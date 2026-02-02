@@ -1,0 +1,69 @@
+apiVersion: nais.io/v1alpha1
+kind: Application
+
+metadata:
+  labels:
+    team: holmes
+  name: watson-sak-admin
+  namespace: holmes
+
+spec:
+  liveness:
+    path: /api/health
+    initialDelay: 5
+    periodSeconds: 60
+  readiness:
+    path: /api/health
+    initialDelay: 5
+    periodSeconds: 5
+  observability:
+    logging:
+      destinations:
+        - id: loki
+  ingresses:
+    {{#each INGRESS_URLS}}
+    - {{this}}
+    {{/each}}
+  replicas:
+    min: {{MIN_REPLICAS}}
+    max: {{MAX_REPLICAS}}
+  accessPolicy:
+    outbound:
+      rules:
+        - application: nav-persondata-api
+          namespace: holmes
+      external:
+        - host: holmes-unleash-api.nav.cloud.nais.io
+  image: {{image}}
+  port: 3000
+  azure:
+    application:
+      enabled: true
+      tenant: {{TENANT}}
+      allowAllUsers: false
+      claims:
+        groups:
+          {{#each CLAIM_GROUPS}}
+          - id: {{this}}
+          {{/each}}
+    sidecar:
+      enabled: true
+      autoLogin: true
+      autoLoginIgnorePaths:
+        - /api/health
+        - /assets/logos/*
+
+  envFrom:
+    - secret: watson-sak-admin
+    - secret: watson-sak-admin-unleash-api-token
+  env:
+    - name: CLUSTER
+      value: {{CLUSTER}}
+    - name: FARO_URL
+      value: {{FARO_URL}}
+    - name: UMAMI_SITE_ID
+      value: {{UMAMI_SITE_ID}}
+    - name: ENVIRONMENT
+      value: {{ENVIRONMENT}}
+    - name: APP_VERSION
+      value: {{APP_VERSION}}

@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+@import "@navikt/ds-css/darkside" layer(components);
+
+@config '../tailwind.config.cjs';

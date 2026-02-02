@@ -1,0 +1,31 @@
+name: Deploy unleash api-token
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Velg miljø"
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+
+permissions:
+  contents: "read"
+  id-token: "write"
+  packages: "write"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sjekk ut kode
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # ratchet:actions/checkout@v4
+      - name: Deploy unleash api-token til ${{ github.event.inputs.environment }}
+        uses: nais/deploy/actions/deploy@961addd1e4d4211f1a7333ada5fde85f7c9aa5b7 # ratchet:nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: ${{ github.event.inputs.environment == 'prod' && 'prod-gcp' || 'dev-gcp' }}
+          RESOURCE: .nais/unleash-api-token.yaml
+          VARS: .nais/${{ github.event.inputs.environment }}.json
+          PRINT_PAYLOAD: true

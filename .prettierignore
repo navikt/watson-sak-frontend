@@ -1,0 +1,3 @@
+# Ignore all yaml files, since Pretiter doesn't support the templating syntax
+**/*.yml
+**/*.yaml

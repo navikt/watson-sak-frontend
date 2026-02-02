@@ -1,0 +1,66 @@
+name: Deploy release til prod
+on:
+  release:
+    types: [published]
+
+jobs:
+  deploy-prod:
+    name: Deploy til prod
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          persist-credentials: false
+      - name: Bygg og push docker image til GAR
+        uses: nais/docker-build-push@main
+        id: docker-push-prod
+        with:
+          team: holmes
+          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
+          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+          build_secrets: NODE_AUTH_TOKEN=${{ secrets.READER_TOKEN }}
+      - name: Deploy til nais
+        uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: prod-gcp
+          IMAGE: ${{ steps.docker-push-prod.outputs.image }}
+          RESOURCE: .nais/nais.yml
+          VARS: .nais/prod.json
+          VAR: APP_VERSION=${{ github.event.release.tag_name }}
+
+      - name: Post Slack-melding om prodsetting
+        uses: actions/github-script@v7
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const rel = context.payload.release;
+            const tag = rel?.tag_name ?? "ukjent tag";
+            const url = rel?.html_url ?? `https://github.com/${owner}/${repo}/releases`;
+
+            const text = `*${repo}* ble prodsatt med release ${tag} :tada:`;
+            const blocks = [
+              { type: "section", text: { type: "mrkdwn", text } },
+              {
+                type: "context",
+                elements: [
+                  { type: "mrkdwn", text: `<${url}|Se release>` },
+                  { type: "mrkdwn", text: `Cluster: prod-gcp` }
+                ]
+              }
+            ];
+
+            const resp = await fetch(process.env.SLACK_WEBHOOK_URL, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ blocks, username: "Prod-vakta", icon_emoji: ":in-prod:" })
+            });
+
+            if (!resp.ok) {
+              throw new Error(`Slack webhook feilet: ${resp.status} ${await resp.text()}`);
+            }

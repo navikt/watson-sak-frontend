@@ -1,0 +1,18 @@
+{
+  "MIN_REPLICAS": 2,
+  "MAX_REPLICAS": 2,
+  "INGRESS_URLS": [
+    "https://watson-sak-admin.ansatt.nav.no",
+    "https://watson-sak-admin.intern.nav.no"
+  ],
+  "CLAIM_GROUPS": [
+    "a1d74637-a6fc-41a9-9277-f368ee6745b3",
+    "206f49eb-51fb-4afe-b1b1-33cf2165aa23"
+  ],
+  "CLUSTER": "prod-gcp",
+  "TENANT": "nav.no",
+  "FARO_URL": "https://telemetry.nav.no/collect",
+  "UMAMI_SITE_ID": "6dd2ad0d-28d2-4934-93dc-b95448b37915",
+  "ENVIRONMENT": "prod",
+  "UNLEASH_ENVIRONMENT": "production"
+}

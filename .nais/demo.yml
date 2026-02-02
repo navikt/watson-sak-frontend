@@ -1,0 +1,48 @@
+apiVersion: nais.io/v1alpha1
+kind: Application
+
+metadata:
+  labels:
+    team: holmes
+  name: watson-sak-admin-demo
+  namespace: holmes
+
+spec:
+  liveness:
+    path: /api/health
+    initialDelay: 5
+    periodSeconds: 60
+  readiness:
+    path: /api/health
+    initialDelay: 5
+    periodSeconds: 5
+  observability:
+    logging:
+      destinations:
+        - id: loki
+  accessPolicy:
+    outbound:
+      external:
+        - host: holmes-unleash-api.nav.cloud.nais.io
+  ingresses:
+    - https://watson-sak-admin-demo.ekstern.dev.nav.no
+  replicas:
+    min: 1
+    max: 1
+  image: {{image}}
+  port: 3000
+
+  envFrom:
+    - secret: watson-sak-admin
+    - secret: watson-sak-admin-unleash-api-token
+  env:
+    - name: CLUSTER
+      value: dev-gcp
+    - name: FARO_URL
+      value: https://telemetry.ekstern.dev.nav.no/collect
+    - name: UMAMI_SITE_ID
+      value: 2a620987-f8b6-43ee-aaed-2845f515b8a1
+    - name: ENVIRONMENT
+      value: demo
+    - name: APP_VERSION
+      value: {{APP_VERSION}}

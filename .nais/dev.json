@@ -1,0 +1,18 @@
+{
+  "MIN_REPLICAS": 1,
+  "MAX_REPLICAS": 1,
+  "INGRESS_URLS": [
+    "https://watson-sak-admin.ansatt.dev.nav.no",
+    "https://watson-sak-admin.intern.dev.nav.no"
+  ],
+  "CLAIM_GROUPS": [
+    "b734a20d-63e3-4b44-bb77-87f7f0b7f48a",
+    "222dedb1-a80d-48c9-b8d3-1e8149be9063"
+  ],
+  "CLUSTER": "dev-gcp",
+  "TENANT": "trygdeetaten.no",
+  "FARO_URL": "https://telemetry.ekstern.dev.nav.no/collect",
+  "UMAMI_SITE_ID": "2a620987-f8b6-43ee-aaed-2845f515b8a1",
+  "ENVIRONMENT": "dev",
+  "UNLEASH_ENVIRONMENT": "development"
+}

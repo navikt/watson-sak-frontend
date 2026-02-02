@@ -1,0 +1,106 @@
+name: Si ifra om pending release på Slack
+
+on:
+  schedule:
+    - cron: "37 13 * * 1-5" # kjør kl 13:37 mandag-fredag (kun hverdager)
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  check-prs:
+    name: "Sjekk om det trengs en release"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sjekk om det trengs en release
+        uses: actions/github-script@v7
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+
+            // 1) Finn siste release (fallback til siste tag hvis ingen release finnes)
+            let sinceIso = null;
+            try {
+              const rel = await github.rest.repos.getLatestRelease({ owner, repo });
+              sinceIso = rel.data.published_at;
+            } catch (e) {
+              // Ingen release? Fallback til nyeste tag
+              try {
+                const tags = await github.rest.repos.listTags({ owner, repo, per_page: 1 });
+                if (tags.data.length) {
+                  const tagSha = tags.data[0].commit.sha;
+                  const commit = await github.rest.repos.getCommit({ owner, repo, ref: tagSha });
+                  sinceIso = commit.data.commit.author.date;
+                }
+              } catch (_) {}
+            }
+
+            if (!sinceIso) {
+              core.info("Fant ingen release eller tag – skipper (ingenting å sammenligne mot).");
+              return;
+            }
+
+            // 2) Tell merged PRs siden 'sinceIso'
+            // Filtrér ut drafts og revert/bot om du vil
+            const q = [
+              `repo:${owner}/${repo}`,
+              "is:pr",
+              "is:merged",
+              `merged:>=${sinceIso}`,
+              "-is:draft"
+            ].join(" ");
+
+            let count = 0;
+            let page = 1;
+            const per_page = 100;
+
+            while (true) {
+              const res = await github.rest.search.issuesAndPullRequests({
+                q,
+                per_page,
+                page
+              });
+              const items = res.data.items ?? [];
+              count += items.length;
+              if (items.length < per_page) break;
+              page += 1;
+            }
+
+            core.info(`Mergede PRs siden ${sinceIso}: ${count}`);
+
+            if (count < 5) {
+              core.info("Under terskel – ingen Slack-post.");
+              return;
+            }
+
+            // 3) Post til Slack
+            const text = `*${repo}* har ${count} merga PRer siden forrige release. Kanskje på tide med ny release? :thinking_face:`;
+            const blocks = [
+              {
+                type: "section",
+                text: { type: "mrkdwn", text }
+              },
+              {
+                type: "context",
+                elements: [
+                  { type: "mrkdwn", text: `Siden: ${sinceIso}` },
+                  { type: "mrkdwn", text: `<https://github.com/${owner}/${repo}/releases|Releases>` }
+                ]
+              }
+            ];
+
+            const resp = await fetch(process.env.SLACK_WEBHOOK_URL, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ blocks, username: "Masekråka", icon_emoji: ":ship-it:" })
+            });
+
+            if (!resp.ok) {
+              throw new Error(`Slack webhook feilet: ${resp.status} ${await resp.text()}`);
+            }

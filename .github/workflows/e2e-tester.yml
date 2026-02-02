@@ -1,0 +1,60 @@
+name: Ende-til-ende-tester
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Kjør ende-til-ende-tester
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Sett opp Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "23"
+          cache: "npm"
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@navikt"
+
+      - name: Installer avhengigheter
+        run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.READER_TOKEN }}
+          NPM_AUTH_TOKEN: ${{ secrets.READER_TOKEN }}
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Kjør E2E-tester
+        run: npm run test:e2e
+        env:
+          CLUSTER: dev-gcp
+          FARO_URL: https://telemetry.ekstern.dev.nav.no/collect
+          UMAMI_SITE_ID: dummy-site-id
+          IDENT_SESSION_SECRET: dummy-secret
+          ENVIRONMENT: local-mock
+          MODIA_URL: https://modiapersonoversikt.intern.dev.nav.no
+          UNLEASH_SERVER_API_URL: dummy
+          UNLEASH_SERVER_API_TOKEN: dummy
+          UNLEASH_SERVER_API_PROJECTS: default
+          UNLEASH_SERVER_API_TYPE: CLIENT
+          UNLEASH_SERVER_API_ENV: development
+          APP_VERSION: ${{ github.sha }}
+
+      - name: Last opp test rapport
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
