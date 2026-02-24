@@ -4,6 +4,7 @@ import { PageBlock } from "@navikt/ds-react/Page";
 export default function LandingSide() {
   return (
     <Page>
+      <title>Watson Sak Admin</title>
       <PageBlock
         width="text"
         gutters

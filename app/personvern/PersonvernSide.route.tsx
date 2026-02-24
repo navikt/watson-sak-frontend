@@ -1,4 +1,4 @@
-import { BodyLong, Heading, Link, List, Page } from "@navikt/ds-react";
+import { BodyLong, Box, Heading, Link, List, Page } from "@navikt/ds-react";
 import { ListItem } from "@navikt/ds-react/List";
 import { PageBlock } from "@navikt/ds-react/Page";
 import { useMiljø } from "~/miljø/useMiljø";
@@ -33,12 +33,16 @@ export default function PersonvernSide() {
           analysere bruk av tjenesten, slik at vi kan videreutvikle og forbedre
           den. Eksempler på hva vi samler inn er:
         </BodyLong>
-        <List className="mb-4">
-          <ListItem>Hvilke knapper du trykker på</ListItem>
-          <ListItem>Om du trykker på hjelpetekster</ListItem>
-          <ListItem>Hvilke lenker i løsningen du trykker på</ListItem>
-          <ListItem>Hvilke sider du er inne på</ListItem>
-        </List>
+        <div className="mb-4">
+          <Box marginBlock="space-16" asChild>
+            <List>
+              <ListItem>Hvilke knapper du trykker på</ListItem>
+              <ListItem>Om du trykker på hjelpetekster</ListItem>
+              <ListItem>Hvilke lenker i løsningen du trykker på</ListItem>
+              <ListItem>Hvilke sider du er inne på</ListItem>
+            </List>
+          </Box>
+        </div>
 
         <Heading level="2" size="medium" spacing>
           Funksjonelle cookies
