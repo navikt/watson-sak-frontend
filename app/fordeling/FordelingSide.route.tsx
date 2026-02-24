@@ -90,74 +90,89 @@ export default function FordelingSide() {
           Saker til fordeling
         </Heading>
 
-        <VStack gap="space-4" className="mb-4">
-          <div>
-            <Label size="small" spacing>Status</Label>
-            <Chips>
-              {sakStatusSchema.options.map((status) => (
-                <Chips.Toggle
-                  key={status}
-                  selected={valgteStatuser.includes(status)}
-                  onClick={() => toggleStatus(status)}
-                >
-                  {status}
-                </Chips.Toggle>
+        <div className="flex flex-col-reverse gap-6 md:flex-row">
+          <div className="min-w-0 flex-1">
+            <HStack gap="space-4" align="end" className="mb-4">
+              <Select
+                label="Sortering"
+                value={sortering}
+                onChange={(e) =>
+                  setSearchParams((prev) => {
+                    const neste = new URLSearchParams(prev);
+                    neste.set("sortering", e.target.value);
+                    return neste;
+                  })
+                }
+                className="w-fit"
+                size="small"
+              >
+                <option value="nyest">Nyest først</option>
+                <option value="eldst">Eldst først</option>
+              </Select>
+
+              {harAktiveFiltre && (
+                <BodyShort size="small">
+                  Viser {sorterteSaker.length} av {saker.length} saker
+                </BodyShort>
+              )}
+            </HStack>
+
+            <VStack gap="space-4">
+              {sorterteSaker.map((sak) => (
+                <SakKort key={sak.id} sak={sak} />
               ))}
-            </Chips>
+            </VStack>
           </div>
 
-          <div>
-            <Label size="small" spacing>Ytelser</Label>
-            <Chips>
-              {alleYtelser.map((ytelse) => (
-                <Chips.Toggle
-                  key={ytelse}
-                  selected={valgteYtelser.includes(ytelse)}
-                  onClick={() => toggleYtelse(ytelse)}
-                >
-                  {ytelse}
-                </Chips.Toggle>
-              ))}
-            </Chips>
-          </div>
-        </VStack>
+          <aside className="rounded-lg border border-gray-200 bg-gray-50 p-4 md:sticky md:top-4 md:w-72 md:shrink-0 md:self-start">
+            <HStack justify="space-between" align="center" className="mb-3">
+              <Heading level="2" size="small">
+                Filtrering
+              </Heading>
+              {harAktiveFiltre && (
+                <Button variant="tertiary" size="xsmall" onClick={nullstillFiltre}>
+                  Nullstill
+                </Button>
+              )}
+            </HStack>
 
-        <HStack gap="space-4" align="end" className="mb-4">
-          <Select
-            label="Sortering"
-            value={sortering}
-            onChange={(e) =>
-              setSearchParams((prev) => {
-                const neste = new URLSearchParams(prev);
-                neste.set("sortering", e.target.value);
-                return neste;
-              })
-            }
-            className="w-fit"
-            size="small"
-          >
-            <option value="nyest">Nyest først</option>
-            <option value="eldst">Eldst først</option>
-          </Select>
+            <VStack gap="space-4">
+              <div>
+                <Label size="small" spacing>
+                  Status
+                </Label>
+                <Chips>
+                  {sakStatusSchema.options.map((status) => (
+                    <Chips.Toggle
+                      key={status}
+                      selected={valgteStatuser.includes(status)}
+                      onClick={() => toggleStatus(status)}
+                    >
+                      {status}
+                    </Chips.Toggle>
+                  ))}
+                </Chips>
+              </div>
 
-          {harAktiveFiltre && (
-            <Button variant="tertiary" size="small" onClick={nullstillFiltre}>
-              Nullstill filtre
-            </Button>
-          )}
-        </HStack>
-
-        {harAktiveFiltre && (
-          <BodyShort size="small" className="mb-2">
-            Viser {sorterteSaker.length} av {saker.length} saker
-          </BodyShort>
-        )}
-
-        <VStack gap="space-4">
-          {sorterteSaker.map((sak) => (
-            <SakKort key={sak.id} sak={sak} />
-          ))}
-        </VStack>
+              <div>
+                <Label size="small" spacing>
+                  Ytelser
+                </Label>
+                <Chips>
+                  {alleYtelser.map((ytelse) => (
+                    <Chips.Toggle
+                      key={ytelse}
+                      selected={valgteYtelser.includes(ytelse)}
+                      onClick={() => toggleYtelse(ytelse)}
+                    >
+                      {ytelse}
+                    </Chips.Toggle>
+                  ))}
+                </Chips>
+              </div>
+            </VStack>
+          </aside>
+        </div>
       </PageBlock>
     </Page>
   );
