@@ -24,9 +24,9 @@
   "dependencies": {
     "@grafana/faro-react": "^2.1.0",
     "@navikt/aksel-icons": "^7.33.2",
-    "@navikt/ds-css": "^7.33.2",
-    "@navikt/ds-react": "^7.33.2",
-    "@navikt/ds-tailwind": "^7.33.2",
+    "@navikt/ds-css": "^8.6.0",
+    "@navikt/ds-react": "^8.6.0",
+    "@navikt/ds-tailwind": "^8.6.0",
     "@navikt/oasis": "^4.1.0",
     "@react-router/node": "^7.9.4",
     "@react-router/serve": "^7.9.4",

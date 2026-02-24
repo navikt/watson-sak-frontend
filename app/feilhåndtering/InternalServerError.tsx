@@ -18,7 +18,7 @@ export function InternalServerError() {
       <title>Feil – Watson Sak Admin</title>
       <AppHeader />
       <Page.Block as="main" width="xl" gutters>
-        <Box paddingBlock="20 8">
+        <Box paddingBlock="space-80 space-32">
           <HGrid columns="minmax(auto,600px)" data-aksel-template="500-v2">
             <VStack gap="space-16">
               <VStack gap="space-12" align="start">
@@ -34,19 +34,21 @@ export function InternalServerError() {
                     utilgjengelig. Dette skyldes ikke noe du gjorde.
                   </BodyShort>
                   <BodyShort>Du kan prøve å</BodyShort>
-                  <List>
-                    <ListItem>
-                      vente noen minutter og{" "}
-                      <Link href="#" onClick={() => location.reload()}>
-                        laste siden på nytt
-                      </Link>
-                    </ListItem>
-                    <ListItem>
-                      <Link href="#" onClick={() => history.back()}>
-                        gå tilbake til forrige side
-                      </Link>
-                    </ListItem>
-                  </List>
+                  <Box marginBlock="space-16" asChild>
+                    <List>
+                      <ListItem>
+                        vente noen minutter og{" "}
+                        <Link href="#" onClick={() => location.reload()}>
+                          laste siden på nytt
+                        </Link>
+                      </ListItem>
+                      <ListItem>
+                        <Link href="#" onClick={() => history.back()}>
+                          gå tilbake til forrige side
+                        </Link>
+                      </ListItem>
+                    </List>
+                  </Box>
                   <BodyShort>
                     Hvis problemet vedvarer, kan du melde inn feil i Porten.
                   </BodyShort>

@@ -25,7 +25,7 @@ export function PageNotFound() {
         {`Fant ikke side – Watson Sak Admin ${miljø !== "prod" ? `(${miljø})` : ""}`}
       </title>
       <PageBlock as="main" width="xl" gutters>
-        <Box paddingBlock="20 16" data-aksel-template="404-v2">
+        <Box paddingBlock="space-80 space-64" data-aksel-template="404-v2">
           <VStack gap="space-16">
             <VStack gap="space-12" align="start">
               <div>
@@ -36,14 +36,16 @@ export function PageNotFound() {
                   Denne siden kan være slettet eller flyttet, eller det er en
                   feil i lenken.
                 </BodyShort>
-                <List>
-                  <ListItem>Bruk gjerne søket eller menyen</ListItem>
-                  <ListItem>
-                    <NavLink as={Link} to={RouteConfig.INDEX}>
-                      Gå til forsiden
-                    </NavLink>
-                  </ListItem>
-                </List>
+                <Box marginBlock="space-16" asChild>
+                  <List>
+                    <ListItem>Bruk gjerne søket eller menyen</ListItem>
+                    <ListItem>
+                      <NavLink as={Link} to={RouteConfig.INDEX}>
+                        Gå til forsiden
+                      </NavLink>
+                    </ListItem>
+                  </List>
+                </Box>
               </div>
             </VStack>
           </VStack>
