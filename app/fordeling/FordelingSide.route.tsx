@@ -2,7 +2,6 @@ import { MenuElipsisVerticalIcon } from "@navikt/aksel-icons";
 import {
   ActionMenu,
   BodyShort,
-  Box,
   Button,
   Chips,
   Heading,
@@ -166,18 +165,18 @@ export default function FordelingSide() {
 
 function SakKort({ sak }: { sak: Sak }) {
   return (
-    <Box padding="space-4" borderRadius="8" background="raised">
+    <div className="relative rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
+      <Link
+        to={RouteConfig.FORDELING_DETALJ.replace(":sakId", sak.id)}
+        className="absolute inset-0 rounded-lg"
+        aria-label={`Sak ${sak.id}`}
+      />
       <HStack justify="space-between" align="start">
         <VStack gap="space-2">
           <HStack gap="space-4" align="center">
-            <Link
-              to={RouteConfig.FORDELING_DETALJ.replace(":sakId", sak.id)}
-              className="navds-link"
-            >
-              <Heading level="2" size="small">
-                Sak {sak.id}
-              </Heading>
-            </Link>
+            <Heading level="2" size="small">
+              Sak {sak.id}
+            </Heading>
             <Tag variant={hentStatusVariant(sak.status)} size="small">
               {sak.status}
             </Tag>
@@ -198,19 +197,21 @@ function SakKort({ sak }: { sak: Sak }) {
           <BodyShort size="small">Ytelser: {sak.ytelser.join(", ")}</BodyShort>
         </VStack>
 
-        <ActionMenu>
-          <ActionMenu.Trigger>
-            <Button
-              variant="tertiary-neutral"
-              icon={<MenuElipsisVerticalIcon title="Handlinger" />}
-              size="small"
-            />
-          </ActionMenu.Trigger>
-          <ActionMenu.Content>
-            <SakHandlinger sakId={sak.id} />
-          </ActionMenu.Content>
-        </ActionMenu>
+        <div className="relative z-10">
+          <ActionMenu>
+            <ActionMenu.Trigger>
+              <Button
+                variant="tertiary-neutral"
+                icon={<MenuElipsisVerticalIcon title="Handlinger" />}
+                size="small"
+              />
+            </ActionMenu.Trigger>
+            <ActionMenu.Content>
+              <SakHandlinger sakId={sak.id} />
+            </ActionMenu.Content>
+          </ActionMenu>
+        </div>
       </HStack>
-    </Box>
+    </div>
   );
 }
