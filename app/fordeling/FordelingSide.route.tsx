@@ -7,16 +7,23 @@ import {
   Heading,
   HStack,
   Page,
+  Select,
   Tag,
   VStack,
 } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
-import { Link, useLoaderData } from "react-router";
+import { Link, useLoaderData, useSearchParams } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { mockSaker } from "./mock-data";
 import { SakHandlinger } from "./SakHandlinger";
 import type { Sak } from "./typer";
-import { formaterDato, formaterKilde, hentStatusVariant } from "./utils";
+import {
+  formaterDato,
+  formaterKilde,
+  hentStatusVariant,
+  sorterSakerEtterDato,
+  type Sorteringsretning,
+} from "./utils";
 
 export function loader() {
   return { saker: mockSaker };
@@ -24,6 +31,10 @@ export function loader() {
 
 export default function FordelingSide() {
   const { saker } = useLoaderData<typeof loader>();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const sortering = (searchParams.get("sortering") ?? "nyest") as Sorteringsretning;
+  const sorterteSaker = sorterSakerEtterDato(saker, sortering);
 
   return (
     <Page>
@@ -33,8 +44,21 @@ export default function FordelingSide() {
           Saker til fordeling
         </Heading>
 
+        <Select
+          label="Sortering"
+          value={sortering}
+          onChange={(e) =>
+            setSearchParams({ sortering: e.target.value })
+          }
+          className="mb-4 w-fit"
+          size="small"
+        >
+          <option value="nyest">Nyest først</option>
+          <option value="eldst">Eldst først</option>
+        </Select>
+
         <VStack gap="space-4">
-          {saker.map((sak) => (
+          {sorterteSaker.map((sak) => (
             <SakKort key={sak.id} sak={sak} />
           ))}
         </VStack>

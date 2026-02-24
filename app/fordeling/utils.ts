@@ -1,4 +1,16 @@
-import type { SakKilde, SakStatus } from "./typer";
+import type { Sak, SakKilde, SakStatus } from "./typer";
+
+export type Sorteringsretning = "nyest" | "eldst";
+
+export function sorterSakerEtterDato(
+  saker: Sak[],
+  retning: Sorteringsretning,
+): Sak[] {
+  return [...saker].sort((a, b) => {
+    const sammenligning = a.datoInnmeldt.localeCompare(b.datoInnmeldt);
+    return retning === "nyest" ? -sammenligning : sammenligning;
+  });
+}
 
 export function formaterDato(dato: string): string {
   return new Date(dato).toLocaleDateString("nb-NO", {
