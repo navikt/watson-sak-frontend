@@ -69,3 +69,25 @@ export function hentUnikeYtelser(saker: Sak[]): string[] {
     a.localeCompare(b, "nb"),
   );
 }
+
+export function søkISaker(saker: Sak[], søketekst: string): Sak[] {
+  const normalisert = søketekst.trim().toLowerCase();
+  if (!normalisert) return saker;
+
+  return saker.filter((sak) => {
+    const sammenslått = [
+      sak.id,
+      sak.datoInnmeldt,
+      sak.kilde,
+      sak.notat,
+      sak.fødselsnummer,
+      sak.ytelser.join(", "),
+      sak.status,
+      sak.seksjon,
+    ]
+      .join(";;")
+      .toLowerCase();
+
+    return sammenslått.includes(normalisert);
+  });
+}

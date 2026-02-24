@@ -8,6 +8,7 @@ import {
   HStack,
   Label,
   Page,
+  Search,
   Select,
   Tag,
   VStack,
@@ -26,6 +27,7 @@ import {
   hentStatusVariant,
   hentUnikeYtelser,
   sorterSakerEtterDato,
+  søkISaker,
   type Sorteringsretning,
 } from "./utils";
 
@@ -39,12 +41,14 @@ export default function FordelingSide() {
 
   const sortering = (searchParams.get("sortering") ?? "nyest") as Sorteringsretning;
 
+  const søketekst = searchParams.get("sok") ?? "";
   const valgteStatuser = (searchParams.get("status")?.split(",").filter(Boolean) ?? []) as SakStatus[];
   const valgteYtelser = searchParams.get("ytelse")?.split(",").filter(Boolean) ?? [];
-  const harAktiveFiltre = valgteStatuser.length > 0 || valgteYtelser.length > 0;
+  const harAktiveFiltre = valgteStatuser.length > 0 || valgteYtelser.length > 0 || søketekst.length > 0;
 
   const alleYtelser = hentUnikeYtelser(saker);
-  const filtrerteSaker = filtrerSaker(saker, valgteStatuser, valgteYtelser);
+  const sakerEtterSøk = søkISaker(saker, søketekst);
+  const filtrerteSaker = filtrerSaker(sakerEtterSøk, valgteStatuser, valgteYtelser);
   const sorterteSaker = sorterSakerEtterDato(filtrerteSaker, sortering);
 
   function oppdaterSearchParams(nøkkel: string, verdier: string[]) {
@@ -76,6 +80,7 @@ export default function FordelingSide() {
   function nullstillFiltre() {
     setSearchParams((prev) => {
       const neste = new URLSearchParams(prev);
+      neste.delete("sok");
       neste.delete("status");
       neste.delete("ytelse");
       return neste;
@@ -137,6 +142,15 @@ export default function FordelingSide() {
             </HStack>
 
             <VStack gap="space-4">
+              <Search
+                label="Søk i saker"
+                size="small"
+                variant="simple"
+                value={søketekst}
+                onChange={(verdi) => oppdaterSearchParams("sok", verdi ? [verdi] : [])}
+                onClear={() => oppdaterSearchParams("sok", [])}
+              />
+
               <div>
                 <Label size="small" spacing>
                   Status
