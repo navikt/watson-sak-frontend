@@ -4,8 +4,10 @@ import {
   BodyShort,
   Box,
   Button,
+  Chips,
   Heading,
   HStack,
+  Label,
   Page,
   Select,
   Tag,
@@ -16,11 +18,14 @@ import { Link, useLoaderData, useSearchParams } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { mockSaker } from "./mock-data";
 import { SakHandlinger } from "./SakHandlinger";
-import type { Sak } from "./typer";
+import type { Sak, SakStatus } from "./typer";
+import { sakStatusSchema } from "./typer";
 import {
+  filtrerSaker,
   formaterDato,
   formaterKilde,
   hentStatusVariant,
+  hentUnikeYtelser,
   sorterSakerEtterDato,
   type Sorteringsretning,
 } from "./utils";
@@ -34,7 +39,49 @@ export default function FordelingSide() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const sortering = (searchParams.get("sortering") ?? "nyest") as Sorteringsretning;
-  const sorterteSaker = sorterSakerEtterDato(saker, sortering);
+
+  const valgteStatuser = (searchParams.get("status")?.split(",").filter(Boolean) ?? []) as SakStatus[];
+  const valgteYtelser = searchParams.get("ytelse")?.split(",").filter(Boolean) ?? [];
+  const harAktiveFiltre = valgteStatuser.length > 0 || valgteYtelser.length > 0;
+
+  const alleYtelser = hentUnikeYtelser(saker);
+  const filtrerteSaker = filtrerSaker(saker, valgteStatuser, valgteYtelser);
+  const sorterteSaker = sorterSakerEtterDato(filtrerteSaker, sortering);
+
+  function oppdaterSearchParams(nøkkel: string, verdier: string[]) {
+    setSearchParams((prev) => {
+      const neste = new URLSearchParams(prev);
+      if (verdier.length > 0) {
+        neste.set(nøkkel, verdier.join(","));
+      } else {
+        neste.delete(nøkkel);
+      }
+      return neste;
+    });
+  }
+
+  function toggleStatus(status: SakStatus) {
+    const oppdatert = valgteStatuser.includes(status)
+      ? valgteStatuser.filter((s) => s !== status)
+      : [...valgteStatuser, status];
+    oppdaterSearchParams("status", oppdatert);
+  }
+
+  function toggleYtelse(ytelse: string) {
+    const oppdatert = valgteYtelser.includes(ytelse)
+      ? valgteYtelser.filter((y) => y !== ytelse)
+      : [...valgteYtelser, ytelse];
+    oppdaterSearchParams("ytelse", oppdatert);
+  }
+
+  function nullstillFiltre() {
+    setSearchParams((prev) => {
+      const neste = new URLSearchParams(prev);
+      neste.delete("status");
+      neste.delete("ytelse");
+      return neste;
+    });
+  }
 
   return (
     <Page>
@@ -44,18 +91,68 @@ export default function FordelingSide() {
           Saker til fordeling
         </Heading>
 
-        <Select
-          label="Sortering"
-          value={sortering}
-          onChange={(e) =>
-            setSearchParams({ sortering: e.target.value })
-          }
-          className="mb-4 w-fit"
-          size="small"
-        >
-          <option value="nyest">Nyest først</option>
-          <option value="eldst">Eldst først</option>
-        </Select>
+        <VStack gap="space-4" className="mb-4">
+          <div>
+            <Label size="small" spacing>Status</Label>
+            <Chips>
+              {sakStatusSchema.options.map((status) => (
+                <Chips.Toggle
+                  key={status}
+                  selected={valgteStatuser.includes(status)}
+                  onClick={() => toggleStatus(status)}
+                >
+                  {status}
+                </Chips.Toggle>
+              ))}
+            </Chips>
+          </div>
+
+          <div>
+            <Label size="small" spacing>Ytelser</Label>
+            <Chips>
+              {alleYtelser.map((ytelse) => (
+                <Chips.Toggle
+                  key={ytelse}
+                  selected={valgteYtelser.includes(ytelse)}
+                  onClick={() => toggleYtelse(ytelse)}
+                >
+                  {ytelse}
+                </Chips.Toggle>
+              ))}
+            </Chips>
+          </div>
+        </VStack>
+
+        <HStack gap="space-4" align="end" className="mb-4">
+          <Select
+            label="Sortering"
+            value={sortering}
+            onChange={(e) =>
+              setSearchParams((prev) => {
+                const neste = new URLSearchParams(prev);
+                neste.set("sortering", e.target.value);
+                return neste;
+              })
+            }
+            className="w-fit"
+            size="small"
+          >
+            <option value="nyest">Nyest først</option>
+            <option value="eldst">Eldst først</option>
+          </Select>
+
+          {harAktiveFiltre && (
+            <Button variant="tertiary" size="small" onClick={nullstillFiltre}>
+              Nullstill filtre
+            </Button>
+          )}
+        </HStack>
+
+        {harAktiveFiltre && (
+          <BodyShort size="small" className="mb-2">
+            Viser {sorterteSaker.length} av {saker.length} saker
+          </BodyShort>
+        )}
 
         <VStack gap="space-4">
           {sorterteSaker.map((sak) => (

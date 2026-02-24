@@ -48,3 +48,24 @@ export function hentStatusVariant(
 ): "info" | "warning" | "success" | "neutral" {
   return statusVariant[status];
 }
+
+export function filtrerSaker(
+  saker: Sak[],
+  valgteStatuser: SakStatus[],
+  valgteYtelser: string[],
+): Sak[] {
+  return saker.filter((sak) => {
+    const matcherStatus =
+      valgteStatuser.length === 0 || valgteStatuser.includes(sak.status);
+    const matcherYtelse =
+      valgteYtelser.length === 0 ||
+      sak.ytelser.some((ytelse) => valgteYtelser.includes(ytelse));
+    return matcherStatus && matcherYtelse;
+  });
+}
+
+export function hentUnikeYtelser(saker: Sak[]): string[] {
+  return [...new Set(saker.flatMap((sak) => sak.ytelser))].sort((a, b) =>
+    a.localeCompare(b, "nb"),
+  );
+}
