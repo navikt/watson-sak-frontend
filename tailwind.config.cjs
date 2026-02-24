@@ -1,3 +1,3 @@
 module.exports = {
-  presets: [require("@navikt/ds-tailwind/darkside-tw3")],
+  presets: [require("@navikt/ds-tailwind")],
 };

@@ -8,7 +8,7 @@ export function AppFooter() {
   const appversjon = formaterVersjon(loaderData?.loaderData?.envs.appversjon);
   return (
     <div className="mt-8">
-      <Theme theme="dark">
+      <Theme hasBackground theme="dark">
         <footer className="p-4">
           <ul className="flex items-center justify-center gap-4 list-none mx-auto my-0">
             <li className="flex items-center gap-2">
