@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Sak } from "./typer";
-import {
-  filtrerSaker,
-  hentUnikeYtelser,
-  sorterSakerEtterDato,
-} from "./utils";
+import { filtrerSaker, hentUnikeYtelser, sorterSakerEtterDato } from "./utils";
 
 const lagSak = (id: string, datoInnmeldt: string): Sak => ({
   id,
@@ -43,11 +39,31 @@ describe("sorterSakerEtterDato", () => {
 
 describe("filtrerSaker", () => {
   const saker: Sak[] = [
-    { ...lagSak("1", "2026-01-15"), status: "tips mottatt", ytelser: ["Dagpenger"] },
-    { ...lagSak("2", "2026-01-20"), status: "tips avklart", ytelser: ["Sykepenger", "Arbeidsavklaringspenger"] },
-    { ...lagSak("3", "2026-02-01"), status: "under utredning", ytelser: ["Foreldrepenger"] },
-    { ...lagSak("4", "2026-02-10"), status: "tips mottatt", ytelser: ["Dagpenger", "Sykepenger"] },
-    { ...lagSak("5", "2026-02-18"), status: "avsluttet", ytelser: ["Pleiepenger"] },
+    {
+      ...lagSak("1", "2026-01-15"),
+      status: "tips mottatt",
+      ytelser: ["Dagpenger"],
+    },
+    {
+      ...lagSak("2", "2026-01-20"),
+      status: "tips avklart",
+      ytelser: ["Sykepenger", "Arbeidsavklaringspenger"],
+    },
+    {
+      ...lagSak("3", "2026-02-01"),
+      status: "under utredning",
+      ytelser: ["Foreldrepenger"],
+    },
+    {
+      ...lagSak("4", "2026-02-10"),
+      status: "tips mottatt",
+      ytelser: ["Dagpenger", "Sykepenger"],
+    },
+    {
+      ...lagSak("5", "2026-02-18"),
+      status: "avsluttet",
+      ytelser: ["Pleiepenger"],
+    },
   ];
 
   it("returnerer alle saker når ingen filtre er satt", () => {

@@ -39,16 +39,28 @@ export default function FordelingSide() {
   const { saker } = useLoaderData<typeof loader>();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const sortering = (searchParams.get("sortering") ?? "nyest") as Sorteringsretning;
+  const sortering = (searchParams.get("sortering") ??
+    "nyest") as Sorteringsretning;
 
   const søketekst = searchParams.get("sok") ?? "";
-  const valgteStatuser = (searchParams.get("status")?.split(",").filter(Boolean) ?? []) as SakStatus[];
-  const valgteYtelser = searchParams.get("ytelse")?.split(",").filter(Boolean) ?? [];
-  const harAktiveFiltre = valgteStatuser.length > 0 || valgteYtelser.length > 0 || søketekst.length > 0;
+  const valgteStatuser = (searchParams
+    .get("status")
+    ?.split(",")
+    .filter(Boolean) ?? []) as SakStatus[];
+  const valgteYtelser =
+    searchParams.get("ytelse")?.split(",").filter(Boolean) ?? [];
+  const harAktiveFiltre =
+    valgteStatuser.length > 0 ||
+    valgteYtelser.length > 0 ||
+    søketekst.length > 0;
 
   const alleYtelser = hentUnikeYtelser(saker);
   const sakerEtterSøk = søkISaker(saker, søketekst);
-  const filtrerteSaker = filtrerSaker(sakerEtterSøk, valgteStatuser, valgteYtelser);
+  const filtrerteSaker = filtrerSaker(
+    sakerEtterSøk,
+    valgteStatuser,
+    valgteYtelser,
+  );
   const sorterteSaker = sorterSakerEtterDato(filtrerteSaker, sortering);
 
   function oppdaterSearchParams(nøkkel: string, verdier: string[]) {
@@ -135,7 +147,11 @@ export default function FordelingSide() {
                 Filtrering
               </Heading>
               {harAktiveFiltre && (
-                <Button variant="tertiary" size="xsmall" onClick={nullstillFiltre}>
+                <Button
+                  variant="tertiary"
+                  size="xsmall"
+                  onClick={nullstillFiltre}
+                >
                   Nullstill
                 </Button>
               )}
@@ -147,7 +163,9 @@ export default function FordelingSide() {
                 size="small"
                 variant="simple"
                 value={søketekst}
-                onChange={(verdi) => oppdaterSearchParams("sok", verdi ? [verdi] : [])}
+                onChange={(verdi) =>
+                  oppdaterSearchParams("sok", verdi ? [verdi] : [])
+                }
                 onClear={() => oppdaterSearchParams("sok", [])}
               />
 
