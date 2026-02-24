@@ -4,6 +4,8 @@
  */
 export const RouteConfig = {
   INDEX: "/",
+  FORDELING: "/fordeling",
+  FORDELING_DETALJ: "/fordeling/:sakId",
   PERSONVERN: "/personvern",
 
   WELL_KNOWN: {

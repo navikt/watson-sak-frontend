@@ -9,6 +9,8 @@ export default [
   // App routes
   layout("layout/AppLayout.tsx", [
     route(RouteConfig.INDEX, "landingsside/LandingSide.route.tsx"),
+    route(RouteConfig.FORDELING, "fordeling/FordelingSide.route.tsx"),
+    route(RouteConfig.FORDELING_DETALJ, "fordeling/FordelingSakSide.route.tsx"),
     route(RouteConfig.PERSONVERN, "personvern/PersonvernSide.route.tsx"),
   ]),
 

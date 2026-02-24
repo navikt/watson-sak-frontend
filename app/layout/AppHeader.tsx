@@ -36,6 +36,10 @@ export function AppHeader() {
         </div>
       </InternalHeader.Title>
 
+      <Link to={RouteConfig.FORDELING} className="navds-link px-4">
+        Fordeling
+      </Link>
+
       <Spacer />
       <ActionMenu>
         <ActionMenu.Trigger>
