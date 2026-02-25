@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { Sak } from "./typer";
-import { filtrerSaker, hentUnikeYtelser, sorterSakerEtterDato } from "./utils";
+import {
+  filtrerSaker,
+  hentUnikeYtelser,
+  sorterSakerEtterDato,
+  søkISaker,
+} from "./utils";
 
 const lagSak = (id: string, datoInnmeldt: string): Sak => ({
   id,
@@ -114,5 +119,86 @@ describe("hentUnikeYtelser", () => {
 
   it("returnerer tom liste for tom input", () => {
     expect(hentUnikeYtelser([])).toEqual([]);
+  });
+});
+
+describe("søkISaker", () => {
+  const saker: Sak[] = [
+    {
+      ...lagSak("SAK-001", "2026-01-15"),
+      notat: "Mistanke om svindel",
+      fødselsnummer: "12345678901",
+      ytelser: ["Dagpenger"],
+      status: "tips mottatt",
+      seksjon: "Seksjon A",
+    },
+    {
+      ...lagSak("SAK-002", "2026-02-01"),
+      notat: "Varslet av arbeidsgiver",
+      fødselsnummer: "98765432100",
+      ytelser: ["Sykepenger", "Arbeidsavklaringspenger"],
+      status: "under utredning",
+      seksjon: "Seksjon B",
+    },
+  ];
+
+  it("returnerer alle saker ved tom søketekst", () => {
+    expect(søkISaker(saker, "")).toHaveLength(2);
+  });
+
+  it("returnerer alle saker ved søketekst med kun mellomrom", () => {
+    expect(søkISaker(saker, "   ")).toHaveLength(2);
+  });
+
+  it("søker case-insensitivt", () => {
+    expect(søkISaker(saker, "SVINDEL").map((s) => s.id)).toEqual(["SAK-001"]);
+    expect(søkISaker(saker, "svindel").map((s) => s.id)).toEqual(["SAK-001"]);
+  });
+
+  it("trimmer søketekst", () => {
+    expect(søkISaker(saker, "  svindel  ").map((s) => s.id)).toEqual([
+      "SAK-001",
+    ]);
+  });
+
+  it("matcher på id", () => {
+    expect(søkISaker(saker, "SAK-002").map((s) => s.id)).toEqual(["SAK-002"]);
+  });
+
+  it("matcher på notat", () => {
+    expect(søkISaker(saker, "arbeidsgiver").map((s) => s.id)).toEqual([
+      "SAK-002",
+    ]);
+  });
+
+  it("matcher på fødselsnummer", () => {
+    expect(søkISaker(saker, "98765432100").map((s) => s.id)).toEqual([
+      "SAK-002",
+    ]);
+  });
+
+  it("matcher på ytelser", () => {
+    expect(søkISaker(saker, "dagpenger").map((s) => s.id)).toEqual([
+      "SAK-001",
+    ]);
+    expect(søkISaker(saker, "arbeidsavklaringspenger").map((s) => s.id)).toEqual(
+      ["SAK-002"],
+    );
+  });
+
+  it("matcher på status", () => {
+    expect(søkISaker(saker, "under utredning").map((s) => s.id)).toEqual([
+      "SAK-002",
+    ]);
+  });
+
+  it("matcher på seksjon", () => {
+    expect(søkISaker(saker, "Seksjon B").map((s) => s.id)).toEqual([
+      "SAK-002",
+    ]);
+  });
+
+  it("returnerer tom liste når ingenting matcher", () => {
+    expect(søkISaker(saker, "finnes ikke")).toHaveLength(0);
   });
 });
