@@ -13,10 +13,12 @@ import {
 } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
 import { data, Link, useLoaderData } from "react-router";
+import { RouteConfig } from "~/routeConfig";
 import type { Route } from "./+types/FordelingSakSide.route";
 import { mockSaker } from "./mock-data";
 import { SakHandlinger } from "./SakHandlinger";
-import { formaterDato, formaterKilde, hentStatusVariant } from "./utils";
+import { formaterDato } from "~/utils/date-utils";
+import { formaterKilde, hentStatusVariant } from "./utils";
 
 export function loader({ params }: Route.LoaderArgs) {
   const sak = mockSaker.find((s) => s.id === params.sakId);
@@ -35,7 +37,7 @@ export default function FordelingSakSide() {
       <PageBlock width="lg" gutters>
         <VStack gap="space-4" className="mt-4">
           <div>
-            <Link to="/fordeling" className="navds-link">
+            <Link to={RouteConfig.FORDELING} className="navds-link">
               <HStack gap="space-1" align="center">
                 <ArrowLeftIcon aria-hidden />
                 Tilbake til fordeling

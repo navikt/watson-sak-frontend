@@ -12,14 +12,6 @@ export function sorterSakerEtterDato(
   });
 }
 
-export function formaterDato(dato: string): string {
-  return new Date(dato).toLocaleDateString("nb-NO", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-}
-
 const kildeVisningsnavn: Record<SakKilde, string> = {
   telefon: "Telefon",
   epost: "E-post",

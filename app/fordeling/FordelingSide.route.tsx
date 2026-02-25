@@ -20,9 +20,9 @@ import { mockSaker } from "./mock-data";
 import { SakHandlinger } from "./SakHandlinger";
 import type { Sak, SakStatus } from "./typer";
 import { sakStatusSchema } from "./typer";
+import { formaterDato } from "~/utils/date-utils";
 import {
   filtrerSaker,
-  formaterDato,
   formaterKilde,
   hentStatusVariant,
   hentUnikeYtelser,
