@@ -15,7 +15,7 @@ import { PageBlock } from "@navikt/ds-react/Page";
 import { data, Link, useLoaderData } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import type { Route } from "./+types/FordelingSakSide.route";
-import { mockSaker } from "./mock-data";
+import { mockSaker } from "./mock-data.server";
 import { SakHandlinger } from "./SakHandlinger";
 import { formaterDato } from "~/utils/date-utils";
 import { formaterKilde, hentStatusVariant } from "./utils";

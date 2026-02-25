@@ -16,7 +16,7 @@ import {
 import { PageBlock } from "@navikt/ds-react/Page";
 import { Link, useLoaderData, useSearchParams } from "react-router";
 import { RouteConfig } from "~/routeConfig";
-import { mockSaker } from "./mock-data";
+import { mockSaker } from "./mock-data.server";
 import { SakHandlinger } from "./SakHandlinger";
 import type { Sak, SakStatus } from "./typer";
 import { sakStatusSchema } from "./typer";
