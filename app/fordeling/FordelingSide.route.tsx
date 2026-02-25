@@ -39,14 +39,14 @@ export default function FordelingSide() {
   const { saker } = useLoaderData<typeof loader>();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const sortering = (searchParams.get("sortering") ??
-    "nyest") as Sorteringsretning;
+  const sorteringParam = searchParams.get("sortering");
+  const sortering: Sorteringsretning =
+    sorteringParam === "eldst" ? "eldst" : "nyest";
 
   const søketekst = searchParams.get("sok") ?? "";
-  const valgteStatuser = (searchParams
-    .get("status")
-    ?.split(",")
-    .filter(Boolean) ?? []) as SakStatus[];
+  const valgteStatuser: SakStatus[] = (
+    searchParams.get("status")?.split(",").filter(Boolean) ?? []
+  ).filter((s): s is SakStatus => sakStatusSchema.safeParse(s).success);
   const valgteYtelser =
     searchParams.get("ytelse")?.split(",").filter(Boolean) ?? [];
   const harAktiveFiltre =
