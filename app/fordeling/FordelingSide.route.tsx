@@ -141,7 +141,7 @@ export default function FordelingSide() {
             </VStack>
           </div>
 
-          <aside className="rounded-lg border border-gray-200 bg-gray-50 p-4 md:sticky md:top-4 md:w-72 md:shrink-0 md:self-start">
+          <aside className="rounded-lg border border-border-subtle bg-surface-subtle p-4 md:sticky md:top-4 md:w-72 md:shrink-0 md:self-start">
             <HStack justify="space-between" align="center" className="mb-3">
               <Heading level="2" size="small">
                 Filtrering
@@ -212,7 +212,7 @@ export default function FordelingSide() {
 
 function SakKort({ sak }: { sak: Sak }) {
   return (
-    <div className="relative rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
+    <div className="relative rounded-lg border border-border-subtle bg-surface-default p-4 shadow-sm transition-shadow hover:shadow-md">
       <Link
         to={RouteConfig.FORDELING_DETALJ.replace(":sakId", sak.id)}
         className="absolute inset-0 rounded-lg"
@@ -230,13 +230,13 @@ function SakKort({ sak }: { sak: Sak }) {
           </HStack>
 
           <HStack gap="space-4">
-            <BodyShort size="small" className="text-gray-600">
+            <BodyShort size="small" className="text-text-subtle">
               Innmeldt: {formaterDato(sak.datoInnmeldt)}
             </BodyShort>
-            <BodyShort size="small" className="text-gray-600">
+            <BodyShort size="small" className="text-text-subtle">
               Kilde: {formaterKilde(sak.kilde)}
             </BodyShort>
-            <BodyShort size="small" className="text-gray-600">
+            <BodyShort size="small" className="text-text-subtle">
               Seksjon: {sak.seksjon}
             </BodyShort>
           </HStack>
