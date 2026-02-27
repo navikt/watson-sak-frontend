@@ -178,12 +178,10 @@ describe("søkISaker", () => {
   });
 
   it("matcher på ytelser", () => {
-    expect(søkISaker(saker, "dagpenger").map((s) => s.id)).toEqual([
-      "SAK-001",
-    ]);
-    expect(søkISaker(saker, "arbeidsavklaringspenger").map((s) => s.id)).toEqual(
-      ["SAK-002"],
-    );
+    expect(søkISaker(saker, "dagpenger").map((s) => s.id)).toEqual(["SAK-001"]);
+    expect(
+      søkISaker(saker, "arbeidsavklaringspenger").map((s) => s.id),
+    ).toEqual(["SAK-002"]);
   });
 
   it("matcher på status", () => {
@@ -193,9 +191,7 @@ describe("søkISaker", () => {
   });
 
   it("matcher på seksjon", () => {
-    expect(søkISaker(saker, "Seksjon B").map((s) => s.id)).toEqual([
-      "SAK-002",
-    ]);
+    expect(søkISaker(saker, "Seksjon B").map((s) => s.id)).toEqual(["SAK-002"]);
   });
 
   it("returnerer tom liste når ingenting matcher", () => {

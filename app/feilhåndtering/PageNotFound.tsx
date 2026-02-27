@@ -22,7 +22,7 @@ export function PageNotFound() {
     <Page footer={<AppFooter />}>
       <AppHeader />
       <title>
-        {`Fant ikke side – Watson Sak Admin ${miljø !== "prod" ? `(${miljø})` : ""}`}
+        {`Fant ikke side – Watson Sak ${miljø !== "prod" ? `(${miljø})` : ""}`}
       </title>
       <PageBlock as="main" width="xl" gutters>
         <Box paddingBlock="space-80 space-64" data-aksel-template="404-v2">

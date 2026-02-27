@@ -16,11 +16,11 @@ import {
 import { PageBlock } from "@navikt/ds-react/Page";
 import { Link, useLoaderData, useSearchParams } from "react-router";
 import { RouteConfig } from "~/routeConfig";
+import { formaterDato } from "~/utils/date-utils";
 import { mockSaker } from "./mock-data.server";
 import { SakHandlinger } from "./SakHandlinger";
 import type { Sak, SakStatus } from "./typer";
 import { sakStatusSchema } from "./typer";
-import { formaterDato } from "~/utils/date-utils";
 import {
   filtrerSaker,
   formaterKilde,
@@ -101,7 +101,7 @@ export default function FordelingSide() {
 
   return (
     <Page>
-      <title>Saker til fordeling – Watson Sak Admin</title>
+      <title>Saker til fordeling – Watson Sak</title>
       <PageBlock width="lg" gutters>
         <Heading level="1" size="large" spacing className="mt-4">
           Saker til fordeling

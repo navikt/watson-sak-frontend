@@ -14,10 +14,10 @@ import {
 import { PageBlock } from "@navikt/ds-react/Page";
 import { data, Link, useLoaderData } from "react-router";
 import { RouteConfig } from "~/routeConfig";
+import { formaterDato } from "~/utils/date-utils";
 import type { Route } from "./+types/FordelingSakSide.route";
 import { mockSaker } from "./mock-data.server";
 import { SakHandlinger } from "./SakHandlinger";
-import { formaterDato } from "~/utils/date-utils";
 import { formaterKilde, hentStatusVariant } from "./utils";
 
 export function loader({ params }: Route.LoaderArgs) {
@@ -33,7 +33,7 @@ export default function FordelingSakSide() {
 
   return (
     <Page>
-      <title>{`Sak ${sak.id} – Watson Sak Admin`}</title>
+      <title>{`Sak ${sak.id} – Watson Sak`}</title>
       <PageBlock width="lg" gutters>
         <VStack gap="space-4" className="mt-4">
           <div>

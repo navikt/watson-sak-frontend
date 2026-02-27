@@ -27,7 +27,7 @@ export function AppHeader() {
     <InternalHeader>
       <InternalHeader.Title as="h1">
         <div className="flex items-center gap-2">
-          <Link to={RouteConfig.INDEX}>Watson Sak Admin</Link>
+          <Link to={RouteConfig.INDEX}>Watson Sak</Link>
           {visMiljøtag && (
             <Tag variant={miljøtagVariant} size="small">
               {miljø}
@@ -61,10 +61,10 @@ export function AppHeader() {
             </ActionMenu.Item>
             <ActionMenu.Item
               as="a"
-              href="https://watson-sak-admin.intern.nav.no"
+              href="https://watson-sak.intern.nav.no"
               icon={<PersonIcon />}
             >
-              Watson Sak Admin
+              Watson Sak
             </ActionMenu.Item>
           </ActionMenu.Group>
 
@@ -80,7 +80,7 @@ export function AppHeader() {
           </ActionMenu.Item>
           <ActionMenu.Item
             as="a"
-            href="https://watson-sak-admin.ideas.aha.io"
+            href="https://watson-sak.ideas.aha.io"
             target="_blank"
             rel="noopener noreferrer"
             icon={<LightBulbIcon />}

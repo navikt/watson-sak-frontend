@@ -1,6 +1,6 @@
 # Repository Guidelines
 
-Kort veiledning for bidragsytere til watson-sak-admin. Hold koden enkel, domeneorientert og sikker.
+Kort veiledning for bidragsytere til watson-sak. Hold koden enkel, domeneorientert og sikker.
 
 ## Prosjektstruktur og moduler
 

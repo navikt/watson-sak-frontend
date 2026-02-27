@@ -1,6 +1,6 @@
 # Copilot Instructions
 
-Watson Sak Admin er en React Router v7-applikasjon (framework mode, SSR) for å administrere saker i Watson. Appen kjører på NAIS/GCP og bruker NAVs designsystem Aksel.
+Watson Sak er en React Router v7-applikasjon (framework mode, SSR) for å administrere saker i Watson. Appen kjører på NAIS/GCP og bruker NAVs designsystem Aksel.
 
 ## Kommandoer
 
