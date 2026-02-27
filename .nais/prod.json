@@ -2,8 +2,8 @@
   "MIN_REPLICAS": 2,
   "MAX_REPLICAS": 2,
   "INGRESS_URLS": [
-    "https://watson-sak-admin.ansatt.nav.no",
-    "https://watson-sak-admin.intern.nav.no"
+    "https://watson-sak.ansatt.nav.no",
+    "https://watson-sak.intern.nav.no"
   ],
   "CLAIM_GROUPS": [
     "a1d74637-a6fc-41a9-9277-f368ee6745b3",

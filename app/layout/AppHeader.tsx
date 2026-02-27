@@ -7,7 +7,7 @@ import {
   SunIcon,
 } from "@navikt/aksel-icons";
 import { ActionMenu, InternalHeader, Spacer, Tag } from "@navikt/ds-react";
-import { Link } from "react-router";
+import { Link, NavLink } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { useMiljø } from "~/miljø/useMiljø";
@@ -27,7 +27,7 @@ export function AppHeader() {
     <InternalHeader>
       <InternalHeader.Title as="h1">
         <div className="flex items-center gap-2">
-          <Link to={RouteConfig.INDEX}>Watson Sak Admin</Link>
+          <Link to={RouteConfig.INDEX}>Watson Sak</Link>
           {visMiljøtag && (
             <Tag variant={miljøtagVariant} size="small">
               {miljø}
@@ -35,6 +35,12 @@ export function AppHeader() {
           )}
         </div>
       </InternalHeader.Title>
+
+      <div className="flex gap-2 items-center">
+        <NavLink to={RouteConfig.FORDELING} className="navds-link px-4">
+          Fordeling
+        </NavLink>
+      </div>
 
       <Spacer />
       <ActionMenu>
@@ -55,10 +61,10 @@ export function AppHeader() {
             </ActionMenu.Item>
             <ActionMenu.Item
               as="a"
-              href="https://watson-sak-admin.intern.nav.no"
+              href="https://watson-sak.intern.nav.no"
               icon={<PersonIcon />}
             >
-              Watson Sak Admin
+              Watson Sak
             </ActionMenu.Item>
           </ActionMenu.Group>
 
@@ -74,7 +80,7 @@ export function AppHeader() {
           </ActionMenu.Item>
           <ActionMenu.Item
             as="a"
-            href="https://watson-sak-admin.ideas.aha.io"
+            href="https://watson-sak.ideas.aha.io"
             target="_blank"
             rel="noopener noreferrer"
             icon={<LightBulbIcon />}

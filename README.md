@@ -1,4 +1,4 @@
-# Watson Sak Admin
+# Watson Sak
 
 En React Router-applikasjon for å administrere saker i Watson.
 
@@ -40,7 +40,7 @@ For utvikling mot lokal backend trenger du også `gcloud` og `k9s`. Se utvikling
 
 ```bash
 git clone <repository-url>
-cd watson-sak-admin
+cd watson-sak
 ```
 
 2. Installer avhengigheter:
@@ -96,9 +96,9 @@ TODO
 
 Applikasjonen deployes automatisk til NAIS på GCP via GitHub Actions.
 
-For deployment til dev-miljøet, kan du kjøre actionen [Deploy manuelt til dev](https://github.com/navikt/watson-sak-admin/actions/workflows/manual-deploy-to-dev.yml) med den branchen du ønsker å deploye. `main`-branchen deployes også til dev hver gang man merger en pull request til `main`.
+For deployment til dev-miljøet, kan du kjøre actionen [Deploy manuelt til dev](https://github.com/navikt/watson-sak/actions/workflows/manual-deploy-to-dev.yml) med den branchen du ønsker å deploye. `main`-branchen deployes også til dev hver gang man merger en pull request til `main`.
 
-For deployment til produksjon, lag en [ny release](https://github.com/navikt/watson-sak-admin/releases/new).
+For deployment til produksjon, lag en [ny release](https://github.com/navikt/watson-sak/releases/new).
 
 ### Unleash
 
@@ -114,9 +114,9 @@ For å deploye denne ressursen kan man kjøre [en egen GitHub action](https://gi
 
 ### Miljøer
 
-- **Produksjon**: https://watson-sak-admin.intern.nav.no
-- **Dev**: https://watson-sak-admin.intern.dev.nav.no
-- **Demo**: https://watson-sak-admin-demo.ekstern.dev.nav.no/
+- **Produksjon**: https://watson-sak.intern.nav.no
+- **Dev**: https://watson-sak.intern.dev.nav.no
+- **Demo**: https://watson-sak-demo.ekstern.dev.nav.no/
 - **Utvikling**: Lokal utvikling på https://localhost:5174
 
 </details>

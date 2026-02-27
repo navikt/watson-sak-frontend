@@ -4,7 +4,7 @@ kind: Application
 metadata:
   labels:
     team: holmes
-  name: watson-sak-admin
+  name: watson-sak
   namespace: holmes
 
 spec:
@@ -54,8 +54,8 @@ spec:
         - /assets/logos/*
 
   envFrom:
-    - secret: watson-sak-admin
-    - secret: watson-sak-admin-unleash-api-token
+    - secret: watson-sak
+    - secret: watson-sak-unleash-api-token
   env:
     - name: CLUSTER
       value: {{CLUSTER}}

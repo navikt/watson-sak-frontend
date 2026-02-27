@@ -31,7 +31,7 @@ function initFaro(url: string) {
   faro = initializeFaro({
     url,
     app: {
-      name: "watson-sak-admin",
+      name: "watson-sak",
     },
     sessionTracking: {
       enabled: true,

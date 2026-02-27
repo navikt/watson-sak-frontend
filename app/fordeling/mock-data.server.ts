@@ -1,0 +1,66 @@
+import { type Sak, sakSchema } from "./typer";
+
+const rådata: Sak[] = [
+  {
+    id: "1",
+    datoInnmeldt: "2026-01-15",
+    kilde: "telefon",
+    notat: "Tipser melder om mulig feil utbetaling av dagpenger.",
+    fødselsnummer: "12345678901",
+    ytelser: ["Dagpenger"],
+    status: "tips mottatt",
+    seksjon: "Seksjon A",
+  },
+  {
+    id: "2",
+    datoInnmeldt: "2026-01-20",
+    kilde: "registersamkjøring",
+    notat: "Avvik mellom arbeidsgiver- og a-ordningsdata.",
+    fødselsnummer: "23456789012",
+    ytelser: ["Sykepenger", "Arbeidsavklaringspenger"],
+    status: "tips avklart",
+    seksjon: "Seksjon B",
+  },
+  {
+    id: "3",
+    datoInnmeldt: "2026-02-01",
+    kilde: "saksbehandler",
+    notat: "Saksbehandler har avdekket mulig dobbeltutbetaling.",
+    fødselsnummer: "34567890123",
+    ytelser: ["Foreldrepenger"],
+    status: "under utredning",
+    seksjon: "Seksjon A",
+  },
+  {
+    id: "4",
+    datoInnmeldt: "2026-02-10",
+    kilde: "brev",
+    notat: "Mottatt anonymt tips per brev.",
+    fødselsnummer: "45678901234",
+    ytelser: ["Uføretrygd"],
+    status: "tips mottatt",
+    seksjon: "Seksjon C",
+  },
+  {
+    id: "5",
+    datoInnmeldt: "2026-02-18",
+    kilde: "epost",
+    notat: "Epost fra ekstern kilde om mulig misbruk av pleiepenger.",
+    fødselsnummer: "56789012345",
+    ytelser: ["Pleiepenger"],
+    status: "avsluttet",
+    seksjon: "Seksjon B",
+  },
+  {
+    id: "6",
+    datoInnmeldt: "2026-02-22",
+    kilde: "annet",
+    notat: "Flagget via intern kontroll.",
+    fødselsnummer: "67890123456",
+    ytelser: ["Dagpenger", "Sykepenger"],
+    status: "tips mottatt",
+    seksjon: "Seksjon A",
+  },
+];
+
+export const mockSaker: Sak[] = rådata.map((sak) => sakSchema.parse(sak));
