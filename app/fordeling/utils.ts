@@ -18,6 +18,9 @@ const kildeVisningsnavn: Record<SakKilde, string> = {
   brev: "Brev",
   registersamkjøring: "Registersamkjøring",
   saksbehandler: "Saksbehandler",
+  publikum: "Publikum",
+  politiet: "Politiet",
+  nay: "NAY",
   annet: "Annet",
 };
 

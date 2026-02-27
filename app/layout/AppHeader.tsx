@@ -40,6 +40,9 @@ export function AppHeader() {
         <NavLink to={RouteConfig.FORDELING} className="navds-link px-4">
           Fordeling
         </NavLink>
+        <NavLink to={RouteConfig.REGISTRER_SAK} className="navds-link px-4">
+          Registrer sak
+        </NavLink>
       </div>
 
       <Spacer />

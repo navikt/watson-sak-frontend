@@ -10,6 +10,18 @@ const rådata: Sak[] = [
     ytelser: ["Dagpenger"],
     status: "tips mottatt",
     seksjon: "Seksjon A",
+    fraDato: "2025-06-01",
+    tilDato: "2025-12-31",
+    avdeling: "Kontroll Øst",
+    kategori: "Feilutbetaling",
+    tags: ["dagpenger", "feilutbetaling"],
+    kontaktinformasjon: {
+      navn: "Ola Nordmann",
+      telefon: "99887766",
+      epost: "ola@example.com",
+      anonymt: false,
+    },
+    beskrivelse: "Tipser melder om mulig feil utbetaling av dagpenger.",
   },
   {
     id: "2",
@@ -20,6 +32,10 @@ const rådata: Sak[] = [
     ytelser: ["Sykepenger", "Arbeidsavklaringspenger"],
     status: "tips avklart",
     seksjon: "Seksjon B",
+    avdeling: "Kontroll Vest",
+    kategori: "Registeravvik",
+    tags: ["registersamkjøring", "a-ordning"],
+    beskrivelse: "Avvik mellom arbeidsgiver- og a-ordningsdata.",
   },
   {
     id: "3",
@@ -30,6 +46,18 @@ const rådata: Sak[] = [
     ytelser: ["Foreldrepenger"],
     status: "under utredning",
     seksjon: "Seksjon A",
+    fraDato: "2025-09-01",
+    tilDato: "2026-03-01",
+    avdeling: "Kontroll Øst",
+    kategori: "Dobbeltutbetaling",
+    tags: ["foreldrepenger", "dobbeltutbetaling"],
+    kontaktinformasjon: {
+      navn: "Kari Saksbehandler",
+      telefon: "98765432",
+      epost: "kari@nav.no",
+      anonymt: false,
+    },
+    beskrivelse: "Saksbehandler har avdekket mulig dobbeltutbetaling.",
   },
   {
     id: "4",
@@ -40,6 +68,13 @@ const rådata: Sak[] = [
     ytelser: ["Uføretrygd"],
     status: "tips mottatt",
     seksjon: "Seksjon C",
+    avdeling: "Kontroll Nord",
+    kategori: "Anonymt tips",
+    tags: ["uføretrygd", "anonymt"],
+    kontaktinformasjon: {
+      anonymt: true,
+    },
+    beskrivelse: "Mottatt anonymt tips per brev.",
   },
   {
     id: "5",
@@ -50,6 +85,15 @@ const rådata: Sak[] = [
     ytelser: ["Pleiepenger"],
     status: "avsluttet",
     seksjon: "Seksjon B",
+    avdeling: "Kontroll Sør",
+    kategori: "Misbruk",
+    tags: ["pleiepenger"],
+    kontaktinformasjon: {
+      navn: "Per Tipser",
+      epost: "per@example.com",
+      anonymt: false,
+    },
+    beskrivelse: "Epost fra ekstern kilde om mulig misbruk av pleiepenger.",
   },
   {
     id: "6",
@@ -60,7 +104,55 @@ const rådata: Sak[] = [
     ytelser: ["Dagpenger", "Sykepenger"],
     status: "tips mottatt",
     seksjon: "Seksjon A",
+    avdeling: "Kontroll Øst",
+    kategori: "Internkontroll",
+    tags: ["dagpenger", "sykepenger", "internkontroll"],
+    beskrivelse: "Flagget via intern kontroll.",
   },
 ];
 
 export const mockSaker: Sak[] = rådata.map((sak) => sakSchema.parse(sak));
+
+export const mockAvdelinger = [
+  "Kontroll Øst",
+  "Kontroll Vest",
+  "Kontroll Nord",
+  "Kontroll Sør",
+  "Kontroll Midt",
+];
+
+export const mockKategorier = [
+  "Feilutbetaling",
+  "Dobbeltutbetaling",
+  "Registeravvik",
+  "Misbruk",
+  "Anonymt tips",
+  "Internkontroll",
+  "Annet",
+];
+
+export const mockTags = [
+  "dagpenger",
+  "sykepenger",
+  "foreldrepenger",
+  "pleiepenger",
+  "uføretrygd",
+  "arbeidsavklaringspenger",
+  "feilutbetaling",
+  "dobbeltutbetaling",
+  "registersamkjøring",
+  "a-ordning",
+  "anonymt",
+  "internkontroll",
+];
+
+export const mockYtelser = [
+  "Dagpenger",
+  "Sykepenger",
+  "Foreldrepenger",
+  "Pleiepenger",
+  "Uføretrygd",
+  "Arbeidsavklaringspenger",
+  "Overgangsstønad",
+  "Kontantstøtte",
+];
