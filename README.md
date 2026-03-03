@@ -69,7 +69,7 @@ npm run dev
 - `npm run format` - Sjekker Oxfmt formatering
 - `npm run format:fix` - Fikser Oxfmt formatering
 - `npm run unused` - Sjekker om du har ubrukt kode eller avhengigheter
-- `npm run code-quality` – Kjører lint, typecheck, format og unused
+- `npm run verify` – Kjører lint, typecheck, format og unused
 </details>
 
 <details>
