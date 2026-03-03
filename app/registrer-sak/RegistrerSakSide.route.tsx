@@ -64,9 +64,7 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   const data = resultat.data;
-  const nesteId = String(
-    Math.max(0, ...mockSaker.map((s) => Number(s.id))) + 1,
-  );
+  const nesteId = String(Math.max(0, ...mockSaker.map((s) => Number(s.id))) + 1);
 
   mockSaker.push({
     id: nesteId,
@@ -95,13 +93,10 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function RegistrerSakSide() {
-  const { avdelinger, kategorier, tags, ytelser, kilder } =
-    useLoaderData<typeof loader>();
+  const { avdelinger, kategorier, tags, ytelser, kilder } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const feil =
-    actionData && "feil" in actionData
-      ? (actionData.feil as Record<string, string[]>)
-      : undefined;
+    actionData && "feil" in actionData ? (actionData.feil as Record<string, string[]>) : undefined;
 
   const [valgteYtelser, setValgteYtelser] = useState<string[]>([]);
   const [valgteTags, setValgteTags] = useState<string[]>([]);
@@ -138,19 +133,12 @@ export default function RegistrerSakSide() {
                 selectedOptions={valgteYtelser}
                 onToggleSelected={(option, isSelected) => {
                   setValgteYtelser((prev) =>
-                    isSelected
-                      ? [...prev, option]
-                      : prev.filter((y) => y !== option),
+                    isSelected ? [...prev, option] : prev.filter((y) => y !== option),
                   );
                 }}
               />
               {valgteYtelser.map((ytelse) => (
-                <input
-                  key={ytelse}
-                  type="hidden"
-                  name="ytelser"
-                  value={ytelse}
-                />
+                <input key={ytelse} type="hidden" name="ytelser" value={ytelse} />
               ))}
               {feil?.ytelser && (
                 <BodyShort className="text-text-danger" size="small">
@@ -176,11 +164,7 @@ export default function RegistrerSakSide() {
                 </DatePicker>
               </HStack>
 
-              <Select
-                name="avdeling"
-                label="Avdeling"
-                error={feil?.avdeling?.join(", ")}
-              >
+              <Select name="avdeling" label="Avdeling" error={feil?.avdeling?.join(", ")}>
                 <option value="">Velg avdeling</option>
                 {avdelinger.map((avd) => (
                   <option key={avd} value={avd}>
@@ -189,11 +173,7 @@ export default function RegistrerSakSide() {
                 ))}
               </Select>
 
-              <Select
-                name="kategori"
-                label="Kategori"
-                error={feil?.kategori?.join(", ")}
-              >
+              <Select name="kategori" label="Kategori" error={feil?.kategori?.join(", ")}>
                 <option value="">Velg kategori</option>
                 {kategorier.map((kat) => (
                   <option key={kat} value={kat}>
@@ -209,9 +189,7 @@ export default function RegistrerSakSide() {
                 selectedOptions={valgteTags}
                 onToggleSelected={(option, isSelected) => {
                   setValgteTags((prev) =>
-                    isSelected
-                      ? [...prev, option]
-                      : prev.filter((t) => t !== option),
+                    isSelected ? [...prev, option] : prev.filter((t) => t !== option),
                   );
                 }}
               />
@@ -225,11 +203,7 @@ export default function RegistrerSakSide() {
                 Kildeinformasjon
               </Heading>
 
-              <Select
-                name="kilde"
-                label="Kilde"
-                error={feil?.kilde?.join(", ")}
-              >
+              <Select name="kilde" label="Kilde" error={feil?.kilde?.join(", ")}>
                 <option value="">Velg kilde</option>
                 {kilder.map((kilde) => (
                   <option key={kilde} value={kilde}>
@@ -238,11 +212,7 @@ export default function RegistrerSakSide() {
                 ))}
               </Select>
 
-              <TextField
-                name="kontaktNavn"
-                label="Kontaktperson – navn"
-                autoComplete="off"
-              />
+              <TextField name="kontaktNavn" label="Kontaktperson – navn" autoComplete="off" />
 
               <HStack gap="space-4">
                 <TextField
@@ -251,12 +221,7 @@ export default function RegistrerSakSide() {
                   inputMode="tel"
                   autoComplete="off"
                 />
-                <TextField
-                  name="kontaktEpost"
-                  label="E-post"
-                  type="email"
-                  autoComplete="off"
-                />
+                <TextField name="kontaktEpost" label="E-post" type="email" autoComplete="off" />
               </HStack>
 
               <Checkbox name="anonymt" value="on">
@@ -274,12 +239,7 @@ export default function RegistrerSakSide() {
 
             <HStack gap="space-4">
               <Button type="submit">Registrer sak</Button>
-              <Button
-                type="button"
-                variant="secondary"
-                as="a"
-                href={RouteConfig.FORDELING}
-              >
+              <Button type="button" variant="secondary" as="a" href={RouteConfig.FORDELING}>
                 Avbryt
               </Button>
             </HStack>

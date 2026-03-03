@@ -20,8 +20,7 @@ export function AppHeader() {
 
   const miljø = useMiljø();
   const visMiljøtag = miljø !== "prod";
-  const miljøtagVariant =
-    miljø === "demo" ? "alt2" : miljø === "dev" ? "alt1" : "alt3";
+  const miljøtagVariant = miljø === "demo" ? "alt2" : miljø === "dev" ? "alt1" : "alt3";
 
   return (
     <InternalHeader>
@@ -55,18 +54,10 @@ export function AppHeader() {
 
         <ActionMenu.Content>
           <ActionMenu.Group label="Interne flater">
-            <ActionMenu.Item
-              as="a"
-              href="https://watson-sok.intern.nav.no"
-              icon={<PersonIcon />}
-            >
+            <ActionMenu.Item as="a" href="https://watson-sok.intern.nav.no" icon={<PersonIcon />}>
               Watson Søk
             </ActionMenu.Item>
-            <ActionMenu.Item
-              as="a"
-              href="https://watson-sak.intern.nav.no"
-              icon={<PersonIcon />}
-            >
+            <ActionMenu.Item as="a" href="https://watson-sak.intern.nav.no" icon={<PersonIcon />}>
               Watson Sak
             </ActionMenu.Item>
           </ActionMenu.Group>

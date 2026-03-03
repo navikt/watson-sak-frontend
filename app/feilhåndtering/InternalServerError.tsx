@@ -1,13 +1,4 @@
-import {
-  BodyShort,
-  Box,
-  HGrid,
-  Heading,
-  Link,
-  List,
-  Page,
-  VStack,
-} from "@navikt/ds-react";
+import { BodyShort, Box, HGrid, Heading, Link, List, Page, VStack } from "@navikt/ds-react";
 import { ListItem } from "@navikt/ds-react/List";
 import { AppFooter } from "~/layout/AppFooter";
 import { AppHeader } from "~/layout/AppHeader";
@@ -30,8 +21,8 @@ export function InternalServerError() {
                     Beklager, noe gikk galt.
                   </Heading>
                   <BodyShort spacing>
-                    En teknisk feil på våre servere gjør at siden er
-                    utilgjengelig. Dette skyldes ikke noe du gjorde.
+                    En teknisk feil på våre servere gjør at siden er utilgjengelig. Dette skyldes
+                    ikke noe du gjorde.
                   </BodyShort>
                   <BodyShort>Du kan prøve å</BodyShort>
                   <Box marginBlock="space-16" asChild>
@@ -49,9 +40,7 @@ export function InternalServerError() {
                       </ListItem>
                     </List>
                   </Box>
-                  <BodyShort>
-                    Hvis problemet vedvarer, kan du melde inn feil i Porten.
-                  </BodyShort>
+                  <BodyShort>Hvis problemet vedvarer, kan du melde inn feil i Porten.</BodyShort>
                 </div>
               </VStack>
 
@@ -60,12 +49,10 @@ export function InternalServerError() {
                   Something went wrong
                 </Heading>
                 <BodyShort spacing>
-                  This was caused by a technical fault on our servers. Please
-                  refresh this page or try again in a few minutes.{" "}
+                  This was caused by a technical fault on our servers. Please refresh this page or
+                  try again in a few minutes.{" "}
                 </BodyShort>
-                <BodyShort>
-                  If the problem persists, you can report the error in Porten.
-                </BodyShort>
+                <BodyShort>If the problem persists, you can report the error in Porten.</BodyShort>
               </div>
             </VStack>
           </HGrid>

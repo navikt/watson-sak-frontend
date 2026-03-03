@@ -58,9 +58,7 @@ describe("storFørsteBokstavPerOrd", () => {
   it("behandler bindestrek som orddelimeter når inkluderBindestrek er true", () => {
     expect(storFørsteBokstavPerOrd("anne-marie", true)).toBe("Anne-Marie");
     expect(storFørsteBokstavPerOrd("STOR-ELVDAL", true)).toBe("Stor-Elvdal");
-    expect(storFørsteBokstavPerOrd("ole-johan hansen", true)).toBe(
-      "Ole-Johan Hansen",
-    );
+    expect(storFørsteBokstavPerOrd("ole-johan hansen", true)).toBe("Ole-Johan Hansen");
   });
 
   it("returnerer tom streng for null og undefined", () => {

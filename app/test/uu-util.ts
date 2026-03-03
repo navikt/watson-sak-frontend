@@ -10,9 +10,7 @@ export const sjekkTilgjengelighet = async (page: Page) => {
 
   if (tilgjengelighetsresultater.violations.length > 0) {
     console.error("🚫♿️ Fant UU-feil ♿️🚫");
-    console.error(
-      JSON.stringify(tilgjengelighetsresultater.violations, null, 2),
-    );
+    console.error(JSON.stringify(tilgjengelighetsresultater.violations, null, 2));
   }
 
   expect(tilgjengelighetsresultater.violations).toEqual([]);

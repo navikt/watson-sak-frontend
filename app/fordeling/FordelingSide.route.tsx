@@ -40,27 +40,19 @@ export default function FordelingSide() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const sorteringParam = searchParams.get("sortering");
-  const sortering: Sorteringsretning =
-    sorteringParam === "eldst" ? "eldst" : "nyest";
+  const sortering: Sorteringsretning = sorteringParam === "eldst" ? "eldst" : "nyest";
 
   const søketekst = searchParams.get("sok") ?? "";
   const valgteStatuser: SakStatus[] = (
     searchParams.get("status")?.split(",").filter(Boolean) ?? []
   ).filter((s): s is SakStatus => sakStatusSchema.safeParse(s).success);
-  const valgteYtelser =
-    searchParams.get("ytelse")?.split(",").filter(Boolean) ?? [];
+  const valgteYtelser = searchParams.get("ytelse")?.split(",").filter(Boolean) ?? [];
   const harAktiveFiltre =
-    valgteStatuser.length > 0 ||
-    valgteYtelser.length > 0 ||
-    søketekst.length > 0;
+    valgteStatuser.length > 0 || valgteYtelser.length > 0 || søketekst.length > 0;
 
   const alleYtelser = hentUnikeYtelser(saker);
   const sakerEtterSøk = søkISaker(saker, søketekst);
-  const filtrerteSaker = filtrerSaker(
-    sakerEtterSøk,
-    valgteStatuser,
-    valgteYtelser,
-  );
+  const filtrerteSaker = filtrerSaker(sakerEtterSøk, valgteStatuser, valgteYtelser);
   const sorterteSaker = sorterSakerEtterDato(filtrerteSaker, sortering);
 
   function oppdaterSearchParams(nøkkel: string, verdier: string[]) {
@@ -147,11 +139,7 @@ export default function FordelingSide() {
                 Filtrering
               </Heading>
               {harAktiveFiltre && (
-                <Button
-                  variant="tertiary"
-                  size="xsmall"
-                  onClick={nullstillFiltre}
-                >
+                <Button variant="tertiary" size="xsmall" onClick={nullstillFiltre}>
                   Nullstill
                 </Button>
               )}
@@ -163,9 +151,7 @@ export default function FordelingSide() {
                 size="small"
                 variant="simple"
                 value={søketekst}
-                onChange={(verdi) =>
-                  oppdaterSearchParams("sok", verdi ? [verdi] : [])
-                }
+                onChange={(verdi) => oppdaterSearchParams("sok", verdi ? [verdi] : [])}
                 onClear={() => oppdaterSearchParams("sok", [])}
               />
 

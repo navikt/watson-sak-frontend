@@ -25,10 +25,7 @@ type ThemeProviderProps = {
   defaultTheme?: ThemeType;
 };
 
-export function ThemeProvider({
-  children,
-  defaultTheme = "light",
-}: ThemeProviderProps) {
+export function ThemeProvider({ children, defaultTheme = "light" }: ThemeProviderProps) {
   const [theme, setTheme] = useState<ThemeType>(defaultTheme);
 
   const toggleTheme = async () => {

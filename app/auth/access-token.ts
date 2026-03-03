@@ -17,10 +17,7 @@ type GetOboTokenArgs = {
   request: Request;
   audience: string;
 };
-async function getOboToken({
-  request,
-  audience,
-}: GetOboTokenArgs): Promise<string> {
+async function getOboToken({ request, audience }: GetOboTokenArgs): Promise<string> {
   if (isDev) {
     if (!env.DEVELOPMENT_OAUTH_TOKEN) {
       throw new Error("Du må sette DEVELOPMENT_OAUTH_TOKEN i .env");

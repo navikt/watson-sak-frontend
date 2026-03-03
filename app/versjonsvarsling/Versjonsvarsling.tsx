@@ -51,9 +51,7 @@ export function Versjonsvarsling({ gjeldendeVersjon }: VersjonsvarslingProps) {
       aktivController.current = new AbortController();
 
       try {
-        const serverVersjon = await hentVersjonFraServer(
-          aktivController.current.signal,
-        );
+        const serverVersjon = await hentVersjonFraServer(aktivController.current.signal);
 
         if (serverVersjon && serverVersjon !== gjeldendeVersjon) {
           setSkalVises(true);
@@ -110,8 +108,8 @@ export function Versjonsvarsling({ gjeldendeVersjon }: VersjonsvarslingProps) {
     >
       <ModalBody>
         <BodyLong>
-          Det har kommet en ny versjon av Watson Søk. For å fortsette å bruke
-          løsningen, må du laste inn siden på nytt.
+          Det har kommet en ny versjon av Watson Søk. For å fortsette å bruke løsningen, må du laste
+          inn siden på nytt.
         </BodyLong>
       </ModalBody>
       <ModalFooter>

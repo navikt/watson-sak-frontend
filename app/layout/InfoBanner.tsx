@@ -23,9 +23,7 @@ export function InfoBanner() {
         <GlobalAlertCloseButton onClick={onLukk} />
       </GlobalAlertHeader>
       {statusmelding.beskrivelse && (
-        <GlobalAlertContent className="px-4">
-          {statusmelding.beskrivelse}
-        </GlobalAlertContent>
+        <GlobalAlertContent className="px-4">{statusmelding.beskrivelse}</GlobalAlertContent>
       )}
     </GlobalAlert>
   );

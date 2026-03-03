@@ -149,7 +149,7 @@ describe("registrerSakSchema", () => {
   });
 
   it("setter tags til tom liste som default", () => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    // oxlint-disable-next-line typescript/no-unused-vars
     const { tags: _tags, ...utenTags } = gyldigSkjema;
     const resultat = registrerSakSchema.safeParse(utenTags);
     expect(resultat.success).toBe(true);

@@ -16,9 +16,7 @@ const envSchema = z.object({
   DEVELOPMENT_OAUTH_TOKEN: z
     .string()
     .optional()
-    .describe(
-      "The OAuth token for the development environment. Is not set in production.",
-    ),
+    .describe("The OAuth token for the development environment. Is not set in production."),
   UNLEASH_SERVER_API_ENV: z
     .enum(["development", "production"])
     .describe("The environment of the Unleash instance")
@@ -31,10 +29,7 @@ const envSchema = z.object({
     .string()
     .describe("Unique API token for the Unleash client")
     .optional(),
-  UNLEASH_SERVER_API_PROJECTS: z
-    .string()
-    .describe("The Unleash project to use")
-    .default("default"),
+  UNLEASH_SERVER_API_PROJECTS: z.string().describe("The Unleash project to use").default("default"),
   UNLEASH_SERVER_API_URL: z
     .string()
     .describe("The URL of the Unleash instance")
@@ -48,9 +43,7 @@ if (!envResult.success) {
   logger.error("Mangler eller er ugyldige miljøvariabler", {
     error: envResult.error,
   });
-  throw new Error(
-    "Invalid environment variables. Check console for more information.",
-  );
+  throw new Error("Invalid environment variables. Check console for more information.");
 }
 
 export const env = envResult.data;
@@ -65,5 +58,4 @@ export const BACKEND_API_URL =
 export const isProd = env.NODE_ENV === "production";
 export const isDev = env.NODE_ENV === "development";
 
-export const skalBrukeMockdata =
-  env.ENVIRONMENT === "local-mock" || env.ENVIRONMENT === "demo";
+export const skalBrukeMockdata = env.ENVIRONMENT === "local-mock" || env.ENVIRONMENT === "demo";

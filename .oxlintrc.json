@@ -1,0 +1,31 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "rules": {
+    "no-unused-vars": "off",
+    "no-empty-function": "off",
+
+    "typescript/no-explicit-any": "warn",
+    "typescript/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+    "typescript/no-non-null-assertion": "warn",
+    "typescript/no-empty-interface": "warn",
+
+    "react/prop-types": "off",
+    "react/react-in-jsx-scope": "off",
+    "react/display-name": "warn",
+    "react/no-unescaped-entities": "warn",
+    "react/no-deprecated": "warn",
+    "react/no-direct-mutation-state": "error",
+    "react/no-find-dom-node": "error",
+    "react/no-is-mounted": "error",
+    "react/no-string-refs": "error",
+
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn"
+  },
+  "settings": {
+    "react": {
+      "version": "19"
+    }
+  },
+  "ignorePatterns": ["build/", "node_modules/"]
+}

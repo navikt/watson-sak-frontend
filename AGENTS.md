@@ -13,10 +13,10 @@ Kort veiledning for bidragsytere til watson-sak. Hold koden enkel, domeneoriente
 - `npm run dev` / `npm run dev:local` – utviklingsserver (lokal backend med `dev:local`).
 - `npm run build` → prod-build, `npm run start` → kjør build.
 - `npm run typecheck` – React Router typegen + `tsc`.
-- `npm run lint` / `npm run lint:fix` – ESLint.
-- `npm run prettier` / `npm run prettier:fix` – formattering.
+- `npm run lint` / `npm run lint:fix` – Oxlint.
+- `npm run format` / `npm run format:fix` – Oxfmt formattering.
 - `npm run unused` – knip for ubrukte filer/imports.
-- `npm run code-quality` – samlet sjekk (lint + prettier + typecheck + unused).
+- `npm run verify` – samlet sjekk (tester, lint, format, typecheck, unused).
 - `npm run test:e2e` (`:headed`/`:ui` for debugging) – Playwright e2e.
 
 ## Koding og navngiving
@@ -24,7 +24,7 @@ Kort veiledning for bidragsytere til watson-sak. Hold koden enkel, domeneoriente
 - TypeScript strict; React 19 + React Router v7.
 - Skriv på norsk; velg åpenbare løsninger fremfor smarte triks.
 - Legg utils nær feature; bruk `features/common` kun for genuint delte helpers. Sti-alias `~/*` peker til `app/*`.
-- Følg Prettier/ESLint; ingen manuell linjeformattering. Indentasjon: 2 spaces.
+- Følg Oxfmt/Oxlint; ingen manuell linjeformattering. Indentasjon: 2 spaces.
 - A11y som default: riktige labels, fokusrekkefølge, ARIA der nødvendig.
 
 ## Testing

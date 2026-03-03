@@ -14,10 +14,7 @@ vi.mock("react-router", async () => {
 
 type MockRoute = {
   loaderData?: {
-    statusmelding?:
-      | { tittel: string; beskrivelse?: string }
-      | false
-      | undefined;
+    statusmelding?: { tittel: string; beskrivelse?: string } | false | undefined;
   };
 };
 
@@ -160,9 +157,7 @@ describe("InfoBanner", () => {
     render(<InfoBanner />);
 
     expect(screen.getByText("Systemvedlikehold")).toBeDefined();
-    expect(
-      screen.getByText("Systemet vil være nede mellom 02:00 og 04:00"),
-    ).toBeDefined();
+    expect(screen.getByText("Systemet vil være nede mellom 02:00 og 04:00")).toBeDefined();
   });
 
   it("viser banner ved første render når statusmelding finnes", () => {

@@ -64,12 +64,12 @@ npm run dev
 - `npm run build` - Bygger applikasjonen for produksjon
 - `npm run start` - Starter produksjonsserveren
 - `npm run test:e2e` – Kjører ende-til-ende tester
-- `npm run lint` - Kjører ESLint
+- `npm run lint` - Kjører Oxlint
 - `npm run typecheck` - Kjører TypeScript typesjekk
-- `npm run prettier` - Sjekker Prettier formatering
-- `npm run prettier:fix` - Fikser Prettier formatering
+- `npm run format` - Sjekker Oxfmt formatering
+- `npm run format:fix` - Fikser Oxfmt formatering
 - `npm run unused` - Sjekker om du har ubrukt kode eller avhengigheter
-- `npm run code-quality` – Kjører lint, typecheck, prettier og unused
+- `npm run verify` – Kjører lint, typecheck, format og unused
 </details>
 
 <details>
@@ -79,8 +79,8 @@ npm run dev
 
 Prosjektet bruker:
 
-- **ESLint** for kodekvalitet
-- **Prettier** for kodeformatering
+- **Oxlint** for kodekvalitet
+- **Oxfmt** for kodeformatering
 - **TypeScript** for typesikkerhet
 - **Knip** for sjekking av ubrukt kode og avhengigheter
 - **Playwright** for å kjøre ende-til-ende tester

@@ -1,14 +1,8 @@
 {
   "MIN_REPLICAS": 1,
   "MAX_REPLICAS": 1,
-  "INGRESS_URLS": [
-    "https://watson-sak.ansatt.dev.nav.no",
-    "https://watson-sak.intern.dev.nav.no"
-  ],
-  "CLAIM_GROUPS": [
-    "b734a20d-63e3-4b44-bb77-87f7f0b7f48a",
-    "222dedb1-a80d-48c9-b8d3-1e8149be9063"
-  ],
+  "INGRESS_URLS": ["https://watson-sak.ansatt.dev.nav.no", "https://watson-sak.intern.dev.nav.no"],
+  "CLAIM_GROUPS": ["b734a20d-63e3-4b44-bb77-87f7f0b7f48a", "222dedb1-a80d-48c9-b8d3-1e8149be9063"],
   "CLUSTER": "dev-gcp",
   "TENANT": "trygdeetaten.no",
   "FARO_URL": "https://telemetry.ekstern.dev.nav.no/collect",

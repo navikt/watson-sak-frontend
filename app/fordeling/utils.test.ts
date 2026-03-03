@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Sak } from "./typer";
-import {
-  filtrerSaker,
-  hentUnikeYtelser,
-  sorterSakerEtterDato,
-  søkISaker,
-} from "./utils";
+import { filtrerSaker, hentUnikeYtelser, sorterSakerEtterDato, søkISaker } from "./utils";
 
 const lagSak = (id: string, datoInnmeldt: string): Sak => ({
   id,
@@ -157,9 +152,7 @@ describe("søkISaker", () => {
   });
 
   it("trimmer søketekst", () => {
-    expect(søkISaker(saker, "  svindel  ").map((s) => s.id)).toEqual([
-      "SAK-001",
-    ]);
+    expect(søkISaker(saker, "  svindel  ").map((s) => s.id)).toEqual(["SAK-001"]);
   });
 
   it("matcher på id", () => {
@@ -167,28 +160,20 @@ describe("søkISaker", () => {
   });
 
   it("matcher på notat", () => {
-    expect(søkISaker(saker, "arbeidsgiver").map((s) => s.id)).toEqual([
-      "SAK-002",
-    ]);
+    expect(søkISaker(saker, "arbeidsgiver").map((s) => s.id)).toEqual(["SAK-002"]);
   });
 
   it("matcher på fødselsnummer", () => {
-    expect(søkISaker(saker, "98765432100").map((s) => s.id)).toEqual([
-      "SAK-002",
-    ]);
+    expect(søkISaker(saker, "98765432100").map((s) => s.id)).toEqual(["SAK-002"]);
   });
 
   it("matcher på ytelser", () => {
     expect(søkISaker(saker, "dagpenger").map((s) => s.id)).toEqual(["SAK-001"]);
-    expect(
-      søkISaker(saker, "arbeidsavklaringspenger").map((s) => s.id),
-    ).toEqual(["SAK-002"]);
+    expect(søkISaker(saker, "arbeidsavklaringspenger").map((s) => s.id)).toEqual(["SAK-002"]);
   });
 
   it("matcher på status", () => {
-    expect(søkISaker(saker, "under utredning").map((s) => s.id)).toEqual([
-      "SAK-002",
-    ]);
+    expect(søkISaker(saker, "under utredning").map((s) => s.id)).toEqual(["SAK-002"]);
   });
 
   it("matcher på seksjon", () => {

@@ -15,11 +15,7 @@ export const registrerSakSchema = z.object({
   kilde: sakKildeSchema,
   kontaktNavn: z.string().optional(),
   kontaktTelefon: z.string().optional(),
-  kontaktEpost: z
-    .string()
-    .email("Ugyldig e-postadresse")
-    .optional()
-    .or(z.literal("")),
+  kontaktEpost: z.string().email("Ugyldig e-postadresse").optional().or(z.literal("")),
   anonymt: z.boolean().default(false),
   beskrivelse: z.string().min(1, "Beskrivelse er påkrevd"),
 });
