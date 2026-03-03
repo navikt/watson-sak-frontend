@@ -16,7 +16,7 @@ Kort veiledning for bidragsytere til watson-sak. Hold koden enkel, domeneoriente
 - `npm run lint` / `npm run lint:fix` – Oxlint.
 - `npm run format` / `npm run format:fix` – Oxfmt formattering.
 - `npm run unused` – knip for ubrukte filer/imports.
-- `npm run code-quality` – samlet sjekk (lint + format + typecheck + unused).
+- `npm run verify` – samlet sjekk (tester, lint, format, typecheck, unused).
 - `npm run test:e2e` (`:headed`/`:ui` for debugging) – Playwright e2e.
 
 ## Koding og navngiving
