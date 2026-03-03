@@ -64,7 +64,9 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   const data = resultat.data;
-  const nesteId = String(Math.max(...mockSaker.map((s) => Number(s.id))) + 1);
+  const nesteId = String(
+    Math.max(0, ...mockSaker.map((s) => Number(s.id))) + 1,
+  );
 
   mockSaker.push({
     id: nesteId,
