@@ -16,6 +16,7 @@ const lagSak = (id: string, datoInnmeldt: string): Sak => ({
   ytelser: [],
   status: "tips mottatt",
   seksjon: "Seksjon A",
+  tags: [],
 });
 
 describe("sorterSakerEtterDato", () => {
