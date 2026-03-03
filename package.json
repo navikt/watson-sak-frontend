@@ -11,15 +11,15 @@
     "typecheck": "react-router typegen && tsc",
     "lint": "oxlint .",
     "lint:fix": "oxlint --fix .",
-    "prettier": "oxfmt --check .",
-    "prettier:fix": "oxfmt --write .",
+    "format": "oxfmt --check .",
+    "format:fix": "oxfmt --write .",
     "unused": "knip",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
-    "verify": "concurrently -n test,lint,prettier,types,unused -c green,yellow,magenta,cyan,blue \"npm run test\" \"npm run lint\" \"npm run prettier\" \"npm run typecheck\" \"npm run unused\""
+    "verify": "concurrently -n test,lint,format,types,unused -c green,yellow,magenta,cyan,blue \"npm run test\" \"npm run lint\" \"npm run format\" \"npm run typecheck\" \"npm run unused\""
   },
   "dependencies": {
     "@grafana/faro-react": "^2.1.0",

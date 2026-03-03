@@ -66,10 +66,10 @@ npm run dev
 - `npm run test:e2e` – Kjører ende-til-ende tester
 - `npm run lint` - Kjører Oxlint
 - `npm run typecheck` - Kjører TypeScript typesjekk
-- `npm run prettier` - Sjekker Oxfmt formatering
-- `npm run prettier:fix` - Fikser Oxfmt formatering
+- `npm run format` - Sjekker Oxfmt formatering
+- `npm run format:fix` - Fikser Oxfmt formatering
 - `npm run unused` - Sjekker om du har ubrukt kode eller avhengigheter
-- `npm run code-quality` – Kjører lint, typecheck, prettier og unused
+- `npm run code-quality` – Kjører lint, typecheck, format og unused
 </details>
 
 <details>

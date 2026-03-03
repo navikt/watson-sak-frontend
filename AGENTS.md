@@ -14,9 +14,9 @@ Kort veiledning for bidragsytere til watson-sak. Hold koden enkel, domeneoriente
 - `npm run build` → prod-build, `npm run start` → kjør build.
 - `npm run typecheck` – React Router typegen + `tsc`.
 - `npm run lint` / `npm run lint:fix` – Oxlint.
-- `npm run prettier` / `npm run prettier:fix` – Oxfmt formattering.
+- `npm run format` / `npm run format:fix` – Oxfmt formattering.
 - `npm run unused` – knip for ubrukte filer/imports.
-- `npm run code-quality` – samlet sjekk (lint + prettier + typecheck + unused).
+- `npm run code-quality` – samlet sjekk (lint + format + typecheck + unused).
 - `npm run test:e2e` (`:headed`/`:ui` for debugging) – Playwright e2e.
 
 ## Koding og navngiving
