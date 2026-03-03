@@ -1,13 +1,6 @@
 import { BodyShort } from "@navikt/ds-react";
 
-import {
-  Box,
-  Heading,
-  List,
-  Link as NavLink,
-  Page,
-  VStack,
-} from "@navikt/ds-react";
+import { Box, Heading, List, Link as NavLink, Page, VStack } from "@navikt/ds-react";
 import { ListItem } from "@navikt/ds-react/List";
 import { PageBlock } from "@navikt/ds-react/Page";
 import { Link } from "react-router";
@@ -21,9 +14,7 @@ export function PageNotFound() {
   return (
     <Page footer={<AppFooter />}>
       <AppHeader />
-      <title>
-        {`Fant ikke side – Watson Sak ${miljø !== "prod" ? `(${miljø})` : ""}`}
-      </title>
+      <title>{`Fant ikke side – Watson Sak ${miljø !== "prod" ? `(${miljø})` : ""}`}</title>
       <PageBlock as="main" width="xl" gutters>
         <Box paddingBlock="space-80 space-64" data-aksel-template="404-v2">
           <VStack gap="space-16">
@@ -33,8 +24,7 @@ export function PageNotFound() {
                   Beklager, vi fant ikke siden
                 </Heading>
                 <BodyShort>
-                  Denne siden kan være slettet eller flyttet, eller det er en
-                  feil i lenken.
+                  Denne siden kan være slettet eller flyttet, eller det er en feil i lenken.
                 </BodyShort>
                 <Box marginBlock="space-16" asChild>
                   <List>

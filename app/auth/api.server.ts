@@ -2,9 +2,7 @@ import { BACKEND_API_URL } from "~/config/env.server";
 import { logger } from "~/logging/logging";
 import { SaksbehandlerInfoSchema, type SaksbehandlerInfo } from "./domene";
 
-export async function hentSaksbehandlerInfo(
-  token: string,
-): Promise<SaksbehandlerInfo> {
+export async function hentSaksbehandlerInfo(token: string): Promise<SaksbehandlerInfo> {
   try {
     const response = await fetch(`${BACKEND_API_URL}/saksbehandler`, {
       headers: {

@@ -1,0 +1,4 @@
+{
+  "organizeImports": true,
+  "ignorePatterns": ["**/*.yml", "**/*.yaml"]
+}

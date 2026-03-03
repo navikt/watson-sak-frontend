@@ -27,9 +27,7 @@ describe("cn", () => {
   it("fungerer med betingede klasser", () => {
     const erAktiv = true;
     const erDeaktivert = false;
-    expect(cn("base", erAktiv && "aktiv", erDeaktivert && "deaktivert")).toBe(
-      "base aktiv",
-    );
+    expect(cn("base", erAktiv && "aktiv", erDeaktivert && "deaktivert")).toBe("base aktiv");
   });
 
   it("returnerer tom streng når ingen gyldige klasser", () => {
@@ -39,14 +37,8 @@ describe("cn", () => {
 
   it("håndterer komplekse kombinasjoner", () => {
     expect(
-      cn(
-        "btn",
-        "btn-primary",
-        true && "btn-large",
-        false && "btn-disabled",
-        undefined,
-        "mt-4",
-      ),
+      // oxlint-disable-next-line no-constant-binary-expression
+      cn("btn", "btn-primary", true && "btn-large", false && "btn-disabled", undefined, "mt-4"),
     ).toBe("btn btn-primary btn-large mt-4");
   });
 });

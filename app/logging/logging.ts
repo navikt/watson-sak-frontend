@@ -11,11 +11,7 @@ class Logger {
     this.logg("error", message, data);
   }
 
-  private logg(
-    level: "info" | "warn" | "error",
-    message: string,
-    data?: Record<string, unknown>,
-  ) {
+  private logg(level: "info" | "warn" | "error", message: string, data?: Record<string, unknown>) {
     let logglinje: string | Record<string, unknown> = {
       level,
       message,

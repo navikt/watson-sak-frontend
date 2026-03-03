@@ -18,10 +18,7 @@ export function AnalyticsTags({ sporingId }: AnalyticsTagProps) {
  *
  * Du kan sende med et objekt med relevante data for hendelsen.
  */
-export function sporHendelse(
-  hendelse: Hendelse,
-  data: Record<string, unknown> = {},
-) {
+export function sporHendelse(hendelse: Hendelse, data: Record<string, unknown> = {}) {
   if (process.env.NODE_ENV === "development") {
     if (hendelse.length > 50) {
       logger.warn(

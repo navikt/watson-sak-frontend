@@ -1,8 +1,4 @@
-import {
-  layout,
-  route,
-  type RouteConfig as RouteConfigType,
-} from "@react-router/dev/routes";
+import { layout, route, type RouteConfig as RouteConfigType } from "@react-router/dev/routes";
 import { RouteConfig } from "./routeConfig";
 
 export default [
@@ -11,10 +7,7 @@ export default [
     route(RouteConfig.INDEX, "landingsside/LandingSide.route.tsx"),
     route(RouteConfig.FORDELING, "fordeling/FordelingSide.route.tsx"),
     route(RouteConfig.FORDELING_DETALJ, "fordeling/FordelingSakSide.route.tsx"),
-    route(
-      RouteConfig.REGISTRER_SAK,
-      "registrer-sak/RegistrerSakSide.route.tsx",
-    ),
+    route(RouteConfig.REGISTRER_SAK, "registrer-sak/RegistrerSakSide.route.tsx"),
     route(RouteConfig.PERSONVERN, "personvern/PersonvernSide.route.tsx"),
   ]),
 

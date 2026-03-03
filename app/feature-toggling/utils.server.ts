@@ -59,9 +59,7 @@ type Statusmelding = {
   tittel: string;
   beskrivelse?: string;
 };
-export async function hentStatusmeldingFeatureFlagg(): Promise<
-  Statusmelding | false
-> {
+export async function hentStatusmeldingFeatureFlagg(): Promise<Statusmelding | false> {
   if (!isProd) {
     return false;
   }
@@ -71,9 +69,7 @@ export async function hentStatusmeldingFeatureFlagg(): Promise<
     return false;
   }
 
-  const tekst = unleash.getFeatureToggleDefinition(
-    FeatureFlagg.STATUSMELDING,
-  )?.description;
+  const tekst = unleash.getFeatureToggleDefinition(FeatureFlagg.STATUSMELDING)?.description;
 
   if (!tekst?.trim()) {
     return false;

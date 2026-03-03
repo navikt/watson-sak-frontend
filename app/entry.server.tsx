@@ -21,9 +21,7 @@ export default function handleRequest(
     let userAgent = request.headers.get("user-agent");
 
     let readyOption: keyof RenderToPipeableStreamOptions =
-      (userAgent && isbot(userAgent)) || routerContext.isSpaMode
-        ? "onAllReady"
-        : "onShellReady";
+      (userAgent && isbot(userAgent)) || routerContext.isSpaMode ? "onAllReady" : "onShellReady";
 
     // Abort the rendering stream after the `streamTimeout` so it has time to
     // flush down the rejected boundaries

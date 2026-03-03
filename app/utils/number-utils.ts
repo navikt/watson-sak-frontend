@@ -51,15 +51,9 @@ export function formaterProsent(tall: unknown): unknown {
  * @param maximumFractionDigits - Maksimum antall desimaler (default: 2)
  * @returns Formatert beløp
  */
-export function formaterBeløp(
-  tall: number,
-  maximumFractionDigits?: number,
-): string;
+export function formaterBeløp(tall: number, maximumFractionDigits?: number): string;
 export function formaterBeløp<T>(tall: T, maximumFractionDigits?: number): T;
-export function formaterBeløp(
-  tall: unknown,
-  maximumFractionDigits = 2,
-): unknown {
+export function formaterBeløp(tall: unknown, maximumFractionDigits = 2): unknown {
   if (typeof tall !== "number") {
     return tall;
   }
@@ -76,7 +70,6 @@ export function konverterTilTall(verdi: unknown): number | null {
     return null;
   }
 
-  const tall =
-    typeof verdi === "number" ? verdi : Number(String(verdi).replace(",", "."));
+  const tall = typeof verdi === "number" ? verdi : Number(String(verdi).replace(",", "."));
   return Number.isFinite(tall) ? tall : null;
 }

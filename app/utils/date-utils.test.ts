@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  formaterDato,
-  formaterTilIsoDato,
-  formaterÅrMåned,
-  forskjellIDager,
-} from "./date-utils";
+import { formaterDato, formaterTilIsoDato, formaterÅrMåned, forskjellIDager } from "./date-utils";
 
 describe("formaterÅrMåned", () => {
   it("formaterer gyldig år-måned streng", () => {
@@ -41,9 +36,7 @@ describe("forskjellIDager", () => {
   });
 
   it("håndterer Date-objekter", () => {
-    expect(
-      forskjellIDager(new Date("2025-01-01"), new Date("2025-01-05")),
-    ).toBe(4);
+    expect(forskjellIDager(new Date("2025-01-01"), new Date("2025-01-05"))).toBe(4);
   });
 
   it("returnerer absolutt verdi uansett rekkefølge", () => {

@@ -9,11 +9,7 @@ type HtmlRammeProps = {
   initialTheme?: Theme;
   umamiSiteId: string;
 };
-export function HtmlRamme({
-  children,
-  initialTheme = "light",
-  umamiSiteId,
-}: HtmlRammeProps) {
+export function HtmlRamme({ children, initialTheme = "light", umamiSiteId }: HtmlRammeProps) {
   return (
     <html lang="nb-no">
       <head>

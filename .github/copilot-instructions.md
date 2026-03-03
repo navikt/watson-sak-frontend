@@ -11,7 +11,7 @@ Watson Sak er en React Router v7-applikasjon (framework mode, SSR) for å admini
 - `npm run test` – Vitest enhetstester, `npm run test -- app/utils/string-utils.test.ts` for enkeltfil
 - `npm run test:e2e` – Playwright e2e-tester, `npx playwright test app/path/to/test.spec.ts` for enkeltfil
 - `npm run typecheck` – React Router typegen + tsc
-- `npm run lint` / `npm run prettier` – kodekvalitet
+- `npm run lint` / `npm run prettier` – kodekvalitet (Oxlint og Oxfmt)
 
 ## Arkitektur
 

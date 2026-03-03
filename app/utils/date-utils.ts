@@ -67,7 +67,5 @@ export function formaterTilIsoDato(dato: Date): string {
 export function forskjellIDager(fom: string | Date, tom: string | Date) {
   const fomDato = new Date(fom);
   const tomDato = new Date(tom);
-  return Math.floor(
-    Math.abs(fomDato.getTime() - tomDato.getTime()) / (1000 * 60 * 60 * 24),
-  );
+  return Math.floor(Math.abs(fomDato.getTime() - tomDato.getTime()) / (1000 * 60 * 60 * 24));
 }
