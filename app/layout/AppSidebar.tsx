@@ -5,6 +5,7 @@ const lenker = [
   { to: RouteConfig.MINE_SAKER, label: "Mine saker" },
   { to: RouteConfig.FORDELING, label: "Fordeling" },
   { to: RouteConfig.REGISTRER_SAK, label: "Registrer sak" },
+  { to: RouteConfig.STATISTIKK, label: "Statistikk" },
 ];
 
 export function AppSidebar() {

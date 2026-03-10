@@ -8,6 +8,7 @@ export const RouteConfig = {
   SAKER_DETALJ: "/saker/:sakId",
   MINE_SAKER: "/mine-saker",
   REGISTRER_SAK: "/registrer-sak",
+  STATISTIKK: "/statistikk",
   PERSONVERN: "/personvern",
 
   WELL_KNOWN: {
