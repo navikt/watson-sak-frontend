@@ -35,17 +35,30 @@ export function AppHeader() {
         </div>
       </InternalHeader.Title>
 
-      <div className="flex gap-2 items-center">
-        <NavLink to={RouteConfig.MINE_SAKER} className="navds-link px-4">
-          Mine saker
-        </NavLink>
-        <NavLink to={RouteConfig.FORDELING} className="navds-link px-4">
-          Fordeling
-        </NavLink>
-        <NavLink to={RouteConfig.REGISTRER_SAK} className="navds-link px-4">
-          Registrer sak
-        </NavLink>
-      </div>
+      <nav aria-label="Hovedmeny">
+        <ul className="flex list-none m-0 p-0">
+          {[
+            { to: RouteConfig.MINE_SAKER, label: "Mine saker" },
+            { to: RouteConfig.FORDELING, label: "Fordeling" },
+            { to: RouteConfig.REGISTRER_SAK, label: "Registrer sak" },
+          ].map(({ to, label }) => (
+            <li key={to}>
+              <NavLink
+                to={to}
+                className={({ isActive }) =>
+                  `flex items-center px-4 h-full text-sm no-underline transition-colors ${
+                    isActive
+                      ? "text-white border-b-2 border-white font-semibold"
+                      : "text-gray-300 hover:text-white"
+                  }`
+                }
+              >
+                {label}
+              </NavLink>
+            </li>
+          ))}
+        </ul>
+      </nav>
 
       <Spacer />
       <ActionMenu>
