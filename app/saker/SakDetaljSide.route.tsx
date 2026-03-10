@@ -1,9 +1,7 @@
-import { ArrowLeftIcon, MenuElipsisVerticalIcon } from "@navikt/aksel-icons";
+import { ArrowLeftIcon } from "@navikt/aksel-icons";
 import {
-  ActionMenu,
   BodyShort,
   Box,
-  Button,
   Detail,
   Heading,
   HGrid,
@@ -16,9 +14,11 @@ import { PageBlock } from "@navikt/ds-react/Page";
 import { data, useLoaderData, useNavigate } from "react-router";
 import { formaterDato } from "~/utils/date-utils";
 import { mockSaker } from "~/fordeling/mock-data.server";
-import { SakHandlinger } from "~/fordeling/SakHandlinger";
 import { mockMineSaker } from "~/mine-saker/mock-data.server";
+import { mockSaksbehandlere } from "~/saker/mock-saksbehandlere.server";
+import { mockSeksjoner } from "~/saker/mock-seksjoner.server";
 import type { Route } from "./+types/SakDetaljSide.route";
+import { SakHandlingerKnapper } from "./handlinger/SakHandlingerKnapper";
 import { SakHistorikk } from "./historikk/SakHistorikk";
 import { hentHistorikk, leggTilHendelse } from "./historikk/mock-data.server";
 import { formaterKilde, hentStatusVariant } from "./utils";
@@ -31,7 +31,7 @@ export function loader({ params }: Route.LoaderArgs) {
     throw data("Sak ikke funnet", { status: 404 });
   }
   const historikk = hentHistorikk(sak.id);
-  return { sak, historikk };
+  return { sak, historikk, saksbehandlere: mockSaksbehandlere, seksjoner: mockSeksjoner };
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
@@ -47,11 +47,13 @@ export async function action({ request, params }: Route.ActionArgs) {
   switch (handling) {
     case "endre_status": {
       const nyStatus = formData.get("status") as string;
+      const notat = (formData.get("notat") as string) ?? undefined;
       const gammelStatus = sak.status;
       sak.status = nyStatus as typeof sak.status;
       leggTilHendelse(sakId, "status_endret", "Ola Nordmann", {
         fra: gammelStatus,
         til: nyStatus,
+        notat,
       });
       break;
     }
@@ -67,6 +69,16 @@ export async function action({ request, params }: Route.ActionArgs) {
       leggTilHendelse(sakId, "seksjon_endret", "Ola Nordmann", {
         fra: gammelSeksjon,
         til: nySeksjon,
+      });
+      break;
+    }
+    case "henlegg": {
+      const notat = (formData.get("notat") as string) ?? undefined;
+      const gammelStatus = sak.status;
+      sak.status = "henlagt";
+      leggTilHendelse(sakId, "henlagt", "Ola Nordmann", {
+        fra: gammelStatus,
+        notat,
       });
       break;
     }
@@ -87,7 +99,7 @@ function Felt({ label, children }: { label: string; children: React.ReactNode })
 }
 
 export default function SakDetaljSide() {
-  const { sak, historikk } = useLoaderData<typeof loader>();
+  const { sak, historikk, saksbehandlere, seksjoner } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
 
   return (
@@ -115,24 +127,11 @@ export default function SakDetaljSide() {
               </Heading>
               <Tag variant={hentStatusVariant(sak.status)}>{sak.status}</Tag>
             </HStack>
-
-            <ActionMenu>
-              <ActionMenu.Trigger>
-                <Button
-                  variant="secondary-neutral"
-                  icon={<MenuElipsisVerticalIcon title="Handlinger" />}
-                  size="small"
-                >
-                  Handlinger
-                </Button>
-              </ActionMenu.Trigger>
-              <ActionMenu.Content>
-                <SakHandlinger sakId={sak.id} />
-              </ActionMenu.Content>
-            </ActionMenu>
           </HStack>
 
-          <HGrid columns={{ xs: 1, md: 2 }} gap="space-6">
+          <HGrid columns={{ xs: 1, md: "1fr auto" }} gap="space-6">
+            <VStack gap="space-6">
+              <HGrid columns={{ xs: 1, md: 2 }} gap="space-6">
             <Box padding="space-6" borderRadius="8" background="raised">
               <Heading level="2" size="small" spacing>
                 Saksinformasjon
@@ -235,6 +234,14 @@ export default function SakDetaljSide() {
           )}
 
           <SakHistorikk hendelser={historikk} />
+            </VStack>
+
+            <SakHandlingerKnapper
+              sak={sak}
+              saksbehandlere={saksbehandlere}
+              seksjoner={seksjoner}
+            />
+          </HGrid>
         </VStack>
       </PageBlock>
     </Page>

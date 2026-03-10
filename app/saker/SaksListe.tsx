@@ -31,7 +31,7 @@ interface SaksListeProps {
   /** Base-sti for sak-detaljlenker, f.eks. "/saker" → "/saker/:sakId" */
   detaljSti: string;
   /** Valgfri handlingsmeny som vises på hvert kort */
-  handlinger?: (sakId: string) => ReactNode;
+  handlinger?: (sak: Sak) => ReactNode;
 }
 
 /**
@@ -193,7 +193,7 @@ function SakKort({
   sak,
   detaljSti,
   handlinger,
-}: { sak: Sak; detaljSti: string; handlinger?: (sakId: string) => ReactNode }) {
+}: { sak: Sak; detaljSti: string; handlinger?: (sak: Sak) => ReactNode }) {
   return (
     <div className="relative rounded-lg border border-border-subtle bg-surface-default p-4 shadow-sm transition-shadow hover:shadow-md">
       <Link
@@ -235,7 +235,7 @@ function SakKort({
                   size="small"
                 />
               </ActionMenu.Trigger>
-              <ActionMenu.Content>{handlinger(sak.id)}</ActionMenu.Content>
+              <ActionMenu.Content>{handlinger(sak)}</ActionMenu.Content>
             </ActionMenu>
           </div>
         )}

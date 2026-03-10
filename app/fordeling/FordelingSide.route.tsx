@@ -5,13 +5,19 @@ import { SaksListe } from "~/saker/SaksListe";
 import { RouteConfig } from "~/routeConfig";
 import { mockSaker } from "./mock-data.server";
 import { SakHandlinger } from "./SakHandlinger";
+import { mockSaksbehandlere } from "~/saker/mock-saksbehandlere.server";
+import { mockSeksjoner } from "~/saker/mock-seksjoner.server";
 
 export function loader() {
-  return { saker: mockSaker };
+  return {
+    saker: mockSaker,
+    saksbehandlere: mockSaksbehandlere,
+    seksjoner: mockSeksjoner,
+  };
 }
 
 export default function FordelingSide() {
-  const { saker } = useLoaderData<typeof loader>();
+  const { saker, saksbehandlere, seksjoner } = useLoaderData<typeof loader>();
 
   return (
     <Page>
@@ -24,7 +30,13 @@ export default function FordelingSide() {
         <SaksListe
           saker={saker}
           detaljSti={RouteConfig.SAKER_DETALJ.replace("/:sakId", "")}
-          handlinger={(sakId) => <SakHandlinger sakId={sakId} />}
+          handlinger={(sak) => (
+            <SakHandlinger
+              sak={sak}
+              saksbehandlere={saksbehandlere}
+              seksjoner={seksjoner}
+            />
+          )}
         />
       </PageBlock>
     </Page>

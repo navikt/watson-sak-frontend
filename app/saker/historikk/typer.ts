@@ -6,6 +6,7 @@ export const sakHendelseTypeSchema = z.enum([
   "tildelt",
   "seksjon_endret",
   "avdeling_endret",
+  "henlagt",
 ]);
 
 export type SakHendelseType = z.infer<typeof sakHendelseTypeSchema>;
@@ -20,6 +21,7 @@ export const sakHendelseSchema = z.object({
     .object({
       fra: z.string().optional(),
       til: z.string().optional(),
+      notat: z.string().optional(),
     })
     .optional(),
 });

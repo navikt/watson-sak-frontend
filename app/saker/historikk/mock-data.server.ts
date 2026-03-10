@@ -15,7 +15,7 @@ export function leggTilHendelse(
   sakId: string,
   type: SakHendelseType,
   utførtAv: string,
-  detaljer?: { fra?: string; til?: string },
+  detaljer?: { fra?: string; til?: string; notat?: string },
   tidspunkt?: string,
 ): SakHendelse {
   const hendelse: SakHendelse = {

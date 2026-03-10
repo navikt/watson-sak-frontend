@@ -1,99 +1,97 @@
 import {
   ArrowForwardIcon,
-  CheckmarkCircleIcon,
-  PencilIcon,
-  StarIcon,
-  XMarkIcon,
+  ArrowRightIcon,
+  PersonPencilIcon,
+  XMarkOctagonIcon,
 } from "@navikt/aksel-icons";
 import { ActionMenu } from "@navikt/ds-react";
-import { useFetcher } from "react-router";
-import { RouteConfig } from "~/routeConfig";
+import { useState } from "react";
+import type { Sak } from "~/saker/typer";
+import { EndreStatusModal } from "~/saker/handlinger/EndreStatusModal";
+import { HenleggModal } from "~/saker/handlinger/HenleggModal";
+import {
+  erAktivSak,
+  hentNesteStatus,
+} from "~/saker/handlinger/tilgjengeligeHandlinger";
+import { TildelSaksbehandlerModal } from "~/saker/handlinger/TildelSaksbehandlerModal";
+import { VideresendTilSeksjonModal } from "~/saker/handlinger/VideresendTilSeksjonModal";
 
 interface SakHandlingerProps {
-  sakId: string;
+  sak: Sak;
+  saksbehandlere: string[];
+  seksjoner: string[];
 }
 
-/** Handlingsmeny for en sak – brukes både i listen og på detaljsiden */
-export function SakHandlinger({ sakId }: SakHandlingerProps) {
-  const fetcher = useFetcher();
-  const actionUrl = RouteConfig.SAKER_DETALJ.replace(":sakId", sakId);
+/** Handlingsmeny for en sak i listevisiningen */
+export function SakHandlinger({
+  sak,
+  saksbehandlere,
+  seksjoner,
+}: SakHandlingerProps) {
+  const [åpenModal, setÅpenModal] = useState<
+    "tildel" | "videresend" | "status" | "henlegg" | null
+  >(null);
 
-  function submit(data: Record<string, string>) {
-    fetcher.submit(data, { method: "post", action: actionUrl });
-  }
+  if (!erAktivSak(sak.status)) return null;
+
+  const nesteStatus = hentNesteStatus(sak.status);
 
   return (
     <>
       <ActionMenu.Item
-        onSelect={() =>
-          submit({ handling: "endre_status", status: "tips avklart" })
-        }
-        icon={<StarIcon aria-hidden />}
+        onSelect={() => setÅpenModal("tildel")}
+        icon={<PersonPencilIcon aria-hidden />}
       >
-        Marker som prioritert
+        Tildel saksbehandler
       </ActionMenu.Item>
       <ActionMenu.Item
-        onSelect={() =>
-          submit({ handling: "endre_status", status: "under utredning" })
-        }
-        icon={<CheckmarkCircleIcon aria-hidden />}
+        onSelect={() => setÅpenModal("videresend")}
+        icon={<ArrowForwardIcon aria-hidden />}
       >
-        Send til plukkliste
+        Videresend til seksjon
       </ActionMenu.Item>
+      {nesteStatus && (
+        <ActionMenu.Item
+          onSelect={() => setÅpenModal("status")}
+          icon={<ArrowRightIcon aria-hidden />}
+        >
+          Flytt til {nesteStatus}
+        </ActionMenu.Item>
+      )}
+      <ActionMenu.Divider />
       <ActionMenu.Item
-        onSelect={() =>
-          submit({ handling: "endre_status", status: "avsluttet" })
-        }
-        icon={<XMarkIcon aria-hidden />}
+        onSelect={() => setÅpenModal("henlegg")}
+        icon={<XMarkOctagonIcon aria-hidden />}
       >
-        Avvis
+        Henlegg
       </ActionMenu.Item>
-      <ActionMenu.Divider />
-      <ActionMenu.Group label="Tildel saksbehandler">
-        <ActionMenu.Item
-          onSelect={() =>
-            submit({ handling: "tildel", saksbehandler: "Ola Nordmann" })
-          }
-          icon={<PencilIcon aria-hidden />}
-        >
-          Ola Nordmann
-        </ActionMenu.Item>
-        <ActionMenu.Item
-          onSelect={() =>
-            submit({ handling: "tildel", saksbehandler: "Kari Nordmann" })
-          }
-          icon={<PencilIcon aria-hidden />}
-        >
-          Kari Nordmann
-        </ActionMenu.Item>
-      </ActionMenu.Group>
-      <ActionMenu.Divider />
-      <ActionMenu.Group label="Videresend til seksjon">
-        <ActionMenu.Item
-          onSelect={() =>
-            submit({ handling: "videresend_seksjon", seksjon: "Seksjon A" })
-          }
-          icon={<ArrowForwardIcon aria-hidden />}
-        >
-          Seksjon A
-        </ActionMenu.Item>
-        <ActionMenu.Item
-          onSelect={() =>
-            submit({ handling: "videresend_seksjon", seksjon: "Seksjon B" })
-          }
-          icon={<ArrowForwardIcon aria-hidden />}
-        >
-          Seksjon B
-        </ActionMenu.Item>
-        <ActionMenu.Item
-          onSelect={() =>
-            submit({ handling: "videresend_seksjon", seksjon: "Seksjon C" })
-          }
-          icon={<ArrowForwardIcon aria-hidden />}
-        >
-          Seksjon C
-        </ActionMenu.Item>
-      </ActionMenu.Group>
+
+      <TildelSaksbehandlerModal
+        sakId={sak.id}
+        saksbehandlere={saksbehandlere}
+        åpen={åpenModal === "tildel"}
+        onClose={() => setÅpenModal(null)}
+      />
+      <VideresendTilSeksjonModal
+        sakId={sak.id}
+        nåværendeSeksjon={sak.seksjon}
+        seksjoner={seksjoner}
+        åpen={åpenModal === "videresend"}
+        onClose={() => setÅpenModal(null)}
+      />
+      {nesteStatus && (
+        <EndreStatusModal
+          sakId={sak.id}
+          nåværendeStatus={sak.status}
+          åpen={åpenModal === "status"}
+          onClose={() => setÅpenModal(null)}
+        />
+      )}
+      <HenleggModal
+        sakId={sak.id}
+        åpen={åpenModal === "henlegg"}
+        onClose={() => setÅpenModal(null)}
+      />
     </>
   );
 }

@@ -3,6 +3,7 @@ import {
   ClockIcon,
   PersonIcon,
   PlusCircleIcon,
+  XMarkOctagonIcon,
 } from "@navikt/aksel-icons";
 import { BodyShort, Box, Button, Heading, Process, VStack } from "@navikt/ds-react";
 import { useState } from "react";
@@ -38,17 +39,23 @@ function hendelseTittel(hendelse: SakHendelse): string {
       return "Seksjon endret";
     case "avdeling_endret":
       return "Avdeling endret";
+    case "henlagt":
+      return "Sak henlagt";
   }
 }
 
 function hendelseBeskrivelse(hendelse: SakHendelse): string | null {
   if (!hendelse.detaljer) return null;
 
-  const { fra, til } = hendelse.detaljer;
+  const { fra, til, notat } = hendelse.detaljer;
+  const deler: string[] = [];
 
-  if (fra && til) return `${fra} → ${til}`;
-  if (til) return til;
-  return null;
+  if (fra && til) deler.push(`${fra} → ${til}`);
+  else if (til) deler.push(til);
+
+  if (notat) deler.push(notat);
+
+  return deler.length > 0 ? deler.join(" – ") : null;
 }
 
 function HendelseBullet({ type }: { type: SakHendelse["type"] }) {
@@ -63,6 +70,8 @@ function HendelseBullet({ type }: { type: SakHendelse["type"] }) {
     case "seksjon_endret":
     case "avdeling_endret":
       return <ArrowRightIcon {...iconProps} />;
+    case "henlagt":
+      return <XMarkOctagonIcon {...iconProps} />;
   }
 }
 
