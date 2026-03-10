@@ -7,7 +7,7 @@ import {
   SunIcon,
 } from "@navikt/aksel-icons";
 import { ActionMenu, InternalHeader, Spacer, Tag } from "@navikt/ds-react";
-import { Link, NavLink } from "react-router";
+import { Link } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { useMiljø } from "~/miljø/useMiljø";
@@ -34,31 +34,6 @@ export function AppHeader() {
           )}
         </div>
       </InternalHeader.Title>
-
-      <nav aria-label="Hovedmeny">
-        <ul className="flex list-none m-0 p-0">
-          {[
-            { to: RouteConfig.MINE_SAKER, label: "Mine saker" },
-            { to: RouteConfig.FORDELING, label: "Fordeling" },
-            { to: RouteConfig.REGISTRER_SAK, label: "Registrer sak" },
-          ].map(({ to, label }) => (
-            <li key={to}>
-              <NavLink
-                to={to}
-                className={({ isActive }) =>
-                  `flex items-center px-4 h-full text-sm no-underline transition-colors ${
-                    isActive
-                      ? "text-white border-b-2 border-white font-semibold"
-                      : "text-gray-300 hover:text-white"
-                  }`
-                }
-              >
-                {label}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-      </nav>
 
       <Spacer />
       <ActionMenu>
