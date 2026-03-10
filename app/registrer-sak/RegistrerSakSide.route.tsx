@@ -22,8 +22,8 @@ import {
   mockTags,
   mockYtelser,
 } from "~/fordeling/mock-data.server";
-import { sakKildeSchema } from "~/fordeling/typer";
-import { formaterKilde } from "~/fordeling/utils";
+import { sakKildeSchema } from "~/saker/typer";
+import { formaterKilde } from "~/saker/utils";
 import { RouteConfig } from "~/routeConfig";
 import type { Route } from "./+types/RegistrerSakSide.route";
 import { registrerSakSchema } from "./validering";

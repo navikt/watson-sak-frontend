@@ -13,11 +13,10 @@ import {
 } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
 import { data, Link, useLoaderData } from "react-router";
-import { RouteConfig } from "~/routeConfig";
 import { formaterDato } from "~/utils/date-utils";
-import type { Route } from "./+types/FordelingSakSide.route";
-import { mockSaker } from "./mock-data.server";
-import { SakHandlinger } from "./SakHandlinger";
+import { mockSaker } from "~/fordeling/mock-data.server";
+import { SakHandlinger } from "~/fordeling/SakHandlinger";
+import type { Route } from "./+types/SakDetaljSide.route";
 import { formaterKilde, hentStatusVariant } from "./utils";
 
 export function loader({ params }: Route.LoaderArgs) {
@@ -28,7 +27,7 @@ export function loader({ params }: Route.LoaderArgs) {
   return { sak };
 }
 
-export default function FordelingSakSide() {
+export default function SakDetaljSide() {
   const { sak } = useLoaderData<typeof loader>();
 
   return (
@@ -37,10 +36,10 @@ export default function FordelingSakSide() {
       <PageBlock width="lg" gutters>
         <VStack gap="space-4" className="mt-4">
           <div>
-            <Link to={RouteConfig.FORDELING} className="navds-link">
+            <Link to=".." relative="path" className="navds-link">
               <HStack gap="space-1" align="center">
                 <ArrowLeftIcon aria-hidden />
-                Tilbake til fordeling
+                Tilbake
               </HStack>
             </Link>
           </div>

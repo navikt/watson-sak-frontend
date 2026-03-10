@@ -3,28 +3,26 @@ import { PageBlock } from "@navikt/ds-react/Page";
 import { useLoaderData } from "react-router";
 import { SaksListe } from "~/saker/SaksListe";
 import { RouteConfig } from "~/routeConfig";
-import { mockSaker } from "./mock-data.server";
-import { SakHandlinger } from "./SakHandlinger";
+import { mockMineSaker } from "./mock-data.server";
 
 export function loader() {
-  return { saker: mockSaker };
+  return { saker: mockMineSaker };
 }
 
-export default function FordelingSide() {
+export default function MineSakerSide() {
   const { saker } = useLoaderData<typeof loader>();
 
   return (
     <Page>
-      <title>Saker til fordeling – Watson Sak</title>
+      <title>Mine saker – Watson Sak</title>
       <PageBlock width="lg" gutters>
         <Heading level="1" size="large" spacing className="mt-4">
-          Saker til fordeling
+          Mine saker
         </Heading>
 
         <SaksListe
           saker={saker}
           detaljSti={RouteConfig.SAKER_DETALJ.replace("/:sakId", "")}
-          handlinger={(sakId) => <SakHandlinger sakId={sakId} />}
         />
       </PageBlock>
     </Page>

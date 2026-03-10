@@ -36,6 +36,9 @@ export function AppHeader() {
       </InternalHeader.Title>
 
       <div className="flex gap-2 items-center">
+        <NavLink to={RouteConfig.MINE_SAKER} className="navds-link px-4">
+          Mine saker
+        </NavLink>
         <NavLink to={RouteConfig.FORDELING} className="navds-link px-4">
           Fordeling
         </NavLink>
