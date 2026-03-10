@@ -18,6 +18,8 @@ import { mockSaker } from "~/fordeling/mock-data.server";
 import { SakHandlinger } from "~/fordeling/SakHandlinger";
 import { mockMineSaker } from "~/mine-saker/mock-data.server";
 import type { Route } from "./+types/SakDetaljSide.route";
+import { SakHistorikk } from "./historikk/SakHistorikk";
+import { hentHistorikk, leggTilHendelse } from "./historikk/mock-data.server";
 import { formaterKilde, hentStatusVariant } from "./utils";
 
 const alleSaker = [...mockSaker, ...mockMineSaker];
@@ -27,11 +29,53 @@ export function loader({ params }: Route.LoaderArgs) {
   if (!sak) {
     throw data("Sak ikke funnet", { status: 404 });
   }
-  return { sak };
+  const historikk = hentHistorikk(sak.id);
+  return { sak, historikk };
+}
+
+export async function action({ request, params }: Route.ActionArgs) {
+  const formData = await request.formData();
+  const handling = formData.get("handling") as string;
+  const sakId = params.sakId;
+
+  const sak = alleSaker.find((s) => s.id === sakId);
+  if (!sak) {
+    throw data("Sak ikke funnet", { status: 404 });
+  }
+
+  switch (handling) {
+    case "endre_status": {
+      const nyStatus = formData.get("status") as string;
+      const gammelStatus = sak.status;
+      sak.status = nyStatus as typeof sak.status;
+      leggTilHendelse(sakId, "status_endret", "Ola Nordmann", {
+        fra: gammelStatus,
+        til: nyStatus,
+      });
+      break;
+    }
+    case "tildel": {
+      const saksbehandler = formData.get("saksbehandler") as string;
+      leggTilHendelse(sakId, "tildelt", "Ola Nordmann", { til: saksbehandler });
+      break;
+    }
+    case "videresend_seksjon": {
+      const nySeksjon = formData.get("seksjon") as string;
+      const gammelSeksjon = sak.seksjon;
+      sak.seksjon = nySeksjon;
+      leggTilHendelse(sakId, "seksjon_endret", "Ola Nordmann", {
+        fra: gammelSeksjon,
+        til: nySeksjon,
+      });
+      break;
+    }
+  }
+
+  return { ok: true };
 }
 
 export default function SakDetaljSide() {
-  const { sak } = useLoaderData<typeof loader>();
+  const { sak, historikk } = useLoaderData<typeof loader>();
 
   return (
     <Page>
@@ -106,6 +150,8 @@ export default function SakDetaljSide() {
             </Heading>
             <BodyShort>{sak.notat}</BodyShort>
           </Box>
+
+          <SakHistorikk hendelser={historikk} />
         </VStack>
       </PageBlock>
     </Page>

@@ -6,6 +6,8 @@ import {
   XMarkIcon,
 } from "@navikt/aksel-icons";
 import { ActionMenu } from "@navikt/ds-react";
+import { useFetcher } from "react-router";
+import { RouteConfig } from "~/routeConfig";
 
 interface SakHandlingerProps {
   sakId: string;
@@ -13,22 +15,35 @@ interface SakHandlingerProps {
 
 /** Handlingsmeny for en sak – brukes både i listen og på detaljsiden */
 export function SakHandlinger({ sakId }: SakHandlingerProps) {
+  const fetcher = useFetcher();
+  const actionUrl = RouteConfig.SAKER_DETALJ.replace(":sakId", sakId);
+
+  function submit(data: Record<string, string>) {
+    fetcher.submit(data, { method: "post", action: actionUrl });
+  }
+
   return (
     <>
       <ActionMenu.Item
-        onSelect={() => alert(`Marker sak ${sakId} som prioritert`)}
+        onSelect={() =>
+          submit({ handling: "endre_status", status: "tips avklart" })
+        }
         icon={<StarIcon aria-hidden />}
       >
         Marker som prioritert
       </ActionMenu.Item>
       <ActionMenu.Item
-        onSelect={() => alert(`Send sak ${sakId} til plukkliste`)}
+        onSelect={() =>
+          submit({ handling: "endre_status", status: "under utredning" })
+        }
         icon={<CheckmarkCircleIcon aria-hidden />}
       >
         Send til plukkliste
       </ActionMenu.Item>
       <ActionMenu.Item
-        onSelect={() => alert(`Avvis sak ${sakId}`)}
+        onSelect={() =>
+          submit({ handling: "endre_status", status: "avsluttet" })
+        }
         icon={<XMarkIcon aria-hidden />}
       >
         Avvis
@@ -36,13 +51,17 @@ export function SakHandlinger({ sakId }: SakHandlingerProps) {
       <ActionMenu.Divider />
       <ActionMenu.Group label="Tildel saksbehandler">
         <ActionMenu.Item
-          onSelect={() => alert(`Tildel saksbehandler til sak ${sakId}`)}
+          onSelect={() =>
+            submit({ handling: "tildel", saksbehandler: "Ola Nordmann" })
+          }
           icon={<PencilIcon aria-hidden />}
         >
           Ola Nordmann
         </ActionMenu.Item>
         <ActionMenu.Item
-          onSelect={() => alert(`Tildel saksbehandler til sak ${sakId}`)}
+          onSelect={() =>
+            submit({ handling: "tildel", saksbehandler: "Kari Nordmann" })
+          }
           icon={<PencilIcon aria-hidden />}
         >
           Kari Nordmann
@@ -51,19 +70,25 @@ export function SakHandlinger({ sakId }: SakHandlingerProps) {
       <ActionMenu.Divider />
       <ActionMenu.Group label="Videresend til seksjon">
         <ActionMenu.Item
-          onSelect={() => alert(`Videresend sak ${sakId} til Seksjon A`)}
+          onSelect={() =>
+            submit({ handling: "videresend_seksjon", seksjon: "Seksjon A" })
+          }
           icon={<ArrowForwardIcon aria-hidden />}
         >
           Seksjon A
         </ActionMenu.Item>
         <ActionMenu.Item
-          onSelect={() => alert(`Videresend sak ${sakId} til Seksjon B`)}
+          onSelect={() =>
+            submit({ handling: "videresend_seksjon", seksjon: "Seksjon B" })
+          }
           icon={<ArrowForwardIcon aria-hidden />}
         >
           Seksjon B
         </ActionMenu.Item>
         <ActionMenu.Item
-          onSelect={() => alert(`Videresend sak ${sakId} til Seksjon C`)}
+          onSelect={() =>
+            submit({ handling: "videresend_seksjon", seksjon: "Seksjon C" })
+          }
           icon={<ArrowForwardIcon aria-hidden />}
         >
           Seksjon C

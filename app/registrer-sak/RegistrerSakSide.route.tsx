@@ -22,6 +22,7 @@ import {
   mockTags,
   mockYtelser,
 } from "~/fordeling/mock-data.server";
+import { leggTilHendelse } from "~/saker/historikk/mock-data.server";
 import { sakKildeSchema } from "~/saker/typer";
 import { formaterKilde } from "~/saker/utils";
 import { RouteConfig } from "~/routeConfig";
@@ -88,6 +89,8 @@ export async function action({ request }: Route.ActionArgs) {
     },
     beskrivelse: data.beskrivelse,
   });
+
+  leggTilHendelse(nesteId, "opprettet", "System");
 
   return redirect(RouteConfig.FORDELING);
 }
