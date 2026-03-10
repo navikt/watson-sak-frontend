@@ -144,7 +144,7 @@ export default function RegistrerSakSide() {
                 <input key={ytelse} type="hidden" name="ytelser" value={ytelse} />
               ))}
               {feil?.ytelser && (
-                <BodyShort className="text-text-danger" size="small">
+                <BodyShort className="text-ax-text-danger" size="small">
                   {feil.ytelser.join(", ")}
                 </BodyShort>
               )}

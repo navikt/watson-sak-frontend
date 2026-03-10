@@ -128,7 +128,7 @@ export function SaksListe({ saker, detaljSti, handlinger }: SaksListeProps) {
         </VStack>
       </div>
 
-      <aside className="rounded-lg border border-border-subtle bg-surface-subtle p-4 md:sticky md:top-4 md:w-72 md:shrink-0 md:self-start">
+      <aside className="rounded-lg border border-ax-border-neutral-subtle bg-ax-bg-neutral-soft p-4 md:sticky md:top-4 md:w-72 md:shrink-0 md:self-start">
         <HStack justify="space-between" align="center" className="mb-3">
           <Label as="p" size="small">
             Filtrering
@@ -195,7 +195,7 @@ function SakKort({
   handlinger,
 }: { sak: Sak; detaljSti: string; handlinger?: (sak: Sak) => ReactNode }) {
   return (
-    <div className="relative rounded-lg border border-border-subtle bg-surface-default p-4 shadow-sm transition-shadow hover:shadow-md">
+    <div className="relative rounded-lg border border-ax-border-neutral-subtle bg-ax-bg-default p-4 shadow-sm transition-shadow hover:shadow-md">
       <Link
         to={`${detaljSti}/${sak.id}`}
         className="absolute inset-0 rounded-lg"
@@ -211,13 +211,13 @@ function SakKort({
           </HStack>
 
           <HStack gap="space-4">
-            <BodyShort size="small" className="text-text-subtle">
+            <BodyShort size="small" className="text-ax-text-neutral-subtle">
               Innmeldt: {formaterDato(sak.datoInnmeldt)}
             </BodyShort>
-            <BodyShort size="small" className="text-text-subtle">
+            <BodyShort size="small" className="text-ax-text-neutral-subtle">
               Kilde: {formaterKilde(sak.kilde)}
             </BodyShort>
-            <BodyShort size="small" className="text-text-subtle">
+            <BodyShort size="small" className="text-ax-text-neutral-subtle">
               Seksjon: {sak.seksjon}
             </BodyShort>
           </HStack>

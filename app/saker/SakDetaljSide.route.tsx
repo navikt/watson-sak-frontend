@@ -90,7 +90,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 function Felt({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <Detail className="text-text-subtle" uppercase>
+      <Detail className="text-ax-text-neutral-subtle" uppercase>
         {label}
       </Detail>
       <BodyShort className="mt-05">{children}</BodyShort>
@@ -146,7 +146,7 @@ export default function SakDetaljSide() {
               </HGrid>
               {sak.ytelser.length > 0 && (
                 <div className="mt-4">
-                  <Detail className="text-text-subtle mb-1" uppercase>
+                  <Detail className="text-ax-text-neutral-subtle mb-1" uppercase>
                     Ytelser
                   </Detail>
                   <HStack gap="space-2" wrap>
@@ -160,7 +160,7 @@ export default function SakDetaljSide() {
               )}
               {sak.tags.length > 0 && (
                 <div className="mt-4">
-                  <Detail className="text-text-subtle mb-1" uppercase>
+                  <Detail className="text-ax-text-neutral-subtle mb-1" uppercase>
                     Tags
                   </Detail>
                   <HStack gap="space-2" wrap>

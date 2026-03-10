@@ -86,7 +86,7 @@ export default function StatistikkSide() {
               <Heading level="2" size="medium" spacing id="behandlingstid-heading">
                 Behandlingstid (dager)
               </Heading>
-              <BodyShort spacing className="text-text-subtle">
+              <BodyShort spacing className="text-ax-text-neutral-subtle">
                 Basert på {behandlingstid.antall} avsluttede/henlagte saker
               </BodyShort>
               <HGrid columns={{ xs: 2, md: 4 }} gap="space-4">
@@ -112,7 +112,7 @@ export default function StatistikkSide() {
             <Heading level="2" size="medium" spacing id="ytelse-heading">
               Fordeling per ytelse
             </Heading>
-            <BodyShort spacing className="text-text-subtle">
+            <BodyShort spacing className="text-ax-text-neutral-subtle">
               En sak kan ha flere ytelser, så summen kan overstige totalt antall
               saker
             </BodyShort>
@@ -145,12 +145,12 @@ function NøkkeltallKort({
 }) {
   return (
     <Box padding="space-4" borderRadius="8" background="raised">
-      <BodyShort size="small" className="text-text-subtle">
+      <BodyShort size="small" className="text-ax-text-neutral-subtle">
         {tittel}
       </BodyShort>
       <span className="text-3xl font-semibold">{verdi}</span>
       {enhet && (
-        <BodyShort size="small" className="text-text-subtle" as="span">
+        <BodyShort size="small" className="text-ax-text-neutral-subtle" as="span">
           {" "}
           {enhet}
         </BodyShort>
@@ -189,10 +189,10 @@ function FordelingTabell({
               <Table.DataCell>
                 <div className="flex items-center gap-2">
                   <div
-                    className="h-4 rounded bg-surface-action-subtle"
+                    className="h-4 rounded bg-ax-bg-accent-soft"
                     style={{ width: `${prosentandel}%`, minWidth: "2px" }}
                   />
-                  <BodyShort size="small" className="text-text-subtle">
+                  <BodyShort size="small" className="text-ax-text-neutral-subtle">
                     {prosentandel} %
                   </BodyShort>
                 </div>

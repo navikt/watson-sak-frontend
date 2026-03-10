@@ -111,7 +111,7 @@ export function SakHistorikk({ hendelser }: SakHistorikkProps) {
             >
               <VStack gap="space-1">
                 {beskrivelse && <BodyShort size="small">{beskrivelse}</BodyShort>}
-                <BodyShort size="small" className="text-text-subtle">
+                <BodyShort size="small" className="text-ax-text-neutral-subtle">
                   {hendelse.utførtAv}
                 </BodyShort>
               </VStack>
