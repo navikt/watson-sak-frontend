@@ -4,7 +4,8 @@ import {
   PersonIcon,
   PlusCircleIcon,
 } from "@navikt/aksel-icons";
-import { BodyShort, Box, Heading, Process, VStack } from "@navikt/ds-react";
+import { BodyShort, Box, Button, Heading, Process, VStack } from "@navikt/ds-react";
+import { useState } from "react";
 import type { SakHendelse } from "./typer";
 
 interface SakHistorikkProps {
@@ -65,7 +66,13 @@ function HendelseBullet({ type }: { type: SakHendelse["type"] }) {
   }
 }
 
+const MAKS_SYNLIGE_HENDELSER = 5;
+
 export function SakHistorikk({ hendelser }: SakHistorikkProps) {
+  const [visAlle, setVisAlle] = useState(false);
+  const harFlere = hendelser.length > MAKS_SYNLIGE_HENDELSER;
+  const synligeHendelser = visAlle ? hendelser : hendelser.slice(0, MAKS_SYNLIGE_HENDELSER);
+
   if (hendelser.length === 0) {
     return (
       <Box padding="space-6" borderRadius="8" background="raised">
@@ -83,7 +90,7 @@ export function SakHistorikk({ hendelser }: SakHistorikkProps) {
         Historikk
       </Heading>
       <Process>
-        {hendelser.map((hendelse, index) => {
+        {synligeHendelser.map((hendelse, index) => {
           const beskrivelse = hendelseBeskrivelse(hendelse);
           return (
             <Process.Event
@@ -103,6 +110,18 @@ export function SakHistorikk({ hendelser }: SakHistorikkProps) {
           );
         })}
       </Process>
+      {harFlere && (
+        <Button
+          variant="tertiary"
+          size="small"
+          onClick={() => setVisAlle((prev) => !prev)}
+          className="mt-2"
+        >
+          {visAlle
+            ? "Vis færre"
+            : `Vis ${hendelser.length - MAKS_SYNLIGE_HENDELSER} flere`}
+        </Button>
+      )}
     </Box>
   );
 }
