@@ -4,9 +4,10 @@ import {
   BodyShort,
   Box,
   Button,
+  Detail,
   Heading,
+  HGrid,
   HStack,
-  Label,
   Page,
   Tag,
   VStack,
@@ -74,6 +75,17 @@ export async function action({ request, params }: Route.ActionArgs) {
   return { ok: true };
 }
 
+function Felt({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <Detail className="text-text-subtle" uppercase>
+        {label}
+      </Detail>
+      <BodyShort className="mt-05">{children}</BodyShort>
+    </div>
+  );
+}
+
 export default function SakDetaljSide() {
   const { sak, historikk } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
@@ -82,7 +94,7 @@ export default function SakDetaljSide() {
     <Page>
       <title>{`Sak ${sak.id} – Watson Sak`}</title>
       <PageBlock width="lg" gutters>
-        <VStack gap="space-4" className="mt-4">
+        <VStack gap="space-6" className="mt-4 mb-8">
           <div>
             <button
               type="button"
@@ -120,41 +132,107 @@ export default function SakDetaljSide() {
             </ActionMenu>
           </HStack>
 
-          <Box padding="space-6" borderRadius="8" background="raised">
-            <VStack gap="space-4">
-              <div>
-                <Label size="small">Dato innmeldt</Label>
-                <BodyShort>{formaterDato(sak.datoInnmeldt)}</BodyShort>
-              </div>
-              <div>
-                <Label size="small">Fødselsnummer</Label>
-                <BodyShort>{sak.fødselsnummer}</BodyShort>
-              </div>
-              <div>
-                <Label size="small">Kilde</Label>
-                <BodyShort>{formaterKilde(sak.kilde)}</BodyShort>
-              </div>
-              <div>
-                <Label size="small">Ytelser</Label>
-                <BodyShort>{sak.ytelser.join(", ")}</BodyShort>
-              </div>
-              <div>
-                <Label size="small">Seksjon</Label>
-                <BodyShort>{sak.seksjon}</BodyShort>
-              </div>
-              <div>
-                <Label size="small">Status</Label>
-                <BodyShort>{sak.status}</BodyShort>
-              </div>
-            </VStack>
-          </Box>
+          <HGrid columns={{ xs: 1, md: 2 }} gap="space-6">
+            <Box padding="space-6" borderRadius="8" background="raised">
+              <Heading level="2" size="small" spacing>
+                Saksinformasjon
+              </Heading>
+              <HGrid columns={2} gap="space-4">
+                <Felt label="Dato innmeldt">{formaterDato(sak.datoInnmeldt)}</Felt>
+                <Felt label="Kilde">{formaterKilde(sak.kilde)}</Felt>
+                <Felt label="Fødselsnummer">{sak.fødselsnummer}</Felt>
+                <Felt label="Seksjon">{sak.seksjon}</Felt>
+                {sak.avdeling && <Felt label="Avdeling">{sak.avdeling}</Felt>}
+                {sak.kategori && <Felt label="Kategori">{sak.kategori}</Felt>}
+              </HGrid>
+              {sak.ytelser.length > 0 && (
+                <div className="mt-4">
+                  <Detail className="text-text-subtle mb-1" uppercase>
+                    Ytelser
+                  </Detail>
+                  <HStack gap="space-2" wrap>
+                    {sak.ytelser.map((ytelse) => (
+                      <Tag key={ytelse} variant="info" size="small">
+                        {ytelse}
+                      </Tag>
+                    ))}
+                  </HStack>
+                </div>
+              )}
+              {sak.tags.length > 0 && (
+                <div className="mt-4">
+                  <Detail className="text-text-subtle mb-1" uppercase>
+                    Tags
+                  </Detail>
+                  <HStack gap="space-2" wrap>
+                    {sak.tags.map((tag) => (
+                      <Tag key={tag} variant="neutral" size="small">
+                        {tag}
+                      </Tag>
+                    ))}
+                  </HStack>
+                </div>
+              )}
+            </Box>
 
-          <Box padding="space-6" borderRadius="8" background="raised">
-            <Heading level="2" size="small" spacing>
-              Notat
-            </Heading>
-            <BodyShort>{sak.notat}</BodyShort>
-          </Box>
+            <VStack gap="space-6">
+              {(sak.fraDato || sak.tilDato) && (
+                <Box padding="space-6" borderRadius="8" background="raised">
+                  <Heading level="2" size="small" spacing>
+                    Periode
+                  </Heading>
+                  <HGrid columns={2} gap="space-4">
+                    {sak.fraDato && (
+                      <Felt label="Fra dato">{formaterDato(sak.fraDato)}</Felt>
+                    )}
+                    {sak.tilDato && (
+                      <Felt label="Til dato">{formaterDato(sak.tilDato)}</Felt>
+                    )}
+                  </HGrid>
+                </Box>
+              )}
+
+              {sak.kontaktinformasjon &&
+                !sak.kontaktinformasjon.anonymt && (
+                  <Box padding="space-6" borderRadius="8" background="raised">
+                    <Heading level="2" size="small" spacing>
+                      Kontaktinformasjon
+                    </Heading>
+                    <VStack gap="space-2">
+                      {sak.kontaktinformasjon.navn && (
+                        <Felt label="Navn">{sak.kontaktinformasjon.navn}</Felt>
+                      )}
+                      {sak.kontaktinformasjon.telefon && (
+                        <Felt label="Telefon">{sak.kontaktinformasjon.telefon}</Felt>
+                      )}
+                      {sak.kontaktinformasjon.epost && (
+                        <Felt label="E-post">{sak.kontaktinformasjon.epost}</Felt>
+                      )}
+                    </VStack>
+                  </Box>
+                )}
+
+              {sak.kontaktinformasjon?.anonymt && (
+                <Box padding="space-6" borderRadius="8" background="raised">
+                  <Heading level="2" size="small" spacing>
+                    Kontaktinformasjon
+                  </Heading>
+                  <Tag variant="neutral" size="small">
+                    Anonymt tips
+                  </Tag>
+                </Box>
+              )}
+            </VStack>
+          </HGrid>
+
+          {(sak.notat || sak.beskrivelse) && (
+            <Box padding="space-6" borderRadius="8" background="raised">
+              <Heading level="2" size="small" spacing>
+                {sak.beskrivelse ? "Beskrivelse" : "Notat"}
+              </Heading>
+              <BodyShort>{sak.beskrivelse ?? sak.notat}</BodyShort>
+            </Box>
+          )}
 
           <SakHistorikk hendelser={historikk} />
         </VStack>
