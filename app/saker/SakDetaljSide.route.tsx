@@ -12,7 +12,7 @@ import {
   VStack,
 } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
-import { data, Link, useLoaderData } from "react-router";
+import { data, useLoaderData, useNavigate } from "react-router";
 import { formaterDato } from "~/utils/date-utils";
 import { mockSaker } from "~/fordeling/mock-data.server";
 import { SakHandlinger } from "~/fordeling/SakHandlinger";
@@ -76,6 +76,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
 export default function SakDetaljSide() {
   const { sak, historikk } = useLoaderData<typeof loader>();
+  const navigate = useNavigate();
 
   return (
     <Page>
@@ -83,12 +84,16 @@ export default function SakDetaljSide() {
       <PageBlock width="lg" gutters>
         <VStack gap="space-4" className="mt-4">
           <div>
-            <Link to=".." relative="path" className="navds-link">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="navds-link cursor-pointer bg-transparent border-none p-0"
+            >
               <HStack gap="space-1" align="center">
                 <ArrowLeftIcon aria-hidden />
                 Tilbake
               </HStack>
-            </Link>
+            </button>
           </div>
 
           <HStack justify="space-between" align="center">
