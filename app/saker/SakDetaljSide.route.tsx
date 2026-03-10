@@ -16,11 +16,14 @@ import { data, Link, useLoaderData } from "react-router";
 import { formaterDato } from "~/utils/date-utils";
 import { mockSaker } from "~/fordeling/mock-data.server";
 import { SakHandlinger } from "~/fordeling/SakHandlinger";
+import { mockMineSaker } from "~/mine-saker/mock-data.server";
 import type { Route } from "./+types/SakDetaljSide.route";
 import { formaterKilde, hentStatusVariant } from "./utils";
 
+const alleSaker = [...mockSaker, ...mockMineSaker];
+
 export function loader({ params }: Route.LoaderArgs) {
-  const sak = mockSaker.find((s) => s.id === params.sakId);
+  const sak = alleSaker.find((s) => s.id === params.sakId);
   if (!sak) {
     throw data("Sak ikke funnet", { status: 404 });
   }
