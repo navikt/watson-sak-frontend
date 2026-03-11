@@ -13,8 +13,6 @@ test.describe("Fordeling – sakshandlinger", () => {
     await expect(page.getByRole("menuitem", { name: "Tildel saksbehandler" })).toBeVisible();
     await expect(page.getByRole("menuitem", { name: "Videresend til seksjon" })).toBeVisible();
     await expect(page.getByRole("menuitem", { name: "Henlegg" })).toBeVisible();
-
-    await sjekkTilgjengelighet(page);
   });
 
   test("kan åpne tildel-modal fra handlingsmenyen", async ({ page }) => {

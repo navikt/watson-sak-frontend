@@ -14,12 +14,11 @@ test.describe("Registrer sak", () => {
   test("viser valideringsfeil ved tom innsending", async ({ page }) => {
     await page.getByRole("button", { name: "Registrer sak" }).click();
 
-    const feilmeldinger = page.locator(".aksel-error-message");
-    await expect(feilmeldinger.filter({ hasText: "Fødselsnummer er påkrevd" })).toBeVisible();
-    await expect(feilmeldinger.filter({ hasText: "Velg avdeling" })).toBeVisible();
-    await expect(feilmeldinger.filter({ hasText: "Velg kategori" })).toBeVisible();
+    await expect(page.getByText("Fødselsnummer er påkrevd")).toBeVisible();
+    await expect(page.getByText("Velg avdeling")).toBeVisible();
+    await expect(page.getByText("Velg kategori")).toBeVisible();
     await expect(page.getByText("Velg minst én ytelse")).toBeVisible();
-    await expect(feilmeldinger.filter({ hasText: "Beskrivelse er påkrevd" })).toBeVisible();
+    await expect(page.getByText("Beskrivelse er påkrevd")).toBeVisible();
   });
 
   test("kan fylle ut og sende inn skjema", async ({ page }) => {

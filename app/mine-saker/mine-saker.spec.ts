@@ -21,10 +21,9 @@ test.describe("Mine saker", () => {
   test("kan navigere til sakdetalj", async ({ page }) => {
     const sakLenke = page.getByRole("link", { name: /^Sak \d+$/ }).first();
 
-    if (await sakLenke.isVisible()) {
-      await sakLenke.click();
-      await expect(page).toHaveURL(/\/saker\/\d+/);
-    }
+    await expect(sakLenke).toBeVisible();
+    await sakLenke.click();
+    await expect(page).toHaveURL(/\/saker\/\d+/);
   });
 
   test("er UU-compliant", async ({ page }) => {

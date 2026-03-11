@@ -36,8 +36,9 @@ export function SakHandlinger({ sak, saksbehandlere, seksjoner }: SakHandlingerP
         <ActionMenu.Trigger>
           <Button
             variant="tertiary-neutral"
-            icon={<MenuElipsisVerticalIcon title="Handlinger" />}
+            icon={<MenuElipsisVerticalIcon aria-hidden />}
             size="small"
+            aria-label="Handlinger"
           />
         </ActionMenu.Trigger>
         <ActionMenu.Content>
