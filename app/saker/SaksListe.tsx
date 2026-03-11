@@ -1,6 +1,4 @@
-import { MenuElipsisVerticalIcon } from "@navikt/aksel-icons";
 import {
-  ActionMenu,
   BodyShort,
   Button,
   Chips,
@@ -229,20 +227,7 @@ function SakKort({
           <BodyShort size="small">Ytelser: {sak.ytelser.join(", ")}</BodyShort>
         </VStack>
 
-        {handlinger && (
-          <div className="relative z-10">
-            <ActionMenu>
-              <ActionMenu.Trigger>
-                <Button
-                  variant="tertiary-neutral"
-                  icon={<MenuElipsisVerticalIcon title="Handlinger" />}
-                  size="small"
-                />
-              </ActionMenu.Trigger>
-              <ActionMenu.Content>{handlinger(sak)}</ActionMenu.Content>
-            </ActionMenu>
-          </div>
-        )}
+        {handlinger && <div className="relative z-10">{handlinger(sak)}</div>}
       </HStack>
     </div>
   );

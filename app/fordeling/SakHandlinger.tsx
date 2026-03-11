@@ -1,10 +1,11 @@
 import {
   ArrowForwardIcon,
   ArrowRightIcon,
+  MenuElipsisVerticalIcon,
   PersonPencilIcon,
   XMarkOctagonIcon,
 } from "@navikt/aksel-icons";
-import { ActionMenu } from "@navikt/ds-react";
+import { ActionMenu, Button } from "@navikt/ds-react";
 import { useState } from "react";
 import type { Sak } from "~/saker/typer";
 import { EndreStatusModal } from "~/saker/handlinger/EndreStatusModal";
@@ -19,7 +20,7 @@ interface SakHandlingerProps {
   seksjoner: string[];
 }
 
-/** Handlingsmeny for en sak i listevisiningen */
+/** Handlingsmeny for en sak i listevisningen */
 export function SakHandlinger({ sak, saksbehandlere, seksjoner }: SakHandlingerProps) {
   const [åpenModal, setÅpenModal] = useState<"tildel" | "videresend" | "status" | "henlegg" | null>(
     null,
@@ -31,33 +32,44 @@ export function SakHandlinger({ sak, saksbehandlere, seksjoner }: SakHandlingerP
 
   return (
     <>
-      <ActionMenu.Item
-        onSelect={() => setÅpenModal("tildel")}
-        icon={<PersonPencilIcon aria-hidden />}
-      >
-        Tildel saksbehandler
-      </ActionMenu.Item>
-      <ActionMenu.Item
-        onSelect={() => setÅpenModal("videresend")}
-        icon={<ArrowForwardIcon aria-hidden />}
-      >
-        Videresend til seksjon
-      </ActionMenu.Item>
-      {nesteStatus && (
-        <ActionMenu.Item
-          onSelect={() => setÅpenModal("status")}
-          icon={<ArrowRightIcon aria-hidden />}
-        >
-          Flytt til {nesteStatus}
-        </ActionMenu.Item>
-      )}
-      <ActionMenu.Divider />
-      <ActionMenu.Item
-        onSelect={() => setÅpenModal("henlegg")}
-        icon={<XMarkOctagonIcon aria-hidden />}
-      >
-        Henlegg
-      </ActionMenu.Item>
+      <ActionMenu>
+        <ActionMenu.Trigger>
+          <Button
+            variant="tertiary-neutral"
+            icon={<MenuElipsisVerticalIcon title="Handlinger" />}
+            size="small"
+          />
+        </ActionMenu.Trigger>
+        <ActionMenu.Content>
+          <ActionMenu.Item
+            onSelect={() => setÅpenModal("tildel")}
+            icon={<PersonPencilIcon aria-hidden />}
+          >
+            Tildel saksbehandler
+          </ActionMenu.Item>
+          <ActionMenu.Item
+            onSelect={() => setÅpenModal("videresend")}
+            icon={<ArrowForwardIcon aria-hidden />}
+          >
+            Videresend til seksjon
+          </ActionMenu.Item>
+          {nesteStatus && (
+            <ActionMenu.Item
+              onSelect={() => setÅpenModal("status")}
+              icon={<ArrowRightIcon aria-hidden />}
+            >
+              Flytt til {nesteStatus}
+            </ActionMenu.Item>
+          )}
+          <ActionMenu.Divider />
+          <ActionMenu.Item
+            onSelect={() => setÅpenModal("henlegg")}
+            icon={<XMarkOctagonIcon aria-hidden />}
+          >
+            Henlegg
+          </ActionMenu.Item>
+        </ActionMenu.Content>
+      </ActionMenu>
 
       <TildelSaksbehandlerModal
         sakId={sak.id}
