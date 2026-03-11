@@ -119,12 +119,18 @@ export default function RegistrerSakSide() {
         </Heading>
 
         <Form method="post" className="max-w-3xl">
-          <VStack gap="space-8">
-            <Box padding="space-6" borderRadius="8" background="raised">
+          <VStack gap="space-16">
+            <Box
+              padding="space-12"
+              borderRadius="8"
+              borderWidth="1"
+              borderColor="neutral-subtle"
+              background="raised"
+            >
               <Heading level="2" size="small" spacing>
                 Saksinformasjon
               </Heading>
-              <VStack gap="space-4">
+              <VStack gap="space-8">
                 <div>
                   <TextField
                     name="fødselsnummer"
@@ -186,7 +192,13 @@ export default function RegistrerSakSide() {
               </VStack>
             </Box>
 
-            <Box padding="space-6" borderRadius="8" background="raised">
+            <Box
+              padding="space-12"
+              borderRadius="8"
+              borderWidth="1"
+              borderColor="neutral-subtle"
+              background="raised"
+            >
               <Heading level="2" size="small" spacing>
                 Ytelser og klassifisering
               </Heading>
@@ -237,31 +249,41 @@ export default function RegistrerSakSide() {
               </HStack>
             </Box>
 
-            <Box padding="space-6" borderRadius="8" background="raised">
+            <Box
+              padding="space-12"
+              borderRadius="8"
+              borderWidth="1"
+              borderColor="neutral-subtle"
+              background="raised"
+            >
               <Heading level="2" size="small" spacing>
                 Kilde og kontaktinformasjon
               </Heading>
-              <HStack gap="space-8">
-                <Select
-                  name="kilde"
-                  label="Kilde"
-                  error={feil?.kilde?.join(", ")}
-                >
-                  <option value="">Velg kilde</option>
-                  {kilder.map((kilde) => (
-                    <option key={kilde} value={kilde}>
-                      {formaterKilde(kilde)}
-                    </option>
-                  ))}
-                </Select>
-
-                <TextField
-                  name="kontaktNavn"
-                  label="Kontaktperson – navn"
-                  autoComplete="off"
-                />
-
-                <HStack gap="space-8">
+              <VStack gap="space-8">
+                <div>
+                  <Select
+                    name="kilde"
+                    label="Kilde"
+                    error={feil?.kilde?.join(", ")}
+                    className="w-fit"
+                  >
+                    <option value="">Velg kilde</option>
+                    {kilder.map((kilde) => (
+                      <option key={kilde} value={kilde}>
+                        {formaterKilde(kilde)}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+                <Heading level="3" size="xsmall" spacing={false}>
+                  Kontaktinformasjon
+                </Heading>
+                <HStack gap="space-8" align="end">
+                  <TextField
+                    name="kontaktNavn"
+                    label="Navn"
+                    autoComplete="off"
+                  />
                   <TextField
                     name="kontaktTelefon"
                     label="Telefon"
@@ -274,15 +296,20 @@ export default function RegistrerSakSide() {
                     type="email"
                     autoComplete="off"
                   />
+                  <Checkbox name="anonymt" value="on">
+                    Anonymt tips
+                  </Checkbox>
                 </HStack>
-
-                <Checkbox name="anonymt" value="on">
-                  Anonymt tips
-                </Checkbox>
-              </HStack>
+              </VStack>
             </Box>
 
-            <Box padding="space-6" borderRadius="8" background="raised">
+            <Box
+              padding="space-12"
+              borderRadius="8"
+              borderWidth="1"
+              borderColor="neutral-subtle"
+              background="raised"
+            >
               <Heading level="2" size="small" spacing>
                 Beskrivelse
               </Heading>
