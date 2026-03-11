@@ -116,6 +116,7 @@ export function JoarkOversikt({ journalposter }: JoarkOversiktProps) {
                         <Link href={post.dokumentUrl} target="_blank" rel="noopener noreferrer">
                           <HStack gap="space-1" align="center" wrap={false}>
                             {post.tittel}
+                            <span className="sr-only">(åpnes i ny fane)</span>
                             <ExternalLinkIcon aria-hidden fontSize="1rem" />
                           </HStack>
                         </Link>
