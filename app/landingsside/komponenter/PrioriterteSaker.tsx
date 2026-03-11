@@ -15,7 +15,7 @@ function dagerSiden(dato: string): number {
 export function PrioriterteSaker({ saker }: { saker: Sak[] }) {
   return (
     <Box
-      padding="space-6"
+      padding="space-8"
       borderRadius="8"
       borderWidth="1"
       borderColor="neutral-subtle"

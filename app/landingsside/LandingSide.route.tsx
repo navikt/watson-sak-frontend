@@ -19,7 +19,7 @@ export default function LandingSide() {
     <Page>
       <title>Dashboard – Watson Sak</title>
       <PageBlock width="lg" gutters>
-        <VStack gap="space-8" className="mt-4 mb-8">
+        <VStack gap="space-16" className="mt-4 mb-8">
           <Velkomst
             antallUnderBehandling={data.nøkkeltall.underUtredning}
             antallTipsMottatt={data.nøkkeltall.tipsMottatt}
@@ -27,9 +27,9 @@ export default function LandingSide() {
 
           <Nokkeltall data={data.nøkkeltall} />
 
-          <HGrid columns={{ xs: 1, md: "2fr 1fr" }} gap="space-6">
+          <HGrid columns={{ xs: 1, md: "2fr 1fr" }} gap="space-8">
             <MineSakerOversikt saker={data.mineSaker} />
-            <VStack gap="space-6">
+            <VStack gap="space-8">
               <PrioriterteSaker saker={data.prioriterteSaker} />
               <Varslinger />
             </VStack>

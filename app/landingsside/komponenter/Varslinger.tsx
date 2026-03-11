@@ -37,7 +37,7 @@ const mockVarslinger: Varsling[] = [
 export function Varslinger() {
   return (
     <Box
-      padding="space-6"
+      padding="space-8"
       borderRadius="8"
       borderWidth="1"
       borderColor="neutral-subtle"
