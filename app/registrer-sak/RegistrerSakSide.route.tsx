@@ -1,5 +1,6 @@
 import {
   BodyShort,
+  Box,
   Button,
   Checkbox,
   DatePicker,
@@ -65,7 +66,9 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   const data = resultat.data;
-  const nesteId = String(Math.max(0, ...mockSaker.map((s) => Number(s.id))) + 1);
+  const nesteId = String(
+    Math.max(0, ...mockSaker.map((s) => Number(s.id))) + 1,
+  );
 
   mockSaker.push({
     id: nesteId,
@@ -96,10 +99,13 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function RegistrerSakSide() {
-  const { avdelinger, kategorier, tags, ytelser, kilder } = useLoaderData<typeof loader>();
+  const { avdelinger, kategorier, tags, ytelser, kilder } =
+    useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const feil =
-    actionData && "feil" in actionData ? (actionData.feil as Record<string, string[]>) : undefined;
+    actionData && "feil" in actionData
+      ? (actionData.feil as Record<string, string[]>)
+      : undefined;
 
   const [valgteYtelser, setValgteYtelser] = useState<string[]>([]);
   const [valgteTags, setValgteTags] = useState<string[]>([]);
@@ -112,125 +118,174 @@ export default function RegistrerSakSide() {
           Registrer sak
         </Heading>
 
-        <Form method="post">
+        <Form method="post" className="max-w-3xl">
           <VStack gap="space-8">
-            <VStack gap="space-4">
-              <Heading level="2" size="medium">
+            <Box padding="space-6" borderRadius="8" background="raised">
+              <Heading level="2" size="small" spacing>
                 Saksinformasjon
               </Heading>
-
-              <TextField
-                name="fødselsnummer"
-                label="Fødselsnummer"
-                description="11 siffer"
-                inputMode="numeric"
-                maxLength={11}
-                error={feil?.fødselsnummer?.join(", ")}
-                autoComplete="off"
-              />
-
-              <UNSAFE_Combobox
-                label="Ytelser"
-                options={ytelser}
-                isMultiSelect
-                selectedOptions={valgteYtelser}
-                onToggleSelected={(option, isSelected) => {
-                  setValgteYtelser((prev) =>
-                    isSelected ? [...prev, option] : prev.filter((y) => y !== option),
-                  );
-                }}
-              />
-              {valgteYtelser.map((ytelse) => (
-                <input key={ytelse} type="hidden" name="ytelser" value={ytelse} />
-              ))}
-              {feil?.ytelser && (
-                <BodyShort className="text-ax-text-danger" size="small">
-                  {feil.ytelser.join(", ")}
-                </BodyShort>
-              )}
-
-              <HStack gap="space-4">
-                <DatePicker>
-                  <DatePicker.Input
-                    name="fraDato"
-                    label="Fra dato"
-                    error={feil?.fraDato?.join(", ")}
+              <VStack gap="space-4">
+                <div>
+                  <TextField
+                    name="fødselsnummer"
+                    label="Fødselsnummer"
+                    description="11 siffer"
+                    inputMode="numeric"
+                    maxLength={11}
+                    htmlSize={20}
+                    error={feil?.fødselsnummer?.join(", ")}
+                    autoComplete="off"
                   />
-                </DatePicker>
+                </div>
 
-                <DatePicker>
-                  <DatePicker.Input
-                    name="tilDato"
-                    label="Til dato"
-                    error={feil?.tilDato?.join(", ")}
-                  />
-                </DatePicker>
-              </HStack>
+                <HStack gap="space-8">
+                  <Select
+                    name="avdeling"
+                    label="Avdeling"
+                    error={feil?.avdeling?.join(", ")}
+                  >
+                    <option value="">Velg avdeling</option>
+                    {avdelinger.map((avd) => (
+                      <option key={avd} value={avd}>
+                        {avd}
+                      </option>
+                    ))}
+                  </Select>
 
-              <Select name="avdeling" label="Avdeling" error={feil?.avdeling?.join(", ")}>
-                <option value="">Velg avdeling</option>
-                {avdelinger.map((avd) => (
-                  <option key={avd} value={avd}>
-                    {avd}
-                  </option>
-                ))}
-              </Select>
+                  <Select
+                    name="kategori"
+                    label="Kategori"
+                    error={feil?.kategori?.join(", ")}
+                  >
+                    <option value="">Velg kategori</option>
+                    {kategorier.map((kat) => (
+                      <option key={kat} value={kat}>
+                        {kat}
+                      </option>
+                    ))}
+                  </Select>
+                </HStack>
 
-              <Select name="kategori" label="Kategori" error={feil?.kategori?.join(", ")}>
-                <option value="">Velg kategori</option>
-                {kategorier.map((kat) => (
-                  <option key={kat} value={kat}>
-                    {kat}
-                  </option>
-                ))}
-              </Select>
+                <HStack gap="space-8">
+                  <DatePicker>
+                    <DatePicker.Input
+                      name="fraDato"
+                      label="Fra dato"
+                      error={feil?.fraDato?.join(", ")}
+                    />
+                  </DatePicker>
 
-              <UNSAFE_Combobox
-                label="Tags"
-                options={tags}
-                isMultiSelect
-                selectedOptions={valgteTags}
-                onToggleSelected={(option, isSelected) => {
-                  setValgteTags((prev) =>
-                    isSelected ? [...prev, option] : prev.filter((t) => t !== option),
-                  );
-                }}
-              />
-              {valgteTags.map((tag) => (
-                <input key={tag} type="hidden" name="tags" value={tag} />
-              ))}
-            </VStack>
+                  <DatePicker>
+                    <DatePicker.Input
+                      name="tilDato"
+                      label="Til dato"
+                      error={feil?.tilDato?.join(", ")}
+                    />
+                  </DatePicker>
+                </HStack>
+              </VStack>
+            </Box>
 
-            <VStack gap="space-4">
-              <Heading level="2" size="medium">
-                Kildeinformasjon
+            <Box padding="space-6" borderRadius="8" background="raised">
+              <Heading level="2" size="small" spacing>
+                Ytelser og klassifisering
               </Heading>
-
-              <Select name="kilde" label="Kilde" error={feil?.kilde?.join(", ")}>
-                <option value="">Velg kilde</option>
-                {kilder.map((kilde) => (
-                  <option key={kilde} value={kilde}>
-                    {formaterKilde(kilde)}
-                  </option>
+              <HStack gap="space-8">
+                <UNSAFE_Combobox
+                  label="Ytelser"
+                  options={ytelser}
+                  isMultiSelect
+                  selectedOptions={valgteYtelser}
+                  onToggleSelected={(option, isSelected) => {
+                    setValgteYtelser((prev) =>
+                      isSelected
+                        ? [...prev, option]
+                        : prev.filter((y) => y !== option),
+                    );
+                  }}
+                />
+                {valgteYtelser.map((ytelse) => (
+                  <input
+                    key={ytelse}
+                    type="hidden"
+                    name="ytelser"
+                    value={ytelse}
+                  />
                 ))}
-              </Select>
+                {feil?.ytelser && (
+                  <BodyShort className="text-ax-text-danger" size="small">
+                    {feil.ytelser.join(", ")}
+                  </BodyShort>
+                )}
 
-              <TextField name="kontaktNavn" label="Kontaktperson – navn" autoComplete="off" />
+                <UNSAFE_Combobox
+                  label="Tags"
+                  options={tags}
+                  isMultiSelect
+                  selectedOptions={valgteTags}
+                  onToggleSelected={(option, isSelected) => {
+                    setValgteTags((prev) =>
+                      isSelected
+                        ? [...prev, option]
+                        : prev.filter((t) => t !== option),
+                    );
+                  }}
+                />
+                {valgteTags.map((tag) => (
+                  <input key={tag} type="hidden" name="tags" value={tag} />
+                ))}
+              </HStack>
+            </Box>
 
-              <HStack gap="space-4">
+            <Box padding="space-6" borderRadius="8" background="raised">
+              <Heading level="2" size="small" spacing>
+                Kilde og kontaktinformasjon
+              </Heading>
+              <HStack gap="space-8">
+                <Select
+                  name="kilde"
+                  label="Kilde"
+                  error={feil?.kilde?.join(", ")}
+                >
+                  <option value="">Velg kilde</option>
+                  {kilder.map((kilde) => (
+                    <option key={kilde} value={kilde}>
+                      {formaterKilde(kilde)}
+                    </option>
+                  ))}
+                </Select>
+
                 <TextField
-                  name="kontaktTelefon"
-                  label="Telefon"
-                  inputMode="tel"
+                  name="kontaktNavn"
+                  label="Kontaktperson – navn"
                   autoComplete="off"
                 />
-                <TextField name="kontaktEpost" label="E-post" type="email" autoComplete="off" />
+
+                <HStack gap="space-8">
+                  <TextField
+                    name="kontaktTelefon"
+                    label="Telefon"
+                    inputMode="tel"
+                    autoComplete="off"
+                  />
+                  <TextField
+                    name="kontaktEpost"
+                    label="E-post"
+                    type="email"
+                    autoComplete="off"
+                  />
+                </HStack>
+
+                <Checkbox name="anonymt" value="on">
+                  Anonymt tips
+                </Checkbox>
               </HStack>
+            </Box>
 
-              <Checkbox name="anonymt" value="on">
-                Anonymt tips
-              </Checkbox>
-
+            <Box padding="space-6" borderRadius="8" background="raised">
+              <Heading level="2" size="small" spacing>
+                Beskrivelse
+              </Heading>
               <Textarea
                 name="beskrivelse"
                 label="Beskrivelse"
@@ -238,11 +293,16 @@ export default function RegistrerSakSide() {
                 minRows={4}
                 error={feil?.beskrivelse?.join(", ")}
               />
-            </VStack>
+            </Box>
 
             <HStack gap="space-4">
               <Button type="submit">Registrer sak</Button>
-              <Button type="button" variant="secondary" as="a" href={RouteConfig.FORDELING}>
+              <Button
+                type="button"
+                variant="secondary"
+                as="a"
+                href={RouteConfig.FORDELING}
+              >
                 Avbryt
               </Button>
             </HStack>
