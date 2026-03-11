@@ -23,6 +23,8 @@ import { SakFilområde } from "./filer/SakFilområde";
 import { SakHandlingerKnapper } from "./handlinger/SakHandlingerKnapper";
 import { SakHistorikk } from "./historikk/SakHistorikk";
 import { hentHistorikk, leggTilHendelse } from "./historikk/mock-data.server";
+import { hentJournalposter } from "./joark/mock-data.server";
+import { JoarkOversikt } from "./joark/JoarkOversikt";
 import { formaterKilde, hentStatusVariant } from "./utils";
 
 const alleSaker = [...mockSaker, ...mockMineSaker];
@@ -34,7 +36,15 @@ export function loader({ params }: Route.LoaderArgs) {
   }
   const historikk = hentHistorikk(sak.id);
   const filer = hentFilerForSak(sak.id);
-  return { sak, historikk, filer, saksbehandlere: mockSaksbehandlere, seksjoner: mockSeksjoner };
+  const journalposter = hentJournalposter(sak.fødselsnummer);
+  return {
+    sak,
+    historikk,
+    filer,
+    journalposter,
+    saksbehandlere: mockSaksbehandlere,
+    seksjoner: mockSeksjoner,
+  };
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
@@ -102,7 +112,8 @@ function Felt({ label, children }: { label: string; children: React.ReactNode })
 }
 
 export default function SakDetaljSide() {
-  const { sak, historikk, filer, saksbehandlere, seksjoner } = useLoaderData<typeof loader>();
+  const { sak, historikk, filer, journalposter, saksbehandlere, seksjoner } =
+    useLoaderData<typeof loader>();
   const navigate = useNavigate();
 
   return (
@@ -232,6 +243,8 @@ export default function SakDetaljSide() {
               )}
 
               <SakFilområde filer={filer} />
+
+              <JoarkOversikt journalposter={journalposter} />
 
               <SakHistorikk hendelser={historikk} />
             </VStack>
