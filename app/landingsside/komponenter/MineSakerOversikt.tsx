@@ -8,7 +8,7 @@ import { Kort } from "~/utils/Kort";
 
 export function MineSakerOversikt({ saker }: { saker: Sak[] }) {
   return (
-    <Kort>
+    <Kort as="section">
       <VStack gap="space-4">
         <div className="flex items-center justify-between">
           <Heading level="2" size="medium">

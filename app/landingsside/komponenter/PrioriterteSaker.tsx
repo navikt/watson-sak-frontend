@@ -15,7 +15,7 @@ function dagerSiden(dato: string): number {
 
 export function PrioriterteSaker({ saker }: { saker: Sak[] }) {
   return (
-    <Kort>
+    <Kort as="section">
       <VStack gap="space-4">
         <div className="flex items-center justify-between">
           <Heading level="2" size="medium">

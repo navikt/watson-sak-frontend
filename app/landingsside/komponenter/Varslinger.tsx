@@ -37,7 +37,7 @@ const mockVarslinger: Varsling[] = [
 
 export function Varslinger() {
   return (
-    <Kort>
+    <Kort as="section">
       <VStack gap="space-4">
         <Heading level="2" size="medium">
           Varslinger

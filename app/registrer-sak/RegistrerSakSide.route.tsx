@@ -115,7 +115,7 @@ export default function RegistrerSakSide() {
 
         <Form method="post" className="max-w-3xl">
           <VStack gap="space-16">
-            <Kort padding="space-12">
+            <Kort as="section" padding="space-12">
               <Heading level="2" size="small" spacing>
                 Saksinformasjon
               </Heading>
@@ -173,7 +173,7 @@ export default function RegistrerSakSide() {
               </VStack>
             </Kort>
 
-            <Kort padding="space-12">
+            <Kort as="section" padding="space-12">
               <Heading level="2" size="small" spacing>
                 Ytelser og klassifisering
               </Heading>
@@ -215,7 +215,7 @@ export default function RegistrerSakSide() {
               </HStack>
             </Kort>
 
-            <Kort padding="space-12">
+            <Kort as="section" padding="space-12">
               <Heading level="2" size="small" spacing>
                 Kilde og kontaktinformasjon
               </Heading>
@@ -254,7 +254,7 @@ export default function RegistrerSakSide() {
               </VStack>
             </Kort>
 
-            <Kort padding="space-12">
+            <Kort as="section" padding="space-12">
               <Heading level="2" size="small" spacing>
                 Beskrivelse
               </Heading>
