@@ -18,7 +18,7 @@ export function beregnAntallPerStatus(saker: Sak[]): Record<SakStatus, number> {
   return resultat;
 }
 
-export interface BehandlingstidResultat {
+interface BehandlingstidResultat {
   min: number;
   median: number;
   gjennomsnitt: number;

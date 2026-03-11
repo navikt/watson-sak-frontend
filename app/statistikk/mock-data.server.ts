@@ -3,29 +3,6 @@ import { type Sak, sakSchema } from "~/saker/typer";
 /** Avslutningsdatoer for avsluttede/henlagte saker (sakId → ISO-dato) */
 export type Avslutningsdatoer = Record<string, string>;
 
-const ytelser = [
-  "Dagpenger",
-  "Sykepenger",
-  "Foreldrepenger",
-  "Pleiepenger",
-  "Uføretrygd",
-  "Arbeidsavklaringspenger",
-  "Overgangsstønad",
-  "Kontantstøtte",
-];
-
-const seksjoner = ["Seksjon A", "Seksjon B", "Seksjon C", "Seksjon D", "Seksjon E"];
-
-const kilder = [
-  "telefon",
-  "epost",
-  "brev",
-  "registersamkjøring",
-  "saksbehandler",
-  "publikum",
-  "annet",
-] as const;
-
 const rådata: Sak[] = [
   // Tips mottatt (6 stk)
   {

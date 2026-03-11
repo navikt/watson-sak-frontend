@@ -7,7 +7,6 @@ import {
   beregnBehandlingstid,
   beregnFordelingPerAntallYtelser,
   beregnFordelingPerYtelse,
-  type BehandlingstidResultat,
   type GruppertAntall,
 } from "./beregninger";
 import { mockAvslutningsdatoer, mockStatistikkSaker } from "./mock-data.server";

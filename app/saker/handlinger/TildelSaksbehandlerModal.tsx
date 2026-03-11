@@ -1,5 +1,5 @@
 import { PersonPencilIcon } from "@navikt/aksel-icons";
-import { BodyShort, Button, Heading, Modal, UNSAFE_Combobox, VStack } from "@navikt/ds-react";
+import { BodyShort, Button, Modal, UNSAFE_Combobox, VStack } from "@navikt/ds-react";
 import { useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { RouteConfig } from "~/routeConfig";

@@ -1,5 +1,5 @@
 import { XMarkOctagonIcon } from "@navikt/aksel-icons";
-import { Alert, BodyShort, Button, Modal, Textarea, VStack } from "@navikt/ds-react";
+import { Alert, Button, Modal, Textarea, VStack } from "@navikt/ds-react";
 import { useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { RouteConfig } from "~/routeConfig";
