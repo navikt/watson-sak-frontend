@@ -3,13 +3,8 @@ import { ArrowRightIcon } from "@navikt/aksel-icons";
 import { Link as RouterLink } from "react-router";
 import type { Sak } from "~/saker/typer";
 import { RouteConfig } from "~/routeConfig";
-import { Kort } from "~/utils/Kort";
-
-function dagerSiden(dato: string): number {
-  const nå = new Date();
-  const innmeldt = new Date(dato);
-  return Math.floor((nå.getTime() - innmeldt.getTime()) / (1000 * 60 * 60 * 24));
-}
+import { forskjellIDager } from "~/utils/date-utils";
+import { Kort } from "~/komponenter/Kort";
 
 export function PrioriterteSaker({ saker }: { saker: Sak[] }) {
   return (
@@ -31,7 +26,8 @@ export function PrioriterteSaker({ saker }: { saker: Sak[] }) {
         ) : (
           <VStack as="ul" gap="space-4" className="list-none m-0 p-0">
             {saker.slice(0, 5).map((sak) => {
-              const alder = dagerSiden(sak.datoInnmeldt);
+              const alder = forskjellIDager(sak.datoInnmeldt, new Date());
+              const alderTekst = alder === 0 ? "i dag" : `${alder} dager siden`;
               return (
                 <li key={sak.id}>
                   <Link
@@ -42,10 +38,10 @@ export function PrioriterteSaker({ saker }: { saker: Sak[] }) {
                     <div className="flex items-start justify-between gap-2">
                       <VStack gap="space-1">
                         <BodyShort size="small" weight="semibold">
-                          #{sak.id} – {sak.ytelser[0]}
+                          #{sak.id} – {sak.ytelser.at(0) ?? "Ukjent ytelse"}
                         </BodyShort>
                         <BodyShort size="small" className="text-ax-text-neutral-subtle">
-                          {sak.seksjon} · {alder} dager siden
+                          {sak.seksjon} · {alderTekst}
                         </BodyShort>
                       </VStack>
                       <Tag variant={alder > 30 ? "warning" : "info"} size="xsmall">
