@@ -18,6 +18,8 @@ import { mockMineSaker } from "~/mine-saker/mock-data.server";
 import { mockSaksbehandlere } from "~/saker/mock-saksbehandlere.server";
 import { mockSeksjoner } from "~/saker/mock-seksjoner.server";
 import type { Route } from "./+types/SakDetaljSide.route";
+import { hentFilerForSak } from "./filer/mock-data.server";
+import { SakFilområde } from "./filer/SakFilområde";
 import { SakHandlingerKnapper } from "./handlinger/SakHandlingerKnapper";
 import { SakHistorikk } from "./historikk/SakHistorikk";
 import { hentHistorikk, leggTilHendelse } from "./historikk/mock-data.server";
@@ -31,7 +33,8 @@ export function loader({ params }: Route.LoaderArgs) {
     throw data("Sak ikke funnet", { status: 404 });
   }
   const historikk = hentHistorikk(sak.id);
-  return { sak, historikk, saksbehandlere: mockSaksbehandlere, seksjoner: mockSeksjoner };
+  const filer = hentFilerForSak(sak.id);
+  return { sak, historikk, filer, saksbehandlere: mockSaksbehandlere, seksjoner: mockSeksjoner };
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
@@ -99,7 +102,7 @@ function Felt({ label, children }: { label: string; children: React.ReactNode })
 }
 
 export default function SakDetaljSide() {
-  const { sak, historikk, saksbehandlere, seksjoner } = useLoaderData<typeof loader>();
+  const { sak, historikk, filer, saksbehandlere, seksjoner } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
 
   return (
@@ -227,6 +230,8 @@ export default function SakDetaljSide() {
                   <BodyShort>{sak.beskrivelse ?? sak.notat}</BodyShort>
                 </Box>
               )}
+
+              <SakFilområde filer={filer} />
 
               <SakHistorikk hendelser={historikk} />
             </VStack>
