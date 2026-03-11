@@ -1,5 +1,6 @@
-import { BodyShort, Box, Heading, HGrid, VStack } from "@navikt/ds-react";
+import { BodyShort, Heading, HGrid, VStack } from "@navikt/ds-react";
 import type { SakStatus } from "~/saker/typer";
+import { Kort } from "~/utils/Kort";
 
 interface BehandlingstidData {
   min: number;
@@ -21,13 +22,7 @@ export function Avdelingsstatistikk({
   const totalt = Object.values(antallPerStatus).reduce((a, b) => a + b, 0);
 
   return (
-    <Box
-      padding="space-8"
-      borderRadius="8"
-      borderWidth="1"
-      borderColor="neutral-subtle"
-      background="raised"
-    >
+    <Kort>
       <VStack gap="space-4">
         <Heading level="2" size="medium">
           Avdelingsstatistikk
@@ -86,6 +81,6 @@ export function Avdelingsstatistikk({
           )}
         </HGrid>
       </VStack>
-    </Box>
+    </Kort>
   );
 }

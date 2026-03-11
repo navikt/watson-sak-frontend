@@ -1,4 +1,4 @@
-import { BodyShort, Box, Heading, HGrid, VStack } from "@navikt/ds-react";
+import { BodyShort, Heading, HGrid, VStack } from "@navikt/ds-react";
 import {
   FolderIcon,
   TasklistIcon,
@@ -8,6 +8,7 @@ import {
 import { Link } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import type { ReactNode } from "react";
+import { Kort } from "~/utils/Kort";
 
 const lenker = [
   {
@@ -70,14 +71,7 @@ function Hurtiglenke({
 }) {
   return (
     <Link to={to} className="no-underline">
-      <Box
-        padding="space-8"
-        borderRadius="8"
-        borderWidth="1"
-        borderColor="neutral-subtle"
-        background="raised"
-        className="h-full transition-shadow hover:shadow-md"
-      >
+      <Kort className="h-full transition-shadow hover:shadow-md">
         <VStack gap="space-2">
           <span className="text-ax-text-accent">{ikon}</span>
           <BodyShort weight="semibold">{tittel}</BodyShort>
@@ -85,7 +79,7 @@ function Hurtiglenke({
             {beskrivelse}
           </BodyShort>
         </VStack>
-      </Box>
+      </Kort>
     </Link>
   );
 }

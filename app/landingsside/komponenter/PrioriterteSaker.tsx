@@ -1,8 +1,9 @@
-import { BodyShort, Box, Heading, Link, Tag, VStack } from "@navikt/ds-react";
+import { BodyShort, Heading, Link, Tag, VStack } from "@navikt/ds-react";
 import { ArrowRightIcon } from "@navikt/aksel-icons";
 import { Link as RouterLink } from "react-router";
 import type { Sak } from "~/saker/typer";
 import { RouteConfig } from "~/routeConfig";
+import { Kort } from "~/utils/Kort";
 
 function dagerSiden(dato: string): number {
   const nå = new Date();
@@ -14,13 +15,7 @@ function dagerSiden(dato: string): number {
 
 export function PrioriterteSaker({ saker }: { saker: Sak[] }) {
   return (
-    <Box
-      padding="space-8"
-      borderRadius="8"
-      borderWidth="1"
-      borderColor="neutral-subtle"
-      background="raised"
-    >
+    <Kort>
       <VStack gap="space-4">
         <div className="flex items-center justify-between">
           <Heading level="2" size="medium">
@@ -72,6 +67,6 @@ export function PrioriterteSaker({ saker }: { saker: Sak[] }) {
           </VStack>
         )}
       </VStack>
-    </Box>
+    </Kort>
   );
 }

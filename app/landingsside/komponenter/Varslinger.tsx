@@ -1,10 +1,11 @@
-import { BodyShort, Box, Heading, VStack } from "@navikt/ds-react";
+import { BodyShort, Heading, VStack } from "@navikt/ds-react";
 import {
   BellIcon,
   PersonIcon,
   ClockIcon,
 } from "@navikt/aksel-icons";
 import type { ReactNode } from "react";
+import { Kort } from "~/utils/Kort";
 
 interface Varsling {
   id: string;
@@ -36,13 +37,7 @@ const mockVarslinger: Varsling[] = [
 
 export function Varslinger() {
   return (
-    <Box
-      padding="space-8"
-      borderRadius="8"
-      borderWidth="1"
-      borderColor="neutral-subtle"
-      background="raised"
-    >
+    <Kort>
       <VStack gap="space-4">
         <Heading level="2" size="medium">
           Varslinger
@@ -77,6 +72,6 @@ export function Varslinger() {
           Varslinger er en kommende funksjon
         </BodyShort>
       </VStack>
-    </Box>
+    </Kort>
   );
 }

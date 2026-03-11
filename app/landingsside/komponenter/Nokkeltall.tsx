@@ -1,4 +1,4 @@
-import { BodyShort, Box, Heading, HGrid, VStack } from "@navikt/ds-react";
+import { BodyShort, Heading, HGrid, VStack } from "@navikt/ds-react";
 import {
   BulletListIcon,
   EnvelopeClosedIcon,
@@ -6,6 +6,7 @@ import {
   MagnifyingGlassIcon,
 } from "@navikt/aksel-icons";
 import type { ReactNode } from "react";
+import { Kort } from "~/utils/Kort";
 
 interface NøkkeltallData {
   totalt: number;
@@ -62,13 +63,7 @@ function NøkkeltallKort({
   ikon: ReactNode;
 }) {
   return (
-    <Box
-      padding="space-8"
-      borderRadius="8"
-      borderWidth="1"
-      borderColor="neutral-subtle"
-      background="raised"
-    >
+    <Kort>
       <VStack gap="space-2">
         <div className="flex items-center gap-2 text-ax-text-neutral-subtle">
           {ikon}
@@ -76,6 +71,6 @@ function NøkkeltallKort({
         </div>
         <span className="text-3xl font-semibold">{verdi}</span>
       </VStack>
-    </Box>
+    </Kort>
   );
 }
