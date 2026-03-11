@@ -10,7 +10,10 @@ const lenker = [
 
 export function AppSidebar() {
   return (
-    <nav aria-label="Hovedmeny" className="w-56 shrink-0 border-r border-ax-border-neutral-subtle bg-ax-bg-neutral-soft">
+    <nav
+      aria-label="Hovedmeny"
+      className="w-56 shrink-0 border-r border-ax-border-neutral-subtle bg-ax-bg-neutral-soft"
+    >
       <ul className="flex flex-col list-none m-0 p-0 pt-4">
         {lenker.map(({ to, label }) => (
           <li key={to}>

@@ -20,10 +20,7 @@ export default function MineSakerSide() {
           Mine saker
         </Heading>
 
-        <SaksListe
-          saker={saker}
-          detaljSti={RouteConfig.SAKER_DETALJ.replace("/:sakId", "")}
-        />
+        <SaksListe saker={saker} detaljSti={RouteConfig.SAKER_DETALJ.replace("/:sakId", "")} />
       </PageBlock>
     </Page>
   );

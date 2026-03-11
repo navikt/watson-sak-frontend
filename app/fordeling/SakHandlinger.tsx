@@ -9,10 +9,7 @@ import { useState } from "react";
 import type { Sak } from "~/saker/typer";
 import { EndreStatusModal } from "~/saker/handlinger/EndreStatusModal";
 import { HenleggModal } from "~/saker/handlinger/HenleggModal";
-import {
-  erAktivSak,
-  hentNesteStatus,
-} from "~/saker/handlinger/tilgjengeligeHandlinger";
+import { erAktivSak, hentNesteStatus } from "~/saker/handlinger/tilgjengeligeHandlinger";
 import { TildelSaksbehandlerModal } from "~/saker/handlinger/TildelSaksbehandlerModal";
 import { VideresendTilSeksjonModal } from "~/saker/handlinger/VideresendTilSeksjonModal";
 
@@ -23,14 +20,10 @@ interface SakHandlingerProps {
 }
 
 /** Handlingsmeny for en sak i listevisiningen */
-export function SakHandlinger({
-  sak,
-  saksbehandlere,
-  seksjoner,
-}: SakHandlingerProps) {
-  const [åpenModal, setÅpenModal] = useState<
-    "tildel" | "videresend" | "status" | "henlegg" | null
-  >(null);
+export function SakHandlinger({ sak, saksbehandlere, seksjoner }: SakHandlingerProps) {
+  const [åpenModal, setÅpenModal] = useState<"tildel" | "videresend" | "status" | "henlegg" | null>(
+    null,
+  );
 
   if (!erAktivSak(sak.status)) return null;
 

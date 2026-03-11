@@ -31,11 +31,7 @@ export default function FordelingSide() {
           saker={saker}
           detaljSti={RouteConfig.SAKER_DETALJ.replace("/:sakId", "")}
           handlinger={(sak) => (
-            <SakHandlinger
-              sak={sak}
-              saksbehandlere={saksbehandlere}
-              seksjoner={seksjoner}
-            />
+            <SakHandlinger sak={sak} saksbehandlere={saksbehandlere} seksjoner={seksjoner} />
           )}
         />
       </PageBlock>

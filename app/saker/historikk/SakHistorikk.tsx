@@ -126,9 +126,7 @@ export function SakHistorikk({ hendelser }: SakHistorikkProps) {
           onClick={() => setVisAlle((prev) => !prev)}
           className="mt-2"
         >
-          {visAlle
-            ? "Vis færre"
-            : `Vis ${hendelser.length - MAKS_SYNLIGE_HENDELSER} flere`}
+          {visAlle ? "Vis færre" : `Vis ${hendelser.length - MAKS_SYNLIGE_HENDELSER} flere`}
         </Button>
       )}
     </Box>

@@ -98,9 +98,7 @@ describe("beregnBehandlingstid", () => {
   });
 
   test("inkluderer henlagte saker", () => {
-    const saker: Sak[] = [
-      lagSak({ id: "1", status: "henlagt", datoInnmeldt: "2025-01-01" }),
-    ];
+    const saker: Sak[] = [lagSak({ id: "1", status: "henlagt", datoInnmeldt: "2025-01-01" })];
     const avslutningsdatoer: Avslutningsdatoer = {
       "1": "2025-01-15", // 14 dager
     };
@@ -136,9 +134,7 @@ describe("beregnBehandlingstid", () => {
   });
 
   test("returnerer null når ingen saker er avsluttet", () => {
-    const saker: Sak[] = [
-      lagSak({ id: "1", status: "under utredning" }),
-    ];
+    const saker: Sak[] = [lagSak({ id: "1", status: "under utredning" })];
     expect(beregnBehandlingstid(saker, {})).toBeNull();
   });
 });

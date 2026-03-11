@@ -193,7 +193,11 @@ function SakKort({
   sak,
   detaljSti,
   handlinger,
-}: { sak: Sak; detaljSti: string; handlinger?: (sak: Sak) => ReactNode }) {
+}: {
+  sak: Sak;
+  detaljSti: string;
+  handlinger?: (sak: Sak) => ReactNode;
+}) {
   return (
     <div className="relative rounded-lg border border-ax-border-neutral-subtle bg-ax-bg-default p-4 shadow-sm transition-shadow hover:shadow-md">
       <Link

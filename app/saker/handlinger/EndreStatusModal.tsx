@@ -14,12 +14,7 @@ interface EndreStatusModalProps {
   onClose: () => void;
 }
 
-export function EndreStatusModal({
-  sakId,
-  nåværendeStatus,
-  åpen,
-  onClose,
-}: EndreStatusModalProps) {
+export function EndreStatusModal({ sakId, nåværendeStatus, åpen, onClose }: EndreStatusModalProps) {
   const [notat, setNotat] = useState("");
   const [feil, setFeil] = useState<string | null>(null);
   const fetcher = useFetcher();

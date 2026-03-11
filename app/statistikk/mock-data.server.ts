@@ -14,13 +14,7 @@ const ytelser = [
   "Kontantstøtte",
 ];
 
-const seksjoner = [
-  "Seksjon A",
-  "Seksjon B",
-  "Seksjon C",
-  "Seksjon D",
-  "Seksjon E",
-];
+const seksjoner = ["Seksjon A", "Seksjon B", "Seksjon C", "Seksjon D", "Seksjon E"];
 
 const kilder = [
   "telefon",
@@ -400,9 +394,7 @@ const rådata: Sak[] = [
   },
 ];
 
-export const mockStatistikkSaker: Sak[] = rådata.map((sak) =>
-  sakSchema.parse(sak),
-);
+export const mockStatistikkSaker: Sak[] = rådata.map((sak) => sakSchema.parse(sak));
 
 /**
  * Simulerte avslutningsdatoer for avsluttede og henlagte saker.

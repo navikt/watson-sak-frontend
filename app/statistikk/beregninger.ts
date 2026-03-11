@@ -2,9 +2,7 @@ import type { Sak, SakStatus } from "~/saker/typer";
 import type { Avslutningsdatoer } from "./mock-data.server";
 
 /** Antall saker gruppert etter status */
-export function beregnAntallPerStatus(
-  saker: Sak[],
-): Record<SakStatus, number> {
+export function beregnAntallPerStatus(saker: Sak[]): Record<SakStatus, number> {
   const resultat: Record<SakStatus, number> = {
     "tips mottatt": 0,
     "tips avklart": 0,
@@ -31,9 +29,7 @@ export interface BehandlingstidResultat {
 function dagerMellom(fra: string, til: string): number {
   const fraDato = new Date(fra);
   const tilDato = new Date(til);
-  return Math.round(
-    (tilDato.getTime() - fraDato.getTime()) / (1000 * 60 * 60 * 24),
-  );
+  return Math.round((tilDato.getTime() - fraDato.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 /**
@@ -102,9 +98,7 @@ export function beregnFordelingPerYtelse(saker: Sak[]): GruppertAntall[] {
 }
 
 /** Fordeling av saker basert på antall ytelser per sak */
-export function beregnFordelingPerAntallYtelser(
-  saker: Sak[],
-): GruppertAntall[] {
+export function beregnFordelingPerAntallYtelser(saker: Sak[]): GruppertAntall[] {
   const map = new Map<number, number>();
 
   for (const sak of saker) {
