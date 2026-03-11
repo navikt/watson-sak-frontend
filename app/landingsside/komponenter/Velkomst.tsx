@@ -1,4 +1,4 @@
-import { BodyShort, Heading, VStack } from "@navikt/ds-react";
+import { BodyLong, Heading, VStack } from "@navikt/ds-react";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 
 function hentHilsen(): string {
@@ -18,22 +18,19 @@ interface VelkomstProps {
   antallTipsMottatt: number;
 }
 
-export function Velkomst({
-  antallUnderBehandling,
-  antallTipsMottatt,
-}: VelkomstProps) {
+export function Velkomst({ antallUnderBehandling, antallTipsMottatt }: VelkomstProps) {
   const bruker = useInnloggetBruker();
   const fornavn = hentFornavn(bruker.name);
 
   return (
-    <VStack gap="space-2">
-      <Heading level="1" size="large">
+    <VStack gap="space-4" className="rounded-xl bg-ax-bg-neutral-moderate px-6 py-8">
+      <Heading level="1" size="xlarge">
         {hentHilsen()}, {fornavn} 👋
       </Heading>
-      <BodyShort className="text-ax-text-neutral-subtle">
-        Du har {antallUnderBehandling} saker under behandling og{" "}
-        {antallTipsMottatt} nye tips som venter.
-      </BodyShort>
+      <BodyLong size="large" className="text-ax-text-neutral-subtle">
+        Du har {antallUnderBehandling} saker under behandling og {antallTipsMottatt} nye tips som
+        venter.
+      </BodyLong>
     </VStack>
   );
 }
