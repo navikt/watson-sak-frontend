@@ -27,5 +27,5 @@
       "version": "19"
     }
   },
-  "ignorePatterns": ["build/", "node_modules/"]
+  "ignorePatterns": ["build/", "node_modules/", ".github/skills/", ".github/agents/"]
 }

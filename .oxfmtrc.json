@@ -1,4 +1,4 @@
 {
   "organizeImports": true,
-  "ignorePatterns": ["**/*.yml", "**/*.yaml"]
+  "ignorePatterns": ["**/*.yml", "**/*.yaml", ".github/skills/**", ".github/agents/**"]
 }
