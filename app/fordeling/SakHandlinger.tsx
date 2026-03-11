@@ -1,74 +1,90 @@
 import {
   ArrowForwardIcon,
-  CheckmarkCircleIcon,
-  PencilIcon,
-  StarIcon,
-  XMarkIcon,
+  ArrowRightIcon,
+  PersonPencilIcon,
+  XMarkOctagonIcon,
 } from "@navikt/aksel-icons";
 import { ActionMenu } from "@navikt/ds-react";
+import { useState } from "react";
+import type { Sak } from "~/saker/typer";
+import { EndreStatusModal } from "~/saker/handlinger/EndreStatusModal";
+import { HenleggModal } from "~/saker/handlinger/HenleggModal";
+import { erAktivSak, hentNesteStatus } from "~/saker/handlinger/tilgjengeligeHandlinger";
+import { TildelSaksbehandlerModal } from "~/saker/handlinger/TildelSaksbehandlerModal";
+import { VideresendTilSeksjonModal } from "~/saker/handlinger/VideresendTilSeksjonModal";
 
 interface SakHandlingerProps {
-  sakId: string;
+  sak: Sak;
+  saksbehandlere: string[];
+  seksjoner: string[];
 }
 
-/** Handlingsmeny for en sak – brukes både i listen og på detaljsiden */
-export function SakHandlinger({ sakId }: SakHandlingerProps) {
+/** Handlingsmeny for en sak i listevisiningen */
+export function SakHandlinger({ sak, saksbehandlere, seksjoner }: SakHandlingerProps) {
+  const [åpenModal, setÅpenModal] = useState<"tildel" | "videresend" | "status" | "henlegg" | null>(
+    null,
+  );
+
+  if (!erAktivSak(sak.status)) return null;
+
+  const nesteStatus = hentNesteStatus(sak.status);
+
   return (
     <>
       <ActionMenu.Item
-        onSelect={() => alert(`Marker sak ${sakId} som prioritert`)}
-        icon={<StarIcon aria-hidden />}
+        onSelect={() => setÅpenModal("tildel")}
+        icon={<PersonPencilIcon aria-hidden />}
       >
-        Marker som prioritert
+        Tildel saksbehandler
       </ActionMenu.Item>
       <ActionMenu.Item
-        onSelect={() => alert(`Send sak ${sakId} til plukkliste`)}
-        icon={<CheckmarkCircleIcon aria-hidden />}
+        onSelect={() => setÅpenModal("videresend")}
+        icon={<ArrowForwardIcon aria-hidden />}
       >
-        Send til plukkliste
+        Videresend til seksjon
       </ActionMenu.Item>
+      {nesteStatus && (
+        <ActionMenu.Item
+          onSelect={() => setÅpenModal("status")}
+          icon={<ArrowRightIcon aria-hidden />}
+        >
+          Flytt til {nesteStatus}
+        </ActionMenu.Item>
+      )}
+      <ActionMenu.Divider />
       <ActionMenu.Item
-        onSelect={() => alert(`Avvis sak ${sakId}`)}
-        icon={<XMarkIcon aria-hidden />}
+        onSelect={() => setÅpenModal("henlegg")}
+        icon={<XMarkOctagonIcon aria-hidden />}
       >
-        Avvis
+        Henlegg
       </ActionMenu.Item>
-      <ActionMenu.Divider />
-      <ActionMenu.Group label="Tildel saksbehandler">
-        <ActionMenu.Item
-          onSelect={() => alert(`Tildel saksbehandler til sak ${sakId}`)}
-          icon={<PencilIcon aria-hidden />}
-        >
-          Ola Nordmann
-        </ActionMenu.Item>
-        <ActionMenu.Item
-          onSelect={() => alert(`Tildel saksbehandler til sak ${sakId}`)}
-          icon={<PencilIcon aria-hidden />}
-        >
-          Kari Nordmann
-        </ActionMenu.Item>
-      </ActionMenu.Group>
-      <ActionMenu.Divider />
-      <ActionMenu.Group label="Videresend til seksjon">
-        <ActionMenu.Item
-          onSelect={() => alert(`Videresend sak ${sakId} til Seksjon A`)}
-          icon={<ArrowForwardIcon aria-hidden />}
-        >
-          Seksjon A
-        </ActionMenu.Item>
-        <ActionMenu.Item
-          onSelect={() => alert(`Videresend sak ${sakId} til Seksjon B`)}
-          icon={<ArrowForwardIcon aria-hidden />}
-        >
-          Seksjon B
-        </ActionMenu.Item>
-        <ActionMenu.Item
-          onSelect={() => alert(`Videresend sak ${sakId} til Seksjon C`)}
-          icon={<ArrowForwardIcon aria-hidden />}
-        >
-          Seksjon C
-        </ActionMenu.Item>
-      </ActionMenu.Group>
+
+      <TildelSaksbehandlerModal
+        sakId={sak.id}
+        saksbehandlere={saksbehandlere}
+        åpen={åpenModal === "tildel"}
+        onClose={() => setÅpenModal(null)}
+      />
+      <VideresendTilSeksjonModal
+        sakId={sak.id}
+        nåværendeSeksjon={sak.seksjon}
+        seksjoner={seksjoner}
+        åpen={åpenModal === "videresend"}
+        onClose={() => setÅpenModal(null)}
+      />
+      {nesteStatus && (
+        <EndreStatusModal
+          sakId={sak.id}
+          nåværendeStatus={sak.status}
+          åpen={åpenModal === "status"}
+          onClose={() => setÅpenModal(null)}
+        />
+      )}
+      <HenleggModal
+        sakId={sak.id}
+        åpen={åpenModal === "henlegg"}
+        onClose={() => setÅpenModal(null)}
+      />
     </>
   );
 }

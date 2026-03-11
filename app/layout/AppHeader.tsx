@@ -7,7 +7,7 @@ import {
   SunIcon,
 } from "@navikt/aksel-icons";
 import { ActionMenu, InternalHeader, Spacer, Tag } from "@navikt/ds-react";
-import { Link, NavLink } from "react-router";
+import { Link } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { useMiljø } from "~/miljø/useMiljø";
@@ -34,15 +34,6 @@ export function AppHeader() {
           )}
         </div>
       </InternalHeader.Title>
-
-      <div className="flex gap-2 items-center">
-        <NavLink to={RouteConfig.FORDELING} className="navds-link px-4">
-          Fordeling
-        </NavLink>
-        <NavLink to={RouteConfig.REGISTRER_SAK} className="navds-link px-4">
-          Registrer sak
-        </NavLink>
-      </div>
 
       <Spacer />
       <ActionMenu>

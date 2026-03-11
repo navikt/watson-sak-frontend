@@ -1,4 +1,4 @@
-import { type Sak, sakSchema } from "./typer";
+import { type Sak, sakSchema } from "~/saker/typer";
 
 const rådata: Sak[] = [
   {

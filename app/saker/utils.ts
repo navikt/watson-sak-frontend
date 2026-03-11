@@ -30,6 +30,7 @@ const statusVariant: Record<SakStatus, "info" | "warning" | "success" | "neutral
   "tips avklart": "warning",
   "under utredning": "warning",
   avsluttet: "neutral",
+  henlagt: "neutral",
 };
 
 export function hentStatusVariant(status: SakStatus): "info" | "warning" | "success" | "neutral" {

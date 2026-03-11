@@ -1,95 +1,23 @@
-import { MenuElipsisVerticalIcon } from "@navikt/aksel-icons";
-import {
-  ActionMenu,
-  BodyShort,
-  Button,
-  Chips,
-  Heading,
-  HStack,
-  Label,
-  Page,
-  Search,
-  Select,
-  Tag,
-  VStack,
-} from "@navikt/ds-react";
+import { Heading, Page } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
-import { Link, useLoaderData, useSearchParams } from "react-router";
+import { useLoaderData } from "react-router";
+import { SaksListe } from "~/saker/SaksListe";
 import { RouteConfig } from "~/routeConfig";
-import { formaterDato } from "~/utils/date-utils";
 import { mockSaker } from "./mock-data.server";
 import { SakHandlinger } from "./SakHandlinger";
-import type { Sak, SakStatus } from "./typer";
-import { sakStatusSchema } from "./typer";
-import {
-  filtrerSaker,
-  formaterKilde,
-  hentStatusVariant,
-  hentUnikeYtelser,
-  sorterSakerEtterDato,
-  søkISaker,
-  type Sorteringsretning,
-} from "./utils";
+import { mockSaksbehandlere } from "~/saker/mock-saksbehandlere.server";
+import { mockSeksjoner } from "~/saker/mock-seksjoner.server";
 
 export function loader() {
-  return { saker: mockSaker };
+  return {
+    saker: mockSaker,
+    saksbehandlere: mockSaksbehandlere,
+    seksjoner: mockSeksjoner,
+  };
 }
 
 export default function FordelingSide() {
-  const { saker } = useLoaderData<typeof loader>();
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  const sorteringParam = searchParams.get("sortering");
-  const sortering: Sorteringsretning = sorteringParam === "eldst" ? "eldst" : "nyest";
-
-  const søketekst = searchParams.get("sok") ?? "";
-  const valgteStatuser: SakStatus[] = (
-    searchParams.get("status")?.split(",").filter(Boolean) ?? []
-  ).filter((s): s is SakStatus => sakStatusSchema.safeParse(s).success);
-  const valgteYtelser = searchParams.get("ytelse")?.split(",").filter(Boolean) ?? [];
-  const harAktiveFiltre =
-    valgteStatuser.length > 0 || valgteYtelser.length > 0 || søketekst.length > 0;
-
-  const alleYtelser = hentUnikeYtelser(saker);
-  const sakerEtterSøk = søkISaker(saker, søketekst);
-  const filtrerteSaker = filtrerSaker(sakerEtterSøk, valgteStatuser, valgteYtelser);
-  const sorterteSaker = sorterSakerEtterDato(filtrerteSaker, sortering);
-
-  function oppdaterSearchParams(nøkkel: string, verdier: string[]) {
-    setSearchParams((prev) => {
-      const neste = new URLSearchParams(prev);
-      if (verdier.length > 0) {
-        neste.set(nøkkel, verdier.join(","));
-      } else {
-        neste.delete(nøkkel);
-      }
-      return neste;
-    });
-  }
-
-  function toggleStatus(status: SakStatus) {
-    const oppdatert = valgteStatuser.includes(status)
-      ? valgteStatuser.filter((s) => s !== status)
-      : [...valgteStatuser, status];
-    oppdaterSearchParams("status", oppdatert);
-  }
-
-  function toggleYtelse(ytelse: string) {
-    const oppdatert = valgteYtelser.includes(ytelse)
-      ? valgteYtelser.filter((y) => y !== ytelse)
-      : [...valgteYtelser, ytelse];
-    oppdaterSearchParams("ytelse", oppdatert);
-  }
-
-  function nullstillFiltre() {
-    setSearchParams((prev) => {
-      const neste = new URLSearchParams(prev);
-      neste.delete("sok");
-      neste.delete("status");
-      neste.delete("ytelse");
-      return neste;
-    });
-  }
+  const { saker, saksbehandlere, seksjoner } = useLoaderData<typeof loader>();
 
   return (
     <Page>
@@ -99,152 +27,14 @@ export default function FordelingSide() {
           Saker til fordeling
         </Heading>
 
-        <div className="flex flex-col-reverse gap-6 md:flex-row">
-          <div className="min-w-0 flex-1">
-            <HStack gap="space-4" align="end" className="mb-4">
-              <Select
-                label="Sortering"
-                value={sortering}
-                onChange={(e) =>
-                  setSearchParams((prev) => {
-                    const neste = new URLSearchParams(prev);
-                    neste.set("sortering", e.target.value);
-                    return neste;
-                  })
-                }
-                className="w-fit"
-                size="small"
-              >
-                <option value="nyest">Nyest først</option>
-                <option value="eldst">Eldst først</option>
-              </Select>
-
-              {harAktiveFiltre && (
-                <BodyShort size="small">
-                  Viser {sorterteSaker.length} av {saker.length} saker
-                </BodyShort>
-              )}
-            </HStack>
-
-            <VStack gap="space-4">
-              {sorterteSaker.map((sak) => (
-                <SakKort key={sak.id} sak={sak} />
-              ))}
-            </VStack>
-          </div>
-
-          <aside className="rounded-lg border border-border-subtle bg-surface-subtle p-4 md:sticky md:top-4 md:w-72 md:shrink-0 md:self-start">
-            <HStack justify="space-between" align="center" className="mb-3">
-              <Heading level="2" size="small">
-                Filtrering
-              </Heading>
-              {harAktiveFiltre && (
-                <Button variant="tertiary" size="xsmall" onClick={nullstillFiltre}>
-                  Nullstill
-                </Button>
-              )}
-            </HStack>
-
-            <VStack gap="space-4">
-              <Search
-                label="Søk i saker"
-                size="small"
-                variant="simple"
-                value={søketekst}
-                onChange={(verdi) => oppdaterSearchParams("sok", verdi ? [verdi] : [])}
-                onClear={() => oppdaterSearchParams("sok", [])}
-              />
-
-              <div>
-                <Label size="small" spacing>
-                  Status
-                </Label>
-                <Chips>
-                  {sakStatusSchema.options.map((status) => (
-                    <Chips.Toggle
-                      key={status}
-                      selected={valgteStatuser.includes(status)}
-                      onClick={() => toggleStatus(status)}
-                    >
-                      {status}
-                    </Chips.Toggle>
-                  ))}
-                </Chips>
-              </div>
-
-              <div>
-                <Label size="small" spacing>
-                  Ytelser
-                </Label>
-                <Chips>
-                  {alleYtelser.map((ytelse) => (
-                    <Chips.Toggle
-                      key={ytelse}
-                      selected={valgteYtelser.includes(ytelse)}
-                      onClick={() => toggleYtelse(ytelse)}
-                    >
-                      {ytelse}
-                    </Chips.Toggle>
-                  ))}
-                </Chips>
-              </div>
-            </VStack>
-          </aside>
-        </div>
+        <SaksListe
+          saker={saker}
+          detaljSti={RouteConfig.SAKER_DETALJ.replace("/:sakId", "")}
+          handlinger={(sak) => (
+            <SakHandlinger sak={sak} saksbehandlere={saksbehandlere} seksjoner={seksjoner} />
+          )}
+        />
       </PageBlock>
     </Page>
-  );
-}
-
-function SakKort({ sak }: { sak: Sak }) {
-  return (
-    <div className="relative rounded-lg border border-border-subtle bg-surface-default p-4 shadow-sm transition-shadow hover:shadow-md">
-      <Link
-        to={RouteConfig.FORDELING_DETALJ.replace(":sakId", sak.id)}
-        className="absolute inset-0 rounded-lg"
-        aria-label={`Sak ${sak.id}`}
-      />
-      <HStack justify="space-between" align="start">
-        <VStack gap="space-2">
-          <HStack gap="space-4" align="center">
-            <Heading level="2" size="small">
-              Sak {sak.id}
-            </Heading>
-            <Tag variant={hentStatusVariant(sak.status)} size="small">
-              {sak.status}
-            </Tag>
-          </HStack>
-
-          <HStack gap="space-4">
-            <BodyShort size="small" className="text-text-subtle">
-              Innmeldt: {formaterDato(sak.datoInnmeldt)}
-            </BodyShort>
-            <BodyShort size="small" className="text-text-subtle">
-              Kilde: {formaterKilde(sak.kilde)}
-            </BodyShort>
-            <BodyShort size="small" className="text-text-subtle">
-              Seksjon: {sak.seksjon}
-            </BodyShort>
-          </HStack>
-
-          <BodyShort size="small">Ytelser: {sak.ytelser.join(", ")}</BodyShort>
-        </VStack>
-
-        <div className="relative z-10">
-          <ActionMenu>
-            <ActionMenu.Trigger>
-              <Button
-                variant="tertiary-neutral"
-                icon={<MenuElipsisVerticalIcon title="Handlinger" />}
-                size="small"
-              />
-            </ActionMenu.Trigger>
-            <ActionMenu.Content>
-              <SakHandlinger sakId={sak.id} />
-            </ActionMenu.Content>
-          </ActionMenu>
-        </div>
-      </HStack>
-    </div>
   );
 }

@@ -38,7 +38,7 @@ export function AppFooter() {
               </NavLink>
             </li>
           </ul>
-          <Detail align="center" className="mt-2 text-text-subtle">
+          <Detail align="center" className="mt-2 text-ax-text-neutral-subtle">
             Versjon: {appversjon}
           </Detail>
         </footer>

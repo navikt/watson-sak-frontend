@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { sakKildeSchema } from "~/fordeling/typer";
+import { sakKildeSchema } from "~/saker/typer";
 
 export const registrerSakSchema = z.object({
   fødselsnummer: z

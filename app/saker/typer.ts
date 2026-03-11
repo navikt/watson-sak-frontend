@@ -19,6 +19,7 @@ export const sakStatusSchema = z.enum([
   "tips avklart",
   "under utredning",
   "avsluttet",
+  "henlagt",
 ]);
 
 export type SakStatus = z.infer<typeof sakStatusSchema>;

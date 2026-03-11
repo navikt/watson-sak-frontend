@@ -6,8 +6,10 @@ export default [
   layout("layout/AppLayout.tsx", [
     route(RouteConfig.INDEX, "landingsside/LandingSide.route.tsx"),
     route(RouteConfig.FORDELING, "fordeling/FordelingSide.route.tsx"),
-    route(RouteConfig.FORDELING_DETALJ, "fordeling/FordelingSakSide.route.tsx"),
+    route(RouteConfig.SAKER_DETALJ, "saker/SakDetaljSide.route.tsx"),
+    route(RouteConfig.MINE_SAKER, "mine-saker/MineSakerSide.route.tsx"),
     route(RouteConfig.REGISTRER_SAK, "registrer-sak/RegistrerSakSide.route.tsx"),
+    route(RouteConfig.STATISTIKK, "statistikk/StatistikkSide.route.tsx"),
     route(RouteConfig.PERSONVERN, "personvern/PersonvernSide.route.tsx"),
   ]),
 
