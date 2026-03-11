@@ -1,6 +1,6 @@
 import { BodyShort, Heading, HGrid, VStack } from "@navikt/ds-react";
 import type { SakStatus } from "~/saker/typer";
-import { Kort } from "~/utils/Kort";
+import { Kort } from "~/komponenter/Kort";
 
 interface BehandlingstidData {
   min: number;
@@ -27,7 +27,7 @@ export function Avdelingsstatistikk({ antallPerStatus, behandlingstid }: Avdelin
 
         <HGrid columns={{ xs: 2, md: 4 }} gap="space-4">
           {Object.entries(antallPerStatus).map(([status, antall]) => {
-            const prosentandel = Math.round((antall / totalt) * 100);
+            const prosentandel = totalt > 0 ? Math.round((antall / totalt) * 100) : 0;
             return (
               <VStack key={status} gap="space-1">
                 <BodyShort size="small" className="text-ax-text-neutral-subtle capitalize">
