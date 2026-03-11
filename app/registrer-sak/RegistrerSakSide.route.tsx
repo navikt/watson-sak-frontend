@@ -28,7 +28,7 @@ import { formaterKilde } from "~/saker/utils";
 import { RouteConfig } from "~/routeConfig";
 import type { Route } from "./+types/RegistrerSakSide.route";
 import { registrerSakSchema } from "./validering";
-import { Kort } from "~/utils/Kort";
+import { Kort } from "~/komponenter/Kort";
 
 export function loader() {
   return {

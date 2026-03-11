@@ -6,7 +6,7 @@ import {
   MagnifyingGlassIcon,
 } from "@navikt/aksel-icons";
 import type { ReactNode } from "react";
-import { Kort } from "~/utils/Kort";
+import { Kort } from "~/komponenter/Kort";
 
 interface NøkkeltallData {
   totalt: number;

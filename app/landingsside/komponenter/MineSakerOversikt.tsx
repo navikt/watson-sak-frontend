@@ -4,7 +4,7 @@ import { Link as RouterLink } from "react-router";
 import type { Sak } from "~/saker/typer";
 import { hentStatusVariant } from "~/saker/utils";
 import { RouteConfig } from "~/routeConfig";
-import { Kort } from "~/utils/Kort";
+import { Kort } from "~/komponenter/Kort";
 
 export function MineSakerOversikt({ saker }: { saker: Sak[] }) {
   return (

@@ -1,7 +1,7 @@
 import { BodyShort, Heading, VStack } from "@navikt/ds-react";
 import { BellIcon, PersonIcon, ClockIcon } from "@navikt/aksel-icons";
 import type { ReactNode } from "react";
-import { Kort } from "~/utils/Kort";
+import { Kort } from "~/komponenter/Kort";
 
 interface Varsling {
   id: string;

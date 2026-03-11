@@ -3,7 +3,7 @@ import { FolderIcon, TasklistIcon, PlusCircleIcon, BarChartIcon } from "@navikt/
 import { Link } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import type { ReactNode } from "react";
-import { Kort } from "~/utils/Kort";
+import { Kort } from "~/komponenter/Kort";
 
 const lenker = [
   {
