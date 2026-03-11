@@ -8,9 +8,7 @@ import { Kort } from "~/utils/Kort";
 function dagerSiden(dato: string): number {
   const nå = new Date();
   const innmeldt = new Date(dato);
-  return Math.floor(
-    (nå.getTime() - innmeldt.getTime()) / (1000 * 60 * 60 * 24),
-  );
+  return Math.floor((nå.getTime() - innmeldt.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 export function PrioriterteSaker({ saker }: { saker: Sak[] }) {
@@ -46,17 +44,11 @@ export function PrioriterteSaker({ saker }: { saker: Sak[] }) {
                         <BodyShort size="small" weight="semibold">
                           #{sak.id} – {sak.ytelser[0]}
                         </BodyShort>
-                        <BodyShort
-                          size="small"
-                          className="text-ax-text-neutral-subtle"
-                        >
+                        <BodyShort size="small" className="text-ax-text-neutral-subtle">
                           {sak.seksjon} · {alder} dager siden
                         </BodyShort>
                       </VStack>
-                      <Tag
-                        variant={alder > 30 ? "warning" : "info"}
-                        size="xsmall"
-                      >
+                      <Tag variant={alder > 30 ? "warning" : "info"} size="xsmall">
                         {alder > 30 ? "Haster" : "Ny"}
                       </Tag>
                     </div>

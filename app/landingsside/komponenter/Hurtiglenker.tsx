@@ -1,10 +1,5 @@
 import { BodyShort, Heading, HGrid, VStack } from "@navikt/ds-react";
-import {
-  FolderIcon,
-  TasklistIcon,
-  PlusCircleIcon,
-  BarChartIcon,
-} from "@navikt/aksel-icons";
+import { FolderIcon, TasklistIcon, PlusCircleIcon, BarChartIcon } from "@navikt/aksel-icons";
 import { Link } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import type { ReactNode } from "react";
@@ -40,13 +35,7 @@ const lenker = [
 export function Hurtiglenker() {
   return (
     <section aria-labelledby="hurtiglenker-heading">
-      <Heading
-        level="2"
-        size="medium"
-        spacing
-        id="hurtiglenker-heading"
-        className="sr-only"
-      >
+      <Heading level="2" size="medium" spacing id="hurtiglenker-heading" className="sr-only">
         Hurtiglenker
       </Heading>
       <HGrid columns={{ xs: 2, md: 4 }} gap="space-4">

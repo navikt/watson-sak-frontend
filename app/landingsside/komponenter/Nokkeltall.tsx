@@ -18,13 +18,7 @@ interface NøkkeltallData {
 export function Nokkeltall({ data }: { data: NøkkeltallData }) {
   return (
     <section aria-labelledby="nøkkeltall-heading">
-      <Heading
-        level="2"
-        size="medium"
-        spacing
-        id="nøkkeltall-heading"
-        className="sr-only"
-      >
+      <Heading level="2" size="medium" spacing id="nøkkeltall-heading" className="sr-only">
         Nøkkeltall
       </Heading>
       <HGrid columns={{ xs: 2, md: 4 }} gap="space-4">

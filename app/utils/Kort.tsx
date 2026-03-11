@@ -19,12 +19,7 @@ const standardProps = {
 };
 
 /** Gjenbrukbart kort med avrundede hjørner, ramme og hevet bakgrunn. */
-export function Kort({
-  children,
-  as,
-  padding = "space-8",
-  className,
-}: KortProps) {
+export function Kort({ children, as, padding = "space-8", className }: KortProps) {
   if (as) {
     return (
       <Box as={as} padding={padding} className={className} {...standardProps}>

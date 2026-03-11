@@ -15,10 +15,7 @@ interface AvdelingsstatistikkProps {
   behandlingstid: BehandlingstidData | null;
 }
 
-export function Avdelingsstatistikk({
-  antallPerStatus,
-  behandlingstid,
-}: AvdelingsstatistikkProps) {
+export function Avdelingsstatistikk({ antallPerStatus, behandlingstid }: AvdelingsstatistikkProps) {
   const totalt = Object.values(antallPerStatus).reduce((a, b) => a + b, 0);
 
   return (
@@ -33,18 +30,12 @@ export function Avdelingsstatistikk({
             const prosentandel = Math.round((antall / totalt) * 100);
             return (
               <VStack key={status} gap="space-1">
-                <BodyShort
-                  size="small"
-                  className="text-ax-text-neutral-subtle capitalize"
-                >
+                <BodyShort size="small" className="text-ax-text-neutral-subtle capitalize">
                   {status}
                 </BodyShort>
                 <div className="flex items-baseline gap-2">
                   <span className="text-xl font-semibold">{antall}</span>
-                  <BodyShort
-                    size="small"
-                    className="text-ax-text-neutral-subtle"
-                  >
+                  <BodyShort size="small" className="text-ax-text-neutral-subtle">
                     ({prosentandel} %)
                   </BodyShort>
                 </div>
@@ -60,20 +51,12 @@ export function Avdelingsstatistikk({
 
           {behandlingstid && (
             <VStack gap="space-1">
-              <BodyShort
-                size="small"
-                className="text-ax-text-neutral-subtle"
-              >
+              <BodyShort size="small" className="text-ax-text-neutral-subtle">
                 Median behandlingstid
               </BodyShort>
               <div className="flex items-baseline gap-1">
-                <span className="text-xl font-semibold">
-                  {behandlingstid.median}
-                </span>
-                <BodyShort
-                  size="small"
-                  className="text-ax-text-neutral-subtle"
-                >
+                <span className="text-xl font-semibold">{behandlingstid.median}</span>
+                <BodyShort size="small" className="text-ax-text-neutral-subtle">
                   dager
                 </BodyShort>
               </div>

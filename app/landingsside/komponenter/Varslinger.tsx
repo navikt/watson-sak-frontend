@@ -1,9 +1,5 @@
 import { BodyShort, Heading, VStack } from "@navikt/ds-react";
-import {
-  BellIcon,
-  PersonIcon,
-  ClockIcon,
-} from "@navikt/aksel-icons";
+import { BellIcon, PersonIcon, ClockIcon } from "@navikt/aksel-icons";
 import type { ReactNode } from "react";
 import { Kort } from "~/utils/Kort";
 
@@ -49,15 +45,10 @@ export function Varslinger() {
               key={varsling.id}
               className="flex items-start gap-3 rounded-md p-3 bg-ax-bg-neutral-soft"
             >
-              <span className="mt-0.5 text-ax-text-neutral-subtle">
-                {varsling.ikon}
-              </span>
+              <span className="mt-0.5 text-ax-text-neutral-subtle">{varsling.ikon}</span>
               <VStack gap="space-1">
                 <BodyShort size="small">{varsling.tekst}</BodyShort>
-                <BodyShort
-                  size="small"
-                  className="text-ax-text-neutral-subtle"
-                >
+                <BodyShort size="small" className="text-ax-text-neutral-subtle">
                   {varsling.tidspunkt}
                 </BodyShort>
               </VStack>
@@ -65,10 +56,7 @@ export function Varslinger() {
           ))}
         </VStack>
 
-        <BodyShort
-          size="small"
-          className="text-ax-text-neutral-subtle text-center"
-        >
+        <BodyShort size="small" className="text-ax-text-neutral-subtle text-center">
           Varslinger er en kommende funksjon
         </BodyShort>
       </VStack>

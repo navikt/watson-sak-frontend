@@ -20,9 +20,7 @@ export function MineSakerOversikt({ saker }: { saker: Sak[] }) {
         </div>
 
         {saker.length === 0 ? (
-          <BodyShort className="text-ax-text-neutral-subtle">
-            Du har ingen aktive saker.
-          </BodyShort>
+          <BodyShort className="text-ax-text-neutral-subtle">Du har ingen aktive saker.</BodyShort>
         ) : (
           <Table size="small">
             <Table.Header>
@@ -37,10 +35,7 @@ export function MineSakerOversikt({ saker }: { saker: Sak[] }) {
               {saker.map((sak) => (
                 <Table.Row key={sak.id}>
                   <Table.DataCell>
-                    <Link
-                      as={RouterLink}
-                      to={RouteConfig.SAKER_DETALJ.replace(":sakId", sak.id)}
-                    >
+                    <Link as={RouterLink} to={RouteConfig.SAKER_DETALJ.replace(":sakId", sak.id)}>
                       #{sak.id}
                     </Link>
                   </Table.DataCell>
@@ -50,10 +45,7 @@ export function MineSakerOversikt({ saker }: { saker: Sak[] }) {
                     </BodyShort>
                   </Table.DataCell>
                   <Table.DataCell>
-                    <Tag
-                      variant={hentStatusVariant(sak.status)}
-                      size="xsmall"
-                    >
+                    <Tag variant={hentStatusVariant(sak.status)} size="xsmall">
                       {sak.status}
                     </Tag>
                   </Table.DataCell>
