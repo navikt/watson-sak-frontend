@@ -8,7 +8,7 @@ export function sikkerhetHeaders() {
       "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()",
     "Content-Security-Policy":
       "default-src 'self'; " +
-      "script-src 'self' https://cdn.nav.no https://cdn.mxpnl.com 'unsafe-inline' 'unsafe-eval'; " +
+      "script-src 'self' https://cdn.nav.no 'unsafe-inline' 'unsafe-eval'; " +
       "style-src 'self' 'unsafe-inline'; " +
       "img-src 'self' data: https:; " +
       "font-src 'self' data: cdn.nav.no; " +
