@@ -1,6 +1,5 @@
 import {
   BodyShort,
-  Box,
   Button,
   Checkbox,
   DatePicker,
@@ -29,6 +28,7 @@ import { formaterKilde } from "~/saker/utils";
 import { RouteConfig } from "~/routeConfig";
 import type { Route } from "./+types/RegistrerSakSide.route";
 import { registrerSakSchema } from "./validering";
+import { Kort } from "~/komponenter/Kort";
 
 export function loader() {
   return {
@@ -115,13 +115,7 @@ export default function RegistrerSakSide() {
 
         <Form method="post" className="max-w-3xl">
           <VStack gap="space-16">
-            <Box
-              padding="space-12"
-              borderRadius="8"
-              borderWidth="1"
-              borderColor="neutral-subtle"
-              background="raised"
-            >
+            <Kort as="section" padding="space-12">
               <Heading level="2" size="small" spacing>
                 Saksinformasjon
               </Heading>
@@ -177,15 +171,9 @@ export default function RegistrerSakSide() {
                   </DatePicker>
                 </HStack>
               </VStack>
-            </Box>
+            </Kort>
 
-            <Box
-              padding="space-12"
-              borderRadius="8"
-              borderWidth="1"
-              borderColor="neutral-subtle"
-              background="raised"
-            >
+            <Kort as="section" padding="space-12">
               <Heading level="2" size="small" spacing>
                 Ytelser og klassifisering
               </Heading>
@@ -225,15 +213,9 @@ export default function RegistrerSakSide() {
                   <input key={tag} type="hidden" name="tags" value={tag} />
                 ))}
               </HStack>
-            </Box>
+            </Kort>
 
-            <Box
-              padding="space-12"
-              borderRadius="8"
-              borderWidth="1"
-              borderColor="neutral-subtle"
-              background="raised"
-            >
+            <Kort as="section" padding="space-12">
               <Heading level="2" size="small" spacing>
                 Kilde og kontaktinformasjon
               </Heading>
@@ -270,15 +252,9 @@ export default function RegistrerSakSide() {
                   </Checkbox>
                 </HStack>
               </VStack>
-            </Box>
+            </Kort>
 
-            <Box
-              padding="space-12"
-              borderRadius="8"
-              borderWidth="1"
-              borderColor="neutral-subtle"
-              background="raised"
-            >
+            <Kort as="section" padding="space-12">
               <Heading level="2" size="small" spacing>
                 Beskrivelse
               </Heading>
@@ -289,7 +265,7 @@ export default function RegistrerSakSide() {
                 minRows={4}
                 error={feil?.beskrivelse?.join(", ")}
               />
-            </Box>
+            </Kort>
 
             <HStack gap="space-4">
               <Button type="submit">Registrer sak</Button>

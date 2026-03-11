@@ -2,6 +2,7 @@ import { NavLink } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 
 const lenker = [
+  { to: RouteConfig.INDEX, label: "Dashboard" },
   { to: RouteConfig.MINE_SAKER, label: "Mine saker" },
   { to: RouteConfig.FORDELING, label: "Fordeling" },
   { to: RouteConfig.REGISTRER_SAK, label: "Registrer sak" },
@@ -19,6 +20,7 @@ export function AppSidebar() {
           <li key={to}>
             <NavLink
               to={to}
+              end={to === RouteConfig.INDEX}
               className={({ isActive }) =>
                 `block px-6 py-3 text-sm no-underline transition-colors ${
                   isActive
