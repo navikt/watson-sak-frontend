@@ -21,6 +21,9 @@ COPY --from=dependencies /app/node_modules ./node_modules
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/app/test/mocks ./app/test/mocks
 
+RUN addgroup -g 1069 watson && adduser -D -u 1069 -G watson watson
+USER watson
+
 ENV NODE_ENV=production
 EXPOSE 3000
 CMD ["npm", "run", "start"]

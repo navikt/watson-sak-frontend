@@ -16,7 +16,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Bygg og push docker image til GAR
-        uses: nais/docker-build-push@main
+        uses: nais/docker-build-push@ae613eff6f44f0323476eda1c3994a7c518761c3 # main
         id: docker-push-prod
         with:
           team: holmes
