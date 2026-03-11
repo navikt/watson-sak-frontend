@@ -1,14 +1,14 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { FilIkon } from "./fil-ikon";
-import type { FilNode } from "./typer";
+import type { FilNode, FilType } from "./typer";
 
-function lagFil(format: FilNode extends { type: "fil" } ? never : string): FilNode {
+function lagFil(format: FilType): FilNode {
   return {
     id: "test",
     type: "fil",
     navn: "test.txt",
-    format: format as "tekst",
+    format,
     endretAv: "Test",
     endretDato: "2026-01-01",
     sharepointUrl: "https://example.com",

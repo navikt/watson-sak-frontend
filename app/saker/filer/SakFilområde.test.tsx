@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { SakFilområde } from "./SakFilområde";
 import type { FilNode } from "./typer";
@@ -60,5 +60,70 @@ describe("SakFilområde", () => {
     render(<SakFilområde filer={mockFiler} />);
     const lastOppKnapper = screen.getAllByText("Last opp fil");
     expect(lastOppKnapper.length).toBeGreaterThan(0);
+  });
+
+  it("ekspanderer mappe ved klikk og viser barn", () => {
+    render(<SakFilområde filer={mockFiler} />);
+    expect(screen.queryByText("Rapport.pdf")).toBeNull();
+
+    const mappeKnapp = screen.getByText("Dokumentasjon").closest("button")!;
+    fireEvent.click(mappeKnapp);
+
+    expect(screen.getByText("Rapport.pdf")).toBeDefined();
+  });
+
+  it("kollapser mappe ved nytt klikk", () => {
+    render(<SakFilområde filer={mockFiler} />);
+    const mappeKnapp = screen.getByText("Dokumentasjon").closest("button")!;
+
+    fireEvent.click(mappeKnapp);
+    expect(screen.getByText("Rapport.pdf")).toBeDefined();
+
+    fireEvent.click(mappeKnapp);
+    expect(screen.queryByText("Rapport.pdf")).toBeNull();
+  });
+
+  it("setter aria-expanded riktig ved toggle av mappe", () => {
+    render(<SakFilområde filer={mockFiler} />);
+    const mappeKnapp = screen.getByText("Dokumentasjon").closest("button")!;
+
+    expect(mappeKnapp.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(mappeKnapp);
+    expect(mappeKnapp.getAttribute("aria-expanded")).toBe("true");
+    fireEvent.click(mappeKnapp);
+    expect(mappeKnapp.getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("har riktig ARIA-trestruktur", () => {
+    render(<SakFilområde filer={mockFiler} />);
+    const tre = screen.getByRole("tree");
+    expect(tre).toBeDefined();
+
+    const treElementer = screen.getAllByRole("treeitem");
+    expect(treElementer.length).toBe(2);
+
+    const mappeKnapp = screen.getByText("Dokumentasjon").closest("button")!;
+    expect(mappeKnapp.getAttribute("aria-level")).toBe("1");
+  });
+
+  it("viser group-rolle for barn i ekspandert mappe", () => {
+    render(<SakFilområde filer={mockFiler} />);
+    const mappeKnapp = screen.getByText("Dokumentasjon").closest("button")!;
+    fireEvent.click(mappeKnapp);
+
+    const grupper = screen.getAllByRole("group");
+    expect(grupper.length).toBe(1);
+
+    const barnElement = screen.getByText("Rapport.pdf").closest("a")!;
+    expect(barnElement.getAttribute("aria-level")).toBe("2");
+  });
+
+  it("har riktige lenkeattributter for filer", () => {
+    render(<SakFilområde filer={mockFiler} />);
+    const filLenke = screen.getByText("Notat.docx").closest("a")!;
+
+    expect(filLenke.getAttribute("href")).toBe("https://example.com/notat.docx");
+    expect(filLenke.getAttribute("target")).toBe("_blank");
+    expect(filLenke.getAttribute("rel")).toBe("noopener noreferrer");
   });
 });
