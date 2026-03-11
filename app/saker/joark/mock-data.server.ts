@@ -101,15 +101,16 @@ function lagJournalposter(fødselsnummer: string): Journalpost[] {
     const typeSeed = seed + i * 7;
     const type = velgTilfeldig(typer, typeSeed);
     const tittelListe = titler[type];
+    const journalpostId = lagJournalpostId();
 
     poster.push({
-      journalpostId: lagJournalpostId(),
+      journalpostId,
       tittel: velgTilfeldig(tittelListe, typeSeed + 1),
       dato: lagDato(baseDato, i * 12 + (typeSeed % 10)),
       journalposttype: type,
       tema: velgTilfeldig(temaer, typeSeed + 2),
       avsenderMottaker: velgTilfeldig(avsendere, typeSeed + 3),
-      dokumentUrl: `${joarkBase}/${lagJournalpostId()}`,
+      dokumentUrl: `${joarkBase}/${journalpostId}`,
     });
   }
 
