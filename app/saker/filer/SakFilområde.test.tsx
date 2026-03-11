@@ -118,6 +118,26 @@ describe("SakFilområde", () => {
     expect(barnElement.getAttribute("aria-level")).toBe("2");
   });
 
+  it("åpner mappe med Enter-tasten", () => {
+    render(<SakFilområde filer={mockFiler} />);
+    const mappeKnapp = screen.getByText("Dokumentasjon").closest("button")!;
+
+    fireEvent.keyDown(mappeKnapp.closest("[role='tree']")!, { key: "Enter" });
+    expect(screen.getByText("Rapport.pdf")).toBeDefined();
+  });
+
+  it("toggler mappe med mellomromstasten", () => {
+    render(<SakFilområde filer={mockFiler} />);
+    const mappeKnapp = screen.getByText("Dokumentasjon").closest("button")!;
+    const tre = mappeKnapp.closest("[role='tree']")!;
+
+    fireEvent.keyDown(tre, { key: " " });
+    expect(screen.getByText("Rapport.pdf")).toBeDefined();
+
+    fireEvent.keyDown(tre, { key: " " });
+    expect(screen.queryByText("Rapport.pdf")).toBeNull();
+  });
+
   it("har riktige lenkeattributter for filer", () => {
     render(<SakFilområde filer={mockFiler} />);
     const filLenke = screen.getByText("Notat.docx").closest("a")!;

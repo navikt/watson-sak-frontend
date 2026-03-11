@@ -174,6 +174,17 @@ export function FilTre({ noder }: { noder: FilNode[] }) {
       const gjeldende = fokusertId ? synligeIder.indexOf(fokusertId) : -1;
 
       switch (event.key) {
+        case " ":
+        case "Enter": {
+          if (fokusertId) {
+            const node = finnNode(fokusertId, noder);
+            if (node?.type === "mappe") {
+              event.preventDefault();
+              toggleMappe(node.id);
+            }
+          }
+          break;
+        }
         case "ArrowDown": {
           event.preventDefault();
           if (gjeldende < synligeIder.length - 1) {
