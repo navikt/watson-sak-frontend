@@ -18,7 +18,7 @@ export default function LandingSide() {
   return (
     <Page>
       <title>Dashboard – Watson Sak</title>
-      <PageBlock width="lg" gutters>
+      <PageBlock width="xl" gutters>
         <VStack gap="space-16" className="mt-4 mb-8">
           <Velkomst
             antallUnderBehandling={data.nøkkeltall.underUtredning}
