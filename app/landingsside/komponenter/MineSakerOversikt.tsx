@@ -4,6 +4,7 @@ import { Link as RouterLink } from "react-router";
 import type { Sak } from "~/saker/typer";
 import { hentStatusVariant } from "~/saker/utils";
 import { RouteConfig } from "~/routeConfig";
+import { formaterDato } from "~/utils/date-utils";
 import { Kort } from "~/komponenter/Kort";
 
 export function MineSakerOversikt({ saker }: { saker: Sak[] }) {
@@ -50,9 +51,7 @@ export function MineSakerOversikt({ saker }: { saker: Sak[] }) {
                     </Tag>
                   </Table.DataCell>
                   <Table.DataCell>
-                    <BodyShort size="small">
-                      {new Date(sak.datoInnmeldt).toLocaleDateString("nb-NO")}
-                    </BodyShort>
+                    <BodyShort size="small">{formaterDato(sak.datoInnmeldt)}</BodyShort>
                   </Table.DataCell>
                 </Table.Row>
               ))}
