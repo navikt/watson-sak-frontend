@@ -5,15 +5,15 @@ import type { FilNode } from "./typer";
 
 function TomtFilområde() {
   return (
-    <VStack gap="space-4" align="center" className="py-8">
+    <VStack gap="space-8" align="center" className="py-12 bg-ax-bg-neutral-soft rounded-lg">
       <FileIcon aria-hidden className="text-ax-icon-neutral-subtle" fontSize="3rem" />
-      <VStack gap="space-1" align="center">
+      <VStack gap="space-2" align="center">
         <BodyShort weight="semibold">Ingen filer ennå</BodyShort>
         <BodyShort size="small" className="text-ax-text-neutral-subtle">
           Last opp filer eller opprett en mappe for å komme i gang.
         </BodyShort>
       </VStack>
-      <HStack gap="space-2">
+      <HStack gap="space-4">
         <Button size="small" icon={<UploadIcon aria-hidden />} onClick={() => {}}>
           Last opp fil
         </Button>
