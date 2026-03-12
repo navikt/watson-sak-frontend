@@ -12,7 +12,7 @@ const sider = [
 
 test.describe("Navigasjon og sidebar", () => {
   test("sidebar har riktig aria-label", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "networkidle" });
 
     const nav = page.getByRole("navigation", { name: "Hovedmeny" });
     await expect(nav).toBeVisible();
@@ -20,7 +20,7 @@ test.describe("Navigasjon og sidebar", () => {
 
   for (const side of sider) {
     test(`kan navigere til ${side.lenketekst}`, async ({ page }) => {
-      await page.goto("/");
+      await page.goto("/", { waitUntil: "networkidle" });
 
       const nav = page.getByRole("navigation", { name: "Hovedmeny" });
       await nav.getByRole("link", { name: side.lenketekst }).click();

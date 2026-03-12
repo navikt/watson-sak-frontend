@@ -4,7 +4,7 @@ import { sjekkTilgjengelighet } from "~/test/uu-util";
 
 test.describe("Statistikk", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/statistikk");
+    await page.goto("/statistikk", { waitUntil: "networkidle" });
   });
 
   test("viser overskrift", async ({ page }) => {

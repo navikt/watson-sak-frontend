@@ -4,7 +4,7 @@ import { sjekkTilgjengelighet } from "~/test/uu-util";
 
 test.describe("Landingsside", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "networkidle" });
   });
 
   test("viser velkomsthilsen med brukerens navn", async ({ page }) => {

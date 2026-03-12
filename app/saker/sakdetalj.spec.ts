@@ -4,7 +4,7 @@ import { sjekkTilgjengelighet } from "~/test/uu-util";
 
 test.describe("Sakdetalj", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/saker/1");
+    await page.goto("/saker/1", { waitUntil: "networkidle" });
   });
 
   test("viser saksinformasjon", async ({ page }) => {
@@ -28,6 +28,8 @@ test.describe("Sakdetalj", () => {
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole("heading", { name: "Tildel saksbehandler" })).toBeVisible();
 
+    // Vent til modal-animasjonen er ferdig før UU-sjekk
+    await page.waitForTimeout(300);
     await sjekkTilgjengelighet(page);
 
     await dialog.getByRole("button", { name: "Avbryt" }).click();

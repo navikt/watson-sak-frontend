@@ -4,7 +4,7 @@ import { sjekkTilgjengelighet } from "~/test/uu-util";
 
 test.describe("Mine saker", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/mine-saker");
+    await page.goto("/mine-saker", { waitUntil: "networkidle" });
   });
 
   test("viser overskrift og saksliste", async ({ page }) => {

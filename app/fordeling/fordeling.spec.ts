@@ -4,7 +4,7 @@ import { sjekkTilgjengelighet } from "~/test/uu-util";
 
 test.describe("Fordeling – saksliste", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/fordeling");
+    await page.goto("/fordeling", { waitUntil: "networkidle" });
   });
 
   test("viser overskrift og sakskort", async ({ page }) => {

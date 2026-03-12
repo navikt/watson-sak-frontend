@@ -4,7 +4,7 @@ import { sjekkTilgjengelighet } from "~/test/uu-util";
 
 test.describe("Personvern", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/personvern");
+    await page.goto("/personvern", { waitUntil: "networkidle" });
   });
 
   test("viser personverninnhold", async ({ page }) => {

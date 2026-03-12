@@ -1,10 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-import { sjekkTilgjengelighet } from "~/test/uu-util";
-
 test.describe("Fordeling – sakshandlinger", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/fordeling");
+    await page.goto("/fordeling", { waitUntil: "networkidle" });
   });
 
   test("kan åpne handlingsmenyen med riktige valg", async ({ page }) => {

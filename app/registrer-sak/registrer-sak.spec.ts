@@ -4,7 +4,7 @@ import { sjekkTilgjengelighet } from "~/test/uu-util";
 
 test.describe("Registrer sak", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/registrer-sak");
+    await page.goto("/registrer-sak", { waitUntil: "networkidle" });
   });
 
   test("viser skjema med riktig overskrift", async ({ page }) => {
@@ -15,8 +15,8 @@ test.describe("Registrer sak", () => {
     await page.getByRole("button", { name: "Registrer sak" }).click();
 
     await expect(page.getByText("Fødselsnummer er påkrevd")).toBeVisible();
-    await expect(page.getByText("Velg avdeling")).toBeVisible();
-    await expect(page.getByText("Velg kategori")).toBeVisible();
+    await expect(page.locator(".aksel-error-message").getByText("Velg avdeling")).toBeVisible();
+    await expect(page.locator(".aksel-error-message").getByText("Velg kategori")).toBeVisible();
     await expect(page.getByText("Velg minst én ytelse")).toBeVisible();
     await expect(page.getByText("Beskrivelse er påkrevd")).toBeVisible();
   });
