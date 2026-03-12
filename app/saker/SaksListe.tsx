@@ -2,6 +2,7 @@ import {
   BodyShort,
   Button,
   Chips,
+  Heading,
   HStack,
   Label,
   Search,
@@ -9,6 +10,12 @@ import {
   Tag,
   VStack,
 } from "@navikt/ds-react";
+import {
+  CalendarIcon,
+  ChevronRightIcon,
+  EnvelopeClosedIcon,
+  Buildings2Icon,
+} from "@navikt/aksel-icons";
 import type { ReactNode } from "react";
 import { Link, useSearchParams } from "react-router";
 import { formaterDato } from "~/utils/date-utils";
@@ -187,6 +194,17 @@ export function SaksListe({ saker, detaljSti, handlinger }: SaksListeProps) {
   );
 }
 
+function statusAccentKlasse(status: SakStatus): string {
+  const farge: Record<SakStatus, string> = {
+    "tips mottatt": "bg-ax-bg-info-strong",
+    "tips avklart": "bg-ax-bg-warning-strong",
+    "under utredning": "bg-ax-bg-warning-strong",
+    avsluttet: "bg-ax-bg-neutral-moderate",
+    henlagt: "bg-ax-bg-neutral-moderate",
+  };
+  return farge[status];
+}
+
 function SakKort({
   sak,
   detaljSti,
@@ -197,37 +215,79 @@ function SakKort({
   handlinger?: (sak: Sak) => ReactNode;
 }) {
   return (
-    <div className="relative rounded-lg border border-ax-border-neutral-subtle bg-ax-bg-default p-4 shadow-sm transition-shadow hover:shadow-md">
+    <div className="relative overflow-hidden rounded-lg border border-ax-border-neutral-subtle bg-ax-bg-default shadow-sm transition-shadow hover:shadow-md">
+      <div
+        className={`absolute inset-y-0 left-0 w-1 ${statusAccentKlasse(sak.status)}`}
+        aria-hidden
+      />
       <Link
         to={`${detaljSti}/${sak.id}`}
         className="absolute inset-0 rounded-lg"
         aria-label={`Sak ${sak.id}`}
       />
-      <HStack justify="space-between" align="start">
-        <VStack gap="space-2">
+      <HStack justify="space-between" align="center" className="py-5 pr-5 pl-6">
+        <VStack gap="space-4">
           <HStack gap="space-4" align="center">
-            <BodyShort weight="semibold">Sak {sak.id}</BodyShort>
+            <Heading size="xsmall" as="h3">
+              Sak {sak.id}
+            </Heading>
             <Tag variant={hentStatusVariant(sak.status)} size="small">
               {sak.status}
             </Tag>
           </HStack>
 
-          <HStack gap="space-4">
-            <BodyShort size="small" className="text-ax-text-neutral-subtle">
-              Innmeldt: {formaterDato(sak.datoInnmeldt)}
-            </BodyShort>
-            <BodyShort size="small" className="text-ax-text-neutral-subtle">
-              Kilde: {formaterKilde(sak.kilde)}
-            </BodyShort>
-            <BodyShort size="small" className="text-ax-text-neutral-subtle">
-              Seksjon: {sak.seksjon}
-            </BodyShort>
+          <HStack gap="space-6" align="center" wrap>
+            <HStack as="span" gap="space-2" align="center">
+              <CalendarIcon
+                aria-hidden
+                className="shrink-0 text-ax-text-neutral-subtle"
+                fontSize="1.25rem"
+              />
+              <BodyShort size="small" className="text-ax-text-neutral-subtle">
+                {formaterDato(sak.datoInnmeldt)}
+              </BodyShort>
+            </HStack>
+
+            <HStack as="span" gap="space-2" align="center">
+              <EnvelopeClosedIcon
+                aria-hidden
+                className="shrink-0 text-ax-text-neutral-subtle"
+                fontSize="1.25rem"
+              />
+              <BodyShort size="small" className="text-ax-text-neutral-subtle">
+                {formaterKilde(sak.kilde)}
+              </BodyShort>
+            </HStack>
+
+            <HStack as="span" gap="space-2" align="center">
+              <Buildings2Icon
+                aria-hidden
+                className="shrink-0 text-ax-text-neutral-subtle"
+                fontSize="1.25rem"
+              />
+              <BodyShort size="small" className="text-ax-text-neutral-subtle">
+                {sak.seksjon}
+              </BodyShort>
+            </HStack>
           </HStack>
 
-          <BodyShort size="small">Ytelser: {sak.ytelser.join(", ")}</BodyShort>
+          <HStack gap="space-2" wrap>
+            {sak.ytelser.map((ytelse) => (
+              <Tag key={ytelse} variant="neutral" size="small">
+                {ytelse}
+              </Tag>
+            ))}
+          </HStack>
         </VStack>
 
-        {handlinger && <div className="relative z-10">{handlinger(sak)}</div>}
+        <HStack align="center" gap="space-4" className="shrink-0">
+          {handlinger && <div className="relative z-10">{handlinger(sak)}</div>}
+          <ChevronRightIcon
+            aria-hidden
+            className="text-ax-text-neutral-subtle"
+            fontSize="1.5rem"
+          />
+        </HStack>
       </HStack>
     </div>
   );
