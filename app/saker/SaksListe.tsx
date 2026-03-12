@@ -228,7 +228,7 @@ function SakKort({
       <HStack justify="space-between" align="center" className="py-5 pr-5 pl-6">
         <VStack gap="space-4">
           <HStack gap="space-4" align="center">
-            <Heading size="xsmall" as="h3">
+            <Heading size="xsmall" as="h2">
               Sak {sak.id}
             </Heading>
             <Tag variant={hentStatusVariant(sak.status)} size="small">
