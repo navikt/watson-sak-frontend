@@ -282,11 +282,7 @@ function SakKort({
 
         <HStack align="center" gap="space-4" className="shrink-0">
           {handlinger && <div className="relative z-10">{handlinger(sak)}</div>}
-          <ChevronRightIcon
-            aria-hidden
-            className="text-ax-text-neutral-subtle"
-            fontSize="1.5rem"
-          />
+          <ChevronRightIcon aria-hidden className="text-ax-text-neutral-subtle" fontSize="1.5rem" />
         </HStack>
       </HStack>
     </div>

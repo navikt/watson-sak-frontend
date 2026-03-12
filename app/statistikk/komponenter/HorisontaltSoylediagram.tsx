@@ -39,7 +39,11 @@ export function HorisontaltSoylediagram({ data, ariaLabel }: Props) {
 
   return (
     <div role="img" aria-label={ariaLabel}>
-      <ResponsiveContainer width="100%" height={høyde} initialDimension={{ width: 800, height: høyde }}>
+      <ResponsiveContainer
+        width="100%"
+        height={høyde}
+        initialDimension={{ width: 800, height: høyde }}
+      >
         <BarChart layout="vertical" data={data} margin={{ left: 0, right: 40, top: 5, bottom: 5 }}>
           <CartesianGrid
             strokeDasharray="3 3"

@@ -120,13 +120,7 @@ function Felt({ label, children }: { label: string; children: React.ReactNode })
   );
 }
 
-function MetadataPunkt({
-  icon,
-  children,
-}: {
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}) {
+function MetadataPunkt({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <HStack gap="space-2" align="center">
       <span className="text-ax-icon-neutral-subtle">{icon}</span>
@@ -183,9 +177,7 @@ export default function SakDetaljSide() {
                   </MetadataPunkt>
                 )}
                 {sak.kategori && (
-                  <MetadataPunkt icon={<TagIcon {...iconProps} />}>
-                    {sak.kategori}
-                  </MetadataPunkt>
+                  <MetadataPunkt icon={<TagIcon {...iconProps} />}>{sak.kategori}</MetadataPunkt>
                 )}
               </HStack>
             </VStack>
