@@ -1,7 +1,6 @@
 import { ExternalLinkIcon, FileSearchIcon } from "@navikt/aksel-icons";
 import {
   BodyShort,
-  Box,
   Heading,
   HStack,
   Link,
@@ -11,6 +10,7 @@ import {
   Tag,
   VStack,
 } from "@navikt/ds-react";
+import { Kort } from "~/komponenter/Kort";
 import { useState } from "react";
 import { formaterDato } from "~/utils/date-utils";
 import type { Journalpost, Journalposttype } from "./typer";
@@ -60,7 +60,7 @@ export function JoarkOversikt({ journalposter }: JoarkOversiktProps) {
   }
 
   return (
-    <Box padding="space-6" borderRadius="8" background="raised">
+    <Kort>
       <VStack gap="space-4">
         <HStack justify="space-between" align="center">
           <Heading level="2" size="small">
@@ -143,6 +143,6 @@ export function JoarkOversikt({ journalposter }: JoarkOversiktProps) {
           </>
         )}
       </VStack>
-    </Box>
+    </Kort>
   );
 }

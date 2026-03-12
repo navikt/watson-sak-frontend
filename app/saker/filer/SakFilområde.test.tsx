@@ -66,7 +66,7 @@ describe("SakFilområde", () => {
     render(<SakFilområde filer={mockFiler} />);
     expect(screen.queryByText("Rapport.pdf")).toBeNull();
 
-    const mappeKnapp = screen.getByText("Dokumentasjon").closest("button")!;
+    const mappeKnapp = screen.getByText("Dokumentasjon").closest("button") as HTMLButtonElement;
     fireEvent.click(mappeKnapp);
 
     expect(screen.getByText("Rapport.pdf")).toBeDefined();
@@ -74,7 +74,7 @@ describe("SakFilområde", () => {
 
   it("kollapser mappe ved nytt klikk", () => {
     render(<SakFilområde filer={mockFiler} />);
-    const mappeKnapp = screen.getByText("Dokumentasjon").closest("button")!;
+    const mappeKnapp = screen.getByText("Dokumentasjon").closest("button") as HTMLButtonElement;
 
     fireEvent.click(mappeKnapp);
     expect(screen.getByText("Rapport.pdf")).toBeDefined();
@@ -85,7 +85,7 @@ describe("SakFilområde", () => {
 
   it("setter aria-expanded riktig ved toggle av mappe", () => {
     render(<SakFilområde filer={mockFiler} />);
-    const mappeKnapp = screen.getByText("Dokumentasjon").closest("button")!;
+    const mappeKnapp = screen.getByText("Dokumentasjon").closest("button") as HTMLButtonElement;
 
     expect(mappeKnapp.getAttribute("aria-expanded")).toBe("false");
     fireEvent.click(mappeKnapp);
@@ -102,34 +102,33 @@ describe("SakFilområde", () => {
     const treElementer = screen.getAllByRole("treeitem");
     expect(treElementer.length).toBe(2);
 
-    const mappeKnapp = screen.getByText("Dokumentasjon").closest("button")!;
+    const mappeKnapp = screen.getByText("Dokumentasjon").closest("button") as HTMLButtonElement;
     expect(mappeKnapp.getAttribute("aria-level")).toBe("1");
   });
 
   it("viser group-rolle for barn i ekspandert mappe", () => {
     render(<SakFilområde filer={mockFiler} />);
-    const mappeKnapp = screen.getByText("Dokumentasjon").closest("button")!;
+    const mappeKnapp = screen.getByText("Dokumentasjon").closest("button") as HTMLButtonElement;
     fireEvent.click(mappeKnapp);
 
     const grupper = screen.getAllByRole("group");
     expect(grupper.length).toBe(1);
 
-    const barnElement = screen.getByText("Rapport.pdf").closest("a")!;
+    const barnElement = screen.getByText("Rapport.pdf").closest("a") as HTMLAnchorElement;
     expect(barnElement.getAttribute("aria-level")).toBe("2");
   });
 
   it("åpner mappe med Enter-tasten", () => {
     render(<SakFilområde filer={mockFiler} />);
-    const mappeKnapp = screen.getByText("Dokumentasjon").closest("button")!;
+    const tre = screen.getByRole("tree");
 
-    fireEvent.keyDown(mappeKnapp.closest("[role='tree']")!, { key: "Enter" });
+    fireEvent.keyDown(tre, { key: "Enter" });
     expect(screen.getByText("Rapport.pdf")).toBeDefined();
   });
 
   it("toggler mappe med mellomromstasten", () => {
     render(<SakFilområde filer={mockFiler} />);
-    const mappeKnapp = screen.getByText("Dokumentasjon").closest("button")!;
-    const tre = mappeKnapp.closest("[role='tree']")!;
+    const tre = screen.getByRole("tree");
 
     fireEvent.keyDown(tre, { key: " " });
     expect(screen.getByText("Rapport.pdf")).toBeDefined();
@@ -140,7 +139,7 @@ describe("SakFilområde", () => {
 
   it("har riktige lenkeattributter for filer", () => {
     render(<SakFilområde filer={mockFiler} />);
-    const filLenke = screen.getByText("Notat.docx").closest("a")!;
+    const filLenke = screen.getByText("Notat.docx").closest("a") as HTMLAnchorElement;
 
     expect(filLenke.getAttribute("href")).toBe("https://example.com/notat.docx");
     expect(filLenke.getAttribute("target")).toBe("_blank");

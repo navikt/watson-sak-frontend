@@ -22,7 +22,7 @@ export function AppSidebar() {
               to={to}
               end={to === RouteConfig.INDEX}
               className={({ isActive }) =>
-                `block px-6 py-3 text-sm no-underline transition-colors ${
+                `block px-6 py-3 text-base no-underline transition-colors ${
                   isActive
                     ? "bg-ax-bg-accent-soft text-ax-text-accent font-semibold border-l-[3px] border-ax-border-accent"
                     : "text-ax-text-neutral hover:bg-ax-bg-neutral-moderate-hover border-l-[3px] border-transparent"

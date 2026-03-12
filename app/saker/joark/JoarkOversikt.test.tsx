@@ -66,10 +66,10 @@ describe("JoarkOversikt", () => {
     const poster = [lagJournalpost()];
     render(<JoarkOversikt journalposter={poster} />);
 
-    const lenke = screen.getByText("Søknad om dagpenger").closest("a")!;
-    expect(lenke.getAttribute("href")).toBe("https://joark.intern.nav.no/dokument/1001");
-    expect(lenke.getAttribute("target")).toBe("_blank");
-    expect(lenke.getAttribute("rel")).toBe("noopener noreferrer");
+    const lenke = screen.getByText("Søknad om dagpenger").closest("a");
+    expect(lenke?.getAttribute("href")).toBe("https://joark.intern.nav.no/dokument/1001");
+    expect(lenke?.getAttribute("target")).toBe("_blank");
+    expect(lenke?.getAttribute("rel")).toBe("noopener noreferrer");
   });
 
   it("viser ikke søk og paginering når det er 10 eller færre entries", () => {
@@ -144,7 +144,7 @@ describe("JoarkOversikt", () => {
       }),
     ];
 
-    const { rerender } = render(<JoarkOversikt journalposter={poster} />);
+    render(<JoarkOversikt journalposter={poster} />);
 
     const søkefelt = screen.getByLabelText("Søk i journalposter");
 

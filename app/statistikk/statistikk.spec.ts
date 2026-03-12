@@ -19,16 +19,37 @@ test.describe("Statistikk", () => {
     await expect(nøkkeltall.getByText("Henlagt")).toBeVisible();
   });
 
-  test("viser saker per status", async ({ page }) => {
+  test("viser saker per status som søylediagram", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "Saker per status" })).toBeVisible();
+    await expect(
+      page.getByRole("img", { name: /Søylediagram over saker per status/ }),
+    ).toBeVisible();
   });
 
-  test("viser saker per seksjon", async ({ page }) => {
+  test("viser behandlingstid med visuell indikator", async ({ page }) => {
+    await expect(page.getByRole("heading", { name: "Behandlingstid (dager)" })).toBeVisible();
+    await expect(page.getByRole("img", { name: /Behandlingstid fra/ })).toBeVisible();
+  });
+
+  test("viser saker per seksjon som søylediagram", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "Saker per seksjon" })).toBeVisible();
+    await expect(
+      page.getByRole("img", { name: /Søylediagram over saker per seksjon/ }),
+    ).toBeVisible();
   });
 
-  test("viser fordeling per ytelse", async ({ page }) => {
+  test("viser fordeling per ytelse som søylediagram", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "Fordeling per ytelse" })).toBeVisible();
+    await expect(
+      page.getByRole("img", { name: /Søylediagram over fordeling per ytelse/ }),
+    ).toBeVisible();
+  });
+
+  test("viser fordeling per antall ytelser som søylediagram", async ({ page }) => {
+    await expect(page.getByRole("heading", { name: "Fordeling per antall ytelser" })).toBeVisible();
+    await expect(
+      page.getByRole("img", { name: /Søylediagram over fordeling per antall ytelser/ }),
+    ).toBeVisible();
   });
 
   test("er UU-compliant", async ({ page }) => {
