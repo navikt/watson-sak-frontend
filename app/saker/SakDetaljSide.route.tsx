@@ -1,7 +1,6 @@
 import { ArrowLeftIcon } from "@navikt/aksel-icons";
 import {
   BodyShort,
-  Box,
   Detail,
   Heading,
   HGrid,
@@ -12,6 +11,7 @@ import {
 } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
 import { data, useLoaderData, useNavigate } from "react-router";
+import { Kort } from "~/komponenter/Kort";
 import { formaterDato } from "~/utils/date-utils";
 import { mockSaker } from "~/fordeling/mock-data.server";
 import { mockMineSaker } from "~/mine-saker/mock-data.server";
@@ -145,101 +145,106 @@ export default function SakDetaljSide() {
 
           <HGrid columns={{ xs: 1, md: "1fr auto" }} gap="space-6">
             <VStack gap="space-6">
-              <HGrid columns={{ xs: 1, md: 2 }} gap="space-6">
-                <Box padding="space-6" borderRadius="8" background="raised">
-                  <Heading level="2" size="small" spacing>
-                    Saksinformasjon
-                  </Heading>
-                  <HGrid columns={2} gap="space-4">
-                    <Felt label="Dato innmeldt">{formaterDato(sak.datoInnmeldt)}</Felt>
-                    <Felt label="Kilde">{formaterKilde(sak.kilde)}</Felt>
-                    <Felt label="Fødselsnummer">{sak.fødselsnummer}</Felt>
-                    <Felt label="Seksjon">{sak.seksjon}</Felt>
-                    {sak.avdeling && <Felt label="Avdeling">{sak.avdeling}</Felt>}
-                    {sak.kategori && <Felt label="Kategori">{sak.kategori}</Felt>}
-                  </HGrid>
-                  {sak.ytelser.length > 0 && (
-                    <div className="mt-4">
-                      <Detail className="text-ax-text-neutral-subtle mb-1" uppercase>
-                        Ytelser
-                      </Detail>
-                      <HStack gap="space-2" wrap>
-                        {sak.ytelser.map((ytelse) => (
-                          <Tag key={ytelse} variant="info" size="small">
-                            {ytelse}
-                          </Tag>
-                        ))}
-                      </HStack>
-                    </div>
-                  )}
-                  {sak.tags.length > 0 && (
-                    <div className="mt-4">
-                      <Detail className="text-ax-text-neutral-subtle mb-1" uppercase>
-                        Tags
-                      </Detail>
-                      <HStack gap="space-2" wrap>
-                        {sak.tags.map((tag) => (
-                          <Tag key={tag} variant="neutral" size="small">
-                            {tag}
-                          </Tag>
-                        ))}
-                      </HStack>
-                    </div>
-                  )}
-                </Box>
+              <Kort>
+                <VStack gap="space-8">
+                  <div>
+                    <Heading level="2" size="small" spacing>
+                      Saksinformasjon
+                    </Heading>
+                    <HGrid columns={{ xs: 2, md: 3 }} gap="space-4">
+                      <Felt label="Dato innmeldt">{formaterDato(sak.datoInnmeldt)}</Felt>
+                      <Felt label="Kilde">{formaterKilde(sak.kilde)}</Felt>
+                      <Felt label="Fødselsnummer">{sak.fødselsnummer}</Felt>
+                      <Felt label="Seksjon">{sak.seksjon}</Felt>
+                      {sak.avdeling && <Felt label="Avdeling">{sak.avdeling}</Felt>}
+                      {sak.kategori && <Felt label="Kategori">{sak.kategori}</Felt>}
+                    </HGrid>
+                    {sak.ytelser.length > 0 && (
+                      <div className="mt-4">
+                        <Detail className="text-ax-text-neutral-subtle mb-1" uppercase>
+                          Ytelser
+                        </Detail>
+                        <HStack gap="space-2" wrap>
+                          {sak.ytelser.map((ytelse) => (
+                            <Tag key={ytelse} variant="info" size="small">
+                              {ytelse}
+                            </Tag>
+                          ))}
+                        </HStack>
+                      </div>
+                    )}
+                    {sak.tags.length > 0 && (
+                      <div className="mt-4">
+                        <Detail className="text-ax-text-neutral-subtle mb-1" uppercase>
+                          Tags
+                        </Detail>
+                        <HStack gap="space-2" wrap>
+                          {sak.tags.map((tag) => (
+                            <Tag key={tag} variant="neutral" size="small">
+                              {tag}
+                            </Tag>
+                          ))}
+                        </HStack>
+                      </div>
+                    )}
+                  </div>
 
-                <VStack gap="space-6">
                   {(sak.fraDato || sak.tilDato) && (
-                    <Box padding="space-6" borderRadius="8" background="raised">
-                      <Heading level="2" size="small" spacing>
-                        Periode
-                      </Heading>
-                      <HGrid columns={2} gap="space-4">
-                        {sak.fraDato && <Felt label="Fra dato">{formaterDato(sak.fraDato)}</Felt>}
-                        {sak.tilDato && <Felt label="Til dato">{formaterDato(sak.tilDato)}</Felt>}
-                      </HGrid>
-                    </Box>
+                    <>
+                      <hr className="border-ax-border-neutral-subtle" />
+                      <div>
+                        <Heading level="2" size="small" spacing>
+                          Periode
+                        </Heading>
+                        <HGrid columns={2} gap="space-4">
+                          {sak.fraDato && (
+                            <Felt label="Fra dato">{formaterDato(sak.fraDato)}</Felt>
+                          )}
+                          {sak.tilDato && (
+                            <Felt label="Til dato">{formaterDato(sak.tilDato)}</Felt>
+                          )}
+                        </HGrid>
+                      </div>
+                    </>
                   )}
 
-                  {sak.kontaktinformasjon && !sak.kontaktinformasjon.anonymt && (
-                    <Box padding="space-6" borderRadius="8" background="raised">
-                      <Heading level="2" size="small" spacing>
-                        Kontaktinformasjon
-                      </Heading>
-                      <VStack gap="space-2">
-                        {sak.kontaktinformasjon.navn && (
-                          <Felt label="Navn">{sak.kontaktinformasjon.navn}</Felt>
+                  {sak.kontaktinformasjon && (
+                    <>
+                      <hr className="border-ax-border-neutral-subtle" />
+                      <div>
+                        <Heading level="2" size="small" spacing>
+                          Kontaktinformasjon
+                        </Heading>
+                        {sak.kontaktinformasjon.anonymt ? (
+                          <Tag variant="neutral" size="small">
+                            Anonymt tips
+                          </Tag>
+                        ) : (
+                          <VStack gap="space-2">
+                            {sak.kontaktinformasjon.navn && (
+                              <Felt label="Navn">{sak.kontaktinformasjon.navn}</Felt>
+                            )}
+                            {sak.kontaktinformasjon.telefon && (
+                              <Felt label="Telefon">{sak.kontaktinformasjon.telefon}</Felt>
+                            )}
+                            {sak.kontaktinformasjon.epost && (
+                              <Felt label="E-post">{sak.kontaktinformasjon.epost}</Felt>
+                            )}
+                          </VStack>
                         )}
-                        {sak.kontaktinformasjon.telefon && (
-                          <Felt label="Telefon">{sak.kontaktinformasjon.telefon}</Felt>
-                        )}
-                        {sak.kontaktinformasjon.epost && (
-                          <Felt label="E-post">{sak.kontaktinformasjon.epost}</Felt>
-                        )}
-                      </VStack>
-                    </Box>
-                  )}
-
-                  {sak.kontaktinformasjon?.anonymt && (
-                    <Box padding="space-6" borderRadius="8" background="raised">
-                      <Heading level="2" size="small" spacing>
-                        Kontaktinformasjon
-                      </Heading>
-                      <Tag variant="neutral" size="small">
-                        Anonymt tips
-                      </Tag>
-                    </Box>
+                      </div>
+                    </>
                   )}
                 </VStack>
-              </HGrid>
+              </Kort>
 
               {(sak.notat || sak.beskrivelse) && (
-                <Box padding="space-6" borderRadius="8" background="raised">
+                <Kort>
                   <Heading level="2" size="small" spacing>
                     {sak.beskrivelse ? "Beskrivelse" : "Notat"}
                   </Heading>
                   <BodyShort>{sak.beskrivelse ?? sak.notat}</BodyShort>
-                </Box>
+                </Kort>
               )}
 
               <SakFilområde filer={filer} />

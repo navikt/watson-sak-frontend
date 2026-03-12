@@ -1,5 +1,6 @@
 import { FileIcon, FolderPlusIcon, UploadIcon } from "@navikt/aksel-icons";
-import { BodyShort, Box, Button, Heading, HStack, VStack } from "@navikt/ds-react";
+import { BodyShort, Button, Heading, HStack, VStack } from "@navikt/ds-react";
+import { Kort } from "~/komponenter/Kort";
 import { FilTre } from "./FilTre";
 import type { FilNode } from "./typer";
 
@@ -34,7 +35,7 @@ export function SakFilområde({ filer }: { filer: FilNode[] }) {
   const harFiler = filer.length > 0;
 
   return (
-    <Box padding="space-6" borderRadius="8" background="raised">
+    <Kort>
       <HStack justify="space-between" align="center" className="mb-4">
         <Heading level="2" size="small">
           Filer
@@ -61,6 +62,6 @@ export function SakFilområde({ filer }: { filer: FilNode[] }) {
         )}
       </HStack>
       {harFiler ? <FilTre noder={filer} /> : <TomtFilområde />}
-    </Box>
+    </Kort>
   );
 }
