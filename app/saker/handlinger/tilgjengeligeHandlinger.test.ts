@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { erAktivSak, hentNesteStatus } from "./tilgjengeligeHandlinger";
+import { erAktivSak, hentNesteStatus, kanVideresendesTilNayNfp } from "./tilgjengeligeHandlinger";
 
 describe("hentNesteStatus", () => {
   it("returnerer 'tips avklart' for 'tips mottatt'", () => {
@@ -42,5 +42,35 @@ describe("erAktivSak", () => {
 
   it("returnerer false for 'henlagt'", () => {
     expect(erAktivSak("henlagt")).toBe(false);
+  });
+
+  it("returnerer false for 'videresendt til nay/nfp'", () => {
+    expect(erAktivSak("videresendt til nay/nfp")).toBe(false);
+  });
+});
+
+describe("kanVideresendesTilNayNfp", () => {
+  it("returnerer true for 'under utredning'", () => {
+    expect(kanVideresendesTilNayNfp("under utredning")).toBe(true);
+  });
+
+  it("returnerer false for 'tips mottatt'", () => {
+    expect(kanVideresendesTilNayNfp("tips mottatt")).toBe(false);
+  });
+
+  it("returnerer false for 'tips avklart'", () => {
+    expect(kanVideresendesTilNayNfp("tips avklart")).toBe(false);
+  });
+
+  it("returnerer false for 'avsluttet'", () => {
+    expect(kanVideresendesTilNayNfp("avsluttet")).toBe(false);
+  });
+
+  it("returnerer false for 'henlagt'", () => {
+    expect(kanVideresendesTilNayNfp("henlagt")).toBe(false);
+  });
+
+  it("returnerer false for 'videresendt til nay/nfp'", () => {
+    expect(kanVideresendesTilNayNfp("videresendt til nay/nfp")).toBe(false);
   });
 });

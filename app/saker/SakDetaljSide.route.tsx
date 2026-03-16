@@ -30,6 +30,7 @@ import type { Route } from "./+types/SakDetaljSide.route";
 import { hentFilerForSak } from "./filer/mock-data.server";
 import { SakFilområde } from "./filer/SakFilområde";
 import { SakHandlingerKnapper } from "./handlinger/SakHandlingerKnapper";
+import { erAktivSak } from "./handlinger/tilgjengeligeHandlinger";
 import { SakHistorikk } from "./historikk/SakHistorikk";
 import { hentHistorikk, leggTilHendelse } from "./historikk/mock-data.server";
 import { hentJournalposter } from "./joark/mock-data.server";
@@ -258,7 +259,7 @@ export default function SakDetaljSide() {
                 </Kort>
               )}
 
-              <SakFilområde filer={filer} />
+              <SakFilområde filer={filer} redigerbar={erAktivSak(sak.status)} />
 
               <JoarkOversikt journalposter={journalposter} />
 

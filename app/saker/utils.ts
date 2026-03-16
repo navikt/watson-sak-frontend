@@ -29,6 +29,7 @@ const statusVariant: Record<SakStatus, "info" | "warning" | "success" | "neutral
   "tips mottatt": "info",
   "tips avklart": "warning",
   "under utredning": "warning",
+  "videresendt til nay/nfp": "success",
   avsluttet: "neutral",
   henlagt: "neutral",
 };

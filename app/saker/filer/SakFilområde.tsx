@@ -4,34 +4,44 @@ import { Kort } from "~/komponenter/Kort";
 import { FilTre } from "./FilTre";
 import type { FilNode } from "./typer";
 
-function TomtFilområde() {
+function TomtFilområde({ redigerbar }: { redigerbar: boolean }) {
   return (
     <VStack gap="space-8" align="center" className="py-12 bg-ax-bg-neutral-soft rounded-lg">
       <FileIcon aria-hidden className="text-ax-icon-neutral-subtle" fontSize="3rem" />
       <VStack gap="space-2" align="center">
         <BodyShort weight="semibold">Ingen filer ennå</BodyShort>
-        <BodyShort size="small" className="text-ax-text-neutral-subtle">
-          Last opp filer eller opprett en mappe for å komme i gang.
-        </BodyShort>
+        {redigerbar && (
+          <BodyShort size="small" className="text-ax-text-neutral-subtle">
+            Last opp filer eller opprett en mappe for å komme i gang.
+          </BodyShort>
+        )}
       </VStack>
-      <HStack gap="space-4">
-        <Button size="small" icon={<UploadIcon aria-hidden />} onClick={() => {}}>
-          Last opp fil
-        </Button>
-        <Button
-          size="small"
-          variant="secondary"
-          icon={<FolderPlusIcon aria-hidden />}
-          onClick={() => {}}
-        >
-          Opprett mappe
-        </Button>
-      </HStack>
+      {redigerbar && (
+        <HStack gap="space-4">
+          <Button size="small" icon={<UploadIcon aria-hidden />} onClick={() => {}}>
+            Last opp fil
+          </Button>
+          <Button
+            size="small"
+            variant="secondary"
+            icon={<FolderPlusIcon aria-hidden />}
+            onClick={() => {}}
+          >
+            Opprett mappe
+          </Button>
+        </HStack>
+      )}
     </VStack>
   );
 }
 
-export function SakFilområde({ filer }: { filer: FilNode[] }) {
+interface SakFilområdeProps {
+  filer: FilNode[];
+  /** Om brukeren kan laste opp filer og opprette mapper. Standard: `true` */
+  redigerbar?: boolean;
+}
+
+export function SakFilområde({ filer, redigerbar = true }: SakFilområdeProps) {
   const harFiler = filer.length > 0;
 
   return (
@@ -40,7 +50,7 @@ export function SakFilområde({ filer }: { filer: FilNode[] }) {
         <Heading level="2" size="small">
           Filer
         </Heading>
-        {harFiler && (
+        {harFiler && redigerbar && (
           <HStack gap="space-2">
             <Button
               size="xsmall"
@@ -61,7 +71,7 @@ export function SakFilområde({ filer }: { filer: FilNode[] }) {
           </HStack>
         )}
       </HStack>
-      {harFiler ? <FilTre noder={filer} /> : <TomtFilområde />}
+      {harFiler ? <FilTre noder={filer} /> : <TomtFilområde redigerbar={redigerbar} />}
     </Kort>
   );
 }

@@ -1,15 +1,18 @@
 import {
   ArrowForwardIcon,
   ArrowRightIcon,
+  PaperplaneIcon,
   PersonPencilIcon,
   XMarkOctagonIcon,
 } from "@navikt/aksel-icons";
 import { Button, Heading, VStack } from "@navikt/ds-react";
 import { useState } from "react";
+import { Link } from "react-router";
+import { RouteConfig } from "~/routeConfig";
 import type { Sak } from "~/saker/typer";
 import { EndreStatusModal } from "./EndreStatusModal";
 import { HenleggModal } from "./HenleggModal";
-import { erAktivSak, hentNesteStatus } from "./tilgjengeligeHandlinger";
+import { erAktivSak, hentNesteStatus, kanVideresendesTilNayNfp } from "./tilgjengeligeHandlinger";
 import { TildelSaksbehandlerModal } from "./TildelSaksbehandlerModal";
 import { VideresendTilSeksjonModal } from "./VideresendTilSeksjonModal";
 
@@ -54,6 +57,17 @@ export function SakHandlingerKnapper({
         >
           Videresend til seksjon
         </Button>
+        {kanVideresendesTilNayNfp(sak.status) && (
+          <Button
+            as={Link}
+            to={RouteConfig.VIDERESEND_SAK.replace(":sakId", sak.id)}
+            variant="secondary"
+            size="small"
+            icon={<PaperplaneIcon aria-hidden />}
+          >
+            Videresend til NAY/NFP
+          </Button>
+        )}
         {nesteStatus && (
           <Button
             variant="secondary"

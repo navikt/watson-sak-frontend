@@ -18,6 +18,7 @@ export const sakStatusSchema = z.enum([
   "tips mottatt",
   "tips avklart",
   "under utredning",
+  "videresendt til nay/nfp",
   "avsluttet",
   "henlagt",
 ]);

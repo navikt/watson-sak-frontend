@@ -40,6 +40,13 @@ describe("SakFilområde", () => {
     expect(screen.getByText("Opprett mappe")).toBeDefined();
   });
 
+  it("skjuler knapper i tomtilstand når redigerbar er false", () => {
+    render(<SakFilområde filer={[]} redigerbar={false} />);
+    expect(screen.getByText("Ingen filer ennå")).toBeDefined();
+    expect(screen.queryByText("Last opp fil")).toBeNull();
+    expect(screen.queryByText("Opprett mappe")).toBeNull();
+  });
+
   it("viser heading 'Filer' alltid", () => {
     render(<SakFilområde filer={[]} />);
     expect(screen.getByText("Filer")).toBeDefined();
@@ -60,6 +67,12 @@ describe("SakFilområde", () => {
     render(<SakFilområde filer={mockFiler} />);
     const lastOppKnapper = screen.getAllByText("Last opp fil");
     expect(lastOppKnapper.length).toBeGreaterThan(0);
+  });
+
+  it("skjuler handlingsknapper når redigerbar er false", () => {
+    render(<SakFilområde filer={mockFiler} redigerbar={false} />);
+    expect(screen.queryByText("Last opp fil")).toBeNull();
+    expect(screen.queryByText("Opprett mappe")).toBeNull();
   });
 
   it("ekspanderer mappe ved klikk og viser barn", () => {
