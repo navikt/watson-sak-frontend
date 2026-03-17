@@ -16,10 +16,20 @@ export function hentNesteStatus(status: SakStatus): SakStatus | null {
 
 /** Sjekk om en sak kan ha handlinger utført på seg */
 export function erAktivSak(status: SakStatus): boolean {
-  return status !== "avsluttet" && status !== "henlagt" && status !== "videresendt til nay/nfp";
+  return (
+    status !== "avsluttet" &&
+    status !== "henlagt" &&
+    status !== "videresendt til nay/nfp" &&
+    status !== "politianmeldt"
+  );
 }
 
 /** Sjekk om en sak kan videresendes til NAY/NFP */
 export function kanVideresendesTilNayNfp(status: SakStatus): boolean {
+  return status === "under utredning";
+}
+
+/** Sjekk om en sak kan politianmeldes */
+export function kanPolitianmeldes(status: SakStatus): boolean {
   return status === "under utredning";
 }

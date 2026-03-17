@@ -19,6 +19,7 @@ export const sakStatusSchema = z.enum([
   "tips avklart",
   "under utredning",
   "videresendt til nay/nfp",
+  "politianmeldt",
   "avsluttet",
   "henlagt",
 ]);

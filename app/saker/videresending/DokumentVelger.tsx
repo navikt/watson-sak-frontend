@@ -113,7 +113,9 @@ export function DokumentVelger({
             <Table size="small">
               <Table.Header>
                 <Table.Row>
-                  <Table.HeaderCell scope="col" />
+                  <Table.HeaderCell scope="col">
+                    <span className="navds-sr-only">Velg</span>
+                  </Table.HeaderCell>
                   <Table.HeaderCell scope="col">Tittel</Table.HeaderCell>
                   <Table.HeaderCell scope="col">Dato</Table.HeaderCell>
                   <Table.HeaderCell scope="col">Type</Table.HeaderCell>

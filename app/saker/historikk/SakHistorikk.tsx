@@ -1,6 +1,7 @@
 import {
   ArrowRightIcon,
   ClockIcon,
+  GavelIcon,
   PaperplaneIcon,
   PersonIcon,
   PlusCircleIcon,
@@ -44,6 +45,8 @@ function hendelseTittel(hendelse: SakHendelse): string {
       return "Sak henlagt";
     case "videresendt_nay_nfp":
       return "Videresendt til NAY/NFP";
+    case "politianmeldt":
+      return "Politianmeldt";
   }
 }
 
@@ -77,6 +80,8 @@ function HendelseBullet({ type }: { type: SakHendelse["type"] }) {
       return <XMarkOctagonIcon {...iconProps} />;
     case "videresendt_nay_nfp":
       return <PaperplaneIcon {...iconProps} />;
+    case "politianmeldt":
+      return <GavelIcon {...iconProps} />;
   }
 }
 

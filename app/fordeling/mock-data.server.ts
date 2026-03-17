@@ -111,7 +111,12 @@ const rådata: Sak[] = [
   },
 ];
 
-export const mockSaker: Sak[] = rådata.map((sak) => sakSchema.parse(sak));
+export let mockSaker: Sak[] = rådata.map((sak) => sakSchema.parse(sak));
+
+/** Tilbakestill mock-saker til opprinnelig tilstand */
+export function resetMockSaker() {
+  mockSaker = rådata.map((sak) => sakSchema.parse(sak));
+}
 
 export const mockAvdelinger = [
   "Kontroll Øst",

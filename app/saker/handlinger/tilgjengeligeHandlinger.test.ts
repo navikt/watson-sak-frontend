@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { erAktivSak, hentNesteStatus, kanVideresendesTilNayNfp } from "./tilgjengeligeHandlinger";
+import {
+  erAktivSak,
+  hentNesteStatus,
+  kanPolitianmeldes,
+  kanVideresendesTilNayNfp,
+} from "./tilgjengeligeHandlinger";
 
 describe("hentNesteStatus", () => {
   it("returnerer 'tips avklart' for 'tips mottatt'", () => {
@@ -47,6 +52,10 @@ describe("erAktivSak", () => {
   it("returnerer false for 'videresendt til nay/nfp'", () => {
     expect(erAktivSak("videresendt til nay/nfp")).toBe(false);
   });
+
+  it("returnerer false for 'politianmeldt'", () => {
+    expect(erAktivSak("politianmeldt")).toBe(false);
+  });
 });
 
 describe("kanVideresendesTilNayNfp", () => {
@@ -72,5 +81,39 @@ describe("kanVideresendesTilNayNfp", () => {
 
   it("returnerer false for 'videresendt til nay/nfp'", () => {
     expect(kanVideresendesTilNayNfp("videresendt til nay/nfp")).toBe(false);
+  });
+
+  it("returnerer false for 'politianmeldt'", () => {
+    expect(kanVideresendesTilNayNfp("politianmeldt")).toBe(false);
+  });
+});
+
+describe("kanPolitianmeldes", () => {
+  it("returnerer true for 'under utredning'", () => {
+    expect(kanPolitianmeldes("under utredning")).toBe(true);
+  });
+
+  it("returnerer false for 'tips mottatt'", () => {
+    expect(kanPolitianmeldes("tips mottatt")).toBe(false);
+  });
+
+  it("returnerer false for 'tips avklart'", () => {
+    expect(kanPolitianmeldes("tips avklart")).toBe(false);
+  });
+
+  it("returnerer false for 'avsluttet'", () => {
+    expect(kanPolitianmeldes("avsluttet")).toBe(false);
+  });
+
+  it("returnerer false for 'henlagt'", () => {
+    expect(kanPolitianmeldes("henlagt")).toBe(false);
+  });
+
+  it("returnerer false for 'videresendt til nay/nfp'", () => {
+    expect(kanPolitianmeldes("videresendt til nay/nfp")).toBe(false);
+  });
+
+  it("returnerer false for 'politianmeldt'", () => {
+    expect(kanPolitianmeldes("politianmeldt")).toBe(false);
   });
 });

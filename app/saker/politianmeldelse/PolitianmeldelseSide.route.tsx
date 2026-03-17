@@ -1,4 +1,4 @@
-import { ArrowLeftIcon, PaperplaneIcon } from "@navikt/aksel-icons";
+import { ArrowLeftIcon, GavelIcon } from "@navikt/aksel-icons";
 import { Alert, Button, Heading, HStack, Page, VStack } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
 import { useState } from "react";
@@ -10,11 +10,10 @@ import { leggTilHendelse } from "~/saker/historikk/mock-data.server";
 import { hentJournalposter } from "~/saker/joark/mock-data.server";
 import { SaksinformasjonKort } from "~/saker/komponenter/SaksinformasjonKort";
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
-import { DokumentVelger } from "./DokumentVelger";
-import { MottakerVelger } from "./MottakerVelger";
-import { OppsummeringSkjema } from "./OppsummeringSkjema";
-import { videresendingSkjemaRefinert, type Mottaker } from "./typer";
-import type { Route } from "./+types/VideresendSakSide.route";
+import { DokumentVelger } from "~/saker/videresending/DokumentVelger";
+import { OppsummeringSkjema } from "~/saker/videresending/OppsummeringSkjema";
+import { politianmeldelseSkjemaRefinert } from "./typer";
+import type { Route } from "./+types/PolitianmeldelseSide.route";
 
 export function loader({ params }: Route.LoaderArgs) {
   const sak = hentAlleSaker().find((s) => s.id === params.sakId);
@@ -35,7 +34,6 @@ export async function action({ request, params }: Route.ActionArgs) {
   const formData = await request.formData();
 
   const rådata = {
-    mottaker: formData.get("mottaker"),
     valgteFiler: formData.getAll("valgteFiler"),
     valgteJournalposter: formData.getAll("valgteJournalposter"),
     funn: formData.get("funn"),
@@ -43,7 +41,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     anbefaling: formData.get("anbefaling"),
   };
 
-  const resultat = videresendingSkjemaRefinert.safeParse(rådata);
+  const resultat = politianmeldelseSkjemaRefinert.safeParse(rådata);
 
   if (!resultat.success) {
     const flattened = resultat.error.flatten();
@@ -62,22 +60,21 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   const data = resultat.data;
-  sak.status = "videresendt til nay/nfp";
+  sak.status = "politianmeldt";
 
-  leggTilHendelse(sakId, "videresendt_nay_nfp", "Ola Nordmann", {
-    til: data.mottaker === "nay" ? "NAY" : "NFP",
+  leggTilHendelse(sakId, "politianmeldt", "Ola Nordmann", {
+    til: "Politiet",
     notat: `Funn: ${data.funn} | Vurdering: ${data.vurdering} | Anbefaling: ${data.anbefaling}`,
   });
 
   return redirect(RouteConfig.SAKER_DETALJ.replace(":sakId", sakId));
 }
 
-export default function VideresendSakSide() {
+export default function PolitianmeldelseSide() {
   const { sak, filer, journalposter } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const feil = actionData?.feil as Record<string, string[] | undefined> | undefined;
 
-  const [mottaker, setMottaker] = useState<Mottaker | undefined>(undefined);
   const [valgteFiler, setValgteFiler] = useState<string[]>([]);
   const [valgteJournalposter, setValgteJournalposter] = useState<string[]>([]);
   const [funn, setFunn] = useState("");
@@ -88,7 +85,7 @@ export default function VideresendSakSide() {
 
   return (
     <Page>
-      <title>{`Videresend sak ${sak.id} – Watson Sak`}</title>
+      <title>{`Politianmeldelse – Sak ${sak.id} – Watson Sak`}</title>
       <PageBlock width="lg" gutters className="!mx-0">
         <VStack gap="space-12" className="py-6">
           <VStack gap="space-4">
@@ -104,22 +101,13 @@ export default function VideresendSakSide() {
               </Button>
             </div>
             <Heading level="1" size="large">
-              Videresend sak til NAY/NFP
+              Opprett politianmeldelse
             </Heading>
           </VStack>
 
           <Form method="post">
             <VStack gap="space-8">
               <SaksinformasjonKort sak={sak} />
-
-              <Kort>
-                <input type="hidden" name="mottaker" value={mottaker ?? ""} />
-                <MottakerVelger
-                  valgt={mottaker}
-                  onChange={setMottaker}
-                  feil={feil?.mottaker?.join(", ")}
-                />
-              </Kort>
 
               <Kort>
                 {valgteFiler.map((filId) => (
@@ -164,8 +152,8 @@ export default function VideresendSakSide() {
               )}
 
               <HStack gap="space-4">
-                <Button type="submit" icon={<PaperplaneIcon aria-hidden />}>
-                  Send til {mottaker === "nfp" ? "NFP" : "NAY/NFP"}
+                <Button type="submit" variant="danger" icon={<GavelIcon aria-hidden />}>
+                  Send politianmeldelse
                 </Button>
                 <Button as={Link} to={tilbakeUrl} variant="secondary">
                   Avbryt
