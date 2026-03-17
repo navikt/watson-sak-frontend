@@ -1,38 +1,23 @@
 import { ArrowLeftIcon, PaperplaneIcon } from "@navikt/aksel-icons";
-import {
-  Alert,
-  BodyShort,
-  Button,
-  CopyButton,
-  Detail,
-  Heading,
-  HStack,
-  Page,
-  Tag,
-  VStack,
-} from "@navikt/ds-react";
+import { Alert, Button, Heading, HStack, Page, VStack } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
 import { useState } from "react";
 import { Form, Link, redirect, useActionData, useLoaderData } from "react-router";
 import { Kort } from "~/komponenter/Kort";
-import { mockSaker } from "~/fordeling/mock-data.server";
-import { mockMineSaker } from "~/mine-saker/mock-data.server";
 import { RouteConfig } from "~/routeConfig";
 import { hentFilerForSak } from "~/saker/filer/mock-data.server";
 import { leggTilHendelse } from "~/saker/historikk/mock-data.server";
 import { hentJournalposter } from "~/saker/joark/mock-data.server";
-import { hentStatusVariant, formaterKilde } from "~/saker/utils";
-import { formaterDato } from "~/utils/date-utils";
+import { SaksinformasjonKort } from "~/saker/komponenter/SaksinformasjonKort";
+import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
 import { DokumentVelger } from "./DokumentVelger";
 import { MottakerVelger } from "./MottakerVelger";
 import { OppsummeringSkjema } from "./OppsummeringSkjema";
 import { videresendingSkjemaRefinert, type Mottaker } from "./typer";
 import type { Route } from "./+types/VideresendSakSide.route";
 
-const alleSaker = [...mockSaker, ...mockMineSaker];
-
 export function loader({ params }: Route.LoaderArgs) {
-  const sak = alleSaker.find((s) => s.id === params.sakId);
+  const sak = hentAlleSaker().find((s) => s.id === params.sakId);
   if (!sak) {
     throw new Response("Sak ikke funnet", { status: 404 });
   }
@@ -71,7 +56,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   const sakId = params.sakId;
-  const sak = alleSaker.find((s) => s.id === sakId);
+  const sak = hentAlleSaker().find((s) => s.id === sakId);
   if (!sak) {
     throw new Response("Sak ikke funnet", { status: 404 });
   }
@@ -125,53 +110,7 @@ export default function VideresendSakSide() {
 
           <Form method="post">
             <VStack gap="space-8">
-              <Kort>
-                <VStack gap="space-4">
-                  <Heading level="2" size="small">
-                    Saksinformasjon
-                  </Heading>
-                  <HStack gap="space-8" wrap>
-                    <VStack gap="space-1">
-                      <Detail className="text-ax-text-neutral-subtle" uppercase>
-                        Sak-ID
-                      </Detail>
-                      <HStack gap="space-1" align="center">
-                        <BodyShort>{sak.id}</BodyShort>
-                        <CopyButton size="xsmall" copyText={sak.id} />
-                      </HStack>
-                    </VStack>
-                    <VStack gap="space-1">
-                      <Detail className="text-ax-text-neutral-subtle" uppercase>
-                        Fødselsnummer
-                      </Detail>
-                      <HStack gap="space-1" align="center">
-                        <BodyShort>{sak.fødselsnummer}</BodyShort>
-                        <CopyButton size="xsmall" copyText={sak.fødselsnummer} />
-                      </HStack>
-                    </VStack>
-                    <VStack gap="space-1">
-                      <Detail className="text-ax-text-neutral-subtle" uppercase>
-                        Status
-                      </Detail>
-                      <Tag variant={hentStatusVariant(sak.status)} size="small">
-                        {sak.status}
-                      </Tag>
-                    </VStack>
-                    <VStack gap="space-1">
-                      <Detail className="text-ax-text-neutral-subtle" uppercase>
-                        Innmeldt
-                      </Detail>
-                      <BodyShort>{formaterDato(sak.datoInnmeldt)}</BodyShort>
-                    </VStack>
-                    <VStack gap="space-1">
-                      <Detail className="text-ax-text-neutral-subtle" uppercase>
-                        Kilde
-                      </Detail>
-                      <BodyShort>{formaterKilde(sak.kilde)}</BodyShort>
-                    </VStack>
-                  </HStack>
-                </VStack>
-              </Kort>
+              <SaksinformasjonKort sak={sak} />
 
               <Kort>
                 <input type="hidden" name="mottaker" value={mottaker ?? ""} />

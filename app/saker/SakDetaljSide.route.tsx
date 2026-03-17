@@ -22,8 +22,6 @@ import { PageBlock } from "@navikt/ds-react/Page";
 import { data, useLoaderData, useNavigate } from "react-router";
 import { Kort } from "~/komponenter/Kort";
 import { formaterDato } from "~/utils/date-utils";
-import { mockSaker } from "~/fordeling/mock-data.server";
-import { mockMineSaker } from "~/mine-saker/mock-data.server";
 import { mockSaksbehandlere } from "~/saker/mock-saksbehandlere.server";
 import { mockSeksjoner } from "~/saker/mock-seksjoner.server";
 import type { Route } from "./+types/SakDetaljSide.route";
@@ -35,12 +33,11 @@ import { SakHistorikk } from "./historikk/SakHistorikk";
 import { hentHistorikk, leggTilHendelse } from "./historikk/mock-data.server";
 import { hentJournalposter } from "./joark/mock-data.server";
 import { JoarkOversikt } from "./joark/JoarkOversikt";
+import { hentAlleSaker } from "./mock-alle-saker.server";
 import { formaterKilde, hentStatusVariant } from "./utils";
 
-const alleSaker = [...mockSaker, ...mockMineSaker];
-
 export function loader({ params }: Route.LoaderArgs) {
-  const sak = alleSaker.find((s) => s.id === params.sakId);
+  const sak = hentAlleSaker().find((s) => s.id === params.sakId);
   if (!sak) {
     throw data("Sak ikke funnet", { status: 404 });
   }
@@ -62,7 +59,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   const handling = formData.get("handling") as string;
   const sakId = params.sakId;
 
-  const sak = alleSaker.find((s) => s.id === sakId);
+  const sak = hentAlleSaker().find((s) => s.id === sakId);
   if (!sak) {
     throw data("Sak ikke funnet", { status: 404 });
   }
