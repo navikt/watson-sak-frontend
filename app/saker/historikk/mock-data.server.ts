@@ -105,3 +105,11 @@ function genererHistorikk(saker: typeof mockSaker) {
 
 genererHistorikk(mockSaker);
 genererHistorikk(mockMineSaker);
+
+/** Tilbakestill historikk til opprinnelig tilstand */
+export function resetHistorikk() {
+  historikkMap.clear();
+  nesteId = 1;
+  genererHistorikk(mockSaker);
+  genererHistorikk(mockMineSaker);
+}
