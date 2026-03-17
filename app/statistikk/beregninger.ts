@@ -8,6 +8,7 @@ export function beregnAntallPerStatus(saker: Sak[]): Record<SakStatus, number> {
     "tips avklart": 0,
     "under utredning": 0,
     "videresendt til nay/nfp": 0,
+    politianmeldt: 0,
     avsluttet: 0,
     henlagt: 0,
   };

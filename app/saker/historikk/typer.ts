@@ -8,6 +8,7 @@ export const sakHendelseTypeSchema = z.enum([
   "avdeling_endret",
   "henlagt",
   "videresendt_nay_nfp",
+  "politianmeldt",
 ]);
 
 export type SakHendelseType = z.infer<typeof sakHendelseTypeSchema>;

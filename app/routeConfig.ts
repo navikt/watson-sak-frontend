@@ -7,6 +7,7 @@ export const RouteConfig = {
   FORDELING: "/fordeling",
   SAKER_DETALJ: "/saker/:sakId",
   VIDERESEND_SAK: "/saker/:sakId/videresend",
+  POLITIANMELDELSE: "/saker/:sakId/politianmeldelse",
   MINE_SAKER: "/mine-saker",
   REGISTRER_SAK: "/registrer-sak",
   STATISTIKK: "/statistikk",
@@ -21,5 +22,6 @@ export const RouteConfig = {
     LOGGED_IN_USER: "/api/logged-in-user",
     THEME: "/api/theme",
     VERSION: "/api/version",
+    RESET_MOCK_DATA: "/api/reset-mock-data",
   },
 };

@@ -1,6 +1,7 @@
 import {
   ArrowForwardIcon,
   ArrowRightIcon,
+  GavelIcon,
   PaperplaneIcon,
   PersonPencilIcon,
   XMarkOctagonIcon,
@@ -12,7 +13,12 @@ import { RouteConfig } from "~/routeConfig";
 import type { Sak } from "~/saker/typer";
 import { EndreStatusModal } from "./EndreStatusModal";
 import { HenleggModal } from "./HenleggModal";
-import { erAktivSak, hentNesteStatus, kanVideresendesTilNayNfp } from "./tilgjengeligeHandlinger";
+import {
+  erAktivSak,
+  hentNesteStatus,
+  kanPolitianmeldes,
+  kanVideresendesTilNayNfp,
+} from "./tilgjengeligeHandlinger";
 import { TildelSaksbehandlerModal } from "./TildelSaksbehandlerModal";
 import { VideresendTilSeksjonModal } from "./VideresendTilSeksjonModal";
 
@@ -66,6 +72,17 @@ export function SakHandlingerKnapper({
             icon={<PaperplaneIcon aria-hidden />}
           >
             Videresend til NAY/NFP
+          </Button>
+        )}
+        {kanPolitianmeldes(sak.status) && (
+          <Button
+            as={Link}
+            to={RouteConfig.POLITIANMELDELSE.replace(":sakId", sak.id)}
+            variant="secondary"
+            size="small"
+            icon={<GavelIcon aria-hidden />}
+          >
+            Politianmeldelse
           </Button>
         )}
         {nesteStatus && (

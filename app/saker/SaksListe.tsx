@@ -200,6 +200,7 @@ function statusAccentKlasse(status: SakStatus): string {
     "tips avklart": "bg-ax-bg-warning-strong",
     "under utredning": "bg-ax-bg-warning-strong",
     "videresendt til nay/nfp": "bg-ax-bg-success-strong",
+    politianmeldt: "bg-ax-bg-success-strong",
     avsluttet: "bg-ax-bg-neutral-moderate",
     henlagt: "bg-ax-bg-neutral-moderate",
   };

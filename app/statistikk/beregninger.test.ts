@@ -41,6 +41,7 @@ describe("beregnAntallPerStatus", () => {
       "tips avklart": 0,
       "under utredning": 1,
       "videresendt til nay/nfp": 0,
+      politianmeldt: 0,
       avsluttet: 1,
       henlagt: 1,
     });
@@ -54,6 +55,7 @@ describe("beregnAntallPerStatus", () => {
       "tips avklart": 0,
       "under utredning": 0,
       "videresendt til nay/nfp": 0,
+      politianmeldt: 0,
       avsluttet: 0,
       henlagt: 0,
     });
