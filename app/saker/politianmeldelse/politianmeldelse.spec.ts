@@ -63,6 +63,10 @@ test.describe("Politianmeldelse", () => {
 });
 
 test.describe("Politianmeldelse – tilgang", () => {
+  test.beforeEach(async ({ page }) => {
+    await resetMockData(page);
+  });
+
   test("politianmeldelse-knappen vises for saker under utredning", async ({ page }) => {
     await page.goto("/saker/3", { waitUntil: "networkidle" });
 
