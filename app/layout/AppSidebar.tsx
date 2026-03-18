@@ -8,7 +8,7 @@ import {
   TasklistIcon,
 } from "@navikt/aksel-icons";
 import { Tooltip } from "@navikt/ds-react";
-import { type ComponentType, useEffect, useState } from "react";
+import { type ComponentType } from "react";
 import { NavLink } from "react-router";
 import { usePreferences } from "~/preferanser/PreferencesContext";
 import { RouteConfig } from "~/routeConfig";
@@ -31,28 +31,10 @@ const lenker: Lenke[] = [
   { to: RouteConfig.STATISTIKK, label: "Statistikk", icon: BarChartIcon },
 ];
 
-function useErLitenSkjerm() {
-  const [erLiten, setErLiten] = useState(false);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 768px)");
-    setErLiten(mediaQuery.matches);
-
-    function oppdater(e: MediaQueryListEvent) {
-      setErLiten(e.matches);
-    }
-    mediaQuery.addEventListener("change", oppdater);
-    return () => mediaQuery.removeEventListener("change", oppdater);
-  }, []);
-
-  return erLiten;
-}
-
 export function AppSidebar() {
   const { preferences, oppdaterPreference } = usePreferences();
-  const erLitenSkjerm = useErLitenSkjerm();
 
-  const erKollapset = erLitenSkjerm || preferences.sidebarKollapset;
+  const erKollapset = preferences.sidebarKollapset;
 
   const toggleSidebar = () => {
     oppdaterPreference("sidebarKollapset", !preferences.sidebarKollapset);
