@@ -99,7 +99,7 @@ export function AppSidebar() {
           );
         })}
       </ul>
-      <div className="p-2 flex justify-center">
+      <div className="sticky bottom-0 p-2 flex justify-center bg-ax-bg-neutral-soft">
         <Tooltip content={erKollapset ? "Vis meny" : "Skjul meny"} placement="right">
           <button
             type="button"
