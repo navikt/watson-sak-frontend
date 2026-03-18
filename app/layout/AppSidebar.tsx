@@ -89,10 +89,7 @@ export function AppSidebar() {
         })}
       </ul>
       <div className="sticky bottom-0 p-2 flex justify-start pl-[calc((4rem-2.5rem)/2)] bg-ax-bg-neutral-soft">
-        <Tooltip
-          content={erKollapset ? "Vis meny" : "Skjul meny"}
-          placement="right"
-        >
+        <Tooltip content={erKollapset ? "Vis meny" : "Skjul meny"} placement="right">
           <button
             type="button"
             onClick={toggleSidebar}

@@ -2,10 +2,7 @@ import { FaroErrorBoundary } from "@grafana/faro-react";
 import { Links, Meta, Scripts, ScrollRestoration } from "react-router";
 import { AnalyticsTags } from "~/analytics/analytics";
 import { PreferencesProvider } from "~/preferanser/PreferencesContext";
-import {
-  defaultPreferences,
-  type Preferences,
-} from "~/preferanser/PreferencesCookie";
+import { defaultPreferences, type Preferences } from "~/preferanser/PreferencesCookie";
 import { ThemeProvider } from "~/tema/ThemeContext";
 
 type HtmlRammeProps = {
