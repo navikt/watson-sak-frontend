@@ -1,6 +1,7 @@
 import { Button, Heading, HStack, LocalAlert, VStack, BodyShort } from "@navikt/ds-react";
 import { useState } from "react";
 import { Link as RouterLink } from "react-router";
+import { BellIcon } from "@navikt/aksel-icons";
 import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
 import type { Varsel } from "~/varsler/typer";
@@ -27,9 +28,12 @@ export function SisteVarsler({
   return (
     <Kort as="section">
       <VStack gap="space-4">
-        <Heading level="2" size="medium">
-          Siste varsler
-        </Heading>
+        <HStack gap="space-4" align="center">
+          <BellIcon aria-hidden fontSize="1.25rem" />
+          <Heading level="2" size="medium">
+            Siste varsler
+          </Heading>
+        </HStack>
 
         {synligeVarsler.length === 0 ? (
           <BodyShort className="text-ax-text-neutral-subtle">

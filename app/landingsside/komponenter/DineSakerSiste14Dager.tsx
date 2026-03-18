@@ -1,10 +1,11 @@
 import {
+  PieChartIcon,
   CheckmarkCircleIcon,
   HourglassIcon,
   PaperplaneIcon,
   XMarkOctagonIcon,
 } from "@navikt/aksel-icons";
-import { BodyShort, Heading, HGrid, VStack } from "@navikt/ds-react";
+import { BodyShort, Heading, HGrid, HStack, VStack } from "@navikt/ds-react";
 import { Kort } from "~/komponenter/Kort";
 import { Nokkeltallkort } from "~/statistikk/komponenter/Nokkeltallkort";
 import type { DineSakerSiste14DagerStatistikk } from "../beregninger";
@@ -35,9 +36,12 @@ export function DineSakerSiste14Dager({ statistikk }: DineSakerSiste14DagerProps
     <Kort as="section">
       <VStack gap="space-4">
         <div>
-          <Heading level="2" size="medium">
-            Dine saker siste 14 dager
-          </Heading>
+          <HStack gap="space-4" align="center">
+            <PieChartIcon aria-hidden fontSize="1.25rem" />
+            <Heading level="2" size="medium">
+              Dine saker siste 14 dager
+            </Heading>
+          </HStack>
           <BodyShort size="small" className="text-ax-text-neutral-subtle">
             Basert på dato innmeldt de siste 14 dagene.
           </BodyShort>
