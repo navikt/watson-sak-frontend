@@ -1,39 +1,110 @@
+import {
+  BarChartIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  FolderIcon,
+  HouseIcon,
+  PlusCircleIcon,
+  TasklistIcon,
+} from "@navikt/aksel-icons";
+import { Tooltip } from "@navikt/ds-react";
+import { type ComponentType } from "react";
 import { NavLink } from "react-router";
+import { usePreferences } from "~/preferanser/PreferencesContext";
 import { RouteConfig } from "~/routeConfig";
 
-const lenker = [
-  { to: RouteConfig.INDEX, label: "Dashboard" },
-  { to: RouteConfig.MINE_SAKER, label: "Mine saker" },
-  { to: RouteConfig.FORDELING, label: "Fordeling" },
-  { to: RouteConfig.REGISTRER_SAK, label: "Registrer sak" },
-  { to: RouteConfig.STATISTIKK, label: "Statistikk" },
+type Lenke = {
+  to: string;
+  label: string;
+  icon: ComponentType<{ fontSize: string; "aria-hidden": boolean }>;
+};
+
+const lenker: Lenke[] = [
+  { to: RouteConfig.INDEX, label: "Dashboard", icon: HouseIcon },
+  { to: RouteConfig.MINE_SAKER, label: "Mine saker", icon: FolderIcon },
+  { to: RouteConfig.FORDELING, label: "Fordeling", icon: TasklistIcon },
+  {
+    to: RouteConfig.REGISTRER_SAK,
+    label: "Registrer sak",
+    icon: PlusCircleIcon,
+  },
+  { to: RouteConfig.STATISTIKK, label: "Statistikk", icon: BarChartIcon },
 ];
 
 export function AppSidebar() {
+  const { preferences, oppdaterPreference } = usePreferences();
+
+  const erKollapset = preferences.sidebarKollapset;
+
+  const toggleSidebar = () => {
+    oppdaterPreference("sidebarKollapset", !preferences.sidebarKollapset);
+  };
+
   return (
     <nav
+      id="sidebar-nav"
       aria-label="Hovedmeny"
-      className="w-56 shrink-0 border-r border-ax-border-neutral-subtle bg-ax-bg-neutral-soft"
+      className={`shrink-0 border-r border-ax-border-neutral-subtle bg-ax-bg-neutral-soft flex flex-col transition-[width] duration-200 ease-in-out ${
+        erKollapset ? "w-16" : "w-56"
+      }`}
     >
-      <ul className="flex flex-col list-none m-0 p-0 pt-4">
-        {lenker.map(({ to, label }) => (
-          <li key={to}>
+      <ul className="flex flex-col list-none m-0 p-0 pt-4 flex-1">
+        {lenker.map(({ to, label, icon: Icon }) => {
+          const lenkInnhold = (
             <NavLink
               to={to}
               end={to === RouteConfig.INDEX}
               className={({ isActive }) =>
-                `block px-6 py-3 text-base no-underline transition-colors ${
+                `flex items-center py-3 text-base no-underline overflow-hidden transition-colors border-l-4 ${
                   isActive
-                    ? "bg-ax-bg-accent-soft text-ax-text-accent font-semibold border-l-[3px] border-ax-border-accent"
-                    : "text-ax-text-neutral hover:bg-ax-bg-neutral-moderate-hover border-l-[3px] border-transparent"
+                    ? "bg-ax-bg-accent-soft text-ax-text-accent font-semibold border-ax-border-accent"
+                    : "text-ax-text-neutral hover:bg-ax-bg-neutral-moderate-hover border-transparent"
                 }`
               }
             >
-              {label}
+              <span className="flex items-center justify-center w-[calc(4rem-4px)] shrink-0">
+                <Icon fontSize="1.5rem" aria-hidden={true} />
+              </span>
+              <span
+                className={`whitespace-nowrap transition-opacity duration-200 ${
+                  erKollapset ? "opacity-0" : "opacity-100"
+                }`}
+              >
+                {label}
+              </span>
             </NavLink>
-          </li>
-        ))}
+          );
+
+          return (
+            <li key={to}>
+              {erKollapset ? (
+                <Tooltip content={label} placement="right">
+                  <span>{lenkInnhold}</span>
+                </Tooltip>
+              ) : (
+                lenkInnhold
+              )}
+            </li>
+          );
+        })}
       </ul>
+      <div className="sticky bottom-0 p-2 flex justify-start pl-[calc((4rem-2.5rem)/2)] bg-ax-bg-neutral-soft">
+        <Tooltip content={erKollapset ? "Vis meny" : "Skjul meny"} placement="right">
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            aria-expanded={!erKollapset}
+            aria-controls="sidebar-nav"
+            className="flex items-center justify-center w-10 h-10 rounded-full border border-ax-border-neutral-subtle bg-ax-bg-neutral-soft text-ax-text-neutral hover:bg-ax-bg-neutral-moderate-hover transition-colors cursor-pointer"
+          >
+            {erKollapset ? (
+              <ChevronRightIcon fontSize="1.5rem" title="Vis meny" />
+            ) : (
+              <ChevronLeftIcon fontSize="1.5rem" title="Skjul meny" />
+            )}
+          </button>
+        </Tooltip>
+      </div>
     </nav>
   );
 }

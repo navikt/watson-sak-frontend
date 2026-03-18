@@ -7,10 +7,10 @@ import { HtmlRamme } from "./HtmlRamme";
 import type { rootLoader } from "./loader.server";
 
 export default function Root() {
-  const { envs, initialTheme } = useLoaderData<typeof rootLoader>();
+  const { envs, initialPreferences } = useLoaderData<typeof rootLoader>();
   useFaro();
   return (
-    <HtmlRamme initialTheme={initialTheme} umamiSiteId={envs.umamiSiteId}>
+    <HtmlRamme initialPreferences={initialPreferences} umamiSiteId={envs.umamiSiteId}>
       <Versjonsvarsling gjeldendeVersjon={envs.appversjon} />
       <Outlet />
     </HtmlRamme>

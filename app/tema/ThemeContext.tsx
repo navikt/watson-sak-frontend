@@ -1,8 +1,9 @@
 import { Theme } from "@navikt/ds-react";
-import { createContext, useContext, useState } from "react";
-import { logger } from "~/logging/logging";
-import { RouteConfig } from "~/routeConfig";
-import { type Theme as ThemeType } from "./ThemeCookie";
+import { createContext, useContext } from "react";
+import { usePreferences } from "~/preferanser/PreferencesContext";
+import type { Preferences } from "~/preferanser/PreferencesCookie";
+
+type ThemeType = Preferences["tema"];
 
 const ThemeContext = createContext<{
   theme: ThemeType;
@@ -22,29 +23,15 @@ export function useTheme() {
 
 type ThemeProviderProps = {
   children: React.ReactNode;
-  defaultTheme?: ThemeType;
 };
 
-export function ThemeProvider({ children, defaultTheme = "light" }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<ThemeType>(defaultTheme);
+export function ThemeProvider({ children }: ThemeProviderProps) {
+  const { preferences, oppdaterPreference } = usePreferences();
+  const theme = preferences.tema;
 
   const toggleTheme = async () => {
-    const oldTheme = theme;
     const newTheme = theme === "light" ? "dark" : "light";
-    setTheme(newTheme);
-
-    try {
-      const formData = new FormData();
-      formData.append("theme", newTheme);
-
-      await fetch(RouteConfig.API.THEME, {
-        method: "POST",
-        body: formData,
-      });
-    } catch (error) {
-      logger.error("Kunne ikke lagre tema-preferense", { error });
-      setTheme(oldTheme);
-    }
+    await oppdaterPreference("tema", newTheme);
   };
 
   return (
