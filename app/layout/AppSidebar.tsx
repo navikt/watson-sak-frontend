@@ -72,7 +72,7 @@ export function AppSidebar() {
               to={to}
               end={to === RouteConfig.INDEX}
               className={({ isActive }) =>
-                `flex items-center gap-3 py-3 text-base no-underline transition-colors ${
+                `flex items-center gap-3 py-3 text-base no-underline overflow-hidden transition-colors ${
                   erKollapset ? "justify-center px-0" : "px-6"
                 } ${
                   isActive
@@ -82,7 +82,13 @@ export function AppSidebar() {
               }
             >
               <Icon fontSize="1.5rem" aria-hidden={true} />
-              {!erKollapset && <span>{label}</span>}
+              <span
+                className={`whitespace-nowrap transition-opacity duration-200 ${
+                  erKollapset ? "opacity-0" : "opacity-100"
+                }`}
+              >
+                {label}
+              </span>
             </NavLink>
           );
 
