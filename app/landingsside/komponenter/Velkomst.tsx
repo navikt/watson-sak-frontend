@@ -1,4 +1,4 @@
-import { BodyLong, Heading, VStack } from "@navikt/ds-react";
+import { Heading } from "@navikt/ds-react";
 import { CoffeeIcon, MoonIcon, SunIcon } from "@navikt/aksel-icons";
 import type { ComponentType, SVGProps } from "react";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
@@ -21,25 +21,16 @@ function hentFornavn(fulltNavn: string): string {
   return fulltNavn.split(" ")[0];
 }
 
-interface VelkomstProps {
-  antallUnderBehandling: number;
-  antallTipsMottatt: number;
-}
-
-export function Velkomst({ antallUnderBehandling, antallTipsMottatt }: VelkomstProps) {
+export function Velkomst() {
   const bruker = useInnloggetBruker();
   const fornavn = hentFornavn(bruker.name);
   const { tekst, Ikon } = hentHilsen();
 
   return (
-    <VStack gap="space-4" className="rounded-xl bg-ax-bg-neutral-moderate px-6 py-8">
+    <div className="rounded-xl bg-ax-bg-neutral-moderate px-6 py-8">
       <Heading level="1" size="xlarge">
         {tekst}, {fornavn} <Ikon aria-hidden className="inline" />
       </Heading>
-      <BodyLong size="large" className="text-ax-text-neutral-subtle">
-        Du har {antallUnderBehandling} saker under behandling og {antallTipsMottatt} nye tips som
-        venter.
-      </BodyLong>
-    </VStack>
+    </div>
   );
 }

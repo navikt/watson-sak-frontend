@@ -23,7 +23,7 @@ export function MineSakerOversikt({ saker }: { saker: Sak[] }) {
         {saker.length === 0 ? (
           <BodyShort className="text-ax-text-neutral-subtle">Du har ingen aktive saker.</BodyShort>
         ) : (
-          <Table size="small">
+          <Table size="medium">
             <Table.Header>
               <Table.Row>
                 <Table.HeaderCell scope="col">Sak</Table.HeaderCell>
