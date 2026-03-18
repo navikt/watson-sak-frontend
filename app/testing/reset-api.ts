@@ -2,6 +2,7 @@ import { skalBrukeMockdata } from "~/config/env.server";
 import { resetMockSaker } from "~/fordeling/mock-data.server";
 import { resetMockMineSaker } from "~/mine-saker/mock-data.server";
 import { resetHistorikk } from "~/saker/historikk/mock-data.server";
+import { resetMockVarsler } from "~/varsler/mock-data.server";
 
 /**
  * API-rute som tilbakestiller all mock-data til opprinnelig tilstand.
@@ -15,6 +16,7 @@ export function action() {
   resetMockSaker();
   resetMockMineSaker();
   resetHistorikk();
+  resetMockVarsler();
 
   return Response.json({ ok: true });
 }
