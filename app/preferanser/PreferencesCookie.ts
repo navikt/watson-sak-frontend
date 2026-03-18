@@ -11,12 +11,14 @@ export const preferencesCookie = createCookie("preferences", {
 
 const preferencesSchema = z.object({
   sidebarKollapset: z.boolean().default(false),
+  tema: z.enum(["light", "dark"]).default("light"),
 });
 
 export type Preferences = z.infer<typeof preferencesSchema>;
 
 const defaultPreferences: Preferences = {
   sidebarKollapset: false,
+  tema: "light",
 };
 
 export function parsePreferences(value: unknown): Preferences {

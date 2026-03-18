@@ -4,20 +4,17 @@ import { AnalyticsTags } from "~/analytics/analytics";
 import { PreferencesProvider } from "~/preferanser/PreferencesContext";
 import type { Preferences } from "~/preferanser/PreferencesCookie";
 import { ThemeProvider } from "~/tema/ThemeContext";
-import type { Theme } from "~/tema/ThemeCookie";
 
 type HtmlRammeProps = {
   children: React.ReactNode;
-  initialTheme?: Theme;
   initialPreferences?: Preferences;
   umamiSiteId: string;
 };
 
-const defaultPreferences: Preferences = { sidebarKollapset: false };
+const defaultPreferences: Preferences = { sidebarKollapset: false, tema: "light" };
 
 export function HtmlRamme({
   children,
-  initialTheme = "light",
   initialPreferences = defaultPreferences,
   umamiSiteId,
 }: HtmlRammeProps) {
@@ -33,11 +30,9 @@ export function HtmlRamme({
       </head>
       <body className="flex flex-col min-h-screen">
         <FaroErrorBoundary>
-          <ThemeProvider defaultTheme={initialTheme}>
-            <PreferencesProvider defaultPreferences={initialPreferences}>
-              {children}
-            </PreferencesProvider>
-          </ThemeProvider>
+          <PreferencesProvider defaultPreferences={initialPreferences}>
+            <ThemeProvider>{children}</ThemeProvider>
+          </PreferencesProvider>
         </FaroErrorBoundary>
         <ScrollRestoration />
         <Scripts />
