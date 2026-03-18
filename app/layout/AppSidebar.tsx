@@ -72,16 +72,16 @@ export function AppSidebar() {
               to={to}
               end={to === RouteConfig.INDEX}
               className={({ isActive }) =>
-                `flex items-center gap-3 py-3 text-base no-underline overflow-hidden transition-colors ${
-                  erKollapset ? "justify-center px-0" : "px-6"
-                } ${
+                `flex items-center py-3 text-base no-underline overflow-hidden transition-colors border-l-[3px] ${
                   isActive
-                    ? "bg-ax-bg-accent-soft text-ax-text-accent font-semibold border-l-[3px] border-ax-border-accent"
-                    : "text-ax-text-neutral hover:bg-ax-bg-neutral-moderate-hover border-l-[3px] border-transparent"
+                    ? "bg-ax-bg-accent-soft text-ax-text-accent font-semibold border-ax-border-accent"
+                    : "text-ax-text-neutral hover:bg-ax-bg-neutral-moderate-hover border-transparent"
                 }`
               }
             >
-              <Icon fontSize="1.5rem" aria-hidden={true} />
+              <span className="flex items-center justify-center w-[calc(4rem-3px)] shrink-0">
+                <Icon fontSize="1.5rem" aria-hidden={true} />
+              </span>
               <span
                 className={`whitespace-nowrap transition-opacity duration-200 ${
                   erKollapset ? "opacity-0" : "opacity-100"
