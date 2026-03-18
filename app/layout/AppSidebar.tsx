@@ -72,14 +72,14 @@ export function AppSidebar() {
               to={to}
               end={to === RouteConfig.INDEX}
               className={({ isActive }) =>
-                `flex items-center py-3 text-base no-underline overflow-hidden transition-colors border-l-[3px] ${
+                `flex items-center py-3 text-base no-underline overflow-hidden transition-colors border-l-4 ${
                   isActive
                     ? "bg-ax-bg-accent-soft text-ax-text-accent font-semibold border-ax-border-accent"
                     : "text-ax-text-neutral hover:bg-ax-bg-neutral-moderate-hover border-transparent"
                 }`
               }
             >
-              <span className="flex items-center justify-center w-[calc(4rem-3px)] shrink-0">
+              <span className="flex items-center justify-center w-[calc(4rem-4px)] shrink-0">
                 <Icon fontSize="1.5rem" aria-hidden={true} />
               </span>
               <span
