@@ -16,7 +16,7 @@ const preferencesSchema = z.object({
 
 export type Preferences = z.infer<typeof preferencesSchema>;
 
-const defaultPreferences: Preferences = {
+export const defaultPreferences: Preferences = {
   sidebarKollapset: false,
   tema: "light",
 };
