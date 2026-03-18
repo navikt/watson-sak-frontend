@@ -42,6 +42,7 @@ export function AppSidebar() {
 
   return (
     <nav
+      id="sidebar-nav"
       aria-label="Hovedmeny"
       className={`shrink-0 border-r border-ax-border-neutral-subtle bg-ax-bg-neutral-soft flex flex-col transition-[width] duration-200 ease-in-out ${
         erKollapset ? "w-16" : "w-56"
@@ -88,7 +89,10 @@ export function AppSidebar() {
         })}
       </ul>
       <div className="sticky bottom-0 p-2 flex justify-start pl-[calc((4rem-2.5rem)/2)] bg-ax-bg-neutral-soft">
-        <Tooltip content={erKollapset ? "Vis meny" : "Skjul meny"} placement="right">
+        <Tooltip
+          content={erKollapset ? "Vis meny" : "Skjul meny"}
+          placement="right"
+        >
           <button
             type="button"
             onClick={toggleSidebar}
