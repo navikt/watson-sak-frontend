@@ -96,7 +96,7 @@ export function AppSidebar() {
             <li key={to}>
               {erKollapset ? (
                 <Tooltip content={label} placement="right">
-                  {lenkInnhold}
+                  <span>{lenkInnhold}</span>
                 </Tooltip>
               ) : (
                 lenkInnhold
