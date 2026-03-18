@@ -1,15 +1,26 @@
 import { FaroErrorBoundary } from "@grafana/faro-react";
 import { Links, Meta, Scripts, ScrollRestoration } from "react-router";
 import { AnalyticsTags } from "~/analytics/analytics";
+import { PreferencesProvider } from "~/preferanser/PreferencesContext";
+import type { Preferences } from "~/preferanser/PreferencesCookie";
 import { ThemeProvider } from "~/tema/ThemeContext";
 import type { Theme } from "~/tema/ThemeCookie";
 
 type HtmlRammeProps = {
   children: React.ReactNode;
   initialTheme?: Theme;
+  initialPreferences?: Preferences;
   umamiSiteId: string;
 };
-export function HtmlRamme({ children, initialTheme = "light", umamiSiteId }: HtmlRammeProps) {
+
+const defaultPreferences: Preferences = { sidebarKollapset: false };
+
+export function HtmlRamme({
+  children,
+  initialTheme = "light",
+  initialPreferences = defaultPreferences,
+  umamiSiteId,
+}: HtmlRammeProps) {
   return (
     <html lang="nb-no">
       <head>
@@ -22,7 +33,11 @@ export function HtmlRamme({ children, initialTheme = "light", umamiSiteId }: Htm
       </head>
       <body className="flex flex-col min-h-screen">
         <FaroErrorBoundary>
-          <ThemeProvider defaultTheme={initialTheme}>{children}</ThemeProvider>
+          <ThemeProvider defaultTheme={initialTheme}>
+            <PreferencesProvider defaultPreferences={initialPreferences}>
+              {children}
+            </PreferencesProvider>
+          </ThemeProvider>
         </FaroErrorBoundary>
         <ScrollRestoration />
         <Scripts />

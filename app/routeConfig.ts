@@ -22,6 +22,7 @@ export const RouteConfig = {
     LOGGED_IN_USER: "/api/logged-in-user",
     THEME: "/api/theme",
     VERSION: "/api/version",
+    PREFERENCES: "/api/preferences",
     RESET_MOCK_DATA: "/api/reset-mock-data",
   },
 };

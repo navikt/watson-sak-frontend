@@ -19,6 +19,7 @@ export default [
   route(RouteConfig.API.HEALTH, "monitorering/helsesjekk/api.ts"),
   route(RouteConfig.API.LOGGED_IN_USER, "admin/innlogget-bruker/api.ts"),
   route(RouteConfig.API.THEME, "tema/api.ts"),
+  route(RouteConfig.API.PREFERENCES, "preferanser/api.ts"),
   route(RouteConfig.API.VERSION, "versjonsvarsling/api.ts"),
   route(RouteConfig.API.RESET_MOCK_DATA, "testing/reset-api.ts"),
 
