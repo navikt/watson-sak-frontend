@@ -34,10 +34,18 @@ export function PreferencesProvider({ children, defaultPreferences }: Preference
       const formData = new FormData();
       formData.append(key, String(value));
 
-      await fetch(RouteConfig.API.PREFERENCES, {
+      const response = await fetch(RouteConfig.API.PREFERENCES, {
         method: "POST",
         body: formData,
       });
+
+      if (!response.ok) {
+        logger.error("Kunne ikke lagre preferanse – server svarte med feilstatus", {
+          status: response.status,
+          statusText: response.statusText,
+        });
+        setPreferences(forrige);
+      }
     } catch (error) {
       logger.error("Kunne ikke lagre preferanse", { error });
       setPreferences(forrige);
