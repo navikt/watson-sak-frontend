@@ -2,7 +2,7 @@ import { FaroErrorBoundary } from "@grafana/faro-react";
 import { Links, Meta, Scripts, ScrollRestoration } from "react-router";
 import { AnalyticsTags } from "~/analytics/analytics";
 import { PreferencesProvider } from "~/preferanser/PreferencesContext";
-import type { Preferences } from "~/preferanser/PreferencesCookie";
+import { parsePreferences, type Preferences } from "~/preferanser/PreferencesCookie";
 import { ThemeProvider } from "~/tema/ThemeContext";
 
 type HtmlRammeProps = {
@@ -11,7 +11,7 @@ type HtmlRammeProps = {
   umamiSiteId: string;
 };
 
-const defaultPreferences: Preferences = { sidebarKollapset: false, tema: "light" };
+const defaultPreferences: Preferences = parsePreferences(undefined);
 
 export function HtmlRamme({
   children,
