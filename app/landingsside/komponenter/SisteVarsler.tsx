@@ -55,6 +55,7 @@ export function SisteVarsler({
                           as={RouterLink}
                           to={RouteConfig.SAKER_DETALJ.replace(":sakId", varsel.sakId)}
                           size="small"
+                          data-color="neutral"
                         >
                           Gå til sak
                         </Button>
@@ -62,6 +63,7 @@ export function SisteVarsler({
                           type="button"
                           variant="secondary"
                           size="small"
+                          data-color="neutral"
                           disabled={erSubmitting}
                           onClick={() => onMarkerSomLest(varsel.id)}
                         >
