@@ -89,7 +89,7 @@ export default function SøkSide() {
               </BodyShort>
 
               {resultater && resultater.length > 0 && (
-                <VStack gap="space-4" ref={resultatlisteRef} onKeyDown={handleResultatlisteKeyDown}>
+                <VStack gap="space-8" ref={resultatlisteRef} onKeyDown={handleResultatlisteKeyDown}>
                   {resultater.map((sak) => (
                     <SøkResultatKort key={sak.id} sak={sak} />
                   ))}
