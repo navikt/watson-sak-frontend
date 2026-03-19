@@ -19,7 +19,7 @@ export default function LandingSide() {
       <title>Dashboard – Watson Sak</title>
       <PageBlock width="xl" gutters>
         <VStack gap="space-16" className="mt-4 mb-8">
-          <Velkomst />
+          <Velkomst oppsummering={loaderData.velkomstOppsummering} />
           <MineSakerOversikt saker={loaderData.mineSaker} />
           <HGrid columns={{ xs: 1, md: 2 }} gap="space-8">
             <SisteVarsler

@@ -17,6 +17,12 @@ test.describe("Landingsside", () => {
     ).toBeVisible();
   });
 
+  test("viser en dynamisk oppsummeringslinje i velkomstseksjonen", async ({ page }) => {
+    await expect(
+      page.getByText("Akkurat nå har du 2 tips til vurdering og 2 saker til utredning."),
+    ).toBeVisible();
+  });
+
   test("viser mine saker-oversikt", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "Mine saker" }).first()).toBeVisible();
     await expect(page.getByRole("link", { name: "Se alle" })).toBeVisible();

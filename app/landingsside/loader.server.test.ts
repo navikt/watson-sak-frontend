@@ -37,4 +37,12 @@ describe("landingsside-loader", () => {
       antallHenlagteTips: 1,
     });
   });
+
+  it("returnerer en velkomstoppsummering basert på sakene dine", () => {
+    const data = loader();
+
+    expect(data.velkomstOppsummering).toBe(
+      "Akkurat nå har du 2 tips til vurdering og 2 saker til utredning.",
+    );
+  });
 });
