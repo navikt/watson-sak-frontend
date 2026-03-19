@@ -22,7 +22,7 @@ export function SøkResultatKort({ sak }: SøkResultatKortProps) {
       <VStack gap="space-4">
         <HStack gap="space-4" align="center" justify="space-between">
           <Link to={detaljSti} className="no-underline focus-visible:outline-none">
-            <Heading level="3" size="small">
+            <Heading level="2" size="small">
               Sak {sak.id}
             </Heading>
           </Link>
