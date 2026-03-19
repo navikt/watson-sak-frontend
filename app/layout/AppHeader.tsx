@@ -1,6 +1,6 @@
 import { BooksIcon, LightBulbIcon, MenuGridIcon, PersonIcon } from "@navikt/aksel-icons";
-import { ActionMenu, InternalHeader, Spacer, Tag } from "@navikt/ds-react";
-import { Link } from "react-router";
+import { ActionMenu, InternalHeader, Search, Spacer, Tag } from "@navikt/ds-react";
+import { Form, Link } from "react-router";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { useMiljø } from "~/miljø/useMiljø";
 import { RouteConfig } from "~/routeConfig";
@@ -25,6 +25,21 @@ export function AppHeader() {
         </div>
       </InternalHeader.Title>
 
+      <Spacer />
+      <Form
+        method="post"
+        action={RouteConfig.SØK}
+        role="search"
+        className="flex items-center self-stretch"
+      >
+        <Search
+          label="Søk i saker"
+          name="søketekst"
+          variant="secondary"
+          size="small"
+          htmlSize={24}
+        />
+      </Form>
       <Spacer />
       <ActionMenu>
         <ActionMenu.Trigger>
