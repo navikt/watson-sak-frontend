@@ -15,10 +15,13 @@ export function SøkResultatKort({ sak }: SøkResultatKortProps) {
   const detaljSti = RouteConfig.SAKER_DETALJ.replace(":sakId", sak.id);
 
   return (
-    <Kort as="article">
+    <Kort
+      as="article"
+      className="focus-within:[outline:3px_solid_var(--ax-border-focus)] focus-within:outline-offset-[3px]"
+    >
       <VStack gap="space-4">
         <HStack gap="space-4" align="center" justify="space-between">
-          <Link to={detaljSti} className="no-underline">
+          <Link to={detaljSti} className="no-underline focus-visible:outline-none">
             <Heading level="3" size="small">
               Sak {sak.id}
             </Heading>
