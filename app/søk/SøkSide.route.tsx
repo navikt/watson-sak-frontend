@@ -75,6 +75,7 @@ export default function SøkSide() {
                 name="søketekst"
                 defaultValue={søketekst}
                 variant="primary"
+                autoFocus
                 onKeyDown={handleSøkefeltKeyDown}
               />
             </Form>
