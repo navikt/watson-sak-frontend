@@ -13,6 +13,7 @@ export default [
     route(RouteConfig.REGISTRER_SAK, "registrer-sak/RegistrerSakSide.route.tsx"),
     route(RouteConfig.STATISTIKK, "statistikk/StatistikkSide.route.tsx"),
     route(RouteConfig.PERSONVERN, "personvern/PersonvernSide.route.tsx"),
+    route(RouteConfig.SØK, "søk/SøkSide.route.tsx"),
   ]),
 
   // API routes
