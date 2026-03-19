@@ -1,6 +1,7 @@
 import { MagnifyingGlassIcon } from "@navikt/aksel-icons";
 import { BodyShort, Heading, Page, Search, VStack } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
+import { useRef } from "react";
 import { Form, useActionData } from "react-router";
 import type { Sak } from "~/saker/typer";
 import { SøkResultatKort } from "./SøkResultatKort";
@@ -19,11 +20,45 @@ export async function action({ request }: Route.ActionArgs) {
   return { søketekst, resultater };
 }
 
+function hentResultatlenker(container: HTMLElement | null): HTMLAnchorElement[] {
+  if (!container) return [];
+  return Array.from(container.querySelectorAll<HTMLAnchorElement>("a"));
+}
+
 export default function SøkSide() {
   const actionData = useActionData<typeof action>();
   const søketekst = actionData?.søketekst ?? "";
   const resultater = actionData?.resultater;
   const harSøkt = actionData !== undefined;
+
+  const skjemaRef = useRef<HTMLFormElement>(null);
+  const resultatlisteRef = useRef<HTMLDivElement>(null);
+
+  function handleSøkefeltKeyDown(event: React.KeyboardEvent) {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      const lenker = hentResultatlenker(resultatlisteRef.current);
+      if (lenker.length > 0) lenker[0].focus();
+    }
+  }
+
+  function handleResultatlisteKeyDown(event: React.KeyboardEvent) {
+    const lenker = hentResultatlenker(resultatlisteRef.current);
+    const aktivIndex = lenker.indexOf(event.target as HTMLAnchorElement);
+    if (aktivIndex === -1) return;
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      if (aktivIndex < lenker.length - 1) lenker[aktivIndex + 1].focus();
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      if (aktivIndex > 0) {
+        lenker[aktivIndex - 1].focus();
+      } else {
+        skjemaRef.current?.querySelector("input")?.focus();
+      }
+    }
+  }
 
   return (
     <Page>
@@ -34,12 +69,13 @@ export default function SøkSide() {
             <Heading level="1" size="large">
               Søk i saker
             </Heading>
-            <Form method="post" role="search" className="max-w-xl">
+            <Form method="post" role="search" className="max-w-xl" ref={skjemaRef}>
               <Search
                 label="Søk etter saker"
                 name="søketekst"
                 defaultValue={søketekst}
                 variant="primary"
+                onKeyDown={handleSøkefeltKeyDown}
               />
             </Form>
           </VStack>
@@ -53,7 +89,7 @@ export default function SøkSide() {
               </BodyShort>
 
               {resultater && resultater.length > 0 && (
-                <VStack gap="space-4">
+                <VStack gap="space-4" ref={resultatlisteRef} onKeyDown={handleResultatlisteKeyDown}>
                   {resultater.map((sak) => (
                     <SøkResultatKort key={sak.id} sak={sak} />
                   ))}
