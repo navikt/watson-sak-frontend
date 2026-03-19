@@ -53,6 +53,7 @@ export function AppHeader() {
           variant="secondary"
           size="small"
           htmlSize={24}
+          aria-keyshortcuts="Meta+K"
         />
       </Form>
       <Spacer />
