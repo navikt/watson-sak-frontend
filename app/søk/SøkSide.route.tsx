@@ -1,7 +1,7 @@
 import { MagnifyingGlassIcon } from "@navikt/aksel-icons";
 import { BodyShort, Heading, Page, Search, VStack } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Form, useActionData } from "react-router";
 import type { Sak } from "~/saker/typer";
 import { SøkResultatKort } from "./SøkResultatKort";
@@ -33,6 +33,18 @@ export default function SøkSide() {
 
   const skjemaRef = useRef<HTMLFormElement>(null);
   const resultatlisteRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "k" && event.metaKey) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        skjemaRef.current?.querySelector("input")?.focus();
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => document.removeEventListener("keydown", handleKeyDown, true);
+  }, []);
 
   function handleSøkefeltKeyDown(event: React.KeyboardEvent) {
     if (event.key === "ArrowDown") {
