@@ -27,7 +27,7 @@ export function Velkomst({ oppsummering }: { oppsummering: string }) {
   const { tekst, Ikon } = hentHilsen();
 
   return (
-    <div className="rounded-xl bg-ax-bg-neutral-moderate px-6 py-8">
+    <div className="rounded-xl bg-ax-bg-accent-soft px-6 py-8">
       <VStack gap="space-4">
         <Heading level="1" size="xlarge">
           {tekst}, {fornavn} <Ikon aria-hidden className="inline" />
