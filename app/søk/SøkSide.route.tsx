@@ -81,7 +81,13 @@ export default function SøkSide() {
             <Heading level="1" size="large">
               Søk i saker
             </Heading>
-            <Form method="post" role="search" className="max-w-xl" ref={skjemaRef}>
+            <Form
+              method="post"
+              role="search"
+              aria-label="Søk i saker"
+              className="max-w-xl"
+              ref={skjemaRef}
+            >
               <Search
                 label="Søk etter saker"
                 name="søketekst"

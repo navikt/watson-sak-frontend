@@ -43,6 +43,7 @@ export function AppHeader() {
         method="post"
         action={RouteConfig.SØK}
         role="search"
+        aria-label="Hurtigsøk"
         className="flex items-center self-stretch"
         ref={skjemaRef}
       >
