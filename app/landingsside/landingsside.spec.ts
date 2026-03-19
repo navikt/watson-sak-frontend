@@ -23,6 +23,46 @@ test.describe("Landingsside", () => {
     ).toBeVisible();
   });
 
+  test("kan skjule velkomstmeldingen via innstillinger og beholder valget etter refresh", async ({
+    page,
+  }) => {
+    await page.getByRole("button", { name: "Innstillinger" }).click();
+    await page.getByRole("checkbox", { name: "Vis velkomstmelding" }).click();
+    await page.getByRole("button", { name: "Lukk" }).nth(1).click();
+
+    await expect(
+      page.getByRole("heading", {
+        name: /God (morgen|dag|ettermiddag|kveld|natt), Saks/,
+      }),
+    ).not.toBeVisible();
+
+    await page.reload({ waitUntil: "networkidle" });
+
+    await expect(
+      page.getByRole("heading", {
+        name: /God (morgen|dag|ettermiddag|kveld|natt), Saks/,
+      }),
+    ).not.toBeVisible();
+  });
+
+  test("kan lukke innstillinger ved å trykke på backdroppet", async ({ page }) => {
+    await page.getByRole("button", { name: "Innstillinger" }).click();
+    const dialog = page.getByRole("dialog", { name: "Innstillinger" });
+    await expect(dialog).toBeVisible();
+
+    const dialogBoks = await dialog.boundingBox();
+
+    expect(dialogBoks).not.toBeNull();
+
+    if (!dialogBoks) {
+      throw new Error("Fant ikke dialogen som forventet");
+    }
+
+    await page.mouse.click(dialogBoks.x - 20, dialogBoks.y - 20);
+
+    await expect(page.getByRole("heading", { name: "Innstillinger" })).not.toBeVisible();
+  });
+
   test("viser mine saker-oversikt", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "Mine saker" }).first()).toBeVisible();
     await expect(page.getByRole("link", { name: "Se alle" })).toBeVisible();

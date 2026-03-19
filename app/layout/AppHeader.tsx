@@ -1,22 +1,12 @@
-import {
-  BooksIcon,
-  LightBulbIcon,
-  MenuGridIcon,
-  MoonIcon,
-  PersonIcon,
-  SunIcon,
-} from "@navikt/aksel-icons";
+import { BooksIcon, LightBulbIcon, MenuGridIcon, PersonIcon } from "@navikt/aksel-icons";
 import { ActionMenu, InternalHeader, Spacer, Tag } from "@navikt/ds-react";
 import { Link } from "react-router";
-import { sporHendelse } from "~/analytics/analytics";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { useMiljø } from "~/miljø/useMiljø";
 import { RouteConfig } from "~/routeConfig";
-import { useTheme } from "~/tema/ThemeContext";
 
 export function AppHeader() {
   const innloggetBruker = useInnloggetBruker();
-  const { theme, toggleTheme } = useTheme();
 
   const miljø = useMiljø();
   const visMiljøtag = miljø !== "prod";
@@ -71,18 +61,6 @@ export function AppHeader() {
             icon={<LightBulbIcon />}
           >
             Idéportal
-          </ActionMenu.Item>
-
-          <ActionMenu.Item
-            onSelect={() => {
-              toggleTheme();
-              sporHendelse("endre tema", {
-                tema: theme === "light" ? "mørk" : "lys",
-              });
-            }}
-            icon={theme === "light" ? <MoonIcon /> : <SunIcon />}
-          >
-            Bruk {theme === "light" ? "mørke" : "lyse"} farger
           </ActionMenu.Item>
         </ActionMenu.Content>
       </ActionMenu>
