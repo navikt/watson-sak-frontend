@@ -1,46 +1,45 @@
 import { HGrid, Page, VStack } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
-import { useLoaderData } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
+import { usePreferences } from "~/preferanser/PreferencesContext";
 import type { loader } from "./loader.server";
+import { DineSakerSiste14Dager } from "./komponenter/DineSakerSiste14Dager";
+import { SisteVarsler } from "./komponenter/SisteVarsler";
 import { Velkomst } from "./komponenter/Velkomst";
-import { Nokkeltall } from "./komponenter/Nokkeltall";
 import { MineSakerOversikt } from "./komponenter/MineSakerOversikt";
-import { PrioriterteSaker } from "./komponenter/PrioriterteSaker";
-import { Varslinger } from "./komponenter/Varslinger";
-import { Avdelingsstatistikk } from "./komponenter/Avdelingsstatistikk";
-import { Hurtiglenker } from "./komponenter/Hurtiglenker";
 
+export { action } from "./action.server";
 export { loader } from "./loader.server";
 
 export default function LandingSide() {
-  const data = useLoaderData<typeof loader>();
+  const loaderData = useLoaderData<typeof loader>();
+  const fetcher = useFetcher();
+  const { preferences } = usePreferences();
 
   return (
     <Page>
       <title>Dashboard – Watson Sak</title>
       <PageBlock width="xl" gutters>
         <VStack gap="space-16" className="mt-4 mb-8">
-          <Velkomst
-            antallUnderBehandling={data.nøkkeltall.underUtredning}
-            antallTipsMottatt={data.nøkkeltall.tipsMottatt}
-          />
-
-          <Nokkeltall data={data.nøkkeltall} />
-
-          <HGrid columns={{ xs: 1, md: "2fr 1fr" }} gap="space-8">
-            <MineSakerOversikt saker={data.mineSaker} />
-            <VStack gap="space-8">
-              <PrioriterteSaker saker={data.prioriterteSaker} />
-              <Varslinger />
-            </VStack>
+          {preferences.visVelkomstmelding ? (
+            <Velkomst oppsummering={loaderData.velkomstOppsummering} />
+          ) : null}
+          <MineSakerOversikt saker={loaderData.mineSaker} />
+          <HGrid columns={{ xs: 1, md: 2 }} gap="space-8">
+            <SisteVarsler
+              varsler={loaderData.varsler}
+              erSubmitting={fetcher.state !== "idle"}
+              onMarkerSomLest={(varselId) => {
+                fetcher.submit(
+                  { handling: "marker_varsel_som_lest", varselId },
+                  {
+                    method: "post",
+                  },
+                );
+              }}
+            />
+            <DineSakerSiste14Dager statistikk={loaderData.dineSakerSiste14Dager} />
           </HGrid>
-
-          <Avdelingsstatistikk
-            antallPerStatus={data.antallPerStatus}
-            behandlingstid={data.behandlingstid}
-          />
-
-          <Hurtiglenker />
         </VStack>
       </PageBlock>
     </Page>

@@ -6,12 +6,13 @@ interface Props {
   verdi: number;
   enhet?: string;
   ikon?: ReactNode;
+  gap?: "space-4" | "space-6" | "space-8";
 }
 
-export function Nokkeltallkort({ tittel, verdi, enhet, ikon }: Props) {
+export function Nokkeltallkort({ tittel, verdi, enhet, ikon, gap = "space-4" }: Props) {
   return (
     <Box padding="space-4" borderRadius="8" background="raised">
-      <HStack gap="space-4" align="center">
+      <HStack gap={gap} align="center">
         {ikon && (
           <div className="flex items-center justify-center rounded-lg bg-ax-bg-accent-soft p-2 text-ax-text-accent">
             {ikon}

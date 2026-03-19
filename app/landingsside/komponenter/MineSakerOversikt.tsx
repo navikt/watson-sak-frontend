@@ -1,5 +1,5 @@
-import { BodyShort, Heading, Link, Table, Tag, VStack } from "@navikt/ds-react";
-import { ArrowRightIcon } from "@navikt/aksel-icons";
+import { BodyShort, Heading, HStack, Link, Table, Tag, VStack } from "@navikt/ds-react";
+import { ArrowRightIcon, FilesIcon } from "@navikt/aksel-icons";
 import { Link as RouterLink } from "react-router";
 import type { Sak } from "~/saker/typer";
 import { hentStatusVariant } from "~/saker/utils";
@@ -11,19 +11,22 @@ export function MineSakerOversikt({ saker }: { saker: Sak[] }) {
   return (
     <Kort as="section">
       <VStack gap="space-4">
-        <div className="flex items-center justify-between">
-          <Heading level="2" size="medium">
-            Mine saker
-          </Heading>
+        <HStack justify="space-between" align="center">
+          <HStack gap="space-4" align="center">
+            <FilesIcon aria-hidden fontSize="1.25rem" />
+            <Heading level="2" size="medium">
+              Mine saker
+            </Heading>
+          </HStack>
           <Link as={RouterLink} to={RouteConfig.MINE_SAKER}>
             Se alle <ArrowRightIcon aria-hidden fontSize="1rem" />
           </Link>
-        </div>
+        </HStack>
 
         {saker.length === 0 ? (
           <BodyShort className="text-ax-text-neutral-subtle">Du har ingen aktive saker.</BodyShort>
         ) : (
-          <Table size="small">
+          <Table size="medium">
             <Table.Header>
               <Table.Row>
                 <Table.HeaderCell scope="col">Sak</Table.HeaderCell>

@@ -1,42 +1,62 @@
 import { Theme } from "@navikt/ds-react";
-import { createContext, useContext } from "react";
+import { useEffect, useState } from "react";
 import { usePreferences } from "~/preferanser/PreferencesContext";
-import type { Preferences } from "~/preferanser/PreferencesCookie";
-
-type ThemeType = Preferences["tema"];
-
-const ThemeContext = createContext<{
-  theme: ThemeType;
-  toggleTheme: () => Promise<void>;
-}>({
-  theme: "light",
-  toggleTheme: async () => {},
-});
-
-export function useTheme() {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error("useTheme must be used within a ThemeProvider");
-  }
-  return context;
-}
+import { finnAktivtTema } from "./theme-utils";
 
 type ThemeProviderProps = {
   children: React.ReactNode;
 };
 
-export function ThemeProvider({ children }: ThemeProviderProps) {
-  const { preferences, oppdaterPreference } = usePreferences();
-  const theme = preferences.tema;
+function lagSystemTemaScript() {
+  return `
+    (function() {
+      var root = document.currentScript && document.currentScript.parentElement;
+      if (!root || !window.matchMedia) return;
+      var erMorkt = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      root.classList.remove("light", "dark");
+      root.classList.add(erMorkt ? "dark" : "light");
+    })();
+  `;
+}
 
-  const toggleTheme = async () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    await oppdaterPreference("tema", newTheme);
-  };
+export function ThemeProvider({ children }: ThemeProviderProps) {
+  const { preferences } = usePreferences();
+  const [systemForetrekkerMorktTema, setSystemForetrekkerMorktTema] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const oppdaterSystemTema = () => {
+      setSystemForetrekkerMorktTema(mediaQuery.matches);
+    };
+
+    oppdaterSystemTema();
+    mediaQuery.addEventListener("change", oppdaterSystemTema);
+
+    return () => {
+      mediaQuery.removeEventListener("change", oppdaterSystemTema);
+    };
+  }, []);
+
+  const theme = finnAktivtTema(preferences.tema, systemForetrekkerMorktTema);
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      <Theme theme={theme}>{children}</Theme>
-    </ThemeContext.Provider>
+    <Theme asChild theme={theme}>
+      <div suppressHydrationWarning>
+        {preferences.tema === "system" ? (
+          <script dangerouslySetInnerHTML={{ __html: lagSystemTemaScript() }} />
+        ) : null}
+        {children}
+      </div>
+    </Theme>
   );
 }

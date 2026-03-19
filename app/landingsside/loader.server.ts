@@ -1,30 +1,24 @@
-import { beregnAntallPerStatus, beregnBehandlingstid } from "~/statistikk/beregninger";
-import { mockAvslutningsdatoer, mockStatistikkSaker } from "~/statistikk/mock-data.server";
-import { mockMineSaker } from "~/mine-saker/mock-data.server";
+import {
+  mockMineSaker,
+  mockMineSakerAvslutningsdatoer,
+  mockMineSakerTidligereTipsSakIder,
+} from "~/mine-saker/mock-data.server";
 import { sorterSakerEtterDato } from "~/saker/utils";
+import { hentUlesteVarsler } from "~/varsler/mock-data.server";
+import { beregnDineSakerSiste14Dager } from "./beregninger";
+import { lagVelkomstOppsummering } from "./velkomst";
 
 export function loader() {
-  const alleSaker = mockStatistikkSaker;
-  const antallPerStatus = beregnAntallPerStatus(alleSaker);
-  const behandlingstid = beregnBehandlingstid(alleSaker, mockAvslutningsdatoer);
-
   const mineSaker = sorterSakerEtterDato(mockMineSaker, "nyest").slice(0, 5);
+  const varsler = hentUlesteVarsler();
+  const velkomstOppsummering = lagVelkomstOppsummering(mockMineSaker);
+  const referansedato = new Date().toISOString().split("T")[0];
+  const dineSakerSiste14Dager = beregnDineSakerSiste14Dager({
+    saker: mockMineSaker,
+    avslutningsdatoer: mockMineSakerAvslutningsdatoer,
+    tidligereTipsSakIder: mockMineSakerTidligereTipsSakIder,
+    referansedato,
+  });
 
-  const prioriterteSaker = sorterSakerEtterDato(
-    alleSaker.filter((s) => s.status === "tips mottatt"),
-    "eldst",
-  );
-
-  return {
-    nøkkeltall: {
-      totalt: alleSaker.length,
-      tipsMottatt: antallPerStatus["tips mottatt"],
-      underUtredning: antallPerStatus["under utredning"],
-      avsluttet: antallPerStatus.avsluttet,
-    },
-    mineSaker,
-    prioriterteSaker,
-    behandlingstid,
-    antallPerStatus,
-  };
+  return { mineSaker, varsler, velkomstOppsummering, dineSakerSiste14Dager };
 }
