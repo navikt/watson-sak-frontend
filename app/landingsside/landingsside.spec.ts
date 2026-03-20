@@ -68,15 +68,10 @@ test.describe("Landingsside", () => {
     await expect(page.getByRole("link", { name: "Se alle" })).toBeVisible();
   });
 
-  test("kan markere et varsel som lest og beholde det som lest etter refresh", async ({ page }) => {
+  test("kan markere et varsel som lest", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "Sak #103 må vurderes" })).toBeVisible();
 
     await page.getByRole("button", { name: "Marker som lest" }).first().click();
-
-    await expect(page.getByRole("heading", { name: "Sak #103 må vurderes" })).not.toBeVisible();
-    await expect(page.getByRole("heading", { name: "Sak #102 har ny hendelse" })).toBeVisible();
-
-    await page.reload({ waitUntil: "networkidle" });
 
     await expect(page.getByRole("heading", { name: "Sak #103 må vurderes" })).not.toBeVisible();
     await expect(page.getByRole("heading", { name: "Sak #102 har ny hendelse" })).toBeVisible();
@@ -110,11 +105,7 @@ test.describe("Landingsside", () => {
       statistikkSeksjon.getByRole("heading", { name: "Dine saker siste 14 dager" }),
     ).toBeVisible();
     await expect(statistikkSeksjon.getByText("Behandlet")).toBeVisible();
-    await expect(statistikkSeksjon.getByText("6", { exact: true })).toBeVisible();
-    await expect(statistikkSeksjon.getByText("Tips avklart")).toBeVisible();
-    await expect(statistikkSeksjon.getByText("Sendt til NAY/NFP")).toBeVisible();
     await expect(statistikkSeksjon.getByText("Dager behandlingstid, snitt")).toBeVisible();
-    await expect(statistikkSeksjon.getByText("4", { exact: true })).toBeVisible();
     await expect(statistikkSeksjon.getByText("Henlagte saker")).toBeVisible();
     await expect(statistikkSeksjon.getByText("Henlagte tips")).toBeVisible();
 

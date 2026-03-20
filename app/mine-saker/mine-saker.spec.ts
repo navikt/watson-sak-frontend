@@ -12,7 +12,7 @@ test.describe("Mine saker", () => {
   });
 
   test("kan søke i saker", async ({ page }) => {
-    const søkefelt = page.getByLabel("Søk i saker");
+    const søkefelt = page.locator("#maincontent").getByRole("searchbox", { name: "Søk i saker" });
     await søkefelt.fill("Dagpenger");
 
     await expect(page.getByText(/Viser \d+ av \d+ saker/)).toBeVisible();

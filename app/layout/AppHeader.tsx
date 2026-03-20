@@ -1,12 +1,25 @@
 import { BooksIcon, LightBulbIcon, MenuGridIcon, PersonIcon } from "@navikt/aksel-icons";
-import { ActionMenu, InternalHeader, Spacer, Tag } from "@navikt/ds-react";
-import { Link } from "react-router";
+import { ActionMenu, InternalHeader, Search, Spacer, Tag } from "@navikt/ds-react";
+import { useEffect, useRef } from "react";
+import { Form, Link } from "react-router";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { useMiljø } from "~/miljø/useMiljø";
 import { RouteConfig } from "~/routeConfig";
 
 export function AppHeader() {
   const innloggetBruker = useInnloggetBruker();
+  const skjemaRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "k" && event.metaKey) {
+        event.preventDefault();
+        skjemaRef.current?.querySelector("input")?.focus();
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const miljø = useMiljø();
   const visMiljøtag = miljø !== "prod";
@@ -25,6 +38,24 @@ export function AppHeader() {
         </div>
       </InternalHeader.Title>
 
+      <Spacer />
+      <Form
+        method="post"
+        action={RouteConfig.SØK}
+        role="search"
+        aria-label="Hurtigsøk"
+        className="flex items-center self-stretch"
+        ref={skjemaRef}
+      >
+        <Search
+          label="Søk i saker"
+          name="søketekst"
+          variant="secondary"
+          size="small"
+          htmlSize={24}
+          aria-keyshortcuts="Meta+K"
+        />
+      </Form>
       <Spacer />
       <ActionMenu>
         <ActionMenu.Trigger>

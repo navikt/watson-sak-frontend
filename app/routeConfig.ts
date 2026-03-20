@@ -12,6 +12,7 @@ export const RouteConfig = {
   REGISTRER_SAK: "/registrer-sak",
   STATISTIKK: "/statistikk",
   PERSONVERN: "/personvern",
+  SØK: "/søk",
 
   WELL_KNOWN: {
     SECURITY_TXT: "/.well-known/security.txt",
