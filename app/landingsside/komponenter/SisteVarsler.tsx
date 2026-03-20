@@ -43,7 +43,7 @@ export function SisteVarsler({
           <>
             <VStack gap="space-4">
               {synligeVarsler.map((varsel) => (
-                <LocalAlert key={varsel.id} status={varsel.status}>
+                <LocalAlert key={varsel.id} status="announcement">
                   <LocalAlert.Header>
                     <LocalAlert.Title as="h3">{varsel.tittel}</LocalAlert.Title>
                   </LocalAlert.Header>
