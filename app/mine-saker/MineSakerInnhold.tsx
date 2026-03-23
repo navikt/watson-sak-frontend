@@ -141,21 +141,21 @@ function SammenleggbarSeksjon({
 }) {
   return (
     <section className="space-y-4">
-      <button
-        type="button"
-        onClick={toggle}
-        aria-expanded={erÅpen}
-        className="flex items-center gap-3 rounded-md border-none bg-transparent p-0 text-left text-ax-text-neutral hover:text-ax-text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
-      >
-        <Heading level="2" size="small">
+      <Heading level="2" size="small">
+        <button
+          type="button"
+          onClick={toggle}
+          aria-expanded={erÅpen}
+          className="flex items-center gap-3 rounded-md border-none bg-transparent p-0 text-left text-ax-text-neutral hover:text-ax-text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
+        >
           {tittel}
-        </Heading>
-        <ChevronDownIcon
-          aria-hidden
-          fontSize="1.25rem"
-          className={`transition-transform duration-200 ${erÅpen ? "rotate-180" : ""}`}
-        />
-      </button>
+          <ChevronDownIcon
+            aria-hidden
+            fontSize="1.25rem"
+            className={`transition-transform duration-200 ${erÅpen ? "rotate-180" : ""}`}
+          />
+        </button>
+      </Heading>
 
       {erÅpen && children}
     </section>
@@ -168,7 +168,6 @@ function SakKort({ sak, detaljSti }: { sak: Sak; detaljSti: string }) {
   return (
     <Link
       to={`${detaljSti}/${sak.id}`}
-      aria-label={`Åpne sak ${sak.id}`}
       className="group flex min-h-32 items-start justify-between gap-4 rounded-xl border border-ax-border-neutral-subtle bg-ax-bg-default px-5 py-4 text-inherit no-underline transition-colors hover:border-ax-border-neutral hover:bg-ax-bg-neutral-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
     >
       <HStack gap="space-4" align="start" className="min-w-0 flex-1">

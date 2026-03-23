@@ -1,7 +1,7 @@
-import { Button, Heading, HStack, LocalAlert, VStack, BodyShort } from "@navikt/ds-react";
+import { BodyShort, Button, Heading, HStack, InfoCard, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import { Link as RouterLink } from "react-router";
-import { BellIcon } from "@navikt/aksel-icons";
+import { BellIcon, InformationSquareIcon } from "@navikt/aksel-icons";
 import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
 import type { Varsel } from "~/varsler/typer";
@@ -43,11 +43,11 @@ export function SisteVarsler({
           <>
             <VStack gap="space-4">
               {synligeVarsler.map((varsel) => (
-                <LocalAlert key={varsel.id} status="announcement">
-                  <LocalAlert.Header>
-                    <LocalAlert.Title as="h3">{varsel.tittel}</LocalAlert.Title>
-                  </LocalAlert.Header>
-                  <LocalAlert.Content>
+                <InfoCard key={varsel.id} size="small" data-color="info">
+                  <InfoCard.Header icon={<InformationSquareIcon aria-hidden />}>
+                    <InfoCard.Title as="h3">{varsel.tittel}</InfoCard.Title>
+                  </InfoCard.Header>
+                  <InfoCard.Content>
                     <VStack gap="space-4">
                       <BodyShort>{varsel.tekst}</BodyShort>
                       <HStack gap="space-4" justify="end">
@@ -55,7 +55,7 @@ export function SisteVarsler({
                           as={RouterLink}
                           to={RouteConfig.SAKER_DETALJ.replace(":sakId", varsel.sakId)}
                           size="small"
-                          data-color="neutral"
+                          data-color="accent"
                         >
                           Gå til sak
                         </Button>
@@ -63,7 +63,7 @@ export function SisteVarsler({
                           type="button"
                           variant="secondary"
                           size="small"
-                          data-color="neutral"
+                          data-color="accent"
                           disabled={erSubmitting}
                           onClick={() => onMarkerSomLest(varsel.id)}
                         >
@@ -71,8 +71,8 @@ export function SisteVarsler({
                         </Button>
                       </HStack>
                     </VStack>
-                  </LocalAlert.Content>
-                </LocalAlert>
+                  </InfoCard.Content>
+                </InfoCard>
               ))}
             </VStack>
 
@@ -81,6 +81,7 @@ export function SisteVarsler({
                 <Button
                   type="button"
                   variant="tertiary"
+                  size="small"
                   onClick={() => {
                     setAntallSynligeVarsler(
                       (nåværendeAntall) => nåværendeAntall + ANTALL_VARSLER_PER_STEG,
