@@ -79,7 +79,15 @@ export async function action({ request, params }: Route.ActionArgs) {
     }
     case "tildel": {
       const saksbehandler = formData.get("saksbehandler") as string;
+      const gammelStatus = sak.status;
+      sak.status = "under utredning";
       leggTilHendelse(sakId, "tildelt", "Ola Nordmann", { til: saksbehandler });
+      if (gammelStatus !== "under utredning") {
+        leggTilHendelse(sakId, "status_endret", "Ola Nordmann", {
+          fra: gammelStatus,
+          til: "under utredning",
+        });
+      }
       break;
     }
     case "videresend_seksjon": {

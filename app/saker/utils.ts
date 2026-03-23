@@ -1,6 +1,6 @@
 import type { Sak, SakKilde, SakStatus } from "./typer";
 
-export type Sorteringsretning = "nyest" | "eldst";
+type Sorteringsretning = "nyest" | "eldst";
 
 export function sorterSakerEtterDato(saker: Sak[], retning: Sorteringsretning): Sak[] {
   return [...saker].sort((a, b) => {

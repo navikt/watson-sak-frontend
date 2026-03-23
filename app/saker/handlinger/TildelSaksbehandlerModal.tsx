@@ -1,5 +1,5 @@
 import { PersonPencilIcon } from "@navikt/aksel-icons";
-import { BodyShort, Button, Modal, UNSAFE_Combobox, VStack } from "@navikt/ds-react";
+import { BodyShort, Button, Modal, Select, VStack } from "@navikt/ds-react";
 import { useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { RouteConfig } from "~/routeConfig";
@@ -56,14 +56,18 @@ export function TildelSaksbehandlerModal({
       <Modal.Body>
         <VStack gap="space-4">
           <BodyShort>Velg saksbehandler som skal ha ansvar for sak {sakId}.</BodyShort>
-          <UNSAFE_Combobox
+          <Select
             label="Saksbehandler"
-            options={saksbehandlere}
-            selectedOptions={valgtSaksbehandler ? [valgtSaksbehandler] : []}
-            onToggleSelected={(option, isSelected) => {
-              setValgtSaksbehandler(isSelected ? option : "");
-            }}
-          />
+            value={valgtSaksbehandler}
+            onChange={(event) => setValgtSaksbehandler(event.target.value)}
+          >
+            <option value="">Velg saksbehandler</option>
+            {saksbehandlere.map((saksbehandler) => (
+              <option key={saksbehandler} value={saksbehandler}>
+                {saksbehandler}
+              </option>
+            ))}
+          </Select>
         </VStack>
       </Modal.Body>
       <Modal.Footer>
