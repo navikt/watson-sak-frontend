@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { hentBackendApiUrl, skalBrukeMockdataForMiljø, type Miljø } from "~/config/backend-config";
 import { logger } from "~/logging/logging";
 
 const envSchema = z.object({
@@ -17,6 +18,10 @@ const envSchema = z.object({
     .string()
     .optional()
     .describe("The OAuth token for the development environment. Is not set in production."),
+  WATSON_ADMIN_API_URL: z
+    .string()
+    .optional()
+    .describe("Base-URL for Watson Admin API. Optional outside dev deployments."),
   UNLEASH_SERVER_API_ENV: z
     .enum(["development", "production"])
     .describe("The environment of the Unleash instance")
@@ -48,14 +53,12 @@ if (!envResult.success) {
 
 export const env = envResult.data;
 
-export const BACKEND_API_URL =
-  env.ENVIRONMENT === "local-backend"
-    ? "http://localhost:8080"
-    : env.ENVIRONMENT === "local-dev"
-      ? "http://TODO"
-      : "http://TODO";
+export const BACKEND_API_URL = hentBackendApiUrl(
+  env.ENVIRONMENT as Miljø,
+  env.WATSON_ADMIN_API_URL,
+);
 
 export const isProd = env.NODE_ENV === "production";
 export const isDev = env.NODE_ENV === "development";
 
-export const skalBrukeMockdata = env.ENVIRONMENT === "local-mock" || env.ENVIRONMENT === "demo";
+export const skalBrukeMockdata = skalBrukeMockdataForMiljø(env.ENVIRONMENT as Miljø);

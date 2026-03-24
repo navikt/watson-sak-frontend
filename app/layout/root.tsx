@@ -1,5 +1,7 @@
 import { Outlet, useLoaderData } from "react-router";
 import "~/globals.css";
+import { skalPolleBackendHelse } from "~/config/backend-config";
+import { BackendHelsesjekk } from "~/monitorering/BackendHelsesjekk";
 import { useFaro } from "~/monitorering/faro";
 import { Versjonsvarsling } from "~/versjonsvarsling/Versjonsvarsling";
 
@@ -11,6 +13,7 @@ export default function Root() {
   useFaro();
   return (
     <HtmlRamme initialPreferences={initialPreferences} umamiSiteId={envs.umamiSiteId}>
+      <BackendHelsesjekk aktiv={skalPolleBackendHelse(envs.miljø)} />
       <Versjonsvarsling gjeldendeVersjon={envs.appversjon} />
       <Outlet />
     </HtmlRamme>

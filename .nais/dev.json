@@ -8,5 +8,6 @@
   "FARO_URL": "https://telemetry.ekstern.dev.nav.no/collect",
   "UMAMI_SITE_ID": "2a620987-f8b6-43ee-aaed-2845f515b8a1",
   "ENVIRONMENT": "dev",
+  "WATSON_ADMIN_API_URL": "https://watson-admin-api.intern.dev.nav.no",
   "UNLEASH_ENVIRONMENT": "development"
 }
