@@ -1,10 +1,12 @@
 import { expect, test } from "@playwright/test";
 
+import { resetMockData } from "~/test/reset-mock-data";
 import { sjekkTilgjengelighet } from "~/test/uu-util";
 
 test.describe("Søk", () => {
   test.describe("søkesiden", () => {
     test.beforeEach(async ({ page }) => {
+      await resetMockData(page);
       await page.goto("/søk", { waitUntil: "networkidle" });
     });
 
@@ -21,9 +23,9 @@ test.describe("Søk", () => {
       await page.getByLabel("Søk etter saker").fill("101");
       await page.getByLabel("Søk etter saker").press("Enter");
 
-      await expect(page.getByText(/1 treff for "101"/)).toBeVisible();
-      await expect(page.getByRole("article")).toHaveCount(1);
-      await expect(page.getByRole("heading", { name: "Sak 101" })).toBeVisible();
+      await expect(page.getByText(/2 treff for "101"/)).toBeVisible();
+      await expect(page.getByRole("article")).toHaveCount(2);
+      await expect(page.getByRole("heading", { name: "Sak 101" })).toHaveCount(2);
     });
 
     test("kan søke på tags og viser resultater", async ({ page }) => {
@@ -54,7 +56,7 @@ test.describe("Søk", () => {
       await page.getByLabel("Søk etter saker").fill("101");
       await page.getByLabel("Søk etter saker").press("Enter");
 
-      await page.getByRole("link", { name: "Sak 101" }).click();
+      await page.getByRole("article").first().getByRole("link", { name: "Sak 101" }).click();
       await expect(page).toHaveURL(/\/saker\/101/);
     });
 

@@ -1,53 +1,67 @@
 import { expect, test } from "@playwright/test";
 
+import { resetMockData } from "~/test/reset-mock-data";
 import { sjekkTilgjengelighet } from "~/test/uu-util";
 
-test.describe("Fordeling – saksliste", () => {
+test.describe("Ufordelte saker", () => {
   test.beforeEach(async ({ page }) => {
+    await resetMockData(page);
     await page.goto("/fordeling", { waitUntil: "networkidle" });
   });
 
-  test("viser overskrift og sakskort", async ({ page }) => {
-    await expect(page.getByRole("heading", { name: "Saker til fordeling" })).toBeVisible();
-    await expect(page.getByText(/^Sak \d+$/).first()).toBeVisible();
+  test("viser nytt hovedinnhold for ufordelte saker", async ({ page }) => {
+    await expect(page.getByRole("heading", { name: "Ufordelte saker" })).toBeVisible();
+    await expect(page.getByText("12 ufordelte saker")).toBeVisible();
+    await expect(page.getByText(/Eldste sak har ligget i \d+ dager/)).toBeVisible();
+    await expect(
+      page.getByText(
+        "Gjelder ytelsene Barnetrygd, Dagpenger, Enslig forsørger, Foreldrepenger, Sykepenger og AAP",
+      ),
+    ).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Kategori" })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Ytelse" })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Opprettet" })).toBeVisible();
+    await expect(
+      page.locator("#maincontent").getByRole("searchbox", { name: "Søk i saker" }),
+    ).toHaveCount(0);
   });
 
-  test("kan søke i saker", async ({ page }) => {
-    const søkefelt = page.locator("#maincontent").getByRole("searchbox", { name: "Søk i saker" });
-    await søkefelt.fill("Dagpenger");
+  test("kan filtrere på kategori og ytelse", async ({ page }) => {
+    await page.getByRole("button", { name: "Samliv" }).click();
+    await page.getByRole("button", { name: "Barnetrygd" }).click();
 
-    await expect(page.getByText(/Viser \d+ av \d+ saker/)).toBeVisible();
+    const rader = page.locator("tbody tr");
+    await expect
+      .poll(async () => {
+        const tekster = await rader.allTextContents();
+
+        return tekster.every(
+          (tekst) => tekst.includes("Barnetrygd") && /Samliv|Identitet/.test(tekst),
+        );
+      })
+      .toBe(true);
   });
 
-  test("kan filtrere på status", async ({ page }) => {
-    await page.getByRole("button", { name: "tips mottatt" }).click();
+  test("kan bla til neste side i tabellen", async ({ page }) => {
+    await page.getByRole("button", { name: "2" }).click();
 
-    await expect(page.getByText(/Viser \d+ av \d+ saker/)).toBeVisible();
+    await expect(page.getByRole("button", { name: "2" })).toHaveAttribute("aria-current", "true");
+    const tiltakRad = page.locator("tbody tr").filter({ hasText: "Tiltak" });
+    await expect(tiltakRad).toHaveCount(1);
+    await expect(tiltakRad).toContainText("Foreldrepenger");
   });
 
-  test("kan sortere sakene", async ({ page }) => {
-    const sortering = page.getByLabel("Sortering");
-    await sortering.selectOption("eldst");
+  test("kan sortere på kategori, ytelse og opprettet", async ({ page }) => {
+    const rader = page.locator("tbody tr");
 
-    await expect(sortering).toHaveValue("eldst");
-  });
+    await page.getByRole("button", { name: "Sorter på kategori" }).click();
+    await expect(rader.nth(0)).toContainText("Annet");
 
-  test("kan nullstille filtre", async ({ page }) => {
-    // Aktiver et filter først
-    await page.getByRole("button", { name: "tips mottatt" }).click();
-    await expect(page.getByText(/Viser \d+ av \d+ saker/)).toBeVisible();
+    await page.getByRole("button", { name: "Sorter på ytelse" }).click();
+    await expect(rader.nth(0)).toContainText("AAP");
 
-    // Nullstill
-    await page.getByRole("button", { name: "Nullstill" }).click();
-    await expect(page.getByText(/Viser \d+ av \d+ saker/)).not.toBeVisible();
-  });
-
-  test("kan navigere til sakdetalj", async ({ page }) => {
-    await page
-      .getByRole("link", { name: /^Sak \d+$/ })
-      .first()
-      .click();
-    await expect(page).toHaveURL(/\/saker\/\d+/);
+    await page.getByRole("button", { name: "Sorter på opprettet" }).click();
+    await expect(rader.nth(0)).toContainText("16. feb. 2026");
   });
 
   test("er UU-compliant", async ({ page }) => {

@@ -1,39 +1,30 @@
 import { expect, test } from "@playwright/test";
 
-test.describe("Fordeling – sakshandlinger", () => {
+import { resetMockData } from "~/test/reset-mock-data";
+
+test.describe("Ufordelte saker – tildeling", () => {
   test.beforeEach(async ({ page }) => {
+    await resetMockData(page);
     await page.goto("/fordeling", { waitUntil: "networkidle" });
   });
 
-  test("kan åpne handlingsmenyen med riktige valg", async ({ page }) => {
-    await page.getByRole("button", { name: "Handlinger" }).first().click();
+  test("kan tildele sak og få den bort fra listen", async ({ page }) => {
+    const radSomSkalTildeles = page.locator("tbody tr").filter({ hasText: "Enslig forsørger" });
+    await expect(radSomSkalTildeles).toHaveCount(1);
+    await expect(radSomSkalTildeles).toContainText("Samliv");
 
-    await expect(page.getByRole("menuitem", { name: "Tildel saksbehandler" })).toBeVisible();
-    await expect(page.getByRole("menuitem", { name: "Videresend til seksjon" })).toBeVisible();
-    await expect(page.getByRole("menuitem", { name: "Henlegg" })).toBeVisible();
-  });
-
-  test("kan åpne tildel-modal fra handlingsmenyen", async ({ page }) => {
-    await page.getByRole("button", { name: "Handlinger" }).first().click();
-    await page.getByRole("menuitem", { name: "Tildel saksbehandler" }).click();
+    await radSomSkalTildeles.getByRole("button", { name: "Tildel" }).click();
 
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole("heading", { name: "Tildel saksbehandler" })).toBeVisible();
 
-    await dialog.getByRole("button", { name: "Avbryt" }).click();
+    await dialog.getByLabel("Saksbehandler").selectOption("Kari Nordmann");
+    const tildelKnapp = dialog.getByRole("button", { name: "Tildel" });
+    await expect(tildelKnapp).toBeEnabled();
+    await tildelKnapp.click();
+
     await expect(dialog).not.toBeVisible();
-  });
-
-  test("kan åpne henlegg-modal fra handlingsmenyen", async ({ page }) => {
-    await page.getByRole("button", { name: "Handlinger" }).first().click();
-    await page.getByRole("menuitem", { name: "Henlegg" }).click();
-
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole("heading", { name: "Henlegg sak" })).toBeVisible();
-
-    await dialog.getByRole("button", { name: "Avbryt" }).click();
-    await expect(dialog).not.toBeVisible();
+    await expect(page.locator("tbody tr").filter({ hasText: "Enslig forsørger" })).toHaveCount(0);
   });
 });
