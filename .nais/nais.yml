@@ -34,6 +34,7 @@ spec:
           namespace: holmes
       external:
         - host: holmes-unleash-api.nav.cloud.nais.io
+        - host: watson-admin-api.intern.dev.nav.no
   image: {{image}}
   port: 3000
   azure:
@@ -65,5 +66,7 @@ spec:
       value: {{UMAMI_SITE_ID}}
     - name: ENVIRONMENT
       value: {{ENVIRONMENT}}
+    - name: WATSON_ADMIN_API_URL
+      value: {{WATSON_ADMIN_API_URL}}
     - name: APP_VERSION
       value: {{APP_VERSION}}

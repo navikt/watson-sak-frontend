@@ -8,5 +8,6 @@
   "FARO_URL": "https://telemetry.nav.no/collect",
   "UMAMI_SITE_ID": "6dd2ad0d-28d2-4934-93dc-b95448b37915",
   "ENVIRONMENT": "prod",
+  "WATSON_ADMIN_API_URL": "",
   "UNLEASH_ENVIRONMENT": "production"
 }
