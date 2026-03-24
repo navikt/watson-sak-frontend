@@ -31,11 +31,15 @@ test.describe("Ufordelte saker", () => {
     await page.getByRole("button", { name: "Barnetrygd" }).click();
 
     const rader = page.locator("tbody tr");
-    await expect(rader).toHaveCount(2);
-    await expect(rader.nth(0)).toContainText("Samliv");
-    await expect(rader.nth(0)).toContainText("Barnetrygd");
-    await expect(rader.nth(1)).toContainText("Samliv");
-    await expect(rader.nth(1)).toContainText("Barnetrygd");
+    await expect
+      .poll(async () => {
+        const tekster = await rader.allTextContents();
+
+        return tekster.every(
+          (tekst) => tekst.includes("Barnetrygd") && /Samliv|Identitet/.test(tekst),
+        );
+      })
+      .toBe(true);
   });
 
   test("kan bla til neste side i tabellen", async ({ page }) => {

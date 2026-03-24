@@ -6,8 +6,9 @@ import { sjekkTilgjengelighet } from "~/test/uu-util";
 test.describe("Politianmeldelse", () => {
   test.beforeEach(async ({ page }) => {
     await resetMockData(page);
-    // Sak 101 har status "under utredning" og har journalposter
-    await page.goto("/saker/101/politianmeldelse", { waitUntil: "networkidle" });
+    // Sak 113 har status "under utredning" og finnes unikt i mockdata.
+    await page.goto("/saker/113/politianmeldelse", { waitUntil: "networkidle" });
+    await expect(page.getByRole("heading", { name: "Opprett politianmeldelse" })).toBeVisible();
   });
 
   test("viser riktig overskrift og saksinformasjon", async ({ page }) => {
@@ -34,7 +35,9 @@ test.describe("Politianmeldelse", () => {
   });
 
   test("kan fylle ut og sende inn politianmeldelse", async ({ page }) => {
-    await page.getByRole("checkbox").first().check();
+    const valgtDokument = page.getByRole("checkbox", { name: "Velg Søknad om unntak" }).first();
+    await valgtDokument.check();
+    await expect(valgtDokument).toBeChecked();
 
     await page.getByLabel("Funn").fill("Mistanke om svindel med dagpenger");
     await page.getByLabel("Vurdering").fill("Klare tegn på bevisst feilinformasjon");
@@ -42,19 +45,19 @@ test.describe("Politianmeldelse", () => {
 
     await page.getByRole("button", { name: "Send politianmeldelse" }).click();
 
-    await expect(page).toHaveURL(/\/saker\/101$/);
+    await expect(page).toHaveURL(/\/saker\/113$/);
   });
 
   test("avbryt-knappen navigerer tilbake til sak", async ({ page }) => {
     await page.getByRole("button", { name: "Avbryt" }).click();
 
-    await expect(page).toHaveURL(/\/saker\/101$/);
+    await expect(page).toHaveURL(/\/saker\/113$/);
   });
 
   test("tilbake-knappen navigerer tilbake til sak", async ({ page }) => {
     await page.getByRole("button", { name: "Tilbake til sak" }).click();
 
-    await expect(page).toHaveURL(/\/saker\/101$/);
+    await expect(page).toHaveURL(/\/saker\/113$/);
   });
 
   test("er UU-compliant", async ({ page }) => {
@@ -68,13 +71,13 @@ test.describe("Politianmeldelse – tilgang", () => {
   });
 
   test("politianmeldelse-knappen vises for saker under utredning", async ({ page }) => {
-    await page.goto("/saker/3", { waitUntil: "networkidle" });
+    await page.goto("/saker/113");
 
     await expect(page.getByRole("button", { name: "Politianmeldelse" })).toBeVisible();
   });
 
   test("politianmeldelse-knappen vises ikke for saker med annen status", async ({ page }) => {
-    await page.goto("/saker/1", { waitUntil: "networkidle" });
+    await page.goto("/saker/101");
 
     await expect(page.getByRole("button", { name: "Politianmeldelse" })).not.toBeVisible();
   });

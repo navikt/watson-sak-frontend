@@ -1,14 +1,17 @@
 import { expect, test } from "@playwright/test";
 
+import { resetMockData } from "~/test/reset-mock-data";
 import { sjekkTilgjengelighet } from "~/test/uu-util";
 
 test.describe("Sakdetalj", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/saker/1", { waitUntil: "networkidle" });
+    await resetMockData(page);
+    await page.goto("/saker/101", { waitUntil: "networkidle" });
+    await expect(page.getByRole("heading", { name: /^Sak 101$/ })).toBeVisible();
   });
 
   test("viser saksinformasjon", async ({ page }) => {
-    await expect(page.getByRole("heading", { name: /^Sak 1$/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^Sak 101$/ })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Saksinformasjon" })).toBeVisible();
   });
 
@@ -22,14 +25,16 @@ test.describe("Sakdetalj", () => {
   });
 
   test("kan åpne og lukke tildel-modal", async ({ page }) => {
+    await expect(page.getByRole("button", { name: "Tildel saksbehandler" })).toBeEnabled();
     await page.getByRole("button", { name: "Tildel saksbehandler" }).click();
+    await page.waitForTimeout(300);
 
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole("heading", { name: "Tildel saksbehandler" })).toBeVisible();
+    await expect(dialog.getByRole("combobox", { name: "Saksbehandler" })).toBeVisible();
 
     // Vent til modal-animasjonen er ferdig før UU-sjekk
-    await page.waitForTimeout(300);
     await sjekkTilgjengelighet(page);
 
     await dialog.getByRole("button", { name: "Avbryt" }).click();
@@ -37,7 +42,9 @@ test.describe("Sakdetalj", () => {
   });
 
   test("kan åpne og lukke henlegg-modal", async ({ page }) => {
+    await expect(page.getByRole("button", { name: "Henlegg" })).toBeEnabled();
     await page.getByRole("button", { name: "Henlegg" }).click();
+    await page.waitForTimeout(300);
 
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();

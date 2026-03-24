@@ -24,7 +24,7 @@ test.describe("Registrer sak", () => {
   test("kan fylle ut og sende inn skjema", async ({ page }) => {
     await page.getByLabel("Fødselsnummer").fill("12345678901");
     await page.getByLabel("Avdeling").selectOption("Kontroll Øst");
-    await page.getByLabel("Kategori").selectOption("Feilutbetaling");
+    await page.getByLabel("Kategori").selectOption("Samliv");
 
     // Velg ytelse via UNSAFE_Combobox
     const ytelserCombobox = page.getByLabel("Ytelser");
