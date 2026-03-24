@@ -1,9 +1,8 @@
 import { render } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
 import type { Sak } from "~/saker/typer";
 import { UfordelteSakerInnhold } from "./UfordelteSakerInnhold";
-import { vi } from "vitest";
 
 vi.mock("~/saker/handlinger/TildelSaksbehandlerModal", () => ({
   TildelSaksbehandlerModal: () => null,
