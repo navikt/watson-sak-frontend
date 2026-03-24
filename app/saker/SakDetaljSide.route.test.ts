@@ -13,7 +13,7 @@ describe("SakDetaljSide action", () => {
     resetHistorikk();
   });
 
-  it("logger ikke status_endret ved tildeling nar saken allerede er under utredning", async () => {
+  it("logger ikke status_endret ved tildeling når saken allerede er under utredning", async () => {
     const sak = hentAlleSaker().find((sak) => sak.id === "113");
 
     expect(sak?.status).toBe("under utredning");

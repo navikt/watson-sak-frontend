@@ -234,12 +234,12 @@ export function UfordelteSakerInnhold({ saker, saksbehandlere }: UfordelteSakerI
 
 function Oppsummeringskort({ tittel, children }: { tittel: string; children: ReactNode }) {
   return (
-    <section className="rounded-2xl border border-ax-border-neutral-subtle bg-ax-bg-default p-5">
+    <div className="rounded-2xl border border-ax-border-neutral-subtle bg-ax-bg-default p-5">
       <BodyShort size="small" className="mb-2 text-ax-text-neutral-subtle">
         {tittel}
       </BodyShort>
       <BodyShort className="font-medium text-ax-text-neutral">{children}</BodyShort>
-    </section>
+    </div>
   );
 }
 

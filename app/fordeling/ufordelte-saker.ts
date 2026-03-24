@@ -19,10 +19,10 @@ export function hentUfordelteFiltervalg(saker: Sak[]) {
   const ufordelteSaker = hentUfordelteSaker(saker);
 
   return {
-    kategorier: hentUnikeVerdierIRekkefølge(
+    kategorier: hentSorterteUnikeVerdier(
       ufordelteSaker.flatMap((sak) => (sak.kategori ? [sak.kategori] : [])),
     ),
-    ytelser: hentUnikeVerdierIRekkefølge(ufordelteSaker.flatMap((sak) => sak.ytelser)),
+    ytelser: hentSorterteUnikeVerdier(ufordelteSaker.flatMap((sak) => sak.ytelser)),
   };
 }
 
@@ -61,7 +61,7 @@ export function lagUfordelteOppsummering(saker: Sak[], dagensDato = new Date()) 
     return eldste;
   }, null);
   const eldsteLiggetid = eldsteDato ? forskjellIDager(eldsteDato, dagensDato) : 0;
-  const ytelser = hentUnikeVerdierIRekkefølge(ufordelteSaker.flatMap((sak) => sak.ytelser));
+  const ytelser = hentSorterteUnikeVerdier(ufordelteSaker.flatMap((sak) => sak.ytelser));
 
   return {
     antallTekst: formaterAntallSaker(antallSaker),
@@ -91,8 +91,8 @@ export function sorterUfordelteSaker(
   });
 }
 
-function hentUnikeVerdierIRekkefølge(verdier: string[]) {
-  return [...new Set(verdier)];
+function hentSorterteUnikeVerdier(verdier: string[]) {
+  return [...new Set(verdier)].sort((a, b) => a.localeCompare(b, "nb"));
 }
 
 function hentSorteringsverdi(sak: Sak, kolonne: UfordeltSorteringskolonne) {

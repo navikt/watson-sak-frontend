@@ -1,19 +1,21 @@
 import { expect, test } from "@playwright/test";
 
+import { resetMockData } from "~/test/reset-mock-data";
 import { sjekkTilgjengelighet } from "~/test/uu-util";
 
 test.describe("Ufordelte saker", () => {
   test.beforeEach(async ({ page }) => {
+    await resetMockData(page);
     await page.goto("/fordeling", { waitUntil: "networkidle" });
   });
 
   test("viser nytt hovedinnhold for ufordelte saker", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "Ufordelte saker" })).toBeVisible();
     await expect(page.getByText("12 ufordelte saker")).toBeVisible();
-    await expect(page.getByText("Eldste sak har ligget i 69 dager")).toBeVisible();
+    await expect(page.getByText(/Eldste sak har ligget i \d+ dager/)).toBeVisible();
     await expect(
       page.getByText(
-        "Gjelder ytelsene Enslig forsørger, Dagpenger, Barnetrygd, Sykepenger, AAP og Foreldrepenger",
+        "Gjelder ytelsene Barnetrygd, Dagpenger, Enslig forsørger, Foreldrepenger, Sykepenger og AAP",
       ),
     ).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "Kategori" })).toBeVisible();
@@ -39,7 +41,7 @@ test.describe("Ufordelte saker", () => {
   test("kan bla til neste side i tabellen", async ({ page }) => {
     await page.getByRole("button", { name: "2" }).click();
 
-    await expect(page.getByRole("button", { name: "2" })).toHaveAttribute("aria-current", "page");
+    await expect(page.getByRole("button", { name: "2" })).toHaveAttribute("aria-current", "true");
     const tiltakRad = page.locator("tbody tr").filter({ hasText: "Tiltak" });
     await expect(tiltakRad).toHaveCount(1);
     await expect(tiltakRad).toContainText("Foreldrepenger");

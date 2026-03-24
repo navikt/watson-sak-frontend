@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { Sak } from "~/saker/typer";
+import {
+  filtrerUfordelteSaker,
+  hentUfordelteFiltervalg,
+  hentUfordelteSaker,
+  lagUfordelteOppsummering,
+  paginerElementer,
+  sorterUfordelteSaker,
+} from "./ufordelte-saker";
 
 const lagSak = (overstyringer: Partial<Sak>): Sak => ({
   id: "1",
@@ -15,12 +23,7 @@ const lagSak = (overstyringer: Partial<Sak>): Sak => ({
 });
 
 describe("ufordelte-saker", () => {
-  it("velger bare saker i status tips mottatt og tips avklart", async () => {
-    const modul = await import("./ufordelte-saker").catch(() => null);
-
-    expect(modul).not.toBeNull();
-    if (!modul) return;
-
+  it("velger bare saker i status tips mottatt og tips avklart", () => {
     const saker = [
       lagSak({ id: "1", status: "tips mottatt" }),
       lagSak({ id: "2", status: "tips avklart" }),
@@ -29,34 +32,24 @@ describe("ufordelte-saker", () => {
       lagSak({ id: "5", status: "henlagt" }),
     ];
 
-    expect(modul.hentUfordelteSaker(saker).map((sak) => sak.id)).toEqual(["1", "2"]);
+    expect(hentUfordelteSaker(saker).map((sak) => sak.id)).toEqual(["1", "2"]);
   });
 
-  it("utleder sorterte filtervalg fra de ufordelte sakene", async () => {
-    const modul = await import("./ufordelte-saker").catch(() => null);
-
-    expect(modul).not.toBeNull();
-    if (!modul) return;
-
+  it("utleder alfabetisk sorterte filtervalg fra de ufordelte sakene", () => {
     const saker = [
-      lagSak({ id: "1", kategori: "Annet", ytelser: ["AAP"], status: "tips mottatt" }),
-      lagSak({ id: "2", kategori: "Arbeid", ytelser: ["Dagpenger"], status: "tips avklart" }),
-      lagSak({ id: "3", kategori: "Arbeid", ytelser: ["AAP"], status: "under utredning" }),
-      lagSak({ id: "4", ytelser: ["Sykepenger"], status: "tips mottatt" }),
+      lagSak({ id: "1", kategori: "Utland", ytelser: ["Sykepenger"], status: "tips mottatt" }),
+      lagSak({ id: "2", kategori: "Annet", ytelser: ["Barnetrygd"], status: "tips avklart" }),
+      lagSak({ id: "3", kategori: "Arbeid", ytelser: ["Dagpenger"], status: "tips mottatt" }),
+      lagSak({ id: "4", kategori: "Arbeid", ytelser: ["Barnetrygd"], status: "under utredning" }),
     ];
 
-    expect(modul.hentUfordelteFiltervalg(saker)).toEqual({
-      kategorier: ["Annet", "Arbeid"],
-      ytelser: ["AAP", "Dagpenger", "Sykepenger"],
+    expect(hentUfordelteFiltervalg(saker)).toEqual({
+      kategorier: ["Annet", "Arbeid", "Utland"],
+      ytelser: ["Barnetrygd", "Dagpenger", "Sykepenger"],
     });
   });
 
-  it("filtrerer med kategori og ytelse og justerer ugyldig side ved paginering", async () => {
-    const modul = await import("./ufordelte-saker").catch(() => null);
-
-    expect(modul).not.toBeNull();
-    if (!modul) return;
-
+  it("filtrerer med kategori og ytelse og justerer ugyldig side ved paginering", () => {
     const saker = [
       lagSak({ id: "1", kategori: "Arbeid", ytelser: ["Dagpenger"], status: "tips mottatt" }),
       lagSak({ id: "2", kategori: "Arbeid", ytelser: ["AAP"], status: "tips mottatt" }),
@@ -65,26 +58,21 @@ describe("ufordelte-saker", () => {
       lagSak({ id: "5", kategori: "Arbeid", ytelser: ["Dagpenger"], status: "under utredning" }),
     ];
 
-    const filtrerteSaker = modul.filtrerUfordelteSaker(saker, {
+    const filtrerteSaker = filtrerUfordelteSaker(saker, {
       kategorier: ["Arbeid"],
       ytelser: ["Dagpenger"],
     });
 
     expect(filtrerteSaker.map((sak) => sak.id)).toEqual(["1", "3"]);
 
-    expect(modul.paginerElementer(filtrerteSaker, 5, 1)).toEqual({
+    expect(paginerElementer(filtrerteSaker, 5, 1)).toEqual({
       aktivSide: 2,
       totalSider: 2,
       elementer: [filtrerteSaker[1]],
     });
   });
 
-  it("lager oppsummering med antall saker, eldste liggetid og relevante ytelser", async () => {
-    const modul = await import("./ufordelte-saker").catch(() => null);
-
-    expect(modul).not.toBeNull();
-    if (!modul) return;
-
+  it("lager oppsummering med antall saker, eldste liggetid og relevante ytelser", () => {
     const saker = [
       lagSak({
         id: "1",
@@ -109,19 +97,14 @@ describe("ufordelte-saker", () => {
       }),
     ];
 
-    expect(modul.lagUfordelteOppsummering(saker, new Date("2026-03-23"))).toEqual({
+    expect(lagUfordelteOppsummering(saker, new Date("2026-03-23"))).toEqual({
       antallTekst: "2 ufordelte saker",
       eldsteTekst: "Eldste sak har ligget i 69 dager",
       ytelserTekst: "Gjelder ytelsene Barnetrygd og Dagpenger",
     });
   });
 
-  it("sorterer ufordelte saker på valgt kolonne og retning", async () => {
-    const modul = await import("./ufordelte-saker").catch(() => null);
-
-    expect(modul).not.toBeNull();
-    if (!modul) return;
-
+  it("sorterer ufordelte saker på valgt kolonne og retning", () => {
     const saker = [
       lagSak({
         id: "1",
@@ -146,18 +129,20 @@ describe("ufordelte-saker", () => {
       }),
     ];
 
-    expect(modul.sorterUfordelteSaker(saker, "kategori", "stigende").map((sak) => sak.id)).toEqual([
+    expect(sorterUfordelteSaker(saker, "kategori", "stigende").map((sak) => sak.id)).toEqual([
       "2",
       "3",
       "1",
     ]);
-    expect(modul.sorterUfordelteSaker(saker, "ytelse", "synkende").map((sak) => sak.id)).toEqual([
+    expect(sorterUfordelteSaker(saker, "ytelse", "synkende").map((sak) => sak.id)).toEqual([
       "1",
       "3",
       "2",
     ]);
-    expect(modul.sorterUfordelteSaker(saker, "opprettet", "synkende").map((sak) => sak.id)).toEqual(
-      ["2", "3", "1"],
-    );
+    expect(sorterUfordelteSaker(saker, "opprettet", "synkende").map((sak) => sak.id)).toEqual([
+      "2",
+      "3",
+      "1",
+    ]);
   });
 });
