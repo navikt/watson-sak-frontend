@@ -1,7 +1,9 @@
 import { expect, test } from "@playwright/test";
 
+import { resetMockData } from "~/test/reset-mock-data";
+
 test.describe("Ufordelte saker – tildeling", () => {
-  test.beforeEach(async ({ page, resetMockData }) => {
+  test.beforeEach(async ({ page }) => {
     await resetMockData(page);
     await page.goto("/fordeling", { waitUntil: "networkidle" });
   });
