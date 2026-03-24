@@ -1,6 +1,6 @@
 import { parseAzureUserToken } from "@navikt/oasis";
 import { redirect } from "react-router";
-import { skalBrukeMockdata } from "~/config/env.server";
+import { env, skalBrukeMockdata } from "~/config/env.server";
 import { logger } from "~/logging/logging";
 import { getBackendOboToken, getValidToken } from "./access-token";
 import { hentSaksbehandlerInfo } from "./api.server";
@@ -22,7 +22,7 @@ type HentInnloggetBrukerArgs = {
 export async function hentInnloggetBruker({
   request,
 }: HentInnloggetBrukerArgs): Promise<InnloggetBruker> {
-  if (skalBrukeMockdata) {
+  if (env.ENVIRONMENT === "local-mock" || env.ENVIRONMENT === "demo") {
     return {
       preferredUsername: "test",
       name: "Saks Behandlersen",
