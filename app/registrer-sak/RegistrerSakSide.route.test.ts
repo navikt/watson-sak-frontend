@@ -26,7 +26,7 @@ describe("RegistrerSakSide action", () => {
   });
 
   it("sender backend-kompatibel payload og redirecter til dashboard", async () => {
-    const { action } = await import("./RegistrerSakSide.route");
+    const { action } = await import("./RegistrerSakSide.server");
     const { opprettKontrollsak } = await import("./api.server");
 
     const formData = new FormData();
@@ -101,7 +101,7 @@ describe("RegistrerSakSide action", () => {
       organisasjoner: "Ukjent",
     });
 
-    const { action } = await import("./RegistrerSakSide.route");
+    const { action } = await import("./RegistrerSakSide.server");
 
     const formData = new FormData();
     formData.set("personIdent", "12345678901");
