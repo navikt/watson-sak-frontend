@@ -52,11 +52,7 @@ function hentMottakEnhet(organisasjoner: string) {
   return organisasjoner.split(",")[0]?.trim() || "Ukjent";
 }
 
-function byggYtelser(
-  ytelser: RegistrerSakSkjema["ytelser"],
-  fraDato: string,
-  tilDato: string,
-) {
+function byggYtelser(ytelser: RegistrerSakSkjema["ytelser"], fraDato: string, tilDato: string) {
   return ytelser.map((ytelse) => ({
     type: ytelse,
     periodeFra: fraDato,
@@ -65,7 +61,12 @@ function byggYtelser(
 }
 
 function byggAvsender(data: RegistrerSakSkjema) {
-  if (!data.avsenderNavn && !data.avsenderTelefon && !data.avsenderAdresse && !data.avsenderAnonym) {
+  if (
+    !data.avsenderNavn &&
+    !data.avsenderTelefon &&
+    !data.avsenderAdresse &&
+    !data.avsenderAnonym
+  ) {
     return null;
   }
 
@@ -123,15 +124,15 @@ export async function action({ request }: Route.ActionArgs) {
       kategori: data.kategori,
       prioritet: data.prioritet,
       ytelser: byggYtelser(data.ytelser, data.fraDato, data.tilDato),
-        bakgrunn: {
-          kilde: data.kilde,
-          innhold: data.bakgrunn,
-          avsender: byggAvsender(data),
-          vedlegg: [],
-          tilleggsopplysninger: null,
-        },
+      bakgrunn: {
+        kilde: data.kilde,
+        innhold: data.bakgrunn,
+        avsender: byggAvsender(data),
+        vedlegg: [],
+        tilleggsopplysninger: null,
       },
-    });
+    },
+  });
 
   return redirect(RouteConfig.INDEX);
 }
@@ -180,11 +181,7 @@ export default function RegistrerSakSide() {
                     ))}
                   </Select>
 
-                  <Select
-                    name="prioritet"
-                    label="Prioritet"
-                    error={feil?.prioritet?.join(", ")}
-                  >
+                  <Select name="prioritet" label="Prioritet" error={feil?.prioritet?.join(", ")}>
                     <option value="">Velg prioritet</option>
                     {prioriteringer.map((prioritet) => (
                       <option key={prioritet} value={prioritet}>
@@ -246,7 +243,12 @@ export default function RegistrerSakSide() {
                 Bakgrunn
               </Heading>
               <VStack gap="space-8">
-                <Select name="kilde" label="Kilde" error={feil?.kilde?.join(", ")} className="w-fit">
+                <Select
+                  name="kilde"
+                  label="Kilde"
+                  error={feil?.kilde?.join(", ")}
+                  className="w-fit"
+                >
                   <option value="">Velg kilde</option>
                   {kilder.map((kilde) => (
                     <option key={kilde} value={kilde}>

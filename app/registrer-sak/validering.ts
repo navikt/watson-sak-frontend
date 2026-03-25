@@ -1,7 +1,12 @@
 import { z } from "zod";
 
 export const kildeAlternativer = ["INTERN", "EKSTERN", "ANONYM_TIPS"] as const;
-export const kategoriAlternativer = ["UDEFINERT", "FEILUTBETALING", "MISBRUK", "OPPFØLGING"] as const;
+export const kategoriAlternativer = [
+  "UDEFINERT",
+  "FEILUTBETALING",
+  "MISBRUK",
+  "OPPFØLGING",
+] as const;
 export const prioritetAlternativer = ["HØY", "NORMAL", "LAV"] as const;
 
 function normaliserDato(dato: string) {

@@ -133,7 +133,9 @@ describe("registrerSakSchema", () => {
   });
 
   it("setter avsenderAnonym til false som default", () => {
-    const { avsenderAnonym: _avsenderAnonym, ...utenAnonym } = gyldigSkjema;
+    const { avsenderAnonym, ...utenAnonym } = gyldigSkjema;
+    expect(avsenderAnonym).toBe(false);
+
     const resultat = registrerSakSchema.safeParse(utenAnonym);
     expect(resultat.success).toBe(true);
     if (resultat.success) {

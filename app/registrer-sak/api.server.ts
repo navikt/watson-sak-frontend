@@ -1,7 +1,7 @@
 import { BACKEND_API_URL } from "~/config/env.server";
 import { logger } from "~/logging/logging";
 
-export type OpprettKontrollsakRequest = {
+type OpprettKontrollsakRequest = {
   personIdent: string;
   saksbehandler: string;
   mottakEnhet: string;
