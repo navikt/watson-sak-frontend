@@ -21,7 +21,11 @@ describe("UfordelteSakerInnhold", () => {
   it("bruker ikke ekstra section-landmarks for oppsummeringskortene", () => {
     const { container } = render(
       <MemoryRouter>
-        <UfordelteSakerInnhold saker={[lagSak()]} saksbehandlere={["Kari Nordmann"]} />
+        <UfordelteSakerInnhold
+          saker={[lagSak()]}
+          saksbehandlere={["Kari Nordmann"]}
+          submitPath="/fordeling"
+        />
       </MemoryRouter>,
     );
 

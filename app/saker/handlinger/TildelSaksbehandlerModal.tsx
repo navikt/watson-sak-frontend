@@ -7,6 +7,7 @@ import { RouteConfig } from "~/routeConfig";
 interface TildelSaksbehandlerModalProps {
   sakId: string;
   saksbehandlere: string[];
+  submitPath?: string;
   åpen: boolean;
   onClose: () => void;
 }
@@ -14,6 +15,7 @@ interface TildelSaksbehandlerModalProps {
 export function TildelSaksbehandlerModal({
   sakId,
   saksbehandlere,
+  submitPath,
   åpen,
   onClose,
 }: TildelSaksbehandlerModalProps) {
@@ -27,10 +29,10 @@ export function TildelSaksbehandlerModal({
     if (!valgtSaksbehandler) return;
 
     fetcher.submit(
-      { handling: "tildel", saksbehandler: valgtSaksbehandler },
+      { handling: "tildel", sakId, saksbehandler: valgtSaksbehandler },
       {
         method: "post",
-        action: RouteConfig.SAKER_DETALJ.replace(":sakId", sakId),
+        action: submitPath ?? RouteConfig.SAKER_DETALJ.replace(":sakId", sakId),
       },
     );
     setValgtSaksbehandler("");

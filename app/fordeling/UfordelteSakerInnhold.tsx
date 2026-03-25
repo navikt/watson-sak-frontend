@@ -20,9 +20,14 @@ const antallPerSide = 6;
 interface UfordelteSakerInnholdProps {
   saker: FordelingSak[];
   saksbehandlere: string[];
+  submitPath?: string;
 }
 
-export function UfordelteSakerInnhold({ saker, saksbehandlere }: UfordelteSakerInnholdProps) {
+export function UfordelteSakerInnhold({
+  saker,
+  saksbehandlere,
+  submitPath,
+}: UfordelteSakerInnholdProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [sakSomTildeles, setSakSomTildeles] = useState<FordelingSak | null>(null);
 
@@ -228,6 +233,7 @@ export function UfordelteSakerInnhold({ saker, saksbehandlere }: UfordelteSakerI
       <TildelSaksbehandlerModal
         sakId={sakSomTildeles?.id ?? ""}
         saksbehandlere={saksbehandlere}
+        submitPath={submitPath}
         åpen={sakSomTildeles !== null}
         onClose={() => setSakSomTildeles(null)}
       />

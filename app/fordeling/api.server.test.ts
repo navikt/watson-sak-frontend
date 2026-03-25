@@ -40,4 +40,35 @@ describe("Fordeling api.server", () => {
       },
     );
   });
+
+  it("sender tildeling til backend med saksbehandler", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { tildelKontrollsak } = await import("./api.server");
+
+    await tildelKontrollsak({
+      token: "token-123",
+      sakId: "sak-1",
+      saksbehandler: "Kari Nordmann",
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://backend.test/api/v1/kontrollsaker/sak-1/tildel",
+      {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer token-123",
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ saksbehandler: "Kari Nordmann" }),
+      },
+    );
+  });
 });

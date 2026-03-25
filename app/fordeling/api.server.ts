@@ -44,3 +44,37 @@ export async function hentKontrollsakerForFordeling(request: Request) {
   const token = await getBackendOboToken(request);
   return hentKontrollsaker({ token, page: 1, size: 100 });
 }
+
+type TildelKontrollsakArgs = {
+  token: string;
+  sakId: string;
+  saksbehandler: string;
+};
+
+export async function tildelKontrollsak({
+  token,
+  sakId,
+  saksbehandler,
+}: TildelKontrollsakArgs): Promise<void> {
+  if (!BACKEND_API_URL) {
+    throw new Error("Mangler backend-url for tildeling av kontrollsak.");
+  }
+
+  const response = await fetch(`${BACKEND_API_URL}/api/v1/kontrollsaker/${sakId}/tildel`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({ saksbehandler }),
+  });
+
+  if (!response.ok) {
+    logger.error("Kunne ikke tildele kontrollsak i Watson Admin API", {
+      status: response.status,
+      sakId,
+    });
+    throw new Error("Kunne ikke tildele kontrollsak.");
+  }
+}
