@@ -1,21 +1,28 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Route } from "./+types/RegistrerSakSide.route";
 
+const hentInnloggetBrukerMock = vi.fn().mockResolvedValue({
+  navIdent: "Z123456",
+  token: "token-123",
+  organisasjoner: "4812, 9999",
+});
+
 vi.mock("./api.server", () => ({
   opprettKontrollsak: vi.fn(),
 }));
 
 vi.mock("~/auth/innlogget-bruker.server", () => ({
-  hentInnloggetBruker: vi.fn().mockResolvedValue({
-    navIdent: "Z123456",
-    token: "token-123",
-    organisasjoner: "4812, 9999",
-  }),
+  hentInnloggetBruker: hentInnloggetBrukerMock,
 }));
 
 describe("RegistrerSakSide action", () => {
   afterEach(() => {
     vi.clearAllMocks();
+    hentInnloggetBrukerMock.mockResolvedValue({
+      navIdent: "Z123456",
+      token: "token-123",
+      organisasjoner: "4812, 9999",
+    });
   });
 
   it("sender backend-kompatibel payload og redirecter til dashboard", async () => {
@@ -85,5 +92,36 @@ describe("RegistrerSakSide action", () => {
     const redirectResponse = response as Response;
     expect(redirectResponse.status).toBe(302);
     expect(redirectResponse.headers.get("Location")).toBe("/");
+  });
+
+  it("feiler når innlogget bruker mangler gyldig mottakende enhet", async () => {
+    hentInnloggetBrukerMock.mockResolvedValue({
+      navIdent: "Z123456",
+      token: "token-123",
+      organisasjoner: "Ukjent",
+    });
+
+    const { action } = await import("./RegistrerSakSide.route");
+
+    const formData = new FormData();
+    formData.set("personIdent", "12345678901");
+    formData.append("ytelser", "Dagpenger");
+    formData.set("fraDato", "2026-01-01");
+    formData.set("tilDato", "2026-12-31");
+    formData.set("kategori", "UDEFINERT");
+    formData.set("prioritet", "HØY");
+    formData.set("kilde", "INTERN");
+    formData.set("bakgrunn", "Bakgrunn for saken");
+
+    await expect(
+      action({
+        request: new Request("http://localhost/registrer-sak", {
+          method: "POST",
+          body: formData,
+        }),
+        params: {},
+        context: {},
+      } as Route.ActionArgs),
+    ).rejects.toThrow("Ugyldig mottakende enhet: 'Ukjent'. Forventet enhetsnummer (4 sifre).");
   });
 });

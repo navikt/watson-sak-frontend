@@ -49,7 +49,19 @@ const kildeTilEtikett = {
 } as const;
 
 function hentMottakEnhet(organisasjoner: string) {
-  return organisasjoner.split(",")[0]?.trim() || "Ukjent";
+  const førsteEnhet = organisasjoner.split(",")[0]?.trim();
+
+  if (!førsteEnhet) {
+    throw new Error("Fant ingen mottakende enhet i organisasjoner.");
+  }
+
+  if (!/^\d{4}$/.test(førsteEnhet)) {
+    throw new Error(
+      `Ugyldig mottakende enhet: '${førsteEnhet}'. Forventet enhetsnummer (4 sifre).`,
+    );
+  }
+
+  return førsteEnhet;
 }
 
 function byggYtelser(ytelser: RegistrerSakSkjema["ytelser"], fraDato: string, tilDato: string) {

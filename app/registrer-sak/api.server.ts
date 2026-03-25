@@ -6,8 +6,8 @@ type OpprettKontrollsakRequest = {
   saksbehandler: string;
   mottakEnhet: string;
   mottakSaksbehandler: string;
-  kategori?: string;
-  prioritet?: string;
+  kategori: string;
+  prioritet: string;
   ytelser: Array<{
     type: string;
     periodeFra: string;

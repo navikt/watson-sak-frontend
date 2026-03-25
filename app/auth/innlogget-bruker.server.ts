@@ -28,7 +28,7 @@ export async function hentInnloggetBruker({
       name: "Saks Behandlersen",
       navIdent: "S133337",
       token: "test",
-      organisasjoner: "Ukjent",
+      organisasjoner: "4812",
     };
   }
   const token = await getValidToken(request);
