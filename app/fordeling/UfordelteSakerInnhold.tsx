@@ -1,6 +1,7 @@
 import { BodyShort, Chips, Heading, HStack, Label, Pagination, VStack } from "@navikt/ds-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router";
+import { RouteConfig } from "~/routeConfig";
 import { TildelSaksbehandlerModal } from "~/saker/handlinger/TildelSaksbehandlerModal";
 import { formaterDato } from "~/utils/date-utils";
 import {
@@ -26,7 +27,7 @@ interface UfordelteSakerInnholdProps {
 export function UfordelteSakerInnhold({
   saker,
   saksbehandlere,
-  submitPath,
+  submitPath = RouteConfig.FORDELING,
 }: UfordelteSakerInnholdProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [sakSomTildeles, setSakSomTildeles] = useState<FordelingSak | null>(null);
@@ -171,10 +172,7 @@ export function UfordelteSakerInnhold({
                           className="border-b border-ax-border-neutral-subtle last:border-b-0"
                         >
                           <Celle>
-                            <KategoriPille
-                              kategori={sak.kategori ?? "Uten kategori"}
-                              variant={sak.kategoriVariant}
-                            />
+                            <KategoriPille kategori={sak.kategori ?? "Uten kategori"} />
                           </Celle>
                           <Celle>
                             <div className="flex flex-wrap gap-2">
@@ -355,12 +353,10 @@ function Filtergruppe({
   );
 }
 
-function KategoriPille({ kategori, variant }: { kategori: string; variant: "neutral" }) {
-  const kategoriKlasser = variant === "neutral" ? kategoriStiler.standard : kategoriStiler.standard;
-
+function KategoriPille({ kategori }: { kategori: string }) {
   return (
     <span
-      className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium ${kategoriKlasser}`}
+      className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium ${kategoriStiler.standard}`}
     >
       {kategori}
     </span>

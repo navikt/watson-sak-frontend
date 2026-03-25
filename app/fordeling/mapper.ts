@@ -19,7 +19,6 @@ export function mapKontrollsakTilFordelingSak(kontrollsak: KontrollsakResponse):
     id: kontrollsak.id,
     opprettetDato: kontrollsak.opprettet.slice(0, 10),
     kategori: kategoriEtikett(kontrollsak.kategori),
-    kategoriVariant: "neutral",
     ytelser: kontrollsak.ytelser.map((ytelse) => ytelse.type),
   };
 }

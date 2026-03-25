@@ -12,7 +12,6 @@ const lagSak = (overstyringer: Partial<FordelingSak>): FordelingSak => ({
   id: "1",
   opprettetDato: "2026-01-15",
   kategori: "Feilutbetaling",
-  kategoriVariant: "neutral",
   ytelser: ["Dagpenger"],
   ...overstyringer,
 });

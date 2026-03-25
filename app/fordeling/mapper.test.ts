@@ -46,7 +46,6 @@ describe("Fordeling mapper", () => {
       id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
       opprettetDato: "2026-03-20",
       kategori: "Feilutbetaling",
-      kategoriVariant: "neutral",
       ytelser: ["Dagpenger"],
     });
   });
@@ -56,7 +55,6 @@ describe("Fordeling mapper", () => {
       id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
       opprettetDato: "2026-03-20",
       kategori: "Ukjent kategori",
-      kategoriVariant: "neutral",
       ytelser: ["Dagpenger"],
     });
   });

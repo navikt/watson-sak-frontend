@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("~/config/env.server", () => ({
   BACKEND_API_URL: "https://backend.test",
+  skalBrukeMockdata: false,
 }));
 
 describe("Fordeling api.server", () => {

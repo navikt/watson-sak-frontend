@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { RouteConfig } from "~/routeConfig";
 import type { Route } from "./+types/FordelingSide.route";
 import { mockSaker, resetMockSaker } from "./mock-data.server";
 
@@ -83,5 +84,43 @@ describe("FordelingSide action", () => {
       sakId: "101",
       saksbehandler: "Kari Nordmann",
     });
+  });
+
+  it("feiler med 400 når handling er ukjent", async () => {
+    const { action } = await import("./FordelingSide.route");
+
+    const formData = new FormData();
+    formData.set("handling", "ukjent");
+
+    await expect(
+      action({
+        request: new Request(`http://localhost${RouteConfig.FORDELING}`, {
+          method: "POST",
+          body: formData,
+        }),
+        params: {},
+        context: {},
+      } as Route.ActionArgs),
+    ).rejects.toMatchObject({ init: { status: 400 } });
+  });
+
+  it("feiler med 404 når sak ikke finnes i mockmiljø", async () => {
+    const { action } = await import("./FordelingSide.route");
+
+    const formData = new FormData();
+    formData.set("handling", "tildel");
+    formData.set("sakId", "999");
+    formData.set("saksbehandler", "Kari Nordmann");
+
+    await expect(
+      action({
+        request: new Request(`http://localhost${RouteConfig.FORDELING}`, {
+          method: "POST",
+          body: formData,
+        }),
+        params: {},
+        context: {},
+      } as Route.ActionArgs),
+    ).rejects.toMatchObject({ init: { status: 404 } });
   });
 });

@@ -1,6 +1,7 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
+import { RouteConfig } from "~/routeConfig";
 import { UfordelteSakerInnhold } from "./UfordelteSakerInnhold";
 import type { FordelingSak } from "./typer";
 
@@ -12,7 +13,6 @@ const lagSak = (overstyringer: Partial<FordelingSak> = {}): FordelingSak => ({
   id: "1",
   opprettetDato: "2026-01-13",
   kategori: "Feilutbetaling",
-  kategoriVariant: "neutral",
   ytelser: ["Dagpenger"],
   ...overstyringer,
 });
@@ -24,7 +24,7 @@ describe("UfordelteSakerInnhold", () => {
         <UfordelteSakerInnhold
           saker={[lagSak()]}
           saksbehandlere={["Kari Nordmann"]}
-          submitPath="/fordeling"
+          submitPath={RouteConfig.FORDELING}
         />
       </MemoryRouter>,
     );
