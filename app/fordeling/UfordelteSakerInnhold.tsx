@@ -355,13 +355,7 @@ function Filtergruppe({
   );
 }
 
-function KategoriPille({
-  kategori,
-  variant,
-}: {
-  kategori: string;
-  variant: "neutral";
-}) {
+function KategoriPille({ kategori, variant }: { kategori: string; variant: "neutral" }) {
   const kategoriKlasser = variant === "neutral" ? kategoriStiler.standard : kategoriStiler.standard;
 
   return (

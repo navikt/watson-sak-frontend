@@ -18,13 +18,16 @@ export async function hentKontrollsaker({
     throw new Error("Mangler backend-url for henting av kontrollsaker.");
   }
 
-  const response = await fetch(`${BACKEND_API_URL}/api/v1/kontrollsaker?page=${page}&size=${size}`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
+  const response = await fetch(
+    `${BACKEND_API_URL}/api/v1/kontrollsaker?page=${page}&size=${size}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
     },
-  });
+  );
 
   if (!response.ok) {
     logger.error("Kunne ikke hente kontrollsaker fra Watson Admin API", {

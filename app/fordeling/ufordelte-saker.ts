@@ -12,12 +12,17 @@ interface UfordelteFiltre {
 
 export function hentUfordelteFiltervalg(saker: FordelingSak[]) {
   return {
-    kategorier: hentSorterteUnikeVerdier(saker.flatMap((sak) => (sak.kategori ? [sak.kategori] : []))),
+    kategorier: hentSorterteUnikeVerdier(
+      saker.flatMap((sak) => (sak.kategori ? [sak.kategori] : [])),
+    ),
     ytelser: hentSorterteUnikeVerdier(saker.flatMap((sak) => sak.ytelser)),
   };
 }
 
-export function filtrerUfordelteSaker(saker: FordelingSak[], filtre: UfordelteFiltre): FordelingSak[] {
+export function filtrerUfordelteSaker(
+  saker: FordelingSak[],
+  filtre: UfordelteFiltre,
+): FordelingSak[] {
   return saker.filter((sak) => {
     const matcherKategori =
       filtre.kategorier.length === 0 ||

@@ -13,12 +13,14 @@
 ### Task 1: Add Fordeling read-model tests first
 
 **Files:**
+
 - Create: `watson-sak-frontend/app/fordeling/mapper.test.ts`
 - Modify: `watson-sak-frontend/app/fordeling/ufordelte-saker.test.ts`
 
 **Step 1: Write failing mapper tests**
 
 Cover:
+
 - `OPPRETTET` maps to a Fordeling-visible sak
 - `AVKLART` maps to a Fordeling-visible sak
 - `UTREDES` is excluded from Fordeling
@@ -32,6 +34,7 @@ Run: `npm run test -- app/fordeling/mapper.test.ts app/fordeling/ufordelte-saker
 **Step 3: Implement minimal Fordeling-specific types and mapper**
 
 Create:
+
 - `watson-sak-frontend/app/fordeling/types.backend.ts`
 - `watson-sak-frontend/app/fordeling/typer.ts`
 - `watson-sak-frontend/app/fordeling/mapper.ts`
@@ -50,6 +53,7 @@ git commit -m "Legg til Fordeling-readmodell"
 ### Task 2: Switch Fordeling route to backend read
 
 **Files:**
+
 - Create: `watson-sak-frontend/app/fordeling/api.server.ts`
 - Modify: `watson-sak-frontend/app/fordeling/FordelingSide.route.tsx`
 - Modify: `watson-sak-frontend/app/fordeling/UfordelteSakerInnhold.tsx`
@@ -60,6 +64,7 @@ git commit -m "Legg til Fordeling-readmodell"
 **Step 1: Write failing API and route-adjacent tests**
 
 Cover:
+
 - frontend fetches `/api/v1/kontrollsaker` with bearer token
 - Fordeling content accepts `FordelingSak[]`
 
@@ -70,6 +75,7 @@ Run: `npm run test -- app/fordeling/api.server.test.ts app/fordeling/UfordelteSa
 **Step 3: Implement minimal backend client and loader migration**
 
 Requirements:
+
 - use `getBackendOboToken(request)`
 - parse backend page response
 - map `items` to `FordelingSak[]`
@@ -90,11 +96,13 @@ git commit -m "Hent Fordeling-saker fra backend"
 ### Task 3: Add backend assignment API tests first
 
 **Files:**
+
 - Create: `watson-admin-api/src/test/kotlin/no/nav/watson/admin/service/KontrollsakServiceTest.kt`
 
 **Step 1: Write failing backend service tests**
 
 Cover:
+
 - assignment updates `saksbehandler`
 - assignment transitions status to `UTREDES`
 - assignment updates `oppdatert`
@@ -106,6 +114,7 @@ Run: `./gradlew test --tests no.nav.watson.admin.service.KontrollsakServiceTest`
 **Step 3: Implement minimal backend assignment support**
 
 Modify:
+
 - `watson-admin-api/src/main/kotlin/no/nav/watson/admin/api/KontrollsakController.kt`
 - `watson-admin-api/src/main/kotlin/no/nav/watson/admin/api/dto/OppdaterKontrollsakRequest.kt`
 - `watson-admin-api/src/main/kotlin/no/nav/watson/admin/service/KontrollsakService.kt`
@@ -127,6 +136,7 @@ git commit -m "Legg til backend-tildeling av kontrollsak"
 ### Task 4: Move Fordeling tildeling to backend
 
 **Files:**
+
 - Modify: `watson-sak-frontend/app/fordeling/FordelingSide.route.tsx`
 - Modify: `watson-sak-frontend/app/fordeling/api.server.ts`
 - Modify: `watson-sak-frontend/app/saker/handlinger/TildelSaksbehandlerModal.tsx`
@@ -136,6 +146,7 @@ git commit -m "Legg til backend-tildeling av kontrollsak"
 **Step 1: Write failing frontend tests**
 
 Cover:
+
 - Fordeling action sends assignment request to backend
 - modal submits to Fordeling route instead of SakDetalj
 - assigned sak disappears after reload because it is no longer Fordeling-visible
@@ -147,6 +158,7 @@ Run: `npm run test -- app/fordeling/FordelingSide.route.test.ts`
 **Step 3: Implement minimal action flow**
 
 Requirements:
+
 - add Fordeling `action()`
 - call backend assignment endpoint
 - leave modal UX unchanged
@@ -155,6 +167,7 @@ Requirements:
 **Step 4: Re-run tests and Playwright flow**
 
 Run:
+
 - `npm run test -- app/fordeling/FordelingSide.route.test.ts app/fordeling/api.server.test.ts`
 - `npm run test:e2e -- app/fordeling/sakshandlinger.spec.ts`
 
@@ -168,22 +181,26 @@ git commit -m "Flytt tildeling i Fordeling til backend"
 ### Task 5: Full verification
 
 **Files:**
+
 - Verify all changed files only
 
 **Step 1: Run frontend checks**
 
 Run:
+
 - `npm run test -- app/fordeling/mapper.test.ts app/fordeling/api.server.test.ts app/fordeling/UfordelteSakerInnhold.test.tsx app/fordeling/ufordelte-saker.test.ts app/fordeling/FordelingSide.route.test.ts`
 - `npm run typecheck`
 
 **Step 2: Run backend checks**
 
 Run:
+
 - `./gradlew test --tests no.nav.watson.admin.service.KontrollsakServiceTest`
 
 **Step 3: Run end-to-end regression**
 
 Run:
+
 - `npm run test:e2e -- app/fordeling/sakshandlinger.spec.ts`
 
 **Step 4: Final commit if verification fixes were needed**
