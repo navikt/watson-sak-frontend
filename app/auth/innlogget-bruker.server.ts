@@ -1,6 +1,6 @@
 import { parseAzureUserToken } from "@navikt/oasis";
 import { redirect } from "react-router";
-import { env, skalBrukeMockdata } from "~/config/env.server";
+import { env } from "~/config/env.server";
 import { logger } from "~/logging/logging";
 import { getBackendOboToken, getValidToken } from "./access-token";
 import { hentSaksbehandlerInfo } from "./api.server";
@@ -28,7 +28,7 @@ export async function hentInnloggetBruker({
       name: "Saks Behandlersen",
       navIdent: "S133337",
       token: "test",
-      organisasjoner: "Ukjent",
+      organisasjoner: "4812",
     };
   }
   const token = await getValidToken(request);

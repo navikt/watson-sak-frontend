@@ -15,28 +15,87 @@ import {
 import { PageBlock } from "@navikt/ds-react/Page";
 import { useState } from "react";
 import { Form, redirect, useActionData, useLoaderData } from "react-router";
-import {
-  mockAvdelinger,
-  mockKategorier,
-  mockSaker,
-  mockTags,
-  mockYtelser,
-} from "~/fordeling/mock-data.server";
-import { leggTilHendelse } from "~/saker/historikk/mock-data.server";
-import { sakKildeSchema } from "~/saker/typer";
-import { formaterKilde } from "~/saker/utils";
+import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
+import { mockYtelser } from "~/fordeling/mock-data.server";
+import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
 import type { Route } from "./+types/RegistrerSakSide.route";
-import { registrerSakSchema } from "./validering";
-import { Kort } from "~/komponenter/Kort";
+import { opprettKontrollsak } from "./api.server";
+import {
+  kategoriAlternativer,
+  kildeAlternativer,
+  prioritetAlternativer,
+  registrerSakSchema,
+  type RegistrerSakSkjema,
+} from "./validering";
+
+const kategoriTilEtikett = {
+  UDEFINERT: "Udefinert",
+  FEILUTBETALING: "Feilutbetaling",
+  MISBRUK: "Misbruk",
+  OPPFØLGING: "Oppfølging",
+} as const;
+
+const prioritetTilEtikett = {
+  HØY: "Høy",
+  NORMAL: "Normal",
+  LAV: "Lav",
+} as const;
+
+const kildeTilEtikett = {
+  INTERN: "Intern",
+  EKSTERN: "Ekstern",
+  ANONYM_TIPS: "Anonymt tips",
+} as const;
+
+function hentMottakEnhet(organisasjoner: string) {
+  const førsteEnhet = organisasjoner.split(",")[0]?.trim();
+
+  if (!førsteEnhet) {
+    throw new Error("Fant ingen mottakende enhet i organisasjoner.");
+  }
+
+  if (!/^\d{4}$/.test(førsteEnhet)) {
+    throw new Error(
+      `Ugyldig mottakende enhet: '${førsteEnhet}'. Forventet enhetsnummer (4 sifre).`,
+    );
+  }
+
+  return førsteEnhet;
+}
+
+function byggYtelser(ytelser: RegistrerSakSkjema["ytelser"], fraDato: string, tilDato: string) {
+  return ytelser.map((ytelse) => ({
+    type: ytelse,
+    periodeFra: fraDato,
+    periodeTil: tilDato,
+  }));
+}
+
+function byggAvsender(data: RegistrerSakSkjema) {
+  if (
+    !data.avsenderNavn &&
+    !data.avsenderTelefon &&
+    !data.avsenderAdresse &&
+    !data.avsenderAnonym
+  ) {
+    return null;
+  }
+
+  return {
+    navn: data.avsenderNavn,
+    telefon: data.avsenderTelefon,
+    adresse: data.avsenderAdresse,
+    anonym: data.avsenderAnonym,
+  };
+}
 
 export function loader() {
   return {
-    avdelinger: mockAvdelinger,
-    kategorier: mockKategorier,
-    tags: mockTags,
     ytelser: mockYtelser,
-    kilder: sakKildeSchema.options,
+    kategorier: kategoriAlternativer,
+    prioriteringer: prioritetAlternativer,
+    kilder: kildeAlternativer,
   };
 }
 
@@ -44,19 +103,18 @@ export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
 
   const rådata = {
-    fødselsnummer: formData.get("fødselsnummer"),
+    personIdent: formData.get("personIdent"),
     ytelser: formData.getAll("ytelser"),
     fraDato: formData.get("fraDato") || undefined,
     tilDato: formData.get("tilDato") || undefined,
-    avdeling: formData.get("avdeling"),
     kategori: formData.get("kategori"),
-    tags: formData.getAll("tags"),
+    prioritet: formData.get("prioritet"),
     kilde: formData.get("kilde"),
-    kontaktNavn: formData.get("kontaktNavn") || undefined,
-    kontaktTelefon: formData.get("kontaktTelefon") || undefined,
-    kontaktEpost: formData.get("kontaktEpost") || undefined,
-    anonymt: formData.get("anonymt") === "on",
-    beskrivelse: formData.get("beskrivelse"),
+    bakgrunn: formData.get("bakgrunn"),
+    avsenderNavn: formData.get("avsenderNavn") || undefined,
+    avsenderTelefon: formData.get("avsenderTelefon") || undefined,
+    avsenderAdresse: formData.get("avsenderAdresse") || undefined,
+    avsenderAnonym: formData.get("avsenderAnonym") === "on",
   };
 
   const resultat = registrerSakSchema.safeParse(rådata);
@@ -65,45 +123,39 @@ export async function action({ request }: Route.ActionArgs) {
     return { feil: resultat.error.flatten().fieldErrors };
   }
 
+  const innloggetBruker = await hentInnloggetBruker({ request });
   const data = resultat.data;
-  const nesteId = String(Math.max(0, ...mockSaker.map((s) => Number(s.id))) + 1);
 
-  mockSaker.push({
-    id: nesteId,
-    datoInnmeldt: new Date().toISOString().split("T")[0],
-    kilde: data.kilde,
-    notat: data.beskrivelse,
-    fødselsnummer: data.fødselsnummer,
-    ytelser: data.ytelser as string[],
-    status: "tips mottatt",
-    seksjon: data.avdeling,
-    fraDato: data.fraDato,
-    tilDato: data.tilDato,
-    avdeling: data.avdeling,
-    kategori: data.kategori,
-    tags: data.tags as string[],
-    kontaktinformasjon: {
-      navn: data.kontaktNavn,
-      telefon: data.kontaktTelefon,
-      epost: data.kontaktEpost,
-      anonymt: data.anonymt,
+  await opprettKontrollsak({
+    token: innloggetBruker.token,
+    payload: {
+      personIdent: data.personIdent,
+      saksbehandler: innloggetBruker.navIdent,
+      mottakEnhet: hentMottakEnhet(innloggetBruker.organisasjoner),
+      mottakSaksbehandler: innloggetBruker.navIdent,
+      kategori: data.kategori,
+      prioritet: data.prioritet,
+      ytelser: byggYtelser(data.ytelser, data.fraDato, data.tilDato),
+      bakgrunn: {
+        kilde: data.kilde,
+        innhold: data.bakgrunn,
+        avsender: byggAvsender(data),
+        vedlegg: [],
+        tilleggsopplysninger: null,
+      },
     },
-    beskrivelse: data.beskrivelse,
   });
 
-  leggTilHendelse(nesteId, "opprettet", "System");
-
-  return redirect(RouteConfig.FORDELING);
+  return redirect(RouteConfig.INDEX);
 }
 
 export default function RegistrerSakSide() {
-  const { avdelinger, kategorier, tags, ytelser, kilder } = useLoaderData<typeof loader>();
+  const { ytelser, kategorier, prioriteringer, kilder } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const feil =
     actionData && "feil" in actionData ? (actionData.feil as Record<string, string[]>) : undefined;
 
   const [valgteYtelser, setValgteYtelser] = useState<string[]>([]);
-  const [valgteTags, setValgteTags] = useState<string[]>([]);
 
   return (
     <Page>
@@ -120,34 +172,32 @@ export default function RegistrerSakSide() {
                 Saksinformasjon
               </Heading>
               <VStack gap="space-8">
-                <div>
-                  <TextField
-                    name="fødselsnummer"
-                    label="Fødselsnummer"
-                    description="11 siffer"
-                    inputMode="numeric"
-                    maxLength={11}
-                    htmlSize={20}
-                    error={feil?.fødselsnummer?.join(", ")}
-                    autoComplete="off"
-                  />
-                </div>
+                <TextField
+                  name="personIdent"
+                  label="Fødselsnummer"
+                  description="11 siffer"
+                  inputMode="numeric"
+                  maxLength={11}
+                  htmlSize={20}
+                  error={feil?.personIdent?.join(", ")}
+                  autoComplete="off"
+                />
 
                 <HStack gap="space-8">
-                  <Select name="avdeling" label="Avdeling" error={feil?.avdeling?.join(", ")}>
-                    <option value="">Velg avdeling</option>
-                    {avdelinger.map((avd) => (
-                      <option key={avd} value={avd}>
-                        {avd}
+                  <Select name="kategori" label="Kategori" error={feil?.kategori?.join(", ")}>
+                    <option value="">Velg kategori</option>
+                    {kategorier.map((kategori) => (
+                      <option key={kategori} value={kategori}>
+                        {kategoriTilEtikett[kategori]}
                       </option>
                     ))}
                   </Select>
 
-                  <Select name="kategori" label="Kategori" error={feil?.kategori?.join(", ")}>
-                    <option value="">Velg kategori</option>
-                    {kategorier.map((kat) => (
-                      <option key={kat} value={kat}>
-                        {kat}
+                  <Select name="prioritet" label="Prioritet" error={feil?.prioritet?.join(", ")}>
+                    <option value="">Velg prioritet</option>
+                    {prioriteringer.map((prioritet) => (
+                      <option key={prioritet} value={prioritet}>
+                        {prioritetTilEtikett[prioritet]}
                       </option>
                     ))}
                   </Select>
@@ -175,9 +225,9 @@ export default function RegistrerSakSide() {
 
             <Kort as="section" padding="space-12">
               <Heading level="2" size="small" spacing>
-                Ytelser og klassifisering
+                Ytelser
               </Heading>
-              <HStack gap="space-8">
+              <VStack gap="space-8">
                 <UNSAFE_Combobox
                   label="Ytelser"
                   options={ytelser}
@@ -185,7 +235,7 @@ export default function RegistrerSakSide() {
                   selectedOptions={valgteYtelser}
                   onToggleSelected={(option, isSelected) => {
                     setValgteYtelser((prev) =>
-                      isSelected ? [...prev, option] : prev.filter((y) => y !== option),
+                      isSelected ? [...prev, option] : prev.filter((ytelse) => ytelse !== option),
                     );
                   }}
                 />
@@ -197,79 +247,58 @@ export default function RegistrerSakSide() {
                     {feil.ytelser.join(", ")}
                   </BodyShort>
                 )}
-
-                <UNSAFE_Combobox
-                  label="Tags"
-                  options={tags}
-                  isMultiSelect
-                  selectedOptions={valgteTags}
-                  onToggleSelected={(option, isSelected) => {
-                    setValgteTags((prev) =>
-                      isSelected ? [...prev, option] : prev.filter((t) => t !== option),
-                    );
-                  }}
-                />
-                {valgteTags.map((tag) => (
-                  <input key={tag} type="hidden" name="tags" value={tag} />
-                ))}
-              </HStack>
-            </Kort>
-
-            <Kort as="section" padding="space-12">
-              <Heading level="2" size="small" spacing>
-                Kilde og kontaktinformasjon
-              </Heading>
-              <VStack gap="space-8">
-                <div>
-                  <Select
-                    name="kilde"
-                    label="Kilde"
-                    error={feil?.kilde?.join(", ")}
-                    className="w-fit"
-                  >
-                    <option value="">Velg kilde</option>
-                    {kilder.map((kilde) => (
-                      <option key={kilde} value={kilde}>
-                        {formaterKilde(kilde)}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-                <Heading level="3" size="xsmall" spacing={false}>
-                  Kontaktinformasjon
-                </Heading>
-                <HStack gap="space-8" align="end">
-                  <TextField name="kontaktNavn" label="Navn" autoComplete="off" />
-                  <TextField
-                    name="kontaktTelefon"
-                    label="Telefon"
-                    inputMode="tel"
-                    autoComplete="off"
-                  />
-                  <TextField name="kontaktEpost" label="E-post" type="email" autoComplete="off" />
-                  <Checkbox name="anonymt" value="on">
-                    Anonymt tips
-                  </Checkbox>
-                </HStack>
               </VStack>
             </Kort>
 
             <Kort as="section" padding="space-12">
               <Heading level="2" size="small" spacing>
-                Beskrivelse
+                Bakgrunn
               </Heading>
-              <Textarea
-                name="beskrivelse"
-                label="Beskrivelse"
-                description="Beskriv saken så detaljert som mulig"
-                minRows={4}
-                error={feil?.beskrivelse?.join(", ")}
-              />
+              <VStack gap="space-8">
+                <Select
+                  name="kilde"
+                  label="Kilde"
+                  error={feil?.kilde?.join(", ")}
+                  className="w-fit"
+                >
+                  <option value="">Velg kilde</option>
+                  {kilder.map((kilde) => (
+                    <option key={kilde} value={kilde}>
+                      {kildeTilEtikett[kilde]}
+                    </option>
+                  ))}
+                </Select>
+
+                <Textarea
+                  name="bakgrunn"
+                  label="Bakgrunn"
+                  description="Beskriv saken så detaljert som mulig"
+                  minRows={4}
+                  error={feil?.bakgrunn?.join(", ")}
+                />
+
+                <Heading level="3" size="xsmall" spacing={false}>
+                  Avsender
+                </Heading>
+                <HStack gap="space-8" align="end">
+                  <TextField name="avsenderNavn" label="Navn" autoComplete="off" />
+                  <TextField
+                    name="avsenderTelefon"
+                    label="Telefon"
+                    inputMode="tel"
+                    autoComplete="off"
+                  />
+                  <TextField name="avsenderAdresse" label="Adresse" autoComplete="off" />
+                  <Checkbox name="avsenderAnonym" value="on">
+                    Anonym avsender
+                  </Checkbox>
+                </HStack>
+              </VStack>
             </Kort>
 
             <HStack gap="space-4">
               <Button type="submit">Registrer sak</Button>
-              <Button type="button" variant="secondary" as="a" href={RouteConfig.FORDELING}>
+              <Button type="button" variant="secondary" as="a" href={RouteConfig.INDEX}>
                 Avbryt
               </Button>
             </HStack>

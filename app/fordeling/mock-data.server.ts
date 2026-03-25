@@ -206,39 +206,6 @@ export function resetMockSaker() {
   mockSaker = rådata.map((sak) => sakSchema.parse(sak));
 }
 
-export const mockAvdelinger = [
-  "Kontroll Øst",
-  "Kontroll Vest",
-  "Kontroll Nord",
-  "Kontroll Sør",
-  "Kontroll Midt",
-];
-
-export const mockKategorier = [
-  "Samliv",
-  "Arbeid",
-  "Utland",
-  "Identitet",
-  "Annet",
-  "Tiltak",
-  "Dokumentfalsk",
-];
-
-export const mockTags = [
-  "enslig-forsørger",
-  "dagpenger",
-  "sykepenger",
-  "barnetrygd",
-  "aap",
-  "foreldrepenger",
-  "samliv",
-  "arbeid",
-  "utland",
-  "identitet",
-  "tiltak",
-  "dokumentfalsk",
-];
-
 export const mockYtelser = [
   "Enslig forsørger",
   "Dagpenger",
