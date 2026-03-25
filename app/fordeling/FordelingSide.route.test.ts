@@ -39,7 +39,7 @@ describe("FordelingSide action", () => {
   });
 
   it("flytter sak ut av Fordeling i mockmiljø når den tildeles", async () => {
-    const { action } = await import("./FordelingSide.route");
+    const { action } = await import("./FordelingSide.server");
 
     const formData = new FormData();
     formData.set("handling", "tildel");
@@ -62,7 +62,7 @@ describe("FordelingSide action", () => {
   it("kaller backend når tildeling skjer uten mockdata", async () => {
     testState.skalBrukeMockdata = false;
 
-    const { action } = await import("./FordelingSide.route");
+    const { action } = await import("./FordelingSide.server");
 
     const formData = new FormData();
     formData.set("handling", "tildel");
@@ -87,7 +87,7 @@ describe("FordelingSide action", () => {
   });
 
   it("feiler med 400 når handling er ukjent", async () => {
-    const { action } = await import("./FordelingSide.route");
+    const { action } = await import("./FordelingSide.server");
 
     const formData = new FormData();
     formData.set("handling", "ukjent");
@@ -105,7 +105,7 @@ describe("FordelingSide action", () => {
   });
 
   it("feiler med 404 når sak ikke finnes i mockmiljø", async () => {
-    const { action } = await import("./FordelingSide.route");
+    const { action } = await import("./FordelingSide.server");
 
     const formData = new FormData();
     formData.set("handling", "tildel");
@@ -122,5 +122,25 @@ describe("FordelingSide action", () => {
         context: {},
       } as Route.ActionArgs),
     ).rejects.toMatchObject({ init: { status: 404 } });
+  });
+
+  it("feiler med 400 når sakId eller saksbehandler bare er whitespace", async () => {
+    const { action } = await import("./FordelingSide.server");
+
+    const formData = new FormData();
+    formData.set("handling", "tildel");
+    formData.set("sakId", "   ");
+    formData.set("saksbehandler", " ");
+
+    await expect(
+      action({
+        request: new Request(`http://localhost${RouteConfig.FORDELING}`, {
+          method: "POST",
+          body: formData,
+        }),
+        params: {},
+        context: {},
+      } as Route.ActionArgs),
+    ).rejects.toMatchObject({ init: { status: 400 } });
   });
 });

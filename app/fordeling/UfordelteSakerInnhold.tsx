@@ -356,7 +356,7 @@ function Filtergruppe({
 function KategoriPille({ kategori }: { kategori: string }) {
   return (
     <span
-      className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium ${kategoriStiler.standard}`}
+      className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium ${kategoriPilleKlasser}`}
     >
       {kategori}
     </span>
@@ -371,13 +371,4 @@ function YtelsePille({ children }: { children: ReactNode }) {
   );
 }
 
-const kategoriStiler: Record<string, string> = {
-  Samliv: "border-ax-border-accent bg-ax-bg-accent-soft text-ax-text-accent",
-  Arbeid: "border-ax-border-neutral bg-ax-bg-neutral-soft text-ax-text-neutral",
-  Utland: "border-ax-border-warning bg-ax-bg-warning-soft text-ax-text-warning",
-  Identitet: "border-ax-border-info bg-ax-bg-info-soft text-ax-text-info",
-  Annet: "border-ax-border-danger bg-ax-bg-danger-soft text-ax-text-danger",
-  Tiltak: "border-ax-border-success bg-ax-bg-success-soft text-ax-text-success",
-  Dokumentfalsk: "border-ax-border-warning bg-ax-bg-warning-soft text-ax-text-warning",
-  standard: "border-ax-border-neutral bg-ax-bg-neutral-soft text-ax-text-neutral",
-};
+const kategoriPilleKlasser = "border-ax-border-neutral bg-ax-bg-neutral-soft text-ax-text-neutral";
