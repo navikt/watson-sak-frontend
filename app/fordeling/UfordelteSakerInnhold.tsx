@@ -2,7 +2,6 @@ import { BodyShort, Chips, Heading, HStack, Label, Pagination, VStack } from "@n
 import { useMemo, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router";
 import { TildelSaksbehandlerModal } from "~/saker/handlinger/TildelSaksbehandlerModal";
-import type { Sak } from "~/saker/typer";
 import { formaterDato } from "~/utils/date-utils";
 import {
   filtrerUfordelteSaker,
@@ -14,17 +13,18 @@ import {
   type UfordeltSorteringskolonne,
   type UfordeltSorteringsretning,
 } from "./ufordelte-saker";
+import type { FordelingSak } from "./typer";
 
 const antallPerSide = 6;
 
 interface UfordelteSakerInnholdProps {
-  saker: Sak[];
+  saker: FordelingSak[];
   saksbehandlere: string[];
 }
 
 export function UfordelteSakerInnhold({ saker, saksbehandlere }: UfordelteSakerInnholdProps) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [sakSomTildeles, setSakSomTildeles] = useState<Sak | null>(null);
+  const [sakSomTildeles, setSakSomTildeles] = useState<FordelingSak | null>(null);
 
   const valgteKategorier = hentValgteVerdier(searchParams, "kategori");
   const valgteYtelser = hentValgteVerdier(searchParams, "ytelse");
@@ -166,7 +166,10 @@ export function UfordelteSakerInnhold({ saker, saksbehandlere }: UfordelteSakerI
                           className="border-b border-ax-border-neutral-subtle last:border-b-0"
                         >
                           <Celle>
-                            <KategoriPille kategori={sak.kategori ?? "Uten kategori"} />
+                            <KategoriPille
+                              kategori={sak.kategori ?? "Uten kategori"}
+                              variant={sak.kategoriVariant}
+                            />
                           </Celle>
                           <Celle>
                             <div className="flex flex-wrap gap-2">
@@ -175,7 +178,7 @@ export function UfordelteSakerInnhold({ saker, saksbehandlere }: UfordelteSakerI
                               ))}
                             </div>
                           </Celle>
-                          <Celle>{formaterDato(sak.datoInnmeldt)}</Celle>
+                          <Celle>{formaterDato(sak.opprettetDato)}</Celle>
                           <Celle className="text-right">
                             <button
                               type="button"
@@ -346,8 +349,14 @@ function Filtergruppe({
   );
 }
 
-function KategoriPille({ kategori }: { kategori: string }) {
-  const kategoriKlasser = kategoriStiler[kategori] ?? kategoriStiler.standard;
+function KategoriPille({
+  kategori,
+  variant,
+}: {
+  kategori: string;
+  variant: "neutral";
+}) {
+  const kategoriKlasser = variant === "neutral" ? kategoriStiler.standard : kategoriStiler.standard;
 
   return (
     <span

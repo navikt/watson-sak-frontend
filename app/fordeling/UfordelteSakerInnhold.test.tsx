@@ -1,23 +1,19 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
-import type { Sak } from "~/saker/typer";
 import { UfordelteSakerInnhold } from "./UfordelteSakerInnhold";
+import type { FordelingSak } from "./typer";
 
 vi.mock("~/saker/handlinger/TildelSaksbehandlerModal", () => ({
   TildelSaksbehandlerModal: () => null,
 }));
 
-const lagSak = (overstyringer: Partial<Sak> = {}): Sak => ({
+const lagSak = (overstyringer: Partial<FordelingSak> = {}): FordelingSak => ({
   id: "1",
-  datoInnmeldt: "2026-01-13",
-  kilde: "telefon",
-  notat: "Tips om mulig feilutbetaling",
-  fødselsnummer: "12345678901",
+  opprettetDato: "2026-01-13",
+  kategori: "Feilutbetaling",
+  kategoriVariant: "neutral",
   ytelser: ["Dagpenger"],
-  status: "tips mottatt",
-  seksjon: "Seksjon A",
-  tags: [],
   ...overstyringer,
 });
 

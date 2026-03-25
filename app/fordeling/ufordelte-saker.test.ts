@@ -1,65 +1,48 @@
 import { describe, expect, it } from "vitest";
-import type { Sak } from "~/saker/typer";
 import {
   filtrerUfordelteSaker,
   hentUfordelteFiltervalg,
-  hentUfordelteSaker,
   lagUfordelteOppsummering,
   paginerElementer,
   sorterUfordelteSaker,
 } from "./ufordelte-saker";
+import type { FordelingSak } from "./typer";
 
-const lagSak = (overstyringer: Partial<Sak>): Sak => ({
+const lagSak = (overstyringer: Partial<FordelingSak>): FordelingSak => ({
   id: "1",
-  datoInnmeldt: "2026-01-15",
-  kilde: "telefon",
-  notat: "",
-  fødselsnummer: "12345678901",
+  opprettetDato: "2026-01-15",
+  kategori: "Feilutbetaling",
+  kategoriVariant: "neutral",
   ytelser: ["Dagpenger"],
-  status: "tips mottatt",
-  seksjon: "Seksjon A",
-  tags: [],
   ...overstyringer,
 });
 
 describe("ufordelte-saker", () => {
-  it("velger bare saker i status tips mottatt og tips avklart", () => {
-    const saker = [
-      lagSak({ id: "1", status: "tips mottatt" }),
-      lagSak({ id: "2", status: "tips avklart" }),
-      lagSak({ id: "3", status: "under utredning" }),
-      lagSak({ id: "4", status: "avsluttet" }),
-      lagSak({ id: "5", status: "henlagt" }),
-    ];
-
-    expect(hentUfordelteSaker(saker).map((sak) => sak.id)).toEqual(["1", "2"]);
-  });
-
   it("utleder alfabetisk sorterte filtervalg fra de ufordelte sakene", () => {
     const saker = [
-      lagSak({ id: "1", kategori: "Utland", ytelser: ["Sykepenger"], status: "tips mottatt" }),
-      lagSak({ id: "2", kategori: "Annet", ytelser: ["Barnetrygd"], status: "tips avklart" }),
-      lagSak({ id: "3", kategori: "Arbeid", ytelser: ["Dagpenger"], status: "tips mottatt" }),
-      lagSak({ id: "4", kategori: "Arbeid", ytelser: ["Barnetrygd"], status: "under utredning" }),
+      lagSak({ id: "1", kategori: "Oppfølging", ytelser: ["Sykepenger"] }),
+      lagSak({ id: "2", kategori: "Misbruk", ytelser: ["Barnetrygd"] }),
+      lagSak({ id: "3", kategori: "Feilutbetaling", ytelser: ["Dagpenger"] }),
+      lagSak({ id: "4", kategori: "Feilutbetaling", ytelser: ["Barnetrygd"] }),
     ];
 
     expect(hentUfordelteFiltervalg(saker)).toEqual({
-      kategorier: ["Annet", "Arbeid", "Utland"],
+      kategorier: ["Feilutbetaling", "Misbruk", "Oppfølging"],
       ytelser: ["Barnetrygd", "Dagpenger", "Sykepenger"],
     });
   });
 
   it("filtrerer med kategori og ytelse og justerer ugyldig side ved paginering", () => {
     const saker = [
-      lagSak({ id: "1", kategori: "Arbeid", ytelser: ["Dagpenger"], status: "tips mottatt" }),
-      lagSak({ id: "2", kategori: "Arbeid", ytelser: ["AAP"], status: "tips mottatt" }),
-      lagSak({ id: "3", kategori: "Arbeid", ytelser: ["Dagpenger"], status: "tips avklart" }),
-      lagSak({ id: "4", kategori: "Utland", ytelser: ["Dagpenger"], status: "tips mottatt" }),
-      lagSak({ id: "5", kategori: "Arbeid", ytelser: ["Dagpenger"], status: "under utredning" }),
+      lagSak({ id: "1", kategori: "Feilutbetaling", ytelser: ["Dagpenger"] }),
+      lagSak({ id: "2", kategori: "Feilutbetaling", ytelser: ["AAP"] }),
+      lagSak({ id: "3", kategori: "Feilutbetaling", ytelser: ["Dagpenger"] }),
+      lagSak({ id: "4", kategori: "Oppfølging", ytelser: ["Dagpenger"] }),
+      lagSak({ id: "5", kategori: "Misbruk", ytelser: ["Dagpenger"] }),
     ];
 
     const filtrerteSaker = filtrerUfordelteSaker(saker, {
-      kategorier: ["Arbeid"],
+      kategorier: ["Feilutbetaling"],
       ytelser: ["Dagpenger"],
     });
 
@@ -76,31 +59,28 @@ describe("ufordelte-saker", () => {
     const saker = [
       lagSak({
         id: "1",
-        datoInnmeldt: "2026-01-13",
-        kategori: "Samliv",
+        opprettetDato: "2026-01-13",
+        kategori: "Oppfølging",
         ytelser: ["Barnetrygd"],
-        status: "tips mottatt",
       }),
       lagSak({
         id: "2",
-        datoInnmeldt: "2026-02-16",
-        kategori: "Arbeid",
+        opprettetDato: "2026-02-16",
+        kategori: "Feilutbetaling",
         ytelser: ["Dagpenger", "Barnetrygd"],
-        status: "tips avklart",
       }),
       lagSak({
         id: "3",
-        datoInnmeldt: "2026-02-18",
-        kategori: "Arbeid",
+        opprettetDato: "2026-02-18",
+        kategori: "Misbruk",
         ytelser: ["Sykepenger"],
-        status: "under utredning",
       }),
     ];
 
     expect(lagUfordelteOppsummering(saker, new Date("2026-03-23"))).toEqual({
-      antallTekst: "2 ufordelte saker",
+      antallTekst: "3 ufordelte saker",
       eldsteTekst: "Eldste sak har ligget i 69 dager",
-      ytelserTekst: "Gjelder ytelsene Barnetrygd og Dagpenger",
+      ytelserTekst: "Gjelder ytelsene Barnetrygd, Dagpenger og Sykepenger",
     });
   });
 
@@ -108,24 +88,21 @@ describe("ufordelte-saker", () => {
     const saker = [
       lagSak({
         id: "1",
-        datoInnmeldt: "2026-01-13",
-        kategori: "Utland",
+        opprettetDato: "2026-01-13",
+        kategori: "Oppfølging",
         ytelser: ["Sykepenger"],
-        status: "tips mottatt",
       }),
       lagSak({
         id: "2",
-        datoInnmeldt: "2026-02-16",
-        kategori: "Arbeid",
+        opprettetDato: "2026-02-16",
+        kategori: "Feilutbetaling",
         ytelser: ["Barnetrygd"],
-        status: "tips avklart",
       }),
       lagSak({
         id: "3",
-        datoInnmeldt: "2026-01-20",
-        kategori: "Samliv",
+        opprettetDato: "2026-01-20",
+        kategori: "Misbruk",
         ytelser: ["Dagpenger"],
-        status: "tips mottatt",
       }),
     ];
 

@@ -1,7 +1,6 @@
-import type { Sak, SakStatus } from "~/saker/typer";
 import { forskjellIDager } from "~/utils/date-utils";
+import type { FordelingSak } from "./typer";
 
-const ufordelteStatuser = new Set<SakStatus>(["tips mottatt", "tips avklart"]);
 export const ufordelteSorteringskolonner = ["kategori", "ytelse", "opprettet"] as const;
 export type UfordeltSorteringskolonne = (typeof ufordelteSorteringskolonner)[number];
 export type UfordeltSorteringsretning = "stigende" | "synkende";
@@ -11,23 +10,15 @@ interface UfordelteFiltre {
   ytelser: string[];
 }
 
-export function hentUfordelteSaker(saker: Sak[]): Sak[] {
-  return saker.filter((sak) => ufordelteStatuser.has(sak.status));
-}
-
-export function hentUfordelteFiltervalg(saker: Sak[]) {
-  const ufordelteSaker = hentUfordelteSaker(saker);
-
+export function hentUfordelteFiltervalg(saker: FordelingSak[]) {
   return {
-    kategorier: hentSorterteUnikeVerdier(
-      ufordelteSaker.flatMap((sak) => (sak.kategori ? [sak.kategori] : [])),
-    ),
-    ytelser: hentSorterteUnikeVerdier(ufordelteSaker.flatMap((sak) => sak.ytelser)),
+    kategorier: hentSorterteUnikeVerdier(saker.flatMap((sak) => (sak.kategori ? [sak.kategori] : []))),
+    ytelser: hentSorterteUnikeVerdier(saker.flatMap((sak) => sak.ytelser)),
   };
 }
 
-export function filtrerUfordelteSaker(saker: Sak[], filtre: UfordelteFiltre): Sak[] {
-  return hentUfordelteSaker(saker).filter((sak) => {
+export function filtrerUfordelteSaker(saker: FordelingSak[], filtre: UfordelteFiltre): FordelingSak[] {
+  return saker.filter((sak) => {
     const matcherKategori =
       filtre.kategorier.length === 0 ||
       (sak.kategori ? filtre.kategorier.includes(sak.kategori) : false);
@@ -50,18 +41,17 @@ export function paginerElementer<T>(elementer: T[], √∏nsketSide: number, sideSt√
   };
 }
 
-export function lagUfordelteOppsummering(saker: Sak[], dagensDato = new Date()) {
-  const ufordelteSaker = hentUfordelteSaker(saker);
-  const antallSaker = ufordelteSaker.length;
-  const eldsteDato = ufordelteSaker.reduce<string | null>((eldste, sak) => {
-    if (!eldste || sak.datoInnmeldt < eldste) {
-      return sak.datoInnmeldt;
+export function lagUfordelteOppsummering(saker: FordelingSak[], dagensDato = new Date()) {
+  const antallSaker = saker.length;
+  const eldsteDato = saker.reduce<string | null>((eldste, sak) => {
+    if (!eldste || sak.opprettetDato < eldste) {
+      return sak.opprettetDato;
     }
 
     return eldste;
   }, null);
   const eldsteLiggetid = eldsteDato ? forskjellIDager(eldsteDato, dagensDato) : 0;
-  const ytelser = hentSorterteUnikeVerdier(ufordelteSaker.flatMap((sak) => sak.ytelser));
+  const ytelser = hentSorterteUnikeVerdier(saker.flatMap((sak) => sak.ytelser));
 
   return {
     antallTekst: formaterAntallSaker(antallSaker),
@@ -77,13 +67,13 @@ export function lagUfordelteOppsummering(saker: Sak[], dagensDato = new Date()) 
 }
 
 export function sorterUfordelteSaker(
-  saker: Sak[],
+  saker: FordelingSak[],
   kolonne: UfordeltSorteringskolonne,
   retning: UfordeltSorteringsretning,
 ) {
   const retningFaktor = retning === "stigende" ? 1 : -1;
 
-  return [...hentUfordelteSaker(saker)].sort((a, b) => {
+  return [...saker].sort((a, b) => {
     const verdiA = hentSorteringsverdi(a, kolonne);
     const verdiB = hentSorteringsverdi(b, kolonne);
 
@@ -95,14 +85,14 @@ function hentSorterteUnikeVerdier(verdier: string[]) {
   return [...new Set(verdier)].sort((a, b) => a.localeCompare(b, "nb"));
 }
 
-function hentSorteringsverdi(sak: Sak, kolonne: UfordeltSorteringskolonne) {
+function hentSorteringsverdi(sak: FordelingSak, kolonne: UfordeltSorteringskolonne) {
   switch (kolonne) {
     case "kategori":
       return sak.kategori ?? "Uten kategori";
     case "ytelse":
       return sak.ytelser.join(", ");
     case "opprettet":
-      return sak.datoInnmeldt;
+      return sak.opprettetDato;
   }
 }
 
