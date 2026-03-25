@@ -2,46 +2,35 @@ import { describe, expect, it } from "vitest";
 import { registrerSakSchema } from "./validering";
 
 const gyldigSkjema = {
-  fødselsnummer: "12345678901",
+  personIdent: "12345678901",
   ytelser: ["Dagpenger"],
-  avdeling: "Kontroll Øst",
-  kategori: "Feilutbetaling",
-  tags: ["dagpenger"],
-  kilde: "telefon" as const,
-  beskrivelse: "En beskrivelse av saken",
+  fraDato: "2026-01-01",
+  tilDato: "2026-12-31",
+  kategori: "UDEFINERT",
+  prioritet: "HØY",
+  kilde: "INTERN",
+  bakgrunn: "En backend-kompatibel beskrivelse av saken",
+  avsenderNavn: "Tipser Testesen",
+  avsenderTelefon: "12345678",
+  avsenderAdresse: "Testveien 1",
+  avsenderAnonym: false,
 };
 
 describe("registrerSakSchema", () => {
-  it("godtar gyldig skjemadata", () => {
+  it("godtar gyldig skjemadata i backend-format", () => {
     const resultat = registrerSakSchema.safeParse(gyldigSkjema);
     expect(resultat.success).toBe(true);
   });
 
-  it("krever fødselsnummer med 11 siffer", () => {
+  it("krever personident med 11 siffer", () => {
     const resultat = registrerSakSchema.safeParse({
       ...gyldigSkjema,
-      fødselsnummer: "123",
+      personIdent: "123",
     });
     expect(resultat.success).toBe(false);
     if (!resultat.success) {
-      expect(resultat.error.flatten().fieldErrors.fødselsnummer).toBeDefined();
+      expect(resultat.error.flatten().fieldErrors.personIdent).toBeDefined();
     }
-  });
-
-  it("avviser tomt fødselsnummer", () => {
-    const resultat = registrerSakSchema.safeParse({
-      ...gyldigSkjema,
-      fødselsnummer: "",
-    });
-    expect(resultat.success).toBe(false);
-  });
-
-  it("avviser fødselsnummer med bokstaver", () => {
-    const resultat = registrerSakSchema.safeParse({
-      ...gyldigSkjema,
-      fødselsnummer: "1234567890a",
-    });
-    expect(resultat.success).toBe(false);
   });
 
   it("krever minst én ytelse", () => {
@@ -50,47 +39,18 @@ describe("registrerSakSchema", () => {
       ytelser: [],
     });
     expect(resultat.success).toBe(false);
-    if (!resultat.success) {
-      expect(resultat.error.flatten().fieldErrors.ytelser).toBeDefined();
-    }
   });
 
-  it("krever avdeling", () => {
+  it("krever gyldig backend-kilde", () => {
     const resultat = registrerSakSchema.safeParse({
       ...gyldigSkjema,
-      avdeling: "",
+      kilde: "telefon",
     });
     expect(resultat.success).toBe(false);
   });
 
-  it("krever kategori", () => {
-    const resultat = registrerSakSchema.safeParse({
-      ...gyldigSkjema,
-      kategori: "",
-    });
-    expect(resultat.success).toBe(false);
-  });
-
-  it("krever gyldig kilde", () => {
-    const resultat = registrerSakSchema.safeParse({
-      ...gyldigSkjema,
-      kilde: "ugyldig",
-    });
-    expect(resultat.success).toBe(false);
-  });
-
-  it("godtar alle gyldige kilder inkludert nye", () => {
-    for (const kilde of [
-      "telefon",
-      "epost",
-      "brev",
-      "registersamkjøring",
-      "saksbehandler",
-      "publikum",
-      "politiet",
-      "nay",
-      "annet",
-    ]) {
+  it("godtar kun INTERN, EKSTERN og ANONYM_TIPS som kilde", () => {
+    for (const kilde of ["INTERN", "EKSTERN", "ANONYM_TIPS"]) {
       const resultat = registrerSakSchema.safeParse({
         ...gyldigSkjema,
         kilde,
@@ -99,21 +59,44 @@ describe("registrerSakSchema", () => {
     }
   });
 
-  it("krever beskrivelse", () => {
+  it("krever kategori", () => {
     const resultat = registrerSakSchema.safeParse({
       ...gyldigSkjema,
-      beskrivelse: "",
+      kategori: undefined,
     });
     expect(resultat.success).toBe(false);
   });
 
-  it("godtar valgfrie datoer", () => {
+  it("viser UDEFINERT som gyldig kategori", () => {
     const resultat = registrerSakSchema.safeParse({
       ...gyldigSkjema,
-      fraDato: "2026-01-01",
-      tilDato: "2026-12-31",
+      kategori: "UDEFINERT",
     });
     expect(resultat.success).toBe(true);
+  });
+
+  it("krever prioritet", () => {
+    const resultat = registrerSakSchema.safeParse({
+      ...gyldigSkjema,
+      prioritet: undefined,
+    });
+    expect(resultat.success).toBe(false);
+  });
+
+  it("krever bakgrunnsinnhold", () => {
+    const resultat = registrerSakSchema.safeParse({
+      ...gyldigSkjema,
+      bakgrunn: "",
+    });
+    expect(resultat.success).toBe(false);
+  });
+
+  it("krever felles datoer for alle valgte ytelser", () => {
+    const resultat = registrerSakSchema.safeParse({
+      ...gyldigSkjema,
+      fraDato: undefined,
+    });
+    expect(resultat.success).toBe(false);
   });
 
   it("avviser ugyldige datoer", () => {
@@ -124,37 +107,37 @@ describe("registrerSakSchema", () => {
     expect(resultat.success).toBe(false);
   });
 
-  it("godtar tom e-post", () => {
+  it("normaliserer datoer skrevet som dd.mm.åååå", () => {
     const resultat = registrerSakSchema.safeParse({
       ...gyldigSkjema,
-      kontaktEpost: "",
+      fraDato: "01.01.2026",
+      tilDato: "31.12.2026",
     });
-    expect(resultat.success).toBe(true);
-  });
 
-  it("avviser ugyldig e-post", () => {
-    const resultat = registrerSakSchema.safeParse({
-      ...gyldigSkjema,
-      kontaktEpost: "ikke-epost",
-    });
-    expect(resultat.success).toBe(false);
-  });
-
-  it("setter anonymt til false som default", () => {
-    const resultat = registrerSakSchema.safeParse(gyldigSkjema);
     expect(resultat.success).toBe(true);
+
     if (resultat.success) {
-      expect(resultat.data.anonymt).toBe(false);
+      expect(resultat.data.fraDato).toBe("2026-01-01");
+      expect(resultat.data.tilDato).toBe("2026-12-31");
     }
   });
 
-  it("setter tags til tom liste som default", () => {
-    // oxlint-disable-next-line typescript/no-unused-vars
-    const { tags: _tags, ...utenTags } = gyldigSkjema;
-    const resultat = registrerSakSchema.safeParse(utenTags);
+  it("avviser når til dato er før fra dato", () => {
+    const resultat = registrerSakSchema.safeParse({
+      ...gyldigSkjema,
+      fraDato: "2026-12-31",
+      tilDato: "2026-01-01",
+    });
+
+    expect(resultat.success).toBe(false);
+  });
+
+  it("setter avsenderAnonym til false som default", () => {
+    const { avsenderAnonym: _avsenderAnonym, ...utenAnonym } = gyldigSkjema;
+    const resultat = registrerSakSchema.safeParse(utenAnonym);
     expect(resultat.success).toBe(true);
     if (resultat.success) {
-      expect(resultat.data.tags).toEqual([]);
+      expect(resultat.data.avsenderAnonym).toBe(false);
     }
   });
 });

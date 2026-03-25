@@ -15,28 +15,31 @@ test.describe("Registrer sak", () => {
     await page.getByRole("button", { name: "Registrer sak" }).click();
 
     await expect(page.getByText("Fødselsnummer er påkrevd")).toBeVisible();
-    await expect(page.locator(".aksel-error-message").getByText("Velg avdeling")).toBeVisible();
+    await expect(page.getByText("Fra dato er påkrevd")).toBeVisible();
+    await expect(page.getByText("Til dato er påkrevd")).toBeVisible();
     await expect(page.locator(".aksel-error-message").getByText("Velg kategori")).toBeVisible();
+    await expect(page.locator(".aksel-error-message").getByText("Velg prioritet")).toBeVisible();
     await expect(page.getByText("Velg minst én ytelse")).toBeVisible();
-    await expect(page.getByText("Beskrivelse er påkrevd")).toBeVisible();
+    await expect(page.getByText("Bakgrunn er påkrevd")).toBeVisible();
   });
 
   test("kan fylle ut og sende inn skjema", async ({ page }) => {
     await page.getByLabel("Fødselsnummer").fill("12345678901");
-    await page.getByLabel("Avdeling").selectOption("Kontroll Øst");
-    await page.getByLabel("Kategori").selectOption("Samliv");
+    await page.getByLabel("Kategori").selectOption("UDEFINERT");
+    await page.getByLabel("Prioritet").selectOption("HØY");
+    await page.getByLabel("Fra dato").fill("01.01.2026");
+    await page.getByLabel("Til dato").fill("31.12.2026");
 
-    // Velg ytelse via UNSAFE_Combobox
     const ytelserCombobox = page.getByLabel("Ytelser");
     await ytelserCombobox.fill("Dagpenger");
     await page.getByRole("option", { name: "Dagpenger" }).click();
 
-    await page.getByLabel("Kilde").selectOption("telefon");
-    await page.getByLabel("Beskrivelse").fill("En testbeskrivelse av saken");
+    await page.getByLabel("Kilde").selectOption("INTERN");
+    await page.getByLabel("Bakgrunn").fill("En testbeskrivelse av saken");
 
     await page.getByRole("button", { name: "Registrer sak" }).click();
 
-    await expect(page).toHaveURL("/fordeling");
+    await expect(page).toHaveURL("/");
   });
 
   test("avbryt-knappen navigerer bort fra skjemaet", async ({ page }) => {
