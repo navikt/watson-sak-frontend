@@ -45,7 +45,7 @@ export default defineConfig({
   /* Kjør lokal dev-server før testene starter */
   webServer: {
     command:
-      "WATSON_ADMIN_API_URL=http://localhost:8089 ENVIRONMENT=local-mock NODE_ENV=development sh -c 'node playwright.backend.mock.cjs & npm run dev'",
+      'WATSON_ADMIN_API_URL=http://localhost:8089 ENVIRONMENT=local-mock NODE_ENV=development npx concurrently -k -n mock,dev "node playwright.backend.mock.cjs" "npm run dev"',
     url: "http://localhost:5174",
     reuseExistingServer: false,
   },

@@ -18,3 +18,25 @@ const server = http.createServer((request, response) => {
 });
 
 server.listen(8089);
+
+let stengerNed = false;
+
+function shutdown() {
+  if (stengerNed) {
+    return;
+  }
+
+  stengerNed = true;
+
+  server.close((error) => {
+    if (error) {
+      process.exit(1);
+      return;
+    }
+
+    process.exit(0);
+  });
+}
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);

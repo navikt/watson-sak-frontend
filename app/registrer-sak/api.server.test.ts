@@ -7,6 +7,7 @@ vi.mock("~/config/env.server", () => ({
 describe("opprettKontrollsak", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it("poster OpprettKontrollsakRequest til backend med bearer-token", async () => {

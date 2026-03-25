@@ -63,18 +63,9 @@ export const registrerSakSchema = z
     avsenderAdresse: z.string().optional(),
     avsenderAnonym: z.boolean().default(false),
   })
-  .refine(
-    ({ fraDato, tilDato }) => {
-      if (!fraDato || !tilDato) {
-        return true;
-      }
-
-      return new Date(fraDato) <= new Date(tilDato);
-    },
-    {
-      message: "Til dato må være lik eller etter fra dato",
-      path: ["tilDato"],
-    },
-  );
+  .refine(({ fraDato, tilDato }) => fraDato <= tilDato, {
+    message: "Til dato må være lik eller etter fra dato",
+    path: ["tilDato"],
+  });
 
 export type RegistrerSakSkjema = z.infer<typeof registrerSakSchema>;

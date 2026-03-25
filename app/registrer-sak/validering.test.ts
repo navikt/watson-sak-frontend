@@ -91,10 +91,18 @@ describe("registrerSakSchema", () => {
     expect(resultat.success).toBe(false);
   });
 
-  it("krever felles datoer for alle valgte ytelser", () => {
+  it("krever fra dato", () => {
     const resultat = registrerSakSchema.safeParse({
       ...gyldigSkjema,
       fraDato: undefined,
+    });
+    expect(resultat.success).toBe(false);
+  });
+
+  it("krever til dato", () => {
+    const resultat = registrerSakSchema.safeParse({
+      ...gyldigSkjema,
+      tilDato: undefined,
     });
     expect(resultat.success).toBe(false);
   });
