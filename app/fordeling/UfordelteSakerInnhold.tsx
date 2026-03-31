@@ -1,8 +1,8 @@
 import { BodyShort, Chips, Heading, HStack, Label, Pagination, VStack } from "@navikt/ds-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router";
+import { RouteConfig } from "~/routeConfig";
 import { TildelSaksbehandlerModal } from "~/saker/handlinger/TildelSaksbehandlerModal";
-import type { Sak } from "~/saker/typer";
 import { formaterDato } from "~/utils/date-utils";
 import {
   filtrerUfordelteSaker,
@@ -14,17 +14,23 @@ import {
   type UfordeltSorteringskolonne,
   type UfordeltSorteringsretning,
 } from "./ufordelte-saker";
+import type { FordelingSak } from "./typer";
 
 const antallPerSide = 6;
 
 interface UfordelteSakerInnholdProps {
-  saker: Sak[];
+  saker: FordelingSak[];
   saksbehandlere: string[];
+  submitPath?: string;
 }
 
-export function UfordelteSakerInnhold({ saker, saksbehandlere }: UfordelteSakerInnholdProps) {
+export function UfordelteSakerInnhold({
+  saker,
+  saksbehandlere,
+  submitPath = RouteConfig.FORDELING,
+}: UfordelteSakerInnholdProps) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [sakSomTildeles, setSakSomTildeles] = useState<Sak | null>(null);
+  const [sakSomTildeles, setSakSomTildeles] = useState<FordelingSak | null>(null);
 
   const valgteKategorier = hentValgteVerdier(searchParams, "kategori");
   const valgteYtelser = hentValgteVerdier(searchParams, "ytelse");
@@ -175,7 +181,7 @@ export function UfordelteSakerInnhold({ saker, saksbehandlere }: UfordelteSakerI
                               ))}
                             </div>
                           </Celle>
-                          <Celle>{formaterDato(sak.datoInnmeldt)}</Celle>
+                          <Celle>{formaterDato(sak.opprettetDato)}</Celle>
                           <Celle className="text-right">
                             <button
                               type="button"
@@ -225,6 +231,7 @@ export function UfordelteSakerInnhold({ saker, saksbehandlere }: UfordelteSakerI
       <TildelSaksbehandlerModal
         sakId={sakSomTildeles?.id ?? ""}
         saksbehandlere={saksbehandlere}
+        submitPath={submitPath}
         åpen={sakSomTildeles !== null}
         onClose={() => setSakSomTildeles(null)}
       />
@@ -347,11 +354,9 @@ function Filtergruppe({
 }
 
 function KategoriPille({ kategori }: { kategori: string }) {
-  const kategoriKlasser = kategoriStiler[kategori] ?? kategoriStiler.standard;
-
   return (
     <span
-      className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium ${kategoriKlasser}`}
+      className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium ${kategoriPilleKlasser}`}
     >
       {kategori}
     </span>
@@ -366,13 +371,4 @@ function YtelsePille({ children }: { children: ReactNode }) {
   );
 }
 
-const kategoriStiler: Record<string, string> = {
-  Samliv: "border-ax-border-accent bg-ax-bg-accent-soft text-ax-text-accent",
-  Arbeid: "border-ax-border-neutral bg-ax-bg-neutral-soft text-ax-text-neutral",
-  Utland: "border-ax-border-warning bg-ax-bg-warning-soft text-ax-text-warning",
-  Identitet: "border-ax-border-info bg-ax-bg-info-soft text-ax-text-info",
-  Annet: "border-ax-border-danger bg-ax-bg-danger-soft text-ax-text-danger",
-  Tiltak: "border-ax-border-success bg-ax-bg-success-soft text-ax-text-success",
-  Dokumentfalsk: "border-ax-border-warning bg-ax-bg-warning-soft text-ax-text-warning",
-  standard: "border-ax-border-neutral bg-ax-bg-neutral-soft text-ax-text-neutral",
-};
+const kategoriPilleKlasser = "border-ax-border-neutral bg-ax-bg-neutral-soft text-ax-text-neutral";
