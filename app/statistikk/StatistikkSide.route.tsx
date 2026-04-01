@@ -7,6 +7,7 @@ import {
   XMarkOctagonIcon,
 } from "@navikt/aksel-icons";
 import { useLoaderData } from "react-router";
+import { formaterStatus } from "~/saker/visning";
 import {
   beregnAntallPerSeksjon,
   beregnAntallPerStatus,
@@ -44,7 +45,7 @@ export default function StatistikkSide() {
   } = useLoaderData<typeof loader>();
 
   const statusData = Object.entries(antallPerStatus).map(([navn, antall]) => ({
-    navn,
+    navn: formaterStatus(navn as never),
     antall,
   }));
 
@@ -69,17 +70,17 @@ export default function StatistikkSide() {
               />
               <Nokkeltallkort
                 tittel="Under utredning"
-                verdi={antallPerStatus["under utredning"]}
+                verdi={antallPerStatus.UTREDES}
                 ikon={<HourglassIcon aria-hidden fontSize="1.5rem" />}
               />
               <Nokkeltallkort
                 tittel="Avsluttet"
-                verdi={antallPerStatus.avsluttet}
+                verdi={antallPerStatus.AVSLUTTET}
                 ikon={<CheckmarkCircleIcon aria-hidden fontSize="1.5rem" />}
               />
               <Nokkeltallkort
                 tittel="Henlagt"
-                verdi={antallPerStatus.henlagt}
+                verdi={antallPerStatus.HENLAGT}
                 ikon={<XMarkOctagonIcon aria-hidden fontSize="1.5rem" />}
               />
             </HGrid>

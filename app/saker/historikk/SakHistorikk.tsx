@@ -1,4 +1,5 @@
 import {
+  CheckmarkCircleIcon,
   ArrowRightIcon,
   ClockIcon,
   GavelIcon,
@@ -30,58 +31,64 @@ function formaterTidspunkt(isoString: string): string {
 }
 
 function hendelseTittel(hendelse: SakHendelse): string {
-  switch (hendelse.type) {
-    case "opprettet":
+  switch (hendelse.hendelsesType) {
+    case "SAK_OPPRETTET":
       return "Sak opprettet";
-    case "status_endret":
-      return "Status endret";
-    case "tildelt":
+    case "AVKLARING_OPPRETTET":
+      return "Avklaring opprettet";
+    case "SAK_TILDELT":
       return "Sak tildelt";
-    case "seksjon_endret":
-      return "Seksjon endret";
-    case "avdeling_endret":
-      return "Avdeling endret";
-    case "henlagt":
-      return "Sak henlagt";
-    case "videresendt_nay_nfp":
+    case "STATUS_ENDRET":
+      return "Status endret";
+    case "MOTTAKSENHET_ENDRET":
+      return "Mottaksenhet endret";
+    case "VIDERESENDT_TIL_NAY_NFP":
       return "Videresendt til NAY/NFP";
-    case "politianmeldt":
+    case "POLITIANMELDT":
       return "Politianmeldt";
+    case "SAK_HENLAGT":
+      return "Sak henlagt";
+    default:
+      return hendelse.hendelsesType;
   }
 }
 
 function hendelseBeskrivelse(hendelse: SakHendelse): string | null {
-  if (!hendelse.detaljer) return null;
-
-  const { fra, til, notat } = hendelse.detaljer;
   const deler: string[] = [];
 
-  if (fra && til) deler.push(`${fra} → ${til}`);
-  else if (til) deler.push(til);
+  deler.push(`Status: ${formaterTekst(hendelse.status)}`);
+  deler.push(`Mottaksenhet: ${hendelse.mottakEnhet}`);
 
-  if (notat) deler.push(notat);
+  if (hendelse.avklaringResultat) {
+    deler.push(`Avklaringsresultat: ${hendelse.avklaringResultat}`);
+  }
 
   return deler.length > 0 ? deler.join(" – ") : null;
 }
 
-function HendelseBullet({ type }: { type: SakHendelse["type"] }) {
+function formaterTekst(verdi: string): string {
+  return verdi.charAt(0) + verdi.slice(1).toLowerCase().replaceAll("_", " ");
+}
+
+function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
   const iconProps = { "aria-hidden": true as const, fontSize: "1.25rem" };
-  switch (type) {
-    case "opprettet":
+  switch (hendelse.hendelsesType) {
+    case "SAK_OPPRETTET":
       return <PlusCircleIcon {...iconProps} />;
-    case "status_endret":
-      return <ClockIcon {...iconProps} />;
-    case "tildelt":
+    case "AVKLARING_OPPRETTET":
+      return <CheckmarkCircleIcon {...iconProps} />;
+    case "SAK_TILDELT":
       return <PersonIcon {...iconProps} />;
-    case "seksjon_endret":
-    case "avdeling_endret":
+    case "MOTTAKSENHET_ENDRET":
       return <ArrowRightIcon {...iconProps} />;
-    case "henlagt":
+    case "SAK_HENLAGT":
       return <XMarkOctagonIcon {...iconProps} />;
-    case "videresendt_nay_nfp":
+    case "VIDERESENDT_TIL_NAY_NFP":
       return <PaperplaneIcon {...iconProps} />;
-    case "politianmeldt":
+    case "POLITIANMELDT":
       return <GavelIcon {...iconProps} />;
+    default:
+      return <ClockIcon {...iconProps} />;
   }
 }
 
@@ -113,16 +120,16 @@ export function SakHistorikk({ hendelser }: SakHistorikkProps) {
           const beskrivelse = hendelseBeskrivelse(hendelse);
           return (
             <Process.Event
-              key={hendelse.id}
+              key={hendelse.hendelseId}
               title={hendelseTittel(hendelse)}
               timestamp={formaterTidspunkt(hendelse.tidspunkt)}
               status={index === 0 ? "active" : "completed"}
-              bullet={<HendelseBullet type={hendelse.type} />}
+              bullet={<HendelseBullet hendelse={hendelse} />}
             >
               <VStack gap="space-1">
                 {beskrivelse && <BodyShort size="small">{beskrivelse}</BodyShort>}
                 <BodyShort size="small" className="text-ax-text-neutral-subtle">
-                  {hendelse.utførtAv}
+                  {`${formaterTekst(hendelse.kategori)} · ${formaterTekst(hendelse.prioritet)}`}
                 </BodyShort>
               </VStack>
             </Process.Event>

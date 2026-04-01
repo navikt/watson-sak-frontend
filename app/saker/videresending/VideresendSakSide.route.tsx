@@ -7,26 +7,32 @@ import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
 import { hentFilerForSak } from "~/saker/filer/mock-data.server";
 import { leggTilHendelse } from "~/saker/historikk/mock-data.server";
+import { getSaksreferanse } from "~/saker/id";
 import { hentJournalposter } from "~/saker/joark/mock-data.server";
 import { SaksinformasjonKort } from "~/saker/komponenter/SaksinformasjonKort";
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
+import { getPersonIdent } from "~/saker/visning";
 import { DokumentVelger } from "./DokumentVelger";
 import { MottakerVelger } from "./MottakerVelger";
 import { OppsummeringSkjema } from "./OppsummeringSkjema";
 import { videresendingSkjemaRefinert, type Mottaker } from "./typer";
 import type { Route } from "./+types/VideresendSakSide.route";
 
+function hentVideresendbareSaker() {
+  return hentAlleSaker();
+}
+
 export function loader({ params }: Route.LoaderArgs) {
-  const sak = hentAlleSaker().find((s) => s.id === params.sakId);
+  const sak = hentVideresendbareSaker().find((s) => s.id === params.sakId);
   if (!sak) {
     throw new Response("Sak ikke funnet", { status: 404 });
   }
-  if (sak.status !== "under utredning") {
+  if (sak.status !== "UTREDES") {
     throw redirect(RouteConfig.SAKER_DETALJ.replace(":sakId", params.sakId));
   }
 
   const filer = hentFilerForSak(sak.id);
-  const journalposter = hentJournalposter(sak.fødselsnummer);
+  const journalposter = hentJournalposter(getPersonIdent(sak));
 
   return { sak, filer, journalposter };
 }
@@ -56,18 +62,16 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   const sakId = params.sakId;
-  const sak = hentAlleSaker().find((s) => s.id === sakId);
+  const sak = hentVideresendbareSaker().find((s) => s.id === sakId);
   if (!sak) {
     throw new Response("Sak ikke funnet", { status: 404 });
   }
 
   const data = resultat.data;
-  sak.status = "videresendt til nay/nfp";
+  sak.status = "TIL_FORVALTNING";
 
-  leggTilHendelse(sakId, "videresendt_nay_nfp", "Ola Nordmann", {
-    til: data.mottaker === "nay" ? "NAY" : "NFP",
-    notat: `Funn: ${data.funn} | Vurdering: ${data.vurdering} | Anbefaling: ${data.anbefaling}`,
-  });
+  void data;
+  leggTilHendelse(sak, "VIDERESENDT_TIL_NAY_NFP");
 
   return redirect(RouteConfig.SAKER_DETALJ.replace(":sakId", sakId));
 }
@@ -85,10 +89,11 @@ export default function VideresendSakSide() {
   const [anbefaling, setAnbefaling] = useState("");
 
   const tilbakeUrl = RouteConfig.SAKER_DETALJ.replace(":sakId", sak.id);
+  const saksreferanse = getSaksreferanse(sak.id);
 
   return (
     <Page>
-      <title>{`Videresend sak ${sak.id} – Watson Sak`}</title>
+      <title>{`Videresend sak ${saksreferanse} – Watson Sak`}</title>
       <PageBlock width="lg" gutters className="!mx-0">
         <VStack gap="space-12" className="py-6">
           <VStack gap="space-4">

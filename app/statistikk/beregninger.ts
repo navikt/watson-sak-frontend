@@ -1,20 +1,39 @@
-import type { Sak, SakStatus } from "~/saker/typer";
+import type { KontrollsakResponse } from "~/saker/types.backend";
+import type { KontrollsakStatus } from "~/saker/visning";
 import type { Avslutningsdatoer } from "./mock-data.server";
 
+type Statistikksak = KontrollsakResponse;
+type StatistikkStatus = KontrollsakStatus;
+
+function getStatus(sak: Statistikksak): StatistikkStatus {
+  return sak.status as StatistikkStatus;
+}
+
+function getOpprettet(sak: Statistikksak): string {
+  return sak.opprettet;
+}
+
+function getMottakEnhet(sak: Statistikksak): string {
+  return sak.mottakEnhet;
+}
+
+function getYtelseTyper(sak: Statistikksak): string[] {
+  return sak.ytelser.map((ytelse) => ytelse.type);
+}
+
 /** Antall saker gruppert etter status */
-export function beregnAntallPerStatus(saker: Sak[]): Record<SakStatus, number> {
-  const resultat: Record<SakStatus, number> = {
-    "tips mottatt": 0,
-    "tips avklart": 0,
-    "under utredning": 0,
-    "videresendt til nay/nfp": 0,
-    politianmeldt: 0,
-    avsluttet: 0,
-    henlagt: 0,
+export function beregnAntallPerStatus(saker: Statistikksak[]): Record<StatistikkStatus, number> {
+  const resultat: Record<StatistikkStatus, number> = {
+    OPPRETTET: 0,
+    AVKLART: 0,
+    UTREDES: 0,
+    TIL_FORVALTNING: 0,
+    AVSLUTTET: 0,
+    HENLAGT: 0,
   };
 
   for (const sak of saker) {
-    resultat[sak.status]++;
+    resultat[getStatus(sak)]++;
   }
 
   return resultat;
@@ -39,13 +58,13 @@ function dagerMellom(fra: string, til: string): number {
  * Returnerer null dersom det ikke finnes noen avsluttede saker.
  */
 export function beregnBehandlingstid(
-  saker: Sak[],
+  saker: Statistikksak[],
   avslutningsdatoer: Avslutningsdatoer,
 ): BehandlingstidResultat | null {
   const behandlingstider = saker
-    .filter((s) => s.status === "avsluttet" || s.status === "henlagt")
+    .filter((s) => getStatus(s) === "AVSLUTTET" || getStatus(s) === "HENLAGT")
     .filter((s) => avslutningsdatoer[s.id] !== undefined)
-    .map((s) => dagerMellom(s.datoInnmeldt, avslutningsdatoer[s.id]));
+    .map((s) => dagerMellom(getOpprettet(s), avslutningsdatoer[s.id]));
 
   if (behandlingstider.length === 0) return null;
 
@@ -72,11 +91,12 @@ export interface GruppertAntall {
 }
 
 /** Antall saker gruppert etter seksjon */
-export function beregnAntallPerSeksjon(saker: Sak[]): GruppertAntall[] {
+export function beregnAntallPerSeksjon(saker: Statistikksak[]): GruppertAntall[] {
   const map = new Map<string, number>();
 
   for (const sak of saker) {
-    map.set(sak.seksjon, (map.get(sak.seksjon) ?? 0) + 1);
+    const mottakEnhet = getMottakEnhet(sak);
+    map.set(mottakEnhet, (map.get(mottakEnhet) ?? 0) + 1);
   }
 
   return [...map.entries()]
@@ -85,11 +105,11 @@ export function beregnAntallPerSeksjon(saker: Sak[]): GruppertAntall[] {
 }
 
 /** Fordeling av saker basert på ytelse (én sak kan telle på flere ytelser) */
-export function beregnFordelingPerYtelse(saker: Sak[]): GruppertAntall[] {
+export function beregnFordelingPerYtelse(saker: Statistikksak[]): GruppertAntall[] {
   const map = new Map<string, number>();
 
   for (const sak of saker) {
-    for (const ytelse of sak.ytelser) {
+    for (const ytelse of getYtelseTyper(sak)) {
       map.set(ytelse, (map.get(ytelse) ?? 0) + 1);
     }
   }
@@ -100,11 +120,11 @@ export function beregnFordelingPerYtelse(saker: Sak[]): GruppertAntall[] {
 }
 
 /** Fordeling av saker basert på antall ytelser per sak */
-export function beregnFordelingPerAntallYtelser(saker: Sak[]): GruppertAntall[] {
+export function beregnFordelingPerAntallYtelser(saker: Statistikksak[]): GruppertAntall[] {
   const map = new Map<number, number>();
 
   for (const sak of saker) {
-    const antall = sak.ytelser.length;
+    const antall = getYtelseTyper(sak).length;
     map.set(antall, (map.get(antall) ?? 0) + 1);
   }
 

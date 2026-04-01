@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { RouteConfig } from "~/routeConfig";
 import type { Route } from "./+types/FordelingSide.route";
-import { mockSaker, resetMockSaker } from "./mock-data.server";
+import { mockKontrollsaker } from "./mock-data.server";
+import { resetMockSaker } from "./mock-data.server";
 
 const testState = vi.hoisted(() => ({
   skalBrukeMockdata: true,
@@ -40,10 +41,17 @@ describe("FordelingSide action", () => {
 
   it("flytter sak ut av Fordeling i mockmiljø når den tildeles", async () => {
     const { action } = await import("./FordelingSide.server");
+    const tildelbarKontrollsakId = mockKontrollsaker.find((sak) => sak.status === "OPPRETTET")?.id;
+
+    expect(tildelbarKontrollsakId).toBeDefined();
+
+    if (!tildelbarKontrollsakId) {
+      throw new Error("Fant ingen tildelbar kontrollsak i testdata");
+    }
 
     const formData = new FormData();
     formData.set("handling", "tildel");
-    formData.set("sakId", "101");
+    formData.set("sakId", tildelbarKontrollsakId);
     formData.set("saksbehandler", "Kari Nordmann");
 
     await action({
@@ -55,7 +63,9 @@ describe("FordelingSide action", () => {
       context: {},
     } as Route.ActionArgs);
 
-    expect(mockSaker.find((sak) => sak.id === "101")?.status).toBe("under utredning");
+    expect(mockKontrollsaker.find((sak) => sak.id === tildelbarKontrollsakId)?.status).toBe(
+      "UTREDES",
+    );
     expect(tildelKontrollsakMock).not.toHaveBeenCalled();
   });
 
@@ -142,5 +152,33 @@ describe("FordelingSide action", () => {
         context: {},
       } as Route.ActionArgs),
     ).rejects.toMatchObject({ init: { status: 400 } });
+  });
+});
+
+describe("FordelingSide loader", () => {
+  beforeEach(() => {
+    testState.skalBrukeMockdata = true;
+    resetMockSaker();
+    vi.clearAllMocks();
+  });
+
+  it("mapper backend-shapede mockkontrollsaker til FordelingSak i mockmiljø", async () => {
+    const { loader } = await import("./FordelingSide.server");
+
+    const resultat = await loader({
+      request: new Request(`http://localhost${RouteConfig.FORDELING}`),
+      params: {},
+      context: {},
+    } as Route.LoaderArgs);
+
+    const forventedeSaker = mockKontrollsaker
+      .filter((sak) => sak.status === "OPPRETTET" || sak.status === "AVKLART")
+      .map((sak) => sak.id);
+
+    expect(resultat.map((sak) => sak.id)).toEqual(forventedeSaker);
+    expect(resultat[0]).toMatchObject({
+      opprettetDato: mockKontrollsaker[0].opprettet.slice(0, 10),
+      ytelser: mockKontrollsaker[0].ytelser.map((ytelse) => ytelse.type),
+    });
   });
 });

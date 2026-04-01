@@ -28,22 +28,44 @@ import type { Route } from "./+types/SakDetaljSide.route";
 import { hentFilerForSak } from "./filer/mock-data.server";
 import { SakFilområde } from "./filer/SakFilområde";
 import { SakHandlingerKnapper } from "./handlinger/SakHandlingerKnapper";
-import { erAktivSak } from "./handlinger/tilgjengeligeHandlinger";
+import { erAktivSakKontrollsak } from "./handlinger/tilgjengeligeHandlinger";
 import { SakHistorikk } from "./historikk/SakHistorikk";
 import { hentHistorikk, leggTilHendelse } from "./historikk/mock-data.server";
 import { hentJournalposter } from "./joark/mock-data.server";
+import { getSaksreferanse } from "./id";
 import { JoarkOversikt } from "./joark/JoarkOversikt";
 import { hentAlleSaker } from "./mock-alle-saker.server";
-import { formaterKilde, hentStatusVariant } from "./utils";
+import {
+  getAvdeling,
+  getKategoriText,
+  getOpprettetDato,
+  getPeriodeText,
+  getSaksenhet,
+  getStatusVariantForSak,
+  getTags,
+} from "./selectors";
+import {
+  getBeskrivelse,
+  getKildeText,
+  getKontaktinformasjon,
+  getPersonIdent,
+  getStatus,
+  getYtelseTyper,
+  type KontrollsakStatus,
+} from "./visning";
+
+function hentDetaljSaker() {
+  return hentAlleSaker();
+}
 
 export function loader({ params }: Route.LoaderArgs) {
-  const sak = hentAlleSaker().find((s) => s.id === params.sakId);
+  const sak = hentDetaljSaker().find((s) => s.id === params.sakId);
   if (!sak) {
     throw data("Sak ikke funnet", { status: 404 });
   }
   const historikk = hentHistorikk(sak.id);
   const filer = hentFilerForSak(sak.id);
-  const journalposter = hentJournalposter(sak.fødselsnummer);
+  const journalposter = hentJournalposter(getPersonIdent(sak));
   return {
     sak,
     historikk,
@@ -59,7 +81,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   const handling = formData.get("handling") as string;
   const sakId = params.sakId;
 
-  const sak = hentAlleSaker().find((s) => s.id === sakId);
+  const sak = hentDetaljSaker().find((s) => s.id === sakId);
   if (!sak) {
     throw data("Sak ikke funnet", { status: 404 });
   }
@@ -67,47 +89,37 @@ export async function action({ request, params }: Route.ActionArgs) {
   switch (handling) {
     case "endre_status": {
       const nyStatus = formData.get("status") as string;
-      const notat = (formData.get("notat") as string) ?? undefined;
-      const gammelStatus = sak.status;
+
       sak.status = nyStatus as typeof sak.status;
-      leggTilHendelse(sakId, "status_endret", "Ola Nordmann", {
-        fra: gammelStatus,
-        til: nyStatus,
-        notat,
-      });
+      leggTilHendelse(sak, "STATUS_ENDRET");
       break;
     }
     case "tildel": {
       const saksbehandler = formData.get("saksbehandler") as string;
       const gammelStatus = sak.status;
-      sak.status = "under utredning";
-      leggTilHendelse(sakId, "tildelt", "Ola Nordmann", { til: saksbehandler });
-      if (gammelStatus !== "under utredning") {
-        leggTilHendelse(sakId, "status_endret", "Ola Nordmann", {
-          fra: gammelStatus,
-          til: "under utredning",
-        });
+
+      sak.status = "UTREDES";
+      sak.saksbehandler = saksbehandler;
+
+      leggTilHendelse(sak, "SAK_TILDELT");
+
+      const nyStatus = "UTREDES";
+
+      if (gammelStatus !== nyStatus) {
+        leggTilHendelse(sak, "STATUS_ENDRET");
       }
       break;
     }
     case "videresend_seksjon": {
       const nySeksjon = formData.get("seksjon") as string;
-      const gammelSeksjon = sak.seksjon;
-      sak.seksjon = nySeksjon;
-      leggTilHendelse(sakId, "seksjon_endret", "Ola Nordmann", {
-        fra: gammelSeksjon,
-        til: nySeksjon,
-      });
+
+      sak.mottakEnhet = nySeksjon;
+      leggTilHendelse(sak, "MOTTAKSENHET_ENDRET");
       break;
     }
     case "henlegg": {
-      const notat = (formData.get("notat") as string) ?? undefined;
-      const gammelStatus = sak.status;
-      sak.status = "henlagt";
-      leggTilHendelse(sakId, "henlagt", "Ola Nordmann", {
-        fra: gammelStatus,
-        notat,
-      });
+      sak.status = "HENLAGT";
+      leggTilHendelse(sak, "SAK_HENLAGT");
       break;
     }
   }
@@ -139,12 +151,26 @@ export default function SakDetaljSide() {
   const { sak, historikk, filer, journalposter, saksbehandlere, seksjoner } =
     useLoaderData<typeof loader>();
   const navigate = useNavigate();
+  const personIdent = getPersonIdent(sak);
+  const statusTekst = getStatus(sak);
+  const kildeTekst = getKildeText(sak);
+  const ytelseTyper = getYtelseTyper(sak);
+  const beskrivelse = getBeskrivelse(sak);
+  const kontaktinformasjon = getKontaktinformasjon(sak);
+  const opprettetDato = getOpprettetDato(sak);
+  const saksenhet = getSaksenhet(sak);
+  const avdeling = getAvdeling(sak);
+  const kategoriText = getKategoriText(sak);
+  const periodeText = getPeriodeText(sak);
+  const tags = getTags(sak);
+  const erAktiv = erAktivSakKontrollsak(sak.status as KontrollsakStatus);
+  const saksreferanse = getSaksreferanse(sak.id);
 
   const iconProps = { "aria-hidden": true as const, fontSize: "1.25rem" };
 
   return (
     <Page>
-      <title>{`Sak ${sak.id} – Watson Sak`}</title>
+      <title>{`Sak ${saksreferanse} – Watson Sak`}</title>
       <PageBlock width="xl" gutters className="!mx-0">
         <VStack gap="space-12" className="py-6">
           <VStack gap="space-4">
@@ -163,27 +189,21 @@ export default function SakDetaljSide() {
             <VStack gap="space-4">
               <HStack gap="space-4" align="center">
                 <Heading level="1" size="large">
-                  Sak {sak.id}
+                  Sak {saksreferanse}
                 </Heading>
-                <Tag variant={hentStatusVariant(sak.status)}>{sak.status}</Tag>
+                <Tag variant={getStatusVariantForSak(sak)}>{statusTekst}</Tag>
               </HStack>
               <HStack gap="space-6" align="center" wrap>
                 <MetadataPunkt icon={<CalendarIcon {...iconProps} />}>
-                  {formaterDato(sak.datoInnmeldt)}
+                  {formaterDato(opprettetDato)}
                 </MetadataPunkt>
-                <MetadataPunkt icon={<InboxDownIcon {...iconProps} />}>
-                  {formaterKilde(sak.kilde)}
-                </MetadataPunkt>
-                <MetadataPunkt icon={<Buildings2Icon {...iconProps} />}>
-                  {sak.seksjon}
-                </MetadataPunkt>
-                {sak.avdeling && (
-                  <MetadataPunkt icon={<Buildings2Icon {...iconProps} />}>
-                    {sak.avdeling}
-                  </MetadataPunkt>
+                <MetadataPunkt icon={<InboxDownIcon {...iconProps} />}>{kildeTekst}</MetadataPunkt>
+                <MetadataPunkt icon={<Buildings2Icon {...iconProps} />}>{saksenhet}</MetadataPunkt>
+                {avdeling && (
+                  <MetadataPunkt icon={<Buildings2Icon {...iconProps} />}>{avdeling}</MetadataPunkt>
                 )}
-                {sak.kategori && (
-                  <MetadataPunkt icon={<TagIcon {...iconProps} />}>{sak.kategori}</MetadataPunkt>
+                {kategoriText && (
+                  <MetadataPunkt icon={<TagIcon {...iconProps} />}>{kategoriText}</MetadataPunkt>
                 )}
               </HStack>
             </VStack>
@@ -203,31 +223,25 @@ export default function SakDetaljSide() {
                         Fødselsnummer
                       </Detail>
                       <HStack gap="space-1" align="center">
-                        <BodyShort>{sak.fødselsnummer}</BodyShort>
-                        <CopyButton size="xsmall" copyText={sak.fødselsnummer} />
+                        <BodyShort>{personIdent}</BodyShort>
+                        <CopyButton size="xsmall" copyText={personIdent} />
                       </HStack>
                     </VStack>
 
-                    {(sak.fraDato || sak.tilDato) && (
-                      <Felt label="Periode">
-                        {sak.fraDato ? formaterDato(sak.fraDato) : "—"}
-                        {" – "}
-                        {sak.tilDato ? formaterDato(sak.tilDato) : "pågående"}
-                      </Felt>
-                    )}
+                    {periodeText && <Felt label="Periode">{periodeText}</Felt>}
                   </HGrid>
 
-                  {(sak.ytelser.length > 0 || sak.tags.length > 0) && (
+                  {(ytelseTyper.length > 0 || tags.length > 0) && (
                     <>
                       <hr className="border-ax-border-neutral-subtle" />
                       <VStack gap="space-4">
-                        {sak.ytelser.length > 0 && (
+                        {ytelseTyper.length > 0 && (
                           <div>
                             <Detail className="text-ax-text-neutral-subtle mb-1" uppercase>
                               Ytelser
                             </Detail>
                             <HStack gap="space-2" wrap>
-                              {sak.ytelser.map((ytelse) => (
+                              {ytelseTyper.map((ytelse) => (
                                 <Tag key={ytelse} variant="info" size="small">
                                   {ytelse}
                                 </Tag>
@@ -235,13 +249,13 @@ export default function SakDetaljSide() {
                             </HStack>
                           </div>
                         )}
-                        {sak.tags.length > 0 && (
+                        {tags.length > 0 && (
                           <div>
                             <Detail className="text-ax-text-neutral-subtle mb-1" uppercase>
                               Tags
                             </Detail>
                             <HStack gap="space-2" wrap>
-                              {sak.tags.map((tag) => (
+                              {tags.map((tag) => (
                                 <Tag key={tag} variant="neutral" size="small">
                                   {tag}
                                 </Tag>
@@ -255,16 +269,16 @@ export default function SakDetaljSide() {
                 </VStack>
               </Kort>
 
-              {(sak.notat || sak.beskrivelse) && (
+              {beskrivelse && (
                 <Kort>
                   <Heading level="2" size="small" spacing>
-                    {sak.beskrivelse ? "Beskrivelse" : "Notat"}
+                    Beskrivelse
                   </Heading>
-                  <BodyLong>{sak.beskrivelse ?? sak.notat}</BodyLong>
+                  <BodyLong>{beskrivelse}</BodyLong>
                 </Kort>
               )}
 
-              <SakFilområde filer={filer} redigerbar={erAktivSak(sak.status)} />
+              <SakFilområde filer={filer} redigerbar={erAktiv} />
 
               <JoarkOversikt journalposter={journalposter} />
 
@@ -278,26 +292,26 @@ export default function SakDetaljSide() {
                 seksjoner={seksjoner}
               />
 
-              {sak.kontaktinformasjon && (
+              {kontaktinformasjon && (
                 <Kort padding="space-6">
                   <VStack gap="space-4">
                     <Heading level="2" size="small">
                       Kontaktinformasjon
                     </Heading>
-                    {sak.kontaktinformasjon.anonymt ? (
+                    {kontaktinformasjon.anonymt ? (
                       <Tag variant="neutral" size="small">
                         Anonymt tips
                       </Tag>
                     ) : (
                       <VStack gap="space-2">
-                        {sak.kontaktinformasjon.navn && (
-                          <Felt label="Navn">{sak.kontaktinformasjon.navn}</Felt>
+                        {kontaktinformasjon.navn && (
+                          <Felt label="Navn">{kontaktinformasjon.navn}</Felt>
                         )}
-                        {sak.kontaktinformasjon.telefon && (
-                          <Felt label="Telefon">{sak.kontaktinformasjon.telefon}</Felt>
+                        {kontaktinformasjon.telefon && (
+                          <Felt label="Telefon">{kontaktinformasjon.telefon}</Felt>
                         )}
-                        {sak.kontaktinformasjon.epost && (
-                          <Felt label="E-post">{sak.kontaktinformasjon.epost}</Felt>
+                        {kontaktinformasjon.epost && (
+                          <Felt label="E-post">{kontaktinformasjon.epost}</Felt>
                         )}
                       </VStack>
                     )}

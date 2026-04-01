@@ -1,30 +1,34 @@
 import { describe, expect, test } from "vitest";
-import type { Sak } from "~/saker/typer";
+import type { KontrollsakResponse } from "~/saker/types.backend";
 import { lagVelkomstOppsummering } from "./velkomst";
 
-function lagSak(overstyringer: Partial<Sak> = {}): Sak {
+function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
-    id: "test-1",
-    datoInnmeldt: "2026-03-01",
-    kilde: "telefon",
-    notat: "Testnotat",
-    fødselsnummer: "12345678901",
-    ytelser: ["Dagpenger"],
-    status: "tips mottatt",
-    seksjon: "Seksjon A",
-    tags: [],
+    id: "ks-1",
+    personIdent: "12345678901",
+    saksbehandler: "Z123456",
+    status: "OPPRETTET",
+    kategori: "FEILUTBETALING",
+    prioritet: "NORMAL",
+    mottakEnhet: "4812",
+    mottakSaksbehandler: "Z654321",
+    ytelser: [],
+    bakgrunn: null,
+    resultat: null,
+    opprettet: "2026-03-01T00:00:00Z",
+    oppdatert: null,
     ...overstyringer,
   };
 }
 
 describe("lagVelkomstOppsummering", () => {
   test("oppsummerer de to mest relevante arbeidstypene", () => {
-    const saker: Sak[] = [
-      lagSak({ id: "1", status: "tips mottatt" }),
-      lagSak({ id: "2", status: "tips mottatt" }),
-      lagSak({ id: "3", status: "under utredning" }),
-      lagSak({ id: "4", status: "under utredning" }),
-      lagSak({ id: "5", status: "videresendt til nay/nfp" }),
+    const saker = [
+      lagKontrollsak({ id: "1", status: "OPPRETTET" }),
+      lagKontrollsak({ id: "2", status: "OPPRETTET" }),
+      lagKontrollsak({ id: "3", status: "UTREDES" }),
+      lagKontrollsak({ id: "4", status: "UTREDES" }),
+      lagKontrollsak({ id: "5", status: "TIL_FORVALTNING" }),
     ];
 
     expect(lagVelkomstOppsummering(saker)).toBe(
@@ -33,10 +37,10 @@ describe("lagVelkomstOppsummering", () => {
   });
 
   test("viser en oppmuntrende tekst når brukeren ikke har aktive saker", () => {
-    const saker: Sak[] = [
-      lagSak({ id: "1", status: "tips avklart" }),
-      lagSak({ id: "2", status: "henlagt" }),
-      lagSak({ id: "3", status: "avsluttet" }),
+    const saker = [
+      lagKontrollsak({ id: "1", status: "AVKLART" }),
+      lagKontrollsak({ id: "2", status: "HENLAGT" }),
+      lagKontrollsak({ id: "3", status: "AVSLUTTET" }),
     ];
 
     expect(lagVelkomstOppsummering(saker)).toBe(
@@ -45,15 +49,29 @@ describe("lagVelkomstOppsummering", () => {
   });
 
   test("tar med ventende saker når de utgjør en større del av arbeidsbildet", () => {
-    const saker: Sak[] = [
-      lagSak({ id: "1", status: "videresendt til nay/nfp" }),
-      lagSak({ id: "2", status: "videresendt til nay/nfp" }),
-      lagSak({ id: "3", status: "videresendt til nay/nfp" }),
-      lagSak({ id: "4", status: "under utredning" }),
+    const saker = [
+      lagKontrollsak({ id: "1", status: "TIL_FORVALTNING" }),
+      lagKontrollsak({ id: "2", status: "TIL_FORVALTNING" }),
+      lagKontrollsak({ id: "3", status: "TIL_FORVALTNING" }),
+      lagKontrollsak({ id: "4", status: "UTREDES" }),
     ];
 
     expect(lagVelkomstOppsummering(saker)).toBe(
       "Akkurat nå har du 3 saker som venter på svar fra NAY/NFP og 1 sak til utredning.",
+    );
+  });
+
+  test("oppsummerer backend-statuser med samme arbeidsbilde", () => {
+    const saker = [
+      lagKontrollsak({ id: "ks-1", status: "OPPRETTET" }),
+      lagKontrollsak({ id: "ks-2", status: "OPPRETTET" }),
+      lagKontrollsak({ id: "ks-3", status: "UTREDES" }),
+      lagKontrollsak({ id: "ks-4", status: "UTREDES" }),
+      lagKontrollsak({ id: "ks-5", status: "TIL_FORVALTNING" }),
+    ];
+
+    expect(lagVelkomstOppsummering(saker)).toBe(
+      "Akkurat nå har du 2 tips til vurdering og 2 saker til utredning.",
     );
   });
 });

@@ -1,4 +1,4 @@
-import type { Sak, SakKilde, SakStatus } from "./typer";
+import type { Sak, SakStatus } from "./typer";
 
 type Sorteringsretning = "nyest" | "eldst";
 
@@ -7,36 +7,6 @@ export function sorterSakerEtterDato(saker: Sak[], retning: Sorteringsretning): 
     const sammenligning = a.datoInnmeldt.localeCompare(b.datoInnmeldt);
     return retning === "nyest" ? -sammenligning : sammenligning;
   });
-}
-
-const kildeVisningsnavn: Record<SakKilde, string> = {
-  telefon: "Telefon",
-  epost: "E-post",
-  brev: "Brev",
-  registersamkjøring: "Registersamkjøring",
-  saksbehandler: "Saksbehandler",
-  publikum: "Publikum",
-  politiet: "Politiet",
-  nay: "NAY",
-  annet: "Annet",
-};
-
-export function formaterKilde(kilde: SakKilde): string {
-  return kildeVisningsnavn[kilde];
-}
-
-const statusVariant: Record<SakStatus, "info" | "warning" | "success" | "neutral"> = {
-  "tips mottatt": "info",
-  "tips avklart": "warning",
-  "under utredning": "warning",
-  "videresendt til nay/nfp": "success",
-  politianmeldt: "success",
-  avsluttet: "neutral",
-  henlagt: "neutral",
-};
-
-export function hentStatusVariant(status: SakStatus): "info" | "warning" | "success" | "neutral" {
-  return statusVariant[status];
 }
 
 export function filtrerSaker(

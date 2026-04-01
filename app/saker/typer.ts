@@ -1,19 +1,5 @@
 import { z } from "zod";
 
-export const sakKildeSchema = z.enum([
-  "telefon",
-  "epost",
-  "brev",
-  "registersamkjøring",
-  "saksbehandler",
-  "publikum",
-  "politiet",
-  "nay",
-  "annet",
-]);
-
-export type SakKilde = z.infer<typeof sakKildeSchema>;
-
 export const sakStatusSchema = z.enum([
   "tips mottatt",
   "tips avklart",
@@ -36,7 +22,17 @@ const kontaktinformasjonSchema = z.object({
 export const sakSchema = z.object({
   id: z.string(),
   datoInnmeldt: z.string().date(),
-  kilde: sakKildeSchema,
+  kilde: z.enum([
+    "telefon",
+    "epost",
+    "brev",
+    "registersamkjøring",
+    "saksbehandler",
+    "publikum",
+    "politiet",
+    "nay",
+    "annet",
+  ]),
   notat: z.string(),
   fødselsnummer: z.string(),
   ytelser: z.array(z.string()),

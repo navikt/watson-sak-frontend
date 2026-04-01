@@ -3,17 +3,19 @@ import { BodyShort, Heading, Page, Search, VStack } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
 import { useEffect, useRef } from "react";
 import { Form, useActionData } from "react-router";
-import type { Sak } from "~/saker/typer";
+import type { KontrollsakResponse } from "~/saker/types.backend";
 import { SøkResultatKort } from "./SøkResultatKort";
 import { søkSaker } from "./søk.server";
 import type { Route } from "./+types/SøkSide.route";
+
+type Søksak = KontrollsakResponse;
 
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
   const søketekst = (formData.get("søketekst") as string) ?? "";
 
   if (!søketekst.trim()) {
-    return { søketekst: "", resultater: [] as Sak[] };
+    return { søketekst: "", resultater: [] as Søksak[] };
   }
 
   const resultater = søkSaker(søketekst);
@@ -123,7 +125,7 @@ export default function SøkSide() {
                     className="text-ax-icon-neutral-subtle"
                   />
                   <BodyShort className="text-ax-text-neutral-subtle">
-                    Prøv å søke på saksnummer, fødselsnummer, tags eller kategorier.
+                    Prøv å søke på saksnummer, fødselsnummer eller kategorier.
                   </BodyShort>
                 </VStack>
               )}
@@ -138,7 +140,7 @@ export default function SøkSide() {
                 className="text-ax-icon-neutral-subtle"
               />
               <BodyShort className="text-ax-text-neutral-subtle">
-                Søk etter saker på saksnummer, fødselsnummer, tags eller kategorier.
+                Søk etter saker på saksnummer, fødselsnummer eller kategorier.
               </BodyShort>
             </VStack>
           )}

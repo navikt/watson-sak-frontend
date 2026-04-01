@@ -1,4 +1,5 @@
 import type { SakStatus } from "~/saker/typer";
+import type { KontrollsakStatus } from "~/saker/visning";
 
 const statusRekkefølge: SakStatus[] = [
   "tips mottatt",
@@ -32,4 +33,19 @@ export function kanVideresendesTilNayNfp(status: SakStatus): boolean {
 /** Sjekk om en sak kan politianmeldes */
 export function kanPolitianmeldes(status: SakStatus): boolean {
   return status === "under utredning";
+}
+
+export function erAktivSakKontrollsak(status: KontrollsakStatus): boolean {
+  return status === "OPPRETTET" || status === "AVKLART" || status === "UTREDES";
+}
+
+export function hentNesteStatusKontrollsak(status: KontrollsakStatus): KontrollsakStatus | null {
+  switch (status) {
+    case "OPPRETTET":
+      return "AVKLART";
+    case "AVKLART":
+      return "UTREDES";
+    default:
+      return null;
+  }
 }

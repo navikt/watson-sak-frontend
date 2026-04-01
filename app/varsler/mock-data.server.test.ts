@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { lagMockSakUuid } from "~/saker/mock-uuid";
 import * as varslerModule from "./mock-data.server";
 
 describe("varsler mock-data", () => {
@@ -24,6 +25,23 @@ describe("varsler mock-data", () => {
     );
     expect(varslerModule.hentUlesteVarsler().map((varsel) => varsel.id)).not.toContain(
       "varsel-107",
+    );
+  });
+
+  it("bruker normaliserte kontrollsak-UUID-er i varsel-lenker", () => {
+    const varsler = varslerModule.hentUlesteVarsler();
+
+    expect(varsler.find((varsel) => varsel.id === "varsel-101")?.sakId).toBe(
+      lagMockSakUuid("101", 1),
+    );
+    expect(varsler.find((varsel) => varsel.id === "varsel-102")?.sakId).toBe(
+      lagMockSakUuid("102", 1),
+    );
+    expect(varsler.find((varsel) => varsel.id === "varsel-103")?.sakId).toBe(
+      lagMockSakUuid("103", 1),
+    );
+    expect(varsler.find((varsel) => varsel.id === "varsel-104")?.sakId).toBe(
+      lagMockSakUuid("104", 1),
     );
   });
 });

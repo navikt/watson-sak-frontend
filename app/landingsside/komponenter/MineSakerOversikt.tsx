@@ -1,13 +1,15 @@
 import { BodyShort, Heading, HStack, Link, Table, Tag, VStack } from "@navikt/ds-react";
 import { ArrowRightIcon, FilesIcon } from "@navikt/aksel-icons";
 import { Link as RouterLink } from "react-router";
-import type { Sak } from "~/saker/typer";
-import { hentStatusVariant } from "~/saker/utils";
+import type { KontrollsakResponse } from "~/saker/types.backend";
+import { getSaksreferanse } from "~/saker/id";
+import { getOpprettetDato, getStatusVariantForSak } from "~/saker/selectors";
+import { getStatus, getYtelseTyper } from "~/saker/visning";
 import { RouteConfig } from "~/routeConfig";
 import { formaterDato } from "~/utils/date-utils";
 import { Kort } from "~/komponenter/Kort";
 
-export function MineSakerOversikt({ saker }: { saker: Sak[] }) {
+export function MineSakerOversikt({ saker }: { saker: KontrollsakResponse[] }) {
   return (
     <Kort as="section">
       <VStack gap="space-4">
@@ -40,21 +42,21 @@ export function MineSakerOversikt({ saker }: { saker: Sak[] }) {
                 <Table.Row key={sak.id}>
                   <Table.DataCell>
                     <Link as={RouterLink} to={RouteConfig.SAKER_DETALJ.replace(":sakId", sak.id)}>
-                      #{sak.id}
+                      #{getSaksreferanse(sak.id)}
                     </Link>
                   </Table.DataCell>
                   <Table.DataCell>
                     <BodyShort size="small" truncate className="max-w-32">
-                      {sak.ytelser.join(", ")}
+                      {getYtelseTyper(sak).join(", ")}
                     </BodyShort>
                   </Table.DataCell>
                   <Table.DataCell>
-                    <Tag variant={hentStatusVariant(sak.status)} size="xsmall">
-                      {sak.status}
+                    <Tag variant={getStatusVariantForSak(sak)} size="xsmall">
+                      {getStatus(sak)}
                     </Tag>
                   </Table.DataCell>
                   <Table.DataCell>
-                    <BodyShort size="small">{formaterDato(sak.datoInnmeldt)}</BodyShort>
+                    <BodyShort size="small">{formaterDato(getOpprettetDato(sak))}</BodyShort>
                   </Table.DataCell>
                 </Table.Row>
               ))}

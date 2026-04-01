@@ -1,8 +1,7 @@
-import { mockSaker } from "~/fordeling/mock-data.server";
-import { mockMineSaker } from "~/mine-saker/mock-data.server";
-import type { Sak } from "./typer";
+import { mockKontrollsaker } from "~/fordeling/mock-data.server";
+import { mockMineKontrollsaker } from "~/mine-saker/mock-data.server";
+import type { KontrollsakResponse } from "./types.backend";
 
-/** Henter alle saker (fordeling + mine saker) med ferske referanser */
-export function hentAlleSaker(): Sak[] {
-  return [...mockSaker, ...mockMineSaker];
+export function hentAlleSaker(): KontrollsakResponse[] {
+  return [...mockKontrollsaker, ...mockMineKontrollsaker];
 }

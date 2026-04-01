@@ -1,30 +1,38 @@
-import { mockSaker } from "~/fordeling/mock-data.server";
-import { mockMineSaker } from "~/mine-saker/mock-data.server";
-import type { SakHendelse, SakHendelseType } from "./typer";
+import { mockKontrollsaker } from "~/fordeling/mock-data.server";
+import { mockMineKontrollsaker } from "~/mine-saker/mock-data.server";
+import type { KontrollsakResponse } from "~/saker/types.backend";
+import type { SakHendelse } from "./typer";
 
 const historikkMap = new Map<string, SakHendelse[]>();
+
+type BackendHendelsestype =
+  | "SAK_OPPRETTET"
+  | "AVKLARING_OPPRETTET"
+  | "SAK_TILDELT"
+  | "STATUS_ENDRET"
+  | "MOTTAKSENHET_ENDRET"
+  | "VIDERESENDT_TIL_NAY_NFP"
+  | "POLITIANMELDT"
+  | "SAK_HENLAGT";
 
 let nesteId = 1;
 
 function lagId(): string {
-  return String(nesteId++);
+  return `00000000-0000-4000-8000-${String(nesteId++).padStart(12, "0")}`;
 }
 
-/** Legg til en hendelse i historikken for en sak */
-export function leggTilHendelse(
+function leggTilBackendHendelse(
   sakId: string,
-  type: SakHendelseType,
-  utførtAv: string,
-  detaljer?: { fra?: string; til?: string; notat?: string },
+  type: BackendHendelsestype,
+  snapshot: Omit<SakHendelse, "hendelseId" | "tidspunkt" | "hendelsesType" | "sakId">,
   tidspunkt?: string,
 ): SakHendelse {
   const hendelse: SakHendelse = {
-    id: lagId(),
-    sakId,
+    hendelseId: lagId(),
     tidspunkt: tidspunkt ?? new Date().toISOString(),
-    type,
-    utførtAv,
-    detaljer,
+    hendelsesType: type,
+    sakId,
+    ...snapshot,
   };
 
   const eksisterende = historikkMap.get(sakId) ?? [];
@@ -42,74 +50,50 @@ export function hentHistorikk(sakId: string): SakHendelse[] {
   );
 }
 
-// Generer historikk for eksisterende mock-saker
-const statusRekkefølge = ["tips mottatt", "tips avklart", "under utredning", "avsluttet"] as const;
+function lagSnapshotFraKontrollsak(
+  sak: KontrollsakResponse,
+): Omit<SakHendelse, "hendelseId" | "tidspunkt" | "hendelsesType" | "sakId"> {
+  return {
+    kategori: sak.kategori,
+    prioritet: sak.prioritet,
+    status: sak.status,
+    ytelseTyper: sak.ytelser.map((ytelse) => ytelse.type),
+    kilde: sak.bakgrunn?.kilde ?? null,
+    avklaringResultat: sak.resultat?.avklaring?.resultat ?? null,
+    mottakEnhet: sak.mottakEnhet,
+  };
+}
 
-function genererHistorikk(saker: typeof mockSaker) {
+export function leggTilHendelse(
+  sak: KontrollsakResponse,
+  type: Exclude<BackendHendelsestype, "SAK_OPPRETTET" | "AVKLARING_OPPRETTET">,
+  tidspunkt?: string,
+) {
+  return leggTilBackendHendelse(sak.id, type, lagSnapshotFraKontrollsak(sak), tidspunkt);
+}
+
+function genererHistorikk(saker: KontrollsakResponse[]) {
   for (const sak of saker) {
-    const innmeldtDato = new Date(sak.datoInnmeldt);
+    leggTilBackendHendelse(sak.id, "SAK_OPPRETTET", lagSnapshotFraKontrollsak(sak), sak.opprettet);
 
-    // Sak opprettet
-    leggTilHendelse(sak.id, "opprettet", "System", undefined, innmeldtDato.toISOString());
-
-    // Generer statusendringer basert på nåværende status
-    const nåværendeIndex = statusRekkefølge.indexOf(
-      sak.status as (typeof statusRekkefølge)[number],
-    );
-    for (let i = 1; i <= nåværendeIndex; i++) {
-      const dagerEtter = i * 3;
-      const dato = new Date(innmeldtDato);
-      dato.setDate(dato.getDate() + dagerEtter);
-
-      leggTilHendelse(
+    if (sak.resultat?.avklaring) {
+      leggTilBackendHendelse(
         sak.id,
-        "status_endret",
-        "Kari Saksbehandler",
-        {
-          fra: statusRekkefølge[i - 1],
-          til: statusRekkefølge[i],
-        },
-        dato.toISOString(),
-      );
-    }
-
-    // Legg til tildeling hvis saken er kommet forbi "tips mottatt"
-    if (nåværendeIndex >= 1) {
-      const tildelingsDato = new Date(innmeldtDato);
-      tildelingsDato.setDate(tildelingsDato.getDate() + 2);
-
-      leggTilHendelse(
-        sak.id,
-        "tildelt",
-        "System",
-        { til: "Kari Saksbehandler" },
-        tildelingsDato.toISOString(),
-      );
-    }
-
-    // Legg til avdelingsendring for noen saker
-    if (sak.avdeling && nåværendeIndex >= 2) {
-      const avdelingsDato = new Date(innmeldtDato);
-      avdelingsDato.setDate(avdelingsDato.getDate() + 5);
-
-      leggTilHendelse(
-        sak.id,
-        "avdeling_endret",
-        "Ola Nordmann",
-        { fra: "Kontroll Øst", til: sak.avdeling },
-        avdelingsDato.toISOString(),
+        "AVKLARING_OPPRETTET",
+        lagSnapshotFraKontrollsak(sak),
+        `${sak.resultat.avklaring.dato}T00:00:00Z`,
       );
     }
   }
 }
 
-genererHistorikk(mockSaker);
-genererHistorikk(mockMineSaker);
+genererHistorikk(mockKontrollsaker);
+genererHistorikk(mockMineKontrollsaker);
 
 /** Tilbakestill historikk til opprinnelig tilstand */
 export function resetHistorikk() {
   historikkMap.clear();
   nesteId = 1;
-  genererHistorikk(mockSaker);
-  genererHistorikk(mockMineSaker);
+  genererHistorikk(mockKontrollsaker);
+  genererHistorikk(mockMineKontrollsaker);
 }

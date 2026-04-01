@@ -1,14 +1,22 @@
 import { BodyShort, CopyButton, Detail, Heading, HStack, Tag, VStack } from "@navikt/ds-react";
 import { Kort } from "~/komponenter/Kort";
+import { getSaksreferanse } from "~/saker/id";
 import { formaterDato } from "~/utils/date-utils";
-import type { Sak } from "~/saker/typer";
-import { formaterKilde, hentStatusVariant } from "~/saker/utils";
+import type { KontrollsakResponse } from "~/saker/types.backend";
+import { getOpprettetDato, getStatusVariantForSak } from "~/saker/selectors";
+import { getKildeText, getPersonIdent, getStatus } from "~/saker/visning";
 
 interface SaksinformasjonKortProps {
-  sak: Sak;
+  sak: KontrollsakResponse;
 }
 
 export function SaksinformasjonKort({ sak }: SaksinformasjonKortProps) {
+  const personIdent = getPersonIdent(sak);
+  const status = getStatus(sak);
+  const opprettetDato = getOpprettetDato(sak);
+  const kilde = getKildeText(sak);
+  const saksreferanse = getSaksreferanse(sak.id);
+
   return (
     <Kort>
       <VStack gap="space-4">
@@ -21,7 +29,7 @@ export function SaksinformasjonKort({ sak }: SaksinformasjonKortProps) {
               Sak-ID
             </Detail>
             <HStack gap="space-1" align="center">
-              <BodyShort>{sak.id}</BodyShort>
+              <BodyShort>{saksreferanse}</BodyShort>
               <CopyButton size="xsmall" copyText={sak.id} />
             </HStack>
           </VStack>
@@ -30,29 +38,29 @@ export function SaksinformasjonKort({ sak }: SaksinformasjonKortProps) {
               Fødselsnummer
             </Detail>
             <HStack gap="space-1" align="center">
-              <BodyShort>{sak.fødselsnummer}</BodyShort>
-              <CopyButton size="xsmall" copyText={sak.fødselsnummer} />
+              <BodyShort>{personIdent}</BodyShort>
+              <CopyButton size="xsmall" copyText={personIdent} />
             </HStack>
           </VStack>
           <VStack gap="space-1">
             <Detail className="text-ax-text-neutral-subtle" uppercase>
               Status
             </Detail>
-            <Tag variant={hentStatusVariant(sak.status)} size="small">
-              {sak.status}
+            <Tag variant={getStatusVariantForSak(sak)} size="small">
+              {status}
             </Tag>
           </VStack>
           <VStack gap="space-1">
             <Detail className="text-ax-text-neutral-subtle" uppercase>
               Innmeldt
             </Detail>
-            <BodyShort>{formaterDato(sak.datoInnmeldt)}</BodyShort>
+            <BodyShort>{formaterDato(opprettetDato)}</BodyShort>
           </VStack>
           <VStack gap="space-1">
             <Detail className="text-ax-text-neutral-subtle" uppercase>
               Kilde
             </Detail>
-            <BodyShort>{formaterKilde(sak.kilde)}</BodyShort>
+            <BodyShort>{kilde}</BodyShort>
           </VStack>
         </HStack>
       </VStack>

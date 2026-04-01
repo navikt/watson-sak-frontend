@@ -8,43 +8,33 @@ import {
   FolderIcon,
   TasklistIcon,
 } from "@navikt/aksel-icons";
-import { BodyShort, Heading, HStack, VStack } from "@navikt/ds-react";
-import { useState, type ComponentType, type ReactNode } from "react";
+import { BodyShort, Heading, HStack, Tag, VStack } from "@navikt/ds-react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
-import type { Sak, SakKilde, SakStatus } from "~/saker/typer";
+import { getStatus } from "~/saker/visning";
+import type { KontrollsakResponse } from "~/saker/types.backend";
+import {
+  getMineSakerGruppeStatus,
+  getMineSakerIkonType,
+  getMineSakerOpprettetTekst,
+  getMineSakerPeriodeTekst,
+  getMineSakerTittel,
+  getStatusVariantForSak,
+} from "~/saker/selectors";
 
 type SakGrupper = {
-  aktive: Sak[];
-  ventende: Sak[];
-  fullførte: Sak[];
+  aktive: KontrollsakResponse[];
+  ventende: KontrollsakResponse[];
+  fullførte: KontrollsakResponse[];
 };
 
-type IkonKomponent = ComponentType<{
-  fontSize?: string;
-  className?: string;
-  "aria-hidden": boolean;
-}>;
-
-const fullførteStatuser = new Set<SakStatus>([
-  "videresendt til nay/nfp",
-  "politianmeldt",
-  "avsluttet",
-  "henlagt",
-]);
-
-const ikonPerKilde: Record<SakKilde, IkonKomponent> = {
-  telefon: TasklistIcon,
-  epost: EnvelopeClosedIcon,
-  brev: EnvelopeClosedIcon,
-  registersamkjøring: Buildings2Icon,
-  saksbehandler: FilesIcon,
-  publikum: FolderIcon,
-  politiet: Buildings2Icon,
-  nay: FolderIcon,
-  annet: FilesIcon,
-};
-
-export function MineSakerInnhold({ saker, detaljSti }: { saker: Sak[]; detaljSti: string }) {
+export function MineSakerInnhold({
+  saker,
+  detaljSti,
+}: {
+  saker: KontrollsakResponse[];
+  detaljSti: string;
+}) {
   const [viserVentende, setViserVentende] = useState(false);
   const [viserFullførte, setViserFullførte] = useState(false);
   const grupper = grupperSaker(saker);
@@ -96,13 +86,11 @@ export function MineSakerInnhold({ saker, detaljSti }: { saker: Sak[]; detaljSti
   );
 }
 
-function grupperSaker(saker: Sak[]): SakGrupper {
+function grupperSaker(saker: KontrollsakResponse[]): SakGrupper {
   return {
-    aktive: saker.filter(
-      (sak) => sak.status === "under utredning" || sak.status === "tips avklart",
-    ),
-    ventende: saker.filter((sak) => sak.status === "tips mottatt"),
-    fullførte: saker.filter((sak) => fullførteStatuser.has(sak.status)),
+    aktive: saker.filter((sak) => getMineSakerGruppeStatus(sak) === "aktive"),
+    ventende: saker.filter((sak) => getMineSakerGruppeStatus(sak) === "ventende"),
+    fullførte: saker.filter((sak) => getMineSakerGruppeStatus(sak) === "fullførte"),
   };
 }
 
@@ -111,7 +99,7 @@ function SakGrid({
   detaljSti,
   tomTekst,
 }: {
-  saker: Sak[];
+  saker: KontrollsakResponse[];
   detaljSti: string;
   tomTekst: string;
 }) {
@@ -162,8 +150,18 @@ function SammenleggbarSeksjon({
   );
 }
 
-function SakKort({ sak, detaljSti }: { sak: Sak; detaljSti: string }) {
-  const Ikon = ikonPerKilde[sak.kilde] ?? FilesIcon;
+function SakKort({ sak, detaljSti }: { sak: KontrollsakResponse; detaljSti: string }) {
+  const ikonType = getMineSakerIkonType(sak);
+  const Ikon =
+    ikonType === "tasklist"
+      ? TasklistIcon
+      : ikonType === "envelope"
+        ? EnvelopeClosedIcon
+        : ikonType === "buildings"
+          ? Buildings2Icon
+          : ikonType === "folder"
+            ? FolderIcon
+            : FilesIcon;
 
   return (
     <Link
@@ -182,18 +180,18 @@ function SakKort({ sak, detaljSti }: { sak: Sak; detaljSti: string }) {
               level="3"
               className="truncate underline decoration-1 underline-offset-3"
             >
-              {lagSakstittel(sak)}
+              {getMineSakerTittel(sak)}
             </Heading>
             <BodyShort size="small" className="text-ax-text-neutral-subtle">
-              {lagPeriodeTekst(sak)}
+              {getMineSakerPeriodeTekst(sak)}
             </BodyShort>
           </VStack>
 
           <HStack gap="space-2" wrap>
-            <StatusPille status={sak.status} />
+            <StatusPille sak={sak} />
             <MetadataPille
               icon={<CalendarIcon aria-hidden fontSize="1rem" />}
-              tekst={lagOpprettetTekst(sak)}
+              tekst={getMineSakerOpprettetTekst(sak)}
             />
           </HStack>
         </VStack>
@@ -206,11 +204,6 @@ function SakKort({ sak, detaljSti }: { sak: Sak; detaljSti: string }) {
       />
     </Link>
   );
-}
-
-function StatusPille({ status }: { status: SakStatus }) {
-  const { tekst, className, ikon } = hentStatusvisning(status);
-  return <MetadataPille icon={ikon} tekst={tekst} className={className} />;
 }
 
 function MetadataPille({
@@ -232,67 +225,12 @@ function MetadataPille({
   );
 }
 
-function lagSakstittel(sak: Sak) {
-  const ytelser = sak.ytelser.join(" / ");
-  return sak.kategori ? `${sak.kategori} - ${ytelser}` : ytelser;
-}
+function StatusPille({ sak }: { sak: KontrollsakResponse }) {
+  const variant = getStatusVariantForSak(sak);
 
-function lagPeriodeTekst(sak: Sak) {
-  const fraDato = sak.fraDato ?? sak.datoInnmeldt;
-  const tilDato = sak.tilDato ?? sak.datoInnmeldt;
-  return `Ytelser i perioden ${formaterTallDato(fraDato)} - ${formaterTallDato(tilDato)}`;
-}
-
-function lagOpprettetTekst(sak: Sak) {
-  return `Opprettet ${formaterTallDato(sak.datoInnmeldt)}`;
-}
-
-function hentStatusvisning(status: SakStatus) {
-  switch (status) {
-    case "tips mottatt":
-      return {
-        tekst: "Ikke påbegynt",
-        className: "bg-ax-bg-info-soft text-ax-text-info",
-        ikon: <TasklistIcon aria-hidden fontSize="1rem" />,
-      };
-    case "tips avklart":
-    case "under utredning":
-      return {
-        tekst: "Til utredning",
-        className: "bg-ax-bg-accent-soft text-ax-text-accent",
-        ikon: <FilesIcon aria-hidden fontSize="1rem" />,
-      };
-    case "videresendt til nay/nfp":
-      return {
-        tekst: "Videresendt",
-        className: "bg-ax-bg-success-soft text-ax-text-success",
-        ikon: <ChevronRightIcon aria-hidden fontSize="1rem" />,
-      };
-    case "politianmeldt":
-      return {
-        tekst: "Politianmeldt",
-        className: "bg-ax-bg-success-soft text-ax-text-success",
-        ikon: <Buildings2Icon aria-hidden fontSize="1rem" />,
-      };
-    case "avsluttet":
-      return {
-        tekst: "Avsluttet",
-        className: "bg-ax-bg-neutral-moderate text-ax-text-neutral",
-        ikon: <FolderIcon aria-hidden fontSize="1rem" />,
-      };
-    case "henlagt":
-      return {
-        tekst: "Henlagt",
-        className: "bg-ax-bg-neutral-moderate text-ax-text-neutral",
-        ikon: <FolderIcon aria-hidden fontSize="1rem" />,
-      };
-  }
-}
-
-function formaterTallDato(dato: string) {
-  return new Intl.DateTimeFormat("nb-NO", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(new Date(dato));
+  return (
+    <Tag variant={variant} size="small">
+      {getStatus(sak)}
+    </Tag>
+  );
 }
