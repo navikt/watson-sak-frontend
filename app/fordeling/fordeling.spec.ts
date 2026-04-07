@@ -27,10 +27,14 @@ test.describe("Ufordelte saker", () => {
   });
 
   test("kan filtrere på kategori og ytelse", async ({ page }) => {
-    await page.getByRole("button", { name: "Feilutbetaling" }).click();
+    const feilutbetalingKnapp = page.getByRole("button", { name: "Feilutbetaling" });
+    await feilutbetalingKnapp.click();
+    await expect(feilutbetalingKnapp).toHaveAttribute("aria-pressed", "true");
+
     await page.getByRole("button", { name: "Barnetrygd" }).click();
 
     const rader = page.locator("tbody tr");
+    await expect(rader).not.toHaveCount(0);
     await expect
       .poll(async () => {
         const tekster = await rader.allTextContents();
