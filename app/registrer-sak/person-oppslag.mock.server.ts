@@ -19,7 +19,7 @@ export type EksisterendeSak = {
   status: string;
 };
 
-const mockPersoner: Record<string, PersonOppslagResultat> = {
+const opprinneligeMockPersoner: Record<string, PersonOppslagResultat> = {
   "03117845975": {
     person: {
       navn: "Birger Egil Lorumipsum-Olsen",
@@ -58,11 +58,26 @@ const mockPersoner: Record<string, PersonOppslagResultat> = {
   },
 };
 
+let mockPersoner: Record<string, PersonOppslagResultat> = lagKopiAvMockPersoner();
+let nesteMockSakId = 200;
+
+function lagKopiAvMockPersoner(): Record<string, PersonOppslagResultat> {
+  return Object.fromEntries(
+    Object.entries(opprinneligeMockPersoner).map(([fnr, data]) => [
+      fnr,
+      { ...data, eksisterendeSaker: [...data.eksisterendeSaker] },
+    ]),
+  );
+}
+
+export function resetMockPersonOppslag(): void {
+  mockPersoner = lagKopiAvMockPersoner();
+  nesteMockSakId = 200;
+}
+
 export function slaOppPerson(fnr: string): PersonOppslagResultat | null {
   return mockPersoner[fnr] ?? null;
 }
-
-let nesteMockSakId = 200;
 
 export function leggTilMockSak(personIdent: string, saksbehandler: string, enhet: string): void {
   const eksisterende = mockPersoner[personIdent];

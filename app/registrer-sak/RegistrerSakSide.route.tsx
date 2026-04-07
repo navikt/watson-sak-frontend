@@ -71,11 +71,13 @@ export default function OpprettSakSide() {
   const [valgteFiler, setValgteFiler] = useState<FileObject[]>([]);
 
   const personFetcher = useFetcher<
-    PersonOppslagResultat | { person: null; eksisterendeSaker: [] }
+    PersonOppslagResultat | { person: null; eksisterendeSaker: [] } | { feil: string }
   >();
 
   const harSøkt = personFetcher.state === "idle" && personFetcher.data !== undefined;
   const lasterPerson = personFetcher.state !== "idle";
+  const oppslagFeil =
+    personFetcher.data && "feil" in personFetcher.data ? personFetcher.data.feil : null;
   const person =
     personFetcher.data && "person" in personFetcher.data ? personFetcher.data.person : null;
   const eksisterendeSaker =
@@ -125,8 +127,18 @@ export default function OpprettSakSide() {
             </Search>
           </personFetcher.Form>
 
+          {/* Feil fra personoppslag */}
+          {harSøkt && oppslagFeil && (
+            <LocalAlert status="announcement" className="max-w-xl">
+              <LocalAlert.Header>
+                <LocalAlert.Title as="h2">Feil ved personoppslag</LocalAlert.Title>
+              </LocalAlert.Header>
+              <LocalAlert.Content>{oppslagFeil}</LocalAlert.Content>
+            </LocalAlert>
+          )}
+
           {/* Person ikke funnet */}
-          {harSøkt && !person && (
+          {harSøkt && !person && !oppslagFeil && (
             <LocalAlert status="announcement" className="max-w-xl">
               <LocalAlert.Header>
                 <LocalAlert.Title as="h2">Personen ble ikke funnet</LocalAlert.Title>
@@ -340,6 +352,8 @@ export default function OpprettSakSide() {
                   </HStack>
 
                   {/* Filopplaster */}
+                  {/* TODO: Filer sendes foreløpig ikke til serveren – backend-endepunkt for
+                      filopplasting er ikke implementert ennå. Komponenten er en placeholder. */}
                   <VStack gap="space-2" className="max-w-[500px]">
                     <FileUpload.Dropzone
                       label="Filopplaster (valgfritt)"

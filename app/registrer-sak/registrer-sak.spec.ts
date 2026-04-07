@@ -1,9 +1,11 @@
 import { expect, test } from "@playwright/test";
 
+import { resetMockData } from "~/test/reset-mock-data";
 import { sjekkTilgjengelighet } from "~/test/uu-util";
 
 test.describe("Opprett sak", () => {
   test.beforeEach(async ({ page }) => {
+    await resetMockData(page);
     await page.goto("/registrer-sak", { waitUntil: "networkidle" });
   });
 
