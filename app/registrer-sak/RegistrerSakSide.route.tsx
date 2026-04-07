@@ -138,7 +138,7 @@ export default function OpprettSakSide() {
               <HStack
                 gap="space-4"
                 align="center"
-                className="rounded-lg bg-ax-bg-neutral-moderate-subtle px-4 py-3 max-w-2xl"
+                className="rounded-lg bg-ax-bg-moderate px-4 py-3 max-w-2xl"
                 aria-label="Personinformasjon"
               >
                 <PersonIcon
