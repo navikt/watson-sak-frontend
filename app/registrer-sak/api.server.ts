@@ -8,26 +8,17 @@ export type OpprettKontrollsakRequest = {
   mottakSaksbehandler: string;
   kategori: string;
   prioritet: string;
+  misbruktype?: string;
+  merking?: string;
   ytelser: Array<{
     type: string;
     periodeFra: string;
     periodeTil: string;
   }>;
-  bakgrunn: {
-    kilde: string;
-    innhold: string;
-    avsender: {
-      navn?: string;
-      telefon?: string;
-      adresse?: string;
-      anonym: boolean;
-    } | null;
-    vedlegg: Array<{
-      filnavn: string;
-      lokasjon: string;
-    }>;
-    tilleggsopplysninger: string | null;
-  };
+  enhet: string;
+  kilde: string;
+  caBeløp?: number;
+  organisasjonsnummer?: string;
 };
 
 type OpprettKontrollsakArgs = {

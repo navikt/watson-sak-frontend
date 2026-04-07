@@ -15,7 +15,7 @@ vi.mock("~/auth/innlogget-bruker.server", () => ({
   hentInnloggetBruker: hentInnloggetBrukerMock,
 }));
 
-describe("RegistrerSakSide action", () => {
+describe("OpprettSakSide action", () => {
   afterEach(() => {
     vi.clearAllMocks();
     hentInnloggetBrukerMock.mockResolvedValue({
@@ -35,13 +35,9 @@ describe("RegistrerSakSide action", () => {
     formData.append("ytelser", "AAP");
     formData.set("fraDato", "2026-01-01");
     formData.set("tilDato", "2026-12-31");
-    formData.set("kategori", "UDEFINERT");
-    formData.set("prioritet", "HØY");
+    formData.set("kategori", "DOKUMENTFALSK");
     formData.set("kilde", "INTERN");
-    formData.set("bakgrunn", "Bakgrunn for saken");
-    formData.set("avsenderNavn", "Tipser Testesen");
-    formData.set("avsenderTelefon", "12345678");
-    formData.set("avsenderAdresse", "Testveien 1");
+    formData.set("enhet", "ØST");
 
     const response = await action({
       request: new Request("http://localhost/registrer-sak", {
@@ -59,8 +55,10 @@ describe("RegistrerSakSide action", () => {
         saksbehandler: "Z123456",
         mottakEnhet: "4812",
         mottakSaksbehandler: "Z123456",
-        kategori: "UDEFINERT",
-        prioritet: "HØY",
+        kategori: "DOKUMENTFALSK",
+        prioritet: "NORMAL",
+        misbruktype: undefined,
+        merking: undefined,
         ytelser: [
           {
             type: "Dagpenger",
@@ -73,18 +71,10 @@ describe("RegistrerSakSide action", () => {
             periodeTil: "2026-12-31",
           },
         ],
-        bakgrunn: {
-          kilde: "INTERN",
-          innhold: "Bakgrunn for saken",
-          avsender: {
-            navn: "Tipser Testesen",
-            telefon: "12345678",
-            adresse: "Testveien 1",
-            anonym: false,
-          },
-          vedlegg: [],
-          tilleggsopplysninger: null,
-        },
+        enhet: "ØST",
+        kilde: "INTERN",
+        caBeløp: undefined,
+        organisasjonsnummer: undefined,
       },
     });
 
@@ -108,10 +98,9 @@ describe("RegistrerSakSide action", () => {
     formData.append("ytelser", "Dagpenger");
     formData.set("fraDato", "2026-01-01");
     formData.set("tilDato", "2026-12-31");
-    formData.set("kategori", "UDEFINERT");
-    formData.set("prioritet", "HØY");
+    formData.set("kategori", "DOKUMENTFALSK");
     formData.set("kilde", "INTERN");
-    formData.set("bakgrunn", "Bakgrunn for saken");
+    formData.set("enhet", "ØST");
 
     await expect(
       action({
@@ -127,7 +116,7 @@ describe("RegistrerSakSide action", () => {
 });
 
 describe("byggOpprettKontrollsakPayload", () => {
-  it("mapper skjema til backend payload med bakgrunn og ytelsesperioder", async () => {
+  it("mapper skjema til backend payload", async () => {
     const { byggOpprettKontrollsakPayload } = await import("./RegistrerSakSide.server");
 
     expect(
@@ -137,14 +126,13 @@ describe("byggOpprettKontrollsakPayload", () => {
           ytelser: ["Dagpenger", "AAP"],
           fraDato: "2026-01-01",
           tilDato: "2026-12-31",
-          kategori: "UDEFINERT",
-          prioritet: "HØY",
+          kategori: "SAMLIV",
+          misbruktype: "Skjult samliv",
+          merking: "PRIORITERT",
           kilde: "INTERN",
-          bakgrunn: "Bakgrunn for saken",
-          avsenderNavn: "Tipser Testesen",
-          avsenderTelefon: "12345678",
-          avsenderAdresse: "Testveien 1",
-          avsenderAnonym: false,
+          enhet: "ØST",
+          caBeløp: 300000,
+          organisasjonsnummer: "123456789",
         },
         navIdent: "Z123456",
         mottakEnhet: "4812",
@@ -154,8 +142,10 @@ describe("byggOpprettKontrollsakPayload", () => {
       saksbehandler: "Z123456",
       mottakEnhet: "4812",
       mottakSaksbehandler: "Z123456",
-      kategori: "UDEFINERT",
-      prioritet: "HØY",
+      kategori: "SAMLIV",
+      prioritet: "NORMAL",
+      misbruktype: "Skjult samliv",
+      merking: "PRIORITERT",
       ytelser: [
         {
           type: "Dagpenger",
@@ -168,18 +158,10 @@ describe("byggOpprettKontrollsakPayload", () => {
           periodeTil: "2026-12-31",
         },
       ],
-      bakgrunn: {
-        kilde: "INTERN",
-        innhold: "Bakgrunn for saken",
-        avsender: {
-          navn: "Tipser Testesen",
-          telefon: "12345678",
-          adresse: "Testveien 1",
-          anonym: false,
-        },
-        vedlegg: [],
-        tilleggsopplysninger: null,
-      },
+      enhet: "ØST",
+      kilde: "INTERN",
+      caBeløp: 300000,
+      organisasjonsnummer: "123456789",
     });
   });
 });

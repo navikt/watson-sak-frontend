@@ -22,6 +22,7 @@ export default [
   route(RouteConfig.API.PREFERENCES, "preferanser/api.ts"),
   route(RouteConfig.API.VERSION, "versjonsvarsling/api.ts"),
   route(RouteConfig.API.RESET_MOCK_DATA, "testing/reset-api.ts"),
+  route(RouteConfig.API.PERSON_OPPSLAG, "registrer-sak/person-oppslag.api.ts"),
 
   // Well-known routes
   route(RouteConfig.WELL_KNOWN.SECURITY_TXT, "sikkerhet/well-known/api.ts"),

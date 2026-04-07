@@ -27,8 +27,9 @@ describe("opprettKontrollsak", () => {
         saksbehandler: "Z123456",
         mottakEnhet: "4812",
         mottakSaksbehandler: "Z123456",
-        kategori: "UDEFINERT",
-        prioritet: "HØY",
+        kategori: "SAMLIV",
+        prioritet: "NORMAL",
+        misbruktype: "Skjult samliv",
         ytelser: [
           {
             type: "Dagpenger",
@@ -36,18 +37,8 @@ describe("opprettKontrollsak", () => {
             periodeTil: "2026-12-31",
           },
         ],
-        bakgrunn: {
-          kilde: "INTERN",
-          innhold: "Bakgrunn for saken",
-          avsender: {
-            navn: "Tipser Testesen",
-            telefon: "12345678",
-            adresse: "Testveien 1",
-            anonym: false,
-          },
-          vedlegg: [],
-          tilleggsopplysninger: null,
-        },
+        enhet: "ØST",
+        kilde: "INTERN",
       },
     });
 
@@ -63,8 +54,9 @@ describe("opprettKontrollsak", () => {
         saksbehandler: "Z123456",
         mottakEnhet: "4812",
         mottakSaksbehandler: "Z123456",
-        kategori: "UDEFINERT",
-        prioritet: "HØY",
+        kategori: "SAMLIV",
+        prioritet: "NORMAL",
+        misbruktype: "Skjult samliv",
         ytelser: [
           {
             type: "Dagpenger",
@@ -72,18 +64,8 @@ describe("opprettKontrollsak", () => {
             periodeTil: "2026-12-31",
           },
         ],
-        bakgrunn: {
-          kilde: "INTERN",
-          innhold: "Bakgrunn for saken",
-          avsender: {
-            navn: "Tipser Testesen",
-            telefon: "12345678",
-            adresse: "Testveien 1",
-            anonym: false,
-          },
-          vedlegg: [],
-          tilleggsopplysninger: null,
-        },
+        enhet: "ØST",
+        kilde: "INTERN",
       }),
     });
   });
