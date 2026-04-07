@@ -6,6 +6,7 @@ import {
   FileUpload,
   Heading,
   HStack,
+  Loader,
   Page,
   Search,
   Select,
@@ -87,15 +88,6 @@ export default function OpprettSakSide() {
     : [];
   const visMisbruktype = misbrukstyper.length > 0;
 
-  function utførSøk() {
-    const normalisert = søkeFnr.replace(/\s/g, "");
-    if (!normalisert) return;
-    personFetcher.submit(
-      { fnr: normalisert },
-      { method: "get", action: RouteConfig.API.PERSON_OPPSLAG },
-    );
-  }
-
   return (
     <Page>
       <title>Opprett sak – Watson Sak</title>
@@ -106,17 +98,31 @@ export default function OpprettSakSide() {
           </Heading>
 
           {/* Personoppslag */}
-          <Search
-            label="Fødsels- eller d-nummer"
-            hideLabel={false}
-            value={søkeFnr}
-            onChange={setSøkeFnr}
-            onClear={() => setSøkeFnr("")}
-            onSearchClick={utførSøk}
-            htmlSize={20}
-            autoComplete="off"
-            inputMode="numeric"
-          />
+          <personFetcher.Form
+            method="get"
+            action={RouteConfig.API.PERSON_OPPSLAG}
+            aria-label="Søk etter person"
+          >
+            <Search
+              label="Fødsels- eller d-nummer"
+              hideLabel={false}
+              name="fnr"
+              value={søkeFnr}
+              onChange={setSøkeFnr}
+              onClear={() => setSøkeFnr("")}
+              htmlSize={20}
+              autoComplete="off"
+              inputMode="numeric"
+            >
+              <Search.Button
+                type="submit"
+                disabled={lasterPerson}
+                aria-label={lasterPerson ? "Søker..." : "Søk"}
+              >
+                {lasterPerson && <Loader size="xsmall" title="Søker..." />}
+              </Search.Button>
+            </Search>
+          </personFetcher.Form>
 
           {/* Person ikke funnet */}
           {harSøkt && !person && (
