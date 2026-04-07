@@ -133,7 +133,7 @@ export default function OpprettSakSide() {
 
           {/* Person funnet */}
           {person && (
-            <VStack gap="space-6">
+            <VStack gap="space-10">
               {/* PersonInfoBanner */}
               <HStack
                 gap="space-4"
@@ -191,13 +191,13 @@ export default function OpprettSakSide() {
                 {/* Personident sendes som hidden felt */}
                 <input type="hidden" name="personIdent" value={søkeFnr.replace(/\s/g, "")} />
 
-                <VStack gap="space-8">
+                <VStack gap="space-10">
                   <Heading level="2" size="medium">
                     Grunnleggende saksinformasjon
                   </Heading>
 
                   {/* Rad 1: Kategori, Misbruktype, Merking */}
-                  <HStack gap="space-6" align="start" wrap>
+                  <HStack gap="space-8" align="start" wrap>
                     <Select
                       name="kategori"
                       label="Kategori"
@@ -246,7 +246,7 @@ export default function OpprettSakSide() {
                   </HStack>
 
                   {/* Rad 2: Fra dato, Til dato, Ytelse, Ca beløp */}
-                  <HStack gap="space-6" align="start" wrap>
+                  <HStack gap="space-8" align="start" wrap>
                     <DatePicker>
                       <DatePicker.Input
                         name="fraDato"
@@ -290,7 +290,7 @@ export default function OpprettSakSide() {
                   </HStack>
 
                   {/* Rad 3: Enhet, Kilde, Organisasjonsnummer */}
-                  <HStack gap="space-6" align="start" wrap>
+                  <HStack gap="space-8" align="start" wrap>
                     <Select
                       name="enhet"
                       label="Enhet"
@@ -330,7 +330,7 @@ export default function OpprettSakSide() {
                   </HStack>
 
                   {/* Filopplaster */}
-                  <VStack gap="space-2">
+                  <VStack gap="space-2" className="max-w-[500px]">
                     <FileUpload.Dropzone
                       label="Filopplaster (valgfritt)"
                       description="Legg til eventuelle vedlegg"
