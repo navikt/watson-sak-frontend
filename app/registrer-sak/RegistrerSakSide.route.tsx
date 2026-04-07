@@ -1,5 +1,5 @@
 import {
-  Alert,
+  LocalAlert,
   BodyShort,
   Button,
   DatePicker,
@@ -126,9 +126,12 @@ export default function OpprettSakSide() {
 
           {/* Person ikke funnet */}
           {harSøkt && !person && (
-            <Alert variant="error" className="max-w-xl">
-              Personen ble ikke funnet. Sjekk at fødselsnummeret er riktig.
-            </Alert>
+            <LocalAlert status="announcement" className="max-w-xl">
+              <LocalAlert.Header>
+                <LocalAlert.Title as="h2">Personen ble ikke funnet</LocalAlert.Title>
+              </LocalAlert.Header>
+              <LocalAlert.Content>Sjekk at fødselsnummeret er riktig.</LocalAlert.Content>
+            </LocalAlert>
           )}
 
           {/* Person funnet */}
@@ -164,25 +167,31 @@ export default function OpprettSakSide() {
                     year: "numeric",
                   });
                   return (
-                    <Alert key={sak.sakId} variant="warning" className="max-w-2xl" role="status">
-                      <Heading level="2" size="xsmall" spacing>
-                        Det er allerede registrert en sak på personen
-                      </Heading>
-                      <BodyShort spacing>
-                        {dato} ble det opprettet en sak på {sak.personNavn}. Kanskje gjelder dette
-                        samme sak?
-                      </BodyShort>
-                      <HStack gap="space-4">
-                        <Button
-                          as={Link}
-                          to={RouteConfig.SAKER_DETALJ.replace(":sakId", sak.sakId)}
-                          variant="secondary"
-                          size="small"
-                        >
-                          Se sak
-                        </Button>
-                      </HStack>
-                    </Alert>
+                    <LocalAlert key={sak.sakId} status="announcement" className="max-w-2xl">
+                      <LocalAlert.Header>
+                        <LocalAlert.Title as="h2">
+                          Det er allerede registrert en sak på personen
+                        </LocalAlert.Title>
+                      </LocalAlert.Header>
+                      <LocalAlert.Content>
+                        <VStack gap="space-4">
+                          <BodyShort>
+                            {dato} ble det opprettet en sak på {sak.personNavn}. Kanskje gjelder
+                            dette samme sak?
+                          </BodyShort>
+                          <HStack gap="space-4">
+                            <Button
+                              as={Link}
+                              to={RouteConfig.SAKER_DETALJ.replace(":sakId", sak.sakId)}
+                              variant="secondary"
+                              size="small"
+                            >
+                              Se sak
+                            </Button>
+                          </HStack>
+                        </VStack>
+                      </LocalAlert.Content>
+                    </LocalAlert>
                   );
                 })}
 
