@@ -108,6 +108,7 @@ export default function OpprettSakSide() {
           {/* Personoppslag */}
           <Search
             label="Fødsels- eller d-nummer"
+            hideLabel={false}
             value={søkeFnr}
             onChange={setSøkeFnr}
             onClear={() => setSøkeFnr("")}
