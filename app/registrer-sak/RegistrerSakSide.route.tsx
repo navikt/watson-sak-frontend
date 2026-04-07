@@ -14,7 +14,7 @@ import {
   VStack,
 } from "@navikt/ds-react";
 import type { FileObject } from "@navikt/ds-react";
-import { InformationSquareIcon } from "@navikt/aksel-icons";
+import { PersonIcon } from "@navikt/aksel-icons";
 import { PageBlock } from "@navikt/ds-react/Page";
 import { useState } from "react";
 import { Form, Link, useFetcher, useActionData, useLoaderData } from "react-router";
@@ -132,13 +132,13 @@ export default function OpprettSakSide() {
               <HStack
                 gap="space-4"
                 align="center"
-                className="rounded-lg border border-ax-border-neutral-subtle bg-ax-bg-neutral-moderate-subtle px-4 py-3 max-w-2xl"
+                className="rounded-lg bg-ax-bg-neutral-moderate-subtle px-4 py-3 max-w-2xl"
                 aria-label="Personinformasjon"
               >
-                <InformationSquareIcon
+                <PersonIcon
                   aria-hidden
                   fontSize="1.5rem"
-                  className="shrink-0 text-ax-icon-info"
+                  className="shrink-0 text-ax-icon-neutral"
                 />
                 <BodyShort>
                   <strong>{person.navn}</strong>
