@@ -61,3 +61,24 @@ const mockPersoner: Record<string, PersonOppslagResultat> = {
 export function slaOppPerson(fnr: string): PersonOppslagResultat | null {
   return mockPersoner[fnr] ?? null;
 }
+
+let nesteMockSakId = 200;
+
+export function leggTilMockSak(
+  personIdent: string,
+  saksbehandler: string,
+  enhet: string,
+): void {
+  const eksisterende = mockPersoner[personIdent];
+  if (!eksisterende) return;
+
+  const sakId = String(nesteMockSakId++);
+  eksisterende.eksisterendeSaker.push({
+    sakId,
+    opprettetDato: new Date().toISOString().split("T")[0],
+    personNavn: eksisterende.person.navn,
+    saksbehandler,
+    enhet,
+    status: "Til utredning",
+  });
+}

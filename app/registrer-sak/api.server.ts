@@ -1,5 +1,6 @@
-import { BACKEND_API_URL } from "~/config/env.server";
+import { BACKEND_API_URL, skalBrukeMockdata } from "~/config/env.server";
 import { logger } from "~/logging/logging";
+import { leggTilMockSak } from "./person-oppslag.mock.server";
 
 export type OpprettKontrollsakRequest = {
   personIdent: string;
@@ -30,6 +31,11 @@ export async function opprettKontrollsak({
   token,
   payload,
 }: OpprettKontrollsakArgs): Promise<void> {
+  if (skalBrukeMockdata) {
+    leggTilMockSak(payload.personIdent, payload.saksbehandler, payload.enhet);
+    return;
+  }
+
   if (!BACKEND_API_URL) {
     throw new Error("Mangler backend-url for opprettelse av kontrollsak.");
   }
