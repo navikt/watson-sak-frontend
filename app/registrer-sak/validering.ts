@@ -74,15 +74,21 @@ export const opprettSakSchema = z
     fraDato: lagPåkrevdDatofelt("Fra dato"),
     tilDato: lagPåkrevdDatofelt("Til dato"),
     kategori: z.enum(kategoriAlternativer, { message: "Velg kategori" }),
-    misbruktype: z.string().optional(),
-    merking: z.string().optional(),
+    misbruktype: z
+      .string()
+      .refine((val) => {
+        const alleMisbrukstyper = Object.values(misbrukstypePerKategori).flat();
+        return !val || alleMisbrukstyper.includes(val);
+      }, "Ugyldig misbruktype")
+      .optional(),
+    merking: z.enum(merkingAlternativer).optional(),
     kilde: z.enum(kildeAlternativer, { message: "Velg kilde" }),
     enhet: z.enum(enhetAlternativer, { message: "Velg enhet" }),
-    caBeløp: z.preprocess(
-      (verdi) =>
-        verdi === "" || verdi === null || verdi === undefined ? undefined : Number(verdi),
-      z.number().positive("Ca beløp må være et positivt tall").optional(),
-    ),
+    caBeløp: z.preprocess((verdi) => {
+      if (verdi === "" || verdi === null || verdi === undefined) return undefined;
+      const tall = Number(verdi);
+      return Number.isFinite(tall) ? tall : verdi;
+    }, z.number({ message: "Ca beløp må være et gyldig tall" }).positive("Ca beløp må være et positivt tall").optional()),
     organisasjonsnummer: z
       .string()
       .regex(/^\d{9}$/, "Organisasjonsnummer må bestå av 9 siffer")

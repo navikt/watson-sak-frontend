@@ -70,13 +70,18 @@ describe("opprettSakSchema", () => {
       "DOKUMENTFALSK",
       "ANNET",
     ]) {
+      const misbrukstypeForKategori: Record<string, string> = {
+        BEHANDLER: "Behandler §25-7",
+        ARBEID: "Hvit inntekt",
+        SAMLIV: "Skjult samliv",
+        UTLAND: "Innenfor EØS",
+        IDENTITET: "Identitetsmisbruk",
+        TILTAK: "Misbruk av tiltaksplass",
+      };
       const resultat = opprettSakSchema.safeParse({
         ...gyldigSkjema,
         kategori,
-        misbruktype:
-          kategori in { BEHANDLER: 1, ARBEID: 1, SAMLIV: 1, UTLAND: 1, IDENTITET: 1, TILTAK: 1 }
-            ? "testtype"
-            : undefined,
+        misbruktype: misbrukstypeForKategori[kategori],
       });
       expect(resultat.success).toBe(true);
     }

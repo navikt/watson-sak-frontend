@@ -3,7 +3,6 @@ import {
   BodyShort,
   Button,
   DatePicker,
-  FileUpload,
   Heading,
   HStack,
   Loader,
@@ -14,7 +13,6 @@ import {
   UNSAFE_Combobox,
   VStack,
 } from "@navikt/ds-react";
-import type { FileObject } from "@navikt/ds-react";
 import { PersonIcon } from "@navikt/aksel-icons";
 import { PageBlock } from "@navikt/ds-react/Page";
 import { useState } from "react";
@@ -68,7 +66,6 @@ export default function OpprettSakSide() {
   const [valgteYtelser, setValgteYtelser] = useState<string[]>([]);
   const [valgtKategori, setValgtKategori] = useState<string>("");
   const [søkeFnr, setSøkeFnr] = useState("");
-  const [valgteFiler, setValgteFiler] = useState<FileObject[]>([]);
 
   const personFetcher = useFetcher<
     PersonOppslagResultat | { person: null; eksisterendeSaker: [] } | { feil: string }
@@ -101,7 +98,7 @@ export default function OpprettSakSide() {
 
           {/* Personoppslag */}
           <personFetcher.Form
-            method="get"
+            method="post"
             action={RouteConfig.API.PERSON_OPPSLAG}
             aria-label="Søk etter person"
             className="mb-6"
@@ -116,6 +113,7 @@ export default function OpprettSakSide() {
               htmlSize={20}
               autoComplete="off"
               inputMode="numeric"
+              disabled={lasterPerson}
             >
               <Search.Button
                 type="submit"
@@ -211,7 +209,11 @@ export default function OpprettSakSide() {
               {/* Skjema */}
               <Form method="post" aria-label="Grunnleggende saksinformasjon">
                 {/* Personident sendes som hidden felt */}
-                <input type="hidden" name="personIdent" value={søkeFnr.replace(/\s/g, "")} />
+                <input
+                  type="hidden"
+                  name="personIdent"
+                  value={person.personnummer.replace(/\s/g, "")}
+                />
 
                 <VStack gap="space-40">
                   <Heading level="2" size="medium">
@@ -350,36 +352,6 @@ export default function OpprettSakSide() {
                       autoComplete="off"
                     />
                   </HStack>
-
-                  {/* Filopplaster */}
-                  {/* TODO: Filer sendes foreløpig ikke til serveren – backend-endepunkt for
-                      filopplasting er ikke implementert ennå. Komponenten er en placeholder. */}
-                  <VStack gap="space-2" className="max-w-[500px]">
-                    <FileUpload.Dropzone
-                      label="Filopplaster (valgfritt)"
-                      description="Legg til eventuelle vedlegg"
-                      accept=".pdf,.doc,.docx,.png,.jpg"
-                      onSelect={(filer) => setValgteFiler((prev) => [...prev, ...filer])}
-                      multiple
-                    />
-                    {valgteFiler.length > 0 && (
-                      <VStack gap="space-1" as="ul" aria-label="Valgte filer">
-                        {valgteFiler.map((fileObject, index) => (
-                          <FileUpload.Item
-                            key={index}
-                            as="li"
-                            file={fileObject.file}
-                            status="idle"
-                            button={{
-                              action: "delete",
-                              onClick: () =>
-                                setValgteFiler((prev) => prev.filter((_, i) => i !== index)),
-                            }}
-                          />
-                        ))}
-                      </VStack>
-                    )}
-                  </VStack>
 
                   {/* Submit */}
                   <HStack justify="end">

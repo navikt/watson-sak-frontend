@@ -1,9 +1,9 @@
 import { slaOppPerson } from "./person-oppslag.mock.server";
 import { skalBrukeMockdata } from "~/config/env.server";
 
-export function loader({ request }: { request: Request }) {
-  const url = new URL(request.url);
-  const fnr = (url.searchParams.get("fnr") ?? "").replace(/\s/g, "");
+export async function action({ request }: { request: Request }) {
+  const formData = await request.formData();
+  const fnr = ((formData.get("fnr") as string) ?? "").replace(/\s/g, "");
 
   if (!fnr || !/^\d{11}$/.test(fnr)) {
     return Response.json({ feil: "Ugyldig fødselsnummer" }, { status: 400 });
