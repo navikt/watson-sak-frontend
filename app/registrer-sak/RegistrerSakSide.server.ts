@@ -6,11 +6,13 @@ import type { OpprettKontrollsakRequest } from "./api.server";
 import type { Route } from "./+types/RegistrerSakSide.route";
 import { opprettKontrollsak } from "./api.server";
 import {
+  enhetAlternativer,
   kategoriAlternativer,
   kildeAlternativer,
-  prioritetAlternativer,
-  registrerSakSchema,
-  type RegistrerSakSkjema,
+  merkingAlternativer,
+  misbrukstypePerKategori,
+  opprettSakSchema,
+  type OpprettSakSkjema,
 } from "./validering";
 
 function hentMottakEnhet(organisasjoner: string) {
@@ -29,7 +31,7 @@ function hentMottakEnhet(organisasjoner: string) {
   return førsteEnhet;
 }
 
-function byggYtelser(ytelser: RegistrerSakSkjema["ytelser"], fraDato: string, tilDato: string) {
+function byggYtelser(ytelser: OpprettSakSkjema["ytelser"], fraDato: string, tilDato: string) {
   return ytelser.map((ytelse) => ({
     type: ytelse,
     periodeFra: fraDato,
@@ -37,30 +39,12 @@ function byggYtelser(ytelser: RegistrerSakSkjema["ytelser"], fraDato: string, ti
   }));
 }
 
-function byggAvsender(data: RegistrerSakSkjema) {
-  if (
-    !data.avsenderNavn &&
-    !data.avsenderTelefon &&
-    !data.avsenderAdresse &&
-    !data.avsenderAnonym
-  ) {
-    return null;
-  }
-
-  return {
-    navn: data.avsenderNavn,
-    telefon: data.avsenderTelefon,
-    adresse: data.avsenderAdresse,
-    anonym: data.avsenderAnonym,
-  };
-}
-
 export function byggOpprettKontrollsakPayload({
   skjema,
   navIdent,
   mottakEnhet,
 }: {
-  skjema: RegistrerSakSkjema;
+  skjema: OpprettSakSkjema;
   navIdent: string;
   mottakEnhet: string;
 }): OpprettKontrollsakRequest {
@@ -70,15 +54,14 @@ export function byggOpprettKontrollsakPayload({
     mottakEnhet,
     mottakSaksbehandler: navIdent,
     kategori: skjema.kategori,
-    prioritet: skjema.prioritet,
+    prioritet: "NORMAL",
+    misbruktype: skjema.misbruktype,
+    merking: skjema.merking,
     ytelser: byggYtelser(skjema.ytelser, skjema.fraDato, skjema.tilDato),
-    bakgrunn: {
-      kilde: skjema.kilde,
-      innhold: skjema.bakgrunn,
-      avsender: byggAvsender(skjema),
-      vedlegg: [],
-      tilleggsopplysninger: null,
-    },
+    enhet: skjema.enhet,
+    kilde: skjema.kilde,
+    caBeløp: skjema.caBeløp,
+    organisasjonsnummer: skjema.organisasjonsnummer || undefined,
   };
 }
 
@@ -86,7 +69,9 @@ export function loader() {
   return {
     ytelser: mockYtelser,
     kategorier: kategoriAlternativer,
-    prioriteringer: prioritetAlternativer,
+    misbrukstypePerKategori,
+    merkinger: merkingAlternativer,
+    enheter: enhetAlternativer,
     kilder: kildeAlternativer,
   };
 }
@@ -100,16 +85,15 @@ export async function action({ request }: Route.ActionArgs) {
     fraDato: formData.get("fraDato") || undefined,
     tilDato: formData.get("tilDato") || undefined,
     kategori: formData.get("kategori"),
-    prioritet: formData.get("prioritet"),
+    misbruktype: formData.get("misbruktype") || undefined,
+    merking: formData.get("merking") || undefined,
     kilde: formData.get("kilde"),
-    bakgrunn: formData.get("bakgrunn"),
-    avsenderNavn: formData.get("avsenderNavn") || undefined,
-    avsenderTelefon: formData.get("avsenderTelefon") || undefined,
-    avsenderAdresse: formData.get("avsenderAdresse") || undefined,
-    avsenderAnonym: formData.get("avsenderAnonym") === "on",
+    enhet: formData.get("enhet"),
+    caBeløp: formData.get("caBeløp") || undefined,
+    organisasjonsnummer: formData.get("organisasjonsnummer") || undefined,
   };
 
-  const resultat = registrerSakSchema.safeParse(rådata);
+  const resultat = opprettSakSchema.safeParse(rådata);
 
   if (!resultat.success) {
     return { feil: resultat.error.flatten().fieldErrors };

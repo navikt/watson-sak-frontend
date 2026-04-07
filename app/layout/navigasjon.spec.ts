@@ -6,7 +6,7 @@ const sider = [
   { lenketekst: "Dashboard", sti: "/", tittel: /Watson Sak/ },
   { lenketekst: "Mine saker", sti: "/mine-saker", tittel: /Mine saker/ },
   { lenketekst: "Fordeling", sti: "/fordeling", tittel: /Fordeling/ },
-  { lenketekst: "Registrer sak", sti: "/registrer-sak", tittel: /Registrer sak/ },
+  { lenketekst: "Opprett sak", sti: "/registrer-sak", tittel: /Opprett sak/ },
   { lenketekst: "Statistikk", sti: "/statistikk", tittel: /Statistikk/ },
 ];
 

@@ -1,6 +1,7 @@
 import { skalBrukeMockdata } from "~/config/env.server";
 import { resetMockSaker } from "~/fordeling/mock-data.server";
 import { resetMockMineSaker } from "~/mine-saker/mock-data.server";
+import { resetMockPersonOppslag } from "~/registrer-sak/person-oppslag.mock.server";
 import { resetHistorikk } from "~/saker/historikk/mock-data.server";
 import { resetMockVarsler } from "~/varsler/mock-data.server";
 
@@ -17,6 +18,7 @@ export function action() {
   resetMockMineSaker();
   resetHistorikk();
   resetMockVarsler();
+  resetMockPersonOppslag();
 
   return Response.json({ ok: true });
 }

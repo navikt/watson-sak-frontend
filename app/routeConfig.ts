@@ -24,5 +24,6 @@ export const RouteConfig = {
     VERSION: "/api/version",
     PREFERENCES: "/api/preferences",
     RESET_MOCK_DATA: "/api/reset-mock-data",
+    PERSON_OPPSLAG: "/api/registrer-sak/person-oppslag",
   },
 };

@@ -27,7 +27,7 @@ const lenker: Lenke[] = [
   { to: RouteConfig.FORDELING, label: "Fordeling", icon: TasklistIcon },
   {
     to: RouteConfig.REGISTRER_SAK,
-    label: "Registrer sak",
+    label: "Opprett sak",
     icon: PlusCircleIcon,
   },
   { to: RouteConfig.STATISTIKK, label: "Statistikk", icon: BarChartIcon },
