@@ -30,11 +30,11 @@ export function getPeriodeText(sak: KontrollsakResponse): string | null {
 }
 
 export function getKategoriText(sak: KontrollsakResponse): string | null {
-  return formaterKategori(sak.kategori as never);
+  return formaterKategori(sak.kategori);
 }
 
 export function getStatusVariantForSak(sak: KontrollsakResponse) {
-  return hentKontrollsakStatusVariant(sak.status as never);
+  return hentKontrollsakStatusVariant(sak.status);
 }
 
 export function getSaksenhet(sak: KontrollsakResponse): string {

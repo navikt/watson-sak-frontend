@@ -67,10 +67,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     throw new Response("Sak ikke funnet", { status: 404 });
   }
 
-  const data = resultat.data;
   sak.status = "TIL_FORVALTNING";
-
-  void data;
   leggTilHendelse(sak, "VIDERESENDT_TIL_NAY_NFP");
 
   return redirect(RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id)));

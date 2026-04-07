@@ -1,16 +1,12 @@
-import type { KontrollsakResponse, KontrollsakYtelse } from "./types.backend";
+import type {
+  KontrollsakKategori,
+  KontrollsakKilde,
+  KontrollsakResponse,
+  KontrollsakStatus,
+  KontrollsakYtelse,
+} from "./types.backend";
 
-export type KontrollsakStatus =
-  | "OPPRETTET"
-  | "AVKLART"
-  | "UTREDES"
-  | "TIL_FORVALTNING"
-  | "HENLAGT"
-  | "AVSLUTTET";
-
-type KontrollsakKategori = "UDEFINERT" | "FEILUTBETALING" | "MISBRUK" | "OPPFØLGING";
-
-type KontrollsakKilde = "INTERN" | "EKSTERN" | "ANONYM_TIPS";
+export type { KontrollsakStatus };
 
 type StatusVariant = "info" | "warning" | "success" | "neutral";
 
@@ -94,7 +90,7 @@ export function getPersonIdent(sak: KontrollsakResponse): string {
 }
 
 export function getStatus(sak: KontrollsakResponse): string {
-  return formaterStatus(sak.status as KontrollsakStatus);
+  return formaterStatus(sak.status);
 }
 
 export function getYtelseTyper(sak: KontrollsakResponse): string[] {
@@ -106,7 +102,7 @@ export function getBeskrivelse(sak: KontrollsakResponse): string | null {
 }
 
 export function getKildeText(sak: KontrollsakResponse): string {
-  return formaterKilde(sak.bakgrunn?.kilde as KontrollsakKilde | null | undefined);
+  return formaterKilde(sak.bakgrunn?.kilde);
 }
 
 export function getKontaktinformasjon(sak: KontrollsakResponse) {

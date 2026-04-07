@@ -112,3 +112,6 @@ export const kontrollsakHendelseResponseSchema = z.object({
 export type KontrollsakYtelse = z.infer<typeof kontrollsakYtelseSchema>;
 export type KontrollsakResponse = z.infer<typeof kontrollsakResponseSchema>;
 export type KontrollsakPageResponse = z.infer<typeof kontrollsakPageResponseSchema>;
+export type KontrollsakStatus = z.infer<typeof kontrollsakStatusSchema>;
+export type KontrollsakKategori = z.infer<typeof kontrollsakKategoriSchema>;
+export type KontrollsakKilde = z.infer<typeof kontrollsakKildeSchema>;

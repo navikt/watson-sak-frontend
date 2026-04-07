@@ -54,7 +54,7 @@ import {
   type KontrollsakStatus,
 } from "./visning";
 
-const gyldigeStatuser: Set<string> = new Set<KontrollsakStatus>([
+const gyldigeStatuser = new Set<KontrollsakStatus>([
   "OPPRETTET",
   "AVKLART",
   "UTREDES",
@@ -62,6 +62,10 @@ const gyldigeStatuser: Set<string> = new Set<KontrollsakStatus>([
   "HENLAGT",
   "AVSLUTTET",
 ]);
+
+function erGyldigStatus(verdi: string): verdi is KontrollsakStatus {
+  return gyldigeStatuser.has(verdi as KontrollsakStatus);
+}
 
 function hentDetaljSaker() {
   return hentAlleSaker();
@@ -99,11 +103,11 @@ export async function action({ request, params }: Route.ActionArgs) {
     case "endre_status": {
       const nyStatus = formData.get("status") as string;
 
-      if (!gyldigeStatuser.has(nyStatus)) {
+      if (!erGyldigStatus(nyStatus)) {
         throw data("Ugyldig status", { status: 400 });
       }
 
-      sak.status = nyStatus as KontrollsakStatus;
+      sak.status = nyStatus;
       leggTilHendelse(sak, "STATUS_ENDRET");
       break;
     }
@@ -176,7 +180,7 @@ export default function SakDetaljSide() {
   const kategoriText = getKategoriText(sak);
   const periodeText = getPeriodeText(sak);
   const tags = getTags(sak);
-  const erAktiv = erAktivSakKontrollsak(sak.status as KontrollsakStatus);
+  const erAktiv = erAktivSakKontrollsak(sak.status);
   const saksreferanse = getSaksreferanse(sak.id);
 
   const iconProps = { "aria-hidden": true as const, fontSize: "1.25rem" };

@@ -6,7 +6,7 @@ type Statistikksak = KontrollsakResponse;
 type StatistikkStatus = KontrollsakStatus;
 
 function getStatus(sak: Statistikksak): StatistikkStatus {
-  return sak.status as StatistikkStatus;
+  return sak.status;
 }
 
 function getOpprettet(sak: Statistikksak): string {

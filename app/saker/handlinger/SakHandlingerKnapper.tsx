@@ -2,7 +2,6 @@ import { PersonPencilIcon } from "@navikt/aksel-icons";
 import { Button, Heading, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import type { KontrollsakResponse } from "~/saker/types.backend";
-import type { KontrollsakStatus } from "~/saker/visning";
 import { erAktivSakKontrollsak } from "./tilgjengeligeHandlinger";
 import { TildelSaksbehandlerModal } from "./TildelSaksbehandlerModal";
 
@@ -20,7 +19,7 @@ export function SakHandlingerKnapper({
   seksjoner: _seksjoner,
 }: SakHandlingerKnapperProps) {
   const [åpenModal, setÅpenModal] = useState<ÅpenModal>(null);
-  const erAktiv = erAktivSakKontrollsak(sak.status as KontrollsakStatus);
+  const erAktiv = erAktivSakKontrollsak(sak.status);
 
   if (!erAktiv) return null;
 
