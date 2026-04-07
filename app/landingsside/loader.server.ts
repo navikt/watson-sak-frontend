@@ -1,20 +1,22 @@
 import {
-  mockMineSaker,
+  mockMineKontrollsaker,
   mockMineSakerAvslutningsdatoer,
   mockMineSakerTidligereTipsSakIder,
 } from "~/mine-saker/mock-data.server";
-import { sorterSakerEtterDato } from "~/saker/utils";
+import { getOpprettetDato } from "~/saker/selectors";
 import { hentUlesteVarsler } from "~/varsler/mock-data.server";
 import { beregnDineSakerSiste14Dager } from "./beregninger";
 import { lagVelkomstOppsummering } from "./velkomst";
 
 export function loader() {
-  const mineSaker = sorterSakerEtterDato(mockMineSaker, "nyest").slice(0, 5);
+  const mineSaker = [...mockMineKontrollsaker]
+    .sort((a, b) => getOpprettetDato(b).localeCompare(getOpprettetDato(a)))
+    .slice(0, 5);
   const varsler = hentUlesteVarsler();
-  const velkomstOppsummering = lagVelkomstOppsummering(mockMineSaker);
+  const velkomstOppsummering = lagVelkomstOppsummering(mockMineKontrollsaker);
   const referansedato = new Date().toISOString().split("T")[0];
   const dineSakerSiste14Dager = beregnDineSakerSiste14Dager({
-    saker: mockMineSaker,
+    saker: mockMineKontrollsaker,
     avslutningsdatoer: mockMineSakerAvslutningsdatoer,
     tidligereTipsSakIder: mockMineSakerTidligereTipsSakIder,
     referansedato,

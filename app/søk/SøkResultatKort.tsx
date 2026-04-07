@@ -3,16 +3,19 @@ import { BodyShort, Detail, Heading, HStack, Tag, VStack } from "@navikt/ds-reac
 import { Link } from "react-router";
 import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
-import type { Sak } from "~/saker/typer";
-import { formaterKilde, hentStatusVariant } from "~/saker/utils";
+import { getSaksreferanse } from "~/saker/id";
+import type { KontrollsakResponse } from "~/saker/types.backend";
+import { getKategoriText, getOpprettetDato, getStatusVariantForSak } from "~/saker/selectors";
+import { getBeskrivelse, getKildeText, getPersonIdent, getStatus } from "~/saker/visning";
 import { formaterDato } from "~/utils/date-utils";
 
 interface SøkResultatKortProps {
-  sak: Sak;
+  sak: KontrollsakResponse;
 }
 
 export function SøkResultatKort({ sak }: SøkResultatKortProps) {
-  const detaljSti = RouteConfig.SAKER_DETALJ.replace(":sakId", sak.id);
+  const detaljSti = RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id));
+  const saksreferanse = getSaksreferanse(sak.id);
 
   return (
     <Kort
@@ -23,42 +26,32 @@ export function SøkResultatKort({ sak }: SøkResultatKortProps) {
         <HStack gap="space-4" align="center" justify="space-between">
           <Link to={detaljSti} className="no-underline focus-visible:outline-none">
             <Heading level="2" size="small">
-              Sak {sak.id}
+              Sak {saksreferanse}
             </Heading>
           </Link>
-          <Tag variant={hentStatusVariant(sak.status)} size="small">
-            {sak.status}
+          <Tag variant={getStatusVariantForSak(sak)} size="small">
+            {getStatus(sak)}
           </Tag>
         </HStack>
 
         <HStack gap="space-6" align="center" wrap>
           <HStack gap="space-2" align="center">
             <CalendarIcon aria-hidden fontSize="1rem" />
-            <Detail>{formaterDato(sak.datoInnmeldt)}</Detail>
+            <Detail>{formaterDato(getOpprettetDato(sak))}</Detail>
           </HStack>
-          <Detail>{formaterKilde(sak.kilde)}</Detail>
-          <Detail>Fnr: {sak.fødselsnummer}</Detail>
-          {sak.kategori && (
+          <Detail>{getKildeText(sak)}</Detail>
+          <Detail>Fnr: {getPersonIdent(sak)}</Detail>
+          {getKategoriText(sak) && (
             <HStack gap="space-2" align="center">
               <TagIcon aria-hidden fontSize="1rem" />
-              <Detail>{sak.kategori}</Detail>
+              <Detail>{getKategoriText(sak)}</Detail>
             </HStack>
           )}
         </HStack>
 
-        {sak.tags.length > 0 && (
-          <HStack gap="space-2" wrap>
-            {sak.tags.map((tag) => (
-              <Tag key={tag} variant="neutral" size="xsmall">
-                {tag}
-              </Tag>
-            ))}
-          </HStack>
-        )}
-
-        {sak.beskrivelse && (
+        {getBeskrivelse(sak) && (
           <BodyShort size="small" truncate>
-            {sak.beskrivelse}
+            {getBeskrivelse(sak)}
           </BodyShort>
         )}
       </VStack>

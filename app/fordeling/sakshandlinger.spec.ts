@@ -11,7 +11,7 @@ test.describe("Ufordelte saker – tildeling", () => {
   test("kan tildele sak og få den bort fra listen", async ({ page }) => {
     const radSomSkalTildeles = page.locator("tbody tr").filter({ hasText: "Enslig forsørger" });
     await expect(radSomSkalTildeles).toHaveCount(1);
-    await expect(radSomSkalTildeles).toContainText("Samliv");
+    await expect(radSomSkalTildeles).toContainText("Feilutbetaling");
 
     await radSomSkalTildeles.getByRole("button", { name: "Tildel" }).click();
 

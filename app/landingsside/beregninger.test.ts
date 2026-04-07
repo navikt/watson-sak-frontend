@@ -1,32 +1,43 @@
 import { describe, expect, test } from "vitest";
-import type { Sak } from "~/saker/typer";
+import type { KontrollsakResponse } from "~/saker/types.backend";
 import type { Avslutningsdatoer } from "~/statistikk/mock-data.server";
 import { beregnDineSakerSiste14Dager } from "./beregninger";
 
-function lagSak(overstyringer: Partial<Sak> = {}): Sak {
+function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
-    id: "test-1",
-    datoInnmeldt: "2026-03-01",
-    kilde: "telefon",
-    notat: "Testnotat",
-    fødselsnummer: "12345678901",
-    ytelser: ["Dagpenger"],
-    status: "tips mottatt",
-    seksjon: "Seksjon A",
-    tags: [],
+    id: "ks-1",
+    personIdent: "12345678901",
+    saksbehandler: "Z123456",
+    status: "OPPRETTET",
+    kategori: "FEILUTBETALING",
+    prioritet: "NORMAL",
+    mottakEnhet: "4812",
+    mottakSaksbehandler: "Z654321",
+    ytelser: [
+      {
+        id: "ytelse-1",
+        type: "Dagpenger",
+        periodeFra: "2026-03-18",
+        periodeTil: "2026-03-18",
+      },
+    ],
+    bakgrunn: null,
+    resultat: null,
+    opprettet: "2026-03-18T00:00:00Z",
+    oppdatert: null,
     ...overstyringer,
   };
 }
 
 describe("beregnDineSakerSiste14Dager", () => {
-  test("filtrerer på datoInnmeldt og beregner nøkkeltall for siste 14 dager", () => {
-    const saker: Sak[] = [
-      lagSak({ id: "1", datoInnmeldt: "2026-03-18", status: "under utredning" }),
-      lagSak({ id: "2", datoInnmeldt: "2026-03-10", status: "tips avklart" }),
-      lagSak({ id: "3", datoInnmeldt: "2026-03-09", status: "videresendt til nay/nfp" }),
-      lagSak({ id: "4", datoInnmeldt: "2026-03-08", status: "henlagt" }),
-      lagSak({ id: "5", datoInnmeldt: "2026-03-07", status: "avsluttet" }),
-      lagSak({ id: "6", datoInnmeldt: "2026-02-20", status: "tips avklart" }),
+  test("filtrerer på opprettet og beregner nøkkeltall for siste 14 dager", () => {
+    const saker = [
+      lagKontrollsak({ id: "1", opprettet: "2026-03-18T00:00:00Z", status: "UTREDES" }),
+      lagKontrollsak({ id: "2", opprettet: "2026-03-10T00:00:00Z", status: "AVKLART" }),
+      lagKontrollsak({ id: "3", opprettet: "2026-03-09T00:00:00Z", status: "TIL_FORVALTNING" }),
+      lagKontrollsak({ id: "4", opprettet: "2026-03-08T00:00:00Z", status: "HENLAGT" }),
+      lagKontrollsak({ id: "5", opprettet: "2026-03-07T00:00:00Z", status: "AVSLUTTET" }),
+      lagKontrollsak({ id: "6", opprettet: "2026-02-20T00:00:00Z", status: "AVKLART" }),
     ];
     const avslutningsdatoer: Avslutningsdatoer = {
       "4": "2026-03-12",
@@ -51,9 +62,9 @@ describe("beregnDineSakerSiste14Dager", () => {
   });
 
   test("returnerer null for snitt behandlingstid når ingen avsluttede eller henlagte saker finnes", () => {
-    const saker: Sak[] = [
-      lagSak({ id: "1", datoInnmeldt: "2026-03-18", status: "under utredning" }),
-      lagSak({ id: "2", datoInnmeldt: "2026-03-10", status: "tips avklart" }),
+    const saker = [
+      lagKontrollsak({ id: "1", opprettet: "2026-03-18T00:00:00Z", status: "UTREDES" }),
+      lagKontrollsak({ id: "2", opprettet: "2026-03-10T00:00:00Z", status: "AVKLART" }),
     ];
 
     const resultat = beregnDineSakerSiste14Dager({
@@ -66,5 +77,37 @@ describe("beregnDineSakerSiste14Dager", () => {
     expect(resultat.snittBehandlingstidPerSak).toBeNull();
     expect(resultat.antallHenlagteSaker).toBe(0);
     expect(resultat.antallHenlagteTips).toBe(0);
+  });
+
+  test("bruker backend opprettet og backend-status for kontrollsaker", () => {
+    const saker = [
+      lagKontrollsak({ id: "ks-1", opprettet: "2026-03-18T00:00:00Z", status: "UTREDES" }),
+      lagKontrollsak({ id: "ks-2", opprettet: "2026-03-10T00:00:00Z", status: "AVKLART" }),
+      lagKontrollsak({ id: "ks-3", opprettet: "2026-03-09T00:00:00Z", status: "TIL_FORVALTNING" }),
+      lagKontrollsak({ id: "ks-4", opprettet: "2026-03-08T00:00:00Z", status: "HENLAGT" }),
+      lagKontrollsak({ id: "ks-5", opprettet: "2026-03-07T00:00:00Z", status: "AVSLUTTET" }),
+      lagKontrollsak({ id: "ks-6", opprettet: "2026-02-20T00:00:00Z", status: "AVKLART" }),
+    ];
+
+    const avslutningsdatoer: Avslutningsdatoer = {
+      "ks-4": "2026-03-12",
+      "ks-5": "2026-03-13",
+    };
+
+    const resultat = beregnDineSakerSiste14Dager({
+      saker,
+      avslutningsdatoer,
+      tidligereTipsSakIder: ["ks-4"],
+      referansedato: "2026-03-18",
+    });
+
+    expect(resultat).toEqual({
+      antallSakerJobbetMed: 5,
+      antallTipsAvklart: 1,
+      antallSendtTilNayNfp: 1,
+      snittBehandlingstidPerSak: 5,
+      antallHenlagteSaker: 1,
+      antallHenlagteTips: 1,
+    });
   });
 });

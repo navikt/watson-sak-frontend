@@ -51,7 +51,11 @@ describe("Fordeling mapper", () => {
   });
 
   it("bruker trygg fallback for ukjent kategori", () => {
-    expect(mapKontrollsakTilFordelingSak(lagKontrollsak({ kategori: "UVENTET" }))).toEqual({
+    expect(
+      mapKontrollsakTilFordelingSak(
+        lagKontrollsak({ kategori: "UVENTET" as KontrollsakResponse["kategori"] }),
+      ),
+    ).toEqual({
       id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
       opprettetDato: "2026-03-20",
       kategori: "Ukjent kategori",

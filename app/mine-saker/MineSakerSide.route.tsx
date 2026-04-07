@@ -3,10 +3,10 @@ import { PageBlock } from "@navikt/ds-react/Page";
 import { useLoaderData } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { MineSakerInnhold } from "./MineSakerInnhold";
-import { mockMineSaker } from "./mock-data.server";
+import { mockMineKontrollsaker } from "./mock-data.server";
 
 export function loader() {
-  return { saker: mockMineSaker };
+  return { saker: mockMineKontrollsaker };
 }
 
 export default function MineSakerSide() {

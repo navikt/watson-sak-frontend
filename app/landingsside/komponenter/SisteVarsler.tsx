@@ -4,6 +4,7 @@ import { Link as RouterLink } from "react-router";
 import { BellIcon, InformationSquareIcon } from "@navikt/aksel-icons";
 import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
+import { getSaksreferanse } from "~/saker/id";
 import type { Varsel } from "~/varsler/typer";
 
 interface SisteVarslerProps {
@@ -53,7 +54,10 @@ export function SisteVarsler({
                       <HStack gap="space-4" justify="end">
                         <Button
                           as={RouterLink}
-                          to={RouteConfig.SAKER_DETALJ.replace(":sakId", varsel.sakId)}
+                          to={RouteConfig.SAKER_DETALJ.replace(
+                            ":sakId",
+                            getSaksreferanse(varsel.sakId),
+                          )}
                           size="small"
                           data-color="accent"
                         >

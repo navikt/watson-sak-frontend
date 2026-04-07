@@ -4,7 +4,7 @@ import { skalBrukeMockdata } from "~/config/env.server";
 import type { Route } from "./+types/FordelingSide.route";
 import { hentKontrollsakerForFordeling, tildelKontrollsak } from "./api.server";
 import { mapKontrollsakTilFordelingSak, erUfordeltKontrollsak } from "./mapper";
-import { mockSaker } from "./mock-data.server";
+import { mockKontrollsaker } from "./mock-data.server";
 
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
@@ -27,13 +27,13 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   if (skalBrukeMockdata) {
-    const sak = mockSaker.find((eksisterendeSak) => eksisterendeSak.id === sakId);
+    const kontrollsak = mockKontrollsaker.find((eksisterendeSak) => eksisterendeSak.id === sakId);
 
-    if (!sak) {
+    if (!kontrollsak) {
       throw data("Sak ikke funnet", { status: 404 });
     }
 
-    sak.status = "under utredning";
+    kontrollsak.status = "UTREDES";
     return { ok: true };
   }
 
@@ -48,12 +48,5 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   return kontrollsaker
     ? kontrollsaker.items.filter(erUfordeltKontrollsak).map(mapKontrollsakTilFordelingSak)
-    : mockSaker
-        .filter((sak) => sak.status === "tips mottatt" || sak.status === "tips avklart")
-        .map((sak) => ({
-          id: sak.id,
-          opprettetDato: sak.datoInnmeldt,
-          kategori: sak.kategori ?? null,
-          ytelser: sak.ytelser,
-        }));
+    : mockKontrollsaker.filter(erUfordeltKontrollsak).map(mapKontrollsakTilFordelingSak);
 }

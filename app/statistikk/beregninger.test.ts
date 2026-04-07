@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import type { Sak } from "~/saker/typer";
+import type { KontrollsakResponse } from "~/saker/types.backend";
 import type { Avslutningsdatoer } from "./mock-data.server";
 import {
   beregnAntallPerSeksjon,
@@ -9,41 +9,51 @@ import {
   beregnFordelingPerYtelse,
 } from "./beregninger";
 
-function lagSak(overstyringer: Partial<Sak> = {}): Sak {
+function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
-    id: "test-1",
-    datoInnmeldt: "2025-01-01",
-    kilde: "telefon",
-    notat: "Testnotat",
-    fødselsnummer: "12345678901",
-    ytelser: ["Dagpenger"],
-    status: "tips mottatt",
-    seksjon: "Seksjon A",
-    tags: [],
+    id: "ks-1",
+    personIdent: "12345678901",
+    saksbehandler: "Z123456",
+    status: "OPPRETTET",
+    kategori: "FEILUTBETALING",
+    prioritet: "NORMAL",
+    mottakEnhet: "Seksjon A",
+    mottakSaksbehandler: "Z654321",
+    ytelser: [
+      {
+        id: "ytelse-1",
+        type: "Dagpenger",
+        periodeFra: "2025-01-01",
+        periodeTil: "2025-01-31",
+      },
+    ],
+    bakgrunn: null,
+    resultat: null,
+    opprettet: "2025-01-01T00:00:00Z",
+    oppdatert: null,
     ...overstyringer,
   };
 }
 
 describe("beregnAntallPerStatus", () => {
   test("teller riktig antall per status", () => {
-    const saker: Sak[] = [
-      lagSak({ id: "1", status: "tips mottatt" }),
-      lagSak({ id: "2", status: "tips mottatt" }),
-      lagSak({ id: "3", status: "under utredning" }),
-      lagSak({ id: "4", status: "avsluttet" }),
-      lagSak({ id: "5", status: "henlagt" }),
+    const saker = [
+      lagKontrollsak({ id: "1", status: "OPPRETTET" }),
+      lagKontrollsak({ id: "2", status: "OPPRETTET" }),
+      lagKontrollsak({ id: "3", status: "UTREDES" }),
+      lagKontrollsak({ id: "4", status: "AVSLUTTET" }),
+      lagKontrollsak({ id: "5", status: "HENLAGT" }),
     ];
 
     const resultat = beregnAntallPerStatus(saker);
 
     expect(resultat).toEqual({
-      "tips mottatt": 2,
-      "tips avklart": 0,
-      "under utredning": 1,
-      "videresendt til nay/nfp": 0,
-      politianmeldt: 0,
-      avsluttet: 1,
-      henlagt: 1,
+      OPPRETTET: 2,
+      AVKLART: 0,
+      UTREDES: 1,
+      TIL_FORVALTNING: 0,
+      AVSLUTTET: 1,
+      HENLAGT: 1,
     });
   });
 
@@ -51,23 +61,34 @@ describe("beregnAntallPerStatus", () => {
     const resultat = beregnAntallPerStatus([]);
 
     expect(resultat).toEqual({
-      "tips mottatt": 0,
-      "tips avklart": 0,
-      "under utredning": 0,
-      "videresendt til nay/nfp": 0,
-      politianmeldt: 0,
-      avsluttet: 0,
-      henlagt: 0,
+      OPPRETTET: 0,
+      AVKLART: 0,
+      UTREDES: 0,
+      TIL_FORVALTNING: 0,
+      AVSLUTTET: 0,
+      HENLAGT: 0,
     });
+  });
+
+  test("mapper backend-statuser direkte", () => {
+    const resultat = beregnAntallPerStatus([
+      lagKontrollsak({ id: "ks-1", status: "OPPRETTET" }),
+      lagKontrollsak({ id: "ks-2", status: "UTREDES" }),
+      lagKontrollsak({ id: "ks-3", status: "AVSLUTTET" }),
+    ]);
+
+    expect(resultat.OPPRETTET).toBe(1);
+    expect(resultat.UTREDES).toBe(1);
+    expect(resultat.AVSLUTTET).toBe(1);
   });
 });
 
 describe("beregnBehandlingstid", () => {
   test("beregner riktig min, median, gjennomsnitt og maks", () => {
-    const saker: Sak[] = [
-      lagSak({ id: "1", status: "avsluttet", datoInnmeldt: "2025-01-01" }),
-      lagSak({ id: "2", status: "avsluttet", datoInnmeldt: "2025-01-01" }),
-      lagSak({ id: "3", status: "avsluttet", datoInnmeldt: "2025-01-01" }),
+    const saker = [
+      lagKontrollsak({ id: "1", status: "AVSLUTTET", opprettet: "2025-01-01T00:00:00Z" }),
+      lagKontrollsak({ id: "2", status: "AVSLUTTET", opprettet: "2025-01-01T00:00:00Z" }),
+      lagKontrollsak({ id: "3", status: "AVSLUTTET", opprettet: "2025-01-01T00:00:00Z" }),
     ];
     const avslutningsdatoer: Avslutningsdatoer = {
       "1": "2025-01-11", // 10 dager
@@ -87,9 +108,9 @@ describe("beregnBehandlingstid", () => {
   });
 
   test("beregner median for partall antall saker", () => {
-    const saker: Sak[] = [
-      lagSak({ id: "1", status: "avsluttet", datoInnmeldt: "2025-01-01" }),
-      lagSak({ id: "2", status: "avsluttet", datoInnmeldt: "2025-01-01" }),
+    const saker = [
+      lagKontrollsak({ id: "1", status: "AVSLUTTET", opprettet: "2025-01-01T00:00:00Z" }),
+      lagKontrollsak({ id: "2", status: "AVSLUTTET", opprettet: "2025-01-01T00:00:00Z" }),
     ];
     const avslutningsdatoer: Avslutningsdatoer = {
       "1": "2025-01-11", // 10 dager
@@ -102,7 +123,9 @@ describe("beregnBehandlingstid", () => {
   });
 
   test("inkluderer henlagte saker", () => {
-    const saker: Sak[] = [lagSak({ id: "1", status: "henlagt", datoInnmeldt: "2025-01-01" })];
+    const saker = [
+      lagKontrollsak({ id: "1", status: "HENLAGT", opprettet: "2025-01-01T00:00:00Z" }),
+    ];
     const avslutningsdatoer: Avslutningsdatoer = {
       "1": "2025-01-15", // 14 dager
     };
@@ -119,9 +142,9 @@ describe("beregnBehandlingstid", () => {
   });
 
   test("ignorerer saker som ikke er avsluttet/henlagt", () => {
-    const saker: Sak[] = [
-      lagSak({ id: "1", status: "under utredning", datoInnmeldt: "2025-01-01" }),
-      lagSak({ id: "2", status: "avsluttet", datoInnmeldt: "2025-01-01" }),
+    const saker = [
+      lagKontrollsak({ id: "1", status: "UTREDES", opprettet: "2025-01-01T00:00:00Z" }),
+      lagKontrollsak({ id: "2", status: "AVSLUTTET", opprettet: "2025-01-01T00:00:00Z" }),
     ];
     const avslutningsdatoer: Avslutningsdatoer = {
       "2": "2025-01-31", // 30 dager
@@ -138,20 +161,33 @@ describe("beregnBehandlingstid", () => {
   });
 
   test("returnerer null når ingen saker er avsluttet", () => {
-    const saker: Sak[] = [lagSak({ id: "1", status: "under utredning" })];
+    const saker = [lagKontrollsak({ id: "1", status: "UTREDES" })];
     expect(beregnBehandlingstid(saker, {})).toBeNull();
+  });
+
+  test("bruker backend opprettet-felt for kontrollsaker", () => {
+    const saker = [
+      lagKontrollsak({ id: "ks-1", status: "AVSLUTTET", opprettet: "2025-01-01T00:00:00Z" }),
+    ];
+    const avslutningsdatoer: Avslutningsdatoer = {
+      "ks-1": "2025-01-11",
+    };
+
+    const resultat = beregnBehandlingstid(saker, avslutningsdatoer);
+
+    expect(resultat?.gjennomsnitt).toBe(10);
   });
 });
 
 describe("beregnAntallPerSeksjon", () => {
   test("grupperer riktig etter seksjon og sorterer synkende", () => {
-    const saker: Sak[] = [
-      lagSak({ id: "1", seksjon: "Seksjon A" }),
-      lagSak({ id: "2", seksjon: "Seksjon A" }),
-      lagSak({ id: "3", seksjon: "Seksjon B" }),
-      lagSak({ id: "4", seksjon: "Seksjon C" }),
-      lagSak({ id: "5", seksjon: "Seksjon C" }),
-      lagSak({ id: "6", seksjon: "Seksjon C" }),
+    const saker = [
+      lagKontrollsak({ id: "1", mottakEnhet: "Seksjon A" }),
+      lagKontrollsak({ id: "2", mottakEnhet: "Seksjon A" }),
+      lagKontrollsak({ id: "3", mottakEnhet: "Seksjon B" }),
+      lagKontrollsak({ id: "4", mottakEnhet: "Seksjon C" }),
+      lagKontrollsak({ id: "5", mottakEnhet: "Seksjon C" }),
+      lagKontrollsak({ id: "6", mottakEnhet: "Seksjon C" }),
     ];
 
     const resultat = beregnAntallPerSeksjon(saker);
@@ -166,14 +202,43 @@ describe("beregnAntallPerSeksjon", () => {
   test("returnerer tom liste for tom input", () => {
     expect(beregnAntallPerSeksjon([])).toEqual([]);
   });
+
+  test("grupperer backend-saker på mottakEnhet", () => {
+    const resultat = beregnAntallPerSeksjon([
+      lagKontrollsak({ id: "ks-1", mottakEnhet: "4812" }),
+      lagKontrollsak({ id: "ks-2", mottakEnhet: "4812" }),
+      lagKontrollsak({ id: "ks-3", mottakEnhet: "4813" }),
+    ]);
+
+    expect(resultat).toEqual([
+      { navn: "4812", antall: 2 },
+      { navn: "4813", antall: 1 },
+    ]);
+  });
 });
 
 describe("beregnFordelingPerYtelse", () => {
   test("teller ytelser på tvers av saker", () => {
-    const saker: Sak[] = [
-      lagSak({ id: "1", ytelser: ["Dagpenger"] }),
-      lagSak({ id: "2", ytelser: ["Dagpenger", "Sykepenger"] }),
-      lagSak({ id: "3", ytelser: ["Sykepenger"] }),
+    const saker = [
+      lagKontrollsak({
+        id: "1",
+        ytelser: [
+          { id: "y1", type: "Dagpenger", periodeFra: "2025-01-01", periodeTil: "2025-01-31" },
+        ],
+      }),
+      lagKontrollsak({
+        id: "2",
+        ytelser: [
+          { id: "y2", type: "Dagpenger", periodeFra: "2025-01-01", periodeTil: "2025-01-31" },
+          { id: "y3", type: "Sykepenger", periodeFra: "2025-01-01", periodeTil: "2025-01-31" },
+        ],
+      }),
+      lagKontrollsak({
+        id: "3",
+        ytelser: [
+          { id: "y4", type: "Sykepenger", periodeFra: "2025-01-01", periodeTil: "2025-01-31" },
+        ],
+      }),
     ];
 
     const resultat = beregnFordelingPerYtelse(saker);
@@ -185,11 +250,31 @@ describe("beregnFordelingPerYtelse", () => {
   });
 
   test("sorterer synkende etter antall", () => {
-    const saker: Sak[] = [
-      lagSak({ id: "1", ytelser: ["Dagpenger"] }),
-      lagSak({ id: "2", ytelser: ["Sykepenger"] }),
-      lagSak({ id: "3", ytelser: ["Sykepenger"] }),
-      lagSak({ id: "4", ytelser: ["Sykepenger"] }),
+    const saker = [
+      lagKontrollsak({
+        id: "1",
+        ytelser: [
+          { id: "y1", type: "Dagpenger", periodeFra: "2025-01-01", periodeTil: "2025-01-31" },
+        ],
+      }),
+      lagKontrollsak({
+        id: "2",
+        ytelser: [
+          { id: "y2", type: "Sykepenger", periodeFra: "2025-01-01", periodeTil: "2025-01-31" },
+        ],
+      }),
+      lagKontrollsak({
+        id: "3",
+        ytelser: [
+          { id: "y3", type: "Sykepenger", periodeFra: "2025-01-01", periodeTil: "2025-01-31" },
+        ],
+      }),
+      lagKontrollsak({
+        id: "4",
+        ytelser: [
+          { id: "y4", type: "Sykepenger", periodeFra: "2025-01-01", periodeTil: "2025-01-31" },
+        ],
+      }),
     ];
 
     const resultat = beregnFordelingPerYtelse(saker);
@@ -201,15 +286,64 @@ describe("beregnFordelingPerYtelse", () => {
   test("returnerer tom liste for tom input", () => {
     expect(beregnFordelingPerYtelse([])).toEqual([]);
   });
+
+  test("teller backend-ytelser fra objekter", () => {
+    const resultat = beregnFordelingPerYtelse([
+      lagKontrollsak({
+        id: "ks-1",
+        ytelser: [
+          { id: "y1", type: "Dagpenger", periodeFra: "2025-01-01", periodeTil: "2025-01-31" },
+        ],
+      }),
+      lagKontrollsak({
+        id: "ks-2",
+        ytelser: [
+          { id: "y2", type: "Sykepenger", periodeFra: "2025-01-01", periodeTil: "2025-01-31" },
+        ],
+      }),
+      lagKontrollsak({
+        id: "ks-3",
+        ytelser: [
+          { id: "y3", type: "Sykepenger", periodeFra: "2025-01-01", periodeTil: "2025-01-31" },
+        ],
+      }),
+    ]);
+
+    expect(resultat[0]).toEqual({ navn: "Sykepenger", antall: 2 });
+    expect(resultat[1]).toEqual({ navn: "Dagpenger", antall: 1 });
+  });
 });
 
 describe("beregnFordelingPerAntallYtelser", () => {
   test("grupperer saker etter antall ytelser", () => {
-    const saker: Sak[] = [
-      lagSak({ id: "1", ytelser: ["Dagpenger"] }),
-      lagSak({ id: "2", ytelser: ["Dagpenger"] }),
-      lagSak({ id: "3", ytelser: ["Dagpenger", "Sykepenger"] }),
-      lagSak({ id: "4", ytelser: ["Dagpenger", "Sykepenger", "Foreldrepenger"] }),
+    const saker = [
+      lagKontrollsak({
+        id: "1",
+        ytelser: [
+          { id: "y1", type: "Dagpenger", periodeFra: "2025-01-01", periodeTil: "2025-01-31" },
+        ],
+      }),
+      lagKontrollsak({
+        id: "2",
+        ytelser: [
+          { id: "y2", type: "Dagpenger", periodeFra: "2025-01-01", periodeTil: "2025-01-31" },
+        ],
+      }),
+      lagKontrollsak({
+        id: "3",
+        ytelser: [
+          { id: "y3", type: "Dagpenger", periodeFra: "2025-01-01", periodeTil: "2025-01-31" },
+          { id: "y4", type: "Sykepenger", periodeFra: "2025-01-01", periodeTil: "2025-01-31" },
+        ],
+      }),
+      lagKontrollsak({
+        id: "4",
+        ytelser: [
+          { id: "y5", type: "Dagpenger", periodeFra: "2025-01-01", periodeTil: "2025-01-31" },
+          { id: "y6", type: "Sykepenger", periodeFra: "2025-01-01", periodeTil: "2025-01-31" },
+          { id: "y7", type: "Foreldrepenger", periodeFra: "2025-01-01", periodeTil: "2025-01-31" },
+        ],
+      }),
     ];
 
     const resultat = beregnFordelingPerAntallYtelser(saker);
@@ -222,9 +356,19 @@ describe("beregnFordelingPerAntallYtelser", () => {
   });
 
   test("sorterer stigende etter antall ytelser", () => {
-    const saker: Sak[] = [
-      lagSak({ id: "1", ytelser: ["A", "B", "C"] }),
-      lagSak({ id: "2", ytelser: ["A"] }),
+    const saker = [
+      lagKontrollsak({
+        id: "1",
+        ytelser: [
+          { id: "y1", type: "A", periodeFra: "2025-01-01", periodeTil: "2025-01-31" },
+          { id: "y2", type: "B", periodeFra: "2025-01-01", periodeTil: "2025-01-31" },
+          { id: "y3", type: "C", periodeFra: "2025-01-01", periodeTil: "2025-01-31" },
+        ],
+      }),
+      lagKontrollsak({
+        id: "2",
+        ytelser: [{ id: "y4", type: "A", periodeFra: "2025-01-01", periodeTil: "2025-01-31" }],
+      }),
     ];
 
     const resultat = beregnFordelingPerAntallYtelser(saker);
@@ -235,5 +379,28 @@ describe("beregnFordelingPerAntallYtelser", () => {
 
   test("returnerer tom liste for tom input", () => {
     expect(beregnFordelingPerAntallYtelser([])).toEqual([]);
+  });
+
+  test("grupperer backend-saker etter antall ytelsesobjekter", () => {
+    const resultat = beregnFordelingPerAntallYtelser([
+      lagKontrollsak({
+        id: "ks-1",
+        ytelser: [
+          { id: "y1", type: "Dagpenger", periodeFra: "2025-01-01", periodeTil: "2025-01-31" },
+        ],
+      }),
+      lagKontrollsak({
+        id: "ks-2",
+        ytelser: [
+          { id: "y2", type: "Dagpenger", periodeFra: "2025-01-01", periodeTil: "2025-01-31" },
+          { id: "y3", type: "Sykepenger", periodeFra: "2025-01-01", periodeTil: "2025-01-31" },
+        ],
+      }),
+    ]);
+
+    expect(resultat).toEqual([
+      { navn: "1 ytelse", antall: 1 },
+      { navn: "2 ytelser", antall: 1 },
+    ]);
   });
 });

@@ -27,16 +27,20 @@ test.describe("Ufordelte saker", () => {
   });
 
   test("kan filtrere på kategori og ytelse", async ({ page }) => {
-    await page.getByRole("button", { name: "Samliv" }).click();
+    const feilutbetalingKnapp = page.getByRole("button", { name: "Feilutbetaling" });
+    await feilutbetalingKnapp.click();
+    await expect(feilutbetalingKnapp).toHaveAttribute("aria-pressed", "true");
+
     await page.getByRole("button", { name: "Barnetrygd" }).click();
 
     const rader = page.locator("tbody tr");
+    await expect(rader).not.toHaveCount(0);
     await expect
       .poll(async () => {
         const tekster = await rader.allTextContents();
 
         return tekster.every(
-          (tekst) => tekst.includes("Barnetrygd") && /Samliv|Identitet/.test(tekst),
+          (tekst) => tekst.includes("Barnetrygd") && tekst.includes("Feilutbetaling"),
         );
       })
       .toBe(true);
@@ -46,22 +50,22 @@ test.describe("Ufordelte saker", () => {
     await page.getByRole("button", { name: "2" }).click();
 
     await expect(page.getByRole("button", { name: "2" })).toHaveAttribute("aria-current", "true");
-    const tiltakRad = page.locator("tbody tr").filter({ hasText: "Tiltak" });
-    await expect(tiltakRad).toHaveCount(1);
-    await expect(tiltakRad).toContainText("Foreldrepenger");
+    const oppfølgingRad = page.locator("tbody tr").filter({ hasText: "Oppfølging" });
+    await expect(oppfølgingRad).toHaveCount(1);
+    await expect(oppfølgingRad).toContainText("Foreldrepenger");
   });
 
   test("kan sortere på kategori, ytelse og opprettet", async ({ page }) => {
     const rader = page.locator("tbody tr");
 
     await page.getByRole("button", { name: "Sorter på kategori" }).click();
-    await expect(rader.nth(0)).toContainText("Annet");
-
-    await page.getByRole("button", { name: "Sorter på ytelse" }).click();
-    await expect(rader.nth(0)).toContainText("AAP");
+    await expect(rader.nth(0)).toContainText("Feilutbetaling");
 
     await page.getByRole("button", { name: "Sorter på opprettet" }).click();
     await expect(rader.nth(0)).toContainText("16. feb. 2026");
+
+    await page.getByRole("button", { name: "Sorter på ytelse" }).click();
+    await expect(rader.nth(0)).toContainText("Barnetrygd");
   });
 
   test("er UU-compliant", async ({ page }) => {

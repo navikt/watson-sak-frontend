@@ -3,6 +3,7 @@ import { BodyShort, Button, Modal, Select, VStack } from "@navikt/ds-react";
 import { useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { RouteConfig } from "~/routeConfig";
+import { getSaksreferanse } from "~/saker/id";
 
 interface TildelSaksbehandlerModalProps {
   sakId: string;
@@ -22,6 +23,7 @@ export function TildelSaksbehandlerModal({
   const [valgtSaksbehandler, setValgtSaksbehandler] = useState("");
   const fetcher = useFetcher();
   const modalRef = useRef<HTMLDialogElement>(null);
+  const saksreferanse = getSaksreferanse(sakId);
 
   const erSubmitting = fetcher.state !== "idle";
 
@@ -32,7 +34,7 @@ export function TildelSaksbehandlerModal({
       { handling: "tildel", sakId, saksbehandler: valgtSaksbehandler },
       {
         method: "post",
-        action: submitPath ?? RouteConfig.SAKER_DETALJ.replace(":sakId", sakId),
+        action: submitPath ?? RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),
       },
     );
     setValgtSaksbehandler("");
@@ -57,7 +59,7 @@ export function TildelSaksbehandlerModal({
     >
       <Modal.Body>
         <VStack gap="space-4">
-          <BodyShort>Velg saksbehandler som skal ha ansvar for sak {sakId}.</BodyShort>
+          <BodyShort>Velg saksbehandler som skal ha ansvar for sak {saksreferanse}.</BodyShort>
           <Select
             label="Saksbehandler"
             value={valgtSaksbehandler}

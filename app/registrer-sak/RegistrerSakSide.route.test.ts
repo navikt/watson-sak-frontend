@@ -125,3 +125,61 @@ describe("RegistrerSakSide action", () => {
     ).rejects.toThrow("Ugyldig mottakende enhet: 'Ukjent'. Forventet enhetsnummer (4 sifre).");
   });
 });
+
+describe("byggOpprettKontrollsakPayload", () => {
+  it("mapper skjema til backend payload med bakgrunn og ytelsesperioder", async () => {
+    const { byggOpprettKontrollsakPayload } = await import("./RegistrerSakSide.server");
+
+    expect(
+      byggOpprettKontrollsakPayload({
+        skjema: {
+          personIdent: "12345678901",
+          ytelser: ["Dagpenger", "AAP"],
+          fraDato: "2026-01-01",
+          tilDato: "2026-12-31",
+          kategori: "UDEFINERT",
+          prioritet: "HØY",
+          kilde: "INTERN",
+          bakgrunn: "Bakgrunn for saken",
+          avsenderNavn: "Tipser Testesen",
+          avsenderTelefon: "12345678",
+          avsenderAdresse: "Testveien 1",
+          avsenderAnonym: false,
+        },
+        navIdent: "Z123456",
+        mottakEnhet: "4812",
+      }),
+    ).toEqual({
+      personIdent: "12345678901",
+      saksbehandler: "Z123456",
+      mottakEnhet: "4812",
+      mottakSaksbehandler: "Z123456",
+      kategori: "UDEFINERT",
+      prioritet: "HØY",
+      ytelser: [
+        {
+          type: "Dagpenger",
+          periodeFra: "2026-01-01",
+          periodeTil: "2026-12-31",
+        },
+        {
+          type: "AAP",
+          periodeFra: "2026-01-01",
+          periodeTil: "2026-12-31",
+        },
+      ],
+      bakgrunn: {
+        kilde: "INTERN",
+        innhold: "Bakgrunn for saken",
+        avsender: {
+          navn: "Tipser Testesen",
+          telefon: "12345678",
+          adresse: "Testveien 1",
+          anonym: false,
+        },
+        vedlegg: [],
+        tilleggsopplysninger: null,
+      },
+    });
+  });
+});

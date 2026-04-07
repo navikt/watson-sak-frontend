@@ -7,25 +7,31 @@ import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
 import { hentFilerForSak } from "~/saker/filer/mock-data.server";
 import { leggTilHendelse } from "~/saker/historikk/mock-data.server";
+import { finnSakMedReferanse, getSaksreferanse } from "~/saker/id";
 import { hentJournalposter } from "~/saker/joark/mock-data.server";
 import { SaksinformasjonKort } from "~/saker/komponenter/SaksinformasjonKort";
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
+import { getPersonIdent } from "~/saker/visning";
 import { DokumentVelger } from "~/saker/videresending/DokumentVelger";
 import { OppsummeringSkjema } from "~/saker/videresending/OppsummeringSkjema";
 import { politianmeldelseSkjemaRefinert } from "./typer";
 import type { Route } from "./+types/PolitianmeldelseSide.route";
 
+function hentPolitianmeldbareSaker() {
+  return hentAlleSaker();
+}
+
 export function loader({ params }: Route.LoaderArgs) {
-  const sak = hentAlleSaker().find((s) => s.id === params.sakId);
+  const sak = finnSakMedReferanse(hentPolitianmeldbareSaker(), params.sakId);
   if (!sak) {
     throw new Response("Sak ikke funnet", { status: 404 });
   }
-  if (sak.status !== "under utredning") {
-    throw redirect(RouteConfig.SAKER_DETALJ.replace(":sakId", params.sakId));
+  if (sak.status !== "UTREDES") {
+    throw redirect(RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id)));
   }
 
   const filer = hentFilerForSak(sak.id);
-  const journalposter = hentJournalposter(sak.fødselsnummer);
+  const journalposter = hentJournalposter(getPersonIdent(sak));
 
   return { sak, filer, journalposter };
 }
@@ -54,20 +60,15 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   const sakId = params.sakId;
-  const sak = hentAlleSaker().find((s) => s.id === sakId);
+  const sak = finnSakMedReferanse(hentPolitianmeldbareSaker(), sakId);
   if (!sak) {
     throw new Response("Sak ikke funnet", { status: 404 });
   }
 
-  const data = resultat.data;
-  sak.status = "politianmeldt";
+  sak.status = "TIL_FORVALTNING";
+  leggTilHendelse(sak, "POLITIANMELDT");
 
-  leggTilHendelse(sakId, "politianmeldt", "Ola Nordmann", {
-    til: "Politiet",
-    notat: `Funn: ${data.funn} | Vurdering: ${data.vurdering} | Anbefaling: ${data.anbefaling}`,
-  });
-
-  return redirect(RouteConfig.SAKER_DETALJ.replace(":sakId", sakId));
+  return redirect(RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id)));
 }
 
 export default function PolitianmeldelseSide() {
@@ -81,11 +82,12 @@ export default function PolitianmeldelseSide() {
   const [vurdering, setVurdering] = useState("");
   const [anbefaling, setAnbefaling] = useState("");
 
-  const tilbakeUrl = RouteConfig.SAKER_DETALJ.replace(":sakId", sak.id);
+  const tilbakeUrl = RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id));
+  const saksreferanse = getSaksreferanse(sak.id);
 
   return (
     <Page>
-      <title>{`Politianmeldelse – Sak ${sak.id} – Watson Sak`}</title>
+      <title>{`Politianmeldelse – Sak ${saksreferanse} – Watson Sak`}</title>
       <PageBlock width="lg" gutters className="!mx-0">
         <VStack gap="space-12" className="py-6">
           <VStack gap="space-4">

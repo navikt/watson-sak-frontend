@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   erAktivSak,
+  erAktivSakKontrollsak,
   hentNesteStatus,
+  hentNesteStatusKontrollsak,
   kanPolitianmeldes,
   kanVideresendesTilNayNfp,
 } from "./tilgjengeligeHandlinger";
@@ -115,5 +117,27 @@ describe("kanPolitianmeldes", () => {
 
   it("returnerer false for 'politianmeldt'", () => {
     expect(kanPolitianmeldes("politianmeldt")).toBe(false);
+  });
+});
+
+describe("Kontrollsak-statusregler", () => {
+  it("behandler OPPRETTET som aktiv sak", () => {
+    expect(erAktivSakKontrollsak("OPPRETTET")).toBe(true);
+  });
+
+  it("behandler AVSLUTTET som inaktiv sak", () => {
+    expect(erAktivSakKontrollsak("AVSLUTTET")).toBe(false);
+  });
+
+  it("finner neste status for OPPRETTET", () => {
+    expect(hentNesteStatusKontrollsak("OPPRETTET")).toBe("AVKLART");
+  });
+
+  it("finner neste status for AVKLART", () => {
+    expect(hentNesteStatusKontrollsak("AVKLART")).toBe("UTREDES");
+  });
+
+  it("returnerer null for HENLAGT", () => {
+    expect(hentNesteStatusKontrollsak("HENLAGT")).toBeNull();
   });
 });

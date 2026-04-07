@@ -1,17 +1,30 @@
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
-import type { Sak } from "~/saker/typer";
+import { getSaksreferanse } from "~/saker/id";
+import type { KontrollsakResponse } from "~/saker/types.backend";
+import { getBeskrivelse, getPersonIdent, getYtelseTyper } from "~/saker/visning";
+import { getKategoriText } from "~/saker/selectors";
 
-export function søkSaker(søketekst: string): Sak[] {
+type Søksak = KontrollsakResponse;
+
+export function søkSaker(søketekst: string): Søksak[] {
   const normalisert = søketekst.trim().toLowerCase();
   if (!normalisert) return [];
 
-  const alleSaker = hentAlleSaker();
+  const alleSaker: Søksak[] = hentAlleSaker();
 
   return alleSaker.filter((sak) => {
     if (sak.id.toLowerCase().includes(normalisert)) return true;
-    if (sak.fødselsnummer.includes(normalisert)) return true;
-    if (sak.kategori?.toLowerCase().includes(normalisert)) return true;
-    if (sak.tags.some((tag) => tag.toLowerCase().includes(normalisert))) return true;
+    if (getSaksreferanse(sak.id).toLowerCase().includes(normalisert)) return true;
+    if (getPersonIdent(sak).includes(normalisert)) return true;
+
+    const kategori = getKategoriText(sak);
+    if (kategori?.toLowerCase().includes(normalisert)) return true;
+
+    if (getYtelseTyper(sak).some((ytelse) => ytelse.toLowerCase().includes(normalisert)))
+      return true;
+
+    const beskrivelse = getBeskrivelse(sak);
+    if (beskrivelse?.toLowerCase().includes(normalisert)) return true;
 
     return false;
   });

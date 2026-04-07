@@ -2,6 +2,7 @@ import { redirect } from "react-router";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { mockYtelser } from "~/fordeling/mock-data.server";
 import { RouteConfig } from "~/routeConfig";
+import type { OpprettKontrollsakRequest } from "./api.server";
 import type { Route } from "./+types/RegistrerSakSide.route";
 import { opprettKontrollsak } from "./api.server";
 import {
@@ -54,6 +55,33 @@ function byggAvsender(data: RegistrerSakSkjema) {
   };
 }
 
+export function byggOpprettKontrollsakPayload({
+  skjema,
+  navIdent,
+  mottakEnhet,
+}: {
+  skjema: RegistrerSakSkjema;
+  navIdent: string;
+  mottakEnhet: string;
+}): OpprettKontrollsakRequest {
+  return {
+    personIdent: skjema.personIdent,
+    saksbehandler: navIdent,
+    mottakEnhet,
+    mottakSaksbehandler: navIdent,
+    kategori: skjema.kategori,
+    prioritet: skjema.prioritet,
+    ytelser: byggYtelser(skjema.ytelser, skjema.fraDato, skjema.tilDato),
+    bakgrunn: {
+      kilde: skjema.kilde,
+      innhold: skjema.bakgrunn,
+      avsender: byggAvsender(skjema),
+      vedlegg: [],
+      tilleggsopplysninger: null,
+    },
+  };
+}
+
 export function loader() {
   return {
     ytelser: mockYtelser,
@@ -89,25 +117,15 @@ export async function action({ request }: Route.ActionArgs) {
 
   const innloggetBruker = await hentInnloggetBruker({ request });
   const data = resultat.data;
+  const mottakEnhet = hentMottakEnhet(innloggetBruker.organisasjoner);
 
   await opprettKontrollsak({
     token: innloggetBruker.token,
-    payload: {
-      personIdent: data.personIdent,
-      saksbehandler: innloggetBruker.navIdent,
-      mottakEnhet: hentMottakEnhet(innloggetBruker.organisasjoner),
-      mottakSaksbehandler: innloggetBruker.navIdent,
-      kategori: data.kategori,
-      prioritet: data.prioritet,
-      ytelser: byggYtelser(data.ytelser, data.fraDato, data.tilDato),
-      bakgrunn: {
-        kilde: data.kilde,
-        innhold: data.bakgrunn,
-        avsender: byggAvsender(data),
-        vedlegg: [],
-        tilleggsopplysninger: null,
-      },
-    },
+    payload: byggOpprettKontrollsakPayload({
+      skjema: data,
+      navIdent: innloggetBruker.navIdent,
+      mottakEnhet,
+    }),
   });
 
   return redirect(RouteConfig.INDEX);

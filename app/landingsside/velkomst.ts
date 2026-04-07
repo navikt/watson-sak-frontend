@@ -1,4 +1,4 @@
-import type { Sak } from "~/saker/typer";
+import type { KontrollsakResponse } from "~/saker/types.backend";
 
 interface Oppsummeringsdel {
   antall: number;
@@ -9,12 +9,14 @@ function formaterSakTekst(antall: number, entall: string, flertall: string) {
   return `${antall} ${antall === 1 ? entall : flertall}`;
 }
 
-function velgMestRelevantArbeid(saker: Sak[]): Oppsummeringsdel[] {
-  const antallTipsTilVurdering = saker.filter((sak) => sak.status === "tips mottatt").length;
-  const antallTilUtredning = saker.filter((sak) => sak.status === "under utredning").length;
-  const antallSomVenterPåSvar = saker.filter(
-    (sak) => sak.status === "videresendt til nay/nfp",
-  ).length;
+function getStatus(sak: KontrollsakResponse) {
+  return sak.status;
+}
+
+function velgMestRelevantArbeid(saker: KontrollsakResponse[]): Oppsummeringsdel[] {
+  const antallTipsTilVurdering = saker.filter((sak) => getStatus(sak) === "OPPRETTET").length;
+  const antallTilUtredning = saker.filter((sak) => getStatus(sak) === "UTREDES").length;
+  const antallSomVenterPåSvar = saker.filter((sak) => getStatus(sak) === "TIL_FORVALTNING").length;
 
   const oppsummeringer: Oppsummeringsdel[] = [
     {
@@ -53,7 +55,7 @@ function sammenstillOppsummering(oppsummeringer: Oppsummeringsdel[]) {
   return `Akkurat nå har du ${oppsummeringer[0].tekst} og ${oppsummeringer[1].tekst}.`;
 }
 
-export function lagVelkomstOppsummering(saker: Sak[]) {
+export function lagVelkomstOppsummering(saker: KontrollsakResponse[]) {
   const oppsummeringer = velgMestRelevantArbeid(saker);
 
   return sammenstillOppsummering(oppsummeringer);

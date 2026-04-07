@@ -70,15 +70,15 @@ test.describe("Politianmeldelse – tilgang", () => {
     await resetMockData(page);
   });
 
-  test("politianmeldelse-knappen vises for saker under utredning", async ({ page }) => {
-    await page.goto("/saker/113");
+  test("politianmeldelsesiden er tilgjengelig for saker under utredning", async ({ page }) => {
+    await page.goto("/saker/113/politianmeldelse");
 
-    await expect(page.getByRole("button", { name: "Politianmeldelse" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Opprett politianmeldelse" })).toBeVisible();
   });
 
-  test("politianmeldelse-knappen vises ikke for saker med annen status", async ({ page }) => {
-    await page.goto("/saker/101");
+  test("politianmeldelsesiden redirecter for saker med annen status", async ({ page }) => {
+    await page.goto("/saker/101/politianmeldelse");
 
-    await expect(page.getByRole("button", { name: "Politianmeldelse" })).not.toBeVisible();
+    await expect(page).toHaveURL(/\/saker\/101$/);
   });
 });

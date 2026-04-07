@@ -1,45 +1,27 @@
-import {
-  ArrowForwardIcon,
-  ArrowRightIcon,
-  GavelIcon,
-  PaperplaneIcon,
-  PersonPencilIcon,
-  XMarkOctagonIcon,
-} from "@navikt/aksel-icons";
+import { PersonPencilIcon } from "@navikt/aksel-icons";
 import { Button, Heading, VStack } from "@navikt/ds-react";
 import { useState } from "react";
-import { Link } from "react-router";
-import { RouteConfig } from "~/routeConfig";
-import type { Sak } from "~/saker/typer";
-import { EndreStatusModal } from "./EndreStatusModal";
-import { HenleggModal } from "./HenleggModal";
-import {
-  erAktivSak,
-  hentNesteStatus,
-  kanPolitianmeldes,
-  kanVideresendesTilNayNfp,
-} from "./tilgjengeligeHandlinger";
+import type { KontrollsakResponse } from "~/saker/types.backend";
+import { erAktivSakKontrollsak } from "./tilgjengeligeHandlinger";
 import { TildelSaksbehandlerModal } from "./TildelSaksbehandlerModal";
-import { VideresendTilSeksjonModal } from "./VideresendTilSeksjonModal";
 
 interface SakHandlingerKnapperProps {
-  sak: Sak;
+  sak: KontrollsakResponse;
   saksbehandlere: string[];
   seksjoner: string[];
 }
 
-type ÅpenModal = "tildel" | "videresend" | "status" | "henlegg" | null;
+type ÅpenModal = "tildel" | null;
 
 export function SakHandlingerKnapper({
   sak,
   saksbehandlere,
-  seksjoner,
+  seksjoner: _seksjoner,
 }: SakHandlingerKnapperProps) {
   const [åpenModal, setÅpenModal] = useState<ÅpenModal>(null);
+  const erAktiv = erAktivSakKontrollsak(sak.status);
 
-  if (!erAktivSak(sak.status)) return null;
-
-  const nesteStatus = hentNesteStatus(sak.status);
+  if (!erAktiv) return null;
 
   return (
     <>
@@ -55,80 +37,12 @@ export function SakHandlingerKnapper({
         >
           Tildel saksbehandler
         </Button>
-        <Button
-          variant="secondary"
-          size="small"
-          icon={<ArrowForwardIcon aria-hidden />}
-          onClick={() => setÅpenModal("videresend")}
-        >
-          Videresend til seksjon
-        </Button>
-        {kanVideresendesTilNayNfp(sak.status) && (
-          <Button
-            as={Link}
-            to={RouteConfig.VIDERESEND_SAK.replace(":sakId", sak.id)}
-            variant="secondary"
-            size="small"
-            icon={<PaperplaneIcon aria-hidden />}
-          >
-            Videresend til NAY/NFP
-          </Button>
-        )}
-        {kanPolitianmeldes(sak.status) && (
-          <Button
-            as={Link}
-            to={RouteConfig.POLITIANMELDELSE.replace(":sakId", sak.id)}
-            variant="secondary"
-            size="small"
-            icon={<GavelIcon aria-hidden />}
-          >
-            Politianmeldelse
-          </Button>
-        )}
-        {nesteStatus && (
-          <Button
-            variant="secondary"
-            size="small"
-            icon={<ArrowRightIcon aria-hidden />}
-            onClick={() => setÅpenModal("status")}
-          >
-            Flytt til {nesteStatus}
-          </Button>
-        )}
-        <Button
-          variant="danger"
-          size="small"
-          icon={<XMarkOctagonIcon aria-hidden />}
-          onClick={() => setÅpenModal("henlegg")}
-        >
-          Henlegg
-        </Button>
       </VStack>
 
       <TildelSaksbehandlerModal
         sakId={sak.id}
         saksbehandlere={saksbehandlere}
         åpen={åpenModal === "tildel"}
-        onClose={() => setÅpenModal(null)}
-      />
-      <VideresendTilSeksjonModal
-        sakId={sak.id}
-        nåværendeSeksjon={sak.seksjon}
-        seksjoner={seksjoner}
-        åpen={åpenModal === "videresend"}
-        onClose={() => setÅpenModal(null)}
-      />
-      {nesteStatus && (
-        <EndreStatusModal
-          sakId={sak.id}
-          nåværendeStatus={sak.status}
-          åpen={åpenModal === "status"}
-          onClose={() => setÅpenModal(null)}
-        />
-      )}
-      <HenleggModal
-        sakId={sak.id}
-        åpen={åpenModal === "henlegg"}
         onClose={() => setÅpenModal(null)}
       />
     </>
