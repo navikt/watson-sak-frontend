@@ -7,7 +7,7 @@ import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
 import { hentFilerForSak } from "~/saker/filer/mock-data.server";
 import { leggTilHendelse } from "~/saker/historikk/mock-data.server";
-import { getSaksreferanse } from "~/saker/id";
+import { finnSakMedReferanse, getSaksreferanse } from "~/saker/id";
 import { hentJournalposter } from "~/saker/joark/mock-data.server";
 import { SaksinformasjonKort } from "~/saker/komponenter/SaksinformasjonKort";
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
@@ -22,12 +22,12 @@ function hentPolitianmeldbareSaker() {
 }
 
 export function loader({ params }: Route.LoaderArgs) {
-  const sak = hentPolitianmeldbareSaker().find((s) => s.id === params.sakId);
+  const sak = finnSakMedReferanse(hentPolitianmeldbareSaker(), params.sakId);
   if (!sak) {
     throw new Response("Sak ikke funnet", { status: 404 });
   }
   if (sak.status !== "UTREDES") {
-    throw redirect(RouteConfig.SAKER_DETALJ.replace(":sakId", params.sakId));
+    throw redirect(RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id)));
   }
 
   const filer = hentFilerForSak(sak.id);
@@ -60,7 +60,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   const sakId = params.sakId;
-  const sak = hentPolitianmeldbareSaker().find((s) => s.id === sakId);
+  const sak = finnSakMedReferanse(hentPolitianmeldbareSaker(), sakId);
   if (!sak) {
     throw new Response("Sak ikke funnet", { status: 404 });
   }
@@ -71,7 +71,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   void data;
   leggTilHendelse(sak, "POLITIANMELDT");
 
-  return redirect(RouteConfig.SAKER_DETALJ.replace(":sakId", sakId));
+  return redirect(RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id)));
 }
 
 export default function PolitianmeldelseSide() {
@@ -85,7 +85,7 @@ export default function PolitianmeldelseSide() {
   const [vurdering, setVurdering] = useState("");
   const [anbefaling, setAnbefaling] = useState("");
 
-  const tilbakeUrl = RouteConfig.SAKER_DETALJ.replace(":sakId", sak.id);
+  const tilbakeUrl = RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id));
   const saksreferanse = getSaksreferanse(sak.id);
 
   return (

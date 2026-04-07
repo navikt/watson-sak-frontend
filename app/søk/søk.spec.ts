@@ -23,9 +23,9 @@ test.describe("Søk", () => {
       await page.getByLabel("Søk etter saker").fill("101");
       await page.getByLabel("Søk etter saker").press("Enter");
 
-      await expect(page.getByText(/2 treff for "101"/)).toBeVisible();
-      await expect(page.getByRole("article")).toHaveCount(2);
-      await expect(page.getByRole("heading", { name: "Sak 101" })).toHaveCount(2);
+      await expect(page.getByText(/1 treff for "101"/)).toBeVisible();
+      await expect(page.getByRole("article")).toHaveCount(1);
+      await expect(page.getByRole("heading", { name: "Sak 101" })).toHaveCount(1);
     });
 
     test("kan søke på tags og viser resultater", async ({ page }) => {

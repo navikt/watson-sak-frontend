@@ -41,7 +41,10 @@ export function MineSakerOversikt({ saker }: { saker: KontrollsakResponse[] }) {
               {saker.map((sak) => (
                 <Table.Row key={sak.id}>
                   <Table.DataCell>
-                    <Link as={RouterLink} to={RouteConfig.SAKER_DETALJ.replace(":sakId", sak.id)}>
+                    <Link
+                      as={RouterLink}
+                      to={RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id))}
+                    >
                       #{getSaksreferanse(sak.id)}
                     </Link>
                   </Table.DataCell>

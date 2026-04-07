@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
+import { getSaksreferanse } from "~/saker/id";
 import { lagMockSakUuid } from "~/saker/mock-uuid";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { MineSakerInnhold } from "./MineSakerInnhold";
@@ -52,7 +53,7 @@ describe("MineSakerInnhold", () => {
 
     const lenke = screen.getByRole("link", { name: /Feilutbetaling - Sykepenger/i });
 
-    expect(lenke.getAttribute("href")).toBe(`/saker/${lagMockSakUuid("201", 2)}`);
+    expect(lenke.getAttribute("href")).toBe(`/saker/${getSaksreferanse(lagMockSakUuid("201", 2))}`);
     expect(screen.getByText("Opprettet")).toBeDefined();
     expect(screen.getByText("Opprettet 03.02.2026")).toBeDefined();
   });

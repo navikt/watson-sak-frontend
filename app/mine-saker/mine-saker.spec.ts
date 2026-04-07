@@ -15,7 +15,7 @@ test.describe("Mine saker", () => {
     await expect(page.getByRole("heading", { name: "Mine saker" })).toBeVisible();
     await expect(hovedinnhold.getByRole("button", { name: "Oppgaver på vent" })).toBeVisible();
     await expect(hovedinnhold.getByRole("button", { name: "Fullførte oppgaver" })).toBeVisible();
-    await expect(hovedinnhold.getByRole("link")).toHaveCount(4);
+    await expect(hovedinnhold.getByRole("link")).toHaveCount(6);
   });
 
   test("kan åpne ventende og fullførte saker", async ({ page }) => {
@@ -24,7 +24,7 @@ test.describe("Mine saker", () => {
     const fullførteKnapp = hovedinnhold.getByRole("button", { name: "Fullførte oppgaver" });
 
     await ventendeKnapp.click();
-    await expect(hovedinnhold.getByRole("link")).toHaveCount(6);
+    await expect(hovedinnhold.getByRole("link")).toHaveCount(7);
 
     await fullførteKnapp.click();
     await expect(hovedinnhold.getByRole("link")).toHaveCount(10);

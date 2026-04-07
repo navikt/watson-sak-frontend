@@ -32,7 +32,7 @@ import { erAktivSakKontrollsak } from "./handlinger/tilgjengeligeHandlinger";
 import { SakHistorikk } from "./historikk/SakHistorikk";
 import { hentHistorikk, leggTilHendelse } from "./historikk/mock-data.server";
 import { hentJournalposter } from "./joark/mock-data.server";
-import { getSaksreferanse } from "./id";
+import { finnSakMedReferanse, getSaksreferanse } from "./id";
 import { JoarkOversikt } from "./joark/JoarkOversikt";
 import { hentAlleSaker } from "./mock-alle-saker.server";
 import {
@@ -59,7 +59,7 @@ function hentDetaljSaker() {
 }
 
 export function loader({ params }: Route.LoaderArgs) {
-  const sak = hentDetaljSaker().find((s) => s.id === params.sakId);
+  const sak = finnSakMedReferanse(hentDetaljSaker(), params.sakId);
   if (!sak) {
     throw data("Sak ikke funnet", { status: 404 });
   }
@@ -81,7 +81,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   const handling = formData.get("handling") as string;
   const sakId = params.sakId;
 
-  const sak = hentDetaljSaker().find((s) => s.id === sakId);
+  const sak = finnSakMedReferanse(hentDetaljSaker(), sakId);
   if (!sak) {
     throw data("Sak ikke funnet", { status: 404 });
   }

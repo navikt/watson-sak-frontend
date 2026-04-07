@@ -14,7 +14,7 @@ interface SøkResultatKortProps {
 }
 
 export function SøkResultatKort({ sak }: SøkResultatKortProps) {
-  const detaljSti = RouteConfig.SAKER_DETALJ.replace(":sakId", sak.id);
+  const detaljSti = RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id));
   const saksreferanse = getSaksreferanse(sak.id);
 
   return (

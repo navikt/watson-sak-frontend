@@ -11,6 +11,7 @@ import {
 import { BodyShort, Heading, HStack, Tag, VStack } from "@navikt/ds-react";
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
+import { getSaksreferanse } from "~/saker/id";
 import { getStatus } from "~/saker/visning";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import {
@@ -165,7 +166,7 @@ function SakKort({ sak, detaljSti }: { sak: KontrollsakResponse; detaljSti: stri
 
   return (
     <Link
-      to={`${detaljSti}/${sak.id}`}
+      to={`${detaljSti}/${getSaksreferanse(sak.id)}`}
       className="group flex min-h-32 items-start justify-between gap-4 rounded-xl border border-ax-border-neutral-subtle bg-ax-bg-default px-5 py-4 text-inherit no-underline transition-colors hover:border-ax-border-neutral hover:bg-ax-bg-neutral-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
     >
       <HStack gap="space-4" align="start" className="min-w-0 flex-1">

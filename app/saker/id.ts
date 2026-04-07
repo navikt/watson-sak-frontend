@@ -16,3 +16,10 @@ export function getSaksreferanse(sakId: string): string {
 
   return saksnummer > 0 ? String(saksnummer) : sakId;
 }
+
+export function finnSakMedReferanse<T extends { id: string }>(
+  saker: T[],
+  sakId: string,
+): T | undefined {
+  return saker.find((s) => getSaksreferanse(s.id) === sakId);
+}

@@ -34,7 +34,7 @@ export function TildelSaksbehandlerModal({
       { handling: "tildel", sakId, saksbehandler: valgtSaksbehandler },
       {
         method: "post",
-        action: submitPath ?? RouteConfig.SAKER_DETALJ.replace(":sakId", sakId),
+        action: submitPath ?? RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),
       },
     );
     setValgtSaksbehandler("");

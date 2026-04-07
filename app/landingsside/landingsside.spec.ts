@@ -27,7 +27,13 @@ test.describe("Landingsside", () => {
     page,
   }) => {
     await page.getByRole("button", { name: "Innstillinger" }).click();
+
+    const preferanseLagret = page.waitForResponse(
+      (response) => response.url().includes("/api/preferences") && response.ok(),
+    );
     await page.getByRole("checkbox", { name: "Vis velkomstmelding" }).click();
+    await preferanseLagret;
+
     await page.getByRole("button", { name: "Lukk" }).nth(1).click();
 
     await expect(

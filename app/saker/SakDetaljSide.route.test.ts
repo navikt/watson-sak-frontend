@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { mockKontrollsaker } from "~/fordeling/mock-data.server";
 import { resetMockSaker } from "~/fordeling/mock-data.server";
 import { resetMockMineSaker } from "~/mine-saker/mock-data.server";
+import { getSaksreferanse } from "~/saker/id";
 import { lagMockSakUuid } from "~/saker/mock-uuid";
 import { getBeskrivelse, getKildeText, getPersonIdent, getYtelseTyper } from "~/saker/visning";
 import type { Route } from "./+types/SakDetaljSide.route";
@@ -11,6 +12,7 @@ import { action, loader } from "./SakDetaljSide.route";
 
 describe("SakDetaljSide action", () => {
   const utredningSakId = lagMockSakUuid("113", 1);
+  const utredningSakRef = getSaksreferanse(utredningSakId);
 
   beforeEach(() => {
     resetMockSaker();
@@ -36,11 +38,11 @@ describe("SakDetaljSide action", () => {
     formData.set("saksbehandler", "Kari Nordmann");
 
     await action({
-      request: new Request(`http://localhost/saker/${utredningSakId}`, {
+      request: new Request(`http://localhost/saker/${utredningSakRef}`, {
         method: "POST",
         body: formData,
       }),
-      params: { sakId: utredningSakId },
+      params: { sakId: utredningSakRef },
     } as Route.ActionArgs);
 
     const historikkEtter = hentHistorikk(utredningSakId);
@@ -94,6 +96,7 @@ describe("SakDetaljSide helper-integrasjon", () => {
 
 describe("SakDetaljSide kontrollsak-runtime", () => {
   const mineSakId = lagMockSakUuid("201", 2);
+  const mineSakRef = getSaksreferanse(mineSakId);
 
   beforeEach(() => {
     resetMockSaker();
@@ -103,15 +106,16 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
 
   it("loader returnerer backend-shapet kontrollsak når sakId peker på kontrollsak", () => {
     const kontrollsakId = mockKontrollsaker[0].id;
+    const kontrollsakRef = getSaksreferanse(kontrollsakId);
 
-    const resultat = loader({ params: { sakId: kontrollsakId } } as Route.LoaderArgs);
+    const resultat = loader({ params: { sakId: kontrollsakRef } } as Route.LoaderArgs);
 
     expect(resultat.sak.id).toBe(kontrollsakId);
     expect("personIdent" in resultat.sak).toBe(true);
   });
 
   it("loader returnerer backend-shapet mine sak når sakId peker på backend-shaped mine saker", () => {
-    const resultat = loader({ params: { sakId: mineSakId } } as Route.LoaderArgs);
+    const resultat = loader({ params: { sakId: mineSakRef } } as Route.LoaderArgs);
 
     expect(resultat.sak.id).toBe(mineSakId);
     expect("personIdent" in resultat.sak).toBe(true);
@@ -126,6 +130,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
 
   it("oppdaterer kontrollsak-status med backend-enum ved tildeling", async () => {
     const kontrollsak = mockKontrollsaker[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
 
     expect(kontrollsak.status).toBe("OPPRETTET");
 
@@ -134,11 +139,11 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     formData.set("saksbehandler", "Kari Nordmann");
 
     await action({
-      request: new Request(`http://localhost/saker/${kontrollsak.id}`, {
+      request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
         method: "POST",
         body: formData,
       }),
-      params: { sakId: kontrollsak.id },
+      params: { sakId: kontrollsakRef },
     } as Route.ActionArgs);
 
     expect(kontrollsak.status).toBe("UTREDES");
