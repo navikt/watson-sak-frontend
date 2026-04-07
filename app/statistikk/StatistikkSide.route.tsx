@@ -7,7 +7,7 @@ import {
   XMarkOctagonIcon,
 } from "@navikt/aksel-icons";
 import { useLoaderData } from "react-router";
-import { formaterStatus } from "~/saker/visning";
+import { formaterStatus, type KontrollsakStatus } from "~/saker/visning";
 import {
   beregnAntallPerSeksjon,
   beregnAntallPerStatus,
@@ -44,9 +44,9 @@ export default function StatistikkSide() {
     fordelingPerAntallYtelser,
   } = useLoaderData<typeof loader>();
 
-  const statusData = Object.entries(antallPerStatus).map(([navn, antall]) => ({
-    navn: formaterStatus(navn as never),
-    antall,
+  const statusData = (Object.keys(antallPerStatus) as KontrollsakStatus[]).map((status) => ({
+    navn: formaterStatus(status),
+    antall: antallPerStatus[status],
   }));
 
   return (

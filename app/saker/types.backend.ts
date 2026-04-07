@@ -1,5 +1,20 @@
 import { z } from "zod";
 
+const kontrollsakStatusSchema = z.enum([
+  "OPPRETTET",
+  "AVKLART",
+  "UTREDES",
+  "TIL_FORVALTNING",
+  "HENLAGT",
+  "AVSLUTTET",
+]);
+
+const kontrollsakKategoriSchema = z.enum(["UDEFINERT", "FEILUTBETALING", "MISBRUK", "OPPFØLGING"]);
+
+const kontrollsakPrioritetSchema = z.enum(["HØY", "NORMAL", "LAV"]);
+
+const kontrollsakKildeSchema = z.enum(["INTERN", "EKSTERN", "ANONYM_TIPS"]);
+
 const kontrollsakAvsenderSchema = z.object({
   id: z.string(),
   navn: z.string().nullable(),
@@ -16,7 +31,7 @@ const kontrollsakVedleggSchema = z.object({
 
 const kontrollsakBakgrunnSchema = z.object({
   id: z.string().uuid(),
-  kilde: z.string(),
+  kilde: kontrollsakKildeSchema,
   innhold: z.string(),
   avsender: kontrollsakAvsenderSchema.nullable(),
   vedlegg: z.array(kontrollsakVedleggSchema),
@@ -60,9 +75,9 @@ export const kontrollsakResponseSchema = z.object({
   id: z.string().uuid(),
   personIdent: z.string(),
   saksbehandler: z.string(),
-  status: z.string(),
-  kategori: z.string(),
-  prioritet: z.string(),
+  status: kontrollsakStatusSchema,
+  kategori: kontrollsakKategoriSchema,
+  prioritet: kontrollsakPrioritetSchema,
   mottakEnhet: z.string(),
   mottakSaksbehandler: z.string(),
   ytelser: z.array(kontrollsakYtelseSchema),
@@ -85,11 +100,11 @@ export const kontrollsakHendelseResponseSchema = z.object({
   tidspunkt: z.string(),
   hendelsesType: z.string(),
   sakId: z.string().uuid(),
-  kategori: z.string(),
-  prioritet: z.string(),
-  status: z.string(),
+  kategori: kontrollsakKategoriSchema,
+  prioritet: kontrollsakPrioritetSchema,
+  status: kontrollsakStatusSchema,
   ytelseTyper: z.array(z.string()),
-  kilde: z.string().nullable(),
+  kilde: kontrollsakKildeSchema.nullable(),
   avklaringResultat: z.string().nullable(),
   mottakEnhet: z.string(),
 });

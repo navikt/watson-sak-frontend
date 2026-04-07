@@ -54,6 +54,15 @@ import {
   type KontrollsakStatus,
 } from "./visning";
 
+const gyldigeStatuser: Set<string> = new Set<KontrollsakStatus>([
+  "OPPRETTET",
+  "AVKLART",
+  "UTREDES",
+  "TIL_FORVALTNING",
+  "HENLAGT",
+  "AVSLUTTET",
+]);
+
 function hentDetaljSaker() {
   return hentAlleSaker();
 }
@@ -90,7 +99,11 @@ export async function action({ request, params }: Route.ActionArgs) {
     case "endre_status": {
       const nyStatus = formData.get("status") as string;
 
-      sak.status = nyStatus as typeof sak.status;
+      if (!gyldigeStatuser.has(nyStatus)) {
+        throw data("Ugyldig status", { status: 400 });
+      }
+
+      sak.status = nyStatus as KontrollsakStatus;
       leggTilHendelse(sak, "STATUS_ENDRET");
       break;
     }

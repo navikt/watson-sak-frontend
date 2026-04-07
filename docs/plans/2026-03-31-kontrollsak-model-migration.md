@@ -1,7 +1,5 @@
 # Implementeringsplan for migrering fra frontend-Sak til backend-Kontrollsak
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
-
 **Mål:** Erstatt den gamle frontend-modellen `Sak` med en kanonisk backend-alignet `Kontrollsak`-modell, og flytt all UI-spesifikk shaping til selectors og viewmodels.
 
 **Arkitektur:** `watson-admin-api` er sannhetskilden for sakedata. Frontenden skal ha én delt kontrakt som speiler `KontrollsakResponse`, mens skjermer som Fordeling, Mine saker og Sakdetalj skal bruke små viewmodels og presentasjonshjelpere avledet fra den kontrakten. Felter som bare finnes i dagens frontendmodell skal enten slettes eller utledes lokalt i visningslaget, ikke leve videre som del av domenemodellen.

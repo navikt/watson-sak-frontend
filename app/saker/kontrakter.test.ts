@@ -33,7 +33,7 @@ describe("Kontrollsak-kontrakter", () => {
         ],
         bakgrunn: {
           id: "1fa85f64-5717-4562-b3fc-2c963f66afa6",
-          kilde: "telefon",
+          kilde: "EKSTERN",
           innhold: "Tips mottatt",
           avsender: {
             id: "0fa85f64-5717-4562-b3fc-2c963f66afa6",
@@ -68,7 +68,7 @@ describe("Kontrollsak-kontrakter", () => {
     ).toMatchObject({
       status: "OPPRETTET",
       ytelser: [{ type: "Dagpenger" }],
-      bakgrunn: { kilde: "telefon" },
+      bakgrunn: { kilde: "EKSTERN" },
     });
   });
 
