@@ -14,14 +14,14 @@ test.describe("Opprett sak", () => {
 
   test("viser feilmelding ved ugyldig person", async ({ page }) => {
     await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("99999999999");
-    await page.getByRole("button", { name: "Søk" }).click();
+    await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
 
     await expect(page.getByText("Personen ble ikke funnet")).toBeVisible();
   });
 
   test("viser personinfo og skjema etter vellykket oppslag", async ({ page }) => {
     await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("12345678901");
-    await page.getByRole("button", { name: "Søk" }).click();
+    await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
 
     await expect(page.getByText("Ola Testesen")).toBeVisible();
     await expect(
@@ -31,15 +31,15 @@ test.describe("Opprett sak", () => {
 
   test("viser advarsel om eksisterende sak", async ({ page }) => {
     await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("03117845975");
-    await page.getByRole("button", { name: "Søk" }).click();
+    await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
 
     await expect(page.getByText("Det er allerede registrert en sak på personen")).toBeVisible();
-    await expect(page.getByRole("link", { name: "Se sak" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Se sak" })).toBeVisible();
   });
 
   test("kan fylle ut og sende inn skjema", async ({ page }) => {
     await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("12345678901");
-    await page.getByRole("button", { name: "Søk" }).click();
+    await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
 
     await expect(
       page.getByRole("heading", { name: "Grunnleggende saksinformasjon" }),
@@ -63,7 +63,7 @@ test.describe("Opprett sak", () => {
 
   test("misbruktype-feltet vises kun for kategorier med misbrukstyper", async ({ page }) => {
     await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("12345678901");
-    await page.getByRole("button", { name: "Søk" }).click();
+    await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
 
     await expect(
       page.getByRole("heading", { name: "Grunnleggende saksinformasjon" }),

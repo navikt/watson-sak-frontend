@@ -64,11 +64,7 @@ export function slaOppPerson(fnr: string): PersonOppslagResultat | null {
 
 let nesteMockSakId = 200;
 
-export function leggTilMockSak(
-  personIdent: string,
-  saksbehandler: string,
-  enhet: string,
-): void {
+export function leggTilMockSak(personIdent: string, saksbehandler: string, enhet: string): void {
   const eksisterende = mockPersoner[personIdent];
   if (!eksisterende) return;
 
