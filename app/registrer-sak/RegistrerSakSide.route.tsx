@@ -102,6 +102,7 @@ export default function OpprettSakSide() {
             method="get"
             action={RouteConfig.API.PERSON_OPPSLAG}
             aria-label="Søk etter person"
+            className="mb-6"
           >
             <Search
               label="Fødsels- eller d-nummer"
