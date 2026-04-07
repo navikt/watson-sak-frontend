@@ -74,6 +74,8 @@ const kontrollsakResultatSchema = z.object({
 export const kontrollsakResponseSchema = z.object({
   id: z.string().uuid(),
   personIdent: z.string(),
+  navn: z.string().nullable().optional(),
+  alder: z.number().int().nullable().optional(),
   saksbehandler: z.string(),
   status: kontrollsakStatusSchema,
   kategori: kontrollsakKategoriSchema,
@@ -81,6 +83,9 @@ export const kontrollsakResponseSchema = z.object({
   mottakEnhet: z.string(),
   mottakSaksbehandler: z.string(),
   ytelser: z.array(kontrollsakYtelseSchema),
+  misbrukstyper: z.array(z.string()).nullable().optional(),
+  belop: z.number().nullable().optional(),
+  merking: z.array(z.string()).nullable().optional(),
   bakgrunn: kontrollsakBakgrunnSchema.nullable(),
   resultat: kontrollsakResultatSchema.nullable(),
   opprettet: z.string(),

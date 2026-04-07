@@ -1,9 +1,17 @@
 import { render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { lagMockSakUuid } from "~/saker/mock-uuid";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { SakHandlingerKnapper } from "./SakHandlingerKnapper";
+
+vi.mock("~/auth/innlogget-bruker", () => ({
+  useInnloggetBruker: () => ({
+    navIdent: "Z999999",
+    name: "Test Saksbehandler",
+    organisasjoner: [],
+  }),
+}));
 
 function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
@@ -40,7 +48,7 @@ function renderMedRouter(ui: React.ReactNode) {
 }
 
 describe("SakHandlingerKnapper", () => {
-  it("viser bare backend-støttet tildeling for kontrollsak", () => {
+  it("viser tildel saksbehandler, tildel meg og send til annen enhet for aktiv kontrollsak", () => {
     renderMedRouter(
       <SakHandlingerKnapper
         sak={lagKontrollsak()}
@@ -50,6 +58,8 @@ describe("SakHandlingerKnapper", () => {
     );
 
     expect(screen.getByRole("button", { name: "Tildel saksbehandler" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Tildel meg" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Send til annen enhet" })).toBeDefined();
     expect(screen.queryByRole("button", { name: "Videresend til seksjon" })).toBeNull();
     expect(screen.queryByRole("button", { name: /Flytt til/i })).toBeNull();
     expect(screen.queryByRole("button", { name: "Henlegg" })).toBeNull();
@@ -67,5 +77,7 @@ describe("SakHandlingerKnapper", () => {
     );
 
     expect(screen.queryByRole("button", { name: "Tildel saksbehandler" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Tildel meg" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Send til annen enhet" })).toBeNull();
   });
 });

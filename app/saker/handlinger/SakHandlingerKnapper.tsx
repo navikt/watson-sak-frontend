@@ -1,7 +1,11 @@
-import { PersonPencilIcon } from "@navikt/aksel-icons";
+import { Buildings2Icon, PersonPencilIcon, PersonPlusIcon } from "@navikt/aksel-icons";
 import { Button, Heading, VStack } from "@navikt/ds-react";
 import { useState } from "react";
+import { useFetcher } from "react-router";
+import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import type { KontrollsakResponse } from "~/saker/types.backend";
+import { getSaksreferanse } from "~/saker/id";
+import { RouteConfig } from "~/routeConfig";
 import { erAktivSakKontrollsak } from "./tilgjengeligeHandlinger";
 import { TildelSaksbehandlerModal } from "./TildelSaksbehandlerModal";
 
@@ -20,8 +24,20 @@ export function SakHandlingerKnapper({
 }: SakHandlingerKnapperProps) {
   const [åpenModal, setÅpenModal] = useState<ÅpenModal>(null);
   const erAktiv = erAktivSakKontrollsak(sak.status);
+  const innloggetBruker = useInnloggetBruker();
+  const tildelMegFetcher = useFetcher();
 
   if (!erAktiv) return null;
+
+  function handleTildelMeg() {
+    tildelMegFetcher.submit(
+      { handling: "tildel", saksbehandler: innloggetBruker.navIdent },
+      {
+        method: "post",
+        action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id)),
+      },
+    );
+  }
 
   return (
     <>
@@ -30,12 +46,24 @@ export function SakHandlingerKnapper({
           Handlinger
         </Heading>
         <Button
-          variant="secondary"
+          variant="primary"
           size="small"
           icon={<PersonPencilIcon aria-hidden />}
           onClick={() => setÅpenModal("tildel")}
         >
           Tildel saksbehandler
+        </Button>
+        <Button
+          variant="secondary"
+          size="small"
+          icon={<PersonPlusIcon aria-hidden />}
+          onClick={handleTildelMeg}
+          loading={tildelMegFetcher.state !== "idle"}
+        >
+          Tildel meg
+        </Button>
+        <Button variant="secondary" size="small" icon={<Buildings2Icon aria-hidden />} disabled>
+          Send til annen enhet
         </Button>
       </VStack>
 

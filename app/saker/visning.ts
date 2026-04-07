@@ -11,7 +11,7 @@ export type { KontrollsakStatus };
 type StatusVariant = "info" | "warning" | "success" | "neutral";
 
 const statusEtiketter: Record<KontrollsakStatus, string> = {
-  OPPRETTET: "Opprettet",
+  OPPRETTET: "Ufordelt",
   AVKLART: "Avklart",
   UTREDES: "Utredes",
   TIL_FORVALTNING: "Til forvaltning",
@@ -118,4 +118,8 @@ export function getKontaktinformasjon(sak: KontrollsakResponse) {
     epost: undefined,
     anonymt: avsender.anonym,
   };
+}
+
+export function formaterBelop(belop: number): string {
+  return new Intl.NumberFormat("nb-NO").format(belop);
 }

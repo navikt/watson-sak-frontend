@@ -42,7 +42,7 @@ describe("landingsside-loader", () => {
     const data = loader();
 
     expect(data.velkomstOppsummering).toBe(
-      "Akkurat nå har du 2 tips til vurdering og 2 saker til utredning.",
+      "Akkurat nå har du 3 saker til utredning og 1 tips til vurdering.",
     );
   });
 });
