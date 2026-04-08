@@ -12,7 +12,7 @@ vi.mock("~/saker/handlinger/TildelSaksbehandlerModal", () => ({
 const lagSak = (overstyringer: Partial<FordelingSak> = {}): FordelingSak => ({
   id: "1",
   opprettetDato: "2026-01-13",
-  kategori: "Feilutbetaling",
+  kategori: "Arbeid",
   ytelser: ["Dagpenger"],
   ...overstyringer,
 });
