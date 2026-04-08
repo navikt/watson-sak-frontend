@@ -41,13 +41,7 @@ interface SakKortProps {
   sak: KontrollsakResponse;
 }
 
-function SakFelt({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function SakFelt({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <VStack gap="space-4">
       <Detail className="text-ax-text-neutral-subtle" uppercase>
@@ -78,12 +72,7 @@ function SakKort({ sak }: SakKortProps) {
   if (alder !== null) tittelDeler.push(`(${alder})`);
 
   return (
-    <Box
-      borderRadius="8"
-      background="raised"
-      padding="space-16"
-      shadow="dialog"
-    >
+    <Box borderRadius="8" background="raised" padding="space-16" shadow="dialog">
       <VStack gap="space-16">
         <HStack justify="space-between" align="center" wrap gap="space-8">
           <HStack gap="space-16" align="center" wrap>
@@ -97,8 +86,7 @@ function SakKort({ sak }: SakKortProps) {
               Enhet: <span className="font-bold">{sak.mottakEnhet}</span>
             </BodyShort>
             <BodyShort size="small">
-              Saksbehandler:{" "}
-              <span className="font-bold">{sak.saksbehandler}</span>
+              Saksbehandler: <span className="font-bold">{sak.saksbehandler}</span>
             </BodyShort>
             <Tag variant={getStatusVariantForSak(sak)} size="small">
               {statusTekst}
@@ -107,13 +95,7 @@ function SakKort({ sak }: SakKortProps) {
           <Button
             variant="tertiary"
             size="xsmall"
-            icon={
-              åpen ? (
-                <ChevronUpIcon aria-hidden />
-              ) : (
-                <ChevronDownIcon aria-hidden />
-              )
-            }
+            icon={åpen ? <ChevronUpIcon aria-hidden /> : <ChevronDownIcon aria-hidden />}
             iconPosition="right"
             onClick={() => setÅpen((prev) => !prev)}
             aria-expanded={åpen}
@@ -179,13 +161,9 @@ function SakKort({ sak }: SakKortProps) {
               </VStack>
 
               <VStack gap="space-16">
-                {periodeText && (
-                  <SakFelt label="Periode">{periodeText}</SakFelt>
-                )}
+                {periodeText && <SakFelt label="Periode">{periodeText}</SakFelt>}
 
-                {belop !== null && (
-                  <SakFelt label="Ca beløp">{formaterBelop(belop)}</SakFelt>
-                )}
+                {belop !== null && <SakFelt label="Ca beløp">{formaterBelop(belop)}</SakFelt>}
 
                 {ytelseTyper.length > 0 && (
                   <VStack gap="space-4">
@@ -226,10 +204,7 @@ function SakKort({ sak }: SakKortProps) {
   );
 }
 
-export function SakerPåSammePerson({
-  saker,
-  gjeldendeSakId,
-}: SakerPåSammePersonProps) {
+export function SakerPåSammePerson({ saker, gjeldendeSakId }: SakerPåSammePersonProps) {
   const andreSaker = saker.filter((sak) => sak.id !== gjeldendeSakId);
 
   if (andreSaker.length === 0) {

@@ -1,6 +1,5 @@
 import { ArrowLeftIcon, PencilIcon } from "@navikt/aksel-icons";
 import {
-  BodyLong,
   BodyShort,
   Button,
   CopyButton,
@@ -24,9 +23,7 @@ import { SakHandlingerKnapper } from "./handlinger/SakHandlingerKnapper";
 import { erAktivSakKontrollsak } from "./handlinger/tilgjengeligeHandlinger";
 import { SakHistorikk } from "./historikk/SakHistorikk";
 import { hentHistorikk, leggTilHendelse } from "./historikk/mock-data.server";
-import { hentJournalposter } from "./joark/mock-data.server";
 import { finnSakMedReferanse, getSaksreferanse } from "./id";
-import { JoarkOversikt } from "./joark/JoarkOversikt";
 import { hentAlleSaker } from "./mock-alle-saker.server";
 import { SakerPåSammePerson } from "./komponenter/SakerPåSammePerson";
 import {
@@ -41,7 +38,6 @@ import {
 } from "./selectors";
 import {
   formaterBelop,
-  getBeskrivelse,
   getKildeText,
   getKontaktinformasjon,
   getPersonIdent,
@@ -75,16 +71,13 @@ export function loader({ params }: Route.LoaderArgs) {
   }
   const historikk = hentHistorikk(sak.id);
   const filer = hentFilerForSak(sak.id);
-  const journalposter = hentJournalposter(getPersonIdent(sak));
   const andreSaker = alleSaker.filter(
-    (annenSak) =>
-      annenSak.personIdent === sak.personIdent && annenSak.id !== sak.id,
+    (annenSak) => annenSak.personIdent === sak.personIdent && annenSak.id !== sak.id,
   );
   return {
     sak,
     historikk,
     filer,
-    journalposter,
     andreSaker,
     saksbehandlere: mockSaksbehandlere,
     seksjoner: mockSeksjoner,
@@ -152,13 +145,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   return { ok: true };
 }
 
-function Felt({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function Felt({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <VStack gap="space-1">
       <Detail className="text-ax-text-neutral-subtle" uppercase>
@@ -170,21 +157,13 @@ function Felt({
 }
 
 export default function SakDetaljSide() {
-  const {
-    sak,
-    historikk,
-    filer,
-    journalposter,
-    andreSaker,
-    saksbehandlere,
-    seksjoner,
-  } = useLoaderData<typeof loader>();
+  const { sak, historikk, filer, andreSaker, saksbehandlere, seksjoner } =
+    useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const personIdent = getPersonIdent(sak);
   const statusTekst = getStatus(sak);
   const kildeTekst = getKildeText(sak);
   const ytelseTyper = getYtelseTyper(sak);
-  const beskrivelse = getBeskrivelse(sak);
   const kontaktinformasjon = getKontaktinformasjon(sak);
   const erAktiv = erAktivSakKontrollsak(sak.status);
   const saksreferanse = getSaksreferanse(sak.id);
@@ -227,9 +206,7 @@ export default function SakDetaljSide() {
                         {tittel}
                       </Heading>
                     </VStack>
-                    <Tag variant={getStatusVariantForSak(sak)}>
-                      {statusTekst}
-                    </Tag>
+                    <Tag variant={getStatusVariantForSak(sak)}>{statusTekst}</Tag>
                   </HStack>
 
                   <hr className="border-ax-border-neutral-subtle" />
@@ -237,10 +214,7 @@ export default function SakDetaljSide() {
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <VStack gap="space-4">
                       <VStack gap="space-1">
-                        <Detail
-                          className="text-ax-text-neutral-subtle"
-                          uppercase
-                        >
+                        <Detail className="text-ax-text-neutral-subtle" uppercase>
                           Personnummer
                         </Detail>
                         <HStack gap="space-1" align="center">
@@ -251,10 +225,7 @@ export default function SakDetaljSide() {
 
                       {kategoriText && (
                         <VStack gap="space-1">
-                          <Detail
-                            className="text-ax-text-neutral-subtle"
-                            uppercase
-                          >
+                          <Detail className="text-ax-text-neutral-subtle" uppercase>
                             Kategori
                           </Detail>
                           <div>
@@ -267,10 +238,7 @@ export default function SakDetaljSide() {
 
                       {misbrukstyper.length > 0 && (
                         <VStack gap="space-1">
-                          <Detail
-                            className="text-ax-text-neutral-subtle"
-                            uppercase
-                          >
+                          <Detail className="text-ax-text-neutral-subtle" uppercase>
                             Misbrukstype
                           </Detail>
                           <HStack gap="space-2" wrap>
@@ -285,10 +253,7 @@ export default function SakDetaljSide() {
 
                       {tags.length > 0 && (
                         <VStack gap="space-1">
-                          <Detail
-                            className="text-ax-text-neutral-subtle"
-                            uppercase
-                          >
+                          <Detail className="text-ax-text-neutral-subtle" uppercase>
                             Merking
                           </Detail>
                           <HStack gap="space-2" wrap>
@@ -305,20 +270,13 @@ export default function SakDetaljSide() {
                     </VStack>
 
                     <VStack gap="space-4">
-                      {periodeText && (
-                        <Felt label="Periode">{periodeText}</Felt>
-                      )}
+                      {periodeText && <Felt label="Periode">{periodeText}</Felt>}
 
-                      {belop !== null && (
-                        <Felt label="Ca beløp">{formaterBelop(belop)}</Felt>
-                      )}
+                      {belop !== null && <Felt label="Ca beløp">{formaterBelop(belop)}</Felt>}
 
                       {ytelseTyper.length > 0 && (
                         <VStack gap="space-1">
-                          <Detail
-                            className="text-ax-text-neutral-subtle"
-                            uppercase
-                          >
+                          <Detail className="text-ax-text-neutral-subtle" uppercase>
                             Ytelse
                           </Detail>
                           <HStack gap="space-2" wrap>
@@ -376,9 +334,7 @@ export default function SakDetaljSide() {
                           <Felt label="Navn">{kontaktinformasjon.navn}</Felt>
                         )}
                         {kontaktinformasjon.telefon && (
-                          <Felt label="Telefon">
-                            {kontaktinformasjon.telefon}
-                          </Felt>
+                          <Felt label="Telefon">{kontaktinformasjon.telefon}</Felt>
                         )}
                         {kontaktinformasjon.epost && (
                           <Felt label="E-post">{kontaktinformasjon.epost}</Felt>
