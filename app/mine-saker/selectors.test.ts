@@ -14,7 +14,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     personIdent: "10987654321",
     saksbehandler: "Z123456",
     status: "OPPRETTET",
-    kategori: "FEILUTBETALING",
+    kategori: "ARBEID",
     prioritet: "NORMAL",
     mottakEnhet: "4812",
     mottakSaksbehandler: "Z654321",
@@ -50,7 +50,7 @@ describe("Mine saker selectors", () => {
     expect(
       getMineSakerTittel(
         lagKontrollsak({
-          kategori: "FEILUTBETALING",
+          kategori: "ARBEID",
           ytelser: [
             {
               id: "ytelse-1",
@@ -67,7 +67,7 @@ describe("Mine saker selectors", () => {
           ],
         }),
       ),
-    ).toBe("Feilutbetaling - Sykepenger / Dagpenger");
+    ).toBe("Arbeid - Sykepenger / Dagpenger");
   });
 
   it("bygger periode- og opprettet-tekst fra backend-felter", () => {
