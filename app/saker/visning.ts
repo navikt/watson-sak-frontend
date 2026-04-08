@@ -5,6 +5,7 @@ import type {
   KontrollsakStatus,
   KontrollsakYtelse,
 } from "./types.backend";
+import { kontrollsakKategoriEtiketter } from "./kategorier";
 
 export type { KontrollsakStatus };
 
@@ -28,13 +29,6 @@ const statusVarianter: Record<KontrollsakStatus, StatusVariant> = {
   AVSLUTTET: "neutral",
 };
 
-const kategoriEtiketter: Record<KontrollsakKategori, string> = {
-  UDEFINERT: "Udefinert",
-  FEILUTBETALING: "Feilutbetaling",
-  MISBRUK: "Misbruk",
-  OPPFØLGING: "Oppfølging",
-};
-
 const kildeEtiketter: Record<KontrollsakKilde, string> = {
   INTERN: "Intern",
   EKSTERN: "Ekstern",
@@ -54,7 +48,7 @@ export function formaterKategori(kategori: KontrollsakKategori | null | undefine
     return null;
   }
 
-  return kategoriEtiketter[kategori] ?? kategori;
+  return kontrollsakKategoriEtiketter[kategori] ?? kategori;
 }
 
 function formaterKilde(kilde: KontrollsakKilde | null | undefined): string {
