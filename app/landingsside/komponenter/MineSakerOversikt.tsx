@@ -3,8 +3,13 @@ import { ArrowRightIcon, FilesIcon } from "@navikt/aksel-icons";
 import { Link as RouterLink } from "react-router";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { getSaksreferanse } from "~/saker/id";
-import { getOpprettetDato, getStatusVariantForSak } from "~/saker/selectors";
-import { getStatus, getYtelseTyper } from "~/saker/visning";
+import {
+  getKategoriText,
+  getMisbrukstyper,
+  getNavn,
+  getOppdatertDato,
+  getOpprettetDato,
+} from "~/saker/selectors";
 import { RouteConfig } from "~/routeConfig";
 import { formaterDato } from "~/utils/date-utils";
 import { Kort } from "~/komponenter/Kort";
@@ -31,38 +36,64 @@ export function MineSakerOversikt({ saker }: { saker: KontrollsakResponse[] }) {
           <Table size="medium">
             <Table.Header>
               <Table.Row>
-                <Table.HeaderCell scope="col">Sak</Table.HeaderCell>
-                <Table.HeaderCell scope="col">Ytelse</Table.HeaderCell>
-                <Table.HeaderCell scope="col">Status</Table.HeaderCell>
-                <Table.HeaderCell scope="col">Innmeldt</Table.HeaderCell>
+                <Table.HeaderCell scope="col">Saksid</Table.HeaderCell>
+                <Table.HeaderCell scope="col">Navn</Table.HeaderCell>
+                <Table.HeaderCell scope="col">Kategori</Table.HeaderCell>
+                <Table.HeaderCell scope="col">Misbrukstype</Table.HeaderCell>
+                <Table.HeaderCell scope="col">Opprettet</Table.HeaderCell>
+                <Table.HeaderCell scope="col">Oppdatert</Table.HeaderCell>
               </Table.Row>
             </Table.Header>
             <Table.Body>
-              {saker.map((sak) => (
-                <Table.Row key={sak.id}>
-                  <Table.DataCell>
-                    <Link
-                      as={RouterLink}
-                      to={RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id))}
-                    >
-                      #{getSaksreferanse(sak.id)}
-                    </Link>
-                  </Table.DataCell>
-                  <Table.DataCell>
-                    <BodyShort size="small" truncate className="max-w-32">
-                      {getYtelseTyper(sak).join(", ")}
-                    </BodyShort>
-                  </Table.DataCell>
-                  <Table.DataCell>
-                    <Tag variant={getStatusVariantForSak(sak)} size="xsmall">
-                      {getStatus(sak)}
-                    </Tag>
-                  </Table.DataCell>
-                  <Table.DataCell>
-                    <BodyShort size="small">{formaterDato(getOpprettetDato(sak))}</BodyShort>
-                  </Table.DataCell>
-                </Table.Row>
-              ))}
+              {saker.map((sak) => {
+                const misbrukstyper = getMisbrukstyper(sak);
+
+                return (
+                  <Table.Row key={sak.id}>
+                    <Table.DataCell>
+                      <Link
+                        as={RouterLink}
+                        to={RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id))}
+                      >
+                        {getSaksreferanse(sak.id)}
+                      </Link>
+                    </Table.DataCell>
+                    <Table.DataCell>
+                      <BodyShort size="small" truncate className="max-w-48">
+                        {getNavn(sak) ?? "–"}
+                      </BodyShort>
+                    </Table.DataCell>
+                    <Table.DataCell>
+                      {getKategoriText(sak) ? (
+                        <Tag variant="neutral" size="small">
+                          {getKategoriText(sak)}
+                        </Tag>
+                      ) : (
+                        <BodyShort size="small">–</BodyShort>
+                      )}
+                    </Table.DataCell>
+                    <Table.DataCell>
+                      {misbrukstyper.length > 0 ? (
+                        <HStack gap="space-2" wrap>
+                          {misbrukstyper.map((misbrukstype) => (
+                            <Tag key={misbrukstype} variant="warning" size="small">
+                              {misbrukstype}
+                            </Tag>
+                          ))}
+                        </HStack>
+                      ) : (
+                        <BodyShort size="small">–</BodyShort>
+                      )}
+                    </Table.DataCell>
+                    <Table.DataCell>
+                      <BodyShort size="small">{formaterDato(getOpprettetDato(sak))}</BodyShort>
+                    </Table.DataCell>
+                    <Table.DataCell>
+                      <BodyShort size="small">{formaterDato(getOppdatertDato(sak))}</BodyShort>
+                    </Table.DataCell>
+                  </Table.Row>
+                );
+              })}
             </Table.Body>
           </Table>
         )}
