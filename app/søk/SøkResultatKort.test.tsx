@@ -11,7 +11,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     personIdent: "10987654321",
     saksbehandler: "Z123456",
     status: "OPPRETTET",
-    kategori: "FEILUTBETALING",
+    kategori: "ARBEID",
     prioritet: "NORMAL",
     mottakEnhet: "4812",
     mottakSaksbehandler: "Z654321",
@@ -54,6 +54,6 @@ describe("SøkResultatKort", () => {
     expect(screen.getByText("3. feb. 2026")).toBeDefined();
     expect(screen.getByText("Anonymt tips")).toBeDefined();
     expect(screen.getByText("Fnr: 10987654321")).toBeDefined();
-    expect(screen.getByText("Feilutbetaling")).toBeDefined();
+    expect(screen.getByText("Arbeid")).toBeDefined();
   });
 });
