@@ -12,7 +12,7 @@ test.describe("Sakdetalj", () => {
 
   test("viser saksinformasjon", async ({ page }) => {
     await expect(page.getByRole("heading", { name: /^Sak 101$/ })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Saksinformasjon" })).toBeVisible();
+    await expect(page.getByText("Personnummer")).toBeVisible();
   });
 
   test("viser historikk-seksjon", async ({ page }) => {
