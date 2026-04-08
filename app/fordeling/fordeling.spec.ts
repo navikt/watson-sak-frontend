@@ -27,9 +27,9 @@ test.describe("Ufordelte saker", () => {
   });
 
   test("kan filtrere på kategori og ytelse", async ({ page }) => {
-    const arbeidKnapp = page.getByRole("button", { name: "Arbeid" });
-    await arbeidKnapp.click();
-    await expect(arbeidKnapp).toHaveAttribute("aria-pressed", "true");
+    const samlivKnapp = page.getByRole("button", { name: "Samliv" });
+    await samlivKnapp.click();
+    await expect(samlivKnapp).toHaveAttribute("aria-pressed", "true");
 
     await page.getByRole("button", { name: "Barnetrygd" }).click();
 
@@ -39,7 +39,7 @@ test.describe("Ufordelte saker", () => {
       .poll(async () => {
         const tekster = await rader.allTextContents();
 
-        return tekster.every((tekst) => tekst.includes("Barnetrygd") && tekst.includes("Arbeid"));
+        return tekster.every((tekst) => tekst.includes("Barnetrygd") && tekst.includes("Samliv"));
       })
       .toBe(true);
   });
@@ -57,7 +57,7 @@ test.describe("Ufordelte saker", () => {
     const rader = page.locator("tbody tr");
 
     await page.getByRole("button", { name: "Sorter på kategori" }).click();
-    await expect(rader.nth(0)).toContainText("Arbeid");
+    await expect(rader.nth(0)).toContainText("Annet");
 
     await page.getByRole("button", { name: "Sorter på opprettet" }).click();
     await expect(rader.nth(0)).toContainText("16. feb. 2026");
