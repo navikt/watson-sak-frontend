@@ -59,7 +59,9 @@ describe("SakHandlingerKnapper", () => {
 
     expect(screen.getByRole("button", { name: "Tildel saksbehandler" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Tildel meg" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Send til annen enhet" })).toBeDefined();
+    const sendTilAnnenEnhet = screen.getByRole("button", { name: "Send til annen enhet" });
+    expect(sendTilAnnenEnhet).toBeDefined();
+    expect((sendTilAnnenEnhet as HTMLButtonElement).disabled).toBe(true);
     expect(screen.queryByRole("button", { name: "Videresend til seksjon" })).toBeNull();
     expect(screen.queryByRole("button", { name: /Flytt til/i })).toBeNull();
     expect(screen.queryByRole("button", { name: "Henlegg" })).toBeNull();

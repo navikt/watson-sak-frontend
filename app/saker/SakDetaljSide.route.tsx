@@ -68,14 +68,15 @@ function hentDetaljSaker() {
 }
 
 export function loader({ params }: Route.LoaderArgs) {
-  const sak = finnSakMedReferanse(hentDetaljSaker(), params.sakId);
+  const alleSaker = hentDetaljSaker();
+  const sak = finnSakMedReferanse(alleSaker, params.sakId);
   if (!sak) {
     throw data("Sak ikke funnet", { status: 404 });
   }
   const historikk = hentHistorikk(sak.id);
   const filer = hentFilerForSak(sak.id);
   const journalposter = hentJournalposter(getPersonIdent(sak));
-  const andreSaker = hentDetaljSaker().filter(
+  const andreSaker = alleSaker.filter(
     (annenSak) =>
       annenSak.personIdent === sak.personIdent && annenSak.id !== sak.id,
   );
@@ -141,7 +142,10 @@ export async function action({ request, params }: Route.ActionArgs) {
       break;
     }
     case "koble_sak": {
-      break;
+      throw data("Koble til saken er ikke tilgjengelig ennå", { status: 501 });
+    }
+    default: {
+      throw data("Ugyldig handling", { status: 400 });
     }
   }
 
