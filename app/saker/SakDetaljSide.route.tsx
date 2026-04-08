@@ -1,12 +1,5 @@
+import { ArrowLeftIcon, PencilIcon } from "@navikt/aksel-icons";
 import {
-  ArrowLeftIcon,
-  Buildings2Icon,
-  CalendarIcon,
-  InboxDownIcon,
-  TagIcon,
-} from "@navikt/aksel-icons";
-import {
-  BodyLong,
   BodyShort,
   Button,
   CopyButton,
@@ -21,7 +14,6 @@ import {
 import { PageBlock } from "@navikt/ds-react/Page";
 import { data, useLoaderData, useNavigate } from "react-router";
 import { Kort } from "~/komponenter/Kort";
-import { formaterDato } from "~/utils/date-utils";
 import { mockSaksbehandlere } from "~/saker/mock-saksbehandlere.server";
 import { mockSeksjoner } from "~/saker/mock-seksjoner.server";
 import type { Route } from "./+types/SakDetaljSide.route";
@@ -31,21 +23,21 @@ import { SakHandlingerKnapper } from "./handlinger/SakHandlingerKnapper";
 import { erAktivSakKontrollsak } from "./handlinger/tilgjengeligeHandlinger";
 import { SakHistorikk } from "./historikk/SakHistorikk";
 import { hentHistorikk, leggTilHendelse } from "./historikk/mock-data.server";
-import { hentJournalposter } from "./joark/mock-data.server";
 import { finnSakMedReferanse, getSaksreferanse } from "./id";
-import { JoarkOversikt } from "./joark/JoarkOversikt";
 import { hentAlleSaker } from "./mock-alle-saker.server";
+import { SakerPåSammePerson } from "./komponenter/SakerPåSammePerson";
 import {
-  getAvdeling,
+  getAlder,
+  getBelop,
   getKategoriText,
-  getOpprettetDato,
+  getMisbrukstyper,
+  getNavn,
   getPeriodeText,
-  getSaksenhet,
   getStatusVariantForSak,
   getTags,
 } from "./selectors";
 import {
-  getBeskrivelse,
+  formaterBelop,
   getKildeText,
   getKontaktinformasjon,
   getPersonIdent,
@@ -72,18 +64,21 @@ function hentDetaljSaker() {
 }
 
 export function loader({ params }: Route.LoaderArgs) {
-  const sak = finnSakMedReferanse(hentDetaljSaker(), params.sakId);
+  const alleSaker = hentDetaljSaker();
+  const sak = finnSakMedReferanse(alleSaker, params.sakId);
   if (!sak) {
     throw data("Sak ikke funnet", { status: 404 });
   }
   const historikk = hentHistorikk(sak.id);
   const filer = hentFilerForSak(sak.id);
-  const journalposter = hentJournalposter(getPersonIdent(sak));
+  const andreSaker = alleSaker.filter(
+    (annenSak) => annenSak.personIdent === sak.personIdent && annenSak.id !== sak.id,
+  );
   return {
     sak,
     historikk,
     filer,
-    journalposter,
+    andreSaker,
     saksbehandlere: mockSaksbehandlere,
     seksjoner: mockSeksjoner,
   };
@@ -139,6 +134,12 @@ export async function action({ request, params }: Route.ActionArgs) {
       leggTilHendelse(sak, "SAK_HENLAGT");
       break;
     }
+    case "koble_sak": {
+      throw data("Koble til saken er ikke tilgjengelig ennå", { status: 501 });
+    }
+    default: {
+      throw data("Ugyldig handling", { status: 400 });
+    }
   }
 
   return { ok: true };
@@ -155,151 +156,159 @@ function Felt({ label, children }: { label: string; children: React.ReactNode })
   );
 }
 
-function MetadataPunkt({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <HStack gap="space-2" align="center">
-      <span className="text-ax-icon-neutral-subtle">{icon}</span>
-      <BodyShort size="small">{children}</BodyShort>
-    </HStack>
-  );
-}
-
 export default function SakDetaljSide() {
-  const { sak, historikk, filer, journalposter, saksbehandlere, seksjoner } =
+  const { sak, historikk, filer, andreSaker, saksbehandlere, seksjoner } =
     useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const personIdent = getPersonIdent(sak);
   const statusTekst = getStatus(sak);
   const kildeTekst = getKildeText(sak);
   const ytelseTyper = getYtelseTyper(sak);
-  const beskrivelse = getBeskrivelse(sak);
   const kontaktinformasjon = getKontaktinformasjon(sak);
-  const opprettetDato = getOpprettetDato(sak);
-  const saksenhet = getSaksenhet(sak);
-  const avdeling = getAvdeling(sak);
-  const kategoriText = getKategoriText(sak);
-  const periodeText = getPeriodeText(sak);
-  const tags = getTags(sak);
   const erAktiv = erAktivSakKontrollsak(sak.status);
   const saksreferanse = getSaksreferanse(sak.id);
+  const navn = getNavn(sak);
+  const alder = getAlder(sak);
+  const kategoriText = getKategoriText(sak);
+  const misbrukstyper = getMisbrukstyper(sak);
+  const belop = getBelop(sak);
+  const periodeText = getPeriodeText(sak);
+  const tags = getTags(sak);
 
-  const iconProps = { "aria-hidden": true as const, fontSize: "1.25rem" };
+  const tittel = navn
+    ? `Sak ${saksreferanse} – ${navn}${alder !== null ? ` (${alder})` : ""}`
+    : `Sak ${saksreferanse}`;
 
   return (
     <Page>
       <title>{`Sak ${saksreferanse} – Watson Sak`}</title>
       <PageBlock width="xl" gutters className="!mx-0">
         <VStack gap="space-12" className="py-6">
-          <VStack gap="space-4">
-            <div>
-              <Button
-                type="button"
-                variant="tertiary"
-                size="small"
-                icon={<ArrowLeftIcon aria-hidden />}
-                onClick={() => navigate(-1)}
-              >
-                Tilbake
-              </Button>
-            </div>
-
-            <VStack gap="space-4">
-              <HStack gap="space-4" align="center">
-                <Heading level="1" size="large">
-                  Sak {saksreferanse}
-                </Heading>
-                <Tag variant={getStatusVariantForSak(sak)}>{statusTekst}</Tag>
-              </HStack>
-              <HStack gap="space-6" align="center" wrap>
-                <MetadataPunkt icon={<CalendarIcon {...iconProps} />}>
-                  {formaterDato(opprettetDato)}
-                </MetadataPunkt>
-                <MetadataPunkt icon={<InboxDownIcon {...iconProps} />}>{kildeTekst}</MetadataPunkt>
-                <MetadataPunkt icon={<Buildings2Icon {...iconProps} />}>{saksenhet}</MetadataPunkt>
-                {avdeling && (
-                  <MetadataPunkt icon={<Buildings2Icon {...iconProps} />}>{avdeling}</MetadataPunkt>
-                )}
-                {kategoriText && (
-                  <MetadataPunkt icon={<TagIcon {...iconProps} />}>{kategoriText}</MetadataPunkt>
-                )}
-              </HStack>
-            </VStack>
-          </VStack>
+          <div>
+            <Button
+              type="button"
+              variant="tertiary"
+              size="small"
+              icon={<ArrowLeftIcon aria-hidden />}
+              onClick={() => navigate(-1)}
+            >
+              Tilbake
+            </Button>
+          </div>
 
           <HGrid columns={{ xs: 1, md: "1fr 280px" }} gap="space-8">
             <VStack gap="space-8">
               <Kort>
-                <VStack gap="space-6">
-                  <Heading level="2" size="small">
-                    Saksinformasjon
-                  </Heading>
+                <VStack gap="space-4">
+                  <HStack justify="space-between" align="start">
+                    <VStack gap="space-2">
+                      <Heading level="1" size="large">
+                        {tittel}
+                      </Heading>
+                    </VStack>
+                    <Tag variant={getStatusVariantForSak(sak)}>{statusTekst}</Tag>
+                  </HStack>
 
-                  <HGrid columns={{ xs: 1, sm: 2 }} gap="space-4">
-                    <VStack gap="space-1">
-                      <Detail className="text-ax-text-neutral-subtle" uppercase>
-                        Fødselsnummer
-                      </Detail>
-                      <HStack gap="space-1" align="center">
-                        <BodyShort>{personIdent}</BodyShort>
-                        <CopyButton size="xsmall" copyText={personIdent} />
-                      </HStack>
+                  <hr className="border-ax-border-neutral-subtle" />
+
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <VStack gap="space-4">
+                      <VStack gap="space-1">
+                        <Detail className="text-ax-text-neutral-subtle" uppercase>
+                          Personnummer
+                        </Detail>
+                        <HStack gap="space-1" align="center">
+                          <BodyShort>{personIdent}</BodyShort>
+                          <CopyButton size="xsmall" copyText={personIdent} />
+                        </HStack>
+                      </VStack>
+
+                      {kategoriText && (
+                        <VStack gap="space-1">
+                          <Detail className="text-ax-text-neutral-subtle" uppercase>
+                            Kategori
+                          </Detail>
+                          <div>
+                            <Tag variant="neutral" size="small">
+                              {kategoriText}
+                            </Tag>
+                          </div>
+                        </VStack>
+                      )}
+
+                      {misbrukstyper.length > 0 && (
+                        <VStack gap="space-1">
+                          <Detail className="text-ax-text-neutral-subtle" uppercase>
+                            Misbrukstype
+                          </Detail>
+                          <HStack gap="space-2" wrap>
+                            {misbrukstyper.map((type) => (
+                              <Tag key={type} variant="warning" size="small">
+                                {type}
+                              </Tag>
+                            ))}
+                          </HStack>
+                        </VStack>
+                      )}
+
+                      {tags.length > 0 && (
+                        <VStack gap="space-1">
+                          <Detail className="text-ax-text-neutral-subtle" uppercase>
+                            Merking
+                          </Detail>
+                          <HStack gap="space-2" wrap>
+                            {tags.map((tag) => (
+                              <Tag key={tag} variant="neutral" size="small">
+                                {tag}
+                              </Tag>
+                            ))}
+                          </HStack>
+                        </VStack>
+                      )}
+
+                      <Felt label="Kilde">{kildeTekst}</Felt>
                     </VStack>
 
-                    {periodeText && <Felt label="Periode">{periodeText}</Felt>}
-                  </HGrid>
+                    <VStack gap="space-4">
+                      {periodeText && <Felt label="Periode">{periodeText}</Felt>}
 
-                  {(ytelseTyper.length > 0 || tags.length > 0) && (
-                    <>
-                      <hr className="border-ax-border-neutral-subtle" />
-                      <VStack gap="space-4">
-                        {ytelseTyper.length > 0 && (
-                          <div>
-                            <Detail className="text-ax-text-neutral-subtle mb-1" uppercase>
-                              Ytelser
-                            </Detail>
-                            <HStack gap="space-2" wrap>
-                              {ytelseTyper.map((ytelse) => (
-                                <Tag key={ytelse} variant="info" size="small">
-                                  {ytelse}
-                                </Tag>
-                              ))}
-                            </HStack>
-                          </div>
-                        )}
-                        {tags.length > 0 && (
-                          <div>
-                            <Detail className="text-ax-text-neutral-subtle mb-1" uppercase>
-                              Tags
-                            </Detail>
-                            <HStack gap="space-2" wrap>
-                              {tags.map((tag) => (
-                                <Tag key={tag} variant="neutral" size="small">
-                                  {tag}
-                                </Tag>
-                              ))}
-                            </HStack>
-                          </div>
-                        )}
-                      </VStack>
-                    </>
+                      {belop !== null && <Felt label="Ca beløp">{formaterBelop(belop)}</Felt>}
+
+                      {ytelseTyper.length > 0 && (
+                        <VStack gap="space-1">
+                          <Detail className="text-ax-text-neutral-subtle" uppercase>
+                            Ytelse
+                          </Detail>
+                          <HStack gap="space-2" wrap>
+                            {ytelseTyper.map((ytelse) => (
+                              <Tag key={ytelse} variant="success" size="small">
+                                {ytelse}
+                              </Tag>
+                            ))}
+                          </HStack>
+                        </VStack>
+                      )}
+                    </VStack>
+                  </div>
+
+                  {erAktiv && (
+                    <HStack justify="end">
+                      <Button
+                        variant="tertiary"
+                        size="xsmall"
+                        icon={<PencilIcon aria-hidden />}
+                        aria-label="Rediger saksinformasjon"
+                      >
+                        Rediger
+                      </Button>
+                    </HStack>
                   )}
                 </VStack>
               </Kort>
 
-              {beskrivelse && (
-                <Kort>
-                  <Heading level="2" size="small" spacing>
-                    Beskrivelse
-                  </Heading>
-                  <BodyLong>{beskrivelse}</BodyLong>
-                </Kort>
-              )}
-
               <SakFilområde filer={filer} redigerbar={erAktiv} />
 
-              <JoarkOversikt journalposter={journalposter} />
-
-              <SakHistorikk hendelser={historikk} />
+              <SakerPåSammePerson saker={andreSaker} gjeldendeSakId={sak.id} />
             </VStack>
 
             <VStack gap="space-6" className="md:sticky md:top-4 md:self-start">
@@ -335,6 +344,8 @@ export default function SakDetaljSide() {
                   </VStack>
                 </Kort>
               )}
+
+              <SakHistorikk hendelser={historikk} />
             </VStack>
           </HGrid>
         </VStack>

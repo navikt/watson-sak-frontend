@@ -45,8 +45,24 @@ export function getAvdeling(_sak: KontrollsakResponse): string | null {
   return null;
 }
 
-export function getTags(_sak: KontrollsakResponse): string[] {
-  return [];
+export function getTags(sak: KontrollsakResponse): string[] {
+  return sak.merking ?? [];
+}
+
+export function getNavn(sak: KontrollsakResponse): string | null {
+  return sak.navn ?? null;
+}
+
+export function getAlder(sak: KontrollsakResponse): number | null {
+  return sak.alder ?? null;
+}
+
+export function getMisbrukstyper(sak: KontrollsakResponse): string[] {
+  return sak.misbrukstyper ?? [];
+}
+
+export function getBelop(sak: KontrollsakResponse): number | null {
+  return sak.belop ?? null;
 }
 
 export function getResultat(sak: KontrollsakResponse) {

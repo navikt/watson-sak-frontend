@@ -1,6 +1,7 @@
 import type { KontrollsakResponse } from "./types.backend";
 import { describe, expect, it } from "vitest";
 import {
+  formaterBelop,
   formaterKategori,
   formaterPeriodeForYtelser,
   formaterStatus,
@@ -55,6 +56,16 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
 describe("sak-visning", () => {
   it("formaterer backend-status til visningstekst", () => {
     expect(formaterStatus("UTREDES")).toBe("Utredes");
+  });
+
+  it("formaterer OPPRETTET-status til «Ufordelt»", () => {
+    expect(formaterStatus("OPPRETTET")).toBe("Ufordelt");
+  });
+
+  it("formaterer beløp med norsk tusen-separator", () => {
+    expect(formaterBelop(1000)).toBe("1\u00a0000");
+    expect(formaterBelop(0)).toBe("0");
+    expect(formaterBelop(1234567)).toBe("1\u00a0234\u00a0567");
   });
 
   it("maper backend-status til riktig tag-variant", () => {

@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { KontrollsakResponse } from "./types.backend";
 import {
+  getAlder,
   getAvdeling,
+  getBelop,
   getKategoriText,
+  getMisbrukstyper,
+  getNavn,
   getOpprettetDato,
   getPeriodeText,
   getResultat,
@@ -78,7 +82,42 @@ describe("saker-selectors", () => {
     expect(getTags(sak)).toEqual([]);
   });
 
+  it("returnerer merking fra sak når feltet er satt", () => {
+    const sak = lagKontrollsak({ merking: ["Utelivsbransje", "Noe lurt"] });
+    expect(getTags(sak)).toEqual(["Utelivsbransje", "Noe lurt"]);
+  });
+
   it("håndterer resultat null-sikkert for kontrollsak", () => {
     expect(getResultat(lagKontrollsak())).toBeNull();
+  });
+
+  it("returnerer navn og alder når feltene er satt", () => {
+    const sak = lagKontrollsak({ navn: "Ola Nordmann", alder: 42 });
+    expect(getNavn(sak)).toBe("Ola Nordmann");
+    expect(getAlder(sak)).toBe(42);
+  });
+
+  it("returnerer null for navn og alder når feltene mangler", () => {
+    const sak = lagKontrollsak();
+    expect(getNavn(sak)).toBeNull();
+    expect(getAlder(sak)).toBeNull();
+  });
+
+  it("returnerer misbrukstyper når feltet er satt", () => {
+    const sak = lagKontrollsak({ misbrukstyper: ["Utenfor EØS", "Innenfor EØS"] });
+    expect(getMisbrukstyper(sak)).toEqual(["Utenfor EØS", "Innenfor EØS"]);
+  });
+
+  it("returnerer tomt array for misbrukstyper når feltet mangler", () => {
+    expect(getMisbrukstyper(lagKontrollsak())).toEqual([]);
+  });
+
+  it("returnerer beløp når feltet er satt", () => {
+    const sak = lagKontrollsak({ belop: 300000 });
+    expect(getBelop(sak)).toBe(300000);
+  });
+
+  it("returnerer null for beløp når feltet mangler", () => {
+    expect(getBelop(lagKontrollsak())).toBeNull();
   });
 });

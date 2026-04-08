@@ -112,6 +112,9 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
 
     expect(resultat.sak.id).toBe(kontrollsakId);
     expect("personIdent" in resultat.sak).toBe(true);
+    expect(Array.isArray(resultat.andreSaker)).toBe(true);
+    expect(resultat.andreSaker.every((s) => s.personIdent === resultat.sak.personIdent)).toBe(true);
+    expect(resultat.andreSaker.every((s) => s.id !== resultat.sak.id)).toBe(true);
   });
 
   it("loader returnerer backend-shapet mine sak når sakId peker på backend-shaped mine saker", () => {
@@ -119,6 +122,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
 
     expect(resultat.sak.id).toBe(mineSakId);
     expect("personIdent" in resultat.sak).toBe(true);
+    expect(Array.isArray(resultat.andreSaker)).toBe(true);
   });
 
   it("beholder hentAlleSaker som backend-shaped aggregat", () => {

@@ -54,7 +54,7 @@ describe("MineSakerInnhold", () => {
     const lenke = screen.getByRole("link", { name: /Feilutbetaling - Sykepenger/i });
 
     expect(lenke.getAttribute("href")).toBe(`/saker/${getSaksreferanse(lagMockSakUuid("201", 2))}`);
-    expect(screen.getByText("Opprettet")).toBeDefined();
+    expect(screen.getByText("Ufordelt")).toBeDefined();
     expect(screen.getByText("Opprettet 03.02.2026")).toBeDefined();
   });
 });
