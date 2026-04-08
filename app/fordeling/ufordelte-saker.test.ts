@@ -11,7 +11,7 @@ import type { FordelingSak } from "./typer";
 const lagSak = (overstyringer: Partial<FordelingSak>): FordelingSak => ({
   id: "1",
   opprettetDato: "2026-01-15",
-  kategori: "Feilutbetaling",
+  kategori: "Arbeid",
   ytelser: ["Dagpenger"],
   ...overstyringer,
 });
@@ -19,29 +19,29 @@ const lagSak = (overstyringer: Partial<FordelingSak>): FordelingSak => ({
 describe("ufordelte-saker", () => {
   it("utleder alfabetisk sorterte filtervalg fra de ufordelte sakene", () => {
     const saker = [
-      lagSak({ id: "1", kategori: "Oppfølging", ytelser: ["Sykepenger"] }),
-      lagSak({ id: "2", kategori: "Misbruk", ytelser: ["Barnetrygd"] }),
-      lagSak({ id: "3", kategori: "Feilutbetaling", ytelser: ["Dagpenger"] }),
-      lagSak({ id: "4", kategori: "Feilutbetaling", ytelser: ["Barnetrygd"] }),
+      lagSak({ id: "1", kategori: "Tiltak", ytelser: ["Sykepenger"] }),
+      lagSak({ id: "2", kategori: "Samliv", ytelser: ["Barnetrygd"] }),
+      lagSak({ id: "3", kategori: "Arbeid", ytelser: ["Dagpenger"] }),
+      lagSak({ id: "4", kategori: "Arbeid", ytelser: ["Barnetrygd"] }),
     ];
 
     expect(hentUfordelteFiltervalg(saker)).toEqual({
-      kategorier: ["Feilutbetaling", "Misbruk", "Oppfølging"],
+      kategorier: ["Arbeid", "Samliv", "Tiltak"],
       ytelser: ["Barnetrygd", "Dagpenger", "Sykepenger"],
     });
   });
 
   it("filtrerer med kategori og ytelse og justerer ugyldig side ved paginering", () => {
     const saker = [
-      lagSak({ id: "1", kategori: "Feilutbetaling", ytelser: ["Dagpenger"] }),
-      lagSak({ id: "2", kategori: "Feilutbetaling", ytelser: ["AAP"] }),
-      lagSak({ id: "3", kategori: "Feilutbetaling", ytelser: ["Dagpenger"] }),
-      lagSak({ id: "4", kategori: "Oppfølging", ytelser: ["Dagpenger"] }),
-      lagSak({ id: "5", kategori: "Misbruk", ytelser: ["Dagpenger"] }),
+      lagSak({ id: "1", kategori: "Arbeid", ytelser: ["Dagpenger"] }),
+      lagSak({ id: "2", kategori: "Arbeid", ytelser: ["AAP"] }),
+      lagSak({ id: "3", kategori: "Arbeid", ytelser: ["Dagpenger"] }),
+      lagSak({ id: "4", kategori: "Tiltak", ytelser: ["Dagpenger"] }),
+      lagSak({ id: "5", kategori: "Samliv", ytelser: ["Dagpenger"] }),
     ];
 
     const filtrerteSaker = filtrerUfordelteSaker(saker, {
-      kategorier: ["Feilutbetaling"],
+      kategorier: ["Arbeid"],
       ytelser: ["Dagpenger"],
     });
 
@@ -59,19 +59,19 @@ describe("ufordelte-saker", () => {
       lagSak({
         id: "1",
         opprettetDato: "2026-01-13",
-        kategori: "Oppfølging",
+        kategori: "Tiltak",
         ytelser: ["Barnetrygd"],
       }),
       lagSak({
         id: "2",
         opprettetDato: "2026-02-16",
-        kategori: "Feilutbetaling",
+        kategori: "Arbeid",
         ytelser: ["Dagpenger", "Barnetrygd"],
       }),
       lagSak({
         id: "3",
         opprettetDato: "2026-02-18",
-        kategori: "Misbruk",
+        kategori: "Samliv",
         ytelser: ["Sykepenger"],
       }),
     ];
@@ -88,19 +88,19 @@ describe("ufordelte-saker", () => {
       lagSak({
         id: "1",
         opprettetDato: "2026-01-13",
-        kategori: "Oppfølging",
+        kategori: "Tiltak",
         ytelser: ["Sykepenger"],
       }),
       lagSak({
         id: "2",
         opprettetDato: "2026-02-16",
-        kategori: "Feilutbetaling",
+        kategori: "Arbeid",
         ytelser: ["Barnetrygd"],
       }),
       lagSak({
         id: "3",
         opprettetDato: "2026-01-20",
-        kategori: "Misbruk",
+        kategori: "Samliv",
         ytelser: ["Dagpenger"],
       }),
     ];

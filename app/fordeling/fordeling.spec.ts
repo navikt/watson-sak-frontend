@@ -27,9 +27,9 @@ test.describe("Ufordelte saker", () => {
   });
 
   test("kan filtrere på kategori og ytelse", async ({ page }) => {
-    const feilutbetalingKnapp = page.getByRole("button", { name: "Feilutbetaling" });
-    await feilutbetalingKnapp.click();
-    await expect(feilutbetalingKnapp).toHaveAttribute("aria-pressed", "true");
+    const arbeidKnapp = page.getByRole("button", { name: "Arbeid" });
+    await arbeidKnapp.click();
+    await expect(arbeidKnapp).toHaveAttribute("aria-pressed", "true");
 
     await page.getByRole("button", { name: "Barnetrygd" }).click();
 
@@ -39,9 +39,7 @@ test.describe("Ufordelte saker", () => {
       .poll(async () => {
         const tekster = await rader.allTextContents();
 
-        return tekster.every(
-          (tekst) => tekst.includes("Barnetrygd") && tekst.includes("Feilutbetaling"),
-        );
+        return tekster.every((tekst) => tekst.includes("Barnetrygd") && tekst.includes("Arbeid"));
       })
       .toBe(true);
   });
@@ -50,16 +48,16 @@ test.describe("Ufordelte saker", () => {
     await page.getByRole("button", { name: "2" }).click();
 
     await expect(page.getByRole("button", { name: "2" })).toHaveAttribute("aria-current", "true");
-    const oppfølgingRad = page.locator("tbody tr").filter({ hasText: "Oppfølging" });
-    await expect(oppfølgingRad).toHaveCount(1);
-    await expect(oppfølgingRad).toContainText("Foreldrepenger");
+    const tiltakRad = page.locator("tbody tr").filter({ hasText: "Tiltak" });
+    await expect(tiltakRad).toHaveCount(1);
+    await expect(tiltakRad).toContainText("Foreldrepenger");
   });
 
   test("kan sortere på kategori, ytelse og opprettet", async ({ page }) => {
     const rader = page.locator("tbody tr");
 
     await page.getByRole("button", { name: "Sorter på kategori" }).click();
-    await expect(rader.nth(0)).toContainText("Feilutbetaling");
+    await expect(rader.nth(0)).toContainText("Arbeid");
 
     await page.getByRole("button", { name: "Sorter på opprettet" }).click();
     await expect(rader.nth(0)).toContainText("16. feb. 2026");
