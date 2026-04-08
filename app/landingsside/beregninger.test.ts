@@ -9,7 +9,7 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
     personIdent: "12345678901",
     saksbehandler: "Z123456",
     status: "OPPRETTET",
-    kategori: "FEILUTBETALING",
+    kategori: "ANNET",
     prioritet: "NORMAL",
     mottakEnhet: "4812",
     mottakSaksbehandler: "Z654321",
