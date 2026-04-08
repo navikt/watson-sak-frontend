@@ -7,6 +7,7 @@ import {
   getKategoriText,
   getMisbrukstyper,
   getNavn,
+  getOppdatertDato,
   getOpprettetDato,
   getPeriodeText,
   getResultat,
@@ -21,7 +22,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     personIdent: "10987654321",
     saksbehandler: "Z123456",
     status: "UTREDES",
-    kategori: "FEILUTBETALING",
+    kategori: "ARBEID",
     prioritet: "NORMAL",
     mottakEnhet: "4812",
     mottakSaksbehandler: "Z654321",
@@ -59,6 +60,13 @@ describe("saker-selectors", () => {
     expect(getOpprettetDato(lagKontrollsak())).toBe("2026-02-03T10:11:12Z");
   });
 
+  it("bruker opprettet som fallback for oppdatert", () => {
+    expect(getOppdatertDato(lagKontrollsak())).toBe("2026-02-03T10:11:12Z");
+    expect(getOppdatertDato(lagKontrollsak({ oppdatert: "2026-02-04T10:11:12Z" }))).toBe(
+      "2026-02-04T10:11:12Z",
+    );
+  });
+
   it("bygger periodevisning fra backend-ytelser", () => {
     expect(getPeriodeText(lagKontrollsak())).toBe("1. jan. 2026 – 31. jan. 2026");
   });
@@ -70,7 +78,7 @@ describe("saker-selectors", () => {
   it("mapper backend-kategori og backend-statusvariant for kontrollsak", () => {
     const sak = lagKontrollsak();
 
-    expect(getKategoriText(sak)).toBe("Feilutbetaling");
+    expect(getKategoriText(sak)).toBe("Arbeid");
     expect(getStatusVariantForSak(sak)).toBe("warning");
   });
 
@@ -104,7 +112,10 @@ describe("saker-selectors", () => {
   });
 
   it("returnerer misbrukstyper når feltet er satt", () => {
-    const sak = lagKontrollsak({ misbrukstyper: ["Utenfor EØS", "Innenfor EØS"] });
+    const sak = lagKontrollsak({
+      kategori: "UTLAND",
+      misbrukstyper: ["Utenfor EØS", "Innenfor EØS"],
+    });
     expect(getMisbrukstyper(sak)).toEqual(["Utenfor EØS", "Innenfor EØS"]);
   });
 

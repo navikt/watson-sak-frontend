@@ -13,6 +13,10 @@ export function getOpprettetDato(sak: KontrollsakResponse): string {
   return sak.opprettet;
 }
 
+export function getOppdatertDato(sak: KontrollsakResponse): string {
+  return sak.oppdatert ?? sak.opprettet;
+}
+
 export function getPeriodeText(sak: KontrollsakResponse): string | null {
   const periodeText = formaterPeriodeForYtelser(sak.ytelser);
 
