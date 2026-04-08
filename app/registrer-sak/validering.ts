@@ -1,28 +1,10 @@
 import { z } from "zod";
+import { kontrollsakKategoriVerdier, misbrukstyperPerKategori } from "~/saker/kategorier";
 
 export const kildeAlternativer = ["INTERN", "EKSTERN", "ANONYM_TIPS", "PUBLIKUM"] as const;
 
-export const kategoriAlternativer = [
-  "BEHANDLER",
-  "ARBEID",
-  "SAMLIV",
-  "UTLAND",
-  "IDENTITET",
-  "TILTAK",
-  "DOKUMENTFALSK",
-  "ANNET",
-] as const;
-
-export const misbrukstypePerKategori: Partial<
-  Record<(typeof kategoriAlternativer)[number], readonly string[]>
-> = {
-  BEHANDLER: ["Behandler §25-7", "L-takster", "Behandler", "L-takster foretak"],
-  ARBEID: ["Hvit inntekt", "Fiktivt arbeidsforhold", "Svart arbeid", "Feil inntektsgrunnlag"],
-  SAMLIV: ["Skjult samliv", "Endret sivilstatus"],
-  UTLAND: ["Medlemskap bortfalt", "Innenfor EØS", "Utenfor EØS"],
-  IDENTITET: ["Identitetsmisbruk", "Opphold på feil grunnlag"],
-  TILTAK: ["Misbruk av tiltaksplass", "Avbrutt tiltak"],
-};
+export const kategoriAlternativer = kontrollsakKategoriVerdier;
+export { misbrukstyperPerKategori as misbrukstypePerKategori };
 
 export const merkingAlternativer = ["PRIORITERT", "SENSITIV", "POLITIANMELDELSE", "ANNET"] as const;
 
@@ -77,7 +59,7 @@ export const opprettSakSchema = z
     misbruktype: z
       .string()
       .refine((val) => {
-        const alleMisbrukstyper = Object.values(misbrukstypePerKategori).flat();
+        const alleMisbrukstyper: readonly string[] = Object.values(misbrukstyperPerKategori).flat();
         return !val || alleMisbrukstyper.includes(val);
       }, "Ugyldig misbruktype")
       .optional(),
@@ -101,7 +83,7 @@ export const opprettSakSchema = z
   })
   .refine(
     ({ kategori, misbruktype }) => {
-      const harMisbrukstyper = kategori in misbrukstypePerKategori;
+      const harMisbrukstyper = kategori in misbrukstyperPerKategori;
       if (harMisbrukstyper && !misbruktype) return false;
       return true;
     },
