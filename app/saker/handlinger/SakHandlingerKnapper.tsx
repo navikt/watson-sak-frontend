@@ -1,4 +1,4 @@
-import { Buildings2Icon, PersonPencilIcon, PersonPlusIcon } from "@navikt/aksel-icons";
+import { ArrowForwardIcon, PersonPencilIcon, PersonPlusIcon } from "@navikt/aksel-icons";
 import { Button, Heading, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import { useFetcher } from "react-router";
@@ -62,7 +62,7 @@ export function SakHandlingerKnapper({
         >
           Tildel meg
         </Button>
-        <Button variant="secondary" size="small" icon={<Buildings2Icon aria-hidden />} disabled>
+        <Button variant="secondary" size="small" icon={<ArrowForwardIcon aria-hidden />} disabled>
           Send til annen enhet
         </Button>
       </VStack>

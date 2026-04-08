@@ -41,9 +41,15 @@ interface SakKortProps {
   sak: KontrollsakResponse;
 }
 
-function SakFelt({ label, children }: { label: string; children: React.ReactNode }) {
+function SakFelt({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
-    <VStack gap="space-1">
+    <VStack gap="space-4">
       <Detail className="text-ax-text-neutral-subtle" uppercase>
         {label}
       </Detail>
@@ -72,10 +78,15 @@ function SakKort({ sak }: SakKortProps) {
   if (alder !== null) tittelDeler.push(`(${alder})`);
 
   return (
-    <Box borderRadius="8" background="raised" padding="space-4" shadow="dialog">
-      <VStack gap="space-4">
-        <HStack justify="space-between" align="center" wrap gap="space-2">
-          <HStack gap="space-4" align="center" wrap>
+    <Box
+      borderRadius="8"
+      background="raised"
+      padding="space-16"
+      shadow="dialog"
+    >
+      <VStack gap="space-16">
+        <HStack justify="space-between" align="center" wrap gap="space-8">
+          <HStack gap="space-16" align="center" wrap>
             <BodyShort size="small" weight="semibold">
               Personnummer: <span className="font-bold">{personIdent}</span>
             </BodyShort>
@@ -86,7 +97,8 @@ function SakKort({ sak }: SakKortProps) {
               Enhet: <span className="font-bold">{sak.mottakEnhet}</span>
             </BodyShort>
             <BodyShort size="small">
-              Saksbehandler: <span className="font-bold">{sak.saksbehandler}</span>
+              Saksbehandler:{" "}
+              <span className="font-bold">{sak.saksbehandler}</span>
             </BodyShort>
             <Tag variant={getStatusVariantForSak(sak)} size="small">
               {statusTekst}
@@ -95,7 +107,13 @@ function SakKort({ sak }: SakKortProps) {
           <Button
             variant="tertiary"
             size="xsmall"
-            icon={åpen ? <ChevronUpIcon aria-hidden /> : <ChevronDownIcon aria-hidden />}
+            icon={
+              åpen ? (
+                <ChevronUpIcon aria-hidden />
+              ) : (
+                <ChevronDownIcon aria-hidden />
+              )
+            }
             iconPosition="right"
             onClick={() => setÅpen((prev) => !prev)}
             aria-expanded={åpen}
@@ -107,13 +125,13 @@ function SakKort({ sak }: SakKortProps) {
         {åpen && (
           <>
             <hr className="border-ax-border-neutral-subtle" />
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <VStack gap="space-4">
-                <VStack gap="space-1">
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+              <VStack gap="space-16">
+                <VStack gap="space-4">
                   <Detail className="text-ax-text-neutral-subtle" uppercase>
                     Personnummer
                   </Detail>
-                  <HStack gap="space-1" align="center">
+                  <HStack gap="space-4" align="center">
                     <BodyShort size="small">{personIdent}</BodyShort>
                     <CopyButton size="xsmall" copyText={personIdent} />
                   </HStack>
@@ -128,11 +146,11 @@ function SakKort({ sak }: SakKortProps) {
                 )}
 
                 {misbrukstyper.length > 0 && (
-                  <VStack gap="space-1">
+                  <VStack gap="space-4">
                     <Detail className="text-ax-text-neutral-subtle" uppercase>
                       Misbrukstype
                     </Detail>
-                    <HStack gap="space-2" wrap>
+                    <HStack gap="space-4" wrap>
                       {misbrukstyper.map((type) => (
                         <Tag key={type} variant="warning" size="small">
                           {type}
@@ -143,11 +161,11 @@ function SakKort({ sak }: SakKortProps) {
                 )}
 
                 {tags.length > 0 && (
-                  <VStack gap="space-1">
+                  <VStack gap="space-4">
                     <Detail className="text-ax-text-neutral-subtle" uppercase>
                       Merking
                     </Detail>
-                    <HStack gap="space-2" wrap>
+                    <HStack gap="space-4" wrap>
                       {tags.map((tag) => (
                         <Tag key={tag} variant="neutral" size="small">
                           {tag}
@@ -160,17 +178,21 @@ function SakKort({ sak }: SakKortProps) {
                 <SakFelt label="Kilde">{kildeTekst}</SakFelt>
               </VStack>
 
-              <VStack gap="space-4">
-                {periodeText && <SakFelt label="Periode">{periodeText}</SakFelt>}
+              <VStack gap="space-16">
+                {periodeText && (
+                  <SakFelt label="Periode">{periodeText}</SakFelt>
+                )}
 
-                {belop !== null && <SakFelt label="Ca beløp">{formaterBelop(belop)}</SakFelt>}
+                {belop !== null && (
+                  <SakFelt label="Ca beløp">{formaterBelop(belop)}</SakFelt>
+                )}
 
                 {ytelseTyper.length > 0 && (
-                  <VStack gap="space-1">
+                  <VStack gap="space-4">
                     <Detail className="text-ax-text-neutral-subtle" uppercase>
                       Ytelse
                     </Detail>
-                    <HStack gap="space-2" wrap>
+                    <HStack gap="space-4" wrap>
                       {ytelseTyper.map((ytelse) => (
                         <Tag key={ytelse} variant="success" size="small">
                           {ytelse}
@@ -204,7 +226,10 @@ function SakKort({ sak }: SakKortProps) {
   );
 }
 
-export function SakerPåSammePerson({ saker, gjeldendeSakId }: SakerPåSammePersonProps) {
+export function SakerPåSammePerson({
+  saker,
+  gjeldendeSakId,
+}: SakerPåSammePersonProps) {
   const andreSaker = saker.filter((sak) => sak.id !== gjeldendeSakId);
 
   if (andreSaker.length === 0) {
@@ -212,8 +237,8 @@ export function SakerPåSammePerson({ saker, gjeldendeSakId }: SakerPåSammePers
   }
 
   return (
-    <Box padding="space-6" borderRadius="8" background="raised">
-      <VStack gap="space-4">
+    <Box borderRadius="8" background="raised">
+      <VStack gap="space-8">
         <Heading level="2" size="small">
           Saker på samme person
         </Heading>

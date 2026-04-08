@@ -76,7 +76,8 @@ export function loader({ params }: Route.LoaderArgs) {
   const filer = hentFilerForSak(sak.id);
   const journalposter = hentJournalposter(getPersonIdent(sak));
   const andreSaker = hentDetaljSaker().filter(
-    (annenSak) => annenSak.personIdent === sak.personIdent && annenSak.id !== sak.id,
+    (annenSak) =>
+      annenSak.personIdent === sak.personIdent && annenSak.id !== sak.id,
   );
   return {
     sak,
@@ -147,7 +148,13 @@ export async function action({ request, params }: Route.ActionArgs) {
   return { ok: true };
 }
 
-function Felt({ label, children }: { label: string; children: React.ReactNode }) {
+function Felt({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <VStack gap="space-1">
       <Detail className="text-ax-text-neutral-subtle" uppercase>
@@ -159,8 +166,15 @@ function Felt({ label, children }: { label: string; children: React.ReactNode })
 }
 
 export default function SakDetaljSide() {
-  const { sak, historikk, filer, journalposter, andreSaker, saksbehandlere, seksjoner } =
-    useLoaderData<typeof loader>();
+  const {
+    sak,
+    historikk,
+    filer,
+    journalposter,
+    andreSaker,
+    saksbehandlere,
+    seksjoner,
+  } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const personIdent = getPersonIdent(sak);
   const statusTekst = getStatus(sak);
@@ -209,7 +223,9 @@ export default function SakDetaljSide() {
                         {tittel}
                       </Heading>
                     </VStack>
-                    <Tag variant={getStatusVariantForSak(sak)}>{statusTekst}</Tag>
+                    <Tag variant={getStatusVariantForSak(sak)}>
+                      {statusTekst}
+                    </Tag>
                   </HStack>
 
                   <hr className="border-ax-border-neutral-subtle" />
@@ -217,7 +233,10 @@ export default function SakDetaljSide() {
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <VStack gap="space-4">
                       <VStack gap="space-1">
-                        <Detail className="text-ax-text-neutral-subtle" uppercase>
+                        <Detail
+                          className="text-ax-text-neutral-subtle"
+                          uppercase
+                        >
                           Personnummer
                         </Detail>
                         <HStack gap="space-1" align="center">
@@ -228,7 +247,10 @@ export default function SakDetaljSide() {
 
                       {kategoriText && (
                         <VStack gap="space-1">
-                          <Detail className="text-ax-text-neutral-subtle" uppercase>
+                          <Detail
+                            className="text-ax-text-neutral-subtle"
+                            uppercase
+                          >
                             Kategori
                           </Detail>
                           <div>
@@ -241,7 +263,10 @@ export default function SakDetaljSide() {
 
                       {misbrukstyper.length > 0 && (
                         <VStack gap="space-1">
-                          <Detail className="text-ax-text-neutral-subtle" uppercase>
+                          <Detail
+                            className="text-ax-text-neutral-subtle"
+                            uppercase
+                          >
                             Misbrukstype
                           </Detail>
                           <HStack gap="space-2" wrap>
@@ -256,7 +281,10 @@ export default function SakDetaljSide() {
 
                       {tags.length > 0 && (
                         <VStack gap="space-1">
-                          <Detail className="text-ax-text-neutral-subtle" uppercase>
+                          <Detail
+                            className="text-ax-text-neutral-subtle"
+                            uppercase
+                          >
                             Merking
                           </Detail>
                           <HStack gap="space-2" wrap>
@@ -273,13 +301,20 @@ export default function SakDetaljSide() {
                     </VStack>
 
                     <VStack gap="space-4">
-                      {periodeText && <Felt label="Periode">{periodeText}</Felt>}
+                      {periodeText && (
+                        <Felt label="Periode">{periodeText}</Felt>
+                      )}
 
-                      {belop !== null && <Felt label="Ca beløp">{formaterBelop(belop)}</Felt>}
+                      {belop !== null && (
+                        <Felt label="Ca beløp">{formaterBelop(belop)}</Felt>
+                      )}
 
                       {ytelseTyper.length > 0 && (
                         <VStack gap="space-1">
-                          <Detail className="text-ax-text-neutral-subtle" uppercase>
+                          <Detail
+                            className="text-ax-text-neutral-subtle"
+                            uppercase
+                          >
                             Ytelse
                           </Detail>
                           <HStack gap="space-2" wrap>
@@ -309,18 +344,7 @@ export default function SakDetaljSide() {
                 </VStack>
               </Kort>
 
-              {beskrivelse && (
-                <Kort>
-                  <Heading level="2" size="small" spacing>
-                    Beskrivelse
-                  </Heading>
-                  <BodyLong>{beskrivelse}</BodyLong>
-                </Kort>
-              )}
-
               <SakFilområde filer={filer} redigerbar={erAktiv} />
-
-              <JoarkOversikt journalposter={journalposter} />
 
               <SakerPåSammePerson saker={andreSaker} gjeldendeSakId={sak.id} />
             </VStack>
@@ -348,7 +372,9 @@ export default function SakDetaljSide() {
                           <Felt label="Navn">{kontaktinformasjon.navn}</Felt>
                         )}
                         {kontaktinformasjon.telefon && (
-                          <Felt label="Telefon">{kontaktinformasjon.telefon}</Felt>
+                          <Felt label="Telefon">
+                            {kontaktinformasjon.telefon}
+                          </Felt>
                         )}
                         {kontaktinformasjon.epost && (
                           <Felt label="E-post">{kontaktinformasjon.epost}</Felt>
