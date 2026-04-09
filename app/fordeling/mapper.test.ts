@@ -8,7 +8,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     personIdent: "12345678901",
     saksbehandler: "Z123456",
     status: "OPPRETTET",
-    kategori: "FEILUTBETALING",
+    kategori: "ARBEID",
     prioritet: "NORMAL",
     mottakEnhet: "4812",
     mottakSaksbehandler: "Z123456",
@@ -45,7 +45,7 @@ describe("Fordeling mapper", () => {
     expect(mapKontrollsakTilFordelingSak(lagKontrollsak())).toEqual({
       id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
       opprettetDato: "2026-03-20",
-      kategori: "Feilutbetaling",
+      kategori: "Arbeid",
       ytelser: ["Dagpenger"],
     });
   });

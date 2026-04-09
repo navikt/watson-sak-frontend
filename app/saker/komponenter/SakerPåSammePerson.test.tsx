@@ -14,7 +14,7 @@ function lagKontrollsak(
     personIdent: "12345678901",
     saksbehandler: "Lise Raus",
     status: "UTREDES",
-    kategori: "MISBRUK",
+    kategori: "SAMLIV",
     prioritet: "NORMAL",
     mottakEnhet: "Øst",
     mottakSaksbehandler: "Z999999",

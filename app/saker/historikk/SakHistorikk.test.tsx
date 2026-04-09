@@ -9,7 +9,7 @@ function lagBackendHendelse(overrides: Partial<SakHendelse> = {}): SakHendelse {
     tidspunkt: "2026-03-31T10:15:00Z",
     hendelsesType: "SAK_OPPRETTET",
     sakId: "00000000-0000-0000-0000-000000000124",
-    kategori: "FEILUTBETALING",
+    kategori: "ARBEID",
     prioritet: "NORMAL",
     status: "OPPRETTET",
     ytelseTyper: ["Sykepenger"],

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { kontrollsakKategoriVerdier, kontrollsakMisbrukstypeVerdier } from "./kategorier";
 
 const kontrollsakStatusSchema = z.enum([
   "OPPRETTET",
@@ -9,7 +10,8 @@ const kontrollsakStatusSchema = z.enum([
   "AVSLUTTET",
 ]);
 
-const kontrollsakKategoriSchema = z.enum(["UDEFINERT", "FEILUTBETALING", "MISBRUK", "OPPFØLGING"]);
+const kontrollsakKategoriSchema = z.enum(kontrollsakKategoriVerdier);
+const kontrollsakMisbrukstypeSchema = z.enum(kontrollsakMisbrukstypeVerdier);
 
 const kontrollsakPrioritetSchema = z.enum(["HØY", "NORMAL", "LAV"]);
 
@@ -83,7 +85,7 @@ export const kontrollsakResponseSchema = z.object({
   mottakEnhet: z.string(),
   mottakSaksbehandler: z.string(),
   ytelser: z.array(kontrollsakYtelseSchema),
-  misbrukstyper: z.array(z.string()).nullable().optional(),
+  misbrukstyper: z.array(kontrollsakMisbrukstypeSchema).nullable().optional(),
   belop: z.number().nullable().optional(),
   merking: z.array(z.string()).nullable().optional(),
   bakgrunn: kontrollsakBakgrunnSchema.nullable(),

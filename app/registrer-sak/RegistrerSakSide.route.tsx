@@ -18,21 +18,11 @@ import { PageBlock } from "@navikt/ds-react/Page";
 import { useState } from "react";
 import { Form, Link, useFetcher, useActionData, useLoaderData } from "react-router";
 import { RouteConfig } from "~/routeConfig";
+import { kontrollsakKategoriEtiketter } from "~/saker/kategorier";
 import type { PersonOppslagResultat } from "./person-oppslag.mock.server";
 import { action, loader } from "./RegistrerSakSide.server";
 
 export { action, loader };
-
-const kategoriEtiketter: Record<string, string> = {
-  BEHANDLER: "Behandler",
-  ARBEID: "Arbeid",
-  SAMLIV: "Samliv",
-  UTLAND: "Utland",
-  IDENTITET: "Identitet",
-  TILTAK: "Tiltak",
-  DOKUMENTFALSK: "Dokumentfalsk",
-  ANNET: "Annet",
-};
 
 const kildeEtiketter: Record<string, string> = {
   INTERN: "Intern",
@@ -233,7 +223,9 @@ export default function OpprettSakSide() {
                       <option value="">Velg kategori</option>
                       {kategorier.map((k) => (
                         <option key={k} value={k}>
-                          {kategoriEtiketter[k] ?? k}
+                          {kontrollsakKategoriEtiketter[
+                            k as keyof typeof kontrollsakKategoriEtiketter
+                          ] ?? k}
                         </option>
                       ))}
                     </Select>

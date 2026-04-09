@@ -12,7 +12,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     personIdent: "10987654321",
     saksbehandler: "Z123456",
     status: "OPPRETTET",
-    kategori: "FEILUTBETALING",
+    kategori: "ARBEID",
     prioritet: "NORMAL",
     mottakEnhet: "4812",
     mottakSaksbehandler: "Z654321",
@@ -51,7 +51,7 @@ describe("MineSakerInnhold", () => {
   it("renderer backend-shapet mine sak med tittel, status og detaljlenke", () => {
     renderMedRouter(<MineSakerInnhold saker={[lagKontrollsak()]} detaljSti="/saker" />);
 
-    const lenke = screen.getByRole("link", { name: /Feilutbetaling - Sykepenger/i });
+    const lenke = screen.getByRole("link", { name: /Arbeid - Sykepenger/i });
 
     expect(lenke.getAttribute("href")).toBe(`/saker/${getSaksreferanse(lagMockSakUuid("201", 2))}`);
     expect(screen.getByText("Ufordelt")).toBeDefined();
