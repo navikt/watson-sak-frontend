@@ -1,1 +1,1 @@
-export const mockSeksjoner = ["Seksjon A", "Seksjon B", "Seksjon C", "Seksjon D", "Seksjon E"];
+export { mockSeksjoner } from "~/testing/mock-store/reference-data.server";
