@@ -1,9 +1,5 @@
 import { skalBrukeMockdata } from "~/config/env.server";
-import { resetMockSaker } from "~/fordeling/mock-data.server";
-import { resetMockMineSaker } from "~/mine-saker/mock-data.server";
-import { resetMockPersonOppslag } from "~/registrer-sak/person-oppslag.mock.server";
-import { resetHistorikk } from "~/saker/historikk/mock-data.server";
-import { resetMockVarsler } from "~/varsler/mock-data.server";
+import { resetMockStore } from "~/testing/mock-store/reset.server";
 
 /**
  * API-rute som tilbakestiller all mock-data til opprinnelig tilstand.
@@ -14,11 +10,7 @@ export function action() {
     throw new Response("Ikke tilgjengelig i dette miljøet", { status: 403 });
   }
 
-  resetMockSaker();
-  resetMockMineSaker();
-  resetHistorikk();
-  resetMockVarsler();
-  resetMockPersonOppslag();
+  resetMockStore();
 
   return Response.json({ ok: true });
 }

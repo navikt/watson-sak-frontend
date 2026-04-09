@@ -1,0 +1,42 @@
+import { beforeEach, describe, expect, it } from "vitest";
+import {
+  mockKontrollsaker as adapterFordeling,
+  resetMockSaker,
+} from "~/fordeling/mock-data.server";
+import {
+  mockMineKontrollsaker as adapterMineSaker,
+  resetMockMineSaker,
+} from "~/mine-saker/mock-data.server";
+import { mockKontrollsaker as storeFordeling } from "./saker/fordeling.server";
+import { mockMineKontrollsaker as storeMineSaker } from "./saker/mine-saker.server";
+import { resetMockStore } from "./reset.server";
+
+describe("shared mock-store", () => {
+  beforeEach(() => {
+    resetMockStore();
+  });
+
+  it("eksponerer samme live state gjennom adapter og store", () => {
+    adapterFordeling[0].status = "UTREDES";
+
+    expect(storeFordeling[0]?.status).toBe("UTREDES");
+
+    resetMockSaker();
+
+    expect(adapterFordeling[0]?.status).toBe("OPPRETTET");
+    expect(storeFordeling[0]?.status).toBe("OPPRETTET");
+  });
+
+  it("tilbakestiller flere saksdomener via sentral reset", () => {
+    adapterFordeling[0].status = "UTREDES";
+    adapterMineSaker[0].status = "HENLAGT";
+
+    resetMockStore();
+
+    expect(storeFordeling[0]?.status).toBe("OPPRETTET");
+    expect(storeMineSaker[0]?.status).toBe("UTREDES");
+
+    resetMockMineSaker();
+    expect(adapterMineSaker[0]?.status).toBe("UTREDES");
+  });
+});
