@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { fireEvent } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
 import { getSaksreferanse } from "~/saker/id";
@@ -10,6 +11,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
   return {
     id: lagMockSakUuid("201", 2),
     personIdent: "10987654321",
+    navn: "Ola Nordmann",
     saksbehandler: "Z123456",
     status: "OPPRETTET",
     kategori: "ARBEID",
@@ -48,13 +50,34 @@ function renderMedRouter(ui: React.ReactNode) {
 }
 
 describe("MineSakerInnhold", () => {
-  it("renderer backend-shapet mine sak med tittel, status og detaljlenke", () => {
-    renderMedRouter(<MineSakerInnhold saker={[lagKontrollsak()]} detaljSti="/saker" />);
+  it("viser felles saksliste i aktive saker og beholder grupperingene", () => {
+    renderMedRouter(
+      <MineSakerInnhold
+        saker={[
+          lagKontrollsak(),
+          lagKontrollsak({
+            id: lagMockSakUuid("202", 2),
+            status: "TIL_FORVALTNING",
+            oppdatert: "2026-02-05T10:11:12Z",
+          }),
+        ]}
+        detaljSti="/saker"
+      />,
+    );
 
-    const lenke = screen.getByRole("link", { name: /Arbeid - Sykepenger/i });
+    expect(screen.getByRole("columnheader", { name: "Saksid" })).toBeDefined();
+    expect(screen.getByRole("columnheader", { name: "Navn" })).toBeDefined();
+    expect(screen.getByRole("columnheader", { name: "Kategori" })).toBeDefined();
+    expect(screen.getByRole("columnheader", { name: "Misbrukstype" })).toBeDefined();
+    expect(screen.getByRole("columnheader", { name: "Opprettet" })).toBeDefined();
+    expect(screen.getByRole("columnheader", { name: "Oppdatert" })).toBeDefined();
 
+    const lenke = screen.getByRole("link", { name: "201" });
     expect(lenke.getAttribute("href")).toBe(`/saker/${getSaksreferanse(lagMockSakUuid("201", 2))}`);
-    expect(screen.getByText("Ufordelt")).toBeDefined();
-    expect(screen.getByText("Opprettet 03.02.2026")).toBeDefined();
+    expect(screen.getByText("Ola Nordmann")).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: "Oppgaver på vent" }));
+
+    expect(screen.getByRole("link", { name: "202" })).toBeDefined();
   });
 });
