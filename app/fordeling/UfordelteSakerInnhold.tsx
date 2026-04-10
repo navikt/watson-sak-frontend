@@ -3,7 +3,8 @@ import { useMemo, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { TildelSaksbehandlerModal } from "~/saker/handlinger/TildelSaksbehandlerModal";
-import { formaterDato } from "~/utils/date-utils";
+import { mapFordelingSakTilSakslisteRad } from "~/saker/saksliste/adaptere";
+import { Saksliste } from "~/saker/saksliste/Saksliste";
 import {
   filtrerUfordelteSaker,
   hentUfordelteFiltervalg,
@@ -59,6 +60,10 @@ export function UfordelteSakerInnhold({
     [sorterteSaker, valgtSide],
   );
   const oppsummering = useMemo(() => lagUfordelteOppsummering(filtrerteSaker), [filtrerteSaker]);
+  const sakslisteRader = useMemo(
+    () => paginerteSaker.elementer.map(mapFordelingSakTilSakslisteRad),
+    [paginerteSaker.elementer],
+  );
 
   function oppdaterValg(nøkkel: "kategori" | "ytelse", verdi: string) {
     const eksisterendeVerdier = hentValgteVerdier(searchParams, nøkkel);
@@ -105,8 +110,6 @@ export function UfordelteSakerInnhold({
     });
   }
 
-  const harIngenTreff = paginerteSaker.elementer.length === 0;
-
   return (
     <section aria-labelledby="ufordelte-saker-overskrift" className="pb-12">
       <VStack gap="space-6" className="mt-4">
@@ -124,78 +127,65 @@ export function UfordelteSakerInnhold({
           <div className="min-w-0">
             <div className="overflow-hidden rounded-2xl border border-ax-border-neutral-subtle bg-ax-bg-default">
               <div className="overflow-x-auto">
-                <table className="min-w-full table-fixed border-collapse">
-                  <thead>
-                    <tr className="border-b border-ax-border-neutral-subtle">
-                      <KolonneOverskrift
+                <Saksliste
+                  rader={sakslisteRader}
+                  kolonner={["saksid", "kategori", "misbrukstype", "opprettet", "oppdatert"]}
+                  tomTekst="Ingen ufordelte saker matcher filtrene."
+                  handlingKolonneTittel={<span className="sr-only">Handling</span>}
+                  kolonneHeaderInnhold={{
+                    kategori: (
+                      <KolonneSorteringsknapp
                         tittel="Kategori"
                         kolonne="kategori"
                         aktivKolonne={sorteringskolonne}
                         retning={sorteringsretning}
                         onSort={sorterPåKolonne}
-                        className="w-48"
                       />
-                      <KolonneOverskrift
-                        tittel="Ytelse"
-                        kolonne="ytelse"
-                        aktivKolonne={sorteringskolonne}
-                        retning={sorteringsretning}
-                        onSort={sorterPåKolonne}
-                        className="w-[28rem]"
-                      />
-                      <KolonneOverskrift
+                    ),
+                    opprettet: (
+                      <KolonneSorteringsknapp
                         tittel="Opprettet"
                         kolonne="opprettet"
                         aktivKolonne={sorteringskolonne}
                         retning={sorteringsretning}
                         onSort={sorterPåKolonne}
-                        className="w-40"
                       />
-                      <KolonneOverskrift className="w-24">
-                        <span className="sr-only">Handling</span>
-                      </KolonneOverskrift>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {harIngenTreff ? (
-                      <tr>
-                        <td colSpan={4} className="px-5 py-8">
-                          <BodyShort className="text-ax-text-neutral-subtle">
-                            Ingen ufordelte saker matcher filtrene.
-                          </BodyShort>
-                        </td>
-                      </tr>
-                    ) : (
-                      paginerteSaker.elementer.map((sak) => (
-                        <tr
-                          key={sak.id}
-                          className="border-b border-ax-border-neutral-subtle last:border-b-0"
-                        >
-                          <Celle>
-                            <KategoriPille kategori={sak.kategori ?? "Uten kategori"} />
-                          </Celle>
-                          <Celle>
-                            <div className="flex flex-wrap gap-2">
-                              {sak.ytelser.map((ytelse) => (
-                                <YtelsePille key={ytelse}>{ytelse}</YtelsePille>
-                              ))}
-                            </div>
-                          </Celle>
-                          <Celle>{formaterDato(sak.opprettetDato)}</Celle>
-                          <Celle className="text-right">
-                            <button
-                              type="button"
-                              onClick={() => setSakSomTildeles(sak)}
-                              className="cursor-pointer border-none bg-transparent p-0 text-sm font-semibold text-ax-text-accent underline-offset-2 hover:underline focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
-                            >
-                              Tildel
-                            </button>
-                          </Celle>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                    ),
+                  }}
+                  kolonneHeaderProps={{
+                    kategori: {
+                      "aria-sort":
+                        sorteringskolonne === "kategori"
+                          ? sorteringsretning === "stigende"
+                            ? "ascending"
+                            : "descending"
+                          : "none",
+                    },
+                    opprettet: {
+                      "aria-sort":
+                        sorteringskolonne === "opprettet"
+                          ? sorteringsretning === "stigende"
+                            ? "ascending"
+                            : "descending"
+                          : "none",
+                    },
+                  }}
+                  renderRadHandling={(rad) => (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const valgtSak = paginerteSaker.elementer.find((sak) => sak.id === rad.id);
+
+                        if (valgtSak) {
+                          setSakSomTildeles(valgtSak);
+                        }
+                      }}
+                      className="cursor-pointer border-none bg-transparent p-0 text-sm font-semibold text-ax-text-accent underline-offset-2 hover:underline focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
+                    >
+                      Tildel
+                    </button>
+                  )}
+                />
               </div>
             </div>
 
@@ -268,57 +258,31 @@ function hentStandardRetning(kolonne: UfordeltSorteringskolonne): UfordeltSorter
   return kolonne === "opprettet" ? "synkende" : "stigende";
 }
 
-function KolonneOverskrift({
-  children,
+function KolonneSorteringsknapp({
   tittel,
   kolonne,
   aktivKolonne,
   retning,
   onSort,
-  className = "",
 }: {
-  children?: ReactNode;
-  tittel?: string;
-  kolonne?: UfordeltSorteringskolonne;
-  aktivKolonne?: UfordeltSorteringskolonne | null;
-  retning?: UfordeltSorteringsretning | null;
-  onSort?: (kolonne: UfordeltSorteringskolonne) => void;
-  className?: string;
+  tittel: string;
+  kolonne: UfordeltSorteringskolonne;
+  aktivKolonne: UfordeltSorteringskolonne | null;
+  retning: UfordeltSorteringsretning | null;
+  onSort: (kolonne: UfordeltSorteringskolonne) => void;
 }) {
-  const erSorterbar = tittel && kolonne && onSort;
-  const ariaSort =
-    aktivKolonne === kolonne ? (retning === "stigende" ? "ascending" : "descending") : "none";
-
   return (
-    <th
-      scope="col"
-      aria-sort={erSorterbar ? ariaSort : undefined}
-      className={`px-5 py-4 text-left text-sm font-semibold text-ax-text-neutral ${className}`}
+    <button
+      type="button"
+      onClick={() => onSort(kolonne)}
+      aria-label={`Sorter på ${tittel.toLowerCase()}`}
+      className="inline-flex cursor-pointer items-center gap-2 border-none bg-transparent p-0 text-left text-sm font-semibold text-ax-text-neutral hover:text-ax-text-accent focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
     >
-      {erSorterbar ? (
-        <button
-          type="button"
-          onClick={() => onSort(kolonne)}
-          aria-label={`Sorter på ${tittel.toLowerCase()}`}
-          className="inline-flex cursor-pointer items-center gap-2 border-none bg-transparent p-0 text-left text-sm font-semibold text-ax-text-neutral hover:text-ax-text-accent focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
-        >
-          <span>{tittel}</span>
-          <span aria-hidden className="text-xs text-ax-text-neutral-subtle">
-            {aktivKolonne === kolonne ? (retning === "stigende" ? "▲" : "▼") : "↕"}
-          </span>
-        </button>
-      ) : (
-        children
-      )}
-    </th>
-  );
-}
-
-function Celle({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return (
-    <td className={`px-5 py-4 align-middle text-sm text-ax-text-neutral ${className}`}>
-      {children}
-    </td>
+      <span>{tittel}</span>
+      <span aria-hidden className="text-xs text-ax-text-neutral-subtle">
+        {aktivKolonne === kolonne ? (retning === "stigende" ? "▲" : "▼") : "↕"}
+      </span>
+    </button>
   );
 }
 
@@ -352,23 +316,3 @@ function Filtergruppe({
     </div>
   );
 }
-
-function KategoriPille({ kategori }: { kategori: string }) {
-  return (
-    <span
-      className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium ${kategoriPilleKlasser}`}
-    >
-      {kategori}
-    </span>
-  );
-}
-
-function YtelsePille({ children }: { children: ReactNode }) {
-  return (
-    <span className="inline-flex items-center rounded-md border border-ax-border-success bg-ax-bg-success-soft px-2.5 py-1 text-xs font-medium text-ax-text-success">
-      {children}
-    </span>
-  );
-}
-
-const kategoriPilleKlasser = "border-ax-border-neutral bg-ax-bg-neutral-soft text-ax-text-neutral";

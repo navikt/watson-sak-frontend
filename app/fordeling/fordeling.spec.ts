@@ -19,7 +19,7 @@ test.describe("Ufordelte saker", () => {
       ),
     ).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "Kategori" })).toBeVisible();
-    await expect(page.getByRole("columnheader", { name: "Ytelse" })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Misbrukstype" })).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "Opprettet" })).toBeVisible();
     await expect(
       page.locator("#maincontent").getByRole("searchbox", { name: "Søk i saker" }),
@@ -39,7 +39,9 @@ test.describe("Ufordelte saker", () => {
       .poll(async () => {
         const tekster = await rader.allTextContents();
 
-        return tekster.every((tekst) => tekst.includes("Barnetrygd") && tekst.includes("Samliv"));
+        return tekster.every(
+          (tekst) => tekst.includes("Endret sivilstatus") && tekst.includes("Samliv"),
+        );
       })
       .toBe(true);
   });
@@ -50,10 +52,10 @@ test.describe("Ufordelte saker", () => {
     await expect(page.getByRole("button", { name: "2" })).toHaveAttribute("aria-current", "true");
     const tiltakRad = page.locator("tbody tr").filter({ hasText: "Tiltak" });
     await expect(tiltakRad).toHaveCount(1);
-    await expect(tiltakRad).toContainText("Foreldrepenger");
+    await expect(tiltakRad).toContainText("Misbruk av tiltaksplass");
   });
 
-  test("kan sortere på kategori, ytelse og opprettet", async ({ page }) => {
+  test("kan sortere på kategori og opprettet", async ({ page }) => {
     const rader = page.locator("tbody tr");
 
     await page.getByRole("button", { name: "Sorter på kategori" }).click();
@@ -61,9 +63,6 @@ test.describe("Ufordelte saker", () => {
 
     await page.getByRole("button", { name: "Sorter på opprettet" }).click();
     await expect(rader.nth(0)).toContainText("16. feb. 2026");
-
-    await page.getByRole("button", { name: "Sorter på ytelse" }).click();
-    await expect(rader.nth(0)).toContainText("Barnetrygd");
   });
 
   test("er UU-compliant", async ({ page }) => {
