@@ -12,6 +12,7 @@ import {
   TextField,
   UNSAFE_Combobox,
   VStack,
+  useRangeDatepicker,
 } from "@navikt/ds-react";
 import { PersonIcon } from "@navikt/aksel-icons";
 import { PageBlock } from "@navikt/ds-react/Page";
@@ -56,6 +57,7 @@ export default function OpprettSakSide() {
   const [valgteYtelser, setValgteYtelser] = useState<string[]>([]);
   const [valgtKategori, setValgtKategori] = useState<string>("");
   const [søkeFnr, setSøkeFnr] = useState("");
+  const { datepickerProps, fromInputProps, toInputProps } = useRangeDatepicker();
 
   const personFetcher = useFetcher<
     PersonOppslagResultat | { person: null; eksisterendeSaker: [] } | { feil: string }
@@ -263,20 +265,22 @@ export default function OpprettSakSide() {
 
                   {/* Rad 2: Fra dato, Til dato, Ytelse, Ca beløp */}
                   <HStack gap="space-24" align="start" wrap>
-                    <DatePicker>
-                      <DatePicker.Input
-                        name="fraDato"
-                        label="Fra dato"
-                        error={feil?.fraDato?.join(", ")}
-                      />
-                    </DatePicker>
+                    <DatePicker {...datepickerProps}>
+                      <HStack gap="space-24" align="start" wrap>
+                        <DatePicker.Input
+                          {...fromInputProps}
+                          name="fraDato"
+                          label="Fra dato"
+                          error={feil?.fraDato?.join(", ")}
+                        />
 
-                    <DatePicker>
-                      <DatePicker.Input
-                        name="tilDato"
-                        label="Til dato"
-                        error={feil?.tilDato?.join(", ")}
-                      />
+                        <DatePicker.Input
+                          {...toInputProps}
+                          name="tilDato"
+                          label="Til dato"
+                          error={feil?.tilDato?.join(", ")}
+                        />
+                      </HStack>
                     </DatePicker>
 
                     <UNSAFE_Combobox
