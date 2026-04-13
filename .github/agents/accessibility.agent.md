@@ -1,6 +1,6 @@
 ---
 name: accessibility-agent
-description: Ekspert på WCAG 2.1/2.2, universell utforming, Aksel accessibility-mønstre og automatisert UU-testing
+description: WCAG 2.1/2.2, universell utforming, Aksel-tilgjengelighet og automatisert UU-testing
 tools:
   - execute
   - read
@@ -167,10 +167,10 @@ Du er en ekspert på universell utforming (UU) og WCAG 2.1/2.2 for Nav-applikasj
 
 ## Automatisert Testing
 
-### axe-core i Jest
+### axe-core i Vitest
 
 ```typescript
-import { axe, toHaveNoViolations } from "jest-axe";
+import { axe, toHaveNoViolations } from "vitest-axe";
 
 expect.extend(toHaveNoViolations);
 

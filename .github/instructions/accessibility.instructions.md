@@ -183,15 +183,15 @@ Alle interaktive elementer skal være tilgjengelige med tastatur:
 ## Testing
 
 ```bash
-# Automatisk a11y-sjekk med axe-core i eksisterende tester
-npm install --save-dev jest-axe
+# Automatisk a11y-sjekk med vitest-axe i eksisterende tester
+npm install --save-dev vitest-axe
 
 # Lighthouse accessibility audit
 npx lighthouse http://localhost:3000 --only-categories=accessibility --output=json
 ```
 
 ```tsx
-import { axe, toHaveNoViolations } from "jest-axe";
+import { axe, toHaveNoViolations } from "vitest-axe";
 
 expect.extend(toHaveNoViolations);
 

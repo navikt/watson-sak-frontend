@@ -1,19 +1,19 @@
 ---
 name: aksel-spacing
-description: Responsive layout patterns using Aksel spacing tokens with Box, VStack, HStack, and HGrid
+description: Responsiv layout med Aksel spacing-tokens og Box, VStack, HStack og HGrid
 ---
 
 # Aksel Spacing Skill
 
-This skill provides responsive layout patterns using Nav Aksel Design System spacing tokens.
+Responsive layout-mønstre med Navs Aksel Design System spacing-tokens.
 
-## Critical Rule
+## Viktig regel
 
-**NEVER use Tailwind padding/margin utilities (`p-`, `m-`, `px-`, `py-`) with Aksel components.**
+**Aldri bruk Tailwind padding/margin (`p-`, `m-`, `px-`, `py-`) med Aksel-komponenter.**
 
-Always use Aksel spacing tokens: `space-4`, `space-6`, `space-8`, etc.
+Bruk alltid Aksel spacing-tokens: `space-4`, `space-6`, `space-8`, osv.
 
-## Page Container Pattern
+## Page container-mønster
 
 ```typescript
 import { Box, VStack } from '@navikt/ds-react';
@@ -26,7 +26,7 @@ export default function Page() {
         paddingInline={{ xs: 'space-4', md: 'space-10' }}
       >
         <VStack gap={{ xs: 'space-6', md: 'space-8' }}>
-          {/* Page content */}
+          {/* Sideinnhold */}
         </VStack>
       </Box>
     </main>
@@ -34,7 +34,7 @@ export default function Page() {
 }
 ```
 
-## Card Pattern
+## Card-mønster
 
 ```typescript
 import { Box, VStack, Heading, BodyShort } from '@navikt/ds-react';
@@ -57,7 +57,7 @@ export function Card({ title, children }: { title: string; children: React.React
 }
 ```
 
-## Form Layout Pattern
+## Form-layout
 
 ```typescript
 import { VStack, HStack, TextField, Button } from '@navikt/ds-react';
@@ -65,24 +65,24 @@ import { VStack, HStack, TextField, Button } from '@navikt/ds-react';
 export function UserForm() {
   return (
     <VStack gap="space-6">
-      {/* Input fields with consistent vertical spacing */}
+      {/* Input-felt med konsistent vertikal spacing */}
       <VStack gap="space-4">
-        <TextField label="First Name" />
-        <TextField label="Last Name" />
-        <TextField label="Email" type="email" />
+        <TextField label="Fornavn" />
+        <TextField label="Etternavn" />
+        <TextField label="E-post" type="email" />
       </VStack>
 
-      {/* Button group with horizontal spacing */}
+      {/* Button row med horisontal spacing */}}
       <HStack gap="space-4" justify="end">
-        <Button variant="secondary">Cancel</Button>
-        <Button variant="primary">Submit</Button>
+        <Button variant="secondary">Avbryt</Button>
+        <Button variant="primary">Send inn</Button>
       </HStack>
     </VStack>
   );
 }
 ```
 
-## Dashboard Grid Pattern
+## Dashboard-grid
 
 ```typescript
 import { HGrid, Box, VStack, Heading } from '@navikt/ds-react';
@@ -92,28 +92,28 @@ export function Dashboard() {
     <VStack gap={{ xs: 'space-6', md: 'space-8' }}>
       <Heading size="xlarge">Dashboard</Heading>
 
-      {/* Responsive grid: 1 col mobile, 2 tablet, 4 desktop */}
+      {/* Responsiv grid: 1 kolonne mobil, 2 nettbrett, 4 desktop */}
       <HGrid gap="space-4" columns={{ xs: 1, sm: 2, lg: 4 }}>
-        <MetricCard title="Users" value="1 234" />
-        <MetricCard title="Revenue" value="5 678" />
-        <MetricCard title="Orders" value="910" />
-        <MetricCard title="Growth" value="+12%" />
+        <MetricCard title="Brukere" value="1 234" />
+        <MetricCard title="Inntekt" value="5 678" />
+        <MetricCard title="Bestillinger" value="910" />
+        <MetricCard title="Vekst" value="+12 %" />
       </HGrid>
 
-      {/* Content area */}
+      {/* Innholdsområde */}
       <Box
         background="surface-subtle"
         padding={{ xs: 'space-6', md: 'space-8' }}
         borderRadius="large"
       >
-        {/* Content */}
+        {/* Innhold */}
       </Box>
     </VStack>
   );
 }
 ```
 
-## Two-Column Layout Pattern
+## Two-column layout
 
 ```typescript
 import { HGrid, Box, VStack } from '@navikt/ds-react';
@@ -121,25 +121,25 @@ import { HGrid, Box, VStack } from '@navikt/ds-react';
 export function TwoColumnLayout() {
   return (
     <HGrid gap="space-6" columns={{ xs: 1, md: 2 }}>
-      {/* Left column */}
+      {/* Venstre kolonne */}
       <Box
         background="surface-default"
         padding={{ xs: 'space-6', md: 'space-8' }}
         borderRadius="large"
       >
         <VStack gap="space-4">
-          {/* Left content */}
+          {/* Venstre innhold */}
         </VStack>
       </Box>
 
-      {/* Right column */}
+      {/* Høyre kolonne */}
       <Box
         background="surface-subtle"
         padding={{ xs: 'space-6', md: 'space-8' }}
         borderRadius="large"
       >
         <VStack gap="space-4">
-          {/* Right content */}
+          {/* Høyre innhold */}
         </VStack>
       </Box>
     </HGrid>
