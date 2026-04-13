@@ -71,7 +71,7 @@ import {
 
 type Feltfeil = Partial<
   Record<
-    "kategori" | "misbruktype" | "merking" | "kilde" | "fraDato" | "tilDato" | "ytelser",
+    "kategori" | "misbruktype" | "merking" | "kilde" | "fraDato" | "tilDato" | "ytelser" | "skjema",
     string[]
   >
 >;
@@ -87,6 +87,7 @@ type RedigerSaksinformasjonData = {
 };
 
 type ActionResult = { ok: true } | { ok: false; feil: Feltfeil };
+const unsupportedRedigeringFeil = "Saken kan ikke redigeres med denne løsningen ennå.";
 
 const gyldigeStatuser = new Set<KontrollsakStatus>([
   "OPPRETTET",
@@ -127,6 +128,14 @@ function lagRedigeringsdata(
 
 function erLikeRedigeringsdata(a: RedigerSaksinformasjonData, b: RedigerSaksinformasjonData) {
   return JSON.stringify(a) === JSON.stringify(b);
+}
+
+function hentMisbrukstypeAlternativer(kategori: string) {
+  if (!kategori) {
+    return [];
+  }
+
+  return (misbrukstypePerKategori as Partial<Record<string, readonly string[]>>)[kategori] ?? [];
 }
 
 function harStøttetRedigeringsmodell(sak: Route.ComponentProps["loaderData"]["sak"]) {
@@ -212,6 +221,10 @@ export async function action({ request, params }: Route.ActionArgs) {
       break;
     }
     case "rediger_saksinformasjon": {
+      if (!erAktivSakKontrollsak(sak.status) || !harStøttetRedigeringsmodell(sak)) {
+        return { ok: false, feil: { skjema: [unsupportedRedigeringFeil] } } satisfies ActionResult;
+      }
+
       const rådata = {
         kategori: formData.get("kategori"),
         misbruktype: formData.get("misbruktype") || undefined,
@@ -298,18 +311,15 @@ export default function SakDetaljSide() {
   const periodeText = getPeriodeText(sak);
   const tags = getTags(sak);
   const [redigerer, setRedigerer] = useState(false);
-  const [valgteYtelser, setValgteYtelser] = useState<string[]>([]);
-  const [valgtKategori, setValgtKategori] = useState("");
   const [lokaleVerdier, setLokaleVerdier] = useState<RedigerSaksinformasjonData>(() =>
     lagRedigeringsdata(sak),
   );
   const { datepickerProps, fromInputProps, toInputProps } = useRangeDatepicker();
 
   const utgangspunkt = useMemo(() => lagRedigeringsdata(sak), [sak]);
-  const feil = fetcher.data && !fetcher.data.ok ? fetcher.data.feil : undefined;
-  const misbrukstypeAlternativer = valgtKategori
-    ? ((misbrukstypePerKategori as Partial<Record<string, readonly string[]>>)[valgtKategori] ?? [])
-    : [];
+  const feil: Feltfeil | undefined =
+    fetcher.data && !fetcher.data.ok ? fetcher.data.feil : undefined;
+  const misbrukstypeAlternativer = hentMisbrukstypeAlternativer(lokaleVerdier.kategori);
   const visMisbruktype = misbrukstypeAlternativer.length > 0;
   const harUlagredeEndringer = redigerer && !erLikeRedigeringsdata(lokaleVerdier, utgangspunkt);
   const kanRedigereSaksinformasjon = erAktiv && harStøttetRedigeringsmodell(sak);
@@ -321,8 +331,6 @@ export default function SakDetaljSide() {
 
   useEffect(() => {
     setLokaleVerdier(utgangspunkt);
-    setValgtKategori(utgangspunkt.kategori);
-    setValgteYtelser(utgangspunkt.ytelser);
   }, [utgangspunkt]);
 
   useEffect(() => {
@@ -364,15 +372,11 @@ export default function SakDetaljSide() {
   function startRedigering() {
     setRedigerer(true);
     setLokaleVerdier(utgangspunkt);
-    setValgtKategori(utgangspunkt.kategori);
-    setValgteYtelser(utgangspunkt.ytelser);
   }
 
   function avbrytRedigering() {
     setRedigerer(false);
     setLokaleVerdier(utgangspunkt);
-    setValgtKategori(utgangspunkt.kategori);
-    setValgteYtelser(utgangspunkt.ytelser);
   }
 
   return (
@@ -410,14 +414,15 @@ export default function SakDetaljSide() {
                   {redigerer ? (
                     <fetcher.Form method="post">
                       <input type="hidden" name="handling" value="rediger_saksinformasjon" />
-                      {valgteYtelser.map((ytelse) => (
+                      {lokaleVerdier.ytelser.map((ytelse) => (
                         <input key={ytelse} type="hidden" name="ytelser" value={ytelse} />
                       ))}
 
                       <VStack gap="space-4">
                         {feil && Object.keys(feil).length > 0 && (
                           <Alert variant="error">
-                            Skjemaet inneholder feil. Vennligst rett opp feilene ovenfor.
+                            {feil.skjema?.[0] ??
+                              "Skjemaet inneholder feil. Vennligst rett opp feilene ovenfor."}
                           </Alert>
                         )}
 
@@ -436,17 +441,13 @@ export default function SakDetaljSide() {
                             <Select
                               name="kategori"
                               label="Kategori"
-                              value={valgtKategori}
+                              value={lokaleVerdier.kategori}
                               error={feil?.kategori?.join(", ")}
                               onChange={(event) => {
                                 const kategori = event.target.value;
-                                setValgtKategori(kategori);
                                 oppdaterLokaleVerdier("kategori", kategori);
 
-                                const gyldigeMisbrukstyper =
-                                  misbrukstypePerKategori[
-                                    kategori as keyof typeof misbrukstypePerKategori
-                                  ];
+                                const gyldigeMisbrukstyper = hentMisbrukstypeAlternativer(kategori);
 
                                 if (
                                   gyldigeMisbrukstyper &&
@@ -558,16 +559,13 @@ export default function SakDetaljSide() {
                               label="Ytelse"
                               options={ytelser}
                               isMultiSelect
-                              selectedOptions={valgteYtelser}
+                              selectedOptions={lokaleVerdier.ytelser}
                               error={feil?.ytelser?.join(", ")}
                               onToggleSelected={(option, isSelected) => {
-                                setValgteYtelser((gjeldende) => {
-                                  const neste = isSelected
-                                    ? [...gjeldende, option]
-                                    : gjeldende.filter((ytelse) => ytelse !== option);
-                                  oppdaterLokaleVerdier("ytelser", neste);
-                                  return neste;
-                                });
+                                const neste = isSelected
+                                  ? [...lokaleVerdier.ytelser, option]
+                                  : lokaleVerdier.ytelser.filter((ytelse) => ytelse !== option);
+                                oppdaterLokaleVerdier("ytelser", neste);
                               }}
                             />
                           </VStack>

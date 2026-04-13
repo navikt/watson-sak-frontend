@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { resetMockSaker } from "~/fordeling/mock-data.server";
+import { mockKontrollsaker, resetMockSaker } from "~/fordeling/mock-data.server";
 import { resetMockMineSaker } from "~/mine-saker/mock-data.server";
 import { resetHistorikk } from "./historikk/mock-data.server";
 import SakDetaljSide, { loader } from "./SakDetaljSide.route";
@@ -57,5 +57,22 @@ describe("SakDetaljSide render", () => {
     });
 
     expect(await screen.findByLabelText("Misbruktype")).toBeDefined();
+  });
+
+  it("deaktiverer redigering for unsupported saksmodell", async () => {
+    mockKontrollsaker[0].misbrukstyper = ["Endret sivilstatus", "Skjult samliv"];
+
+    renderDetaljside();
+
+    expect(
+      (await screen.findByRole("button", { name: "Rediger saksinformasjon" })).getAttribute(
+        "disabled",
+      ),
+    ).not.toBeNull();
+    expect(
+      screen.getByText(
+        "Redigering støttes foreløpig bare for saker med én misbrukstype, én merking og én felles periode.",
+      ),
+    ).toBeDefined();
   });
 });
