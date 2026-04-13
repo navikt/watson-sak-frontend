@@ -4,6 +4,7 @@ import {
   ClockIcon,
   GavelIcon,
   PaperplaneIcon,
+  PencilIcon,
   PersonIcon,
   PlusCircleIcon,
   XMarkOctagonIcon,
@@ -40,6 +41,8 @@ function hendelseTittel(hendelse: SakHendelse): string {
       return "Sak tildelt";
     case "STATUS_ENDRET":
       return "Status endret";
+    case "SAKSINFORMASJON_ENDRET":
+      return "Saksinformasjon endret";
     case "MOTTAKSENHET_ENDRET":
       return "Mottaksenhet endret";
     case "VIDERESENDT_TIL_NAY_NFP":
@@ -79,6 +82,8 @@ function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
       return <CheckmarkCircleIcon {...iconProps} />;
     case "SAK_TILDELT":
       return <PersonIcon {...iconProps} />;
+    case "SAKSINFORMASJON_ENDRET":
+      return <PencilIcon {...iconProps} />;
     case "MOTTAKSENHET_ENDRET":
       return <ArrowRightIcon {...iconProps} />;
     case "SAK_HENLAGT":
