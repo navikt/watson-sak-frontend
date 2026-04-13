@@ -77,8 +77,35 @@ function lagPåkrevdDatofelt(feltnavn: string) {
 
 const misbrukstypeSchema = z.enum(kontrollsakMisbrukstypeVerdier);
 
-export const opprettSakSchema = z
-  .object({
+type SaksreglerShape = {
+  fraDato: string;
+  tilDato: string;
+  kategori: string;
+  misbruktype?: string;
+};
+
+function medFellesSaksregler<T extends z.ZodType<SaksreglerShape>>(schema: T) {
+  return schema
+    .refine(({ fraDato, tilDato }) => fraDato <= tilDato, {
+      message: "Til dato må være lik eller etter fra dato",
+      path: ["tilDato"],
+    })
+    .refine(
+      ({ kategori, misbruktype }) => {
+        const harMisbrukstyper = kategori in misbrukstyperPerKategori;
+        if (harMisbrukstyper && !misbruktype) return false;
+        return true;
+      },
+      { message: "Velg misbruktype", path: ["misbruktype"] },
+    )
+    .refine(({ kategori, misbruktype }) => erGyldigMisbrukstypeForKategori(kategori, misbruktype), {
+      message: "Ugyldig misbruktype for valgt kategori",
+      path: ["misbruktype"],
+    });
+}
+
+export const opprettSakSchema = medFellesSaksregler(
+  z.object({
     personIdent: z
       .string()
       .min(1, "Fødselsnummer er påkrevd")
@@ -101,26 +128,11 @@ export const opprettSakSchema = z
       .regex(/^\d{9}$/, "Organisasjonsnummer må bestå av 9 siffer")
       .optional()
       .or(z.literal("")),
-  })
-  .refine(({ fraDato, tilDato }) => fraDato <= tilDato, {
-    message: "Til dato må være lik eller etter fra dato",
-    path: ["tilDato"],
-  })
-  .refine(
-    ({ kategori, misbruktype }) => {
-      const harMisbrukstyper = kategori in misbrukstyperPerKategori;
-      if (harMisbrukstyper && !misbruktype) return false;
-      return true;
-    },
-    { message: "Velg misbruktype", path: ["misbruktype"] },
-  )
-  .refine(({ kategori, misbruktype }) => erGyldigMisbrukstypeForKategori(kategori, misbruktype), {
-    message: "Ugyldig misbruktype for valgt kategori",
-    path: ["misbruktype"],
-  });
+  }),
+);
 
-export const redigerSaksinformasjonSchema = z
-  .object({
+export const redigerSaksinformasjonSchema = medFellesSaksregler(
+  z.object({
     ytelser: z.array(z.string().min(1)).min(1, "Velg minst én ytelse"),
     fraDato: lagPåkrevdDatofelt("Fra dato"),
     tilDato: lagPåkrevdDatofelt("Til dato"),
@@ -128,23 +140,8 @@ export const redigerSaksinformasjonSchema = z
     misbruktype: misbrukstypeSchema.optional(),
     merking: z.enum(merkingAlternativer).optional(),
     kilde: z.enum(kildeAlternativer, { message: "Velg kilde" }),
-  })
-  .refine(({ fraDato, tilDato }) => fraDato <= tilDato, {
-    message: "Til dato må være lik eller etter fra dato",
-    path: ["tilDato"],
-  })
-  .refine(
-    ({ kategori, misbruktype }) => {
-      const harMisbrukstyper = kategori in misbrukstyperPerKategori;
-      if (harMisbrukstyper && !misbruktype) return false;
-      return true;
-    },
-    { message: "Velg misbruktype", path: ["misbruktype"] },
-  )
-  .refine(({ kategori, misbruktype }) => erGyldigMisbrukstypeForKategori(kategori, misbruktype), {
-    message: "Ugyldig misbruktype for valgt kategori",
-    path: ["misbruktype"],
-  });
+  }),
+);
 
 export type OpprettSakSkjema = z.infer<typeof opprettSakSchema>;
 export type RedigerSaksinformasjonSkjema = z.infer<typeof redigerSaksinformasjonSchema>;
