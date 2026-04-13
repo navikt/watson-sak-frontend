@@ -1,6 +1,6 @@
 ---
 name: security-review
-description: Use when about to commit, push, or open a pull request and want to check if code is safe to merge
+description: Bruk før commit, push eller pull request for å sjekke at koden er trygg å merge
 ---
 
 # Security Review Skill
@@ -87,6 +87,131 @@ spec:
       external:
         - host: api.external-service.no  # only if strictly necessary
 ```
+
+## OWASP Top 10 Checks
+
+### A01: Broken Access Control
+
+```kotlin
+// ✅ Correct — check that user has access to the resource
+@GetMapping("/api/vedtak/{id}")
+fun getVedtak(@PathVariable id: UUID): ResponseEntity<VedtakDTO> {
+    val bruker = hentInnloggetBruker()
+    val vedtak = vedtakService.findById(id)
+    if (vedtak.brukerId != bruker.id) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+    }
+    return ResponseEntity.ok(vedtak.toDTO())
+}
+
+// ❌ Wrong — no access control (IDOR)
+@GetMapping("/api/vedtak/{id}")
+fun getVedtak(@PathVariable id: UUID) = vedtakService.findById(id)
+```
+
+### A03: Injection
+
+```kotlin
+// ✅ Correct — parameterized query
+jdbcTemplate.query("SELECT * FROM bruker WHERE fnr = ?", mapper, fnr)
+
+// ❌ Wrong — string concatenation
+jdbcTemplate.query("SELECT * FROM bruker WHERE fnr = '$fnr'", mapper)
+```
+
+### A05: Security Misconfiguration
+
+```kotlin
+// ✅ Correct — CORS only for known domains
+@Bean
+fun corsFilter() = CorsFilter(CorsConfiguration().apply {
+    allowedOrigins = listOf("https://my-app.intern.nav.no")
+    allowedMethods = listOf("GET", "POST")
+    allowedHeaders = listOf("Authorization", "Content-Type")
+})
+
+// ❌ Wrong — open CORS
+allowedOrigins = listOf("*")
+```
+
+### A07: Cross-Site Scripting (XSS)
+
+```tsx
+// ✅ Correct — React escapes automatically
+<BodyShort>{bruker.navn}</BodyShort>
+
+// ❌ Wrong — raw HTML injection
+<div dangerouslySetInnerHTML={{ __html: userInput }} />
+```
+
+### A08: Insecure Deserialization
+
+```kotlin
+// ✅ Correct — validate input after deserialization
+@PostMapping("/api/vedtak")
+fun create(@RequestBody @Valid request: CreateVedtakRequest): ResponseEntity<VedtakDTO>
+
+// ✅ Limit Jackson to known types
+objectMapper.apply {
+    activateDefaultTyping(
+        polymorphicTypeValidator,
+        ObjectMapper.DefaultTyping.NON_FINAL
+    )
+}
+```
+
+### A09: Logging & Monitoring
+
+```kotlin
+// ✅ Correct — structured logging with correlation ID, no PII
+log.info("Vedtak opprettet", kv("vedtakId", vedtak.id), kv("sakId", sak.id))
+
+// ❌ Wrong — PII in logs
+log.info("Vedtak for bruker ${bruker.fnr} opprettet")
+```
+
+## File Upload Security
+
+```kotlin
+// ✅ Correct — validate file type, size, and magic bytes
+fun validateUpload(file: MultipartFile) {
+    require(file.size <= 10 * 1024 * 1024) { "File too large (max 10 MB)" }
+    require(file.contentType in ALLOWED_TYPES) { "Invalid file type" }
+
+    val bytes = file.bytes.take(8).toByteArray()
+    require(verifyMagicBytes(bytes, file.contentType!!)) { "File content does not match type" }
+}
+
+private val ALLOWED_TYPES = setOf("application/pdf", "image/png", "image/jpeg")
+```
+
+## Dependency Management
+
+```kotlin
+// build.gradle.kts — pin versions, use BOM
+dependencyManagement {
+    imports {
+        mavenBom("org.springframework.boot:spring-boot-dependencies:3.4.1")
+    }
+}
+
+// Check vulnerable dependencies
+// ./gradlew dependencyCheckAnalyze
+// trivy repo .
+```
+
+## Expanded Checklist
+
+- [ ] SQL queries are parameterized (no string concatenation)
+- [ ] No PII in logs (fnr, name, address)
+- [ ] Secrets only from environment/secrets
+- [ ] Nais accessPolicy is explicit (no open inbound)
+- [ ] CORS is restricted to known domains
+- [ ] Input is validated and sanitized
+- [ ] Access control checks ownership (not just auth)
+- [ ] File upload validates type, size, and content
+- [ ] Dependencies are up to date and vulnerability-scanned
+- [ ] No `dangerouslySetInnerHTML` without sanitization
 
 ## Dependency Management
 

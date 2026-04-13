@@ -1,12 +1,13 @@
 ---
 name: nais-agent
-description: Expert on Nais deployment, GCP resources, Kafka topics, and platform troubleshooting
+description: Nais-deployment, GCP-ressurser, Kafka-topics og feilsøking på plattformen
 tools:
   - execute
   - read
   - edit
   - search
   - web
+  - todo
   - ms-vscode.vscode-websearchforcopilot/websearch
   - io.github.navikt/github-mcp/get_file_contents
   - io.github.navikt/github-mcp/search_code
