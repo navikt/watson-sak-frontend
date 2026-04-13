@@ -1,20 +1,15 @@
-import { BodyShort, Heading, HStack, Link, Table, Tag, VStack } from "@navikt/ds-react";
+import { Heading, HStack, Link, VStack } from "@navikt/ds-react";
 import { ArrowRightIcon, FilesIcon } from "@navikt/aksel-icons";
 import { Link as RouterLink } from "react-router";
 import type { KontrollsakResponse } from "~/saker/types.backend";
-import { getSaksreferanse } from "~/saker/id";
-import {
-  getKategoriText,
-  getMisbrukstyper,
-  getNavn,
-  getOppdatertDato,
-  getOpprettetDato,
-} from "~/saker/selectors";
 import { RouteConfig } from "~/routeConfig";
-import { formaterDato } from "~/utils/date-utils";
 import { Kort } from "~/komponenter/Kort";
+import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
+import { Saksliste } from "~/saker/saksliste/Saksliste";
 
 export function MineSakerOversikt({ saker }: { saker: KontrollsakResponse[] }) {
+  const rader = saker.map((sak) => mapKontrollsakTilSakslisteRad(sak));
+
   return (
     <Kort as="section">
       <VStack gap="space-4">
@@ -30,73 +25,7 @@ export function MineSakerOversikt({ saker }: { saker: KontrollsakResponse[] }) {
           </Link>
         </HStack>
 
-        {saker.length === 0 ? (
-          <BodyShort className="text-ax-text-neutral-subtle">Du har ingen aktive saker.</BodyShort>
-        ) : (
-          <Table size="medium">
-            <Table.Header>
-              <Table.Row>
-                <Table.HeaderCell scope="col">Saksid</Table.HeaderCell>
-                <Table.HeaderCell scope="col">Navn</Table.HeaderCell>
-                <Table.HeaderCell scope="col">Kategori</Table.HeaderCell>
-                <Table.HeaderCell scope="col">Misbrukstype</Table.HeaderCell>
-                <Table.HeaderCell scope="col">Opprettet</Table.HeaderCell>
-                <Table.HeaderCell scope="col">Oppdatert</Table.HeaderCell>
-              </Table.Row>
-            </Table.Header>
-            <Table.Body>
-              {saker.map((sak) => {
-                const misbrukstyper = getMisbrukstyper(sak);
-
-                return (
-                  <Table.Row key={sak.id}>
-                    <Table.DataCell>
-                      <Link
-                        as={RouterLink}
-                        to={RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id))}
-                      >
-                        {getSaksreferanse(sak.id)}
-                      </Link>
-                    </Table.DataCell>
-                    <Table.DataCell>
-                      <BodyShort size="small" truncate className="max-w-48">
-                        {getNavn(sak) ?? "–"}
-                      </BodyShort>
-                    </Table.DataCell>
-                    <Table.DataCell>
-                      {getKategoriText(sak) ? (
-                        <Tag variant="neutral" size="small">
-                          {getKategoriText(sak)}
-                        </Tag>
-                      ) : (
-                        <BodyShort size="small">–</BodyShort>
-                      )}
-                    </Table.DataCell>
-                    <Table.DataCell>
-                      {misbrukstyper.length > 0 ? (
-                        <HStack gap="space-2" wrap>
-                          {misbrukstyper.map((misbrukstype) => (
-                            <Tag key={misbrukstype} variant="warning" size="small">
-                              {misbrukstype}
-                            </Tag>
-                          ))}
-                        </HStack>
-                      ) : (
-                        <BodyShort size="small">–</BodyShort>
-                      )}
-                    </Table.DataCell>
-                    <Table.DataCell>
-                      <BodyShort size="small">{formaterDato(getOpprettetDato(sak))}</BodyShort>
-                    </Table.DataCell>
-                    <Table.DataCell>
-                      <BodyShort size="small">{formaterDato(getOppdatertDato(sak))}</BodyShort>
-                    </Table.DataCell>
-                  </Table.Row>
-                );
-              })}
-            </Table.Body>
-          </Table>
-        )}
+        <Saksliste rader={rader} tomTekst="Du har ingen aktive saker." />
       </VStack>
     </Kort>
   );

@@ -9,7 +9,12 @@ test.describe("Ufordelte saker – tildeling", () => {
   });
 
   test("kan tildele sak og få den bort fra listen", async ({ page }) => {
-    const radSomSkalTildeles = page.locator("tbody tr").filter({ hasText: "Enslig forsørger" });
+    const radSomSkalTildeles = page
+      .locator("tbody tr")
+      .filter({ hasText: "101" })
+      .filter({ hasText: "Endret sivilstatus" })
+      .filter({ hasText: "Samliv" });
+
     await expect(radSomSkalTildeles).toHaveCount(1);
     await expect(radSomSkalTildeles).toContainText("Samliv");
 
@@ -25,6 +30,12 @@ test.describe("Ufordelte saker – tildeling", () => {
     await tildelKnapp.click();
 
     await expect(dialog).not.toBeVisible();
-    await expect(page.locator("tbody tr").filter({ hasText: "Enslig forsørger" })).toHaveCount(0);
+    await expect(
+      page
+        .locator("tbody tr")
+        .filter({ hasText: "101" })
+        .filter({ hasText: "Endret sivilstatus" })
+        .filter({ hasText: "Samliv" }),
+    ).toHaveCount(0);
   });
 });

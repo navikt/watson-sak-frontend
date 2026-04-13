@@ -11,8 +11,11 @@ export function erUfordeltKontrollsak(kontrollsak: KontrollsakResponse) {
 export function mapKontrollsakTilFordelingSak(kontrollsak: KontrollsakResponse): FordelingSak {
   return {
     id: kontrollsak.id,
+    navn: kontrollsak.navn ?? null,
     opprettetDato: kontrollsak.opprettet.slice(0, 10),
+    oppdatertDato: (kontrollsak.oppdatert ?? kontrollsak.opprettet).slice(0, 10),
     kategori: kategoriEtikett(kontrollsak.kategori),
+    misbrukstyper: kontrollsak.misbrukstyper ?? [],
     ytelser: kontrollsak.ytelser.map((ytelse) => ytelse.type),
   };
 }

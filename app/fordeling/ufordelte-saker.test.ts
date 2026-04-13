@@ -10,8 +10,11 @@ import type { FordelingSak } from "./typer";
 
 const lagSak = (overstyringer: Partial<FordelingSak>): FordelingSak => ({
   id: "1",
+  navn: null,
   opprettetDato: "2026-01-15",
+  oppdatertDato: "2026-01-15",
   kategori: "Arbeid",
+  misbrukstyper: [],
   ytelser: ["Dagpenger"],
   ...overstyringer,
 });

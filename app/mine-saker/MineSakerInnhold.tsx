@@ -1,27 +1,10 @@
-import {
-  Buildings2Icon,
-  CalendarIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  EnvelopeClosedIcon,
-  FilesIcon,
-  FolderIcon,
-  TasklistIcon,
-} from "@navikt/aksel-icons";
-import { BodyShort, Heading, HStack, Tag, VStack } from "@navikt/ds-react";
+import { ChevronDownIcon, FolderIcon } from "@navikt/aksel-icons";
+import { Heading, HStack, VStack } from "@navikt/ds-react";
 import { useState, type ReactNode } from "react";
-import { Link } from "react-router";
-import { getSaksreferanse } from "~/saker/id";
-import { getStatus } from "~/saker/visning";
 import type { KontrollsakResponse } from "~/saker/types.backend";
-import {
-  getMineSakerGruppeStatus,
-  getMineSakerIkonType,
-  getMineSakerOpprettetTekst,
-  getMineSakerPeriodeTekst,
-  getMineSakerTittel,
-  getStatusVariantForSak,
-} from "~/saker/selectors";
+import { getMineSakerGruppeStatus } from "~/saker/selectors";
+import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
+import { Saksliste } from "~/saker/saksliste/Saksliste";
 
 type SakGrupper = {
   aktive: KontrollsakResponse[];
@@ -104,16 +87,11 @@ function SakGrid({
   detaljSti: string;
   tomTekst: string;
 }) {
-  if (saker.length === 0) {
-    return <BodyShort className="text-ax-text-neutral-subtle">{tomTekst}</BodyShort>;
-  }
-
   return (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-      {saker.map((sak) => (
-        <SakKort key={sak.id} sak={sak} detaljSti={detaljSti} />
-      ))}
-    </div>
+    <Saksliste
+      rader={saker.map((sak) => mapKontrollsakTilSakslisteRad(sak, detaljSti))}
+      tomTekst={tomTekst}
+    />
   );
 }
 
@@ -148,90 +126,5 @@ function SammenleggbarSeksjon({
 
       {erÅpen && children}
     </section>
-  );
-}
-
-function SakKort({ sak, detaljSti }: { sak: KontrollsakResponse; detaljSti: string }) {
-  const ikonType = getMineSakerIkonType(sak);
-  const Ikon =
-    ikonType === "tasklist"
-      ? TasklistIcon
-      : ikonType === "envelope"
-        ? EnvelopeClosedIcon
-        : ikonType === "buildings"
-          ? Buildings2Icon
-          : ikonType === "folder"
-            ? FolderIcon
-            : FilesIcon;
-
-  return (
-    <Link
-      to={`${detaljSti}/${getSaksreferanse(sak.id)}`}
-      className="group flex min-h-32 items-start justify-between gap-4 rounded-xl border border-ax-border-neutral-subtle bg-ax-bg-default px-5 py-4 text-inherit no-underline transition-colors hover:border-ax-border-neutral hover:bg-ax-bg-neutral-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
-    >
-      <HStack gap="space-4" align="start" className="min-w-0 flex-1">
-        <div className="pt-1 text-ax-text-neutral">
-          <Ikon aria-hidden fontSize="1.875rem" />
-        </div>
-
-        <VStack gap="space-4" className="min-w-0">
-          <VStack gap="space-2">
-            <Heading
-              size="xsmall"
-              level="3"
-              className="truncate underline decoration-1 underline-offset-3"
-            >
-              {getMineSakerTittel(sak)}
-            </Heading>
-            <BodyShort size="small" className="text-ax-text-neutral-subtle">
-              {getMineSakerPeriodeTekst(sak)}
-            </BodyShort>
-          </VStack>
-
-          <HStack gap="space-2" wrap>
-            <StatusPille sak={sak} />
-            <MetadataPille
-              icon={<CalendarIcon aria-hidden fontSize="1rem" />}
-              tekst={getMineSakerOpprettetTekst(sak)}
-            />
-          </HStack>
-        </VStack>
-      </HStack>
-
-      <ChevronRightIcon
-        aria-hidden
-        fontSize="1.5rem"
-        className="mt-1 shrink-0 text-ax-text-neutral transition-transform duration-200 group-hover:translate-x-1"
-      />
-    </Link>
-  );
-}
-
-function MetadataPille({
-  icon,
-  tekst,
-  className = "bg-ax-bg-neutral-moderate text-ax-text-neutral",
-}: {
-  icon?: ReactNode;
-  tekst: string;
-  className?: string;
-}) {
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium ${className}`}
-    >
-      {icon}
-      <span>{tekst}</span>
-    </span>
-  );
-}
-
-function StatusPille({ sak }: { sak: KontrollsakResponse }) {
-  const variant = getStatusVariantForSak(sak);
-
-  return (
-    <Tag variant={variant} size="small">
-      {getStatus(sak)}
-    </Tag>
   );
 }
