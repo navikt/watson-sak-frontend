@@ -144,4 +144,3 @@ export const redigerSaksinformasjonSchema = medFellesSaksregler(
 );
 
 export type OpprettSakSkjema = z.infer<typeof opprettSakSchema>;
-export type RedigerSaksinformasjonSkjema = z.infer<typeof redigerSaksinformasjonSchema>;
