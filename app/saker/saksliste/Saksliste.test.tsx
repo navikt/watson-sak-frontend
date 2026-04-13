@@ -48,6 +48,14 @@ describe("Saksliste", () => {
     );
 
     expect(screen.queryByRole("columnheader", { name: "Navn" })).toBeNull();
+    expect(screen.getByRole("columnheader", { name: "Handling" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Tildel" })).toBeDefined();
+  });
+
+  it("viser tomtekst uten tabell når listen er tom", () => {
+    renderMedRouter(<Saksliste rader={[]} tomTekst="Ingen saker akkurat nå." />);
+
+    expect(screen.getByText("Ingen saker akkurat nå.")).toBeDefined();
+    expect(screen.queryByRole("table")).toBeNull();
   });
 });

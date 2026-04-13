@@ -74,7 +74,9 @@ export function Saksliste({
             </Table.HeaderCell>
           ))}
           {renderRadHandling ? (
-            <Table.HeaderCell scope="col">{handlingKolonneTittel ?? null}</Table.HeaderCell>
+            <Table.HeaderCell scope="col">
+              {handlingKolonneTittel ?? <span className="sr-only">Handling</span>}
+            </Table.HeaderCell>
           ) : null}
         </Table.Row>
       </Table.Header>
