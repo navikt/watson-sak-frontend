@@ -303,6 +303,10 @@ export async function action({ request, params }: Route.ActionArgs) {
       leggTilHendelse(sak, "TILGANG_DELT");
       break;
     }
+    case "stans_ytelse": {
+      leggTilHendelse(sak, "YTELSE_STANSET");
+      break;
+    }
     default: {
       throw data("Ugyldig handling", { status: 400 });
     }

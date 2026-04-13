@@ -10,13 +10,14 @@ import { Button, Heading, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { DelTilgangModal } from "./DelTilgangModal";
+import { StansYtelseModal } from "./StansYtelseModal";
 
 interface SakUtredesHandlingerProps {
   sak: KontrollsakResponse;
   saksbehandlere: string[];
 }
 
-type ÅpenModal = "del-tilgang" | null;
+type ÅpenModal = "del-tilgang" | "stans-ytelse" | null;
 
 export function SakUtredesHandlinger({ sak, saksbehandlere }: SakUtredesHandlingerProps) {
   const [åpenModal, setÅpenModal] = useState<ÅpenModal>(null);
@@ -38,7 +39,12 @@ export function SakUtredesHandlinger({ sak, saksbehandlere }: SakUtredesHandling
         >
           Del tilgang
         </Button>
-        <Button variant="tertiary" size="small" icon={<XMarkOctagonIcon aria-hidden />}>
+        <Button
+          variant="tertiary"
+          size="small"
+          icon={<XMarkOctagonIcon aria-hidden />}
+          onClick={() => setÅpenModal("stans-ytelse")}
+        >
           Stans ytelse
         </Button>
         <Button variant="tertiary" size="small" icon={<ClockDashedIcon aria-hidden />}>
@@ -56,6 +62,11 @@ export function SakUtredesHandlinger({ sak, saksbehandlere }: SakUtredesHandling
         sakId={sak.id}
         saksbehandlere={saksbehandlere}
         åpen={åpenModal === "del-tilgang"}
+        onClose={() => setÅpenModal(null)}
+      />
+      <StansYtelseModal
+        sakId={sak.id}
+        åpen={åpenModal === "stans-ytelse"}
         onClose={() => setÅpenModal(null)}
       />
     </>

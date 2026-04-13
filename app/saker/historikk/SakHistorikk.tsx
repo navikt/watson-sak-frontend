@@ -54,6 +54,8 @@ function hendelseTittel(hendelse: SakHendelse): string {
       return "Sak henlagt";
     case "TILGANG_DELT":
       return "Tilgang delt";
+    case "YTELSE_STANSET":
+      return "Ytelse stanset";
     default:
       return hendelse.hendelsesType;
   }
@@ -97,6 +99,8 @@ function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
       return <GavelIcon {...iconProps} />;
     case "TILGANG_DELT":
       return <PersonGroupIcon {...iconProps} />;
+    case "YTELSE_STANSET":
+      return <XMarkOctagonIcon {...iconProps} />;
     default:
       return <ClockIcon {...iconProps} />;
   }
