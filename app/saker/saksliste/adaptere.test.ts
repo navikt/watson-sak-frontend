@@ -67,6 +67,12 @@ describe("sakslisteadaptere", () => {
     });
   });
 
+  it("kan bruke egendefinert detaljsti for kontrollsak", () => {
+    expect(mapKontrollsakTilSakslisteRad(lagKontrollsak(), "/mine-saker")).toMatchObject({
+      detaljHref: "/mine-saker/201",
+    });
+  });
+
   it("mapper fordeling-sak til standard sakslisterad", () => {
     expect(mapFordelingSakTilSakslisteRad(lagFordelingSak())).toEqual({
       id: lagMockSakUuid("301", 2),
@@ -77,6 +83,12 @@ describe("sakslisteadaptere", () => {
       misbrukstyper: ["Skjult samliv"],
       opprettet: "2026-03-20",
       oppdatert: "2026-03-21",
+    });
+  });
+
+  it("kan bruke egendefinert detaljsti for fordeling-sak", () => {
+    expect(mapFordelingSakTilSakslisteRad(lagFordelingSak(), "/fordeling/sak")).toMatchObject({
+      detaljHref: "/fordeling/sak/301",
     });
   });
 });

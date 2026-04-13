@@ -8,7 +8,7 @@ import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
 
 export function MineSakerOversikt({ saker }: { saker: KontrollsakResponse[] }) {
-  const rader = saker.map(mapKontrollsakTilSakslisteRad);
+  const rader = saker.map((sak) => mapKontrollsakTilSakslisteRad(sak));
 
   return (
     <Kort as="section">

@@ -11,13 +11,16 @@ import {
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import type { SakslisteRad } from "./Saksliste";
 
-export function mapKontrollsakTilSakslisteRad(sak: KontrollsakResponse): SakslisteRad {
+export function mapKontrollsakTilSakslisteRad(
+  sak: KontrollsakResponse,
+  detaljSti = RouteConfig.SAKER_DETALJ.replace("/:sakId", ""),
+): SakslisteRad {
   const saksreferanse = getSaksreferanse(sak.id);
 
   return {
     id: sak.id,
     saksreferanse,
-    detaljHref: RouteConfig.SAKER_DETALJ.replace(":sakId", saksreferanse),
+    detaljHref: `${detaljSti}/${saksreferanse}`,
     navn: getNavn(sak),
     kategori: getKategoriText(sak),
     misbrukstyper: getMisbrukstyper(sak),
@@ -26,13 +29,16 @@ export function mapKontrollsakTilSakslisteRad(sak: KontrollsakResponse): Sakslis
   };
 }
 
-export function mapFordelingSakTilSakslisteRad(sak: FordelingSak): SakslisteRad {
+export function mapFordelingSakTilSakslisteRad(
+  sak: FordelingSak,
+  detaljSti = RouteConfig.SAKER_DETALJ.replace("/:sakId", ""),
+): SakslisteRad {
   const saksreferanse = getSaksreferanse(sak.id);
 
   return {
     id: sak.id,
     saksreferanse,
-    detaljHref: RouteConfig.SAKER_DETALJ.replace(":sakId", saksreferanse),
+    detaljHref: `${detaljSti}/${saksreferanse}`,
     navn: sak.navn,
     kategori: sak.kategori,
     misbrukstyper: sak.misbrukstyper,

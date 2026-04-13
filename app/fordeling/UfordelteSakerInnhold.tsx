@@ -61,7 +61,7 @@ export function UfordelteSakerInnhold({
   );
   const oppsummering = useMemo(() => lagUfordelteOppsummering(filtrerteSaker), [filtrerteSaker]);
   const sakslisteRader = useMemo(
-    () => paginerteSaker.elementer.map(mapFordelingSakTilSakslisteRad),
+    () => paginerteSaker.elementer.map((sak) => mapFordelingSakTilSakslisteRad(sak)),
     [paginerteSaker.elementer],
   );
 
