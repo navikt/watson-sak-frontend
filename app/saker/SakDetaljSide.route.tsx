@@ -1,19 +1,42 @@
 import { ArrowLeftIcon, PencilIcon } from "@navikt/aksel-icons";
 import {
+  Alert,
   BodyShort,
   Button,
   CopyButton,
+  DatePicker,
   Detail,
   Heading,
   HGrid,
   HStack,
   Page,
+  Select,
   Tag,
+  UNSAFE_Combobox,
   VStack,
+  useRangeDatepicker,
 } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
-import { data, useLoaderData, useNavigate } from "react-router";
+import { useEffect, useMemo, useState } from "react";
+import {
+  data,
+  useBeforeUnload,
+  useBlocker,
+  useFetcher,
+  useLoaderData,
+  useNavigate,
+} from "react-router";
+import { mockYtelser } from "~/fordeling/mock-data.server";
 import { Kort } from "~/komponenter/Kort";
+import {
+  kategoriAlternativer,
+  kildeAlternativer,
+  kildeEtiketter,
+  merkingAlternativer,
+  merkingEtiketter,
+  misbrukstypePerKategori,
+  redigerSaksinformasjonSchema,
+} from "~/registrer-sak/validering";
 import { mockSaksbehandlere } from "~/saker/mock-saksbehandlere.server";
 import { mockSeksjoner } from "~/saker/mock-seksjoner.server";
 import type { Route } from "./+types/SakDetaljSide.route";
@@ -46,6 +69,25 @@ import {
   type KontrollsakStatus,
 } from "./visning";
 
+type Feltfeil = Partial<
+  Record<
+    "kategori" | "misbruktype" | "merking" | "kilde" | "fraDato" | "tilDato" | "ytelser",
+    string[]
+  >
+>;
+
+type RedigerSaksinformasjonData = {
+  kategori: string;
+  misbruktype: string;
+  merking: string;
+  kilde: string;
+  fraDato: string;
+  tilDato: string;
+  ytelser: string[];
+};
+
+type ActionResult = { ok: true } | { ok: false; feil: Feltfeil };
+
 const gyldigeStatuser = new Set<KontrollsakStatus>([
   "OPPRETTET",
   "AVKLART",
@@ -61,6 +103,40 @@ function erGyldigStatus(verdi: string): verdi is KontrollsakStatus {
 
 function hentDetaljSaker() {
   return hentAlleSaker();
+}
+
+function hentFørsteVerdi<T>(verdier: T[] | null | undefined): T | undefined {
+  return verdier?.[0];
+}
+
+function lagRedigeringsdata(
+  sak: Route.ComponentProps["loaderData"]["sak"],
+): RedigerSaksinformasjonData {
+  const førsteYtelse = sak.ytelser[0];
+
+  return {
+    kategori: sak.kategori,
+    misbruktype: hentFørsteVerdi(sak.misbrukstyper) ?? "",
+    merking: hentFørsteVerdi(sak.merking) ?? "",
+    kilde: sak.bakgrunn?.kilde ?? "",
+    fraDato: førsteYtelse?.periodeFra ?? "",
+    tilDato: førsteYtelse?.periodeTil ?? "",
+    ytelser: sak.ytelser.map((ytelse) => ytelse.type),
+  };
+}
+
+function erLikeRedigeringsdata(a: RedigerSaksinformasjonData, b: RedigerSaksinformasjonData) {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+function harStøttetRedigeringsmodell(sak: Route.ComponentProps["loaderData"]["sak"]) {
+  const antallMisbrukstyper = sak.misbrukstyper?.length ?? 0;
+  const antallMerkinger = sak.merking?.length ?? 0;
+  const unikePerioder = new Set(
+    sak.ytelser.map((ytelse) => `${ytelse.periodeFra}-${ytelse.periodeTil}`),
+  );
+
+  return antallMisbrukstyper <= 1 && antallMerkinger <= 1 && unikePerioder.size <= 1;
 }
 
 export function loader({ params }: Route.LoaderArgs) {
@@ -81,6 +157,7 @@ export function loader({ params }: Route.LoaderArgs) {
     andreSaker,
     saksbehandlere: mockSaksbehandlere,
     seksjoner: mockSeksjoner,
+    ytelser: mockYtelser,
   };
 }
 
@@ -134,6 +211,51 @@ export async function action({ request, params }: Route.ActionArgs) {
       leggTilHendelse(sak, "SAK_HENLAGT");
       break;
     }
+    case "rediger_saksinformasjon": {
+      const rådata = {
+        kategori: formData.get("kategori"),
+        misbruktype: formData.get("misbruktype") || undefined,
+        merking: formData.get("merking") || undefined,
+        kilde: formData.get("kilde"),
+        fraDato: formData.get("fraDato") || undefined,
+        tilDato: formData.get("tilDato") || undefined,
+        ytelser: formData.getAll("ytelser"),
+      };
+
+      const resultat = redigerSaksinformasjonSchema.safeParse(rådata);
+
+      if (!resultat.success) {
+        return { ok: false, feil: resultat.error.flatten().fieldErrors } satisfies ActionResult;
+      }
+
+      const data = resultat.data;
+      const eksisterendeYtelser = sak.ytelser;
+
+      sak.kategori = data.kategori;
+      sak.misbrukstyper = data.misbruktype ? [data.misbruktype] : undefined;
+      sak.merking = data.merking ? [data.merking] : [];
+      sak.bakgrunn = sak.bakgrunn
+        ? {
+            ...sak.bakgrunn,
+            kilde: data.kilde,
+          }
+        : {
+            id: crypto.randomUUID(),
+            kilde: data.kilde,
+            innhold: "",
+            avsender: null,
+            vedlegg: [],
+            tilleggsopplysninger: null,
+          };
+      sak.ytelser = data.ytelser.map((ytelse, indeks) => ({
+        id: eksisterendeYtelser[indeks]?.id ?? crypto.randomUUID(),
+        type: ytelse,
+        periodeFra: data.fraDato,
+        periodeTil: data.tilDato,
+      }));
+      leggTilHendelse(sak, "SAKSINFORMASJON_ENDRET");
+      break;
+    }
     case "koble_sak": {
       throw data("Koble til saken er ikke tilgjengelig ennå", { status: 501 });
     }
@@ -142,7 +264,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     }
   }
 
-  return { ok: true };
+  return { ok: true } satisfies ActionResult;
 }
 
 function Felt({ label, children }: { label: string; children: React.ReactNode }) {
@@ -157,9 +279,10 @@ function Felt({ label, children }: { label: string; children: React.ReactNode })
 }
 
 export default function SakDetaljSide() {
-  const { sak, historikk, filer, andreSaker, saksbehandlere, seksjoner } =
+  const { sak, historikk, filer, andreSaker, saksbehandlere, seksjoner, ytelser } =
     useLoaderData<typeof loader>();
   const navigate = useNavigate();
+  const fetcher = useFetcher<typeof action>();
   const personIdent = getPersonIdent(sak);
   const statusTekst = getStatus(sak);
   const kildeTekst = getKildeText(sak);
@@ -174,10 +297,83 @@ export default function SakDetaljSide() {
   const belop = getBelop(sak);
   const periodeText = getPeriodeText(sak);
   const tags = getTags(sak);
+  const [redigerer, setRedigerer] = useState(false);
+  const [valgteYtelser, setValgteYtelser] = useState<string[]>([]);
+  const [valgtKategori, setValgtKategori] = useState("");
+  const [lokaleVerdier, setLokaleVerdier] = useState<RedigerSaksinformasjonData>(() =>
+    lagRedigeringsdata(sak),
+  );
+  const { datepickerProps, fromInputProps, toInputProps } = useRangeDatepicker();
+
+  const utgangspunkt = useMemo(() => lagRedigeringsdata(sak), [sak]);
+  const feil = fetcher.data && !fetcher.data.ok ? fetcher.data.feil : undefined;
+  const misbrukstypeAlternativer = valgtKategori
+    ? ((misbrukstypePerKategori as Partial<Record<string, readonly string[]>>)[valgtKategori] ?? [])
+    : [];
+  const visMisbruktype = misbrukstypeAlternativer.length > 0;
+  const harUlagredeEndringer = redigerer && !erLikeRedigeringsdata(lokaleVerdier, utgangspunkt);
+  const kanRedigereSaksinformasjon = erAktiv && harStøttetRedigeringsmodell(sak);
+  const blocker = useBlocker(harUlagredeEndringer);
 
   const tittel = navn
     ? `Sak ${saksreferanse} – ${navn}${alder !== null ? ` (${alder})` : ""}`
     : `Sak ${saksreferanse}`;
+
+  useEffect(() => {
+    setLokaleVerdier(utgangspunkt);
+    setValgtKategori(utgangspunkt.kategori);
+    setValgteYtelser(utgangspunkt.ytelser);
+  }, [utgangspunkt]);
+
+  useEffect(() => {
+    if (fetcher.data?.ok) {
+      setRedigerer(false);
+    }
+  }, [fetcher.data]);
+
+  useEffect(() => {
+    if (blocker.state !== "blocked") {
+      return;
+    }
+
+    const skalForlateSiden = window.confirm(
+      "Du har ulagrede endringer. Er du sikker på at du vil forlate siden?",
+    );
+
+    if (skalForlateSiden) {
+      blocker.proceed();
+      return;
+    }
+
+    blocker.reset();
+  }, [blocker]);
+
+  useBeforeUnload((event) => {
+    if (!harUlagredeEndringer) {
+      return;
+    }
+
+    event.preventDefault();
+    event.returnValue = "";
+  });
+
+  function oppdaterLokaleVerdier(felt: keyof RedigerSaksinformasjonData, verdi: string | string[]) {
+    setLokaleVerdier((gjeldende) => ({ ...gjeldende, [felt]: verdi }));
+  }
+
+  function startRedigering() {
+    setRedigerer(true);
+    setLokaleVerdier(utgangspunkt);
+    setValgtKategori(utgangspunkt.kategori);
+    setValgteYtelser(utgangspunkt.ytelser);
+  }
+
+  function avbrytRedigering() {
+    setRedigerer(false);
+    setLokaleVerdier(utgangspunkt);
+    setValgtKategori(utgangspunkt.kategori);
+    setValgteYtelser(utgangspunkt.ytelser);
+  }
 
   return (
     <Page>
@@ -211,97 +407,288 @@ export default function SakDetaljSide() {
 
                   <hr className="border-ax-border-neutral-subtle" />
 
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <VStack gap="space-4">
-                      <VStack gap="space-1">
-                        <Detail className="text-ax-text-neutral-subtle" uppercase>
-                          Personnummer
-                        </Detail>
-                        <HStack gap="space-1" align="center">
-                          <BodyShort>{personIdent}</BodyShort>
-                          <CopyButton size="xsmall" copyText={personIdent} />
+                  {redigerer ? (
+                    <fetcher.Form method="post">
+                      <input type="hidden" name="handling" value="rediger_saksinformasjon" />
+                      {valgteYtelser.map((ytelse) => (
+                        <input key={ytelse} type="hidden" name="ytelser" value={ytelse} />
+                      ))}
+
+                      <VStack gap="space-4">
+                        {feil && Object.keys(feil).length > 0 && (
+                          <Alert variant="error">
+                            Skjemaet inneholder feil. Vennligst rett opp feilene ovenfor.
+                          </Alert>
+                        )}
+
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                          <VStack gap="space-4">
+                            <VStack gap="space-1">
+                              <Detail className="text-ax-text-neutral-subtle" uppercase>
+                                Personnummer
+                              </Detail>
+                              <HStack gap="space-1" align="center">
+                                <BodyShort>{personIdent}</BodyShort>
+                                <CopyButton size="xsmall" copyText={personIdent} />
+                              </HStack>
+                            </VStack>
+
+                            <Select
+                              name="kategori"
+                              label="Kategori"
+                              value={valgtKategori}
+                              error={feil?.kategori?.join(", ")}
+                              onChange={(event) => {
+                                const kategori = event.target.value;
+                                setValgtKategori(kategori);
+                                oppdaterLokaleVerdier("kategori", kategori);
+
+                                const gyldigeMisbrukstyper =
+                                  misbrukstypePerKategori[
+                                    kategori as keyof typeof misbrukstypePerKategori
+                                  ];
+
+                                if (
+                                  gyldigeMisbrukstyper &&
+                                  lokaleVerdier.misbruktype &&
+                                  !gyldigeMisbrukstyper.includes(
+                                    lokaleVerdier.misbruktype as (typeof gyldigeMisbrukstyper)[number],
+                                  )
+                                ) {
+                                  oppdaterLokaleVerdier("misbruktype", "");
+                                }
+
+                                if (!gyldigeMisbrukstyper) {
+                                  oppdaterLokaleVerdier("misbruktype", "");
+                                }
+                              }}
+                            >
+                              <option value="">Velg kategori</option>
+                              {kategoriAlternativer.map((kategori) => (
+                                <option key={kategori} value={kategori}>
+                                  {getKategoriText({ ...sak, kategori }) ?? kategori}
+                                </option>
+                              ))}
+                            </Select>
+
+                            {visMisbruktype && (
+                              <Select
+                                name="misbruktype"
+                                label="Misbruktype"
+                                value={lokaleVerdier.misbruktype}
+                                error={feil?.misbruktype?.join(", ")}
+                                onChange={(event) =>
+                                  oppdaterLokaleVerdier("misbruktype", event.target.value)
+                                }
+                              >
+                                <option value="">Velg misbruktype</option>
+                                {misbrukstypeAlternativer.map((type) => (
+                                  <option key={type} value={type}>
+                                    {type}
+                                  </option>
+                                ))}
+                              </Select>
+                            )}
+
+                            <Select
+                              name="merking"
+                              label="Merking (valgfritt)"
+                              value={lokaleVerdier.merking}
+                              error={feil?.merking?.join(", ")}
+                              onChange={(event) =>
+                                oppdaterLokaleVerdier("merking", event.target.value)
+                              }
+                            >
+                              <option value="">Velg merking</option>
+                              {merkingAlternativer.map((merking) => (
+                                <option key={merking} value={merking}>
+                                  {merkingEtiketter[merking] ?? merking}
+                                </option>
+                              ))}
+                            </Select>
+
+                            <Select
+                              name="kilde"
+                              label="Kilde"
+                              value={lokaleVerdier.kilde}
+                              error={feil?.kilde?.join(", ")}
+                              onChange={(event) =>
+                                oppdaterLokaleVerdier("kilde", event.target.value)
+                              }
+                            >
+                              <option value="">Velg kilde</option>
+                              {kildeAlternativer.map((kilde) => (
+                                <option key={kilde} value={kilde}>
+                                  {kildeEtiketter[kilde] ?? kilde}
+                                </option>
+                              ))}
+                            </Select>
+                          </VStack>
+
+                          <VStack gap="space-4">
+                            <DatePicker {...datepickerProps}>
+                              <HStack gap="space-4" align="start" wrap>
+                                <DatePicker.Input
+                                  {...fromInputProps}
+                                  name="fraDato"
+                                  label="Fra dato"
+                                  value={lokaleVerdier.fraDato}
+                                  error={feil?.fraDato?.join(", ")}
+                                  onChange={(event) =>
+                                    oppdaterLokaleVerdier("fraDato", event.target.value)
+                                  }
+                                />
+
+                                <DatePicker.Input
+                                  {...toInputProps}
+                                  name="tilDato"
+                                  label="Til dato"
+                                  value={lokaleVerdier.tilDato}
+                                  error={feil?.tilDato?.join(", ")}
+                                  onChange={(event) =>
+                                    oppdaterLokaleVerdier("tilDato", event.target.value)
+                                  }
+                                />
+                              </HStack>
+                            </DatePicker>
+
+                            {belop !== null && <Felt label="Ca beløp">{formaterBelop(belop)}</Felt>}
+
+                            <UNSAFE_Combobox
+                              label="Ytelse"
+                              options={ytelser}
+                              isMultiSelect
+                              selectedOptions={valgteYtelser}
+                              error={feil?.ytelser?.join(", ")}
+                              onToggleSelected={(option, isSelected) => {
+                                setValgteYtelser((gjeldende) => {
+                                  const neste = isSelected
+                                    ? [...gjeldende, option]
+                                    : gjeldende.filter((ytelse) => ytelse !== option);
+                                  oppdaterLokaleVerdier("ytelser", neste);
+                                  return neste;
+                                });
+                              }}
+                            />
+                          </VStack>
+                        </div>
+
+                        <HStack justify="end" gap="space-4">
+                          <Button type="submit" loading={fetcher.state !== "idle"}>
+                            Lagre
+                          </Button>
+                          <Button type="button" variant="secondary" onClick={avbrytRedigering}>
+                            Avbryt
+                          </Button>
                         </HStack>
                       </VStack>
-
-                      {kategoriText && (
-                        <VStack gap="space-1">
-                          <Detail className="text-ax-text-neutral-subtle" uppercase>
-                            Kategori
-                          </Detail>
-                          <div>
-                            <Tag variant="neutral" size="small">
-                              {kategoriText}
-                            </Tag>
-                          </div>
-                        </VStack>
-                      )}
-
-                      {misbrukstyper.length > 0 && (
-                        <VStack gap="space-1">
-                          <Detail className="text-ax-text-neutral-subtle" uppercase>
-                            Misbrukstype
-                          </Detail>
-                          <HStack gap="space-2" wrap>
-                            {misbrukstyper.map((type) => (
-                              <Tag key={type} variant="warning" size="small">
-                                {type}
-                              </Tag>
-                            ))}
-                          </HStack>
-                        </VStack>
-                      )}
-
-                      {tags.length > 0 && (
-                        <VStack gap="space-1">
-                          <Detail className="text-ax-text-neutral-subtle" uppercase>
-                            Merking
-                          </Detail>
-                          <HStack gap="space-2" wrap>
-                            {tags.map((tag) => (
-                              <Tag key={tag} variant="neutral" size="small">
-                                {tag}
-                              </Tag>
-                            ))}
-                          </HStack>
-                        </VStack>
-                      )}
-
-                      <Felt label="Kilde">{kildeTekst}</Felt>
-                    </VStack>
-
+                    </fetcher.Form>
+                  ) : (
                     <VStack gap="space-4">
-                      {periodeText && <Felt label="Periode">{periodeText}</Felt>}
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <VStack gap="space-4">
+                          <VStack gap="space-1">
+                            <Detail className="text-ax-text-neutral-subtle" uppercase>
+                              Personnummer
+                            </Detail>
+                            <HStack gap="space-1" align="center">
+                              <BodyShort>{personIdent}</BodyShort>
+                              <CopyButton size="xsmall" copyText={personIdent} />
+                            </HStack>
+                          </VStack>
 
-                      {belop !== null && <Felt label="Ca beløp">{formaterBelop(belop)}</Felt>}
+                          {kategoriText && (
+                            <VStack gap="space-1">
+                              <Detail className="text-ax-text-neutral-subtle" uppercase>
+                                Kategori
+                              </Detail>
+                              <div>
+                                <Tag variant="neutral" size="small">
+                                  {kategoriText}
+                                </Tag>
+                              </div>
+                            </VStack>
+                          )}
 
-                      {ytelseTyper.length > 0 && (
-                        <VStack gap="space-1">
-                          <Detail className="text-ax-text-neutral-subtle" uppercase>
-                            Ytelse
-                          </Detail>
-                          <HStack gap="space-2" wrap>
-                            {ytelseTyper.map((ytelse) => (
-                              <Tag key={ytelse} variant="success" size="small">
-                                {ytelse}
-                              </Tag>
-                            ))}
+                          {misbrukstyper.length > 0 && (
+                            <VStack gap="space-1">
+                              <Detail className="text-ax-text-neutral-subtle" uppercase>
+                                Misbrukstype
+                              </Detail>
+                              <HStack gap="space-2" wrap>
+                                {misbrukstyper.map((type) => (
+                                  <Tag key={type} variant="warning" size="small">
+                                    {type}
+                                  </Tag>
+                                ))}
+                              </HStack>
+                            </VStack>
+                          )}
+
+                          {tags.length > 0 && (
+                            <VStack gap="space-1">
+                              <Detail className="text-ax-text-neutral-subtle" uppercase>
+                                Merking
+                              </Detail>
+                              <HStack gap="space-2" wrap>
+                                {tags.map((tag) => (
+                                  <Tag key={tag} variant="neutral" size="small">
+                                    {merkingEtiketter[tag as keyof typeof merkingEtiketter] ?? tag}
+                                  </Tag>
+                                ))}
+                              </HStack>
+                            </VStack>
+                          )}
+
+                          <Felt label="Kilde">{kildeTekst}</Felt>
+                        </VStack>
+
+                        <VStack gap="space-4">
+                          {periodeText && <Felt label="Periode">{periodeText}</Felt>}
+
+                          {belop !== null && <Felt label="Ca beløp">{formaterBelop(belop)}</Felt>}
+
+                          {ytelseTyper.length > 0 && (
+                            <VStack gap="space-1">
+                              <Detail className="text-ax-text-neutral-subtle" uppercase>
+                                Ytelse
+                              </Detail>
+                              <HStack gap="space-2" wrap>
+                                {ytelseTyper.map((ytelse) => (
+                                  <Tag key={ytelse} variant="success" size="small">
+                                    {ytelse}
+                                  </Tag>
+                                ))}
+                              </HStack>
+                            </VStack>
+                          )}
+                        </VStack>
+                      </div>
+
+                      {erAktiv && (
+                        <VStack gap="space-2" align="end">
+                          <HStack justify="end">
+                            <Button
+                              type="button"
+                              variant="tertiary"
+                              size="xsmall"
+                              icon={<PencilIcon aria-hidden />}
+                              aria-label="Rediger saksinformasjon"
+                              onClick={startRedigering}
+                              disabled={!kanRedigereSaksinformasjon}
+                            >
+                              Rediger
+                            </Button>
                           </HStack>
+                          {!kanRedigereSaksinformasjon && (
+                            <BodyShort size="small" className="text-ax-text-neutral-subtle">
+                              Redigering støttes foreløpig bare for saker med én misbrukstype, én
+                              merking og én felles periode.
+                            </BodyShort>
+                          )}
                         </VStack>
                       )}
                     </VStack>
-                  </div>
-
-                  {erAktiv && (
-                    <HStack justify="end">
-                      <Button
-                        variant="tertiary"
-                        size="xsmall"
-                        icon={<PencilIcon aria-hidden />}
-                        aria-label="Rediger saksinformasjon"
-                      >
-                        Rediger
-                      </Button>
-                    </HStack>
                   )}
                 </VStack>
               </Kort>
