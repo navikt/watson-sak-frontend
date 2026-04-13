@@ -299,6 +299,10 @@ export async function action({ request, params }: Route.ActionArgs) {
     case "koble_sak": {
       throw data("Koble til saken er ikke tilgjengelig ennå", { status: 501 });
     }
+    case "del_tilgang": {
+      leggTilHendelse(sak, "TILGANG_DELT");
+      break;
+    }
     default: {
       throw data("Ugyldig handling", { status: 400 });
     }

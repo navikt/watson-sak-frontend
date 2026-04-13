@@ -14,7 +14,8 @@ type BackendHendelsestype =
   | "MOTTAKSENHET_ENDRET"
   | "VIDERESENDT_TIL_NAY_NFP"
   | "POLITIANMELDT"
-  | "SAK_HENLAGT";
+  | "SAK_HENLAGT"
+  | "TILGANG_DELT";
 
 let nesteId = 1;
 

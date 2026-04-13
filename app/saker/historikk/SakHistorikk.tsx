@@ -5,6 +5,7 @@ import {
   GavelIcon,
   PaperplaneIcon,
   PencilIcon,
+  PersonGroupIcon,
   PersonIcon,
   PlusCircleIcon,
   XMarkOctagonIcon,
@@ -51,6 +52,8 @@ function hendelseTittel(hendelse: SakHendelse): string {
       return "Politianmeldt";
     case "SAK_HENLAGT":
       return "Sak henlagt";
+    case "TILGANG_DELT":
+      return "Tilgang delt";
     default:
       return hendelse.hendelsesType;
   }
@@ -92,6 +95,8 @@ function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
       return <PaperplaneIcon {...iconProps} />;
     case "POLITIANMELDT":
       return <GavelIcon {...iconProps} />;
+    case "TILGANG_DELT":
+      return <PersonGroupIcon {...iconProps} />;
     default:
       return <ClockIcon {...iconProps} />;
   }

@@ -48,10 +48,10 @@ function renderMedRouter(ui: React.ReactNode) {
 }
 
 describe("SakHandlingerKnapper", () => {
-  it("viser tildel saksbehandler, tildel meg og send til annen enhet for aktiv kontrollsak", () => {
+  it("viser tildel-handlinger for sak med status OPPRETTET", () => {
     renderMedRouter(
       <SakHandlingerKnapper
-        sak={lagKontrollsak()}
+        sak={lagKontrollsak({ status: "OPPRETTET" })}
         saksbehandlere={["Kari Nordmann"]}
         seksjoner={["4812", "4813"]}
       />,
@@ -62,11 +62,26 @@ describe("SakHandlingerKnapper", () => {
     const sendTilAnnenEnhet = screen.getByRole("button", { name: "Send til annen enhet" });
     expect(sendTilAnnenEnhet).toBeDefined();
     expect((sendTilAnnenEnhet as HTMLButtonElement).disabled).toBe(true);
-    expect(screen.queryByRole("button", { name: "Videresend til seksjon" })).toBeNull();
-    expect(screen.queryByRole("button", { name: /Flytt til/i })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Henlegg" })).toBeNull();
-    expect(screen.queryByRole("link", { name: "Videresend til NAY/NFP" })).toBeNull();
-    expect(screen.queryByRole("link", { name: "Politianmeldelse" })).toBeNull();
+  });
+
+  it("viser utredes-handlinger for sak med status UTREDES", () => {
+    renderMedRouter(
+      <SakHandlingerKnapper
+        sak={lagKontrollsak({ status: "UTREDES" })}
+        saksbehandlere={["Kari Nordmann"]}
+        seksjoner={["4812", "4813"]}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Ferdigstill sak" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Del tilgang" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Stans ytelse" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Sett i bero" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Opprett anmeldelse" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Legg tilbake i ufordelt" })).toBeDefined();
+
+    expect(screen.queryByRole("button", { name: "Tildel saksbehandler" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Tildel meg" })).toBeNull();
   });
 
   it("viser ingen handlinger for inaktiv kontrollsak", () => {
@@ -81,5 +96,6 @@ describe("SakHandlingerKnapper", () => {
     expect(screen.queryByRole("button", { name: "Tildel saksbehandler" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Tildel meg" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Send til annen enhet" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Ferdigstill sak" })).toBeNull();
   });
 });
