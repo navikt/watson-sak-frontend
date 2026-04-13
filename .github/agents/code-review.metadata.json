@@ -1,0 +1,18 @@
+{
+  "domain": "general",
+  "tags": ["code-review", "quality", "conventions", "pre-merge"],
+  "examples": [
+    {
+      "prompt": "@code-review-agent Gå gjennom endringene mine før jeg lager PR",
+      "scenario": "Pre-PR gjennomgang"
+    },
+    {
+      "prompt": "@code-review-agent Sjekk denne Kotlin-kontrolleren for sikkerhetsproblemer",
+      "scenario": "Sikkerhetssjekk"
+    },
+    {
+      "prompt": "@code-review-agent Sjekk src/app/usage/page.tsx for Nav-konvensjoner",
+      "scenario": "Konvensjonssjekk"
+    }
+  ]
+}
