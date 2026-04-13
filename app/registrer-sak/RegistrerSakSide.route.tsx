@@ -19,18 +19,12 @@ import { PageBlock } from "@navikt/ds-react/Page";
 import { useState } from "react";
 import { Form, Link, useFetcher, useActionData, useLoaderData } from "react-router";
 import { RouteConfig } from "~/routeConfig";
+import { kildeEtiketter, merkingEtiketter } from "~/registrer-sak/validering";
 import { kontrollsakKategoriEtiketter } from "~/saker/kategorier";
 import type { PersonOppslagResultat } from "./person-oppslag.mock.server";
 import { action, loader } from "./RegistrerSakSide.server";
 
 export { action, loader };
-
-const kildeEtiketter: Record<string, string> = {
-  INTERN: "Intern",
-  EKSTERN: "Ekstern",
-  ANONYM_TIPS: "Anonymt tips",
-  PUBLIKUM: "Publikum",
-};
 
 const enhetEtiketter: Record<string, string> = {
   ØST: "Øst",
@@ -38,13 +32,6 @@ const enhetEtiketter: Record<string, string> = {
   NORD: "Nord",
   SØR: "Sør",
   OSLO: "Oslo",
-};
-
-const merkingEtiketter: Record<string, string> = {
-  PRIORITERT: "Prioritert",
-  SENSITIV: "Sensitiv",
-  POLITIANMELDELSE: "Politianmeldelse",
-  ANNET: "Annet",
 };
 
 export default function OpprettSakSide() {
