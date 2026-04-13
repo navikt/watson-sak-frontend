@@ -14,7 +14,7 @@ type SakGrupper = {
 
 export function MineSakerInnhold({
   saker,
-  detaljSti: _detaljSti,
+  detaljSti,
 }: {
   saker: KontrollsakResponse[];
   detaljSti: string;
@@ -36,14 +36,22 @@ export function MineSakerInnhold({
         <Heading level="2" size="small" className="sr-only">
           Aktive saker
         </Heading>
-        <SakGrid saker={grupper.aktive} tomTekst="Du har ingen aktive saker." />
+        <SakGrid
+          saker={grupper.aktive}
+          detaljSti={detaljSti}
+          tomTekst="Du har ingen aktive saker."
+        />
 
         <SammenleggbarSeksjon
           tittel="Oppgaver på vent"
           erÅpen={viserVentende}
           toggle={() => setViserVentende((åpen) => !åpen)}
         >
-          <SakGrid saker={grupper.ventende} tomTekst="Du har ingen saker som venter." />
+          <SakGrid
+            saker={grupper.ventende}
+            detaljSti={detaljSti}
+            tomTekst="Du har ingen saker som venter."
+          />
         </SammenleggbarSeksjon>
 
         <SammenleggbarSeksjon
@@ -51,7 +59,11 @@ export function MineSakerInnhold({
           erÅpen={viserFullførte}
           toggle={() => setViserFullførte((åpen) => !åpen)}
         >
-          <SakGrid saker={grupper.fullførte} tomTekst="Du har ingen fullførte saker." />
+          <SakGrid
+            saker={grupper.fullførte}
+            detaljSti={detaljSti}
+            tomTekst="Du har ingen fullførte saker."
+          />
         </SammenleggbarSeksjon>
       </VStack>
     </section>
@@ -66,8 +78,21 @@ function grupperSaker(saker: KontrollsakResponse[]): SakGrupper {
   };
 }
 
-function SakGrid({ saker, tomTekst }: { saker: KontrollsakResponse[]; tomTekst: string }) {
-  return <Saksliste rader={saker.map(mapKontrollsakTilSakslisteRad)} tomTekst={tomTekst} />;
+function SakGrid({
+  saker,
+  detaljSti,
+  tomTekst,
+}: {
+  saker: KontrollsakResponse[];
+  detaljSti: string;
+  tomTekst: string;
+}) {
+  return (
+    <Saksliste
+      rader={saker.map((sak) => mapKontrollsakTilSakslisteRad(sak, detaljSti))}
+      tomTekst={tomTekst}
+    />
+  );
 }
 
 function SammenleggbarSeksjon({

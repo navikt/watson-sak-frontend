@@ -80,4 +80,24 @@ describe("MineSakerInnhold", () => {
 
     expect(screen.getByRole("link", { name: "202" })).toBeDefined();
   });
+
+  it("bruker oppgitt detaljsti for sakslenker", () => {
+    renderMedRouter(<MineSakerInnhold saker={[lagKontrollsak()]} detaljSti="/mine-saker/detalj" />);
+
+    expect(screen.getByRole("link", { name: "201" }).getAttribute("href")).toBe(
+      "/mine-saker/detalj/201",
+    );
+  });
+
+  it("viser riktige tomtekster for aktive, ventende og fullførte grupper", () => {
+    renderMedRouter(<MineSakerInnhold saker={[]} detaljSti="/mine-saker/detalj" />);
+
+    expect(screen.getByText("Du har ingen aktive saker.")).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: "Oppgaver på vent" }));
+    expect(screen.getByText("Du har ingen saker som venter.")).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: "Fullførte oppgaver" }));
+    expect(screen.getByText("Du har ingen fullførte saker.")).toBeDefined();
+  });
 });
