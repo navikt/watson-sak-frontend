@@ -33,6 +33,7 @@ const kildeEtiketter: Record<KontrollsakKilde, string> = {
   INTERN: "Intern",
   EKSTERN: "Ekstern",
   ANONYM_TIPS: "Anonymt tips",
+  PUBLIKUM: "Publikum",
 };
 
 export function formaterStatus(status: KontrollsakStatus): string {

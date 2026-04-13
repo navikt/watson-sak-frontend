@@ -100,6 +100,16 @@ describe("opprettSakSchema", () => {
     }
   });
 
+  it("avviser misbruktype som ikke tilhører valgt kategori", () => {
+    const resultat = opprettSakSchema.safeParse({
+      ...gyldigSkjema,
+      kategori: "SAMLIV",
+      misbruktype: "Svart arbeid",
+    });
+
+    expect(resultat.success).toBe(false);
+  });
+
   it("godtar skjema uten misbruktype for DOKUMENTFALSK", () => {
     const resultat = opprettSakSchema.safeParse({
       ...gyldigSkjema,

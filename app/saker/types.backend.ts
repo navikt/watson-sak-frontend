@@ -15,7 +15,7 @@ const kontrollsakMisbrukstypeSchema = z.enum(kontrollsakMisbrukstypeVerdier);
 
 const kontrollsakPrioritetSchema = z.enum(["HØY", "NORMAL", "LAV"]);
 
-const kontrollsakKildeSchema = z.enum(["INTERN", "EKSTERN", "ANONYM_TIPS"]);
+const kontrollsakKildeSchema = z.enum(["INTERN", "EKSTERN", "ANONYM_TIPS", "PUBLIKUM"]);
 
 const kontrollsakAvsenderSchema = z.object({
   id: z.string(),
