@@ -87,6 +87,33 @@ test.describe("Sakdetalj", () => {
     await expect(page.getByText("Arbeid", { exact: true })).toHaveCount(0);
   });
 
+  test("resetter datofelter etter avbryt og ny redigering", async ({ page }) => {
+    await page.getByRole("button", { name: "Rediger saksinformasjon" }).click();
+
+    await page.getByLabel("Fra dato").fill("01.02.2026");
+    await page.getByLabel("Til dato").fill("28.02.2026");
+    await page.getByRole("button", { name: "Avbryt" }).click();
+
+    await page.getByRole("button", { name: "Rediger saksinformasjon" }).click();
+
+    await expect(page.getByLabel("Fra dato")).toHaveValue("13.01.2026");
+    await expect(page.getByLabel("Til dato")).toHaveValue("13.01.2026");
+  });
+
+  test("viser ikke gamle valideringsfeil etter avbryt og ny redigering", async ({ page }) => {
+    await page.getByRole("button", { name: "Rediger saksinformasjon" }).click();
+
+    await page.getByLabel("Kilde").selectOption("");
+    await page.getByRole("button", { name: "Lagre" }).click();
+
+    await expect(page.locator(".aksel-error-message", { hasText: "Velg kilde" })).toBeVisible();
+
+    await page.getByRole("button", { name: "Avbryt" }).click();
+    await page.getByRole("button", { name: "Rediger saksinformasjon" }).click();
+
+    await expect(page.locator(".aksel-error-message", { hasText: "Velg kilde" })).toHaveCount(0);
+  });
+
   test("viser ikke status og saksbehandler som redigerbare felt", async ({ page }) => {
     await page.getByRole("button", { name: "Rediger saksinformasjon" }).click();
 

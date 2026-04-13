@@ -17,7 +17,7 @@ import {
   useRangeDatepicker,
 } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   data,
   useBeforeUnload,
@@ -120,8 +120,8 @@ function lagRedigeringsdata(
     misbruktype: hentFørsteVerdi(sak.misbrukstyper) ?? "",
     merking: hentFørsteVerdi(sak.merking) ?? "",
     kilde: sak.bakgrunn?.kilde ?? "",
-    fraDato: førsteYtelse?.periodeFra ?? "",
-    tilDato: førsteYtelse?.periodeTil ?? "",
+    fraDato: førsteYtelse?.periodeFra ? formaterTallDatoForInput(førsteYtelse.periodeFra) : "",
+    tilDato: førsteYtelse?.periodeTil ? formaterTallDatoForInput(førsteYtelse.periodeTil) : "",
     ytelser: sak.ytelser.map((ytelse) => ytelse.type),
   };
 }
@@ -136,6 +136,33 @@ function hentMisbrukstypeAlternativer(kategori: string) {
   }
 
   return (misbrukstypePerKategori as Partial<Record<string, readonly string[]>>)[kategori] ?? [];
+}
+
+function tilDate(verdi: string) {
+  if (!verdi) {
+    return undefined;
+  }
+
+  if (/^\d{2}\.\d{2}\.\d{4}$/.test(verdi)) {
+    const [dag, måned, år] = verdi.split(".");
+    return new Date(`${år}-${måned}-${dag}`);
+  }
+
+  return new Date(verdi);
+}
+
+function formaterTallDatoForInput(isoDato: string) {
+  const date = new Date(isoDato);
+
+  if (Number.isNaN(date.getTime())) {
+    return isoDato;
+  }
+
+  const dag = `${date.getDate()}`.padStart(2, "0");
+  const måned = `${date.getMonth() + 1}`.padStart(2, "0");
+  const år = date.getFullYear();
+
+  return `${dag}.${måned}.${år}`;
 }
 
 function harStøttetRedigeringsmodell(sak: Route.ComponentProps["loaderData"]["sak"]) {
@@ -291,6 +318,53 @@ function Felt({ label, children }: { label: string; children: React.ReactNode })
   );
 }
 
+function Periodefelter({
+  lokaleVerdier,
+  feil,
+  oppdaterLokaleVerdier,
+}: {
+  lokaleVerdier: RedigerSaksinformasjonData;
+  feil: Feltfeil | undefined;
+  oppdaterLokaleVerdier: (felt: keyof RedigerSaksinformasjonData, verdi: string | string[]) => void;
+}) {
+  const { datepickerProps, fromInputProps, toInputProps } = useRangeDatepicker({
+    defaultSelected: {
+      from: tilDate(lokaleVerdier.fraDato),
+      to: tilDate(lokaleVerdier.tilDato),
+    },
+  });
+
+  return (
+    <DatePicker {...datepickerProps}>
+      <HStack gap="space-4" align="start" wrap>
+        <DatePicker.Input
+          {...fromInputProps}
+          name="fraDato"
+          label="Fra dato"
+          value={lokaleVerdier.fraDato}
+          error={feil?.fraDato?.join(", ")}
+          onChange={(event) => {
+            fromInputProps.onChange?.(event);
+            oppdaterLokaleVerdier("fraDato", event.target.value);
+          }}
+        />
+
+        <DatePicker.Input
+          {...toInputProps}
+          name="tilDato"
+          label="Til dato"
+          value={lokaleVerdier.tilDato}
+          error={feil?.tilDato?.join(", ")}
+          onChange={(event) => {
+            toInputProps.onChange?.(event);
+            oppdaterLokaleVerdier("tilDato", event.target.value);
+          }}
+        />
+      </HStack>
+    </DatePicker>
+  );
+}
+
 export default function SakDetaljSide() {
   const { sak, historikk, filer, andreSaker, saksbehandlere, seksjoner, ytelser } =
     useLoaderData<typeof loader>();
@@ -311,14 +385,14 @@ export default function SakDetaljSide() {
   const periodeText = getPeriodeText(sak);
   const tags = getTags(sak);
   const [redigerer, setRedigerer] = useState(false);
+  const [redigeringsøkt, setRedigeringsøkt] = useState(0);
+  const [visFeil, setVisFeil] = useState(false);
   const [lokaleVerdier, setLokaleVerdier] = useState<RedigerSaksinformasjonData>(() =>
     lagRedigeringsdata(sak),
   );
-  const { datepickerProps, fromInputProps, toInputProps } = useRangeDatepicker();
-
-  const utgangspunkt = useMemo(() => lagRedigeringsdata(sak), [sak]);
+  const utgangspunkt = lagRedigeringsdata(sak);
   const feil: Feltfeil | undefined =
-    fetcher.data && !fetcher.data.ok ? fetcher.data.feil : undefined;
+    visFeil && fetcher.data && !fetcher.data.ok ? fetcher.data.feil : undefined;
   const misbrukstypeAlternativer = hentMisbrukstypeAlternativer(lokaleVerdier.kategori);
   const visMisbruktype = misbrukstypeAlternativer.length > 0;
   const harUlagredeEndringer = redigerer && !erLikeRedigeringsdata(lokaleVerdier, utgangspunkt);
@@ -330,12 +404,14 @@ export default function SakDetaljSide() {
     : `Sak ${saksreferanse}`;
 
   useEffect(() => {
-    setLokaleVerdier(utgangspunkt);
-  }, [utgangspunkt]);
-
-  useEffect(() => {
     if (fetcher.data?.ok) {
+      setVisFeil(false);
       setRedigerer(false);
+      return;
+    }
+
+    if (fetcher.data && !fetcher.data.ok) {
+      setVisFeil(true);
     }
   }, [fetcher.data]);
 
@@ -370,11 +446,14 @@ export default function SakDetaljSide() {
   }
 
   function startRedigering() {
+    setRedigeringsøkt((gjeldende) => gjeldende + 1);
+    setVisFeil(false);
     setRedigerer(true);
     setLokaleVerdier(utgangspunkt);
   }
 
   function avbrytRedigering() {
+    setVisFeil(false);
     setRedigerer(false);
     setLokaleVerdier(utgangspunkt);
   }
@@ -450,16 +529,11 @@ export default function SakDetaljSide() {
                                 const gyldigeMisbrukstyper = hentMisbrukstypeAlternativer(kategori);
 
                                 if (
-                                  gyldigeMisbrukstyper &&
                                   lokaleVerdier.misbruktype &&
                                   !gyldigeMisbrukstyper.includes(
                                     lokaleVerdier.misbruktype as (typeof gyldigeMisbrukstyper)[number],
                                   )
                                 ) {
-                                  oppdaterLokaleVerdier("misbruktype", "");
-                                }
-
-                                if (!gyldigeMisbrukstyper) {
                                   oppdaterLokaleVerdier("misbruktype", "");
                                 }
                               }}
@@ -527,31 +601,12 @@ export default function SakDetaljSide() {
                           </VStack>
 
                           <VStack gap="space-4">
-                            <DatePicker {...datepickerProps}>
-                              <HStack gap="space-4" align="start" wrap>
-                                <DatePicker.Input
-                                  {...fromInputProps}
-                                  name="fraDato"
-                                  label="Fra dato"
-                                  value={lokaleVerdier.fraDato}
-                                  error={feil?.fraDato?.join(", ")}
-                                  onChange={(event) =>
-                                    oppdaterLokaleVerdier("fraDato", event.target.value)
-                                  }
-                                />
-
-                                <DatePicker.Input
-                                  {...toInputProps}
-                                  name="tilDato"
-                                  label="Til dato"
-                                  value={lokaleVerdier.tilDato}
-                                  error={feil?.tilDato?.join(", ")}
-                                  onChange={(event) =>
-                                    oppdaterLokaleVerdier("tilDato", event.target.value)
-                                  }
-                                />
-                              </HStack>
-                            </DatePicker>
+                            <Periodefelter
+                              key={redigeringsøkt}
+                              lokaleVerdier={lokaleVerdier}
+                              feil={feil}
+                              oppdaterLokaleVerdier={oppdaterLokaleVerdier}
+                            />
 
                             {belop !== null && <Felt label="Ca beløp">{formaterBelop(belop)}</Felt>}
 
