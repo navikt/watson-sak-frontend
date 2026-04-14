@@ -10,11 +10,13 @@ import { Button, Detail, Heading, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import { useFetcher } from "react-router";
 import { RouteConfig } from "~/routeConfig";
+import type { FilNode } from "~/saker/filer/typer";
 import { getSaksreferanse } from "~/saker/id";
 import type { SakHendelse } from "~/saker/historikk/typer";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { formaterDato } from "~/utils/date-utils";
 import { DelTilgangModal } from "./DelTilgangModal";
+import { FerdigstillSakModal } from "./FerdigstillSakModal";
 import { OpprettAnmeldelseModal } from "./OpprettAnmeldelseModal";
 import { StansYtelseModal } from "./StansYtelseModal";
 
@@ -22,11 +24,17 @@ interface SakUtredesHandlingerProps {
   sak: KontrollsakResponse;
   saksbehandlere: string[];
   historikk: SakHendelse[];
+  filer: FilNode[];
 }
 
-type ÅpenModal = "del-tilgang" | "stans-ytelse" | "opprett-anmeldelse" | null;
+type ÅpenModal = "del-tilgang" | "stans-ytelse" | "opprett-anmeldelse" | "ferdigstill" | null;
 
-export function SakUtredesHandlinger({ sak, saksbehandlere, historikk }: SakUtredesHandlingerProps) {
+export function SakUtredesHandlinger({
+  sak,
+  saksbehandlere,
+  historikk,
+  filer,
+}: SakUtredesHandlingerProps) {
   const [åpenModal, setÅpenModal] = useState<ÅpenModal>(null);
   const beroFetcher = useFetcher();
   const tilbakeFetcher = useFetcher();
@@ -60,7 +68,12 @@ export function SakUtredesHandlinger({ sak, saksbehandlere, historikk }: SakUtre
         <Heading level="2" size="small">
           Handlinger
         </Heading>
-        <Button variant="primary" size="medium" icon={<CheckmarkCircleIcon aria-hidden />}>
+        <Button
+          variant="primary"
+          size="medium"
+          icon={<CheckmarkCircleIcon aria-hidden />}
+          onClick={() => setÅpenModal("ferdigstill")}
+        >
           Ferdigstill sak
         </Button>
         <Button
@@ -105,7 +118,10 @@ export function SakUtredesHandlinger({ sak, saksbehandlere, historikk }: SakUtre
             </Detail>
           )}
         </VStack>
-        <Button variant="tertiary" size="small" icon={<ArrowUndoIcon aria-hidden />}
+        <Button
+          variant="tertiary"
+          size="small"
+          icon={<ArrowUndoIcon aria-hidden />}
           onClick={handleLeggTilbakeIUfordelt}
           loading={tilbakeFetcher.state !== "idle"}
         >
@@ -113,6 +129,13 @@ export function SakUtredesHandlinger({ sak, saksbehandlere, historikk }: SakUtre
         </Button>
       </VStack>
 
+      <FerdigstillSakModal
+        sakId={sak.id}
+        filer={filer}
+        historikk={historikk}
+        åpen={åpenModal === "ferdigstill"}
+        onClose={() => setÅpenModal(null)}
+      />
       <DelTilgangModal
         sakId={sak.id}
         saksbehandlere={saksbehandlere}

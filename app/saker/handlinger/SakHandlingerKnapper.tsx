@@ -1,3 +1,4 @@
+import type { FilNode } from "~/saker/filer/typer";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import type { SakHendelse } from "~/saker/historikk/typer";
 import { erAktivSakKontrollsak } from "./tilgjengeligeHandlinger";
@@ -10,13 +11,27 @@ interface SakHandlingerKnapperProps {
   saksbehandlere: string[];
   seksjoner: string[];
   historikk: SakHendelse[];
+  filer: FilNode[];
 }
 
-export function SakHandlingerKnapper({ sak, saksbehandlere, seksjoner, historikk }: SakHandlingerKnapperProps) {
+export function SakHandlingerKnapper({
+  sak,
+  saksbehandlere,
+  seksjoner,
+  historikk,
+  filer,
+}: SakHandlingerKnapperProps) {
   if (!erAktivSakKontrollsak(sak.status)) return null;
 
   if (sak.status === "UTREDES") {
-    return <SakUtredesHandlinger sak={sak} saksbehandlere={saksbehandlere} historikk={historikk} />;
+    return (
+      <SakUtredesHandlinger
+        sak={sak}
+        saksbehandlere={saksbehandlere}
+        historikk={historikk}
+        filer={filer}
+      />
+    );
   }
 
   if (sak.status === "I_BERO") {

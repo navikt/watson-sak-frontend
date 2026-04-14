@@ -35,9 +35,7 @@ export function OpprettAnmeldelseModal({ sakId, åpen, onClose }: OpprettAnmelde
       width="small"
     >
       <Modal.Body>
-        <BodyShort>
-          Bekreft at du har opprettet anmeldelse, og ønsker å loggføre det.
-        </BodyShort>
+        <BodyShort>Bekreft at du har opprettet anmeldelse, og ønsker å loggføre det.</BodyShort>
       </Modal.Body>
       <Modal.Footer>
         <Button variant="primary" onClick={handleBekreft}>

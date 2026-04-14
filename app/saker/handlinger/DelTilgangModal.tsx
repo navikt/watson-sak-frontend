@@ -46,9 +46,7 @@ export function DelTilgangModal({ sakId, saksbehandlere, åpen, onClose }: DelTi
     >
       <Modal.Body>
         <VStack gap="space-4">
-          <BodyShort>
-            Velg saksbehandler som skal få tilgang til sak {saksreferanse}.
-          </BodyShort>
+          <BodyShort>Velg saksbehandler som skal få tilgang til sak {saksreferanse}.</BodyShort>
           <UNSAFE_Combobox
             label="Saksbehandler"
             options={saksbehandlere}

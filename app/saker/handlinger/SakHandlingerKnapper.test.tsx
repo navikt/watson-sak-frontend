@@ -55,6 +55,7 @@ describe("SakHandlingerKnapper", () => {
         saksbehandlere={["Kari Nordmann"]}
         seksjoner={["4812", "4813"]}
         historikk={[]}
+        filer={[]}
       />,
     );
 
@@ -72,6 +73,7 @@ describe("SakHandlingerKnapper", () => {
         saksbehandlere={["Kari Nordmann"]}
         seksjoner={["4812", "4813"]}
         historikk={[]}
+        filer={[]}
       />,
     );
 
@@ -93,6 +95,7 @@ describe("SakHandlingerKnapper", () => {
         saksbehandlere={["Kari Nordmann"]}
         seksjoner={["4812", "4813"]}
         historikk={[]}
+        filer={[]}
       />,
     );
 

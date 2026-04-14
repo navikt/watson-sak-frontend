@@ -45,7 +45,11 @@ import { SakFilområde } from "./filer/SakFilområde";
 import { SakHandlingerKnapper } from "./handlinger/SakHandlingerKnapper";
 import { erAktivSakKontrollsak } from "./handlinger/tilgjengeligeHandlinger";
 import { SakHistorikk } from "./historikk/SakHistorikk";
-import { hentHistorikk, leggTilHendelse, leggTilManuellHendelse } from "./historikk/mock-data.server";
+import {
+  hentHistorikk,
+  leggTilHendelse,
+  leggTilManuellHendelse,
+} from "./historikk/mock-data.server";
 import { finnSakMedReferanse, getSaksreferanse } from "./id";
 import { hentAlleSaker } from "./mock-alle-saker.server";
 import { SakerPåSammePerson } from "./komponenter/SakerPåSammePerson";
@@ -328,6 +332,12 @@ export async function action({ request, params }: Route.ActionArgs) {
     }
     case "loggfør_anmeldelse": {
       leggTilHendelse(sak, "POLITIANMELDT");
+      break;
+    }
+    case "ferdigstill_sak": {
+      const avslutningstype = formData.get("avslutningstype") as string;
+      sak.status = avslutningstype === "henlegg" ? "HENLAGT" : "AVSLUTTET";
+      leggTilHendelse(sak, "STATUS_ENDRET");
       break;
     }
     case "gjenoppta": {
@@ -807,6 +817,7 @@ export default function SakDetaljSide() {
                 saksbehandlere={saksbehandlere}
                 seksjoner={seksjoner}
                 historikk={historikk}
+                filer={filer}
               />
 
               {kontaktinformasjon && (

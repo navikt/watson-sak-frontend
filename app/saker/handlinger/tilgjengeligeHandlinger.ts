@@ -37,10 +37,7 @@ export function kanPolitianmeldes(status: SakStatus): boolean {
 
 export function erAktivSakKontrollsak(status: KontrollsakStatus): boolean {
   return (
-    status === "OPPRETTET" ||
-    status === "AVKLART" ||
-    status === "UTREDES" ||
-    status === "I_BERO"
+    status === "OPPRETTET" || status === "AVKLART" || status === "UTREDES" || status === "I_BERO"
   );
 }
 
