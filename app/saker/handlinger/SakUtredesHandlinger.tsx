@@ -144,6 +144,7 @@ export function SakUtredesHandlinger({
       />
       <StansYtelseModal
         sakId={sak.id}
+        ytelser={sak.ytelser}
         åpen={åpenModal === "stans-ytelse"}
         onClose={() => setÅpenModal(null)}
       />
