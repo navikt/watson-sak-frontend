@@ -38,6 +38,13 @@ describe("landingsside-loader", () => {
     });
   });
 
+  it("returnerer kun aktive saker (ikke henlagte eller avsluttede)", () => {
+    const data = loader();
+
+    expect(data.mineSaker.every((sak) => sak.status !== "HENLAGT")).toBe(true);
+    expect(data.mineSaker.every((sak) => sak.status !== "AVSLUTTET")).toBe(true);
+  });
+
   it("returnerer en velkomstoppsummering basert på sakene dine", () => {
     const data = loader();
 
