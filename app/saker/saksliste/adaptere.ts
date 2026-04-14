@@ -9,6 +9,7 @@ import {
   getOpprettetDato,
 } from "~/saker/selectors";
 import type { KontrollsakResponse } from "~/saker/types.backend";
+import { formaterStatus, hentStatusVariant } from "~/saker/visning";
 import type { SakslisteRad } from "./Saksliste";
 
 export function mapKontrollsakTilSakslisteRad(
@@ -24,6 +25,7 @@ export function mapKontrollsakTilSakslisteRad(
     navn: getNavn(sak),
     kategori: getKategoriText(sak),
     misbrukstyper: getMisbrukstyper(sak),
+    status: { tekst: formaterStatus(sak.status), variant: hentStatusVariant(sak.status) },
     opprettet: getOpprettetDato(sak),
     oppdatert: getOppdatertDato(sak),
   };
@@ -42,6 +44,7 @@ export function mapFordelingSakTilSakslisteRad(
     navn: sak.navn,
     kategori: sak.kategori,
     misbrukstyper: sak.misbrukstyper,
+    status: null,
     opprettet: sak.opprettetDato,
     oppdatert: sak.oppdatertDato,
   };

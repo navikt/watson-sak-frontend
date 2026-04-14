@@ -62,6 +62,7 @@ describe("sakslisteadaptere", () => {
       navn: "Ola Nordmann",
       kategori: "Samliv",
       misbrukstyper: ["Skjult samliv"],
+      status: { tekst: "Ufordelt", variant: "info" },
       opprettet: "2026-02-03T10:11:12Z",
       oppdatert: "2026-02-03T10:11:12Z",
     });
@@ -81,6 +82,7 @@ describe("sakslisteadaptere", () => {
       navn: "Kari Nordmann",
       kategori: "Arbeid",
       misbrukstyper: ["Skjult samliv"],
+      status: null,
       opprettet: "2026-03-20",
       oppdatert: "2026-03-21",
     });

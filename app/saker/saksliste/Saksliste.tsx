@@ -3,7 +3,19 @@ import type { ReactNode } from "react";
 import { Link as RouterLink } from "react-router";
 import { formaterDato } from "~/utils/date-utils";
 
-type SakslisteKolonne = "saksid" | "navn" | "kategori" | "misbrukstype" | "opprettet" | "oppdatert";
+type SakslisteKolonne =
+  | "saksid"
+  | "navn"
+  | "kategori"
+  | "misbrukstype"
+  | "status"
+  | "opprettet"
+  | "oppdatert";
+
+export type SakslisteStatus = {
+  tekst: string;
+  variant: "info" | "warning" | "success" | "neutral";
+};
 
 export type SakslisteRad = {
   id: string;
@@ -12,6 +24,7 @@ export type SakslisteRad = {
   navn: string | null;
   kategori: string | null;
   misbrukstyper: string[];
+  status: SakslisteStatus | null;
   opprettet: string;
   oppdatert: string | null;
 };
@@ -37,6 +50,7 @@ const standardKolonner: SakslisteKolonne[] = [
   "navn",
   "kategori",
   "misbrukstype",
+  "status",
   "opprettet",
   "oppdatert",
 ];
@@ -46,6 +60,7 @@ const standardTitler: Record<SakslisteKolonne, string> = {
   navn: "Navn",
   kategori: "Kategori",
   misbrukstype: "Misbrukstype",
+  status: "Status",
   opprettet: "Opprettet",
   oppdatert: "Oppdatert",
 };
@@ -127,6 +142,14 @@ function renderCelle(rad: SakslisteRad, kolonne: SakslisteKolonne) {
             </Tag>
           ))}
         </HStack>
+      ) : (
+        <BodyShort size="small">–</BodyShort>
+      );
+    case "status":
+      return rad.status ? (
+        <Tag variant={rad.status.variant} size="small">
+          {rad.status.tekst}
+        </Tag>
       ) : (
         <BodyShort size="small">–</BodyShort>
       );

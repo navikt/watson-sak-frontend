@@ -19,6 +19,7 @@ const rader: SakslisteRad[] = [
     navn: "Ola Nordmann",
     kategori: "Samliv",
     misbrukstyper: ["Skjult samliv"],
+    status: { tekst: "Ufordelt", variant: "info" },
     opprettet: "2026-02-03T10:11:12Z",
     oppdatert: "2026-02-03T10:11:12Z",
   },
@@ -32,6 +33,7 @@ describe("Saksliste", () => {
     expect(screen.getByRole("columnheader", { name: "Navn" })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Kategori" })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Misbrukstype" })).toBeDefined();
+    expect(screen.getByRole("columnheader", { name: "Status" })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Opprettet" })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Oppdatert" })).toBeDefined();
     expect(screen.getByRole("link", { name: "201" }).getAttribute("href")).toBe("/saker/201");
