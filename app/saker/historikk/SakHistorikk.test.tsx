@@ -22,7 +22,7 @@ function lagBackendHendelse(overrides: Partial<SakHendelse> = {}): SakHendelse {
 
 describe("SakHistorikk", () => {
   it("renderer backend hendelsestype og snapshot-felter", () => {
-    render(<SakHistorikk hendelser={[lagBackendHendelse()]} />);
+    render(<SakHistorikk sakId="test-sak-id" hendelser={[lagBackendHendelse()]} />);
 
     expect(screen.getByText("Sak opprettet")).toBeDefined();
     expect(screen.getByText(/Status: Opprettet/)).toBeDefined();
@@ -32,6 +32,7 @@ describe("SakHistorikk", () => {
   it("renderer avklaringshendelse med avklaringsresultat", () => {
     render(
       <SakHistorikk
+        sakId="test-sak-id"
         hendelser={[
           lagBackendHendelse({
             hendelsesType: "AVKLARING_OPPRETTET",

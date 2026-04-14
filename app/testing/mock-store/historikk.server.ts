@@ -18,7 +18,8 @@ type BackendHendelsestype =
   | "TILGANG_DELT"
   | "YTELSE_STANSET"
   | "SAK_SATT_I_BERO"
-  | "SAK_GJENOPPTATT";
+  | "SAK_GJENOPPTATT"
+  | "MANUELL_NOTAT";
 
 let nesteId = 1;
 
@@ -71,10 +72,33 @@ function lagSnapshotFraKontrollsak(
 
 export function leggTilHendelse(
   sak: KontrollsakResponse,
-  type: Exclude<BackendHendelsestype, "SAK_OPPRETTET" | "AVKLARING_OPPRETTET">,
+  type: Exclude<BackendHendelsestype, "SAK_OPPRETTET" | "AVKLARING_OPPRETTET" | "MANUELL_NOTAT">,
   tidspunkt?: string,
 ) {
   return leggTilBackendHendelse(sak.id, type, lagSnapshotFraKontrollsak(sak), tidspunkt);
+}
+
+export function leggTilManuellHendelse(
+  sak: KontrollsakResponse,
+  tittel: string,
+  notat: string,
+  tidspunkt: string,
+): SakHendelse {
+  const hendelse: SakHendelse = {
+    hendelseId: lagId(),
+    tidspunkt,
+    hendelsesType: "MANUELL_NOTAT",
+    sakId: sak.id,
+    tittel,
+    notat,
+    ...lagSnapshotFraKontrollsak(sak),
+  };
+
+  const eksisterende = historikkMap.get(sak.id) ?? [];
+  eksisterende.push(hendelse);
+  historikkMap.set(sak.id, eksisterende);
+
+  return hendelse;
 }
 
 function genererHistorikk(saker: KontrollsakResponse[]) {
