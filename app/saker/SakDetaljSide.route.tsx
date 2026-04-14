@@ -312,6 +312,12 @@ export async function action({ request, params }: Route.ActionArgs) {
       leggTilHendelse(sak, "SAK_SATT_I_BERO");
       break;
     }
+    case "legg_tilbake_i_ufordelt": {
+      sak.status = "OPPRETTET";
+      sak.saksbehandler = "";
+      leggTilHendelse(sak, "STATUS_ENDRET");
+      break;
+    }
     case "loggfør_anmeldelse": {
       leggTilHendelse(sak, "POLITIANMELDT");
       break;

@@ -29,6 +29,7 @@ type ÅpenModal = "del-tilgang" | "stans-ytelse" | "opprett-anmeldelse" | null;
 export function SakUtredesHandlinger({ sak, saksbehandlere, historikk }: SakUtredesHandlingerProps) {
   const [åpenModal, setÅpenModal] = useState<ÅpenModal>(null);
   const beroFetcher = useFetcher();
+  const tilbakeFetcher = useFetcher();
 
   const sisteAnmeldelse = historikk.find((h) => h.hendelsesType === "POLITIANMELDT");
   const erAlleredeAnmeldt = sisteAnmeldelse !== undefined;
@@ -36,6 +37,16 @@ export function SakUtredesHandlinger({ sak, saksbehandlere, historikk }: SakUtre
   function handleSettIBero() {
     beroFetcher.submit(
       { handling: "sett_i_bero" },
+      {
+        method: "post",
+        action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id)),
+      },
+    );
+  }
+
+  function handleLeggTilbakeIUfordelt() {
+    tilbakeFetcher.submit(
+      { handling: "legg_tilbake_i_ufordelt" },
       {
         method: "post",
         action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id)),
@@ -94,7 +105,10 @@ export function SakUtredesHandlinger({ sak, saksbehandlere, historikk }: SakUtre
             </Detail>
           )}
         </VStack>
-        <Button variant="tertiary" size="small" icon={<ArrowUndoIcon aria-hidden />}>
+        <Button variant="tertiary" size="small" icon={<ArrowUndoIcon aria-hidden />}
+          onClick={handleLeggTilbakeIUfordelt}
+          loading={tilbakeFetcher.state !== "idle"}
+        >
           Legg tilbake i ufordelt
         </Button>
       </VStack>
