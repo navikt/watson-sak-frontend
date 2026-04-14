@@ -1,78 +1,42 @@
-import { ArrowForwardIcon, PersonPencilIcon, PersonPlusIcon } from "@navikt/aksel-icons";
-import { Button, Heading, VStack } from "@navikt/ds-react";
-import { useState } from "react";
-import { useFetcher } from "react-router";
-import { useInnloggetBruker } from "~/auth/innlogget-bruker";
+import type { FilNode } from "~/saker/filer/typer";
 import type { KontrollsakResponse } from "~/saker/types.backend";
-import { getSaksreferanse } from "~/saker/id";
-import { RouteConfig } from "~/routeConfig";
+import type { SakHendelse } from "~/saker/historikk/typer";
 import { erAktivSakKontrollsak } from "./tilgjengeligeHandlinger";
-import { TildelSaksbehandlerModal } from "./TildelSaksbehandlerModal";
+import { UfordeltSakHandlinger } from "./UfordeltSakHandlinger";
+import { SakUtredesHandlinger } from "./SakUtredesHandlinger";
+import { SakIBeroHandlinger } from "./SakIBeroHandlinger";
 
 interface SakHandlingerKnapperProps {
   sak: KontrollsakResponse;
   saksbehandlere: string[];
   seksjoner: string[];
+  historikk: SakHendelse[];
+  filer: FilNode[];
 }
-
-type ÅpenModal = "tildel" | null;
 
 export function SakHandlingerKnapper({
   sak,
   saksbehandlere,
-  seksjoner: _seksjoner,
+  seksjoner,
+  historikk,
+  filer,
 }: SakHandlingerKnapperProps) {
-  const [åpenModal, setÅpenModal] = useState<ÅpenModal>(null);
-  const erAktiv = erAktivSakKontrollsak(sak.status);
-  const innloggetBruker = useInnloggetBruker();
-  const tildelMegFetcher = useFetcher();
+  if (!erAktivSakKontrollsak(sak.status)) return null;
 
-  if (!erAktiv) return null;
-
-  function handleTildelMeg() {
-    tildelMegFetcher.submit(
-      { handling: "tildel", saksbehandler: innloggetBruker.navIdent },
-      {
-        method: "post",
-        action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id)),
-      },
+  if (sak.status === "UTREDES") {
+    return (
+      <SakUtredesHandlinger
+        sak={sak}
+        saksbehandlere={saksbehandlere}
+        historikk={historikk}
+        filer={filer}
+      />
     );
   }
 
-  return (
-    <>
-      <VStack gap="space-4" align="stretch">
-        <Heading level="2" size="small">
-          Handlinger
-        </Heading>
-        <Button
-          variant="primary"
-          size="small"
-          icon={<PersonPencilIcon aria-hidden />}
-          onClick={() => setÅpenModal("tildel")}
-        >
-          Tildel saksbehandler
-        </Button>
-        <Button
-          variant="secondary"
-          size="small"
-          icon={<PersonPlusIcon aria-hidden />}
-          onClick={handleTildelMeg}
-          loading={tildelMegFetcher.state !== "idle"}
-        >
-          Tildel meg
-        </Button>
-        <Button variant="secondary" size="small" icon={<ArrowForwardIcon aria-hidden />} disabled>
-          Send til annen enhet
-        </Button>
-      </VStack>
+  if (sak.status === "I_BERO") {
+    return <SakIBeroHandlinger sak={sak} />;
+  }
 
-      <TildelSaksbehandlerModal
-        sakId={sak.id}
-        saksbehandlere={saksbehandlere}
-        åpen={åpenModal === "tildel"}
-        onClose={() => setÅpenModal(null)}
-      />
-    </>
-  );
+  return <UfordeltSakHandlinger sak={sak} saksbehandlere={saksbehandlere} seksjoner={seksjoner} />;
 }

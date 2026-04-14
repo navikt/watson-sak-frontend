@@ -105,7 +105,11 @@ export function {ComponentName}({
 ### Dashboard Section
 
 ```tsx
-<Box background="surface-default" padding={{ xs: "space-16", md: "space-24" }} borderRadius="medium">
+<Box
+  background="surface-default"
+  padding={{ xs: "space-16", md: "space-24" }}
+  borderRadius="medium"
+>
   <VStack gap="6">
     <div className="flex items-center justify-between">
       <Heading size="large" level="2">
@@ -128,7 +132,10 @@ export function {ComponentName}({
 
 ```tsx
 <main className="max-w-7xl mx-auto">
-  <Box paddingBlock={{ xs: "space-16", md: "space-24" }} paddingInline={{ xs: "space-16", md: "space-40" }}>
+  <Box
+    paddingBlock={{ xs: "space-16", md: "space-24" }}
+    paddingInline={{ xs: "space-16", md: "space-40" }}
+  >
     <VStack gap={{ xs: "space-16", md: "space-24" }}>{/* Page content */}</VStack>
   </Box>
 </main>

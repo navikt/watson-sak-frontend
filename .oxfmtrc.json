@@ -5,6 +5,8 @@
     "**/*.yaml",
     ".github/skills/**",
     ".github/agents/**",
+    ".github/instructions/**",
+    ".github/prompts/**",
     ".agents/**",
     ".claude/**"
   ]

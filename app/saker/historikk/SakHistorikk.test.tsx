@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
 import type { SakHendelse } from "./typer";
 import { SakHistorikk } from "./SakHistorikk";
@@ -20,9 +21,16 @@ function lagBackendHendelse(overrides: Partial<SakHendelse> = {}): SakHendelse {
   };
 }
 
+function renderMedRouter(ui: React.ReactNode) {
+  const router = createMemoryRouter([{ path: "/", element: ui }], {
+    initialEntries: ["/"],
+  });
+  return render(<RouterProvider router={router} />);
+}
+
 describe("SakHistorikk", () => {
   it("renderer backend hendelsestype og snapshot-felter", () => {
-    render(<SakHistorikk hendelser={[lagBackendHendelse()]} />);
+    renderMedRouter(<SakHistorikk sakId="test-sak-id" hendelser={[lagBackendHendelse()]} />);
 
     expect(screen.getByText("Sak opprettet")).toBeDefined();
     expect(screen.getByText(/Status: Opprettet/)).toBeDefined();
@@ -30,8 +38,9 @@ describe("SakHistorikk", () => {
   });
 
   it("renderer avklaringshendelse med avklaringsresultat", () => {
-    render(
+    renderMedRouter(
       <SakHistorikk
+        sakId="test-sak-id"
         hendelser={[
           lagBackendHendelse({
             hendelsesType: "AVKLARING_OPPRETTET",

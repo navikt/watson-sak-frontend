@@ -1,19 +1,25 @@
 import {
   CheckmarkCircleIcon,
   ArrowRightIcon,
+  ArrowUndoIcon,
+  ClockDashedIcon,
   ClockIcon,
   GavelIcon,
   PaperplaneIcon,
   PencilIcon,
+  PersonGroupIcon,
   PersonIcon,
   PlusCircleIcon,
   XMarkOctagonIcon,
 } from "@navikt/aksel-icons";
-import { BodyShort, Box, Button, Heading, Process, VStack } from "@navikt/ds-react";
+import { BodyShort, Box, Button, Heading, HStack, Process, VStack } from "@navikt/ds-react";
 import { useState } from "react";
+import { useDisclosure } from "~/use-disclosure/useDisclosure";
+import { LeggTilHistorikkModal } from "./LeggTilHistorikkModal";
 import type { SakHendelse } from "./typer";
 
 interface SakHistorikkProps {
+  sakId: string;
   hendelser: SakHendelse[];
 }
 
@@ -51,12 +57,26 @@ function hendelseTittel(hendelse: SakHendelse): string {
       return "Politianmeldt";
     case "SAK_HENLAGT":
       return "Sak henlagt";
+    case "TILGANG_DELT":
+      return "Tilgang delt";
+    case "YTELSE_STANSET":
+      return "Ytelse stanset";
+    case "SAK_SATT_I_BERO":
+      return "Sak satt i bero";
+    case "SAK_GJENOPPTATT":
+      return "Sak gjenopptatt";
+    case "MANUELL_NOTAT":
+      return hendelse.tittel ?? "Notat";
     default:
       return hendelse.hendelsesType;
   }
 }
 
 function hendelseBeskrivelse(hendelse: SakHendelse): string | null {
+  if (hendelse.hendelsesType === "MANUELL_NOTAT") {
+    return hendelse.notat ?? null;
+  }
+
   const deler: string[] = [];
 
   deler.push(`Status: ${formaterTekst(hendelse.status)}`);
@@ -92,6 +112,14 @@ function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
       return <PaperplaneIcon {...iconProps} />;
     case "POLITIANMELDT":
       return <GavelIcon {...iconProps} />;
+    case "TILGANG_DELT":
+      return <PersonGroupIcon {...iconProps} />;
+    case "YTELSE_STANSET":
+      return <XMarkOctagonIcon {...iconProps} />;
+    case "SAK_SATT_I_BERO":
+      return <ClockDashedIcon {...iconProps} />;
+    case "SAK_GJENOPPTATT":
+      return <ArrowUndoIcon {...iconProps} />;
     default:
       return <ClockIcon {...iconProps} />;
   }
@@ -99,58 +127,67 @@ function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
 
 const MAKS_SYNLIGE_HENDELSER = 5;
 
-export function SakHistorikk({ hendelser }: SakHistorikkProps) {
+export function SakHistorikk({ sakId, hendelser }: SakHistorikkProps) {
   const [visAlle, setVisAlle] = useState(false);
+  const { erÅpen, onÅpne, onLukk } = useDisclosure();
   const harFlere = hendelser.length > MAKS_SYNLIGE_HENDELSER;
   const synligeHendelser = visAlle ? hendelser : hendelser.slice(0, MAKS_SYNLIGE_HENDELSER);
 
-  if (hendelser.length === 0) {
-    return (
-      <Box padding="space-6" borderRadius="8" background="raised">
-        <Heading level="2" size="small" spacing>
-          Historikk
-        </Heading>
-        <BodyShort>Ingen historikk for denne saken.</BodyShort>
-      </Box>
-    );
-  }
-
   return (
     <Box padding="space-6" borderRadius="8" background="raised">
-      <Heading level="2" size="small" spacing>
-        Historikk
-      </Heading>
-      <Process>
-        {synligeHendelser.map((hendelse, index) => {
-          const beskrivelse = hendelseBeskrivelse(hendelse);
-          return (
-            <Process.Event
-              key={hendelse.hendelseId}
-              title={hendelseTittel(hendelse)}
-              timestamp={formaterTidspunkt(hendelse.tidspunkt)}
-              status={index === 0 ? "active" : "completed"}
-              bullet={<HendelseBullet hendelse={hendelse} />}
-            >
-              <VStack gap="space-1">
-                {beskrivelse && <BodyShort size="small">{beskrivelse}</BodyShort>}
-                <BodyShort size="small" className="text-ax-text-neutral-subtle">
-                  {`${formaterTekst(hendelse.kategori)} · ${formaterTekst(hendelse.prioritet)}`}
-                </BodyShort>
-              </VStack>
-            </Process.Event>
-          );
-        })}
-      </Process>
-      {harFlere && (
+      <HStack justify="space-between" align="center" className="mb-3">
+        <Heading level="2" size="small">
+          Historikk
+        </Heading>
         <Button
           variant="tertiary"
           size="small"
-          onClick={() => setVisAlle((prev) => !prev)}
-          className="mt-2"
+          icon={<PlusCircleIcon aria-hidden />}
+          onClick={onÅpne}
         >
-          {visAlle ? "Vis færre" : `Vis ${hendelser.length - MAKS_SYNLIGE_HENDELSER} flere`}
+          Legg til
         </Button>
+      </HStack>
+      {hendelser.length === 0 ? (
+        <BodyShort>Ingen historikk for denne saken.</BodyShort>
+      ) : (
+        <>
+          <Process>
+            {synligeHendelser.map((hendelse, index) => {
+              const beskrivelse = hendelseBeskrivelse(hendelse);
+              return (
+                <Process.Event
+                  key={hendelse.hendelseId}
+                  title={hendelseTittel(hendelse)}
+                  timestamp={formaterTidspunkt(hendelse.tidspunkt)}
+                  status={index === 0 ? "active" : "completed"}
+                  bullet={<HendelseBullet hendelse={hendelse} />}
+                >
+                  <VStack gap="space-1">
+                    {beskrivelse && <BodyShort size="small">{beskrivelse}</BodyShort>}
+                    {hendelse.hendelsesType !== "MANUELL_NOTAT" && (
+                      <BodyShort size="small" className="text-ax-text-neutral-subtle">
+                        {`${formaterTekst(hendelse.kategori)} · ${formaterTekst(hendelse.prioritet)}`}
+                      </BodyShort>
+                    )}
+                  </VStack>
+                </Process.Event>
+              );
+            })}
+          </Process>
+          {harFlere && (
+            <Button
+              variant="tertiary"
+              size="small"
+              onClick={() => setVisAlle((prev) => !prev)}
+              className="mt-2"
+            >
+              {visAlle ? "Vis færre" : `Vis ${hendelser.length - MAKS_SYNLIGE_HENDELSER} flere`}
+            </Button>
+          )}
+        </>
       )}
+      <LeggTilHistorikkModal sakId={sakId} åpen={erÅpen} onClose={onLukk} />
     </Box>
   );
 }

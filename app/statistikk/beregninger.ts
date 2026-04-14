@@ -27,6 +27,7 @@ export function beregnAntallPerStatus(saker: Statistikksak[]): Record<Statistikk
     OPPRETTET: 0,
     AVKLART: 0,
     UTREDES: 0,
+    I_BERO: 0,
     TIL_FORVALTNING: 0,
     AVSLUTTET: 0,
     HENLAGT: 0,

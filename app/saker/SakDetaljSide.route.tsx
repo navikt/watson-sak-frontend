@@ -45,7 +45,11 @@ import { SakFilområde } from "./filer/SakFilområde";
 import { SakHandlingerKnapper } from "./handlinger/SakHandlingerKnapper";
 import { erAktivSakKontrollsak } from "./handlinger/tilgjengeligeHandlinger";
 import { SakHistorikk } from "./historikk/SakHistorikk";
-import { hentHistorikk, leggTilHendelse } from "./historikk/mock-data.server";
+import {
+  hentHistorikk,
+  leggTilHendelse,
+  leggTilManuellHendelse,
+} from "./historikk/mock-data.server";
 import { finnSakMedReferanse, getSaksreferanse } from "./id";
 import { hentAlleSaker } from "./mock-alle-saker.server";
 import { SakerPåSammePerson } from "./komponenter/SakerPåSammePerson";
@@ -163,6 +167,14 @@ function formaterTallDatoForInput(isoDato: string) {
   const år = date.getFullYear();
 
   return `${dag}.${måned}.${år}`;
+}
+
+function lagTidspunktFraSkjema(dato: string, tid: string): string {
+  if (/^\d{2}\.\d{2}\.\d{4}$/.test(dato)) {
+    const [dag, måned, år] = dato.split(".");
+    return new Date(`${år}-${måned}-${dag}T${tid ?? "00:00"}:00`).toISOString();
+  }
+  return new Date(`${dato}T${tid ?? "00:00"}:00`).toISOString();
 }
 
 function harStøttetRedigeringsmodell(sak: Route.ComponentProps["loaderData"]["sak"]) {
@@ -298,6 +310,54 @@ export async function action({ request, params }: Route.ActionArgs) {
     }
     case "koble_sak": {
       throw data("Koble til saken er ikke tilgjengelig ennå", { status: 501 });
+    }
+    case "del_tilgang": {
+      leggTilHendelse(sak, "TILGANG_DELT");
+      break;
+    }
+    case "stans_ytelse": {
+      leggTilHendelse(sak, "YTELSE_STANSET");
+      break;
+    }
+    case "sett_i_bero": {
+      sak.status = "I_BERO";
+      leggTilHendelse(sak, "SAK_SATT_I_BERO");
+      break;
+    }
+    case "legg_tilbake_i_ufordelt": {
+      sak.status = "OPPRETTET";
+      sak.saksbehandler = "";
+      leggTilHendelse(sak, "STATUS_ENDRET");
+      break;
+    }
+    case "loggfør_anmeldelse": {
+      leggTilHendelse(sak, "POLITIANMELDT");
+      break;
+    }
+    case "ferdigstill_sak": {
+      const avslutningstype = formData.get("avslutningstype") as string;
+      sak.status = avslutningstype === "henlegg" ? "HENLAGT" : "AVSLUTTET";
+      leggTilHendelse(sak, "STATUS_ENDRET");
+      break;
+    }
+    case "gjenoppta": {
+      sak.status = "UTREDES";
+      leggTilHendelse(sak, "SAK_GJENOPPTATT");
+      break;
+    }
+    case "legg_til_historikk": {
+      const tittel = formData.get("tittel") as string;
+      const notat = formData.get("notat") as string;
+      const dato = formData.get("dato") as string;
+      const tid = formData.get("tid") as string;
+
+      if (!tittel) {
+        throw data("Tittel er påkrevd", { status: 400 });
+      }
+
+      const tidspunkt = lagTidspunktFraSkjema(dato, tid);
+      leggTilManuellHendelse(sak, tittel, notat ?? "", tidspunkt);
+      break;
     }
     default: {
       throw data("Ugyldig handling", { status: 400 });
@@ -756,6 +816,8 @@ export default function SakDetaljSide() {
                 sak={sak}
                 saksbehandlere={saksbehandlere}
                 seksjoner={seksjoner}
+                historikk={historikk}
+                filer={filer}
               />
 
               {kontaktinformasjon && (
@@ -785,7 +847,7 @@ export default function SakDetaljSide() {
                 </Kort>
               )}
 
-              <SakHistorikk hendelser={historikk} />
+              <SakHistorikk sakId={sak.id} hendelser={historikk} />
             </VStack>
           </HGrid>
         </VStack>
