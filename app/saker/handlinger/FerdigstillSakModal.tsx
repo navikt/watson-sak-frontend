@@ -104,14 +104,16 @@ function ValgbarFilTre({
 
           return (
             <li key={node.id}>
-              <Checkbox
-                checked={alleValgt}
-                indeterminate={noenValgt}
-                onChange={() => onToggleMappe(node.barn)}
-                style={{ paddingLeft: `${nivå * 1.5 + 0.5}rem` }}
-              >
-                {node.navn}
-              </Checkbox>
+              <div style={{ paddingLeft: `${nivå * 1.5}rem` }}>
+                <Checkbox
+                  size="small"
+                  checked={alleValgt}
+                  indeterminate={noenValgt}
+                  onChange={() => onToggleMappe(node.barn)}
+                >
+                  {node.navn}
+                </Checkbox>
+              </div>
               <ValgbarFilTre
                 noder={node.barn}
                 valgteIder={valgteIder}
@@ -125,13 +127,15 @@ function ValgbarFilTre({
 
         return (
           <li key={node.id}>
-            <Checkbox
-              checked={valgteIder.has(node.id)}
-              onChange={() => onToggleFil(node.id)}
-              style={{ paddingLeft: `${nivå * 1.5 + 1.5}rem` }}
-            >
-              {node.navn}
-            </Checkbox>
+            <div style={{ paddingLeft: `${(nivå + 1) * 1.5}rem` }}>
+              <Checkbox
+                size="small"
+                checked={valgteIder.has(node.id)}
+                onChange={() => onToggleFil(node.id)}
+              >
+                {node.navn}
+              </Checkbox>
+            </div>
           </li>
         );
       })}
@@ -276,8 +280,9 @@ function GjennomgåLogg({
           Ingen logginnslag for denne saken.
         </BodyShort>
       ) : (
-        <VStack gap="space-1">
+        <VStack gap="space-2">
           <Checkbox
+            size="medium"
             checked={alleValgt}
             indeterminate={noenValgt}
             onChange={onToggleAlle}
@@ -287,13 +292,14 @@ function GjennomgåLogg({
           </Checkbox>
           {historikk.map((hendelse) => (
             <Checkbox
+              size="medium"
               key={hendelse.hendelseId}
               checked={valgteHendelseIder.has(hendelse.hendelseId)}
               onChange={() => onToggleHendelse(hendelse.hendelseId)}
             >
               <VStack gap="space-0">
-                <span className="text-sm font-medium">{hendelseTittel(hendelse)}</span>
-                <span className="text-xs text-ax-text-neutral-subtle">
+                <span className="font-medium">{hendelseTittel(hendelse)}</span>
+                <span className="text-sm text-ax-text-neutral-subtle">
                   {formaterTidspunkt(hendelse.tidspunkt)}
                 </span>
               </VStack>
