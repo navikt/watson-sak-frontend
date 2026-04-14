@@ -1,7 +1,7 @@
 {
   "collection": "fullstack",
-  "version": "2025.07",
-  "source_sha": "c9a1348",
+  "version": "2026.04.14-095325-5d28ed0",
+  "source_sha": "5d28ed0",
   "installed_at": "2026-04-13T13:00:26Z",
   "files": [
     {
@@ -22,7 +22,7 @@
     },
     {
       "path": ".github/agents/forfatter.agent.md",
-      "hash": "acc16aca57ed5f30"
+      "hash": "42eb060eeeaef4cf"
     },
     {
       "path": ".github/agents/forfatter.metadata.json",
@@ -46,7 +46,7 @@
     },
     {
       "path": ".github/agents/security-champion.agent.md",
-      "hash": "d3fd3160fc2152c9"
+      "hash": "3081dcf0ddde695d"
     },
     {
       "path": ".github/agents/security-champion.metadata.json",
@@ -54,7 +54,7 @@
     },
     {
       "path": ".github/agents/nav-pilot.agent.md",
-      "hash": "a27c3d1ffee76b0a"
+      "hash": "3eac438b61ab279a"
     },
     {
       "path": ".github/agents/nav-pilot.metadata.json",
@@ -98,15 +98,15 @@
     },
     {
       "path": ".github/instructions/kotlin-ktor.instructions.md",
-      "hash": "32ca1c5ff40db124"
+      "hash": "7eaa6e7c6e5cfe25"
     },
     {
       "path": ".github/instructions/kotlin-spring.instructions.md",
-      "hash": "7b7d55ac22e314cc"
+      "hash": "75458689164c6c1b"
     },
     {
       "path": ".github/instructions/nextjs-aksel.instructions.md",
-      "hash": "3fe8feeb1459e760"
+      "hash": "6aa56ec320c72809"
     },
     {
       "path": ".github/instructions/testing.instructions.md",
@@ -130,7 +130,7 @@
     },
     {
       "path": ".github/instructions/database.instructions.md",
-      "hash": "aa0f7bd2de1e3d64"
+      "hash": "a45c76e4a947a91f"
     },
     {
       "path": ".github/prompts/spring-boot-endpoint.prompt.md",

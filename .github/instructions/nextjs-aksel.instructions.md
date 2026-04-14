@@ -187,6 +187,73 @@ export async function POST(request: Request) {
 }
 ```
 
+## Async Request APIs (Next.js 15+)
+
+In Next.js 15+, `cookies()`, `headers()`, and route `params` are **async** and require `await`:
+
+```typescript
+import { cookies, headers } from "next/headers";
+
+export default async function Page() {
+  // ✅ Next.js 15+: must await
+  const cookieStore = await cookies();
+  const headersList = await headers();
+
+  const token = cookieStore.get("auth-token")?.value;
+  const userAgent = headersList.get("user-agent");
+}
+
+// ✅ Route params are also Promises
+export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
+  const { id } = await props.params;
+  // ...
+}
+
+// ❌ Next.js 14 pattern — no longer works
+const cookieStore = cookies(); // Error: must await
+```
+
+## Metadata API
+
+```typescript
+import { Metadata } from "next";
+
+// ✅ Dynamic metadata for SEO
+export async function generateMetadata(props: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await props.params;
+  const vedtak = await fetchVedtak(id);
+
+  return {
+    title: `${vedtak.title} | Nav`,
+    description: vedtak.summary,
+    openGraph: { title: vedtak.title, description: vedtak.summary },
+  };
+}
+```
+
+## Middleware
+
+```typescript
+// src/middleware.ts
+import { NextRequest, NextResponse } from "next/server";
+
+export function middleware(request: NextRequest) {
+  const response = NextResponse.next();
+
+  // Security headers
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "DENY");
+
+  return response;
+}
+
+export const config = {
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+};
+```
+
 ## Authentication
 
 ```typescript
@@ -266,7 +333,7 @@ export default function Loading() {
 }
 
 // src/app/oversikt/error.tsx — shown on uncaught errors
-"use client";
+("use client");
 
 import { Alert, Button, VStack } from "@navikt/ds-react";
 
@@ -279,10 +346,10 @@ export default function Error({
 }) {
   return (
     <VStack gap="4">
-      <Alert variant="error">
-        Noe gikk galt. Prøv igjen senere.
-      </Alert>
-      <Button variant="secondary" onClick={reset}>Prøv igjen</Button>
+      <Alert variant="error">Noe gikk galt. Prøv igjen senere.</Alert>
+      <Button variant="secondary" onClick={reset}>
+        Prøv igjen
+      </Button>
     </VStack>
   );
 }
@@ -297,7 +364,9 @@ import { Skeleton } from "@navikt/ds-react";
 export default function Page() {
   return (
     <VStack gap="8">
-      <Heading size="large" level="1">Oversikt</Heading>
+      <Heading size="large" level="1">
+        Oversikt
+      </Heading>
       <Suspense fallback={<Skeleton variant="rounded" height={200} />}>
         <SlowDataComponent />
       </Suspense>
@@ -348,10 +417,110 @@ export default function VedtakForm() {
   return (
     <form action={action}>
       <TextField name="tittel" label="Tittel" error={state?.error} />
-      <Button type="submit" loading={isPending}>Opprett</Button>
+      <Button type="submit" loading={isPending}>
+        Opprett
+      </Button>
     </form>
   );
 }
+```
+
+## When Using React Query (Server State)
+
+React Query (@tanstack/react-query) is the standard for server state management at Nav, replacing Redux/Context for API data.
+
+```tsx
+"use client";
+
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+export function ResourceList() {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["resources"],
+    queryFn: () => fetch("/api/resources").then((res) => res.json()),
+  });
+
+  if (isLoading) return <Loader title="Laster..." />;
+  if (error) return <Alert variant="error">Kunne ikke laste data</Alert>;
+
+  return (
+    <VStack gap="space-4">
+      {data.map((resource) => (
+        <ResourceCard key={resource.id} resource={resource} />
+      ))}
+    </VStack>
+  );
+}
+```
+
+```tsx
+// ✅ Mutation with cache invalidation
+const queryClient = useQueryClient();
+const mutation = useMutation({
+  mutationFn: (data: CreateRequest) =>
+    fetch("/api/resources", { method: "POST", body: JSON.stringify(data) }),
+  onSuccess: () => queryClient.invalidateQueries({ queryKey: ["resources"] }),
+});
+```
+
+Do not introduce React Query into projects that don't already use it — Server Components with `fetch` may be sufficient.
+
+## When Using React Hook Form (Form State)
+
+React Hook Form is preferred for complex forms with validation.
+
+```tsx
+"use client";
+
+import { useForm } from "react-hook-form";
+import { TextField, Button, VStack } from "@navikt/ds-react";
+
+interface FormData {
+  name: string;
+  email: string;
+}
+
+export function RegistrationForm() {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormData>();
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <VStack gap="space-4">
+        <TextField
+          label="Navn"
+          {...register("name", { required: "Navn er påkrevd" })}
+          error={errors.name?.message}
+        />
+        <TextField
+          label="E-post"
+          type="email"
+          {...register("email", { required: "E-post er påkrevd" })}
+          error={errors.email?.message}
+        />
+        <Button type="submit">Registrer</Button>
+      </VStack>
+    </form>
+  );
+}
+```
+
+For simple forms, Server Actions with `useActionState` (shown above) may be simpler.
+
+## Package Manager
+
+**pnpm** is the standard package manager for new Nav frontend projects.
+
+```bash
+# ✅ Use pnpm
+pnpm install
+pnpm add @navikt/ds-react
+pnpm test
+
+# Lock file: pnpm-lock.yaml (commit this)
 ```
 
 ## Boundaries
@@ -363,6 +532,7 @@ export default function VedtakForm() {
 - Mobile-first responsive design
 - Norwegian number formatting
 - Explicit error handling in API routes
+- pnpm for new projects
 
 ### ⚠️ Ask First
 
@@ -370,6 +540,7 @@ export default function VedtakForm() {
 - Deviating from Aksel patterns
 - Changing authentication flow
 - Modifying data aggregation logic
+- Introducing React Query or React Hook Form into existing projects
 
 ### 🚫 Never
 
@@ -378,3 +549,13 @@ export default function VedtakForm() {
 - Ignore accessibility requirements
 - Skip responsive props
 - Add code comments unless explicitly requested
+
+## Related
+
+| Resource                   | Use For                                                   |
+| -------------------------- | --------------------------------------------------------- |
+| `@aksel-agent`             | Aksel Design System component patterns and spacing tokens |
+| `@accessibility-agent`     | WCAG 2.1/2.2 compliance and accessibility testing         |
+| `performance` instruction  | Core Web Vitals and bundle optimization                   |
+| `aksel-spacing` skill      | Responsive spacing token reference                        |
+| `playwright-testing` skill | E2E testing with Playwright and axe-core                  |
