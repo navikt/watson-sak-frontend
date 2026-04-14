@@ -104,22 +104,14 @@ function ValgbarFilTre({
 
           return (
             <li key={node.id}>
-              <label
-                className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-ax-bg-neutral-moderate-hover transition-colors"
+              <Checkbox
+                checked={alleValgt}
+                indeterminate={noenValgt}
+                onChange={() => onToggleMappe(node.barn)}
                 style={{ paddingLeft: `${nivå * 1.5 + 0.5}rem` }}
               >
-                <input
-                  type="checkbox"
-                  className="navds-checkbox__input w-5 h-5 shrink-0"
-                  checked={alleValgt}
-                  ref={(el) => {
-                    if (el) el.indeterminate = noenValgt;
-                  }}
-                  onChange={() => onToggleMappe(node.barn)}
-                  aria-label={`Velg alle filer i ${node.navn}`}
-                />
-                <span className="font-semibold text-sm">{node.navn}</span>
-              </label>
+                {node.navn}
+              </Checkbox>
               <ValgbarFilTre
                 noder={node.barn}
                 valgteIder={valgteIder}
@@ -133,19 +125,13 @@ function ValgbarFilTre({
 
         return (
           <li key={node.id}>
-            <label
-              className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-ax-bg-neutral-moderate-hover transition-colors"
+            <Checkbox
+              checked={valgteIder.has(node.id)}
+              onChange={() => onToggleFil(node.id)}
               style={{ paddingLeft: `${nivå * 1.5 + 1.5}rem` }}
             >
-              <input
-                type="checkbox"
-                className="navds-checkbox__input w-5 h-5 shrink-0"
-                checked={valgteIder.has(node.id)}
-                onChange={() => onToggleFil(node.id)}
-                aria-label={`Velg ${node.navn}`}
-              />
-              <span className="text-sm">{node.navn}</span>
-            </label>
+              {node.navn}
+            </Checkbox>
           </li>
         );
       })}
@@ -290,39 +276,28 @@ function GjennomgåLogg({
           Ingen logginnslag for denne saken.
         </BodyShort>
       ) : (
-        <VStack gap="space-2">
-          <label className="flex cursor-pointer items-center gap-2 px-2 py-1.5 rounded-md hover:bg-ax-bg-neutral-moderate-hover transition-colors border-b border-ax-border-neutral pb-3 mb-1">
-            <input
-              type="checkbox"
-              className="navds-checkbox__input"
-              checked={alleValgt}
-              ref={(el) => {
-                if (el) el.indeterminate = noenValgt;
-              }}
-              onChange={onToggleAlle}
-              aria-label="Velg alle logginnslag"
-            />
-            <span className="font-semibold text-sm">Velg alle</span>
-          </label>
+        <VStack gap="space-1">
+          <Checkbox
+            checked={alleValgt}
+            indeterminate={noenValgt}
+            onChange={onToggleAlle}
+            className="border-b border-ax-border-neutral pb-3"
+          >
+            <span className="font-semibold">Velg alle</span>
+          </Checkbox>
           {historikk.map((hendelse) => (
-            <label
+            <Checkbox
               key={hendelse.hendelseId}
-              className="flex cursor-pointer items-start gap-2 px-2 py-1.5 rounded-md hover:bg-ax-bg-neutral-moderate-hover transition-colors"
+              checked={valgteHendelseIder.has(hendelse.hendelseId)}
+              onChange={() => onToggleHendelse(hendelse.hendelseId)}
             >
-              <input
-                type="checkbox"
-                className="navds-checkbox__input mt-0.5"
-                checked={valgteHendelseIder.has(hendelse.hendelseId)}
-                onChange={() => onToggleHendelse(hendelse.hendelseId)}
-                aria-label={`Inkluder: ${hendelseTittel(hendelse)}`}
-              />
               <VStack gap="space-0">
                 <span className="text-sm font-medium">{hendelseTittel(hendelse)}</span>
                 <span className="text-xs text-ax-text-neutral-subtle">
                   {formaterTidspunkt(hendelse.tidspunkt)}
                 </span>
               </VStack>
-            </label>
+            </Checkbox>
           ))}
         </VStack>
       )}
