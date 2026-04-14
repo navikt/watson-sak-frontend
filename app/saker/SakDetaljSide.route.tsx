@@ -307,6 +307,16 @@ export async function action({ request, params }: Route.ActionArgs) {
       leggTilHendelse(sak, "YTELSE_STANSET");
       break;
     }
+    case "sett_i_bero": {
+      sak.status = "I_BERO";
+      leggTilHendelse(sak, "SAK_SATT_I_BERO");
+      break;
+    }
+    case "gjenoppta": {
+      sak.status = "UTREDES";
+      leggTilHendelse(sak, "SAK_GJENOPPTATT");
+      break;
+    }
     default: {
       throw data("Ugyldig handling", { status: 400 });
     }

@@ -5,6 +5,7 @@ const kontrollsakStatusSchema = z.enum([
   "OPPRETTET",
   "AVKLART",
   "UTREDES",
+  "I_BERO",
   "TIL_FORVALTNING",
   "HENLAGT",
   "AVSLUTTET",

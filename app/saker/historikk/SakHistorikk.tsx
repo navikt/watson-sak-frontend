@@ -1,6 +1,8 @@
 import {
   CheckmarkCircleIcon,
   ArrowRightIcon,
+  ArrowUndoIcon,
+  ClockDashedIcon,
   ClockIcon,
   GavelIcon,
   PaperplaneIcon,
@@ -56,6 +58,10 @@ function hendelseTittel(hendelse: SakHendelse): string {
       return "Tilgang delt";
     case "YTELSE_STANSET":
       return "Ytelse stanset";
+    case "SAK_SATT_I_BERO":
+      return "Sak satt i bero";
+    case "SAK_GJENOPPTATT":
+      return "Sak gjenopptatt";
     default:
       return hendelse.hendelsesType;
   }
@@ -101,6 +107,10 @@ function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
       return <PersonGroupIcon {...iconProps} />;
     case "YTELSE_STANSET":
       return <XMarkOctagonIcon {...iconProps} />;
+    case "SAK_SATT_I_BERO":
+      return <ClockDashedIcon {...iconProps} />;
+    case "SAK_GJENOPPTATT":
+      return <ArrowUndoIcon {...iconProps} />;
     default:
       return <ClockIcon {...iconProps} />;
   }
