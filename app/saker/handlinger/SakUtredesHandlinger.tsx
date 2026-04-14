@@ -6,25 +6,32 @@ import {
   PersonGroupIcon,
   XMarkOctagonIcon,
 } from "@navikt/aksel-icons";
-import { Button, Heading, VStack } from "@navikt/ds-react";
+import { Button, Detail, Heading, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import { useFetcher } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
+import type { SakHendelse } from "~/saker/historikk/typer";
 import type { KontrollsakResponse } from "~/saker/types.backend";
+import { formaterDato } from "~/utils/date-utils";
 import { DelTilgangModal } from "./DelTilgangModal";
+import { OpprettAnmeldelseModal } from "./OpprettAnmeldelseModal";
 import { StansYtelseModal } from "./StansYtelseModal";
 
 interface SakUtredesHandlingerProps {
   sak: KontrollsakResponse;
   saksbehandlere: string[];
+  historikk: SakHendelse[];
 }
 
-type ÅpenModal = "del-tilgang" | "stans-ytelse" | null;
+type ÅpenModal = "del-tilgang" | "stans-ytelse" | "opprett-anmeldelse" | null;
 
-export function SakUtredesHandlinger({ sak, saksbehandlere }: SakUtredesHandlingerProps) {
+export function SakUtredesHandlinger({ sak, saksbehandlere, historikk }: SakUtredesHandlingerProps) {
   const [åpenModal, setÅpenModal] = useState<ÅpenModal>(null);
   const beroFetcher = useFetcher();
+
+  const sisteAnmeldelse = historikk.find((h) => h.hendelsesType === "POLITIANMELDT");
+  const erAlleredeAnmeldt = sisteAnmeldelse !== undefined;
 
   function handleSettIBero() {
     beroFetcher.submit(
@@ -70,9 +77,23 @@ export function SakUtredesHandlinger({ sak, saksbehandlere }: SakUtredesHandling
         >
           Sett i bero
         </Button>
-        <Button variant="tertiary" size="small" icon={<GavelSoundBlockIcon aria-hidden />}>
-          Opprett anmeldelse
-        </Button>
+        <VStack gap="space-1">
+          <Button
+            variant="tertiary"
+            size="small"
+            icon={<GavelSoundBlockIcon aria-hidden />}
+            onClick={() => setÅpenModal("opprett-anmeldelse")}
+            disabled={erAlleredeAnmeldt}
+            aria-describedby={erAlleredeAnmeldt ? "anmeldelse-registrert-info" : undefined}
+          >
+            Opprett anmeldelse
+          </Button>
+          {erAlleredeAnmeldt && sisteAnmeldelse && (
+            <Detail id="anmeldelse-registrert-info" className="pl-8 text-ax-text-neutral-subtle">
+              Registrert {formaterDato(sisteAnmeldelse.tidspunkt)}
+            </Detail>
+          )}
+        </VStack>
         <Button variant="tertiary" size="small" icon={<ArrowUndoIcon aria-hidden />}>
           Legg tilbake i ufordelt
         </Button>
@@ -87,6 +108,11 @@ export function SakUtredesHandlinger({ sak, saksbehandlere }: SakUtredesHandling
       <StansYtelseModal
         sakId={sak.id}
         åpen={åpenModal === "stans-ytelse"}
+        onClose={() => setÅpenModal(null)}
+      />
+      <OpprettAnmeldelseModal
+        sakId={sak.id}
+        åpen={åpenModal === "opprett-anmeldelse"}
         onClose={() => setÅpenModal(null)}
       />
     </>

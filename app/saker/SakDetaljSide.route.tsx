@@ -312,6 +312,10 @@ export async function action({ request, params }: Route.ActionArgs) {
       leggTilHendelse(sak, "SAK_SATT_I_BERO");
       break;
     }
+    case "loggfør_anmeldelse": {
+      leggTilHendelse(sak, "POLITIANMELDT");
+      break;
+    }
     case "gjenoppta": {
       sak.status = "UTREDES";
       leggTilHendelse(sak, "SAK_GJENOPPTATT");
@@ -774,6 +778,7 @@ export default function SakDetaljSide() {
                 sak={sak}
                 saksbehandlere={saksbehandlere}
                 seksjoner={seksjoner}
+                historikk={historikk}
               />
 
               {kontaktinformasjon && (

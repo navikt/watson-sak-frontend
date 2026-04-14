@@ -54,6 +54,7 @@ describe("SakHandlingerKnapper", () => {
         sak={lagKontrollsak({ status: "OPPRETTET" })}
         saksbehandlere={["Kari Nordmann"]}
         seksjoner={["4812", "4813"]}
+        historikk={[]}
       />,
     );
 
@@ -70,6 +71,7 @@ describe("SakHandlingerKnapper", () => {
         sak={lagKontrollsak({ status: "UTREDES" })}
         saksbehandlere={["Kari Nordmann"]}
         seksjoner={["4812", "4813"]}
+        historikk={[]}
       />,
     );
 
@@ -90,6 +92,7 @@ describe("SakHandlingerKnapper", () => {
         sak={lagKontrollsak({ status: "AVSLUTTET" })}
         saksbehandlere={["Kari Nordmann"]}
         seksjoner={["4812", "4813"]}
+        historikk={[]}
       />,
     );
 
