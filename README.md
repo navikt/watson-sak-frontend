@@ -89,6 +89,10 @@ Prosjektet bruker:
 
 TODO
 
+## Mockdata
+
+- Opprett sak bruker søkbar person-mockdata fra [`app/testing/mock-store/person-oppslag.server.ts`](app/testing/mock-store/person-oppslag.server.ts).
+
 </details>
 
 <details>
