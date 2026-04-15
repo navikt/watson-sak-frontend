@@ -18,11 +18,11 @@ import {
   getAlder,
   getBelop,
   getKategoriText,
+  getMerkinger,
   getMisbrukstyper,
   getNavn,
   getPeriodeText,
   getStatusVariantForSak,
-  getTags,
 } from "~/saker/selectors";
 import {
   formaterBelop,
@@ -64,7 +64,7 @@ function SakKort({ sak }: SakKortProps) {
   const misbrukstyper = getMisbrukstyper(sak);
   const belop = getBelop(sak);
   const ytelseTyper = getYtelseTyper(sak);
-  const tags = getTags(sak);
+  const merkinger = getMerkinger(sak);
   const kildeTekst = getKildeText(sak);
   const opprettetAv = sak.saksbehandlere.opprettetAv.navn ?? sak.saksbehandlere.opprettetAv.navIdent;
 
@@ -143,15 +143,15 @@ function SakKort({ sak }: SakKortProps) {
                   </VStack>
                 )}
 
-                {tags.length > 0 && (
+                {merkinger.length > 0 && (
                   <VStack gap="space-4">
                     <Detail className="text-ax-text-neutral-subtle" uppercase>
                       Merking
                     </Detail>
                     <HStack gap="space-4" wrap>
-                      {tags.map((tag) => (
-                        <Tag key={tag} variant="neutral" size="small">
-                          {tag}
+                      {merkinger.map((merking) => (
+                        <Tag key={merking} variant="neutral" size="small">
+                          {merking}
                         </Tag>
                       ))}
                     </HStack>

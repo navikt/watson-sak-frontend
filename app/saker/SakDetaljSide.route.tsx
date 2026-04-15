@@ -57,11 +57,11 @@ import {
   getAlder,
   getBelop,
   getKategoriText,
+  getMerkinger,
   getMisbrukstyper,
   getNavn,
   getPeriodeText,
   getStatusVariantForSak,
-  getTags,
 } from "./selectors";
 import {
   formaterBelop,
@@ -426,7 +426,7 @@ export default function SakDetaljSide() {
   const misbrukstyper = getMisbrukstyper(sak);
   const belop = getBelop(sak);
   const periodeText = getPeriodeText(sak);
-  const tags = getTags(sak);
+  const merkinger = getMerkinger(sak);
   const [redigerer, setRedigerer] = useState(false);
   const [redigeringsøkt, setRedigeringsøkt] = useState(0);
   const [visFeil, setVisFeil] = useState(false);
@@ -719,15 +719,15 @@ export default function SakDetaljSide() {
                             </VStack>
                           )}
 
-                          {tags.length > 0 && (
+                          {merkinger.length > 0 && (
                             <VStack gap="space-1">
                               <Detail className="text-ax-text-neutral-subtle" uppercase>
                                 Merking
                               </Detail>
                               <HStack gap="space-2" wrap>
-                                {tags.map((tag) => (
-                                  <Tag key={tag} variant="neutral" size="small">
-                                    {merkingEtiketter[tag as keyof typeof merkingEtiketter] ?? tag}
+                                {merkinger.map((merking) => (
+                                  <Tag key={merking} variant="neutral" size="small">
+                                    {merkingEtiketter[merking as keyof typeof merkingEtiketter] ?? merking}
                                   </Tag>
                                 ))}
                               </HStack>

@@ -89,7 +89,7 @@ export function getYtelseTyper(sak: KontrollsakResponse): string[] {
   return hentYtelseTyper(sak.ytelser);
 }
 
-export function getBeskrivelse(sak: KontrollsakResponse): string | null {
+export function getUtredningsresultat(sak: KontrollsakResponse): string | null {
   return sak.resultat?.utredning?.resultat ?? null;
 }
 

@@ -41,7 +41,7 @@ export function getStatusVariantForSak(sak: KontrollsakResponse) {
   return hentKontrollsakStatusVariant(sak.status);
 }
 
-export function getSaksenhet(sak: KontrollsakResponse): string {
+export function getOpprettetAv(sak: KontrollsakResponse): string {
   return sak.saksbehandlere.opprettetAv.navn ?? sak.saksbehandlere.opprettetAv.navIdent;
 }
 
@@ -49,7 +49,7 @@ export function getAvdeling(_sak: KontrollsakResponse): string | null {
   return null;
 }
 
-export function getTags(sak: KontrollsakResponse): string[] {
+export function getMerkinger(sak: KontrollsakResponse): string[] {
   return sak.merking ? [sak.merking] : [];
 }
 
@@ -75,7 +75,7 @@ export function getBelop(sak: KontrollsakResponse): number | null {
   }, null);
 }
 
-export function getResultat(sak: KontrollsakResponse) {
+export function getResultatstruktur(sak: KontrollsakResponse) {
   return sak.resultat;
 }
 
