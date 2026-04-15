@@ -54,4 +54,46 @@ describe("SakHistorikk", () => {
     expect(screen.getByText("Avklaring opprettet")).toBeDefined();
     expect(screen.getByText(/Avklaringsresultat: HENLAGT/)).toBeDefined();
   });
+
+  it("renderer historikk for endret ansvarlig saksbehandler", () => {
+    renderMedRouter(
+      <SakHistorikk
+        sakId="test-sak-id"
+        hendelser={[
+          lagBackendHendelse({
+            hendelsesType: "ANSVARLIG_SAKSBEHANDLER_ENDRET",
+            berortSaksbehandlerNavn: "Kari Nordmann",
+            berortSaksbehandlerNavIdent: "Z123456",
+            berortSaksbehandlerEnhet: "Seksjon A",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Ansvarlig saksbehandler endret")).toBeDefined();
+    expect(
+      screen.getByText(/Ansvarlig saksbehandler: Kari Nordmann \(Z123456\) · Seksjon A/),
+    ).toBeDefined();
+  });
+
+  it("renderer historikk for fjernet deling", () => {
+    renderMedRouter(
+      <SakHistorikk
+        sakId="test-sak-id"
+        hendelser={[
+          lagBackendHendelse({
+            hendelsesType: "TILGANG_FJERNET",
+            berortSaksbehandlerNavn: "Ada Larsen",
+            berortSaksbehandlerNavIdent: "Z234567",
+            berortSaksbehandlerEnhet: "Seksjon B",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Tilgang fjernet")).toBeDefined();
+    expect(
+      screen.getByText(/Fjernet deling med: Ada Larsen \(Z234567\) · Seksjon B/),
+    ).toBeDefined();
+  });
 });

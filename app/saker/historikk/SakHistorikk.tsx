@@ -59,6 +59,10 @@ function hendelseTittel(hendelse: SakHendelse): string {
       return "Sak henlagt";
     case "TILGANG_DELT":
       return "Tilgang delt";
+    case "TILGANG_FJERNET":
+      return "Tilgang fjernet";
+    case "ANSVARLIG_SAKSBEHANDLER_ENDRET":
+      return "Ansvarlig saksbehandler endret";
     case "YTELSE_STANSET":
       return "Ytelse stanset";
     case "SAK_SATT_I_BERO":
@@ -75,6 +79,33 @@ function hendelseTittel(hendelse: SakHendelse): string {
 function hendelseBeskrivelse(hendelse: SakHendelse): string | null {
   if (hendelse.hendelsesType === "MANUELL_NOTAT") {
     return hendelse.notat ?? null;
+  }
+
+  if (
+    hendelse.hendelsesType === "ANSVARLIG_SAKSBEHANDLER_ENDRET" &&
+    hendelse.berortSaksbehandlerNavn &&
+    hendelse.berortSaksbehandlerNavIdent &&
+    hendelse.berortSaksbehandlerEnhet
+  ) {
+    return `Ansvarlig saksbehandler: ${hendelse.berortSaksbehandlerNavn} (${hendelse.berortSaksbehandlerNavIdent}) · ${hendelse.berortSaksbehandlerEnhet}`;
+  }
+
+  if (
+    hendelse.hendelsesType === "TILGANG_DELT" &&
+    hendelse.berortSaksbehandlerNavn &&
+    hendelse.berortSaksbehandlerNavIdent &&
+    hendelse.berortSaksbehandlerEnhet
+  ) {
+    return `Delt med: ${hendelse.berortSaksbehandlerNavn} (${hendelse.berortSaksbehandlerNavIdent}) · ${hendelse.berortSaksbehandlerEnhet}`;
+  }
+
+  if (
+    hendelse.hendelsesType === "TILGANG_FJERNET" &&
+    hendelse.berortSaksbehandlerNavn &&
+    hendelse.berortSaksbehandlerNavIdent &&
+    hendelse.berortSaksbehandlerEnhet
+  ) {
+    return `Fjernet deling med: ${hendelse.berortSaksbehandlerNavn} (${hendelse.berortSaksbehandlerNavIdent}) · ${hendelse.berortSaksbehandlerEnhet}`;
   }
 
   const deler: string[] = [];
@@ -113,7 +144,10 @@ function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
     case "POLITIANMELDT":
       return <GavelIcon {...iconProps} />;
     case "TILGANG_DELT":
+    case "TILGANG_FJERNET":
       return <PersonGroupIcon {...iconProps} />;
+    case "ANSVARLIG_SAKSBEHANDLER_ENDRET":
+      return <PersonIcon {...iconProps} />;
     case "YTELSE_STANSET":
       return <XMarkOctagonIcon {...iconProps} />;
     case "SAK_SATT_I_BERO":
