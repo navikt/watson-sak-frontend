@@ -9,6 +9,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     id: lagMockSakUuid("1", 9),
     personIdent: "10987654321",
     saksbehandler: "Z123456",
+    saksbehandlere: { deltMed: [] },
     status: "UTREDES",
     kategori: "ARBEID",
     prioritet: "NORMAL",

@@ -13,6 +13,7 @@ function lagKontrollsak(
     id: lagMockSakUuid(idNum, 1),
     personIdent: "12345678901",
     saksbehandler: "Lise Raus",
+    saksbehandlere: { deltMed: [] },
     status: "UTREDES",
     kategori: "SAMLIV",
     prioritet: "NORMAL",

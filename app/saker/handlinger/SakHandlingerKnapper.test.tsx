@@ -18,6 +18,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     id: lagMockSakUuid("101", 9),
     personIdent: "10987654321",
     saksbehandler: "Z123456",
+    saksbehandlere: { deltMed: [] },
     status: "UTREDES",
     kategori: "ARBEID",
     prioritet: "NORMAL",
@@ -53,6 +54,7 @@ describe("SakHandlingerKnapper", () => {
       <SakHandlingerKnapper
         sak={lagKontrollsak({ status: "OPPRETTET" })}
         saksbehandlere={["Kari Nordmann"]}
+        saksbehandlerDetaljer={[]}
         seksjoner={["4812", "4813"]}
         historikk={[]}
         filer={[]}
@@ -71,6 +73,7 @@ describe("SakHandlingerKnapper", () => {
       <SakHandlingerKnapper
         sak={lagKontrollsak({ status: "UTREDES" })}
         saksbehandlere={["Kari Nordmann"]}
+        saksbehandlerDetaljer={[]}
         seksjoner={["4812", "4813"]}
         historikk={[]}
         filer={[]}
@@ -93,6 +96,7 @@ describe("SakHandlingerKnapper", () => {
       <SakHandlingerKnapper
         sak={lagKontrollsak({ status: "AVSLUTTET" })}
         saksbehandlere={["Kari Nordmann"]}
+        saksbehandlerDetaljer={[]}
         seksjoner={["4812", "4813"]}
         historikk={[]}
         filer={[]}
