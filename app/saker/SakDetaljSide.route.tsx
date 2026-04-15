@@ -92,6 +92,7 @@ type RedigerSaksinformasjonData = {
 
 type ActionResult = { ok: true } | { ok: false; feil: Feltfeil };
 const unsupportedRedigeringFeil = "Saken kan ikke redigeres med denne løsningen ennå.";
+const unsupportedKobleSakFeil = "Denne funksjonen er ikke tilgjengelig ennå.";
 
 const gyldigeStatuser = new Set<KontrollsakStatus>([
   "OPPRETTET",
@@ -309,7 +310,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       break;
     }
     case "koble_sak": {
-      throw data("Koble til saken er ikke tilgjengelig ennå", { status: 501 });
+      return { ok: false, feil: { skjema: [unsupportedKobleSakFeil] } } satisfies ActionResult;
     }
     case "del_tilgang": {
       leggTilHendelse(sak, "TILGANG_DELT");

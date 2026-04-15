@@ -42,9 +42,21 @@ function lagKontrollsak(
 }
 
 function renderMedRouter(ui: React.ReactNode) {
-  const router = createMemoryRouter([{ path: "/", element: ui }], {
-    initialEntries: ["/"],
-  });
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/",
+        element: ui,
+        action: async () => ({
+          ok: false as const,
+          feil: { skjema: ["Denne funksjonen er ikke tilgjengelig ennå."] },
+        }),
+      },
+    ],
+    {
+      initialEntries: ["/"],
+    },
+  );
   return render(<RouterProvider router={router} />);
 }
 
@@ -89,5 +101,21 @@ describe("SakerPåSammePerson", () => {
 
     expect(screen.getByRole("button", { name: "Koble til saken" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Skjul" })).toBeDefined();
+  });
+
+  it("viser lokal feilmelding når koble til saken ikke er tilgjengelig", async () => {
+    renderMedRouter(
+      <SakerPåSammePerson
+        saker={[lagKontrollsak("203")]}
+        gjeldendeSakId={lagMockSakUuid("105", 1)}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Vis detaljer" }));
+    fireEvent.click(screen.getByRole("button", { name: "Koble til saken" }));
+
+    expect(
+      await screen.findByText("Denne funksjonen er ikke tilgjengelig ennå."),
+    ).toBeDefined();
   });
 });
