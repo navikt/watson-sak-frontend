@@ -68,6 +68,16 @@ const kontrollsakForvaltningSchema = z.object({
   resultat: z.string(),
 });
 
+export const kontrollsakSaksbehandlerSchema = z.object({
+  navn: z.string(),
+  enhet: z.string(),
+  navIdent: z.string(),
+});
+
+const kontrollsakSaksbehandlereSchema = z.object({
+  deltMed: z.array(kontrollsakSaksbehandlerSchema),
+});
+
 const kontrollsakResultatSchema = z.object({
   avklaring: kontrollsakAvklaringSchema.nullable(),
   utredning: kontrollsakUtredningSchema.nullable(),
@@ -80,6 +90,7 @@ export const kontrollsakResponseSchema = z.object({
   navn: z.string().nullable().optional(),
   alder: z.number().int().nullable().optional(),
   saksbehandler: z.string(),
+  saksbehandlere: kontrollsakSaksbehandlereSchema.optional(),
   status: kontrollsakStatusSchema,
   kategori: kontrollsakKategoriSchema,
   prioritet: kontrollsakPrioritetSchema,
@@ -115,9 +126,13 @@ export const kontrollsakHendelseResponseSchema = z.object({
   kilde: kontrollsakKildeSchema.nullable(),
   avklaringResultat: z.string().nullable(),
   mottakEnhet: z.string(),
+  berortSaksbehandlerNavn: z.string().optional(),
+  berortSaksbehandlerNavIdent: z.string().optional(),
+  berortSaksbehandlerEnhet: z.string().optional(),
 });
 
 export type KontrollsakYtelse = z.infer<typeof kontrollsakYtelseSchema>;
+export type KontrollsakSaksbehandler = z.infer<typeof kontrollsakSaksbehandlerSchema>;
 export type KontrollsakResponse = z.infer<typeof kontrollsakResponseSchema>;
 export type KontrollsakPageResponse = z.infer<typeof kontrollsakPageResponseSchema>;
 export type KontrollsakStatus = z.infer<typeof kontrollsakStatusSchema>;
