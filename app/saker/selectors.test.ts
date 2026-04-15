@@ -5,15 +5,15 @@ import {
   getAvdeling,
   getBelop,
   getKategoriText,
+  getMerkinger,
   getMisbrukstyper,
   getNavn,
   getOppdatertDato,
+  getOpprettetAv,
   getOpprettetDato,
   getPeriodeText,
-  getResultat,
-  getSaksenhet,
+  getResultatstruktur,
   getStatusVariantForSak,
-  getTags,
 } from "./selectors";
 
 function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
@@ -72,7 +72,7 @@ describe("saker-selectors", () => {
     );
   });
 
-  it("bygger periodevisning fra backend-ytelser", () => {
+  it("bygger periodevisning fra ytelser", () => {
     expect(getPeriodeText(lagKontrollsak())).toBe("1. jan. 2026 – 31. jan. 2026");
   });
 
@@ -80,28 +80,28 @@ describe("saker-selectors", () => {
     expect(getPeriodeText(lagKontrollsak({ ytelser: [] }))).toBeNull();
   });
 
-  it("mapper backend-kategori og backend-statusvariant for kontrollsak", () => {
+  it("mapper kategori og statusvariant for kontrollsak", () => {
     const sak = lagKontrollsak();
 
     expect(getKategoriText(sak)).toBe("Feilutbetaling");
     expect(getStatusVariantForSak(sak)).toBe("warning");
   });
 
-  it("bruker opprettetAv som saksenhet og skjuler avdeling for kontrollsak", () => {
+  it("bruker opprettetAv og skjuler avdeling for kontrollsak", () => {
     const sak = lagKontrollsak();
 
-    expect(getSaksenhet(sak)).toBe("Oppretter Navn");
+    expect(getOpprettetAv(sak)).toBe("Oppretter Navn");
     expect(getAvdeling(sak)).toBeNull();
-    expect(getTags(sak)).toEqual([]);
+    expect(getMerkinger(sak)).toEqual([]);
   });
 
   it("returnerer merking fra sak når feltet er satt", () => {
     const sak = lagKontrollsak({ merking: "PRIORITERT" });
-    expect(getTags(sak)).toEqual(["PRIORITERT"]);
+    expect(getMerkinger(sak)).toEqual(["PRIORITERT"]);
   });
 
-  it("håndterer resultat null-sikkert for kontrollsak", () => {
-    expect(getResultat(lagKontrollsak())).toBeNull();
+  it("håndterer resultatstruktur null-sikkert for kontrollsak", () => {
+    expect(getResultatstruktur(lagKontrollsak())).toBeNull();
   });
 
   it("returnerer null for navn og alder når feltene mangler", () => {

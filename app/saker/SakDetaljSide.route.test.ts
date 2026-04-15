@@ -4,7 +4,7 @@ import { resetMockSaker } from "~/fordeling/mock-data.server";
 import { resetMockMineSaker } from "~/mine-saker/mock-data.server";
 import { getSaksreferanse } from "~/saker/id";
 import { lagMockSakUuid } from "~/saker/mock-uuid";
-import { getBeskrivelse, getKildeText, getPersonIdent, getYtelseTyper } from "~/saker/visning";
+import { getKildeText, getPersonIdent, getUtredningsresultat, getYtelseTyper } from "~/saker/visning";
 import type { Route } from "./+types/SakDetaljSide.route";
 import { hentHistorikk, resetHistorikk } from "./historikk/mock-data.server";
 import { hentAlleSaker } from "./mock-alle-saker.server";
@@ -58,7 +58,7 @@ describe("SakDetaljSide action", () => {
   });
 });
 
-describe("SakDetaljSide helper-integrasjon", () => {
+describe("SakDetaljSide helpere", () => {
   const fordelingSakId = lagMockSakUuid("101", 1);
 
   beforeEach(() => {
@@ -66,35 +66,35 @@ describe("SakDetaljSide helper-integrasjon", () => {
     resetMockMineSaker();
   });
 
-  it("leser personident, kilde, ytelser og beskrivelse via helpers for backend-shapede saker", () => {
+  it("leser personident, kilde, ytelser og utredningsresultat via helpere", () => {
     const sak = hentAlleSaker().find((sak) => sak.id === fordelingSakId);
 
     expect(sak).toBeDefined();
 
     if (!sak) {
-      throw new Error("Fant ikke forventet legacy-sak i testdata");
+      throw new Error("Fant ikke forventet sak i testdata");
     }
 
     expect(getPersonIdent(sak)).toBe("12345678901");
     expect(getKildeText(sak)).toBe("Ekstern");
     expect(getYtelseTyper(sak)).toEqual(["Enslig forsørger"]);
-    expect(getBeskrivelse(sak)).toBeNull();
+    expect(getUtredningsresultat(sak)).toBeNull();
   });
 
-  it("returnerer backend-shapede saker i samlet mockdatasett for øvrige flows", () => {
+  it("returnerer saker i samlet mockdatasett for øvrige flyter", () => {
     const sak = hentAlleSaker().find((eksisterendeSak) => eksisterendeSak.id === fordelingSakId);
 
     expect(sak).toBeDefined();
 
     if (!sak) {
-      throw new Error("Fant ikke forventet legacy-sak i testdata");
+      throw new Error("Fant ikke forventet sak i testdata");
     }
 
     expect("personIdent" in sak).toBe(true);
   });
 });
 
-describe("SakDetaljSide kontrollsak-runtime", () => {
+describe("SakDetaljSide kontrollsaker", () => {
   const mineSakId = lagMockSakUuid("201", 2);
   const mineSakRef = getSaksreferanse(mineSakId);
 
@@ -104,7 +104,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     resetHistorikk();
   });
 
-  it("loader returnerer backend-shapet kontrollsak når sakId peker på kontrollsak", () => {
+  it("loader returnerer kontrollsak når sakId peker på kontrollsak", () => {
     const kontrollsakId = mockKontrollsaker[0].id;
     const kontrollsakRef = getSaksreferanse(kontrollsakId);
 
@@ -117,7 +117,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(resultat.andreSaker.every((s) => s.id !== resultat.sak.id)).toBe(true);
   });
 
-  it("loader returnerer backend-shapet mine sak når sakId peker på backend-shaped mine saker", () => {
+  it("loader returnerer mine sak når sakId peker på en sak i mine saker", () => {
     const resultat = loader({ params: { sakId: mineSakRef } } as Route.LoaderArgs);
 
     expect(resultat.sak.id).toBe(mineSakId);
@@ -125,7 +125,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(Array.isArray(resultat.andreSaker)).toBe(true);
   });
 
-  it("beholder hentAlleSaker som backend-shaped aggregat", () => {
+  it("beholder hentAlleSaker som aggregat over saker", () => {
     const saker = hentAlleSaker();
 
     expect(saker.length).toBeGreaterThan(0);

@@ -5,11 +5,11 @@ import {
   formaterKategori,
   formaterPeriodeForYtelser,
   formaterStatus,
-  getBeskrivelse,
   getKildeText,
   getKontaktinformasjon,
   getPersonIdent,
   getStatus,
+  getUtredningsresultat,
   getYtelseTyper,
   hentStatusVariant,
 } from "./visning";
@@ -52,7 +52,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
 }
 
 describe("sak-visning", () => {
-  it("formaterer backend-status til visningstekst", () => {
+  it("formaterer status til visningstekst", () => {
     expect(formaterStatus("UTREDES")).toBe("Utredes");
   });
 
@@ -66,11 +66,11 @@ describe("sak-visning", () => {
     expect(formaterBelop(1234567)).toBe("1\u00a0234\u00a0567");
   });
 
-  it("maper backend-status til riktig tag-variant", () => {
+  it("maper status til riktig tag-variant", () => {
     expect(hentStatusVariant("FORVALTNING")).toBe("success");
   });
 
-  it("formaterer backend-kategori til visningstekst", () => {
+  it("formaterer kategori til visningstekst", () => {
     expect(formaterKategori("FEILUTBETALING")).toBe("Feilutbetaling");
   });
 
@@ -100,8 +100,8 @@ describe("sak-visning", () => {
     expect(getYtelseTyper(lagKontrollsak())).toEqual(["Sykepenger"]);
   });
 
-  it("returnerer ikke beskrivelse når backend ikke lenger sender feltet", () => {
-    expect(getBeskrivelse(lagKontrollsak())).toBeNull();
+  it("returnerer ikke utredningsresultat når saken mangler utredning", () => {
+    expect(getUtredningsresultat(lagKontrollsak())).toBeNull();
   });
 
   it("henter formaterbar kilde fra kontrollsak", () => {
