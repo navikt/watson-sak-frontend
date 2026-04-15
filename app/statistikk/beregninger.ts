@@ -13,8 +13,8 @@ function getOpprettet(sak: Statistikksak): string {
   return sak.opprettet;
 }
 
-function getMottakEnhet(sak: Statistikksak): string {
-  return sak.mottakEnhet;
+function getSeksjonNavn(sak: Statistikksak): string {
+  return sak.saksbehandlere.opprettetAv.navn ?? sak.saksbehandlere.opprettetAv.navIdent;
 }
 
 function getYtelseTyper(sak: Statistikksak): string[] {
@@ -24,13 +24,11 @@ function getYtelseTyper(sak: Statistikksak): string[] {
 /** Antall saker gruppert etter status */
 export function beregnAntallPerStatus(saker: Statistikksak[]): Record<StatistikkStatus, number> {
   const resultat: Record<StatistikkStatus, number> = {
-    OPPRETTET: 0,
-    AVKLART: 0,
+    UFORDELT: 0,
     UTREDES: 0,
+    FORVALTNING: 0,
     I_BERO: 0,
-    TIL_FORVALTNING: 0,
     AVSLUTTET: 0,
-    HENLAGT: 0,
   };
 
   for (const sak of saker) {
@@ -63,7 +61,7 @@ export function beregnBehandlingstid(
   avslutningsdatoer: Avslutningsdatoer,
 ): BehandlingstidResultat | null {
   const behandlingstider = saker
-    .filter((s) => getStatus(s) === "AVSLUTTET" || getStatus(s) === "HENLAGT")
+    .filter((s) => getStatus(s) === "AVSLUTTET")
     .filter((s) => avslutningsdatoer[s.id] !== undefined)
     .map((s) => dagerMellom(getOpprettet(s), avslutningsdatoer[s.id]));
 
@@ -96,8 +94,8 @@ export function beregnAntallPerSeksjon(saker: Statistikksak[]): GruppertAntall[]
   const map = new Map<string, number>();
 
   for (const sak of saker) {
-    const mottakEnhet = getMottakEnhet(sak);
-    map.set(mottakEnhet, (map.get(mottakEnhet) ?? 0) + 1);
+    const seksjonNavn = getSeksjonNavn(sak);
+    map.set(seksjonNavn, (map.get(seksjonNavn) ?? 0) + 1);
   }
 
   return [...map.entries()]

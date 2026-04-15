@@ -6,7 +6,7 @@ const gyldigSkjema = {
   ytelser: ["Dagpenger"],
   fraDato: "2026-01-01",
   tilDato: "2026-12-31",
-  kategori: "DOKUMENTFALSK",
+  kategori: "UDEFINERT",
   kilde: "INTERN",
   enhet: "ØST",
 };
@@ -44,8 +44,8 @@ describe("opprettSakSchema", () => {
     expect(resultat.success).toBe(false);
   });
 
-  it("godtar INTERN, EKSTERN, ANONYM_TIPS og PUBLIKUM som kilde", () => {
-    for (const kilde of ["INTERN", "EKSTERN", "ANONYM_TIPS", "PUBLIKUM"]) {
+  it("godtar INTERN, EKSTERN og ANONYM_TIPS som kilde", () => {
+    for (const kilde of ["INTERN", "EKSTERN", "ANONYM_TIPS"]) {
       const resultat = opprettSakSchema.safeParse({ ...gyldigSkjema, kilde });
       expect(resultat.success).toBe(true);
     }
@@ -60,23 +60,11 @@ describe("opprettSakSchema", () => {
   });
 
   it("godtar alle gyldige kategorier", () => {
-    for (const kategori of [
-      "BEHANDLER",
-      "ARBEID",
-      "SAMLIV",
-      "UTLAND",
-      "IDENTITET",
-      "TILTAK",
-      "DOKUMENTFALSK",
-      "ANNET",
-    ]) {
+    for (const kategori of ["UDEFINERT", "FEILUTBETALING", "MISBRUK", "OPPFOLGING"]) {
       const misbrukstypeForKategori: Record<string, string> = {
-        BEHANDLER: "Behandler §25-7",
-        ARBEID: "Hvit inntekt",
-        SAMLIV: "Skjult samliv",
-        UTLAND: "Innenfor EØS",
-        IDENTITET: "Identitetsmisbruk",
-        TILTAK: "Misbruk av tiltaksplass",
+        FEILUTBETALING: "Hvit inntekt",
+        MISBRUK: "Skjult samliv",
+        OPPFOLGING: "Misbruk av tiltaksplass",
       };
       const resultat = opprettSakSchema.safeParse({
         ...gyldigSkjema,
@@ -90,7 +78,7 @@ describe("opprettSakSchema", () => {
   it("krever misbruktype når kategori har tilknyttede misbrukstyper", () => {
     const resultat = opprettSakSchema.safeParse({
       ...gyldigSkjema,
-      kategori: "SAMLIV",
+      kategori: "MISBRUK",
       misbruktype: undefined,
     });
     expect(resultat.success).toBe(false);
@@ -103,17 +91,17 @@ describe("opprettSakSchema", () => {
   it("avviser misbruktype som ikke tilhører valgt kategori", () => {
     const resultat = opprettSakSchema.safeParse({
       ...gyldigSkjema,
-      kategori: "SAMLIV",
+      kategori: "OPPFOLGING",
       misbruktype: "Svart arbeid",
     });
 
     expect(resultat.success).toBe(false);
   });
 
-  it("godtar skjema uten misbruktype for DOKUMENTFALSK", () => {
+  it("godtar skjema uten misbruktype for UDEFINERT", () => {
     const resultat = opprettSakSchema.safeParse({
       ...gyldigSkjema,
-      kategori: "DOKUMENTFALSK",
+      kategori: "UDEFINERT",
     });
     expect(resultat.success).toBe(true);
   });

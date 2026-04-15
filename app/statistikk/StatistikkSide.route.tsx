@@ -1,11 +1,6 @@
 import { BodyShort, Heading, HGrid, Page, VStack } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
-import {
-  BarChartIcon,
-  CheckmarkCircleIcon,
-  HourglassIcon,
-  XMarkOctagonIcon,
-} from "@navikt/aksel-icons";
+import { BarChartIcon, CheckmarkCircleIcon, FilesIcon, HourglassIcon } from "@navikt/aksel-icons";
 import { useLoaderData } from "react-router";
 import { formaterStatus, type KontrollsakStatus } from "~/saker/visning";
 import {
@@ -79,9 +74,9 @@ export default function StatistikkSide() {
                 ikon={<CheckmarkCircleIcon aria-hidden fontSize="1.5rem" />}
               />
               <Nokkeltallkort
-                tittel="Henlagt"
-                verdi={antallPerStatus.HENLAGT}
-                ikon={<XMarkOctagonIcon aria-hidden fontSize="1.5rem" />}
+                tittel="Ufordelt"
+                verdi={antallPerStatus.UFORDELT}
+                ikon={<FilesIcon aria-hidden fontSize="1.5rem" />}
               />
             </HGrid>
           </section>

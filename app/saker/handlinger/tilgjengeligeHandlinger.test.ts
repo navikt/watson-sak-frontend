@@ -121,23 +121,23 @@ describe("kanPolitianmeldes", () => {
 });
 
 describe("Kontrollsak-statusregler", () => {
-  it("behandler OPPRETTET som aktiv sak", () => {
-    expect(erAktivSakKontrollsak("OPPRETTET")).toBe(true);
+  it("behandler UFORDELT som aktiv sak", () => {
+    expect(erAktivSakKontrollsak("UFORDELT")).toBe(true);
   });
 
   it("behandler AVSLUTTET som inaktiv sak", () => {
     expect(erAktivSakKontrollsak("AVSLUTTET")).toBe(false);
   });
 
-  it("finner neste status for OPPRETTET", () => {
-    expect(hentNesteStatusKontrollsak("OPPRETTET")).toBe("AVKLART");
+  it("finner neste status for UFORDELT", () => {
+    expect(hentNesteStatusKontrollsak("UFORDELT")).toBe("UTREDES");
   });
 
-  it("finner neste status for AVKLART", () => {
-    expect(hentNesteStatusKontrollsak("AVKLART")).toBe("UTREDES");
+  it("returnerer null for FORVALTNING", () => {
+    expect(hentNesteStatusKontrollsak("FORVALTNING")).toBeNull();
   });
 
-  it("returnerer null for HENLAGT", () => {
-    expect(hentNesteStatusKontrollsak("HENLAGT")).toBeNull();
+  it("returnerer null for AVSLUTTET", () => {
+    expect(hentNesteStatusKontrollsak("AVSLUTTET")).toBeNull();
   });
 });

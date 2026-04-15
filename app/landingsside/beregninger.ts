@@ -37,7 +37,7 @@ function erInnenforSiste14Dager(dato: string, referansedato: string) {
 export function beregnDineSakerSiste14Dager({
   saker,
   avslutningsdatoer,
-  tidligereTipsSakIder,
+  tidligereTipsSakIder: _tidligereTipsSakIder,
   referansedato,
 }: BeregnDineSakerSiste14DagerArgs): DineSakerSiste14DagerStatistikk {
   const sakerSiste14Dager = saker.filter((sak) =>
@@ -48,13 +48,11 @@ export function beregnDineSakerSiste14Dager({
 
   return {
     antallSakerJobbetMed: sakerSiste14Dager.length,
-    antallTipsAvklart: sakerSiste14Dager.filter((sak) => getStatus(sak) === "AVKLART").length,
-    antallSendtTilNayNfp: sakerSiste14Dager.filter((sak) => getStatus(sak) === "TIL_FORVALTNING")
+    antallTipsAvklart: sakerSiste14Dager.filter((sak) => getStatus(sak) === "UFORDELT").length,
+    antallSendtTilNayNfp: sakerSiste14Dager.filter((sak) => getStatus(sak) === "FORVALTNING")
       .length,
     snittBehandlingstidPerSak: behandlingstid?.gjennomsnitt ?? null,
-    antallHenlagteSaker: sakerSiste14Dager.filter((sak) => getStatus(sak) === "HENLAGT").length,
-    antallHenlagteTips: sakerSiste14Dager.filter(
-      (sak) => getStatus(sak) === "HENLAGT" && tidligereTipsSakIder.includes(sak.id),
-    ).length,
+    antallHenlagteSaker: 0,
+    antallHenlagteTips: 0,
   };
 }

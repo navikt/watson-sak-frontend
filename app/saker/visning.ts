@@ -12,22 +12,18 @@ export type { KontrollsakStatus };
 type StatusVariant = "info" | "warning" | "success" | "neutral";
 
 const statusEtiketter: Record<KontrollsakStatus, string> = {
-  OPPRETTET: "Ufordelt",
-  AVKLART: "Avklart",
+  UFORDELT: "Ufordelt",
   UTREDES: "Utredes",
+  FORVALTNING: "Forvaltning",
   I_BERO: "I bero",
-  TIL_FORVALTNING: "Til forvaltning",
-  HENLAGT: "Henlagt",
   AVSLUTTET: "Avsluttet",
 };
 
 const statusVarianter: Record<KontrollsakStatus, StatusVariant> = {
-  OPPRETTET: "info",
-  AVKLART: "warning",
+  UFORDELT: "info",
   UTREDES: "warning",
+  FORVALTNING: "success",
   I_BERO: "neutral",
-  TIL_FORVALTNING: "success",
-  HENLAGT: "neutral",
   AVSLUTTET: "neutral",
 };
 
@@ -35,7 +31,6 @@ const kildeEtiketter: Record<KontrollsakKilde, string> = {
   INTERN: "Intern",
   EKSTERN: "Ekstern",
   ANONYM_TIPS: "Anonymt tips",
-  PUBLIKUM: "Publikum",
 };
 
 export function formaterStatus(status: KontrollsakStatus): string {
@@ -95,26 +90,15 @@ export function getYtelseTyper(sak: KontrollsakResponse): string[] {
 }
 
 export function getBeskrivelse(sak: KontrollsakResponse): string | null {
-  return sak.bakgrunn?.innhold ?? null;
+  return sak.resultat?.utredning?.resultat ?? null;
 }
 
 export function getKildeText(sak: KontrollsakResponse): string {
-  return formaterKilde(sak.bakgrunn?.kilde);
+  return formaterKilde(sak.kilde);
 }
 
-export function getKontaktinformasjon(sak: KontrollsakResponse) {
-  const avsender = sak.bakgrunn?.avsender;
-
-  if (!avsender) {
-    return null;
-  }
-
-  return {
-    navn: avsender.navn ?? undefined,
-    telefon: avsender.telefon ?? undefined,
-    epost: undefined,
-    anonymt: avsender.anonym,
-  };
+export function getKontaktinformasjon(_sak: KontrollsakResponse) {
+  return null;
 }
 
 export function formaterBelop(belop: number): string {

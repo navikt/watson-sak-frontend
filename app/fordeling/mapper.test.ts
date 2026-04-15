@@ -6,21 +6,29 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
   return {
     id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
     personIdent: "12345678901",
-    saksbehandler: "Z123456",
-    status: "OPPRETTET",
-    kategori: "ARBEID",
+    saksbehandlere: {
+      eier: null,
+      deltMed: [],
+      opprettetAv: {
+        navIdent: "Z123456",
+        navn: "Oppretter Navn",
+      },
+    },
+    status: "UFORDELT",
+    kategori: "MISBRUK",
+    kilde: "INTERN",
+    misbruktype: [],
     prioritet: "NORMAL",
-    mottakEnhet: "4812",
-    mottakSaksbehandler: "Z123456",
     ytelser: [
       {
-        id: "ytelse-1",
+        id: "2fa85f64-5717-4562-b3fc-2c963f66afa6",
         type: "Dagpenger",
         periodeFra: "2026-01-01",
         periodeTil: "2026-12-31",
+        belop: null,
       },
     ],
-    bakgrunn: null,
+    merking: null,
     resultat: null,
     opprettet: "2026-03-20T12:34:56Z",
     oppdatert: null,
@@ -29,12 +37,8 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
 }
 
 describe("Fordeling mapper", () => {
-  it("behandler opprettet sak som ufordelt", () => {
-    expect(erUfordeltKontrollsak(lagKontrollsak({ status: "OPPRETTET" }))).toBe(true);
-  });
-
-  it("behandler avklart sak som ufordelt", () => {
-    expect(erUfordeltKontrollsak(lagKontrollsak({ status: "AVKLART" }))).toBe(true);
+  it("behandler ufordelt sak som ufordelt", () => {
+    expect(erUfordeltKontrollsak(lagKontrollsak({ status: "UFORDELT" }))).toBe(true);
   });
 
   it("behandler sak under utredning som fordelt", () => {
@@ -47,7 +51,7 @@ describe("Fordeling mapper", () => {
       navn: null,
       opprettetDato: "2026-03-20",
       oppdatertDato: "2026-03-20",
-      kategori: "Arbeid",
+      kategori: "Misbruk",
       misbrukstyper: [],
       ytelser: ["Dagpenger"],
     });

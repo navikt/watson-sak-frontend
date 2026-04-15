@@ -41,22 +41,16 @@ function hendelseTittel(hendelse: SakHendelse): string {
   switch (hendelse.hendelsesType) {
     case "SAK_OPPRETTET":
       return "Sak opprettet";
-    case "AVKLARING_OPPRETTET":
-      return "Avklaring opprettet";
     case "SAK_TILDELT":
       return "Sak tildelt";
     case "STATUS_ENDRET":
       return "Status endret";
     case "SAKSINFORMASJON_ENDRET":
       return "Saksinformasjon endret";
-    case "MOTTAKSENHET_ENDRET":
-      return "Mottaksenhet endret";
     case "VIDERESENDT_TIL_NAY_NFP":
       return "Videresendt til NAY/NFP";
     case "POLITIANMELDT":
       return "Politianmeldt";
-    case "SAK_HENLAGT":
-      return "Sak henlagt";
     case "TILGANG_DELT":
       return "Tilgang delt";
     case "YTELSE_STANSET":
@@ -80,8 +74,6 @@ function hendelseBeskrivelse(hendelse: SakHendelse): string | null {
   const deler: string[] = [];
 
   deler.push(`Status: ${formaterTekst(hendelse.status)}`);
-  deler.push(`Mottaksenhet: ${hendelse.mottakEnhet}`);
-
   if (hendelse.avklaringResultat) {
     deler.push(`Avklaringsresultat: ${hendelse.avklaringResultat}`);
   }
@@ -98,16 +90,10 @@ function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
   switch (hendelse.hendelsesType) {
     case "SAK_OPPRETTET":
       return <PlusCircleIcon {...iconProps} />;
-    case "AVKLARING_OPPRETTET":
-      return <CheckmarkCircleIcon {...iconProps} />;
     case "SAK_TILDELT":
       return <PersonIcon {...iconProps} />;
     case "SAKSINFORMASJON_ENDRET":
       return <PencilIcon {...iconProps} />;
-    case "MOTTAKSENHET_ENDRET":
-      return <ArrowRightIcon {...iconProps} />;
-    case "SAK_HENLAGT":
-      return <XMarkOctagonIcon {...iconProps} />;
     case "VIDERESENDT_TIL_NAY_NFP":
       return <PaperplaneIcon {...iconProps} />;
     case "POLITIANMELDT":

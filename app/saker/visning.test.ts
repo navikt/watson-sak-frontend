@@ -16,36 +16,34 @@ import {
 
 function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
-    id: "kontrollsak-1",
+    id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
     personIdent: "10987654321",
-    saksbehandler: "Z123456",
+    saksbehandlere: {
+      eier: {
+        navIdent: "Z123456",
+        navn: "Saksbehandler Navn",
+      },
+      deltMed: [],
+      opprettetAv: {
+        navIdent: "Z654321",
+        navn: "Oppretter Navn",
+      },
+    },
     status: "UTREDES",
-    kategori: "ARBEID",
+    kategori: "FEILUTBETALING",
+    kilde: "ANONYM_TIPS",
+    misbruktype: [],
     prioritet: "NORMAL",
-    mottakEnhet: "4812",
-    mottakSaksbehandler: "Z654321",
     ytelser: [
       {
-        id: "ytelse-1",
+        id: "2fa85f64-5717-4562-b3fc-2c963f66afa6",
         type: "Sykepenger",
         periodeFra: "2026-01-01",
         periodeTil: "2026-01-31",
+        belop: null,
       },
     ],
-    bakgrunn: {
-      id: "bakgrunn-1",
-      kilde: "ANONYM_TIPS",
-      innhold: "Kontrollsak-beskrivelse",
-      avsender: {
-        id: "avsender-1",
-        navn: "Tipser",
-        telefon: "99999999",
-        adresse: null,
-        anonym: true,
-      },
-      vedlegg: [],
-      tilleggsopplysninger: null,
-    },
+    merking: null,
     resultat: null,
     opprettet: "2026-01-01T00:00:00Z",
     oppdatert: null,
@@ -58,8 +56,8 @@ describe("sak-visning", () => {
     expect(formaterStatus("UTREDES")).toBe("Utredes");
   });
 
-  it("formaterer OPPRETTET-status til «Ufordelt»", () => {
-    expect(formaterStatus("OPPRETTET")).toBe("Ufordelt");
+  it("formaterer UFORDELT-status til «Ufordelt»", () => {
+    expect(formaterStatus("UFORDELT")).toBe("Ufordelt");
   });
 
   it("formaterer beløp med norsk tusen-separator", () => {
@@ -69,11 +67,11 @@ describe("sak-visning", () => {
   });
 
   it("maper backend-status til riktig tag-variant", () => {
-    expect(hentStatusVariant("TIL_FORVALTNING")).toBe("success");
+    expect(hentStatusVariant("FORVALTNING")).toBe("success");
   });
 
   it("formaterer backend-kategori til visningstekst", () => {
-    expect(formaterKategori("ARBEID")).toBe("Arbeid");
+    expect(formaterKategori("FEILUTBETALING")).toBe("Feilutbetaling");
   });
 
   it("bygger periodevisning fra ytelsesobjekter", () => {
@@ -84,6 +82,7 @@ describe("sak-visning", () => {
           type: "Dagpenger",
           periodeFra: "2026-01-01",
           periodeTil: "2026-12-31",
+          belop: null,
         },
       ]),
     ).toBe("2026-01-01 – 2026-12-31");
@@ -94,41 +93,26 @@ describe("sak-visning", () => {
   });
 
   it("henter formatert status fra kontrollsak", () => {
-    expect(getStatus(lagKontrollsak({ status: "TIL_FORVALTNING" }))).toBe("Til forvaltning");
+    expect(getStatus(lagKontrollsak({ status: "FORVALTNING" }))).toBe("Forvaltning");
   });
 
   it("henter ytelsestyper fra kontrollsak", () => {
     expect(getYtelseTyper(lagKontrollsak())).toEqual(["Sykepenger"]);
   });
 
-  it("henter beskrivelse fra kontrollsak", () => {
-    expect(getBeskrivelse(lagKontrollsak())).toBe("Kontrollsak-beskrivelse");
+  it("returnerer ikke beskrivelse når backend ikke lenger sender feltet", () => {
+    expect(getBeskrivelse(lagKontrollsak())).toBeNull();
   });
 
   it("henter formaterbar kilde fra kontrollsak", () => {
-    const kontrollsak = lagKontrollsak();
-
-    if (!kontrollsak.bakgrunn) {
-      throw new Error("Forventet bakgrunn i kontrollsak-testdata");
-    }
-
-    expect(
-      getKildeText(lagKontrollsak({ bakgrunn: { ...kontrollsak.bakgrunn, kilde: "EKSTERN" } })),
-    ).toBe("Ekstern");
+    expect(getKildeText(lagKontrollsak({ kilde: "EKSTERN" }))).toBe("Ekstern");
   });
 
-  it("henter kontaktinformasjon fra kontrollsak", () => {
-    expect(getKontaktinformasjon(lagKontrollsak())).toEqual({
-      navn: "Tipser",
-      telefon: "99999999",
-      epost: undefined,
-      anonymt: true,
-    });
+  it("returnerer null for kontaktinformasjon når backend ikke lenger sender feltet", () => {
+    expect(getKontaktinformasjon(lagKontrollsak())).toBeNull();
   });
 
-  it("returnerer null eller standardtekst når bakgrunn mangler", () => {
-    expect(getBeskrivelse(lagKontrollsak({ bakgrunn: null }))).toBeNull();
-    expect(getKontaktinformasjon(lagKontrollsak({ bakgrunn: null }))).toBeNull();
-    expect(getKildeText(lagKontrollsak({ bakgrunn: null }))).toBe("Ukjent kilde");
+  it("returnerer standardtekst når kilde mangler", () => {
+    expect(getKildeText(lagKontrollsak({ kilde: undefined as never }))).toBe("Ukjent kilde");
   });
 });

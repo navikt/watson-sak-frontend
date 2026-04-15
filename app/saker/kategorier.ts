@@ -1,12 +1,8 @@
 export const kontrollsakKategoriVerdier = [
-  "BEHANDLER",
-  "ARBEID",
-  "SAMLIV",
-  "UTLAND",
-  "IDENTITET",
-  "TILTAK",
-  "DOKUMENTFALSK",
-  "ANNET",
+  "UDEFINERT",
+  "FEILUTBETALING",
+  "MISBRUK",
+  "OPPFOLGING",
 ] as const;
 
 type KontrollsakKategoriVerdi = (typeof kontrollsakKategoriVerdier)[number];
@@ -34,23 +30,23 @@ export const kontrollsakMisbrukstypeVerdier = [
 type KontrollsakMisbrukstypeVerdi = (typeof kontrollsakMisbrukstypeVerdier)[number];
 
 export const kontrollsakKategoriEtiketter: Record<KontrollsakKategoriVerdi, string> = {
-  BEHANDLER: "Behandler",
-  ARBEID: "Arbeid",
-  SAMLIV: "Samliv",
-  UTLAND: "Utland",
-  IDENTITET: "Identitet",
-  TILTAK: "Tiltak",
-  DOKUMENTFALSK: "Dokumentfalsk",
-  ANNET: "Annet",
+  UDEFINERT: "Udefinert",
+  FEILUTBETALING: "Feilutbetaling",
+  MISBRUK: "Misbruk",
+  OPPFOLGING: "Oppfølging",
 };
 
 export const misbrukstyperPerKategori: Partial<
   Record<KontrollsakKategoriVerdi, readonly KontrollsakMisbrukstypeVerdi[]>
 > = {
-  BEHANDLER: ["Behandler §25-7", "L-takster", "Behandler", "L-takster foretak"],
-  ARBEID: ["Hvit inntekt", "Fiktivt arbeidsforhold", "Svart arbeid", "Feil inntektsgrunnlag"],
-  SAMLIV: ["Skjult samliv", "Endret sivilstatus"],
-  UTLAND: ["Medlemskap bortfalt", "Innenfor EØS", "Utenfor EØS"],
-  IDENTITET: ["Identitetsmisbruk", "Opphold på feil grunnlag"],
-  TILTAK: ["Misbruk av tiltaksplass", "Avbrutt tiltak"],
+  FEILUTBETALING: ["Hvit inntekt", "Feil inntektsgrunnlag", "Endret sivilstatus"],
+  MISBRUK: [
+    "Skjult samliv",
+    "Svart arbeid",
+    "Fiktivt arbeidsforhold",
+    "Utenfor EØS",
+    "Innenfor EØS",
+    "Identitetsmisbruk",
+  ],
+  OPPFOLGING: ["Misbruk av tiltaksplass", "Avbrutt tiltak"],
 };

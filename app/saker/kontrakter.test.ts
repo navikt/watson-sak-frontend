@@ -17,80 +17,92 @@ describe("Kontrollsak-kontrakter", () => {
       kontrollsakResponseSchema.parse({
         id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
         personIdent: "12345678901",
-        saksbehandler: "Z123456",
-        status: "OPPRETTET",
-        kategori: "ARBEID",
+        saksbehandlere: {
+          eier: {
+            navIdent: "Z123456",
+            navn: "Eier Navn",
+          },
+          deltMed: [
+            {
+              navIdent: "Z654321",
+              navn: "Delt Saksbehandler",
+            },
+          ],
+          opprettetAv: {
+            navIdent: "Z111111",
+            navn: "Oppretter Navn",
+          },
+        },
+        status: "UFORDELT",
+        kategori: "MISBRUK",
+        kilde: "EKSTERN",
+        misbruktype: ["Skjult samliv"],
         prioritet: "NORMAL",
-        mottakEnhet: "4812",
-        mottakSaksbehandler: "Z654321",
         ytelser: [
           {
             id: "2fa85f64-5717-4562-b3fc-2c963f66afa6",
             type: "Dagpenger",
             periodeFra: "2026-01-01",
             periodeTil: "2026-12-31",
+            belop: 1200,
           },
         ],
-        bakgrunn: {
-          id: "1fa85f64-5717-4562-b3fc-2c963f66afa6",
-          kilde: "EKSTERN",
-          innhold: "Tips mottatt",
-          avsender: {
-            id: "0fa85f64-5717-4562-b3fc-2c963f66afa6",
-            navn: "Ola Nordmann",
-            telefon: "12345678",
-            adresse: null,
-            anonym: false,
-          },
-          vedlegg: [
-            {
-              id: "9fa85f64-5717-4562-b3fc-2c963f66afa6",
-              filnavn: "tips.pdf",
-              lokasjon: "gs://bucket/tips.pdf",
-            },
-          ],
-          tilleggsopplysninger: null,
-        },
+        merking: "SENSITIV",
         resultat: {
-          avklaring: {
+          utredning: {
             id: "8fa85f64-5717-4562-b3fc-2c963f66afa6",
-            saksbehandler: "Z123456",
-            dato: "2026-03-20",
-            resultat: "IKKE_RELEVANT",
-            begrunnelse: null,
+            opprettet: "2026-03-20T11:00:00Z",
+            resultat: "IKKE_MISBRUK",
           },
-          utredning: null,
-          forvaltning: null,
+          forvaltning: {
+            id: "7fa85f64-5717-4562-b3fc-2c963f66afa6",
+            dato: "2026-03-21",
+            resultat: "TILBAKEKREVING",
+          },
+          strafferettsligVurdering: {
+            id: "6fa85f64-5717-4562-b3fc-2c963f66afa6",
+            dato: "2026-03-22",
+            resultat: "ANMELDES",
+          },
         },
         opprettet: "2026-03-20T12:34:56Z",
         oppdatert: null,
       }),
     ).toMatchObject({
-      status: "OPPRETTET",
-      ytelser: [{ type: "Dagpenger" }],
-      bakgrunn: { kilde: "EKSTERN" },
+      status: "UFORDELT",
+      saksbehandlere: { eier: { navIdent: "Z123456" } },
+      kilde: "EKSTERN",
+      misbruktype: ["Skjult samliv"],
+      ytelser: [{ type: "Dagpenger", belop: 1200 }],
     });
   });
 
-  it("tillater nullable bakgrunn, resultat og oppdatert", () => {
+  it("tillater nullable resultat, merking og oppdatert", () => {
     expect(
       kontrollsakResponseSchema.parse({
         id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
         personIdent: "12345678901",
-        saksbehandler: "Z123456",
-        status: "OPPRETTET",
-        kategori: "ARBEID",
-        prioritet: "NORMAL",
-        mottakEnhet: "4812",
-        mottakSaksbehandler: "Z654321",
+        saksbehandlere: {
+          eier: null,
+          deltMed: [],
+          opprettetAv: {
+            navIdent: "Z111111",
+            navn: "Oppretter Navn",
+          },
+        },
+        status: "UFORDELT",
+        kategori: "UDEFINERT",
+        kilde: "INTERN",
+        misbruktype: [],
+        prioritet: "HOY",
         ytelser: [],
-        bakgrunn: null,
+        merking: null,
         resultat: null,
         opprettet: "2026-03-20T12:34:56Z",
         oppdatert: null,
       }),
     ).toMatchObject({
-      bakgrunn: null,
+      merking: null,
       resultat: null,
       oppdatert: null,
     });
@@ -103,14 +115,21 @@ describe("Kontrollsak-kontrakter", () => {
           {
             id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
             personIdent: "12345678901",
-            saksbehandler: "Z123456",
-            status: "OPPRETTET",
-            kategori: "ARBEID",
+            saksbehandlere: {
+              eier: null,
+              deltMed: [],
+              opprettetAv: {
+                navIdent: "Z123456",
+                navn: "Oppretter Navn",
+              },
+            },
+            status: "UFORDELT",
+            kategori: "FEILUTBETALING",
+            kilde: "INTERN",
+            misbruktype: [],
             prioritet: "NORMAL",
-            mottakEnhet: "4812",
-            mottakSaksbehandler: "Z654321",
             ytelser: [],
-            bakgrunn: null,
+            merking: null,
             resultat: null,
             opprettet: "2026-03-20T12:34:56Z",
             oppdatert: null,
@@ -123,7 +142,7 @@ describe("Kontrollsak-kontrakter", () => {
       }),
     ).toMatchObject({
       totalItems: 1,
-      items: [{ status: "OPPRETTET" }],
+      items: [{ status: "UFORDELT" }],
     });
   });
 
@@ -134,18 +153,17 @@ describe("Kontrollsak-kontrakter", () => {
         tidspunkt: "2026-03-31T10:15:00Z",
         hendelsesType: "SAK_OPPRETTET",
         sakId: "4fa85f64-5717-4562-b3fc-2c963f66afa6",
-        kategori: "ARBEID",
+        kategori: "MISBRUK",
         prioritet: "NORMAL",
-        status: "OPPRETTET",
+        status: "UFORDELT",
         ytelseTyper: ["Sykepenger"],
         kilde: "ANONYM_TIPS",
         avklaringResultat: null,
-        mottakEnhet: "4812",
       }),
     ).toMatchObject({
       hendelsesType: "SAK_OPPRETTET",
-      status: "OPPRETTET",
-      mottakEnhet: "4812",
+      status: "UFORDELT",
+      kategori: "MISBRUK",
     });
   });
 
@@ -165,10 +183,6 @@ describe("Kontrollsak-kontrakter", () => {
 
       for (const ytelse of sak.ytelser) {
         expect(ytelse.id).toMatch(uuidMønster);
-      }
-
-      if (sak.bakgrunn?.avsender) {
-        expect(sak.bakgrunn.avsender.id).toMatch(uuidMønster);
       }
 
       for (const hendelse of hentHistorikk(sak.id)) {

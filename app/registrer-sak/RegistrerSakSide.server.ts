@@ -15,53 +15,44 @@ import {
   type OpprettSakSkjema,
 } from "./validering";
 
-function hentMottakEnhet(organisasjoner: string) {
-  const førsteEnhet = organisasjoner.split(",")[0]?.trim();
-
-  if (!førsteEnhet) {
-    throw new Error("Fant ingen mottakende enhet i organisasjoner.");
-  }
-
-  if (!/^\d{4}$/.test(førsteEnhet)) {
-    throw new Error(
-      `Ugyldig mottakende enhet: '${førsteEnhet}'. Forventet enhetsnummer (4 sifre).`,
-    );
-  }
-
-  return førsteEnhet;
-}
-
-function byggYtelser(ytelser: OpprettSakSkjema["ytelser"], fraDato: string, tilDato: string) {
+function byggYtelser(
+  ytelser: OpprettSakSkjema["ytelser"],
+  fraDato: string,
+  tilDato: string,
+  belop?: number,
+) {
   return ytelser.map((ytelse) => ({
     type: ytelse,
     periodeFra: fraDato,
     periodeTil: tilDato,
+    belop,
   }));
 }
 
 export function byggOpprettKontrollsakPayload({
   skjema,
   navIdent,
-  mottakEnhet,
+  navn,
 }: {
   skjema: OpprettSakSkjema;
   navIdent: string;
-  mottakEnhet: string;
+  navn: string;
 }): OpprettKontrollsakRequest {
   return {
     personIdent: skjema.personIdent,
-    saksbehandler: navIdent,
-    mottakEnhet,
-    mottakSaksbehandler: navIdent,
+    saksbehandlere: {
+      eier: {
+        navIdent,
+        navn,
+      },
+      deltMed: [],
+    },
     kategori: skjema.kategori,
     prioritet: "NORMAL",
-    misbruktype: skjema.misbruktype,
+    misbruktype: skjema.misbruktype ? [skjema.misbruktype] : [],
     merking: skjema.merking,
-    ytelser: byggYtelser(skjema.ytelser, skjema.fraDato, skjema.tilDato),
-    enhet: skjema.enhet,
+    ytelser: byggYtelser(skjema.ytelser, skjema.fraDato, skjema.tilDato, skjema.caBeløp),
     kilde: skjema.kilde,
-    caBeløp: skjema.caBeløp,
-    organisasjonsnummer: skjema.organisasjonsnummer || undefined,
   };
 }
 
@@ -101,14 +92,13 @@ export async function action({ request }: Route.ActionArgs) {
 
   const innloggetBruker = await hentInnloggetBruker({ request });
   const data = resultat.data;
-  const mottakEnhet = hentMottakEnhet(innloggetBruker.organisasjoner);
 
   await opprettKontrollsak({
     token: innloggetBruker.token,
     payload: byggOpprettKontrollsakPayload({
       skjema: data,
       navIdent: innloggetBruker.navIdent,
-      mottakEnhet,
+      navn: innloggetBruker.name,
     }),
   });
 

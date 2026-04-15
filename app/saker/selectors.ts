@@ -42,7 +42,7 @@ export function getStatusVariantForSak(sak: KontrollsakResponse) {
 }
 
 export function getSaksenhet(sak: KontrollsakResponse): string {
-  return sak.mottakEnhet;
+  return sak.saksbehandlere.opprettetAv.navn ?? sak.saksbehandlere.opprettetAv.navIdent;
 }
 
 export function getAvdeling(_sak: KontrollsakResponse): string | null {
@@ -50,23 +50,29 @@ export function getAvdeling(_sak: KontrollsakResponse): string | null {
 }
 
 export function getTags(sak: KontrollsakResponse): string[] {
-  return sak.merking ?? [];
+  return sak.merking ? [sak.merking] : [];
 }
 
-export function getNavn(sak: KontrollsakResponse): string | null {
-  return sak.navn ?? null;
+export function getNavn(_sak: KontrollsakResponse): string | null {
+  return null;
 }
 
-export function getAlder(sak: KontrollsakResponse): number | null {
-  return sak.alder ?? null;
+export function getAlder(_sak: KontrollsakResponse): number | null {
+  return null;
 }
 
 export function getMisbrukstyper(sak: KontrollsakResponse): string[] {
-  return sak.misbrukstyper ?? [];
+  return sak.misbruktype;
 }
 
 export function getBelop(sak: KontrollsakResponse): number | null {
-  return sak.belop ?? null;
+  return sak.ytelser.reduce<number | null>((sum, ytelse) => {
+    if (ytelse.belop === null) {
+      return sum;
+    }
+
+    return (sum ?? 0) + ytelse.belop;
+  }, null);
 }
 
 export function getResultat(sak: KontrollsakResponse) {
@@ -75,13 +81,11 @@ export function getResultat(sak: KontrollsakResponse) {
 
 export function getMineSakerGruppeStatus(sak: KontrollsakResponse): MineSakerGruppeStatus {
   switch (sak.status) {
-    case "OPPRETTET":
-    case "AVKLART":
+    case "UFORDELT":
     case "UTREDES":
       return "aktive";
-    case "TIL_FORVALTNING":
+    case "FORVALTNING":
       return "ventende";
-    case "HENLAGT":
     case "AVSLUTTET":
       return "fullførte";
     default:
@@ -113,7 +117,7 @@ export function getMineSakerOpprettetTekst(sak: KontrollsakResponse): string {
 export function getMineSakerIkonType(
   sak: KontrollsakResponse,
 ): "tasklist" | "envelope" | "buildings" | "files" | "folder" {
-  switch (sak.bakgrunn?.kilde) {
+  switch (sak.kilde) {
     case "ANONYM_TIPS":
       return "tasklist";
     case "EKSTERN":

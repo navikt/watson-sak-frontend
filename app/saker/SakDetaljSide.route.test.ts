@@ -78,7 +78,7 @@ describe("SakDetaljSide helper-integrasjon", () => {
     expect(getPersonIdent(sak)).toBe("12345678901");
     expect(getKildeText(sak)).toBe("Ekstern");
     expect(getYtelseTyper(sak)).toEqual(["Enslig forsørger"]);
-    expect(getBeskrivelse(sak)).toBe("Tips om mulig feil i enslig-forsørger-sak.");
+    expect(getBeskrivelse(sak)).toBeNull();
   });
 
   it("returnerer backend-shapede saker i samlet mockdatasett for øvrige flows", () => {
@@ -136,7 +136,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     const kontrollsak = mockKontrollsaker[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
 
-    expect(kontrollsak.status).toBe("OPPRETTET");
+    expect(kontrollsak.status).toBe("UFORDELT");
 
     const formData = new FormData();
     formData.set("handling", "tildel");
@@ -159,20 +159,20 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
 
     const opprinneligPersonIdent = kontrollsak.personIdent;
     const opprinneligStatus = kontrollsak.status;
-    const opprinneligSaksbehandler = kontrollsak.saksbehandler;
+    const opprinneligSaksbehandler = kontrollsak.saksbehandlere.eier;
 
     const formData = new FormData();
     formData.set("handling", "rediger_saksinformasjon");
-    formData.set("kategori", "ARBEID");
+    formData.set("kategori", "MISBRUK");
     formData.set("misbruktype", "Svart arbeid");
     formData.set("merking", "PRIORITERT");
-    formData.set("kilde", "PUBLIKUM");
+    formData.set("kilde", "ANONYM_TIPS");
     formData.set("fraDato", "2026-02-01");
     formData.set("tilDato", "2026-02-28");
     formData.append("ytelser", "Dagpenger");
     formData.append("ytelser", "Sykepenger");
     formData.set("personIdent", "99999999999");
-    formData.set("status", "HENLAGT");
+    formData.set("status", "AVSLUTTET");
     formData.set("saksbehandler", "Ny Saksbehandler");
 
     await action({
@@ -183,10 +183,10 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
       params: { sakId: kontrollsakRef },
     } as Route.ActionArgs);
 
-    expect(kontrollsak.kategori).toBe("ARBEID");
-    expect(kontrollsak.misbrukstyper).toEqual(["Svart arbeid"]);
-    expect(kontrollsak.merking).toEqual(["PRIORITERT"]);
-    expect(kontrollsak.bakgrunn?.kilde).toBe("PUBLIKUM");
+    expect(kontrollsak.kategori).toBe("MISBRUK");
+    expect(kontrollsak.misbruktype).toEqual(["Svart arbeid"]);
+    expect(kontrollsak.merking).toBe("PRIORITERT");
+    expect(kontrollsak.kilde).toBe("ANONYM_TIPS");
     expect(kontrollsak.ytelser.map((ytelse) => ytelse.type)).toEqual(["Dagpenger", "Sykepenger"]);
     expect(kontrollsak.ytelser.map((ytelse) => ytelse.periodeFra)).toEqual([
       "2026-02-01",
@@ -198,22 +198,21 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     ]);
     expect(kontrollsak.personIdent).toBe(opprinneligPersonIdent);
     expect(kontrollsak.status).toBe(opprinneligStatus);
-    expect(kontrollsak.saksbehandler).toBe(opprinneligSaksbehandler);
+    expect(kontrollsak.saksbehandlere.eier).toEqual(opprinneligSaksbehandler);
 
     const historikk = hentHistorikk(kontrollsak.id);
     expect(historikk[0]?.hendelsesType).toBe("SAKSINFORMASJON_ENDRET");
   });
 
-  it("oppretter bakgrunn når sak uten bakgrunn får oppdatert kilde", async () => {
+  it("oppdaterer top-level kilde når saksinformasjon redigeres", async () => {
     const kontrollsak = mockKontrollsaker[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
-    kontrollsak.bakgrunn = null;
 
     const formData = new FormData();
     formData.set("handling", "rediger_saksinformasjon");
-    formData.set("kategori", kontrollsak.kategori);
+    formData.set("kategori", "FEILUTBETALING");
     formData.set("misbruktype", "Endret sivilstatus");
-    formData.set("kilde", "PUBLIKUM");
+    formData.set("kilde", "ANONYM_TIPS");
     formData.set("fraDato", "2026-01-13");
     formData.set("tilDato", "2026-01-13");
     formData.append("ytelser", "Enslig forsørger");
@@ -227,26 +226,22 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     } as Route.ActionArgs);
 
     const oppdatertSak = hentAlleSaker().find((sak) => sak.id === kontrollsak.id);
-
-    if (!oppdatertSak?.bakgrunn) {
-      throw new Error("Forventet at bakgrunn ble opprettet");
-    }
-
-    expect(oppdatertSak.bakgrunn.kilde).toBe("PUBLIKUM");
+    expect(oppdatertSak?.kilde).toBe("ANONYM_TIPS");
   });
 
   it("avviser redigering når saken ikke følger støttet redigeringsmodell", async () => {
     const kontrollsak = mockKontrollsaker[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    const opprinneligKategori = kontrollsak.kategori;
 
-    kontrollsak.misbrukstyper = ["Endret sivilstatus", "Skjult samliv"];
+    kontrollsak.misbruktype = ["Endret sivilstatus", "Skjult samliv"];
 
     const formData = new FormData();
     formData.set("handling", "rediger_saksinformasjon");
-    formData.set("kategori", "ARBEID");
+    formData.set("kategori", "MISBRUK");
     formData.set("misbruktype", "Svart arbeid");
     formData.set("merking", "PRIORITERT");
-    formData.set("kilde", "PUBLIKUM");
+    formData.set("kilde", "ANONYM_TIPS");
     formData.set("fraDato", "2026-02-01");
     formData.set("tilDato", "2026-02-28");
     formData.append("ytelser", "Dagpenger");
@@ -263,21 +258,22 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
       ok: false,
       feil: { skjema: ["Saken kan ikke redigeres med denne løsningen ennå."] },
     });
-    expect(kontrollsak.kategori).not.toBe("ARBEID");
-    expect(kontrollsak.misbrukstyper).toEqual(["Endret sivilstatus", "Skjult samliv"]);
+    expect(kontrollsak.kategori).toBe(opprinneligKategori);
+    expect(kontrollsak.misbruktype).toEqual(["Endret sivilstatus", "Skjult samliv"]);
   });
 
   it("avviser redigering når saken er inaktiv selv om payloaden er gyldig", async () => {
     const kontrollsak = mockKontrollsaker[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
-    kontrollsak.status = "HENLAGT";
+    const opprinneligKategori = kontrollsak.kategori;
+    kontrollsak.status = "AVSLUTTET";
 
     const formData = new FormData();
     formData.set("handling", "rediger_saksinformasjon");
-    formData.set("kategori", "ARBEID");
+    formData.set("kategori", "MISBRUK");
     formData.set("misbruktype", "Svart arbeid");
     formData.set("merking", "PRIORITERT");
-    formData.set("kilde", "PUBLIKUM");
+    formData.set("kilde", "ANONYM_TIPS");
     formData.set("fraDato", "2026-02-01");
     formData.set("tilDato", "2026-02-28");
     formData.append("ytelser", "Dagpenger");
@@ -294,8 +290,8 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
       ok: false,
       feil: { skjema: ["Saken kan ikke redigeres med denne løsningen ennå."] },
     });
-    expect(kontrollsak.status).toBe("HENLAGT");
-    expect(kontrollsak.kategori).not.toBe("ARBEID");
+    expect(kontrollsak.status).toBe("AVSLUTTET");
+    expect(kontrollsak.kategori).toBe(opprinneligKategori);
   });
 
   it("avviser redigering når saken har ulike perioder per ytelse", async () => {
@@ -307,21 +303,23 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
         type: "Dagpenger",
         periodeFra: "2026-02-01",
         periodeTil: "2026-02-15",
+        belop: null,
       },
       {
         id: crypto.randomUUID(),
         type: "Sykepenger",
         periodeFra: "2026-03-01",
         periodeTil: "2026-03-31",
+        belop: null,
       },
     ];
 
     const formData = new FormData();
     formData.set("handling", "rediger_saksinformasjon");
-    formData.set("kategori", "ARBEID");
+    formData.set("kategori", "MISBRUK");
     formData.set("misbruktype", "Svart arbeid");
     formData.set("merking", "PRIORITERT");
-    formData.set("kilde", "PUBLIKUM");
+    formData.set("kilde", "ANONYM_TIPS");
     formData.set("fraDato", "2026-02-01");
     formData.set("tilDato", "2026-02-28");
     formData.append("ytelser", "Dagpenger");

@@ -11,30 +11,35 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
   return {
     id: lagMockSakUuid("201", 2),
     personIdent: "10987654321",
-    navn: "Ola Nordmann",
-    saksbehandler: "Z123456",
-    status: "OPPRETTET",
-    kategori: "ARBEID",
+    saksbehandlere: {
+      eier: { navIdent: "Z123456", navn: "Z123456" },
+      deltMed: [],
+      opprettetAv: { navIdent: "Z654321", navn: "Z654321" },
+    },
+    status: "UFORDELT",
+    kategori: "MISBRUK",
+    kilde: "ANONYM_TIPS",
+    misbruktype: ["Svart arbeid"],
     prioritet: "NORMAL",
-    mottakEnhet: "4812",
-    mottakSaksbehandler: "Z654321",
     ytelser: [
       {
         id: "00000000-0000-4000-8000-000000020101",
         type: "Sykepenger",
         periodeFra: "2026-01-01",
         periodeTil: "2026-01-31",
+        belop: null,
       },
     ],
-    bakgrunn: {
-      id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-      kilde: "ANONYM_TIPS",
-      innhold: "Tips om mulig feilutbetaling.",
-      avsender: null,
-      vedlegg: [],
-      tilleggsopplysninger: null,
+    merking: null,
+    resultat: {
+      utredning: {
+        id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        opprettet: "2026-02-03T10:11:12Z",
+        resultat: "Tips om mulig feilutbetaling.",
+      },
+      forvaltning: null,
+      strafferettsligVurdering: null,
     },
-    resultat: null,
     opprettet: "2026-02-03T10:11:12Z",
     oppdatert: null,
     ...overrides,
@@ -57,7 +62,7 @@ describe("MineSakerInnhold", () => {
           lagKontrollsak(),
           lagKontrollsak({
             id: lagMockSakUuid("202", 2),
-            status: "TIL_FORVALTNING",
+            status: "FORVALTNING",
             oppdatert: "2026-02-05T10:11:12Z",
           }),
         ]}
@@ -74,8 +79,6 @@ describe("MineSakerInnhold", () => {
 
     const lenke = screen.getByRole("link", { name: "201" });
     expect(lenke.getAttribute("href")).toBe(`/saker/${getSaksreferanse(lagMockSakUuid("201", 2))}`);
-    expect(screen.getByText("Ola Nordmann")).toBeDefined();
-
     fireEvent.click(screen.getByRole("button", { name: "Oppgaver på vent" }));
 
     expect(screen.getByRole("link", { name: "202" })).toBeDefined();

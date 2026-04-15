@@ -1,44 +1,29 @@
 import { z } from "zod";
-import { kontrollsakKategoriVerdier, kontrollsakMisbrukstypeVerdier } from "./kategorier";
+import { kontrollsakKategoriVerdier } from "./kategorier";
 
 const kontrollsakStatusSchema = z.enum([
-  "OPPRETTET",
-  "AVKLART",
+  "UFORDELT",
   "UTREDES",
-  "I_BERO",
-  "TIL_FORVALTNING",
-  "HENLAGT",
+  "FORVALTNING",
   "AVSLUTTET",
+  "I_BERO",
 ]);
 
 const kontrollsakKategoriSchema = z.enum(kontrollsakKategoriVerdier);
-const kontrollsakMisbrukstypeSchema = z.enum(kontrollsakMisbrukstypeVerdier);
 
-const kontrollsakPrioritetSchema = z.enum(["HØY", "NORMAL", "LAV"]);
+const kontrollsakPrioritetSchema = z.enum(["HOY", "NORMAL", "LAV"]);
 
-const kontrollsakKildeSchema = z.enum(["INTERN", "EKSTERN", "ANONYM_TIPS", "PUBLIKUM"]);
+const kontrollsakKildeSchema = z.enum(["INTERN", "EKSTERN", "ANONYM_TIPS"]);
 
-const kontrollsakAvsenderSchema = z.object({
-  id: z.string(),
+const kontrollsakSaksbehandlerSchema = z.object({
+  navIdent: z.string(),
   navn: z.string().nullable(),
-  telefon: z.string().nullable(),
-  adresse: z.string().nullable(),
-  anonym: z.boolean(),
 });
 
-const kontrollsakVedleggSchema = z.object({
-  id: z.string().uuid(),
-  filnavn: z.string(),
-  lokasjon: z.string(),
-});
-
-const kontrollsakBakgrunnSchema = z.object({
-  id: z.string().uuid(),
-  kilde: kontrollsakKildeSchema,
-  innhold: z.string(),
-  avsender: kontrollsakAvsenderSchema.nullable(),
-  vedlegg: z.array(kontrollsakVedleggSchema),
-  tilleggsopplysninger: z.string().nullable(),
+const kontrollsakSaksbehandlereSchema = z.object({
+  eier: kontrollsakSaksbehandlerSchema.nullable(),
+  deltMed: z.array(kontrollsakSaksbehandlerSchema),
+  opprettetAv: kontrollsakSaksbehandlerSchema,
 });
 
 export const kontrollsakYtelseSchema = z.object({
@@ -46,19 +31,12 @@ export const kontrollsakYtelseSchema = z.object({
   type: z.string(),
   periodeFra: z.string(),
   periodeTil: z.string(),
-});
-
-const kontrollsakAvklaringSchema = z.object({
-  id: z.string().uuid(),
-  saksbehandler: z.string(),
-  dato: z.string(),
-  resultat: z.string(),
-  begrunnelse: z.string().nullable(),
+  belop: z.number().nullable(),
 });
 
 const kontrollsakUtredningSchema = z.object({
   id: z.string().uuid(),
-  dato: z.string(),
+  opprettet: z.string(),
   resultat: z.string(),
 });
 
@@ -68,28 +46,29 @@ const kontrollsakForvaltningSchema = z.object({
   resultat: z.string(),
 });
 
+const kontrollsakStrafferettsligVurderingSchema = z.object({
+  id: z.string().uuid(),
+  dato: z.string(),
+  resultat: z.string(),
+});
+
 const kontrollsakResultatSchema = z.object({
-  avklaring: kontrollsakAvklaringSchema.nullable(),
   utredning: kontrollsakUtredningSchema.nullable(),
   forvaltning: kontrollsakForvaltningSchema.nullable(),
+  strafferettsligVurdering: kontrollsakStrafferettsligVurderingSchema.nullable(),
 });
 
 export const kontrollsakResponseSchema = z.object({
   id: z.string().uuid(),
   personIdent: z.string(),
-  navn: z.string().nullable().optional(),
-  alder: z.number().int().nullable().optional(),
-  saksbehandler: z.string(),
+  saksbehandlere: kontrollsakSaksbehandlereSchema,
   status: kontrollsakStatusSchema,
   kategori: kontrollsakKategoriSchema,
+  kilde: kontrollsakKildeSchema,
+  misbruktype: z.array(z.string()),
   prioritet: kontrollsakPrioritetSchema,
-  mottakEnhet: z.string(),
-  mottakSaksbehandler: z.string(),
   ytelser: z.array(kontrollsakYtelseSchema),
-  misbrukstyper: z.array(kontrollsakMisbrukstypeSchema).nullable().optional(),
-  belop: z.number().nullable().optional(),
-  merking: z.array(z.string()).nullable().optional(),
-  bakgrunn: kontrollsakBakgrunnSchema.nullable(),
+  merking: z.string().nullable(),
   resultat: kontrollsakResultatSchema.nullable(),
   opprettet: z.string(),
   oppdatert: z.string().nullable(),
@@ -114,7 +93,6 @@ export const kontrollsakHendelseResponseSchema = z.object({
   ytelseTyper: z.array(z.string()),
   kilde: kontrollsakKildeSchema.nullable(),
   avklaringResultat: z.string().nullable(),
-  mottakEnhet: z.string(),
 });
 
 export type KontrollsakYtelse = z.infer<typeof kontrollsakYtelseSchema>;

@@ -3,8 +3,8 @@ import type { Route } from "./+types/RegistrerSakSide.route";
 
 const hentInnloggetBrukerMock = vi.fn().mockResolvedValue({
   navIdent: "Z123456",
+  name: "Test Saksbehandler",
   token: "token-123",
-  organisasjoner: "4812, 9999",
 });
 
 vi.mock("./api.server", () => ({
@@ -20,8 +20,8 @@ describe("OpprettSakSide action", () => {
     vi.clearAllMocks();
     hentInnloggetBrukerMock.mockResolvedValue({
       navIdent: "Z123456",
+      name: "Test Saksbehandler",
       token: "token-123",
-      organisasjoner: "4812, 9999",
     });
   });
 
@@ -35,7 +35,7 @@ describe("OpprettSakSide action", () => {
     formData.append("ytelser", "AAP");
     formData.set("fraDato", "2026-01-01");
     formData.set("tilDato", "2026-12-31");
-    formData.set("kategori", "DOKUMENTFALSK");
+    formData.set("kategori", "UDEFINERT");
     formData.set("kilde", "INTERN");
     formData.set("enhet", "ØST");
 
@@ -52,29 +52,32 @@ describe("OpprettSakSide action", () => {
       token: "token-123",
       payload: {
         personIdent: "12345678901",
-        saksbehandler: "Z123456",
-        mottakEnhet: "4812",
-        mottakSaksbehandler: "Z123456",
-        kategori: "DOKUMENTFALSK",
+        saksbehandlere: {
+          eier: {
+            navIdent: "Z123456",
+            navn: "Test Saksbehandler",
+          },
+          deltMed: [],
+        },
+        kategori: "UDEFINERT",
         prioritet: "NORMAL",
-        misbruktype: undefined,
+        misbruktype: [],
         merking: undefined,
         ytelser: [
           {
             type: "Dagpenger",
             periodeFra: "2026-01-01",
             periodeTil: "2026-12-31",
+            belop: undefined,
           },
           {
             type: "AAP",
             periodeFra: "2026-01-01",
             periodeTil: "2026-12-31",
+            belop: undefined,
           },
         ],
-        enhet: "ØST",
         kilde: "INTERN",
-        caBeløp: undefined,
-        organisasjonsnummer: undefined,
       },
     });
 
@@ -82,36 +85,6 @@ describe("OpprettSakSide action", () => {
     const redirectResponse = response as Response;
     expect(redirectResponse.status).toBe(302);
     expect(redirectResponse.headers.get("Location")).toBe("/");
-  });
-
-  it("feiler når innlogget bruker mangler gyldig mottakende enhet", async () => {
-    hentInnloggetBrukerMock.mockResolvedValue({
-      navIdent: "Z123456",
-      token: "token-123",
-      organisasjoner: "Ukjent",
-    });
-
-    const { action } = await import("./RegistrerSakSide.server");
-
-    const formData = new FormData();
-    formData.set("personIdent", "12345678901");
-    formData.append("ytelser", "Dagpenger");
-    formData.set("fraDato", "2026-01-01");
-    formData.set("tilDato", "2026-12-31");
-    formData.set("kategori", "DOKUMENTFALSK");
-    formData.set("kilde", "INTERN");
-    formData.set("enhet", "ØST");
-
-    await expect(
-      action({
-        request: new Request("http://localhost/registrer-sak", {
-          method: "POST",
-          body: formData,
-        }),
-        params: {},
-        context: {},
-      } as Route.ActionArgs),
-    ).rejects.toThrow("Ugyldig mottakende enhet: 'Ukjent'. Forventet enhetsnummer (4 sifre).");
   });
 });
 
@@ -126,7 +99,7 @@ describe("byggOpprettKontrollsakPayload", () => {
           ytelser: ["Dagpenger", "AAP"],
           fraDato: "2026-01-01",
           tilDato: "2026-12-31",
-          kategori: "SAMLIV",
+          kategori: "MISBRUK",
           misbruktype: "Skjult samliv",
           merking: "PRIORITERT",
           kilde: "INTERN",
@@ -135,33 +108,36 @@ describe("byggOpprettKontrollsakPayload", () => {
           organisasjonsnummer: "123456789",
         },
         navIdent: "Z123456",
-        mottakEnhet: "4812",
+        navn: "Test Saksbehandler",
       }),
     ).toEqual({
       personIdent: "12345678901",
-      saksbehandler: "Z123456",
-      mottakEnhet: "4812",
-      mottakSaksbehandler: "Z123456",
-      kategori: "SAMLIV",
+      saksbehandlere: {
+        eier: {
+          navIdent: "Z123456",
+          navn: "Test Saksbehandler",
+        },
+        deltMed: [],
+      },
+      kategori: "MISBRUK",
       prioritet: "NORMAL",
-      misbruktype: "Skjult samliv",
+      misbruktype: ["Skjult samliv"],
       merking: "PRIORITERT",
       ytelser: [
         {
           type: "Dagpenger",
           periodeFra: "2026-01-01",
           periodeTil: "2026-12-31",
+          belop: 300000,
         },
         {
           type: "AAP",
           periodeFra: "2026-01-01",
           periodeTil: "2026-12-31",
+          belop: 300000,
         },
       ],
-      enhet: "ØST",
       kilde: "INTERN",
-      caBeløp: 300000,
-      organisasjonsnummer: "123456789",
     });
   });
 });

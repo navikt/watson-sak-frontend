@@ -94,11 +94,10 @@ type ActionResult = { ok: true } | { ok: false; feil: Feltfeil };
 const unsupportedRedigeringFeil = "Saken kan ikke redigeres med denne løsningen ennå.";
 
 const gyldigeStatuser = new Set<KontrollsakStatus>([
-  "OPPRETTET",
-  "AVKLART",
+  "UFORDELT",
   "UTREDES",
-  "TIL_FORVALTNING",
-  "HENLAGT",
+  "FORVALTNING",
+  "I_BERO",
   "AVSLUTTET",
 ]);
 
@@ -121,9 +120,9 @@ function lagRedigeringsdata(
 
   return {
     kategori: sak.kategori,
-    misbruktype: hentFørsteVerdi(sak.misbrukstyper) ?? "",
-    merking: hentFørsteVerdi(sak.merking) ?? "",
-    kilde: sak.bakgrunn?.kilde ?? "",
+    misbruktype: hentFørsteVerdi(sak.misbruktype) ?? "",
+    merking: sak.merking ?? "",
+    kilde: sak.kilde ?? "",
     fraDato: førsteYtelse?.periodeFra ? formaterTallDatoForInput(førsteYtelse.periodeFra) : "",
     tilDato: førsteYtelse?.periodeTil ? formaterTallDatoForInput(førsteYtelse.periodeTil) : "",
     ytelser: sak.ytelser.map((ytelse) => ytelse.type),
@@ -178,8 +177,8 @@ function lagTidspunktFraSkjema(dato: string, tid: string): string {
 }
 
 function harStøttetRedigeringsmodell(sak: Route.ComponentProps["loaderData"]["sak"]) {
-  const antallMisbrukstyper = sak.misbrukstyper?.length ?? 0;
-  const antallMerkinger = sak.merking?.length ?? 0;
+  const antallMisbrukstyper = sak.misbruktype.length;
+  const antallMerkinger = sak.merking ? 1 : 0;
   const unikePerioder = new Set(
     sak.ytelser.map((ytelse) => `${ytelse.periodeFra}-${ytelse.periodeTil}`),
   );
@@ -236,7 +235,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       const gammelStatus = sak.status;
 
       sak.status = "UTREDES";
-      sak.saksbehandler = saksbehandler;
+      sak.saksbehandlere.eier = { navIdent: saksbehandler, navn: saksbehandler };
 
       leggTilHendelse(sak, "SAK_TILDELT");
 
@@ -248,15 +247,12 @@ export async function action({ request, params }: Route.ActionArgs) {
       break;
     }
     case "videresend_seksjon": {
-      const nySeksjon = formData.get("seksjon") as string;
-
-      sak.mottakEnhet = nySeksjon;
-      leggTilHendelse(sak, "MOTTAKSENHET_ENDRET");
+      leggTilHendelse(sak, "VIDERESENDT_TIL_NAY_NFP");
       break;
     }
     case "henlegg": {
-      sak.status = "HENLAGT";
-      leggTilHendelse(sak, "SAK_HENLAGT");
+      sak.status = "AVSLUTTET";
+      leggTilHendelse(sak, "STATUS_ENDRET");
       break;
     }
     case "rediger_saksinformasjon": {
@@ -284,26 +280,15 @@ export async function action({ request, params }: Route.ActionArgs) {
       const eksisterendeYtelser = sak.ytelser;
 
       sak.kategori = data.kategori;
-      sak.misbrukstyper = data.misbruktype ? [data.misbruktype] : undefined;
-      sak.merking = data.merking ? [data.merking] : [];
-      sak.bakgrunn = sak.bakgrunn
-        ? {
-            ...sak.bakgrunn,
-            kilde: data.kilde,
-          }
-        : {
-            id: crypto.randomUUID(),
-            kilde: data.kilde,
-            innhold: "",
-            avsender: null,
-            vedlegg: [],
-            tilleggsopplysninger: null,
-          };
+      sak.misbruktype = data.misbruktype ? [data.misbruktype] : [];
+      sak.merking = data.merking ?? null;
+      sak.kilde = data.kilde;
       sak.ytelser = data.ytelser.map((ytelse, indeks) => ({
         id: eksisterendeYtelser[indeks]?.id ?? crypto.randomUUID(),
         type: ytelse,
         periodeFra: data.fraDato,
         periodeTil: data.tilDato,
+        belop: eksisterendeYtelser[indeks]?.belop ?? null,
       }));
       leggTilHendelse(sak, "SAKSINFORMASJON_ENDRET");
       break;
@@ -325,8 +310,8 @@ export async function action({ request, params }: Route.ActionArgs) {
       break;
     }
     case "legg_tilbake_i_ufordelt": {
-      sak.status = "OPPRETTET";
-      sak.saksbehandler = "";
+      sak.status = "UFORDELT";
+      sak.saksbehandlere.eier = null;
       leggTilHendelse(sak, "STATUS_ENDRET");
       break;
     }
@@ -335,8 +320,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       break;
     }
     case "ferdigstill_sak": {
-      const avslutningstype = formData.get("avslutningstype") as string;
-      sak.status = avslutningstype === "henlegg" ? "HENLAGT" : "AVSLUTTET";
+      sak.status = "AVSLUTTET";
       leggTilHendelse(sak, "STATUS_ENDRET");
       break;
     }
@@ -434,7 +418,6 @@ export default function SakDetaljSide() {
   const statusTekst = getStatus(sak);
   const kildeTekst = getKildeText(sak);
   const ytelseTyper = getYtelseTyper(sak);
-  const kontaktinformasjon = getKontaktinformasjon(sak);
   const erAktiv = erAktivSakKontrollsak(sak.status);
   const saksreferanse = getSaksreferanse(sak.id);
   const navn = getNavn(sak);
@@ -590,9 +573,7 @@ export default function SakDetaljSide() {
 
                                 if (
                                   lokaleVerdier.misbruktype &&
-                                  !gyldigeMisbrukstyper.includes(
-                                    lokaleVerdier.misbruktype as (typeof gyldigeMisbrukstyper)[number],
-                                  )
+                                  !gyldigeMisbrukstyper.includes(lokaleVerdier.misbruktype)
                                 ) {
                                   oppdaterLokaleVerdier("misbruktype", "");
                                 }
@@ -819,33 +800,6 @@ export default function SakDetaljSide() {
                 historikk={historikk}
                 filer={filer}
               />
-
-              {kontaktinformasjon && (
-                <Kort padding="space-6">
-                  <VStack gap="space-4">
-                    <Heading level="2" size="small">
-                      Kontaktinformasjon
-                    </Heading>
-                    {kontaktinformasjon.anonymt ? (
-                      <Tag variant="neutral" size="small">
-                        Anonymt tips
-                      </Tag>
-                    ) : (
-                      <VStack gap="space-2">
-                        {kontaktinformasjon.navn && (
-                          <Felt label="Navn">{kontaktinformasjon.navn}</Felt>
-                        )}
-                        {kontaktinformasjon.telefon && (
-                          <Felt label="Telefon">{kontaktinformasjon.telefon}</Felt>
-                        )}
-                        {kontaktinformasjon.epost && (
-                          <Felt label="E-post">{kontaktinformasjon.epost}</Felt>
-                        )}
-                      </VStack>
-                    )}
-                  </VStack>
-                </Kort>
-              )}
 
               <SakHistorikk sakId={sak.id} hendelser={historikk} />
             </VStack>

@@ -53,14 +53,14 @@ describe("SakDetaljSide render", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Rediger saksinformasjon" }));
     fireEvent.change(await screen.findByLabelText("Kategori"), {
-      target: { value: "ARBEID" },
+      target: { value: "MISBRUK" },
     });
 
     expect(await screen.findByLabelText("Misbruktype")).toBeDefined();
   });
 
   it("deaktiverer redigering for unsupported saksmodell", async () => {
-    mockKontrollsaker[0].misbrukstyper = ["Endret sivilstatus", "Skjult samliv"];
+    mockKontrollsaker[0].misbruktype = ["Endret sivilstatus", "Skjult samliv"];
 
     renderDetaljside();
 

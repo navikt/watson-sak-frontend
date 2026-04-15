@@ -31,44 +31,42 @@ export function lagMockKontrollsak(
   return {
     ...sak,
     id: lagMockUuid(entityBase),
+    saksbehandlere: {
+      ...sak.saksbehandlere,
+      eier: sak.saksbehandlere.eier
+        ? {
+            ...sak.saksbehandlere.eier,
+          }
+        : null,
+      deltMed: sak.saksbehandlere.deltMed.map((saksbehandler) => ({
+        ...saksbehandler,
+      })),
+      opprettetAv: {
+        ...sak.saksbehandlere.opprettetAv,
+      },
+    },
     ytelser: sak.ytelser.map((ytelse, indeks) => ({
       ...ytelse,
       id: lagMockUuid(entityBase + 100n + BigInt(indeks + 1)),
     })),
-    bakgrunn: sak.bakgrunn
-      ? {
-          ...sak.bakgrunn,
-          id: lagMockUuid(entityBase + 200n),
-          avsender: sak.bakgrunn.avsender
-            ? {
-                ...sak.bakgrunn.avsender,
-                id: lagMockUuid(entityBase + 300n),
-              }
-            : null,
-          vedlegg: sak.bakgrunn.vedlegg.map((vedlegg, indeks) => ({
-            ...vedlegg,
-            id: lagMockUuid(entityBase + 400n + BigInt(indeks + 1)),
-          })),
-        }
-      : null,
     resultat: sak.resultat
       ? {
           ...sak.resultat,
-          avklaring: sak.resultat.avklaring
-            ? {
-                ...sak.resultat.avklaring,
-                id: lagMockUuid(entityBase + 500n),
-              }
-            : null,
           utredning: sak.resultat.utredning
             ? {
                 ...sak.resultat.utredning,
-                id: lagMockUuid(entityBase + 600n),
+                id: lagMockUuid(entityBase + 500n),
               }
             : null,
           forvaltning: sak.resultat.forvaltning
             ? {
                 ...sak.resultat.forvaltning,
+                id: lagMockUuid(entityBase + 600n),
+              }
+            : null,
+          strafferettsligVurdering: sak.resultat.strafferettsligVurdering
+            ? {
+                ...sak.resultat.strafferettsligVurdering,
                 id: lagMockUuid(entityBase + 700n),
               }
             : null,

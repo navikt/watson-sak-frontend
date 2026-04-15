@@ -5,13 +5,12 @@ import {
   misbrukstyperPerKategori,
 } from "~/saker/kategorier";
 
-export const kildeAlternativer = ["INTERN", "EKSTERN", "ANONYM_TIPS", "PUBLIKUM"] as const;
+export const kildeAlternativer = ["INTERN", "EKSTERN", "ANONYM_TIPS"] as const;
 
 export const kildeEtiketter: Record<(typeof kildeAlternativer)[number], string> = {
   INTERN: "Intern",
   EKSTERN: "Ekstern",
   ANONYM_TIPS: "Anonymt tips",
-  PUBLIKUM: "Publikum",
 };
 
 export const kategoriAlternativer = kontrollsakKategoriVerdier;
@@ -75,7 +74,16 @@ function lagPåkrevdDatofelt(feltnavn: string) {
   );
 }
 
-const misbrukstypeSchema = z.enum(kontrollsakMisbrukstypeVerdier);
+const misbrukstypeSchema = z
+  .string()
+  .min(1)
+  .refine(
+    (misbruktype) =>
+      kontrollsakMisbrukstypeVerdier.includes(
+        misbruktype as (typeof kontrollsakMisbrukstypeVerdier)[number],
+      ),
+    "Ugyldig misbruktype",
+  );
 
 type SaksreglerShape = {
   fraDato: string;

@@ -10,13 +10,12 @@ function lagBackendHendelse(overrides: Partial<SakHendelse> = {}): SakHendelse {
     tidspunkt: "2026-03-31T10:15:00Z",
     hendelsesType: "SAK_OPPRETTET",
     sakId: "00000000-0000-0000-0000-000000000124",
-    kategori: "ARBEID",
+    kategori: "MISBRUK",
     prioritet: "NORMAL",
-    status: "OPPRETTET",
+    status: "UFORDELT",
     ytelseTyper: ["Sykepenger"],
     kilde: "ANONYM_TIPS",
     avklaringResultat: null,
-    mottakEnhet: "4812",
     ...overrides,
   };
 }
@@ -33,25 +32,24 @@ describe("SakHistorikk", () => {
     renderMedRouter(<SakHistorikk sakId="test-sak-id" hendelser={[lagBackendHendelse()]} />);
 
     expect(screen.getByText("Sak opprettet")).toBeDefined();
-    expect(screen.getByText(/Status: Opprettet/)).toBeDefined();
-    expect(screen.getByText(/Mottaksenhet: 4812/)).toBeDefined();
+    expect(screen.getByText(/Status: Ufordelt/)).toBeDefined();
+    expect(screen.getByText(/Misbruk · Normal/)).toBeDefined();
   });
 
-  it("renderer avklaringshendelse med avklaringsresultat", () => {
+  it("renderer statushendelse med avsluttet status", () => {
     renderMedRouter(
       <SakHistorikk
         sakId="test-sak-id"
         hendelser={[
           lagBackendHendelse({
-            hendelsesType: "AVKLARING_OPPRETTET",
-            status: "HENLAGT",
-            avklaringResultat: "HENLAGT",
+            hendelsesType: "STATUS_ENDRET",
+            status: "AVSLUTTET",
           }),
         ]}
       />,
     );
 
-    expect(screen.getByText("Avklaring opprettet")).toBeDefined();
-    expect(screen.getByText(/Avklaringsresultat: HENLAGT/)).toBeDefined();
+    expect(screen.getByText("Status endret")).toBeDefined();
+    expect(screen.getByText(/Status: Avsluttet/)).toBeDefined();
   });
 });

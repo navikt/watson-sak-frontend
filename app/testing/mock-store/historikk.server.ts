@@ -7,14 +7,11 @@ const historikkMap = new Map<string, SakHendelse[]>();
 
 type BackendHendelsestype =
   | "SAK_OPPRETTET"
-  | "AVKLARING_OPPRETTET"
   | "SAK_TILDELT"
   | "STATUS_ENDRET"
   | "SAKSINFORMASJON_ENDRET"
-  | "MOTTAKSENHET_ENDRET"
   | "VIDERESENDT_TIL_NAY_NFP"
   | "POLITIANMELDT"
-  | "SAK_HENLAGT"
   | "TILGANG_DELT"
   | "YTELSE_STANSET"
   | "SAK_SATT_I_BERO"
@@ -64,15 +61,14 @@ function lagSnapshotFraKontrollsak(
     prioritet: sak.prioritet,
     status: sak.status,
     ytelseTyper: sak.ytelser.map((ytelse) => ytelse.type),
-    kilde: sak.bakgrunn?.kilde ?? null,
-    avklaringResultat: sak.resultat?.avklaring?.resultat ?? null,
-    mottakEnhet: sak.mottakEnhet,
+    kilde: sak.kilde,
+    avklaringResultat: null,
   };
 }
 
 export function leggTilHendelse(
   sak: KontrollsakResponse,
-  type: Exclude<BackendHendelsestype, "SAK_OPPRETTET" | "AVKLARING_OPPRETTET" | "MANUELL_NOTAT">,
+  type: Exclude<BackendHendelsestype, "SAK_OPPRETTET" | "MANUELL_NOTAT">,
   tidspunkt?: string,
 ) {
   return leggTilBackendHendelse(sak.id, type, lagSnapshotFraKontrollsak(sak), tidspunkt);
@@ -104,15 +100,6 @@ export function leggTilManuellHendelse(
 function genererHistorikk(saker: KontrollsakResponse[]) {
   for (const sak of saker) {
     leggTilBackendHendelse(sak.id, "SAK_OPPRETTET", lagSnapshotFraKontrollsak(sak), sak.opprettet);
-
-    if (sak.resultat?.avklaring) {
-      leggTilBackendHendelse(
-        sak.id,
-        "AVKLARING_OPPRETTET",
-        lagSnapshotFraKontrollsak(sak),
-        `${sak.resultat.avklaring.dato}T00:00:00Z`,
-      );
-    }
   }
 }
 
