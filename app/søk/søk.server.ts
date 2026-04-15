@@ -1,7 +1,7 @@
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
 import { getSaksreferanse } from "~/saker/id";
 import type { KontrollsakResponse } from "~/saker/types.backend";
-import { getBeskrivelse, getPersonIdent, getYtelseTyper } from "~/saker/visning";
+import { getPersonIdent, getYtelseTyper } from "~/saker/visning";
 import { getKategoriText } from "~/saker/selectors";
 
 type Søksak = KontrollsakResponse;
@@ -22,10 +22,6 @@ export function søkSaker(søketekst: string): Søksak[] {
 
     if (getYtelseTyper(sak).some((ytelse) => ytelse.toLowerCase().includes(normalisert)))
       return true;
-
-    const beskrivelse = getBeskrivelse(sak);
-    if (beskrivelse?.toLowerCase().includes(normalisert)) return true;
-
     return false;
   });
 }

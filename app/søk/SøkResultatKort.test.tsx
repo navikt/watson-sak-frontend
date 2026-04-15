@@ -9,29 +9,35 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
   return {
     id: lagMockSakUuid("101", 9),
     personIdent: "10987654321",
-    saksbehandler: "Z123456",
-    status: "OPPRETTET",
-    kategori: "ARBEID",
+    saksbehandlere: {
+      eier: { navIdent: "Z123456", navn: "Z123456" },
+      deltMed: [],
+      opprettetAv: { navIdent: "Z654321", navn: "Z654321" },
+    },
+    status: "UFORDELT",
+    kategori: "MISBRUK",
+    kilde: "ANONYM_TIPS",
+    misbruktype: ["Svart arbeid"],
     prioritet: "NORMAL",
-    mottakEnhet: "4812",
-    mottakSaksbehandler: "Z654321",
     ytelser: [
       {
         id: "00000000-0000-4000-8000-000000090101",
         type: "Dagpenger",
         periodeFra: "2026-01-01",
         periodeTil: "2026-01-31",
+        belop: null,
       },
     ],
-    bakgrunn: {
-      id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-      kilde: "ANONYM_TIPS",
-      innhold: "Kontrollsak fra backend-shaped mockdatasett.",
-      avsender: null,
-      vedlegg: [],
-      tilleggsopplysninger: null,
+    merking: null,
+    resultat: {
+      utredning: {
+        id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        opprettet: "2026-02-03T10:11:12Z",
+        resultat: "Kontrollsak fra backend-shaped mockdatasett.",
+      },
+      forvaltning: null,
+      strafferettsligVurdering: null,
     },
-    resultat: null,
     opprettet: "2026-02-03T10:11:12Z",
     oppdatert: null,
     ...overrides,
@@ -54,6 +60,12 @@ describe("SøkResultatKort", () => {
     expect(screen.getByText("3. feb. 2026")).toBeDefined();
     expect(screen.getByText("Anonymt tips")).toBeDefined();
     expect(screen.getByText("Fnr: 10987654321")).toBeDefined();
-    expect(screen.getByText("Arbeid")).toBeDefined();
+    expect(screen.getByText("Misbruk")).toBeDefined();
+  });
+
+  it("viser ikke utredningsresultat som beskrivelse i søkeresultatet", () => {
+    renderMedRouter(<SøkResultatKort sak={lagKontrollsak()} />);
+
+    expect(screen.queryByText("Kontrollsak fra backend-shaped mockdatasett.")).toBeNull();
   });
 });

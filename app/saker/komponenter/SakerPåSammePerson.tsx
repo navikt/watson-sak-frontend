@@ -66,6 +66,7 @@ function SakKort({ sak }: SakKortProps) {
   const ytelseTyper = getYtelseTyper(sak);
   const tags = getTags(sak);
   const kildeTekst = getKildeText(sak);
+  const opprettetAv = sak.saksbehandlere.opprettetAv.navn ?? sak.saksbehandlere.opprettetAv.navIdent;
 
   const tittelDeler = [personIdent];
   if (navn) tittelDeler.push(navn);
@@ -83,10 +84,10 @@ function SakKort({ sak }: SakKortProps) {
               Saksid: <span className="font-bold">{saksreferanse}</span>
             </BodyShort>
             <BodyShort size="small">
-              Enhet: <span className="font-bold">{sak.mottakEnhet}</span>
+              Opprettet av: <span className="font-bold">{opprettetAv}</span>
             </BodyShort>
             <BodyShort size="small">
-              Saksbehandler: <span className="font-bold">{sak.saksbehandler}</span>
+              Eier: <span className="font-bold">{sak.saksbehandlere.eier?.navn ?? "Ufordelt"}</span>
             </BodyShort>
             <Tag variant={getStatusVariantForSak(sak)} size="small">
               {statusTekst}

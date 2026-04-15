@@ -16,10 +16,10 @@ describe("søkSaker", () => {
     expect(resultater.some((sak) => sak.id === lagMockSakUuid("201", 2))).toBe(true);
   });
 
-  it("finner backend-shapet kontrollsak på bakgrunn.innhold", () => {
+  it("finner ikke lenger saker på utredningsresultat/beskrivelse", () => {
     const resultater = søkSaker("Mulig dobbeltutbetaling av dagpenger");
 
-    expect(resultater.some((sak) => sak.id === lagMockSakUuid("201", 2))).toBe(true);
+    expect(resultater.some((sak) => sak.id === lagMockSakUuid("201", 2))).toBe(false);
   });
 
   it("beholder søk på ytelse for eksisterende brukerflyt", () => {

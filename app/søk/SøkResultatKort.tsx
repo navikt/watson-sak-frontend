@@ -1,12 +1,12 @@
 import { CalendarIcon, TagIcon } from "@navikt/aksel-icons";
-import { BodyShort, Detail, Heading, HStack, Tag, VStack } from "@navikt/ds-react";
+import { Detail, Heading, HStack, Tag, VStack } from "@navikt/ds-react";
 import { Link } from "react-router";
 import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { getKategoriText, getOpprettetDato, getStatusVariantForSak } from "~/saker/selectors";
-import { getBeskrivelse, getKildeText, getPersonIdent, getStatus } from "~/saker/visning";
+import { getKildeText, getPersonIdent, getStatus } from "~/saker/visning";
 import { formaterDato } from "~/utils/date-utils";
 
 interface SøkResultatKortProps {
@@ -48,12 +48,6 @@ export function SøkResultatKort({ sak }: SøkResultatKortProps) {
             </HStack>
           )}
         </HStack>
-
-        {getBeskrivelse(sak) && (
-          <BodyShort size="small" truncate>
-            {getBeskrivelse(sak)}
-          </BodyShort>
-        )}
       </VStack>
     </Kort>
   );

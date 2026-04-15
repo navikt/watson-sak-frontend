@@ -12,29 +12,35 @@ function lagKontrollsak(
   return {
     id: lagMockSakUuid(idNum, 1),
     personIdent: "12345678901",
-    saksbehandler: "Lise Raus",
+    saksbehandlere: {
+      eier: { navIdent: "Z111111", navn: "Lise Raus" },
+      deltMed: [],
+      opprettetAv: { navIdent: "Z999999", navn: "Øst" },
+    },
     status: "UTREDES",
-    kategori: "SAMLIV",
+    kategori: "MISBRUK",
+    kilde: "EKSTERN",
+    misbruktype: ["Skjult samliv"],
     prioritet: "NORMAL",
-    mottakEnhet: "Øst",
-    mottakSaksbehandler: "Z999999",
     ytelser: [
       {
         id: `${idNum}-ytelse-1`,
         type: "Foreldrepenger",
         periodeFra: "2022-01-01",
         periodeTil: "2025-01-01",
+        belop: null,
       },
     ],
-    bakgrunn: {
-      id: "00000000-0000-4000-8000-000000000001",
-      kilde: "EKSTERN",
-      innhold: "Tips om misbruk.",
-      avsender: null,
-      vedlegg: [],
-      tilleggsopplysninger: null,
+    merking: null,
+    resultat: {
+      utredning: {
+        id: "00000000-0000-4000-8000-000000000001",
+        opprettet: "2026-02-01T00:00:00Z",
+        resultat: "Tips om misbruk.",
+      },
+      forvaltning: null,
+      strafferettsligVurdering: null,
     },
-    resultat: null,
     opprettet: "2026-02-01T00:00:00Z",
     oppdatert: null,
     ...overrides,
@@ -89,5 +95,17 @@ describe("SakerPåSammePerson", () => {
 
     expect(screen.getByRole("button", { name: "Koble til saken" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Skjul" })).toBeDefined();
+  });
+
+  it("viser opprettet av i stedet for saksenhet i kompaktraden", () => {
+    renderMedRouter(
+      <SakerPåSammePerson
+        saker={[lagKontrollsak("203")]}
+        gjeldendeSakId={lagMockSakUuid("105", 1)}
+      />,
+    );
+
+    expect(screen.getByText(/Opprettet av:/)).toBeDefined();
+    expect(screen.queryByText(/Saksenhet:/)).toBeNull();
   });
 });
