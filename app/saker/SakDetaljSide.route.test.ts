@@ -56,6 +56,25 @@ describe("SakDetaljSide action", () => {
     expect(statusendringerEtter).toHaveLength(statusendringerFør.length);
     expect(tildelingerEtter).toHaveLength(tildelingerFør.length + 1);
   });
+
+  it("returnerer lokal feilmelding når koble sak ikke er tilgjengelig ennå", async () => {
+    const formData = new FormData();
+    formData.set("handling", "koble_sak");
+    formData.set("relatertSakId", lagMockSakUuid("114", 1));
+
+    const resultat = await action({
+      request: new Request(`http://localhost/saker/${utredningSakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: utredningSakRef },
+    } as Route.ActionArgs);
+
+    expect(resultat).toEqual({
+      ok: false,
+      feil: { skjema: ["Denne funksjonen er ikke tilgjengelig ennå."] },
+    });
+  });
 });
 
 describe("SakDetaljSide helper-integrasjon", () => {

@@ -1,5 +1,6 @@
 import { ChevronDownIcon, ChevronUpIcon, LinkIcon } from "@navikt/aksel-icons";
 import {
+  Alert,
   BodyShort,
   Box,
   Button,
@@ -10,8 +11,8 @@ import {
   Tag,
   VStack,
 } from "@navikt/ds-react";
-import { Form } from "react-router";
 import { useState } from "react";
+import { useFetcher } from "react-router";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { getSaksreferanse } from "~/saker/id";
 import {
@@ -41,6 +42,10 @@ interface SakKortProps {
   sak: KontrollsakResponse;
 }
 
+type KobleSakActionResult =
+  | { ok: true }
+  | { ok: false; feil: { skjema?: string[] } };
+
 function SakFelt({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <VStack gap="space-4">
@@ -54,6 +59,7 @@ function SakFelt({ label, children }: { label: string; children: React.ReactNode
 
 function SakKort({ sak }: SakKortProps) {
   const [åpen, setÅpen] = useState(false);
+  const fetcher = useFetcher<KobleSakActionResult>();
   const saksreferanse = getSaksreferanse(sak.id);
   const personIdent = getPersonIdent(sak);
   const navn = getNavn(sak);
@@ -66,10 +72,7 @@ function SakKort({ sak }: SakKortProps) {
   const ytelseTyper = getYtelseTyper(sak);
   const tags = getTags(sak);
   const kildeTekst = getKildeText(sak);
-
-  const tittelDeler = [personIdent];
-  if (navn) tittelDeler.push(navn);
-  if (alder !== null) tittelDeler.push(`(${alder})`);
+  const kobleSakFeil = fetcher.data?.ok === false ? fetcher.data.feil.skjema?.[0] : undefined;
 
   return (
     <Box borderRadius="8" background="raised" padding="space-16" shadow="dialog">
@@ -183,19 +186,22 @@ function SakKort({ sak }: SakKortProps) {
             </div>
 
             <HStack justify="end">
-              <Form method="post">
-                <input type="hidden" name="handling" value="koble_sak" />
-                <input type="hidden" name="relatertSakId" value={sak.id} />
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="small"
-                  icon={<LinkIcon aria-hidden />}
-                  iconPosition="right"
-                >
-                  Koble til saken
-                </Button>
-              </Form>
+              <fetcher.Form method="post">
+                <VStack gap="space-4" align="end">
+                  {kobleSakFeil && <Alert variant="error" inline>{kobleSakFeil}</Alert>}
+                  <input type="hidden" name="handling" value="koble_sak" />
+                  <input type="hidden" name="relatertSakId" value={sak.id} />
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="small"
+                    icon={<LinkIcon aria-hidden />}
+                    iconPosition="right"
+                  >
+                    Koble til saken
+                  </Button>
+                </VStack>
+              </fetcher.Form>
             </HStack>
           </>
         )}
