@@ -42,9 +42,7 @@ interface SakKortProps {
   sak: KontrollsakResponse;
 }
 
-type KobleSakActionResult =
-  | { ok: true }
-  | { ok: false; feil: { skjema?: string[] } };
+type KobleSakActionResult = { ok: true } | { ok: false; feil: { skjema?: string[] } };
 
 function SakFelt({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -188,7 +186,11 @@ function SakKort({ sak }: SakKortProps) {
             <HStack justify="end">
               <fetcher.Form method="post">
                 <VStack gap="space-4" align="end">
-                  {kobleSakFeil && <Alert variant="error" inline>{kobleSakFeil}</Alert>}
+                  {kobleSakFeil && (
+                    <Alert variant="error" inline>
+                      {kobleSakFeil}
+                    </Alert>
+                  )}
                   <input type="hidden" name="handling" value="koble_sak" />
                   <input type="hidden" name="relatertSakId" value={sak.id} />
                   <Button

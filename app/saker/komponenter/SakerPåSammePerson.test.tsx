@@ -115,8 +115,6 @@ describe("SakerPåSammePerson", () => {
     fireEvent.click(screen.getByRole("button", { name: "Vis detaljer" }));
     fireEvent.click(screen.getByRole("button", { name: "Koble til saken" }));
 
-    expect(
-      await screen.findByText("Denne funksjonen er ikke tilgjengelig ennå."),
-    ).toBeDefined();
+    expect(await screen.findByText("Denne funksjonen er ikke tilgjengelig ennå.")).toBeDefined();
   });
 });
