@@ -4,19 +4,34 @@ import { useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
+import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
 
 interface DelTilgangModalProps {
   sakId: string;
-  saksbehandlere: string[];
+  saksbehandlerDetaljer: KontrollsakSaksbehandler[];
   åpen: boolean;
   onClose: () => void;
 }
 
-export function DelTilgangModal({ sakId, saksbehandlere, åpen, onClose }: DelTilgangModalProps) {
+export function DelTilgangModal({
+  sakId,
+  saksbehandlerDetaljer,
+  åpen,
+  onClose,
+}: DelTilgangModalProps) {
   const [valgtSaksbehandler, setValgtSaksbehandler] = useState<string | undefined>(undefined);
   const modalRef = useRef<HTMLDialogElement>(null);
   const fetcher = useFetcher();
   const saksreferanse = getSaksreferanse(sakId);
+  const alternativer = saksbehandlerDetaljer.map(
+    (saksbehandler) => `${saksbehandler.navn} (${saksbehandler.navIdent})`,
+  );
+
+  function finnNavIdentFraValg(valg: string) {
+    return saksbehandlerDetaljer.find(
+      (saksbehandler) => `${saksbehandler.navn} (${saksbehandler.navIdent})` === valg,
+    )?.navIdent;
+  }
 
   function handleClose() {
     setValgtSaksbehandler(undefined);
@@ -24,10 +39,12 @@ export function DelTilgangModal({ sakId, saksbehandlere, åpen, onClose }: DelTi
   }
 
   function handleDel() {
-    if (!valgtSaksbehandler) return;
+    const navIdent = valgtSaksbehandler ? finnNavIdentFraValg(valgtSaksbehandler) : undefined;
+
+    if (!navIdent) return;
 
     fetcher.submit(
-      { handling: "del_tilgang", saksbehandler: valgtSaksbehandler },
+      { handling: "del_tilgang", navIdent },
       {
         method: "post",
         action: RouteConfig.SAKER_DETALJ.replace(":sakId", saksreferanse),
@@ -49,7 +66,7 @@ export function DelTilgangModal({ sakId, saksbehandlere, åpen, onClose }: DelTi
           <BodyShort>Velg saksbehandler som skal få tilgang til sak {saksreferanse}.</BodyShort>
           <UNSAFE_Combobox
             label="Saksbehandler"
-            options={saksbehandlere}
+            options={alternativer}
             selectedOptions={valgtSaksbehandler ? [valgtSaksbehandler] : []}
             onToggleSelected={(option, isSelected) => {
               setValgtSaksbehandler(isSelected ? option : undefined);
