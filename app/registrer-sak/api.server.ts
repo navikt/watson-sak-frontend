@@ -1,5 +1,6 @@
 import { BACKEND_API_URL, skalBrukeMockdata } from "~/config/env.server";
 import { logger } from "~/logging/logging";
+import { kontrollsakKildeVerdier, kontrollsakMisbrukstypeVerdier } from "~/saker/kategorier";
 import type {
   KontrollsakKategori,
   KontrollsakKilde,
@@ -61,7 +62,7 @@ function erGyldigKategori(verdi: string): verdi is KontrollsakKategori {
 }
 
 function erGyldigKilde(verdi: string): verdi is KontrollsakKilde {
-  return ["NAV_KONTROLL", "ANNET", "PUBLIKUM", "POLITIET"].includes(verdi);
+  return kontrollsakKildeVerdier.includes(verdi as KontrollsakKilde);
 }
 
 function erGyldigPrioritet(verdi: string): verdi is KontrollsakPrioritet {
@@ -70,24 +71,7 @@ function erGyldigPrioritet(verdi: string): verdi is KontrollsakPrioritet {
 
 function erGyldigeMisbrukstyper(verdier: string[]): verdier is KontrollsakMisbrukstype[] {
   return verdier.every((verdi) =>
-    [
-      "BEHANDLER_25_7",
-      "L_TAKSTER_BEHANDLER",
-      "L_TAKSTER_FORETAK",
-      "HVIT_INNTEKT",
-      "FIKTIVT_ARBEIDSFORHOLD",
-      "SKJULT_ARBEIDSINNTEKT",
-      "SVART_ARBEID",
-      "SKJULT_SAMLIV",
-      "ENDRET_SIVILSTATUS",
-      "MEDLEMSKAP_BORTFALT",
-      "INNENFOR_EOS",
-      "UTENFOR_EOS",
-      "IDENTITETSMISBRUK",
-      "OPPHOLD_PAA_FEIL_GRUNNLAG",
-      "MISBRUK_AV_TILTAKSPLASS",
-      "AVBRUTT_TILTAK",
-    ].includes(verdi),
+    kontrollsakMisbrukstypeVerdier.includes(verdi as KontrollsakMisbrukstype),
   );
 }
 
