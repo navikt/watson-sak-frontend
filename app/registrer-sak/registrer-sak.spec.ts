@@ -56,7 +56,7 @@ test.describe("Opprett sak", () => {
     await page.getByRole("option", { name: "Dagpenger" }).click();
 
     await page.getByLabel("Enhet").selectOption("ØST");
-    await page.getByLabel("Kilde").selectOption("INTERN");
+    await page.getByLabel("Kilde").selectOption("NAV_KONTROLL");
 
     await page.getByRole("button", { name: "Opprett sak" }).click();
 

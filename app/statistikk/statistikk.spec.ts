@@ -16,7 +16,7 @@ test.describe("Statistikk", () => {
     await expect(nøkkeltall.getByText("Totalt")).toBeVisible();
     await expect(nøkkeltall.getByText("Under utredning")).toBeVisible();
     await expect(nøkkeltall.getByText("Avsluttet")).toBeVisible();
-    await expect(nøkkeltall.getByText("Henlagt")).toBeVisible();
+    await expect(nøkkeltall.getByText("Ufordelt")).toBeVisible();
   });
 
   test("viser saker per status som søylediagram", async ({ page }) => {

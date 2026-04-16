@@ -19,7 +19,7 @@ test.describe("Landingsside", () => {
 
   test("viser en dynamisk oppsummeringslinje i velkomstseksjonen", async ({ page }) => {
     await expect(
-      page.getByText("Akkurat nå har du 3 saker til utredning og 1 tips til vurdering."),
+      page.getByText("Akkurat nå har du 3 tips til vurdering og 3 saker til utredning."),
     ).toBeVisible();
   });
 
@@ -78,6 +78,7 @@ test.describe("Landingsside", () => {
     await expect(page.getByRole("heading", { name: "Sak #103 må vurderes" })).toBeVisible();
 
     await page.getByRole("button", { name: "Marker som lest" }).first().click();
+    await page.reload({ waitUntil: "networkidle" });
 
     await expect(page.getByRole("heading", { name: "Sak #103 må vurderes" })).not.toBeVisible();
     await expect(page.getByRole("heading", { name: "Sak #102 har ny hendelse" })).toBeVisible();

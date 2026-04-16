@@ -7,11 +7,11 @@ test.describe("Sakdetalj", () => {
   test.beforeEach(async ({ page }) => {
     await resetMockData(page);
     await page.goto("/saker/101", { waitUntil: "networkidle" });
-    await expect(page.getByRole("heading", { name: /^Sak 101$/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^Sak 101/ })).toBeVisible();
   });
 
   test("viser saksinformasjon", async ({ page }) => {
-    await expect(page.getByRole("heading", { name: /^Sak 101$/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^Sak 101/ })).toBeVisible();
     await expect(page.getByText("Personnummer")).toBeVisible();
   });
 
@@ -49,7 +49,7 @@ test.describe("Sakdetalj", () => {
     await page.getByRole("button", { name: "Rediger saksinformasjon" }).click();
 
     await page.getByLabel("Kategori").selectOption("ARBEID");
-    await page.getByLabel("Misbruktype").selectOption("Svart arbeid");
+    await page.getByLabel("Misbruktype").selectOption("SVART_ARBEID");
     await page.getByLabel("Merking (valgfritt)").selectOption("PRIORITERT");
     await page.getByLabel("Kilde").selectOption("PUBLIKUM");
     await page.getByLabel("Fra dato").fill("01.02.2026");
