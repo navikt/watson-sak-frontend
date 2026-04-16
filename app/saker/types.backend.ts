@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { kontrollsakKategoriVerdier, kontrollsakKildeVerdier, kontrollsakMisbrukstypeVerdier } from "./kategorier";
+import {
+  kontrollsakKategoriVerdier,
+  kontrollsakKildeVerdier,
+  kontrollsakMisbrukstypeVerdier,
+} from "./kategorier";
 
 const kontrollsakStatusSchema = z.enum([
   "UFORDELT",

@@ -6,10 +6,7 @@ import type {
   KontrollsakStatus,
   KontrollsakYtelse,
 } from "./types.backend";
-import {
-  kontrollsakKategoriEtiketter,
-  kontrollsakMisbrukstypeEtiketter,
-} from "./kategorier";
+import { kontrollsakKategoriEtiketter, kontrollsakMisbrukstypeEtiketter } from "./kategorier";
 
 export type { KontrollsakStatus };
 
@@ -103,7 +100,7 @@ export function getYtelseTyper(sak: KontrollsakResponse): string[] {
   return hentYtelseTyper(sak.ytelser);
 }
 
-export function getBeskrivelse(sak: KontrollsakResponse): string | null {
+export function getBeskrivelse(_sak: KontrollsakResponse): string | null {
   return null;
 }
 
@@ -111,7 +108,7 @@ export function getKildeText(sak: KontrollsakResponse): string {
   return formaterKilde(sak.kilde);
 }
 
-export function getKontaktinformasjon(sak: KontrollsakResponse) {
+export function getKontaktinformasjon(_sak: KontrollsakResponse) {
   return null;
 }
 

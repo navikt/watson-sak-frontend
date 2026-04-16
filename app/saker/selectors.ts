@@ -58,7 +58,7 @@ export function getNavn(sak: KontrollsakResponse): string | null {
   return sak.personNavn;
 }
 
-export function getAlder(sak: KontrollsakResponse): number | null {
+export function getAlder(_sak: KontrollsakResponse): number | null {
   return null;
 }
 
