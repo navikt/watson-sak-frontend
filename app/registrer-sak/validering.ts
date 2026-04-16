@@ -2,7 +2,6 @@ import { z } from "zod";
 import {
   kontrollsakKategoriVerdier,
   kontrollsakKildeVerdier,
-  kontrollsakMisbrukstypeEtiketter,
   kontrollsakMisbrukstypeVerdier,
   misbrukstyperPerKategori,
 } from "~/saker/kategorier";
@@ -36,8 +35,6 @@ export const merkingEtiketter: Record<(typeof merkingAlternativer)[number], stri
   POLITIANMELDELSE: "Politianmeldelse",
   ANNET: "Annet",
 };
-
-export const misbrukstypeEtiketter = kontrollsakMisbrukstypeEtiketter;
 
 export const enhetAlternativer = ["ØST", "VEST", "NORD", "SØR", "OSLO"] as const;
 

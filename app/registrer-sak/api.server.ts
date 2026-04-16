@@ -40,7 +40,10 @@ export async function opprettKontrollsak({
   payload,
 }: OpprettKontrollsakArgs): Promise<void> {
   if (skalBrukeMockdata) {
-    const saksbehandler = payload.saksbehandlere?.eier?.navIdent ?? payload.saksbehandlere?.deltMed?.[0]?.navIdent ?? "Ukjent";
+    const saksbehandler =
+      payload.saksbehandlere?.eier?.navIdent ??
+      payload.saksbehandlere?.deltMed?.[0]?.navIdent ??
+      "Ukjent";
     const enhet = payload.saksbehandlere?.eier?.enhet ?? "Ukjent";
     leggTilMockSak(payload.personIdent, saksbehandler, enhet);
     return;
