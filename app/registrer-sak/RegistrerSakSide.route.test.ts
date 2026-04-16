@@ -3,7 +3,7 @@ import type { Route } from "./+types/RegistrerSakSide.route";
 
 const hentInnloggetBrukerMock = vi.fn().mockResolvedValue({
   navIdent: "Z123456",
-  name: "Ola Nordmann",
+  name: "Test Saksbehandler",
   token: "token-123",
   organisasjoner: "4812, 9999",
 });
@@ -21,7 +21,7 @@ describe("OpprettSakSide action", () => {
     vi.clearAllMocks();
     hentInnloggetBrukerMock.mockResolvedValue({
       navIdent: "Z123456",
-      name: "Ola Nordmann",
+      name: "Test Saksbehandler",
       token: "token-123",
       organisasjoner: "4812, 9999",
     });
@@ -33,6 +33,7 @@ describe("OpprettSakSide action", () => {
 
     const formData = new FormData();
     formData.set("personIdent", "12345678901");
+    formData.set("personNavn", "Ola Testesen");
     formData.append("ytelser", "Dagpenger");
     formData.append("ytelser", "AAP");
     formData.set("fraDato", "2026-01-01");
@@ -54,11 +55,11 @@ describe("OpprettSakSide action", () => {
       token: "token-123",
       payload: {
         personIdent: "12345678901",
-        personNavn: "Ola Nordmann",
+        personNavn: "Ola Testesen",
         saksbehandlere: {
           eier: {
             navIdent: "Z123456",
-            navn: "Ola Nordmann",
+            navn: "Test Saksbehandler",
             enhet: "4812",
           },
           deltMed: [],
@@ -94,7 +95,7 @@ describe("OpprettSakSide action", () => {
   it("feiler når innlogget bruker mangler gyldig mottakende enhet", async () => {
     hentInnloggetBrukerMock.mockResolvedValue({
       navIdent: "Z123456",
-      name: "Ola Nordmann",
+      name: "Test Saksbehandler",
       token: "token-123",
       organisasjoner: "Ukjent",
     });
@@ -103,6 +104,7 @@ describe("OpprettSakSide action", () => {
 
     const formData = new FormData();
     formData.set("personIdent", "12345678901");
+    formData.set("personNavn", "Ola Testesen");
     formData.append("ytelser", "Dagpenger");
     formData.set("fraDato", "2026-01-01");
     formData.set("tilDato", "2026-12-31");
@@ -144,15 +146,16 @@ describe("byggOpprettKontrollsakPayload", () => {
         },
         navIdent: "Z123456",
         mottakEnhet: "4812",
-        navn: "Ola Nordmann",
+        personNavn: "Ola Testesen",
+        saksbehandlerNavn: "Test Saksbehandler",
       }),
     ).toEqual({
       personIdent: "12345678901",
-      personNavn: "Ola Nordmann",
+      personNavn: "Ola Testesen",
       saksbehandlere: {
         eier: {
           navIdent: "Z123456",
-          navn: "Ola Nordmann",
+          navn: "Test Saksbehandler",
           enhet: "4812",
         },
         deltMed: [],

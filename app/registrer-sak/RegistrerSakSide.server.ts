@@ -43,20 +43,22 @@ export function byggOpprettKontrollsakPayload({
   skjema,
   navIdent,
   mottakEnhet,
-  navn,
+  personNavn,
+  saksbehandlerNavn,
 }: {
   skjema: OpprettSakSkjema;
   navIdent: string;
   mottakEnhet: string;
-  navn: string;
+  personNavn: string;
+  saksbehandlerNavn: string;
 }): OpprettKontrollsakRequest {
   return {
     personIdent: skjema.personIdent,
-    personNavn: navn,
+    personNavn,
     saksbehandlere: {
       eier: {
         navIdent,
-        navn,
+        navn: saksbehandlerNavn,
         enhet: mottakEnhet,
       },
       deltMed: [],
@@ -89,6 +91,7 @@ export async function action({ request }: Route.ActionArgs) {
 
   const rådata = {
     personIdent: formData.get("personIdent"),
+    personNavn: formData.get("personNavn"),
     ytelser: formData.getAll("ytelser"),
     fraDato: formData.get("fraDato") || undefined,
     tilDato: formData.get("tilDato") || undefined,
@@ -109,6 +112,12 @@ export async function action({ request }: Route.ActionArgs) {
 
   const innloggetBruker = await hentInnloggetBruker({ request });
   const data = resultat.data;
+  const personNavn = formData.get("personNavn");
+
+  if (typeof personNavn !== "string" || personNavn.trim() === "") {
+    return { feil: { personIdent: ["Mangler navn på personen som saken opprettes for"] } };
+  }
+
   const mottakEnhet = hentMottakEnhet(innloggetBruker.organisasjoner);
 
   await opprettKontrollsak({
@@ -117,7 +126,8 @@ export async function action({ request }: Route.ActionArgs) {
       skjema: data,
       navIdent: innloggetBruker.navIdent,
       mottakEnhet,
-      navn: innloggetBruker.name,
+      personNavn,
+      saksbehandlerNavn: innloggetBruker.name,
     }),
   });
 

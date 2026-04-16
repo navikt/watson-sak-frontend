@@ -193,6 +193,7 @@ export default function OpprettSakSide() {
                   name="personIdent"
                   value={person.personnummer.replace(/\s/g, "")}
                 />
+                <input type="hidden" name="personNavn" value={person.navn} />
 
                 <VStack gap="space-40">
                   <Heading level="2" size="medium">
