@@ -75,12 +75,44 @@ describe("normaliserLegacyKontrollsak", () => {
     expect(sak.kilde).toBe("ANNET");
     expect(sak.misbruktype).toEqual([]);
     expect(sak.personNavn).toBe("Ukjent navn");
-    expect(sak.saksbehandlere.eier).toEqual({
+    expect(sak.saksbehandlere.eier).toBeNull();
+    expect(sak.saksbehandlere.opprettetAv).toEqual({
       navIdent: "Z999999",
       navn: "Ukjent",
       enhet: null,
     });
     expect(sak.ytelser[0]?.id).toBe("00000000-0000-4000-8000-000004007101");
     expect(sak.ytelser[0]?.belop).toBeNull();
+  });
+
+  it("setter eier til null når legacy-status normaliseres til ufordelt", () => {
+    const sak = normaliserLegacyKontrollsak(
+      {
+        id: "101",
+        personIdent: "12345678901",
+        navn: "Ola Nordmann",
+        saksbehandler: "Z123456",
+        mottakEnhet: "4812",
+        status: "OPPRETTET",
+        kategori: "ARBEID",
+        ytelser: [
+          {
+            type: "Dagpenger",
+            periodeFra: "2026-01-01",
+            periodeTil: "2026-01-31",
+          },
+        ],
+        opprettet: "2026-01-01T00:00:00Z",
+      },
+      1,
+    );
+
+    expect(sak.status).toBe("UFORDELT");
+    expect(sak.saksbehandlere.eier).toBeNull();
+    expect(sak.saksbehandlere.opprettetAv).toEqual({
+      navIdent: "Z123456",
+      navn: "Z123456",
+      enhet: "4812",
+    });
   });
 });

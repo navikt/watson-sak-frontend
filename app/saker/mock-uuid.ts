@@ -30,42 +30,6 @@ function lagMockEntityUuid(fixtureId: string, namespace: number, offset = 0): st
   return lagMockUuid(lagEntityBase(fixtureId, namespace) + BigInt(offset));
 }
 
-function lagMockKontrollsak(sak: KontrollsakResponse, namespace: number): KontrollsakResponse {
-  const entityBase = lagEntityBase(sak.id, namespace);
-
-  return {
-    ...sak,
-    id: lagMockUuid(entityBase),
-    ytelser: sak.ytelser.map((ytelse, indeks) => ({
-      ...ytelse,
-      id: lagMockUuid(entityBase + 100n + BigInt(indeks + 1)),
-    })),
-    resultat: sak.resultat
-      ? {
-          ...sak.resultat,
-          utredning: sak.resultat.utredning
-            ? {
-                ...sak.resultat.utredning,
-                id: lagMockUuid(entityBase + 500n),
-              }
-            : null,
-          forvaltning: sak.resultat.forvaltning
-            ? {
-                ...sak.resultat.forvaltning,
-                id: lagMockUuid(entityBase + 600n),
-              }
-            : null,
-          strafferettsligVurdering: sak.resultat.strafferettsligVurdering
-            ? {
-                ...sak.resultat.strafferettsligVurdering,
-                id: lagMockUuid(entityBase + 700n),
-              }
-            : null,
-        }
-      : null,
-  };
-}
-
 type LegacyKontrollsak = Record<string, unknown>;
 
 function normaliserLegacySaksbehandler(
@@ -161,16 +125,21 @@ export function normaliserLegacyKontrollsak(
     "Avbrutt tiltak": "AVBRUTT_TILTAK",
   };
 
+  const normalisertStatus = statusMap[legacyStatus] ?? "UFORDELT";
+
   const normalisert: KontrollsakResponse = {
     id: erGyldigUuid(id) ? id : lagMockEntityUuid(id, namespace),
     personIdent: String(sak.personIdent ?? ""),
     personNavn,
     saksbehandlere: {
-      eier: {
-        navIdent: typeof sak.saksbehandler === "string" ? sak.saksbehandler : "Z999999",
-        navn: saksbehandlerNavn,
-        enhet: saksbehandlerEnhet,
-      },
+      eier:
+        normalisertStatus === "UFORDELT"
+          ? null
+          : {
+              navIdent: typeof sak.saksbehandler === "string" ? sak.saksbehandler : "Z999999",
+              navn: saksbehandlerNavn,
+              enhet: saksbehandlerEnhet,
+            },
       deltMed: legacyDelteSaksbehandlere
         .map(normaliserLegacySaksbehandler)
         .filter((saksbehandler): saksbehandler is NonNullable<typeof saksbehandler> =>
@@ -182,7 +151,7 @@ export function normaliserLegacyKontrollsak(
         enhet: saksbehandlerEnhet,
       },
     },
-    status: statusMap[legacyStatus] ?? "UFORDELT",
+    status: normalisertStatus,
     kategori: (legacyKategori in
     {
       BEHANDLER: true,
