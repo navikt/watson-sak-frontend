@@ -1,1 +1,4 @@
-export { mockSaksbehandlere } from "~/testing/mock-store/reference-data.server";
+export {
+  mockSaksbehandlere,
+  mockSaksbehandlerDetaljer,
+} from "~/testing/mock-store/reference-data.server";

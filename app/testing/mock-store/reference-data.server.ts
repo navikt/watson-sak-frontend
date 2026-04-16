@@ -1,4 +1,6 @@
-export const mockSaksbehandlere = [
+import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
+
+const saksbehandlerNavn = [
   "Ada Larsen",
   "Aksel Johansen",
   "Alexander Haugen",
@@ -59,6 +61,42 @@ export const mockSaksbehandlere = [
   "Vibeke Røed",
   "Vidar Skogen",
   "Wenche Brekken",
-];
+] as const;
+
+const saksbehandlerEnheter = [
+  "Seksjon A",
+  "Seksjon B",
+  "Seksjon C",
+  "Seksjon D",
+  "Seksjon E",
+] as const;
+
+const saksbehandlerOverstyringer: Partial<
+  Record<(typeof saksbehandlerNavn)[number], KontrollsakSaksbehandler>
+> = {
+  "Kari Nordmann": {
+    navn: "Kari Nordmann",
+    navIdent: "Z123456",
+    enhet: "Seksjon A",
+  },
+  "Ada Larsen": {
+    navn: "Ada Larsen",
+    navIdent: "Z234567",
+    enhet: "Seksjon B",
+  },
+};
+
+export const mockSaksbehandlerDetaljer: KontrollsakSaksbehandler[] = saksbehandlerNavn.map(
+  (navn, indeks) =>
+    saksbehandlerOverstyringer[navn] ?? {
+      navn,
+      navIdent: `Z${String(indeks + 300000).padStart(6, "0")}`,
+      enhet: saksbehandlerEnheter[indeks % saksbehandlerEnheter.length],
+    },
+);
+
+export const mockSaksbehandlere = mockSaksbehandlerDetaljer.map(
+  (saksbehandler) => saksbehandler.navn,
+);
 
 export const mockSeksjoner = ["Seksjon A", "Seksjon B", "Seksjon C", "Seksjon D", "Seksjon E"];

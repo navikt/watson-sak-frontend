@@ -57,6 +57,109 @@ describe("SakDetaljSide action", () => {
     expect(tildelingerEtter).toHaveLength(tildelingerFør.length + 1);
   });
 
+  it("legger til delt saksbehandler og logger historikk", async () => {
+    const kontrollsak = mockKontrollsaker[1];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+
+    expect(kontrollsak.saksbehandlere?.deltMed ?? []).toHaveLength(0);
+
+    const formData = new FormData();
+    formData.set("handling", "del_tilgang");
+    formData.set("navIdent", "Z123456");
+
+    await action({
+      request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: kontrollsakRef },
+    } as Route.ActionArgs);
+
+    expect(kontrollsak.saksbehandlere?.deltMed).toEqual([
+      {
+        navn: "Kari Nordmann",
+        enhet: "Seksjon A",
+        navIdent: "Z123456",
+      },
+    ]);
+
+    const historikk = hentHistorikk(kontrollsak.id);
+    expect(historikk[0]?.hendelsesType).toBe("TILGANG_DELT");
+    expect(historikk[0]?.berortSaksbehandlerNavn).toBe("Kari Nordmann");
+  });
+
+  it("fjerner delt saksbehandler og logger historikk", async () => {
+    const kontrollsak = mockKontrollsaker[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+
+    expect(kontrollsak.saksbehandlere?.deltMed).toEqual([
+      {
+        navn: "Kari Nordmann",
+        enhet: "Seksjon A",
+        navIdent: "Z123456",
+      },
+      {
+        navn: "Ada Larsen",
+        enhet: "Seksjon B",
+        navIdent: "Z234567",
+      },
+    ]);
+
+    const formData = new FormData();
+    formData.set("handling", "fjern_delt_tilgang");
+    formData.set("navIdent", "Z123456");
+
+    await action({
+      request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: kontrollsakRef },
+    } as Route.ActionArgs);
+
+    expect(kontrollsak.saksbehandlere?.deltMed).toEqual([
+      {
+        navn: "Ada Larsen",
+        enhet: "Seksjon B",
+        navIdent: "Z234567",
+      },
+    ]);
+
+    const historikk = hentHistorikk(kontrollsak.id);
+    expect(historikk[0]?.hendelsesType).toBe("TILGANG_FJERNET");
+    expect(historikk[0]?.berortSaksbehandlerNavn).toBe("Kari Nordmann");
+  });
+
+  it("overfører ansvarlig saksbehandler, fjerner vedkommende fra delt med og logger historikk", async () => {
+    const kontrollsak = mockKontrollsaker[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+
+    const formData = new FormData();
+    formData.set("handling", "overfor_ansvarlig");
+    formData.set("navIdent", "Z123456");
+
+    await action({
+      request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: kontrollsakRef },
+    } as Route.ActionArgs);
+
+    expect(kontrollsak.saksbehandler).toBe("Z123456");
+    expect(kontrollsak.saksbehandlere?.deltMed).toEqual([
+      {
+        navn: "Ada Larsen",
+        enhet: "Seksjon B",
+        navIdent: "Z234567",
+      },
+    ]);
+
+    const historikk = hentHistorikk(kontrollsak.id);
+    expect(historikk[0]?.hendelsesType).toBe("ANSVARLIG_SAKSBEHANDLER_ENDRET");
+    expect(historikk[0]?.berortSaksbehandlerNavIdent).toBe("Z123456");
+  });
+
   it("returnerer lokal feilmelding når koble sak ikke er tilgjengelig ennå", async () => {
     const formData = new FormData();
     formData.set("handling", "koble_sak");

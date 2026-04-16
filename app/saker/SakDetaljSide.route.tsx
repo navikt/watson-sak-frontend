@@ -37,8 +37,9 @@ import {
   misbrukstypePerKategori,
   redigerSaksinformasjonSchema,
 } from "~/registrer-sak/validering";
-import { mockSaksbehandlere } from "~/saker/mock-saksbehandlere.server";
+import { mockSaksbehandlere, mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import { mockSeksjoner } from "~/saker/mock-seksjoner.server";
+import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
 import type { Route } from "./+types/SakDetaljSide.route";
 import { hentFilerForSak } from "./filer/mock-data.server";
 import { SakFilområde } from "./filer/SakFilområde";
@@ -53,6 +54,7 @@ import {
 import { finnSakMedReferanse, getSaksreferanse } from "./id";
 import { hentAlleSaker } from "./mock-alle-saker.server";
 import { SakerPåSammePerson } from "./komponenter/SakerPåSammePerson";
+import { SaksbehandlereKort } from "./komponenter/SaksbehandlereKort";
 import {
   getAlder,
   getBelop,
@@ -109,6 +111,17 @@ function erGyldigStatus(verdi: string): verdi is KontrollsakStatus {
 
 function hentDetaljSaker() {
   return hentAlleSaker();
+}
+
+function finnSaksbehandlerDetalj(
+  saksbehandlerDetaljer: KontrollsakSaksbehandler[],
+  navIdent: string,
+) {
+  return (
+    saksbehandlerDetaljer.find(
+      (saksbehandler) => saksbehandler.navIdent === navIdent || saksbehandler.navn === navIdent,
+    ) ?? null
+  );
 }
 
 function hentFørsteVerdi<T>(verdier: T[] | null | undefined): T | undefined {
@@ -205,9 +218,14 @@ export function loader({ params }: Route.LoaderArgs) {
     filer,
     andreSaker,
     saksbehandlere: mockSaksbehandlere,
+    saksbehandlerDetaljer: mockSaksbehandlerDetaljer,
     seksjoner: mockSeksjoner,
     ytelser: mockYtelser,
   };
+}
+
+function hentDelteSaksbehandlere(sak: Route.ComponentProps["loaderData"]["sak"]) {
+  return sak.saksbehandlere?.deltMed ?? [];
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
@@ -219,6 +237,9 @@ export async function action({ request, params }: Route.ActionArgs) {
   if (!sak) {
     throw data("Sak ikke funnet", { status: 404 });
   }
+
+  const saksbehandlere = sak.saksbehandlere ?? { deltMed: [] };
+  sak.saksbehandlere = saksbehandlere;
 
   switch (handling) {
     case "endre_status": {
@@ -246,6 +267,26 @@ export async function action({ request, params }: Route.ActionArgs) {
       if (gammelStatus !== nyStatus) {
         leggTilHendelse(sak, "STATUS_ENDRET");
       }
+      break;
+    }
+    case "overfor_ansvarlig": {
+      const navIdent = formData.get("navIdent") as string;
+      const valgtSaksbehandler = finnSaksbehandlerDetalj(mockSaksbehandlerDetaljer, navIdent);
+
+      if (!valgtSaksbehandler) {
+        throw data("Ugyldig saksbehandler", { status: 400 });
+      }
+
+      sak.saksbehandler = valgtSaksbehandler.navIdent;
+      saksbehandlere.deltMed = saksbehandlere.deltMed.filter(
+        (saksbehandler) => saksbehandler.navIdent !== valgtSaksbehandler.navIdent,
+      );
+
+      leggTilHendelse(sak, "ANSVARLIG_SAKSBEHANDLER_ENDRET", undefined, {
+        berortSaksbehandlerNavn: valgtSaksbehandler.navn,
+        berortSaksbehandlerNavIdent: valgtSaksbehandler.navIdent,
+        berortSaksbehandlerEnhet: valgtSaksbehandler.enhet,
+      });
       break;
     }
     case "videresend_seksjon": {
@@ -313,7 +354,47 @@ export async function action({ request, params }: Route.ActionArgs) {
       return { ok: false, feil: { skjema: [unsupportedKobleSakFeil] } } satisfies ActionResult;
     }
     case "del_tilgang": {
-      leggTilHendelse(sak, "TILGANG_DELT");
+      const navIdent = formData.get("navIdent") as string;
+      const valgtSaksbehandler = finnSaksbehandlerDetalj(mockSaksbehandlerDetaljer, navIdent);
+
+      if (!valgtSaksbehandler) {
+        throw data("Ugyldig saksbehandler", { status: 400 });
+      }
+
+      const erAnsvarlig = sak.saksbehandler === valgtSaksbehandler.navIdent;
+      const erAlleredeDelt = saksbehandlere.deltMed.some(
+        (saksbehandler) => saksbehandler.navIdent === valgtSaksbehandler.navIdent,
+      );
+
+      if (!erAnsvarlig && !erAlleredeDelt) {
+        saksbehandlere.deltMed.push(valgtSaksbehandler);
+        leggTilHendelse(sak, "TILGANG_DELT", undefined, {
+          berortSaksbehandlerNavn: valgtSaksbehandler.navn,
+          berortSaksbehandlerNavIdent: valgtSaksbehandler.navIdent,
+          berortSaksbehandlerEnhet: valgtSaksbehandler.enhet,
+        });
+      }
+
+      break;
+    }
+    case "fjern_delt_tilgang": {
+      const navIdent = formData.get("navIdent") as string;
+      const saksbehandler = saksbehandlere.deltMed.find(
+        (deltSaksbehandler) => deltSaksbehandler.navIdent === navIdent,
+      );
+
+      saksbehandlere.deltMed = saksbehandlere.deltMed.filter(
+        (deltSaksbehandler) => deltSaksbehandler.navIdent !== navIdent,
+      );
+
+      if (saksbehandler) {
+        leggTilHendelse(sak, "TILGANG_FJERNET", undefined, {
+          berortSaksbehandlerNavn: saksbehandler.navn,
+          berortSaksbehandlerNavIdent: saksbehandler.navIdent,
+          berortSaksbehandlerEnhet: saksbehandler.enhet,
+        });
+      }
+
       break;
     }
     case "stans_ytelse": {
@@ -427,8 +508,16 @@ function Periodefelter({
 }
 
 export default function SakDetaljSide() {
-  const { sak, historikk, filer, andreSaker, saksbehandlere, seksjoner, ytelser } =
-    useLoaderData<typeof loader>();
+  const {
+    sak,
+    historikk,
+    filer,
+    andreSaker,
+    saksbehandlere,
+    saksbehandlerDetaljer,
+    seksjoner,
+    ytelser,
+  } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const fetcher = useFetcher<typeof action>();
   const personIdent = getPersonIdent(sak);
@@ -445,6 +534,8 @@ export default function SakDetaljSide() {
   const belop = getBelop(sak);
   const periodeText = getPeriodeText(sak);
   const tags = getTags(sak);
+  const ansvarligSaksbehandler = finnSaksbehandlerDetalj(saksbehandlerDetaljer, sak.saksbehandler);
+  const delteSaksbehandlere = hentDelteSaksbehandlere(sak);
   const [redigerer, setRedigerer] = useState(false);
   const [redigeringsøkt, setRedigeringsøkt] = useState(0);
   const [visFeil, setVisFeil] = useState(false);
@@ -813,9 +904,16 @@ export default function SakDetaljSide() {
             </VStack>
 
             <VStack gap="space-6" className="md:sticky md:top-4 md:self-start">
+              <SaksbehandlereKort
+                sak={{ ...sak, saksbehandlere: { deltMed: delteSaksbehandlere } }}
+                saksbehandlerDetaljer={saksbehandlerDetaljer}
+                ansvarligSaksbehandler={ansvarligSaksbehandler}
+              />
+
               <SakHandlingerKnapper
                 sak={sak}
                 saksbehandlere={saksbehandlere}
+                saksbehandlerDetaljer={saksbehandlerDetaljer}
                 seksjoner={seksjoner}
                 historikk={historikk}
                 filer={filer}

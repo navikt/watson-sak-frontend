@@ -13,6 +13,7 @@ function lagKontrollsak(
     id: lagMockSakUuid(idNum, 1),
     personIdent: "12345678901",
     saksbehandler: "Lise Raus",
+    saksbehandlere: { deltMed: [] },
     status: "UTREDES",
     kategori: "SAMLIV",
     prioritet: "NORMAL",
@@ -114,8 +115,6 @@ describe("SakerPåSammePerson", () => {
     fireEvent.click(screen.getByRole("button", { name: "Vis detaljer" }));
     fireEvent.click(screen.getByRole("button", { name: "Koble til saken" }));
 
-    expect(
-      await screen.findByText("Denne funksjonen er ikke tilgjengelig ennå."),
-    ).toBeDefined();
+    expect(await screen.findByText("Denne funksjonen er ikke tilgjengelig ennå.")).toBeDefined();
   });
 });

@@ -13,7 +13,7 @@ import { RouteConfig } from "~/routeConfig";
 import type { FilNode } from "~/saker/filer/typer";
 import { getSaksreferanse } from "~/saker/id";
 import type { SakHendelse } from "~/saker/historikk/typer";
-import type { KontrollsakResponse } from "~/saker/types.backend";
+import type { KontrollsakResponse, KontrollsakSaksbehandler } from "~/saker/types.backend";
 import { formaterDato } from "~/utils/date-utils";
 import { DelTilgangModal } from "./DelTilgangModal";
 import { FerdigstillSakModal } from "./FerdigstillSakModal";
@@ -23,6 +23,7 @@ import { StansYtelseModal } from "./StansYtelseModal";
 interface SakUtredesHandlingerProps {
   sak: KontrollsakResponse;
   saksbehandlere: string[];
+  saksbehandlerDetaljer: KontrollsakSaksbehandler[];
   historikk: SakHendelse[];
   filer: FilNode[];
 }
@@ -31,7 +32,8 @@ type ÅpenModal = "del-tilgang" | "stans-ytelse" | "opprett-anmeldelse" | "ferdi
 
 export function SakUtredesHandlinger({
   sak,
-  saksbehandlere,
+  saksbehandlere: _saksbehandlere,
+  saksbehandlerDetaljer,
   historikk,
   filer,
 }: SakUtredesHandlingerProps) {
@@ -138,7 +140,7 @@ export function SakUtredesHandlinger({
       />
       <DelTilgangModal
         sakId={sak.id}
-        saksbehandlere={saksbehandlere}
+        saksbehandlerDetaljer={saksbehandlerDetaljer}
         åpen={åpenModal === "del-tilgang"}
         onClose={() => setÅpenModal(null)}
       />

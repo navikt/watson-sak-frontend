@@ -16,6 +16,8 @@ type BackendHendelsestype =
   | "POLITIANMELDT"
   | "SAK_HENLAGT"
   | "TILGANG_DELT"
+  | "TILGANG_FJERNET"
+  | "ANSVARLIG_SAKSBEHANDLER_ENDRET"
   | "YTELSE_STANSET"
   | "SAK_SATT_I_BERO"
   | "SAK_GJENOPPTATT"
@@ -74,8 +76,20 @@ export function leggTilHendelse(
   sak: KontrollsakResponse,
   type: Exclude<BackendHendelsestype, "SAK_OPPRETTET" | "AVKLARING_OPPRETTET" | "MANUELL_NOTAT">,
   tidspunkt?: string,
+  metadata?: Pick<
+    SakHendelse,
+    "berortSaksbehandlerNavn" | "berortSaksbehandlerNavIdent" | "berortSaksbehandlerEnhet"
+  >,
 ) {
-  return leggTilBackendHendelse(sak.id, type, lagSnapshotFraKontrollsak(sak), tidspunkt);
+  return leggTilBackendHendelse(
+    sak.id,
+    type,
+    {
+      ...lagSnapshotFraKontrollsak(sak),
+      ...metadata,
+    },
+    tidspunkt,
+  );
 }
 
 export function leggTilManuellHendelse(
