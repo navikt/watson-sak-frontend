@@ -2,6 +2,7 @@ import { redirect } from "react-router";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { mockYtelser } from "~/fordeling/mock-data.server";
 import { RouteConfig } from "~/routeConfig";
+import { getSaksreferanse } from "~/saker/id";
 import type { OpprettKontrollsakRequest } from "./api.server";
 import type { Route } from "./+types/RegistrerSakSide.route";
 import { opprettKontrollsak } from "./api.server";
@@ -120,7 +121,7 @@ export async function action({ request }: Route.ActionArgs) {
 
   const mottakEnhet = hentMottakEnhet(innloggetBruker.organisasjoner);
 
-  await opprettKontrollsak({
+  const opprettetSak = await opprettKontrollsak({
     token: innloggetBruker.token,
     payload: byggOpprettKontrollsakPayload({
       skjema: data,
@@ -131,5 +132,5 @@ export async function action({ request }: Route.ActionArgs) {
     }),
   });
 
-  return redirect(RouteConfig.INDEX);
+  return redirect(RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(opprettetSak.id)));
 }

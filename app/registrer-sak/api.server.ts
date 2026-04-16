@@ -37,6 +37,10 @@ type OpprettKontrollsakArgs = {
   payload: OpprettKontrollsakRequest;
 };
 
+export type OpprettKontrollsakResultat = {
+  id: string;
+};
+
 type KontrollsakPrioritet = "LAV" | "NORMAL" | "HOY";
 
 function erGyldigKategori(verdi: string): verdi is KontrollsakKategori {
@@ -77,7 +81,7 @@ function erGyldigeMisbrukstyper(verdier: string[]): verdier is KontrollsakMisbru
 export async function opprettKontrollsak({
   token,
   payload,
-}: OpprettKontrollsakArgs): Promise<void> {
+}: OpprettKontrollsakArgs): Promise<OpprettKontrollsakResultat> {
   if (skalBrukeMockdata) {
     const saksbehandler =
       payload.saksbehandlere?.eier?.navIdent ??
@@ -95,7 +99,7 @@ export async function opprettKontrollsak({
       throw new Error("Ugyldig mock-payload for opprettelse av kontrollsak.");
     }
 
-    leggTilMockMineSak({
+    const kontrollsak = leggTilMockMineSak({
       personIdent: payload.personIdent,
       personNavn: payload.personNavn,
       saksbehandlere: payload.saksbehandlere,
@@ -106,7 +110,7 @@ export async function opprettKontrollsak({
       merking: payload.merking,
       ytelser: payload.ytelser,
     });
-    return;
+    return { id: kontrollsak.id };
   }
 
   if (!BACKEND_API_URL) {
@@ -129,4 +133,8 @@ export async function opprettKontrollsak({
     });
     throw new Error("Kunne ikke opprette kontrollsak.");
   }
+
+  const body = (await response.json()) as { id: string };
+
+  return { id: body.id };
 }

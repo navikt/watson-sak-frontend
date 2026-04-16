@@ -9,7 +9,7 @@ const hentInnloggetBrukerMock = vi.fn().mockResolvedValue({
 });
 
 vi.mock("./api.server", () => ({
-  opprettKontrollsak: vi.fn(),
+  opprettKontrollsak: vi.fn().mockResolvedValue({ id: "00000000-0000-4000-8000-000000301000" }),
 }));
 
 vi.mock("~/auth/innlogget-bruker.server", () => ({
@@ -27,7 +27,7 @@ describe("OpprettSakSide action", () => {
     });
   });
 
-  it("sender backend-kompatibel payload og redirecter til dashboard", async () => {
+  it("sender backend-kompatibel payload og redirecter til ny sakdetalj", async () => {
     const { action } = await import("./RegistrerSakSide.server");
     const { opprettKontrollsak } = await import("./api.server");
 
@@ -89,7 +89,7 @@ describe("OpprettSakSide action", () => {
     expect(response).toBeInstanceOf(Response);
     const redirectResponse = response as Response;
     expect(redirectResponse.status).toBe(302);
-    expect(redirectResponse.headers.get("Location")).toBe("/");
+    expect(redirectResponse.headers.get("Location")).toBe("/saker/301");
   });
 
   it("feiler når innlogget bruker mangler gyldig mottakende enhet", async () => {
