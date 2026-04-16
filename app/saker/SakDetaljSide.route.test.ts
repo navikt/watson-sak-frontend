@@ -275,6 +275,70 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(kontrollsak.status).toBe("UTREDES");
   });
 
+  it("tildeler ufordelt sak med konsistent saksbehandlerident", async () => {
+    const kontrollsak = mockKontrollsaker[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+
+    kontrollsak.status = "UFORDELT";
+    kontrollsak.saksbehandlere.eier = null;
+    kontrollsak.saksbehandlere.opprettetAv = {
+      navn: "Tidligere Saksbehandler",
+      navIdent: "Z999999",
+      enhet: "Seksjon A",
+    };
+
+    expect(kontrollsak.status).toBe("UFORDELT");
+    expect(kontrollsak.saksbehandlere.eier).toBeNull();
+
+    const formData = new FormData();
+    formData.set("handling", "tildel");
+    formData.set("saksbehandler", "Kari Nordmann");
+
+    await action({
+      request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: kontrollsakRef },
+    } as Route.ActionArgs);
+
+    expect(kontrollsak.saksbehandlere.eier).toEqual({
+      navn: "Kari Nordmann",
+      navIdent: "Z123456",
+      enhet: "Seksjon A",
+    });
+  });
+
+  it("oppdaterer fallback-enhet når ufordelt sak videresendes til seksjon", async () => {
+    const kontrollsak = mockKontrollsaker[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+
+    kontrollsak.status = "UFORDELT";
+    kontrollsak.saksbehandlere.eier = null;
+    kontrollsak.saksbehandlere.opprettetAv = {
+      navn: "Tidligere Saksbehandler",
+      navIdent: "Z999999",
+      enhet: "Seksjon A",
+    };
+
+    expect(kontrollsak.saksbehandlere.eier).toBeNull();
+    expect(kontrollsak.saksbehandlere.opprettetAv.enhet).toBe("Seksjon A");
+
+    const formData = new FormData();
+    formData.set("handling", "videresend_seksjon");
+    formData.set("seksjon", "Seksjon B");
+
+    await action({
+      request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: kontrollsakRef },
+    } as Route.ActionArgs);
+
+    expect(kontrollsak.saksbehandlere.opprettetAv.enhet).toBe("Seksjon B");
+  });
+
   it("oppdaterer redigerbare saksdetaljer uten å endre låste felt", async () => {
     const kontrollsak = mockKontrollsaker[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);

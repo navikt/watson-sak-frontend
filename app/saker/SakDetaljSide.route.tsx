@@ -253,13 +253,14 @@ export async function action({ request, params }: Route.ActionArgs) {
     case "tildel": {
       const saksbehandler = formData.get("saksbehandler") as string;
       const gammelStatus = sak.status;
+      const valgtSaksbehandler = finnSaksbehandlerDetalj(mockSaksbehandlerDetaljer, saksbehandler);
+
+      if (!valgtSaksbehandler) {
+        throw data("Ugyldig saksbehandler", { status: 400 });
+      }
 
       sak.status = "UTREDES";
-      sak.saksbehandlere.eier = {
-        navIdent: sak.saksbehandlere.eier?.navIdent ?? sak.saksbehandlere.opprettetAv.navIdent,
-        navn: saksbehandler,
-        enhet: sak.saksbehandlere.eier?.enhet ?? sak.saksbehandlere.opprettetAv.enhet,
-      };
+      sak.saksbehandlere.eier = valgtSaksbehandler;
 
       leggTilHendelse(sak, "SAK_TILDELT");
 
@@ -299,6 +300,11 @@ export async function action({ request, params }: Route.ActionArgs) {
       if (sak.saksbehandlere.eier) {
         sak.saksbehandlere.eier = {
           ...sak.saksbehandlere.eier,
+          enhet: nySeksjon,
+        };
+      } else {
+        sak.saksbehandlere.opprettetAv = {
+          ...sak.saksbehandlere.opprettetAv,
           enhet: nySeksjon,
         };
       }
