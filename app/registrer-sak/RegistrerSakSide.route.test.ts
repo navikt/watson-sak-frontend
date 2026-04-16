@@ -3,6 +3,7 @@ import type { Route } from "./+types/RegistrerSakSide.route";
 
 const hentInnloggetBrukerMock = vi.fn().mockResolvedValue({
   navIdent: "Z123456",
+  name: "Ola Nordmann",
   token: "token-123",
   organisasjoner: "4812, 9999",
 });
@@ -20,6 +21,7 @@ describe("OpprettSakSide action", () => {
     vi.clearAllMocks();
     hentInnloggetBrukerMock.mockResolvedValue({
       navIdent: "Z123456",
+      name: "Ola Nordmann",
       token: "token-123",
       organisasjoner: "4812, 9999",
     });
@@ -36,7 +38,7 @@ describe("OpprettSakSide action", () => {
     formData.set("fraDato", "2026-01-01");
     formData.set("tilDato", "2026-12-31");
     formData.set("kategori", "DOKUMENTFALSK");
-    formData.set("kilde", "INTERN");
+    formData.set("kilde", "NAV_KONTROLL");
     formData.set("enhet", "ØST");
 
     const response = await action({
@@ -52,29 +54,34 @@ describe("OpprettSakSide action", () => {
       token: "token-123",
       payload: {
         personIdent: "12345678901",
-        saksbehandler: "Z123456",
-        mottakEnhet: "4812",
-        mottakSaksbehandler: "Z123456",
+        personNavn: "Ola Nordmann",
+        saksbehandlere: {
+          eier: {
+            navIdent: "Z123456",
+            navn: "Ola Nordmann",
+            enhet: "4812",
+          },
+          deltMed: [],
+        },
         kategori: "DOKUMENTFALSK",
+        kilde: "NAV_KONTROLL",
         prioritet: "NORMAL",
-        misbruktype: undefined,
+        misbruktype: [],
         merking: undefined,
         ytelser: [
           {
             type: "Dagpenger",
             periodeFra: "2026-01-01",
             periodeTil: "2026-12-31",
+            belop: undefined,
           },
           {
             type: "AAP",
             periodeFra: "2026-01-01",
             periodeTil: "2026-12-31",
+            belop: undefined,
           },
         ],
-        enhet: "ØST",
-        kilde: "INTERN",
-        caBeløp: undefined,
-        organisasjonsnummer: undefined,
       },
     });
 
@@ -87,6 +94,7 @@ describe("OpprettSakSide action", () => {
   it("feiler når innlogget bruker mangler gyldig mottakende enhet", async () => {
     hentInnloggetBrukerMock.mockResolvedValue({
       navIdent: "Z123456",
+      name: "Ola Nordmann",
       token: "token-123",
       organisasjoner: "Ukjent",
     });
@@ -99,7 +107,7 @@ describe("OpprettSakSide action", () => {
     formData.set("fraDato", "2026-01-01");
     formData.set("tilDato", "2026-12-31");
     formData.set("kategori", "DOKUMENTFALSK");
-    formData.set("kilde", "INTERN");
+    formData.set("kilde", "NAV_KONTROLL");
     formData.set("enhet", "ØST");
 
     await expect(
