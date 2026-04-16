@@ -1,5 +1,5 @@
 import { kontrollsakResponseSchema, type KontrollsakResponse } from "~/saker/types.backend";
-import { lagMockKontrollsak, lagMockSakUuid } from "~/saker/mock-uuid";
+import { lagMockSakUuid, normaliserLegacyKontrollsak } from "~/saker/mock-uuid";
 
 /** Avslutningsdatoer for avsluttede/henlagte saker (sakId → ISO-dato) */
 export type Avslutningsdatoer = Record<string, string>;
@@ -953,11 +953,11 @@ const initialeMockStatistikkSaker = [
     opprettet: "2025-10-20T00:00:00Z",
     oppdatert: null,
   },
-] satisfies KontrollsakResponse[];
+];
 
 function lagMockStatistikkSaker() {
   return initialeMockStatistikkSaker.map((sak) =>
-    kontrollsakResponseSchema.parse(lagMockKontrollsak(sak, 3)),
+    kontrollsakResponseSchema.parse(normaliserLegacyKontrollsak(sak, 3)),
   );
 }
 

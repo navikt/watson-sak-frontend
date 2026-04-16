@@ -25,21 +25,27 @@ describe("opprettKontrollsak", () => {
       token: "token-123",
       payload: {
         personIdent: "12345678901",
-        saksbehandler: "Z123456",
-        mottakEnhet: "4812",
-        mottakSaksbehandler: "Z123456",
+        personNavn: "Ola Nordmann",
+        saksbehandlere: {
+          eier: {
+            navIdent: "Z123456",
+            navn: "Ola Nordmann",
+            enhet: "4812",
+          },
+          deltMed: [],
+        },
         kategori: "SAMLIV",
+        kilde: "NAV_KONTROLL",
         prioritet: "NORMAL",
-        misbruktype: "Skjult samliv",
+        misbruktype: ["SKJULT_SAMLIV"],
         ytelser: [
           {
             type: "Dagpenger",
             periodeFra: "2026-01-01",
             periodeTil: "2026-12-31",
+            belop: 300000,
           },
         ],
-        enhet: "ØST",
-        kilde: "INTERN",
       },
     });
 
@@ -52,21 +58,27 @@ describe("opprettKontrollsak", () => {
       },
       body: JSON.stringify({
         personIdent: "12345678901",
-        saksbehandler: "Z123456",
-        mottakEnhet: "4812",
-        mottakSaksbehandler: "Z123456",
+        personNavn: "Ola Nordmann",
+        saksbehandlere: {
+          eier: {
+            navIdent: "Z123456",
+            navn: "Ola Nordmann",
+            enhet: "4812",
+          },
+          deltMed: [],
+        },
         kategori: "SAMLIV",
+        kilde: "NAV_KONTROLL",
         prioritet: "NORMAL",
-        misbruktype: "Skjult samliv",
+        misbruktype: ["SKJULT_SAMLIV"],
         ytelser: [
           {
             type: "Dagpenger",
             periodeFra: "2026-01-01",
             periodeTil: "2026-12-31",
+            belop: 300000,
           },
         ],
-        enhet: "ØST",
-        kilde: "INTERN",
       }),
     });
   });

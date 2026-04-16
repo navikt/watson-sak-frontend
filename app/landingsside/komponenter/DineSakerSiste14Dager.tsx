@@ -16,10 +16,10 @@ interface DineSakerSiste14DagerProps {
 
 export function DineSakerSiste14Dager({ statistikk }: DineSakerSiste14DagerProps) {
   const valgfrieKort = [
-    statistikk.antallTipsAvklart > 0
+    statistikk.antallTipsTilVurdering > 0
       ? {
-          tittel: "Tips avklart",
-          verdi: statistikk.antallTipsAvklart,
+          tittel: "Tips til vurdering",
+          verdi: statistikk.antallTipsTilVurdering,
           ikon: <CheckmarkCircleIcon aria-hidden fontSize="1.25rem" />,
         }
       : null,

@@ -36,17 +36,15 @@ export function kanPolitianmeldes(status: SakStatus): boolean {
 }
 
 export function erAktivSakKontrollsak(status: KontrollsakStatus): boolean {
-  return (
-    status === "OPPRETTET" || status === "AVKLART" || status === "UTREDES" || status === "I_BERO"
-  );
+  return status === "UFORDELT" || status === "UTREDES" || status === "I_BERO";
 }
 
 export function hentNesteStatusKontrollsak(status: KontrollsakStatus): KontrollsakStatus | null {
   switch (status) {
-    case "OPPRETTET":
-      return "AVKLART";
-    case "AVKLART":
+    case "UFORDELT":
       return "UTREDES";
+    case "UTREDES":
+      return "FORVALTNING";
     default:
       return null;
   }

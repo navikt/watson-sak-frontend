@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { formaterMisbrukstype } from "~/saker/visning";
 import { RouteConfig } from "~/routeConfig";
 import type { Route } from "./+types/FordelingSide.route";
 import { mockKontrollsaker } from "./mock-data.server";
@@ -41,7 +42,7 @@ describe("FordelingSide action", () => {
 
   it("flytter sak ut av Fordeling i mockmiljø når den tildeles", async () => {
     const { action } = await import("./FordelingSide.server");
-    const tildelbarKontrollsakId = mockKontrollsaker.find((sak) => sak.status === "OPPRETTET")?.id;
+    const tildelbarKontrollsakId = mockKontrollsaker.find((sak) => sak.status === "UFORDELT")?.id;
 
     expect(tildelbarKontrollsakId).toBeDefined();
 
@@ -172,18 +173,18 @@ describe("FordelingSide loader", () => {
     } as Route.LoaderArgs);
 
     const forventedeSaker = mockKontrollsaker
-      .filter((sak) => sak.status === "OPPRETTET" || sak.status === "AVKLART")
+      .filter((sak) => sak.status === "UFORDELT")
       .map((sak) => sak.id);
 
     expect(resultat.map((sak) => sak.id)).toEqual(forventedeSaker);
     expect(resultat[0]).toMatchObject({
-      navn: mockKontrollsaker[0].navn ?? null,
+      navn: mockKontrollsaker[0].personNavn ?? null,
       opprettetDato: mockKontrollsaker[0].opprettet.slice(0, 10),
       oppdatertDato: (mockKontrollsaker[0].oppdatert ?? mockKontrollsaker[0].opprettet).slice(
         0,
         10,
       ),
-      misbrukstyper: mockKontrollsaker[0].misbrukstyper ?? [],
+      misbrukstyper: mockKontrollsaker[0].misbruktype.map(formaterMisbrukstype),
       ytelser: mockKontrollsaker[0].ytelser.map((ytelse) => ytelse.type),
     });
   });

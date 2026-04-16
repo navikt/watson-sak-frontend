@@ -18,36 +18,44 @@ import {
 
 function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
-    id: "kontrollsak-1",
+    id: "00000000-0000-4000-8000-000000000001",
     personIdent: "10987654321",
-    saksbehandler: "Z123456",
+    personNavn: "Ola Nordmann",
+    saksbehandlere: {
+      eier: {
+        navIdent: "Z123456",
+        navn: "Saks Behandler",
+        enhet: "4812",
+      },
+      deltMed: [],
+      opprettetAv: {
+        navIdent: "Z654321",
+        navn: "Oppretter",
+        enhet: "4801",
+      },
+    },
     status: "UTREDES",
     kategori: "ARBEID",
+    kilde: "NAV_KONTROLL",
+    misbruktype: [],
     prioritet: "NORMAL",
-    mottakEnhet: "4812",
-    mottakSaksbehandler: "Z654321",
     ytelser: [
       {
-        id: "ytelse-1",
+        id: "00000000-0000-4000-8000-000000000002",
         type: "Sykepenger",
         periodeFra: "2026-01-01",
         periodeTil: "2026-01-31",
+        belop: null,
       },
       {
-        id: "ytelse-2",
+        id: "00000000-0000-4000-8000-000000000003",
         type: "Dagpenger",
         periodeFra: "2026-01-01",
         periodeTil: "2026-01-31",
+        belop: null,
       },
     ],
-    bakgrunn: {
-      id: "00000000-0000-0000-0000-000000000001",
-      kilde: "ANONYM_TIPS",
-      innhold: "Kontrollsak-beskrivelse",
-      avsender: null,
-      vedlegg: [],
-      tilleggsopplysninger: null,
-    },
+    merking: null,
     resultat: null,
     opprettet: "2026-02-03T10:11:12Z",
     oppdatert: null,
@@ -82,7 +90,7 @@ describe("saker-selectors", () => {
     expect(getStatusVariantForSak(sak)).toBe("warning");
   });
 
-  it("bruker mottakEnhet som saksenhet og skjuler legacy-only metadata for kontrollsak", () => {
+  it("bruker enhet fra saksbehandler som saksenhet og skjuler legacy-only metadata for kontrollsak", () => {
     const sak = lagKontrollsak();
 
     expect(getSaksenhet(sak)).toBe("4812");
@@ -91,30 +99,30 @@ describe("saker-selectors", () => {
   });
 
   it("returnerer merking fra sak når feltet er satt", () => {
-    const sak = lagKontrollsak({ merking: ["Utelivsbransje", "Noe lurt"] });
-    expect(getTags(sak)).toEqual(["Utelivsbransje", "Noe lurt"]);
+    const sak = lagKontrollsak({ merking: "PRIORITERT" });
+    expect(getTags(sak)).toEqual(["PRIORITERT"]);
   });
 
   it("håndterer resultat null-sikkert for kontrollsak", () => {
     expect(getResultat(lagKontrollsak())).toBeNull();
   });
 
-  it("returnerer navn og alder når feltene er satt", () => {
-    const sak = lagKontrollsak({ navn: "Ola Nordmann", alder: 42 });
+  it("returnerer personnavn når feltet er satt", () => {
+    const sak = lagKontrollsak({ personNavn: "Ola Nordmann" });
     expect(getNavn(sak)).toBe("Ola Nordmann");
-    expect(getAlder(sak)).toBe(42);
+    expect(getAlder(sak)).toBeNull();
   });
 
-  it("returnerer null for navn og alder når feltene mangler", () => {
+  it("returnerer null for alder når backend ikke lenger sender alder", () => {
     const sak = lagKontrollsak();
-    expect(getNavn(sak)).toBeNull();
+    expect(getNavn(sak)).toBe("Ola Nordmann");
     expect(getAlder(sak)).toBeNull();
   });
 
   it("returnerer misbrukstyper når feltet er satt", () => {
     const sak = lagKontrollsak({
       kategori: "UTLAND",
-      misbrukstyper: ["Utenfor EØS", "Innenfor EØS"],
+      misbruktype: ["UTENFOR_EOS", "INNENFOR_EOS"],
     });
     expect(getMisbrukstyper(sak)).toEqual(["Utenfor EØS", "Innenfor EØS"]);
   });
@@ -124,7 +132,7 @@ describe("saker-selectors", () => {
   });
 
   it("returnerer beløp når feltet er satt", () => {
-    const sak = lagKontrollsak({ belop: 300000 });
+    const sak = lagKontrollsak({ ytelser: [{ ...lagKontrollsak().ytelser[0], belop: 300000 }] });
     expect(getBelop(sak)).toBe(300000);
   });
 

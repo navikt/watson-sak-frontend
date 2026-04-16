@@ -4,22 +4,30 @@ import { leggTilMockSak } from "./person-oppslag.mock.server";
 
 export type OpprettKontrollsakRequest = {
   personIdent: string;
-  saksbehandler: string;
-  mottakEnhet: string;
-  mottakSaksbehandler: string;
+  personNavn: string;
+  saksbehandlere?: {
+    eier?: {
+      navIdent: string;
+      navn: string;
+      enhet?: string;
+    } | null;
+    deltMed?: Array<{
+      navIdent: string;
+      navn: string;
+      enhet?: string;
+    }>;
+  };
   kategori: string;
+  kilde: string;
+  misbruktype: string[];
   prioritet: string;
-  misbruktype?: string;
   merking?: string;
   ytelser: Array<{
     type: string;
     periodeFra: string;
     periodeTil: string;
+    belop?: number;
   }>;
-  enhet: string;
-  kilde: string;
-  caBeløp?: number;
-  organisasjonsnummer?: string;
 };
 
 type OpprettKontrollsakArgs = {
@@ -32,7 +40,9 @@ export async function opprettKontrollsak({
   payload,
 }: OpprettKontrollsakArgs): Promise<void> {
   if (skalBrukeMockdata) {
-    leggTilMockSak(payload.personIdent, payload.saksbehandler, payload.enhet);
+    const saksbehandler = payload.saksbehandlere?.eier?.navIdent ?? payload.saksbehandlere?.deltMed?.[0]?.navIdent ?? "Ukjent";
+    const enhet = payload.saksbehandlere?.eier?.enhet ?? "Ukjent";
+    leggTilMockSak(payload.personIdent, saksbehandler, enhet);
     return;
   }
 

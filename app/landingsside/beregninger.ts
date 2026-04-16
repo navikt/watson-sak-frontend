@@ -11,7 +11,7 @@ interface BeregnDineSakerSiste14DagerArgs {
 
 export interface DineSakerSiste14DagerStatistikk {
   antallSakerJobbetMed: number;
-  antallTipsAvklart: number;
+  antallTipsTilVurdering: number;
   antallSendtTilNayNfp: number;
   snittBehandlingstidPerSak: number | null;
   antallHenlagteSaker: number;
@@ -48,13 +48,16 @@ export function beregnDineSakerSiste14Dager({
 
   return {
     antallSakerJobbetMed: sakerSiste14Dager.length,
-    antallTipsAvklart: sakerSiste14Dager.filter((sak) => getStatus(sak) === "AVKLART").length,
-    antallSendtTilNayNfp: sakerSiste14Dager.filter((sak) => getStatus(sak) === "TIL_FORVALTNING")
+    antallTipsTilVurdering: sakerSiste14Dager.filter((sak) => getStatus(sak) === "UFORDELT")
+      .length,
+    antallSendtTilNayNfp: sakerSiste14Dager.filter((sak) => getStatus(sak) === "FORVALTNING")
       .length,
     snittBehandlingstidPerSak: behandlingstid?.gjennomsnitt ?? null,
-    antallHenlagteSaker: sakerSiste14Dager.filter((sak) => getStatus(sak) === "HENLAGT").length,
+    antallHenlagteSaker: sakerSiste14Dager.filter(
+      (sak) => getStatus(sak) === "AVSLUTTET" && !tidligereTipsSakIder.includes(sak.id),
+    ).length,
     antallHenlagteTips: sakerSiste14Dager.filter(
-      (sak) => getStatus(sak) === "HENLAGT" && tidligereTipsSakIder.includes(sak.id),
+      (sak) => getStatus(sak) === "AVSLUTTET" && tidligereTipsSakIder.includes(sak.id),
     ).length,
   };
 }

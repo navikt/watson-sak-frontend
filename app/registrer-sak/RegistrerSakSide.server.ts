@@ -43,25 +43,33 @@ export function byggOpprettKontrollsakPayload({
   skjema,
   navIdent,
   mottakEnhet,
+  navn,
 }: {
   skjema: OpprettSakSkjema;
   navIdent: string;
   mottakEnhet: string;
+  navn: string;
 }): OpprettKontrollsakRequest {
   return {
     personIdent: skjema.personIdent,
-    saksbehandler: navIdent,
-    mottakEnhet,
-    mottakSaksbehandler: navIdent,
+    personNavn: navn,
+    saksbehandlere: {
+      eier: {
+        navIdent,
+        navn,
+        enhet: mottakEnhet,
+      },
+      deltMed: [],
+    },
     kategori: skjema.kategori,
-    prioritet: "NORMAL",
-    misbruktype: skjema.misbruktype,
-    merking: skjema.merking,
-    ytelser: byggYtelser(skjema.ytelser, skjema.fraDato, skjema.tilDato),
-    enhet: skjema.enhet,
     kilde: skjema.kilde,
-    caBeløp: skjema.caBeløp,
-    organisasjonsnummer: skjema.organisasjonsnummer || undefined,
+    prioritet: "NORMAL",
+    misbruktype: skjema.misbruktype ? [skjema.misbruktype] : [],
+    merking: skjema.merking,
+    ytelser: byggYtelser(skjema.ytelser, skjema.fraDato, skjema.tilDato).map((ytelse) => ({
+      ...ytelse,
+      belop: skjema.caBeløp,
+    })),
   };
 }
 
@@ -109,6 +117,7 @@ export async function action({ request }: Route.ActionArgs) {
       skjema: data,
       navIdent: innloggetBruker.navIdent,
       mottakEnhet,
+      navn: innloggetBruker.name,
     }),
   });
 

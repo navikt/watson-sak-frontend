@@ -12,14 +12,19 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
   return {
     id: "ks-101",
     personIdent: "10987654321",
-    saksbehandler: "Z123456",
-    status: "OPPRETTET",
+    personNavn: "Ola Nordmann",
+    saksbehandlere: {
+      eier: { navIdent: "Z123456", navn: "Ola Saksbehandler", enhet: "4812" },
+      deltMed: [],
+      opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
+    },
+    status: "UFORDELT",
     kategori: "ARBEID",
+    kilde: "NAV_KONTROLL",
+    misbruktype: [],
     prioritet: "NORMAL",
-    mottakEnhet: "4812",
-    mottakSaksbehandler: "Z654321",
     ytelser: [],
-    bakgrunn: null,
+    merking: null,
     resultat: null,
     opprettet: "2026-02-03T10:11:12Z",
     oppdatert: null,
@@ -28,14 +33,18 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
 }
 
 describe("Mine saker selectors", () => {
-  it("mapper backend-status OPPRETTET til aktive", () => {
-    expect(getMineSakerGruppeStatus(lagKontrollsak({ status: "OPPRETTET" }))).toBe("aktive");
+  it("mapper backend-status UFORDELT til aktive", () => {
+    expect(getMineSakerGruppeStatus(lagKontrollsak({ status: "UFORDELT" }))).toBe("aktive");
   });
 
-  it("mapper backend-status TIL_FORVALTNING til ventende", () => {
-    expect(getMineSakerGruppeStatus(lagKontrollsak({ status: "TIL_FORVALTNING" }))).toBe(
+  it("mapper backend-status FORVALTNING til ventende", () => {
+    expect(getMineSakerGruppeStatus(lagKontrollsak({ status: "FORVALTNING" }))).toBe(
       "ventende",
     );
+  });
+
+  it("mapper backend-status I_BERO til aktive eksplisitt", () => {
+    expect(getMineSakerGruppeStatus(lagKontrollsak({ status: "I_BERO" }))).toBe("aktive");
   });
 
   it("mapper backend-status AVSLUTTET til fullførte", () => {
@@ -57,12 +66,14 @@ describe("Mine saker selectors", () => {
               type: "Sykepenger",
               periodeFra: "2026-01-01",
               periodeTil: "2026-01-31",
+              belop: null,
             },
             {
               id: "ytelse-2",
               type: "Dagpenger",
               periodeFra: "2026-01-01",
               periodeTil: "2026-01-31",
+              belop: null,
             },
           ],
         }),
@@ -79,6 +90,7 @@ describe("Mine saker selectors", () => {
           type: "Sykepenger",
           periodeFra: "2026-01-01",
           periodeTil: "2026-01-31",
+          belop: null,
         },
       ],
     });
@@ -88,20 +100,7 @@ describe("Mine saker selectors", () => {
   });
 
   it("utleder ikon-type fra backend-kilde", () => {
-    expect(getMineSakerIkonType(lagKontrollsak({ bakgrunn: null }))).toBe("files");
-    expect(
-      getMineSakerIkonType(
-        lagKontrollsak({
-          bakgrunn: {
-            id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-            kilde: "ANONYM_TIPS",
-            innhold: "Tips",
-            avsender: null,
-            vedlegg: [],
-            tilleggsopplysninger: null,
-          },
-        }),
-      ),
-    ).toBe("tasklist");
+    expect(getMineSakerIkonType(lagKontrollsak({ kilde: "NAV_KONTROLL" }))).toBe("files");
+    expect(getMineSakerIkonType(lagKontrollsak({ kilde: "PUBLIKUM" }))).toBe("tasklist");
   });
 });

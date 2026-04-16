@@ -3,19 +3,14 @@ import { BodyShort, Button, HStack, Label, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import { useFetcher } from "react-router";
 import { Kort } from "~/komponenter/Kort";
-import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import type { KontrollsakResponse, KontrollsakSaksbehandler } from "~/saker/types.backend";
 import { erAktivSakKontrollsak } from "~/saker/handlinger/tilgjengeligeHandlinger";
 import { OverforAnsvarligModal } from "~/saker/handlinger/OverforAnsvarligModal";
 
-type SaksbehandlereKortSak = Omit<KontrollsakResponse, "saksbehandlere"> & {
-  saksbehandlere: { deltMed: KontrollsakSaksbehandler[] };
-};
-
 interface SaksbehandlereKortProps {
-  sak: SaksbehandlereKortSak;
+  sak: KontrollsakResponse;
   saksbehandlerDetaljer: KontrollsakSaksbehandler[];
   ansvarligSaksbehandler: KontrollsakSaksbehandler | null;
 }
@@ -57,22 +52,7 @@ export function SaksbehandlereKort({
   const [visOverforModal, setVisOverforModal] = useState(false);
   const fetcher = useFetcher();
   const erAktiv = erAktivSakKontrollsak(sak.status);
-  const innloggetBruker = useInnloggetBruker();
-  const ansvarligSaksbehandler =
-    ansvarligFraProps ??
-    (sak.saksbehandler === innloggetBruker.navIdent
-      ? {
-          navn: innloggetBruker.name,
-          navIdent: innloggetBruker.navIdent,
-          enhet: sak.mottakEnhet,
-        }
-      : sak.saksbehandler
-        ? {
-            navn: sak.saksbehandler,
-            navIdent: sak.saksbehandler,
-            enhet: sak.mottakEnhet,
-          }
-        : null);
+  const ansvarligSaksbehandler = ansvarligFraProps ?? sak.saksbehandlere.eier;
 
   function fjernDeltTilgang(navIdent: string) {
     fetcher.submit(

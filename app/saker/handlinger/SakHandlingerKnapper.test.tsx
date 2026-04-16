@@ -17,22 +17,27 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
   return {
     id: lagMockSakUuid("101", 9),
     personIdent: "10987654321",
-    saksbehandler: "Z123456",
-    saksbehandlere: { deltMed: [] },
+    personNavn: "Ola Nordmann",
+    saksbehandlere: {
+      eier: { navIdent: "Z123456", navn: "Ola Saksbehandler", enhet: "4812" },
+      deltMed: [],
+      opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
+    },
     status: "UTREDES",
     kategori: "ARBEID",
+    kilde: "NAV_KONTROLL",
+    misbruktype: [],
     prioritet: "NORMAL",
-    mottakEnhet: "4812",
-    mottakSaksbehandler: "Z654321",
     ytelser: [
       {
         id: "00000000-0000-4000-8000-000000090101",
         type: "Sykepenger",
         periodeFra: "2026-01-01",
         periodeTil: "2026-01-31",
+        belop: null,
       },
     ],
-    bakgrunn: null,
+    merking: null,
     resultat: null,
     opprettet: "2026-02-03T10:11:12Z",
     oppdatert: null,
@@ -49,10 +54,10 @@ function renderMedRouter(ui: React.ReactNode) {
 }
 
 describe("SakHandlingerKnapper", () => {
-  it("viser tildel-handlinger for sak med status OPPRETTET", () => {
+  it("viser tildel-handlinger for sak med status UFORDELT", () => {
     renderMedRouter(
       <SakHandlingerKnapper
-        sak={lagKontrollsak({ status: "OPPRETTET" })}
+        sak={lagKontrollsak({ status: "UFORDELT" })}
         saksbehandlere={["Kari Nordmann"]}
         saksbehandlerDetaljer={[]}
         seksjoner={["4812", "4813"]}

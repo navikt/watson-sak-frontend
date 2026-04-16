@@ -97,12 +97,11 @@ const unsupportedRedigeringFeil = "Saken kan ikke redigeres med denne løsningen
 const unsupportedKobleSakFeil = "Denne funksjonen er ikke tilgjengelig ennå.";
 
 const gyldigeStatuser = new Set<KontrollsakStatus>([
-  "OPPRETTET",
-  "AVKLART",
+  "UFORDELT",
   "UTREDES",
-  "TIL_FORVALTNING",
-  "HENLAGT",
+  "FORVALTNING",
   "AVSLUTTET",
+  "I_BERO",
 ]);
 
 function erGyldigStatus(verdi: string): verdi is KontrollsakStatus {
@@ -135,9 +134,9 @@ function lagRedigeringsdata(
 
   return {
     kategori: sak.kategori,
-    misbruktype: hentFørsteVerdi(sak.misbrukstyper) ?? "",
-    merking: hentFørsteVerdi(sak.merking) ?? "",
-    kilde: sak.bakgrunn?.kilde ?? "",
+    misbruktype: hentFørsteVerdi(sak.misbruktype) ?? "",
+    merking: sak.merking ?? "",
+    kilde: sak.kilde,
     fraDato: førsteYtelse?.periodeFra ? formaterTallDatoForInput(førsteYtelse.periodeFra) : "",
     tilDato: førsteYtelse?.periodeTil ? formaterTallDatoForInput(førsteYtelse.periodeTil) : "",
     ytelser: sak.ytelser.map((ytelse) => ytelse.type),
@@ -192,8 +191,8 @@ function lagTidspunktFraSkjema(dato: string, tid: string): string {
 }
 
 function harStøttetRedigeringsmodell(sak: Route.ComponentProps["loaderData"]["sak"]) {
-  const antallMisbrukstyper = sak.misbrukstyper?.length ?? 0;
-  const antallMerkinger = sak.merking?.length ?? 0;
+  const antallMisbrukstyper = sak.misbruktype.length;
+  const antallMerkinger = sak.merking ? 1 : 0;
   const unikePerioder = new Set(
     sak.ytelser.map((ytelse) => `${ytelse.periodeFra}-${ytelse.periodeTil}`),
   );
@@ -225,7 +224,7 @@ export function loader({ params }: Route.LoaderArgs) {
 }
 
 function hentDelteSaksbehandlere(sak: Route.ComponentProps["loaderData"]["sak"]) {
-  return sak.saksbehandlere?.deltMed ?? [];
+  return sak.saksbehandlere.deltMed;
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
@@ -238,8 +237,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     throw data("Sak ikke funnet", { status: 404 });
   }
 
-  const saksbehandlere = sak.saksbehandlere ?? { deltMed: [] };
-  sak.saksbehandlere = saksbehandlere;
+  const saksbehandlere = sak.saksbehandlere;
 
   switch (handling) {
     case "endre_status": {
@@ -258,7 +256,11 @@ export async function action({ request, params }: Route.ActionArgs) {
       const gammelStatus = sak.status;
 
       sak.status = "UTREDES";
-      sak.saksbehandler = saksbehandler;
+      sak.saksbehandlere.eier = {
+        navIdent: sak.saksbehandlere.eier?.navIdent ?? sak.saksbehandlere.opprettetAv.navIdent,
+        navn: saksbehandler,
+        enhet: sak.saksbehandlere.eier?.enhet ?? sak.saksbehandlere.opprettetAv.enhet,
+      };
 
       leggTilHendelse(sak, "SAK_TILDELT");
 
@@ -277,27 +279,35 @@ export async function action({ request, params }: Route.ActionArgs) {
         throw data("Ugyldig saksbehandler", { status: 400 });
       }
 
-      sak.saksbehandler = valgtSaksbehandler.navIdent;
-      saksbehandlere.deltMed = saksbehandlere.deltMed.filter(
+      const berortSaksbehandlerEnhet =
+        valgtSaksbehandler.enhet === null ? undefined : valgtSaksbehandler.enhet;
+
+      sak.saksbehandlere.eier = valgtSaksbehandler;
+      sak.saksbehandlere.deltMed = sak.saksbehandlere.deltMed.filter(
         (saksbehandler) => saksbehandler.navIdent !== valgtSaksbehandler.navIdent,
       );
 
       leggTilHendelse(sak, "ANSVARLIG_SAKSBEHANDLER_ENDRET", undefined, {
         berortSaksbehandlerNavn: valgtSaksbehandler.navn,
         berortSaksbehandlerNavIdent: valgtSaksbehandler.navIdent,
-        berortSaksbehandlerEnhet: valgtSaksbehandler.enhet,
+        berortSaksbehandlerEnhet,
       });
       break;
     }
     case "videresend_seksjon": {
       const nySeksjon = formData.get("seksjon") as string;
 
-      sak.mottakEnhet = nySeksjon;
+      if (sak.saksbehandlere.eier) {
+        sak.saksbehandlere.eier = {
+          ...sak.saksbehandlere.eier,
+          enhet: nySeksjon,
+        };
+      }
       leggTilHendelse(sak, "MOTTAKSENHET_ENDRET");
       break;
     }
     case "henlegg": {
-      sak.status = "HENLAGT";
+      sak.status = "AVSLUTTET";
       leggTilHendelse(sak, "SAK_HENLAGT");
       break;
     }
@@ -326,26 +336,15 @@ export async function action({ request, params }: Route.ActionArgs) {
       const eksisterendeYtelser = sak.ytelser;
 
       sak.kategori = data.kategori;
-      sak.misbrukstyper = data.misbruktype ? [data.misbruktype] : undefined;
-      sak.merking = data.merking ? [data.merking] : [];
-      sak.bakgrunn = sak.bakgrunn
-        ? {
-            ...sak.bakgrunn,
-            kilde: data.kilde,
-          }
-        : {
-            id: crypto.randomUUID(),
-            kilde: data.kilde,
-            innhold: "",
-            avsender: null,
-            vedlegg: [],
-            tilleggsopplysninger: null,
-          };
+      sak.misbruktype = data.misbruktype ? [data.misbruktype] : [];
+      sak.merking = data.merking || null;
+      sak.kilde = data.kilde;
       sak.ytelser = data.ytelser.map((ytelse, indeks) => ({
         id: eksisterendeYtelser[indeks]?.id ?? crypto.randomUUID(),
         type: ytelse,
         periodeFra: data.fraDato,
         periodeTil: data.tilDato,
+        belop: eksisterendeYtelser[indeks]?.belop ?? null,
       }));
       leggTilHendelse(sak, "SAKSINFORMASJON_ENDRET");
       break;
@@ -361,7 +360,10 @@ export async function action({ request, params }: Route.ActionArgs) {
         throw data("Ugyldig saksbehandler", { status: 400 });
       }
 
-      const erAnsvarlig = sak.saksbehandler === valgtSaksbehandler.navIdent;
+      const berortSaksbehandlerEnhet =
+        valgtSaksbehandler.enhet === null ? undefined : valgtSaksbehandler.enhet;
+
+      const erAnsvarlig = sak.saksbehandlere.eier?.navIdent === valgtSaksbehandler.navIdent;
       const erAlleredeDelt = saksbehandlere.deltMed.some(
         (saksbehandler) => saksbehandler.navIdent === valgtSaksbehandler.navIdent,
       );
@@ -371,7 +373,7 @@ export async function action({ request, params }: Route.ActionArgs) {
         leggTilHendelse(sak, "TILGANG_DELT", undefined, {
           berortSaksbehandlerNavn: valgtSaksbehandler.navn,
           berortSaksbehandlerNavIdent: valgtSaksbehandler.navIdent,
-          berortSaksbehandlerEnhet: valgtSaksbehandler.enhet,
+          berortSaksbehandlerEnhet,
         });
       }
 
@@ -388,10 +390,13 @@ export async function action({ request, params }: Route.ActionArgs) {
       );
 
       if (saksbehandler) {
+        const berortSaksbehandlerEnhet =
+          saksbehandler.enhet === null ? undefined : saksbehandler.enhet;
+
         leggTilHendelse(sak, "TILGANG_FJERNET", undefined, {
           berortSaksbehandlerNavn: saksbehandler.navn,
           berortSaksbehandlerNavIdent: saksbehandler.navIdent,
-          berortSaksbehandlerEnhet: saksbehandler.enhet,
+          berortSaksbehandlerEnhet,
         });
       }
 
@@ -407,8 +412,8 @@ export async function action({ request, params }: Route.ActionArgs) {
       break;
     }
     case "legg_tilbake_i_ufordelt": {
-      sak.status = "OPPRETTET";
-      sak.saksbehandler = "";
+      sak.status = "UFORDELT";
+      sak.saksbehandlere.eier = null;
       leggTilHendelse(sak, "STATUS_ENDRET");
       break;
     }
@@ -417,8 +422,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       break;
     }
     case "ferdigstill_sak": {
-      const avslutningstype = formData.get("avslutningstype") as string;
-      sak.status = avslutningstype === "henlegg" ? "HENLAGT" : "AVSLUTTET";
+      sak.status = "AVSLUTTET";
       leggTilHendelse(sak, "STATUS_ENDRET");
       break;
     }
@@ -534,7 +538,9 @@ export default function SakDetaljSide() {
   const belop = getBelop(sak);
   const periodeText = getPeriodeText(sak);
   const tags = getTags(sak);
-  const ansvarligSaksbehandler = finnSaksbehandlerDetalj(saksbehandlerDetaljer, sak.saksbehandler);
+  const ansvarligSaksbehandler = sak.saksbehandlere.eier
+    ? finnSaksbehandlerDetalj(saksbehandlerDetaljer, sak.saksbehandlere.eier.navIdent)
+    : null;
   const delteSaksbehandlere = hentDelteSaksbehandlere(sak);
   const [redigerer, setRedigerer] = useState(false);
   const [redigeringsøkt, setRedigeringsøkt] = useState(0);
@@ -905,7 +911,7 @@ export default function SakDetaljSide() {
 
             <VStack gap="space-6" className="md:sticky md:top-4 md:self-start">
               <SaksbehandlereKort
-                sak={{ ...sak, saksbehandlere: { deltMed: delteSaksbehandlere } }}
+                sak={{ ...sak, saksbehandlere: { ...sak.saksbehandlere, deltMed: delteSaksbehandlere } }}
                 saksbehandlerDetaljer={saksbehandlerDetaljer}
                 ansvarligSaksbehandler={ansvarligSaksbehandler}
               />
@@ -918,33 +924,6 @@ export default function SakDetaljSide() {
                 historikk={historikk}
                 filer={filer}
               />
-
-              {kontaktinformasjon && (
-                <Kort padding="space-6">
-                  <VStack gap="space-4">
-                    <Heading level="2" size="small">
-                      Kontaktinformasjon
-                    </Heading>
-                    {kontaktinformasjon.anonymt ? (
-                      <Tag variant="neutral" size="small">
-                        Anonymt tips
-                      </Tag>
-                    ) : (
-                      <VStack gap="space-2">
-                        {kontaktinformasjon.navn && (
-                          <Felt label="Navn">{kontaktinformasjon.navn}</Felt>
-                        )}
-                        {kontaktinformasjon.telefon && (
-                          <Felt label="Telefon">{kontaktinformasjon.telefon}</Felt>
-                        )}
-                        {kontaktinformasjon.epost && (
-                          <Felt label="E-post">{kontaktinformasjon.epost}</Felt>
-                        )}
-                      </VStack>
-                    )}
-                  </VStack>
-                </Kort>
-              )}
 
               <SakHistorikk sakId={sak.id} hendelser={historikk} />
             </VStack>

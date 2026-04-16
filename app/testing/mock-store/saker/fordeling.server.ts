@@ -1,5 +1,5 @@
 import { kontrollsakResponseSchema, type KontrollsakResponse } from "~/saker/types.backend";
-import { lagMockKontrollsak } from "~/saker/mock-uuid";
+import { normaliserLegacyKontrollsak } from "~/saker/mock-uuid";
 
 const deltMedEksempel = [
   {
@@ -467,11 +467,11 @@ const initialeMockKontrollsaker = [
     opprettet: "2026-02-18T00:00:00Z",
     oppdatert: null,
   },
-] satisfies KontrollsakResponse[];
+];
 
 function lagMockKontrollsaker() {
   return initialeMockKontrollsaker.map((sak) =>
-    kontrollsakResponseSchema.parse(lagMockKontrollsak(sak, 1)),
+    kontrollsakResponseSchema.parse(normaliserLegacyKontrollsak(sak, 1)),
   );
 }
 

@@ -30,7 +30,7 @@ describe("landingsside-loader", () => {
 
     expect(data.dineSakerSiste14Dager).toEqual({
       antallSakerJobbetMed: 6,
-      antallTipsAvklart: 1,
+      antallTipsTilVurdering: 1,
       antallSendtTilNayNfp: 1,
       snittBehandlingstidPerSak: 4,
       antallHenlagteSaker: 2,
@@ -38,10 +38,9 @@ describe("landingsside-loader", () => {
     });
   });
 
-  it("returnerer kun aktive saker (ikke henlagte eller avsluttede)", () => {
+  it("returnerer kun aktive saker (ikke avsluttede)", () => {
     const data = loader();
 
-    expect(data.mineSaker.every((sak) => sak.status !== "HENLAGT")).toBe(true);
     expect(data.mineSaker.every((sak) => sak.status !== "AVSLUTTET")).toBe(true);
   });
 
@@ -49,7 +48,7 @@ describe("landingsside-loader", () => {
     const data = loader();
 
     expect(data.velkomstOppsummering).toBe(
-      "Akkurat nå har du 3 saker til utredning og 1 tips til vurdering.",
+      "Akkurat nå har du 3 tips til vurdering og 3 saker til utredning.",
     );
   });
 });

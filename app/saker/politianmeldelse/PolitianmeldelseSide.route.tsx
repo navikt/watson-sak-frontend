@@ -65,7 +65,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     throw new Response("Sak ikke funnet", { status: 404 });
   }
 
-  sak.status = "TIL_FORVALTNING";
+  sak.status = "FORVALTNING";
   leggTilHendelse(sak, "POLITIANMELDT");
 
   return redirect(RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id)));

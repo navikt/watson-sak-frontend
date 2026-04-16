@@ -60,7 +60,7 @@ describe("SakDetaljSide render", () => {
   });
 
   it("deaktiverer redigering for unsupported saksmodell", async () => {
-    mockKontrollsaker[0].misbrukstyper = ["Endret sivilstatus", "Skjult samliv"];
+    mockKontrollsaker[0].misbruktype = ["ENDRET_SIVILSTATUS", "SKJULT_SAMLIV"];
 
     renderDetaljside();
 
