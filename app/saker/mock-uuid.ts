@@ -30,10 +30,7 @@ function lagMockEntityUuid(fixtureId: string, namespace: number, offset = 0): st
   return lagMockUuid(lagEntityBase(fixtureId, namespace) + BigInt(offset));
 }
 
-export function lagMockKontrollsak(
-  sak: KontrollsakResponse,
-  namespace: number,
-): KontrollsakResponse {
+function lagMockKontrollsak(sak: KontrollsakResponse, namespace: number): KontrollsakResponse {
   const entityBase = lagEntityBase(sak.id, namespace);
 
   return {
@@ -146,7 +143,7 @@ export function normaliserLegacyKontrollsak(
   const misbruktypeMap: Record<string, string> = {
     "Behandler §25-7": "BEHANDLER_25_7",
     "L-takster": "L_TAKSTER_BEHANDLER",
-    "Behandler": "BEHANDLER_25_7",
+    Behandler: "BEHANDLER_25_7",
     "L-takster foretak": "L_TAKSTER_FORETAK",
     "Hvit inntekt": "HVIT_INNTEKT",
     "Fiktivt arbeidsforhold": "FIKTIVT_ARBEIDSFORHOLD",
@@ -158,7 +155,7 @@ export function normaliserLegacyKontrollsak(
     "Medlemskap bortfalt": "MEDLEMSKAP_BORTFALT",
     "Innenfor EØS": "INNENFOR_EOS",
     "Utenfor EØS": "UTENFOR_EOS",
-    "Identitetsmisbruk": "IDENTITETSMISBRUK",
+    Identitetsmisbruk: "IDENTITETSMISBRUK",
     "Opphold på feil grunnlag": "OPPHOLD_PAA_FEIL_GRUNNLAG",
     "Misbruk av tiltaksplass": "MISBRUK_AV_TILTAKSPLASS",
     "Avbrutt tiltak": "AVBRUTT_TILTAK",
@@ -186,7 +183,8 @@ export function normaliserLegacyKontrollsak(
       },
     },
     status: statusMap[legacyStatus] ?? "UFORDELT",
-    kategori: (legacyKategori in {
+    kategori: (legacyKategori in
+    {
       BEHANDLER: true,
       ARBEID: true,
       SAMLIV: true,
@@ -202,7 +200,10 @@ export function normaliserLegacyKontrollsak(
     misbruktype: (Array.isArray(sak.misbrukstyper) ? sak.misbrukstyper : [])
       .map((verdi) => misbruktypeMap[String(verdi)])
       .filter((verdi): verdi is KontrollsakResponse["misbruktype"][number] => Boolean(verdi)),
-    prioritet: sak.prioritet === "LAV" || sak.prioritet === "NORMAL" || sak.prioritet === "HOY" ? sak.prioritet : "NORMAL",
+    prioritet:
+      sak.prioritet === "LAV" || sak.prioritet === "NORMAL" || sak.prioritet === "HOY"
+        ? sak.prioritet
+        : "NORMAL",
     ytelser: legacyYtelser.map((ytelse, indeks) => {
       const typed = ytelse as Record<string, unknown>;
       return {
@@ -213,64 +214,77 @@ export function normaliserLegacyKontrollsak(
         type: String(typed.type ?? "Ukjent ytelse"),
         periodeFra: String(typed.periodeFra ?? "1970-01-01"),
         periodeTil: String(typed.periodeTil ?? typed.periodeFra ?? "1970-01-01"),
-        belop: typeof typed.belop === "number" ? typed.belop : typeof sak.belop === "number" && indeks === 0 ? sak.belop : null,
+        belop:
+          typeof typed.belop === "number"
+            ? typed.belop
+            : typeof sak.belop === "number" && indeks === 0
+              ? sak.belop
+              : null,
       };
     }),
-    merking: Array.isArray(sak.merking) ? String(sak.merking[0] ?? "") || null : typeof sak.merking === "string" ? sak.merking : null,
+    merking: Array.isArray(sak.merking)
+      ? String(sak.merking[0] ?? "") || null
+      : typeof sak.merking === "string"
+        ? sak.merking
+        : null,
     resultat:
       sak.resultat && typeof sak.resultat === "object"
         ? {
-            utredning:
-              (sak.resultat as { utredning?: Record<string, unknown> | null }).utredning
-                ? {
-                    id: String((sak.resultat as { utredning: Record<string, unknown> }).utredning.id),
-                    opprettet: String(
-                      (sak.resultat as { utredning: Record<string, unknown> }).utredning.opprettet ??
-                        (sak.resultat as { utredning: Record<string, unknown> }).utredning.dato ??
-                        sak.opprettet,
-                    ),
-                    resultat: String(
-                      (sak.resultat as { utredning: Record<string, unknown> }).utredning.resultat ?? "INFOSAK",
-                    ),
-                  }
-                : null,
-            forvaltning:
-              (sak.resultat as { forvaltning?: Record<string, unknown> | null }).forvaltning
-                ? {
-                    id: String((sak.resultat as { forvaltning: Record<string, unknown> }).forvaltning.id),
-                    dato: String((sak.resultat as { forvaltning: Record<string, unknown> }).forvaltning.dato),
-                    resultat: String(
-                      (sak.resultat as { forvaltning: Record<string, unknown> }).forvaltning.resultat,
-                    ),
-                  }
-                : null,
-            strafferettsligVurdering:
-              (sak.resultat as { strafferettsligVurdering?: Record<string, unknown> | null })
-                .strafferettsligVurdering
-                ? {
-                    id: String(
-                      (
-                        sak.resultat as {
-                          strafferettsligVurdering: Record<string, unknown>;
-                        }
-                      ).strafferettsligVurdering.id,
-                    ),
-                    dato: String(
-                      (
-                        sak.resultat as {
-                          strafferettsligVurdering: Record<string, unknown>;
-                        }
-                      ).strafferettsligVurdering.dato,
-                    ),
-                    resultat: String(
-                      (
-                        sak.resultat as {
-                          strafferettsligVurdering: Record<string, unknown>;
-                        }
-                      ).strafferettsligVurdering.resultat,
-                    ),
-                  }
-                : null,
+            utredning: (sak.resultat as { utredning?: Record<string, unknown> | null }).utredning
+              ? {
+                  id: String((sak.resultat as { utredning: Record<string, unknown> }).utredning.id),
+                  opprettet: String(
+                    (sak.resultat as { utredning: Record<string, unknown> }).utredning.opprettet ??
+                      (sak.resultat as { utredning: Record<string, unknown> }).utredning.dato ??
+                      sak.opprettet,
+                  ),
+                  resultat: String(
+                    (sak.resultat as { utredning: Record<string, unknown> }).utredning.resultat ??
+                      "INFOSAK",
+                  ),
+                }
+              : null,
+            forvaltning: (sak.resultat as { forvaltning?: Record<string, unknown> | null })
+              .forvaltning
+              ? {
+                  id: String(
+                    (sak.resultat as { forvaltning: Record<string, unknown> }).forvaltning.id,
+                  ),
+                  dato: String(
+                    (sak.resultat as { forvaltning: Record<string, unknown> }).forvaltning.dato,
+                  ),
+                  resultat: String(
+                    (sak.resultat as { forvaltning: Record<string, unknown> }).forvaltning.resultat,
+                  ),
+                }
+              : null,
+            strafferettsligVurdering: (
+              sak.resultat as { strafferettsligVurdering?: Record<string, unknown> | null }
+            ).strafferettsligVurdering
+              ? {
+                  id: String(
+                    (
+                      sak.resultat as {
+                        strafferettsligVurdering: Record<string, unknown>;
+                      }
+                    ).strafferettsligVurdering.id,
+                  ),
+                  dato: String(
+                    (
+                      sak.resultat as {
+                        strafferettsligVurdering: Record<string, unknown>;
+                      }
+                    ).strafferettsligVurdering.dato,
+                  ),
+                  resultat: String(
+                    (
+                      sak.resultat as {
+                        strafferettsligVurdering: Record<string, unknown>;
+                      }
+                    ).strafferettsligVurdering.resultat,
+                  ),
+                }
+              : null,
           }
         : null,
     opprettet: String(sak.opprettet ?? new Date().toISOString()),
