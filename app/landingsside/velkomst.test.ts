@@ -37,7 +37,7 @@ describe("lagVelkomstOppsummering", () => {
     ];
 
     expect(lagVelkomstOppsummering(saker)).toBe(
-      "Akkurat nå har du 2 tips til vurdering og 2 saker til utredning.",
+      "Akkurat nå har du 2 saker til utredning og 1 sak som venter på svar fra NAY/NFP.",
     );
   });
 
@@ -76,7 +76,7 @@ describe("lagVelkomstOppsummering", () => {
     ];
 
     expect(lagVelkomstOppsummering(saker)).toBe(
-      "Akkurat nå har du 2 tips til vurdering og 2 saker til utredning.",
+      "Akkurat nå har du 2 saker til utredning og 1 sak som venter på svar fra NAY/NFP.",
     );
   });
 
@@ -87,8 +87,14 @@ describe("lagVelkomstOppsummering", () => {
       lagKontrollsak({ id: "3", status: "UFORDELT" }),
     ];
 
+    expect(lagVelkomstOppsummering(saker)).toBe("Akkurat nå har du 2 saker til utredning.");
+  });
+
+  test("tar ikke med ufordelte saker i velkomstoppsummeringen", () => {
+    const saker = [lagKontrollsak({ id: "1", status: "UFORDELT" })];
+
     expect(lagVelkomstOppsummering(saker)).toBe(
-      "Akkurat nå har du 2 saker til utredning og 1 tips til vurdering.",
+      "Er du klar for nye oppgaver? Du har ingen saker hos deg akkurat nå.",
     );
   });
 });

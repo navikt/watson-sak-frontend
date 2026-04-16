@@ -58,8 +58,8 @@ describe("beregnDineSakerSiste14Dager", () => {
     });
 
     expect(resultat).toEqual({
-      antallSakerJobbetMed: 5,
-      antallTipsTilVurdering: 1,
+      antallSakerJobbetMed: 4,
+      antallTipsTilVurdering: 0,
       antallSendtTilNayNfp: 1,
       snittBehandlingstidPerSak: 5,
       antallHenlagteSaker: 1,
@@ -108,12 +108,29 @@ describe("beregnDineSakerSiste14Dager", () => {
     });
 
     expect(resultat).toEqual({
-      antallSakerJobbetMed: 5,
-      antallTipsTilVurdering: 1,
+      antallSakerJobbetMed: 4,
+      antallTipsTilVurdering: 0,
       antallSendtTilNayNfp: 1,
       snittBehandlingstidPerSak: 5,
       antallHenlagteSaker: 1,
       antallHenlagteTips: 1,
     });
+  });
+
+  test("teller ikke ufordelte saker som jobbet med de siste 14 dagene", () => {
+    const saker = [
+      lagKontrollsak({ id: "1", opprettet: "2026-03-18T00:00:00Z", status: "UFORDELT" }),
+      lagKontrollsak({ id: "2", opprettet: "2026-03-17T00:00:00Z", status: "UTREDES" }),
+    ];
+
+    const resultat = beregnDineSakerSiste14Dager({
+      saker,
+      avslutningsdatoer: {},
+      tidligereTipsSakIder: [],
+      referansedato: "2026-03-18",
+    });
+
+    expect(resultat.antallSakerJobbetMed).toBe(1);
+    expect(resultat.antallTipsTilVurdering).toBe(0);
   });
 });

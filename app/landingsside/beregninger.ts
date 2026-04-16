@@ -40,15 +40,15 @@ export function beregnDineSakerSiste14Dager({
   tidligereTipsSakIder,
   referansedato,
 }: BeregnDineSakerSiste14DagerArgs): DineSakerSiste14DagerStatistikk {
-  const sakerSiste14Dager = saker.filter((sak) =>
-    erInnenforSiste14Dager(getOpprettet(sak), referansedato),
+  const sakerSiste14Dager = saker.filter(
+    (sak) => erInnenforSiste14Dager(getOpprettet(sak), referansedato) && getStatus(sak) !== "UFORDELT",
   );
 
   const behandlingstid = beregnBehandlingstid(sakerSiste14Dager, avslutningsdatoer);
 
   return {
     antallSakerJobbetMed: sakerSiste14Dager.length,
-    antallTipsTilVurdering: sakerSiste14Dager.filter((sak) => getStatus(sak) === "UFORDELT").length,
+    antallTipsTilVurdering: 0,
     antallSendtTilNayNfp: sakerSiste14Dager.filter((sak) => getStatus(sak) === "FORVALTNING")
       .length,
     snittBehandlingstidPerSak: behandlingstid?.gjennomsnitt ?? null,
