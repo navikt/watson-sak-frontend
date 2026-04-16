@@ -5,13 +5,13 @@ import { DineSakerSiste14Dager } from "./DineSakerSiste14Dager";
 describe("DineSakerSiste14Dager", () => {
   it("viser nøkkeltall og skjuler valgfrie KPI-er når de er null", () => {
     render(
-        <DineSakerSiste14Dager
-          statistikk={{
-            antallSakerJobbetMed: 6,
-            antallTipsTilVurdering: 0,
-            antallSendtTilNayNfp: 0,
-            snittBehandlingstidPerSak: 4,
-            antallHenlagteSaker: 2,
+      <DineSakerSiste14Dager
+        statistikk={{
+          antallSakerJobbetMed: 6,
+          antallTipsTilVurdering: 0,
+          antallSendtTilNayNfp: 0,
+          snittBehandlingstidPerSak: 4,
+          antallHenlagteSaker: 2,
           antallHenlagteTips: 1,
         }}
       />,

@@ -38,9 +38,7 @@ describe("Mine saker selectors", () => {
   });
 
   it("mapper backend-status FORVALTNING til ventende", () => {
-    expect(getMineSakerGruppeStatus(lagKontrollsak({ status: "FORVALTNING" }))).toBe(
-      "ventende",
-    );
+    expect(getMineSakerGruppeStatus(lagKontrollsak({ status: "FORVALTNING" }))).toBe("ventende");
   });
 
   it("mapper backend-status I_BERO til aktive eksplisitt", () => {

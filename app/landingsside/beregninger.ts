@@ -48,8 +48,7 @@ export function beregnDineSakerSiste14Dager({
 
   return {
     antallSakerJobbetMed: sakerSiste14Dager.length,
-    antallTipsTilVurdering: sakerSiste14Dager.filter((sak) => getStatus(sak) === "UFORDELT")
-      .length,
+    antallTipsTilVurdering: sakerSiste14Dager.filter((sak) => getStatus(sak) === "UFORDELT").length,
     antallSendtTilNayNfp: sakerSiste14Dager.filter((sak) => getStatus(sak) === "FORVALTNING")
       .length,
     snittBehandlingstidPerSak: behandlingstid?.gjennomsnitt ?? null,
