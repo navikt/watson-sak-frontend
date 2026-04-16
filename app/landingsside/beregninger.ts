@@ -41,7 +41,8 @@ export function beregnDineSakerSiste14Dager({
   referansedato,
 }: BeregnDineSakerSiste14DagerArgs): DineSakerSiste14DagerStatistikk {
   const sakerSiste14Dager = saker.filter(
-    (sak) => erInnenforSiste14Dager(getOpprettet(sak), referansedato) && getStatus(sak) !== "UFORDELT",
+    (sak) =>
+      erInnenforSiste14Dager(getOpprettet(sak), referansedato) && getStatus(sak) !== "UFORDELT",
   );
 
   const behandlingstid = beregnBehandlingstid(sakerSiste14Dager, avslutningsdatoer);
