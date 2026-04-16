@@ -16,11 +16,9 @@ import { useFetcher } from "react-router";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { getSaksreferanse } from "~/saker/id";
 import {
-  getAlder,
   getBelop,
   getKategoriText,
   getMisbrukstyper,
-  getNavn,
   getPeriodeText,
   getStatusVariantForSak,
   getTags,
@@ -60,8 +58,6 @@ function SakKort({ sak }: SakKortProps) {
   const fetcher = useFetcher<KobleSakActionResult>();
   const saksreferanse = getSaksreferanse(sak.id);
   const personIdent = getPersonIdent(sak);
-  const navn = getNavn(sak);
-  const alder = getAlder(sak);
   const statusTekst = getStatus(sak);
   const periodeText = getPeriodeText(sak);
   const kategoriText = getKategoriText(sak);

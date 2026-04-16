@@ -68,7 +68,6 @@ import {
 import {
   formaterBelop,
   getKildeText,
-  getKontaktinformasjon,
   getPersonIdent,
   getStatus,
   getYtelseTyper,
@@ -528,7 +527,6 @@ export default function SakDetaljSide() {
   const statusTekst = getStatus(sak);
   const kildeTekst = getKildeText(sak);
   const ytelseTyper = getYtelseTyper(sak);
-  const kontaktinformasjon = getKontaktinformasjon(sak);
   const erAktiv = erAktivSakKontrollsak(sak.status);
   const saksreferanse = getSaksreferanse(sak.id);
   const navn = getNavn(sak);
@@ -911,7 +909,10 @@ export default function SakDetaljSide() {
 
             <VStack gap="space-6" className="md:sticky md:top-4 md:self-start">
               <SaksbehandlereKort
-                sak={{ ...sak, saksbehandlere: { ...sak.saksbehandlere, deltMed: delteSaksbehandlere } }}
+                sak={{
+                  ...sak,
+                  saksbehandlere: { ...sak.saksbehandlere, deltMed: delteSaksbehandlere },
+                }}
                 saksbehandlerDetaljer={saksbehandlerDetaljer}
                 ansvarligSaksbehandler={ansvarligSaksbehandler}
               />

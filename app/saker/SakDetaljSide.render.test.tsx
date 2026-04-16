@@ -86,7 +86,7 @@ describe("SakDetaljSide render", () => {
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
     expect(screen.getByRole("heading", { name: "Delt med" })).toBeDefined();
-    expect(screen.getByText("Test Saksbehandler")).toBeDefined();
+    expect(screen.getByText("Z999999")).toBeDefined();
     expect(screen.getAllByText("Kari Nordmann").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Ada Larsen").length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Endre ansvarlig saksbehandler" })).toBeDefined();
