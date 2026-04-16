@@ -1,6 +1,8 @@
 import { BACKEND_API_URL, skalBrukeMockdata } from "~/config/env.server";
 import { logger } from "~/logging/logging";
+import type { KontrollsakKategori, KontrollsakKilde, KontrollsakMisbrukstype } from "~/saker/types.backend";
 import { leggTilMockSak } from "./person-oppslag.mock.server";
+import { leggTilMockMineSak } from "~/testing/mock-store/saker/mine-saker.server";
 
 export type OpprettKontrollsakRequest = {
   personIdent: string;
@@ -35,6 +37,43 @@ type OpprettKontrollsakArgs = {
   payload: OpprettKontrollsakRequest;
 };
 
+type KontrollsakPrioritet = "LAV" | "NORMAL" | "HOY";
+
+function erGyldigKategori(verdi: string): verdi is KontrollsakKategori {
+  return ["BEHANDLER", "ARBEID", "SAMLIV", "UTLAND", "IDENTITET", "TILTAK", "DOKUMENTFALSK", "ANNET"].includes(verdi);
+}
+
+function erGyldigKilde(verdi: string): verdi is KontrollsakKilde {
+  return ["NAV_KONTROLL", "ANNET", "PUBLIKUM", "POLITIET"].includes(verdi);
+}
+
+function erGyldigPrioritet(verdi: string): verdi is KontrollsakPrioritet {
+  return ["LAV", "NORMAL", "HOY"].includes(verdi);
+}
+
+function erGyldigeMisbrukstyper(verdier: string[]): verdier is KontrollsakMisbrukstype[] {
+  return verdier.every((verdi) =>
+    [
+      "BEHANDLER_25_7",
+      "L_TAKSTER_BEHANDLER",
+      "L_TAKSTER_FORETAK",
+      "HVIT_INNTEKT",
+      "FIKTIVT_ARBEIDSFORHOLD",
+      "SKJULT_ARBEIDSINNTEKT",
+      "SVART_ARBEID",
+      "SKJULT_SAMLIV",
+      "ENDRET_SIVILSTATUS",
+      "MEDLEMSKAP_BORTFALT",
+      "INNENFOR_EOS",
+      "UTENFOR_EOS",
+      "IDENTITETSMISBRUK",
+      "OPPHOLD_PAA_FEIL_GRUNNLAG",
+      "MISBRUK_AV_TILTAKSPLASS",
+      "AVBRUTT_TILTAK",
+    ].includes(verdi),
+  );
+}
+
 export async function opprettKontrollsak({
   token,
   payload,
@@ -46,6 +85,27 @@ export async function opprettKontrollsak({
       "Ukjent";
     const enhet = payload.saksbehandlere?.eier?.enhet ?? "Ukjent";
     leggTilMockSak(payload.personIdent, saksbehandler, enhet);
+
+    if (
+      !erGyldigKategori(payload.kategori) ||
+      !erGyldigKilde(payload.kilde) ||
+      !erGyldigPrioritet(payload.prioritet) ||
+      !erGyldigeMisbrukstyper(payload.misbruktype)
+    ) {
+      throw new Error("Ugyldig mock-payload for opprettelse av kontrollsak.");
+    }
+
+    leggTilMockMineSak({
+      personIdent: payload.personIdent,
+      personNavn: payload.personNavn,
+      saksbehandlere: payload.saksbehandlere,
+      kategori: payload.kategori,
+      kilde: payload.kilde,
+      prioritet: payload.prioritet,
+      misbruktype: payload.misbruktype,
+      merking: payload.merking,
+      ytelser: payload.ytelser,
+    });
     return;
   }
 
