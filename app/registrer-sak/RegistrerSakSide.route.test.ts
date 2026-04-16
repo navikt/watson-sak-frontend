@@ -57,11 +57,7 @@ describe("OpprettSakSide action", () => {
         personIdent: "12345678901",
         personNavn: "Ola Testesen",
         saksbehandlere: {
-          eier: {
-            navIdent: "Z123456",
-            navn: "Test Saksbehandler",
-            enhet: "4812",
-          },
+          eier: null,
           deltMed: [],
         },
         kategori: "DOKUMENTFALSK",
@@ -92,7 +88,7 @@ describe("OpprettSakSide action", () => {
     expect(redirectResponse.headers.get("Location")).toBe("/saker/301");
   });
 
-  it("feiler når innlogget bruker mangler gyldig mottakende enhet", async () => {
+  it("oppretter sak selv når innlogget bruker mangler gyldig mottakende enhet", async () => {
     hentInnloggetBrukerMock.mockResolvedValue({
       navIdent: "Z123456",
       name: "Test Saksbehandler",
@@ -112,16 +108,17 @@ describe("OpprettSakSide action", () => {
     formData.set("kilde", "NAV_KONTROLL");
     formData.set("enhet", "ØST");
 
-    await expect(
-      action({
-        request: new Request("http://localhost/registrer-sak", {
-          method: "POST",
-          body: formData,
-        }),
-        params: {},
-        context: {},
-      } as Route.ActionArgs),
-    ).rejects.toThrow("Ugyldig mottakende enhet: 'Ukjent'. Forventet enhetsnummer (4 sifre).");
+    const response = await action({
+      request: new Request("http://localhost/registrer-sak", {
+        method: "POST",
+        body: formData,
+      }),
+      params: {},
+      context: {},
+    } as Route.ActionArgs);
+
+    expect(response).toBeInstanceOf(Response);
+    expect((response as Response).status).toBe(302);
   });
 });
 
@@ -144,20 +141,13 @@ describe("byggOpprettKontrollsakPayload", () => {
           caBeløp: 300000,
           organisasjonsnummer: "123456789",
         },
-        navIdent: "Z123456",
-        mottakEnhet: "4812",
         personNavn: "Ola Testesen",
-        saksbehandlerNavn: "Test Saksbehandler",
       }),
     ).toEqual({
       personIdent: "12345678901",
       personNavn: "Ola Testesen",
       saksbehandlere: {
-        eier: {
-          navIdent: "Z123456",
-          navn: "Test Saksbehandler",
-          enhet: "4812",
-        },
+        eier: null,
         deltMed: [],
       },
       kategori: "SAMLIV",

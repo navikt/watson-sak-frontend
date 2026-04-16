@@ -16,22 +16,6 @@ import {
   type OpprettSakSkjema,
 } from "./validering";
 
-function hentMottakEnhet(organisasjoner: string) {
-  const førsteEnhet = organisasjoner.split(",")[0]?.trim();
-
-  if (!førsteEnhet) {
-    throw new Error("Fant ingen mottakende enhet i organisasjoner.");
-  }
-
-  if (!/^\d{4}$/.test(førsteEnhet)) {
-    throw new Error(
-      `Ugyldig mottakende enhet: '${førsteEnhet}'. Forventet enhetsnummer (4 sifre).`,
-    );
-  }
-
-  return førsteEnhet;
-}
-
 function byggYtelser(ytelser: OpprettSakSkjema["ytelser"], fraDato: string, tilDato: string) {
   return ytelser.map((ytelse) => ({
     type: ytelse,
@@ -42,26 +26,16 @@ function byggYtelser(ytelser: OpprettSakSkjema["ytelser"], fraDato: string, tilD
 
 export function byggOpprettKontrollsakPayload({
   skjema,
-  navIdent,
-  mottakEnhet,
   personNavn,
-  saksbehandlerNavn,
 }: {
   skjema: OpprettSakSkjema;
-  navIdent: string;
-  mottakEnhet: string;
   personNavn: string;
-  saksbehandlerNavn: string;
 }): OpprettKontrollsakRequest {
   return {
     personIdent: skjema.personIdent,
     personNavn,
     saksbehandlere: {
-      eier: {
-        navIdent,
-        navn: saksbehandlerNavn,
-        enhet: mottakEnhet,
-      },
+      eier: null,
       deltMed: [],
     },
     kategori: skjema.kategori,
@@ -119,16 +93,11 @@ export async function action({ request }: Route.ActionArgs) {
     return { feil: { personIdent: ["Mangler navn på personen som saken opprettes for"] } };
   }
 
-  const mottakEnhet = hentMottakEnhet(innloggetBruker.organisasjoner);
-
   const opprettetSak = await opprettKontrollsak({
     token: innloggetBruker.token,
     payload: byggOpprettKontrollsakPayload({
       skjema: data,
-      navIdent: innloggetBruker.navIdent,
-      mottakEnhet,
       personNavn,
-      saksbehandlerNavn: innloggetBruker.name,
     }),
   });
 
