@@ -6,7 +6,7 @@ import type {
   KontrollsakMisbrukstype,
 } from "~/saker/types.backend";
 import { leggTilMockSak } from "./person-oppslag.mock.server";
-import { leggTilMockMineSak } from "~/testing/mock-store/saker/mine-saker.server";
+import { leggTilMockSakIFordeling } from "~/testing/mock-store/saker/fordeling.server";
 
 export type OpprettKontrollsakRequest = {
   personIdent: string;
@@ -41,7 +41,7 @@ type OpprettKontrollsakArgs = {
   payload: OpprettKontrollsakRequest;
 };
 
-export type OpprettKontrollsakResultat = {
+type OpprettKontrollsakResultat = {
   id: string;
 };
 
@@ -96,11 +96,8 @@ export async function opprettKontrollsak({
   payload,
 }: OpprettKontrollsakArgs): Promise<OpprettKontrollsakResultat> {
   if (skalBrukeMockdata) {
-    const saksbehandler =
-      payload.saksbehandlere?.eier?.navIdent ??
-      payload.saksbehandlere?.deltMed?.[0]?.navIdent ??
-      "Ukjent";
-    const enhet = payload.saksbehandlere?.eier?.enhet ?? "Ukjent";
+    const saksbehandler = payload.saksbehandlere?.deltMed?.[0]?.navIdent ?? "Ukjent";
+    const enhet = payload.saksbehandlere?.deltMed?.[0]?.enhet ?? "Ukjent";
     leggTilMockSak(payload.personIdent, saksbehandler, enhet);
 
     if (
@@ -112,7 +109,7 @@ export async function opprettKontrollsak({
       throw new Error("Ugyldig mock-payload for opprettelse av kontrollsak.");
     }
 
-    const kontrollsak = leggTilMockMineSak({
+    const kontrollsak = leggTilMockSakIFordeling({
       personIdent: payload.personIdent,
       personNavn: payload.personNavn,
       saksbehandlere: payload.saksbehandlere,

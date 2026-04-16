@@ -1,34 +1,6 @@
 import { kontrollsakResponseSchema, type KontrollsakResponse } from "~/saker/types.backend";
 import { lagMockSakUuid, normaliserLegacyKontrollsak } from "~/saker/mock-uuid";
 
-type NyMockMineSak = {
-  personIdent: string;
-  personNavn: string;
-  saksbehandlere?: {
-    eier?: {
-      navIdent: string;
-      navn: string;
-      enhet?: string;
-    } | null;
-    deltMed?: Array<{
-      navIdent: string;
-      navn: string;
-      enhet?: string;
-    }>;
-  };
-  kategori: KontrollsakResponse["kategori"];
-  kilde: KontrollsakResponse["kilde"];
-  misbruktype: KontrollsakResponse["misbruktype"];
-  prioritet: KontrollsakResponse["prioritet"];
-  merking?: KontrollsakResponse["merking"];
-  ytelser: Array<{
-    type: string;
-    periodeFra: string;
-    periodeTil: string;
-    belop?: number;
-  }>;
-};
-
 const initialeMockMineKontrollsaker = [
   {
     id: "201",
@@ -392,8 +364,6 @@ function lagMockMineKontrollsaker() {
 
 export let mockMineKontrollsaker: KontrollsakResponse[] = lagMockMineKontrollsaker();
 
-let nesteMockMineSakId = 300;
-
 export const mockMineSakerAvslutningsdatoer = {
   [lagMockSakUuid("207", 2)]: "2026-03-12",
   [lagMockSakUuid("209", 2)]: "2026-03-16",
@@ -402,63 +372,6 @@ export const mockMineSakerAvslutningsdatoer = {
 
 export const mockMineSakerTidligereTipsSakIder = [lagMockSakUuid("207", 2)];
 
-export function leggTilMockMineSak(nySak: NyMockMineSak): KontrollsakResponse {
-  const saksnummer = String(nesteMockMineSakId++);
-  const opprettet = new Date().toISOString();
-
-  const kontrollsak = kontrollsakResponseSchema.parse({
-    id: lagMockSakUuid(saksnummer, 2),
-    personIdent: nySak.personIdent,
-    personNavn: nySak.personNavn,
-    saksbehandlere: {
-      eier: nySak.saksbehandlere?.eier
-        ? {
-            navIdent: nySak.saksbehandlere.eier.navIdent,
-            navn: nySak.saksbehandlere.eier.navn,
-            enhet: nySak.saksbehandlere.eier.enhet ?? null,
-          }
-        : null,
-      deltMed: (nySak.saksbehandlere?.deltMed ?? []).map((saksbehandler) => ({
-        navIdent: saksbehandler.navIdent,
-        navn: saksbehandler.navn,
-        enhet: saksbehandler.enhet ?? null,
-      })),
-      opprettetAv: nySak.saksbehandlere?.eier
-        ? {
-            navIdent: nySak.saksbehandlere.eier.navIdent,
-            navn: nySak.saksbehandlere.eier.navn,
-            enhet: nySak.saksbehandlere.eier.enhet ?? null,
-          }
-        : {
-            navIdent: "Ukjent",
-            navn: "Ukjent",
-            enhet: null,
-          },
-    },
-    status: "UTREDES",
-    kategori: nySak.kategori,
-    kilde: nySak.kilde,
-    misbruktype: nySak.misbruktype,
-    prioritet: nySak.prioritet,
-    ytelser: nySak.ytelser.map((ytelse, indeks) => ({
-      id: lagMockSakUuid(`${saksnummer}${indeks + 1}`, 2),
-      type: ytelse.type,
-      periodeFra: ytelse.periodeFra,
-      periodeTil: ytelse.periodeTil,
-      belop: ytelse.belop ?? null,
-    })),
-    merking: nySak.merking ?? null,
-    resultat: null,
-    opprettet,
-    oppdatert: null,
-  });
-
-  mockMineKontrollsaker.unshift(kontrollsak);
-
-  return kontrollsak;
-}
-
 export function resetMockMineSaker() {
   mockMineKontrollsaker = lagMockMineKontrollsaker();
-  nesteMockMineSakId = 300;
 }
