@@ -193,9 +193,13 @@ export default function OpprettSakSide() {
                   name="personIdent"
                   value={person.personnummer.replace(/\s/g, "")}
                 />
-                <input type="hidden" name="personNavn" value={person.navn} />
-
                 <VStack gap="space-40">
+                  {feil?.skjema?.[0] && (
+                    <LocalAlert status="error" className="max-w-2xl">
+                      <LocalAlert.Content>{feil.skjema[0]}</LocalAlert.Content>
+                    </LocalAlert>
+                  )}
+
                   <Heading level="2" size="medium">
                     Grunnleggende saksinformasjon
                   </Heading>

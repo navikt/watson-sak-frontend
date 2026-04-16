@@ -16,6 +16,21 @@ vi.mock("~/auth/innlogget-bruker.server", () => ({
   hentInnloggetBruker: hentInnloggetBrukerMock,
 }));
 
+vi.mock("./person-oppslag.mock.server", () => ({
+  slaOppPerson: vi.fn((fnr: string) =>
+    fnr === "12345678901"
+      ? {
+          person: {
+            navn: "Ola Testesen",
+            personnummer: "12345678901",
+            alder: 30,
+          },
+          eksisterendeSaker: [],
+        }
+      : null,
+  ),
+}));
+
 describe("OpprettSakSide action", () => {
   afterEach(() => {
     vi.clearAllMocks();
@@ -31,9 +46,11 @@ describe("OpprettSakSide action", () => {
     const { action } = await import("./RegistrerSakSide.server");
     const { opprettKontrollsak } = await import("./api.server");
 
+    const { slaOppPerson } = await import("./person-oppslag.mock.server");
+
     const formData = new FormData();
     formData.set("personIdent", "12345678901");
-    formData.set("personNavn", "Ola Testesen");
+    formData.set("personNavn", "Manipulert Navn");
     formData.append("ytelser", "Dagpenger");
     formData.append("ytelser", "AAP");
     formData.set("fraDato", "2026-01-01");
@@ -81,12 +98,13 @@ describe("OpprettSakSide action", () => {
         ],
       },
     });
+    expect(slaOppPerson).toHaveBeenCalledWith("12345678901");
 
     expect(response).toBeInstanceOf(Response);
     const redirectResponse = response as Response;
     expect(redirectResponse.status).toBe(302);
     expect(redirectResponse.headers.get("Location")).toBe("/saker/301");
-  });
+  }, 15000);
 
   it("oppretter sak selv når innlogget bruker mangler gyldig mottakende enhet", async () => {
     hentInnloggetBrukerMock.mockResolvedValue({
@@ -119,7 +137,34 @@ describe("OpprettSakSide action", () => {
 
     expect(response).toBeInstanceOf(Response);
     expect((response as Response).status).toBe(302);
-  });
+  }, 15000);
+
+  it("returnerer skjema-feil når personnavn ikke kan slås opp server-side", async () => {
+    const { action } = await import("./RegistrerSakSide.server");
+
+    const formData = new FormData();
+    formData.set("personIdent", "99999999999");
+    formData.set("personNavn", "Manipulert Navn");
+    formData.append("ytelser", "Dagpenger");
+    formData.set("fraDato", "2026-01-01");
+    formData.set("tilDato", "2026-12-31");
+    formData.set("kategori", "DOKUMENTFALSK");
+    formData.set("kilde", "NAV_KONTROLL");
+    formData.set("enhet", "ØST");
+
+    const response = await action({
+      request: new Request("http://localhost/registrer-sak", {
+        method: "POST",
+        body: formData,
+      }),
+      params: {},
+      context: {},
+    } as Route.ActionArgs);
+
+    expect(response).toEqual({
+      feil: { skjema: ["Fant ikke navn på personen som saken opprettes for"] },
+    });
+  }, 15000);
 });
 
 describe("byggOpprettKontrollsakPayload", () => {

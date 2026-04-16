@@ -3,6 +3,7 @@ import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { mockYtelser } from "~/fordeling/mock-data.server";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
+import { slaOppPerson } from "./person-oppslag.mock.server";
 import type { OpprettKontrollsakRequest } from "./api.server";
 import type { Route } from "./+types/RegistrerSakSide.route";
 import { opprettKontrollsak } from "./api.server";
@@ -87,10 +88,11 @@ export async function action({ request }: Route.ActionArgs) {
 
   const innloggetBruker = await hentInnloggetBruker({ request });
   const data = resultat.data;
-  const personNavn = formData.get("personNavn");
+  const personOppslag = slaOppPerson(data.personIdent);
+  const personNavn = personOppslag?.person.navn;
 
   if (typeof personNavn !== "string" || personNavn.trim() === "") {
-    return { feil: { personIdent: ["Mangler navn på personen som saken opprettes for"] } };
+    return { feil: { skjema: ["Fant ikke navn på personen som saken opprettes for"] } };
   }
 
   const opprettetSak = await opprettKontrollsak({
