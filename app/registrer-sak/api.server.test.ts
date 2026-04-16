@@ -120,5 +120,4 @@ describe("opprettKontrollsak", () => {
     expect(mockMineKontrollsaker.some((sak) => sak.personIdent === "12345678901")).toBe(true);
     expect(søkSaker("12345678901").some((sak) => sak.personIdent === "12345678901")).toBe(true);
   });
-
 });

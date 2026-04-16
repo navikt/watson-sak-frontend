@@ -1,6 +1,10 @@
 import { BACKEND_API_URL, skalBrukeMockdata } from "~/config/env.server";
 import { logger } from "~/logging/logging";
-import type { KontrollsakKategori, KontrollsakKilde, KontrollsakMisbrukstype } from "~/saker/types.backend";
+import type {
+  KontrollsakKategori,
+  KontrollsakKilde,
+  KontrollsakMisbrukstype,
+} from "~/saker/types.backend";
 import { leggTilMockSak } from "./person-oppslag.mock.server";
 import { leggTilMockMineSak } from "~/testing/mock-store/saker/mine-saker.server";
 
@@ -44,7 +48,16 @@ export type OpprettKontrollsakResultat = {
 type KontrollsakPrioritet = "LAV" | "NORMAL" | "HOY";
 
 function erGyldigKategori(verdi: string): verdi is KontrollsakKategori {
-  return ["BEHANDLER", "ARBEID", "SAMLIV", "UTLAND", "IDENTITET", "TILTAK", "DOKUMENTFALSK", "ANNET"].includes(verdi);
+  return [
+    "BEHANDLER",
+    "ARBEID",
+    "SAMLIV",
+    "UTLAND",
+    "IDENTITET",
+    "TILTAK",
+    "DOKUMENTFALSK",
+    "ANNET",
+  ].includes(verdi);
 }
 
 function erGyldigKilde(verdi: string): verdi is KontrollsakKilde {
