@@ -60,7 +60,37 @@ test.describe("Opprett sak", () => {
 
     await page.getByRole("button", { name: "Opprett sak" }).click();
 
-    await expect(page).toHaveURL("/");
+    await expect(page).toHaveURL(/\/saker\/\d+/);
+  });
+
+  test("nyopprettet sak blir søkbar", async ({ page }) => {
+    await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("12345678901");
+    await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
+
+    await expect(
+      page.getByRole("heading", { name: "Grunnleggende saksinformasjon" }),
+    ).toBeVisible();
+
+    await page.getByLabel("Kategori").selectOption("DOKUMENTFALSK");
+    await page.getByLabel("Fra dato").fill("01.01.2026");
+    await page.getByLabel("Til dato").fill("31.12.2026");
+
+    const ytelserCombobox = page.getByLabel("Ytelse");
+    await ytelserCombobox.fill("Dagpenger");
+    await page.getByRole("option", { name: "Dagpenger" }).click();
+
+    await page.getByLabel("Enhet").selectOption("ØST");
+    await page.getByLabel("Kilde").selectOption("NAV_KONTROLL");
+
+    await page.getByRole("button", { name: "Opprett sak" }).click();
+    await expect(page).toHaveURL(/\/saker\/\d+/);
+
+    await page.goto("/søk", { waitUntil: "networkidle" });
+    await page.getByLabel("Søk etter saker").fill("12345678901");
+    await page.getByLabel("Søk etter saker").press("Enter");
+
+    await expect(page.getByText(/treff for "12345678901"/)).toBeVisible();
+    await expect(page.getByRole("article").first()).toBeVisible();
   });
 
   test("misbruktype-feltet vises kun for kategorier med misbrukstyper", async ({ page }) => {
