@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Route } from "./+types/RegistrerSakSide.route";
 
+const testState = vi.hoisted(() => ({
+  skalBrukeMockdata: true,
+}));
+
 const hentInnloggetBrukerMock = vi.fn().mockResolvedValue({
   navIdent: "Z123456",
   name: "Test Saksbehandler",
@@ -21,6 +25,12 @@ vi.mock("~/auth/access-token", () => ({
   getBackendOboToken: getBackendOboTokenMock,
 }));
 
+vi.mock("~/config/env.server", () => ({
+  get skalBrukeMockdata() {
+    return testState.skalBrukeMockdata;
+  },
+}));
+
 vi.mock("./person-oppslag.mock.server", () => ({
   slaOppPerson: vi.fn((fnr: string) =>
     fnr === "12345678901"
@@ -39,6 +49,7 @@ vi.mock("./person-oppslag.mock.server", () => ({
 describe("OpprettSakSide action", () => {
   afterEach(() => {
     vi.clearAllMocks();
+    testState.skalBrukeMockdata = true;
     hentInnloggetBrukerMock.mockResolvedValue({
       navIdent: "Z123456",
       name: "Test Saksbehandler",
@@ -74,7 +85,7 @@ describe("OpprettSakSide action", () => {
     } as Route.ActionArgs);
 
     expect(opprettKontrollsak).toHaveBeenCalledWith({
-      token: "token-123",
+      token: "demo",
       payload: {
         personIdent: "12345678901",
         personNavn: "Ola Testesen",
@@ -103,6 +114,7 @@ describe("OpprettSakSide action", () => {
         ],
       },
     });
+    expect(getBackendOboTokenMock).not.toHaveBeenCalled();
     expect(slaOppPerson).toHaveBeenCalledWith("12345678901");
 
     expect(response).toBeInstanceOf(Response);
@@ -141,6 +153,39 @@ describe("OpprettSakSide action", () => {
 
     expect(response).toBeInstanceOf(Response);
     expect((response as Response).status).toBe(302);
+  }, 15000);
+
+  it("henter backend-token når mockdata er avslått", async () => {
+    testState.skalBrukeMockdata = false;
+
+    const { action } = await import("./RegistrerSakSide.server");
+    const { opprettKontrollsak } = await import("./api.server");
+
+    const formData = new FormData();
+    formData.set("personIdent", "12345678901");
+    formData.set("personNavn", "Manipulert Navn");
+    formData.append("ytelser", "Dagpenger");
+    formData.set("fraDato", "2026-01-01");
+    formData.set("tilDato", "2026-12-31");
+    formData.set("kategori", "DOKUMENTFALSK");
+    formData.set("kilde", "NAV_KONTROLL");
+    formData.set("enhet", "ØST");
+
+    await action({
+      request: new Request("http://localhost/registrer-sak", {
+        method: "POST",
+        body: formData,
+      }),
+      params: {},
+      context: {},
+    } as Route.ActionArgs);
+
+    expect(getBackendOboTokenMock).toHaveBeenCalled();
+    expect(opprettKontrollsak).toHaveBeenCalledWith(
+      expect.objectContaining({
+        token: "token-123",
+      }),
+    );
   }, 15000);
 
   it("returnerer skjema-feil når personnavn ikke kan slås opp server-side", async () => {

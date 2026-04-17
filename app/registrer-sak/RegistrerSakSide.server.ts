@@ -1,6 +1,7 @@
 import { redirect } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
+import { skalBrukeMockdata } from "~/config/env.server";
 import { mockYtelser } from "~/fordeling/mock-data.server";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
@@ -97,7 +98,7 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   const opprettetSak = await opprettKontrollsak({
-    token: await getBackendOboToken(request),
+    token: skalBrukeMockdata ? "demo" : await getBackendOboToken(request),
     payload: byggOpprettKontrollsakPayload({
       skjema: data,
       personNavn,
