@@ -31,6 +31,20 @@ spec:
     max: 1
   image: {{image}}
   port: 3000
+  azure:
+    application:
+      enabled: true
+      tenant: trygdeetaten.no
+      allowAllUsers: false
+      claims:
+        groups:
+          - id: 962b04a8-40d7-4995-b035-63b2f8e0a46b
+    sidecar:
+      enabled: true
+      autoLogin: true
+      autoLoginIgnorePaths:
+        - /api/health
+        - /assets/logos/*
 
   envFrom:
     - secret: watson-sak
