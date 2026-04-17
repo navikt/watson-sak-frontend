@@ -6,7 +6,7 @@ import { MineSakerInnhold } from "./MineSakerInnhold";
 import { mockMineKontrollsaker } from "./mock-data.server";
 
 export function loader() {
-  return { saker: mockMineKontrollsaker };
+  return { saker: mockMineKontrollsaker.filter((sak) => sak.status !== "UFORDELT") };
 }
 
 export default function MineSakerSide() {

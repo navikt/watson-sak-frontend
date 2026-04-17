@@ -16,8 +16,8 @@ describe("søkSaker", () => {
     expect(resultater.some((sak) => sak.id === lagMockSakUuid("201", 2))).toBe(true);
   });
 
-  it("finner backend-shapet kontrollsak på bakgrunn.innhold", () => {
-    const resultater = søkSaker("Mulig dobbeltutbetaling av dagpenger");
+  it("finner backend-shapet kontrollsak på kategori", () => {
+    const resultater = søkSaker("Arbeid");
 
     expect(resultater.some((sak) => sak.id === lagMockSakUuid("201", 2))).toBe(true);
   });

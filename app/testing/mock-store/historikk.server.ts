@@ -66,9 +66,6 @@ function lagSnapshotFraKontrollsak(
     prioritet: sak.prioritet,
     status: sak.status,
     ytelseTyper: sak.ytelser.map((ytelse) => ytelse.type),
-    kilde: sak.bakgrunn?.kilde ?? null,
-    avklaringResultat: sak.resultat?.avklaring?.resultat ?? null,
-    mottakEnhet: sak.mottakEnhet,
   };
 }
 
@@ -119,12 +116,12 @@ function genererHistorikk(saker: KontrollsakResponse[]) {
   for (const sak of saker) {
     leggTilBackendHendelse(sak.id, "SAK_OPPRETTET", lagSnapshotFraKontrollsak(sak), sak.opprettet);
 
-    if (sak.resultat?.avklaring) {
+    if (sak.resultat?.utredning) {
       leggTilBackendHendelse(
         sak.id,
         "AVKLARING_OPPRETTET",
         lagSnapshotFraKontrollsak(sak),
-        `${sak.resultat.avklaring.dato}T00:00:00Z`,
+        sak.resultat.utredning.opprettet,
       );
     }
   }

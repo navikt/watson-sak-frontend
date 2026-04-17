@@ -2,6 +2,7 @@ import { formaterDato } from "~/utils/date-utils";
 import type { KontrollsakResponse } from "./types.backend";
 import {
   formaterKategori,
+  formaterMisbrukstype,
   formaterPeriodeForYtelser,
   getYtelseTyper,
   hentStatusVariant as hentKontrollsakStatusVariant,
@@ -42,7 +43,7 @@ export function getStatusVariantForSak(sak: KontrollsakResponse) {
 }
 
 export function getSaksenhet(sak: KontrollsakResponse): string {
-  return sak.mottakEnhet;
+  return sak.saksbehandlere.eier?.enhet ?? sak.saksbehandlere.opprettetAv.enhet ?? "";
 }
 
 export function getAvdeling(_sak: KontrollsakResponse): string | null {
@@ -50,23 +51,23 @@ export function getAvdeling(_sak: KontrollsakResponse): string | null {
 }
 
 export function getTags(sak: KontrollsakResponse): string[] {
-  return sak.merking ?? [];
+  return sak.merking ? [sak.merking] : [];
 }
 
 export function getNavn(sak: KontrollsakResponse): string | null {
-  return sak.navn ?? null;
+  return sak.personNavn;
 }
 
-export function getAlder(sak: KontrollsakResponse): number | null {
-  return sak.alder ?? null;
+export function getAlder(_sak: KontrollsakResponse): number | null {
+  return null;
 }
 
 export function getMisbrukstyper(sak: KontrollsakResponse): string[] {
-  return sak.misbrukstyper ?? [];
+  return sak.misbruktype.map(formaterMisbrukstype);
 }
 
 export function getBelop(sak: KontrollsakResponse): number | null {
-  return sak.belop ?? null;
+  return sak.ytelser.find((ytelse) => ytelse.belop !== null)?.belop ?? null;
 }
 
 export function getResultat(sak: KontrollsakResponse) {
@@ -75,17 +76,14 @@ export function getResultat(sak: KontrollsakResponse) {
 
 export function getMineSakerGruppeStatus(sak: KontrollsakResponse): MineSakerGruppeStatus {
   switch (sak.status) {
-    case "OPPRETTET":
-    case "AVKLART":
+    case "UFORDELT":
     case "UTREDES":
+    case "I_BERO":
       return "aktive";
-    case "TIL_FORVALTNING":
+    case "FORVALTNING":
       return "ventende";
-    case "HENLAGT":
     case "AVSLUTTET":
       return "fullførte";
-    default:
-      return "aktive";
   }
 }
 
@@ -113,12 +111,14 @@ export function getMineSakerOpprettetTekst(sak: KontrollsakResponse): string {
 export function getMineSakerIkonType(
   sak: KontrollsakResponse,
 ): "tasklist" | "envelope" | "buildings" | "files" | "folder" {
-  switch (sak.bakgrunn?.kilde) {
-    case "ANONYM_TIPS":
-      return "tasklist";
-    case "EKSTERN":
+  switch (sak.kilde) {
+    case "POLITIET":
       return "buildings";
-    case "INTERN":
+    case "PUBLIKUM":
+      return "tasklist";
+    case "NAV_KONTROLL":
+    case "NAV_OVRIG":
+    case "REGISTERSAMKJORING":
       return "files";
     default:
       return "files";

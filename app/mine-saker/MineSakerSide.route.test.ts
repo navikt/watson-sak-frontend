@@ -8,4 +8,10 @@ describe("MineSakerSide loader", () => {
     expect(resultat.saker.length).toBeGreaterThan(0);
     expect("personIdent" in resultat.saker[0]).toBe(true);
   });
+
+  it("returnerer ikke ufordelte saker under mine saker", () => {
+    const resultat = loader();
+
+    expect(resultat.saker.every((sak) => sak.status !== "UFORDELT")).toBe(true);
+  });
 });

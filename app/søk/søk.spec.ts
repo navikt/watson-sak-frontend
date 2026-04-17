@@ -38,10 +38,10 @@ test.describe("Søk", () => {
     });
 
     test("kan søke på kategori og viser resultater", async ({ page }) => {
-      await page.getByLabel("Søk etter saker").fill("Dobbeltutbetaling");
+      await page.getByLabel("Søk etter saker").fill("Arbeid");
       await page.getByLabel("Søk etter saker").press("Enter");
 
-      await expect(page.getByText(/treff for "Dobbeltutbetaling"/)).toBeVisible();
+      await expect(page.getByText(/treff for "Arbeid"/)).toBeVisible();
       await expect(page.getByRole("article").first()).toBeVisible();
     });
 

@@ -6,14 +6,19 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
   return {
     id: "ks-1",
     personIdent: "12345678901",
-    saksbehandler: "Z123456",
-    status: "OPPRETTET",
+    personNavn: "Ola Nordmann",
+    saksbehandlere: {
+      eier: { navIdent: "Z123456", navn: "Ola Saksbehandler", enhet: "4812" },
+      deltMed: [],
+      opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
+    },
+    status: "UFORDELT",
     kategori: "ANNET",
+    kilde: "NAV_KONTROLL",
+    misbruktype: [],
     prioritet: "NORMAL",
-    mottakEnhet: "4812",
-    mottakSaksbehandler: "Z654321",
     ytelser: [],
-    bakgrunn: null,
+    merking: null,
     resultat: null,
     opprettet: "2026-03-01T00:00:00Z",
     oppdatert: null,
@@ -24,22 +29,22 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
 describe("lagVelkomstOppsummering", () => {
   test("oppsummerer de to mest relevante arbeidstypene", () => {
     const saker = [
-      lagKontrollsak({ id: "1", status: "OPPRETTET" }),
-      lagKontrollsak({ id: "2", status: "OPPRETTET" }),
+      lagKontrollsak({ id: "1", status: "UFORDELT" }),
+      lagKontrollsak({ id: "2", status: "UFORDELT" }),
       lagKontrollsak({ id: "3", status: "UTREDES" }),
       lagKontrollsak({ id: "4", status: "UTREDES" }),
-      lagKontrollsak({ id: "5", status: "TIL_FORVALTNING" }),
+      lagKontrollsak({ id: "5", status: "FORVALTNING" }),
     ];
 
     expect(lagVelkomstOppsummering(saker)).toBe(
-      "Akkurat nå har du 2 tips til vurdering og 2 saker til utredning.",
+      "Akkurat nå har du 2 saker til utredning og 1 sak som venter på svar fra NAY/NFP.",
     );
   });
 
   test("viser en oppmuntrende tekst når brukeren ikke har aktive saker", () => {
     const saker = [
-      lagKontrollsak({ id: "1", status: "AVKLART" }),
-      lagKontrollsak({ id: "2", status: "HENLAGT" }),
+      lagKontrollsak({ id: "1", status: "AVSLUTTET" }),
+      lagKontrollsak({ id: "2", status: "AVSLUTTET" }),
       lagKontrollsak({ id: "3", status: "AVSLUTTET" }),
     ];
 
@@ -50,9 +55,9 @@ describe("lagVelkomstOppsummering", () => {
 
   test("tar med ventende saker når de utgjør en større del av arbeidsbildet", () => {
     const saker = [
-      lagKontrollsak({ id: "1", status: "TIL_FORVALTNING" }),
-      lagKontrollsak({ id: "2", status: "TIL_FORVALTNING" }),
-      lagKontrollsak({ id: "3", status: "TIL_FORVALTNING" }),
+      lagKontrollsak({ id: "1", status: "FORVALTNING" }),
+      lagKontrollsak({ id: "2", status: "FORVALTNING" }),
+      lagKontrollsak({ id: "3", status: "FORVALTNING" }),
       lagKontrollsak({ id: "4", status: "UTREDES" }),
     ];
 
@@ -63,15 +68,33 @@ describe("lagVelkomstOppsummering", () => {
 
   test("oppsummerer backend-statuser med samme arbeidsbilde", () => {
     const saker = [
-      lagKontrollsak({ id: "ks-1", status: "OPPRETTET" }),
-      lagKontrollsak({ id: "ks-2", status: "OPPRETTET" }),
+      lagKontrollsak({ id: "ks-1", status: "UFORDELT" }),
+      lagKontrollsak({ id: "ks-2", status: "UFORDELT" }),
       lagKontrollsak({ id: "ks-3", status: "UTREDES" }),
       lagKontrollsak({ id: "ks-4", status: "UTREDES" }),
-      lagKontrollsak({ id: "ks-5", status: "TIL_FORVALTNING" }),
+      lagKontrollsak({ id: "ks-5", status: "FORVALTNING" }),
     ];
 
     expect(lagVelkomstOppsummering(saker)).toBe(
-      "Akkurat nå har du 2 tips til vurdering og 2 saker til utredning.",
+      "Akkurat nå har du 2 saker til utredning og 1 sak som venter på svar fra NAY/NFP.",
+    );
+  });
+
+  test("behandler I_BERO som sak til utredning i oppsummeringen", () => {
+    const saker = [
+      lagKontrollsak({ id: "1", status: "I_BERO" }),
+      lagKontrollsak({ id: "2", status: "I_BERO" }),
+      lagKontrollsak({ id: "3", status: "UFORDELT" }),
+    ];
+
+    expect(lagVelkomstOppsummering(saker)).toBe("Akkurat nå har du 2 saker til utredning.");
+  });
+
+  test("tar ikke med ufordelte saker i velkomstoppsummeringen", () => {
+    const saker = [lagKontrollsak({ id: "1", status: "UFORDELT" })];
+
+    expect(lagVelkomstOppsummering(saker)).toBe(
+      "Er du klar for nye oppgaver? Du har ingen saker hos deg akkurat nå.",
     );
   });
 });

@@ -14,7 +14,7 @@ function getOpprettet(sak: Statistikksak): string {
 }
 
 function getMottakEnhet(sak: Statistikksak): string {
-  return sak.mottakEnhet;
+  return sak.saksbehandlere.eier?.enhet ?? sak.saksbehandlere.opprettetAv.enhet ?? "Ukjent";
 }
 
 function getYtelseTyper(sak: Statistikksak): string[] {
@@ -24,13 +24,11 @@ function getYtelseTyper(sak: Statistikksak): string[] {
 /** Antall saker gruppert etter status */
 export function beregnAntallPerStatus(saker: Statistikksak[]): Record<StatistikkStatus, number> {
   const resultat: Record<StatistikkStatus, number> = {
-    OPPRETTET: 0,
-    AVKLART: 0,
+    UFORDELT: 0,
     UTREDES: 0,
     I_BERO: 0,
-    TIL_FORVALTNING: 0,
+    FORVALTNING: 0,
     AVSLUTTET: 0,
-    HENLAGT: 0,
   };
 
   for (const sak of saker) {
@@ -63,7 +61,7 @@ export function beregnBehandlingstid(
   avslutningsdatoer: Avslutningsdatoer,
 ): BehandlingstidResultat | null {
   const behandlingstider = saker
-    .filter((s) => getStatus(s) === "AVSLUTTET" || getStatus(s) === "HENLAGT")
+    .filter((s) => getStatus(s) === "AVSLUTTET")
     .filter((s) => avslutningsdatoer[s.id] !== undefined)
     .map((s) => dagerMellom(getOpprettet(s), avslutningsdatoer[s.id]));
 

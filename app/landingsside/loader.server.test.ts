@@ -29,27 +29,32 @@ describe("landingsside-loader", () => {
     const data = loader();
 
     expect(data.dineSakerSiste14Dager).toEqual({
-      antallSakerJobbetMed: 6,
-      antallTipsAvklart: 1,
+      antallSakerJobbetMed: 2,
+      antallTipsTilVurdering: 0,
       antallSendtTilNayNfp: 1,
-      snittBehandlingstidPerSak: 4,
-      antallHenlagteSaker: 2,
-      antallHenlagteTips: 1,
+      snittBehandlingstidPerSak: null,
+      antallHenlagteSaker: 0,
+      antallHenlagteTips: 0,
     });
   });
 
-  it("returnerer kun aktive saker (ikke henlagte eller avsluttede)", () => {
+  it("returnerer kun aktive saker (ikke avsluttede)", () => {
     const data = loader();
 
-    expect(data.mineSaker.every((sak) => sak.status !== "HENLAGT")).toBe(true);
     expect(data.mineSaker.every((sak) => sak.status !== "AVSLUTTET")).toBe(true);
+  });
+
+  it("returnerer ikke ufordelte saker i dashboardets mine saker-liste", () => {
+    const data = loader();
+
+    expect(data.mineSaker.every((sak) => sak.status !== "UFORDELT")).toBe(true);
   });
 
   it("returnerer en velkomstoppsummering basert på sakene dine", () => {
     const data = loader();
 
     expect(data.velkomstOppsummering).toBe(
-      "Akkurat nå har du 3 saker til utredning og 1 tips til vurdering.",
+      "Akkurat nå har du 3 saker til utredning og 1 sak som venter på svar fra NAY/NFP.",
     );
   });
 });

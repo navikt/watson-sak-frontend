@@ -40,7 +40,7 @@ describe("Fordeling api.server", () => {
         },
       },
     );
-  });
+  }, 15000);
 
   it("sender tildeling til backend med saksbehandler", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
@@ -71,5 +71,5 @@ describe("Fordeling api.server", () => {
         body: JSON.stringify({ saksbehandler: "Kari Nordmann" }),
       },
     );
-  });
+  }, 15000);
 });

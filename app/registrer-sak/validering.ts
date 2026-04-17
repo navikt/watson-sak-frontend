@@ -1,17 +1,27 @@
 import { z } from "zod";
 import {
   kontrollsakKategoriVerdier,
+  kontrollsakKildeVerdier,
   kontrollsakMisbrukstypeVerdier,
   misbrukstyperPerKategori,
 } from "~/saker/kategorier";
 
-export const kildeAlternativer = ["INTERN", "EKSTERN", "ANONYM_TIPS", "PUBLIKUM"] as const;
+export const kildeAlternativer = kontrollsakKildeVerdier;
 
 export const kildeEtiketter: Record<(typeof kildeAlternativer)[number], string> = {
-  INTERN: "Intern",
-  EKSTERN: "Ekstern",
-  ANONYM_TIPS: "Anonymt tips",
   PUBLIKUM: "Publikum",
+  NAV_KONTROLL: "Nav kontroll",
+  NAV_OVRIG: "Nav øvrig",
+  REGISTERSAMKJORING: "Registersamkjøring",
+  A_KRIMSAMARBEID: "A-krimsamarbeid",
+  POLITIET: "Politiet",
+  SKATTEETATEN: "Skatteetaten",
+  UTLENDINGSMYNDIGHETEN: "Utlendingsmyndighetene",
+  UTENRIKSTJENESTEN: "Utenrikstjenesten",
+  STATENS_VEGVESEN: "Statens vegvesen",
+  KOMMUNE: "Kommune",
+  BANK_OG_FINANS: "Bank og finans",
+  ANNET: "Annet",
 };
 
 export const kategoriAlternativer = kontrollsakKategoriVerdier;

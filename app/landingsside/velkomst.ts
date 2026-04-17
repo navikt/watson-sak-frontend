@@ -14,15 +14,12 @@ function getStatus(sak: KontrollsakResponse) {
 }
 
 function velgMestRelevantArbeid(saker: KontrollsakResponse[]): Oppsummeringsdel[] {
-  const antallTipsTilVurdering = saker.filter((sak) => getStatus(sak) === "OPPRETTET").length;
-  const antallTilUtredning = saker.filter((sak) => getStatus(sak) === "UTREDES").length;
-  const antallSomVenterPåSvar = saker.filter((sak) => getStatus(sak) === "TIL_FORVALTNING").length;
+  const antallTilUtredning = saker.filter(
+    (sak) => getStatus(sak) === "UTREDES" || getStatus(sak) === "I_BERO",
+  ).length;
+  const antallSomVenterPåSvar = saker.filter((sak) => getStatus(sak) === "FORVALTNING").length;
 
   const oppsummeringer: Oppsummeringsdel[] = [
-    {
-      antall: antallTipsTilVurdering,
-      tekst: `${antallTipsTilVurdering} tips til vurdering`,
-    },
     {
       antall: antallTilUtredning,
       tekst: formaterSakTekst(antallTilUtredning, "sak til utredning", "saker til utredning"),

@@ -1,6 +1,7 @@
 import { HGrid, Page, VStack } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
-import { useFetcher, useLoaderData } from "react-router";
+import { useEffect } from "react";
+import { useFetcher, useLoaderData, useRevalidator } from "react-router";
 import { usePreferences } from "~/preferanser/PreferencesContext";
 import type { loader } from "./loader.server";
 import { DineSakerSiste14Dager } from "./komponenter/DineSakerSiste14Dager";
@@ -14,7 +15,14 @@ export { loader } from "./loader.server";
 export default function LandingSide() {
   const loaderData = useLoaderData<typeof loader>();
   const fetcher = useFetcher();
+  const revalidator = useRevalidator();
   const { preferences } = usePreferences();
+
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data?.ok) {
+      revalidator.revalidate();
+    }
+  }, [fetcher.state, fetcher.data, revalidator]);
 
   return (
     <Page>

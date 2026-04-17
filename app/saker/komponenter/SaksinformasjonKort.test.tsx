@@ -8,29 +8,27 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
   return {
     id: lagMockSakUuid("1", 9),
     personIdent: "10987654321",
-    saksbehandler: "Z123456",
-    saksbehandlere: { deltMed: [] },
+    personNavn: "Ola Nordmann",
+    saksbehandlere: {
+      eier: { navIdent: "Z123456", navn: "Ola Saksbehandler", enhet: "4812" },
+      deltMed: [],
+      opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
+    },
     status: "UTREDES",
     kategori: "ARBEID",
+    kilde: "PUBLIKUM",
+    misbruktype: [],
     prioritet: "NORMAL",
-    mottakEnhet: "4812",
-    mottakSaksbehandler: "Z654321",
     ytelser: [
       {
         id: "00000000-0000-4000-8000-000000090101",
         type: "Sykepenger",
         periodeFra: "2026-01-01",
         periodeTil: "2026-01-31",
+        belop: null,
       },
     ],
-    bakgrunn: {
-      id: "00000000-0000-0000-0000-000000000001",
-      kilde: "ANONYM_TIPS",
-      innhold: "Kontrollsak-beskrivelse",
-      avsender: null,
-      vedlegg: [],
-      tilleggsopplysninger: null,
-    },
+    merking: null,
     resultat: null,
     opprettet: "2026-02-03T10:11:12Z",
     oppdatert: null,
@@ -46,6 +44,6 @@ describe("SaksinformasjonKort", () => {
     expect(screen.getByText("10987654321")).toBeDefined();
     expect(screen.getByText("Utredes")).toBeDefined();
     expect(screen.getByText("3. feb. 2026")).toBeDefined();
-    expect(screen.getByText("Anonymt tips")).toBeDefined();
+    expect(screen.getByText("Publikum")).toBeDefined();
   });
 });

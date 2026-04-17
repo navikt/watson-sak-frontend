@@ -2,6 +2,8 @@ import { redirect } from "react-router";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { mockYtelser } from "~/fordeling/mock-data.server";
 import { RouteConfig } from "~/routeConfig";
+import { getSaksreferanse } from "~/saker/id";
+import { slaOppPerson } from "./person-oppslag.mock.server";
 import type { OpprettKontrollsakRequest } from "./api.server";
 import type { Route } from "./+types/RegistrerSakSide.route";
 import { opprettKontrollsak } from "./api.server";
@@ -15,22 +17,6 @@ import {
   type OpprettSakSkjema,
 } from "./validering";
 
-function hentMottakEnhet(organisasjoner: string) {
-  const førsteEnhet = organisasjoner.split(",")[0]?.trim();
-
-  if (!førsteEnhet) {
-    throw new Error("Fant ingen mottakende enhet i organisasjoner.");
-  }
-
-  if (!/^\d{4}$/.test(førsteEnhet)) {
-    throw new Error(
-      `Ugyldig mottakende enhet: '${førsteEnhet}'. Forventet enhetsnummer (4 sifre).`,
-    );
-  }
-
-  return førsteEnhet;
-}
-
 function byggYtelser(ytelser: OpprettSakSkjema["ytelser"], fraDato: string, tilDato: string) {
   return ytelser.map((ytelse) => ({
     type: ytelse,
@@ -41,27 +27,27 @@ function byggYtelser(ytelser: OpprettSakSkjema["ytelser"], fraDato: string, tilD
 
 export function byggOpprettKontrollsakPayload({
   skjema,
-  navIdent,
-  mottakEnhet,
+  personNavn,
 }: {
   skjema: OpprettSakSkjema;
-  navIdent: string;
-  mottakEnhet: string;
+  personNavn: string;
 }): OpprettKontrollsakRequest {
   return {
     personIdent: skjema.personIdent,
-    saksbehandler: navIdent,
-    mottakEnhet,
-    mottakSaksbehandler: navIdent,
+    personNavn,
+    saksbehandlere: {
+      eier: null,
+      deltMed: [],
+    },
     kategori: skjema.kategori,
-    prioritet: "NORMAL",
-    misbruktype: skjema.misbruktype,
-    merking: skjema.merking,
-    ytelser: byggYtelser(skjema.ytelser, skjema.fraDato, skjema.tilDato),
-    enhet: skjema.enhet,
     kilde: skjema.kilde,
-    caBeløp: skjema.caBeløp,
-    organisasjonsnummer: skjema.organisasjonsnummer || undefined,
+    prioritet: "NORMAL",
+    misbruktype: skjema.misbruktype ? [skjema.misbruktype] : [],
+    merking: skjema.merking,
+    ytelser: byggYtelser(skjema.ytelser, skjema.fraDato, skjema.tilDato).map((ytelse) => ({
+      ...ytelse,
+      belop: skjema.caBeløp,
+    })),
   };
 }
 
@@ -81,6 +67,7 @@ export async function action({ request }: Route.ActionArgs) {
 
   const rådata = {
     personIdent: formData.get("personIdent"),
+    personNavn: formData.get("personNavn"),
     ytelser: formData.getAll("ytelser"),
     fraDato: formData.get("fraDato") || undefined,
     tilDato: formData.get("tilDato") || undefined,
@@ -101,16 +88,20 @@ export async function action({ request }: Route.ActionArgs) {
 
   const innloggetBruker = await hentInnloggetBruker({ request });
   const data = resultat.data;
-  const mottakEnhet = hentMottakEnhet(innloggetBruker.organisasjoner);
+  const personOppslag = slaOppPerson(data.personIdent);
+  const personNavn = personOppslag?.person.navn;
 
-  await opprettKontrollsak({
+  if (typeof personNavn !== "string" || personNavn.trim() === "") {
+    return { feil: { skjema: ["Fant ikke navn på personen som saken opprettes for"] } };
+  }
+
+  const opprettetSak = await opprettKontrollsak({
     token: innloggetBruker.token,
     payload: byggOpprettKontrollsakPayload({
       skjema: data,
-      navIdent: innloggetBruker.navIdent,
-      mottakEnhet,
+      personNavn,
     }),
   });
 
-  return redirect(RouteConfig.INDEX);
+  return redirect(RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(opprettetSak.id)));
 }

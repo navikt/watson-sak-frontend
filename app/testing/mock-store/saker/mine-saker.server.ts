@@ -1,5 +1,5 @@
 import { kontrollsakResponseSchema, type KontrollsakResponse } from "~/saker/types.backend";
-import { lagMockKontrollsak, lagMockSakUuid } from "~/saker/mock-uuid";
+import { lagMockSakUuid, normaliserLegacyKontrollsak } from "~/saker/mock-uuid";
 
 const initialeMockMineKontrollsaker = [
   {
@@ -354,11 +354,11 @@ const initialeMockMineKontrollsaker = [
     opprettet: "2026-03-14T00:00:00Z",
     oppdatert: "2026-03-17T00:00:00Z",
   },
-] satisfies KontrollsakResponse[];
+];
 
 function lagMockMineKontrollsaker() {
   return initialeMockMineKontrollsaker.map((sak) =>
-    kontrollsakResponseSchema.parse(lagMockKontrollsak(sak, 2)),
+    kontrollsakResponseSchema.parse(normaliserLegacyKontrollsak(sak, 2)),
   );
 }
 

@@ -111,11 +111,6 @@ function hendelseBeskrivelse(hendelse: SakHendelse): string | null {
   const deler: string[] = [];
 
   deler.push(`Status: ${formaterTekst(hendelse.status)}`);
-  deler.push(`Mottaksenhet: ${hendelse.mottakEnhet}`);
-
-  if (hendelse.avklaringResultat) {
-    deler.push(`Avklaringsresultat: ${hendelse.avklaringResultat}`);
-  }
 
   return deler.length > 0 ? deler.join(" – ") : null;
 }

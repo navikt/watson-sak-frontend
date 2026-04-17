@@ -1,41 +1,47 @@
 import type {
   KontrollsakKategori,
   KontrollsakKilde,
+  KontrollsakMisbrukstype,
   KontrollsakResponse,
   KontrollsakStatus,
   KontrollsakYtelse,
 } from "./types.backend";
-import { kontrollsakKategoriEtiketter } from "./kategorier";
+import { kontrollsakKategoriEtiketter, kontrollsakMisbrukstypeEtiketter } from "./kategorier";
 
 export type { KontrollsakStatus };
 
 type StatusVariant = "info" | "warning" | "success" | "neutral";
 
 const statusEtiketter: Record<KontrollsakStatus, string> = {
-  OPPRETTET: "Ufordelt",
-  AVKLART: "Avklart",
+  UFORDELT: "Ufordelt",
   UTREDES: "Utredes",
-  I_BERO: "I bero",
-  TIL_FORVALTNING: "Til forvaltning",
-  HENLAGT: "Henlagt",
+  FORVALTNING: "Til forvaltning",
   AVSLUTTET: "Avsluttet",
+  I_BERO: "I bero",
 };
 
 const statusVarianter: Record<KontrollsakStatus, StatusVariant> = {
-  OPPRETTET: "info",
-  AVKLART: "warning",
+  UFORDELT: "info",
   UTREDES: "warning",
-  I_BERO: "neutral",
-  TIL_FORVALTNING: "success",
-  HENLAGT: "neutral",
+  FORVALTNING: "success",
   AVSLUTTET: "neutral",
+  I_BERO: "neutral",
 };
 
 const kildeEtiketter: Record<KontrollsakKilde, string> = {
-  INTERN: "Intern",
-  EKSTERN: "Ekstern",
-  ANONYM_TIPS: "Anonymt tips",
   PUBLIKUM: "Publikum",
+  NAV_KONTROLL: "Nav kontroll",
+  NAV_OVRIG: "Nav øvrig",
+  REGISTERSAMKJORING: "Registersamkjøring",
+  A_KRIMSAMARBEID: "A-krimsamarbeid",
+  POLITIET: "Politiet",
+  SKATTEETATEN: "Skatteetaten",
+  UTLENDINGSMYNDIGHETEN: "Utlendingsmyndighetene",
+  UTENRIKSTJENESTEN: "Utenrikstjenesten",
+  STATENS_VEGVESEN: "Statens vegvesen",
+  KOMMUNE: "Kommune",
+  BANK_OG_FINANS: "Bank og finans",
+  ANNET: "Annet",
 };
 
 export function formaterStatus(status: KontrollsakStatus): string {
@@ -94,29 +100,22 @@ export function getYtelseTyper(sak: KontrollsakResponse): string[] {
   return hentYtelseTyper(sak.ytelser);
 }
 
-export function getBeskrivelse(sak: KontrollsakResponse): string | null {
-  return sak.bakgrunn?.innhold ?? null;
+export function getBeskrivelse(_sak: KontrollsakResponse): string | null {
+  return null;
 }
 
 export function getKildeText(sak: KontrollsakResponse): string {
-  return formaterKilde(sak.bakgrunn?.kilde);
+  return formaterKilde(sak.kilde);
 }
 
-export function getKontaktinformasjon(sak: KontrollsakResponse) {
-  const avsender = sak.bakgrunn?.avsender;
-
-  if (!avsender) {
-    return null;
-  }
-
-  return {
-    navn: avsender.navn ?? undefined,
-    telefon: avsender.telefon ?? undefined,
-    epost: undefined,
-    anonymt: avsender.anonym,
-  };
+export function getKontaktinformasjon(_sak: KontrollsakResponse) {
+  return null;
 }
 
 export function formaterBelop(belop: number): string {
   return new Intl.NumberFormat("nb-NO").format(belop);
+}
+
+export function formaterMisbrukstype(misbrukstype: KontrollsakMisbrukstype): string {
+  return kontrollsakMisbrukstypeEtiketter[misbrukstype] ?? misbrukstype;
 }

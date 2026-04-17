@@ -17,80 +17,82 @@ describe("Kontrollsak-kontrakter", () => {
       kontrollsakResponseSchema.parse({
         id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
         personIdent: "12345678901",
-        saksbehandler: "Z123456",
-        status: "OPPRETTET",
+        personNavn: "Ola Nordmann",
+        saksbehandlere: {
+          eier: {
+            navIdent: "Z123456",
+            navn: "Saks Behandler",
+            enhet: "4812",
+          },
+          deltMed: [],
+          opprettetAv: {
+            navIdent: "Z654321",
+            navn: "Oppretter",
+            enhet: "4801",
+          },
+        },
+        status: "UFORDELT",
         kategori: "ARBEID",
+        kilde: "NAV_KONTROLL",
+        misbruktype: ["FIKTIVT_ARBEIDSFORHOLD"],
         prioritet: "NORMAL",
-        mottakEnhet: "4812",
-        mottakSaksbehandler: "Z654321",
         ytelser: [
           {
             id: "2fa85f64-5717-4562-b3fc-2c963f66afa6",
             type: "Dagpenger",
             periodeFra: "2026-01-01",
             periodeTil: "2026-12-31",
+            belop: 1000,
           },
         ],
-        bakgrunn: {
-          id: "1fa85f64-5717-4562-b3fc-2c963f66afa6",
-          kilde: "EKSTERN",
-          innhold: "Tips mottatt",
-          avsender: {
-            id: "0fa85f64-5717-4562-b3fc-2c963f66afa6",
-            navn: "Ola Nordmann",
-            telefon: "12345678",
-            adresse: null,
-            anonym: false,
-          },
-          vedlegg: [
-            {
-              id: "9fa85f64-5717-4562-b3fc-2c963f66afa6",
-              filnavn: "tips.pdf",
-              lokasjon: "gs://bucket/tips.pdf",
-            },
-          ],
-          tilleggsopplysninger: null,
-        },
+        merking: "PRIORITERT",
         resultat: {
-          avklaring: {
+          utredning: {
             id: "8fa85f64-5717-4562-b3fc-2c963f66afa6",
-            saksbehandler: "Z123456",
-            dato: "2026-03-20",
-            resultat: "IKKE_RELEVANT",
-            begrunnelse: null,
+            opprettet: "2026-03-20T12:34:56Z",
+            resultat: "INFOSAK",
           },
-          utredning: null,
           forvaltning: null,
+          strafferettsligVurdering: null,
         },
         opprettet: "2026-03-20T12:34:56Z",
         oppdatert: null,
       }),
     ).toMatchObject({
-      status: "OPPRETTET",
+      status: "UFORDELT",
+      personNavn: "Ola Nordmann",
       ytelser: [{ type: "Dagpenger" }],
-      bakgrunn: { kilde: "EKSTERN" },
+      kilde: "NAV_KONTROLL",
     });
   });
 
-  it("tillater nullable bakgrunn, resultat og oppdatert", () => {
+  it("tillater nullable resultat og oppdatert", () => {
     expect(
       kontrollsakResponseSchema.parse({
         id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
         personIdent: "12345678901",
-        saksbehandler: "Z123456",
-        status: "OPPRETTET",
+        personNavn: "Ola Nordmann",
+        saksbehandlere: {
+          eier: null,
+          deltMed: [],
+          opprettetAv: {
+            navIdent: "Z123456",
+            navn: "Oppretter",
+            enhet: null,
+          },
+        },
+        status: "UFORDELT",
         kategori: "ARBEID",
+        kilde: "PUBLIKUM",
+        misbruktype: [],
         prioritet: "NORMAL",
-        mottakEnhet: "4812",
-        mottakSaksbehandler: "Z654321",
         ytelser: [],
-        bakgrunn: null,
+        merking: null,
         resultat: null,
         opprettet: "2026-03-20T12:34:56Z",
         oppdatert: null,
       }),
     ).toMatchObject({
-      bakgrunn: null,
       resultat: null,
       oppdatert: null,
     });
@@ -103,14 +105,23 @@ describe("Kontrollsak-kontrakter", () => {
           {
             id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
             personIdent: "12345678901",
-            saksbehandler: "Z123456",
-            status: "OPPRETTET",
+            personNavn: "Ola Nordmann",
+            saksbehandlere: {
+              eier: null,
+              deltMed: [],
+              opprettetAv: {
+                navIdent: "Z123456",
+                navn: "Oppretter",
+                enhet: null,
+              },
+            },
+            status: "UFORDELT",
             kategori: "ARBEID",
+            kilde: "PUBLIKUM",
+            misbruktype: [],
             prioritet: "NORMAL",
-            mottakEnhet: "4812",
-            mottakSaksbehandler: "Z654321",
             ytelser: [],
-            bakgrunn: null,
+            merking: null,
             resultat: null,
             opprettet: "2026-03-20T12:34:56Z",
             oppdatert: null,
@@ -123,7 +134,7 @@ describe("Kontrollsak-kontrakter", () => {
       }),
     ).toMatchObject({
       totalItems: 1,
-      items: [{ status: "OPPRETTET" }],
+      items: [{ status: "UFORDELT" }],
     });
   });
 
@@ -136,16 +147,12 @@ describe("Kontrollsak-kontrakter", () => {
         sakId: "4fa85f64-5717-4562-b3fc-2c963f66afa6",
         kategori: "ARBEID",
         prioritet: "NORMAL",
-        status: "OPPRETTET",
+        status: "UFORDELT",
         ytelseTyper: ["Sykepenger"],
-        kilde: "ANONYM_TIPS",
-        avklaringResultat: null,
-        mottakEnhet: "4812",
       }),
     ).toMatchObject({
       hendelsesType: "SAK_OPPRETTET",
-      status: "OPPRETTET",
-      mottakEnhet: "4812",
+      status: "UFORDELT",
     });
   });
 
@@ -165,10 +172,6 @@ describe("Kontrollsak-kontrakter", () => {
 
       for (const ytelse of sak.ytelser) {
         expect(ytelse.id).toMatch(uuidMønster);
-      }
-
-      if (sak.bakgrunn?.avsender) {
-        expect(sak.bakgrunn.avsender.id).toMatch(uuidMønster);
       }
 
       for (const hendelse of hentHistorikk(sak.id)) {

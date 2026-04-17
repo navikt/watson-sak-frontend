@@ -7,7 +7,7 @@ const gyldigSkjema = {
   fraDato: "2026-01-01",
   tilDato: "2026-12-31",
   kategori: "DOKUMENTFALSK",
-  kilde: "INTERN",
+  kilde: "NAV_KONTROLL",
   enhet: "ØST",
 };
 
@@ -44,8 +44,8 @@ describe("opprettSakSchema", () => {
     expect(resultat.success).toBe(false);
   });
 
-  it("godtar INTERN, EKSTERN, ANONYM_TIPS og PUBLIKUM som kilde", () => {
-    for (const kilde of ["INTERN", "EKSTERN", "ANONYM_TIPS", "PUBLIKUM"]) {
+  it("godtar backendens gyldige kilder", () => {
+    for (const kilde of ["NAV_KONTROLL", "ANNET", "PUBLIKUM", "POLITIET"]) {
       const resultat = opprettSakSchema.safeParse({ ...gyldigSkjema, kilde });
       expect(resultat.success).toBe(true);
     }
@@ -71,12 +71,12 @@ describe("opprettSakSchema", () => {
       "ANNET",
     ]) {
       const misbrukstypeForKategori: Record<string, string> = {
-        BEHANDLER: "Behandler §25-7",
-        ARBEID: "Hvit inntekt",
-        SAMLIV: "Skjult samliv",
-        UTLAND: "Innenfor EØS",
-        IDENTITET: "Identitetsmisbruk",
-        TILTAK: "Misbruk av tiltaksplass",
+        BEHANDLER: "BEHANDLER_25_7",
+        ARBEID: "HVIT_INNTEKT",
+        SAMLIV: "SKJULT_SAMLIV",
+        UTLAND: "INNENFOR_EOS",
+        IDENTITET: "IDENTITETSMISBRUK",
+        TILTAK: "MISBRUK_AV_TILTAKSPLASS",
       };
       const resultat = opprettSakSchema.safeParse({
         ...gyldigSkjema,
@@ -104,7 +104,7 @@ describe("opprettSakSchema", () => {
     const resultat = opprettSakSchema.safeParse({
       ...gyldigSkjema,
       kategori: "SAMLIV",
-      misbruktype: "Svart arbeid",
+      misbruktype: "SVART_ARBEID",
     });
 
     expect(resultat.success).toBe(false);

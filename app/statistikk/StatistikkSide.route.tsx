@@ -79,8 +79,8 @@ export default function StatistikkSide() {
                 ikon={<CheckmarkCircleIcon aria-hidden fontSize="1.5rem" />}
               />
               <Nokkeltallkort
-                tittel="Henlagt"
-                verdi={antallPerStatus.HENLAGT}
+                tittel="Ufordelt"
+                verdi={antallPerStatus.UFORDELT}
                 ikon={<XMarkOctagonIcon aria-hidden fontSize="1.5rem" />}
               />
             </HGrid>

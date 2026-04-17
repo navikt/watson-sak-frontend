@@ -16,11 +16,9 @@ import { useFetcher } from "react-router";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { getSaksreferanse } from "~/saker/id";
 import {
-  getAlder,
   getBelop,
   getKategoriText,
   getMisbrukstyper,
-  getNavn,
   getPeriodeText,
   getStatusVariantForSak,
   getTags,
@@ -60,8 +58,6 @@ function SakKort({ sak }: SakKortProps) {
   const fetcher = useFetcher<KobleSakActionResult>();
   const saksreferanse = getSaksreferanse(sak.id);
   const personIdent = getPersonIdent(sak);
-  const navn = getNavn(sak);
-  const alder = getAlder(sak);
   const statusTekst = getStatus(sak);
   const periodeText = getPeriodeText(sak);
   const kategoriText = getKategoriText(sak);
@@ -70,6 +66,8 @@ function SakKort({ sak }: SakKortProps) {
   const ytelseTyper = getYtelseTyper(sak);
   const tags = getTags(sak);
   const kildeTekst = getKildeText(sak);
+  const enhet = sak.saksbehandlere.eier?.enhet ?? sak.saksbehandlere.opprettetAv.enhet ?? "Ukjent";
+  const saksbehandler = sak.saksbehandlere.eier?.navn ?? sak.saksbehandlere.opprettetAv.navn;
   const kobleSakFeil = fetcher.data?.ok === false ? fetcher.data.feil.skjema?.[0] : undefined;
 
   return (
@@ -84,10 +82,10 @@ function SakKort({ sak }: SakKortProps) {
               Saksid: <span className="font-bold">{saksreferanse}</span>
             </BodyShort>
             <BodyShort size="small">
-              Enhet: <span className="font-bold">{sak.mottakEnhet}</span>
+              Enhet: <span className="font-bold">{enhet}</span>
             </BodyShort>
             <BodyShort size="small">
-              Saksbehandler: <span className="font-bold">{sak.saksbehandler}</span>
+              Saksbehandler: <span className="font-bold">{saksbehandler}</span>
             </BodyShort>
             <Tag variant={getStatusVariantForSak(sak)} size="small">
               {statusTekst}
