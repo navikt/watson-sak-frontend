@@ -7,6 +7,10 @@ import { logger } from "~/logging/logging";
  * Returnerer et OBO-token for å kalle backend-APIene
  */
 export async function getBackendOboToken(request: Request): Promise<string> {
+  if (env.ENVIRONMENT === "demo") {
+    return Promise.resolve("demo");
+  }
+
   return getOboToken({
     request,
     audience: `api://${env.CLUSTER}.holmes.watson-admin-api/.default`,
