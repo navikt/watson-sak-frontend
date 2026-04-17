@@ -37,6 +37,7 @@ describe("innlogget-bruker-api", () => {
       params: {},
       context: {},
       unstable_pattern: "/api/logged-in-user",
+      unstable_url: new URL("http://localhost/api/logged-in-user"),
     };
   }
 
