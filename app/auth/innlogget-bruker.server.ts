@@ -9,7 +9,6 @@ interface InnloggetBruker {
   preferredUsername: string;
   name: string;
   navIdent: string;
-  token: string;
   organisasjoner: string;
 }
 
@@ -22,12 +21,11 @@ type HentInnloggetBrukerArgs = {
 export async function hentInnloggetBruker({
   request,
 }: HentInnloggetBrukerArgs): Promise<InnloggetBruker> {
-  if (env.ENVIRONMENT === "local-mock" || env.ENVIRONMENT === "demo") {
+  if (env.ENVIRONMENT === "local-mock") {
     return {
       preferredUsername: "test",
       name: "Saks Behandlersen",
       navIdent: "S133337",
-      token: "test",
       organisasjoner: "4812",
     };
   }
@@ -39,6 +37,15 @@ export async function hentInnloggetBruker({
     throw redirect(`/oauth2/login`);
   }
 
+  if (env.ENVIRONMENT === "demo") {
+    return {
+      preferredUsername: parseResult.preferred_username,
+      name: parseResult.name,
+      navIdent: parseResult.NAVident,
+      organisasjoner: "Ukjent",
+    };
+  }
+
   const oboToken = await getBackendOboToken(request);
 
   const saksbehandlerInfo = await hentSaksbehandlerInfo(oboToken);
@@ -47,7 +54,6 @@ export async function hentInnloggetBruker({
     preferredUsername: parseResult.preferred_username,
     name: parseResult.name,
     navIdent: parseResult.NAVident,
-    token: oboToken,
     organisasjoner: saksbehandlerInfo.organisasjoner?.join(", ") || "Ukjent",
   };
 }
