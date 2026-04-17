@@ -4,9 +4,10 @@ import type { Route } from "./+types/RegistrerSakSide.route";
 const hentInnloggetBrukerMock = vi.fn().mockResolvedValue({
   navIdent: "Z123456",
   name: "Test Saksbehandler",
-  token: "token-123",
   organisasjoner: "4812, 9999",
 });
+
+const getBackendOboTokenMock = vi.fn().mockResolvedValue("token-123");
 
 vi.mock("./api.server", () => ({
   opprettKontrollsak: vi.fn().mockResolvedValue({ id: "00000000-0000-4000-8000-000000301000" }),
@@ -14,6 +15,10 @@ vi.mock("./api.server", () => ({
 
 vi.mock("~/auth/innlogget-bruker.server", () => ({
   hentInnloggetBruker: hentInnloggetBrukerMock,
+}));
+
+vi.mock("~/auth/access-token", () => ({
+  getBackendOboToken: getBackendOboTokenMock,
 }));
 
 vi.mock("./person-oppslag.mock.server", () => ({
@@ -37,9 +42,9 @@ describe("OpprettSakSide action", () => {
     hentInnloggetBrukerMock.mockResolvedValue({
       navIdent: "Z123456",
       name: "Test Saksbehandler",
-      token: "token-123",
       organisasjoner: "4812, 9999",
     });
+    getBackendOboTokenMock.mockResolvedValue("token-123");
   });
 
   it("sender backend-kompatibel payload og redirecter til ny sakdetalj", async () => {
@@ -110,7 +115,6 @@ describe("OpprettSakSide action", () => {
     hentInnloggetBrukerMock.mockResolvedValue({
       navIdent: "Z123456",
       name: "Test Saksbehandler",
-      token: "token-123",
       organisasjoner: "Ukjent",
     });
 

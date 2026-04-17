@@ -1,4 +1,5 @@
 import { redirect } from "react-router";
+import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { mockYtelser } from "~/fordeling/mock-data.server";
 import { RouteConfig } from "~/routeConfig";
@@ -86,7 +87,7 @@ export async function action({ request }: Route.ActionArgs) {
     return { feil: resultat.error.flatten().fieldErrors };
   }
 
-  const innloggetBruker = await hentInnloggetBruker({ request });
+  await hentInnloggetBruker({ request });
   const data = resultat.data;
   const personOppslag = slaOppPerson(data.personIdent);
   const personNavn = personOppslag?.person.navn;
@@ -96,7 +97,7 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   const opprettetSak = await opprettKontrollsak({
-    token: innloggetBruker.token,
+    token: await getBackendOboToken(request),
     payload: byggOpprettKontrollsakPayload({
       skjema: data,
       personNavn,
