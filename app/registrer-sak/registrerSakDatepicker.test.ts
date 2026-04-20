@@ -15,4 +15,10 @@ describe("lagRegistrerSakDatepickerValg", () => {
 
     expect(valg.toDate).toEqual(new Date(2030, 5, 15));
   });
+
+  it("deaktiverer datoer etter valgt maksdato", () => {
+    const valg = lagRegistrerSakDatepickerValg(new Date(2030, 5, 15, 18, 45));
+
+    expect(valg.disabled).toEqual([{ after: new Date(2030, 5, 15) }]);
+  });
 });

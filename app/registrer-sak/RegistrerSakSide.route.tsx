@@ -45,7 +45,7 @@ export default function OpprettSakSide() {
   const [valgteYtelser, setValgteYtelser] = useState<string[]>([]);
   const [valgtKategori, setValgtKategori] = useState<string>("");
   const [søkeFnr, setSøkeFnr] = useState("");
-  const registrerSakDatepickerValg = lagRegistrerSakDatepickerValg();
+  const registrerSakDatepickerValg = lagRegistrerSakDatepickerValg(new Date());
   const { datepickerProps, fromInputProps, toInputProps } = useRangeDatepicker(registrerSakDatepickerValg);
 
   const personFetcher = useFetcher<
