@@ -22,6 +22,7 @@ import { RouteConfig } from "~/routeConfig";
 import { kildeEtiketter, merkingEtiketter } from "~/registrer-sak/validering";
 import { kontrollsakKategoriEtiketter } from "~/saker/kategorier";
 import type { PersonOppslagResultat } from "./person-oppslag.mock.server";
+import { lagRegistrerSakDatepickerValg } from "./registrerSakDatepicker";
 import { action, loader } from "./RegistrerSakSide.server";
 
 export { action, loader };
@@ -44,7 +45,8 @@ export default function OpprettSakSide() {
   const [valgteYtelser, setValgteYtelser] = useState<string[]>([]);
   const [valgtKategori, setValgtKategori] = useState<string>("");
   const [søkeFnr, setSøkeFnr] = useState("");
-  const { datepickerProps, fromInputProps, toInputProps } = useRangeDatepicker();
+  const registrerSakDatepickerValg = lagRegistrerSakDatepickerValg();
+  const { datepickerProps, fromInputProps, toInputProps } = useRangeDatepicker(registrerSakDatepickerValg);
 
   const personFetcher = useFetcher<
     PersonOppslagResultat | { person: null; eksisterendeSaker: [] } | { feil: string }
@@ -257,7 +259,7 @@ export default function OpprettSakSide() {
 
                   {/* Rad 2: Fra dato, Til dato, Ytelse, Ca beløp */}
                   <HStack gap="space-24" align="start" wrap>
-                    <DatePicker {...datepickerProps}>
+                    <DatePicker {...datepickerProps} dropdownCaption={registrerSakDatepickerValg.dropdownCaption}>
                       <HStack gap="space-24" align="start" wrap>
                         <DatePicker.Input
                           {...fromInputProps}
