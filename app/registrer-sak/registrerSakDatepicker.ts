@@ -4,13 +4,20 @@ function normaliserDato(dato: Date) {
   return normalisertDato;
 }
 
+function trekkFraTiÅr(dato: Date) {
+  const datoTiÅrTilbake = new Date(dato);
+  datoTiÅrTilbake.setFullYear(datoTiÅrTilbake.getFullYear() - 10);
+  return datoTiÅrTilbake;
+}
+
 export function lagRegistrerSakDatepickerValg(senesteValgbareDato = new Date(2100, 11, 31)) {
   const normalisertSenesteValgbareDato = normaliserDato(senesteValgbareDato);
+  const tidligsteValgbareDato = trekkFraTiÅr(normalisertSenesteValgbareDato);
 
   return {
-    fromDate: new Date(1900, 0, 1),
+    fromDate: tidligsteValgbareDato,
     toDate: normalisertSenesteValgbareDato,
-    disabled: [{ after: normalisertSenesteValgbareDato }],
+    disabled: [{ before: tidligsteValgbareDato }, { after: normalisertSenesteValgbareDato }],
     dropdownCaption: true,
   };
 }
