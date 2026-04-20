@@ -20,7 +20,7 @@ jobs:
       - name: Sett opp Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: "23"
+          node-version: "24"
           cache: "npm"
           registry-url: "https://npm.pkg.github.com"
           scope: "@navikt"
