@@ -74,6 +74,10 @@ function erGyldigIsoDato(dato: string) {
   );
 }
 
+function dagensDato() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 function lagPåkrevdDatofelt(feltnavn: string) {
   return z.preprocess(
     (verdi) => (typeof verdi === "string" ? verdi : ""),
@@ -98,6 +102,14 @@ function medFellesSaksregler<T extends z.ZodType<SaksreglerShape>>(schema: T) {
   return schema
     .refine(({ fraDato, tilDato }) => fraDato <= tilDato, {
       message: "Til dato må være lik eller etter fra dato",
+      path: ["tilDato"],
+    })
+    .refine(({ fraDato }) => fraDato <= dagensDato(), {
+      message: "Fra dato kan ikke være frem i tid",
+      path: ["fraDato"],
+    })
+    .refine(({ tilDato }) => tilDato <= dagensDato(), {
+      message: "Til dato kan ikke være frem i tid",
       path: ["tilDato"],
     })
     .refine(

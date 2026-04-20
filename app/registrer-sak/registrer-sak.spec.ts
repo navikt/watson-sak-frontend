@@ -48,8 +48,8 @@ test.describe("Opprett sak", () => {
     ).toBeVisible();
 
     await page.getByLabel("Kategori").selectOption("DOKUMENTFALSK");
-    await page.getByLabel("Fra dato").fill("01.01.2026");
-    await page.getByLabel("Til dato").fill("31.12.2026");
+    await page.getByLabel("Fra dato").fill("01.01.2024");
+    await page.getByLabel("Til dato").fill("31.12.2024");
 
     const ytelserCombobox = page.getByLabel("Ytelse");
     await ytelserCombobox.fill("Dagpenger");
@@ -72,8 +72,8 @@ test.describe("Opprett sak", () => {
     ).toBeVisible();
 
     await page.getByLabel("Kategori").selectOption("DOKUMENTFALSK");
-    await page.getByLabel("Fra dato").fill("01.01.2026");
-    await page.getByLabel("Til dato").fill("31.12.2026");
+    await page.getByLabel("Fra dato").fill("01.01.2024");
+    await page.getByLabel("Til dato").fill("31.12.2024");
 
     const ytelserCombobox = page.getByLabel("Ytelse");
     await ytelserCombobox.fill("Dagpenger");
