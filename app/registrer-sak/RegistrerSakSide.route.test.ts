@@ -69,8 +69,8 @@ describe("OpprettSakSide action", () => {
     formData.set("personNavn", "Manipulert Navn");
     formData.append("ytelser", "Dagpenger");
     formData.append("ytelser", "AAP");
-    formData.set("fraDato", "2026-01-01");
-    formData.set("tilDato", "2026-12-31");
+    formData.set("fraDato", "2024-01-01");
+    formData.set("tilDato", "2024-12-31");
     formData.set("kategori", "DOKUMENTFALSK");
     formData.set("kilde", "NAV_KONTROLL");
     formData.set("enhet", "ØST");
@@ -101,14 +101,14 @@ describe("OpprettSakSide action", () => {
         ytelser: [
           {
             type: "Dagpenger",
-            periodeFra: "2026-01-01",
-            periodeTil: "2026-12-31",
+            periodeFra: "2024-01-01",
+            periodeTil: "2024-12-31",
             belop: undefined,
           },
           {
             type: "AAP",
-            periodeFra: "2026-01-01",
-            periodeTil: "2026-12-31",
+            periodeFra: "2024-01-01",
+            periodeTil: "2024-12-31",
             belop: undefined,
           },
         ],
@@ -136,8 +136,8 @@ describe("OpprettSakSide action", () => {
     formData.set("personIdent", "12345678901");
     formData.set("personNavn", "Ola Testesen");
     formData.append("ytelser", "Dagpenger");
-    formData.set("fraDato", "2026-01-01");
-    formData.set("tilDato", "2026-12-31");
+    formData.set("fraDato", "2024-01-01");
+    formData.set("tilDato", "2024-12-31");
     formData.set("kategori", "DOKUMENTFALSK");
     formData.set("kilde", "NAV_KONTROLL");
     formData.set("enhet", "ØST");
@@ -165,8 +165,8 @@ describe("OpprettSakSide action", () => {
     formData.set("personIdent", "12345678901");
     formData.set("personNavn", "Manipulert Navn");
     formData.append("ytelser", "Dagpenger");
-    formData.set("fraDato", "2026-01-01");
-    formData.set("tilDato", "2026-12-31");
+    formData.set("fraDato", "2024-01-01");
+    formData.set("tilDato", "2024-12-31");
     formData.set("kategori", "DOKUMENTFALSK");
     formData.set("kilde", "NAV_KONTROLL");
     formData.set("enhet", "ØST");
@@ -195,8 +195,8 @@ describe("OpprettSakSide action", () => {
     formData.set("personIdent", "99999999999");
     formData.set("personNavn", "Manipulert Navn");
     formData.append("ytelser", "Dagpenger");
-    formData.set("fraDato", "2026-01-01");
-    formData.set("tilDato", "2026-12-31");
+    formData.set("fraDato", "2024-01-01");
+    formData.set("tilDato", "2024-12-31");
     formData.set("kategori", "DOKUMENTFALSK");
     formData.set("kilde", "NAV_KONTROLL");
     formData.set("enhet", "ØST");
@@ -214,6 +214,40 @@ describe("OpprettSakSide action", () => {
       feil: { skjema: ["Fant ikke navn på personen som saken opprettes for"] },
     });
   }, 15000);
+
+  it("returnerer feltfeil når datoene er frem i tid", async () => {
+    const { action } = await import("./RegistrerSakSide.server");
+
+    const iMorgen = new Date();
+    iMorgen.setDate(iMorgen.getDate() + 1);
+    const dato = iMorgen.toISOString().slice(0, 10);
+
+    const formData = new FormData();
+    formData.set("personIdent", "12345678901");
+    formData.set("personNavn", "Manipulert Navn");
+    formData.append("ytelser", "Dagpenger");
+    formData.set("fraDato", dato);
+    formData.set("tilDato", dato);
+    formData.set("kategori", "DOKUMENTFALSK");
+    formData.set("kilde", "NAV_KONTROLL");
+    formData.set("enhet", "ØST");
+
+    const response = await action({
+      request: new Request("http://localhost/registrer-sak", {
+        method: "POST",
+        body: formData,
+      }),
+      params: {},
+      context: {},
+    } as Route.ActionArgs);
+
+    expect(response).toEqual({
+      feil: {
+        fraDato: ["Fra dato kan ikke være frem i tid"],
+        tilDato: ["Til dato kan ikke være frem i tid"],
+      },
+    });
+  }, 15000);
 });
 
 describe("byggOpprettKontrollsakPayload", () => {
@@ -225,8 +259,8 @@ describe("byggOpprettKontrollsakPayload", () => {
         skjema: {
           personIdent: "12345678901",
           ytelser: ["Dagpenger", "AAP"],
-          fraDato: "2026-01-01",
-          tilDato: "2026-12-31",
+          fraDato: "2024-01-01",
+          tilDato: "2024-12-31",
           kategori: "SAMLIV",
           misbruktype: "SKJULT_SAMLIV",
           merking: "PRIORITERT",
@@ -252,14 +286,14 @@ describe("byggOpprettKontrollsakPayload", () => {
       ytelser: [
         {
           type: "Dagpenger",
-          periodeFra: "2026-01-01",
-          periodeTil: "2026-12-31",
+          periodeFra: "2024-01-01",
+          periodeTil: "2024-12-31",
           belop: 300000,
         },
         {
           type: "AAP",
-          periodeFra: "2026-01-01",
-          periodeTil: "2026-12-31",
+          periodeFra: "2024-01-01",
+          periodeTil: "2024-12-31",
           belop: 300000,
         },
       ],

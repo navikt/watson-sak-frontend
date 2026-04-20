@@ -4,8 +4,8 @@ import { opprettSakSchema } from "./validering";
 const gyldigSkjema = {
   personIdent: "12345678901",
   ytelser: ["Dagpenger"],
-  fraDato: "2026-01-01",
-  tilDato: "2026-12-31",
+  fraDato: "2024-01-01",
+  tilDato: "2024-12-31",
   kategori: "DOKUMENTFALSK",
   kilde: "NAV_KONTROLL",
   enhet: "ØST",
@@ -153,25 +153,44 @@ describe("opprettSakSchema", () => {
   it("normaliserer datoer skrevet som dd.mm.åååå", () => {
     const resultat = opprettSakSchema.safeParse({
       ...gyldigSkjema,
-      fraDato: "01.01.2026",
-      tilDato: "31.12.2026",
+      fraDato: "01.01.2024",
+      tilDato: "31.12.2024",
     });
 
     expect(resultat.success).toBe(true);
 
     if (resultat.success) {
-      expect(resultat.data.fraDato).toBe("2026-01-01");
-      expect(resultat.data.tilDato).toBe("2026-12-31");
+      expect(resultat.data.fraDato).toBe("2024-01-01");
+      expect(resultat.data.tilDato).toBe("2024-12-31");
     }
   });
 
   it("avviser når til dato er før fra dato", () => {
     const resultat = opprettSakSchema.safeParse({
       ...gyldigSkjema,
-      fraDato: "2026-12-31",
-      tilDato: "2026-01-01",
+      fraDato: "2024-12-31",
+      tilDato: "2024-01-01",
     });
     expect(resultat.success).toBe(false);
+  });
+
+  it("avviser datoer frem i tid", () => {
+    const iMorgen = new Date();
+    iMorgen.setDate(iMorgen.getDate() + 1);
+    const dato = iMorgen.toISOString().slice(0, 10);
+
+    const resultat = opprettSakSchema.safeParse({
+      ...gyldigSkjema,
+      fraDato: dato,
+      tilDato: dato,
+    });
+
+    expect(resultat.success).toBe(false);
+    if (!resultat.success) {
+      const feil = resultat.error.flatten().fieldErrors;
+      expect(feil.fraDato).toContain("Fra dato kan ikke være frem i tid");
+      expect(feil.tilDato).toContain("Til dato kan ikke være frem i tid");
+    }
   });
 
   it("godtar caBeløp som valgfritt tall", () => {

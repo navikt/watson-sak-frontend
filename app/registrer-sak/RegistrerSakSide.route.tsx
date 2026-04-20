@@ -46,7 +46,9 @@ export default function OpprettSakSide() {
   const [valgtKategori, setValgtKategori] = useState<string>("");
   const [søkeFnr, setSøkeFnr] = useState("");
   const registrerSakDatepickerValg = lagRegistrerSakDatepickerValg(new Date());
-  const { datepickerProps, fromInputProps, toInputProps } = useRangeDatepicker(registrerSakDatepickerValg);
+  const { datepickerProps, fromInputProps, toInputProps } = useRangeDatepicker(
+    registrerSakDatepickerValg,
+  );
 
   const personFetcher = useFetcher<
     PersonOppslagResultat | { person: null; eksisterendeSaker: [] } | { feil: string }
@@ -259,7 +261,10 @@ export default function OpprettSakSide() {
 
                   {/* Rad 2: Fra dato, Til dato, Ytelse, Ca beløp */}
                   <HStack gap="space-24" align="start" wrap>
-                    <DatePicker {...datepickerProps} dropdownCaption={registrerSakDatepickerValg.dropdownCaption}>
+                    <DatePicker
+                      {...datepickerProps}
+                      dropdownCaption={registrerSakDatepickerValg.dropdownCaption}
+                    >
                       <HStack gap="space-24" align="start" wrap>
                         <DatePicker.Input
                           {...fromInputProps}

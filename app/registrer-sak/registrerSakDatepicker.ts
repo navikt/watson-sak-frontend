@@ -4,9 +4,7 @@ function normaliserDato(dato: Date) {
   return normalisertDato;
 }
 
-export function lagRegistrerSakDatepickerValg(
-  senesteValgbareDato = new Date(2100, 11, 31),
-) {
+export function lagRegistrerSakDatepickerValg(senesteValgbareDato = new Date(2100, 11, 31)) {
   const normalisertSenesteValgbareDato = normaliserDato(senesteValgbareDato);
 
   return {
