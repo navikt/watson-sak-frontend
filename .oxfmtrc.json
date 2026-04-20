@@ -8,6 +8,7 @@
     ".github/instructions/**",
     ".github/prompts/**",
     ".agents/**",
-    ".claude/**"
+    ".claude/**",
+    ".opencode/**"
   ]
 }
