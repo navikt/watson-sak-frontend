@@ -35,6 +35,7 @@ Kort veiledning for bidragsytere til watson-sak. Hold koden enkel, domeneoriente
 
 ## Commits og pull requests
 
+- Alltid skriv alt på norsk, unngå engelske termer med mindre de er standard i domenet.
 - Commits: korte, imperativt formulerte beskrivelser (f.eks. `Flytt oppslag-API til featurepakke`).
 - PR-innhold: hva/hvorfor, relevante issues, risikovurdering, og skjermbilder/GIF for UI-endringer.
 - Hold PR-er små og domenefokuserte; unngå “grab bag”.
