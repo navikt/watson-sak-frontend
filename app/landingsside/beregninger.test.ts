@@ -18,6 +18,8 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
     kilde: "NAV_KONTROLL",
     misbruktype: [],
     prioritet: "NORMAL",
+    avslutningskonklusjon: null,
+    tilgjengeligeHandlinger: [],
     ytelser: [
       {
         id: "ytelse-1",
@@ -40,9 +42,9 @@ describe("beregnDineSakerSiste14Dager", () => {
     const saker = [
       lagKontrollsak({ id: "1", opprettet: "2026-03-18T00:00:00Z", status: "UTREDES" }),
       lagKontrollsak({ id: "2", opprettet: "2026-03-10T00:00:00Z", status: "UFORDELT" }),
-      lagKontrollsak({ id: "3", opprettet: "2026-03-09T00:00:00Z", status: "FORVALTNING" }),
-      lagKontrollsak({ id: "4", opprettet: "2026-03-08T00:00:00Z", status: "AVSLUTTET" }),
-      lagKontrollsak({ id: "5", opprettet: "2026-03-07T00:00:00Z", status: "AVSLUTTET" }),
+      lagKontrollsak({ id: "3", opprettet: "2026-03-09T00:00:00Z", status: "VENTER_PA_VEDTAK" }),
+      lagKontrollsak({ id: "4", opprettet: "2026-03-08T00:00:00Z", status: "HENLAGT" }),
+      lagKontrollsak({ id: "5", opprettet: "2026-03-07T00:00:00Z", status: "HENLAGT" }),
       lagKontrollsak({ id: "6", opprettet: "2026-02-20T00:00:00Z", status: "UFORDELT" }),
     ];
     const avslutningsdatoer: Avslutningsdatoer = {
@@ -61,7 +63,7 @@ describe("beregnDineSakerSiste14Dager", () => {
       antallSakerJobbetMed: 4,
       antallTipsTilVurdering: 0,
       antallSendtTilNayNfp: 1,
-      snittBehandlingstidPerSak: 5,
+      snittBehandlingstidPerSak: null,
       antallHenlagteSaker: 1,
       antallHenlagteTips: 1,
     });
@@ -89,9 +91,9 @@ describe("beregnDineSakerSiste14Dager", () => {
     const saker = [
       lagKontrollsak({ id: "ks-1", opprettet: "2026-03-18T00:00:00Z", status: "UTREDES" }),
       lagKontrollsak({ id: "ks-2", opprettet: "2026-03-10T00:00:00Z", status: "UFORDELT" }),
-      lagKontrollsak({ id: "ks-3", opprettet: "2026-03-09T00:00:00Z", status: "FORVALTNING" }),
-      lagKontrollsak({ id: "ks-4", opprettet: "2026-03-08T00:00:00Z", status: "AVSLUTTET" }),
-      lagKontrollsak({ id: "ks-5", opprettet: "2026-03-07T00:00:00Z", status: "AVSLUTTET" }),
+      lagKontrollsak({ id: "ks-3", opprettet: "2026-03-09T00:00:00Z", status: "VENTER_PA_VEDTAK" }),
+      lagKontrollsak({ id: "ks-4", opprettet: "2026-03-08T00:00:00Z", status: "HENLAGT" }),
+      lagKontrollsak({ id: "ks-5", opprettet: "2026-03-07T00:00:00Z", status: "HENLAGT" }),
       lagKontrollsak({ id: "ks-6", opprettet: "2026-02-20T00:00:00Z", status: "UFORDELT" }),
     ];
 
@@ -111,7 +113,7 @@ describe("beregnDineSakerSiste14Dager", () => {
       antallSakerJobbetMed: 4,
       antallTipsTilVurdering: 0,
       antallSendtTilNayNfp: 1,
-      snittBehandlingstidPerSak: 5,
+      snittBehandlingstidPerSak: null,
       antallHenlagteSaker: 1,
       antallHenlagteTips: 1,
     });

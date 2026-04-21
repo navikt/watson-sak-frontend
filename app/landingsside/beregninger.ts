@@ -50,14 +50,14 @@ export function beregnDineSakerSiste14Dager({
   return {
     antallSakerJobbetMed: sakerSiste14Dager.length,
     antallTipsTilVurdering: 0,
-    antallSendtTilNayNfp: sakerSiste14Dager.filter((sak) => getStatus(sak) === "FORVALTNING")
+    antallSendtTilNayNfp: sakerSiste14Dager.filter((sak) => getStatus(sak) === "VENTER_PA_VEDTAK")
       .length,
     snittBehandlingstidPerSak: behandlingstid?.gjennomsnitt ?? null,
     antallHenlagteSaker: sakerSiste14Dager.filter(
-      (sak) => getStatus(sak) === "AVSLUTTET" && !tidligereTipsSakIder.includes(sak.id),
+      (sak) => getStatus(sak) === "HENLAGT" && !tidligereTipsSakIder.includes(sak.id),
     ).length,
     antallHenlagteTips: sakerSiste14Dager.filter(
-      (sak) => getStatus(sak) === "AVSLUTTET" && tidligereTipsSakIder.includes(sak.id),
+      (sak) => getStatus(sak) === "HENLAGT" && tidligereTipsSakIder.includes(sak.id),
     ).length,
   };
 }
