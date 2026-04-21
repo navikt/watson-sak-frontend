@@ -12,7 +12,7 @@ export function erUfordeltKontrollsak(kontrollsak: KontrollsakResponse) {
 export function mapKontrollsakTilFordelingSak(kontrollsak: KontrollsakResponse): FordelingSak {
   return {
     id: kontrollsak.id,
-    navn: kontrollsak.personNavn,
+    navn: kontrollsak.personNavn ?? null,
     opprettetDato: kontrollsak.opprettet.slice(0, 10),
     oppdatertDato: (kontrollsak.oppdatert ?? kontrollsak.opprettet).slice(0, 10),
     kategori: kategoriEtikett(kontrollsak.kategori),

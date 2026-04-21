@@ -21,6 +21,8 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     kilde: "PUBLIKUM",
     misbruktype: [],
     prioritet: "NORMAL",
+    avslutningskonklusjon: null,
+    tilgjengeligeHandlinger: [],
     ytelser: [
       {
         id: "ytelse-1",
@@ -47,8 +49,8 @@ describe("Fordeling mapper", () => {
     expect(erUfordeltKontrollsak(lagKontrollsak({ status: "UTREDES" }))).toBe(false);
   });
 
-  it("behandler forvaltningssak som fordelt", () => {
-    expect(erUfordeltKontrollsak(lagKontrollsak({ status: "FORVALTNING" }))).toBe(false);
+  it("behandler tildelt sak som fordelt", () => {
+    expect(erUfordeltKontrollsak(lagKontrollsak({ status: "TILDELT" }))).toBe(false);
   });
 
   it("mapper kontrollsak til FordelingSak", () => {
