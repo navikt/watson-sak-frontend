@@ -10,10 +10,12 @@ import { Button, Detail, Heading, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import { useFetcher } from "react-router";
 import { RouteConfig } from "~/routeConfig";
-import type { FilNode } from "~/saker/filer/typer";
 import { getSaksreferanse } from "~/saker/id";
-import type { SakHendelse } from "~/saker/historikk/typer";
-import type { KontrollsakResponse, KontrollsakSaksbehandler } from "~/saker/types.backend";
+import type {
+  KontrollsakResponse,
+  KontrollsakSaksbehandler,
+  TilgjengeligHandling,
+} from "~/saker/types.backend";
 import { formaterDato } from "~/utils/date-utils";
 import { DelTilgangModal } from "./DelTilgangModal";
 import { FerdigstillSakModal } from "./FerdigstillSakModal";
@@ -24,8 +26,7 @@ interface SakUtredesHandlingerProps {
   sak: KontrollsakResponse;
   saksbehandlere: string[];
   saksbehandlerDetaljer: KontrollsakSaksbehandler[];
-  historikk: SakHendelse[];
-  filer: FilNode[];
+  tilgjengeligeHandlinger: TilgjengeligHandling[];
 }
 
 type ÅpenModal = "del-tilgang" | "stans-ytelse" | "opprett-anmeldelse" | "ferdigstill" | null;
@@ -34,19 +35,14 @@ export function SakUtredesHandlinger({
   sak,
   saksbehandlere: _saksbehandlere,
   saksbehandlerDetaljer,
-  historikk,
-  filer,
+  tilgjengeligeHandlinger,
 }: SakUtredesHandlingerProps) {
   const [åpenModal, setÅpenModal] = useState<ÅpenModal>(null);
-  const beroFetcher = useFetcher();
-  const tilbakeFetcher = useFetcher();
+  const fetcher = useFetcher();
 
-  const sisteAnmeldelse = historikk.find((h) => h.hendelsesType === "POLITIANMELDT");
-  const erAlleredeAnmeldt = sisteAnmeldelse !== undefined;
-
-  function handleSettIBero() {
-    beroFetcher.submit(
-      { handling: "sett_i_bero" },
+  function sendHandling(handling: TilgjengeligHandling["handling"]) {
+    fetcher.submit(
+      { handling },
       {
         method: "post",
         action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id)),
@@ -54,15 +50,20 @@ export function SakUtredesHandlinger({
     );
   }
 
-  function handleLeggTilbakeIUfordelt() {
-    tilbakeFetcher.submit(
-      { handling: "legg_tilbake_i_ufordelt" },
-      {
-        method: "post",
-        action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id)),
-      },
+  const harHandling = (handling: TilgjengeligHandling["handling"]) =>
+    tilgjengeligeHandlinger.some(
+      (tilgjengeligHandling) => tilgjengeligHandling.handling === handling,
     );
-  }
+
+  const avsluttMedKonklusjonHandling = tilgjengeligeHandlinger.find(
+    (tilgjengeligHandling) => tilgjengeligHandling.handling === "AVSLUTT_MED_KONKLUSJON",
+  );
+  const tillatteAvslutningskonklusjoner =
+    avsluttMedKonklusjonHandling?.pakrevdeFelter.find(
+      (pakrevdFelt) => pakrevdFelt.felt === "avslutningskonklusjon",
+    )?.tillatteVerdier ?? [];
+
+  const visSisteAnmeldelse = sak.status === "ANMELDT";
 
   return (
     <>
@@ -70,14 +71,6 @@ export function SakUtredesHandlinger({
         <Heading level="2" size="small">
           Handlinger
         </Heading>
-        <Button
-          variant="primary"
-          size="medium"
-          icon={<CheckmarkCircleIcon aria-hidden />}
-          onClick={() => setÅpenModal("ferdigstill")}
-        >
-          Ferdigstill sak
-        </Button>
         <Button
           variant="secondary"
           size="medium"
@@ -94,49 +87,119 @@ export function SakUtredesHandlinger({
         >
           Stans ytelse
         </Button>
-        <Button
-          variant="tertiary"
-          size="small"
-          icon={<ClockDashedIcon aria-hidden />}
-          onClick={handleSettIBero}
-          loading={beroFetcher.state !== "idle"}
-        >
-          Sett i bero
-        </Button>
-        <VStack gap="space-1">
+        {harHandling("START_UTREDNING") && (
+          <Button
+            variant="primary"
+            size="medium"
+            icon={<CheckmarkCircleIcon aria-hidden />}
+            onClick={() => sendHandling("START_UTREDNING")}
+          >
+            Start utredning
+          </Button>
+        )}
+        {harHandling("SETT_VENTER_PA_INFORMASJON") && (
+          <Button
+            variant="tertiary"
+            size="small"
+            onClick={() => sendHandling("SETT_VENTER_PA_INFORMASJON")}
+          >
+            Sett venter på informasjon
+          </Button>
+        )}
+        {harHandling("SETT_VENTER_PA_VEDTAK") && (
+          <Button
+            variant="tertiary"
+            size="small"
+            onClick={() => sendHandling("SETT_VENTER_PA_VEDTAK")}
+          >
+            Sett venter på vedtak
+          </Button>
+        )}
+        {harHandling("SETT_I_BERO") && (
+          <Button
+            variant="tertiary"
+            size="small"
+            icon={<ClockDashedIcon aria-hidden />}
+            onClick={() => sendHandling("SETT_I_BERO")}
+          >
+            Sett i bero
+          </Button>
+        )}
+        {harHandling("SETT_ANMELDELSE_VURDERES") && (
           <Button
             variant="tertiary"
             size="small"
             icon={<GavelSoundBlockIcon aria-hidden />}
-            onClick={() => setÅpenModal("opprett-anmeldelse")}
-            disabled={erAlleredeAnmeldt}
-            aria-describedby={erAlleredeAnmeldt ? "anmeldelse-registrert-info" : undefined}
+            onClick={() => sendHandling("SETT_ANMELDELSE_VURDERES")}
           >
-            Opprett anmeldelse
+            Vurder anmeldelse
           </Button>
-          {erAlleredeAnmeldt && sisteAnmeldelse && (
-            <Detail id="anmeldelse-registrert-info" className="pl-8 text-ax-text-neutral-subtle">
-              Registrert {formaterDato(sisteAnmeldelse.tidspunkt)}
-            </Detail>
-          )}
-        </VStack>
-        <Button
-          variant="tertiary"
-          size="small"
-          icon={<ArrowUndoIcon aria-hidden />}
-          onClick={handleLeggTilbakeIUfordelt}
-          loading={tilbakeFetcher.state !== "idle"}
-        >
-          Legg tilbake i ufordelt
-        </Button>
+        )}
+        {harHandling("SETT_ANMELDT") && (
+          <VStack gap="space-1">
+            <Button
+              variant="tertiary"
+              size="small"
+              icon={<GavelSoundBlockIcon aria-hidden />}
+              onClick={() => setÅpenModal("opprett-anmeldelse")}
+              aria-describedby={visSisteAnmeldelse ? "anmeldelse-registrert-info" : undefined}
+            >
+              Opprett anmeldelse
+            </Button>
+            {visSisteAnmeldelse && (
+              <Detail id="anmeldelse-registrert-info" className="pl-8 text-ax-text-neutral-subtle">
+                Registrert {formaterDato(sak.oppdatert ?? sak.opprettet)}
+              </Detail>
+            )}
+          </VStack>
+        )}
+        {harHandling("SETT_HENLAGT") && (
+          <Button
+            variant="tertiary"
+            size="small"
+            icon={<XMarkOctagonIcon aria-hidden />}
+            onClick={() => sendHandling("SETT_HENLAGT")}
+          >
+            Henlegg sak
+          </Button>
+        )}
+        {harHandling("FRISTILL") && (
+          <Button
+            variant="tertiary"
+            size="small"
+            icon={<ArrowUndoIcon aria-hidden />}
+            onClick={() => sendHandling("FRISTILL")}
+          >
+            Legg tilbake i ufordelt
+          </Button>
+        )}
+        {harHandling("AVSLUTT_MED_KONKLUSJON") && (
+          <Button
+            variant="primary"
+            size="medium"
+            icon={<CheckmarkCircleIcon aria-hidden />}
+            onClick={() => setÅpenModal("ferdigstill")}
+          >
+            Ferdigstill sak
+          </Button>
+        )}
+        {harHandling("AVSLUTT") && (
+          <Button
+            variant="primary"
+            size="medium"
+            icon={<CheckmarkCircleIcon aria-hidden />}
+            onClick={() => sendHandling("AVSLUTT")}
+          >
+            Avslutt sak
+          </Button>
+        )}
       </VStack>
 
       <FerdigstillSakModal
         sakId={sak.id}
-        filer={filer}
-        historikk={historikk}
         åpen={åpenModal === "ferdigstill"}
         onClose={() => setÅpenModal(null)}
+        tillatteVerdier={tillatteAvslutningskonklusjoner}
       />
       <DelTilgangModal
         sakId={sak.id}
