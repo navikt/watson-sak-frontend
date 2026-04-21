@@ -33,6 +33,8 @@ const kontrollsakHandlingSchema = z.enum([
   "AVSLUTT_MED_KONKLUSJON",
 ]);
 
+const støttetKontrollsakHandlingSchema = z.union([kontrollsakHandlingSchema, z.string()]);
+
 const avslutningskonklusjonSchema = z.enum(["POLITIET_HENLA", "FRIFUNNET", "DOMFELT"]);
 
 const pakrevdFeltSchema = z.object({
@@ -41,7 +43,7 @@ const pakrevdFeltSchema = z.object({
 });
 
 const tilgjengeligHandlingSchema = z.object({
-  handling: kontrollsakHandlingSchema,
+  handling: støttetKontrollsakHandlingSchema,
   pakrevdeFelter: z.array(pakrevdFeltSchema),
   resultatStatus: kontrollsakStatusSchema,
 });
