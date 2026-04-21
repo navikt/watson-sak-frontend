@@ -1,7 +1,17 @@
-import { describe, expect, it } from "vitest";
-import { normaliserLegacyKontrollsak } from "./mock-uuid";
+import { beforeEach, describe, expect, it } from "vitest";
+import {
+  hentNesteStatusFraBero,
+  normaliserLegacyKontrollsak,
+  nullstillMockStatushistorikk,
+  oppdaterTilgjengeligeHandlinger,
+  settForrigeStatus,
+} from "./mock-uuid";
 
 describe("normaliserLegacyKontrollsak", () => {
+  beforeEach(() => {
+    nullstillMockStatushistorikk();
+  });
+
   it("mapper legacy-felter til backend-shape og lager stabile mock-uuid-er", () => {
     const sak = normaliserLegacyKontrollsak(
       {
@@ -118,5 +128,47 @@ describe("normaliserLegacyKontrollsak", () => {
       navn: "Z123456",
       enhet: "4812",
     });
+  });
+
+  it("eksponerer avslutt for henlagt sak i mock-tilstandsmaskinen", () => {
+    const sak = normaliserLegacyKontrollsak(
+      {
+        id: "301",
+        personIdent: "12345678901",
+        status: "HENLAGT",
+        kategori: "ARBEID",
+        ytelser: [],
+        opprettet: "2026-01-01T00:00:00Z",
+      },
+      3,
+    );
+
+    expect(sak.tilgjengeligeHandlinger).toEqual([
+      { handling: "AVSLUTT", pakrevdeFelter: [], resultatStatus: "AVSLUTTET" },
+    ]);
+  });
+
+  it("nullstiller lagret forrige status mellom reset av mockdata", () => {
+    const sak = normaliserLegacyKontrollsak(
+      {
+        id: "401",
+        personIdent: "12345678901",
+        status: "UTREDES",
+        kategori: "ARBEID",
+        ytelser: [],
+        opprettet: "2026-01-01T00:00:00Z",
+      },
+      4,
+    );
+
+    settForrigeStatus(sak.id, "VENTER_PA_VEDTAK");
+    sak.status = "I_BERO";
+    oppdaterTilgjengeligeHandlinger(sak);
+
+    expect(hentNesteStatusFraBero(sak)).toBe("VENTER_PA_VEDTAK");
+
+    nullstillMockStatushistorikk();
+
+    expect(hentNesteStatusFraBero(sak)).toBe("UTREDES");
   });
 });

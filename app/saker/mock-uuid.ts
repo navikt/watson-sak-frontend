@@ -85,9 +85,14 @@ function beregnTilgjengeligeHandlinger(
           : []),
       ];
     case "HENLAGT":
+      return [lagTilgjengeligHandling("AVSLUTT", "AVSLUTTET")];
     case "AVSLUTTET":
       return [];
   }
+}
+
+export function nullstillMockStatushistorikk() {
+  forrigeStatusPerSak.clear();
 }
 
 export function oppdaterTilgjengeligeHandlinger(sak: KontrollsakResponse): KontrollsakResponse {
