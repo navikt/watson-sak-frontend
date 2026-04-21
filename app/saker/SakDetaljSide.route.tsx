@@ -244,6 +244,29 @@ function hentDelteSaksbehandlere(sak: Route.ComponentProps["loaderData"]["sak"])
   return sak.saksbehandlere.deltMed;
 }
 
+function hentTekstfelt(formData: FormData, felt: string, feilmelding: string) {
+  const verdi = formData.get(felt);
+
+  if (typeof verdi !== "string" || verdi.trim().length === 0) {
+    throw data(feilmelding, { status: 400 });
+  }
+
+  return verdi;
+}
+
+function hentTillatteVerdierForFelt(
+  sak: KontrollsakResponse,
+  handling: KontrollsakHandling,
+  felt: string,
+) {
+  const tilgjengeligHandling = sak.tilgjengeligeHandlinger.find(
+    (tilgjengeligHandling) => tilgjengeligHandling.handling === handling,
+  );
+
+  return tilgjengeligHandling?.pakrevdeFelter.find((pakrevdFelt) => pakrevdFelt.felt === felt)
+    ?.tillatteVerdier;
+}
+
 function oppdaterSakStatus(sak: KontrollsakResponse, nyStatus: KontrollsakStatus) {
   sak.status = nyStatus;
   oppdaterTilgjengeligeHandlinger(sak);
@@ -260,7 +283,7 @@ function utførStatushandling(
 
   switch (handling) {
     case "TILDEL": {
-      const navIdent = formData.get("navIdent") as string;
+      const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
       const valgtSaksbehandler = finnSaksbehandlerDetalj(mockSaksbehandlerDetaljer, navIdent);
 
       if (!valgtSaksbehandler) {
@@ -331,13 +354,22 @@ function utførStatushandling(
       return;
     }
     case "AVSLUTT_MED_KONKLUSJON": {
-      const avslutningskonklusjon = formData.get("avslutningskonklusjon") as Avslutningskonklusjon;
+      const avslutningskonklusjon = hentTekstfelt(
+        formData,
+        "avslutningskonklusjon",
+        "Avslutningskonklusjon mangler",
+      );
+      const tillatteVerdier = hentTillatteVerdierForFelt(
+        sak,
+        "AVSLUTT_MED_KONKLUSJON",
+        "avslutningskonklusjon",
+      );
 
-      if (!avslutningskonklusjon) {
-        throw data("Avslutningskonklusjon mangler", { status: 400 });
+      if (tillatteVerdier && !tillatteVerdier.includes(avslutningskonklusjon)) {
+        throw data("Ugyldig avslutningskonklusjon", { status: 400 });
       }
 
-      sak.avslutningskonklusjon = avslutningskonklusjon;
+      sak.avslutningskonklusjon = avslutningskonklusjon as Avslutningskonklusjon;
       oppdaterSakStatus(sak, "AVSLUTTET");
       leggTilHendelse(sak, "STATUS_ENDRET");
       return;
