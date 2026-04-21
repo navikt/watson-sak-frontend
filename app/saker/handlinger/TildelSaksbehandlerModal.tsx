@@ -4,10 +4,12 @@ import { useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
+import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
 
 interface TildelSaksbehandlerModalProps {
   sakId: string;
   saksbehandlere: string[];
+  saksbehandlerDetaljer?: KontrollsakSaksbehandler[];
   submitPath?: string;
   åpen: boolean;
   onClose: () => void;
@@ -16,6 +18,7 @@ interface TildelSaksbehandlerModalProps {
 export function TildelSaksbehandlerModal({
   sakId,
   saksbehandlere,
+  saksbehandlerDetaljer = [],
   submitPath,
   åpen,
   onClose,
@@ -31,7 +34,7 @@ export function TildelSaksbehandlerModal({
     if (!valgtSaksbehandler) return;
 
     fetcher.submit(
-      { handling: "tildel", sakId, saksbehandler: valgtSaksbehandler },
+      { handling: "TILDEL", sakId, navIdent: valgtSaksbehandler },
       {
         method: "post",
         action: submitPath ?? RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),
@@ -45,6 +48,14 @@ export function TildelSaksbehandlerModal({
     setValgtSaksbehandler("");
     onClose();
   }
+
+  const valgbareSaksbehandlere =
+    saksbehandlerDetaljer.length > 0
+      ? saksbehandlerDetaljer.map((saksbehandler) => ({
+          verdi: saksbehandler.navIdent,
+          etikett: `${saksbehandler.navn} (${saksbehandler.navIdent})`,
+        }))
+      : saksbehandlere.map((saksbehandler) => ({ verdi: saksbehandler, etikett: saksbehandler }));
 
   return (
     <Modal
@@ -66,9 +77,9 @@ export function TildelSaksbehandlerModal({
             onChange={(event) => setValgtSaksbehandler(event.target.value)}
           >
             <option value="">Velg saksbehandler</option>
-            {saksbehandlere.map((saksbehandler) => (
-              <option key={saksbehandler} value={saksbehandler}>
-                {saksbehandler}
+            {valgbareSaksbehandlere.map((saksbehandler) => (
+              <option key={saksbehandler.verdi} value={saksbehandler.verdi}>
+                {saksbehandler.etikett}
               </option>
             ))}
           </Select>
