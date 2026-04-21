@@ -1,5 +1,9 @@
 import type { SakStatus } from "~/saker/typer";
-import type { KontrollsakStatus } from "~/saker/visning";
+import type {
+  KontrollsakHandling,
+  KontrollsakResponse,
+  KontrollsakStatus,
+} from "~/saker/types.backend";
 
 const statusRekkefølge: SakStatus[] = [
   "tips mottatt",
@@ -36,16 +40,36 @@ export function kanPolitianmeldes(status: SakStatus): boolean {
 }
 
 export function erAktivSakKontrollsak(status: KontrollsakStatus): boolean {
-  return status === "UFORDELT" || status === "UTREDES" || status === "I_BERO";
+  return status !== "AVSLUTTET";
 }
 
-export function hentNesteStatusKontrollsak(status: KontrollsakStatus): KontrollsakStatus | null {
-  switch (status) {
-    case "UFORDELT":
-      return "UTREDES";
-    case "UTREDES":
-      return "FORVALTNING";
-    default:
-      return null;
-  }
+const støttedeKontrollsakHandlinger = new Set<KontrollsakHandling>([
+  "TILDEL",
+  "FRISTILL",
+  "START_UTREDNING",
+  "SETT_VENTER_PA_INFORMASJON",
+  "SETT_VENTER_PA_VEDTAK",
+  "SETT_ANMELDELSE_VURDERES",
+  "SETT_ANMELDT",
+  "SETT_HENLAGT",
+  "SETT_I_BERO",
+  "FORTSETT_FRA_I_BERO",
+  "AVSLUTT",
+  "AVSLUTT_MED_KONKLUSJON",
+]);
+
+export function erStøttetKontrollsakHandling(handling: string): handling is KontrollsakHandling {
+  return støttedeKontrollsakHandlinger.has(handling as KontrollsakHandling);
+}
+
+export function hentStøttedeTilgjengeligeHandlinger(sak: KontrollsakResponse) {
+  return sak.tilgjengeligeHandlinger.filter((handling) =>
+    erStøttetKontrollsakHandling(handling.handling),
+  );
+}
+
+export function harKontrollsakHandling(sak: KontrollsakResponse, handling: KontrollsakHandling) {
+  return hentStøttedeTilgjengeligeHandlinger(sak).some(
+    (tilgjengeligHandling) => tilgjengeligHandling.handling === handling,
+  );
 }
