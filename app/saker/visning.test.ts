@@ -37,6 +37,8 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     kilde: "NAV_KONTROLL",
     misbruktype: ["FIKTIVT_ARBEIDSFORHOLD"],
     prioritet: "NORMAL",
+    avslutningskonklusjon: null,
+    tilgjengeligeHandlinger: [],
     ytelser: [
       {
         id: "00000000-0000-4000-8000-000000000002",
@@ -70,7 +72,7 @@ describe("sak-visning", () => {
   });
 
   it("maper backend-status til riktig tag-variant", () => {
-    expect(hentStatusVariant("FORVALTNING")).toBe("success");
+    expect(hentStatusVariant("ANMELDT")).toBe("success");
   });
 
   it("formaterer backend-kategori til visningstekst", () => {
@@ -96,7 +98,7 @@ describe("sak-visning", () => {
   });
 
   it("henter formatert status fra kontrollsak", () => {
-    expect(getStatus(lagKontrollsak({ status: "FORVALTNING" }))).toBe("Til forvaltning");
+    expect(getStatus(lagKontrollsak({ status: "VENTER_PA_VEDTAK" }))).toBe("Venter på vedtak");
   });
 
   it("henter ytelsestyper fra kontrollsak", () => {
