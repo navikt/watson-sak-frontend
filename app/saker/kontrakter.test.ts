@@ -17,9 +17,8 @@ describe("Kontrollsak-kontrakter", () => {
       kontrollsakResponseSchema.parse({
         id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
         personIdent: "12345678901",
-        personNavn: "Ola Nordmann",
         saksbehandlere: {
-          eier: {
+          ansvarlig: {
             navIdent: "Z123456",
             navn: "Saks Behandler",
             enhet: "4812",
@@ -32,6 +31,14 @@ describe("Kontrollsak-kontrakter", () => {
           },
         },
         status: "UFORDELT",
+        avslutningskonklusjon: null,
+        tilgjengeligeHandlinger: [
+          {
+            handling: "TILDEL",
+            pakrevdeFelter: [{ felt: "navIdent", tillatteVerdier: [] }],
+            resultatStatus: "TILDELT",
+          },
+        ],
         kategori: "ARBEID",
         kilde: "NAV_KONTROLL",
         misbruktype: ["FIKTIVT_ARBEIDSFORHOLD"],
@@ -60,9 +67,10 @@ describe("Kontrollsak-kontrakter", () => {
       }),
     ).toMatchObject({
       status: "UFORDELT",
-      personNavn: "Ola Nordmann",
+      personNavn: null,
       ytelser: [{ type: "Dagpenger" }],
       kilde: "NAV_KONTROLL",
+      tilgjengeligeHandlinger: [{ handling: "TILDEL" }],
     });
   });
 
@@ -71,9 +79,8 @@ describe("Kontrollsak-kontrakter", () => {
       kontrollsakResponseSchema.parse({
         id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
         personIdent: "12345678901",
-        personNavn: "Ola Nordmann",
         saksbehandlere: {
-          eier: null,
+          ansvarlig: null,
           deltMed: [],
           opprettetAv: {
             navIdent: "Z123456",
@@ -82,6 +89,8 @@ describe("Kontrollsak-kontrakter", () => {
           },
         },
         status: "UFORDELT",
+        avslutningskonklusjon: null,
+        tilgjengeligeHandlinger: [],
         kategori: "ARBEID",
         kilde: "PUBLIKUM",
         misbruktype: [],
@@ -105,9 +114,8 @@ describe("Kontrollsak-kontrakter", () => {
           {
             id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
             personIdent: "12345678901",
-            personNavn: "Ola Nordmann",
             saksbehandlere: {
-              eier: null,
+              ansvarlig: null,
               deltMed: [],
               opprettetAv: {
                 navIdent: "Z123456",
@@ -116,6 +124,8 @@ describe("Kontrollsak-kontrakter", () => {
               },
             },
             status: "UFORDELT",
+            avslutningskonklusjon: null,
+            tilgjengeligeHandlinger: [],
             kategori: "ARBEID",
             kilde: "PUBLIKUM",
             misbruktype: [],
