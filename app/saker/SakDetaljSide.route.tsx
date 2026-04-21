@@ -39,12 +39,25 @@ import {
 } from "~/registrer-sak/validering";
 import { mockSaksbehandlere, mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import { mockSeksjoner } from "~/saker/mock-seksjoner.server";
-import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
+import {
+  hentNesteStatusFraBero,
+  oppdaterTilgjengeligeHandlinger,
+  settForrigeStatus,
+} from "~/saker/mock-uuid";
+import type {
+  Avslutningskonklusjon,
+  KontrollsakHandling,
+  KontrollsakResponse,
+  KontrollsakSaksbehandler,
+} from "~/saker/types.backend";
 import type { Route } from "./+types/SakDetaljSide.route";
 import { hentFilerForSak } from "./filer/mock-data.server";
 import { SakFilområde } from "./filer/SakFilområde";
 import { SakHandlingerKnapper } from "./handlinger/SakHandlingerKnapper";
-import { erAktivSakKontrollsak } from "./handlinger/tilgjengeligeHandlinger";
+import {
+  erAktivSakKontrollsak,
+  harKontrollsakHandling,
+} from "./handlinger/tilgjengeligeHandlinger";
 import { SakHistorikk } from "./historikk/SakHistorikk";
 import {
   hentHistorikk,
@@ -97,8 +110,13 @@ const unsupportedKobleSakFeil = "Denne funksjonen er ikke tilgjengelig ennå.";
 
 const gyldigeStatuser = new Set<KontrollsakStatus>([
   "UFORDELT",
+  "TILDELT",
   "UTREDES",
-  "FORVALTNING",
+  "VENTER_PA_INFORMASJON",
+  "VENTER_PA_VEDTAK",
+  "ANMELDELSE_VURDERES",
+  "ANMELDT",
+  "HENLAGT",
   "AVSLUTTET",
   "I_BERO",
 ]);
@@ -226,6 +244,107 @@ function hentDelteSaksbehandlere(sak: Route.ComponentProps["loaderData"]["sak"])
   return sak.saksbehandlere.deltMed;
 }
 
+function oppdaterSakStatus(sak: KontrollsakResponse, nyStatus: KontrollsakStatus) {
+  sak.status = nyStatus;
+  oppdaterTilgjengeligeHandlinger(sak);
+}
+
+function utførStatushandling(
+  sak: KontrollsakResponse,
+  handling: KontrollsakHandling,
+  formData: FormData,
+) {
+  if (!harKontrollsakHandling(sak, handling)) {
+    throw data("Handlingen er ikke tilgjengelig for saken", { status: 400 });
+  }
+
+  switch (handling) {
+    case "TILDEL": {
+      const navIdent = formData.get("navIdent") as string;
+      const valgtSaksbehandler = finnSaksbehandlerDetalj(mockSaksbehandlerDetaljer, navIdent);
+
+      if (!valgtSaksbehandler) {
+        throw data("Ugyldig saksbehandler", { status: 400 });
+      }
+
+      sak.saksbehandlere.eier = valgtSaksbehandler;
+      oppdaterSakStatus(sak, "TILDELT");
+      leggTilHendelse(sak, "SAK_TILDELT");
+      leggTilHendelse(sak, "STATUS_ENDRET");
+      return;
+    }
+    case "START_UTREDNING": {
+      oppdaterSakStatus(sak, "UTREDES");
+      leggTilHendelse(sak, "STATUS_ENDRET");
+      return;
+    }
+    case "SETT_VENTER_PA_INFORMASJON": {
+      oppdaterSakStatus(sak, "VENTER_PA_INFORMASJON");
+      leggTilHendelse(sak, "STATUS_ENDRET");
+      return;
+    }
+    case "SETT_VENTER_PA_VEDTAK": {
+      oppdaterSakStatus(sak, "VENTER_PA_VEDTAK");
+      leggTilHendelse(sak, "STATUS_ENDRET");
+      return;
+    }
+    case "SETT_ANMELDELSE_VURDERES": {
+      oppdaterSakStatus(sak, "ANMELDELSE_VURDERES");
+      leggTilHendelse(sak, "STATUS_ENDRET");
+      return;
+    }
+    case "SETT_ANMELDT": {
+      oppdaterSakStatus(sak, "ANMELDT");
+      leggTilHendelse(sak, "POLITIANMELDT");
+      leggTilHendelse(sak, "STATUS_ENDRET");
+      return;
+    }
+    case "SETT_HENLAGT": {
+      oppdaterSakStatus(sak, "HENLAGT");
+      leggTilHendelse(sak, "SAK_HENLAGT");
+      return;
+    }
+    case "SETT_I_BERO": {
+      settForrigeStatus(sak.id, sak.status);
+      oppdaterSakStatus(sak, "I_BERO");
+      leggTilHendelse(sak, "SAK_SATT_I_BERO");
+      return;
+    }
+    case "FORTSETT_FRA_I_BERO": {
+      oppdaterSakStatus(sak, hentNesteStatusFraBero(sak));
+      leggTilHendelse(sak, "SAK_GJENOPPTATT");
+      return;
+    }
+    case "FRISTILL": {
+      if (sak.status === "I_BERO") {
+        settForrigeStatus(sak.id, null);
+      }
+
+      sak.saksbehandlere.eier = null;
+      oppdaterSakStatus(sak, "UFORDELT");
+      leggTilHendelse(sak, "STATUS_ENDRET");
+      return;
+    }
+    case "AVSLUTT": {
+      oppdaterSakStatus(sak, "AVSLUTTET");
+      leggTilHendelse(sak, "STATUS_ENDRET");
+      return;
+    }
+    case "AVSLUTT_MED_KONKLUSJON": {
+      const avslutningskonklusjon = formData.get("avslutningskonklusjon") as Avslutningskonklusjon;
+
+      if (!avslutningskonklusjon) {
+        throw data("Avslutningskonklusjon mangler", { status: 400 });
+      }
+
+      sak.avslutningskonklusjon = avslutningskonklusjon;
+      oppdaterSakStatus(sak, "AVSLUTTET");
+      leggTilHendelse(sak, "STATUS_ENDRET");
+      return;
+    }
+  }
+}
+
 export async function action({ request, params }: Route.ActionArgs) {
   const formData = await request.formData();
   const handling = formData.get("handling") as string;
@@ -239,6 +358,21 @@ export async function action({ request, params }: Route.ActionArgs) {
   const saksbehandlere = sak.saksbehandlere;
 
   switch (handling) {
+    case "TILDEL":
+    case "FRISTILL":
+    case "START_UTREDNING":
+    case "SETT_VENTER_PA_INFORMASJON":
+    case "SETT_VENTER_PA_VEDTAK":
+    case "SETT_ANMELDELSE_VURDERES":
+    case "SETT_ANMELDT":
+    case "SETT_HENLAGT":
+    case "SETT_I_BERO":
+    case "FORTSETT_FRA_I_BERO":
+    case "AVSLUTT":
+    case "AVSLUTT_MED_KONKLUSJON": {
+      utførStatushandling(sak, handling, formData);
+      break;
+    }
     case "endre_status": {
       const nyStatus = formData.get("status") as string;
 
@@ -247,28 +381,8 @@ export async function action({ request, params }: Route.ActionArgs) {
       }
 
       sak.status = nyStatus;
+      oppdaterTilgjengeligeHandlinger(sak);
       leggTilHendelse(sak, "STATUS_ENDRET");
-      break;
-    }
-    case "tildel": {
-      const saksbehandler = formData.get("saksbehandler") as string;
-      const gammelStatus = sak.status;
-      const valgtSaksbehandler = finnSaksbehandlerDetalj(mockSaksbehandlerDetaljer, saksbehandler);
-
-      if (!valgtSaksbehandler) {
-        throw data("Ugyldig saksbehandler", { status: 400 });
-      }
-
-      sak.status = "UTREDES";
-      sak.saksbehandlere.eier = valgtSaksbehandler;
-
-      leggTilHendelse(sak, "SAK_TILDELT");
-
-      const nyStatus = "UTREDES";
-
-      if (gammelStatus !== nyStatus) {
-        leggTilHendelse(sak, "STATUS_ENDRET");
-      }
       break;
     }
     case "overfor_ansvarlig": {
@@ -351,6 +465,7 @@ export async function action({ request, params }: Route.ActionArgs) {
         periodeTil: data.tilDato,
         belop: eksisterendeYtelser[indeks]?.belop ?? null,
       }));
+      oppdaterTilgjengeligeHandlinger(sak);
       leggTilHendelse(sak, "SAKSINFORMASJON_ENDRET");
       break;
     }
@@ -409,31 +524,6 @@ export async function action({ request, params }: Route.ActionArgs) {
     }
     case "stans_ytelse": {
       leggTilHendelse(sak, "YTELSE_STANSET");
-      break;
-    }
-    case "sett_i_bero": {
-      sak.status = "I_BERO";
-      leggTilHendelse(sak, "SAK_SATT_I_BERO");
-      break;
-    }
-    case "legg_tilbake_i_ufordelt": {
-      sak.status = "UFORDELT";
-      sak.saksbehandlere.eier = null;
-      leggTilHendelse(sak, "STATUS_ENDRET");
-      break;
-    }
-    case "loggfør_anmeldelse": {
-      leggTilHendelse(sak, "POLITIANMELDT");
-      break;
-    }
-    case "ferdigstill_sak": {
-      sak.status = "AVSLUTTET";
-      leggTilHendelse(sak, "STATUS_ENDRET");
-      break;
-    }
-    case "gjenoppta": {
-      sak.status = "UTREDES";
-      leggTilHendelse(sak, "SAK_GJENOPPTATT");
       break;
     }
     case "legg_til_historikk": {

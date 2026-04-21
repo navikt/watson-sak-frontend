@@ -20,7 +20,7 @@ describe("PolitianmeldelseSide loader", () => {
     expect("personIdent" in resultat.sak).toBe(true);
   });
 
-  it("setter status til FORVALTNING og logger politianmeldelse ved gyldig innsending", async () => {
+  it("setter status til ANMELDT og logger politianmeldelse ved gyldig innsending", async () => {
     const sakId = lagMockSakUuid("201", 2);
     const sakRef = getSaksreferanse(sakId);
     const sak = hentAlleSaker().find((eksisterendeSak) => eksisterendeSak.id === sakId);
@@ -41,12 +41,12 @@ describe("PolitianmeldelseSide loader", () => {
       params: { sakId: sakRef },
     } as Route.ActionArgs);
 
-    expect(sak?.status).toBe("FORVALTNING");
+    expect(sak?.status).toBe("ANMELDT");
     expect(respons).toBeInstanceOf(Response);
     expect((respons as Response).status).toBe(302);
 
     const historikk = hentHistorikk(sakId);
     expect(historikk[0]?.hendelsesType).toBe("POLITIANMELDT");
-    expect(historikk[0]?.status).toBe("FORVALTNING");
+    expect(historikk[0]?.status).toBe("ANMELDT");
   });
 });

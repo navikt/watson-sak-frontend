@@ -20,41 +20,14 @@ describe("SakDetaljSide action", () => {
     resetHistorikk();
   });
 
-  it("logger ikke status_endret ved tildeling når kontrollsaken allerede er under utredning", async () => {
+  it("eksponerer ikke tildeling som tilgjengelig handling når kontrollsaken allerede er under utredning", async () => {
     const sak = hentAlleSaker().find((sak) => sak.id === utredningSakId);
 
     expect(sak?.status).toBe("UTREDES");
 
-    const historikkFør = hentHistorikk(utredningSakId);
-    const statusendringerFør = historikkFør.filter(
-      (hendelse) => hendelse.hendelsesType === "STATUS_ENDRET",
+    expect(sak?.tilgjengeligeHandlinger.some((handling) => handling.handling === "TILDEL")).toBe(
+      false,
     );
-    const tildelingerFør = historikkFør.filter(
-      (hendelse) => hendelse.hendelsesType === "SAK_TILDELT",
-    );
-
-    const formData = new FormData();
-    formData.set("handling", "tildel");
-    formData.set("saksbehandler", "Kari Nordmann");
-
-    await action({
-      request: new Request(`http://localhost/saker/${utredningSakRef}`, {
-        method: "POST",
-        body: formData,
-      }),
-      params: { sakId: utredningSakRef },
-    } as Route.ActionArgs);
-
-    const historikkEtter = hentHistorikk(utredningSakId);
-    const statusendringerEtter = historikkEtter.filter(
-      (hendelse) => hendelse.hendelsesType === "STATUS_ENDRET",
-    );
-    const tildelingerEtter = historikkEtter.filter(
-      (hendelse) => hendelse.hendelsesType === "SAK_TILDELT",
-    );
-
-    expect(statusendringerEtter).toHaveLength(statusendringerFør.length);
-    expect(tildelingerEtter).toHaveLength(tildelingerFør.length + 1);
   });
 
   it("legger til delt saksbehandler og logger historikk", async () => {
@@ -261,8 +234,8 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(kontrollsak.status).toBe("UFORDELT");
 
     const formData = new FormData();
-    formData.set("handling", "tildel");
-    formData.set("saksbehandler", "Kari Nordmann");
+    formData.set("handling", "TILDEL");
+    formData.set("navIdent", "Z123456");
 
     await action({
       request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
@@ -272,7 +245,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
       params: { sakId: kontrollsakRef },
     } as Route.ActionArgs);
 
-    expect(kontrollsak.status).toBe("UTREDES");
+    expect(kontrollsak.status).toBe("TILDELT");
   });
 
   it("tildeler ufordelt sak med konsistent saksbehandlerident", async () => {
@@ -289,10 +262,17 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
 
     expect(kontrollsak.status).toBe("UFORDELT");
     expect(kontrollsak.saksbehandlere.eier).toBeNull();
+    kontrollsak.tilgjengeligeHandlinger = [
+      {
+        handling: "TILDEL",
+        pakrevdeFelter: [{ felt: "navIdent", tillatteVerdier: [] }],
+        resultatStatus: "TILDELT",
+      },
+    ];
 
     const formData = new FormData();
-    formData.set("handling", "tildel");
-    formData.set("saksbehandler", "Kari Nordmann");
+    formData.set("handling", "TILDEL");
+    formData.set("navIdent", "Z123456");
 
     await action({
       request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
