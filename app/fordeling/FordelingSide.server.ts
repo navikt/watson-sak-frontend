@@ -33,7 +33,12 @@ export async function action({ request }: Route.ActionArgs) {
       throw data("Sak ikke funnet", { status: 404 });
     }
 
-    kontrollsak.status = "UTREDES";
+    kontrollsak.status = "TILDELT";
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: saksbehandler,
+      navn: saksbehandler,
+      enhet: kontrollsak.saksbehandlere.opprettetAv.enhet,
+    };
     return { ok: true };
   }
 

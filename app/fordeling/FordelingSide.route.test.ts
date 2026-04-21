@@ -65,7 +65,7 @@ describe("FordelingSide action", () => {
     } as Route.ActionArgs);
 
     expect(mockKontrollsaker.find((sak) => sak.id === tildelbarKontrollsakId)?.status).toBe(
-      "UTREDES",
+      "TILDELT",
     );
     expect(tildelKontrollsakMock).not.toHaveBeenCalled();
   });

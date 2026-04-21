@@ -56,11 +56,11 @@ describe("Fordeling api.server", () => {
     await tildelKontrollsak({
       token: "token-123",
       sakId: "sak-1",
-      saksbehandler: "Kari Nordmann",
+      saksbehandler: "Z123456",
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://backend.test/api/v1/kontrollsaker/sak-1/tildel",
+      "https://backend.test/api/v1/kontrollsaker/sak-1/overgang",
       {
         method: "POST",
         headers: {
@@ -68,7 +68,7 @@ describe("Fordeling api.server", () => {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify({ saksbehandler: "Kari Nordmann" }),
+        body: JSON.stringify({ handling: "TILDEL", navIdent: "Z123456" }),
       },
     );
   }, 15000);
