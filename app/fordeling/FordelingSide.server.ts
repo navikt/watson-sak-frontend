@@ -1,4 +1,5 @@
 import { data } from "react-router";
+import { oppdaterTilgjengeligeHandlinger } from "~/saker/mock-uuid";
 import { getBackendOboToken } from "~/auth/access-token";
 import { skalBrukeMockdata } from "~/config/env.server";
 import type { Route } from "./+types/FordelingSide.route";
@@ -39,6 +40,7 @@ export async function action({ request }: Route.ActionArgs) {
       navn: saksbehandler,
       enhet: kontrollsak.saksbehandlere.opprettetAv.enhet,
     };
+    oppdaterTilgjengeligeHandlinger(kontrollsak);
     return { ok: true };
   }
 

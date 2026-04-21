@@ -67,6 +67,11 @@ describe("FordelingSide action", () => {
     expect(mockKontrollsaker.find((sak) => sak.id === tildelbarKontrollsakId)?.status).toBe(
       "TILDELT",
     );
+    expect(
+      mockKontrollsaker
+        .find((sak) => sak.id === tildelbarKontrollsakId)
+        ?.tilgjengeligeHandlinger.some((handling) => handling.handling === "TILDEL"),
+    ).toBe(false);
     expect(tildelKontrollsakMock).not.toHaveBeenCalled();
   });
 
