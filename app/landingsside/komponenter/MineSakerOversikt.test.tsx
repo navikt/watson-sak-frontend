@@ -20,6 +20,8 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     kilde: "PUBLIKUM",
     misbruktype: ["SKJULT_SAMLIV"],
     prioritet: "NORMAL",
+    avslutningskonklusjon: null,
+    tilgjengeligeHandlinger: [],
     ytelser: [
       {
         id: "00000000-0000-4000-8000-000000020101",

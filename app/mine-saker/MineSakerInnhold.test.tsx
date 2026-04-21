@@ -22,6 +22,8 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     kilde: "PUBLIKUM",
     misbruktype: ["FEIL_INNTEKTSGRUNNLAG"],
     prioritet: "NORMAL",
+    avslutningskonklusjon: null,
+    tilgjengeligeHandlinger: [],
     ytelser: [
       {
         id: "00000000-0000-4000-8000-000000020101",
@@ -55,7 +57,7 @@ describe("MineSakerInnhold", () => {
           lagKontrollsak(),
           lagKontrollsak({
             id: lagMockSakUuid("202", 2),
-            status: "FORVALTNING",
+            status: "VENTER_PA_VEDTAK",
             oppdatert: "2026-02-05T10:11:12Z",
           }),
         ]}

@@ -23,6 +23,8 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     kilde: "NAV_KONTROLL",
     misbruktype: [],
     prioritet: "NORMAL",
+    avslutningskonklusjon: null,
+    tilgjengeligeHandlinger: [],
     ytelser: [],
     merking: null,
     resultat: null,
@@ -33,16 +35,18 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
 }
 
 describe("Mine saker selectors", () => {
-  it("mapper backend-status UFORDELT til aktive", () => {
-    expect(getMineSakerGruppeStatus(lagKontrollsak({ status: "UFORDELT" }))).toBe("aktive");
+  it("mapper backend-status TILDELT til aktive", () => {
+    expect(getMineSakerGruppeStatus(lagKontrollsak({ status: "TILDELT" }))).toBe("aktive");
   });
 
-  it("mapper backend-status FORVALTNING til ventende", () => {
-    expect(getMineSakerGruppeStatus(lagKontrollsak({ status: "FORVALTNING" }))).toBe("ventende");
+  it("mapper backend-status VENTER_PA_VEDTAK til ventende", () => {
+    expect(getMineSakerGruppeStatus(lagKontrollsak({ status: "VENTER_PA_VEDTAK" }))).toBe(
+      "ventende",
+    );
   });
 
-  it("mapper backend-status I_BERO til aktive eksplisitt", () => {
-    expect(getMineSakerGruppeStatus(lagKontrollsak({ status: "I_BERO" }))).toBe("aktive");
+  it("mapper backend-status I_BERO til ventende", () => {
+    expect(getMineSakerGruppeStatus(lagKontrollsak({ status: "I_BERO" }))).toBe("ventende");
   });
 
   it("mapper backend-status AVSLUTTET til fullførte", () => {

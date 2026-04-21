@@ -23,6 +23,8 @@ function lagKontrollsak(
     kilde: "ANNET",
     misbruktype: [],
     prioritet: "NORMAL",
+    avslutningskonklusjon: null,
+    tilgjengeligeHandlinger: [],
     ytelser: [
       {
         id: lagMockSakUuid(`${idNum}1`, 1),
