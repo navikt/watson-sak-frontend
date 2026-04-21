@@ -25,9 +25,14 @@ function getYtelseTyper(sak: Statistikksak): string[] {
 export function beregnAntallPerStatus(saker: Statistikksak[]): Record<StatistikkStatus, number> {
   const resultat: Record<StatistikkStatus, number> = {
     UFORDELT: 0,
+    TILDELT: 0,
     UTREDES: 0,
+    VENTER_PA_INFORMASJON: 0,
+    VENTER_PA_VEDTAK: 0,
+    ANMELDELSE_VURDERES: 0,
+    ANMELDT: 0,
+    HENLAGT: 0,
     I_BERO: 0,
-    FORVALTNING: 0,
     AVSLUTTET: 0,
   };
 

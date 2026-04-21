@@ -24,6 +24,8 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
     kilde: "NAV_KONTROLL",
     misbruktype: [],
     prioritet: "NORMAL",
+    avslutningskonklusjon: null,
+    tilgjengeligeHandlinger: [],
     ytelser: [
       {
         id: "ytelse-1",
@@ -73,9 +75,14 @@ describe("beregnAntallPerStatus", () => {
 
     expect(resultat).toEqual({
       UFORDELT: 2,
+      TILDELT: 0,
       UTREDES: 1,
+      VENTER_PA_INFORMASJON: 0,
+      VENTER_PA_VEDTAK: 0,
+      ANMELDELSE_VURDERES: 0,
+      ANMELDT: 0,
+      HENLAGT: 0,
       I_BERO: 0,
-      FORVALTNING: 0,
       AVSLUTTET: 2,
     });
   });
@@ -83,9 +90,14 @@ describe("beregnAntallPerStatus", () => {
   test("returnerer nuller for tom liste", () => {
     expect(beregnAntallPerStatus([])).toEqual({
       UFORDELT: 0,
+      TILDELT: 0,
       UTREDES: 0,
+      VENTER_PA_INFORMASJON: 0,
+      VENTER_PA_VEDTAK: 0,
+      ANMELDELSE_VURDERES: 0,
+      ANMELDT: 0,
+      HENLAGT: 0,
       I_BERO: 0,
-      FORVALTNING: 0,
       AVSLUTTET: 0,
     });
   });
