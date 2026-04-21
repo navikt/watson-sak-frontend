@@ -33,6 +33,7 @@ export function FerdigstillSakModal({
 }: FerdigstillSakModalProps) {
   const fetcher = useFetcher();
   const [avslutningskonklusjon, setAvslutningskonklusjon] = useState("");
+  const erSubmitting = fetcher.state !== "idle";
   const avslutningskonklusjoner =
     tillatteVerdier && tillatteVerdier.length > 0
       ? tillatteVerdier
@@ -43,11 +44,14 @@ export function FerdigstillSakModal({
       : standardAvslutningskonklusjoner;
 
   function handleLukk() {
+    if (erSubmitting) return;
     onClose();
     setAvslutningskonklusjon("");
   }
 
   function handleFerdigstill() {
+    if (!avslutningskonklusjon || erSubmitting) return;
+
     fetcher.submit(
       {
         handling: "AVSLUTT_MED_KONKLUSJON",
@@ -58,7 +62,6 @@ export function FerdigstillSakModal({
         action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),
       },
     );
-    handleLukk();
   }
 
   return (
@@ -91,10 +94,15 @@ export function FerdigstillSakModal({
       </Modal.Body>
 
       <Modal.Footer>
-        <Button variant="primary" onClick={handleFerdigstill} disabled={!avslutningskonklusjon}>
+        <Button
+          variant="primary"
+          onClick={handleFerdigstill}
+          disabled={!avslutningskonklusjon || erSubmitting}
+          loading={erSubmitting}
+        >
           Avslutt sak
         </Button>
-        <Button variant="secondary" onClick={handleLukk} loading={fetcher.state !== "idle"}>
+        <Button variant="secondary" onClick={handleLukk} disabled={erSubmitting}>
           Avbryt
         </Button>
       </Modal.Footer>
