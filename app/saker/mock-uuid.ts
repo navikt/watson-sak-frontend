@@ -1,4 +1,112 @@
-import type { KontrollsakResponse } from "./types.backend";
+import type {
+  Avslutningskonklusjon,
+  KontrollsakHandling,
+  KontrollsakResponse,
+  KontrollsakStatus,
+  TilgjengeligHandling,
+} from "./types.backend";
+
+const forrigeStatusPerSak = new Map<string, KontrollsakStatus>();
+
+function lagTilgjengeligHandling(
+  handling: KontrollsakHandling,
+  resultatStatus: KontrollsakStatus,
+  pakrevdeFelter: TilgjengeligHandling["pakrevdeFelter"] = [],
+): TilgjengeligHandling {
+  return {
+    handling,
+    pakrevdeFelter,
+    resultatStatus,
+  };
+}
+
+function hentForrigeStatus(sakId: string, status: KontrollsakStatus) {
+  return forrigeStatusPerSak.get(sakId) ?? (status === "I_BERO" ? "UTREDES" : undefined);
+}
+
+function beregnTilgjengeligeHandlinger(
+  sak: Pick<KontrollsakResponse, "id" | "status">,
+): TilgjengeligHandling[] {
+  const forrigeStatus = hentForrigeStatus(sak.id, sak.status);
+
+  switch (sak.status) {
+    case "UFORDELT":
+      return [
+        lagTilgjengeligHandling("TILDEL", "TILDELT", [{ felt: "navIdent", tillatteVerdier: [] }]),
+        lagTilgjengeligHandling("SETT_I_BERO", "I_BERO"),
+      ];
+    case "TILDELT":
+      return [
+        lagTilgjengeligHandling("START_UTREDNING", "UTREDES"),
+        lagTilgjengeligHandling("FRISTILL", "UFORDELT"),
+        lagTilgjengeligHandling("SETT_I_BERO", "I_BERO"),
+      ];
+    case "UTREDES":
+      return [
+        lagTilgjengeligHandling("SETT_VENTER_PA_INFORMASJON", "VENTER_PA_INFORMASJON"),
+        lagTilgjengeligHandling("SETT_VENTER_PA_VEDTAK", "VENTER_PA_VEDTAK"),
+        lagTilgjengeligHandling("SETT_ANMELDELSE_VURDERES", "ANMELDELSE_VURDERES"),
+        lagTilgjengeligHandling("SETT_HENLAGT", "HENLAGT"),
+        lagTilgjengeligHandling("SETT_I_BERO", "I_BERO"),
+        lagTilgjengeligHandling("FRISTILL", "UFORDELT"),
+      ];
+    case "VENTER_PA_INFORMASJON":
+      return [
+        lagTilgjengeligHandling("START_UTREDNING", "UTREDES"),
+        lagTilgjengeligHandling("SETT_I_BERO", "I_BERO"),
+        lagTilgjengeligHandling("FRISTILL", "UFORDELT"),
+      ];
+    case "VENTER_PA_VEDTAK":
+      return [
+        lagTilgjengeligHandling("START_UTREDNING", "UTREDES"),
+        lagTilgjengeligHandling("SETT_I_BERO", "I_BERO"),
+      ];
+    case "ANMELDELSE_VURDERES":
+      return [
+        lagTilgjengeligHandling("SETT_ANMELDT", "ANMELDT"),
+        lagTilgjengeligHandling("SETT_HENLAGT", "HENLAGT"),
+        lagTilgjengeligHandling("START_UTREDNING", "UTREDES"),
+        lagTilgjengeligHandling("SETT_I_BERO", "I_BERO"),
+      ];
+    case "ANMELDT":
+      return [
+        lagTilgjengeligHandling("AVSLUTT_MED_KONKLUSJON", "AVSLUTTET", [
+          {
+            felt: "avslutningskonklusjon",
+            tillatteVerdier: ["POLITIET_HENLA", "FRIFUNNET", "DOMFELT"],
+          },
+        ]),
+      ];
+    case "I_BERO":
+      return [
+        lagTilgjengeligHandling("FORTSETT_FRA_I_BERO", forrigeStatus ?? "UTREDES"),
+        ...(forrigeStatus && forrigeStatus !== "UFORDELT"
+          ? [lagTilgjengeligHandling("FRISTILL", "UFORDELT")]
+          : []),
+      ];
+    case "HENLAGT":
+    case "AVSLUTTET":
+      return [];
+  }
+}
+
+export function oppdaterTilgjengeligeHandlinger(sak: KontrollsakResponse): KontrollsakResponse {
+  sak.tilgjengeligeHandlinger = beregnTilgjengeligeHandlinger(sak);
+  return sak;
+}
+
+export function settForrigeStatus(sakId: string, status: KontrollsakStatus | null) {
+  if (status === null) {
+    forrigeStatusPerSak.delete(sakId);
+    return;
+  }
+
+  forrigeStatusPerSak.set(sakId, status);
+}
+
+export function hentNesteStatusFraBero(sak: KontrollsakResponse): KontrollsakStatus {
+  return hentForrigeStatus(sak.id, sak.status) ?? "UTREDES";
+}
 
 function erGyldigUuid(verdi: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(verdi);
@@ -77,12 +185,16 @@ export function normaliserLegacyKontrollsak(
     OPPRETTET: "UFORDELT",
     AVKLART: "UFORDELT",
     UTREDES: "UTREDES",
-    TIL_FORVALTNING: "FORVALTNING",
-    HENLAGT: "AVSLUTTET",
+    TIL_FORVALTNING: "VENTER_PA_VEDTAK",
+    HENLAGT: "HENLAGT",
     AVSLUTTET: "AVSLUTTET",
     I_BERO: "I_BERO",
     UFORDELT: "UFORDELT",
-    FORVALTNING: "FORVALTNING",
+    TILDELT: "TILDELT",
+    VENTER_PA_INFORMASJON: "VENTER_PA_INFORMASJON",
+    VENTER_PA_VEDTAK: "VENTER_PA_VEDTAK",
+    ANMELDELSE_VURDERES: "ANMELDELSE_VURDERES",
+    ANMELDT: "ANMELDT",
   };
 
   const kildeMap: Record<string, KontrollsakResponse["kilde"]> = {
@@ -126,6 +238,10 @@ export function normaliserLegacyKontrollsak(
   };
 
   const normalisertStatus = statusMap[legacyStatus] ?? "UFORDELT";
+  const avslutningskonklusjon =
+    typeof (sak as { avslutningskonklusjon?: unknown }).avslutningskonklusjon === "string"
+      ? ((sak as { avslutningskonklusjon: unknown }).avslutningskonklusjon as Avslutningskonklusjon)
+      : null;
 
   const normalisert: KontrollsakResponse = {
     id: erGyldigUuid(id) ? id : lagMockEntityUuid(id, namespace),
@@ -152,6 +268,8 @@ export function normaliserLegacyKontrollsak(
       },
     },
     status: normalisertStatus,
+    avslutningskonklusjon,
+    tilgjengeligeHandlinger: [],
     kategori: (legacyKategori in
     {
       BEHANDLER: true,
@@ -260,5 +378,9 @@ export function normaliserLegacyKontrollsak(
     oppdatert: typeof sak.oppdatert === "string" ? sak.oppdatert : null,
   };
 
-  return normalisert;
+  if (normalisert.status === "I_BERO") {
+    settForrigeStatus(normalisert.id, "UTREDES");
+  }
+
+  return oppdaterTilgjengeligeHandlinger(normalisert);
 }

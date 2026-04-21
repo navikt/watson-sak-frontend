@@ -30,7 +30,7 @@ describe("normaliserLegacyKontrollsak", () => {
     );
 
     expect(sak.id).toBe("00000000-0000-4000-8000-000002201000");
-    expect(sak.status).toBe("FORVALTNING");
+    expect(sak.status).toBe("VENTER_PA_VEDTAK");
     expect(sak.kilde).toBe("PUBLIKUM");
     expect(sak.misbruktype).toEqual(["SVART_ARBEID"]);
     expect(sak.personNavn).toBe("Ola Nordmann");
@@ -47,6 +47,10 @@ describe("normaliserLegacyKontrollsak", () => {
         periodeTil: "2026-01-31",
         belop: 123456,
       },
+    ]);
+    expect(sak.tilgjengeligeHandlinger).toEqual([
+      { handling: "START_UTREDNING", pakrevdeFelter: [], resultatStatus: "UTREDES" },
+      { handling: "SETT_I_BERO", pakrevdeFelter: [], resultatStatus: "I_BERO" },
     ]);
   });
 
