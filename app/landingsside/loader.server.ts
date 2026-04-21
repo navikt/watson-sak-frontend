@@ -10,7 +10,11 @@ import { lagVelkomstOppsummering } from "./velkomst";
 
 export function loader() {
   const fordelteMineSaker = mockMineKontrollsaker.filter(
-    (sak) => sak.status !== "AVSLUTTET" && sak.status !== "UFORDELT",
+    (sak) =>
+      sak.status !== "ANMELDT" &&
+      sak.status !== "HENLAGT" &&
+      sak.status !== "AVSLUTTET" &&
+      sak.status !== "UFORDELT",
   );
 
   const mineSaker = [...fordelteMineSaker]

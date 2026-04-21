@@ -53,8 +53,6 @@ describe("landingsside-loader", () => {
   it("returnerer en velkomstoppsummering basert på sakene dine", () => {
     const data = loader();
 
-    expect(data.velkomstOppsummering).toBe(
-      "Akkurat nå har du 3 saker til utredning og 1 sak som venter på svar fra NAY/NFP.",
-    );
+    expect(data.velkomstOppsummering).toBe("Akkurat nå har du 3 aktive saker og 1 sak på vent.");
   });
 });

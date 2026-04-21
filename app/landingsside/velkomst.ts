@@ -13,24 +13,26 @@ function getStatus(sak: KontrollsakResponse) {
   return sak.status;
 }
 
+function erAktivStatus(status: KontrollsakResponse["status"]) {
+  return status === "TILDELT" || status === "UTREDES" || status === "ANMELDELSE_VURDERES";
+}
+
+function erVentendeStatus(status: KontrollsakResponse["status"]) {
+  return status === "I_BERO" || status === "VENTER_PA_INFORMASJON" || status === "VENTER_PA_VEDTAK";
+}
+
 function velgMestRelevantArbeid(saker: KontrollsakResponse[]): Oppsummeringsdel[] {
-  const antallTilUtredning = saker.filter(
-    (sak) => getStatus(sak) === "UTREDES" || getStatus(sak) === "I_BERO",
-  ).length;
-  const antallSomVenterPåSvar = saker.filter((sak) => getStatus(sak) === "FORVALTNING").length;
+  const antallAktiveSaker = saker.filter((sak) => erAktivStatus(getStatus(sak))).length;
+  const antallVentendeSaker = saker.filter((sak) => erVentendeStatus(getStatus(sak))).length;
 
   const oppsummeringer: Oppsummeringsdel[] = [
     {
-      antall: antallTilUtredning,
-      tekst: formaterSakTekst(antallTilUtredning, "sak til utredning", "saker til utredning"),
+      antall: antallAktiveSaker,
+      tekst: formaterSakTekst(antallAktiveSaker, "aktiv sak", "aktive saker"),
     },
     {
-      antall: antallSomVenterPåSvar,
-      tekst: formaterSakTekst(
-        antallSomVenterPåSvar,
-        "sak som venter på svar fra NAY/NFP",
-        "saker som venter på svar fra NAY/NFP",
-      ),
+      antall: antallVentendeSaker,
+      tekst: formaterSakTekst(antallVentendeSaker, "sak på vent", "saker på vent"),
     },
   ];
 

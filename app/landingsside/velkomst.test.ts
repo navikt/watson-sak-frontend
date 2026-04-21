@@ -17,6 +17,8 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
     kilde: "NAV_KONTROLL",
     misbruktype: [],
     prioritet: "NORMAL",
+    avslutningskonklusjon: null,
+    tilgjengeligeHandlinger: [],
     ytelser: [],
     merking: null,
     resultat: null,
@@ -33,11 +35,11 @@ describe("lagVelkomstOppsummering", () => {
       lagKontrollsak({ id: "2", status: "UFORDELT" }),
       lagKontrollsak({ id: "3", status: "UTREDES" }),
       lagKontrollsak({ id: "4", status: "UTREDES" }),
-      lagKontrollsak({ id: "5", status: "FORVALTNING" }),
+      lagKontrollsak({ id: "5", status: "VENTER_PA_VEDTAK" }),
     ];
 
     expect(lagVelkomstOppsummering(saker)).toBe(
-      "Akkurat nå har du 2 saker til utredning og 1 sak som venter på svar fra NAY/NFP.",
+      "Akkurat nå har du 2 aktive saker og 1 sak på vent.",
     );
   });
 
@@ -55,14 +57,14 @@ describe("lagVelkomstOppsummering", () => {
 
   test("tar med ventende saker når de utgjør en større del av arbeidsbildet", () => {
     const saker = [
-      lagKontrollsak({ id: "1", status: "FORVALTNING" }),
-      lagKontrollsak({ id: "2", status: "FORVALTNING" }),
-      lagKontrollsak({ id: "3", status: "FORVALTNING" }),
+      lagKontrollsak({ id: "1", status: "VENTER_PA_VEDTAK" }),
+      lagKontrollsak({ id: "2", status: "VENTER_PA_VEDTAK" }),
+      lagKontrollsak({ id: "3", status: "VENTER_PA_VEDTAK" }),
       lagKontrollsak({ id: "4", status: "UTREDES" }),
     ];
 
     expect(lagVelkomstOppsummering(saker)).toBe(
-      "Akkurat nå har du 3 saker som venter på svar fra NAY/NFP og 1 sak til utredning.",
+      "Akkurat nå har du 3 saker på vent og 1 aktiv sak.",
     );
   });
 
@@ -72,22 +74,22 @@ describe("lagVelkomstOppsummering", () => {
       lagKontrollsak({ id: "ks-2", status: "UFORDELT" }),
       lagKontrollsak({ id: "ks-3", status: "UTREDES" }),
       lagKontrollsak({ id: "ks-4", status: "UTREDES" }),
-      lagKontrollsak({ id: "ks-5", status: "FORVALTNING" }),
+      lagKontrollsak({ id: "ks-5", status: "VENTER_PA_VEDTAK" }),
     ];
 
     expect(lagVelkomstOppsummering(saker)).toBe(
-      "Akkurat nå har du 2 saker til utredning og 1 sak som venter på svar fra NAY/NFP.",
+      "Akkurat nå har du 2 aktive saker og 1 sak på vent.",
     );
   });
 
-  test("behandler I_BERO som sak til utredning i oppsummeringen", () => {
+  test("behandler I_BERO som sak på vent i oppsummeringen", () => {
     const saker = [
       lagKontrollsak({ id: "1", status: "I_BERO" }),
       lagKontrollsak({ id: "2", status: "I_BERO" }),
       lagKontrollsak({ id: "3", status: "UFORDELT" }),
     ];
 
-    expect(lagVelkomstOppsummering(saker)).toBe("Akkurat nå har du 2 saker til utredning.");
+    expect(lagVelkomstOppsummering(saker)).toBe("Akkurat nå har du 2 saker på vent.");
   });
 
   test("tar ikke med ufordelte saker i velkomstoppsummeringen", () => {
