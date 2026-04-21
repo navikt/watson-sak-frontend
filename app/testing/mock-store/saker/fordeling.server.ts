@@ -1,6 +1,7 @@
 import { kontrollsakResponseSchema, type KontrollsakResponse } from "~/saker/types.backend";
 import {
   lagMockSakUuid,
+  nullstillMockStatushistorikk,
   normaliserLegacyKontrollsak,
   oppdaterTilgjengeligeHandlinger,
 } from "~/saker/mock-uuid";
@@ -560,6 +561,7 @@ export function leggTilMockSakIFordeling(nySak: NyMockFordelingssak): Kontrollsa
 }
 
 export function resetMockSaker() {
+  nullstillMockStatushistorikk();
   mockKontrollsaker = lagMockKontrollsaker();
   nesteMockFordelingssakId = 200;
 }

@@ -1,5 +1,9 @@
 import { kontrollsakResponseSchema, type KontrollsakResponse } from "~/saker/types.backend";
-import { lagMockSakUuid, normaliserLegacyKontrollsak } from "~/saker/mock-uuid";
+import {
+  lagMockSakUuid,
+  normaliserLegacyKontrollsak,
+  nullstillMockStatushistorikk,
+} from "~/saker/mock-uuid";
 
 const initialeMockMineKontrollsaker = [
   {
@@ -373,5 +377,6 @@ export const mockMineSakerAvslutningsdatoer = {
 export const mockMineSakerTidligereTipsSakIder = [lagMockSakUuid("207", 2)];
 
 export function resetMockMineSaker() {
+  nullstillMockStatushistorikk();
   mockMineKontrollsaker = lagMockMineKontrollsaker();
 }
