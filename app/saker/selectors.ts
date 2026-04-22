@@ -75,12 +75,15 @@ export function getResultat(sak: KontrollsakResponse) {
 }
 
 export function getMineSakerGruppeStatus(sak: KontrollsakResponse): MineSakerGruppeStatus {
+  if (sak.iBero) {
+    return "ventende";
+  }
+
   switch (sak.status) {
     case "OPPRETTET":
     case "UTREDES":
     case "ANMELDELSE_VURDERES":
       return "aktive";
-    case "I_BERO":
     case "VENTER_PA_INFORMASJON":
     case "VENTER_PA_VEDTAK":
       return "ventende";

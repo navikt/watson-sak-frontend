@@ -21,7 +21,6 @@ const statusEtiketter: Record<KontrollsakStatus, string> = {
   ANMELDT: "Anmeldt",
   HENLAGT: "Henlagt",
   AVSLUTTET: "Avsluttet",
-  I_BERO: "I bero",
 };
 
 const statusVarianter: Record<KontrollsakStatus, StatusVariant> = {
@@ -33,7 +32,6 @@ const statusVarianter: Record<KontrollsakStatus, StatusVariant> = {
   ANMELDT: "success",
   HENLAGT: "neutral",
   AVSLUTTET: "neutral",
-  I_BERO: "neutral",
 };
 
 const kildeEtiketter: Record<KontrollsakKilde, string> = {
@@ -101,6 +99,10 @@ export function getPersonIdent(sak: KontrollsakResponse): string {
 }
 
 export function getStatus(sak: KontrollsakResponse): string {
+  if (sak.iBero) {
+    return `I bero · ${formaterStatus(sak.status)}`;
+  }
+
   return formaterStatus(sak.status);
 }
 
