@@ -70,7 +70,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   sak.status = "VENTER_PA_VEDTAK";
   sak.tilgjengeligeHandlinger = [
     { handling: "START_UTREDNING", pakrevdeFelter: [], resultatStatus: "UTREDES" },
-    { handling: "SETT_I_BERO", pakrevdeFelter: [], resultatStatus: "I_BERO" },
+    { handling: "SETT_BERO", pakrevdeFelter: [], resultatStatus: "VENTER_PA_VEDTAK" },
   ];
   leggTilHendelse(sak, "VIDERESENDT_TIL_NAY_NFP");
 
