@@ -15,7 +15,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
       deltMed: [],
       opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
     },
-    status: "UFORDELT",
+    status: "OPPRETTET",
     kategori: "SAMLIV",
     kilde: "PUBLIKUM",
     misbruktype: ["SKJULT_SAMLIV"],

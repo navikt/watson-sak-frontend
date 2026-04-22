@@ -18,7 +18,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
       deltMed: [],
       opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
     },
-    status: "UFORDELT",
+    status: "OPPRETTET",
     kategori: "ARBEID",
     kilde: "NAV_KONTROLL",
     misbruktype: [],
@@ -35,8 +35,8 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
 }
 
 describe("Mine saker selectors", () => {
-  it("mapper backend-status TILDELT til aktive", () => {
-    expect(getMineSakerGruppeStatus(lagKontrollsak({ status: "TILDELT" }))).toBe("aktive");
+  it("mapper backend-status OPPRETTET til aktive", () => {
+    expect(getMineSakerGruppeStatus(lagKontrollsak({ status: "OPPRETTET" }))).toBe("aktive");
   });
 
   it("mapper backend-status VENTER_PA_VEDTAK til ventende", () => {
