@@ -109,8 +109,7 @@ const unsupportedRedigeringFeil = "Saken kan ikke redigeres med denne løsningen
 const unsupportedKobleSakFeil = "Denne funksjonen er ikke tilgjengelig ennå.";
 
 const gyldigeStatuser = new Set<KontrollsakStatus>([
-  "UFORDELT",
-  "TILDELT",
+  "OPPRETTET",
   "UTREDES",
   "VENTER_PA_INFORMASJON",
   "VENTER_PA_VEDTAK",
@@ -281,6 +280,10 @@ function utførStatushandling(
     throw data("Handlingen er ikke tilgjengelig for saken", { status: 400 });
   }
 
+  if (handling !== "TILDEL" && handling !== "FRISTILL" && sak.saksbehandlere.eier === null) {
+    throw data("Saken må tildeles før status kan endres", { status: 400 });
+  }
+
   switch (handling) {
     case "TILDEL": {
       const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
@@ -291,9 +294,8 @@ function utførStatushandling(
       }
 
       sak.saksbehandlere.eier = valgtSaksbehandler;
-      oppdaterSakStatus(sak, "TILDELT");
+      oppdaterTilgjengeligeHandlinger(sak);
       leggTilHendelse(sak, "SAK_TILDELT");
-      leggTilHendelse(sak, "STATUS_ENDRET");
       return;
     }
     case "START_UTREDNING": {
@@ -339,13 +341,8 @@ function utførStatushandling(
       return;
     }
     case "FRISTILL": {
-      if (sak.status === "I_BERO") {
-        settForrigeStatus(sak.id, null);
-      }
-
       sak.saksbehandlere.eier = null;
-      oppdaterSakStatus(sak, "UFORDELT");
-      leggTilHendelse(sak, "STATUS_ENDRET");
+      oppdaterTilgjengeligeHandlinger(sak);
       return;
     }
     case "AVSLUTT": {

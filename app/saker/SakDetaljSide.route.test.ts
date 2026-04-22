@@ -20,13 +20,13 @@ describe("SakDetaljSide action", () => {
     resetHistorikk();
   });
 
-  it("eksponerer ikke tildeling som tilgjengelig handling når kontrollsaken allerede er under utredning", async () => {
+  it("eksponerer tildeling som tilgjengelig handling når kontrollsaken er ownerløs under utredning", async () => {
     const sak = hentAlleSaker().find((sak) => sak.id === utredningSakId);
 
     expect(sak?.status).toBe("UTREDES");
 
     expect(sak?.tilgjengeligeHandlinger.some((handling) => handling.handling === "TILDEL")).toBe(
-      false,
+      true,
     );
   });
 
@@ -227,11 +227,11 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(saker.every((sak) => "personIdent" in sak)).toBe(true);
   });
 
-  it("oppdaterer kontrollsak-status med backend-enum ved tildeling", async () => {
+  it("beholder kontrollsak-status og setter owner ved tildeling", async () => {
     const kontrollsak = mockKontrollsaker[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
 
-    expect(kontrollsak.status).toBe("UFORDELT");
+    expect(kontrollsak.status).toBe("OPPRETTET");
 
     const formData = new FormData();
     formData.set("handling", "TILDEL");
@@ -245,14 +245,15 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
       params: { sakId: kontrollsakRef },
     } as Route.ActionArgs);
 
-    expect(kontrollsak.status).toBe("TILDELT");
+    expect(kontrollsak.status).toBe("OPPRETTET");
+    expect(kontrollsak.saksbehandlere.eier?.navIdent).toBe("Z123456");
   });
 
-  it("tildeler ufordelt sak med konsistent saksbehandlerident", async () => {
+  it("tildeler ownerløs sak med konsistent saksbehandlerident", async () => {
     const kontrollsak = mockKontrollsaker[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
 
-    kontrollsak.status = "UFORDELT";
+    kontrollsak.status = "OPPRETTET";
     kontrollsak.saksbehandlere.eier = null;
     kontrollsak.saksbehandlere.opprettetAv = {
       navn: "Tidligere Saksbehandler",
@@ -260,13 +261,13 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
       enhet: "Seksjon A",
     };
 
-    expect(kontrollsak.status).toBe("UFORDELT");
+    expect(kontrollsak.status).toBe("OPPRETTET");
     expect(kontrollsak.saksbehandlere.eier).toBeNull();
     kontrollsak.tilgjengeligeHandlinger = [
       {
         handling: "TILDEL",
         pakrevdeFelter: [{ felt: "navIdent", tillatteVerdier: [] }],
-        resultatStatus: "TILDELT",
+        resultatStatus: "OPPRETTET",
       },
     ];
 
@@ -289,11 +290,11 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     });
   });
 
-  it("oppdaterer fallback-enhet når ufordelt sak videresendes til seksjon", async () => {
+  it("oppdaterer fallback-enhet når ownerløs sak videresendes til seksjon", async () => {
     const kontrollsak = mockKontrollsaker[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
 
-    kontrollsak.status = "UFORDELT";
+    kontrollsak.status = "OPPRETTET";
     kontrollsak.saksbehandlere.eier = null;
     kontrollsak.saksbehandlere.opprettetAv = {
       navn: "Tidligere Saksbehandler",
