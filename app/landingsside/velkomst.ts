@@ -14,7 +14,7 @@ function getStatus(sak: KontrollsakResponse) {
 }
 
 function erAktivStatus(status: KontrollsakResponse["status"]) {
-  return status === "TILDELT" || status === "UTREDES" || status === "ANMELDELSE_VURDERES";
+  return status === "OPPRETTET" || status === "UTREDES" || status === "ANMELDELSE_VURDERES";
 }
 
 function erVentendeStatus(status: KontrollsakResponse["status"]) {
