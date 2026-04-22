@@ -18,12 +18,13 @@ function erAktivStatus(status: KontrollsakResponse["status"]) {
 }
 
 function erVentendeStatus(status: KontrollsakResponse["status"]) {
-  return status === "I_BERO" || status === "VENTER_PA_INFORMASJON" || status === "VENTER_PA_VEDTAK";
+  return status === "VENTER_PA_INFORMASJON" || status === "VENTER_PA_VEDTAK";
 }
 
 function velgMestRelevantArbeid(saker: KontrollsakResponse[]): Oppsummeringsdel[] {
   const antallAktiveSaker = saker.filter((sak) => erAktivStatus(getStatus(sak))).length;
   const antallVentendeSaker = saker.filter((sak) => erVentendeStatus(getStatus(sak))).length;
+  const antallSakerIBero = saker.filter((sak) => sak.iBero).length;
 
   const oppsummeringer: Oppsummeringsdel[] = [
     {
@@ -33,6 +34,10 @@ function velgMestRelevantArbeid(saker: KontrollsakResponse[]): Oppsummeringsdel[
     {
       antall: antallVentendeSaker,
       tekst: formaterSakTekst(antallVentendeSaker, "sak på vent", "saker på vent"),
+    },
+    {
+      antall: antallSakerIBero,
+      tekst: formaterSakTekst(antallSakerIBero, "sak i bero", "saker i bero"),
     },
   ];
 

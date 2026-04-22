@@ -17,6 +17,7 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
     kilde: "NAV_KONTROLL",
     misbruktype: [],
     prioritet: "NORMAL",
+    iBero: false,
     avslutningskonklusjon: null,
     tilgjengeligeHandlinger: [],
     ytelser: [],
@@ -82,15 +83,15 @@ describe("lagVelkomstOppsummering", () => {
     );
   });
 
-  test("behandler I_BERO som sak på vent i oppsummeringen", () => {
+  test("behandler saker i bero som egen oppsummeringskategori", () => {
     const saker = [
-      lagKontrollsak({ id: "1", status: "I_BERO" }),
-      lagKontrollsak({ id: "2", status: "I_BERO" }),
+      lagKontrollsak({ id: "1", status: "OPPRETTET", iBero: true }),
+      lagKontrollsak({ id: "2", status: "UTREDES", iBero: true }),
       lagKontrollsak({ id: "3", status: "OPPRETTET" }),
     ];
 
     expect(lagVelkomstOppsummering(saker)).toBe(
-      "Akkurat nå har du 2 saker på vent og 1 aktiv sak.",
+      "Akkurat nå har du 3 aktive saker og 2 saker i bero.",
     );
   });
 
