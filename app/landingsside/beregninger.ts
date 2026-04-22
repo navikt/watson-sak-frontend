@@ -26,6 +26,10 @@ function getStatus(sak: KontrollsakResponse) {
   return sak.status;
 }
 
+function harEier(sak: KontrollsakResponse) {
+  return sak.saksbehandlere.eier !== null;
+}
+
 function erInnenforSiste14Dager(dato: string, referansedato: string) {
   const referanse = new Date(referansedato);
   const fjortenDagerSiden = new Date(referanse);
@@ -41,8 +45,7 @@ export function beregnDineSakerSiste14Dager({
   referansedato,
 }: BeregnDineSakerSiste14DagerArgs): DineSakerSiste14DagerStatistikk {
   const sakerSiste14Dager = saker.filter(
-    (sak) =>
-      erInnenforSiste14Dager(getOpprettet(sak), referansedato) && getStatus(sak) !== "UFORDELT",
+    (sak) => erInnenforSiste14Dager(getOpprettet(sak), referansedato) && harEier(sak),
   );
 
   const behandlingstid = beregnBehandlingstid(sakerSiste14Dager, avslutningsdatoer);
