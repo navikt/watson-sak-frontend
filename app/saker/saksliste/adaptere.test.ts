@@ -23,7 +23,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
         enhet: "4812",
       },
     },
-    status: "UFORDELT",
+    status: "OPPRETTET",
     kategori: "SAMLIV",
     kilde: "PUBLIKUM",
     misbruktype: ["SKJULT_SAMLIV"],
@@ -69,7 +69,7 @@ describe("sakslisteadaptere", () => {
       navn: "Ola Nordmann",
       kategori: "Samliv",
       misbrukstyper: ["Skjult samliv"],
-      status: { tekst: "Ufordelt", variant: "info" },
+      status: { tekst: "Opprettet", variant: "info" },
       opprettet: "2026-02-03T10:11:12Z",
       oppdatert: "2026-02-03T10:11:12Z",
     });

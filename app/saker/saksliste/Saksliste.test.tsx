@@ -19,7 +19,7 @@ const rader: SakslisteRad[] = [
     navn: "Ola Nordmann",
     kategori: "Samliv",
     misbrukstyper: ["Skjult samliv"],
-    status: { tekst: "Ufordelt", variant: "info" },
+    status: { tekst: "Opprettet", variant: "info" },
     opprettet: "2026-02-03T10:11:12Z",
     oppdatert: "2026-02-03T10:11:12Z",
   },
