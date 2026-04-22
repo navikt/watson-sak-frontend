@@ -13,8 +13,7 @@ export type { KontrollsakStatus };
 type StatusVariant = "info" | "warning" | "success" | "neutral";
 
 const statusEtiketter: Record<KontrollsakStatus, string> = {
-  UFORDELT: "Ufordelt",
-  TILDELT: "Tildelt",
+  OPPRETTET: "Opprettet",
   UTREDES: "Utredes",
   VENTER_PA_INFORMASJON: "Venter på informasjon",
   VENTER_PA_VEDTAK: "Venter på vedtak",
@@ -26,8 +25,7 @@ const statusEtiketter: Record<KontrollsakStatus, string> = {
 };
 
 const statusVarianter: Record<KontrollsakStatus, StatusVariant> = {
-  UFORDELT: "info",
-  TILDELT: "info",
+  OPPRETTET: "info",
   UTREDES: "warning",
   VENTER_PA_INFORMASJON: "neutral",
   VENTER_PA_VEDTAK: "neutral",

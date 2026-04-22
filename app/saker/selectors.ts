@@ -76,7 +76,7 @@ export function getResultat(sak: KontrollsakResponse) {
 
 export function getMineSakerGruppeStatus(sak: KontrollsakResponse): MineSakerGruppeStatus {
   switch (sak.status) {
-    case "TILDELT":
+    case "OPPRETTET":
     case "UTREDES":
     case "ANMELDELSE_VURDERES":
       return "aktive";
@@ -88,8 +88,6 @@ export function getMineSakerGruppeStatus(sak: KontrollsakResponse): MineSakerGru
     case "HENLAGT":
     case "AVSLUTTET":
       return "fullførte";
-    case "UFORDELT":
-      return "aktive";
   }
 }
 

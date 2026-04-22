@@ -61,8 +61,8 @@ describe("sak-visning", () => {
     expect(formaterStatus("UTREDES")).toBe("Utredes");
   });
 
-  it("formaterer UFORDELT-status til «Ufordelt»", () => {
-    expect(formaterStatus("UFORDELT")).toBe("Ufordelt");
+  it("formaterer OPPRETTET-status til «Opprettet»", () => {
+    expect(formaterStatus("OPPRETTET")).toBe("Opprettet");
   });
 
   it("formaterer beløp med norsk tusen-separator", () => {
