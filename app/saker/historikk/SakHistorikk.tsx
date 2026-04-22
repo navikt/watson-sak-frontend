@@ -68,7 +68,7 @@ function hendelseTittel(hendelse: SakHendelse): string {
     case "SAK_SATT_I_BERO":
       return "Sak satt i bero";
     case "SAK_GJENOPPTATT":
-      return "Sak gjenopptatt";
+      return "Sak tatt ut av bero";
     case "MANUELL_NOTAT":
       return hendelse.tittel ?? "Notat";
     default:

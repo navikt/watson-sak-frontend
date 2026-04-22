@@ -23,6 +23,7 @@ function lagKontrollsak(
     kilde: "ANNET",
     misbruktype: [],
     prioritet: "NORMAL",
+    iBero: false,
     avslutningskonklusjon: null,
     tilgjengeligeHandlinger: [],
     ytelser: [
