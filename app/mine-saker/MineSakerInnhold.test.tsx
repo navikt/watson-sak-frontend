@@ -22,6 +22,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     kilde: "PUBLIKUM",
     misbruktype: ["FEIL_INNTEKTSGRUNNLAG"],
     prioritet: "NORMAL",
+    iBero: false,
     avslutningskonklusjon: null,
     tilgjengeligeHandlinger: [],
     ytelser: [
