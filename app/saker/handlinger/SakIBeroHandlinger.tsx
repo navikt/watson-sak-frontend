@@ -19,7 +19,7 @@ export function SakIBeroHandlinger({ sak, tilgjengeligeHandlinger }: SakIBeroHan
 
   function handleGjenoppta() {
     gjenopptaFetcher.submit(
-      { handling: "FORTSETT_FRA_I_BERO" },
+      { handling: "TA_AV_BERO" },
       {
         method: "post",
         action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id)),

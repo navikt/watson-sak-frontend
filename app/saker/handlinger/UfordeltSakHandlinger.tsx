@@ -26,7 +26,7 @@ export function UfordeltSakHandlinger({
   const [åpenModal, setÅpenModal] = useState<ÅpenModal>(null);
   const innloggetBruker = useInnloggetBruker();
   const tildelMegFetcher = useFetcher();
-  const settIBeroFetcher = useFetcher();
+  const beroFetcher = useFetcher();
 
   function handleTildelMeg() {
     tildelMegFetcher.submit(
@@ -38,9 +38,9 @@ export function UfordeltSakHandlinger({
     );
   }
 
-  function handleSettIBero() {
-    settIBeroFetcher.submit(
-      { handling: "SETT_I_BERO" },
+  function handleBeroHandling() {
+    beroFetcher.submit(
+      { handling: sak.iBero ? "TA_AV_BERO" : "SETT_BERO" },
       {
         method: "post",
         action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id)),
@@ -77,10 +77,10 @@ export function UfordeltSakHandlinger({
         <Button
           variant="tertiary"
           size="small"
-          onClick={handleSettIBero}
-          loading={settIBeroFetcher.state !== "idle"}
+          onClick={handleBeroHandling}
+          loading={beroFetcher.state !== "idle"}
         >
-          Sett i bero
+          {sak.iBero ? "Ta saken ut av bero" : "Sett i bero"}
         </Button>
       </VStack>
 

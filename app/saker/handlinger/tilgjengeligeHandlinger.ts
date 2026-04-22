@@ -52,8 +52,8 @@ const støttedeKontrollsakHandlinger = new Set<KontrollsakHandling>([
   "SETT_ANMELDELSE_VURDERES",
   "SETT_ANMELDT",
   "SETT_HENLAGT",
-  "SETT_I_BERO",
-  "FORTSETT_FRA_I_BERO",
+  "SETT_BERO",
+  "TA_AV_BERO",
   "AVSLUTT",
   "AVSLUTT_MED_KONKLUSJON",
 ]);

@@ -153,10 +153,10 @@ describe("Kontrollsak-statusregler", () => {
       harKontrollsakHandling(
         {
           tilgjengeligeHandlinger: [
-            { handling: "FORTSETT_FRA_I_BERO", pakrevdeFelter: [], resultatStatus: "UTREDES" },
+            { handling: "TA_AV_BERO", pakrevdeFelter: [], resultatStatus: "UTREDES" },
           ],
         } as never,
-        "FORTSETT_FRA_I_BERO",
+        "TA_AV_BERO",
       ),
     ).toBe(true);
   });

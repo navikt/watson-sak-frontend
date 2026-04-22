@@ -115,12 +115,12 @@ export function SakUtredesHandlinger({
             Sett venter på vedtak
           </Button>
         )}
-        {harHandling("SETT_I_BERO") && (
+        {harHandling("SETT_BERO") && (
           <Button
             variant="tertiary"
             size="small"
             icon={<ClockDashedIcon aria-hidden />}
-            onClick={() => sendHandling("SETT_I_BERO")}
+            onClick={() => sendHandling("SETT_BERO")}
           >
             Sett i bero
           </Button>

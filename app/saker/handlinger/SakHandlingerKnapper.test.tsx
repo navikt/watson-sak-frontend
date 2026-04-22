@@ -28,6 +28,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     kilde: "NAV_KONTROLL",
     misbruktype: [],
     prioritet: "NORMAL",
+    iBero: false,
     avslutningskonklusjon: null,
     tilgjengeligeHandlinger: [
       {
@@ -42,7 +43,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
         resultatStatus: "ANMELDELSE_VURDERES",
       },
       { handling: "SETT_HENLAGT", pakrevdeFelter: [], resultatStatus: "HENLAGT" },
-      { handling: "SETT_I_BERO", pakrevdeFelter: [], resultatStatus: "I_BERO" },
+      { handling: "SETT_BERO", pakrevdeFelter: [], resultatStatus: "UTREDES" },
       { handling: "FRISTILL", pakrevdeFelter: [], resultatStatus: "UTREDES" },
     ],
     ytelser: [
@@ -87,7 +88,7 @@ describe("SakHandlingerKnapper", () => {
               pakrevdeFelter: [{ felt: "navIdent", tillatteVerdier: [] }],
               resultatStatus: "OPPRETTET",
             },
-            { handling: "SETT_I_BERO", pakrevdeFelter: [], resultatStatus: "I_BERO" },
+            { handling: "SETT_BERO", pakrevdeFelter: [], resultatStatus: "OPPRETTET" },
           ],
         })}
         saksbehandlere={["Kari Nordmann"]}
@@ -103,6 +104,40 @@ describe("SakHandlingerKnapper", () => {
     const sendTilAnnenEnhet = screen.getByRole("button", { name: "Send til annen enhet" });
     expect(sendTilAnnenEnhet).toBeDefined();
     expect((sendTilAnnenEnhet as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("viser ta-av-bero for eierløs sak som er i bero", () => {
+    renderMedRouter(
+      <SakHandlingerKnapper
+        sak={lagKontrollsak({
+          status: "OPPRETTET",
+          iBero: true,
+          saksbehandlere: {
+            eier: null,
+            deltMed: [],
+            opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
+          },
+          tilgjengeligeHandlinger: [
+            {
+              handling: "TILDEL",
+              pakrevdeFelter: [{ felt: "navIdent", tillatteVerdier: [] }],
+              resultatStatus: "OPPRETTET",
+            },
+            { handling: "TA_AV_BERO", pakrevdeFelter: [], resultatStatus: "OPPRETTET" },
+          ],
+        })}
+        saksbehandlere={["Kari Nordmann"]}
+        saksbehandlerDetaljer={[]}
+        seksjoner={["4812", "4813"]}
+        historikk={[]}
+        filer={[]}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Tildel saksbehandler" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Tildel meg" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Ta saken ut av bero" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Sett i bero" })).toBeNull();
   });
 
   it("viser utredes-handlinger for sak med status UTREDES", () => {

@@ -42,7 +42,7 @@ export function SakHandlingerKnapper({
     );
   }
 
-  if (tilgjengeligeHandlinger.some((handling) => handling.handling === "FORTSETT_FRA_I_BERO")) {
+  if (sak.iBero) {
     return <SakIBeroHandlinger sak={sak} tilgjengeligeHandlinger={tilgjengeligeHandlinger} />;
   }
 
