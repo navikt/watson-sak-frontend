@@ -12,7 +12,7 @@ function lagBackendHendelse(overrides: Partial<SakHendelse> = {}): SakHendelse {
     sakId: "00000000-0000-4000-8000-000000000124",
     kategori: "ARBEID",
     prioritet: "NORMAL",
-    status: "UFORDELT",
+    status: "OPPRETTET",
     ytelseTyper: ["Sykepenger"],
     ...overrides,
   };
@@ -30,7 +30,7 @@ describe("SakHistorikk", () => {
     renderMedRouter(<SakHistorikk sakId="test-sak-id" hendelser={[lagBackendHendelse()]} />);
 
     expect(screen.getByText("Sak opprettet")).toBeDefined();
-    expect(screen.getByText(/Status: Ufordelt/)).toBeDefined();
+    expect(screen.getByText(/Status: Opprettet/)).toBeDefined();
     expect(screen.getByText(/Arbeid · Normal/)).toBeDefined();
   });
 

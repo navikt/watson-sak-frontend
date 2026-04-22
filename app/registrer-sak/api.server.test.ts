@@ -92,7 +92,7 @@ describe("opprettKontrollsak", () => {
     }));
   });
 
-  it("legger til ny mock-sak i fordeling slik at den blir søkbar og ufordelt", async () => {
+  it("legger til ny mock-sak i fordeling slik at den blir søkbar og ownerløs", async () => {
     leggTilMockSakIFordeling({
       personIdent: "12345678901",
       personNavn: "Ola Testesen",
@@ -116,7 +116,7 @@ describe("opprettKontrollsak", () => {
 
     expect(
       mockKontrollsaker.some(
-        (sak) => sak.personIdent === "12345678901" && sak.status === "UFORDELT",
+        (sak) => sak.personIdent === "12345678901" && sak.status === "OPPRETTET" && sak.saksbehandlere.eier === null,
       ),
     ).toBe(true);
     expect(søkSaker("12345678901").some((sak) => sak.personIdent === "12345678901")).toBe(true);
