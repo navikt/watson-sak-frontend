@@ -18,6 +18,7 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
     kilde: "NAV_KONTROLL",
     misbruktype: [],
     prioritet: "NORMAL",
+    iBero: false,
     avslutningskonklusjon: null,
     tilgjengeligeHandlinger: [],
     ytelser: [
@@ -66,6 +67,7 @@ describe("beregnDineSakerSiste14Dager", () => {
       snittBehandlingstidPerSak: null,
       antallHenlagteSaker: 1,
       antallHenlagteTips: 1,
+      antallSakerIBero: 0,
     });
   });
 
@@ -85,6 +87,7 @@ describe("beregnDineSakerSiste14Dager", () => {
     expect(resultat.snittBehandlingstidPerSak).toBeNull();
     expect(resultat.antallHenlagteSaker).toBe(0);
     expect(resultat.antallHenlagteTips).toBe(0);
+    expect(resultat.antallSakerIBero).toBe(0);
   });
 
   test("bruker backend opprettet og backend-status for kontrollsaker", () => {
@@ -116,6 +119,7 @@ describe("beregnDineSakerSiste14Dager", () => {
       snittBehandlingstidPerSak: null,
       antallHenlagteSaker: 1,
       antallHenlagteTips: 1,
+      antallSakerIBero: 0,
     });
   });
 
@@ -134,5 +138,6 @@ describe("beregnDineSakerSiste14Dager", () => {
 
     expect(resultat.antallSakerJobbetMed).toBe(1);
     expect(resultat.antallTipsTilVurdering).toBe(0);
+    expect(resultat.antallSakerIBero).toBe(0);
   });
 });

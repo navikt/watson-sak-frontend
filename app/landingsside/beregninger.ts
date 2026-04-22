@@ -16,6 +16,7 @@ export interface DineSakerSiste14DagerStatistikk {
   snittBehandlingstidPerSak: number | null;
   antallHenlagteSaker: number;
   antallHenlagteTips: number;
+  antallSakerIBero: number;
 }
 
 function getOpprettet(sak: KontrollsakResponse): string {
@@ -62,5 +63,6 @@ export function beregnDineSakerSiste14Dager({
     antallHenlagteTips: sakerSiste14Dager.filter(
       (sak) => getStatus(sak) === "HENLAGT" && tidligereTipsSakIder.includes(sak.id),
     ).length,
+    antallSakerIBero: sakerSiste14Dager.filter((sak) => sak.iBero).length,
   };
 }

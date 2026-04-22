@@ -35,6 +35,7 @@ describe("landingsside-loader", () => {
       snittBehandlingstidPerSak: null,
       antallHenlagteSaker: 0,
       antallHenlagteTips: 0,
+      antallSakerIBero: 0,
     });
   });
 
