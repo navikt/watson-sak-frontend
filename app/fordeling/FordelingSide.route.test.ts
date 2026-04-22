@@ -42,7 +42,9 @@ describe("FordelingSide action", () => {
 
   it("flytter sak ut av Fordeling i mockmiljø når den tildeles", async () => {
     const { action } = await import("./FordelingSide.server");
-    const tildelbarKontrollsakId = mockKontrollsaker.find((sak) => sak.status === "UFORDELT")?.id;
+    const tildelbarKontrollsakId = mockKontrollsaker.find(
+      (sak) => sak.saksbehandlere.eier === null,
+    )?.id;
 
     expect(tildelbarKontrollsakId).toBeDefined();
 
@@ -65,8 +67,11 @@ describe("FordelingSide action", () => {
     } as Route.ActionArgs);
 
     expect(mockKontrollsaker.find((sak) => sak.id === tildelbarKontrollsakId)?.status).toBe(
-      "TILDELT",
+      "OPPRETTET",
     );
+    expect(
+      mockKontrollsaker.find((sak) => sak.id === tildelbarKontrollsakId)?.saksbehandlere.eier,
+    ).toMatchObject({ navIdent: "Kari Nordmann" });
     expect(
       mockKontrollsaker
         .find((sak) => sak.id === tildelbarKontrollsakId)
@@ -178,7 +183,7 @@ describe("FordelingSide loader", () => {
     } as Route.LoaderArgs);
 
     const forventedeSaker = mockKontrollsaker
-      .filter((sak) => sak.status === "UFORDELT")
+      .filter((sak) => sak.saksbehandlere.eier === null)
       .map((sak) => sak.id);
 
     expect(resultat.map((sak) => sak.id)).toEqual(forventedeSaker);

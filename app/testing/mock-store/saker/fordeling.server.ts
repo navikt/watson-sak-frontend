@@ -533,7 +533,7 @@ export function leggTilMockSakIFordeling(nySak: NyMockFordelingssak): Kontrollsa
         enhet: null,
       },
     },
-    status: "UFORDELT",
+    status: "OPPRETTET",
     avslutningskonklusjon: null,
     tilgjengeligeHandlinger: [],
     kategori: nySak.kategori,
