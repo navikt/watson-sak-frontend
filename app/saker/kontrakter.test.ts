@@ -30,13 +30,13 @@ describe("Kontrollsak-kontrakter", () => {
             enhet: "4801",
           },
         },
-        status: "UFORDELT",
+        status: "OPPRETTET",
         avslutningskonklusjon: null,
         tilgjengeligeHandlinger: [
           {
             handling: "TILDEL",
             pakrevdeFelter: [{ felt: "navIdent", tillatteVerdier: [] }],
-            resultatStatus: "TILDELT",
+            resultatStatus: "OPPRETTET",
           },
         ],
         kategori: "ARBEID",
@@ -66,7 +66,7 @@ describe("Kontrollsak-kontrakter", () => {
         oppdatert: null,
       }),
     ).toMatchObject({
-      status: "UFORDELT",
+      status: "OPPRETTET",
       personNavn: null,
       ytelser: [{ type: "Dagpenger" }],
       kilde: "NAV_KONTROLL",
@@ -88,7 +88,7 @@ describe("Kontrollsak-kontrakter", () => {
             enhet: null,
           },
         },
-        status: "UFORDELT",
+        status: "OPPRETTET",
         avslutningskonklusjon: null,
         tilgjengeligeHandlinger: [],
         kategori: "ARBEID",
@@ -123,7 +123,7 @@ describe("Kontrollsak-kontrakter", () => {
                 enhet: null,
               },
             },
-            status: "UFORDELT",
+            status: "OPPRETTET",
             avslutningskonklusjon: null,
             tilgjengeligeHandlinger: [],
             kategori: "ARBEID",
@@ -144,7 +144,7 @@ describe("Kontrollsak-kontrakter", () => {
       }),
     ).toMatchObject({
       totalItems: 1,
-      items: [{ status: "UFORDELT" }],
+        items: [{ status: "OPPRETTET" }],
     });
   });
 
@@ -157,12 +157,12 @@ describe("Kontrollsak-kontrakter", () => {
         sakId: "4fa85f64-5717-4562-b3fc-2c963f66afa6",
         kategori: "ARBEID",
         prioritet: "NORMAL",
-        status: "UFORDELT",
+        status: "OPPRETTET",
         ytelseTyper: ["Sykepenger"],
       }),
     ).toMatchObject({
       hendelsesType: "SAK_OPPRETTET",
-      status: "UFORDELT",
+      status: "OPPRETTET",
     });
   });
 

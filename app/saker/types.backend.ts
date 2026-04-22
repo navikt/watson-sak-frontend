@@ -6,8 +6,7 @@ import {
 } from "./kategorier";
 
 const kontrollsakStatusSchema = z.enum([
-  "UFORDELT",
-  "TILDELT",
+  "OPPRETTET",
   "UTREDES",
   "VENTER_PA_INFORMASJON",
   "VENTER_PA_VEDTAK",
