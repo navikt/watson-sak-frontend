@@ -123,8 +123,8 @@ describe("kanPolitianmeldes", () => {
 });
 
 describe("Kontrollsak-statusregler", () => {
-  it("behandler UFORDELT som aktiv sak", () => {
-    expect(erAktivSakKontrollsak("UFORDELT")).toBe(true);
+  it("behandler OPPRETTET som aktiv sak", () => {
+    expect(erAktivSakKontrollsak("OPPRETTET")).toBe(true);
   });
 
   it("behandler AVSLUTTET som inaktiv sak", () => {
@@ -135,11 +135,11 @@ describe("Kontrollsak-statusregler", () => {
     expect(
       hentStøttedeTilgjengeligeHandlinger({
         tilgjengeligeHandlinger: [
-          { handling: "TILDEL", pakrevdeFelter: [], resultatStatus: "TILDELT" },
+          { handling: "TILDEL", pakrevdeFelter: [], resultatStatus: "OPPRETTET" },
           { handling: "UKJENT" as never, pakrevdeFelter: [], resultatStatus: "UTREDES" },
         ],
       } as never),
-    ).toEqual([{ handling: "TILDEL", pakrevdeFelter: [], resultatStatus: "TILDELT" }]);
+    ).toEqual([{ handling: "TILDEL", pakrevdeFelter: [], resultatStatus: "OPPRETTET" }]);
   });
 
   it("kjenner igjen støttet kontrollsakhandling", () => {

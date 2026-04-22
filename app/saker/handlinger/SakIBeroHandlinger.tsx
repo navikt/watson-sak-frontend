@@ -58,7 +58,7 @@ export function SakIBeroHandlinger({ sak, tilgjengeligeHandlinger }: SakIBeroHan
           onClick={handleFristill}
           loading={fristillFetcher.state !== "idle"}
         >
-          Legg tilbake i ufordelt
+          Fristill sak
         </Button>
       )}
     </VStack>

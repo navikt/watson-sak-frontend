@@ -43,7 +43,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
       },
       { handling: "SETT_HENLAGT", pakrevdeFelter: [], resultatStatus: "HENLAGT" },
       { handling: "SETT_I_BERO", pakrevdeFelter: [], resultatStatus: "I_BERO" },
-      { handling: "FRISTILL", pakrevdeFelter: [], resultatStatus: "UFORDELT" },
+      { handling: "FRISTILL", pakrevdeFelter: [], resultatStatus: "UTREDES" },
     ],
     ytelser: [
       {
@@ -71,11 +71,11 @@ function renderMedRouter(ui: React.ReactNode) {
 }
 
 describe("SakHandlingerKnapper", () => {
-  it("viser tildel-handlinger for sak med status UFORDELT", () => {
+  it("viser tildel-handlinger for eierløs sak", () => {
     renderMedRouter(
       <SakHandlingerKnapper
         sak={lagKontrollsak({
-          status: "UFORDELT",
+          status: "OPPRETTET",
           saksbehandlere: {
             eier: null,
             deltMed: [],
@@ -85,7 +85,7 @@ describe("SakHandlingerKnapper", () => {
             {
               handling: "TILDEL",
               pakrevdeFelter: [{ felt: "navIdent", tillatteVerdier: [] }],
-              resultatStatus: "TILDELT",
+              resultatStatus: "OPPRETTET",
             },
             { handling: "SETT_I_BERO", pakrevdeFelter: [], resultatStatus: "I_BERO" },
           ],
@@ -121,7 +121,7 @@ describe("SakHandlingerKnapper", () => {
     expect(screen.getByRole("button", { name: "Stans ytelse" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Sett i bero" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Vurder anmeldelse" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Legg tilbake i ufordelt" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Fristill sak" })).toBeDefined();
 
     expect(screen.queryByRole("button", { name: "Tildel saksbehandler" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Tildel meg" })).toBeNull();

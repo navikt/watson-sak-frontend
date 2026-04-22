@@ -170,7 +170,7 @@ export function SakUtredesHandlinger({
             icon={<ArrowUndoIcon aria-hidden />}
             onClick={() => sendHandling("FRISTILL")}
           >
-            Legg tilbake i ufordelt
+            Fristill sak
           </Button>
         )}
         {harHandling("AVSLUTT_MED_KONKLUSJON") && (
