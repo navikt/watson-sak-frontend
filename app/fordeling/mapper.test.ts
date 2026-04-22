@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { erUfordeltKontrollsak, mapKontrollsakTilFordelingSak } from "./mapper";
+import { erEierlosKontrollsak, mapKontrollsakTilFordelingSak } from "./mapper";
 import type { KontrollsakResponse } from "./types.backend";
 
 function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
@@ -16,7 +16,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
         enhet: "4812",
       },
     },
-    status: "UFORDELT",
+    status: "OPPRETTET",
     kategori: "ARBEID",
     kilde: "PUBLIKUM",
     misbruktype: [],
@@ -41,16 +41,26 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
 }
 
 describe("Fordeling mapper", () => {
-  it("behandler ufordelt sak som ufordelt", () => {
-    expect(erUfordeltKontrollsak(lagKontrollsak({ status: "UFORDELT" }))).toBe(true);
+  it("behandler eierløs sak som klar for fordeling", () => {
+    expect(erEierlosKontrollsak(lagKontrollsak({ status: "OPPRETTET" }))).toBe(true);
   });
 
-  it("behandler sak under utredning som fordelt", () => {
-    expect(erUfordeltKontrollsak(lagKontrollsak({ status: "UTREDES" }))).toBe(false);
+  it("behandler eierløs sak under utredning som klar for fordeling", () => {
+    expect(erEierlosKontrollsak(lagKontrollsak({ status: "UTREDES" }))).toBe(true);
   });
 
-  it("behandler tildelt sak som fordelt", () => {
-    expect(erUfordeltKontrollsak(lagKontrollsak({ status: "TILDELT" }))).toBe(false);
+  it("behandler eid sak som ikke klar for fordeling", () => {
+    expect(
+      erEierlosKontrollsak(
+        lagKontrollsak({
+          saksbehandlere: {
+            eier: { navIdent: "Z999999", navn: "Eier", enhet: "4812" },
+            deltMed: [],
+            opprettetAv: { navIdent: "Z123456", navn: "Oppretter", enhet: "4812" },
+          },
+        }),
+      ),
+    ).toBe(false);
   });
 
   it("mapper kontrollsak til FordelingSak", () => {
