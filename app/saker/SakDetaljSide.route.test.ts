@@ -290,6 +290,40 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     });
   });
 
+  it("tildeler ownerløs sak til lokal mock-bruker", async () => {
+    const kontrollsak = mockKontrollsaker[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+
+    kontrollsak.status = "OPPRETTET";
+    kontrollsak.iBero = false;
+    kontrollsak.saksbehandlere.eier = null;
+    kontrollsak.tilgjengeligeHandlinger = [
+      {
+        handling: "TILDEL",
+        pakrevdeFelter: [{ felt: "navIdent", tillatteVerdier: [] }],
+        resultatStatus: "OPPRETTET",
+      },
+    ];
+
+    const formData = new FormData();
+    formData.set("handling", "TILDEL");
+    formData.set("navIdent", "Z999999");
+
+    await action({
+      request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: kontrollsakRef },
+    } as Route.ActionArgs);
+
+    expect(kontrollsak.saksbehandlere.eier).toEqual({
+      navn: "Saks Behandlersen",
+      navIdent: "Z999999",
+      enhet: "Seksjon A",
+    });
+  });
+
   it("oppdaterer fallback-enhet når ownerløs sak videresendes til seksjon", async () => {
     const kontrollsak = mockKontrollsaker[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
