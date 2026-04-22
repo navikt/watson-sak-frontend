@@ -116,7 +116,10 @@ describe("opprettKontrollsak", () => {
 
     expect(
       mockKontrollsaker.some(
-        (sak) => sak.personIdent === "12345678901" && sak.status === "OPPRETTET" && sak.saksbehandlere.eier === null,
+        (sak) =>
+          sak.personIdent === "12345678901" &&
+          sak.status === "OPPRETTET" &&
+          sak.saksbehandlere.eier === null,
       ),
     ).toBe(true);
     expect(søkSaker("12345678901").some((sak) => sak.personIdent === "12345678901")).toBe(true);

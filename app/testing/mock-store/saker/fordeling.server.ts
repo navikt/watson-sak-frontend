@@ -534,6 +534,7 @@ export function leggTilMockSakIFordeling(nySak: NyMockFordelingssak): Kontrollsa
       },
     },
     status: "OPPRETTET",
+    iBero: false,
     avslutningskonklusjon: null,
     tilgjengeligeHandlinger: [],
     kategori: nySak.kategori,

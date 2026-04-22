@@ -31,6 +31,7 @@ describe("Kontrollsak-kontrakter", () => {
           },
         },
         status: "OPPRETTET",
+        iBero: false,
         avslutningskonklusjon: null,
         tilgjengeligeHandlinger: [
           {
@@ -89,6 +90,7 @@ describe("Kontrollsak-kontrakter", () => {
           },
         },
         status: "OPPRETTET",
+        iBero: false,
         avslutningskonklusjon: null,
         tilgjengeligeHandlinger: [],
         kategori: "ARBEID",
@@ -124,6 +126,7 @@ describe("Kontrollsak-kontrakter", () => {
               },
             },
             status: "OPPRETTET",
+            iBero: false,
             avslutningskonklusjon: null,
             tilgjengeligeHandlinger: [],
             kategori: "ARBEID",
@@ -144,7 +147,7 @@ describe("Kontrollsak-kontrakter", () => {
       }),
     ).toMatchObject({
       totalItems: 1,
-        items: [{ status: "OPPRETTET" }],
+      items: [{ status: "OPPRETTET" }],
     });
   });
 
