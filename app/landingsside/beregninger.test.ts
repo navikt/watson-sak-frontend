@@ -46,7 +46,16 @@ describe("beregnDineSakerSiste14Dager", () => {
       lagKontrollsak({ id: "3", opprettet: "2026-03-09T00:00:00Z", status: "VENTER_PA_VEDTAK" }),
       lagKontrollsak({ id: "4", opprettet: "2026-03-08T00:00:00Z", status: "HENLAGT" }),
       lagKontrollsak({ id: "5", opprettet: "2026-03-07T00:00:00Z", status: "HENLAGT" }),
-      lagKontrollsak({ id: "6", opprettet: "2026-02-20T00:00:00Z", status: "OPPRETTET", saksbehandlere: { eier: null, deltMed: [], opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" } } }),
+      lagKontrollsak({
+        id: "6",
+        opprettet: "2026-02-20T00:00:00Z",
+        status: "OPPRETTET",
+        saksbehandlere: {
+          eier: null,
+          deltMed: [],
+          opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
+        },
+      }),
     ];
     const avslutningsdatoer: Avslutningsdatoer = {
       "4": "2026-03-12",
@@ -74,7 +83,16 @@ describe("beregnDineSakerSiste14Dager", () => {
   test("returnerer null for snitt behandlingstid når ingen avsluttede eller henlagte saker finnes", () => {
     const saker = [
       lagKontrollsak({ id: "1", opprettet: "2026-03-18T00:00:00Z", status: "UTREDES" }),
-      lagKontrollsak({ id: "2", opprettet: "2026-03-10T00:00:00Z", status: "OPPRETTET", saksbehandlere: { eier: null, deltMed: [], opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" } } }),
+      lagKontrollsak({
+        id: "2",
+        opprettet: "2026-03-10T00:00:00Z",
+        status: "OPPRETTET",
+        saksbehandlere: {
+          eier: null,
+          deltMed: [],
+          opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
+        },
+      }),
     ];
 
     const resultat = beregnDineSakerSiste14Dager({
@@ -97,7 +115,16 @@ describe("beregnDineSakerSiste14Dager", () => {
       lagKontrollsak({ id: "ks-3", opprettet: "2026-03-09T00:00:00Z", status: "VENTER_PA_VEDTAK" }),
       lagKontrollsak({ id: "ks-4", opprettet: "2026-03-08T00:00:00Z", status: "HENLAGT" }),
       lagKontrollsak({ id: "ks-5", opprettet: "2026-03-07T00:00:00Z", status: "HENLAGT" }),
-      lagKontrollsak({ id: "ks-6", opprettet: "2026-02-20T00:00:00Z", status: "OPPRETTET", saksbehandlere: { eier: null, deltMed: [], opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" } } }),
+      lagKontrollsak({
+        id: "ks-6",
+        opprettet: "2026-02-20T00:00:00Z",
+        status: "OPPRETTET",
+        saksbehandlere: {
+          eier: null,
+          deltMed: [],
+          opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
+        },
+      }),
     ];
 
     const avslutningsdatoer: Avslutningsdatoer = {
@@ -125,7 +152,16 @@ describe("beregnDineSakerSiste14Dager", () => {
 
   test("teller ikke eierløse saker som jobbet med de siste 14 dagene", () => {
     const saker = [
-      lagKontrollsak({ id: "1", opprettet: "2026-03-18T00:00:00Z", status: "OPPRETTET", saksbehandlere: { eier: null, deltMed: [], opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" } } }),
+      lagKontrollsak({
+        id: "1",
+        opprettet: "2026-03-18T00:00:00Z",
+        status: "OPPRETTET",
+        saksbehandlere: {
+          eier: null,
+          deltMed: [],
+          opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
+        },
+      }),
       lagKontrollsak({ id: "2", opprettet: "2026-03-17T00:00:00Z", status: "UTREDES" }),
     ];
 

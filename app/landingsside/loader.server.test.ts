@@ -48,7 +48,9 @@ describe("landingsside-loader", () => {
   it("returnerer bare saker eid av innlogget bruker i dashboardets mine saker-liste", () => {
     const data = loader();
 
-    expect(data.mineSaker.every((sak) => sak.saksbehandlere.eier?.navIdent === "Z999999")).toBe(true);
+    expect(data.mineSaker.every((sak) => sak.saksbehandlere.eier?.navIdent === "Z999999")).toBe(
+      true,
+    );
   });
 
   it("returnerer en velkomstoppsummering basert på sakene dine", () => {

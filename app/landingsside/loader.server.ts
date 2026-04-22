@@ -15,10 +15,7 @@ export function loader() {
   );
 
   const aktiveMineSaker = mineSakerHosInnloggetBruker.filter(
-    (sak) =>
-      sak.status !== "ANMELDT" &&
-      sak.status !== "HENLAGT" &&
-      sak.status !== "AVSLUTTET",
+    (sak) => sak.status !== "ANMELDT" && sak.status !== "HENLAGT" && sak.status !== "AVSLUTTET",
   );
 
   const mineSaker = [...aktiveMineSaker]
