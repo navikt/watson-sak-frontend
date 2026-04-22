@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import type { Avslutningsdatoer } from "./mock-data.server";
 import {
+  beregnAntallIBero,
   beregnAntallPerSeksjon,
   beregnAntallPerStatus,
   beregnBehandlingstid,
@@ -24,6 +25,7 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
     kilde: "NAV_KONTROLL",
     misbruktype: [],
     prioritet: "NORMAL",
+    iBero: false,
     avslutningskonklusjon: null,
     tilgjengeligeHandlinger: [],
     ytelser: [
@@ -81,7 +83,6 @@ describe("beregnAntallPerStatus", () => {
       ANMELDELSE_VURDERES: 0,
       ANMELDT: 0,
       HENLAGT: 0,
-      I_BERO: 0,
       AVSLUTTET: 2,
     });
   });
@@ -95,7 +96,6 @@ describe("beregnAntallPerStatus", () => {
       ANMELDELSE_VURDERES: 0,
       ANMELDT: 0,
       HENLAGT: 0,
-      I_BERO: 0,
       AVSLUTTET: 0,
     });
   });
@@ -110,6 +110,16 @@ describe("beregnAntallPerStatus", () => {
     expect(resultat.OPPRETTET).toBe(1);
     expect(resultat.UTREDES).toBe(1);
     expect(resultat.AVSLUTTET).toBe(1);
+  });
+
+  test("teller saker i bero separat fra status", () => {
+    expect(
+      beregnAntallIBero([
+        lagKontrollsak({ id: "1", status: "OPPRETTET", iBero: true }),
+        lagKontrollsak({ id: "2", status: "UTREDES", iBero: true }),
+        lagKontrollsak({ id: "3", status: "UTREDES", iBero: false }),
+      ]),
+    ).toBe(2);
   });
 });
 

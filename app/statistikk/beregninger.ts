@@ -31,7 +31,6 @@ export function beregnAntallPerStatus(saker: Statistikksak[]): Record<Statistikk
     ANMELDELSE_VURDERES: 0,
     ANMELDT: 0,
     HENLAGT: 0,
-    I_BERO: 0,
     AVSLUTTET: 0,
   };
 
@@ -40,6 +39,10 @@ export function beregnAntallPerStatus(saker: Statistikksak[]): Record<Statistikk
   }
 
   return resultat;
+}
+
+export function beregnAntallIBero(saker: Statistikksak[]): number {
+  return saker.filter((sak) => sak.iBero).length;
 }
 
 interface BehandlingstidResultat {

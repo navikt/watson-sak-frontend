@@ -3,12 +3,14 @@ import { PageBlock } from "@navikt/ds-react/Page";
 import {
   BarChartIcon,
   CheckmarkCircleIcon,
+  ClockDashedIcon,
   HourglassIcon,
   XMarkOctagonIcon,
 } from "@navikt/aksel-icons";
 import { useLoaderData } from "react-router";
 import { formaterStatus, type KontrollsakStatus } from "~/saker/visning";
 import {
+  beregnAntallIBero,
   beregnAntallPerSeksjon,
   beregnAntallPerStatus,
   beregnBehandlingstid,
@@ -27,6 +29,7 @@ export function loader() {
   return {
     totaltAntall: saker.length,
     antallPerStatus: beregnAntallPerStatus(saker),
+    antallIBero: beregnAntallIBero(saker),
     behandlingstid: beregnBehandlingstid(saker, mockAvslutningsdatoer),
     antallPerSeksjon: beregnAntallPerSeksjon(saker),
     fordelingPerYtelse: beregnFordelingPerYtelse(saker),
@@ -38,6 +41,7 @@ export default function StatistikkSide() {
   const {
     totaltAntall,
     antallPerStatus,
+    antallIBero,
     behandlingstid,
     antallPerSeksjon,
     fordelingPerYtelse,
@@ -62,7 +66,7 @@ export default function StatistikkSide() {
             <Heading level="2" size="medium" spacing id="nøkkeltall-heading">
               Nøkkeltall
             </Heading>
-            <HGrid columns={{ xs: 2, md: 4 }} gap="space-4">
+            <HGrid columns={{ xs: 2, md: 5 }} gap="space-4">
               <Nokkeltallkort
                 tittel="Totalt"
                 verdi={totaltAntall}
@@ -82,6 +86,11 @@ export default function StatistikkSide() {
                 tittel="Opprettet"
                 verdi={antallPerStatus.OPPRETTET}
                 ikon={<XMarkOctagonIcon aria-hidden fontSize="1.5rem" />}
+              />
+              <Nokkeltallkort
+                tittel="I bero"
+                verdi={antallIBero}
+                ikon={<ClockDashedIcon aria-hidden fontSize="1.5rem" />}
               />
             </HGrid>
           </section>
