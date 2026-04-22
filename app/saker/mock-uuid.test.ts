@@ -44,11 +44,7 @@ describe("normaliserLegacyKontrollsak", () => {
     expect(sak.kilde).toBe("PUBLIKUM");
     expect(sak.misbruktype).toEqual(["SVART_ARBEID"]);
     expect(sak.personNavn).toBe("Ola Nordmann");
-    expect(sak.saksbehandlere.eier).toEqual({
-      navIdent: "Z123456",
-      navn: "Z123456",
-      enhet: "4812",
-    });
+    expect(sak.saksbehandlere.eier).toBeNull();
     expect(sak.ytelser).toEqual([
       {
         id: "00000000-0000-4000-8000-000002201101",
@@ -59,8 +55,11 @@ describe("normaliserLegacyKontrollsak", () => {
       },
     ]);
     expect(sak.tilgjengeligeHandlinger).toEqual([
-      { handling: "START_UTREDNING", pakrevdeFelter: [], resultatStatus: "UTREDES" },
-      { handling: "SETT_I_BERO", pakrevdeFelter: [], resultatStatus: "I_BERO" },
+      {
+        handling: "TILDEL",
+        pakrevdeFelter: [{ felt: "navIdent", tillatteVerdier: [] }],
+        resultatStatus: "VENTER_PA_VEDTAK",
+      },
     ]);
   });
 
@@ -84,7 +83,7 @@ describe("normaliserLegacyKontrollsak", () => {
     );
 
     expect(sak.id).toBe("00000000-0000-4000-8000-000004007000");
-    expect(sak.status).toBe("UFORDELT");
+    expect(sak.status).toBe("OPPRETTET");
     expect(sak.kategori).toBe("ANNET");
     expect(sak.kilde).toBe("ANNET");
     expect(sak.misbruktype).toEqual([]);
@@ -99,7 +98,7 @@ describe("normaliserLegacyKontrollsak", () => {
     expect(sak.ytelser[0]?.belop).toBeNull();
   });
 
-  it("setter eier til null når legacy-status normaliseres til ufordelt", () => {
+  it("setter eier til null når legacy-status normaliseres til opprettet", () => {
     const sak = normaliserLegacyKontrollsak(
       {
         id: "101",
@@ -121,7 +120,7 @@ describe("normaliserLegacyKontrollsak", () => {
       1,
     );
 
-    expect(sak.status).toBe("UFORDELT");
+    expect(sak.status).toBe("OPPRETTET");
     expect(sak.saksbehandlere.eier).toBeNull();
     expect(sak.saksbehandlere.opprettetAv).toEqual({
       navIdent: "Z123456",
@@ -130,7 +129,7 @@ describe("normaliserLegacyKontrollsak", () => {
     });
   });
 
-  it("eksponerer avslutt for henlagt sak i mock-tilstandsmaskinen", () => {
+  it("krever tildeling for ownerløs henlagt sak i mock-tilstandsmaskinen", () => {
     const sak = normaliserLegacyKontrollsak(
       {
         id: "301",
@@ -144,7 +143,11 @@ describe("normaliserLegacyKontrollsak", () => {
     );
 
     expect(sak.tilgjengeligeHandlinger).toEqual([
-      { handling: "AVSLUTT", pakrevdeFelter: [], resultatStatus: "AVSLUTTET" },
+      {
+        handling: "TILDEL",
+        pakrevdeFelter: [{ felt: "navIdent", tillatteVerdier: [] }],
+        resultatStatus: "HENLAGT",
+      },
     ]);
   });
 
@@ -169,6 +172,40 @@ describe("normaliserLegacyKontrollsak", () => {
 
     nullstillMockStatushistorikk();
 
-    expect(hentNesteStatusFraBero(sak)).toBe("UTREDES");
+    expect(hentNesteStatusFraBero(sak)).toBe("OPPRETTET");
+  });
+
+  it("bevarer lagret forrige status når owner fristilles i bero", () => {
+    const sak = normaliserLegacyKontrollsak(
+      {
+        id: "501",
+        personIdent: "12345678901",
+        status: "I_BERO",
+        kategori: "ARBEID",
+        ytelser: [],
+        opprettet: "2026-01-01T00:00:00Z",
+        saksbehandlere: {
+          eier: {
+            navn: "Kari Nordmann",
+            navIdent: "Z123456",
+            enhet: "4812",
+          },
+        },
+      },
+      5,
+    );
+
+    settForrigeStatus(sak.id, "VENTER_PA_VEDTAK");
+    sak.saksbehandlere.eier = null;
+    oppdaterTilgjengeligeHandlinger(sak);
+
+    expect(hentNesteStatusFraBero(sak)).toBe("VENTER_PA_VEDTAK");
+    expect(sak.tilgjengeligeHandlinger).toEqual([
+      {
+        handling: "TILDEL",
+        pakrevdeFelter: [{ felt: "navIdent", tillatteVerdier: [] }],
+        resultatStatus: "I_BERO",
+      },
+    ]);
   });
 });

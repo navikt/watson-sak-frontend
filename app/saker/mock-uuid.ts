@@ -21,24 +21,25 @@ function lagTilgjengeligHandling(
 }
 
 function hentForrigeStatus(sakId: string, status: KontrollsakStatus) {
-  return forrigeStatusPerSak.get(sakId) ?? (status === "I_BERO" ? "UTREDES" : undefined);
+  return forrigeStatusPerSak.get(sakId) ?? (status === "I_BERO" ? "OPPRETTET" : undefined);
 }
 
 function beregnTilgjengeligeHandlinger(
-  sak: Pick<KontrollsakResponse, "id" | "status">,
+  sak: Pick<KontrollsakResponse, "id" | "status" | "saksbehandlere">,
 ): TilgjengeligHandling[] {
   const forrigeStatus = hentForrigeStatus(sak.id, sak.status);
 
+  if (sak.saksbehandlere.eier === null) {
+    return [
+      lagTilgjengeligHandling("TILDEL", sak.status, [{ felt: "navIdent", tillatteVerdier: [] }]),
+    ];
+  }
+
   switch (sak.status) {
-    case "UFORDELT":
-      return [
-        lagTilgjengeligHandling("TILDEL", "TILDELT", [{ felt: "navIdent", tillatteVerdier: [] }]),
-        lagTilgjengeligHandling("SETT_I_BERO", "I_BERO"),
-      ];
-    case "TILDELT":
+    case "OPPRETTET":
       return [
         lagTilgjengeligHandling("START_UTREDNING", "UTREDES"),
-        lagTilgjengeligHandling("FRISTILL", "UFORDELT"),
+        lagTilgjengeligHandling("FRISTILL", "OPPRETTET"),
         lagTilgjengeligHandling("SETT_I_BERO", "I_BERO"),
       ];
     case "UTREDES":
@@ -48,18 +49,19 @@ function beregnTilgjengeligeHandlinger(
         lagTilgjengeligHandling("SETT_ANMELDELSE_VURDERES", "ANMELDELSE_VURDERES"),
         lagTilgjengeligHandling("SETT_HENLAGT", "HENLAGT"),
         lagTilgjengeligHandling("SETT_I_BERO", "I_BERO"),
-        lagTilgjengeligHandling("FRISTILL", "UFORDELT"),
+        lagTilgjengeligHandling("FRISTILL", "UTREDES"),
       ];
     case "VENTER_PA_INFORMASJON":
       return [
         lagTilgjengeligHandling("START_UTREDNING", "UTREDES"),
         lagTilgjengeligHandling("SETT_I_BERO", "I_BERO"),
-        lagTilgjengeligHandling("FRISTILL", "UFORDELT"),
+        lagTilgjengeligHandling("FRISTILL", "VENTER_PA_INFORMASJON"),
       ];
     case "VENTER_PA_VEDTAK":
       return [
         lagTilgjengeligHandling("START_UTREDNING", "UTREDES"),
         lagTilgjengeligHandling("SETT_I_BERO", "I_BERO"),
+        lagTilgjengeligHandling("FRISTILL", "VENTER_PA_VEDTAK"),
       ];
     case "ANMELDELSE_VURDERES":
       return [
@@ -67,6 +69,7 @@ function beregnTilgjengeligeHandlinger(
         lagTilgjengeligHandling("SETT_HENLAGT", "HENLAGT"),
         lagTilgjengeligHandling("START_UTREDNING", "UTREDES"),
         lagTilgjengeligHandling("SETT_I_BERO", "I_BERO"),
+        lagTilgjengeligHandling("FRISTILL", "ANMELDELSE_VURDERES"),
       ];
     case "ANMELDT":
       return [
@@ -76,16 +79,18 @@ function beregnTilgjengeligeHandlinger(
             tillatteVerdier: ["POLITIET_HENLA", "FRIFUNNET", "DOMFELT"],
           },
         ]),
+        lagTilgjengeligHandling("FRISTILL", "ANMELDT"),
       ];
     case "I_BERO":
       return [
         lagTilgjengeligHandling("FORTSETT_FRA_I_BERO", forrigeStatus ?? "UTREDES"),
-        ...(forrigeStatus && forrigeStatus !== "UFORDELT"
-          ? [lagTilgjengeligHandling("FRISTILL", "UFORDELT")]
-          : []),
+        lagTilgjengeligHandling("FRISTILL", "I_BERO"),
       ];
     case "HENLAGT":
-      return [lagTilgjengeligHandling("AVSLUTT", "AVSLUTTET")];
+      return [
+        lagTilgjengeligHandling("AVSLUTT", "AVSLUTTET"),
+        lagTilgjengeligHandling("FRISTILL", "HENLAGT"),
+      ];
     case "AVSLUTTET":
       return [];
   }
@@ -165,6 +170,38 @@ function normaliserLegacySaksbehandler(
   };
 }
 
+function normaliserLegacyEier(
+  sak: LegacyKontrollsak,
+): KontrollsakResponse["saksbehandlere"]["eier"] {
+  return (
+    normaliserLegacySaksbehandler(
+      (sak as { saksbehandlere?: { eier?: unknown; ansvarlig?: unknown } }).saksbehandlere?.eier ??
+        (sak as { saksbehandlere?: { eier?: unknown; ansvarlig?: unknown } }).saksbehandlere
+          ?.ansvarlig,
+    ) ?? null
+  );
+}
+
+function normaliserLegacyOpprettetAv(
+  sak: LegacyKontrollsak,
+  saksbehandlerNavn: string,
+  saksbehandlerEnhet: string | null,
+): KontrollsakResponse["saksbehandlere"]["opprettetAv"] {
+  const opprettetAv = normaliserLegacySaksbehandler(
+    (sak as { saksbehandlere?: { opprettetAv?: unknown } }).saksbehandlere?.opprettetAv,
+  );
+
+  if (opprettetAv) {
+    return opprettetAv;
+  }
+
+  return {
+    navIdent: typeof sak.saksbehandler === "string" ? sak.saksbehandler : "Z999999",
+    navn: saksbehandlerNavn,
+    enhet: saksbehandlerEnhet,
+  };
+}
+
 export function normaliserLegacyKontrollsak(
   sak: LegacyKontrollsak,
   namespace: number,
@@ -179,7 +216,7 @@ export function normaliserLegacyKontrollsak(
   )
     ? (sak as { saksbehandlere: { deltMed: unknown[] } }).saksbehandlere.deltMed
     : [];
-  const legacyStatus = typeof sak.status === "string" ? sak.status : "UFORDELT";
+  const legacyStatus = typeof sak.status === "string" ? sak.status : "OPPRETTET";
   const legacyKategori = typeof sak.kategori === "string" ? sak.kategori : "ANNET";
   const legacyKilde =
     typeof (sak as { bakgrunn?: { kilde?: unknown } }).bakgrunn?.kilde === "string"
@@ -187,15 +224,13 @@ export function normaliserLegacyKontrollsak(
       : null;
 
   const statusMap: Record<string, KontrollsakResponse["status"]> = {
-    OPPRETTET: "UFORDELT",
-    AVKLART: "UFORDELT",
+    OPPRETTET: "OPPRETTET",
+    AVKLART: "OPPRETTET",
     UTREDES: "UTREDES",
     TIL_FORVALTNING: "VENTER_PA_VEDTAK",
     HENLAGT: "HENLAGT",
     AVSLUTTET: "AVSLUTTET",
     I_BERO: "I_BERO",
-    UFORDELT: "UFORDELT",
-    TILDELT: "TILDELT",
     VENTER_PA_INFORMASJON: "VENTER_PA_INFORMASJON",
     VENTER_PA_VEDTAK: "VENTER_PA_VEDTAK",
     ANMELDELSE_VURDERES: "ANMELDELSE_VURDERES",
@@ -242,7 +277,9 @@ export function normaliserLegacyKontrollsak(
     "Avbrutt tiltak": "AVBRUTT_TILTAK",
   };
 
-  const normalisertStatus = statusMap[legacyStatus] ?? "UFORDELT";
+  const normalisertStatus = statusMap[legacyStatus] ?? "OPPRETTET";
+  const opprettetAv = normaliserLegacyOpprettetAv(sak, saksbehandlerNavn, saksbehandlerEnhet);
+  const eier = normaliserLegacyEier(sak);
   const avslutningskonklusjon =
     typeof (sak as { avslutningskonklusjon?: unknown }).avslutningskonklusjon === "string"
       ? ((sak as { avslutningskonklusjon: unknown }).avslutningskonklusjon as Avslutningskonklusjon)
@@ -253,24 +290,13 @@ export function normaliserLegacyKontrollsak(
     personIdent: String(sak.personIdent ?? ""),
     personNavn,
     saksbehandlere: {
-      eier:
-        normalisertStatus === "UFORDELT"
-          ? null
-          : {
-              navIdent: typeof sak.saksbehandler === "string" ? sak.saksbehandler : "Z999999",
-              navn: saksbehandlerNavn,
-              enhet: saksbehandlerEnhet,
-            },
+      eier,
       deltMed: legacyDelteSaksbehandlere
         .map(normaliserLegacySaksbehandler)
         .filter((saksbehandler): saksbehandler is NonNullable<typeof saksbehandler> =>
           Boolean(saksbehandler),
         ),
-      opprettetAv: {
-        navIdent: typeof sak.saksbehandler === "string" ? sak.saksbehandler : "Z999999",
-        navn: saksbehandlerNavn,
-        enhet: saksbehandlerEnhet,
-      },
+      opprettetAv,
     },
     status: normalisertStatus,
     avslutningskonklusjon,
@@ -384,7 +410,7 @@ export function normaliserLegacyKontrollsak(
   };
 
   if (normalisert.status === "I_BERO") {
-    settForrigeStatus(normalisert.id, "UTREDES");
+    settForrigeStatus(normalisert.id, "OPPRETTET");
   }
 
   return oppdaterTilgjengeligeHandlinger(normalisert);
