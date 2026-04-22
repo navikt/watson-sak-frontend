@@ -105,8 +105,7 @@ function beregnTilgjengeligeHandlinger(
   }
 }
 
-export function nullstillMockStatushistorikk() {
-}
+export function nullstillMockStatushistorikk() {}
 
 export function oppdaterTilgjengeligeHandlinger(sak: KontrollsakResponse): KontrollsakResponse {
   sak.tilgjengeligeHandlinger = beregnTilgjengeligeHandlinger(sak);
