@@ -19,7 +19,7 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
       deltMed: [],
       opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "Seksjon A" },
     },
-    status: "UFORDELT",
+    status: "OPPRETTET",
     kategori: "ANNET",
     kilde: "NAV_KONTROLL",
     misbruktype: [],
@@ -64,8 +64,8 @@ function lagYtelse(id: string, type: string) {
 describe("beregnAntallPerStatus", () => {
   test("teller riktig antall per status", () => {
     const saker = [
-      lagKontrollsak({ id: "1", status: "UFORDELT" }),
-      lagKontrollsak({ id: "2", status: "UFORDELT" }),
+      lagKontrollsak({ id: "1", status: "OPPRETTET" }),
+      lagKontrollsak({ id: "2", status: "OPPRETTET" }),
       lagKontrollsak({ id: "3", status: "UTREDES" }),
       lagKontrollsak({ id: "4", status: "AVSLUTTET" }),
       lagKontrollsak({ id: "5", status: "AVSLUTTET" }),
@@ -74,8 +74,7 @@ describe("beregnAntallPerStatus", () => {
     const resultat = beregnAntallPerStatus(saker);
 
     expect(resultat).toEqual({
-      UFORDELT: 2,
-      TILDELT: 0,
+      OPPRETTET: 2,
       UTREDES: 1,
       VENTER_PA_INFORMASJON: 0,
       VENTER_PA_VEDTAK: 0,
@@ -89,8 +88,7 @@ describe("beregnAntallPerStatus", () => {
 
   test("returnerer nuller for tom liste", () => {
     expect(beregnAntallPerStatus([])).toEqual({
-      UFORDELT: 0,
-      TILDELT: 0,
+      OPPRETTET: 0,
       UTREDES: 0,
       VENTER_PA_INFORMASJON: 0,
       VENTER_PA_VEDTAK: 0,
@@ -104,12 +102,12 @@ describe("beregnAntallPerStatus", () => {
 
   test("mapper backend-statuser direkte", () => {
     const resultat = beregnAntallPerStatus([
-      lagKontrollsak({ id: "ks-1", status: "UFORDELT" }),
+      lagKontrollsak({ id: "ks-1", status: "OPPRETTET" }),
       lagKontrollsak({ id: "ks-2", status: "UTREDES" }),
       lagKontrollsak({ id: "ks-3", status: "AVSLUTTET" }),
     ]);
 
-    expect(resultat.UFORDELT).toBe(1);
+    expect(resultat.OPPRETTET).toBe(1);
     expect(resultat.UTREDES).toBe(1);
     expect(resultat.AVSLUTTET).toBe(1);
   });

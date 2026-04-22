@@ -24,8 +24,7 @@ function getYtelseTyper(sak: Statistikksak): string[] {
 /** Antall saker gruppert etter status */
 export function beregnAntallPerStatus(saker: Statistikksak[]): Record<StatistikkStatus, number> {
   const resultat: Record<StatistikkStatus, number> = {
-    UFORDELT: 0,
-    TILDELT: 0,
+    OPPRETTET: 0,
     UTREDES: 0,
     VENTER_PA_INFORMASJON: 0,
     VENTER_PA_VEDTAK: 0,
