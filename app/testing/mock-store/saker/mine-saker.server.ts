@@ -5,13 +5,21 @@ import {
   nullstillMockStatushistorikk,
 } from "~/saker/mock-uuid";
 
+export const mockMineSakerInnloggetNavIdent = "Z999999";
+
+const innloggetEier = {
+  navIdent: mockMineSakerInnloggetNavIdent,
+  navn: "Saks Behandlersen",
+  enhet: "Seksjon A",
+};
+
 const initialeMockMineKontrollsaker = [
   {
     id: "201",
     personIdent: "11223344556",
     navn: "Kari Nordmann",
     saksbehandler: "Z999999",
-    saksbehandlere: { deltMed: [] },
+    saksbehandlere: { eier: innloggetEier, deltMed: [] },
     status: "UTREDES",
     kategori: "ARBEID",
     prioritet: "NORMAL",
@@ -43,7 +51,7 @@ const initialeMockMineKontrollsaker = [
     personIdent: "22334455667",
     navn: "Siri Hansen",
     saksbehandler: "Z999999",
-    saksbehandlere: { deltMed: [] },
+    saksbehandlere: { eier: innloggetEier, deltMed: [] },
     status: "AVKLART",
     kategori: "ARBEID",
     prioritet: "NORMAL",
@@ -77,6 +85,11 @@ const initialeMockMineKontrollsaker = [
     alder: 43,
     saksbehandler: "Lise Raus",
     saksbehandlere: {
+      eier: {
+        navIdent: "Z123456",
+        navn: "Kari Nordmann",
+        enhet: "Seksjon A",
+      },
       deltMed: [
         {
           navn: "Kari Nordmann",
@@ -124,7 +137,7 @@ const initialeMockMineKontrollsaker = [
     personIdent: "44556677889",
     navn: "Nora Berg",
     saksbehandler: "Z999999",
-    saksbehandlere: { deltMed: [] },
+    saksbehandlere: { eier: innloggetEier, deltMed: [] },
     status: "OPPRETTET",
     kategori: "ARBEID",
     prioritet: "NORMAL",
@@ -168,7 +181,7 @@ const initialeMockMineKontrollsaker = [
     personIdent: "55667788990",
     navn: "Lars Nilsen",
     saksbehandler: "Z999999",
-    saksbehandlere: { deltMed: [] },
+    saksbehandlere: { eier: innloggetEier, deltMed: [] },
     status: "AVKLART",
     kategori: "ARBEID",
     prioritet: "NORMAL",
@@ -200,7 +213,7 @@ const initialeMockMineKontrollsaker = [
     personIdent: "66778899001",
     navn: "Anne Lunde",
     saksbehandler: "Z999999",
-    saksbehandlere: { deltMed: [] },
+    saksbehandlere: { eier: innloggetEier, deltMed: [] },
     status: "TIL_FORVALTNING",
     kategori: "ARBEID",
     prioritet: "NORMAL",
@@ -232,7 +245,7 @@ const initialeMockMineKontrollsaker = [
     personIdent: "77889900112",
     navn: "Mona Lie",
     saksbehandler: "Z999999",
-    saksbehandlere: { deltMed: [] },
+    saksbehandlere: { eier: innloggetEier, deltMed: [] },
     status: "HENLAGT",
     kategori: "DOKUMENTFALSK",
     prioritet: "NORMAL",
@@ -263,7 +276,7 @@ const initialeMockMineKontrollsaker = [
     personIdent: "88990011223",
     navn: "Jonas Vik",
     saksbehandler: "Z999999",
-    saksbehandlere: { deltMed: [] },
+    saksbehandlere: { eier: innloggetEier, deltMed: [] },
     status: "UTREDES",
     kategori: "ANNET",
     prioritet: "NORMAL",
@@ -294,7 +307,7 @@ const initialeMockMineKontrollsaker = [
     personIdent: "99001122334",
     navn: "Fatima Rahman",
     saksbehandler: "Z999999",
-    saksbehandlere: { deltMed: [] },
+    saksbehandlere: { eier: innloggetEier, deltMed: [] },
     status: "AVSLUTTET",
     kategori: "ANNET",
     prioritet: "NORMAL",
@@ -331,7 +344,7 @@ const initialeMockMineKontrollsaker = [
     personIdent: "00112233445",
     navn: "Thomas Solberg",
     saksbehandler: "Z999999",
-    saksbehandlere: { deltMed: [] },
+    saksbehandlere: { eier: innloggetEier, deltMed: [] },
     status: "HENLAGT",
     kategori: "IDENTITET",
     prioritet: "NORMAL",
