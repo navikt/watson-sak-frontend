@@ -6,8 +6,6 @@ import type {
   TilgjengeligHandling,
 } from "./types.backend";
 
-const forrigeStatusPerSak = new Map<string, KontrollsakStatus>();
-
 function lagTilgjengeligHandling(
   handling: KontrollsakHandling,
   resultatStatus: KontrollsakStatus,
@@ -20,19 +18,37 @@ function lagTilgjengeligHandling(
   };
 }
 
-function hentForrigeStatus(sakId: string, status: KontrollsakStatus) {
-  return forrigeStatusPerSak.get(sakId) ?? (status === "I_BERO" ? "OPPRETTET" : undefined);
-}
-
 function beregnTilgjengeligeHandlinger(
-  sak: Pick<KontrollsakResponse, "id" | "status" | "saksbehandlere">,
+  sak: Pick<KontrollsakResponse, "status" | "saksbehandlere" | "iBero">,
 ): TilgjengeligHandling[] {
-  const forrigeStatus = hentForrigeStatus(sak.id, sak.status);
+  if (sak.status === "AVSLUTTET") {
+    return [];
+  }
+
+  if (sak.iBero) {
+    if (sak.saksbehandlere.eier === null) {
+      return [
+        lagTilgjengeligHandling("TILDEL", sak.status, [{ felt: "navIdent", tillatteVerdier: [] }]),
+        lagTilgjengeligHandling("TA_AV_BERO", sak.status),
+      ];
+    }
+
+    return [
+      lagTilgjengeligHandling("TA_AV_BERO", sak.status),
+      lagTilgjengeligHandling("FRISTILL", sak.status),
+    ];
+  }
 
   if (sak.saksbehandlere.eier === null) {
-    return [
+    const handlinger = [
       lagTilgjengeligHandling("TILDEL", sak.status, [{ felt: "navIdent", tillatteVerdier: [] }]),
     ];
+
+    if (kanSettesPåBero(sak.status)) {
+      handlinger.push(lagTilgjengeligHandling("SETT_BERO", sak.status));
+    }
+
+    return handlinger;
   }
 
   switch (sak.status) {
@@ -40,7 +56,7 @@ function beregnTilgjengeligeHandlinger(
       return [
         lagTilgjengeligHandling("START_UTREDNING", "UTREDES"),
         lagTilgjengeligHandling("FRISTILL", "OPPRETTET"),
-        lagTilgjengeligHandling("SETT_I_BERO", "I_BERO"),
+        lagTilgjengeligHandling("SETT_BERO", "OPPRETTET"),
       ];
     case "UTREDES":
       return [
@@ -48,19 +64,19 @@ function beregnTilgjengeligeHandlinger(
         lagTilgjengeligHandling("SETT_VENTER_PA_VEDTAK", "VENTER_PA_VEDTAK"),
         lagTilgjengeligHandling("SETT_ANMELDELSE_VURDERES", "ANMELDELSE_VURDERES"),
         lagTilgjengeligHandling("SETT_HENLAGT", "HENLAGT"),
-        lagTilgjengeligHandling("SETT_I_BERO", "I_BERO"),
+        lagTilgjengeligHandling("SETT_BERO", "UTREDES"),
         lagTilgjengeligHandling("FRISTILL", "UTREDES"),
       ];
     case "VENTER_PA_INFORMASJON":
       return [
         lagTilgjengeligHandling("START_UTREDNING", "UTREDES"),
-        lagTilgjengeligHandling("SETT_I_BERO", "I_BERO"),
+        lagTilgjengeligHandling("SETT_BERO", "VENTER_PA_INFORMASJON"),
         lagTilgjengeligHandling("FRISTILL", "VENTER_PA_INFORMASJON"),
       ];
     case "VENTER_PA_VEDTAK":
       return [
         lagTilgjengeligHandling("START_UTREDNING", "UTREDES"),
-        lagTilgjengeligHandling("SETT_I_BERO", "I_BERO"),
+        lagTilgjengeligHandling("SETT_BERO", "VENTER_PA_VEDTAK"),
         lagTilgjengeligHandling("FRISTILL", "VENTER_PA_VEDTAK"),
       ];
     case "ANMELDELSE_VURDERES":
@@ -68,7 +84,7 @@ function beregnTilgjengeligeHandlinger(
         lagTilgjengeligHandling("SETT_ANMELDT", "ANMELDT"),
         lagTilgjengeligHandling("SETT_HENLAGT", "HENLAGT"),
         lagTilgjengeligHandling("START_UTREDNING", "UTREDES"),
-        lagTilgjengeligHandling("SETT_I_BERO", "I_BERO"),
+        lagTilgjengeligHandling("SETT_BERO", "ANMELDELSE_VURDERES"),
         lagTilgjengeligHandling("FRISTILL", "ANMELDELSE_VURDERES"),
       ];
     case "ANMELDT":
@@ -81,41 +97,20 @@ function beregnTilgjengeligeHandlinger(
         ]),
         lagTilgjengeligHandling("FRISTILL", "ANMELDT"),
       ];
-    case "I_BERO":
-      return [
-        lagTilgjengeligHandling("FORTSETT_FRA_I_BERO", forrigeStatus ?? "UTREDES"),
-        lagTilgjengeligHandling("FRISTILL", "I_BERO"),
-      ];
     case "HENLAGT":
       return [
         lagTilgjengeligHandling("AVSLUTT", "AVSLUTTET"),
         lagTilgjengeligHandling("FRISTILL", "HENLAGT"),
       ];
-    case "AVSLUTTET":
-      return [];
   }
 }
 
 export function nullstillMockStatushistorikk() {
-  forrigeStatusPerSak.clear();
 }
 
 export function oppdaterTilgjengeligeHandlinger(sak: KontrollsakResponse): KontrollsakResponse {
   sak.tilgjengeligeHandlinger = beregnTilgjengeligeHandlinger(sak);
   return sak;
-}
-
-export function settForrigeStatus(sakId: string, status: KontrollsakStatus | null) {
-  if (status === null) {
-    forrigeStatusPerSak.delete(sakId);
-    return;
-  }
-
-  forrigeStatusPerSak.set(sakId, status);
-}
-
-export function hentNesteStatusFraBero(sak: KontrollsakResponse): KontrollsakStatus {
-  return hentForrigeStatus(sak.id, sak.status) ?? "UTREDES";
 }
 
 function erGyldigUuid(verdi: string): boolean {
@@ -230,7 +225,7 @@ export function normaliserLegacyKontrollsak(
     TIL_FORVALTNING: "VENTER_PA_VEDTAK",
     HENLAGT: "HENLAGT",
     AVSLUTTET: "AVSLUTTET",
-    I_BERO: "I_BERO",
+    I_BERO: "OPPRETTET",
     VENTER_PA_INFORMASJON: "VENTER_PA_INFORMASJON",
     VENTER_PA_VEDTAK: "VENTER_PA_VEDTAK",
     ANMELDELSE_VURDERES: "ANMELDELSE_VURDERES",
@@ -278,6 +273,7 @@ export function normaliserLegacyKontrollsak(
   };
 
   const normalisertStatus = statusMap[legacyStatus] ?? "OPPRETTET";
+  const iBero = legacyStatus === "I_BERO";
   const opprettetAv = normaliserLegacyOpprettetAv(sak, saksbehandlerNavn, saksbehandlerEnhet);
   const eier = normaliserLegacyEier(sak);
   const avslutningskonklusjon =
@@ -299,6 +295,7 @@ export function normaliserLegacyKontrollsak(
       opprettetAv,
     },
     status: normalisertStatus,
+    iBero,
     avslutningskonklusjon,
     tilgjengeligeHandlinger: [],
     kategori: (legacyKategori in
@@ -409,9 +406,15 @@ export function normaliserLegacyKontrollsak(
     oppdatert: typeof sak.oppdatert === "string" ? sak.oppdatert : null,
   };
 
-  if (normalisert.status === "I_BERO") {
-    settForrigeStatus(normalisert.id, "OPPRETTET");
-  }
-
   return oppdaterTilgjengeligeHandlinger(normalisert);
+}
+
+function kanSettesPåBero(status: KontrollsakStatus): boolean {
+  return (
+    status === "OPPRETTET" ||
+    status === "UTREDES" ||
+    status === "VENTER_PA_INFORMASJON" ||
+    status === "VENTER_PA_VEDTAK" ||
+    status === "ANMELDELSE_VURDERES"
+  );
 }

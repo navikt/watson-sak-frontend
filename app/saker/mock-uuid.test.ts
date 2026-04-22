@@ -1,10 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
-  hentNesteStatusFraBero,
   normaliserLegacyKontrollsak,
   nullstillMockStatushistorikk,
   oppdaterTilgjengeligeHandlinger,
-  settForrigeStatus,
 } from "./mock-uuid";
 
 describe("normaliserLegacyKontrollsak", () => {
@@ -58,6 +56,11 @@ describe("normaliserLegacyKontrollsak", () => {
       {
         handling: "TILDEL",
         pakrevdeFelter: [{ felt: "navIdent", tillatteVerdier: [] }],
+        resultatStatus: "VENTER_PA_VEDTAK",
+      },
+      {
+        handling: "SETT_BERO",
+        pakrevdeFelter: [],
         resultatStatus: "VENTER_PA_VEDTAK",
       },
     ]);
@@ -151,12 +154,12 @@ describe("normaliserLegacyKontrollsak", () => {
     ]);
   });
 
-  it("nullstiller lagret forrige status mellom reset av mockdata", () => {
+  it("lar eierløs sak i bero eksponere tildel og ta av bero", () => {
     const sak = normaliserLegacyKontrollsak(
       {
         id: "401",
         personIdent: "12345678901",
-        status: "UTREDES",
+        status: "I_BERO",
         kategori: "ARBEID",
         ytelser: [],
         opprettet: "2026-01-01T00:00:00Z",
@@ -164,26 +167,34 @@ describe("normaliserLegacyKontrollsak", () => {
       4,
     );
 
-    settForrigeStatus(sak.id, "VENTER_PA_VEDTAK");
-    sak.status = "I_BERO";
     oppdaterTilgjengeligeHandlinger(sak);
 
-    expect(hentNesteStatusFraBero(sak)).toBe("VENTER_PA_VEDTAK");
-
-    nullstillMockStatushistorikk();
-
-    expect(hentNesteStatusFraBero(sak)).toBe("OPPRETTET");
+    expect(sak.iBero).toBe(true);
+    expect(sak.status).toBe("OPPRETTET");
+    expect(sak.tilgjengeligeHandlinger).toEqual([
+      {
+        handling: "TILDEL",
+        pakrevdeFelter: [{ felt: "navIdent", tillatteVerdier: [] }],
+        resultatStatus: "OPPRETTET",
+      },
+      {
+        handling: "TA_AV_BERO",
+        pakrevdeFelter: [],
+        resultatStatus: "OPPRETTET",
+      },
+    ]);
   });
 
-  it("bevarer lagret forrige status når owner fristilles i bero", () => {
+  it("bevarer underliggende status når owner fristilles i bero", () => {
     const sak = normaliserLegacyKontrollsak(
       {
         id: "501",
         personIdent: "12345678901",
-        status: "I_BERO",
+        status: "VENTER_PA_VEDTAK",
         kategori: "ARBEID",
         ytelser: [],
         opprettet: "2026-01-01T00:00:00Z",
+        iBero: true,
         saksbehandlere: {
           eier: {
             navn: "Kari Nordmann",
@@ -195,16 +206,21 @@ describe("normaliserLegacyKontrollsak", () => {
       5,
     );
 
-    settForrigeStatus(sak.id, "VENTER_PA_VEDTAK");
+    sak.iBero = true;
     sak.saksbehandlere.eier = null;
     oppdaterTilgjengeligeHandlinger(sak);
 
-    expect(hentNesteStatusFraBero(sak)).toBe("VENTER_PA_VEDTAK");
+    expect(sak.status).toBe("VENTER_PA_VEDTAK");
     expect(sak.tilgjengeligeHandlinger).toEqual([
       {
         handling: "TILDEL",
         pakrevdeFelter: [{ felt: "navIdent", tillatteVerdier: [] }],
-        resultatStatus: "I_BERO",
+        resultatStatus: "VENTER_PA_VEDTAK",
+      },
+      {
+        handling: "TA_AV_BERO",
+        pakrevdeFelter: [],
+        resultatStatus: "VENTER_PA_VEDTAK",
       },
     ]);
   });
