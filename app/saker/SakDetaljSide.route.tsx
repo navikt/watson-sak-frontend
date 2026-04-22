@@ -39,11 +39,7 @@ import {
 } from "~/registrer-sak/validering";
 import { mockSaksbehandlere, mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import { mockSeksjoner } from "~/saker/mock-seksjoner.server";
-import {
-  hentNesteStatusFraBero,
-  oppdaterTilgjengeligeHandlinger,
-  settForrigeStatus,
-} from "~/saker/mock-uuid";
+import { oppdaterTilgjengeligeHandlinger } from "~/saker/mock-uuid";
 import type {
   Avslutningskonklusjon,
   KontrollsakHandling,
@@ -117,7 +113,6 @@ const gyldigeStatuser = new Set<KontrollsakStatus>([
   "ANMELDT",
   "HENLAGT",
   "AVSLUTTET",
-  "I_BERO",
 ]);
 
 function erGyldigStatus(verdi: string): verdi is KontrollsakStatus {
@@ -280,7 +275,13 @@ function utførStatushandling(
     throw data("Handlingen er ikke tilgjengelig for saken", { status: 400 });
   }
 
-  if (handling !== "TILDEL" && handling !== "FRISTILL" && sak.saksbehandlere.eier === null) {
+  if (
+    handling !== "TILDEL" &&
+    handling !== "FRISTILL" &&
+    handling !== "SETT_BERO" &&
+    handling !== "TA_AV_BERO" &&
+    sak.saksbehandlere.eier === null
+  ) {
     throw data("Saken må tildeles før status kan endres", { status: 400 });
   }
 
@@ -329,14 +330,15 @@ function utførStatushandling(
       leggTilHendelse(sak, "SAK_HENLAGT");
       return;
     }
-    case "SETT_I_BERO": {
-      settForrigeStatus(sak.id, sak.status);
-      oppdaterSakStatus(sak, "I_BERO");
+    case "SETT_BERO": {
+      sak.iBero = true;
+      oppdaterTilgjengeligeHandlinger(sak);
       leggTilHendelse(sak, "SAK_SATT_I_BERO");
       return;
     }
-    case "FORTSETT_FRA_I_BERO": {
-      oppdaterSakStatus(sak, hentNesteStatusFraBero(sak));
+    case "TA_AV_BERO": {
+      sak.iBero = false;
+      oppdaterTilgjengeligeHandlinger(sak);
       leggTilHendelse(sak, "SAK_GJENOPPTATT");
       return;
     }
@@ -346,6 +348,7 @@ function utførStatushandling(
       return;
     }
     case "AVSLUTT": {
+      sak.iBero = false;
       oppdaterSakStatus(sak, "AVSLUTTET");
       leggTilHendelse(sak, "STATUS_ENDRET");
       return;
@@ -367,6 +370,7 @@ function utførStatushandling(
       }
 
       sak.avslutningskonklusjon = avslutningskonklusjon as Avslutningskonklusjon;
+      sak.iBero = false;
       oppdaterSakStatus(sak, "AVSLUTTET");
       leggTilHendelse(sak, "STATUS_ENDRET");
       return;
@@ -395,8 +399,8 @@ export async function action({ request, params }: Route.ActionArgs) {
     case "SETT_ANMELDELSE_VURDERES":
     case "SETT_ANMELDT":
     case "SETT_HENLAGT":
-    case "SETT_I_BERO":
-    case "FORTSETT_FRA_I_BERO":
+    case "SETT_BERO":
+    case "TA_AV_BERO":
     case "AVSLUTT":
     case "AVSLUTT_MED_KONKLUSJON": {
       utførStatushandling(sak, handling, formData);
@@ -410,6 +414,9 @@ export async function action({ request, params }: Route.ActionArgs) {
       }
 
       sak.status = nyStatus;
+      if (nyStatus === "AVSLUTTET") {
+        sak.iBero = false;
+      }
       oppdaterTilgjengeligeHandlinger(sak);
       leggTilHendelse(sak, "STATUS_ENDRET");
       break;
