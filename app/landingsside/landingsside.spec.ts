@@ -4,6 +4,8 @@ import { resetMockData } from "~/test/reset-mock-data";
 import { sjekkTilgjengelighet } from "~/test/uu-util";
 
 test.describe("Landingsside", () => {
+  test.describe.configure({ mode: "serial" });
+
   test.beforeEach(async ({ page }) => {
     await resetMockData(page);
     await page.goto("/", { waitUntil: "networkidle" });
@@ -20,7 +22,7 @@ test.describe("Landingsside", () => {
   test("viser en dynamisk oppsummeringslinje i velkomstseksjonen", async ({ page }) => {
     await expect(
       page.getByText(
-        "Akkurat nå har du 3 saker til utredning og 1 sak som venter på svar fra NAY/NFP.",
+        "Akkurat nå har du 3 aktive saker og 1 sak på vent.",
       ),
     ).toBeVisible();
   });
@@ -80,6 +82,8 @@ test.describe("Landingsside", () => {
     await expect(page.getByRole("heading", { name: "Sak #103 må vurderes" })).toBeVisible();
 
     await page.getByRole("button", { name: "Marker som lest" }).first().click();
+
+    await expect(page.getByRole("heading", { name: "Sak #103 må vurderes" })).not.toBeVisible();
     await page.reload({ waitUntil: "networkidle" });
 
     await expect(page.getByRole("heading", { name: "Sak #103 må vurderes" })).not.toBeVisible();
