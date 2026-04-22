@@ -66,6 +66,54 @@ describe("normaliserLegacyKontrollsak", () => {
     ]);
   });
 
+  it("eksponerer vurder anmeldelse og henlegg fra VENTER_PA_VEDTAK med eier", () => {
+    const sak = normaliserLegacyKontrollsak(
+      {
+        id: "601",
+        personIdent: "12345678901",
+        navn: "Ola Nordmann",
+        saksbehandler: "Z123456",
+        mottakEnhet: "4812",
+        status: "TIL_FORVALTNING",
+        kategori: "ARBEID",
+        ytelser: [],
+        opprettet: "2026-01-01T00:00:00Z",
+      },
+      6,
+    );
+
+    sak.saksbehandlere.eier = {
+      navIdent: "Z123456",
+      navn: "Kari Nordmann",
+      enhet: "4812",
+    };
+    oppdaterTilgjengeligeHandlinger(sak);
+
+    expect(sak.status).toBe("VENTER_PA_VEDTAK");
+    expect(sak.tilgjengeligeHandlinger).toEqual([
+      {
+        handling: "SETT_ANMELDELSE_VURDERES",
+        pakrevdeFelter: [],
+        resultatStatus: "ANMELDELSE_VURDERES",
+      },
+      {
+        handling: "SETT_HENLAGT",
+        pakrevdeFelter: [],
+        resultatStatus: "HENLAGT",
+      },
+      {
+        handling: "SETT_BERO",
+        pakrevdeFelter: [],
+        resultatStatus: "VENTER_PA_VEDTAK",
+      },
+      {
+        handling: "FRISTILL",
+        pakrevdeFelter: [],
+        resultatStatus: "VENTER_PA_VEDTAK",
+      },
+    ]);
+  });
+
   it("faller tilbake trygt når legacy-eier og kategorifelter mangler", () => {
     const sak = normaliserLegacyKontrollsak(
       {

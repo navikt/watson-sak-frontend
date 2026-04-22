@@ -75,7 +75,8 @@ function beregnTilgjengeligeHandlinger(
       ];
     case "VENTER_PA_VEDTAK":
       return [
-        lagTilgjengeligHandling("START_UTREDNING", "UTREDES"),
+        lagTilgjengeligHandling("SETT_ANMELDELSE_VURDERES", "ANMELDELSE_VURDERES"),
+        lagTilgjengeligHandling("SETT_HENLAGT", "HENLAGT"),
         lagTilgjengeligHandling("SETT_BERO", "VENTER_PA_VEDTAK"),
         lagTilgjengeligHandling("FRISTILL", "VENTER_PA_VEDTAK"),
       ];
