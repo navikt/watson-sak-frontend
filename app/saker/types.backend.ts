@@ -14,7 +14,6 @@ const kontrollsakStatusSchema = z.enum([
   "ANMELDT",
   "HENLAGT",
   "AVSLUTTET",
-  "I_BERO",
 ]);
 
 const kontrollsakHandlingSchema = z.enum([
@@ -26,8 +25,8 @@ const kontrollsakHandlingSchema = z.enum([
   "SETT_ANMELDELSE_VURDERES",
   "SETT_ANMELDT",
   "SETT_HENLAGT",
-  "SETT_I_BERO",
-  "FORTSETT_FRA_I_BERO",
+  "SETT_BERO",
+  "TA_AV_BERO",
   "AVSLUTT",
   "AVSLUTT_MED_KONKLUSJON",
 ]);
@@ -115,6 +114,7 @@ export const kontrollsakResponseSchema = z
     personNavn: z.string().nullable().optional(),
     saksbehandlere: saksbehandlereSchema,
     status: kontrollsakStatusSchema,
+    iBero: z.boolean(),
     avslutningskonklusjon: avslutningskonklusjonSchema.nullable(),
     tilgjengeligeHandlinger: z.array(tilgjengeligHandlingSchema),
     kategori: kontrollsakKategoriSchema,
