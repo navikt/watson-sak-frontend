@@ -49,7 +49,7 @@ export function SakIBeroHandlinger({ sak, tilgjengeligeHandlinger }: SakIBeroHan
         onClick={handleGjenoppta}
         loading={gjenopptaFetcher.state !== "idle"}
       >
-        Fortsett arbeid
+        Ta saken ut av bero
       </Button>
       {kanFristilles && (
         <Button

@@ -94,7 +94,7 @@ export function SakUtredesHandlinger({
             icon={<CheckmarkCircleIcon aria-hidden />}
             onClick={() => sendHandling("START_UTREDNING")}
           >
-            Start utredning
+            {sak.status === "OPPRETTET" ? "Start utredning" : "Fortsett utredning"}
           </Button>
         )}
         {harHandling("SETT_VENTER_PA_INFORMASJON") && (
@@ -103,7 +103,7 @@ export function SakUtredesHandlinger({
             size="small"
             onClick={() => sendHandling("SETT_VENTER_PA_INFORMASJON")}
           >
-            Sett venter på informasjon
+            Vent på informasjon
           </Button>
         )}
         {harHandling("SETT_VENTER_PA_VEDTAK") && (
@@ -112,7 +112,7 @@ export function SakUtredesHandlinger({
             size="small"
             onClick={() => sendHandling("SETT_VENTER_PA_VEDTAK")}
           >
-            Sett venter på vedtak
+            Send til vedtak
           </Button>
         )}
         {harHandling("SETT_BERO") && (
