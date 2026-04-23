@@ -21,7 +21,7 @@ test.describe("Landingsside", () => {
 
   test("viser en dynamisk oppsummeringslinje i velkomstseksjonen", async ({ page }) => {
     await expect(
-      page.getByText("Akkurat nå har du 3 aktive saker og 1 sak på vent."),
+      page.getByText("Akkurat nå har du 5 aktive saker og 1 sak på vent."),
     ).toBeVisible();
   });
 
@@ -81,10 +81,10 @@ test.describe("Landingsside", () => {
 
     await page.getByRole("button", { name: "Marker som lest" }).first().click();
 
-    await expect(page.getByRole("heading", { name: "Sak #103 må vurderes" })).not.toBeVisible();
+    await expect(page.getByRole("heading", { name: "Sak #103 må vurderes" })).toHaveCount(0);
     await page.reload({ waitUntil: "networkidle" });
 
-    await expect(page.getByRole("heading", { name: "Sak #103 må vurderes" })).not.toBeVisible();
+    await expect(page.getByRole("heading", { name: "Sak #103 må vurderes" })).toHaveCount(0);
     await expect(page.getByRole("heading", { name: "Sak #102 har ny hendelse" })).toBeVisible();
   });
 

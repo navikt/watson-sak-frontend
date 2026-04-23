@@ -1,9 +1,11 @@
 import { expect, test } from "@playwright/test";
 
+import { resetMockData } from "~/test/reset-mock-data";
 import { sjekkTilgjengelighet } from "~/test/uu-util";
 
 test.describe("Statistikk", () => {
   test.beforeEach(async ({ page }) => {
+    await resetMockData(page);
     await page.goto("/statistikk", { waitUntil: "networkidle" });
   });
 
@@ -16,7 +18,14 @@ test.describe("Statistikk", () => {
     await expect(nøkkeltall.getByText("Totalt")).toBeVisible();
     await expect(nøkkeltall.getByText("Under utredning")).toBeVisible();
     await expect(nøkkeltall.getByText("Avsluttet")).toBeVisible();
-    await expect(nøkkeltall.getByText("Ufordelt")).toBeVisible();
+    await expect(nøkkeltall.getByText("Opprettet")).toBeVisible();
+    await expect(nøkkeltall.getByText("I bero")).toBeVisible();
+  });
+
+  test("viser riktig antall saker i bero", async ({ page }) => {
+    const nøkkeltall = page.getByRole("region", { name: "Nøkkeltall" });
+
+    await expect(nøkkeltall.getByText(/^I bero\s*1$/)).toBeVisible();
   });
 
   test("viser saker per status som søylediagram", async ({ page }) => {

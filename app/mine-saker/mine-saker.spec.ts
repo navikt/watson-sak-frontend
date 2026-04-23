@@ -1,9 +1,11 @@
 import { expect, test } from "@playwright/test";
 
+import { resetMockData } from "~/test/reset-mock-data";
 import { sjekkTilgjengelighet } from "~/test/uu-util";
 
 test.describe("Mine saker", () => {
   test.beforeEach(async ({ page }) => {
+    await resetMockData(page);
     await page.goto("/mine-saker", { waitUntil: "networkidle" });
   });
 
@@ -15,7 +17,7 @@ test.describe("Mine saker", () => {
     await expect(page.getByRole("heading", { name: "Mine saker" })).toBeVisible();
     await expect(hovedinnhold.getByRole("button", { name: "Oppgaver på vent" })).toBeVisible();
     await expect(hovedinnhold.getByRole("button", { name: "Fullførte oppgaver" })).toBeVisible();
-    await expect(hovedinnhold.getByRole("link")).toHaveCount(3);
+    await expect(hovedinnhold.getByRole("link")).toHaveCount(5);
   });
 
   test("kan åpne ventende og fullførte saker", async ({ page }) => {
@@ -24,10 +26,10 @@ test.describe("Mine saker", () => {
     const fullførteKnapp = hovedinnhold.getByRole("button", { name: "Fullførte oppgaver" });
 
     await ventendeKnapp.click();
-    await expect(hovedinnhold.getByRole("link")).toHaveCount(4);
+    await expect(hovedinnhold.getByRole("link")).toHaveCount(6);
 
     await fullførteKnapp.click();
-    await expect(hovedinnhold.getByRole("link")).toHaveCount(7);
+    await expect(hovedinnhold.getByRole("link")).toHaveCount(9);
   });
 
   test("kan navigere til sakdetalj", async ({ page }) => {
