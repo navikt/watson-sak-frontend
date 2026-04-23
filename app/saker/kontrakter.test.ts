@@ -17,9 +17,8 @@ describe("Kontrollsak-kontrakter", () => {
       kontrollsakResponseSchema.parse({
         id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
         personIdent: "12345678901",
-        personNavn: "Ola Nordmann",
         saksbehandlere: {
-          eier: {
+          ansvarlig: {
             navIdent: "Z123456",
             navn: "Saks Behandler",
             enhet: "4812",
@@ -31,7 +30,16 @@ describe("Kontrollsak-kontrakter", () => {
             enhet: "4801",
           },
         },
-        status: "UFORDELT",
+        status: "OPPRETTET",
+        iBero: false,
+        avslutningskonklusjon: null,
+        tilgjengeligeHandlinger: [
+          {
+            handling: "TILDEL",
+            pakrevdeFelter: [{ felt: "navIdent", tillatteVerdier: [] }],
+            resultatStatus: "OPPRETTET",
+          },
+        ],
         kategori: "ARBEID",
         kilde: "NAV_KONTROLL",
         misbruktype: ["FIKTIVT_ARBEIDSFORHOLD"],
@@ -59,10 +67,11 @@ describe("Kontrollsak-kontrakter", () => {
         oppdatert: null,
       }),
     ).toMatchObject({
-      status: "UFORDELT",
-      personNavn: "Ola Nordmann",
+      status: "OPPRETTET",
+      personNavn: null,
       ytelser: [{ type: "Dagpenger" }],
       kilde: "NAV_KONTROLL",
+      tilgjengeligeHandlinger: [{ handling: "TILDEL" }],
     });
   });
 
@@ -71,9 +80,8 @@ describe("Kontrollsak-kontrakter", () => {
       kontrollsakResponseSchema.parse({
         id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
         personIdent: "12345678901",
-        personNavn: "Ola Nordmann",
         saksbehandlere: {
-          eier: null,
+          ansvarlig: null,
           deltMed: [],
           opprettetAv: {
             navIdent: "Z123456",
@@ -81,7 +89,10 @@ describe("Kontrollsak-kontrakter", () => {
             enhet: null,
           },
         },
-        status: "UFORDELT",
+        status: "OPPRETTET",
+        iBero: false,
+        avslutningskonklusjon: null,
+        tilgjengeligeHandlinger: [],
         kategori: "ARBEID",
         kilde: "PUBLIKUM",
         misbruktype: [],
@@ -105,9 +116,8 @@ describe("Kontrollsak-kontrakter", () => {
           {
             id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
             personIdent: "12345678901",
-            personNavn: "Ola Nordmann",
             saksbehandlere: {
-              eier: null,
+              ansvarlig: null,
               deltMed: [],
               opprettetAv: {
                 navIdent: "Z123456",
@@ -115,7 +125,10 @@ describe("Kontrollsak-kontrakter", () => {
                 enhet: null,
               },
             },
-            status: "UFORDELT",
+            status: "OPPRETTET",
+            iBero: false,
+            avslutningskonklusjon: null,
+            tilgjengeligeHandlinger: [],
             kategori: "ARBEID",
             kilde: "PUBLIKUM",
             misbruktype: [],
@@ -134,7 +147,7 @@ describe("Kontrollsak-kontrakter", () => {
       }),
     ).toMatchObject({
       totalItems: 1,
-      items: [{ status: "UFORDELT" }],
+      items: [{ status: "OPPRETTET" }],
     });
   });
 
@@ -147,12 +160,12 @@ describe("Kontrollsak-kontrakter", () => {
         sakId: "4fa85f64-5717-4562-b3fc-2c963f66afa6",
         kategori: "ARBEID",
         prioritet: "NORMAL",
-        status: "UFORDELT",
+        status: "OPPRETTET",
         ytelseTyper: ["Sykepenger"],
       }),
     ).toMatchObject({
       hendelsesType: "SAK_OPPRETTET",
-      status: "UFORDELT",
+      status: "OPPRETTET",
     });
   });
 

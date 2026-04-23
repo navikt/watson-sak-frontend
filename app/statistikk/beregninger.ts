@@ -24,10 +24,13 @@ function getYtelseTyper(sak: Statistikksak): string[] {
 /** Antall saker gruppert etter status */
 export function beregnAntallPerStatus(saker: Statistikksak[]): Record<StatistikkStatus, number> {
   const resultat: Record<StatistikkStatus, number> = {
-    UFORDELT: 0,
+    OPPRETTET: 0,
     UTREDES: 0,
-    I_BERO: 0,
-    FORVALTNING: 0,
+    VENTER_PA_INFORMASJON: 0,
+    VENTER_PA_VEDTAK: 0,
+    ANMELDELSE_VURDERES: 0,
+    ANMELDT: 0,
+    HENLAGT: 0,
     AVSLUTTET: 0,
   };
 
@@ -36,6 +39,10 @@ export function beregnAntallPerStatus(saker: Statistikksak[]): Record<Statistikk
   }
 
   return resultat;
+}
+
+export function beregnAntallIBero(saker: Statistikksak[]): number {
+  return saker.filter((sak) => sak.iBero).length;
 }
 
 interface BehandlingstidResultat {

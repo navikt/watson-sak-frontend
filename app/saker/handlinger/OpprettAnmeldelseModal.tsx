@@ -17,7 +17,7 @@ export function OpprettAnmeldelseModal({ sakId, åpen, onClose }: OpprettAnmelde
 
   function handleBekreft() {
     fetcher.submit(
-      { handling: "loggfør_anmeldelse" },
+      { handling: "SETT_ANMELDT" },
       {
         method: "post",
         action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),

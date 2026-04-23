@@ -1,5 +1,6 @@
 export {
   mockMineKontrollsaker,
+  mockMineSakerInnloggetNavIdent,
   mockMineSakerAvslutningsdatoer,
   mockMineSakerTidligereTipsSakIder,
   resetMockMineSaker,

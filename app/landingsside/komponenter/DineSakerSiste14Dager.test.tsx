@@ -13,6 +13,7 @@ describe("DineSakerSiste14Dager", () => {
           snittBehandlingstidPerSak: 4,
           antallHenlagteSaker: 2,
           antallHenlagteTips: 1,
+          antallSakerIBero: 0,
         }}
       />,
     );
@@ -26,5 +27,6 @@ describe("DineSakerSiste14Dager", () => {
     expect(screen.getByText("Henlagte tips")).toBeDefined();
     expect(screen.queryByText("Tips til vurdering")).toBeNull();
     expect(screen.queryByText("Sendt til NAY/NFP")).toBeNull();
+    expect(screen.queryByText("Saker i bero")).toBeNull();
   });
 });

@@ -20,7 +20,7 @@ describe("VideresendSakSide loader", () => {
     expect("personIdent" in resultat.sak).toBe(true);
   });
 
-  it("setter status til FORVALTNING og logger videresending ved gyldig innsending", async () => {
+  it("setter status til VENTER_PA_VEDTAK og logger videresending ved gyldig innsending", async () => {
     const sakId = lagMockSakUuid("201", 2);
     const sakRef = getSaksreferanse(sakId);
     const sak = hentAlleSaker().find((eksisterendeSak) => eksisterendeSak.id === sakId);
@@ -42,12 +42,12 @@ describe("VideresendSakSide loader", () => {
       params: { sakId: sakRef },
     } as Route.ActionArgs);
 
-    expect(sak?.status).toBe("FORVALTNING");
+    expect(sak?.status).toBe("VENTER_PA_VEDTAK");
     expect(respons).toBeInstanceOf(Response);
     expect((respons as Response).status).toBe(302);
 
     const historikk = hentHistorikk(sakId);
     expect(historikk[0]?.hendelsesType).toBe("VIDERESENDT_TIL_NAY_NFP");
-    expect(historikk[0]?.status).toBe("FORVALTNING");
+    expect(historikk[0]?.status).toBe("VENTER_PA_VEDTAK");
   });
 });

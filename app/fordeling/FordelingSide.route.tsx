@@ -22,7 +22,7 @@ export default function FordelingSide() {
 
   return (
     <Page>
-      <title>Ufordelte saker – Watson Sak</title>
+      <title>Fordeling – Watson Sak</title>
       <PageBlock width="xl" gutters className="!mx-0">
         <UfordelteSakerInnhold
           saker={saker}

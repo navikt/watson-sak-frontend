@@ -13,19 +13,25 @@ export type { KontrollsakStatus };
 type StatusVariant = "info" | "warning" | "success" | "neutral";
 
 const statusEtiketter: Record<KontrollsakStatus, string> = {
-  UFORDELT: "Ufordelt",
+  OPPRETTET: "Opprettet",
   UTREDES: "Utredes",
-  FORVALTNING: "Til forvaltning",
+  VENTER_PA_INFORMASJON: "Venter på informasjon",
+  VENTER_PA_VEDTAK: "Venter på vedtak",
+  ANMELDELSE_VURDERES: "Anmeldelse vurderes",
+  ANMELDT: "Anmeldt",
+  HENLAGT: "Henlagt",
   AVSLUTTET: "Avsluttet",
-  I_BERO: "I bero",
 };
 
 const statusVarianter: Record<KontrollsakStatus, StatusVariant> = {
-  UFORDELT: "info",
+  OPPRETTET: "info",
   UTREDES: "warning",
-  FORVALTNING: "success",
+  VENTER_PA_INFORMASJON: "neutral",
+  VENTER_PA_VEDTAK: "neutral",
+  ANMELDELSE_VURDERES: "warning",
+  ANMELDT: "success",
+  HENLAGT: "neutral",
   AVSLUTTET: "neutral",
-  I_BERO: "neutral",
 };
 
 const kildeEtiketter: Record<KontrollsakKilde, string> = {
@@ -93,6 +99,10 @@ export function getPersonIdent(sak: KontrollsakResponse): string {
 }
 
 export function getStatus(sak: KontrollsakResponse): string {
+  if (sak.iBero) {
+    return `I bero · ${formaterStatus(sak.status)}`;
+  }
+
   return formaterStatus(sak.status);
 }
 

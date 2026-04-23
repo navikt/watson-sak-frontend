@@ -9,9 +9,11 @@ describe("MineSakerSide loader", () => {
     expect("personIdent" in resultat.saker[0]).toBe(true);
   });
 
-  it("returnerer ikke ufordelte saker under mine saker", () => {
+  it("returnerer bare saker eid av innlogget bruker", () => {
     const resultat = loader();
 
-    expect(resultat.saker.every((sak) => sak.status !== "UFORDELT")).toBe(true);
+    expect(resultat.saker.every((sak) => sak.saksbehandlere.eier?.navIdent === "Z999999")).toBe(
+      true,
+    );
   });
 });

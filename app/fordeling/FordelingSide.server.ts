@@ -1,9 +1,10 @@
 import { data } from "react-router";
+import { oppdaterTilgjengeligeHandlinger } from "~/saker/mock-uuid";
 import { getBackendOboToken } from "~/auth/access-token";
 import { skalBrukeMockdata } from "~/config/env.server";
 import type { Route } from "./+types/FordelingSide.route";
 import { hentKontrollsakerForFordeling, tildelKontrollsak } from "./api.server";
-import { mapKontrollsakTilFordelingSak, erUfordeltKontrollsak } from "./mapper";
+import { mapKontrollsakTilFordelingSak, erEierlosKontrollsak } from "./mapper";
 import { mockKontrollsaker } from "./mock-data.server";
 
 export async function action({ request }: Route.ActionArgs) {
@@ -33,7 +34,12 @@ export async function action({ request }: Route.ActionArgs) {
       throw data("Sak ikke funnet", { status: 404 });
     }
 
-    kontrollsak.status = "UTREDES";
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: saksbehandler,
+      navn: saksbehandler,
+      enhet: kontrollsak.saksbehandlere.opprettetAv.enhet,
+    };
+    oppdaterTilgjengeligeHandlinger(kontrollsak);
     return { ok: true };
   }
 
@@ -47,6 +53,6 @@ export async function loader({ request }: Route.LoaderArgs) {
   const kontrollsaker = await hentKontrollsakerForFordeling(request);
 
   return kontrollsaker
-    ? kontrollsaker.items.filter(erUfordeltKontrollsak).map(mapKontrollsakTilFordelingSak)
-    : mockKontrollsaker.filter(erUfordeltKontrollsak).map(mapKontrollsakTilFordelingSak);
+    ? kontrollsaker.items.filter(erEierlosKontrollsak).map(mapKontrollsakTilFordelingSak)
+    : mockKontrollsaker.filter(erEierlosKontrollsak).map(mapKontrollsakTilFordelingSak);
 }

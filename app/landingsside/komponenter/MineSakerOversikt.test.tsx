@@ -15,11 +15,14 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
       deltMed: [],
       opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
     },
-    status: "UFORDELT",
+    status: "OPPRETTET",
     kategori: "SAMLIV",
     kilde: "PUBLIKUM",
     misbruktype: ["SKJULT_SAMLIV"],
     prioritet: "NORMAL",
+    iBero: false,
+    avslutningskonklusjon: null,
+    tilgjengeligeHandlinger: [],
     ytelser: [
       {
         id: "00000000-0000-4000-8000-000000020101",

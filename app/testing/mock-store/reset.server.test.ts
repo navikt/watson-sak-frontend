@@ -23,8 +23,8 @@ describe("shared mock-store", () => {
 
     resetMockSaker();
 
-    expect(adapterFordeling[0]?.status).toBe("UFORDELT");
-    expect(storeFordeling[0]?.status).toBe("UFORDELT");
+    expect(adapterFordeling[0]?.status).toBe("OPPRETTET");
+    expect(storeFordeling[0]?.status).toBe("OPPRETTET");
   });
 
   it("tilbakestiller flere saksdomener via sentral reset", () => {
@@ -33,7 +33,7 @@ describe("shared mock-store", () => {
 
     resetMockStore();
 
-    expect(storeFordeling[0]?.status).toBe("UFORDELT");
+    expect(storeFordeling[0]?.status).toBe("OPPRETTET");
     expect(storeMineSaker[0]?.status).toBe("UTREDES");
 
     resetMockMineSaker();

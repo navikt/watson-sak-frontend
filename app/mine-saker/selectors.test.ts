@@ -18,11 +18,14 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
       deltMed: [],
       opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
     },
-    status: "UFORDELT",
+    status: "OPPRETTET",
     kategori: "ARBEID",
     kilde: "NAV_KONTROLL",
     misbruktype: [],
     prioritet: "NORMAL",
+    iBero: false,
+    avslutningskonklusjon: null,
+    tilgjengeligeHandlinger: [],
     ytelser: [],
     merking: null,
     resultat: null,
@@ -33,16 +36,20 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
 }
 
 describe("Mine saker selectors", () => {
-  it("mapper backend-status UFORDELT til aktive", () => {
-    expect(getMineSakerGruppeStatus(lagKontrollsak({ status: "UFORDELT" }))).toBe("aktive");
+  it("mapper backend-status OPPRETTET til aktive", () => {
+    expect(getMineSakerGruppeStatus(lagKontrollsak({ status: "OPPRETTET" }))).toBe("aktive");
   });
 
-  it("mapper backend-status FORVALTNING til ventende", () => {
-    expect(getMineSakerGruppeStatus(lagKontrollsak({ status: "FORVALTNING" }))).toBe("ventende");
+  it("mapper backend-status VENTER_PA_VEDTAK til ventende", () => {
+    expect(getMineSakerGruppeStatus(lagKontrollsak({ status: "VENTER_PA_VEDTAK" }))).toBe(
+      "ventende",
+    );
   });
 
-  it("mapper backend-status I_BERO til aktive eksplisitt", () => {
-    expect(getMineSakerGruppeStatus(lagKontrollsak({ status: "I_BERO" }))).toBe("aktive");
+  it("mapper saker i bero til ventende", () => {
+    expect(getMineSakerGruppeStatus(lagKontrollsak({ status: "OPPRETTET", iBero: true }))).toBe(
+      "ventende",
+    );
   });
 
   it("mapper backend-status AVSLUTTET til fullførte", () => {

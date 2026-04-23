@@ -1,6 +1,7 @@
 import { getBackendOboToken } from "~/auth/access-token";
 import { BACKEND_API_URL, skalBrukeMockdata } from "~/config/env.server";
 import { logger } from "~/logging/logging";
+import { kontrollsakPageResponseSchema } from "~/saker/types.backend";
 import type { KontrollsakPageResponse } from "./types.backend";
 
 type HentKontrollsakerArgs = {
@@ -36,7 +37,7 @@ export async function hentKontrollsaker({
     throw new Error("Kunne ikke hente kontrollsaker.");
   }
 
-  return (await response.json()) as KontrollsakPageResponse;
+  return kontrollsakPageResponseSchema.parse(await response.json());
 }
 
 export async function hentKontrollsakerForFordeling(request: Request) {
@@ -63,14 +64,14 @@ export async function tildelKontrollsak({
     throw new Error("Mangler backend-url for tildeling av kontrollsak.");
   }
 
-  const response = await fetch(`${BACKEND_API_URL}/api/v1/kontrollsaker/${sakId}/tildel`, {
+  const response = await fetch(`${BACKEND_API_URL}/api/v1/kontrollsaker/${sakId}/overgang`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
       Accept: "application/json",
     },
-    body: JSON.stringify({ saksbehandler }),
+    body: JSON.stringify({ handling: "TILDEL", navIdent: saksbehandler }),
   });
 
   if (!response.ok) {

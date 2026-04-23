@@ -29,12 +29,13 @@ describe("landingsside-loader", () => {
     const data = loader();
 
     expect(data.dineSakerSiste14Dager).toEqual({
-      antallSakerJobbetMed: 2,
+      antallSakerJobbetMed: 3,
       antallTipsTilVurdering: 0,
       antallSendtTilNayNfp: 1,
       snittBehandlingstidPerSak: null,
       antallHenlagteSaker: 0,
       antallHenlagteTips: 0,
+      antallSakerIBero: 0,
     });
   });
 
@@ -44,17 +45,17 @@ describe("landingsside-loader", () => {
     expect(data.mineSaker.every((sak) => sak.status !== "AVSLUTTET")).toBe(true);
   });
 
-  it("returnerer ikke ufordelte saker i dashboardets mine saker-liste", () => {
+  it("returnerer bare saker eid av innlogget bruker i dashboardets mine saker-liste", () => {
     const data = loader();
 
-    expect(data.mineSaker.every((sak) => sak.status !== "UFORDELT")).toBe(true);
+    expect(data.mineSaker.every((sak) => sak.saksbehandlere.eier?.navIdent === "Z999999")).toBe(
+      true,
+    );
   });
 
   it("returnerer en velkomstoppsummering basert på sakene dine", () => {
     const data = loader();
 
-    expect(data.velkomstOppsummering).toBe(
-      "Akkurat nå har du 3 saker til utredning og 1 sak som venter på svar fra NAY/NFP.",
-    );
+    expect(data.velkomstOppsummering).toBe("Akkurat nå har du 5 aktive saker og 1 sak på vent.");
   });
 });

@@ -3,16 +3,14 @@ import type { FordelingSak } from "./typer";
 import { kontrollsakKategoriEtiketter } from "~/saker/kategorier";
 import { formaterMisbrukstype } from "~/saker/visning";
 
-const ufordelteStatuser = new Set(["UFORDELT"]);
-
-export function erUfordeltKontrollsak(kontrollsak: KontrollsakResponse) {
-  return ufordelteStatuser.has(kontrollsak.status);
+export function erEierlosKontrollsak(kontrollsak: KontrollsakResponse) {
+  return kontrollsak.saksbehandlere.eier === null;
 }
 
 export function mapKontrollsakTilFordelingSak(kontrollsak: KontrollsakResponse): FordelingSak {
   return {
     id: kontrollsak.id,
-    navn: kontrollsak.personNavn,
+    navn: kontrollsak.personNavn ?? null,
     opprettetDato: kontrollsak.opprettet.slice(0, 10),
     oppdatertDato: (kontrollsak.oppdatert ?? kontrollsak.opprettet).slice(0, 10),
     kategori: kategoriEtikett(kontrollsak.kategori),
