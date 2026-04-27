@@ -1,6 +1,6 @@
 import { BodyShort, HStack, Link, Table, Tag } from "@navikt/ds-react";
 import type { ReactNode } from "react";
-import { Link as RouterLink } from "react-router";
+import { Link as RouterLink, useNavigate } from "react-router";
 import { formaterDato } from "~/utils/date-utils";
 
 type SakslisteKolonne =
@@ -78,6 +78,8 @@ export function Saksliste({
   kolonneHeaderInnhold,
   kolonneHeaderProps,
 }: SakslisteProps) {
+  const navigate = useNavigate();
+
   if (rader.length === 0) {
     return <BodyShort className="text-ax-text-neutral-subtle">{tomTekst}</BodyShort>;
   }
@@ -100,7 +102,11 @@ export function Saksliste({
       </Table.Header>
       <Table.Body>
         {rader.map((rad) => (
-          <Table.Row key={rad.id}>
+          <Table.Row
+            key={rad.id}
+            onClick={rad.detaljHref ? () => navigate(rad.detaljHref!) : undefined}
+            className={rad.detaljHref ? "cursor-pointer" : undefined}
+          >
             {kolonner.map((kolonne) => (
               <Table.DataCell key={kolonne}>{renderCelle(rad, kolonne)}</Table.DataCell>
             ))}
