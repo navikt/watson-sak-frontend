@@ -71,6 +71,7 @@ describe("sakslisteadaptere", () => {
       kategori: "Samliv",
       misbrukstyper: ["Skjult samliv"],
       status: { tekst: "Opprettet", variant: "info" },
+      saksbehandler: "Saks Behandler",
       opprettet: "2026-02-03T10:11:12Z",
       oppdatert: "2026-02-03T10:11:12Z",
     });
@@ -91,6 +92,7 @@ describe("sakslisteadaptere", () => {
       kategori: "Arbeid",
       misbrukstyper: ["Skjult samliv"],
       status: null,
+      saksbehandler: null,
       opprettet: "2026-03-20",
       oppdatert: "2026-03-21",
     });

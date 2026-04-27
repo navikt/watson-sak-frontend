@@ -10,7 +10,8 @@ type SakslisteKolonne =
   | "misbrukstype"
   | "status"
   | "opprettet"
-  | "oppdatert";
+  | "oppdatert"
+  | "saksbehandler";
 
 export type SakslisteStatus = {
   tekst: string;
@@ -27,6 +28,7 @@ export type SakslisteRad = {
   status: SakslisteStatus | null;
   opprettet: string;
   oppdatert: string | null;
+  saksbehandler: string | null;
 };
 
 type SakslisteProps = {
@@ -63,6 +65,7 @@ const standardTitler: Record<SakslisteKolonne, string> = {
   status: "Status",
   opprettet: "Opprettet",
   oppdatert: "Oppdatert",
+  saksbehandler: "Saksbehandler",
 };
 
 export function Saksliste({
@@ -157,5 +160,7 @@ function renderCelle(rad: SakslisteRad, kolonne: SakslisteKolonne) {
       return <BodyShort size="small">{formaterDato(rad.opprettet)}</BodyShort>;
     case "oppdatert":
       return <BodyShort size="small">{formaterDato(rad.oppdatert ?? rad.opprettet)}</BodyShort>;
+    case "saksbehandler":
+      return <BodyShort size="small">{rad.saksbehandler ?? "–"}</BodyShort>;
   }
 }

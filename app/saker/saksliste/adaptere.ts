@@ -28,6 +28,7 @@ export function mapKontrollsakTilSakslisteRad(
     status: { tekst: getStatus(sak), variant: hentStatusVariant(sak.status) },
     opprettet: getOpprettetDato(sak),
     oppdatert: getOppdatertDato(sak),
+    saksbehandler: sak.saksbehandlere.eier?.navn ?? null,
   };
 }
 
@@ -47,5 +48,6 @@ export function mapFordelingSakTilSakslisteRad(
     status: null,
     opprettet: sak.opprettetDato,
     oppdatert: sak.oppdatertDato,
+    saksbehandler: null,
   };
 }
