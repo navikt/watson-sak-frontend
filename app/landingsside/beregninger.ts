@@ -16,6 +16,7 @@ export interface DineSakerSiste14DagerStatistikk {
   snittBehandlingstidPerSak: number | null;
   antallHenlagteSaker: number;
   antallHenlagteTips: number;
+  antallSakerIBero: number;
 }
 
 function getOpprettet(sak: KontrollsakResponse): string {
@@ -24,6 +25,10 @@ function getOpprettet(sak: KontrollsakResponse): string {
 
 function getStatus(sak: KontrollsakResponse) {
   return sak.status;
+}
+
+function harEier(sak: KontrollsakResponse) {
+  return sak.saksbehandlere.eier !== null;
 }
 
 function erInnenforSiste14Dager(dato: string, referansedato: string) {
@@ -41,8 +46,7 @@ export function beregnDineSakerSiste14Dager({
   referansedato,
 }: BeregnDineSakerSiste14DagerArgs): DineSakerSiste14DagerStatistikk {
   const sakerSiste14Dager = saker.filter(
-    (sak) =>
-      erInnenforSiste14Dager(getOpprettet(sak), referansedato) && getStatus(sak) !== "UFORDELT",
+    (sak) => erInnenforSiste14Dager(getOpprettet(sak), referansedato) && harEier(sak),
   );
 
   const behandlingstid = beregnBehandlingstid(sakerSiste14Dager, avslutningsdatoer);
@@ -50,14 +54,15 @@ export function beregnDineSakerSiste14Dager({
   return {
     antallSakerJobbetMed: sakerSiste14Dager.length,
     antallTipsTilVurdering: 0,
-    antallSendtTilNayNfp: sakerSiste14Dager.filter((sak) => getStatus(sak) === "FORVALTNING")
+    antallSendtTilNayNfp: sakerSiste14Dager.filter((sak) => getStatus(sak) === "VENTER_PA_VEDTAK")
       .length,
     snittBehandlingstidPerSak: behandlingstid?.gjennomsnitt ?? null,
     antallHenlagteSaker: sakerSiste14Dager.filter(
-      (sak) => getStatus(sak) === "AVSLUTTET" && !tidligereTipsSakIder.includes(sak.id),
+      (sak) => getStatus(sak) === "HENLAGT" && !tidligereTipsSakIder.includes(sak.id),
     ).length,
     antallHenlagteTips: sakerSiste14Dager.filter(
-      (sak) => getStatus(sak) === "AVSLUTTET" && tidligereTipsSakIder.includes(sak.id),
+      (sak) => getStatus(sak) === "HENLAGT" && tidligereTipsSakIder.includes(sak.id),
     ).length,
+    antallSakerIBero: sakerSiste14Dager.filter((sak) => sak.iBero).length,
   };
 }

@@ -42,7 +42,9 @@ describe("FordelingSide action", () => {
 
   it("flytter sak ut av Fordeling i mockmiljø når den tildeles", async () => {
     const { action } = await import("./FordelingSide.server");
-    const tildelbarKontrollsakId = mockKontrollsaker.find((sak) => sak.status === "UFORDELT")?.id;
+    const tildelbarKontrollsakId = mockKontrollsaker.find(
+      (sak) => sak.saksbehandlere.eier === null,
+    )?.id;
 
     expect(tildelbarKontrollsakId).toBeDefined();
 
@@ -53,7 +55,7 @@ describe("FordelingSide action", () => {
     const formData = new FormData();
     formData.set("handling", "tildel");
     formData.set("sakId", tildelbarKontrollsakId);
-    formData.set("saksbehandler", "Kari Nordmann");
+    formData.set("navIdent", "Z123456");
 
     await action({
       request: new Request("http://localhost/fordeling", {
@@ -65,8 +67,16 @@ describe("FordelingSide action", () => {
     } as Route.ActionArgs);
 
     expect(mockKontrollsaker.find((sak) => sak.id === tildelbarKontrollsakId)?.status).toBe(
-      "UTREDES",
+      "OPPRETTET",
     );
+    expect(
+      mockKontrollsaker.find((sak) => sak.id === tildelbarKontrollsakId)?.saksbehandlere.eier,
+    ).toMatchObject({ navIdent: "Z123456", navn: "Kari Nordmann" });
+    expect(
+      mockKontrollsaker
+        .find((sak) => sak.id === tildelbarKontrollsakId)
+        ?.tilgjengeligeHandlinger.some((handling) => handling.handling === "TILDEL"),
+    ).toBe(false);
     expect(tildelKontrollsakMock).not.toHaveBeenCalled();
   });
 
@@ -78,7 +88,7 @@ describe("FordelingSide action", () => {
     const formData = new FormData();
     formData.set("handling", "tildel");
     formData.set("sakId", "101");
-    formData.set("saksbehandler", "Kari Nordmann");
+    formData.set("navIdent", "Z123456");
 
     await action({
       request: new Request("http://localhost/fordeling", {
@@ -93,7 +103,7 @@ describe("FordelingSide action", () => {
     expect(tildelKontrollsakMock).toHaveBeenCalledWith({
       token: "token-123",
       sakId: "101",
-      saksbehandler: "Kari Nordmann",
+      saksbehandler: "Z123456",
     });
   });
 
@@ -121,7 +131,7 @@ describe("FordelingSide action", () => {
     const formData = new FormData();
     formData.set("handling", "tildel");
     formData.set("sakId", "999");
-    formData.set("saksbehandler", "Kari Nordmann");
+    formData.set("navIdent", "Z123456");
 
     await expect(
       action({
@@ -135,13 +145,13 @@ describe("FordelingSide action", () => {
     ).rejects.toMatchObject({ init: { status: 404 } });
   });
 
-  it("feiler med 400 når sakId eller saksbehandler bare er whitespace", async () => {
+  it("feiler med 400 når sakId eller navIdent bare er whitespace", async () => {
     const { action } = await import("./FordelingSide.server");
 
     const formData = new FormData();
     formData.set("handling", "tildel");
     formData.set("sakId", "   ");
-    formData.set("saksbehandler", " ");
+    formData.set("navIdent", " ");
 
     await expect(
       action({
@@ -173,7 +183,7 @@ describe("FordelingSide loader", () => {
     } as Route.LoaderArgs);
 
     const forventedeSaker = mockKontrollsaker
-      .filter((sak) => sak.status === "UFORDELT")
+      .filter((sak) => sak.saksbehandlere.eier === null)
       .map((sak) => sak.id);
 
     expect(resultat.map((sak) => sak.id)).toEqual(forventedeSaker);

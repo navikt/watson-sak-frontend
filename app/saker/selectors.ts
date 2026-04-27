@@ -55,7 +55,7 @@ export function getTags(sak: KontrollsakResponse): string[] {
 }
 
 export function getNavn(sak: KontrollsakResponse): string | null {
-  return sak.personNavn;
+  return sak.personNavn ?? null;
 }
 
 export function getAlder(_sak: KontrollsakResponse): number | null {
@@ -75,13 +75,20 @@ export function getResultat(sak: KontrollsakResponse) {
 }
 
 export function getMineSakerGruppeStatus(sak: KontrollsakResponse): MineSakerGruppeStatus {
+  if (sak.iBero) {
+    return "ventende";
+  }
+
   switch (sak.status) {
-    case "UFORDELT":
+    case "OPPRETTET":
     case "UTREDES":
-    case "I_BERO":
+    case "ANMELDELSE_VURDERES":
       return "aktive";
-    case "FORVALTNING":
+    case "VENTER_PA_INFORMASJON":
+    case "VENTER_PA_VEDTAK":
       return "ventende";
+    case "ANMELDT":
+    case "HENLAGT":
     case "AVSLUTTET":
       return "fullførte";
   }

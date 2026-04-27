@@ -4,6 +4,7 @@ import {
   HourglassIcon,
   PaperplaneIcon,
   XMarkOctagonIcon,
+  ClockDashedIcon,
 } from "@navikt/aksel-icons";
 import { BodyShort, Heading, HGrid, HStack, VStack } from "@navikt/ds-react";
 import { Kort } from "~/komponenter/Kort";
@@ -28,6 +29,13 @@ export function DineSakerSiste14Dager({ statistikk }: DineSakerSiste14DagerProps
           tittel: "Sendt til NAY/NFP",
           verdi: statistikk.antallSendtTilNayNfp,
           ikon: <PaperplaneIcon aria-hidden fontSize="1.25rem" />,
+        }
+      : null,
+    statistikk.antallSakerIBero > 0
+      ? {
+          tittel: "Saker i bero",
+          verdi: statistikk.antallSakerIBero,
+          ikon: <ClockDashedIcon aria-hidden fontSize="1.25rem" />,
         }
       : null,
   ].filter((kort) => kort !== null);

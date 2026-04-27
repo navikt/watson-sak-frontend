@@ -95,7 +95,7 @@ describe("hentInnloggetBruker", () => {
     expect(bruker).toEqual({
       preferredUsername: "test",
       name: "Saks Behandlersen",
-      navIdent: "S133337",
+      navIdent: "Z999999",
       organisasjoner: "4812",
     });
   });

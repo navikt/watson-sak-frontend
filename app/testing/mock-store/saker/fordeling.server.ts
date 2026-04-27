@@ -1,5 +1,10 @@
 import { kontrollsakResponseSchema, type KontrollsakResponse } from "~/saker/types.backend";
-import { lagMockSakUuid, normaliserLegacyKontrollsak } from "~/saker/mock-uuid";
+import {
+  lagMockSakUuid,
+  nullstillMockStatushistorikk,
+  normaliserLegacyKontrollsak,
+  oppdaterTilgjengeligeHandlinger,
+} from "~/saker/mock-uuid";
 
 type NyMockFordelingssak = {
   personIdent: string;
@@ -528,7 +533,10 @@ export function leggTilMockSakIFordeling(nySak: NyMockFordelingssak): Kontrollsa
         enhet: null,
       },
     },
-    status: "UFORDELT",
+    status: "OPPRETTET",
+    iBero: false,
+    avslutningskonklusjon: null,
+    tilgjengeligeHandlinger: [],
     kategori: nySak.kategori,
     kilde: nySak.kilde,
     misbruktype: nySak.misbruktype,
@@ -546,12 +554,15 @@ export function leggTilMockSakIFordeling(nySak: NyMockFordelingssak): Kontrollsa
     oppdatert: null,
   });
 
-  mockKontrollsaker.unshift(kontrollsak);
+  const kontrollsakMedHandlinger = oppdaterTilgjengeligeHandlinger(kontrollsak);
 
-  return kontrollsak;
+  mockKontrollsaker.unshift(kontrollsakMedHandlinger);
+
+  return kontrollsakMedHandlinger;
 }
 
 export function resetMockSaker() {
+  nullstillMockStatushistorikk();
   mockKontrollsaker = lagMockKontrollsaker();
   nesteMockFordelingssakId = 200;
 }

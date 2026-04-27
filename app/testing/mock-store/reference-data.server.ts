@@ -47,6 +47,7 @@ const saksbehandlerNavn = [
   "Per Arne Haugen",
   "Ragnhild Tangen",
   "Rune Brekke",
+  "Saks Behandlersen",
   "Silje Ødegård",
   "Simen Åsberg",
   "Solveig Engen",
@@ -83,6 +84,11 @@ const saksbehandlerOverstyringer: Partial<
     navn: "Ada Larsen",
     navIdent: "Z234567",
     enhet: "Seksjon B",
+  },
+  "Saks Behandlersen": {
+    navn: "Saks Behandlersen",
+    navIdent: "Z999999",
+    enhet: "Seksjon A",
   },
 };
 

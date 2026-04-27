@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   erAktivSak,
   erAktivSakKontrollsak,
+  erStøttetKontrollsakHandling,
+  harKontrollsakHandling,
   hentNesteStatus,
-  hentNesteStatusKontrollsak,
+  hentStøttedeTilgjengeligeHandlinger,
   kanPolitianmeldes,
   kanVideresendesTilNayNfp,
 } from "./tilgjengeligeHandlinger";
@@ -121,23 +123,41 @@ describe("kanPolitianmeldes", () => {
 });
 
 describe("Kontrollsak-statusregler", () => {
-  it("behandler UFORDELT som aktiv sak", () => {
-    expect(erAktivSakKontrollsak("UFORDELT")).toBe(true);
+  it("behandler OPPRETTET som aktiv sak", () => {
+    expect(erAktivSakKontrollsak("OPPRETTET")).toBe(true);
   });
 
   it("behandler AVSLUTTET som inaktiv sak", () => {
     expect(erAktivSakKontrollsak("AVSLUTTET")).toBe(false);
   });
 
-  it("finner neste status for UFORDELT", () => {
-    expect(hentNesteStatusKontrollsak("UFORDELT")).toBe("UTREDES");
+  it("filtrerer ut ukjente kontrollsakhandlinger", () => {
+    expect(
+      hentStøttedeTilgjengeligeHandlinger({
+        tilgjengeligeHandlinger: [
+          { handling: "TILDEL", pakrevdeFelter: [], resultatStatus: "OPPRETTET" },
+          { handling: "UKJENT" as never, pakrevdeFelter: [], resultatStatus: "UTREDES" },
+        ],
+      } as never),
+    ).toEqual([{ handling: "TILDEL", pakrevdeFelter: [], resultatStatus: "OPPRETTET" }]);
   });
 
-  it("finner neste status for UTREDES", () => {
-    expect(hentNesteStatusKontrollsak("UTREDES")).toBe("FORVALTNING");
+  it("kjenner igjen støttet kontrollsakhandling", () => {
+    expect(erStøttetKontrollsakHandling("TILDEL")).toBe(true);
+    expect(erStøttetKontrollsakHandling("AVSLUTT")).toBe(true);
+    expect(erStøttetKontrollsakHandling("UKJENT_HANDLING")).toBe(false);
   });
 
-  it("returnerer null for FORVALTNING", () => {
-    expect(hentNesteStatusKontrollsak("FORVALTNING")).toBeNull();
+  it("finner om en sak har en konkret kontrollsakhandling", () => {
+    expect(
+      harKontrollsakHandling(
+        {
+          tilgjengeligeHandlinger: [
+            { handling: "TA_AV_BERO", pakrevdeFelter: [], resultatStatus: "UTREDES" },
+          ],
+        } as never,
+        "TA_AV_BERO",
+      ),
+    ).toBe(true);
   });
 });

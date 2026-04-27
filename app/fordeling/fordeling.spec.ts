@@ -11,7 +11,7 @@ test.describe("Ufordelte saker", () => {
 
   test("viser nytt hovedinnhold for ufordelte saker", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "Ufordelte saker" })).toBeVisible();
-    await expect(page.getByText("12 ufordelte saker")).toBeVisible();
+    await expect(page.getByText("14 ufordelte saker")).toBeVisible();
     await expect(page.getByText(/Eldste sak har ligget i \d+ dager/)).toBeVisible();
     await expect(
       page.getByText(
@@ -62,7 +62,7 @@ test.describe("Ufordelte saker", () => {
     await expect(rader.nth(0)).toContainText("Annet");
 
     await page.getByRole("button", { name: "Sorter på opprettet" }).click();
-    await expect(rader.nth(0)).toContainText("16. feb. 2026");
+    await expect(rader.nth(0)).toContainText("18. feb. 2026");
   });
 
   test("er UU-compliant", async ({ page }) => {
