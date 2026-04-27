@@ -78,7 +78,10 @@ export async function POST(request: Request) {
 import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const user = await getUser(false);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -88,7 +91,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const resource = await findById(id);
 
   if (!resource) {
-    return NextResponse.json({ error: `{{Ressurs}} ${id} not found` }, { status: 404 });
+    return NextResponse.json(
+      { error: `{{Ressurs}} ${id} not found` },
+      { status: 404 },
+    );
   }
 
   return NextResponse.json(resource);
