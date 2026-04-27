@@ -34,7 +34,7 @@ export default defineConfig({
     trace: "on-first-retry",
 
     /* Deaktiver CSS-animasjoner for å unngå flaky tester ved klikk på animerte elementer. */
-    reducedMotion: "reduce",
+    contextOptions: { reducedMotion: "reduce" },
   },
 
   /* Konfigurer prosjekter for hovednettlesere */
