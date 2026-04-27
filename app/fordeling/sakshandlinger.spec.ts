@@ -24,7 +24,7 @@ test.describe("Ufordelte saker – tildeling", () => {
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole("heading", { name: "Tildel saksbehandler" })).toBeVisible();
 
-    await dialog.getByLabel("Saksbehandler").selectOption("Kari Nordmann");
+    await dialog.getByLabel("Saksbehandler").selectOption("Z123456");
     const tildelKnapp = dialog.getByRole("button", { name: "Tildel" });
     await expect(tildelKnapp).toBeEnabled();
     await tildelKnapp.click();

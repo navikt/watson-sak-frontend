@@ -12,7 +12,7 @@ export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
   const handling = formData.get("handling");
 
-  if (handling !== "tildel") {
+  if (handling !== "tildel" && handling !== "TILDEL") {
     throw data("Ukjent handling", { status: 400 });
   }
 
