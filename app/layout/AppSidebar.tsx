@@ -3,6 +3,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   CogIcon,
+  FolderFileIcon,
   FolderIcon,
   HouseIcon,
   PlusCircleIcon,
@@ -25,6 +26,7 @@ const lenker: Lenke[] = [
   { to: RouteConfig.INDEX, label: "Dashboard", icon: HouseIcon },
   { to: RouteConfig.MINE_SAKER, label: "Mine saker", icon: FolderIcon },
   { to: RouteConfig.FORDELING, label: "Fordeling", icon: TasklistIcon },
+  { to: RouteConfig.ALLE_SAKER, label: "Alle saker", icon: FolderFileIcon },
   {
     to: RouteConfig.REGISTRER_SAK,
     label: "Opprett sak",

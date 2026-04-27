@@ -10,6 +10,7 @@ export default [
     route(RouteConfig.VIDERESEND_SAK, "saker/videresending/VideresendSakSide.route.tsx"),
     route(RouteConfig.POLITIANMELDELSE, "saker/politianmeldelse/PolitianmeldelseSide.route.tsx"),
     route(RouteConfig.MINE_SAKER, "mine-saker/MineSakerSide.route.tsx"),
+    route(RouteConfig.ALLE_SAKER, "alle-saker/AlleSakerSide.route.tsx"),
     route(RouteConfig.REGISTRER_SAK, "registrer-sak/RegistrerSakSide.route.tsx"),
     route(RouteConfig.STATISTIKK, "statistikk/StatistikkSide.route.tsx"),
     route(RouteConfig.PERSONVERN, "personvern/PersonvernSide.route.tsx"),

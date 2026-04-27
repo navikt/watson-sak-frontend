@@ -22,6 +22,7 @@ const rader: SakslisteRad[] = [
     status: { tekst: "Opprettet", variant: "info" },
     opprettet: "2026-02-03T10:11:12Z",
     oppdatert: "2026-02-03T10:11:12Z",
+    saksbehandler: null,
   },
 ];
 

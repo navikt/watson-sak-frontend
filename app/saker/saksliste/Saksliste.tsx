@@ -1,6 +1,6 @@
 import { BodyShort, HStack, Link, Table, Tag } from "@navikt/ds-react";
 import type { ReactNode } from "react";
-import { Link as RouterLink } from "react-router";
+import { Link as RouterLink, useNavigate } from "react-router";
 import { formaterDato } from "~/utils/date-utils";
 
 type SakslisteKolonne =
@@ -10,7 +10,8 @@ type SakslisteKolonne =
   | "misbrukstype"
   | "status"
   | "opprettet"
-  | "oppdatert";
+  | "oppdatert"
+  | "saksbehandler";
 
 export type SakslisteStatus = {
   tekst: string;
@@ -27,6 +28,7 @@ export type SakslisteRad = {
   status: SakslisteStatus | null;
   opprettet: string;
   oppdatert: string | null;
+  saksbehandler: string | null;
 };
 
 type SakslisteProps = {
@@ -63,6 +65,7 @@ const standardTitler: Record<SakslisteKolonne, string> = {
   status: "Status",
   opprettet: "Opprettet",
   oppdatert: "Oppdatert",
+  saksbehandler: "Saksbehandler",
 };
 
 export function Saksliste({
@@ -75,6 +78,8 @@ export function Saksliste({
   kolonneHeaderInnhold,
   kolonneHeaderProps,
 }: SakslisteProps) {
+  const navigate = useNavigate();
+
   if (rader.length === 0) {
     return <BodyShort className="text-ax-text-neutral-subtle">{tomTekst}</BodyShort>;
   }
@@ -97,7 +102,11 @@ export function Saksliste({
       </Table.Header>
       <Table.Body>
         {rader.map((rad) => (
-          <Table.Row key={rad.id}>
+          <Table.Row
+            key={rad.id}
+            onClick={rad.detaljHref ? () => navigate(rad.detaljHref ?? "") : undefined}
+            className={rad.detaljHref ? "cursor-pointer" : undefined}
+          >
             {kolonner.map((kolonne) => (
               <Table.DataCell key={kolonne}>{renderCelle(rad, kolonne)}</Table.DataCell>
             ))}
@@ -157,5 +166,7 @@ function renderCelle(rad: SakslisteRad, kolonne: SakslisteKolonne) {
       return <BodyShort size="small">{formaterDato(rad.opprettet)}</BodyShort>;
     case "oppdatert":
       return <BodyShort size="small">{formaterDato(rad.oppdatert ?? rad.opprettet)}</BodyShort>;
+    case "saksbehandler":
+      return <BodyShort size="small">{rad.saksbehandler ?? "–"}</BodyShort>;
   }
 }

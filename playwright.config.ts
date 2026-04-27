@@ -32,6 +32,9 @@ export default defineConfig({
 
     /* Samle trace når feilende test prøves på nytt. Se https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
+
+    /* Deaktiver CSS-animasjoner for å unngå flaky tester ved klikk på animerte elementer. */
+    contextOptions: { reducedMotion: "reduce" },
   },
 
   /* Konfigurer prosjekter for hovednettlesere */
