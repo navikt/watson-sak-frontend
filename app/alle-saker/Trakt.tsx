@@ -12,7 +12,7 @@ interface Props {
 }
 
 export function Trakt({ steg }: Props) {
-  const maks = steg[0]?.antall ?? 1;
+  const maks = Math.max(...steg.map((s) => s.antall), 1);
 
   return (
     <div

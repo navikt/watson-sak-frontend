@@ -7,37 +7,24 @@ import { PageBlock } from "@navikt/ds-react/Page";
 import { useLoaderData, useSearchParams } from "react-router";
 import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
-import { getSaksreferanse } from "~/saker/id";
-import {
-  getKategoriText,
-  getMisbrukstyper,
-  getOppdatertDato,
-  getOpprettetDato,
-  getSaksenhet,
-} from "~/saker/selectors";
-import type { KontrollsakResponse, KontrollsakStatus } from "~/saker/types.backend";
-import { formaterStatus, getStatus } from "~/saker/visning";
-import { paginerElementer } from "~/fordeling/ufordelte-saker";
+import type { KontrollsakResponse } from "~/saker/types.backend";
+import { paginerElementer } from "~/utils/paginering";
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
 import type { Route } from "./+types/AlleSakerSide.route";
 import { mockNokkeltall } from "./mock-data.server";
+import {
+  type AlleSakerKolonne,
+  beregnTraktSteg,
+  filtrerSaker,
+  normaliserFilterVerdier,
+  type Sorteringsretning,
+  sorteringskolonner,
+  sorterSaker,
+  unikeVerdier,
+} from "./saker-utils";
 import { Filtre } from "./Filtre";
 import { Nokkeltall } from "./Nokkeltall";
 import { Trakt } from "./Trakt";
-
-// Kolonner som støtter sortering
-const sorteringskolonner = [
-  "saksid",
-  "kategori",
-  "misbrukstype",
-  "status",
-  "opprettet",
-  "oppdatert",
-  "saksbehandler",
-] as const;
-
-type AlleSakerKolonne = (typeof sorteringskolonner)[number];
-type Sorteringsretning = "asc" | "desc";
 
 const RADER_PER_SIDE = 20;
 const STANDARD_KOLONNE: AlleSakerKolonne = "opprettet";
@@ -316,28 +303,6 @@ export default function AlleSakerSide() {
 
 // ─── Hjelpefunksjoner ───────────────────────────────────────────────────────
 
-// Rekkefølgen statuser skal vises i trakten (prosesskjede-rekkefølge)
-const TRAKT_STATUS_REKKEFOLGE: KontrollsakStatus[] = [
-  "OPPRETTET",
-  "UTREDES",
-  "VENTER_PA_INFORMASJON",
-  "VENTER_PA_VEDTAK",
-  "ANMELDELSE_VURDERES",
-  "ANMELDT",
-  "AVSLUTTET",
-  "HENLAGT",
-];
-
-function beregnTraktSteg(saker: KontrollsakResponse[]) {
-  const teller = new Map<KontrollsakStatus, number>();
-  for (const sak of saker) {
-    teller.set(sak.status, (teller.get(sak.status) ?? 0) + 1);
-  }
-  return TRAKT_STATUS_REKKEFOLGE.filter((status) => (teller.get(status) ?? 0) > 0).map(
-    (status) => ({ label: formaterStatus(status), antall: teller.get(status) ?? 0 }),
-  );
-}
-
 function parseKolonne(verdi: string | null): AlleSakerKolonne {
   return sorteringskolonner.includes(verdi as AlleSakerKolonne)
     ? (verdi as AlleSakerKolonne)
@@ -350,75 +315,6 @@ function parseRetning(verdi: string | null): Sorteringsretning {
 
 function standardRetningForKolonne(kolonne: AlleSakerKolonne): Sorteringsretning {
   return kolonne === "opprettet" || kolonne === "oppdatert" ? "desc" : "asc";
-}
-
-function normaliserFilterVerdier(verdier: string[]): string[] {
-  return [...new Set(verdier.filter((v) => v.trim() !== ""))];
-}
-
-function unikeVerdier(verdier: string[]): string[] {
-  return [...new Set(verdier.filter(Boolean))].sort((a, b) => a.localeCompare(b, "nb"));
-}
-
-type FilterState = {
-  enhet: string[];
-  saksbehandler: string[];
-  kategori: string[];
-  misbrukstype: string[];
-  merking: string[];
-};
-
-function filtrerSaker(saker: KontrollsakResponse[], filter: FilterState): KontrollsakResponse[] {
-  return saker.filter((sak) => {
-    if (filter.enhet.length > 0 && !filter.enhet.includes(getSaksenhet(sak))) return false;
-    if (
-      filter.saksbehandler.length > 0 &&
-      !filter.saksbehandler.includes(sak.saksbehandlere.eier?.navn ?? "")
-    )
-      return false;
-    if (filter.kategori.length > 0 && !filter.kategori.includes(getKategoriText(sak) ?? ""))
-      return false;
-    if (
-      filter.misbrukstype.length > 0 &&
-      !getMisbrukstyper(sak).some((m) => filter.misbrukstype.includes(m))
-    )
-      return false;
-    if (filter.merking.length > 0 && !filter.merking.includes(sak.merking ?? "")) return false;
-    return true;
-  });
-}
-
-function sorterSaker(
-  saker: KontrollsakResponse[],
-  kolonne: AlleSakerKolonne,
-  retning: Sorteringsretning,
-): KontrollsakResponse[] {
-  const faktor = retning === "asc" ? 1 : -1;
-
-  return [...saker].sort((a, b) => {
-    const verdiA = hentSorteringsverdi(a, kolonne);
-    const verdiB = hentSorteringsverdi(b, kolonne);
-    return verdiA.localeCompare(verdiB, "nb", { sensitivity: "base" }) * faktor;
-  });
-}
-
-function hentSorteringsverdi(sak: KontrollsakResponse, kolonne: AlleSakerKolonne): string {
-  switch (kolonne) {
-    case "saksid":
-      return getSaksreferanse(sak.id);
-    case "kategori":
-      return getKategoriText(sak) ?? "";
-    case "misbrukstype":
-      return getMisbrukstyper(sak).join(", ");
-    case "status":
-      return getStatus(sak);
-    case "opprettet":
-      return getOpprettetDato(sak);
-    case "oppdatert":
-      return getOppdatertDato(sak);
-    case "saksbehandler":
-      return sak.saksbehandlere.eier?.navn ?? "";
-  }
 }
 
 // ─── Interne komponenter ────────────────────────────────────────────────────
