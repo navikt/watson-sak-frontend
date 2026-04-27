@@ -22,7 +22,7 @@ export const sorteringskolonner = [
 export type AlleSakerKolonne = (typeof sorteringskolonner)[number];
 export type Sorteringsretning = "asc" | "desc";
 
-export type FilterState = {
+type FilterState = {
   enhet: string[];
   saksbehandler: string[];
   kategori: string[];
@@ -30,7 +30,7 @@ export type FilterState = {
   merking: string[];
 };
 
-export const TRAKT_STATUS_REKKEFOLGE: KontrollsakStatus[] = [
+const TRAKT_STATUS_REKKEFOLGE: KontrollsakStatus[] = [
   "OPPRETTET",
   "UTREDES",
   "VENTER_PA_INFORMASJON",
@@ -82,7 +82,7 @@ export function filtrerSaker(
   });
 }
 
-export function hentSorteringsverdi(sak: KontrollsakResponse, kolonne: AlleSakerKolonne): string {
+function hentSorteringsverdi(sak: KontrollsakResponse, kolonne: AlleSakerKolonne): string {
   switch (kolonne) {
     case "saksid":
       return getSaksreferanse(sak.id);

@@ -7,9 +7,9 @@ import { PageBlock } from "@navikt/ds-react/Page";
 import { useLoaderData, useSearchParams } from "react-router";
 import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
-import type { KontrollsakResponse } from "~/saker/types.backend";
-import { paginerElementer } from "~/utils/paginering";
+import { getKategoriText, getMisbrukstyper, getSaksenhet } from "~/saker/selectors";
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
+import { paginerElementer } from "~/utils/paginering";
 import type { Route } from "./+types/AlleSakerSide.route";
 import { mockNokkeltall } from "./mock-data.server";
 import {

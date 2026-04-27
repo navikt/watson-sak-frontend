@@ -104,7 +104,7 @@ describe("filtrerSaker", () => {
     lagSak({
       id: "00000000-0000-4000-8000-000000000002",
       kategori: "ARBEID",
-      misbruktype: ["ANNET"],
+      misbruktype: ["FIKTIVT_ARBEIDSFORHOLD"],
       merking: "HASTEBEHANDLING",
       saksbehandlere: {
         eier: { navIdent: "Z2", navn: "Bjørn", enhet: "4801" },
@@ -116,7 +116,13 @@ describe("filtrerSaker", () => {
 
   it("returnerer alle saker når ingen filtre er satt", () => {
     expect(
-      filtrerSaker(saker, { enhet: [], saksbehandler: [], kategori: [], misbrukstype: [], merking: [] }),
+      filtrerSaker(saker, {
+        enhet: [],
+        saksbehandler: [],
+        kategori: [],
+        misbrukstype: [],
+        merking: [],
+      }),
     ).toHaveLength(2);
   });
 
