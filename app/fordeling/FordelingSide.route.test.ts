@@ -55,7 +55,7 @@ describe("FordelingSide action", () => {
     const formData = new FormData();
     formData.set("handling", "tildel");
     formData.set("sakId", tildelbarKontrollsakId);
-    formData.set("saksbehandler", "Kari Nordmann");
+    formData.set("navIdent", "Z123456");
 
     await action({
       request: new Request("http://localhost/fordeling", {
@@ -71,7 +71,7 @@ describe("FordelingSide action", () => {
     );
     expect(
       mockKontrollsaker.find((sak) => sak.id === tildelbarKontrollsakId)?.saksbehandlere.eier,
-    ).toMatchObject({ navIdent: "Kari Nordmann" });
+    ).toMatchObject({ navIdent: "Z123456", navn: "Kari Nordmann" });
     expect(
       mockKontrollsaker
         .find((sak) => sak.id === tildelbarKontrollsakId)
@@ -88,7 +88,7 @@ describe("FordelingSide action", () => {
     const formData = new FormData();
     formData.set("handling", "tildel");
     formData.set("sakId", "101");
-    formData.set("saksbehandler", "Kari Nordmann");
+    formData.set("navIdent", "Z123456");
 
     await action({
       request: new Request("http://localhost/fordeling", {
@@ -103,7 +103,7 @@ describe("FordelingSide action", () => {
     expect(tildelKontrollsakMock).toHaveBeenCalledWith({
       token: "token-123",
       sakId: "101",
-      saksbehandler: "Kari Nordmann",
+      saksbehandler: "Z123456",
     });
   });
 
@@ -131,7 +131,7 @@ describe("FordelingSide action", () => {
     const formData = new FormData();
     formData.set("handling", "tildel");
     formData.set("sakId", "999");
-    formData.set("saksbehandler", "Kari Nordmann");
+    formData.set("navIdent", "Z123456");
 
     await expect(
       action({
@@ -145,13 +145,13 @@ describe("FordelingSide action", () => {
     ).rejects.toMatchObject({ init: { status: 404 } });
   });
 
-  it("feiler med 400 når sakId eller saksbehandler bare er whitespace", async () => {
+  it("feiler med 400 når sakId eller navIdent bare er whitespace", async () => {
     const { action } = await import("./FordelingSide.server");
 
     const formData = new FormData();
     formData.set("handling", "tildel");
     formData.set("sakId", "   ");
-    formData.set("saksbehandler", " ");
+    formData.set("navIdent", " ");
 
     await expect(
       action({
