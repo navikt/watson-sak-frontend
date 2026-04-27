@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { lagMockSakUuid } from "~/saker/mock-uuid";
+import { mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import { UfordelteSakerInnhold } from "./UfordelteSakerInnhold";
 import type { FordelingSak } from "./typer";
 
@@ -28,6 +29,7 @@ describe("UfordelteSakerInnhold", () => {
         <UfordelteSakerInnhold
           saker={[lagSak()]}
           saksbehandlere={["Kari Nordmann"]}
+          saksbehandlerDetaljer={mockSaksbehandlerDetaljer}
           submitPath={RouteConfig.FORDELING}
         />
       </MemoryRouter>,
@@ -42,6 +44,7 @@ describe("UfordelteSakerInnhold", () => {
         <UfordelteSakerInnhold
           saker={[lagSak()]}
           saksbehandlere={["Kari Nordmann"]}
+          saksbehandlerDetaljer={mockSaksbehandlerDetaljer}
           submitPath={RouteConfig.FORDELING}
         />
       </MemoryRouter>,

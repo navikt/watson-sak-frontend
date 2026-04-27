@@ -15,6 +15,7 @@ import {
   type UfordeltSorteringskolonne,
   type UfordeltSorteringsretning,
 } from "./ufordelte-saker";
+import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
 import type { FordelingSak } from "./typer";
 
 const antallPerSide = 6;
@@ -22,12 +23,14 @@ const antallPerSide = 6;
 interface UfordelteSakerInnholdProps {
   saker: FordelingSak[];
   saksbehandlere: string[];
+  saksbehandlerDetaljer?: KontrollsakSaksbehandler[];
   submitPath?: string;
 }
 
 export function UfordelteSakerInnhold({
   saker,
   saksbehandlere,
+  saksbehandlerDetaljer,
   submitPath = RouteConfig.FORDELING,
 }: UfordelteSakerInnholdProps) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -221,6 +224,7 @@ export function UfordelteSakerInnhold({
       <TildelSaksbehandlerModal
         sakId={sakSomTildeles?.id ?? ""}
         saksbehandlere={saksbehandlere}
+        saksbehandlerDetaljer={saksbehandlerDetaljer}
         submitPath={submitPath}
         åpen={sakSomTildeles !== null}
         onClose={() => setSakSomTildeles(null)}

@@ -2,7 +2,7 @@ import { Page } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
 import { useLoaderData } from "react-router";
 import { RouteConfig } from "~/routeConfig";
-import { mockSaksbehandlere } from "~/saker/mock-saksbehandlere.server";
+import { mockSaksbehandlere, mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import { action, loader as lastSakerForFordeling } from "./FordelingSide.server";
 import { UfordelteSakerInnhold } from "./UfordelteSakerInnhold";
 
@@ -14,11 +14,12 @@ export async function loader(args: Parameters<typeof lastSakerForFordeling>[0]) 
   return {
     saker,
     saksbehandlere: mockSaksbehandlere,
+    saksbehandlerDetaljer: mockSaksbehandlerDetaljer,
   };
 }
 
 export default function FordelingSide() {
-  const { saker, saksbehandlere } = useLoaderData<typeof loader>();
+  const { saker, saksbehandlere, saksbehandlerDetaljer } = useLoaderData<typeof loader>();
 
   return (
     <Page>
@@ -27,6 +28,7 @@ export default function FordelingSide() {
         <UfordelteSakerInnhold
           saker={saker}
           saksbehandlere={saksbehandlere}
+          saksbehandlerDetaljer={saksbehandlerDetaljer}
           submitPath={RouteConfig.FORDELING}
         />
       </PageBlock>
