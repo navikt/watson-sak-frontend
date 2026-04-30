@@ -24,10 +24,7 @@ describe("SakDetaljSide action", () => {
     const sak = hentAlleSaker().find((sak) => sak.id === utredningSakId);
 
     expect(sak?.status).toBe("UTREDES");
-
-    expect(sak?.tilgjengeligeHandlinger.some((handling) => handling.handling === "TILDEL")).toBe(
-      true,
-    );
+    expect(sak?.saksbehandlere.eier).toBeNull();
   });
 
   it("legger til delt saksbehandler og logger historikk", async () => {
@@ -263,13 +260,6 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
 
     expect(kontrollsak.status).toBe("OPPRETTET");
     expect(kontrollsak.saksbehandlere.eier).toBeNull();
-    kontrollsak.tilgjengeligeHandlinger = [
-      {
-        handling: "TILDEL",
-        pakrevdeFelter: [{ felt: "navIdent", tillatteVerdier: [] }],
-        resultatStatus: "OPPRETTET",
-      },
-    ];
 
     const formData = new FormData();
     formData.set("handling", "TILDEL");
@@ -295,15 +285,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
 
     kontrollsak.status = "OPPRETTET";
-    kontrollsak.iBero = false;
     kontrollsak.saksbehandlere.eier = null;
-    kontrollsak.tilgjengeligeHandlinger = [
-      {
-        handling: "TILDEL",
-        pakrevdeFelter: [{ felt: "navIdent", tillatteVerdier: [] }],
-        resultatStatus: "OPPRETTET",
-      },
-    ];
 
     const formData = new FormData();
     formData.set("handling", "TILDEL");

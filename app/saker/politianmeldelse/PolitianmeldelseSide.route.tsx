@@ -66,18 +66,6 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   sak.status = "ANMELDT";
-  sak.tilgjengeligeHandlinger = [
-    {
-      handling: "AVSLUTT_MED_KONKLUSJON",
-      pakrevdeFelter: [
-        {
-          felt: "avslutningskonklusjon",
-          tillatteVerdier: ["POLITIET_HENLA", "FRIFUNNET", "DOMFELT"],
-        },
-      ],
-      resultatStatus: "AVSLUTTET",
-    },
-  ];
   leggTilHendelse(sak, "POLITIANMELDT");
 
   return redirect(RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id)));

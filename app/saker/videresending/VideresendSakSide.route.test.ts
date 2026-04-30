@@ -42,12 +42,13 @@ describe("VideresendSakSide loader", () => {
       params: { sakId: sakRef },
     } as Route.ActionArgs);
 
-    expect(sak?.status).toBe("VENTER_PA_VEDTAK");
+    expect(sak?.status).toBe("UTREDES");
+    expect(sak?.blokkert).toBe("VENTER_PA_VEDTAK");
     expect(respons).toBeInstanceOf(Response);
     expect((respons as Response).status).toBe(302);
 
     const historikk = hentHistorikk(sakId);
     expect(historikk[0]?.hendelsesType).toBe("VIDERESENDT_TIL_NAY_NFP");
-    expect(historikk[0]?.status).toBe("VENTER_PA_VEDTAK");
+    expect(historikk[0]?.status).toBe("UTREDES");
   });
 });

@@ -40,21 +40,12 @@ import {
 } from "~/registrer-sak/validering";
 import { mockSaksbehandlere, mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import { mockSeksjoner } from "~/saker/mock-seksjoner.server";
-import { oppdaterTilgjengeligeHandlinger } from "~/saker/mock-uuid";
-import type {
-  Avslutningskonklusjon,
-  KontrollsakHandling,
-  KontrollsakResponse,
-  KontrollsakSaksbehandler,
-} from "~/saker/types.backend";
+import type { Blokkeringsarsak, KontrollsakSaksbehandler } from "~/saker/types.backend";
 import type { Route } from "./+types/SakDetaljSide.route";
 import { hentFilerForSak } from "./filer/mock-data.server";
 import { SakFilområde } from "./filer/SakFilområde";
 import { SakHandlingerKnapper } from "./handlinger/SakHandlingerKnapper";
-import {
-  erAktivSakKontrollsak,
-  harKontrollsakHandling,
-} from "./handlinger/tilgjengeligeHandlinger";
+import { erAktivSakKontrollsak } from "./handlinger/tilgjengeligeHandlinger";
 import { SakHistorikk } from "./historikk/SakHistorikk";
 import {
   hentHistorikk,
@@ -117,16 +108,24 @@ const unsupportedKobleSakFeil = "Denne funksjonen er ikke tilgjengelig ennå.";
 const gyldigeStatuser = new Set<KontrollsakStatus>([
   "OPPRETTET",
   "UTREDES",
-  "VENTER_PA_INFORMASJON",
-  "VENTER_PA_VEDTAK",
-  "ANMELDELSE_VURDERES",
+  "STRAFFERETTSLIG_VURDERING",
   "ANMELDT",
   "HENLAGT",
   "AVSLUTTET",
 ]);
 
+const gyldigeBlokkeringsarsaker = new Set<Blokkeringsarsak>([
+  "VENTER_PA_INFORMASJON",
+  "VENTER_PA_VEDTAK",
+  "I_BERO",
+]);
+
 function erGyldigStatus(verdi: string): verdi is KontrollsakStatus {
   return gyldigeStatuser.has(verdi as KontrollsakStatus);
+}
+
+function erGyldigBlokkeringsarsak(verdi: string): verdi is Blokkeringsarsak {
+  return gyldigeBlokkeringsarsaker.has(verdi as Blokkeringsarsak);
 }
 
 function hentDetaljSaker() {
@@ -259,137 +258,6 @@ function hentTekstfelt(formData: FormData, felt: string, feilmelding: string) {
   return verdi;
 }
 
-function hentTillatteVerdierForFelt(
-  sak: KontrollsakResponse,
-  handling: KontrollsakHandling,
-  felt: string,
-) {
-  const tilgjengeligHandling = sak.tilgjengeligeHandlinger.find(
-    (tilgjengeligHandling) => tilgjengeligHandling.handling === handling,
-  );
-
-  return tilgjengeligHandling?.pakrevdeFelter.find((pakrevdFelt) => pakrevdFelt.felt === felt)
-    ?.tillatteVerdier;
-}
-
-function oppdaterSakStatus(sak: KontrollsakResponse, nyStatus: KontrollsakStatus) {
-  sak.status = nyStatus;
-  oppdaterTilgjengeligeHandlinger(sak);
-}
-
-function utførStatushandling(
-  sak: KontrollsakResponse,
-  handling: KontrollsakHandling,
-  formData: FormData,
-) {
-  if (!harKontrollsakHandling(sak, handling)) {
-    throw data("Handlingen er ikke tilgjengelig for saken", { status: 400 });
-  }
-
-  if (
-    handling !== "TILDEL" &&
-    handling !== "FRISTILL" &&
-    handling !== "SETT_BERO" &&
-    handling !== "TA_AV_BERO" &&
-    sak.saksbehandlere.eier === null
-  ) {
-    throw data("Saken må tildeles før status kan endres", { status: 400 });
-  }
-
-  switch (handling) {
-    case "TILDEL": {
-      const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
-      const navn = (formData.get("navn") as string | null) ?? navIdent;
-      const valgtSaksbehandler = finnSaksbehandlerDetalj(mockSaksbehandlerDetaljer, navIdent) ?? {
-        navIdent,
-        navn,
-        enhet: null,
-      };
-
-      sak.saksbehandlere.eier = valgtSaksbehandler;
-      oppdaterTilgjengeligeHandlinger(sak);
-      leggTilHendelse(sak, "SAK_TILDELT");
-      return;
-    }
-    case "START_UTREDNING": {
-      oppdaterSakStatus(sak, "UTREDES");
-      leggTilHendelse(sak, "STATUS_ENDRET");
-      return;
-    }
-    case "SETT_VENTER_PA_INFORMASJON": {
-      oppdaterSakStatus(sak, "VENTER_PA_INFORMASJON");
-      leggTilHendelse(sak, "STATUS_ENDRET");
-      return;
-    }
-    case "SETT_VENTER_PA_VEDTAK": {
-      oppdaterSakStatus(sak, "VENTER_PA_VEDTAK");
-      leggTilHendelse(sak, "STATUS_ENDRET");
-      return;
-    }
-    case "SETT_ANMELDELSE_VURDERES": {
-      oppdaterSakStatus(sak, "ANMELDELSE_VURDERES");
-      leggTilHendelse(sak, "STATUS_ENDRET");
-      return;
-    }
-    case "SETT_ANMELDT": {
-      oppdaterSakStatus(sak, "ANMELDT");
-      leggTilHendelse(sak, "POLITIANMELDT");
-      leggTilHendelse(sak, "STATUS_ENDRET");
-      return;
-    }
-    case "SETT_HENLAGT": {
-      oppdaterSakStatus(sak, "HENLAGT");
-      leggTilHendelse(sak, "SAK_HENLAGT");
-      return;
-    }
-    case "SETT_BERO": {
-      sak.iBero = true;
-      oppdaterTilgjengeligeHandlinger(sak);
-      leggTilHendelse(sak, "SAK_SATT_I_BERO");
-      return;
-    }
-    case "TA_AV_BERO": {
-      sak.iBero = false;
-      oppdaterTilgjengeligeHandlinger(sak);
-      leggTilHendelse(sak, "SAK_GJENOPPTATT");
-      return;
-    }
-    case "FRISTILL": {
-      sak.saksbehandlere.eier = null;
-      oppdaterTilgjengeligeHandlinger(sak);
-      return;
-    }
-    case "AVSLUTT": {
-      sak.iBero = false;
-      oppdaterSakStatus(sak, "AVSLUTTET");
-      leggTilHendelse(sak, "STATUS_ENDRET");
-      return;
-    }
-    case "AVSLUTT_MED_KONKLUSJON": {
-      const avslutningskonklusjon = hentTekstfelt(
-        formData,
-        "avslutningskonklusjon",
-        "Avslutningskonklusjon mangler",
-      );
-      const tillatteVerdier = hentTillatteVerdierForFelt(
-        sak,
-        "AVSLUTT_MED_KONKLUSJON",
-        "avslutningskonklusjon",
-      );
-
-      if (tillatteVerdier && !tillatteVerdier.includes(avslutningskonklusjon)) {
-        throw data("Ugyldig avslutningskonklusjon", { status: 400 });
-      }
-
-      sak.avslutningskonklusjon = avslutningskonklusjon as Avslutningskonklusjon;
-      sak.iBero = false;
-      oppdaterSakStatus(sak, "AVSLUTTET");
-      leggTilHendelse(sak, "STATUS_ENDRET");
-      return;
-    }
-  }
-}
-
 export async function action({ request, params }: Route.ActionArgs) {
   const formData = await request.formData();
   const handling = formData.get("handling") as string;
@@ -403,19 +271,21 @@ export async function action({ request, params }: Route.ActionArgs) {
   const saksbehandlere = sak.saksbehandlere;
 
   switch (handling) {
-    case "TILDEL":
-    case "FRISTILL":
-    case "START_UTREDNING":
-    case "SETT_VENTER_PA_INFORMASJON":
-    case "SETT_VENTER_PA_VEDTAK":
-    case "SETT_ANMELDELSE_VURDERES":
-    case "SETT_ANMELDT":
-    case "SETT_HENLAGT":
-    case "SETT_BERO":
-    case "TA_AV_BERO":
-    case "AVSLUTT":
-    case "AVSLUTT_MED_KONKLUSJON": {
-      utførStatushandling(sak, handling, formData);
+    case "TILDEL": {
+      const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
+      const navn = (formData.get("navn") as string | null) ?? navIdent;
+      const valgtSaksbehandler = finnSaksbehandlerDetalj(mockSaksbehandlerDetaljer, navIdent) ?? {
+        navIdent,
+        navn,
+        enhet: null,
+      };
+
+      sak.saksbehandlere.eier = valgtSaksbehandler;
+      leggTilHendelse(sak, "SAK_TILDELT");
+      break;
+    }
+    case "FRISTILL": {
+      sak.saksbehandlere.eier = null;
       break;
     }
     case "endre_status": {
@@ -425,12 +295,31 @@ export async function action({ request, params }: Route.ActionArgs) {
         throw data("Ugyldig status", { status: 400 });
       }
 
+      const beskrivelse = (formData.get("beskrivelse") as string | null) || undefined;
+
       sak.status = nyStatus;
       if (nyStatus === "AVSLUTTET") {
-        sak.iBero = false;
+        sak.blokkert = null;
       }
-      oppdaterTilgjengeligeHandlinger(sak);
-      leggTilHendelse(sak, "STATUS_ENDRET");
+      leggTilHendelse(sak, "STATUS_ENDRET", undefined, { beskrivelse });
+      break;
+    }
+    case "endre_blokkering": {
+      const blokkert = formData.get("blokkert") as string;
+
+      if (!erGyldigBlokkeringsarsak(blokkert)) {
+        throw data("Ugyldig blokkeringsårsak", { status: 400 });
+      }
+
+      const beskrivelse = (formData.get("beskrivelse") as string | null) || undefined;
+
+      sak.blokkert = blokkert;
+      leggTilHendelse(sak, "SAK_SATT_I_BERO", undefined, { beskrivelse });
+      break;
+    }
+    case "gjenoppta": {
+      sak.blokkert = null;
+      leggTilHendelse(sak, "SAK_GJENOPPTATT");
       break;
     }
     case "overfor_ansvarlig": {
@@ -514,7 +403,6 @@ export async function action({ request, params }: Route.ActionArgs) {
         periodeTil: data.tilDato,
         belop: data.caBeløp ?? null,
       }));
-      oppdaterTilgjengeligeHandlinger(sak);
       leggTilHendelse(sak, "SAKSINFORMASJON_ENDRET");
       break;
     }
