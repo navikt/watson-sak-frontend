@@ -1,4 +1,10 @@
-import { ArrowForwardIcon, PersonPencilIcon, PersonPlusIcon } from "@navikt/aksel-icons";
+import {
+  ArrowForwardIcon,
+  ClockDashedIcon,
+  PencilIcon,
+  PersonPencilIcon,
+  PersonPlusIcon,
+} from "@navikt/aksel-icons";
 import { Button, Heading, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import { useFetcher } from "react-router";
@@ -45,10 +51,20 @@ export function UfordeltSakHandlinger({
         <Heading level="2" size="small">
           Handlinger
         </Heading>
-        <Button variant="primary" size="medium" onClick={() => setÅpenModal("endre-status")}>
+        <Button
+          variant="primary"
+          size="medium"
+          icon={<PencilIcon aria-hidden />}
+          onClick={() => setÅpenModal("endre-status")}
+        >
           Endre status
         </Button>
-        <Button variant="secondary" size="medium" onClick={() => setÅpenModal("sett-pa-vent")}>
+        <Button
+          variant="secondary"
+          size="medium"
+          icon={<ClockDashedIcon aria-hidden />}
+          onClick={() => setÅpenModal("sett-pa-vent")}
+        >
           Sett på vent
         </Button>
         <Button
