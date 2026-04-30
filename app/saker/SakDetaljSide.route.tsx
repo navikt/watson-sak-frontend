@@ -12,6 +12,7 @@ import {
   Page,
   Select,
   Tag,
+  TextField,
   UNSAFE_Combobox,
   VStack,
   useRangeDatepicker,
@@ -85,7 +86,15 @@ import {
 
 type Feltfeil = Partial<
   Record<
-    "kategori" | "misbruktype" | "merking" | "kilde" | "fraDato" | "tilDato" | "ytelser" | "skjema",
+    | "kategori"
+    | "misbruktype"
+    | "merking"
+    | "kilde"
+    | "fraDato"
+    | "tilDato"
+    | "ytelser"
+    | "caBeløp"
+    | "skjema",
     string[]
   >
 >;
@@ -98,6 +107,7 @@ type RedigerSaksinformasjonData = {
   fraDato: string;
   tilDato: string;
   ytelser: string[];
+  caBeløp: string;
 };
 
 type ActionResult = { ok: true } | { ok: false; feil: Feltfeil };
@@ -151,6 +161,7 @@ function lagRedigeringsdata(
     fraDato: førsteYtelse?.periodeFra ? formaterTallDatoForInput(førsteYtelse.periodeFra) : "",
     tilDato: førsteYtelse?.periodeTil ? formaterTallDatoForInput(førsteYtelse.periodeTil) : "",
     ytelser: sak.ytelser.map((ytelse) => ytelse.type),
+    caBeløp: sak.ytelser.find((ytelse) => ytelse.belop !== null)?.belop?.toString() ?? "",
   };
 }
 
@@ -480,6 +491,7 @@ export async function action({ request, params }: Route.ActionArgs) {
         fraDato: formData.get("fraDato") || undefined,
         tilDato: formData.get("tilDato") || undefined,
         ytelser: formData.getAll("ytelser"),
+        caBeløp: formData.get("caBeløp") || undefined,
       };
 
       const resultat = redigerSaksinformasjonSchema.safeParse(rådata);
@@ -500,7 +512,7 @@ export async function action({ request, params }: Route.ActionArgs) {
         type: ytelse,
         periodeFra: data.fraDato,
         periodeTil: data.tilDato,
-        belop: eksisterendeYtelser[indeks]?.belop ?? null,
+        belop: data.caBeløp ?? null,
       }));
       oppdaterTilgjengeligeHandlinger(sak);
       leggTilHendelse(sak, "SAKSINFORMASJON_ENDRET");
@@ -897,7 +909,16 @@ export default function SakDetaljSide() {
                               oppdaterLokaleVerdier={oppdaterLokaleVerdier}
                             />
 
-                            {belop !== null && <Felt label="Ca beløp">{formaterBelop(belop)}</Felt>}
+                            <TextField
+                              name="caBeløp"
+                              label="Ca beløp (valgfritt)"
+                              inputMode="numeric"
+                              value={lokaleVerdier.caBeløp}
+                              error={feil?.caBeløp?.join(", ")}
+                              onChange={(event) =>
+                                oppdaterLokaleVerdier("caBeløp", event.target.value)
+                              }
+                            />
 
                             <UNSAFE_Combobox
                               label="Ytelse"
@@ -988,7 +1009,9 @@ export default function SakDetaljSide() {
                         <VStack gap="space-4">
                           {periodeText && <Felt label="Periode">{periodeText}</Felt>}
 
-                          {belop !== null && <Felt label="Ca beløp">{formaterBelop(belop)}</Felt>}
+                          <Felt label="Ca beløp">
+                            {belop !== null ? formaterBelop(belop) : "–"}
+                          </Felt>
 
                           {ytelseTyper.length > 0 && (
                             <VStack gap="space-1">
