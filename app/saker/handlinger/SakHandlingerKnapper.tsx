@@ -2,10 +2,6 @@ import type { FilNode } from "~/saker/filer/typer";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
 import type { SakHendelse } from "~/saker/historikk/typer";
-import {
-  erAktivSakKontrollsak,
-  hentStøttedeTilgjengeligeHandlinger,
-} from "./tilgjengeligeHandlinger";
 import { UfordeltSakHandlinger } from "./UfordeltSakHandlinger";
 import { SakUtredesHandlinger } from "./SakUtredesHandlinger";
 import { SakIBeroHandlinger } from "./SakIBeroHandlinger";
@@ -27,11 +23,15 @@ export function SakHandlingerKnapper({
   historikk: _historikk,
   filer: _filer,
 }: SakHandlingerKnapperProps) {
-  const tilgjengeligeHandlinger = hentStøttedeTilgjengeligeHandlinger(sak);
+  if (sak.status === "AVSLUTTET") {
+    return null;
+  }
 
-  if (!erAktivSakKontrollsak(sak.status) || tilgjengeligeHandlinger.length === 0) return null;
+  if (sak.blokkert !== null) {
+    return <SakIBeroHandlinger sak={sak} />;
+  }
 
-  if (tilgjengeligeHandlinger.some((handling) => handling.handling === "TILDEL")) {
+  if (sak.saksbehandlere.eier === null) {
     return (
       <UfordeltSakHandlinger
         sak={sak}
@@ -42,16 +42,5 @@ export function SakHandlingerKnapper({
     );
   }
 
-  if (sak.iBero) {
-    return <SakIBeroHandlinger sak={sak} tilgjengeligeHandlinger={tilgjengeligeHandlinger} />;
-  }
-
-  return (
-    <SakUtredesHandlinger
-      sak={sak}
-      saksbehandlere={saksbehandlere}
-      saksbehandlerDetaljer={saksbehandlerDetaljer}
-      tilgjengeligeHandlinger={tilgjengeligeHandlinger}
-    />
-  );
+  return <SakUtredesHandlinger sak={sak} saksbehandlerDetaljer={saksbehandlerDetaljer} />;
 }

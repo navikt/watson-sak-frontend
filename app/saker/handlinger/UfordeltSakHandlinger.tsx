@@ -6,7 +6,9 @@ import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import type { KontrollsakResponse, KontrollsakSaksbehandler } from "~/saker/types.backend";
 import { getSaksreferanse } from "~/saker/id";
 import { RouteConfig } from "~/routeConfig";
+import { EndreStatusModal } from "./EndreStatusModal";
 import { TildelSaksbehandlerModal } from "./TildelSaksbehandlerModal";
+import { SettPaVentModal } from "./SettPaVentModal";
 
 interface UfordeltSakHandlingerProps {
   sak: KontrollsakResponse;
@@ -15,7 +17,7 @@ interface UfordeltSakHandlingerProps {
   seksjoner: string[];
 }
 
-type ÅpenModal = "tildel" | null;
+type ÅpenModal = "tildel" | "endre-status" | "sett-pa-vent" | null;
 
 export function UfordeltSakHandlinger({
   sak,
@@ -26,21 +28,10 @@ export function UfordeltSakHandlinger({
   const [åpenModal, setÅpenModal] = useState<ÅpenModal>(null);
   const innloggetBruker = useInnloggetBruker();
   const tildelMegFetcher = useFetcher();
-  const beroFetcher = useFetcher();
 
   function handleTildelMeg() {
     tildelMegFetcher.submit(
       { handling: "TILDEL", navIdent: innloggetBruker.navIdent, navn: innloggetBruker.name },
-      {
-        method: "post",
-        action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id)),
-      },
-    );
-  }
-
-  function handleBeroHandling() {
-    beroFetcher.submit(
-      { handling: sak.iBero ? "TA_AV_BERO" : "SETT_BERO" },
       {
         method: "post",
         action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id)),
@@ -54,8 +45,14 @@ export function UfordeltSakHandlinger({
         <Heading level="2" size="small">
           Handlinger
         </Heading>
+        <Button variant="primary" size="medium" onClick={() => setÅpenModal("endre-status")}>
+          Endre status
+        </Button>
+        <Button variant="secondary" size="medium" onClick={() => setÅpenModal("sett-pa-vent")}>
+          Sett på vent
+        </Button>
         <Button
-          variant="primary"
+          variant="secondary"
           size="small"
           icon={<PersonPencilIcon aria-hidden />}
           onClick={() => setÅpenModal("tildel")}
@@ -74,21 +71,23 @@ export function UfordeltSakHandlinger({
         <Button variant="secondary" size="small" icon={<ArrowForwardIcon aria-hidden />} disabled>
           Send til annen enhet
         </Button>
-        <Button
-          variant="tertiary"
-          size="small"
-          onClick={handleBeroHandling}
-          loading={beroFetcher.state !== "idle"}
-        >
-          {sak.iBero ? "Ta saken ut av bero" : "Sett i bero"}
-        </Button>
       </VStack>
 
+      <EndreStatusModal
+        sakId={sak.id}
+        åpen={åpenModal === "endre-status"}
+        onClose={() => setÅpenModal(null)}
+      />
       <TildelSaksbehandlerModal
         sakId={sak.id}
         saksbehandlere={saksbehandlere}
         saksbehandlerDetaljer={saksbehandlerDetaljer}
         åpen={åpenModal === "tildel"}
+        onClose={() => setÅpenModal(null)}
+      />
+      <SettPaVentModal
+        sakId={sak.id}
+        åpen={åpenModal === "sett-pa-vent"}
         onClose={() => setÅpenModal(null)}
       />
     </>
