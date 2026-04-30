@@ -1,7 +1,6 @@
 import { Button, Heading, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import type { KontrollsakResponse, KontrollsakSaksbehandler } from "~/saker/types.backend";
-import { DelTilgangModal } from "./DelTilgangModal";
 import { EndreStatusModal } from "./EndreStatusModal";
 import { SettPaVentModal } from "./SettPaVentModal";
 
@@ -10,9 +9,9 @@ interface SakUtredesHandlingerProps {
   saksbehandlerDetaljer: KontrollsakSaksbehandler[];
 }
 
-type ÅpenModal = "del-tilgang" | "endre-status" | "sett-pa-vent" | null;
+type ÅpenModal = "endre-status" | "sett-pa-vent" | null;
 
-export function SakUtredesHandlinger({ sak, saksbehandlerDetaljer }: SakUtredesHandlingerProps) {
+export function SakUtredesHandlinger({ sak, saksbehandlerDetaljer: _saksbehandlerDetaljer }: SakUtredesHandlingerProps) {
   const [åpenModal, setÅpenModal] = useState<ÅpenModal>(null);
 
   return (
@@ -27,9 +26,6 @@ export function SakUtredesHandlinger({ sak, saksbehandlerDetaljer }: SakUtredesH
         <Button variant="secondary" size="medium" onClick={() => setÅpenModal("sett-pa-vent")}>
           Sett på vent
         </Button>
-        <Button variant="secondary" size="small" onClick={() => setÅpenModal("del-tilgang")}>
-          Del tilgang
-        </Button>
       </VStack>
 
       <EndreStatusModal
@@ -40,12 +36,6 @@ export function SakUtredesHandlinger({ sak, saksbehandlerDetaljer }: SakUtredesH
       <SettPaVentModal
         sakId={sak.id}
         åpen={åpenModal === "sett-pa-vent"}
-        onClose={() => setÅpenModal(null)}
-      />
-      <DelTilgangModal
-        sakId={sak.id}
-        saksbehandlerDetaljer={saksbehandlerDetaljer}
-        åpen={åpenModal === "del-tilgang"}
         onClose={() => setÅpenModal(null)}
       />
     </>
