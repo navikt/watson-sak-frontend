@@ -36,7 +36,7 @@ export const merkingEtiketter: Record<(typeof merkingAlternativer)[number], stri
   ANNET: "Annet",
 };
 
-export const enhetAlternativer = ["ØST", "VEST", "NORD", "SØR", "OSLO"] as const;
+export const enhetAlternativer = ["ØST", "VEST", "NORD", "ANALYSE"] as const;
 
 function erGyldigMisbrukstypeForKategori(kategori: string, misbruktype?: string) {
   const gyldigeMisbrukstyper =
