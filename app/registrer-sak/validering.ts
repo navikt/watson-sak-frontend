@@ -36,7 +36,7 @@ export const merkingEtiketter: Record<(typeof merkingAlternativer)[number], stri
   ANNET: "Annet",
 };
 
-export const enhetAlternativer = ["ØST", "VEST", "NORD", "SØR", "OSLO"] as const;
+export const enhetAlternativer = ["ØST", "VEST", "NORD", "ANALYSE"] as const;
 
 function erGyldigMisbrukstypeForKategori(kategori: string, misbruktype?: string) {
   const gyldigeMisbrukstyper =
@@ -162,6 +162,11 @@ export const redigerSaksinformasjonSchema = medFellesSaksregler(
     misbruktype: misbrukstypeSchema.optional(),
     merking: z.enum(merkingAlternativer).optional(),
     kilde: z.enum(kildeAlternativer, { message: "Velg kilde" }),
+    caBeløp: z.preprocess((verdi) => {
+      if (verdi === "" || verdi === null || verdi === undefined) return undefined;
+      const tall = Number(verdi);
+      return Number.isFinite(tall) ? tall : verdi;
+    }, z.number({ message: "Ca beløp må være et gyldig tall" }).positive("Ca beløp må være et positivt tall").optional()),
   }),
 );
 

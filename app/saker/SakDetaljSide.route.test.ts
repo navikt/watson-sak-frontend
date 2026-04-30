@@ -172,7 +172,7 @@ describe("SakDetaljSide helper-integrasjon", () => {
 
     expect(getPersonIdent(sak)).toBe("12345678901");
     expect(getKildeText(sak)).toBe("Annet");
-    expect(getYtelseTyper(sak)).toEqual(["Enslig forsørger"]);
+    expect(getYtelseTyper(sak)).toEqual(["Barnetrygd"]);
     expect(getBeskrivelse(sak)).toBeNull();
   });
 
@@ -416,7 +416,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     formData.set("kilde", "PUBLIKUM");
     formData.set("fraDato", "2026-01-13");
     formData.set("tilDato", "2026-01-13");
-    formData.append("ytelser", "Enslig forsørger");
+    formData.append("ytelser", "Barnetrygd");
 
     await action({
       request: new Request(`http://localhost/saker/${kontrollsakRef}`, {

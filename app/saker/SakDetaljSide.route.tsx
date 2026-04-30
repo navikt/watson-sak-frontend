@@ -12,6 +12,7 @@ import {
   Page,
   Select,
   Tag,
+  TextField,
   UNSAFE_Combobox,
   VStack,
   useRangeDatepicker,
@@ -85,7 +86,15 @@ import {
 
 type Feltfeil = Partial<
   Record<
-    "kategori" | "misbruktype" | "merking" | "kilde" | "fraDato" | "tilDato" | "ytelser" | "skjema",
+    | "kategori"
+    | "misbruktype"
+    | "merking"
+    | "kilde"
+    | "fraDato"
+    | "tilDato"
+    | "ytelser"
+    | "caBeløp"
+    | "skjema",
     string[]
   >
 >;
@@ -98,6 +107,7 @@ type RedigerSaksinformasjonData = {
   fraDato: string;
   tilDato: string;
   ytelser: string[];
+  caBeløp: string;
 };
 
 type ActionResult = { ok: true } | { ok: false; feil: Feltfeil };
@@ -151,6 +161,7 @@ function lagRedigeringsdata(
     fraDato: førsteYtelse?.periodeFra ? formaterTallDatoForInput(førsteYtelse.periodeFra) : "",
     tilDato: førsteYtelse?.periodeTil ? formaterTallDatoForInput(førsteYtelse.periodeTil) : "",
     ytelser: sak.ytelser.map((ytelse) => ytelse.type),
+    caBeløp: sak.ytelser.find((ytelse) => ytelse.belop !== null)?.belop?.toString() ?? "",
   };
 }
 
@@ -288,11 +299,12 @@ function utførStatushandling(
   switch (handling) {
     case "TILDEL": {
       const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
-      const valgtSaksbehandler = finnSaksbehandlerDetalj(mockSaksbehandlerDetaljer, navIdent);
-
-      if (!valgtSaksbehandler) {
-        throw data("Ugyldig saksbehandler", { status: 400 });
-      }
+      const navn = (formData.get("navn") as string | null) ?? navIdent;
+      const valgtSaksbehandler = finnSaksbehandlerDetalj(mockSaksbehandlerDetaljer, navIdent) ?? {
+        navIdent,
+        navn,
+        enhet: null,
+      };
 
       sak.saksbehandlere.eier = valgtSaksbehandler;
       oppdaterTilgjengeligeHandlinger(sak);
@@ -479,6 +491,7 @@ export async function action({ request, params }: Route.ActionArgs) {
         fraDato: formData.get("fraDato") || undefined,
         tilDato: formData.get("tilDato") || undefined,
         ytelser: formData.getAll("ytelser"),
+        caBeløp: formData.get("caBeløp") || undefined,
       };
 
       const resultat = redigerSaksinformasjonSchema.safeParse(rådata);
@@ -499,7 +512,7 @@ export async function action({ request, params }: Route.ActionArgs) {
         type: ytelse,
         periodeFra: data.fraDato,
         periodeTil: data.tilDato,
-        belop: eksisterendeYtelser[indeks]?.belop ?? null,
+        belop: data.caBeløp ?? null,
       }));
       oppdaterTilgjengeligeHandlinger(sak);
       leggTilHendelse(sak, "SAKSINFORMASJON_ENDRET");
@@ -616,6 +629,7 @@ function Periodefelter({
       <HStack gap="space-4" align="start" wrap>
         <DatePicker.Input
           {...fromInputProps}
+          size="small"
           name="fraDato"
           label="Fra dato"
           value={lokaleVerdier.fraDato}
@@ -628,6 +642,7 @@ function Periodefelter({
 
         <DatePicker.Input
           {...toInputProps}
+          size="small"
           name="tilDato"
           label="Til dato"
           value={lokaleVerdier.tilDato}
@@ -793,19 +808,20 @@ export default function SakDetaljSide() {
                           </Alert>
                         )}
 
+                        <VStack gap="space-1">
+                          <Detail className="text-ax-text-neutral-subtle" uppercase>
+                            Personnummer
+                          </Detail>
+                          <HStack gap="space-1" align="center">
+                            <BodyShort>{personIdent}</BodyShort>
+                            <CopyButton size="xsmall" copyText={personIdent} />
+                          </HStack>
+                        </VStack>
+
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                           <VStack gap="space-4">
-                            <VStack gap="space-1">
-                              <Detail className="text-ax-text-neutral-subtle" uppercase>
-                                Personnummer
-                              </Detail>
-                              <HStack gap="space-1" align="center">
-                                <BodyShort>{personIdent}</BodyShort>
-                                <CopyButton size="xsmall" copyText={personIdent} />
-                              </HStack>
-                            </VStack>
-
                             <Select
+                              size="small"
                               name="kategori"
                               label="Kategori"
                               value={lokaleVerdier.kategori}
@@ -836,6 +852,7 @@ export default function SakDetaljSide() {
 
                             {visMisbruktype && (
                               <Select
+                                size="small"
                                 name="misbruktype"
                                 label="Misbruktype"
                                 value={lokaleVerdier.misbruktype}
@@ -854,6 +871,7 @@ export default function SakDetaljSide() {
                             )}
 
                             <Select
+                              size="small"
                               name="merking"
                               label="Merking (valgfritt)"
                               value={lokaleVerdier.merking}
@@ -871,6 +889,7 @@ export default function SakDetaljSide() {
                             </Select>
 
                             <Select
+                              size="small"
                               name="kilde"
                               label="Kilde"
                               value={lokaleVerdier.kilde}
@@ -896,9 +915,20 @@ export default function SakDetaljSide() {
                               oppdaterLokaleVerdier={oppdaterLokaleVerdier}
                             />
 
-                            {belop !== null && <Felt label="Ca beløp">{formaterBelop(belop)}</Felt>}
+                            <TextField
+                              size="small"
+                              name="caBeløp"
+                              label="Ca beløp (valgfritt)"
+                              inputMode="numeric"
+                              value={lokaleVerdier.caBeløp}
+                              error={feil?.caBeløp?.join(", ")}
+                              onChange={(event) =>
+                                oppdaterLokaleVerdier("caBeløp", event.target.value)
+                              }
+                            />
 
                             <UNSAFE_Combobox
+                              size="small"
                               label="Ytelse"
                               options={ytelser}
                               isMultiSelect
@@ -915,10 +945,15 @@ export default function SakDetaljSide() {
                         </div>
 
                         <HStack justify="end" gap="space-4">
-                          <Button type="submit" loading={fetcher.state !== "idle"}>
+                          <Button size="small" type="submit" loading={fetcher.state !== "idle"}>
                             Lagre
                           </Button>
-                          <Button type="button" variant="secondary" onClick={avbrytRedigering}>
+                          <Button
+                            size="small"
+                            type="button"
+                            variant="secondary"
+                            onClick={avbrytRedigering}
+                          >
                             Avbryt
                           </Button>
                         </HStack>
@@ -987,7 +1022,9 @@ export default function SakDetaljSide() {
                         <VStack gap="space-4">
                           {periodeText && <Felt label="Periode">{periodeText}</Felt>}
 
-                          {belop !== null && <Felt label="Ca beløp">{formaterBelop(belop)}</Felt>}
+                          <Felt label="Ca beløp">
+                            {belop !== null ? formaterBelop(belop) : "–"}
+                          </Felt>
 
                           {ytelseTyper.length > 0 && (
                             <VStack gap="space-1">

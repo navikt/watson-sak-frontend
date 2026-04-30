@@ -31,8 +31,7 @@ const enhetEtiketter: Record<string, string> = {
   ØST: "Øst",
   VEST: "Vest",
   NORD: "Nord",
-  SØR: "Sør",
-  OSLO: "Oslo",
+  ANALYSE: "Analyse",
 };
 
 export default function OpprettSakSide() {
