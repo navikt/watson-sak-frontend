@@ -459,10 +459,6 @@ export async function action({ request, params }: Route.ActionArgs) {
 
       break;
     }
-    case "stans_ytelse": {
-      leggTilHendelse(sak, "YTELSE_STANSET");
-      break;
-    }
     case "legg_til_historikk": {
       const tittel = formData.get("tittel") as string;
       const notat = formData.get("notat") as string;

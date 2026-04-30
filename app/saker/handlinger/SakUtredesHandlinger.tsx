@@ -4,14 +4,13 @@ import type { KontrollsakResponse, KontrollsakSaksbehandler } from "~/saker/type
 import { DelTilgangModal } from "./DelTilgangModal";
 import { EndreStatusModal } from "./EndreStatusModal";
 import { SettPaVentModal } from "./SettPaVentModal";
-import { StansYtelseModal } from "./StansYtelseModal";
 
 interface SakUtredesHandlingerProps {
   sak: KontrollsakResponse;
   saksbehandlerDetaljer: KontrollsakSaksbehandler[];
 }
 
-type ÅpenModal = "del-tilgang" | "stans-ytelse" | "endre-status" | "sett-pa-vent" | null;
+type ÅpenModal = "del-tilgang" | "endre-status" | "sett-pa-vent" | null;
 
 export function SakUtredesHandlinger({ sak, saksbehandlerDetaljer }: SakUtredesHandlingerProps) {
   const [åpenModal, setÅpenModal] = useState<ÅpenModal>(null);
@@ -31,9 +30,6 @@ export function SakUtredesHandlinger({ sak, saksbehandlerDetaljer }: SakUtredesH
         <Button variant="secondary" size="small" onClick={() => setÅpenModal("del-tilgang")}>
           Del tilgang
         </Button>
-        <Button variant="tertiary" size="small" onClick={() => setÅpenModal("stans-ytelse")}>
-          Stans ytelse
-        </Button>
       </VStack>
 
       <EndreStatusModal
@@ -50,12 +46,6 @@ export function SakUtredesHandlinger({ sak, saksbehandlerDetaljer }: SakUtredesH
         sakId={sak.id}
         saksbehandlerDetaljer={saksbehandlerDetaljer}
         åpen={åpenModal === "del-tilgang"}
-        onClose={() => setÅpenModal(null)}
-      />
-      <StansYtelseModal
-        sakId={sak.id}
-        ytelser={sak.ytelser}
-        åpen={åpenModal === "stans-ytelse"}
         onClose={() => setÅpenModal(null)}
       />
     </>

@@ -84,6 +84,7 @@ describe("SakHandlingerKnapper", () => {
 
     expect(screen.getByRole("button", { name: "Endre status" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Sett på vent" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Stans ytelse" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Gjenoppta" })).toBeNull();
   });
 
