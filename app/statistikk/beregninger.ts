@@ -26,9 +26,7 @@ export function beregnAntallPerStatus(saker: Statistikksak[]): Record<Statistikk
   const resultat: Record<StatistikkStatus, number> = {
     OPPRETTET: 0,
     UTREDES: 0,
-    VENTER_PA_INFORMASJON: 0,
-    VENTER_PA_VEDTAK: 0,
-    ANMELDELSE_VURDERES: 0,
+    STRAFFERETTSLIG_VURDERING: 0,
     ANMELDT: 0,
     HENLAGT: 0,
     AVSLUTTET: 0,
@@ -42,7 +40,7 @@ export function beregnAntallPerStatus(saker: Statistikksak[]): Record<Statistikk
 }
 
 export function beregnAntallIBero(saker: Statistikksak[]): number {
-  return saker.filter((sak) => sak.iBero).length;
+  return saker.filter((sak) => sak.blokkert === "I_BERO").length;
 }
 
 interface BehandlingstidResultat {

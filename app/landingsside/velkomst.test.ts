@@ -17,9 +17,7 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
     kilde: "NAV_KONTROLL",
     misbruktype: [],
     prioritet: "NORMAL",
-    iBero: false,
-    avslutningskonklusjon: null,
-    tilgjengeligeHandlinger: [],
+    blokkert: null,
     ytelser: [],
     merking: null,
     resultat: null,
@@ -36,7 +34,7 @@ describe("lagVelkomstOppsummering", () => {
       lagKontrollsak({ id: "2", status: "OPPRETTET" }),
       lagKontrollsak({ id: "3", status: "UTREDES" }),
       lagKontrollsak({ id: "4", status: "UTREDES" }),
-      lagKontrollsak({ id: "5", status: "VENTER_PA_VEDTAK" }),
+      lagKontrollsak({ id: "5", status: "UTREDES", blokkert: "VENTER_PA_VEDTAK" }),
     ];
 
     expect(lagVelkomstOppsummering(saker)).toBe(
@@ -58,9 +56,9 @@ describe("lagVelkomstOppsummering", () => {
 
   test("tar med ventende saker når de utgjør en større del av arbeidsbildet", () => {
     const saker = [
-      lagKontrollsak({ id: "1", status: "VENTER_PA_VEDTAK" }),
-      lagKontrollsak({ id: "2", status: "VENTER_PA_VEDTAK" }),
-      lagKontrollsak({ id: "3", status: "VENTER_PA_VEDTAK" }),
+      lagKontrollsak({ id: "1", status: "UTREDES", blokkert: "VENTER_PA_VEDTAK" }),
+      lagKontrollsak({ id: "2", status: "UTREDES", blokkert: "VENTER_PA_VEDTAK" }),
+      lagKontrollsak({ id: "3", status: "UTREDES", blokkert: "VENTER_PA_VEDTAK" }),
       lagKontrollsak({ id: "4", status: "UTREDES" }),
     ];
 
@@ -75,7 +73,7 @@ describe("lagVelkomstOppsummering", () => {
       lagKontrollsak({ id: "ks-2", status: "OPPRETTET" }),
       lagKontrollsak({ id: "ks-3", status: "UTREDES" }),
       lagKontrollsak({ id: "ks-4", status: "UTREDES" }),
-      lagKontrollsak({ id: "ks-5", status: "VENTER_PA_VEDTAK" }),
+      lagKontrollsak({ id: "ks-5", status: "UTREDES", blokkert: "VENTER_PA_VEDTAK" }),
     ];
 
     expect(lagVelkomstOppsummering(saker)).toBe(
@@ -85,8 +83,8 @@ describe("lagVelkomstOppsummering", () => {
 
   test("behandler saker i bero som egen oppsummeringskategori", () => {
     const saker = [
-      lagKontrollsak({ id: "1", status: "OPPRETTET", iBero: true }),
-      lagKontrollsak({ id: "2", status: "UTREDES", iBero: true }),
+      lagKontrollsak({ id: "1", status: "OPPRETTET", blokkert: "I_BERO" }),
+      lagKontrollsak({ id: "2", status: "UTREDES", blokkert: "I_BERO" }),
       lagKontrollsak({ id: "3", status: "OPPRETTET" }),
     ];
 

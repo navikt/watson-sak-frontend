@@ -25,9 +25,7 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
     kilde: "NAV_KONTROLL",
     misbruktype: [],
     prioritet: "NORMAL",
-    iBero: false,
-    avslutningskonklusjon: null,
-    tilgjengeligeHandlinger: [],
+    blokkert: null,
     ytelser: [
       {
         id: "ytelse-1",
@@ -78,9 +76,7 @@ describe("beregnAntallPerStatus", () => {
     expect(resultat).toEqual({
       OPPRETTET: 2,
       UTREDES: 1,
-      VENTER_PA_INFORMASJON: 0,
-      VENTER_PA_VEDTAK: 0,
-      ANMELDELSE_VURDERES: 0,
+      STRAFFERETTSLIG_VURDERING: 0,
       ANMELDT: 0,
       HENLAGT: 0,
       AVSLUTTET: 2,
@@ -91,9 +87,7 @@ describe("beregnAntallPerStatus", () => {
     expect(beregnAntallPerStatus([])).toEqual({
       OPPRETTET: 0,
       UTREDES: 0,
-      VENTER_PA_INFORMASJON: 0,
-      VENTER_PA_VEDTAK: 0,
-      ANMELDELSE_VURDERES: 0,
+      STRAFFERETTSLIG_VURDERING: 0,
       ANMELDT: 0,
       HENLAGT: 0,
       AVSLUTTET: 0,
@@ -115,9 +109,9 @@ describe("beregnAntallPerStatus", () => {
   test("teller saker i bero separat fra status", () => {
     expect(
       beregnAntallIBero([
-        lagKontrollsak({ id: "1", status: "OPPRETTET", iBero: true }),
-        lagKontrollsak({ id: "2", status: "UTREDES", iBero: true }),
-        lagKontrollsak({ id: "3", status: "UTREDES", iBero: false }),
+        lagKontrollsak({ id: "1", status: "OPPRETTET", blokkert: "I_BERO" }),
+        lagKontrollsak({ id: "2", status: "UTREDES", blokkert: "I_BERO" }),
+        lagKontrollsak({ id: "3", status: "UTREDES" }),
       ]),
     ).toBe(2);
   });
