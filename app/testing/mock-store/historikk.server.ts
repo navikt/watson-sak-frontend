@@ -75,7 +75,10 @@ export function leggTilHendelse(
   tidspunkt?: string,
   metadata?: Pick<
     SakHendelse,
-    "berortSaksbehandlerNavn" | "berortSaksbehandlerNavIdent" | "berortSaksbehandlerEnhet"
+    | "berortSaksbehandlerNavn"
+    | "berortSaksbehandlerNavIdent"
+    | "berortSaksbehandlerEnhet"
+    | "beskrivelse"
   >,
 ) {
   return leggTilBackendHendelse(

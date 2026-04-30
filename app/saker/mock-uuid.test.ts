@@ -38,7 +38,8 @@ describe("normaliserLegacyKontrollsak", () => {
     );
 
     expect(sak.id).toBe("00000000-0000-4000-8000-000002201000");
-    expect(sak.status).toBe("VENTER_PA_VEDTAK");
+    expect(sak.status).toBe("UTREDES");
+    expect(sak.blokkert).toBeNull();
     expect(sak.kilde).toBe("PUBLIKUM");
     expect(sak.misbruktype).toEqual(["SVART_ARBEID"]);
     expect(sak.personNavn).toBe("Ola Nordmann");
@@ -52,21 +53,9 @@ describe("normaliserLegacyKontrollsak", () => {
         belop: 123456,
       },
     ]);
-    expect(sak.tilgjengeligeHandlinger).toEqual([
-      {
-        handling: "TILDEL",
-        pakrevdeFelter: [{ felt: "navIdent", tillatteVerdier: [] }],
-        resultatStatus: "VENTER_PA_VEDTAK",
-      },
-      {
-        handling: "SETT_BERO",
-        pakrevdeFelter: [],
-        resultatStatus: "VENTER_PA_VEDTAK",
-      },
-    ]);
   });
 
-  it("eksponerer vurder anmeldelse og henlegg fra VENTER_PA_VEDTAK med eier", () => {
+  it("oppdaterTilgjengeligeHandlinger er en ingen-op og returnerer saken uendret", () => {
     const sak = normaliserLegacyKontrollsak(
       {
         id: "601",
@@ -87,31 +76,11 @@ describe("normaliserLegacyKontrollsak", () => {
       navn: "Kari Nordmann",
       enhet: "4812",
     };
+    const sakFørKall = { ...sak };
     oppdaterTilgjengeligeHandlinger(sak);
 
-    expect(sak.status).toBe("VENTER_PA_VEDTAK");
-    expect(sak.tilgjengeligeHandlinger).toEqual([
-      {
-        handling: "SETT_ANMELDELSE_VURDERES",
-        pakrevdeFelter: [],
-        resultatStatus: "ANMELDELSE_VURDERES",
-      },
-      {
-        handling: "SETT_HENLAGT",
-        pakrevdeFelter: [],
-        resultatStatus: "HENLAGT",
-      },
-      {
-        handling: "SETT_BERO",
-        pakrevdeFelter: [],
-        resultatStatus: "VENTER_PA_VEDTAK",
-      },
-      {
-        handling: "FRISTILL",
-        pakrevdeFelter: [],
-        resultatStatus: "VENTER_PA_VEDTAK",
-      },
-    ]);
+    expect(sak.status).toBe(sakFørKall.status);
+    expect(sak.blokkert).toBe(sakFørKall.blokkert);
   });
 
   it("faller tilbake trygt når legacy-eier og kategorifelter mangler", () => {
@@ -135,6 +104,7 @@ describe("normaliserLegacyKontrollsak", () => {
 
     expect(sak.id).toBe("00000000-0000-4000-8000-000004007000");
     expect(sak.status).toBe("OPPRETTET");
+    expect(sak.blokkert).toBeNull();
     expect(sak.kategori).toBe("ANNET");
     expect(sak.kilde).toBe("ANNET");
     expect(sak.misbruktype).toEqual([]);
@@ -172,6 +142,7 @@ describe("normaliserLegacyKontrollsak", () => {
     );
 
     expect(sak.status).toBe("OPPRETTET");
+    expect(sak.blokkert).toBeNull();
     expect(sak.saksbehandlere.eier).toBeNull();
     expect(sak.saksbehandlere.opprettetAv).toEqual({
       navIdent: "Z123456",
@@ -180,7 +151,7 @@ describe("normaliserLegacyKontrollsak", () => {
     });
   });
 
-  it("krever tildeling for ownerløs henlagt sak i mock-tilstandsmaskinen", () => {
+  it("mapper henlagt-status til HENLAGT", () => {
     const sak = normaliserLegacyKontrollsak(
       {
         id: "301",
@@ -193,16 +164,11 @@ describe("normaliserLegacyKontrollsak", () => {
       3,
     );
 
-    expect(sak.tilgjengeligeHandlinger).toEqual([
-      {
-        handling: "TILDEL",
-        pakrevdeFelter: [{ felt: "navIdent", tillatteVerdier: [] }],
-        resultatStatus: "HENLAGT",
-      },
-    ]);
+    expect(sak.status).toBe("HENLAGT");
+    expect(sak.blokkert).toBeNull();
   });
 
-  it("lar eierløs sak i bero eksponere tildel og ta av bero", () => {
+  it("mapper I_BERO til OPPRETTET-status med blokkert I_BERO", () => {
     const sak = normaliserLegacyKontrollsak(
       {
         id: "401",
@@ -215,25 +181,11 @@ describe("normaliserLegacyKontrollsak", () => {
       4,
     );
 
-    oppdaterTilgjengeligeHandlinger(sak);
-
-    expect(sak.iBero).toBe(true);
+    expect(sak.blokkert).toBe("I_BERO");
     expect(sak.status).toBe("OPPRETTET");
-    expect(sak.tilgjengeligeHandlinger).toEqual([
-      {
-        handling: "TILDEL",
-        pakrevdeFelter: [{ felt: "navIdent", tillatteVerdier: [] }],
-        resultatStatus: "OPPRETTET",
-      },
-      {
-        handling: "TA_AV_BERO",
-        pakrevdeFelter: [],
-        resultatStatus: "OPPRETTET",
-      },
-    ]);
   });
 
-  it("bevarer underliggende status når owner fristilles i bero", () => {
+  it("mapper VENTER_PA_VEDTAK til UTREDES-status med blokkert VENTER_PA_VEDTAK", () => {
     const sak = normaliserLegacyKontrollsak(
       {
         id: "501",
@@ -242,34 +194,11 @@ describe("normaliserLegacyKontrollsak", () => {
         kategori: "ARBEID",
         ytelser: [],
         opprettet: "2026-01-01T00:00:00Z",
-        iBero: true,
-        saksbehandlere: {
-          eier: {
-            navn: "Kari Nordmann",
-            navIdent: "Z123456",
-            enhet: "4812",
-          },
-        },
       },
       5,
     );
 
-    sak.iBero = true;
-    sak.saksbehandlere.eier = null;
-    oppdaterTilgjengeligeHandlinger(sak);
-
-    expect(sak.status).toBe("VENTER_PA_VEDTAK");
-    expect(sak.tilgjengeligeHandlinger).toEqual([
-      {
-        handling: "TILDEL",
-        pakrevdeFelter: [{ felt: "navIdent", tillatteVerdier: [] }],
-        resultatStatus: "VENTER_PA_VEDTAK",
-      },
-      {
-        handling: "TA_AV_BERO",
-        pakrevdeFelter: [],
-        resultatStatus: "VENTER_PA_VEDTAK",
-      },
-    ]);
+    expect(sak.status).toBe("UTREDES");
+    expect(sak.blokkert).toBe("VENTER_PA_VEDTAK");
   });
 });
