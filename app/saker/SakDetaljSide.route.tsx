@@ -629,6 +629,7 @@ function Periodefelter({
       <HStack gap="space-4" align="start" wrap>
         <DatePicker.Input
           {...fromInputProps}
+          size="small"
           name="fraDato"
           label="Fra dato"
           value={lokaleVerdier.fraDato}
@@ -641,6 +642,7 @@ function Periodefelter({
 
         <DatePicker.Input
           {...toInputProps}
+          size="small"
           name="tilDato"
           label="Til dato"
           value={lokaleVerdier.tilDato}
@@ -806,19 +808,20 @@ export default function SakDetaljSide() {
                           </Alert>
                         )}
 
+                        <VStack gap="space-1">
+                          <Detail className="text-ax-text-neutral-subtle" uppercase>
+                            Personnummer
+                          </Detail>
+                          <HStack gap="space-1" align="center">
+                            <BodyShort>{personIdent}</BodyShort>
+                            <CopyButton size="xsmall" copyText={personIdent} />
+                          </HStack>
+                        </VStack>
+
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                           <VStack gap="space-4">
-                            <VStack gap="space-1">
-                              <Detail className="text-ax-text-neutral-subtle" uppercase>
-                                Personnummer
-                              </Detail>
-                              <HStack gap="space-1" align="center">
-                                <BodyShort>{personIdent}</BodyShort>
-                                <CopyButton size="xsmall" copyText={personIdent} />
-                              </HStack>
-                            </VStack>
-
                             <Select
+                              size="small"
                               name="kategori"
                               label="Kategori"
                               value={lokaleVerdier.kategori}
@@ -849,6 +852,7 @@ export default function SakDetaljSide() {
 
                             {visMisbruktype && (
                               <Select
+                                size="small"
                                 name="misbruktype"
                                 label="Misbruktype"
                                 value={lokaleVerdier.misbruktype}
@@ -867,6 +871,7 @@ export default function SakDetaljSide() {
                             )}
 
                             <Select
+                              size="small"
                               name="merking"
                               label="Merking (valgfritt)"
                               value={lokaleVerdier.merking}
@@ -884,6 +889,7 @@ export default function SakDetaljSide() {
                             </Select>
 
                             <Select
+                              size="small"
                               name="kilde"
                               label="Kilde"
                               value={lokaleVerdier.kilde}
@@ -910,6 +916,7 @@ export default function SakDetaljSide() {
                             />
 
                             <TextField
+                              size="small"
                               name="caBeløp"
                               label="Ca beløp (valgfritt)"
                               inputMode="numeric"
@@ -921,6 +928,7 @@ export default function SakDetaljSide() {
                             />
 
                             <UNSAFE_Combobox
+                              size="small"
                               label="Ytelse"
                               options={ytelser}
                               isMultiSelect
@@ -937,10 +945,15 @@ export default function SakDetaljSide() {
                         </div>
 
                         <HStack justify="end" gap="space-4">
-                          <Button type="submit" loading={fetcher.state !== "idle"}>
+                          <Button size="small" type="submit" loading={fetcher.state !== "idle"}>
                             Lagre
                           </Button>
-                          <Button type="button" variant="secondary" onClick={avbrytRedigering}>
+                          <Button
+                            size="small"
+                            type="button"
+                            variant="secondary"
+                            onClick={avbrytRedigering}
+                          >
                             Avbryt
                           </Button>
                         </HStack>
