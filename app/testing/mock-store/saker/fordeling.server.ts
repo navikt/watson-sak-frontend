@@ -61,7 +61,7 @@ const initialeMockKontrollsaker = [
     ytelser: [
       {
         id: "101-ytelse-1",
-        type: "Enslig forsørger",
+        type: "Barnetrygd",
         periodeFra: "2026-01-13",
         periodeTil: "2026-01-13",
       },
@@ -69,7 +69,7 @@ const initialeMockKontrollsaker = [
     bakgrunn: {
       id: "00000000-0000-4000-8000-000000000001",
       kilde: "EKSTERN",
-      innhold: "Tips om mulig feil i enslig-forsørger-sak.",
+      innhold: "Tips om mulig feil i barnetrygd-sak.",
       avsender: null,
       vedlegg: [],
       tilleggsopplysninger: null,
@@ -568,7 +568,6 @@ export function resetMockSaker() {
 }
 
 export const mockYtelser = [
-  "Enslig forsørger",
   "Dagpenger",
   "Sykepenger",
   "Barnetrygd",
