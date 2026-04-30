@@ -75,18 +75,15 @@ export function getResultat(sak: KontrollsakResponse) {
 }
 
 export function getMineSakerGruppeStatus(sak: KontrollsakResponse): MineSakerGruppeStatus {
-  if (sak.iBero) {
+  if (sak.blokkert !== null) {
     return "ventende";
   }
 
   switch (sak.status) {
     case "OPPRETTET":
     case "UTREDES":
-    case "ANMELDELSE_VURDERES":
+    case "STRAFFERETTSLIG_VURDERING":
       return "aktive";
-    case "VENTER_PA_INFORMASJON":
-    case "VENTER_PA_VEDTAK":
-      return "ventende";
     case "ANMELDT":
     case "HENLAGT":
     case "AVSLUTTET":

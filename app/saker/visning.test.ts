@@ -37,9 +37,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     kilde: "NAV_KONTROLL",
     misbruktype: ["FIKTIVT_ARBEIDSFORHOLD"],
     prioritet: "NORMAL",
-    iBero: false,
-    avslutningskonklusjon: null,
-    tilgjengeligeHandlinger: [],
+    blokkert: null,
     ytelser: [
       {
         id: "00000000-0000-4000-8000-000000000002",
@@ -99,11 +97,15 @@ describe("sak-visning", () => {
   });
 
   it("henter formatert status fra kontrollsak", () => {
-    expect(getStatus(lagKontrollsak({ status: "VENTER_PA_VEDTAK" }))).toBe("Venter på vedtak");
+    expect(getStatus(lagKontrollsak({ status: "UTREDES", blokkert: "VENTER_PA_VEDTAK" }))).toBe(
+      "Venter på vedtak · Utredes",
+    );
   });
 
-  it("viser i bero med underliggende status", () => {
-    expect(getStatus(lagKontrollsak({ status: "UTREDES", iBero: true }))).toBe("I bero · Utredes");
+  it("viser blokkert med underliggende status", () => {
+    expect(getStatus(lagKontrollsak({ status: "UTREDES", blokkert: "I_BERO" }))).toBe(
+      "I bero · Utredes",
+    );
   });
 
   it("henter ytelsestyper fra kontrollsak", () => {

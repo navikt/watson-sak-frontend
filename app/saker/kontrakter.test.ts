@@ -31,15 +31,7 @@ describe("Kontrollsak-kontrakter", () => {
           },
         },
         status: "OPPRETTET",
-        iBero: false,
-        avslutningskonklusjon: null,
-        tilgjengeligeHandlinger: [
-          {
-            handling: "TILDEL",
-            pakrevdeFelter: [{ felt: "navIdent", tillatteVerdier: [] }],
-            resultatStatus: "OPPRETTET",
-          },
-        ],
+        blokkert: null,
         kategori: "ARBEID",
         kilde: "NAV_KONTROLL",
         misbruktype: ["FIKTIVT_ARBEIDSFORHOLD"],
@@ -71,7 +63,6 @@ describe("Kontrollsak-kontrakter", () => {
       personNavn: null,
       ytelser: [{ type: "Dagpenger" }],
       kilde: "NAV_KONTROLL",
-      tilgjengeligeHandlinger: [{ handling: "TILDEL" }],
     });
   });
 
@@ -90,9 +81,7 @@ describe("Kontrollsak-kontrakter", () => {
           },
         },
         status: "OPPRETTET",
-        iBero: false,
-        avslutningskonklusjon: null,
-        tilgjengeligeHandlinger: [],
+        blokkert: null,
         kategori: "ARBEID",
         kilde: "PUBLIKUM",
         misbruktype: [],
@@ -126,9 +115,7 @@ describe("Kontrollsak-kontrakter", () => {
               },
             },
             status: "OPPRETTET",
-            iBero: false,
-            avslutningskonklusjon: null,
-            tilgjengeligeHandlinger: [],
+            blokkert: null,
             kategori: "ARBEID",
             kilde: "PUBLIKUM",
             misbruktype: [],
