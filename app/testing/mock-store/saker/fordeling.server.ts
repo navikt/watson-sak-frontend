@@ -567,10 +567,4 @@ export function resetMockSaker() {
   nesteMockFordelingssakId = 200;
 }
 
-export const mockYtelser = [
-  "Dagpenger",
-  "Sykepenger",
-  "Barnetrygd",
-  "AAP",
-  "Foreldrepenger",
-];
+export const mockYtelser = ["Dagpenger", "Sykepenger", "Barnetrygd", "AAP", "Foreldrepenger"];
