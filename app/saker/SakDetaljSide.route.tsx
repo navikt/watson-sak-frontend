@@ -288,11 +288,12 @@ function utførStatushandling(
   switch (handling) {
     case "TILDEL": {
       const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
-      const valgtSaksbehandler = finnSaksbehandlerDetalj(mockSaksbehandlerDetaljer, navIdent);
-
-      if (!valgtSaksbehandler) {
-        throw data("Ugyldig saksbehandler", { status: 400 });
-      }
+      const navn = (formData.get("navn") as string | null) ?? navIdent;
+      const valgtSaksbehandler = finnSaksbehandlerDetalj(mockSaksbehandlerDetaljer, navIdent) ?? {
+        navIdent,
+        navn,
+        enhet: null,
+      };
 
       sak.saksbehandlere.eier = valgtSaksbehandler;
       oppdaterTilgjengeligeHandlinger(sak);

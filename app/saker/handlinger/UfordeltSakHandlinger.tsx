@@ -30,7 +30,7 @@ export function UfordeltSakHandlinger({
 
   function handleTildelMeg() {
     tildelMegFetcher.submit(
-      { handling: "TILDEL", navIdent: innloggetBruker.navIdent },
+      { handling: "TILDEL", navIdent: innloggetBruker.navIdent, navn: innloggetBruker.name },
       {
         method: "post",
         action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id)),
