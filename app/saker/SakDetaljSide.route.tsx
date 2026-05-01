@@ -128,6 +128,10 @@ function erGyldigBlokkeringsarsak(verdi: string): verdi is Blokkeringsarsak {
   return gyldigeBlokkeringsarsaker.has(verdi as Blokkeringsarsak);
 }
 
+function getHendelsestypeForBlokkering(blokkert: Blokkeringsarsak) {
+  return blokkert === "I_BERO" ? "SAK_SATT_I_BERO" : "SAK_SATT_PA_VENT";
+}
+
 function hentDetaljSaker() {
   return hentAlleSaker();
 }
@@ -296,12 +300,16 @@ export async function action({ request, params }: Route.ActionArgs) {
       }
 
       const beskrivelse = (formData.get("beskrivelse") as string | null) || undefined;
+      const forrigeBlokkering = sak.blokkert;
 
       sak.status = nyStatus;
       if (nyStatus === "AVSLUTTET") {
         sak.blokkert = null;
       }
-      leggTilHendelse(sak, "STATUS_ENDRET", undefined, { beskrivelse });
+      leggTilHendelse(sak, "STATUS_ENDRET", undefined, {
+        beskrivelse,
+        blokkert: nyStatus === "AVSLUTTET" ? forrigeBlokkering : sak.blokkert,
+      });
       break;
     }
     case "endre_blokkering": {
@@ -314,12 +322,13 @@ export async function action({ request, params }: Route.ActionArgs) {
       const beskrivelse = (formData.get("beskrivelse") as string | null) || undefined;
 
       sak.blokkert = blokkert;
-      leggTilHendelse(sak, "SAK_SATT_I_BERO", undefined, { beskrivelse });
+      leggTilHendelse(sak, getHendelsestypeForBlokkering(blokkert), undefined, { beskrivelse });
       break;
     }
     case "gjenoppta": {
+      const forrigeBlokkering = sak.blokkert;
       sak.blokkert = null;
-      leggTilHendelse(sak, "SAK_GJENOPPTATT");
+      leggTilHendelse(sak, "SAK_GJENOPPTATT", undefined, { blokkert: forrigeBlokkering });
       break;
     }
     case "overfor_ansvarlig": {

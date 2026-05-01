@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import { action } from "./SakDetaljSide.route";
-import { resetHistorikk } from "./historikk/mock-data.server";
+import { hentHistorikk, resetHistorikk } from "./historikk/mock-data.server";
 import { hentAlleSaker } from "./mock-alle-saker.server";
 
 function lagFormData(felter: Record<string, string>): FormData {
@@ -79,6 +79,10 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
 
     expect(sak.blokkert).toBeNull();
     expect(sak.status).toBe("AVSLUTTET");
+
+    const historikk = hentHistorikk(sak.id);
+    expect(historikk[0]?.hendelsesType).toBe("STATUS_ENDRET");
+    expect(historikk[0]?.blokkert).toBe("I_BERO");
   });
 
   it("endre_blokkering setter blokkeringsårsak på saken", async () => {
@@ -97,6 +101,31 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
 
     expect(resultat).toEqual({ ok: true });
     expect(sak.blokkert).toBe("VENTER_PA_INFORMASJON");
+
+    const historikk = hentHistorikk(sak.id);
+    expect(historikk[0]?.hendelsesType).toBe("SAK_SATT_PA_VENT");
+    expect(historikk[0]?.blokkert).toBe("VENTER_PA_INFORMASJON");
+  });
+
+  it("endre_blokkering med I_BERO logger bero-hendelse", async () => {
+    const saker = hentAlleSaker();
+    const sak = saker.find((s) => s.status !== "AVSLUTTET" && s.blokkert === null);
+    expect(sak).toBeDefined();
+    if (!sak) return;
+
+    const { getSaksreferanse } = await import("./id");
+    const sakId = getSaksreferanse(sak.id);
+
+    const resultat = await utforAction(sakId, {
+      handling: "endre_blokkering",
+      blokkert: "I_BERO",
+    });
+
+    expect(resultat).toEqual({ ok: true });
+
+    const historikk = hentHistorikk(sak.id);
+    expect(historikk[0]?.hendelsesType).toBe("SAK_SATT_I_BERO");
+    expect(historikk[0]?.blokkert).toBe("I_BERO");
   });
 
   it("gjenoppta nullstiller blokkert uten modaldata", async () => {
@@ -116,6 +145,10 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
 
     expect(resultat).toEqual({ ok: true });
     expect(sak.blokkert).toBeNull();
+
+    const historikk = hentHistorikk(sak.id);
+    expect(historikk[0]?.hendelsesType).toBe("SAK_GJENOPPTATT");
+    expect(historikk[0]?.blokkert).toBe("VENTER_PA_VEDTAK");
   });
 
   it("endre_status avviser ugyldig status", async () => {

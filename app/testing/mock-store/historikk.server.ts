@@ -19,6 +19,7 @@ type BackendHendelsestype =
   | "TILGANG_FJERNET"
   | "ANSVARLIG_SAKSBEHANDLER_ENDRET"
   | "YTELSE_STANSET"
+  | "SAK_SATT_PA_VENT"
   | "SAK_SATT_I_BERO"
   | "SAK_GJENOPPTATT"
   | "MANUELL_NOTAT";
@@ -65,6 +66,7 @@ function lagSnapshotFraKontrollsak(
     kategori: sak.kategori,
     prioritet: sak.prioritet,
     status: sak.status,
+    blokkert: sak.blokkert,
     ytelseTyper: sak.ytelser.map((ytelse) => ytelse.type),
   };
 }
@@ -78,6 +80,7 @@ export function leggTilHendelse(
     | "berortSaksbehandlerNavn"
     | "berortSaksbehandlerNavIdent"
     | "berortSaksbehandlerEnhet"
+    | "blokkert"
     | "beskrivelse"
   >,
 ) {
