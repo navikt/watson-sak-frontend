@@ -14,6 +14,7 @@ import {
 } from "@navikt/aksel-icons";
 import { BodyShort, Box, Button, Heading, HStack, Process, VStack } from "@navikt/ds-react";
 import { useState } from "react";
+import { formaterBlokkeringsarsak, formaterStatus } from "~/saker/visning";
 import { useDisclosure } from "~/use-disclosure/useDisclosure";
 import { LeggTilHistorikkModal } from "./LeggTilHistorikkModal";
 import type { SakHendelse } from "./typer";
@@ -65,6 +66,8 @@ function hendelseTittel(hendelse: SakHendelse): string {
       return "Ansvarlig saksbehandler endret";
     case "YTELSE_STANSET":
       return "Ytelse stanset";
+    case "SAK_SATT_PA_VENT":
+      return "Sak satt på vent";
     case "SAK_SATT_I_BERO":
       return "Sak satt i bero";
     case "SAK_GJENOPPTATT":
@@ -97,6 +100,14 @@ function hendelseBeskrivelse(hendelse: SakHendelse): string | null {
     hendelse.berortSaksbehandlerEnhet
   ) {
     return `Delt med: ${hendelse.berortSaksbehandlerNavn} (${hendelse.berortSaksbehandlerNavIdent}) · ${hendelse.berortSaksbehandlerEnhet}`;
+  }
+
+  if (
+    (hendelse.hendelsesType === "SAK_SATT_PA_VENT" ||
+      hendelse.hendelsesType === "SAK_SATT_I_BERO") &&
+    hendelse.blokkert
+  ) {
+    return `På vent: ${formaterBlokkeringsarsak(hendelse.blokkert)} – Status: ${formaterStatus(hendelse.status)}`;
   }
 
   if (
@@ -145,6 +156,8 @@ function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
       return <PersonIcon {...iconProps} />;
     case "YTELSE_STANSET":
       return <XMarkOctagonIcon {...iconProps} />;
+    case "SAK_SATT_PA_VENT":
+      return <ClockDashedIcon {...iconProps} />;
     case "SAK_SATT_I_BERO":
       return <ClockDashedIcon {...iconProps} />;
     case "SAK_GJENOPPTATT":

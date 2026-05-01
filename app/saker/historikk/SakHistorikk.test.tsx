@@ -92,4 +92,22 @@ describe("SakHistorikk", () => {
       screen.getByText(/Fjernet deling med: Ada Larsen \(Z234567\) · Seksjon B/),
     ).toBeDefined();
   });
+
+  it("renderer sak satt på vent med blokkeringsårsak og status", () => {
+    renderMedRouter(
+      <SakHistorikk
+        sakId="test-sak-id"
+        hendelser={[
+          lagBackendHendelse({
+            hendelsesType: "SAK_SATT_PA_VENT",
+            status: "UTREDES",
+            blokkert: "VENTER_PA_VEDTAK",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Sak satt på vent")).toBeDefined();
+    expect(screen.getByText(/På vent: Venter på vedtak – Status: Utredes/)).toBeDefined();
+  });
 });
