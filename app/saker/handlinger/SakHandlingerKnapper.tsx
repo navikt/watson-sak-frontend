@@ -42,5 +42,5 @@ export function SakHandlingerKnapper({
     );
   }
 
-  return <SakUtredesHandlinger sak={sak} saksbehandlerDetaljer={saksbehandlerDetaljer} />;
+  return <SakUtredesHandlinger sak={sak} />;
 }

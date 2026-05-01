@@ -1,18 +1,17 @@
 import { ClockDashedIcon, PencilIcon } from "@navikt/aksel-icons";
 import { Button, Heading, VStack } from "@navikt/ds-react";
 import { useState } from "react";
-import type { KontrollsakResponse, KontrollsakSaksbehandler } from "~/saker/types.backend";
+import type { KontrollsakResponse } from "~/saker/types.backend";
 import { EndreStatusModal } from "./EndreStatusModal";
 import { SettPaVentModal } from "./SettPaVentModal";
 
 interface SakUtredesHandlingerProps {
   sak: KontrollsakResponse;
-  saksbehandlerDetaljer: KontrollsakSaksbehandler[];
 }
 
 type ÅpenModal = "endre-status" | "sett-pa-vent" | null;
 
-export function SakUtredesHandlinger({ sak, saksbehandlerDetaljer: _saksbehandlerDetaljer }: SakUtredesHandlingerProps) {
+export function SakUtredesHandlinger({ sak }: SakUtredesHandlingerProps) {
   const [åpenModal, setÅpenModal] = useState<ÅpenModal>(null);
 
   return (
