@@ -18,9 +18,7 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
     kilde: "NAV_KONTROLL",
     misbruktype: [],
     prioritet: "NORMAL",
-    iBero: false,
-    avslutningskonklusjon: null,
-    tilgjengeligeHandlinger: [],
+    blokkert: null,
     ytelser: [
       {
         id: "ytelse-1",
@@ -43,7 +41,12 @@ describe("beregnDineSakerSiste14Dager", () => {
     const saker = [
       lagKontrollsak({ id: "1", opprettet: "2026-03-18T00:00:00Z", status: "UTREDES" }),
       lagKontrollsak({ id: "2", opprettet: "2026-03-10T00:00:00Z", status: "OPPRETTET" }),
-      lagKontrollsak({ id: "3", opprettet: "2026-03-09T00:00:00Z", status: "VENTER_PA_VEDTAK" }),
+      lagKontrollsak({
+        id: "3",
+        opprettet: "2026-03-09T00:00:00Z",
+        status: "UTREDES",
+        blokkert: "VENTER_PA_VEDTAK",
+      }),
       lagKontrollsak({ id: "4", opprettet: "2026-03-08T00:00:00Z", status: "HENLAGT" }),
       lagKontrollsak({ id: "5", opprettet: "2026-03-07T00:00:00Z", status: "HENLAGT" }),
       lagKontrollsak({
@@ -112,7 +115,12 @@ describe("beregnDineSakerSiste14Dager", () => {
     const saker = [
       lagKontrollsak({ id: "ks-1", opprettet: "2026-03-18T00:00:00Z", status: "UTREDES" }),
       lagKontrollsak({ id: "ks-2", opprettet: "2026-03-10T00:00:00Z", status: "OPPRETTET" }),
-      lagKontrollsak({ id: "ks-3", opprettet: "2026-03-09T00:00:00Z", status: "VENTER_PA_VEDTAK" }),
+      lagKontrollsak({
+        id: "ks-3",
+        opprettet: "2026-03-09T00:00:00Z",
+        status: "UTREDES",
+        blokkert: "VENTER_PA_VEDTAK",
+      }),
       lagKontrollsak({ id: "ks-4", opprettet: "2026-03-08T00:00:00Z", status: "HENLAGT" }),
       lagKontrollsak({ id: "ks-5", opprettet: "2026-03-07T00:00:00Z", status: "HENLAGT" }),
       lagKontrollsak({

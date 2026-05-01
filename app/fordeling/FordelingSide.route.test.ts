@@ -72,11 +72,6 @@ describe("FordelingSide action", () => {
     expect(
       mockKontrollsaker.find((sak) => sak.id === tildelbarKontrollsakId)?.saksbehandlere.eier,
     ).toMatchObject({ navIdent: "Z123456", navn: "Kari Nordmann" });
-    expect(
-      mockKontrollsaker
-        .find((sak) => sak.id === tildelbarKontrollsakId)
-        ?.tilgjengeligeHandlinger.some((handling) => handling.handling === "TILDEL"),
-    ).toBe(false);
     expect(tildelKontrollsakMock).not.toHaveBeenCalled();
   });
 

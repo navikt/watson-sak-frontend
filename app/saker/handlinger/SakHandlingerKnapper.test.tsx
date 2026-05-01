@@ -24,28 +24,11 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
       opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
     },
     status: "UTREDES",
+    blokkert: null,
     kategori: "ARBEID",
     kilde: "NAV_KONTROLL",
     misbruktype: [],
     prioritet: "NORMAL",
-    iBero: false,
-    avslutningskonklusjon: null,
-    tilgjengeligeHandlinger: [
-      {
-        handling: "SETT_VENTER_PA_INFORMASJON",
-        pakrevdeFelter: [],
-        resultatStatus: "VENTER_PA_INFORMASJON",
-      },
-      { handling: "SETT_VENTER_PA_VEDTAK", pakrevdeFelter: [], resultatStatus: "VENTER_PA_VEDTAK" },
-      {
-        handling: "SETT_ANMELDELSE_VURDERES",
-        pakrevdeFelter: [],
-        resultatStatus: "ANMELDELSE_VURDERES",
-      },
-      { handling: "SETT_HENLAGT", pakrevdeFelter: [], resultatStatus: "HENLAGT" },
-      { handling: "SETT_BERO", pakrevdeFelter: [], resultatStatus: "UTREDES" },
-      { handling: "FRISTILL", pakrevdeFelter: [], resultatStatus: "UTREDES" },
-    ],
     ytelser: [
       {
         id: "00000000-0000-4000-8000-000000090101",
@@ -72,6 +55,56 @@ function renderMedRouter(ui: React.ReactNode) {
 }
 
 describe("SakHandlingerKnapper", () => {
+  it("viser ingen handlinger for AVSLUTTET sak", () => {
+    renderMedRouter(
+      <SakHandlingerKnapper
+        sak={lagKontrollsak({ status: "AVSLUTTET" })}
+        saksbehandlere={[]}
+        saksbehandlerDetaljer={[]}
+        seksjoner={[]}
+        historikk={[]}
+        filer={[]}
+      />,
+    );
+
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  it("viser Endre status og Sett på vent for aktiv ikke-blokkert sak med eier", () => {
+    renderMedRouter(
+      <SakHandlingerKnapper
+        sak={lagKontrollsak({ status: "UTREDES", blokkert: null })}
+        saksbehandlere={[]}
+        saksbehandlerDetaljer={[]}
+        seksjoner={[]}
+        historikk={[]}
+        filer={[]}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Endre status" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Sett på vent" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Stans ytelse" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Gjenoppta" })).toBeNull();
+  });
+
+  it("viser kun Gjenoppta for blokkert sak med eier", () => {
+    renderMedRouter(
+      <SakHandlingerKnapper
+        sak={lagKontrollsak({ status: "UTREDES", blokkert: "VENTER_PA_INFORMASJON" })}
+        saksbehandlere={[]}
+        saksbehandlerDetaljer={[]}
+        seksjoner={[]}
+        historikk={[]}
+        filer={[]}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Gjenoppta" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Endre status" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Sett på vent" })).toBeNull();
+  });
+
   it("viser tildel-handlinger for eierløs sak", () => {
     renderMedRouter(
       <SakHandlingerKnapper
@@ -82,14 +115,6 @@ describe("SakHandlingerKnapper", () => {
             deltMed: [],
             opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
           },
-          tilgjengeligeHandlinger: [
-            {
-              handling: "TILDEL",
-              pakrevdeFelter: [{ felt: "navIdent", tillatteVerdier: [] }],
-              resultatStatus: "OPPRETTET",
-            },
-            { handling: "SETT_BERO", pakrevdeFelter: [], resultatStatus: "OPPRETTET" },
-          ],
         })}
         saksbehandlere={["Kari Nordmann"]}
         saksbehandlerDetaljer={[]}
@@ -99,6 +124,8 @@ describe("SakHandlingerKnapper", () => {
       />,
     );
 
+    expect(screen.getByRole("button", { name: "Endre status" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Sett på vent" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Tildel saksbehandler" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Tildel meg" })).toBeDefined();
     const sendTilAnnenEnhet = screen.getByRole("button", { name: "Send til annen enhet" });
@@ -106,25 +133,17 @@ describe("SakHandlingerKnapper", () => {
     expect((sendTilAnnenEnhet as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it("viser ta-av-bero for eierløs sak som er i bero", () => {
+  it("viser kun Gjenoppta for eierløs blokkert sak", () => {
     renderMedRouter(
       <SakHandlingerKnapper
         sak={lagKontrollsak({
           status: "OPPRETTET",
-          iBero: true,
+          blokkert: "I_BERO",
           saksbehandlere: {
             eier: null,
             deltMed: [],
             opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
           },
-          tilgjengeligeHandlinger: [
-            {
-              handling: "TILDEL",
-              pakrevdeFelter: [{ felt: "navIdent", tillatteVerdier: [] }],
-              resultatStatus: "OPPRETTET",
-            },
-            { handling: "TA_AV_BERO", pakrevdeFelter: [], resultatStatus: "OPPRETTET" },
-          ],
         })}
         saksbehandlere={["Kari Nordmann"]}
         saksbehandlerDetaljer={[]}
@@ -134,162 +153,10 @@ describe("SakHandlingerKnapper", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: "Tildel saksbehandler" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Tildel meg" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Ta saken ut av bero" })).toBeDefined();
-    expect(screen.queryByRole("button", { name: "Sett i bero" })).toBeNull();
-  });
-
-  it("viser start utredning for opprettet sak", () => {
-    renderMedRouter(
-      <SakHandlingerKnapper
-        sak={lagKontrollsak({
-          status: "OPPRETTET",
-          tilgjengeligeHandlinger: [
-            { handling: "START_UTREDNING", pakrevdeFelter: [], resultatStatus: "UTREDES" },
-            { handling: "SETT_BERO", pakrevdeFelter: [], resultatStatus: "OPPRETTET" },
-            { handling: "FRISTILL", pakrevdeFelter: [], resultatStatus: "OPPRETTET" },
-          ],
-        })}
-        saksbehandlere={["Kari Nordmann"]}
-        saksbehandlerDetaljer={[]}
-        seksjoner={["4812", "4813"]}
-        historikk={[]}
-        filer={[]}
-      />,
-    );
-
-    expect(screen.getByRole("button", { name: "Start utredning" })).toBeDefined();
-    expect(screen.queryByRole("button", { name: "Fortsett utredning" })).toBeNull();
-  });
-
-  it("viser fortsett utredning for anmeldelse vurderes", () => {
-    renderMedRouter(
-      <SakHandlingerKnapper
-        sak={lagKontrollsak({
-          status: "ANMELDELSE_VURDERES",
-          tilgjengeligeHandlinger: [
-            { handling: "START_UTREDNING", pakrevdeFelter: [], resultatStatus: "UTREDES" },
-            { handling: "SETT_ANMELDT", pakrevdeFelter: [], resultatStatus: "ANMELDT" },
-            { handling: "SETT_HENLAGT", pakrevdeFelter: [], resultatStatus: "HENLAGT" },
-            { handling: "SETT_BERO", pakrevdeFelter: [], resultatStatus: "ANMELDELSE_VURDERES" },
-            { handling: "FRISTILL", pakrevdeFelter: [], resultatStatus: "ANMELDELSE_VURDERES" },
-          ],
-        })}
-        saksbehandlere={["Kari Nordmann"]}
-        saksbehandlerDetaljer={[]}
-        seksjoner={["4812", "4813"]}
-        historikk={[]}
-        filer={[]}
-      />,
-    );
-
-    expect(screen.getByRole("button", { name: "Fortsett utredning" })).toBeDefined();
-    expect(screen.queryByRole("button", { name: "Start utredning" })).toBeNull();
-  });
-
-  it("viser utredes-handlinger for sak med status UTREDES", () => {
-    renderMedRouter(
-      <SakHandlingerKnapper
-        sak={lagKontrollsak({ status: "UTREDES" })}
-        saksbehandlere={["Kari Nordmann"]}
-        saksbehandlerDetaljer={[]}
-        seksjoner={["4812", "4813"]}
-        historikk={[]}
-        filer={[]}
-      />,
-    );
-
-    expect(screen.getByRole("button", { name: "Del tilgang" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Stans ytelse" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Vent på informasjon" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Send til vedtak" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Sett i bero" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Vurder anmeldelse" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Fristill sak" })).toBeDefined();
-
+    expect(screen.getByRole("button", { name: "Gjenoppta" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Sett på vent" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Endre status" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Tildel saksbehandler" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Tildel meg" })).toBeNull();
-  });
-
-  it("viser ingen handlinger for inaktiv kontrollsak", () => {
-    renderMedRouter(
-      <SakHandlingerKnapper
-        sak={lagKontrollsak({ status: "AVSLUTTET", tilgjengeligeHandlinger: [] })}
-        saksbehandlere={["Kari Nordmann"]}
-        saksbehandlerDetaljer={[]}
-        seksjoner={["4812", "4813"]}
-        historikk={[]}
-        filer={[]}
-      />,
-    );
-
-    expect(screen.queryByRole("button", { name: "Tildel saksbehandler" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Tildel meg" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Send til annen enhet" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Ferdigstill sak" })).toBeNull();
-  });
-
-  it("viser avslutt sak for henlagt sak med tilgjengelig avslutt-handling", () => {
-    renderMedRouter(
-      <SakHandlingerKnapper
-        sak={lagKontrollsak({
-          status: "HENLAGT",
-          tilgjengeligeHandlinger: [
-            { handling: "AVSLUTT", pakrevdeFelter: [], resultatStatus: "AVSLUTTET" },
-          ],
-        })}
-        saksbehandlere={["Kari Nordmann"]}
-        saksbehandlerDetaljer={[]}
-        seksjoner={["4812", "4813"]}
-        historikk={[]}
-        filer={[]}
-      />,
-    );
-
-    expect(screen.getByRole("button", { name: "Avslutt sak" })).toBeDefined();
-  });
-
-  it("viser ta saken ut av bero for tildelt sak i bero", () => {
-    renderMedRouter(
-      <SakHandlingerKnapper
-        sak={lagKontrollsak({
-          status: "UTREDES",
-          iBero: true,
-          tilgjengeligeHandlinger: [
-            { handling: "TA_AV_BERO", pakrevdeFelter: [], resultatStatus: "UTREDES" },
-            { handling: "FRISTILL", pakrevdeFelter: [], resultatStatus: "UTREDES" },
-          ],
-        })}
-        saksbehandlere={["Kari Nordmann"]}
-        saksbehandlerDetaljer={[]}
-        seksjoner={["4812", "4813"]}
-        historikk={[]}
-        filer={[]}
-      />,
-    );
-
-    expect(screen.getByRole("button", { name: "Ta saken ut av bero" })).toBeDefined();
-    expect(screen.queryByRole("button", { name: "Fortsett arbeid" })).toBeNull();
-  });
-
-  it("ignorerer ukjente handlinger trygt", () => {
-    renderMedRouter(
-      <SakHandlingerKnapper
-        sak={lagKontrollsak({
-          status: "UTREDES",
-          tilgjengeligeHandlinger: [
-            { handling: "UKJENT_HANDLING" as never, pakrevdeFelter: [], resultatStatus: "UTREDES" },
-          ],
-        })}
-        saksbehandlere={["Kari Nordmann"]}
-        saksbehandlerDetaljer={[]}
-        seksjoner={["4812", "4813"]}
-        historikk={[]}
-        filer={[]}
-      />,
-    );
-
-    expect(screen.queryByRole("button")).toBeNull();
   });
 });

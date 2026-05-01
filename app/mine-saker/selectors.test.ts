@@ -23,9 +23,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     kilde: "NAV_KONTROLL",
     misbruktype: [],
     prioritet: "NORMAL",
-    iBero: false,
-    avslutningskonklusjon: null,
-    tilgjengeligeHandlinger: [],
+    blokkert: null,
     ytelser: [],
     merking: null,
     resultat: null,
@@ -41,15 +39,15 @@ describe("Mine saker selectors", () => {
   });
 
   it("mapper backend-status VENTER_PA_VEDTAK til ventende", () => {
-    expect(getMineSakerGruppeStatus(lagKontrollsak({ status: "VENTER_PA_VEDTAK" }))).toBe(
-      "ventende",
-    );
+    expect(
+      getMineSakerGruppeStatus(lagKontrollsak({ status: "UTREDES", blokkert: "VENTER_PA_VEDTAK" })),
+    ).toBe("ventende");
   });
 
   it("mapper saker i bero til ventende", () => {
-    expect(getMineSakerGruppeStatus(lagKontrollsak({ status: "OPPRETTET", iBero: true }))).toBe(
-      "ventende",
-    );
+    expect(
+      getMineSakerGruppeStatus(lagKontrollsak({ status: "OPPRETTET", blokkert: "I_BERO" })),
+    ).toBe("ventende");
   });
 
   it("mapper backend-status AVSLUTTET til fullførte", () => {

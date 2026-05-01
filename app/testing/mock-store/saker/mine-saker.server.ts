@@ -214,7 +214,7 @@ const initialeMockMineKontrollsaker = [
     navn: "Anne Lunde",
     saksbehandler: "Z999999",
     saksbehandlere: { eier: innloggetEier, deltMed: [] },
-    status: "TIL_FORVALTNING",
+    status: "VENTER_PA_VEDTAK",
     kategori: "ARBEID",
     prioritet: "NORMAL",
     mottakEnhet: "Seksjon A",
