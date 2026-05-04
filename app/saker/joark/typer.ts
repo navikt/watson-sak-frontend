@@ -1,10 +1,10 @@
 import { z } from "zod";
 
-export const journalposttypeSchema = z.enum(["inngående", "utgående", "notat"]);
+const journalposttypeSchema = z.enum(["inngående", "utgående", "notat"]);
 
 export type Journalposttype = z.infer<typeof journalposttypeSchema>;
 
-export const journalpostSchema = z.object({
+const journalpostSchema = z.object({
   journalpostId: z.string(),
   tittel: z.string(),
   dato: z.string().date(),

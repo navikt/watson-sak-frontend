@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const sakStatusSchema = z.enum([
+const sakStatusSchema = z.enum([
   "tips mottatt",
   "tips avklart",
   "under utredning",
@@ -19,7 +19,7 @@ const kontaktinformasjonSchema = z.object({
   anonymt: z.boolean().default(false),
 });
 
-export const sakSchema = z.object({
+const sakSchema = z.object({
   id: z.string(),
   datoInnmeldt: z.string().date(),
   kilde: z.enum([

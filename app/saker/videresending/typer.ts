@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const mottakerSchema = z.enum(["nay", "nfp"]);
+const mottakerSchema = z.enum(["nay", "nfp"]);
 
 export type Mottaker = z.infer<typeof mottakerSchema>;
 
