@@ -1,6 +1,5 @@
 import type { FilNode } from "~/saker/filer/typer";
 import type { KontrollsakResponse } from "~/saker/types.backend";
-import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
 import type { SakHendelse } from "~/saker/historikk/typer";
 import { UfordeltSakHandlinger } from "./UfordeltSakHandlinger";
 import { SakUtredesHandlinger } from "./SakUtredesHandlinger";
