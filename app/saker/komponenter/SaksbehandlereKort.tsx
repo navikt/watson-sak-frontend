@@ -110,8 +110,8 @@ export function SaksbehandlereKort({
                     key={saksbehandler.navIdent}
                     saksbehandler={saksbehandler}
                     handling={
-                       kanEndreTilgang ? (
-                         <Button
+                      kanEndreTilgang ? (
+                        <Button
                           type="button"
                           variant="tertiary"
                           size="xsmall"

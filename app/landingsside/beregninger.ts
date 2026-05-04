@@ -29,7 +29,9 @@ function harEier(sak: KontrollsakResponse) {
 }
 
 function erSendtTilNayNfp(sak: KontrollsakResponse) {
-  return hentHistorikk(sak.id).some((hendelse) => hendelse.hendelsesType === "VIDERESENDT_TIL_NAY_NFP");
+  return hentHistorikk(sak.id).some(
+    (hendelse) => hendelse.hendelsesType === "VIDERESENDT_TIL_NAY_NFP",
+  );
 }
 
 function erInnenforSiste14Dager(dato: string, referansedato: string) {
