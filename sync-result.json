@@ -1,0 +1,121 @@
+{
+  "up_to_date": false,
+  "source": "bb25c0e",
+  "updates": [
+    {
+      "path": ".github/agents/code-review.agent.md",
+      "current_hash": "b289c0ddf131ea19",
+      "source_hash": "452bf7eb43ff1205"
+    },
+    {
+      "path": ".github/agents/forfatter.agent.md",
+      "current_hash": "42eb060eeeaef4cf",
+      "source_hash": "4e55f4d189619dcb"
+    },
+    {
+      "path": ".github/agents/observability.agent.md",
+      "current_hash": "ba87267d1d23aee2",
+      "source_hash": "5ba4036f431e3cfb"
+    },
+    {
+      "path": ".github/agents/nav-pilot.agent.md",
+      "current_hash": "3eac438b61ab279a",
+      "source_hash": "8384742b958b4b84"
+    },
+    {
+      "path": ".github/skills/api-design/",
+      "current_hash": "2760ab46cc8b8993",
+      "source_hash": "a353aded69a4bd4c"
+    },
+    {
+      "path": ".github/skills/flyway-migration/",
+      "current_hash": "4e04be57f47a8fbe",
+      "source_hash": "ebb952121b180fac"
+    },
+    {
+      "path": ".github/skills/kotlin-app-config/",
+      "current_hash": "a7f564fa07377a83",
+      "source_hash": "9168a07cc0b620c3"
+    },
+    {
+      "path": ".github/skills/observability-setup/",
+      "current_hash": "7cfbbd31f8793a0b",
+      "source_hash": "78181a920d929a23"
+    },
+    {
+      "path": ".github/skills/tokenx-auth/",
+      "current_hash": "820c38611e471ff3",
+      "source_hash": "7afa1c42b4e8e859"
+    },
+    {
+      "path": ".github/skills/nav-plan/",
+      "current_hash": "c1dccd4a9b3c3c4c",
+      "source_hash": "0849265460ea23e2"
+    },
+    {
+      "path": ".github/skills/nav-deep-interview/",
+      "current_hash": "db67aa1434fb4610",
+      "source_hash": "42e9aab52e591ef0"
+    },
+    {
+      "path": ".github/skills/nav-architecture-review/",
+      "current_hash": "3210c935f870aa0a",
+      "source_hash": "4618dec566442509"
+    },
+    {
+      "path": ".github/skills/nav-troubleshoot/",
+      "current_hash": "a836d38dbcabe99e",
+      "source_hash": "ce043cf29ce427b1"
+    },
+    {
+      "path": ".github/instructions/kotlin-ktor.instructions.md",
+      "current_hash": "8bd8883562f2db62",
+      "source_hash": "5d85d53d8f375ec2"
+    },
+    {
+      "path": ".github/instructions/kotlin-spring.instructions.md",
+      "current_hash": "ef6288fe37f7b413",
+      "source_hash": "bdf9d1bfd4121803"
+    },
+    {
+      "path": ".github/instructions/nextjs-aksel.instructions.md",
+      "current_hash": "32562f1b4191101c",
+      "source_hash": "9283252e55829ca2"
+    },
+    {
+      "path": ".github/instructions/testing.instructions.md",
+      "current_hash": "a593608b00cd60fa",
+      "source_hash": "4a6a7547a3701ce1"
+    },
+    {
+      "path": ".github/instructions/database.instructions.md",
+      "current_hash": "4a1b78de6e382912",
+      "source_hash": "5b4639fd54c7b4f3"
+    },
+    {
+      "path": ".github/prompts/spring-boot-endpoint.prompt.md",
+      "current_hash": "3b5f6099fe5f457b",
+      "source_hash": "5b79c3b867419f3c"
+    },
+    {
+      "path": ".github/prompts/kafka-topic.prompt.md",
+      "current_hash": "42b1991baee572a6",
+      "source_hash": "3204fac1321522bc"
+    },
+    {
+      "path": ".github/prompts/nais-manifest.prompt.md",
+      "current_hash": "7b1e6ac5b4115c3f",
+      "source_hash": "a7564098ae008cce"
+    },
+    {
+      "path": ".github/prompts/aksel-component.prompt.md",
+      "current_hash": "ebb144c21849e161",
+      "source_hash": "9119d15db318622d"
+    },
+    {
+      "path": ".github/prompts/nextjs-api-route.prompt.md",
+      "current_hash": "30a3319272290e4c",
+      "source_hash": "16655aaa2b055bf3"
+    }
+  ]
+}
