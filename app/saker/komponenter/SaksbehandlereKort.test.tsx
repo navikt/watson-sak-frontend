@@ -73,4 +73,16 @@ describe("SaksbehandlereKort", () => {
 
     expect(screen.queryByRole("button", { name: "Del tilgang" })).toBeNull();
   });
+
+  it("viser ikke Del tilgang for blokkert sak", () => {
+    renderMedRouter(
+      <SaksbehandlereKort
+        sak={lagKontrollsak({ blokkert: "VENTER_PA_VEDTAK" })}
+        saksbehandlerDetaljer={[lagSaksbehandler()]}
+        ansvarligSaksbehandler={lagSaksbehandler()}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Del tilgang" })).toBeNull();
+  });
 });

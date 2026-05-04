@@ -54,6 +54,7 @@ export function SaksbehandlereKort({
   const [visDelTilgangModal, setVisDelTilgangModal] = useState(false);
   const fetcher = useFetcher();
   const erAktiv = erAktivSakKontrollsak(sak.status);
+  const kanEndreTilgang = erAktiv && sak.blokkert === null;
   const ansvarligSaksbehandler = ansvarligFraProps ?? sak.saksbehandlere.eier;
 
   function fjernDeltTilgang(navIdent: string) {
@@ -78,7 +79,7 @@ export function SaksbehandlereKort({
             <SaksbehandlerRad
               saksbehandler={ansvarligSaksbehandler}
               handling={
-                erAktiv ? (
+                kanEndreTilgang ? (
                   <Button
                     type="button"
                     variant="tertiary"
@@ -109,8 +110,8 @@ export function SaksbehandlereKort({
                     key={saksbehandler.navIdent}
                     saksbehandler={saksbehandler}
                     handling={
-                      erAktiv ? (
-                        <Button
+                       kanEndreTilgang ? (
+                         <Button
                           type="button"
                           variant="tertiary"
                           size="xsmall"
@@ -128,7 +129,7 @@ export function SaksbehandlereKort({
             </>
           )}
 
-          {erAktiv && ansvarligSaksbehandler && (
+          {kanEndreTilgang && ansvarligSaksbehandler && (
             <Button
               type="button"
               variant="secondary"
