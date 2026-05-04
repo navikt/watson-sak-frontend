@@ -34,14 +34,14 @@ Felles testprinsipper for Nav. Språkspesifikke eksempler finnes i egne instruks
 
 Choose test type based on what you're verifying:
 
-| What to test            | Test type        | Tools                              |
-| ----------------------- | ---------------- | ---------------------------------- |
-| Pure functions, utils   | Unit test        | Kotest / Vitest                    |
-| Controller + validation | Slice test       | `@WebMvcTest` + MockkBean          |
-| Repository + SQL        | Slice test       | `@DataJpaTest` + Testcontainers    |
-| Full API flow           | Integration test | `@SpringBootTest` + Testcontainers |
-| User workflows          | E2E test         | Playwright                         |
-| Accessibility           | E2E test         | Playwright + axe-core              |
+| What to test | Test type | Tools |
+|---|---|---|
+| Pure functions, utils | Unit test | Kotest / Vitest |
+| Controller + validation | Slice test | `@WebMvcTest` + MockkBean |
+| Repository + SQL | Slice test | `@DataJpaTest` + Testcontainers |
+| Full API flow | Integration test | `@SpringBootTest` + Testcontainers |
+| User workflows | E2E test | Playwright |
+| Accessibility | E2E test | Playwright + axe-core |
 
 ### When to use what
 
@@ -77,7 +77,9 @@ import AxeBuilder from "@axe-core/playwright";
 
 test("should have no a11y violations", async ({ page }) => {
   await page.goto("/oversikt");
-  const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
+  const results = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa"])
+    .analyze();
   expect(results.violations).toEqual([]);
 });
 ```

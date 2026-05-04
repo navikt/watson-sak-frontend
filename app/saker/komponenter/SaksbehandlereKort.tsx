@@ -1,7 +1,8 @@
-import { TrashIcon } from "@navikt/aksel-icons";
+import { PersonPencilIcon, PersonPlusIcon, TrashIcon } from "@navikt/aksel-icons";
 import { BodyShort, Button, HStack, Label, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import { useFetcher } from "react-router";
+import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
@@ -9,6 +10,7 @@ import type { KontrollsakResponse, KontrollsakSaksbehandler } from "~/saker/type
 import { erAktivSakKontrollsak } from "~/saker/handlinger/tilgjengeligeHandlinger";
 import { DelTilgangModal } from "~/saker/handlinger/DelTilgangModal";
 import { OverforAnsvarligModal } from "~/saker/handlinger/OverforAnsvarligModal";
+import { TildelSaksbehandlerModal } from "~/saker/handlinger/TildelSaksbehandlerModal";
 
 interface SaksbehandlereKortProps {
   sak: KontrollsakResponse;
@@ -52,18 +54,26 @@ export function SaksbehandlereKort({
 }: SaksbehandlereKortProps) {
   const [visOverforModal, setVisOverforModal] = useState(false);
   const [visDelTilgangModal, setVisDelTilgangModal] = useState(false);
+  const [visTildelModal, setVisTildelModal] = useState(false);
+  const innloggetBruker = useInnloggetBruker();
   const fetcher = useFetcher();
+  const tildelMegFetcher = useFetcher();
   const erAktiv = erAktivSakKontrollsak(sak.status);
   const kanEndreTilgang = erAktiv && sak.blokkert === null;
   const ansvarligSaksbehandler = ansvarligFraProps ?? sak.saksbehandlere.eier;
+  const sakPath = RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id));
 
   function fjernDeltTilgang(navIdent: string) {
     fetcher.submit(
       { handling: "fjern_delt_tilgang", navIdent },
-      {
-        method: "post",
-        action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id)),
-      },
+      { method: "post", action: sakPath },
+    );
+  }
+
+  function handleTildelMeg() {
+    tildelMegFetcher.submit(
+      { handling: "TILDEL", navIdent: innloggetBruker.navIdent, navn: innloggetBruker.name },
+      { method: "post", action: sakPath },
     );
   }
 
@@ -93,9 +103,34 @@ export function SaksbehandlereKort({
               }
             />
           ) : (
-            <BodyShort className="text-ax-text-neutral-subtle">
-              Ingen ansvarlig saksbehandler satt.
-            </BodyShort>
+            <>
+              <BodyShort className="text-ax-text-neutral-subtle">
+                Ingen ansvarlig saksbehandler satt.
+              </BodyShort>
+              {kanEndreTilgang && (
+                <VStack gap="space-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="small"
+                    icon={<PersonPlusIcon aria-hidden />}
+                    onClick={handleTildelMeg}
+                    loading={tildelMegFetcher.state !== "idle"}
+                  >
+                    Tildel meg
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="small"
+                    icon={<PersonPencilIcon aria-hidden />}
+                    onClick={() => setVisTildelModal(true)}
+                  >
+                    Tildel saksbehandler
+                  </Button>
+                </VStack>
+              )}
+            </>
           )}
 
           {sak.saksbehandlere.deltMed.length > 0 && (
@@ -153,6 +188,13 @@ export function SaksbehandlereKort({
         saksbehandlerDetaljer={saksbehandlerDetaljer}
         åpen={visOverforModal}
         onClose={() => setVisOverforModal(false)}
+      />
+      <TildelSaksbehandlerModal
+        sakId={sak.id}
+        saksbehandlere={[]}
+        saksbehandlerDetaljer={saksbehandlerDetaljer}
+        åpen={visTildelModal}
+        onClose={() => setVisTildelModal(false)}
       />
     </>
   );

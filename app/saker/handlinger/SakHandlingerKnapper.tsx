@@ -1,6 +1,5 @@
 import type { FilNode } from "~/saker/filer/typer";
 import type { KontrollsakResponse } from "~/saker/types.backend";
-import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
 import type { SakHendelse } from "~/saker/historikk/typer";
 import { UfordeltSakHandlinger } from "./UfordeltSakHandlinger";
 import { SakUtredesHandlinger } from "./SakUtredesHandlinger";
@@ -8,8 +7,6 @@ import { SakIBeroHandlinger } from "./SakIBeroHandlinger";
 
 interface SakHandlingerKnapperProps {
   sak: KontrollsakResponse;
-  saksbehandlere: string[];
-  saksbehandlerDetaljer: KontrollsakSaksbehandler[];
   seksjoner: string[];
   historikk: SakHendelse[];
   filer: FilNode[];
@@ -17,8 +14,6 @@ interface SakHandlingerKnapperProps {
 
 export function SakHandlingerKnapper({
   sak,
-  saksbehandlere,
-  saksbehandlerDetaljer,
   seksjoner,
   historikk: _historikk,
   filer: _filer,
@@ -32,14 +27,7 @@ export function SakHandlingerKnapper({
   }
 
   if (sak.saksbehandlere.eier === null) {
-    return (
-      <UfordeltSakHandlinger
-        sak={sak}
-        saksbehandlere={saksbehandlere}
-        saksbehandlerDetaljer={saksbehandlerDetaljer}
-        seksjoner={seksjoner}
-      />
-    );
+    return <UfordeltSakHandlinger sak={sak} seksjoner={seksjoner} />;
   }
 
   return <SakUtredesHandlinger sak={sak} />;

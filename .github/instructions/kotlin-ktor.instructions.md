@@ -66,7 +66,7 @@ object PostgresDataSourceBuilder {
     val dataSource by lazy {
         HikariDataSource().apply {
             jdbcUrl = getOrThrow(DB_URL_KEY)
-            maximumPoolSize = 40
+            maximumPoolSize = 5 // Start low in K8s; scale up if needed
             minimumIdle = 1
         }
     }
@@ -129,9 +129,91 @@ private fun Row.toEntity() = Entity(
 )
 ```
 
-## When Using Koin (Dependency Injection)
+## Transaction Patterns
 
-Koin is Nav's standard DI framework for Ktor. Use when the project has multiple services/repositories.
+JDBC connections are thread-bound. `ThreadLocal` values do not propagate to new coroutines.
+Never use `launch`, `async`, or other coroutine builders inside a transaction block.
+
+### Simple single-block transaction
+
+Works when all operations happen in the same place:
+
+```kotlin
+fun transferFunds(fromId: Long, toId: Long, amount: BigDecimal) =
+    using(sessionOf(dataSource)) { session ->
+        session.transaction { tx ->
+            tx.run(queryOf("UPDATE accounts SET balance = balance - ? WHERE id = ?", amount, fromId).asUpdate)
+            tx.run(queryOf("UPDATE accounts SET balance = balance + ? WHERE id = ?", amount, toId).asUpdate)
+        }
+    }
+```
+
+### Explicit transaction parameter
+
+Recommended when the transaction spans multiple layers. Type-safe and easy to follow:
+
+```kotlin
+class DbTransaction(val session: TransactionalSession)
+
+fun <T> transaction(dataSource: DataSource, block: DbTransaction.() -> T): T =
+    sessionOf(dataSource).use { session ->
+        session.transaction { tx -> DbTransaction(tx).block() }
+    }
+
+// Repository methods take DbTransaction as receiver
+fun DbTransaction.saveOrder(order: Order): Long =
+    session.run(
+        queryOf("INSERT INTO orders (product, amount) VALUES (?, ?)", order.product, order.amount)
+            .asUpdateAndReturnGeneratedKey
+    ) ?: error("Failed to insert order")
+
+fun DbTransaction.updateInventory(productId: Long, delta: Int) =
+    session.run(
+        queryOf("UPDATE inventory SET stock = stock + ? WHERE product_id = ?", delta, productId)
+            .asUpdate
+    )
+
+// Usage — everything runs in the same transaction without ThreadLocal
+transaction(dataSource) {
+    val orderId = saveOrder(order)
+    updateInventory(order.productId, -order.quantity)
+}
+```
+
+### ThreadLocal-based transaction
+
+Pragmatic for existing layered architectures where many service methods already call repositories.
+Repositories automatically reuse the active transaction:
+
+```kotlin
+object Database {
+    private lateinit var dataSource: DataSource
+    private val transactionalSession = ThreadLocal<TransactionalSession?>()
+
+    fun <T> query(block: (Session) -> T): T {
+        val tx = transactionalSession.get()
+        return if (tx != null) block(tx) else using(sessionOf(dataSource)) { block(it) }
+    }
+
+    fun <T> transaction(block: () -> T): T {
+        check(transactionalSession.get() == null) { "Nested transactions are not supported" }
+        return sessionOf(dataSource).use { session ->
+            session.transaction { tx ->
+                transactionalSession.set(tx)
+                try { block() } finally { transactionalSession.remove() }
+            }
+        }
+    }
+}
+```
+
+> **⚠️** ThreadLocal does not propagate to new coroutines. This approach only works
+> when all code in the transaction block runs on the same thread without suspend calls.
+
+## Dependency Injection
+
+For small apps, constructor injection without a framework is simplest — pass dependencies directly.
+For larger apps with many services and repositories, Koin keeps the wiring manageable:
 
 ```kotlin
 // Module definition
@@ -218,6 +300,39 @@ fun Application.api() {
 }
 ```
 
+## Graceful Shutdown
+
+> **NAIS pod lifecycle:** NAIS injects a `sleep 5` preStop hook before your app receives SIGTERM. By then, the load balancer has already stopped routing new traffic. Your app does **not** need to manipulate readiness probes — just finish in-flight requests and exit.
+
+For standalone Ktor servers (non-Rapids & Rivers):
+
+```kotlin
+fun main() {
+    val server = embeddedServer(Netty, port = 8080) {
+        api()
+    }
+
+    server.start(wait = false)
+
+    Runtime.getRuntime().addShutdownHook(Thread {
+        logger.info { "SIGTERM received, draining connections" }
+        server.stop(
+            gracePeriodMillis = 5_000,  // wait for in-flight requests
+            timeoutMillis = 10_000      // hard deadline
+        )
+    })
+
+    Thread.currentThread().join()
+}
+```
+
+For Rapids & Rivers apps, `RapidApplication` handles shutdown automatically.
+
+Common anti-patterns:
+- ❌ Setting `/isready` to return 503 on SIGTERM — unnecessary on NAIS
+- ❌ Adding a preStop hook — NAIS already injects `sleep 5`
+- ✅ `server.stop(gracePeriod, timeout)` drains in-flight requests — this is all you need
+
 ## Kafka Rapids & Rivers
 
 Use the Rapids & Rivers pattern for event-driven architecture:
@@ -270,6 +385,36 @@ class ServiceTest {
 
         val published = testRapid.inspektør.message(0)
         published["field"] shouldBe expectedValue
+    }
+}
+```
+
+### Testing the Ktor application
+
+Use `testApplication` to test the same modules as production — this tests `src/main` code directly:
+
+```kotlin
+class RoutesTest {
+    @Test
+    fun `should return resources`() = testApplication {
+        application {
+            configureSerialization()
+            configureRouting(testRepository)
+        }
+        client.get("/api/resources").apply {
+            status shouldBe HttpStatusCode.OK
+        }
+    }
+
+    @Test
+    fun `should return 401 without token`() = testApplication {
+        application {
+            configureAuth(mockOAuth2Server)
+            configureRouting(testRepository)
+        }
+        client.get("/api/resources").apply {
+            status shouldBe HttpStatusCode.Unauthorized
+        }
     }
 }
 ```
@@ -444,6 +589,7 @@ fun Route.userRoutes(service: UserService) {
 - Add Prometheus metrics for business operations
 - Use Flyway for database migrations
 - Implement all three health endpoints
+- Preserve existing code structure when making targeted fixes — don't rename, restructure, or refactor working code beyond the task at hand
 
 ### ⚠️ Ask First
 
@@ -461,12 +607,12 @@ fun Route.userRoutes(service: UserService) {
 
 ## Related
 
-| Resource                  | Use For                                             |
-| ------------------------- | --------------------------------------------------- |
+| Resource | Use For |
+|----------|---------|
 | `kotlin-app-config` skill | Sealed class configuration pattern (Dev/Prod/Local) |
-| `ktor-scaffold` skill     | Scaffolding new Ktor services with full stack       |
-| `@auth-agent`             | JWT validation, TokenX, ID-porten implementation    |
-| `@nais-agent`             | Nais manifest, accessPolicy, secrets                |
-| `@observability-agent`    | Prometheus metrics, Grafana, tracing                |
-| `flyway-migration` skill  | Database migration patterns                         |
-| `api-design` skill        | REST API conventions (RFC 7807, versioning)         |
+| `ktor-scaffold` skill | Scaffolding new Ktor services with full stack |
+| `@auth-agent` | JWT validation, TokenX, ID-porten implementation |
+| `@nais-agent` | Nais manifest, accessPolicy, secrets |
+| `@observability-agent` | Prometheus metrics, Grafana, tracing |
+| `flyway-migration` skill | Database migration patterns |
+| `api-design` skill | REST API conventions (RFC 7807, versioning) |

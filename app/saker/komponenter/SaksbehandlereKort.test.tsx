@@ -1,9 +1,17 @@
 import { render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { lagMockSakUuid } from "~/saker/mock-uuid";
 import type { KontrollsakResponse, KontrollsakSaksbehandler } from "~/saker/types.backend";
 import { SaksbehandlereKort } from "./SaksbehandlereKort";
+
+vi.mock("~/auth/innlogget-bruker", () => ({
+  useInnloggetBruker: () => ({
+    navIdent: "Z999999",
+    name: "Test Saksbehandler",
+    organisasjoner: [],
+  }),
+}));
 
 function lagSaksbehandler(
   overrides: Partial<KontrollsakSaksbehandler> = {},

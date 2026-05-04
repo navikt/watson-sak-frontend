@@ -59,8 +59,6 @@ describe("SakHandlingerKnapper", () => {
     renderMedRouter(
       <SakHandlingerKnapper
         sak={lagKontrollsak({ status: "AVSLUTTET" })}
-        saksbehandlere={[]}
-        saksbehandlerDetaljer={[]}
         seksjoner={[]}
         historikk={[]}
         filer={[]}
@@ -74,8 +72,6 @@ describe("SakHandlingerKnapper", () => {
     renderMedRouter(
       <SakHandlingerKnapper
         sak={lagKontrollsak({ status: "UTREDES", blokkert: null })}
-        saksbehandlere={[]}
-        saksbehandlerDetaljer={[]}
         seksjoner={[]}
         historikk={[]}
         filer={[]}
@@ -92,8 +88,6 @@ describe("SakHandlingerKnapper", () => {
     renderMedRouter(
       <SakHandlingerKnapper
         sak={lagKontrollsak({ status: "UTREDES", blokkert: "VENTER_PA_INFORMASJON" })}
-        saksbehandlere={[]}
-        saksbehandlerDetaljer={[]}
         seksjoner={[]}
         historikk={[]}
         filer={[]}
@@ -105,7 +99,7 @@ describe("SakHandlingerKnapper", () => {
     expect(screen.queryByRole("button", { name: "Sett på vent" })).toBeNull();
   });
 
-  it("viser tildel-handlinger for eierløs sak", () => {
+  it("viser status- og ventehandlinger for eierløs sak", () => {
     renderMedRouter(
       <SakHandlingerKnapper
         sak={lagKontrollsak({
@@ -116,8 +110,6 @@ describe("SakHandlingerKnapper", () => {
             opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
           },
         })}
-        saksbehandlere={["Kari Nordmann"]}
-        saksbehandlerDetaljer={[]}
         seksjoner={["4812", "4813"]}
         historikk={[]}
         filer={[]}
@@ -126,8 +118,6 @@ describe("SakHandlingerKnapper", () => {
 
     expect(screen.getByRole("button", { name: "Endre status" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Sett på vent" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Tildel saksbehandler" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Tildel meg" })).toBeDefined();
     const sendTilAnnenEnhet = screen.getByRole("button", { name: "Send til annen enhet" });
     expect(sendTilAnnenEnhet).toBeDefined();
     expect((sendTilAnnenEnhet as HTMLButtonElement).disabled).toBe(true);
@@ -145,8 +135,6 @@ describe("SakHandlingerKnapper", () => {
             opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
           },
         })}
-        saksbehandlere={["Kari Nordmann"]}
-        saksbehandlerDetaljer={[]}
         seksjoner={["4812", "4813"]}
         historikk={[]}
         filer={[]}

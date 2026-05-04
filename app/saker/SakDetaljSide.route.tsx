@@ -578,16 +578,8 @@ function Periodefelter({
 }
 
 export default function SakDetaljSide() {
-  const {
-    sak,
-    historikk,
-    filer,
-    andreSaker,
-    saksbehandlere,
-    saksbehandlerDetaljer,
-    seksjoner,
-    ytelser,
-  } = useLoaderData<typeof loader>();
+  const { sak, historikk, filer, andreSaker, saksbehandlerDetaljer, seksjoner, ytelser } =
+    useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const fetcher = useFetcher<typeof action>();
   const personIdent = getPersonIdent(sak);
@@ -1008,8 +1000,6 @@ export default function SakDetaljSide() {
 
               <SakHandlingerKnapper
                 sak={sak}
-                saksbehandlere={saksbehandlere}
-                saksbehandlerDetaljer={saksbehandlerDetaljer}
                 seksjoner={seksjoner}
                 historikk={historikk}
                 filer={filer}
