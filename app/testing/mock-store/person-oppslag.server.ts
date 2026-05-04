@@ -3,14 +3,14 @@ export type PersonOppslagResultat = {
   eksisterendeSaker: EksisterendeSak[];
 };
 
-export type Person = {
+type Person = {
   navn: string;
   personnummer: string;
   aktørId: string;
   alder: number;
 };
 
-export type EksisterendeSak = {
+type EksisterendeSak = {
   sakId: string;
   opprettetDato: string;
   personNavn: string;
