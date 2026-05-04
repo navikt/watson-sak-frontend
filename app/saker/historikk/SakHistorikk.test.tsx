@@ -129,6 +129,38 @@ describe("SakHistorikk", () => {
     expect(screen.getByText(/På vent: Venter på vedtak – Status: Utredes/)).toBeDefined();
   });
 
+  it("renderer gjenoppta som vanlig gjenopptak for ventesaker", () => {
+    renderMedRouter(
+      <SakHistorikk
+        sakId="test-sak-id"
+        hendelser={[
+          lagBackendHendelse({
+            hendelsesType: "SAK_GJENOPPTATT",
+            blokkert: "VENTER_PA_VEDTAK",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Sak gjenopptatt")).toBeDefined();
+  });
+
+  it("renderer gjenoppta som tatt ut av bero for bero-saker", () => {
+    renderMedRouter(
+      <SakHistorikk
+        sakId="test-sak-id"
+        hendelser={[
+          lagBackendHendelse({
+            hendelsesType: "SAK_GJENOPPTATT",
+            blokkert: "I_BERO",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Sak tatt ut av bero")).toBeDefined();
+  });
+
   it("renderer fritekst for manuelt historikkinnslag", () => {
     renderMedRouter(
       <SakHistorikk

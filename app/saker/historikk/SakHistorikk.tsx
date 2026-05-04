@@ -71,7 +71,7 @@ function hendelseTittel(hendelse: SakHendelse): string {
     case "SAK_SATT_I_BERO":
       return "Sak satt i bero";
     case "SAK_GJENOPPTATT":
-      return "Sak tatt ut av bero";
+      return hendelse.blokkert === "I_BERO" ? "Sak tatt ut av bero" : "Sak gjenopptatt";
     case "MANUELL_NOTAT":
       return hendelse.tittel ?? "Notat";
     default:
@@ -85,6 +85,18 @@ function hendelseBeskrivelse(hendelse: SakHendelse): string | null {
   }
 
   if (hendelse.hendelsesType === "STATUS_ENDRET") {
+    const deler: string[] = [];
+
+    if (hendelse.beskrivelse) {
+      deler.push(hendelse.beskrivelse);
+    }
+
+    deler.push(`Status: ${formaterStatus(hendelse.status)}`);
+
+    return deler.join(" – ");
+  }
+
+  if (hendelse.hendelsesType === "POLITIANMELDT" || hendelse.hendelsesType === "SAK_HENLAGT") {
     const deler: string[] = [];
 
     if (hendelse.beskrivelse) {
