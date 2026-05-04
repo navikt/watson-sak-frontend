@@ -349,6 +349,11 @@ export async function action({ request, params }: Route.ActionArgs) {
     }
     case "gjenoppta": {
       const forrigeBlokkering = sak.blokkert;
+
+      if (forrigeBlokkering === null) {
+        throw data("Saken er ikke blokkert", { status: 400 });
+      }
+
       sak.blokkert = null;
       leggTilHendelse(sak, "SAK_GJENOPPTATT", undefined, { blokkert: forrigeBlokkering });
       break;
