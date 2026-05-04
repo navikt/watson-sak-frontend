@@ -13,7 +13,7 @@ type SakslisteKolonne =
   | "oppdatert"
   | "saksbehandler";
 
-export type SakslisteStatus = {
+type SakslisteStatus = {
   tekst: string;
   variant: "info" | "warning" | "success" | "neutral";
 };

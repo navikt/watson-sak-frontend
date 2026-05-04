@@ -5,7 +5,7 @@ import {
   kontrollsakMisbrukstypeVerdier,
 } from "./kategorier";
 
-export const kontrollsakStatusSchema = z.enum([
+const kontrollsakStatusSchema = z.enum([
   "OPPRETTET",
   "UTREDES",
   "STRAFFERETTSLIG_VURDERING",
@@ -43,7 +43,7 @@ const saksbehandlereSchema = z
     eier: eier ?? ansvarlig ?? null,
   }));
 
-export const kontrollsakYtelseSchema = z.object({
+const kontrollsakYtelseSchema = z.object({
   id: z.string().uuid(),
   type: z.string(),
   periodeFra: z.string(),
@@ -63,7 +63,7 @@ const kontrollsakForvaltningSchema = z.object({
   resultat: z.string(),
 });
 
-export const kontrollsakSaksbehandlerSchema = z.object({
+const kontrollsakSaksbehandlerSchema = z.object({
   navIdent: z.string(),
   navn: z.string(),
   enhet: z.string().nullable(),
