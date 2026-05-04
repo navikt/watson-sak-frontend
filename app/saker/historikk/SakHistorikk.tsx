@@ -84,6 +84,18 @@ function hendelseBeskrivelse(hendelse: SakHendelse): string | null {
     return hendelse.notat ?? null;
   }
 
+  if (hendelse.hendelsesType === "STATUS_ENDRET") {
+    const deler: string[] = [];
+
+    if (hendelse.beskrivelse) {
+      deler.push(hendelse.beskrivelse);
+    }
+
+    deler.push(`Status: ${formaterStatus(hendelse.status)}`);
+
+    return deler.join(" – ");
+  }
+
   if (
     hendelse.hendelsesType === "ANSVARLIG_SAKSBEHANDLER_ENDRET" &&
     hendelse.berortSaksbehandlerNavn &&
@@ -107,7 +119,16 @@ function hendelseBeskrivelse(hendelse: SakHendelse): string | null {
       hendelse.hendelsesType === "SAK_SATT_I_BERO") &&
     hendelse.blokkert
   ) {
-    return `På vent: ${formaterBlokkeringsarsak(hendelse.blokkert)} – Status: ${formaterStatus(hendelse.status)}`;
+    const deler = [
+      `På vent: ${formaterBlokkeringsarsak(hendelse.blokkert)}`,
+      `Status: ${formaterStatus(hendelse.status)}`,
+    ];
+
+    if (hendelse.beskrivelse) {
+      deler.push(hendelse.beskrivelse);
+    }
+
+    return deler.join(" – ");
   }
 
   if (

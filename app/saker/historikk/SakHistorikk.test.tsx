@@ -51,6 +51,24 @@ describe("SakHistorikk", () => {
     expect(screen.getByText(/Status: Avsluttet/)).toBeDefined();
   });
 
+  it("renderer beskrivelse for statusendring", () => {
+    renderMedRouter(
+      <SakHistorikk
+        sakId="test-sak-id"
+        hendelser={[
+          lagBackendHendelse({
+            hendelsesType: "STATUS_ENDRET",
+            status: "ANMELDT",
+            beskrivelse: "Saken er vurdert og anmeldt",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Status endret")).toBeDefined();
+    expect(screen.getByText(/Saken er vurdert og anmeldt – Status: Anmeldt/)).toBeDefined();
+  });
+
   it("renderer historikk for endret ansvarlig saksbehandler", () => {
     renderMedRouter(
       <SakHistorikk
@@ -109,5 +127,23 @@ describe("SakHistorikk", () => {
 
     expect(screen.getByText("Sak satt på vent")).toBeDefined();
     expect(screen.getByText(/På vent: Venter på vedtak – Status: Utredes/)).toBeDefined();
+  });
+
+  it("renderer fritekst for manuelt historikkinnslag", () => {
+    renderMedRouter(
+      <SakHistorikk
+        sakId="test-sak-id"
+        hendelser={[
+          lagBackendHendelse({
+            hendelsesType: "MANUELL_NOTAT",
+            tittel: "Ringte bruker",
+            notat: "Avklarte dokumentasjon og neste steg.",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Ringte bruker")).toBeDefined();
+    expect(screen.getByText("Avklarte dokumentasjon og neste steg.")).toBeDefined();
   });
 });
