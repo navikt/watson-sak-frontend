@@ -272,6 +272,13 @@ export async function action({ request, params }: Route.ActionArgs) {
     throw data("Sak ikke funnet", { status: 404 });
   }
 
+  if (
+    sak.status === "AVSLUTTET" &&
+    (handling === "endre_status" || handling === "endre_blokkering" || handling === "gjenoppta")
+  ) {
+    throw data("Kan ikke endre avsluttet sak", { status: 400 });
+  }
+
   const saksbehandlere = sak.saksbehandlere;
 
   switch (handling) {

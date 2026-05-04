@@ -59,11 +59,14 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
 
     const resultat = await utforAction(sakId, {
       handling: "endre_status",
-      status: "UTREDES",
+      status: "STRAFFERETTSLIG_VURDERING",
       beskrivelse: "Saken tas videre til utredning",
     });
 
     expect(resultat).toEqual({ ok: true });
+
+    const historikk = hentHistorikk(sak.id);
+    expect(historikk[0]?.beskrivelse).toBe("Saken tas videre til utredning");
   });
 
   it("endre_status til AVSLUTTET nullstiller blokkert", async () => {
@@ -209,6 +212,88 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
       utforAction(sakId, {
         handling: "endre_blokkering",
         blokkert: "UGYLDIG_AARSAK",
+      }),
+    ).rejects.toBeDefined();
+  });
+
+  it("legger til manuelt historikkinnslag", async () => {
+    const saker = hentAlleSaker();
+    const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
+    expect(sak).toBeDefined();
+    if (!sak) return;
+
+    const { getSaksreferanse } = await import("./id");
+    const sakId = getSaksreferanse(sak.id);
+
+    const resultat = await utforAction(sakId, {
+      handling: "legg_til_historikk",
+      tittel: "Ringte bruker",
+      notat: "Avklarte dokumentasjon og neste steg.",
+      dato: "04.05.2026",
+      tid: "12:34",
+    });
+
+    expect(resultat).toEqual({ ok: true });
+
+    const historikk = hentHistorikk(sak.id);
+    expect(historikk[0]?.hendelsesType).toBe("MANUELL_NOTAT");
+    expect(historikk[0]?.tittel).toBe("Ringte bruker");
+    expect(historikk[0]?.notat).toBe("Avklarte dokumentasjon og neste steg.");
+  });
+
+  it("endre_status avviser for avsluttet sak", async () => {
+    const saker = hentAlleSaker();
+    const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
+    expect(sak).toBeDefined();
+    if (!sak) return;
+
+    sak.status = "AVSLUTTET";
+
+    const { getSaksreferanse } = await import("./id");
+    const sakId = getSaksreferanse(sak.id);
+
+    await expect(
+      utforAction(sakId, {
+        handling: "endre_status",
+        status: "UTREDES",
+      }),
+    ).rejects.toBeDefined();
+  });
+
+  it("endre_blokkering avviser for avsluttet sak", async () => {
+    const saker = hentAlleSaker();
+    const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
+    expect(sak).toBeDefined();
+    if (!sak) return;
+
+    sak.status = "AVSLUTTET";
+
+    const { getSaksreferanse } = await import("./id");
+    const sakId = getSaksreferanse(sak.id);
+
+    await expect(
+      utforAction(sakId, {
+        handling: "endre_blokkering",
+        blokkert: "I_BERO",
+      }),
+    ).rejects.toBeDefined();
+  });
+
+  it("gjenoppta avviser for avsluttet sak", async () => {
+    const saker = hentAlleSaker();
+    const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
+    expect(sak).toBeDefined();
+    if (!sak) return;
+
+    sak.status = "AVSLUTTET";
+    sak.blokkert = "VENTER_PA_VEDTAK";
+
+    const { getSaksreferanse } = await import("./id");
+    const sakId = getSaksreferanse(sak.id);
+
+    await expect(
+      utforAction(sakId, {
+        handling: "gjenoppta",
       }),
     ).rejects.toBeDefined();
   });
