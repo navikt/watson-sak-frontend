@@ -75,7 +75,7 @@ describe("beregnDineSakerSiste14Dager", () => {
     expect(resultat).toEqual({
       antallSakerJobbetMed: 5,
       antallTipsTilVurdering: 0,
-      antallSendtTilNayNfp: 1,
+      antallSendtTilNayNfp: 0,
       snittBehandlingstidPerSak: null,
       antallHenlagteSaker: 1,
       antallHenlagteTips: 1,
@@ -150,7 +150,7 @@ describe("beregnDineSakerSiste14Dager", () => {
     expect(resultat).toEqual({
       antallSakerJobbetMed: 5,
       antallTipsTilVurdering: 0,
-      antallSendtTilNayNfp: 1,
+      antallSendtTilNayNfp: 0,
       snittBehandlingstidPerSak: null,
       antallHenlagteSaker: 1,
       antallHenlagteTips: 1,

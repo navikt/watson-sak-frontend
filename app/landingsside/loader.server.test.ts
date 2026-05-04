@@ -31,7 +31,7 @@ describe("landingsside-loader", () => {
     expect(data.dineSakerSiste14Dager).toEqual({
       antallSakerJobbetMed: 3,
       antallTipsTilVurdering: 0,
-      antallSendtTilNayNfp: 1,
+      antallSendtTilNayNfp: 0,
       snittBehandlingstidPerSak: null,
       antallHenlagteSaker: 0,
       antallHenlagteTips: 0,

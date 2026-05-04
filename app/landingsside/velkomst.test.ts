@@ -98,4 +98,10 @@ describe("lagVelkomstOppsummering", () => {
 
     expect(lagVelkomstOppsummering(saker)).toBe("Akkurat nå har du 1 aktiv sak.");
   });
+
+  test("behandler anmeldte saker som aktive i velkomstoppsummeringen", () => {
+    const saker = [lagKontrollsak({ id: "1", status: "ANMELDT" })];
+
+    expect(lagVelkomstOppsummering(saker)).toBe("Akkurat nå har du 1 aktiv sak.");
+  });
 });
