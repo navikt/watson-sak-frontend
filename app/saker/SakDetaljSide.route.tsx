@@ -1008,8 +1008,6 @@ export default function SakDetaljSide() {
 
               <SakHandlingerKnapper
                 sak={sak}
-                saksbehandlere={saksbehandlere}
-                saksbehandlerDetaljer={saksbehandlerDetaljer}
                 seksjoner={seksjoner}
                 historikk={historikk}
                 filer={filer}

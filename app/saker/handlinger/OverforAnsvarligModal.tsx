@@ -46,6 +46,17 @@ export function OverforAnsvarligModal({
     handleClose();
   }
 
+  function handleFjernSaksbehandler() {
+    fetcher.submit(
+      { handling: "FRISTILL" },
+      {
+        method: "post",
+        action: RouteConfig.SAKER_DETALJ.replace(":sakId", saksreferanse),
+      },
+    );
+    handleClose();
+  }
+
   return (
     <Modal
       ref={modalRef}
@@ -77,6 +88,13 @@ export function OverforAnsvarligModal({
       <Modal.Footer>
         <Button onClick={handleSubmit} disabled={!valgtNavIdent || erSubmitting}>
           Overfør sak
+        </Button>
+        <Button
+          variant="danger"
+          onClick={handleFjernSaksbehandler}
+          disabled={erSubmitting}
+        >
+          Fjern saksbehandler
         </Button>
         <Button variant="secondary" onClick={handleClose}>
           Avbryt

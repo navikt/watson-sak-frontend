@@ -10,6 +10,7 @@ interface TildelSaksbehandlerModalProps {
   sakId: string;
   saksbehandlere: string[];
   saksbehandlerDetaljer?: KontrollsakSaksbehandler[];
+  nåværendeSaksbehandler?: KontrollsakSaksbehandler | null;
   submitPath?: string;
   åpen: boolean;
   onClose: () => void;
@@ -19,6 +20,7 @@ export function TildelSaksbehandlerModal({
   sakId,
   saksbehandlere,
   saksbehandlerDetaljer = [],
+  nåværendeSaksbehandler,
   submitPath,
   åpen,
   onClose,
@@ -29,18 +31,25 @@ export function TildelSaksbehandlerModal({
   const saksreferanse = getSaksreferanse(sakId);
 
   const erSubmitting = fetcher.state !== "idle";
+  const actionPath =
+    submitPath ?? RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId));
 
   function handleSubmit() {
     if (!valgtSaksbehandler) return;
 
     fetcher.submit(
       { handling: "TILDEL", sakId, navIdent: valgtSaksbehandler },
-      {
-        method: "post",
-        action: submitPath ?? RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),
-      },
+      { method: "post", action: actionPath },
     );
     setValgtSaksbehandler("");
+    onClose();
+  }
+
+  function handleFjernSaksbehandler() {
+    fetcher.submit(
+      { handling: "FRISTILL", sakId },
+      { method: "post", action: actionPath },
+    );
     onClose();
   }
 
@@ -57,19 +66,29 @@ export function TildelSaksbehandlerModal({
         }))
       : saksbehandlere.map((saksbehandler) => ({ verdi: saksbehandler, etikett: saksbehandler }));
 
+  const heading = nåværendeSaksbehandler ? "Endre saksbehandler" : "Tildel saksbehandler";
+
   return (
     <Modal
       ref={modalRef}
       open={åpen}
       onClose={handleClose}
       header={{
-        heading: "Tildel saksbehandler",
+        heading,
         icon: <PersonPencilIcon aria-hidden />,
       }}
       width="small"
     >
       <Modal.Body>
         <VStack gap="space-4">
+          {nåværendeSaksbehandler && (
+            <BodyShort>
+              Nåværende saksbehandler:{" "}
+              <strong>
+                {nåværendeSaksbehandler.navn} ({nåværendeSaksbehandler.navIdent})
+              </strong>
+            </BodyShort>
+          )}
           <BodyShort>Velg saksbehandler som skal ha ansvar for sak {saksreferanse}.</BodyShort>
           <Select
             label="Saksbehandler"
@@ -92,6 +111,16 @@ export function TildelSaksbehandlerModal({
         <Button variant="secondary" onClick={handleClose}>
           Avbryt
         </Button>
+        {nåværendeSaksbehandler && (
+          <Button
+            variant="tertiary-neutral"
+            onClick={handleFjernSaksbehandler}
+            disabled={erSubmitting}
+            className="ml-auto"
+          >
+            Fjern saksbehandler
+          </Button>
+        )}
       </Modal.Footer>
     </Modal>
   );
