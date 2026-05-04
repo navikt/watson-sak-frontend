@@ -46,10 +46,7 @@ export function TildelSaksbehandlerModal({
   }
 
   function handleFjernSaksbehandler() {
-    fetcher.submit(
-      { handling: "FRISTILL", sakId },
-      { method: "post", action: actionPath },
-    );
+    fetcher.submit({ handling: "FRISTILL", sakId }, { method: "post", action: actionPath });
     onClose();
   }
 

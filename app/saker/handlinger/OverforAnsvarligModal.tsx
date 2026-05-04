@@ -89,11 +89,7 @@ export function OverforAnsvarligModal({
         <Button onClick={handleSubmit} disabled={!valgtNavIdent || erSubmitting}>
           Overfør sak
         </Button>
-        <Button
-          variant="danger"
-          onClick={handleFjernSaksbehandler}
-          disabled={erSubmitting}
-        >
+        <Button variant="danger" onClick={handleFjernSaksbehandler} disabled={erSubmitting}>
           Fjern saksbehandler
         </Button>
         <Button variant="secondary" onClick={handleClose}>
