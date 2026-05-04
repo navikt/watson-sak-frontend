@@ -132,6 +132,17 @@ function getHendelsestypeForBlokkering(blokkert: Blokkeringsarsak) {
   return blokkert === "I_BERO" ? "SAK_SATT_I_BERO" : "SAK_SATT_PA_VENT";
 }
 
+function getHendelsestypeForStatusendring(status: KontrollsakStatus) {
+  switch (status) {
+    case "ANMELDT":
+      return "POLITIANMELDT";
+    case "HENLAGT":
+      return "SAK_HENLAGT";
+    default:
+      return "STATUS_ENDRET";
+  }
+}
+
 function hentDetaljSaker() {
   return hentAlleSaker();
 }
@@ -317,7 +328,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       if (nyStatus === "AVSLUTTET") {
         sak.blokkert = null;
       }
-      leggTilHendelse(sak, "STATUS_ENDRET", undefined, {
+      leggTilHendelse(sak, getHendelsestypeForStatusendring(nyStatus), undefined, {
         beskrivelse,
         blokkert: nyStatus === "AVSLUTTET" ? forrigeBlokkering : sak.blokkert,
       });

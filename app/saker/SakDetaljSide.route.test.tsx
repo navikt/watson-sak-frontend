@@ -44,6 +44,32 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
 
     expect(resultat).toEqual({ ok: true });
     expect(sak.status).toBe("ANMELDT");
+
+    const historikk = hentHistorikk(sak.id);
+    expect(historikk[0]?.hendelsesType).toBe("POLITIANMELDT");
+  });
+
+  it("endre_status til HENLAGT logger henleggelse", async () => {
+    const saker = hentAlleSaker();
+    const sak = saker.find(
+      (s: KontrollsakResponse) => s.status !== "AVSLUTTET" && s.blokkert === null,
+    );
+    expect(sak).toBeDefined();
+    if (!sak) return;
+
+    const { getSaksreferanse } = await import("./id");
+    const sakId = getSaksreferanse(sak.id);
+
+    const resultat = await utforAction(sakId, {
+      handling: "endre_status",
+      status: "HENLAGT",
+    });
+
+    expect(resultat).toEqual({ ok: true });
+    expect(sak.status).toBe("HENLAGT");
+
+    const historikk = hentHistorikk(sak.id);
+    expect(historikk[0]?.hendelsesType).toBe("SAK_HENLAGT");
   });
 
   it("endre_status med beskrivelse lagrer hendelse med beskrivelse", async () => {
