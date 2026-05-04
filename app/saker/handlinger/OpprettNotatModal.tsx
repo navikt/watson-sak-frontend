@@ -51,7 +51,11 @@ export function OpprettNotatModal({ sakId, åpen, onClose }: OpprettNotatModalPr
   const [behandlendeEnhet, setBehandlendeEnhet] = useState("");
   const [beskrivelse, setBeskrivelse] = useState("");
 
-  const { datepickerProps, inputProps } = useDatepicker({ fromDate: new Date() });
+  const [frist, setFrist] = useState<Date | undefined>(undefined);
+  const { datepickerProps, inputProps } = useDatepicker({
+    fromDate: new Date(),
+    onDateChange: setFrist,
+  });
 
   function handleLukk() {
     nullstill();
@@ -64,6 +68,7 @@ export function OpprettNotatModal({ sakId, åpen, onClose }: OpprettNotatModalPr
     setKnyttTilOppgave(false);
     setOppgavetype("");
     setPrioritet("");
+    setFrist(undefined);
     setBehandlendeEnhet("");
     setBeskrivelse("");
   }
@@ -72,9 +77,14 @@ export function OpprettNotatModal({ sakId, åpen, onClose }: OpprettNotatModalPr
     fetcher.submit(
       {
         handling: "send_notat",
-        notat,
+        notat: notat.trim(),
+        mal,
         knyttTilOppgave: String(knyttTilOppgave),
         oppgavetype,
+        prioritet,
+        frist: frist ? frist.toISOString().split("T")[0] : "",
+        behandlendeEnhet,
+        beskrivelse,
       },
       {
         method: "post",

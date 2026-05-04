@@ -510,13 +510,13 @@ export async function action({ request, params }: Route.ActionArgs) {
       break;
     }
     case "send_notat": {
-      const notat = formData.get("notat") as string;
-      const knyttTilOppgave = formData.get("knyttTilOppgave") === "true";
-      const oppgavetype = (formData.get("oppgavetype") as string | null) ?? "";
-
-      if (!notat) {
+      const notatRaw = formData.get("notat");
+      if (typeof notatRaw !== "string" || !notatRaw.trim()) {
         throw data("Notat er påkrevd", { status: 400 });
       }
+      const notat = notatRaw.trim();
+      const knyttTilOppgave = formData.get("knyttTilOppgave") === "true";
+      const oppgavetype = (formData.get("oppgavetype") as string | null) ?? "";
 
       const deler = [notat];
       if (knyttTilOppgave) {
