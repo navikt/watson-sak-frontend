@@ -88,7 +88,7 @@ describe("OpprettNotatModal", () => {
         handling: "send_notat",
         notat: "Notat med oppgave",
         knyttTilOppgave: "true",
-        oppgavetype: "kontroll",
+        oppgavetype: "Kontroll",
       }),
       expect.objectContaining({ method: "post" }),
     );

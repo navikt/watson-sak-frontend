@@ -74,13 +74,15 @@ export function OpprettNotatModal({ sakId, åpen, onClose }: OpprettNotatModalPr
   }
 
   function handleLagre() {
+    const oppgavetypeLabel =
+      oppgavetypeValg.find((v) => v.verdi === oppgavetype)?.label ?? oppgavetype;
     fetcher.submit(
       {
         handling: "send_notat",
         notat: notat.trim(),
         mal,
         knyttTilOppgave: String(knyttTilOppgave),
-        oppgavetype,
+        oppgavetype: oppgavetypeLabel,
         prioritet,
         frist: frist ? frist.toISOString().split("T")[0] : "",
         behandlendeEnhet,
