@@ -509,6 +509,23 @@ export async function action({ request, params }: Route.ActionArgs) {
       leggTilManuellHendelse(sak, tittel, notat ?? "", tidspunkt);
       break;
     }
+    case "send_notat": {
+      const notat = formData.get("notat") as string;
+      const knyttTilOppgave = formData.get("knyttTilOppgave") === "true";
+      const oppgavetype = (formData.get("oppgavetype") as string | null) ?? "";
+
+      if (!notat) {
+        throw data("Notat er påkrevd", { status: 400 });
+      }
+
+      const deler = [notat];
+      if (knyttTilOppgave) {
+        deler.push(`Knyttet til oppgave${oppgavetype ? `: ${oppgavetype}` : ""}`);
+      }
+
+      leggTilHendelse(sak, "NOTAT_SENDT", undefined, { beskrivelse: deler.join("\n") });
+      break;
+    }
     default: {
       throw data("Ugyldig handling", { status: 400 });
     }

@@ -22,7 +22,8 @@ type BackendHendelsestype =
   | "SAK_SATT_PA_VENT"
   | "SAK_SATT_I_BERO"
   | "SAK_GJENOPPTATT"
-  | "MANUELL_NOTAT";
+  | "MANUELL_NOTAT"
+  | "NOTAT_SENDT";
 
 let nesteId = 1;
 

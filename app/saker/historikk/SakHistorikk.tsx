@@ -4,6 +4,7 @@ import {
   ArrowUndoIcon,
   ClockDashedIcon,
   ClockIcon,
+  DocPencilIcon,
   GavelIcon,
   PaperplaneIcon,
   PencilIcon,
@@ -74,6 +75,8 @@ function hendelseTittel(hendelse: SakHendelse): string {
       return hendelse.blokkert === "I_BERO" ? "Sak tatt ut av bero" : "Sak gjenopptatt";
     case "MANUELL_NOTAT":
       return hendelse.tittel ?? "Notat";
+    case "NOTAT_SENDT":
+      return "Notat opprettet i Gosys";
     default:
       return hendelse.hendelsesType;
   }
@@ -82,6 +85,10 @@ function hendelseTittel(hendelse: SakHendelse): string {
 function hendelseBeskrivelse(hendelse: SakHendelse): string | null {
   if (hendelse.hendelsesType === "MANUELL_NOTAT") {
     return hendelse.notat ?? null;
+  }
+
+  if (hendelse.hendelsesType === "NOTAT_SENDT") {
+    return hendelse.beskrivelse ?? null;
   }
 
   if (hendelse.hendelsesType === "STATUS_ENDRET") {
@@ -195,6 +202,8 @@ function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
       return <ClockDashedIcon {...iconProps} />;
     case "SAK_GJENOPPTATT":
       return <ArrowUndoIcon {...iconProps} />;
+    case "NOTAT_SENDT":
+      return <DocPencilIcon {...iconProps} />;
     default:
       return <ClockIcon {...iconProps} />;
   }
