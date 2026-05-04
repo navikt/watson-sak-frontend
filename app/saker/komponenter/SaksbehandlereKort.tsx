@@ -7,6 +7,7 @@ import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import type { KontrollsakResponse, KontrollsakSaksbehandler } from "~/saker/types.backend";
 import { erAktivSakKontrollsak } from "~/saker/handlinger/tilgjengeligeHandlinger";
+import { DelTilgangModal } from "~/saker/handlinger/DelTilgangModal";
 import { OverforAnsvarligModal } from "~/saker/handlinger/OverforAnsvarligModal";
 
 interface SaksbehandlereKortProps {
@@ -50,8 +51,10 @@ export function SaksbehandlereKort({
   ansvarligSaksbehandler: ansvarligFraProps,
 }: SaksbehandlereKortProps) {
   const [visOverforModal, setVisOverforModal] = useState(false);
+  const [visDelTilgangModal, setVisDelTilgangModal] = useState(false);
   const fetcher = useFetcher();
   const erAktiv = erAktivSakKontrollsak(sak.status);
+  const kanEndreTilgang = erAktiv && sak.blokkert === null;
   const ansvarligSaksbehandler = ansvarligFraProps ?? sak.saksbehandlere.eier;
 
   function fjernDeltTilgang(navIdent: string) {
@@ -76,7 +79,7 @@ export function SaksbehandlereKort({
             <SaksbehandlerRad
               saksbehandler={ansvarligSaksbehandler}
               handling={
-                erAktiv ? (
+                kanEndreTilgang ? (
                   <Button
                     type="button"
                     variant="tertiary"
@@ -107,7 +110,7 @@ export function SaksbehandlereKort({
                     key={saksbehandler.navIdent}
                     saksbehandler={saksbehandler}
                     handling={
-                      erAktiv ? (
+                      kanEndreTilgang ? (
                         <Button
                           type="button"
                           variant="tertiary"
@@ -125,9 +128,26 @@ export function SaksbehandlereKort({
               </VStack>
             </>
           )}
+
+          {kanEndreTilgang && ansvarligSaksbehandler && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="small"
+              onClick={() => setVisDelTilgangModal(true)}
+            >
+              Del tilgang
+            </Button>
+          )}
         </VStack>
       </Kort>
 
+      <DelTilgangModal
+        sakId={sak.id}
+        saksbehandlerDetaljer={saksbehandlerDetaljer}
+        åpen={visDelTilgangModal}
+        onClose={() => setVisDelTilgangModal(false)}
+      />
       <OverforAnsvarligModal
         sakId={sak.id}
         saksbehandlerDetaljer={saksbehandlerDetaljer}

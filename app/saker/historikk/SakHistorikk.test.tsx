@@ -51,6 +51,24 @@ describe("SakHistorikk", () => {
     expect(screen.getByText(/Status: Avsluttet/)).toBeDefined();
   });
 
+  it("renderer beskrivelse for statusendring", () => {
+    renderMedRouter(
+      <SakHistorikk
+        sakId="test-sak-id"
+        hendelser={[
+          lagBackendHendelse({
+            hendelsesType: "STATUS_ENDRET",
+            status: "ANMELDT",
+            beskrivelse: "Saken er vurdert og anmeldt",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Status endret")).toBeDefined();
+    expect(screen.getByText(/Saken er vurdert og anmeldt – Status: Anmeldt/)).toBeDefined();
+  });
+
   it("renderer historikk for endret ansvarlig saksbehandler", () => {
     renderMedRouter(
       <SakHistorikk
@@ -91,5 +109,73 @@ describe("SakHistorikk", () => {
     expect(
       screen.getByText(/Fjernet deling med: Ada Larsen \(Z234567\) · Seksjon B/),
     ).toBeDefined();
+  });
+
+  it("renderer sak satt på vent med blokkeringsårsak og status", () => {
+    renderMedRouter(
+      <SakHistorikk
+        sakId="test-sak-id"
+        hendelser={[
+          lagBackendHendelse({
+            hendelsesType: "SAK_SATT_PA_VENT",
+            status: "UTREDES",
+            blokkert: "VENTER_PA_VEDTAK",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Sak satt på vent")).toBeDefined();
+    expect(screen.getByText(/På vent: Venter på vedtak – Status: Utredes/)).toBeDefined();
+  });
+
+  it("renderer gjenoppta som vanlig gjenopptak for ventesaker", () => {
+    renderMedRouter(
+      <SakHistorikk
+        sakId="test-sak-id"
+        hendelser={[
+          lagBackendHendelse({
+            hendelsesType: "SAK_GJENOPPTATT",
+            blokkert: "VENTER_PA_VEDTAK",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Sak gjenopptatt")).toBeDefined();
+  });
+
+  it("renderer gjenoppta som tatt ut av bero for bero-saker", () => {
+    renderMedRouter(
+      <SakHistorikk
+        sakId="test-sak-id"
+        hendelser={[
+          lagBackendHendelse({
+            hendelsesType: "SAK_GJENOPPTATT",
+            blokkert: "I_BERO",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Sak tatt ut av bero")).toBeDefined();
+  });
+
+  it("renderer fritekst for manuelt historikkinnslag", () => {
+    renderMedRouter(
+      <SakHistorikk
+        sakId="test-sak-id"
+        hendelser={[
+          lagBackendHendelse({
+            hendelsesType: "MANUELL_NOTAT",
+            tittel: "Ringte bruker",
+            notat: "Avklarte dokumentasjon og neste steg.",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Ringte bruker")).toBeDefined();
+    expect(screen.getByText("Avklarte dokumentasjon og neste steg.")).toBeDefined();
   });
 });

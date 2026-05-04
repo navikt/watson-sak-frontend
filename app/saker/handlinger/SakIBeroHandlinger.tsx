@@ -3,33 +3,18 @@ import { Button, Heading, VStack } from "@navikt/ds-react";
 import { useFetcher } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
-import type { KontrollsakResponse, TilgjengeligHandling } from "~/saker/types.backend";
+import type { KontrollsakResponse } from "~/saker/types.backend";
 
 interface SakIBeroHandlingerProps {
   sak: KontrollsakResponse;
-  tilgjengeligeHandlinger: TilgjengeligHandling[];
 }
 
-export function SakIBeroHandlinger({ sak, tilgjengeligeHandlinger }: SakIBeroHandlingerProps) {
+export function SakIBeroHandlinger({ sak }: SakIBeroHandlingerProps) {
   const gjenopptaFetcher = useFetcher();
-  const fristillFetcher = useFetcher();
-  const kanFristilles = tilgjengeligeHandlinger.some(
-    (handling) => handling.handling === "FRISTILL",
-  );
 
   function handleGjenoppta() {
     gjenopptaFetcher.submit(
-      { handling: "TA_AV_BERO" },
-      {
-        method: "post",
-        action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id)),
-      },
-    );
-  }
-
-  function handleFristill() {
-    fristillFetcher.submit(
-      { handling: "FRISTILL" },
+      { handling: "gjenoppta" },
       {
         method: "post",
         action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id)),
@@ -38,7 +23,7 @@ export function SakIBeroHandlinger({ sak, tilgjengeligeHandlinger }: SakIBeroHan
   }
 
   return (
-    <VStack gap="space-8" align="stretch">
+    <VStack gap="space-4" align="stretch">
       <Heading level="2" size="small">
         Handlinger
       </Heading>
@@ -49,18 +34,8 @@ export function SakIBeroHandlinger({ sak, tilgjengeligeHandlinger }: SakIBeroHan
         onClick={handleGjenoppta}
         loading={gjenopptaFetcher.state !== "idle"}
       >
-        Ta saken ut av bero
+        Gjenoppta
       </Button>
-      {kanFristilles && (
-        <Button
-          variant="secondary"
-          size="small"
-          onClick={handleFristill}
-          loading={fristillFetcher.state !== "idle"}
-        >
-          Fristill sak
-        </Button>
-      )}
     </VStack>
   );
 }

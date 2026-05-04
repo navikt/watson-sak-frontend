@@ -1,4 +1,5 @@
 import type {
+  Blokkeringsarsak,
   KontrollsakKategori,
   KontrollsakKilde,
   KontrollsakMisbrukstype,
@@ -15,9 +16,7 @@ type StatusVariant = "info" | "warning" | "success" | "neutral";
 const statusEtiketter: Record<KontrollsakStatus, string> = {
   OPPRETTET: "Opprettet",
   UTREDES: "Utredes",
-  VENTER_PA_INFORMASJON: "Venter på informasjon",
-  VENTER_PA_VEDTAK: "Venter på vedtak",
-  ANMELDELSE_VURDERES: "Anmeldelse vurderes",
+  STRAFFERETTSLIG_VURDERING: "Strafferettslig vurdering",
   ANMELDT: "Anmeldt",
   HENLAGT: "Henlagt",
   AVSLUTTET: "Avsluttet",
@@ -26,12 +25,16 @@ const statusEtiketter: Record<KontrollsakStatus, string> = {
 const statusVarianter: Record<KontrollsakStatus, StatusVariant> = {
   OPPRETTET: "info",
   UTREDES: "warning",
-  VENTER_PA_INFORMASJON: "neutral",
-  VENTER_PA_VEDTAK: "neutral",
-  ANMELDELSE_VURDERES: "warning",
+  STRAFFERETTSLIG_VURDERING: "warning",
   ANMELDT: "success",
   HENLAGT: "neutral",
   AVSLUTTET: "neutral",
+};
+
+const blokkeringsarsakEtiketter: Record<Blokkeringsarsak, string> = {
+  VENTER_PA_INFORMASJON: "Venter på informasjon",
+  VENTER_PA_VEDTAK: "Venter på vedtak",
+  I_BERO: "I bero",
 };
 
 const kildeEtiketter: Record<KontrollsakKilde, string> = {
@@ -56,6 +59,10 @@ export function formaterStatus(status: KontrollsakStatus): string {
 
 export function hentStatusVariant(status: KontrollsakStatus): StatusVariant {
   return statusVarianter[status];
+}
+
+export function formaterBlokkeringsarsak(arsak: Blokkeringsarsak): string {
+  return blokkeringsarsakEtiketter[arsak];
 }
 
 export function formaterKategori(kategori: KontrollsakKategori | null | undefined): string | null {
@@ -99,8 +106,8 @@ export function getPersonIdent(sak: KontrollsakResponse): string {
 }
 
 export function getStatus(sak: KontrollsakResponse): string {
-  if (sak.iBero) {
-    return `I bero · ${formaterStatus(sak.status)}`;
+  if (sak.blokkert) {
+    return `${formaterBlokkeringsarsak(sak.blokkert)} · ${formaterStatus(sak.status)}`;
   }
 
   return formaterStatus(sak.status);

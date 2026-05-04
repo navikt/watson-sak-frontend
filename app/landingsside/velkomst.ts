@@ -9,22 +9,29 @@ function formaterSakTekst(antall: number, entall: string, flertall: string) {
   return `${antall} ${antall === 1 ? entall : flertall}`;
 }
 
-function getStatus(sak: KontrollsakResponse) {
-  return sak.status;
+const aktiveStatuser: KontrollsakResponse["status"][] = [
+  "OPPRETTET",
+  "UTREDES",
+  "STRAFFERETTSLIG_VURDERING",
+  "ANMELDT",
+];
+
+function erAktivStatus(sak: KontrollsakResponse) {
+  return (
+    aktiveStatuser.includes(sak.status) &&
+    sak.blokkert !== "VENTER_PA_INFORMASJON" &&
+    sak.blokkert !== "VENTER_PA_VEDTAK"
+  );
 }
 
-function erAktivStatus(status: KontrollsakResponse["status"]) {
-  return status === "OPPRETTET" || status === "UTREDES" || status === "ANMELDELSE_VURDERES";
-}
-
-function erVentendeStatus(status: KontrollsakResponse["status"]) {
-  return status === "VENTER_PA_INFORMASJON" || status === "VENTER_PA_VEDTAK";
+function erVentende(sak: KontrollsakResponse) {
+  return sak.blokkert === "VENTER_PA_INFORMASJON" || sak.blokkert === "VENTER_PA_VEDTAK";
 }
 
 function velgMestRelevantArbeid(saker: KontrollsakResponse[]): Oppsummeringsdel[] {
-  const antallAktiveSaker = saker.filter((sak) => erAktivStatus(getStatus(sak))).length;
-  const antallVentendeSaker = saker.filter((sak) => erVentendeStatus(getStatus(sak))).length;
-  const antallSakerIBero = saker.filter((sak) => sak.iBero).length;
+  const antallAktiveSaker = saker.filter((sak) => erAktivStatus(sak)).length;
+  const antallVentendeSaker = saker.filter((sak) => erVentende(sak)).length;
+  const antallSakerIBero = saker.filter((sak) => sak.blokkert === "I_BERO").length;
 
   const oppsummeringer: Oppsummeringsdel[] = [
     {

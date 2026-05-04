@@ -5,46 +5,20 @@ import {
   kontrollsakMisbrukstypeVerdier,
 } from "./kategorier";
 
-const kontrollsakStatusSchema = z.enum([
+export const kontrollsakStatusSchema = z.enum([
   "OPPRETTET",
   "UTREDES",
-  "VENTER_PA_INFORMASJON",
-  "VENTER_PA_VEDTAK",
-  "ANMELDELSE_VURDERES",
+  "STRAFFERETTSLIG_VURDERING",
   "ANMELDT",
   "HENLAGT",
   "AVSLUTTET",
 ]);
 
-const kontrollsakHandlingSchema = z.enum([
-  "TILDEL",
-  "FRISTILL",
-  "START_UTREDNING",
-  "SETT_VENTER_PA_INFORMASJON",
-  "SETT_VENTER_PA_VEDTAK",
-  "SETT_ANMELDELSE_VURDERES",
-  "SETT_ANMELDT",
-  "SETT_HENLAGT",
-  "SETT_BERO",
-  "TA_AV_BERO",
-  "AVSLUTT",
-  "AVSLUTT_MED_KONKLUSJON",
+export const blokkeringsarsakSchema = z.enum([
+  "VENTER_PA_INFORMASJON",
+  "VENTER_PA_VEDTAK",
+  "I_BERO",
 ]);
-
-const støttetKontrollsakHandlingSchema = z.union([kontrollsakHandlingSchema, z.string()]);
-
-const avslutningskonklusjonSchema = z.enum(["POLITIET_HENLA", "FRIFUNNET", "DOMFELT"]);
-
-const pakrevdFeltSchema = z.object({
-  felt: z.string(),
-  tillatteVerdier: z.array(z.string()),
-});
-
-const tilgjengeligHandlingSchema = z.object({
-  handling: støttetKontrollsakHandlingSchema,
-  pakrevdeFelter: z.array(pakrevdFeltSchema),
-  resultatStatus: kontrollsakStatusSchema,
-});
 
 const kontrollsakKategoriSchema = z.enum(kontrollsakKategoriVerdier);
 const kontrollsakKildeSchema = z.enum(kontrollsakKildeVerdier);
@@ -114,9 +88,7 @@ export const kontrollsakResponseSchema = z
     personNavn: z.string().nullable().optional(),
     saksbehandlere: saksbehandlereSchema,
     status: kontrollsakStatusSchema,
-    iBero: z.boolean(),
-    avslutningskonklusjon: avslutningskonklusjonSchema.nullable(),
-    tilgjengeligeHandlinger: z.array(tilgjengeligHandlingSchema),
+    blokkert: blokkeringsarsakSchema.nullable(),
     kategori: kontrollsakKategoriSchema,
     kilde: kontrollsakKildeSchema,
     misbruktype: z.array(kontrollsakMisbrukstypeSchema),
@@ -148,6 +120,8 @@ export const kontrollsakHendelseResponseSchema = z.object({
   kategori: kontrollsakKategoriSchema,
   prioritet: kontrollsakPrioritetSchema,
   status: kontrollsakStatusSchema,
+  blokkert: blokkeringsarsakSchema.nullable().optional(),
+  beskrivelse: z.string().nullable().optional(),
   ytelseTyper: z.array(z.string()),
   berortSaksbehandlerNavn: z.string().optional(),
   berortSaksbehandlerNavIdent: z.string().optional(),
@@ -159,9 +133,7 @@ export type KontrollsakSaksbehandler = z.infer<typeof kontrollsakSaksbehandlerSc
 export type KontrollsakResponse = z.infer<typeof kontrollsakResponseSchema>;
 export type KontrollsakPageResponse = z.infer<typeof kontrollsakPageResponseSchema>;
 export type KontrollsakStatus = z.infer<typeof kontrollsakStatusSchema>;
-export type KontrollsakHandling = z.infer<typeof kontrollsakHandlingSchema>;
-export type Avslutningskonklusjon = z.infer<typeof avslutningskonklusjonSchema>;
-export type TilgjengeligHandling = z.infer<typeof tilgjengeligHandlingSchema>;
+export type Blokkeringsarsak = z.infer<typeof blokkeringsarsakSchema>;
 export type KontrollsakKategori = z.infer<typeof kontrollsakKategoriSchema>;
 export type KontrollsakKilde = z.infer<typeof kontrollsakKildeSchema>;
 export type KontrollsakMisbrukstype = z.infer<typeof kontrollsakMisbrukstypeSchema>;

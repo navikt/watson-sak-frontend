@@ -1,4 +1,5 @@
 import type { KontrollsakResponse } from "~/saker/types.backend";
+import { hentHistorikk } from "~/saker/historikk/mock-data.server";
 import { beregnBehandlingstid } from "~/statistikk/beregninger";
 import type { Avslutningsdatoer } from "~/statistikk/mock-data.server";
 
@@ -23,12 +24,14 @@ function getOpprettet(sak: KontrollsakResponse): string {
   return sak.opprettet;
 }
 
-function getStatus(sak: KontrollsakResponse) {
-  return sak.status;
-}
-
 function harEier(sak: KontrollsakResponse) {
   return sak.saksbehandlere.eier !== null;
+}
+
+function erSendtTilNayNfp(sak: KontrollsakResponse) {
+  return hentHistorikk(sak.id).some(
+    (hendelse) => hendelse.hendelsesType === "VIDERESENDT_TIL_NAY_NFP",
+  );
 }
 
 function erInnenforSiste14Dager(dato: string, referansedato: string) {
@@ -54,15 +57,14 @@ export function beregnDineSakerSiste14Dager({
   return {
     antallSakerJobbetMed: sakerSiste14Dager.length,
     antallTipsTilVurdering: 0,
-    antallSendtTilNayNfp: sakerSiste14Dager.filter((sak) => getStatus(sak) === "VENTER_PA_VEDTAK")
-      .length,
+    antallSendtTilNayNfp: sakerSiste14Dager.filter((sak) => erSendtTilNayNfp(sak)).length,
     snittBehandlingstidPerSak: behandlingstid?.gjennomsnitt ?? null,
     antallHenlagteSaker: sakerSiste14Dager.filter(
-      (sak) => getStatus(sak) === "HENLAGT" && !tidligereTipsSakIder.includes(sak.id),
+      (sak) => sak.status === "HENLAGT" && !tidligereTipsSakIder.includes(sak.id),
     ).length,
     antallHenlagteTips: sakerSiste14Dager.filter(
-      (sak) => getStatus(sak) === "HENLAGT" && tidligereTipsSakIder.includes(sak.id),
+      (sak) => sak.status === "HENLAGT" && tidligereTipsSakIder.includes(sak.id),
     ).length,
-    antallSakerIBero: sakerSiste14Dager.filter((sak) => sak.iBero).length,
+    antallSakerIBero: sakerSiste14Dager.filter((sak) => sak.blokkert === "I_BERO").length,
   };
 }

@@ -1,117 +1,4 @@
-import type {
-  Avslutningskonklusjon,
-  KontrollsakHandling,
-  KontrollsakResponse,
-  KontrollsakStatus,
-  TilgjengeligHandling,
-} from "./types.backend";
-
-function lagTilgjengeligHandling(
-  handling: KontrollsakHandling,
-  resultatStatus: KontrollsakStatus,
-  pakrevdeFelter: TilgjengeligHandling["pakrevdeFelter"] = [],
-): TilgjengeligHandling {
-  return {
-    handling,
-    pakrevdeFelter,
-    resultatStatus,
-  };
-}
-
-function beregnTilgjengeligeHandlinger(
-  sak: Pick<KontrollsakResponse, "status" | "saksbehandlere" | "iBero">,
-): TilgjengeligHandling[] {
-  if (sak.status === "AVSLUTTET") {
-    return [];
-  }
-
-  if (sak.iBero) {
-    if (sak.saksbehandlere.eier === null) {
-      return [
-        lagTilgjengeligHandling("TILDEL", sak.status, [{ felt: "navIdent", tillatteVerdier: [] }]),
-        lagTilgjengeligHandling("TA_AV_BERO", sak.status),
-      ];
-    }
-
-    return [
-      lagTilgjengeligHandling("TA_AV_BERO", sak.status),
-      lagTilgjengeligHandling("FRISTILL", sak.status),
-    ];
-  }
-
-  if (sak.saksbehandlere.eier === null) {
-    const handlinger = [
-      lagTilgjengeligHandling("TILDEL", sak.status, [{ felt: "navIdent", tillatteVerdier: [] }]),
-    ];
-
-    if (kanSettesPåBero(sak.status)) {
-      handlinger.push(lagTilgjengeligHandling("SETT_BERO", sak.status));
-    }
-
-    return handlinger;
-  }
-
-  switch (sak.status) {
-    case "OPPRETTET":
-      return [
-        lagTilgjengeligHandling("START_UTREDNING", "UTREDES"),
-        lagTilgjengeligHandling("FRISTILL", "OPPRETTET"),
-        lagTilgjengeligHandling("SETT_BERO", "OPPRETTET"),
-      ];
-    case "UTREDES":
-      return [
-        lagTilgjengeligHandling("SETT_VENTER_PA_INFORMASJON", "VENTER_PA_INFORMASJON"),
-        lagTilgjengeligHandling("SETT_VENTER_PA_VEDTAK", "VENTER_PA_VEDTAK"),
-        lagTilgjengeligHandling("SETT_ANMELDELSE_VURDERES", "ANMELDELSE_VURDERES"),
-        lagTilgjengeligHandling("SETT_HENLAGT", "HENLAGT"),
-        lagTilgjengeligHandling("SETT_BERO", "UTREDES"),
-        lagTilgjengeligHandling("FRISTILL", "UTREDES"),
-      ];
-    case "VENTER_PA_INFORMASJON":
-      return [
-        lagTilgjengeligHandling("START_UTREDNING", "UTREDES"),
-        lagTilgjengeligHandling("SETT_BERO", "VENTER_PA_INFORMASJON"),
-        lagTilgjengeligHandling("FRISTILL", "VENTER_PA_INFORMASJON"),
-      ];
-    case "VENTER_PA_VEDTAK":
-      return [
-        lagTilgjengeligHandling("SETT_ANMELDELSE_VURDERES", "ANMELDELSE_VURDERES"),
-        lagTilgjengeligHandling("SETT_HENLAGT", "HENLAGT"),
-        lagTilgjengeligHandling("SETT_BERO", "VENTER_PA_VEDTAK"),
-        lagTilgjengeligHandling("FRISTILL", "VENTER_PA_VEDTAK"),
-      ];
-    case "ANMELDELSE_VURDERES":
-      return [
-        lagTilgjengeligHandling("SETT_ANMELDT", "ANMELDT"),
-        lagTilgjengeligHandling("SETT_HENLAGT", "HENLAGT"),
-        lagTilgjengeligHandling("START_UTREDNING", "UTREDES"),
-        lagTilgjengeligHandling("SETT_BERO", "ANMELDELSE_VURDERES"),
-        lagTilgjengeligHandling("FRISTILL", "ANMELDELSE_VURDERES"),
-      ];
-    case "ANMELDT":
-      return [
-        lagTilgjengeligHandling("AVSLUTT_MED_KONKLUSJON", "AVSLUTTET", [
-          {
-            felt: "avslutningskonklusjon",
-            tillatteVerdier: ["POLITIET_HENLA", "FRIFUNNET", "DOMFELT"],
-          },
-        ]),
-        lagTilgjengeligHandling("FRISTILL", "ANMELDT"),
-      ];
-    case "HENLAGT":
-      return [
-        lagTilgjengeligHandling("AVSLUTT", "AVSLUTTET"),
-        lagTilgjengeligHandling("FRISTILL", "HENLAGT"),
-      ];
-  }
-}
-
-export function nullstillMockStatushistorikk() {}
-
-export function oppdaterTilgjengeligeHandlinger(sak: KontrollsakResponse): KontrollsakResponse {
-  sak.tilgjengeligeHandlinger = beregnTilgjengeligeHandlinger(sak);
-  return sak;
-}
+import type { Blokkeringsarsak, KontrollsakResponse, KontrollsakStatus } from "./types.backend";
 
 function erGyldigUuid(verdi: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(verdi);
@@ -141,6 +28,13 @@ export function lagMockSakUuid(fixtureId: string, namespace: number): string {
 
 function lagMockEntityUuid(fixtureId: string, namespace: number, offset = 0): string {
   return lagMockUuid(lagEntityBase(fixtureId, namespace) + BigInt(offset));
+}
+
+export function nullstillMockStatushistorikk() {}
+
+/** Ingen-op etter migrering til ny modell – beholdes for bakoverkompatibilitet i tester */
+export function oppdaterTilgjengeligeHandlinger(sak: KontrollsakResponse): KontrollsakResponse {
+  return sak;
 }
 
 type LegacyKontrollsak = Record<string, unknown>;
@@ -222,14 +116,21 @@ export function normaliserLegacyKontrollsak(
     OPPRETTET: "OPPRETTET",
     AVKLART: "OPPRETTET",
     UTREDES: "UTREDES",
-    TIL_FORVALTNING: "VENTER_PA_VEDTAK",
+    TIL_FORVALTNING: "UTREDES",
     HENLAGT: "HENLAGT",
     AVSLUTTET: "AVSLUTTET",
     I_BERO: "OPPRETTET",
+    VENTER_PA_INFORMASJON: "UTREDES",
+    VENTER_PA_VEDTAK: "UTREDES",
+    ANMELDELSE_VURDERES: "STRAFFERETTSLIG_VURDERING",
+    ANMELDT: "ANMELDT",
+    STRAFFERETTSLIG_VURDERING: "STRAFFERETTSLIG_VURDERING",
+  };
+
+  const blokkertMap: Record<string, Blokkeringsarsak | null> = {
+    I_BERO: "I_BERO",
     VENTER_PA_INFORMASJON: "VENTER_PA_INFORMASJON",
     VENTER_PA_VEDTAK: "VENTER_PA_VEDTAK",
-    ANMELDELSE_VURDERES: "ANMELDELSE_VURDERES",
-    ANMELDT: "ANMELDT",
   };
 
   const kildeMap: Record<string, KontrollsakResponse["kilde"]> = {
@@ -272,14 +173,10 @@ export function normaliserLegacyKontrollsak(
     "Avbrutt tiltak": "AVBRUTT_TILTAK",
   };
 
-  const normalisertStatus = statusMap[legacyStatus] ?? "OPPRETTET";
-  const iBero = legacyStatus === "I_BERO";
+  const normalisertStatus: KontrollsakStatus = statusMap[legacyStatus] ?? "OPPRETTET";
+  const blokkert: Blokkeringsarsak | null = blokkertMap[legacyStatus] ?? null;
   const opprettetAv = normaliserLegacyOpprettetAv(sak, saksbehandlerNavn, saksbehandlerEnhet);
   const eier = normaliserLegacyEier(sak);
-  const avslutningskonklusjon =
-    typeof (sak as { avslutningskonklusjon?: unknown }).avslutningskonklusjon === "string"
-      ? ((sak as { avslutningskonklusjon: unknown }).avslutningskonklusjon as Avslutningskonklusjon)
-      : null;
 
   const normalisert: KontrollsakResponse = {
     id: erGyldigUuid(id) ? id : lagMockEntityUuid(id, namespace),
@@ -295,9 +192,7 @@ export function normaliserLegacyKontrollsak(
       opprettetAv,
     },
     status: normalisertStatus,
-    iBero,
-    avslutningskonklusjon,
-    tilgjengeligeHandlinger: [],
+    blokkert,
     kategori: (legacyKategori in
     {
       BEHANDLER: true,
@@ -406,15 +301,5 @@ export function normaliserLegacyKontrollsak(
     oppdatert: typeof sak.oppdatert === "string" ? sak.oppdatert : null,
   };
 
-  return oppdaterTilgjengeligeHandlinger(normalisert);
-}
-
-function kanSettesPåBero(status: KontrollsakStatus): boolean {
-  return (
-    status === "OPPRETTET" ||
-    status === "UTREDES" ||
-    status === "VENTER_PA_INFORMASJON" ||
-    status === "VENTER_PA_VEDTAK" ||
-    status === "ANMELDELSE_VURDERES"
-  );
+  return normalisert;
 }
