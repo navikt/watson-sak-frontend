@@ -91,6 +91,7 @@ export function UfordeltSakHandlinger({
 
       <EndreStatusModal
         sakId={sak.id}
+        nåværendeStatus={sak.status}
         åpen={åpenModal === "endre-status"}
         onClose={() => setÅpenModal(null)}
       />

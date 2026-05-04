@@ -299,6 +299,10 @@ export async function action({ request, params }: Route.ActionArgs) {
         throw data("Ugyldig status", { status: 400 });
       }
 
+      if (nyStatus === sak.status) {
+        throw data("Status er uendret", { status: 400 });
+      }
+
       const beskrivelse = (formData.get("beskrivelse") as string | null) || undefined;
       const forrigeBlokkering = sak.blokkert;
 

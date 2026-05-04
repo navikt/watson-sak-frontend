@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeEach } from "vitest";
+import type { KontrollsakResponse } from "./types.backend";
 import { action } from "./SakDetaljSide.route";
 import { hentHistorikk, resetHistorikk } from "./historikk/mock-data.server";
 import { hentAlleSaker } from "./mock-alle-saker.server";
@@ -27,7 +28,9 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
 
   it("endre_status oppdaterer sakens status", async () => {
     const saker = hentAlleSaker();
-    const sak = saker.find((s) => s.status !== "AVSLUTTET" && s.blokkert === null);
+    const sak = saker.find(
+      (s: KontrollsakResponse) => s.status !== "AVSLUTTET" && s.blokkert === null,
+    );
     expect(sak).toBeDefined();
     if (!sak) return;
 
@@ -45,7 +48,9 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
 
   it("endre_status med beskrivelse lagrer hendelse med beskrivelse", async () => {
     const saker = hentAlleSaker();
-    const sak = saker.find((s) => s.status !== "AVSLUTTET" && s.blokkert === null);
+    const sak = saker.find(
+      (s: KontrollsakResponse) => s.status !== "AVSLUTTET" && s.blokkert === null,
+    );
     expect(sak).toBeDefined();
     if (!sak) return;
 
@@ -63,7 +68,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
 
   it("endre_status til AVSLUTTET nullstiller blokkert", async () => {
     const saker = hentAlleSaker();
-    const sak = saker.find((s) => s.status !== "AVSLUTTET");
+    const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
 
@@ -87,7 +92,9 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
 
   it("endre_blokkering setter blokkeringsårsak på saken", async () => {
     const saker = hentAlleSaker();
-    const sak = saker.find((s) => s.status !== "AVSLUTTET" && s.blokkert === null);
+    const sak = saker.find(
+      (s: KontrollsakResponse) => s.status !== "AVSLUTTET" && s.blokkert === null,
+    );
     expect(sak).toBeDefined();
     if (!sak) return;
 
@@ -109,7 +116,9 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
 
   it("endre_blokkering med I_BERO logger bero-hendelse", async () => {
     const saker = hentAlleSaker();
-    const sak = saker.find((s) => s.status !== "AVSLUTTET" && s.blokkert === null);
+    const sak = saker.find(
+      (s: KontrollsakResponse) => s.status !== "AVSLUTTET" && s.blokkert === null,
+    );
     expect(sak).toBeDefined();
     if (!sak) return;
 
@@ -130,7 +139,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
 
   it("gjenoppta nullstiller blokkert uten modaldata", async () => {
     const saker = hentAlleSaker();
-    const sak = saker.find((s) => s.status !== "AVSLUTTET");
+    const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
 
@@ -153,7 +162,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
 
   it("endre_status avviser ugyldig status", async () => {
     const saker = hentAlleSaker();
-    const sak = saker.find((s) => s.status !== "AVSLUTTET");
+    const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
 
@@ -168,9 +177,28 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     ).rejects.toBeDefined();
   });
 
+  it("endre_status avviser uendret status", async () => {
+    const saker = hentAlleSaker();
+    const sak = saker.find(
+      (s: KontrollsakResponse) => s.status === "UTREDES" && s.blokkert === null,
+    );
+    expect(sak).toBeDefined();
+    if (!sak) return;
+
+    const { getSaksreferanse } = await import("./id");
+    const sakId = getSaksreferanse(sak.id);
+
+    await expect(
+      utforAction(sakId, {
+        handling: "endre_status",
+        status: "UTREDES",
+      }),
+    ).rejects.toBeDefined();
+  });
+
   it("endre_blokkering avviser ugyldig årsak", async () => {
     const saker = hentAlleSaker();
-    const sak = saker.find((s) => s.status !== "AVSLUTTET");
+    const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
 

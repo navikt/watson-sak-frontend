@@ -9,6 +9,7 @@ import { formaterStatus } from "~/saker/visning";
 
 interface EndreStatusModalProps {
   sakId: string;
+  nåværendeStatus: KontrollsakStatus;
   åpen: boolean;
   onClose: () => void;
 }
@@ -22,11 +23,12 @@ const valgbareStatuser: KontrollsakStatus[] = [
   "AVSLUTTET",
 ];
 
-export function EndreStatusModal({ sakId, åpen, onClose }: EndreStatusModalProps) {
+export function EndreStatusModal({ sakId, nåværendeStatus, åpen, onClose }: EndreStatusModalProps) {
   const fetcher = useFetcher();
   const [valgtStatus, setValgtStatus] = useState<string>("");
   const [beskrivelse, setBeskrivelse] = useState("");
   const erSubmitting = fetcher.state !== "idle";
+  const valgtSammeStatus = valgtStatus === nåværendeStatus;
 
   function handleLukk() {
     if (erSubmitting) return;
@@ -36,7 +38,7 @@ export function EndreStatusModal({ sakId, åpen, onClose }: EndreStatusModalProp
   }
 
   function handleLagre() {
-    if (!valgtStatus || erSubmitting) return;
+    if (!valgtStatus || valgtSammeStatus || erSubmitting) return;
 
     fetcher.submit(
       { handling: "endre_status", status: valgtStatus, beskrivelse },
@@ -64,7 +66,7 @@ export function EndreStatusModal({ sakId, åpen, onClose }: EndreStatusModalProp
           >
             <option value="">Velg status</option>
             {valgbareStatuser.map((status) => (
-              <option key={status} value={status}>
+              <option key={status} value={status} disabled={status === nåværendeStatus}>
                 {formaterStatus(status)}
               </option>
             ))}
@@ -82,7 +84,7 @@ export function EndreStatusModal({ sakId, åpen, onClose }: EndreStatusModalProp
         <Button
           variant="primary"
           onClick={handleLagre}
-          disabled={!valgtStatus || erSubmitting}
+          disabled={!valgtStatus || valgtSammeStatus || erSubmitting}
           loading={erSubmitting}
         >
           Lagre
