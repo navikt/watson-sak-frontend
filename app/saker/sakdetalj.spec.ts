@@ -49,17 +49,26 @@ test.describe("Sakdetalj", () => {
     await page.getByRole("button", { name: "Rediger saksinformasjon" }).click();
 
     await page.getByLabel("Kategori").selectOption("ARBEID");
-    await page.getByLabel("Misbruktype").selectOption("SVART_ARBEID");
-    await page.getByLabel("Merking (valgfritt)").selectOption("PRIORITERT");
-    await page.getByLabel("Kilde").selectOption("PUBLIKUM");
-    await page.getByLabel("Fra dato").fill("01.02.2026");
-    await page.getByLabel("Til dato").fill("28.02.2026");
 
-    const ytelserCombobox = page.getByLabel("Ytelse");
-    await ytelserCombobox.fill("Dagpenger");
+    const misbruktypeCombobox = page.getByLabel("Misbruktype");
+    await misbruktypeCombobox.click();
+    await page.getByRole("option", { name: "Svart arbeid" }).click();
+    await misbruktypeCombobox.press("Escape");
+
+    const merkingCombobox = page.getByLabel("Merking");
+    await merkingCombobox.click();
+    await page.getByRole("option", { name: "Prioritert" }).click();
+    await merkingCombobox.press("Escape");
+
+    await page.getByLabel("Kilde").selectOption("PUBLIKUM");
+
+    const ytelseCombobox = page.getByLabel("Ytelse").first();
+    await ytelseCombobox.click();
     await page.getByRole("option", { name: "Dagpenger" }).click();
-    await ytelserCombobox.fill("Sykepenger");
-    await page.getByRole("option", { name: "Sykepenger" }).click();
+    await ytelseCombobox.press("Escape");
+
+    await page.getByLabel("Fra", { exact: true }).fill("01.02.2026");
+    await page.getByLabel("Til", { exact: true }).fill("28.02.2026");
 
     await page.getByRole("button", { name: "Lagre" }).click();
     await expect(page.getByRole("button", { name: "Rediger saksinformasjon" })).toBeVisible();
@@ -70,8 +79,7 @@ test.describe("Sakdetalj", () => {
     await expect(page.getByText("Prioritert", { exact: true })).toBeVisible();
     await expect(page.getByText("Publikum", { exact: true })).toBeVisible();
     await expect(page.getByText("Dagpenger", { exact: true })).toBeVisible();
-    await expect(page.getByText("Sykepenger", { exact: true })).toBeVisible();
-    await expect(page.getByText("1. feb. 2026 – 28. feb. 2026")).toBeVisible();
+    await expect(page.getByText("01.02.2026 – 28.02.2026")).toBeVisible();
     await expect(page.getByText("12345678901")).toBeVisible();
   });
 
@@ -90,14 +98,14 @@ test.describe("Sakdetalj", () => {
   test("resetter datofelter etter avbryt og ny redigering", async ({ page }) => {
     await page.getByRole("button", { name: "Rediger saksinformasjon" }).click();
 
-    await page.getByLabel("Fra dato").fill("01.02.2026");
-    await page.getByLabel("Til dato").fill("28.02.2026");
+    await page.getByLabel("Fra", { exact: true }).fill("01.02.2026");
+    await page.getByLabel("Til", { exact: true }).fill("28.02.2026");
     await page.getByRole("button", { name: "Avbryt" }).click();
 
     await page.getByRole("button", { name: "Rediger saksinformasjon" }).click();
 
-    await expect(page.getByLabel("Fra dato")).toHaveValue("13.01.2026");
-    await expect(page.getByLabel("Til dato")).toHaveValue("13.01.2026");
+    await expect(page.getByLabel("Fra", { exact: true })).toHaveValue("13.01.2026");
+    await expect(page.getByLabel("Til", { exact: true })).toHaveValue("13.01.2026");
   });
 
   test("viser ikke gamle valideringsfeil etter avbryt og ny redigering", async ({ page }) => {

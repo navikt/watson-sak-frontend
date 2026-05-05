@@ -39,7 +39,6 @@ import {
 } from "~/registrer-sak/validering";
 import {
   ankerIdForFelt,
-  type Feil,
   førsteFeilForFelt,
   samleFeilElementer,
   YtelseRadFelt,
@@ -153,10 +152,6 @@ function finnSaksbehandlerDetalj(
       (saksbehandler) => saksbehandler.navIdent === navIdent || saksbehandler.navn === navIdent,
     ) ?? null
   );
-}
-
-function hentFørsteVerdi<T>(verdier: T[] | null | undefined): T | undefined {
-  return verdier?.[0];
 }
 
 function formaterIsoTilNorskDato(iso: string | undefined | null): string {
