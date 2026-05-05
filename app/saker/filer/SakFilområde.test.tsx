@@ -37,6 +37,7 @@ describe("SakFilområde", () => {
     render(<SakFilområde filer={[]} />);
     expect(screen.getByText("Ingen filer ennå")).toBeDefined();
     expect(screen.getByText("Last opp fil")).toBeDefined();
+    expect(screen.getByText("Opprett fil")).toBeDefined();
     expect(screen.getByText("Opprett mappe")).toBeDefined();
   });
 
@@ -44,6 +45,7 @@ describe("SakFilområde", () => {
     render(<SakFilområde filer={[]} redigerbar={false} />);
     expect(screen.getByText("Ingen filer ennå")).toBeDefined();
     expect(screen.queryByText("Last opp fil")).toBeNull();
+    expect(screen.queryByText("Opprett fil")).toBeNull();
     expect(screen.queryByText("Opprett mappe")).toBeNull();
   });
 
@@ -67,11 +69,23 @@ describe("SakFilområde", () => {
     render(<SakFilområde filer={mockFiler} />);
     const lastOppKnapper = screen.getAllByText("Last opp fil");
     expect(lastOppKnapper.length).toBeGreaterThan(0);
+    expect(screen.getByText("Opprett fil")).toBeDefined();
+  });
+
+  it("viser valg for filtype når opprett fil-menyen åpnes", () => {
+    render(<SakFilområde filer={mockFiler} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Opprett fil" }));
+
+    expect(screen.getByText("Word-fil")).toBeDefined();
+    expect(screen.getByText("Excel-fil")).toBeDefined();
+    expect(screen.getByText("PowerPoint-fil")).toBeDefined();
   });
 
   it("skjuler handlingsknapper når redigerbar er false", () => {
     render(<SakFilområde filer={mockFiler} redigerbar={false} />);
     expect(screen.queryByText("Last opp fil")).toBeNull();
+    expect(screen.queryByText("Opprett fil")).toBeNull();
     expect(screen.queryByText("Opprett mappe")).toBeNull();
   });
 
