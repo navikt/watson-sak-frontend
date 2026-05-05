@@ -59,23 +59,27 @@ export function EndreStatusModal({ sakId, nåværendeStatus, åpen, onClose }: E
     >
       <Modal.Body>
         <VStack gap="space-4">
-          <Select
-            label="Ny status"
-            value={valgtStatus}
-            onChange={(event) => setValgtStatus(event.target.value)}
-          >
-            <option value="">Velg status</option>
-            {valgbareStatuser.map((status) => (
-              <option key={status} value={status} disabled={status === nåværendeStatus}>
-                {formaterStatus(status)}
-              </option>
-            ))}
-          </Select>
-          <InfoCard size="small" data-color="warning">
-            <InfoCard.Message icon={<ExclamationmarkTriangleIcon aria-hidden />}>
-              Avsluttet er en endelig status – du kan ikke endre tilbake
-            </InfoCard.Message>
-          </InfoCard>
+          <VStack gap="space-8">
+            <Select
+              label="Ny status"
+              value={valgtStatus}
+              onChange={(event) => setValgtStatus(event.target.value)}
+            >
+              <option value="">Velg status</option>
+              {valgbareStatuser.map((status) => (
+                <option key={status} value={status} disabled={status === nåværendeStatus}>
+                  {formaterStatus(status)}
+                </option>
+              ))}
+            </Select>
+            {valgtStatus === "AVSLUTTET" ? (
+              <InfoCard size="small" data-color="warning">
+                <InfoCard.Message icon={<ExclamationmarkTriangleIcon aria-hidden />}>
+                  Avsluttet er en endelig status – du kan ikke endre tilbake
+                </InfoCard.Message>
+              </InfoCard>
+            ) : null}
+          </VStack>
           <Textarea
             label="Beskrivelse (valgfritt)"
             value={beskrivelse}
