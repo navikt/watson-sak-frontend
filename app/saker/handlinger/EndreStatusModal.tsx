@@ -1,5 +1,5 @@
-import { PencilIcon } from "@navikt/aksel-icons";
-import { Button, Modal, Select, Textarea, VStack } from "@navikt/ds-react";
+import { ExclamationmarkTriangleIcon, PencilIcon } from "@navikt/aksel-icons";
+import { Button, InfoCard, Modal, Select, Textarea, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import { useFetcher } from "react-router";
 import { RouteConfig } from "~/routeConfig";
@@ -71,6 +71,11 @@ export function EndreStatusModal({ sakId, nåværendeStatus, åpen, onClose }: E
               </option>
             ))}
           </Select>
+          <InfoCard size="small" data-color="warning">
+            <InfoCard.Message icon={<ExclamationmarkTriangleIcon aria-hidden />}>
+              Avsluttet er en endelig status – du kan ikke endre tilbake
+            </InfoCard.Message>
+          </InfoCard>
           <Textarea
             label="Beskrivelse (valgfritt)"
             value={beskrivelse}
