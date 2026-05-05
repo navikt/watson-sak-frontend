@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { OpprettNotatModal } from "./OpprettNotatModal";
 
 const submitMock = vi.fn();
@@ -32,6 +32,10 @@ const defaultProps = {
 };
 
 describe("OpprettNotatModal", () => {
+  beforeEach(() => {
+    submitMock.mockClear();
+  });
+
   it("deaktiverer Lagre-knappen når notat er tomt", () => {
     renderMedRouter(<OpprettNotatModal {...defaultProps} />);
 
@@ -89,6 +93,34 @@ describe("OpprettNotatModal", () => {
         notat: "Notat med oppgave",
         knyttTilOppgave: "true",
         oppgavetype: "Vurder dokument",
+      }),
+      expect.objectContaining({ method: "post" }),
+    );
+  });
+
+  it("lar saksbehandler søke opp og sende behandlende enhet", async () => {
+    renderMedRouter(<OpprettNotatModal {...defaultProps} />);
+
+    fireEvent.change(screen.getByLabelText("Notat"), {
+      target: { value: "Notat med behandlende enhet" },
+    });
+    fireEvent.click(screen.getByLabelText("Knytt til oppgave"));
+
+    const behandlendeEnhetCombobox = screen.getByRole("combobox", {
+      name: "Behandlende enhet",
+    });
+    fireEvent.change(behandlendeEnhetCombobox, { target: { value: "4111" } });
+    fireEvent.pointerUp(
+      await screen.findByRole("option", { name: "4111 - Nav kontaktsenter Rogaland" }),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+
+    expect(submitMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        notat: "Notat med behandlende enhet",
+        knyttTilOppgave: "true",
+        behandlendeEnhet: "4111",
       }),
       expect.objectContaining({ method: "post" }),
     );
