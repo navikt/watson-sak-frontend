@@ -52,13 +52,17 @@ export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorik
 
   function handleLagre(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     formData.set("handling", "legg_til_historikk");
     formData.set("dato", dato);
     fetcher.submit(formData, {
       method: "post",
       action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),
     });
+    form.reset();
+    setDato(standardDato());
+    setTid(standardTid());
     onClose();
   }
 

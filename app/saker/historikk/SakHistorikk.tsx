@@ -159,15 +159,7 @@ function hendelseBeskrivelse(hendelse: SakHendelse): string | null {
     return `Fjernet deling med: ${hendelse.berortSaksbehandlerNavn} (${hendelse.berortSaksbehandlerNavIdent}) · ${hendelse.berortSaksbehandlerEnhet}`;
   }
 
-  const deler: string[] = [];
-
-  deler.push(`Status: ${formaterTekst(hendelse.status)}`);
-
-  return deler.length > 0 ? deler.join(" – ") : null;
-}
-
-function formaterTekst(verdi: string): string {
-  return verdi.charAt(0) + verdi.slice(1).toLowerCase().replaceAll("_", " ");
+  return `Status: ${formaterStatus(hendelse.status)}`;
 }
 
 function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
@@ -249,11 +241,6 @@ export function SakHistorikk({ sakId, hendelser }: SakHistorikkProps) {
                 >
                   <VStack gap="space-1">
                     {beskrivelse && <BodyShort size="small">{beskrivelse}</BodyShort>}
-                    {hendelse.hendelsesType !== "MANUELL_NOTAT" && (
-                      <BodyShort size="small" className="text-ax-text-neutral-subtle">
-                        {`${formaterTekst(hendelse.kategori)} · ${formaterTekst(hendelse.prioritet)}`}
-                      </BodyShort>
-                    )}
                   </VStack>
                 </Process.Event>
               );

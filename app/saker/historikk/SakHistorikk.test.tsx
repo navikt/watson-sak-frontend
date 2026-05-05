@@ -31,7 +31,6 @@ describe("SakHistorikk", () => {
 
     expect(screen.getByText("Sak opprettet")).toBeDefined();
     expect(screen.getByText(/Status: Opprettet/)).toBeDefined();
-    expect(screen.getByText(/Arbeid · Normal/)).toBeDefined();
   });
 
   it("renderer avklaringshendelse med oppdatert status", () => {
