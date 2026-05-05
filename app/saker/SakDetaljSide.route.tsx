@@ -330,7 +330,9 @@ export async function action({ request, params }: Route.ActionArgs) {
       const beskrivelse = (formData.get("beskrivelse") as string | null) || undefined;
 
       sak.blokkert = blokkert;
-      leggTilHendelse(sak, getHendelsestypeForBlokkering(blokkert), undefined, { beskrivelse });
+      leggTilHendelse(sak, getHendelsestypeForBlokkering(blokkert), undefined, {
+        beskrivelse,
+      });
       break;
     }
     case "gjenoppta": {
@@ -341,7 +343,9 @@ export async function action({ request, params }: Route.ActionArgs) {
       }
 
       sak.blokkert = null;
-      leggTilHendelse(sak, "SAK_GJENOPPTATT", undefined, { blokkert: forrigeBlokkering });
+      leggTilHendelse(sak, "SAK_GJENOPPTATT", undefined, {
+        blokkert: forrigeBlokkering,
+      });
       break;
     }
     case "overfor_ansvarlig": {
@@ -446,7 +450,10 @@ export async function action({ request, params }: Route.ActionArgs) {
       break;
     }
     case "koble_sak": {
-      return { ok: false, feil: { skjema: [unsupportedKobleSakFeil] } } satisfies ActionResult;
+      return {
+        ok: false,
+        feil: { skjema: [unsupportedKobleSakFeil] },
+      } satisfies ActionResult;
     }
     case "del_tilgang": {
       const navIdent = formData.get("navIdent") as string;
@@ -530,7 +537,9 @@ export async function action({ request, params }: Route.ActionArgs) {
         deler.push(`Knyttet til oppgave${oppgavetype ? `: ${oppgavetype}` : ""}`);
       }
 
-      leggTilHendelse(sak, "NOTAT_SENDT", undefined, { beskrivelse: deler.join("\n") });
+      leggTilHendelse(sak, "NOTAT_SENDT", undefined, {
+        beskrivelse: deler.join("\n"),
+      });
       break;
     }
     default: {
@@ -640,7 +649,10 @@ export default function SakDetaljSide() {
   }
 
   function leggTilYtelseRad() {
-    setLokaleVerdier((gjeldende) => ({ ...gjeldende, ytelser: [...gjeldende.ytelser, {}] }));
+    setLokaleVerdier((gjeldende) => ({
+      ...gjeldende,
+      ytelser: [...gjeldende.ytelser, {}],
+    }));
   }
 
   function fjernYtelseRad(indeks: number) {
@@ -958,18 +970,21 @@ export default function SakDetaljSide() {
                         </VStack>
 
                         <VStack gap="space-1">
-                          <Detail className="text-ax-text-neutral-subtle" uppercase>
-                            Ytelser
-                          </Detail>
                           {sak.ytelser.length === 0 ? (
                             <BodyShort>–</BodyShort>
                           ) : (
                             <Table size="small" className="[&_td]:py-1 [&_th]:py-1 text-sm">
                               <Table.Header>
                                 <Table.Row>
-                                  <Table.HeaderCell scope="col">Ytelse</Table.HeaderCell>
-                                  <Table.HeaderCell scope="col">Periode</Table.HeaderCell>
-                                  <Table.HeaderCell scope="col">Ca. beløp</Table.HeaderCell>
+                                  <Table.HeaderCell scope="col" className="text-sm">
+                                    Ytelse
+                                  </Table.HeaderCell>
+                                  <Table.HeaderCell scope="col" className="text-sm">
+                                    Periode
+                                  </Table.HeaderCell>
+                                  <Table.HeaderCell scope="col" className="text-sm">
+                                    Ca. beløp
+                                  </Table.HeaderCell>
                                 </Table.Row>
                               </Table.Header>
                               <Table.Body>
@@ -980,10 +995,10 @@ export default function SakDetaljSide() {
                                         {ytelse.type}
                                       </Tag>
                                     </Table.DataCell>
-                                    <Table.DataCell>
+                                    <Table.DataCell className="text-sm">
                                       {formaterPeriode(ytelse.periodeFra, ytelse.periodeTil)}
                                     </Table.DataCell>
-                                    <Table.DataCell>
+                                    <Table.DataCell className="text-sm">
                                       {ytelse.belop !== null && ytelse.belop !== undefined
                                         ? formaterBelop(ytelse.belop)
                                         : "–"}
@@ -1024,7 +1039,10 @@ export default function SakDetaljSide() {
               <SaksbehandlereKort
                 sak={{
                   ...sak,
-                  saksbehandlere: { ...sak.saksbehandlere, deltMed: delteSaksbehandlere },
+                  saksbehandlere: {
+                    ...sak.saksbehandlere,
+                    deltMed: delteSaksbehandlere,
+                  },
                 }}
                 saksbehandlerDetaljer={saksbehandlerDetaljer}
                 ansvarligSaksbehandler={ansvarligSaksbehandler}
