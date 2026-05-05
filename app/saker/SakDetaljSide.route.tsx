@@ -58,6 +58,7 @@ import type { Blokkeringsarsak, KontrollsakSaksbehandler } from "~/saker/types.b
 import type { Route } from "./+types/SakDetaljSide.route";
 import { hentFilerForSak } from "./filer/mock-data.server";
 import { SakFilområde } from "./filer/SakFilområde";
+import { notatMalValg } from "./handlinger/notatValg";
 import { SakHandlingerKnapper } from "./handlinger/SakHandlingerKnapper";
 import { erAktivSakKontrollsak } from "./handlinger/tilgjengeligeHandlinger";
 import { SakHistorikk } from "./historikk/SakHistorikk";
@@ -214,6 +215,11 @@ function lagTidspunktFraSkjema(dato: string, tid: string): string {
     return new Date(`${år}-${måned}-${dag}T${tid ?? "00:00"}:00`).toISOString();
   }
   return new Date(`${dato}T${tid ?? "00:00"}:00`).toISOString();
+}
+
+function finnNotatMalLabel(verdi: FormDataEntryValue | null): string | undefined {
+  if (typeof verdi !== "string" || verdi.length === 0) return undefined;
+  return notatMalValg.find((mal) => mal.verdi === verdi)?.label;
 }
 
 export function loader({ params }: Route.LoaderArgs) {
@@ -512,10 +518,14 @@ export async function action({ request, params }: Route.ActionArgs) {
         throw data("Notat er påkrevd", { status: 400 });
       }
       const notat = notatRaw.trim();
+      const malLabel = finnNotatMalLabel(formData.get("mal"));
       const knyttTilOppgave = formData.get("knyttTilOppgave") === "true";
       const oppgavetype = (formData.get("oppgavetype") as string | null) ?? "";
 
       const deler = [notat];
+      if (malLabel) {
+        deler.push(`Mal: ${malLabel}`);
+      }
       if (knyttTilOppgave) {
         deler.push(`Knyttet til oppgave${oppgavetype ? `: ${oppgavetype}` : ""}`);
       }

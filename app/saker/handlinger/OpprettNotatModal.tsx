@@ -18,18 +18,13 @@ import { useFetcher } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { behandlendeEnheter } from "./behandlendeEnheter";
+import { notatMalValg } from "./notatValg";
 
 interface OpprettNotatModalProps {
   sakId: string;
   åpen: boolean;
   onClose: () => void;
 }
-
-const malValg = [
-  { verdi: "personbruker", label: "Notat personbruker" },
-  { verdi: "kontoopplysninger", label: "Vurdering ved innhenting av kontoopplysninger" },
-  { verdi: "barnas_beste", label: "Vurdering av barnas beste" },
-];
 
 const oppgavetypeValg = [
   { verdi: "vurder_dokument", label: "Vurder dokument" },
@@ -114,7 +109,7 @@ export function OpprettNotatModal({ sakId, åpen, onClose }: OpprettNotatModalPr
 
           <Select label="Mal" value={mal} onChange={(e) => setMal(e.target.value)}>
             <option value="">Velg mal</option>
-            {malValg.map(({ verdi, label }) => (
+            {notatMalValg.map(({ verdi, label }) => (
               <option key={verdi} value={verdi}>
                 {label}
               </option>
