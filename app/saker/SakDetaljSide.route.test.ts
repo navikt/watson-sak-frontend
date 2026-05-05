@@ -347,13 +347,15 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     const formData = new FormData();
     formData.set("handling", "rediger_saksinformasjon");
     formData.set("kategori", "ARBEID");
-    formData.set("misbruktype", "SVART_ARBEID");
-    formData.set("merking", "PRIORITERT");
+    formData.append("misbruktype", "SVART_ARBEID");
+    formData.append("merking", "PRIORITERT");
     formData.set("kilde", "PUBLIKUM");
-    formData.set("fraDato", "2026-02-01");
-    formData.set("tilDato", "2026-02-28");
-    formData.append("ytelser", "Dagpenger");
-    formData.append("ytelser", "Sykepenger");
+    formData.set("ytelser[0].type", "Dagpenger");
+    formData.set("ytelser[0].fraDato", "2026-02-01");
+    formData.set("ytelser[0].tilDato", "2026-02-28");
+    formData.set("ytelser[1].type", "Sykepenger");
+    formData.set("ytelser[1].fraDato", "2026-02-01");
+    formData.set("ytelser[1].tilDato", "2026-02-28");
     formData.set("personIdent", "99999999999");
     formData.set("status", "AVSLUTTET");
     formData.set("saksbehandler", "Ny Saksbehandler");
@@ -394,11 +396,11 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     const formData = new FormData();
     formData.set("handling", "rediger_saksinformasjon");
     formData.set("kategori", kontrollsak.kategori);
-    formData.set("misbruktype", "ENDRET_SIVILSTATUS");
+    formData.append("misbruktype", "ENDRET_SIVILSTATUS");
     formData.set("kilde", "PUBLIKUM");
-    formData.set("fraDato", "2026-01-13");
-    formData.set("tilDato", "2026-01-13");
-    formData.append("ytelser", "Barnetrygd");
+    formData.set("ytelser[0].type", "Barnetrygd");
+    formData.set("ytelser[0].fraDato", "2026-01-13");
+    formData.set("ytelser[0].tilDato", "2026-01-13");
 
     await action({
       request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
@@ -417,38 +419,6 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(oppdatertSak.kilde).toBe("PUBLIKUM");
   });
 
-  it("avviser redigering når saken ikke følger støttet redigeringsmodell", async () => {
-    const kontrollsak = mockKontrollsaker[0];
-    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
-
-    kontrollsak.misbruktype = ["ENDRET_SIVILSTATUS", "SKJULT_SAMLIV"];
-
-    const formData = new FormData();
-    formData.set("handling", "rediger_saksinformasjon");
-    formData.set("kategori", "ARBEID");
-    formData.set("misbruktype", "SVART_ARBEID");
-    formData.set("merking", "PRIORITERT");
-    formData.set("kilde", "PUBLIKUM");
-    formData.set("fraDato", "2026-02-01");
-    formData.set("tilDato", "2026-02-28");
-    formData.append("ytelser", "Dagpenger");
-
-    const resultat = await action({
-      request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
-        method: "POST",
-        body: formData,
-      }),
-      params: { sakId: kontrollsakRef },
-    } as Route.ActionArgs);
-
-    expect(resultat).toEqual({
-      ok: false,
-      feil: { skjema: ["Saken kan ikke redigeres med denne løsningen ennå."] },
-    });
-    expect(kontrollsak.kategori).not.toBe("ARBEID");
-    expect(kontrollsak.misbruktype).toEqual(["ENDRET_SIVILSTATUS", "SKJULT_SAMLIV"]);
-  });
-
   it("avviser redigering når saken er inaktiv selv om payloaden er gyldig", async () => {
     const kontrollsak = mockKontrollsaker[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
@@ -457,12 +427,12 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     const formData = new FormData();
     formData.set("handling", "rediger_saksinformasjon");
     formData.set("kategori", "ARBEID");
-    formData.set("misbruktype", "SVART_ARBEID");
-    formData.set("merking", "PRIORITERT");
+    formData.append("misbruktype", "SVART_ARBEID");
+    formData.append("merking", "PRIORITERT");
     formData.set("kilde", "PUBLIKUM");
-    formData.set("fraDato", "2026-02-01");
-    formData.set("tilDato", "2026-02-28");
-    formData.append("ytelser", "Dagpenger");
+    formData.set("ytelser[0].type", "Dagpenger");
+    formData.set("ytelser[0].fraDato", "2026-02-01");
+    formData.set("ytelser[0].tilDato", "2026-02-28");
 
     const resultat = await action({
       request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
@@ -474,54 +444,9 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
 
     expect(resultat).toEqual({
       ok: false,
-      feil: { skjema: ["Saken kan ikke redigeres med denne løsningen ennå."] },
+      feil: { skjema: ["Saken kan ikke redigeres i denne statusen."] },
     });
     expect(kontrollsak.status).toBe("AVSLUTTET");
     expect(kontrollsak.kategori).not.toBe("ARBEID");
-  });
-
-  it("avviser redigering når saken har ulike perioder per ytelse", async () => {
-    const kontrollsak = mockKontrollsaker[0];
-    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
-    kontrollsak.ytelser = [
-      {
-        id: crypto.randomUUID(),
-        type: "Dagpenger",
-        periodeFra: "2026-02-01",
-        periodeTil: "2026-02-15",
-        belop: null,
-      },
-      {
-        id: crypto.randomUUID(),
-        type: "Sykepenger",
-        periodeFra: "2026-03-01",
-        periodeTil: "2026-03-31",
-        belop: null,
-      },
-    ];
-
-    const formData = new FormData();
-    formData.set("handling", "rediger_saksinformasjon");
-    formData.set("kategori", "ARBEID");
-    formData.set("misbruktype", "SVART_ARBEID");
-    formData.set("merking", "PRIORITERT");
-    formData.set("kilde", "PUBLIKUM");
-    formData.set("fraDato", "2026-02-01");
-    formData.set("tilDato", "2026-02-28");
-    formData.append("ytelser", "Dagpenger");
-
-    const resultat = await action({
-      request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
-        method: "POST",
-        body: formData,
-      }),
-      params: { sakId: kontrollsakRef },
-    } as Route.ActionArgs);
-
-    expect(resultat).toEqual({
-      ok: false,
-      feil: { skjema: ["Saken kan ikke redigeres med denne løsningen ennå."] },
-    });
-    expect(kontrollsak.ytelser.map((ytelse) => ytelse.type)).toEqual(["Dagpenger", "Sykepenger"]);
   });
 });

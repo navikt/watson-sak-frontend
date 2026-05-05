@@ -39,7 +39,7 @@ test.describe("Opprett sak", () => {
     await expect(page.getByRole("button", { name: "Se sak" })).toBeVisible();
   });
 
-  test("kan fylle ut og sende inn skjema", async ({ page }) => {
+  test("kan opprette sak med kun kategori og kilde", async ({ page }) => {
     await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("12345678901");
     await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
 
@@ -48,14 +48,6 @@ test.describe("Opprett sak", () => {
     ).toBeVisible();
 
     await page.getByLabel("Kategori").selectOption("DOKUMENTFALSK");
-    await page.getByLabel("Fra dato").fill("01.01.2024");
-    await page.getByLabel("Til dato").fill("31.12.2024");
-
-    const ytelserCombobox = page.getByLabel("Ytelse");
-    await ytelserCombobox.fill("Dagpenger");
-    await page.getByRole("option", { name: "Dagpenger" }).click();
-
-    await page.getByLabel("Enhet").selectOption("ØST");
     await page.getByLabel("Kilde").selectOption("NAV_KONTROLL");
 
     await page.getByRole("button", { name: "Opprett sak" }).click();
@@ -63,37 +55,33 @@ test.describe("Opprett sak", () => {
     await expect(page).toHaveURL(/\/saker\/\d+/);
   });
 
-  test("nyopprettet sak blir søkbar", async ({ page }) => {
+  test("viser ErrorSummary når påkrevde felter mangler", async ({ page }) => {
     await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("12345678901");
     await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
 
     await expect(
       page.getByRole("heading", { name: "Grunnleggende saksinformasjon" }),
     ).toBeVisible();
-
-    await page.getByLabel("Kategori").selectOption("DOKUMENTFALSK");
-    await page.getByLabel("Fra dato").fill("01.01.2024");
-    await page.getByLabel("Til dato").fill("31.12.2024");
-
-    const ytelserCombobox = page.getByLabel("Ytelse");
-    await ytelserCombobox.fill("Dagpenger");
-    await page.getByRole("option", { name: "Dagpenger" }).click();
-
-    await page.getByLabel("Enhet").selectOption("ØST");
-    await page.getByLabel("Kilde").selectOption("NAV_KONTROLL");
 
     await page.getByRole("button", { name: "Opprett sak" }).click();
-    await expect(page).toHaveURL(/\/saker\/\d+/);
 
-    await page.goto("/søk", { waitUntil: "networkidle" });
-    await page.getByLabel("Søk etter saker").fill("12345678901");
-    await page.getByLabel("Søk etter saker").press("Enter");
-
-    await expect(page.getByText(/treff for "12345678901"/)).toBeVisible();
-    await expect(page.getByRole("article").first()).toBeVisible();
+    await expect(page.getByText("Du må rette disse feilene før du kan gå videre")).toBeVisible();
   });
 
-  test("misbruktype-feltet vises kun for kategorier med misbrukstyper", async ({ page }) => {
+  test("kan legge til og fjerne ytelse-rader", async ({ page }) => {
+    await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("12345678901");
+    await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
+
+    await expect(page.getByRole("heading", { name: "Ytelser med mulig misbruk" })).toBeVisible();
+
+    await page.getByRole("button", { name: "Legg til ytelse" }).click();
+    await expect(page.getByLabel("Ytelse")).toHaveCount(2);
+
+    await page.getByRole("button", { name: "Fjern rad 2" }).click();
+    await expect(page.getByLabel("Ytelse")).toHaveCount(1);
+  });
+
+  test("Avbryt-knappen lenker til landingssiden", async ({ page }) => {
     await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("12345678901");
     await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
 
@@ -101,13 +89,7 @@ test.describe("Opprett sak", () => {
       page.getByRole("heading", { name: "Grunnleggende saksinformasjon" }),
     ).toBeVisible();
 
-    // Velg kategori uten misbrukstyper
-    await page.getByLabel("Kategori").selectOption("DOKUMENTFALSK");
-    await expect(page.getByLabel("Misbruktype")).not.toBeVisible();
-
-    // Velg kategori med misbrukstyper
-    await page.getByLabel("Kategori").selectOption("SAMLIV");
-    await expect(page.getByLabel("Misbruktype")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Avbryt" })).toHaveAttribute("href", "/");
   });
 
   test("er UU-compliant", async ({ page }) => {
