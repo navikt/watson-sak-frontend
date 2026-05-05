@@ -80,6 +80,7 @@ function lagValgfrittDatofelt() {
 }
 
 const misbrukstypeSchema = z.enum(kontrollsakMisbrukstypeVerdier);
+const merkingSchema = z.string().trim().min(1, "Merking kan ikke være tom");
 
 const valgfrittBeløpSchema = z.preprocess((verdi) => {
   if (verdi === "" || verdi === null || verdi === undefined) return undefined;
@@ -120,7 +121,7 @@ export const opprettSakSchema = z
     kategori: z.enum(kategoriAlternativer, { message: "Velg kategori" }),
     kilde: z.enum(kildeAlternativer, { message: "Velg kilde" }),
     misbruktype: z.array(misbrukstypeSchema).optional().default([]),
-    merking: z.array(z.enum(merkingAlternativer)).optional().default([]),
+    merking: z.array(merkingSchema).optional().default([]),
     enhet: z.enum(enhetAlternativer).optional(),
     organisasjonsnummer: z
       .string()
@@ -151,7 +152,7 @@ export const redigerSaksinformasjonSchema = z
     kategori: z.enum(kategoriAlternativer, { message: "Velg kategori" }),
     kilde: z.enum(kildeAlternativer, { message: "Velg kilde" }),
     misbruktype: z.array(misbrukstypeSchema).optional().default([]),
-    merking: z.array(z.enum(merkingAlternativer)).optional().default([]),
+    merking: z.array(merkingSchema).optional().default([]),
     ytelser: z.array(ytelseRadSchema).optional().default([]),
   })
   .transform((data) => ({

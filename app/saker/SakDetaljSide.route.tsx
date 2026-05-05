@@ -823,6 +823,7 @@ export default function SakDetaljSide() {
                                 value: merking,
                               }))}
                               isMultiSelect
+                              allowNewValues
                               selectedOptions={lokaleVerdier.merking}
                               onToggleSelected={(option, isSelected) => {
                                 setLokaleVerdier((gjeldende) => {

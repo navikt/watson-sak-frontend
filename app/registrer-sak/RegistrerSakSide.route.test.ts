@@ -196,6 +196,31 @@ describe("OpprettSakSide action", () => {
     );
   }, 15000);
 
+  it("støtter egendefinert merking", async () => {
+    const { action } = await import("./RegistrerSakSide.server");
+    const { opprettKontrollsak } = await import("./api.server");
+
+    const formData = lagFormDataMedMinimum();
+    formData.append("merking", "Egen merking");
+
+    await action({
+      request: new Request("http://localhost/registrer-sak", {
+        method: "POST",
+        body: formData,
+      }),
+      params: {},
+      context: {},
+    } as Route.ActionArgs);
+
+    expect(opprettKontrollsak).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          merking: "Egen merking",
+        }),
+      }),
+    );
+  }, 15000);
+
   it("returnerer feltfeil når kategori mangler", async () => {
     const { action } = await import("./RegistrerSakSide.server");
 
