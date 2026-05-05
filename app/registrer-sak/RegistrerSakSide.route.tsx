@@ -33,7 +33,7 @@ import {
 } from "~/saker/kategorier";
 import type { PersonOppslagResultat } from "./person-oppslag.mock.server";
 import { lagRegistrerSakDatepickerValg } from "./registrerSakDatepicker";
-import { action, loader } from "./RegistrerSakSide.server";
+import { action, loader, type SkjemaVerdier, type YtelseRadVerdier } from "./RegistrerSakSide.server";
 
 export { action, loader };
 
@@ -48,11 +48,11 @@ type Feil = Partial<Record<string, string[]>>;
 
 type YtelseRadState = {
   id: string;
-  type: string;
+  defaults: YtelseRadVerdier;
 };
 
-function nyYtelseRad(): YtelseRadState {
-  return { id: crypto.randomUUID(), type: "" };
+function nyYtelseRad(defaults: YtelseRadVerdier = {}): YtelseRadState {
+  return { id: crypto.randomUUID(), defaults };
 }
 
 function førsteFeilForFelt(feil: Feil | undefined, felt: string): string | undefined {
@@ -73,7 +73,7 @@ function samleFeilElementer(feil: Feil | undefined): FeilElement[] {
 }
 
 function ankerIdForFelt(felt: string): string {
-  return `felt-${felt.replace(/\W+/g, "-")}`;
+  return `felt-${felt.replace(/[^\p{L}\p{N}]+/gu, "-")}`;
 }
 
 export default function OpprettSakSide() {
@@ -81,12 +81,20 @@ export default function OpprettSakSide() {
     useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const feil = actionData && "feil" in actionData ? (actionData.feil as Feil) : undefined;
+  const verdier =
+    actionData && "verdier" in actionData ? (actionData.verdier as SkjemaVerdier) : undefined;
 
-  const [valgtKategori, setValgtKategori] = useState<string>("");
-  const [valgteMisbruktyper, setValgteMisbruktyper] = useState<string[]>([]);
-  const [valgteMerkinger, setValgteMerkinger] = useState<string[]>([]);
+  const [valgtKategori, setValgtKategori] = useState<string>(verdier?.kategori ?? "");
+  const [valgteMisbruktyper, setValgteMisbruktyper] = useState<string[]>(
+    verdier?.misbruktype ?? [],
+  );
+  const [valgteMerkinger, setValgteMerkinger] = useState<string[]>(verdier?.merking ?? []);
   const [søkeFnr, setSøkeFnr] = useState("");
-  const [ytelseRader, setYtelseRader] = useState<YtelseRadState[]>(() => [nyYtelseRad()]);
+  const [ytelseRader, setYtelseRader] = useState<YtelseRadState[]>(() =>
+    verdier && verdier.ytelser.length > 0
+      ? verdier.ytelser.map((rad) => nyYtelseRad(rad))
+      : [nyYtelseRad()],
+  );
   const [filer, setFiler] = useState<File[]>([]);
 
   const personFetcher = useFetcher<
@@ -313,6 +321,7 @@ export default function OpprettSakSide() {
                       label="Kilde"
                       error={førsteFeilForFelt(feil, "kilde")}
                       className="w-52"
+                      defaultValue={verdier?.kilde ?? ""}
                     >
                       <option value="">Velg kilde</option>
                       {kilder.map((k) => (
@@ -330,6 +339,7 @@ export default function OpprettSakSide() {
                       htmlSize={14}
                       error={førsteFeilForFelt(feil, "organisasjonsnummer")}
                       autoComplete="off"
+                      defaultValue={verdier?.organisasjonsnummer ?? ""}
                     />
                   </HStack>
 
@@ -354,9 +364,12 @@ export default function OpprettSakSide() {
                             ] ?? verdi,
                         }))}
                         onToggleSelected={(option, isSelected) => {
-                          setValgteMisbruktyper((prev) =>
-                            isSelected ? [...prev, option] : prev.filter((m) => m !== option),
-                          );
+                          setValgteMisbruktyper((prev) => {
+                            if (isSelected) {
+                              return prev.includes(option) ? prev : [...prev, option];
+                            }
+                            return prev.filter((m) => m !== option);
+                          });
                         }}
                         error={førsteFeilForFelt(feil, "misbruktype")}
                       />
@@ -378,9 +391,12 @@ export default function OpprettSakSide() {
                           label: merkingEtiketter[verdi as keyof typeof merkingEtiketter] ?? verdi,
                         }))}
                         onToggleSelected={(option, isSelected) => {
-                          setValgteMerkinger((prev) =>
-                            isSelected ? [...prev, option] : prev.filter((m) => m !== option),
-                          );
+                          setValgteMerkinger((prev) => {
+                            if (isSelected) {
+                              return prev.includes(option) ? prev : [...prev, option];
+                            }
+                            return prev.filter((m) => m !== option);
+                          });
                         }}
                         error={førsteFeilForFelt(feil, "merking")}
                       />
@@ -395,6 +411,7 @@ export default function OpprettSakSide() {
                       label="Enhet (valgfritt)"
                       error={førsteFeilForFelt(feil, "enhet")}
                       className="w-44"
+                      defaultValue={verdier?.enhet ?? ""}
                     >
                       <option value="">Velg enhet</option>
                       {enheter.map((e) => (
@@ -427,6 +444,8 @@ export default function OpprettSakSide() {
                           ytelser={ytelser}
                           kanFjernes={ytelseRader.length > 1}
                           onFjern={() => fjernYtelseRad(rad.id)}
+                          defaults={rad.defaults}
+                          feil={feil}
                         />
                       ))}
                     </VStack>
@@ -500,44 +519,91 @@ type YtelseRadFeltProps = {
   ytelser: readonly string[];
   kanFjernes: boolean;
   onFjern: () => void;
+  defaults: YtelseRadVerdier;
+  feil: Feil | undefined;
 };
 
-function YtelseRadFelt({ indeks, ytelser, kanFjernes, onFjern }: YtelseRadFeltProps) {
-  const [valgtYtelse, setValgtYtelse] = useState<string>("");
+function parseTilDate(verdi: string | undefined): Date | undefined {
+  if (!verdi) return undefined;
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(verdi);
+  if (iso) {
+    const dato = new Date(Date.UTC(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3])));
+    return Number.isNaN(dato.getTime()) ? undefined : dato;
+  }
+  const norsk = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(verdi);
+  if (norsk) {
+    const dato = new Date(Date.UTC(Number(norsk[3]), Number(norsk[2]) - 1, Number(norsk[1])));
+    return Number.isNaN(dato.getTime()) ? undefined : dato;
+  }
+  return undefined;
+}
+
+function YtelseRadFelt({ indeks, ytelser, kanFjernes, onFjern, defaults, feil }: YtelseRadFeltProps) {
+  const [valgtYtelse, setValgtYtelse] = useState<string>(defaults.type ?? "");
   const registrerSakDatepickerValg = useMemo(() => lagRegistrerSakDatepickerValg(new Date()), []);
-  const { datepickerProps, fromInputProps, toInputProps } = useRangeDatepicker(
-    registrerSakDatepickerValg,
+  const defaultRange = useMemo(
+    () => ({
+      from: parseTilDate(defaults.fraDato),
+      to: parseTilDate(defaults.tilDato),
+    }),
+    [defaults.fraDato, defaults.tilDato],
   );
+  const { datepickerProps, fromInputProps, toInputProps } = useRangeDatepicker({
+    ...registrerSakDatepickerValg,
+    defaultSelected: defaultRange,
+  });
 
   const ytelseFeltnavn = `ytelser[${indeks}].type`;
   const fraFeltnavn = `ytelser[${indeks}].fraDato`;
   const tilFeltnavn = `ytelser[${indeks}].tilDato`;
   const beløpFeltnavn = `ytelser[${indeks}].beløp`;
 
+  const ytelseFeil = førsteFeilForFelt(feil, `ytelser.${indeks}.type`);
+  const fraFeil = førsteFeilForFelt(feil, `ytelser.${indeks}.fraDato`);
+  const tilFeil = førsteFeilForFelt(feil, `ytelser.${indeks}.tilDato`);
+  const beløpFeil = førsteFeilForFelt(feil, `ytelser.${indeks}.beløp`);
+
   return (
     <HStack gap="space-16" align="end" wrap>
-      <UNSAFE_Combobox
-        label="Ytelse"
-        options={ytelser as string[]}
-        selectedOptions={valgtYtelse ? [valgtYtelse] : []}
-        onToggleSelected={(option, isSelected) => setValgtYtelse(isSelected ? option : "")}
-        className="w-56"
-      />
+      <div id={ankerIdForFelt(`ytelser.${indeks}.type`)} className="w-56">
+        <UNSAFE_Combobox
+          label="Ytelse"
+          options={ytelser as string[]}
+          selectedOptions={valgtYtelse ? [valgtYtelse] : []}
+          onToggleSelected={(option, isSelected) => setValgtYtelse(isSelected ? option : "")}
+          error={ytelseFeil}
+        />
+      </div>
       {valgtYtelse && <input type="hidden" name={ytelseFeltnavn} value={valgtYtelse} />}
 
       <DatePicker {...datepickerProps} dropdownCaption={registrerSakDatepickerValg.dropdownCaption}>
         <HStack gap="space-16" align="end" wrap>
-          <DatePicker.Input {...fromInputProps} name={fraFeltnavn} label="Fra" />
-          <DatePicker.Input {...toInputProps} name={tilFeltnavn} label="Til" />
+          <DatePicker.Input
+            {...fromInputProps}
+            id={ankerIdForFelt(`ytelser.${indeks}.fraDato`)}
+            name={fraFeltnavn}
+            label="Fra"
+            error={fraFeil}
+          />
+          <DatePicker.Input
+            {...toInputProps}
+            id={ankerIdForFelt(`ytelser.${indeks}.tilDato`)}
+            name={tilFeltnavn}
+            label="Til"
+            error={tilFeil}
+          />
         </HStack>
       </DatePicker>
 
       <TextField
+        id={ankerIdForFelt(`ytelser.${indeks}.beløp`)}
         name={beløpFeltnavn}
         label="Ca beløp"
         inputMode="numeric"
         htmlSize={12}
         autoComplete="off"
+        defaultValue={defaults.beløp ?? ""}
+        error={beløpFeil}
       />
 
       <Button

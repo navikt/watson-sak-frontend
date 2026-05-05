@@ -268,7 +268,7 @@ describe("OpprettSakSide action", () => {
       context: {},
     } as Route.ActionArgs);
 
-    expect(response).toEqual({
+    expect(response).toMatchObject({
       feil: { skjema: ["Fant ikke navn på personen som saken opprettes for"] },
     });
   }, 15000);
