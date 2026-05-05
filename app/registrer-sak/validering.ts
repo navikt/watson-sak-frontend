@@ -38,17 +38,6 @@ export const merkingEtiketter: Record<(typeof merkingAlternativer)[number], stri
 
 export const enhetAlternativer = ["ØST", "VEST", "NORD", "ANALYSE"] as const;
 
-function erGyldigMisbrukstypeForKategori(kategori: string, misbruktype?: string) {
-  const gyldigeMisbrukstyper =
-    misbrukstyperPerKategori[kategori as keyof typeof misbrukstyperPerKategori];
-
-  if (!gyldigeMisbrukstyper || !misbruktype) {
-    return !misbruktype;
-  }
-
-  return gyldigeMisbrukstyper.includes(misbruktype as (typeof gyldigeMisbrukstyper)[number]);
-}
-
 function normaliserDato(dato: string) {
   if (/^\d{2}\.\d{2}\.\d{4}$/.test(dato)) {
     const [dag, måned, år] = dato.split(".");
@@ -78,54 +67,6 @@ function dagensDato() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function lagPåkrevdDatofelt(feltnavn: string) {
-  return z.preprocess(
-    (verdi) => (typeof verdi === "string" ? verdi : ""),
-    z
-      .string()
-      .min(1, `${feltnavn} er påkrevd`)
-      .transform((dato) => normaliserDato(dato))
-      .refine((dato) => erGyldigIsoDato(dato), "Ugyldig dato"),
-  );
-}
-
-const misbrukstypeSchema = z.enum(kontrollsakMisbrukstypeVerdier);
-
-type SaksreglerShape = {
-  fraDato: string;
-  tilDato: string;
-  kategori: string;
-  misbruktype?: string;
-};
-
-function medFellesSaksregler<T extends z.ZodType<SaksreglerShape>>(schema: T) {
-  return schema
-    .refine(({ fraDato, tilDato }) => fraDato <= tilDato, {
-      message: "Til dato må være lik eller etter fra dato",
-      path: ["tilDato"],
-    })
-    .refine(({ fraDato }) => fraDato <= dagensDato(), {
-      message: "Fra dato kan ikke være frem i tid",
-      path: ["fraDato"],
-    })
-    .refine(({ tilDato }) => tilDato <= dagensDato(), {
-      message: "Til dato kan ikke være frem i tid",
-      path: ["tilDato"],
-    })
-    .refine(
-      ({ kategori, misbruktype }) => {
-        const harMisbrukstyper = kategori in misbrukstyperPerKategori;
-        if (harMisbrukstyper && !misbruktype) return false;
-        return true;
-      },
-      { message: "Velg misbruktype", path: ["misbruktype"] },
-    )
-    .refine(({ kategori, misbruktype }) => erGyldigMisbrukstypeForKategori(kategori, misbruktype), {
-      message: "Ugyldig misbruktype for valgt kategori",
-      path: ["misbruktype"],
-    });
-}
-
 function lagValgfrittDatofelt() {
   return z
     .string()
@@ -137,6 +78,8 @@ function lagValgfrittDatofelt() {
       "Datoen kan ikke være frem i tid",
     );
 }
+
+const misbrukstypeSchema = z.enum(kontrollsakMisbrukstypeVerdier);
 
 const valgfrittBeløpSchema = z.preprocess((verdi) => {
   if (verdi === "" || verdi === null || verdi === undefined) return undefined;
@@ -202,21 +145,28 @@ export const opprettSakSchema = z
     },
   );
 
-export const redigerSaksinformasjonSchema = medFellesSaksregler(
-  z.object({
-    ytelser: z.array(z.string().min(1)).min(1, "Velg minst én ytelse"),
-    fraDato: lagPåkrevdDatofelt("Fra dato"),
-    tilDato: lagPåkrevdDatofelt("Til dato"),
+export const redigerSaksinformasjonSchema = z
+  .object({
     kategori: z.enum(kategoriAlternativer, { message: "Velg kategori" }),
-    misbruktype: misbrukstypeSchema.optional(),
-    merking: z.enum(merkingAlternativer).optional(),
     kilde: z.enum(kildeAlternativer, { message: "Velg kilde" }),
-    caBeløp: z.preprocess((verdi) => {
-      if (verdi === "" || verdi === null || verdi === undefined) return undefined;
-      const tall = Number(verdi);
-      return Number.isFinite(tall) ? tall : verdi;
-    }, z.number({ message: "Ca beløp må være et gyldig tall" }).positive("Ca beløp må være et positivt tall").optional()),
-  }),
-);
+    misbruktype: z.array(misbrukstypeSchema).optional().default([]),
+    merking: z.array(z.enum(merkingAlternativer)).optional().default([]),
+    ytelser: z.array(ytelseRadSchema).optional().default([]),
+  })
+  .transform((data) => ({
+    ...data,
+    ytelser: data.ytelser.filter(erUtfyltYtelseRad),
+  }))
+  .refine(
+    ({ kategori, misbruktype }) => {
+      const gyldige = misbrukstyperPerKategori[kategori as keyof typeof misbrukstyperPerKategori];
+      if (!gyldige || misbruktype.length === 0) return true;
+      return misbruktype.every((type) => gyldige.includes(type as (typeof gyldige)[number]));
+    },
+    {
+      message: "En eller flere misbruktyper passer ikke for valgt kategori",
+      path: ["misbruktype"],
+    },
+  );
 
 export type OpprettSakSkjema = z.infer<typeof opprettSakSchema>;

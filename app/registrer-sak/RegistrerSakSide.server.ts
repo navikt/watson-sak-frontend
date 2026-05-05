@@ -60,12 +60,12 @@ export function loader() {
   };
 }
 
-export type YtelseRadVerdier = {
-  type?: string;
-  fraDato?: string;
-  tilDato?: string;
-  beløp?: string;
-};
+import {
+  bygFeilkartFraIssues,
+  lesStringliste,
+  parseYtelseRader,
+  type YtelseRadVerdier,
+} from "./skjema-helpers";
 
 export type SkjemaVerdier = {
   personIdent: string;
@@ -83,31 +83,6 @@ function lesString(formData: FormData, navn: string): string {
   return typeof verdi === "string" ? verdi : "";
 }
 
-function lesStringliste(formData: FormData, navn: string): string[] {
-  return formData
-    .getAll(navn)
-    .filter((v): v is string => typeof v === "string" && v !== "");
-}
-
-function parseYtelseRader(formData: FormData): YtelseRadVerdier[] {
-  const indekser = new Set<number>();
-  for (const nøkkel of formData.keys()) {
-    const treff = nøkkel.match(/^ytelser\[(\d+)\]\.(?:type|fraDato|tilDato|beløp)$/);
-    if (treff) {
-      indekser.add(Number(treff[1]));
-    }
-  }
-
-  return Array.from(indekser)
-    .sort((a, b) => a - b)
-    .map((i) => ({
-      type: lesString(formData, `ytelser[${i}].type`) || undefined,
-      fraDato: lesString(formData, `ytelser[${i}].fraDato`) || undefined,
-      tilDato: lesString(formData, `ytelser[${i}].tilDato`) || undefined,
-      beløp: lesString(formData, `ytelser[${i}].beløp`) || undefined,
-    }));
-}
-
 function plukkVerdier(formData: FormData): SkjemaVerdier {
   return {
     personIdent: lesString(formData, "personIdent"),
@@ -119,17 +94,6 @@ function plukkVerdier(formData: FormData): SkjemaVerdier {
     organisasjonsnummer: lesString(formData, "organisasjonsnummer"),
     ytelser: parseYtelseRader(formData),
   };
-}
-
-function bygFeilkartFraIssues(
-  issues: ReadonlyArray<{ path: ReadonlyArray<PropertyKey>; message: string }>,
-): Record<string, string[]> {
-  const kart: Record<string, string[]> = {};
-  for (const issue of issues) {
-    const nøkkel = issue.path.length === 0 ? "skjema" : issue.path.join(".");
-    (kart[nøkkel] ??= []).push(issue.message);
-  }
-  return kart;
 }
 
 export async function action({ request }: Route.ActionArgs) {

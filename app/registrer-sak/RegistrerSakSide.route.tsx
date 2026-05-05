@@ -2,7 +2,6 @@ import {
   LocalAlert,
   BodyShort,
   Button,
-  DatePicker,
   ErrorSummary,
   FileUpload,
   Heading,
@@ -14,9 +13,8 @@ import {
   TextField,
   UNSAFE_Combobox,
   VStack,
-  useRangeDatepicker,
 } from "@navikt/ds-react";
-import { PersonIcon, PlusIcon, TrashIcon } from "@navikt/aksel-icons";
+import { PersonIcon, PlusIcon } from "@navikt/aksel-icons";
 import { PageBlock } from "@navikt/ds-react/Page";
 import { useId, useMemo, useState } from "react";
 import { Form, Link, useFetcher, useActionData, useLoaderData } from "react-router";
@@ -32,8 +30,15 @@ import {
   kontrollsakMisbrukstypeVerdier,
 } from "~/saker/kategorier";
 import type { PersonOppslagResultat } from "./person-oppslag.mock.server";
-import { lagRegistrerSakDatepickerValg } from "./registrerSakDatepicker";
-import { action, loader, type SkjemaVerdier, type YtelseRadVerdier } from "./RegistrerSakSide.server";
+import { action, loader, type SkjemaVerdier } from "./RegistrerSakSide.server";
+import type { YtelseRadVerdier } from "./skjema-helpers";
+import {
+  ankerIdForFelt,
+  type Feil,
+  førsteFeilForFelt,
+  samleFeilElementer,
+  YtelseRadFelt,
+} from "./YtelseRadFelt";
 
 export { action, loader };
 
@@ -44,8 +49,6 @@ const enhetEtiketter: Record<string, string> = {
   ANALYSE: "Analyse",
 };
 
-type Feil = Partial<Record<string, string[]>>;
-
 type YtelseRadState = {
   id: string;
   defaults: YtelseRadVerdier;
@@ -53,27 +56,6 @@ type YtelseRadState = {
 
 function nyYtelseRad(defaults: YtelseRadVerdier = {}): YtelseRadState {
   return { id: crypto.randomUUID(), defaults };
-}
-
-function førsteFeilForFelt(feil: Feil | undefined, felt: string): string | undefined {
-  return feil?.[felt]?.[0];
-}
-
-type FeilElement = { id: string; melding: string };
-
-function samleFeilElementer(feil: Feil | undefined): FeilElement[] {
-  if (!feil) return [];
-  const elementer: FeilElement[] = [];
-  for (const [felt, meldinger] of Object.entries(feil)) {
-    if (!meldinger || meldinger.length === 0) continue;
-    if (felt === "skjema") continue;
-    elementer.push({ id: ankerIdForFelt(felt), melding: meldinger[0] });
-  }
-  return elementer;
-}
-
-function ankerIdForFelt(felt: string): string {
-  return `felt-${felt.replace(/[^\p{L}\p{N}]+/gu, "-")}`;
 }
 
 export default function OpprettSakSide() {
@@ -511,114 +493,6 @@ export default function OpprettSakSide() {
         </VStack>
       </PageBlock>
     </Page>
-  );
-}
-
-type YtelseRadFeltProps = {
-  indeks: number;
-  ytelser: readonly string[];
-  kanFjernes: boolean;
-  onFjern: () => void;
-  defaults: YtelseRadVerdier;
-  feil: Feil | undefined;
-};
-
-function parseTilDate(verdi: string | undefined): Date | undefined {
-  if (!verdi) return undefined;
-  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(verdi);
-  if (iso) {
-    const dato = new Date(Date.UTC(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3])));
-    return Number.isNaN(dato.getTime()) ? undefined : dato;
-  }
-  const norsk = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(verdi);
-  if (norsk) {
-    const dato = new Date(Date.UTC(Number(norsk[3]), Number(norsk[2]) - 1, Number(norsk[1])));
-    return Number.isNaN(dato.getTime()) ? undefined : dato;
-  }
-  return undefined;
-}
-
-function YtelseRadFelt({ indeks, ytelser, kanFjernes, onFjern, defaults, feil }: YtelseRadFeltProps) {
-  const [valgtYtelse, setValgtYtelse] = useState<string>(defaults.type ?? "");
-  const registrerSakDatepickerValg = useMemo(() => lagRegistrerSakDatepickerValg(new Date()), []);
-  const defaultRange = useMemo(
-    () => ({
-      from: parseTilDate(defaults.fraDato),
-      to: parseTilDate(defaults.tilDato),
-    }),
-    [defaults.fraDato, defaults.tilDato],
-  );
-  const { datepickerProps, fromInputProps, toInputProps } = useRangeDatepicker({
-    ...registrerSakDatepickerValg,
-    defaultSelected: defaultRange,
-  });
-
-  const ytelseFeltnavn = `ytelser[${indeks}].type`;
-  const fraFeltnavn = `ytelser[${indeks}].fraDato`;
-  const tilFeltnavn = `ytelser[${indeks}].tilDato`;
-  const beløpFeltnavn = `ytelser[${indeks}].beløp`;
-
-  const ytelseFeil = førsteFeilForFelt(feil, `ytelser.${indeks}.type`);
-  const fraFeil = førsteFeilForFelt(feil, `ytelser.${indeks}.fraDato`);
-  const tilFeil = førsteFeilForFelt(feil, `ytelser.${indeks}.tilDato`);
-  const beløpFeil = førsteFeilForFelt(feil, `ytelser.${indeks}.beløp`);
-
-  return (
-    <HStack gap="space-16" align="end" wrap>
-      <div id={ankerIdForFelt(`ytelser.${indeks}.type`)} className="w-56">
-        <UNSAFE_Combobox
-          label="Ytelse"
-          options={ytelser as string[]}
-          selectedOptions={valgtYtelse ? [valgtYtelse] : []}
-          onToggleSelected={(option, isSelected) => setValgtYtelse(isSelected ? option : "")}
-          error={ytelseFeil}
-        />
-      </div>
-      {valgtYtelse && <input type="hidden" name={ytelseFeltnavn} value={valgtYtelse} />}
-
-      <DatePicker {...datepickerProps} dropdownCaption={registrerSakDatepickerValg.dropdownCaption}>
-        <HStack gap="space-16" align="end" wrap>
-          <DatePicker.Input
-            {...fromInputProps}
-            id={ankerIdForFelt(`ytelser.${indeks}.fraDato`)}
-            name={fraFeltnavn}
-            label="Fra"
-            error={fraFeil}
-          />
-          <DatePicker.Input
-            {...toInputProps}
-            id={ankerIdForFelt(`ytelser.${indeks}.tilDato`)}
-            name={tilFeltnavn}
-            label="Til"
-            error={tilFeil}
-          />
-        </HStack>
-      </DatePicker>
-
-      <TextField
-        id={ankerIdForFelt(`ytelser.${indeks}.beløp`)}
-        name={beløpFeltnavn}
-        label="Ca beløp"
-        inputMode="numeric"
-        htmlSize={12}
-        autoComplete="off"
-        defaultValue={defaults.beløp ?? ""}
-        error={beløpFeil}
-      />
-
-      <Button
-        type="button"
-        variant="tertiary"
-        size="small"
-        icon={<TrashIcon aria-hidden />}
-        onClick={onFjern}
-        disabled={!kanFjernes}
-        title={kanFjernes ? "Fjern rad" : "Det må være minst én rad"}
-        className="mb-2"
-      >
-        <span className="sr-only">Fjern rad {indeks + 1}</span>
-      </Button>
-    </HStack>
   );
 }
 
