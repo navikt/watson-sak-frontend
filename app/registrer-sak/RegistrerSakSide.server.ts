@@ -19,14 +19,6 @@ import {
   type OpprettSakSkjema,
 } from "./validering";
 
-function byggYtelser(ytelser: OpprettSakSkjema["ytelser"], fraDato: string, tilDato: string) {
-  return ytelser.map((ytelse) => ({
-    type: ytelse,
-    periodeFra: fraDato,
-    periodeTil: tilDato,
-  }));
-}
-
 export function byggOpprettKontrollsakPayload({
   skjema,
   personNavn,
@@ -44,11 +36,13 @@ export function byggOpprettKontrollsakPayload({
     kategori: skjema.kategori,
     kilde: skjema.kilde,
     prioritet: "NORMAL",
-    misbruktype: skjema.misbruktype ? [skjema.misbruktype] : [],
-    merking: skjema.merking,
-    ytelser: byggYtelser(skjema.ytelser, skjema.fraDato, skjema.tilDato).map((ytelse) => ({
-      ...ytelse,
-      belop: skjema.caBeløp,
+    misbruktype: skjema.misbruktype,
+    merking: skjema.merking[0],
+    ytelser: skjema.ytelser.map((rad) => ({
+      type: rad.type ?? "",
+      periodeFra: rad.fraDato ?? "",
+      periodeTil: rad.tilDato ?? "",
+      belop: rad.beløp,
     })),
   };
 }
@@ -64,22 +58,37 @@ export function loader() {
   };
 }
 
+function parseYtelseRader(formData: FormData) {
+  const indekser = new Set<number>();
+  for (const nøkkel of formData.keys()) {
+    const treff = nøkkel.match(/^ytelser\[(\d+)\]\.(?:type|fraDato|tilDato|beløp)$/);
+    if (treff) {
+      indekser.add(Number(treff[1]));
+    }
+  }
+
+  return Array.from(indekser)
+    .sort((a, b) => a - b)
+    .map((i) => ({
+      type: (formData.get(`ytelser[${i}].type`) as string | null) || undefined,
+      fraDato: (formData.get(`ytelser[${i}].fraDato`) as string | null) || undefined,
+      tilDato: (formData.get(`ytelser[${i}].tilDato`) as string | null) || undefined,
+      beløp: (formData.get(`ytelser[${i}].beløp`) as string | null) || undefined,
+    }));
+}
+
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
 
   const rådata = {
     personIdent: formData.get("personIdent"),
-    personNavn: formData.get("personNavn"),
-    ytelser: formData.getAll("ytelser"),
-    fraDato: formData.get("fraDato") || undefined,
-    tilDato: formData.get("tilDato") || undefined,
     kategori: formData.get("kategori"),
-    misbruktype: formData.get("misbruktype") || undefined,
-    merking: formData.get("merking") || undefined,
     kilde: formData.get("kilde"),
-    enhet: formData.get("enhet"),
-    caBeløp: formData.get("caBeløp") || undefined,
+    misbruktype: formData.getAll("misbruktype").filter((v) => typeof v === "string" && v !== ""),
+    merking: formData.getAll("merking").filter((v) => typeof v === "string" && v !== ""),
+    enhet: formData.get("enhet") || undefined,
     organisasjonsnummer: formData.get("organisasjonsnummer") || undefined,
+    ytelser: parseYtelseRader(formData),
   };
 
   const resultat = opprettSakSchema.safeParse(rådata);

@@ -126,32 +126,81 @@ function medFellesSaksregler<T extends z.ZodType<SaksreglerShape>>(schema: T) {
     });
 }
 
-export const opprettSakSchema = medFellesSaksregler(
-  z.object({
+function lagValgfrittDatofelt() {
+  return z
+    .string()
+    .optional()
+    .transform((dato) => (dato ? normaliserDato(dato) : undefined))
+    .refine((dato) => dato === undefined || erGyldigIsoDato(dato), "Ugyldig dato")
+    .refine(
+      (dato) => dato === undefined || dato <= dagensDato(),
+      "Datoen kan ikke være frem i tid",
+    );
+}
+
+const valgfrittBeløpSchema = z.preprocess((verdi) => {
+  if (verdi === "" || verdi === null || verdi === undefined) return undefined;
+  const tall = Number(verdi);
+  return Number.isFinite(tall) ? tall : verdi;
+}, z.number({ message: "Ca beløp må være et gyldig tall" }).positive("Ca beløp må være et positivt tall").optional());
+
+const ytelseRadSchema = z
+  .object({
+    type: z
+      .string()
+      .optional()
+      .transform((verdi) => (verdi && verdi.trim() !== "" ? verdi : undefined)),
+    fraDato: lagValgfrittDatofelt(),
+    tilDato: lagValgfrittDatofelt(),
+    beløp: valgfrittBeløpSchema,
+  })
+  .refine(({ fraDato, tilDato }) => !fraDato || !tilDato || fraDato <= tilDato, {
+    message: "Til dato må være lik eller etter fra dato",
+    path: ["tilDato"],
+  });
+
+function erUtfyltYtelseRad(rad: {
+  type?: string;
+  fraDato?: string;
+  tilDato?: string;
+  beløp?: number;
+}) {
+  return Boolean(rad.type ?? rad.fraDato ?? rad.tilDato ?? rad.beløp !== undefined);
+}
+
+export const opprettSakSchema = z
+  .object({
     personIdent: z
       .string()
       .min(1, "Fødselsnummer er påkrevd")
       .regex(/^\d{11}$/, "Fødselsnummer må bestå av 11 siffer"),
-    ytelser: z.array(z.string().min(1)).min(1, "Velg minst én ytelse"),
-    fraDato: lagPåkrevdDatofelt("Fra dato"),
-    tilDato: lagPåkrevdDatofelt("Til dato"),
     kategori: z.enum(kategoriAlternativer, { message: "Velg kategori" }),
-    misbruktype: misbrukstypeSchema.optional(),
-    merking: z.enum(merkingAlternativer).optional(),
     kilde: z.enum(kildeAlternativer, { message: "Velg kilde" }),
-    enhet: z.enum(enhetAlternativer, { message: "Velg enhet" }),
-    caBeløp: z.preprocess((verdi) => {
-      if (verdi === "" || verdi === null || verdi === undefined) return undefined;
-      const tall = Number(verdi);
-      return Number.isFinite(tall) ? tall : verdi;
-    }, z.number({ message: "Ca beløp må være et gyldig tall" }).positive("Ca beløp må være et positivt tall").optional()),
+    misbruktype: z.array(misbrukstypeSchema).optional().default([]),
+    merking: z.array(z.enum(merkingAlternativer)).optional().default([]),
+    enhet: z.enum(enhetAlternativer).optional(),
     organisasjonsnummer: z
       .string()
       .regex(/^\d{9}$/, "Organisasjonsnummer må bestå av 9 siffer")
       .optional()
       .or(z.literal("")),
-  }),
-);
+    ytelser: z.array(ytelseRadSchema).optional().default([]),
+  })
+  .transform((data) => ({
+    ...data,
+    ytelser: data.ytelser.filter(erUtfyltYtelseRad),
+  }))
+  .refine(
+    ({ kategori, misbruktype }) => {
+      const gyldige = misbrukstyperPerKategori[kategori as keyof typeof misbrukstyperPerKategori];
+      if (!gyldige || misbruktype.length === 0) return true;
+      return misbruktype.every((type) => gyldige.includes(type as (typeof gyldige)[number]));
+    },
+    {
+      message: "En eller flere misbruktyper passer ikke for valgt kategori",
+      path: ["misbruktype"],
+    },
+  );
 
 export const redigerSaksinformasjonSchema = medFellesSaksregler(
   z.object({

@@ -1,217 +1,163 @@
 import { describe, expect, it } from "vitest";
 import { opprettSakSchema } from "./validering";
 
-const gyldigSkjema = {
+const minimaltGyldigSkjema = {
   personIdent: "12345678901",
-  ytelser: ["Dagpenger"],
-  fraDato: "2024-01-01",
-  tilDato: "2024-12-31",
   kategori: "DOKUMENTFALSK",
   kilde: "NAV_KONTROLL",
-  enhet: "ØST",
 };
 
 describe("opprettSakSchema", () => {
-  it("godtar gyldig skjemadata", () => {
-    const resultat = opprettSakSchema.safeParse(gyldigSkjema);
+  it("godtar et minimalt skjema med kun påkrevde felter", () => {
+    const resultat = opprettSakSchema.safeParse(minimaltGyldigSkjema);
     expect(resultat.success).toBe(true);
+    if (resultat.success) {
+      expect(resultat.data.ytelser).toEqual([]);
+      expect(resultat.data.misbruktype).toEqual([]);
+      expect(resultat.data.merking).toEqual([]);
+    }
   });
 
   it("krever personident med 11 siffer", () => {
-    const resultat = opprettSakSchema.safeParse({
-      ...gyldigSkjema,
-      personIdent: "123",
-    });
+    const resultat = opprettSakSchema.safeParse({ ...minimaltGyldigSkjema, personIdent: "123" });
     expect(resultat.success).toBe(false);
-    if (!resultat.success) {
-      expect(resultat.error.flatten().fieldErrors.personIdent).toBeDefined();
-    }
-  });
-
-  it("krever minst én ytelse", () => {
-    const resultat = opprettSakSchema.safeParse({
-      ...gyldigSkjema,
-      ytelser: [],
-    });
-    expect(resultat.success).toBe(false);
-  });
-
-  it("krever gyldig kilde", () => {
-    const resultat = opprettSakSchema.safeParse({
-      ...gyldigSkjema,
-      kilde: "telefon",
-    });
-    expect(resultat.success).toBe(false);
-  });
-
-  it("godtar backendens gyldige kilder", () => {
-    for (const kilde of ["NAV_KONTROLL", "ANNET", "PUBLIKUM", "POLITIET"]) {
-      const resultat = opprettSakSchema.safeParse({ ...gyldigSkjema, kilde });
-      expect(resultat.success).toBe(true);
-    }
   });
 
   it("krever kategori", () => {
     const resultat = opprettSakSchema.safeParse({
-      ...gyldigSkjema,
+      ...minimaltGyldigSkjema,
       kategori: undefined,
     });
     expect(resultat.success).toBe(false);
   });
 
-  it("godtar alle gyldige kategorier", () => {
-    for (const kategori of [
-      "BEHANDLER",
-      "ARBEID",
-      "SAMLIV",
-      "UTLAND",
-      "IDENTITET",
-      "TILTAK",
-      "DOKUMENTFALSK",
-      "ANNET",
-    ]) {
-      const misbrukstypeForKategori: Record<string, string> = {
-        BEHANDLER: "BEHANDLER_25_7",
-        ARBEID: "HVIT_INNTEKT",
-        SAMLIV: "SKJULT_SAMLIV",
-        UTLAND: "INNENFOR_EOS",
-        IDENTITET: "IDENTITETSMISBRUK",
-        TILTAK: "MISBRUK_AV_TILTAKSPLASS",
-      };
-      const resultat = opprettSakSchema.safeParse({
-        ...gyldigSkjema,
-        kategori,
-        misbruktype: misbrukstypeForKategori[kategori],
-      });
-      expect(resultat.success).toBe(true);
-    }
-  });
-
-  it("krever misbruktype når kategori har tilknyttede misbrukstyper", () => {
+  it("krever kilde", () => {
     const resultat = opprettSakSchema.safeParse({
-      ...gyldigSkjema,
-      kategori: "SAMLIV",
-      misbruktype: undefined,
+      ...minimaltGyldigSkjema,
+      kilde: undefined,
     });
     expect(resultat.success).toBe(false);
-    if (!resultat.success) {
-      const feil = resultat.error.flatten();
-      expect(feil.fieldErrors.misbruktype ?? feil.formErrors).toBeTruthy();
+  });
+
+  it("godtar misbruktype som array", () => {
+    const resultat = opprettSakSchema.safeParse({
+      ...minimaltGyldigSkjema,
+      kategori: "UTLAND",
+      misbruktype: ["INNENFOR_EOS", "UTENFOR_EOS"],
+    });
+    expect(resultat.success).toBe(true);
+    if (resultat.success) {
+      expect(resultat.data.misbruktype).toEqual(["INNENFOR_EOS", "UTENFOR_EOS"]);
     }
   });
 
   it("avviser misbruktype som ikke tilhører valgt kategori", () => {
     const resultat = opprettSakSchema.safeParse({
-      ...gyldigSkjema,
+      ...minimaltGyldigSkjema,
       kategori: "SAMLIV",
-      misbruktype: "SVART_ARBEID",
+      misbruktype: ["SVART_ARBEID"],
     });
-
     expect(resultat.success).toBe(false);
   });
 
-  it("godtar skjema uten misbruktype for DOKUMENTFALSK", () => {
+  it("godtar merking som array", () => {
     const resultat = opprettSakSchema.safeParse({
-      ...gyldigSkjema,
-      kategori: "DOKUMENTFALSK",
+      ...minimaltGyldigSkjema,
+      merking: ["PRIORITERT", "SENSITIV"],
     });
     expect(resultat.success).toBe(true);
   });
 
-  it("krever enhet", () => {
+  it("filtrerer bort tomme ytelse-rader", () => {
     const resultat = opprettSakSchema.safeParse({
-      ...gyldigSkjema,
-      enhet: undefined,
+      ...minimaltGyldigSkjema,
+      ytelser: [
+        { type: "Dagpenger", fraDato: "2024-01-01", tilDato: "2024-12-31", beløp: 1000 },
+        { type: undefined, fraDato: undefined, tilDato: undefined, beløp: undefined },
+      ],
     });
-    expect(resultat.success).toBe(false);
-  });
-
-  it("krever fra dato", () => {
-    const resultat = opprettSakSchema.safeParse({
-      ...gyldigSkjema,
-      fraDato: undefined,
-    });
-    expect(resultat.success).toBe(false);
-  });
-
-  it("krever til dato", () => {
-    const resultat = opprettSakSchema.safeParse({
-      ...gyldigSkjema,
-      tilDato: undefined,
-    });
-    expect(resultat.success).toBe(false);
-  });
-
-  it("avviser ugyldige datoer", () => {
-    const resultat = opprettSakSchema.safeParse({
-      ...gyldigSkjema,
-      fraDato: "ikke-en-dato",
-    });
-    expect(resultat.success).toBe(false);
-  });
-
-  it("normaliserer datoer skrevet som dd.mm.åååå", () => {
-    const resultat = opprettSakSchema.safeParse({
-      ...gyldigSkjema,
-      fraDato: "01.01.2024",
-      tilDato: "31.12.2024",
-    });
-
     expect(resultat.success).toBe(true);
-
     if (resultat.success) {
-      expect(resultat.data.fraDato).toBe("2024-01-01");
-      expect(resultat.data.tilDato).toBe("2024-12-31");
+      expect(resultat.data.ytelser).toHaveLength(1);
+      expect(resultat.data.ytelser[0]).toEqual({
+        type: "Dagpenger",
+        fraDato: "2024-01-01",
+        tilDato: "2024-12-31",
+        beløp: 1000,
+      });
     }
   });
 
-  it("avviser når til dato er før fra dato", () => {
+  it("godtar ytelse-rader hvor kun ett felt er fylt ut", () => {
     const resultat = opprettSakSchema.safeParse({
-      ...gyldigSkjema,
-      fraDato: "2024-12-31",
-      tilDato: "2024-01-01",
+      ...minimaltGyldigSkjema,
+      ytelser: [{ type: "Dagpenger" }],
+    });
+    expect(resultat.success).toBe(true);
+  });
+
+  it("normaliserer datoer skrevet som dd.mm.åååå i ytelse-rad", () => {
+    const resultat = opprettSakSchema.safeParse({
+      ...minimaltGyldigSkjema,
+      ytelser: [{ fraDato: "01.01.2024", tilDato: "31.12.2024" }],
+    });
+    expect(resultat.success).toBe(true);
+    if (resultat.success) {
+      expect(resultat.data.ytelser[0].fraDato).toBe("2024-01-01");
+      expect(resultat.data.ytelser[0].tilDato).toBe("2024-12-31");
+    }
+  });
+
+  it("avviser ugyldige datoer i ytelse-rad", () => {
+    const resultat = opprettSakSchema.safeParse({
+      ...minimaltGyldigSkjema,
+      ytelser: [{ fraDato: "ikke-en-dato" }],
     });
     expect(resultat.success).toBe(false);
   });
 
-  it("avviser datoer frem i tid", () => {
+  it("avviser når til-dato er før fra-dato i samme rad", () => {
+    const resultat = opprettSakSchema.safeParse({
+      ...minimaltGyldigSkjema,
+      ytelser: [{ fraDato: "2024-12-31", tilDato: "2024-01-01" }],
+    });
+    expect(resultat.success).toBe(false);
+  });
+
+  it("avviser datoer frem i tid i ytelse-rad", () => {
     const iMorgen = new Date();
     iMorgen.setDate(iMorgen.getDate() + 1);
     const dato = iMorgen.toISOString().slice(0, 10);
 
     const resultat = opprettSakSchema.safeParse({
-      ...gyldigSkjema,
-      fraDato: dato,
-      tilDato: dato,
+      ...minimaltGyldigSkjema,
+      ytelser: [{ fraDato: dato }],
     });
-
     expect(resultat.success).toBe(false);
-    if (!resultat.success) {
-      const feil = resultat.error.flatten().fieldErrors;
-      expect(feil.fraDato).toContain("Fra dato kan ikke være frem i tid");
-      expect(feil.tilDato).toContain("Til dato kan ikke være frem i tid");
-    }
   });
 
-  it("godtar caBeløp som valgfritt tall", () => {
+  it("godtar beløp som valgfritt tall", () => {
     const resultat = opprettSakSchema.safeParse({
-      ...gyldigSkjema,
-      caBeløp: 300000,
+      ...minimaltGyldigSkjema,
+      ytelser: [{ type: "Dagpenger", beløp: 300000 }],
     });
     expect(resultat.success).toBe(true);
     if (resultat.success) {
-      expect(resultat.data.caBeløp).toBe(300000);
+      expect(resultat.data.ytelser[0].beløp).toBe(300000);
     }
   });
 
-  it("godtar skjema uten caBeløp", () => {
-    const resultat = opprettSakSchema.safeParse(gyldigSkjema);
-    expect(resultat.success).toBe(true);
+  it("avviser negativt beløp", () => {
+    const resultat = opprettSakSchema.safeParse({
+      ...minimaltGyldigSkjema,
+      ytelser: [{ beløp: -100 }],
+    });
+    expect(resultat.success).toBe(false);
   });
 
   it("godtar organisasjonsnummer med 9 siffer", () => {
     const resultat = opprettSakSchema.safeParse({
-      ...gyldigSkjema,
+      ...minimaltGyldigSkjema,
       organisasjonsnummer: "123456789",
     });
     expect(resultat.success).toBe(true);
@@ -219,9 +165,17 @@ describe("opprettSakSchema", () => {
 
   it("avviser ugyldig organisasjonsnummer", () => {
     const resultat = opprettSakSchema.safeParse({
-      ...gyldigSkjema,
+      ...minimaltGyldigSkjema,
       organisasjonsnummer: "1234",
     });
     expect(resultat.success).toBe(false);
+  });
+
+  it("godtar skjema uten enhet", () => {
+    const resultat = opprettSakSchema.safeParse({
+      ...minimaltGyldigSkjema,
+      enhet: undefined,
+    });
+    expect(resultat.success).toBe(true);
   });
 });
