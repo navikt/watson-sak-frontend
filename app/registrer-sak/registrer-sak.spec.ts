@@ -76,6 +76,9 @@ test.describe("Opprett sak", () => {
 
     await page.getByRole("button", { name: "Legg til ytelse" }).click();
     await expect(page.getByLabel("Ytelse")).toHaveCount(2);
+
+    await page.getByRole("button", { name: "Fjern rad 2" }).click();
+    await expect(page.getByLabel("Ytelse")).toHaveCount(1);
   });
 
   test("Avbryt-knappen lenker til landingssiden", async ({ page }) => {

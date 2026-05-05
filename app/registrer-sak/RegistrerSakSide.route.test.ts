@@ -175,6 +175,7 @@ describe("OpprettSakSide action", () => {
     formData.append("misbruktype", "INNENFOR_EOS");
     formData.append("misbruktype", "UTENFOR_EOS");
     formData.append("merking", "PRIORITERT");
+    formData.append("merking", "SENSITIV");
 
     await action({
       request: new Request("http://localhost/registrer-sak", {

@@ -24,11 +24,7 @@ import {
   merkingEtiketter,
   merkingAlternativer as alleMerkinger,
 } from "~/registrer-sak/validering";
-import {
-  kontrollsakKategoriEtiketter,
-  kontrollsakMisbrukstypeEtiketter,
-  kontrollsakMisbrukstypeVerdier,
-} from "~/saker/kategorier";
+import { kontrollsakKategoriEtiketter, kontrollsakMisbrukstypeEtiketter } from "~/saker/kategorier";
 import type { PersonOppslagResultat } from "./person-oppslag.mock.server";
 import { action, loader, type SkjemaVerdier } from "./RegistrerSakSide.server";
 import type { YtelseRadVerdier } from "./skjema-helpers";
@@ -101,11 +97,9 @@ export default function OpprettSakSide() {
   const sisteSak = useMemo(() => velgSisteSak(åpneSaker), [åpneSaker]);
 
   const tilgjengeligeMisbruktyper = useMemo(() => {
-    if (!valgtKategori) return kontrollsakMisbrukstypeVerdier;
+    if (!valgtKategori) return [];
     const filtrert = (misbrukstypePerKategori as Record<string, string[]>)[valgtKategori];
-    return filtrert && filtrert.length > 0
-      ? (filtrert as readonly string[])
-      : kontrollsakMisbrukstypeVerdier;
+    return filtrert && filtrert.length > 0 ? (filtrert as readonly string[]) : [];
   }, [valgtKategori, misbrukstypePerKategori]);
 
   const feilElementer = samleFeilElementer(feil);
@@ -276,14 +270,15 @@ export default function OpprettSakSide() {
                       value={valgtKategori}
                       onChange={(e) => {
                         setValgtKategori(e.target.value);
-                        // Nullstill misbruktyper hvis de ikke lenger passer
                         const nyligeGyldige = (misbrukstypePerKategori as Record<string, string[]>)[
                           e.target.value
                         ];
-                        if (nyligeGyldige) {
+                        if (nyligeGyldige && nyligeGyldige.length > 0) {
                           setValgteMisbruktyper((prev) =>
                             prev.filter((m) => nyligeGyldige.includes(m)),
                           );
+                        } else {
+                          setValgteMisbruktyper([]);
                         }
                       }}
                     >
@@ -327,38 +322,40 @@ export default function OpprettSakSide() {
 
                   {/* Rad 2: Misbruktype, Merking, Enhet */}
                   <HStack gap="space-24" align="start" wrap>
-                    <div id={ankerIdForFelt("misbruktype")} className="w-72">
-                      <UNSAFE_Combobox
-                        label="Misbruktype (valgfritt)"
-                        options={tilgjengeligeMisbruktyper.map((verdi) => ({
-                          value: verdi,
-                          label:
-                            kontrollsakMisbrukstypeEtiketter[
-                              verdi as keyof typeof kontrollsakMisbrukstypeEtiketter
-                            ] ?? verdi,
-                        }))}
-                        isMultiSelect
-                        selectedOptions={valgteMisbruktyper.map((verdi) => ({
-                          value: verdi,
-                          label:
-                            kontrollsakMisbrukstypeEtiketter[
-                              verdi as keyof typeof kontrollsakMisbrukstypeEtiketter
-                            ] ?? verdi,
-                        }))}
-                        onToggleSelected={(option, isSelected) => {
-                          setValgteMisbruktyper((prev) => {
-                            if (isSelected) {
-                              return prev.includes(option) ? prev : [...prev, option];
-                            }
-                            return prev.filter((m) => m !== option);
-                          });
-                        }}
-                        error={førsteFeilForFelt(feil, "misbruktype")}
-                      />
-                      {valgteMisbruktyper.map((m) => (
-                        <input key={m} type="hidden" name="misbruktype" value={m} />
-                      ))}
-                    </div>
+                    {tilgjengeligeMisbruktyper.length > 0 && (
+                      <div id={ankerIdForFelt("misbruktype")} className="w-72">
+                        <UNSAFE_Combobox
+                          label="Misbruktype (valgfritt)"
+                          options={tilgjengeligeMisbruktyper.map((verdi) => ({
+                            value: verdi,
+                            label:
+                              kontrollsakMisbrukstypeEtiketter[
+                                verdi as keyof typeof kontrollsakMisbrukstypeEtiketter
+                              ] ?? verdi,
+                          }))}
+                          isMultiSelect
+                          selectedOptions={valgteMisbruktyper.map((verdi) => ({
+                            value: verdi,
+                            label:
+                              kontrollsakMisbrukstypeEtiketter[
+                                verdi as keyof typeof kontrollsakMisbrukstypeEtiketter
+                              ] ?? verdi,
+                          }))}
+                          onToggleSelected={(option, isSelected) => {
+                            setValgteMisbruktyper((prev) => {
+                              if (isSelected) {
+                                return prev.includes(option) ? prev : [...prev, option];
+                              }
+                              return prev.filter((m) => m !== option);
+                            });
+                          }}
+                          error={førsteFeilForFelt(feil, "misbruktype")}
+                        />
+                        {valgteMisbruktyper.map((m) => (
+                          <input key={m} type="hidden" name="misbruktype" value={m} />
+                        ))}
+                      </div>
+                    )}
 
                     <div id={ankerIdForFelt("merking")} className="w-72">
                       <UNSAFE_Combobox

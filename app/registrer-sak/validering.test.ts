@@ -60,6 +60,24 @@ describe("opprettSakSchema", () => {
     expect(resultat.success).toBe(false);
   });
 
+  it("avviser misbruktype når kategorien ikke har egne misbrukstyper", () => {
+    const resultat = opprettSakSchema.safeParse({
+      ...minimaltGyldigSkjema,
+      kategori: "DOKUMENTFALSK",
+      misbruktype: ["SVART_ARBEID"],
+    });
+    expect(resultat.success).toBe(false);
+  });
+
+  it("godtar tom misbruktype-liste når kategorien ikke har egne misbrukstyper", () => {
+    const resultat = opprettSakSchema.safeParse({
+      ...minimaltGyldigSkjema,
+      kategori: "DOKUMENTFALSK",
+      misbruktype: [],
+    });
+    expect(resultat.success).toBe(true);
+  });
+
   it("godtar merking som array", () => {
     const resultat = opprettSakSchema.safeParse({
       ...minimaltGyldigSkjema,

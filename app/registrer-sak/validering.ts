@@ -135,8 +135,9 @@ export const opprettSakSchema = z
   }))
   .refine(
     ({ kategori, misbruktype }) => {
+      if (misbruktype.length === 0) return true;
       const gyldige = misbrukstyperPerKategori[kategori as keyof typeof misbrukstyperPerKategori];
-      if (!gyldige || misbruktype.length === 0) return true;
+      if (!gyldige || gyldige.length === 0) return false;
       return misbruktype.every((type) => gyldige.includes(type as (typeof gyldige)[number]));
     },
     {
@@ -159,8 +160,9 @@ export const redigerSaksinformasjonSchema = z
   }))
   .refine(
     ({ kategori, misbruktype }) => {
+      if (misbruktype.length === 0) return true;
       const gyldige = misbrukstyperPerKategori[kategori as keyof typeof misbrukstyperPerKategori];
-      if (!gyldige || misbruktype.length === 0) return true;
+      if (!gyldige || gyldige.length === 0) return false;
       return misbruktype.every((type) => gyldige.includes(type as (typeof gyldige)[number]));
     },
     {
