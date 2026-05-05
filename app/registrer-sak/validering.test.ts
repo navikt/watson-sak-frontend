@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { opprettSakSchema } from "./validering";
+import { opprettSakSchema, redigerSaksinformasjonSchema } from "./validering";
 
 const minimaltGyldigSkjema = {
   personIdent: "12345678901",
@@ -84,6 +84,29 @@ describe("opprettSakSchema", () => {
       merking: ["PRIORITERT", "SENSITIV"],
     });
     expect(resultat.success).toBe(true);
+  });
+
+  it("godtar egendefinert merking", () => {
+    const resultat = opprettSakSchema.safeParse({
+      ...minimaltGyldigSkjema,
+      merking: ["Egen merking"],
+    });
+    expect(resultat.success).toBe(true);
+    if (resultat.success) {
+      expect(resultat.data.merking).toEqual(["Egen merking"]);
+    }
+  });
+
+  it("godtar egendefinert merking ved redigering av saksinformasjon", () => {
+    const resultat = redigerSaksinformasjonSchema.safeParse({
+      kategori: "DOKUMENTFALSK",
+      kilde: "NAV_KONTROLL",
+      merking: ["Egen merking"],
+    });
+    expect(resultat.success).toBe(true);
+    if (resultat.success) {
+      expect(resultat.data.merking).toEqual(["Egen merking"]);
+    }
   });
 
   it("filtrerer bort tomme ytelse-rader", () => {

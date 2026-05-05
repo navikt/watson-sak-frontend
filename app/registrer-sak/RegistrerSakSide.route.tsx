@@ -365,6 +365,7 @@ export default function OpprettSakSide() {
                           label: merkingEtiketter[verdi] ?? verdi,
                         }))}
                         isMultiSelect
+                        allowNewValues
                         selectedOptions={valgteMerkinger.map((verdi) => ({
                           value: verdi,
                           label: merkingEtiketter[verdi as keyof typeof merkingEtiketter] ?? verdi,
