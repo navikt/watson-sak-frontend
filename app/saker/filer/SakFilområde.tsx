@@ -1,8 +1,47 @@
-import { FileIcon, FolderPlusIcon, UploadIcon } from "@navikt/aksel-icons";
-import { BodyShort, Button, Heading, HStack, VStack } from "@navikt/ds-react";
+import {
+  FileExcelIcon,
+  FileIcon,
+  FileWordIcon,
+  FolderPlusIcon,
+  PresentationIcon,
+  UploadIcon,
+} from "@navikt/aksel-icons";
+import { ActionMenu, BodyShort, Button, Heading, HStack, VStack } from "@navikt/ds-react";
 import { Kort } from "~/komponenter/Kort";
 import { FilTre } from "./FilTre";
 import type { FilNode } from "./typer";
+
+function OpprettFilMeny({
+  size,
+  variant = "secondary",
+}: {
+  size: "small" | "xsmall";
+  variant?: "secondary" | "tertiary";
+}) {
+  return (
+    <ActionMenu>
+      <ActionMenu.Trigger>
+        <Button size={size} variant={variant} icon={<FileIcon aria-hidden />}>
+          Opprett fil
+        </Button>
+      </ActionMenu.Trigger>
+
+      <ActionMenu.Content>
+        <ActionMenu.Group label="Velg filtype">
+          <ActionMenu.Item icon={<FileWordIcon aria-hidden />} onClick={() => {}}>
+            Word-fil
+          </ActionMenu.Item>
+          <ActionMenu.Item icon={<FileExcelIcon aria-hidden />} onClick={() => {}}>
+            Excel-fil
+          </ActionMenu.Item>
+          <ActionMenu.Item icon={<PresentationIcon aria-hidden />} onClick={() => {}}>
+            PowerPoint-fil
+          </ActionMenu.Item>
+        </ActionMenu.Group>
+      </ActionMenu.Content>
+    </ActionMenu>
+  );
+}
 
 function TomtFilområde({ redigerbar }: { redigerbar: boolean }) {
   return (
@@ -12,7 +51,7 @@ function TomtFilområde({ redigerbar }: { redigerbar: boolean }) {
         <BodyShort weight="semibold">Ingen filer ennå</BodyShort>
         {redigerbar && (
           <BodyShort size="small" className="text-ax-text-neutral-subtle">
-            Last opp filer eller opprett en mappe for å komme i gang.
+            Last opp filer, opprett en fil eller opprett en mappe for å komme i gang.
           </BodyShort>
         )}
       </VStack>
@@ -21,6 +60,7 @@ function TomtFilområde({ redigerbar }: { redigerbar: boolean }) {
           <Button size="small" icon={<UploadIcon aria-hidden />} onClick={() => {}}>
             Last opp fil
           </Button>
+          <OpprettFilMeny size="small" />
           <Button
             size="small"
             variant="secondary"
@@ -60,6 +100,7 @@ export function SakFilområde({ filer, redigerbar = true }: SakFilområdeProps) 
             >
               Last opp fil
             </Button>
+            <OpprettFilMeny size="xsmall" variant="tertiary" />
             <Button
               size="xsmall"
               variant="tertiary"
