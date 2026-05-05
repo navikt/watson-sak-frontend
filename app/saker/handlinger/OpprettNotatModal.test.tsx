@@ -79,7 +79,7 @@ describe("OpprettNotatModal", () => {
     fireEvent.click(screen.getByLabelText("Knytt til oppgave"));
 
     const oppgavetypeSelect = screen.getByLabelText("Oppgavetype");
-    fireEvent.change(oppgavetypeSelect, { target: { value: "kontroll" } });
+    fireEvent.change(oppgavetypeSelect, { target: { value: "vurder_dokument" } });
 
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
 
@@ -88,7 +88,7 @@ describe("OpprettNotatModal", () => {
         handling: "send_notat",
         notat: "Notat med oppgave",
         knyttTilOppgave: "true",
-        oppgavetype: "Kontroll",
+        oppgavetype: "Vurder dokument",
       }),
       expect.objectContaining({ method: "post" }),
     );

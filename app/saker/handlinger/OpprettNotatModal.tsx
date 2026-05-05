@@ -24,15 +24,15 @@ interface OpprettNotatModalProps {
 }
 
 const malValg = [
-  { verdi: "standard", label: "Standard notat" },
-  { verdi: "oppfolging", label: "Oppfølgingsnotat" },
-  { verdi: "avklaring", label: "Avklaringsnotat" },
+  { verdi: "personbruker", label: "Notat personbruker" },
+  { verdi: "kontoopplysninger", label: "Vurdering ved innhenting av kontoopplysninger" },
+  { verdi: "barnaseste", label: "Vurdering av barnas beste" },
 ];
 
 const oppgavetypeValg = [
-  { verdi: "kontroll", label: "Kontroll" },
-  { verdi: "oppfolging", label: "Oppfølging" },
-  { verdi: "avklaring", label: "Avklaring" },
+  { verdi: "vurder_dokument", label: "Vurder dokument" },
+  { verdi: "vurder_henvendelse", label: "Vurder henvendelse" },
+  { verdi: "vurder_konsekvens", label: "Vurder konsekvens for ytelse" },
 ];
 
 const behandlendeEnhetValg = [

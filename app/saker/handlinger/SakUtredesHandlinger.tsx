@@ -46,7 +46,7 @@ export function SakUtredesHandlinger({ sak }: SakUtredesHandlingerProps) {
           icon={<DocPencilIcon aria-hidden />}
           onClick={() => setÅpenModal("send-notat")}
         >
-          Send notat
+          Opprett notat
         </Button>
       </VStack>
 
