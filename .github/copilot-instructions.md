@@ -13,6 +13,8 @@ Watson Sak er en React Router v7-applikasjon (framework mode, SSR) for å admini
 - `npm run typecheck` – React Router typegen + tsc
 - `npm run lint` / `npm run format` – kodekvalitet (Oxlint og Oxfmt)
 
+Når du kjører `npm run verify`, ikke pipe output til `tail` eller andre kommandoer som kan skjule feil fra parallelle deljobber. Hvis output er for stor, les den lagrede outputfilen og sjekk exit-kode/oppsummering for alle deljobber separat: `test`, `lint`, `format`, `typecheck` og `unused`. Ikke rapporter at verify er grønn før alle deljobber har `exited with code 0`.
+
 ## Arkitektur
 
 ### Feature-basert struktur
