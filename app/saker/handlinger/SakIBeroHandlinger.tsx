@@ -49,7 +49,7 @@ export function SakIBeroHandlinger({ sak }: SakIBeroHandlingerProps) {
           icon={<DocPencilIcon aria-hidden />}
           onClick={() => setNotatModalÅpen(true)}
         >
-          Send notat
+          Opprett notat
         </Button>
       </VStack>
 

@@ -130,6 +130,33 @@ describe("SakDetaljSide action", () => {
     expect(historikk[0]?.berortSaksbehandlerNavIdent).toBe("Z123456");
   });
 
+  it("inkluderer valgt mal når notat logges i historikk", async () => {
+    const kontrollsak = mockKontrollsaker[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+
+    const formData = new FormData();
+    formData.set("handling", "send_notat");
+    formData.set("notat", "Vurderingen er dokumentert.");
+    formData.set("mal", "barnas_beste");
+    formData.set("knyttTilOppgave", "false");
+
+    await action({
+      request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: kontrollsakRef },
+    } as Route.ActionArgs);
+
+    const historikk = hentHistorikk(kontrollsak.id);
+    expect(historikk[0]).toEqual(
+      expect.objectContaining({
+        hendelsesType: "NOTAT_SENDT",
+        beskrivelse: "Vurderingen er dokumentert.\nMal: Vurdering av barnas beste",
+      }),
+    );
+  });
+
   it("returnerer lokal feilmelding når koble sak ikke er tilgjengelig ennå", async () => {
     const formData = new FormData();
     formData.set("handling", "koble_sak");

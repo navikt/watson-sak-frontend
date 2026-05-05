@@ -9,6 +9,7 @@ import {
   Modal,
   Select,
   Textarea,
+  UNSAFE_Combobox,
   useDatepicker,
   VStack,
 } from "@navikt/ds-react";
@@ -16,6 +17,8 @@ import { useState } from "react";
 import { useFetcher } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
+import { behandlendeEnheter } from "./behandlendeEnheter";
+import { notatMalValg } from "./notatValg";
 
 interface OpprettNotatModalProps {
   sakId: string;
@@ -23,22 +26,10 @@ interface OpprettNotatModalProps {
   onClose: () => void;
 }
 
-const malValg = [
-  { verdi: "standard", label: "Standard notat" },
-  { verdi: "oppfolging", label: "Oppfølgingsnotat" },
-  { verdi: "avklaring", label: "Avklaringsnotat" },
-];
-
 const oppgavetypeValg = [
-  { verdi: "kontroll", label: "Kontroll" },
-  { verdi: "oppfolging", label: "Oppfølging" },
-  { verdi: "avklaring", label: "Avklaring" },
-];
-
-const behandlendeEnhetValg = [
-  { verdi: "nav-kontroll-oslo", label: "NAV Kontroll Oslo" },
-  { verdi: "nav-kontroll-bergen", label: "NAV Kontroll Bergen" },
-  { verdi: "nav-kontroll-trondheim", label: "NAV Kontroll Trondheim" },
+  { verdi: "vurder_dokument", label: "Vurder dokument" },
+  { verdi: "vurder_henvendelse", label: "Vurder henvendelse" },
+  { verdi: "vurder_konsekvens", label: "Vurder konsekvens for ytelse" },
 ];
 
 export function OpprettNotatModal({ sakId, åpen, onClose }: OpprettNotatModalProps) {
@@ -98,6 +89,9 @@ export function OpprettNotatModal({ sakId, åpen, onClose }: OpprettNotatModalPr
   }
 
   const kanLagre = notat.trim().length > 0;
+  const valgtBehandlendeEnhet = behandlendeEnheter.find(
+    (enhet) => enhet.value === behandlendeEnhet,
+  );
 
   return (
     <Modal
@@ -115,7 +109,7 @@ export function OpprettNotatModal({ sakId, åpen, onClose }: OpprettNotatModalPr
 
           <Select label="Mal" value={mal} onChange={(e) => setMal(e.target.value)}>
             <option value="">Velg mal</option>
-            {malValg.map(({ verdi, label }) => (
+            {notatMalValg.map(({ verdi, label }) => (
               <option key={verdi} value={verdi}>
                 {label}
               </option>
@@ -178,18 +172,15 @@ export function OpprettNotatModal({ sakId, åpen, onClose }: OpprettNotatModalPr
                     </DatePicker>
                   </HStack>
 
-                  <Select
+                  <UNSAFE_Combobox
                     label="Behandlende enhet"
-                    value={behandlendeEnhet}
-                    onChange={(e) => setBehandlendeEnhet(e.target.value)}
-                  >
-                    <option value="">Velg enhet</option>
-                    {behandlendeEnhetValg.map(({ verdi, label }) => (
-                      <option key={verdi} value={verdi}>
-                        {label}
-                      </option>
-                    ))}
-                  </Select>
+                    options={behandlendeEnheter}
+                    placeholder="Søk etter enhet"
+                    selectedOptions={valgtBehandlendeEnhet ? [valgtBehandlendeEnhet] : []}
+                    onToggleSelected={(enhetsnummer, isSelected) =>
+                      setBehandlendeEnhet(isSelected ? enhetsnummer : "")
+                    }
+                  />
 
                   <Textarea
                     label="Beskrivelse"
