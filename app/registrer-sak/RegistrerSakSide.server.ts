@@ -19,18 +19,22 @@ import {
   type OpprettSakSkjema,
 } from "./validering";
 
+type OpprettSakSaksbehandler = NonNullable<OpprettKontrollsakRequest["saksbehandlere"]>["eier"];
+
 export function byggOpprettKontrollsakPayload({
   skjema,
   personNavn,
+  eier = null,
 }: {
   skjema: OpprettSakSkjema;
   personNavn: string;
+  eier?: OpprettSakSaksbehandler;
 }): OpprettKontrollsakRequest {
   return {
     personIdent: skjema.personIdent,
     personNavn,
     saksbehandlere: {
-      eier: null,
+      eier,
       deltMed: [],
     },
     kategori: skjema.kategori,
@@ -117,7 +121,7 @@ export async function action({ request }: Route.ActionArgs) {
     return { feil: bygFeilkartFraIssues(resultat.error.issues), verdier };
   }
 
-  await hentInnloggetBruker({ request });
+  const innloggetBruker = await hentInnloggetBruker({ request });
   const data = resultat.data;
   const personOppslag = slaOppPerson(data.personIdent);
   const personNavn = personOppslag?.person.navn;
@@ -131,6 +135,11 @@ export async function action({ request }: Route.ActionArgs) {
     payload: byggOpprettKontrollsakPayload({
       skjema: data,
       personNavn,
+      eier: {
+        navIdent: innloggetBruker.navIdent,
+        navn: innloggetBruker.name,
+        enhet: data.enhet || undefined,
+      },
     }),
   });
 
