@@ -7,8 +7,6 @@ export default [
     route(RouteConfig.INDEX, "landingsside/LandingSide.route.tsx"),
     route(RouteConfig.FORDELING, "fordeling/FordelingSide.route.tsx"),
     route(RouteConfig.SAKER_DETALJ, "saker/SakDetaljSide.route.tsx"),
-    route(RouteConfig.VIDERESEND_SAK, "saker/videresending/VideresendSakSide.route.tsx"),
-    route(RouteConfig.POLITIANMELDELSE, "saker/politianmeldelse/PolitianmeldelseSide.route.tsx"),
     route(RouteConfig.MINE_SAKER, "mine-saker/MineSakerSide.route.tsx"),
     route(RouteConfig.ALLE_SAKER, "alle-saker/AlleSakerSide.route.tsx"),
     route(RouteConfig.REGISTRER_SAK, "registrer-sak/RegistrerSakSide.route.tsx"),
