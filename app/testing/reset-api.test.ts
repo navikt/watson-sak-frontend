@@ -4,7 +4,7 @@ import {
   markerVarselSomLest,
   resetMockVarsler,
 } from "~/varsler/mock-data.server";
-import { resetMockPersonOppslag, slaOppPerson } from "~/registrer-sak/person-oppslag.mock.server";
+import { slaOppPerson } from "~/registrer-sak/person-oppslag.mock.server";
 import { leggTilMockSakIFordeling } from "~/saker/mock-alle-saker.server";
 
 vi.mock("~/config/env.server", () => ({
@@ -16,7 +16,6 @@ import { action } from "./reset-api";
 describe("reset-api", () => {
   beforeEach(() => {
     resetMockVarsler();
-    resetMockPersonOppslag();
   });
 
   it("tilbakestiller varsler som er markert som lest", () => {

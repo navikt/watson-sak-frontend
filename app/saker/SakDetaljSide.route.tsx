@@ -99,7 +99,7 @@ type RedigerSaksinformasjonData = {
 };
 
 type ActionResult =
-  | { ok: true }
+  | { ok: true; sak?: Route.ComponentProps["loaderData"]["sak"] }
   | { ok: false; feil: Feltfeil; verdier?: RedigerSaksinformasjonData };
 const unsupportedKobleSakFeil = "Denne funksjonen er ikke tilgjengelig ennå.";
 
@@ -448,7 +448,7 @@ export async function action({ request, params }: Route.ActionArgs) {
         belop: ytelse.beløp ?? null,
       }));
       leggTilHendelse(sak, "SAKSINFORMASJON_ENDRET");
-      break;
+      return { ok: true, sak } satisfies ActionResult;
     }
     case "koble_sak": {
       return {
@@ -563,8 +563,16 @@ function Felt({ label, children }: { label: string; children: React.ReactNode })
 }
 
 export default function SakDetaljSide() {
-  const { sak, historikk, filer, andreSaker, saksbehandlerDetaljer, seksjoner, ytelser } =
-    useLoaderData<typeof loader>();
+  const {
+    sak: loaderSak,
+    historikk,
+    filer,
+    andreSaker,
+    saksbehandlerDetaljer,
+    seksjoner,
+    ytelser,
+  } = useLoaderData<typeof loader>();
+  const [sak, setSak] = useState(loaderSak);
   const navigate = useNavigate();
   const fetcher = useFetcher<typeof action>();
   const revalidator = useRevalidator();
@@ -604,6 +612,9 @@ export default function SakDetaljSide() {
 
   useEffect(() => {
     if (fetcher.data?.ok) {
+      if (fetcher.data.sak) {
+        setSak(fetcher.data.sak);
+      }
       setVisFeil(false);
       setRedigerer(false);
       void revalidator.revalidate();
@@ -617,6 +628,10 @@ export default function SakDetaljSide() {
       }
     }
   }, [fetcher.data, revalidator]);
+
+  useEffect(() => {
+    setSak(loaderSak);
+  }, [loaderSak]);
 
   useEffect(() => {
     if (blocker.state !== "blocked") {

@@ -18,7 +18,7 @@ type Person = {
 };
 
 type EksisterendeSak = {
-  sakId: string;
+  sakId?: string;
   opprettetDato: string;
   personNavn: string;
   saksbehandler: string;
@@ -29,7 +29,6 @@ type EksisterendeSak = {
 const manuelleEksisterendeSaker: Record<string, EksisterendeSak[]> = {
   "03117845975": [
     {
-      sakId: "105",
       opprettetDato: "2025-10-12",
       personNavn: "Birger Egil Lorumipsum-Olsen",
       saksbehandler: "Lise Raus",
@@ -74,8 +73,6 @@ function hentEksisterendeSaker(personIdent: string): EksisterendeSak[] {
     b.opprettetDato.localeCompare(a.opprettetDato),
   );
 }
-
-export function resetMockPersonOppslag(): void {}
 
 export function slaOppPerson(fnr: string): PersonOppslagResultat | null {
   const personIdent = normaliserPersonIdent(fnr);

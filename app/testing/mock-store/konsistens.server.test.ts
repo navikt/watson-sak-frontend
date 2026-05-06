@@ -45,4 +45,20 @@ describe("mock-store konsistens", () => {
       expect(slaOppPerson(person.personIdent)?.person.navn).toBe(person.navn);
     }
   });
+
+  it("lenker ikke personoppslag til saker på andre personer", () => {
+    for (const person of hentAlleMockPersoner()) {
+      const personOppslag = slaOppPerson(person.personIdent);
+
+      for (const eksisterendeSak of personOppslag?.eksisterendeSaker ?? []) {
+        if (!eksisterendeSak.sakId) {
+          continue;
+        }
+
+        const sak = hentSakMedReferanse(eksisterendeSak.sakId);
+
+        expect(sak?.personIdent).toBe(person.personIdent);
+      }
+    }
+  });
 });

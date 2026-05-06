@@ -211,16 +211,18 @@ export default function OpprettSakSide() {
                         {formaterDato(sisteSak.opprettetDato)} ble det opprettet en sak på{" "}
                         {sisteSak.personNavn}. Kanskje gjelder dette samme sak?
                       </BodyShort>
-                      <HStack gap="space-8">
-                        <Button
-                          as={Link}
-                          to={RouteConfig.SAKER_DETALJ.replace(":sakId", sisteSak.sakId)}
-                          variant="secondary"
-                          size="small"
-                        >
-                          Se sak
-                        </Button>
-                      </HStack>
+                      {sisteSak.sakId ? (
+                        <HStack gap="space-8">
+                          <Button
+                            as={Link}
+                            to={RouteConfig.SAKER_DETALJ.replace(":sakId", sisteSak.sakId)}
+                            variant="secondary"
+                            size="small"
+                          >
+                            Se sak
+                          </Button>
+                        </HStack>
+                      ) : null}
                     </VStack>
                   </LocalAlert.Content>
                 </LocalAlert>
