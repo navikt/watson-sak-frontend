@@ -8,11 +8,17 @@ import { getSaksreferanse } from "~/saker/id";
 
 interface SendTilAnnenEnhetModalProps {
   sakId: string;
+  nåværendeEnhet: string;
   åpen: boolean;
   onClose: () => void;
 }
 
-export function SendTilAnnenEnhetModal({ sakId, åpen, onClose }: SendTilAnnenEnhetModalProps) {
+export function SendTilAnnenEnhetModal({
+  sakId,
+  nåværendeEnhet,
+  åpen,
+  onClose,
+}: SendTilAnnenEnhetModalProps) {
   const fetcher = useFetcher<{ ok: boolean }>();
   const navigate = useNavigate();
   const [valgtEnhet, setValgtEnhet] = useState("");
@@ -31,7 +37,7 @@ export function SendTilAnnenEnhetModal({ sakId, åpen, onClose }: SendTilAnnenEn
   }
 
   function handleSubmit() {
-    if (!valgtEnhet) {
+    if (!valgtEnhet || valgtEnhet === nåværendeEnhet) {
       return;
     }
 
@@ -64,7 +70,7 @@ export function SendTilAnnenEnhetModal({ sakId, åpen, onClose }: SendTilAnnenEn
           >
             <option value="">Velg enhet</option>
             {enhetAlternativer.map((enhet) => (
-              <option key={enhet} value={enhet}>
+              <option key={enhet} value={enhet} disabled={enhet === nåværendeEnhet}>
                 {enhetEtiketter[enhet]}
               </option>
             ))}

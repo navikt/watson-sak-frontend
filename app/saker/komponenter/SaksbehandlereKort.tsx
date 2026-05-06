@@ -6,6 +6,7 @@ import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
+import { getSaksenhet } from "~/saker/selectors";
 import type { KontrollsakResponse, KontrollsakSaksbehandler } from "~/saker/types.backend";
 import { erAktivSakKontrollsak } from "~/saker/handlinger/tilgjengeligeHandlinger";
 import { DelTilgangModal } from "~/saker/handlinger/DelTilgangModal";
@@ -212,6 +213,7 @@ export function SaksbehandlereKort({
       />
       <SendTilAnnenEnhetModal
         sakId={sak.id}
+        nåværendeEnhet={getSaksenhet(sak)}
         åpen={visSendTilAnnenEnhetModal}
         onClose={() => setVisSendTilAnnenEnhetModal(false)}
       />

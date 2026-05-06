@@ -136,14 +136,23 @@ describe("SaksbehandlereKort", () => {
   it("sender valgt enhet når saken sendes til annen enhet", async () => {
     renderMedRouter(
       <SaksbehandlereKort
-        sak={lagKontrollsak()}
-        saksbehandlerDetaljer={[lagSaksbehandler()]}
-        ansvarligSaksbehandler={lagSaksbehandler()}
+        sak={lagKontrollsak({
+          saksbehandlere: {
+            eier: lagSaksbehandler({ enhet: "ØST" }),
+            deltMed: [],
+            opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "ØST" },
+          },
+        })}
+        saksbehandlerDetaljer={[lagSaksbehandler({ enhet: "ØST" })]}
+        ansvarligSaksbehandler={lagSaksbehandler({ enhet: "ØST" })}
       />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Send til annen enhet" }));
 
+    const nåværendeEnhet = screen.getByRole("option", { name: "Øst" });
+    expect((nåværendeEnhet as HTMLOptionElement).disabled).toBe(true);
+    expect(screen.getByRole("option", { name: "Nord" })).toBeDefined();
     fireEvent.change(screen.getByLabelText("Ny enhet"), { target: { value: "NORD" } });
     const sendKnapper = screen.getAllByRole("button", { name: "Send til annen enhet" });
     const sendKnapp = sendKnapper.at(-1);

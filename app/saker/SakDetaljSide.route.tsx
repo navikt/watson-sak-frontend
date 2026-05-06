@@ -78,6 +78,7 @@ import {
   getKategoriText,
   getMisbrukstyper,
   getNavn,
+  getSaksenhet,
   getStatusVariantForSak,
   getTags,
 } from "./selectors";
@@ -395,6 +396,10 @@ export async function action({ request, params }: Route.ActionArgs) {
 
       if (!enhetAlternativer.includes(nySeksjon as (typeof enhetAlternativer)[number])) {
         throw data("Ugyldig enhet", { status: 400 });
+      }
+
+      if (nySeksjon === getSaksenhet(sak)) {
+        throw data("Velg en annen enhet", { status: 400 });
       }
 
       sak.saksbehandlere.opprettetAv = {
