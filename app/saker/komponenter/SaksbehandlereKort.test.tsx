@@ -1,9 +1,27 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { lagMockSakUuid } from "~/saker/mock-uuid";
 import type { KontrollsakResponse, KontrollsakSaksbehandler } from "~/saker/types.backend";
 import { SaksbehandlereKort } from "./SaksbehandlereKort";
+
+const submitMock = vi.fn();
+const navigateMock = vi.fn();
+let fetcherData: { ok: boolean } | undefined;
+
+vi.mock("react-router", async () => {
+  const actual = await vi.importActual<typeof import("react-router")>("react-router");
+
+  return {
+    ...actual,
+    useFetcher: () => ({
+      state: "idle",
+      data: fetcherData,
+      submit: submitMock,
+    }),
+    useNavigate: () => navigateMock,
+  };
+});
 
 vi.mock("~/auth/innlogget-bruker", () => ({
   useInnloggetBruker: () => ({
@@ -58,6 +76,12 @@ function renderMedRouter(ui: React.ReactNode) {
 }
 
 describe("SaksbehandlereKort", () => {
+  beforeEach(() => {
+    submitMock.mockClear();
+    navigateMock.mockClear();
+    fetcherData = undefined;
+  });
+
   it("viser Del tilgang i saksbehandler-boksen for aktiv sak med ansvarlig saksbehandler", () => {
     renderMedRouter(
       <SaksbehandlereKort
@@ -70,6 +94,19 @@ describe("SaksbehandlereKort", () => {
     expect(screen.getByRole("button", { name: "Del tilgang" })).toBeDefined();
   });
 
+  it("viser Send til annen enhet nederst for aktiv sak", () => {
+    renderMedRouter(
+      <SaksbehandlereKort
+        sak={lagKontrollsak()}
+        saksbehandlerDetaljer={[lagSaksbehandler()]}
+        ansvarligSaksbehandler={lagSaksbehandler()}
+      />,
+    );
+
+    const knapper = screen.getAllByRole("button").map((knapp) => knapp.textContent);
+    expect(knapper.at(-1)).toBe("Send til annen enhet");
+  });
+
   it("viser ikke Del tilgang for avsluttet sak", () => {
     renderMedRouter(
       <SaksbehandlereKort
@@ -80,6 +117,7 @@ describe("SaksbehandlereKort", () => {
     );
 
     expect(screen.queryByRole("button", { name: "Del tilgang" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Send til annen enhet" })).toBeNull();
   });
 
   it("viser ikke Del tilgang for blokkert sak", () => {
@@ -92,5 +130,48 @@ describe("SaksbehandlereKort", () => {
     );
 
     expect(screen.queryByRole("button", { name: "Del tilgang" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Send til annen enhet" })).toBeNull();
+  });
+
+  it("sender valgt enhet når saken sendes til annen enhet", async () => {
+    renderMedRouter(
+      <SaksbehandlereKort
+        sak={lagKontrollsak()}
+        saksbehandlerDetaljer={[lagSaksbehandler()]}
+        ansvarligSaksbehandler={lagSaksbehandler()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Send til annen enhet" }));
+
+    fireEvent.change(screen.getByLabelText("Ny enhet"), { target: { value: "NORD" } });
+    const sendKnapper = screen.getAllByRole("button", { name: "Send til annen enhet" });
+    const sendKnapp = sendKnapper.at(-1);
+    if (!sendKnapp) {
+      throw new Error("Fant ikke send-knapp i modal");
+    }
+    fireEvent.click(sendKnapp);
+
+    expect(submitMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        handling: "send_til_annen_enhet",
+        seksjon: "NORD",
+      }),
+      expect.objectContaining({ method: "post" }),
+    );
+  });
+
+  it("sender brukeren til dashboardet når saken er sendt til annen enhet", () => {
+    fetcherData = { ok: true };
+
+    renderMedRouter(
+      <SaksbehandlereKort
+        sak={lagKontrollsak()}
+        saksbehandlerDetaljer={[lagSaksbehandler()]}
+        ansvarligSaksbehandler={lagSaksbehandler()}
+      />,
+    );
+
+    expect(navigateMock).toHaveBeenCalledWith("/");
   });
 });

@@ -38,6 +38,13 @@ export const merkingEtiketter: Record<(typeof merkingAlternativer)[number], stri
 
 export const enhetAlternativer = ["ØST", "VEST", "NORD", "ANALYSE"] as const;
 
+export const enhetEtiketter: Record<(typeof enhetAlternativer)[number], string> = {
+  ØST: "Øst",
+  VEST: "Vest",
+  NORD: "Nord",
+  ANALYSE: "Analyse",
+};
+
 function normaliserDato(dato: string) {
   if (/^\d{2}\.\d{2}\.\d{4}$/.test(dato)) {
     const [dag, måned, år] = dato.split(".");

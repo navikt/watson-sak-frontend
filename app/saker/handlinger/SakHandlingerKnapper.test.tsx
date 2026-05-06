@@ -118,9 +118,7 @@ describe("SakHandlingerKnapper", () => {
 
     expect(screen.getByRole("button", { name: "Endre status" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Sett på vent" })).toBeDefined();
-    const sendTilAnnenEnhet = screen.getByRole("button", { name: "Send til annen enhet" });
-    expect(sendTilAnnenEnhet).toBeDefined();
-    expect((sendTilAnnenEnhet as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.queryByRole("button", { name: "Send til annen enhet" })).toBeNull();
   });
 
   it("viser kun Gjenoppta for eierløs blokkert sak", () => {

@@ -23,6 +23,7 @@ import {
   kildeEtiketter,
   merkingEtiketter,
   merkingAlternativer as alleMerkinger,
+  enhetEtiketter,
 } from "~/registrer-sak/validering";
 import { kontrollsakKategoriEtiketter, kontrollsakMisbrukstypeEtiketter } from "~/saker/kategorier";
 import type { PersonOppslagResultat } from "./person-oppslag.mock.server";
@@ -37,13 +38,6 @@ import {
 } from "./YtelseRadFelt";
 
 export { action, loader };
-
-const enhetEtiketter: Record<string, string> = {
-  ØST: "Øst",
-  VEST: "Vest",
-  NORD: "Nord",
-  ANALYSE: "Analyse",
-};
 
 type YtelseRadState = {
   id: string;
