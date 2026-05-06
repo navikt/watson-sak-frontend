@@ -1,6 +1,10 @@
 import { lagMockSakUuid } from "~/saker/mock-uuid";
 import { type Varsel, varselSchema } from "~/varsler/typer";
 
+declare global {
+  var __watsonSakMockVarsler: Varsel[] | undefined;
+}
+
 const rådata: Varsel[] = [
   {
     id: "varsel-101",
@@ -67,7 +71,13 @@ const rådata: Varsel[] = [
   },
 ];
 
-export let mockVarsler: Varsel[] = rådata.map((varsel) => varselSchema.parse(varsel));
+function lagInitialeVarsler() {
+  return rådata.map((varsel) => varselSchema.parse(varsel));
+}
+
+globalThis.__watsonSakMockVarsler ??= lagInitialeVarsler();
+
+export const mockVarsler = globalThis.__watsonSakMockVarsler;
 
 export function hentUlesteVarsler() {
   return mockVarsler
@@ -86,5 +96,5 @@ export function markerVarselSomLest(varselId: string) {
 }
 
 export function resetMockVarsler() {
-  mockVarsler = rådata.map((varsel) => varselSchema.parse(varsel));
+  mockVarsler.splice(0, mockVarsler.length, ...lagInitialeVarsler());
 }

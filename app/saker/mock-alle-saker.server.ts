@@ -1,1 +1,7 @@
-export { hentAlleSaker } from "~/testing/mock-store/alle-saker.server";
+export {
+  hentAvslutningsdatoer,
+  hentAlleSaker,
+  hentFordelingssaker,
+  hentMineSaker,
+  leggTilMockSakIFordeling,
+} from "~/testing/mock-store/alle-saker.server";

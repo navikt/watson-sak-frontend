@@ -25,7 +25,7 @@ test.describe("Statistikk", () => {
   test("viser riktig antall saker i bero", async ({ page }) => {
     const nøkkeltall = page.getByRole("region", { name: "Nøkkeltall" });
 
-    await expect(nøkkeltall.getByText(/^I bero\s*1$/)).toBeVisible();
+    await expect(nøkkeltall.getByText(/^I bero\s*0$/)).toBeVisible();
   });
 
   test("viser saker per status som søylediagram", async ({ page }) => {

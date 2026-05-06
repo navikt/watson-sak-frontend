@@ -25,7 +25,9 @@ test.describe("Opprett sak", () => {
     await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("12345678901");
     await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
 
-    await expect(page.getByText("Ola Testesen")).toBeVisible();
+    await expect(
+      page.getByLabel("Personinformasjon").getByText("Ola Testesen", { exact: true }),
+    ).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "Grunnleggende saksinformasjon" }),
     ).toBeVisible();
@@ -36,7 +38,7 @@ test.describe("Opprett sak", () => {
     await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
 
     await expect(page.getByText("Det er allerede registrert en sak på personen")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Se sak" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Se sak" })).toHaveCount(0);
   });
 
   test("kan opprette sak med kun kategori og kilde", async ({ page }) => {

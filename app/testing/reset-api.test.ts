@@ -4,11 +4,8 @@ import {
   markerVarselSomLest,
   resetMockVarsler,
 } from "~/varsler/mock-data.server";
-import {
-  leggTilMockSak,
-  resetMockPersonOppslag,
-  slaOppPerson,
-} from "~/registrer-sak/person-oppslag.mock.server";
+import { slaOppPerson } from "~/registrer-sak/person-oppslag.mock.server";
+import { leggTilMockSakIFordeling } from "~/saker/mock-alle-saker.server";
 
 vi.mock("~/config/env.server", () => ({
   skalBrukeMockdata: true,
@@ -19,7 +16,6 @@ import { action } from "./reset-api";
 describe("reset-api", () => {
   beforeEach(() => {
     resetMockVarsler();
-    resetMockPersonOppslag();
   });
 
   it("tilbakestiller varsler som er markert som lest", () => {
@@ -33,14 +29,23 @@ describe("reset-api", () => {
   });
 
   it("tilbakestiller mock personoppslag etter ny sak er lagt til", () => {
-    leggTilMockSak("12345678901", "Testperson", "Øst");
+    const opprinneligAntall = slaOppPerson("12345678901")?.eksisterendeSaker.length ?? 0;
+    leggTilMockSakIFordeling({
+      personIdent: "12345678901",
+      personNavn: "Ola Testesen",
+      kategori: "ARBEID",
+      kilde: "NAV_KONTROLL",
+      misbruktype: [],
+      prioritet: "NORMAL",
+      ytelser: [],
+    });
 
     const resultatFørReset = slaOppPerson("12345678901");
-    expect(resultatFørReset?.eksisterendeSaker).toHaveLength(1);
+    expect(resultatFørReset?.eksisterendeSaker).toHaveLength(opprinneligAntall + 1);
 
     action();
 
     const resultatEtterReset = slaOppPerson("12345678901");
-    expect(resultatEtterReset?.eksisterendeSaker).toHaveLength(0);
+    expect(resultatEtterReset?.eksisterendeSaker).toHaveLength(opprinneligAntall);
   });
 });

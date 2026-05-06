@@ -8,6 +8,7 @@ import {
   XMarkOctagonIcon,
 } from "@navikt/aksel-icons";
 import { useLoaderData } from "react-router";
+import { hentAlleSaker, hentAvslutningsdatoer } from "~/saker/mock-alle-saker.server";
 import { formaterStatus, type KontrollsakStatus } from "~/saker/visning";
 import {
   beregnAntallIBero,
@@ -21,16 +22,15 @@ import { BehandlingstidVisning } from "./komponenter/BehandlingstidVisning";
 import { HorisontaltSoylediagram } from "./komponenter/HorisontaltSoylediagram";
 import { Nokkeltallkort } from "./komponenter/Nokkeltallkort";
 import { VertikaltSoylediagram } from "./komponenter/VertikaltSoylediagram";
-import { mockAvslutningsdatoer, mockStatistikkSaker } from "./mock-data.server";
 
 export function loader() {
-  const saker = mockStatistikkSaker;
+  const saker = hentAlleSaker();
 
   return {
     totaltAntall: saker.length,
     antallPerStatus: beregnAntallPerStatus(saker),
     antallIBero: beregnAntallIBero(saker),
-    behandlingstid: beregnBehandlingstid(saker, mockAvslutningsdatoer),
+    behandlingstid: beregnBehandlingstid(saker, hentAvslutningsdatoer()),
     antallPerSeksjon: beregnAntallPerSeksjon(saker),
     fordelingPerYtelse: beregnFordelingPerYtelse(saker),
     fordelingPerAntallYtelser: beregnFordelingPerAntallYtelser(saker),

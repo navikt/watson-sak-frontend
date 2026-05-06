@@ -5,6 +5,7 @@ import {
   normaliserLegacyKontrollsak,
   oppdaterTilgjengeligeHandlinger,
 } from "~/saker/mock-uuid";
+import { berikLegacySakMedPerson } from "~/testing/mock-store/personer.server";
 
 type NyMockFordelingssak = {
   personIdent: string;
@@ -504,7 +505,7 @@ const initialeMockKontrollsaker = [
 
 function lagMockKontrollsaker() {
   return initialeMockKontrollsaker.map((sak) =>
-    kontrollsakResponseSchema.parse(normaliserLegacyKontrollsak(sak, 1)),
+    kontrollsakResponseSchema.parse(normaliserLegacyKontrollsak(berikLegacySakMedPerson(sak), 1)),
   );
 }
 
@@ -521,7 +522,13 @@ export function leggTilMockSakIFordeling(nySak: NyMockFordelingssak): Kontrollsa
     personIdent: nySak.personIdent,
     personNavn: nySak.personNavn,
     saksbehandlere: {
-      eier: null,
+      eier: nySak.saksbehandlere?.eier
+        ? {
+            navIdent: nySak.saksbehandlere.eier.navIdent,
+            navn: nySak.saksbehandlere.eier.navn,
+            enhet: nySak.saksbehandlere.eier.enhet ?? null,
+          }
+        : null,
       deltMed: (nySak.saksbehandlere?.deltMed ?? []).map((saksbehandler) => ({
         navIdent: saksbehandler.navIdent,
         navn: saksbehandler.navn,
