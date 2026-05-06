@@ -1,6 +1,7 @@
 import type { FilNode } from "~/saker/filer/typer";
 
 const sharepointBase = "https://navno.sharepoint.com/sites/watson/saker";
+const tommeFilområder = new Set<string>();
 
 function lagUrl(sakId: string, sti: string): string {
   return `${sharepointBase}/${sakId}/${sti}`;
@@ -108,6 +109,10 @@ function lagFilstruktur(sakId: string): FilNode[] {
 }
 
 export function hentFilerForSak(sakId: string): FilNode[] {
+  if (tommeFilområder.has(sakId)) {
+    return [];
+  }
+
   const sisteTegn = sakId.at(-1) ?? "0";
   const harFiler = Number.parseInt(sisteTegn, 36) % 2 === 0;
 
@@ -116,4 +121,12 @@ export function hentFilerForSak(sakId: string): FilNode[] {
   }
 
   return lagFilstruktur(sakId);
+}
+
+export function registrerTomtFilområdeForSak(sakId: string) {
+  tommeFilområder.add(sakId);
+}
+
+export function resetMockFiler() {
+  tommeFilområder.clear();
 }

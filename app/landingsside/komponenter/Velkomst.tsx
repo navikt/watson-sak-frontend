@@ -18,7 +18,9 @@ function hentHilsen(): Hilsen {
 }
 
 function hentFornavn(fulltNavn: string): string {
-  return fulltNavn.split(" ")[0];
+  const navn = fulltNavn.includes(",") ? fulltNavn.split(",")[1] : fulltNavn;
+
+  return navn.trim().split(" ")[0];
 }
 
 export function Velkomst({ oppsummering }: { oppsummering: string }) {

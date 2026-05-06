@@ -1,4 +1,4 @@
-import { ArrowForwardIcon, ClockDashedIcon, PencilIcon } from "@navikt/aksel-icons";
+import { ClockDashedIcon, PencilIcon } from "@navikt/aksel-icons";
 import { Button, Heading, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import type { KontrollsakResponse } from "~/saker/types.backend";
@@ -36,9 +36,6 @@ export function UfordeltSakHandlinger({ sak, seksjoner: _seksjoner }: UfordeltSa
           onClick={() => setÅpenModal("sett-pa-vent")}
         >
           Sett på vent
-        </Button>
-        <Button variant="secondary" size="small" icon={<ArrowForwardIcon aria-hidden />} disabled>
-          Send til annen enhet
         </Button>
       </VStack>
 

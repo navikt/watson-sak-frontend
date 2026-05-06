@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { formaterDato, formaterTilIsoDato, formaterÅrMåned, forskjellIDager } from "./date-utils";
+import {
+  formaterDato,
+  formaterTilIsoDato,
+  formaterÅrMåned,
+  forskjellIDager,
+  lagIsoTidspunktFraNorskDatoTid,
+} from "./date-utils";
 
 describe("formaterÅrMåned", () => {
   it("formaterer gyldig år-måned streng", () => {
@@ -26,6 +32,16 @@ describe("formaterTilIsoDato", () => {
   it("formaterer Date-objekt til ISO-streng", () => {
     const dato = new Date(2025, 0, 15); // 15. januar 2025
     expect(formaterTilIsoDato(dato)).toBe("2025-01-15");
+  });
+});
+
+describe("lagIsoTidspunktFraNorskDatoTid", () => {
+  it("tolker norsk vintertid som Europe/Oslo før lagring som UTC", () => {
+    expect(lagIsoTidspunktFraNorskDatoTid("04.01.2026", "12:34")).toBe("2026-01-04T11:34:00.000Z");
+  });
+
+  it("tolker norsk sommertid som Europe/Oslo før lagring som UTC", () => {
+    expect(lagIsoTidspunktFraNorskDatoTid("04.05.2026", "12:34")).toBe("2026-05-04T10:34:00.000Z");
   });
 });
 

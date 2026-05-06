@@ -1,4 +1,4 @@
-import { PersonPencilIcon, PersonPlusIcon, TrashIcon } from "@navikt/aksel-icons";
+import { ArrowForwardIcon, PersonPencilIcon, PersonPlusIcon, TrashIcon } from "@navikt/aksel-icons";
 import { BodyShort, Button, HStack, Label, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import { useFetcher } from "react-router";
@@ -6,10 +6,12 @@ import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
+import { getSaksenhet } from "~/saker/selectors";
 import type { KontrollsakResponse, KontrollsakSaksbehandler } from "~/saker/types.backend";
 import { erAktivSakKontrollsak } from "~/saker/handlinger/tilgjengeligeHandlinger";
 import { DelTilgangModal } from "~/saker/handlinger/DelTilgangModal";
 import { OverforAnsvarligModal } from "~/saker/handlinger/OverforAnsvarligModal";
+import { SendTilAnnenEnhetModal } from "~/saker/handlinger/SendTilAnnenEnhetModal";
 import { TildelSaksbehandlerModal } from "~/saker/handlinger/TildelSaksbehandlerModal";
 
 interface SaksbehandlereKortProps {
@@ -55,6 +57,7 @@ export function SaksbehandlereKort({
   const [visOverforModal, setVisOverforModal] = useState(false);
   const [visDelTilgangModal, setVisDelTilgangModal] = useState(false);
   const [visTildelModal, setVisTildelModal] = useState(false);
+  const [visSendTilAnnenEnhetModal, setVisSendTilAnnenEnhetModal] = useState(false);
   const innloggetBruker = useInnloggetBruker();
   const fetcher = useFetcher();
   const tildelMegFetcher = useFetcher();
@@ -174,6 +177,18 @@ export function SaksbehandlereKort({
               Del tilgang
             </Button>
           )}
+
+          {kanEndreTilgang && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="small"
+              icon={<ArrowForwardIcon aria-hidden />}
+              onClick={() => setVisSendTilAnnenEnhetModal(true)}
+            >
+              Send til annen enhet
+            </Button>
+          )}
         </VStack>
       </Kort>
 
@@ -195,6 +210,12 @@ export function SaksbehandlereKort({
         saksbehandlerDetaljer={saksbehandlerDetaljer}
         åpen={visTildelModal}
         onClose={() => setVisTildelModal(false)}
+      />
+      <SendTilAnnenEnhetModal
+        sakId={sak.id}
+        nåværendeEnhet={getSaksenhet(sak)}
+        åpen={visSendTilAnnenEnhetModal}
+        onClose={() => setVisSendTilAnnenEnhetModal(false)}
       />
     </>
   );

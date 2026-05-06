@@ -125,6 +125,30 @@ describe("opprettKontrollsak", () => {
     expect(søkSaker("12345678901").some((sak) => sak.personIdent === "12345678901")).toBe(true);
   });
 
+  it("oppretter mock-saker med tom filliste", async () => {
+    const { opprettKontrollsak } = await import("./api.server");
+    const { hentFilerForSak } = await import("~/testing/mock-store/filer.server");
+
+    const opprettetSak = await opprettKontrollsak({
+      token: "token-123",
+      payload: {
+        personIdent: "12345678901",
+        personNavn: "Ola Nordmann",
+        saksbehandlere: {
+          eier: null,
+          deltMed: [],
+        },
+        kategori: "SAMLIV",
+        kilde: "NAV_KONTROLL",
+        prioritet: "NORMAL",
+        misbruktype: ["SKJULT_SAMLIV"],
+        ytelser: [],
+      },
+    });
+
+    expect(hentFilerForSak(opprettetSak.id)).toEqual([]);
+  });
+
   it("legger mock-sak med eier i Mine saker", async () => {
     const nySak = leggTilMockSakIFordeling({
       personIdent: "12345678901",

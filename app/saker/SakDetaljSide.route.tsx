@@ -37,6 +37,7 @@ import {
   merkingEtiketter,
   misbrukstypePerKategori,
   redigerSaksinformasjonSchema,
+  enhetAlternativer,
 } from "~/registrer-sak/validering";
 import {
   ankerIdForFelt,
@@ -56,6 +57,7 @@ import {
 import { mockSaksbehandlere, mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import { mockSeksjoner } from "~/saker/mock-seksjoner.server";
 import type { Blokkeringsarsak, KontrollsakSaksbehandler } from "~/saker/types.backend";
+import { lagIsoTidspunktFraNorskDatoTid } from "~/utils/date-utils";
 import type { Route } from "./+types/SakDetaljSide.route";
 import { hentFilerForSak } from "./filer/mock-data.server";
 import { SakFilområde } from "./filer/SakFilområde";
@@ -77,6 +79,7 @@ import {
   getKategoriText,
   getMisbrukstyper,
   getNavn,
+  getSaksenhet,
   getStatusVariantForSak,
   getTags,
 } from "./selectors";
@@ -211,11 +214,7 @@ function hentMisbrukstypeAlternativer(kategori: string): readonly string[] {
 }
 
 function lagTidspunktFraSkjema(dato: string, tid: string): string {
-  if (/^\d{2}\.\d{2}\.\d{4}$/.test(dato)) {
-    const [dag, måned, år] = dato.split(".");
-    return new Date(`${år}-${måned}-${dag}T${tid ?? "00:00"}:00`).toISOString();
-  }
-  return new Date(`${dato}T${tid ?? "00:00"}:00`).toISOString();
+  return lagIsoTidspunktFraNorskDatoTid(dato, tid);
 }
 
 function finnNotatMalLabel(verdi: FormDataEntryValue | null): string | undefined {
@@ -386,6 +385,25 @@ export async function action({ request, params }: Route.ActionArgs) {
           enhet: nySeksjon,
         };
       }
+      leggTilHendelse(sak, "MOTTAKSENHET_ENDRET");
+      break;
+    }
+    case "send_til_annen_enhet": {
+      const nySeksjon = hentTekstfelt(formData, "seksjon", "Ugyldig enhet");
+
+      if (!enhetAlternativer.includes(nySeksjon as (typeof enhetAlternativer)[number])) {
+        throw data("Ugyldig enhet", { status: 400 });
+      }
+
+      if (nySeksjon === getSaksenhet(sak)) {
+        throw data("Velg en annen enhet", { status: 400 });
+      }
+
+      sak.saksbehandlere.opprettetAv = {
+        ...sak.saksbehandlere.opprettetAv,
+        enhet: nySeksjon,
+      };
+      sak.saksbehandlere.eier = null;
       leggTilHendelse(sak, "MOTTAKSENHET_ENDRET");
       break;
     }

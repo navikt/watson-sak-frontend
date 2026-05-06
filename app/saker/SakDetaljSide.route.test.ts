@@ -363,6 +363,38 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(kontrollsak.saksbehandlere.opprettetAv.enhet).toBe("Seksjon B");
   });
 
+  it("sender sak til annen enhet og fristiller saksbehandler", async () => {
+    const kontrollsak = mockKontrollsaker[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+
+    kontrollsak.saksbehandlere.eier = {
+      navn: "Tidligere Saksbehandler",
+      navIdent: "Z999999",
+      enhet: "Seksjon A",
+    };
+    kontrollsak.saksbehandlere.opprettetAv = {
+      navn: "Kari Oppretter",
+      navIdent: "Z654321",
+      enhet: "Seksjon A",
+    };
+
+    const formData = new FormData();
+    formData.set("handling", "send_til_annen_enhet");
+    formData.set("seksjon", "NORD");
+
+    await action({
+      request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: kontrollsakRef },
+    } as Route.ActionArgs);
+
+    expect(kontrollsak.saksbehandlere.eier).toBeNull();
+    expect(kontrollsak.saksbehandlere.opprettetAv.enhet).toBe("NORD");
+    expect(hentHistorikk(kontrollsak.id)[0]?.hendelsesType).toBe("MOTTAKSENHET_ENDRET");
+  });
+
   it("oppdaterer redigerbare saksdetaljer uten å endre låste felt", async () => {
     const kontrollsak = mockKontrollsaker[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);

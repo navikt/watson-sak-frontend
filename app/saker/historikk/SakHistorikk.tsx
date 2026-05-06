@@ -16,6 +16,7 @@ import {
 import { BodyShort, Box, Button, Heading, HStack, Process, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import { formaterBlokkeringsarsak, formaterStatus } from "~/saker/visning";
+import { NORSK_TIDSSONE } from "~/utils/date-utils";
 import { useDisclosure } from "~/use-disclosure/useDisclosure";
 import { LeggTilHistorikkModal } from "./LeggTilHistorikkModal";
 import type { SakHendelse } from "./typer";
@@ -33,6 +34,7 @@ function formaterTidspunkt(isoString: string): string {
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
+      timeZone: NORSK_TIDSSONE,
     }).format(new Date(isoString));
   } catch {
     return isoString;
@@ -48,7 +50,7 @@ function hendelseTittel(hendelse: SakHendelse): string {
     case "SAK_TILDELT":
       return "Sak tildelt";
     case "STATUS_ENDRET":
-      return "Status endret";
+      return `Sak ${formaterStatus(hendelse.status).toLocaleLowerCase("nb-NO")}`;
     case "SAKSINFORMASJON_ENDRET":
       return "Saksinformasjon endret";
     case "MOTTAKSENHET_ENDRET":

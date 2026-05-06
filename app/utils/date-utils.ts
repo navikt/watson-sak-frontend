@@ -1,3 +1,5 @@
+export const NORSK_TIDSSONE = "Europe/Oslo";
+
 /**
  * Formaterer en "YYYY-MM"-streng til "mån. år"
  *
@@ -49,6 +51,45 @@ export function formaterTilIsoDato(dato: Date): string {
     month: "2-digit",
     day: "2-digit",
   }).format(dato);
+}
+
+function hentTidssoneOffsetMs(dato: Date, tidssone: string): number {
+  const deler = new Intl.DateTimeFormat("en-CA", {
+    timeZone: tidssone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(dato);
+  const verdier = Object.fromEntries(
+    deler.filter((del) => del.type !== "literal").map((del) => [del.type, Number(del.value)]),
+  );
+
+  return (
+    Date.UTC(
+      verdier.year,
+      verdier.month - 1,
+      verdier.day,
+      verdier.hour,
+      verdier.minute,
+      verdier.second,
+    ) - dato.getTime()
+  );
+}
+
+export function lagIsoTidspunktFraNorskDatoTid(dato: string, tid = "00:00"): string {
+  const norskDato = /^\d{2}\.\d{2}\.\d{4}$/.test(dato) ? dato.split(".").reverse().join("-") : dato;
+  const [år, måned, dag] = norskDato.split("-").map(Number);
+  const [time, minutt] = tid.split(":").map(Number);
+  const lokalTidSomUtc = Date.UTC(år, måned - 1, dag, time, minutt, 0);
+  const førsteOffset = hentTidssoneOffsetMs(new Date(lokalTidSomUtc), NORSK_TIDSSONE);
+  const korrigertTidspunkt = lokalTidSomUtc - førsteOffset;
+  const endeligOffset = hentTidssoneOffsetMs(new Date(korrigertTidspunkt), NORSK_TIDSSONE);
+
+  return new Date(lokalTidSomUtc - endeligOffset).toISOString();
 }
 
 /**
