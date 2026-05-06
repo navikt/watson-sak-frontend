@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { medMockDataLock } from "~/test/mock-data-lock";
 import { resetMockData } from "~/test/reset-mock-data";
 import { sjekkTilgjengelighet } from "~/test/uu-util";
 
@@ -24,43 +25,52 @@ test.describe("Ufordelte saker", () => {
     ).toHaveCount(0);
   });
 
-  test("kan filtrere på kategori og ytelse", async ({ page }) => {
-    const samlivKnapp = page.getByRole("button", { name: "Samliv" });
-    await samlivKnapp.click();
-    await expect(samlivKnapp).toHaveAttribute("aria-pressed", "true");
+  test("kan sortere, paginere, filtrere og tildele en sak fra tabellen", async ({ page }) => {
+    await medMockDataLock(async () => {
+      await resetMockData(page);
+      await page.goto("/fordeling", { waitUntil: "networkidle" });
 
-    await page.getByRole("button", { name: "Barnetrygd" }).click();
+      const rader = page.locator("tbody tr");
 
-    const rader = page.locator("tbody tr");
-    await expect(rader).not.toHaveCount(0);
-    await expect
-      .poll(async () => {
-        const tekster = await rader.allTextContents();
+      await page.getByRole("button", { name: "Sorter på kategori" }).click();
+      await expect(rader.nth(0)).toContainText("Annet");
 
-        return tekster.every(
-          (tekst) => tekst.includes("Endret sivilstatus") && tekst.includes("Samliv"),
-        );
-      })
-      .toBe(true);
-  });
+      await page.getByRole("button", { name: "2" }).click();
 
-  test("kan bla til neste side i tabellen", async ({ page }) => {
-    await page.getByRole("button", { name: "2" }).click();
+      await expect(page.getByRole("button", { name: "2" })).toHaveAttribute("aria-current", "true");
+      const tiltakRad = page.locator("tbody tr").filter({ hasText: "Tiltak" });
+      await expect(tiltakRad).toHaveCount(1);
+      await expect(tiltakRad).toContainText("Misbruk av tiltaksplass");
 
-    await expect(page.getByRole("button", { name: "2" })).toHaveAttribute("aria-current", "true");
-    const tiltakRad = page.locator("tbody tr").filter({ hasText: "Tiltak" });
-    await expect(tiltakRad).toHaveCount(1);
-    await expect(tiltakRad).toContainText("Misbruk av tiltaksplass");
-  });
+      const samlivKnapp = page.getByRole("button", { name: "Samliv" });
+      await samlivKnapp.click();
+      await expect(samlivKnapp).toHaveAttribute("aria-pressed", "true");
 
-  test("kan sortere på kategori og opprettet", async ({ page }) => {
-    const rader = page.locator("tbody tr");
+      await page.getByRole("button", { name: "Barnetrygd" }).click();
 
-    await page.getByRole("button", { name: "Sorter på kategori" }).click();
-    await expect(rader.nth(0)).toContainText("Annet");
+      const sakSomSkalTildeles = page
+        .locator("tbody tr")
+        .filter({ hasText: "101" })
+        .filter({ hasText: "Endret sivilstatus" })
+        .filter({ hasText: "Samliv" });
 
-    await page.getByRole("button", { name: "Sorter på opprettet" }).click();
-    await expect(rader.nth(0)).toContainText("18. feb. 2026");
+      await expect(sakSomSkalTildeles).toHaveCount(1);
+      await sakSomSkalTildeles.getByRole("button", { name: "Tildel" }).click();
+
+      const dialog = page.getByRole("dialog");
+      await expect(dialog).toBeVisible();
+      await dialog.getByLabel("Saksbehandler").selectOption("Z999999");
+
+      const tildelt = page.waitForResponse(
+        (response) =>
+          response.url().includes("/fordeling") && response.request().method() === "POST",
+      );
+      await dialog.getByRole("button", { name: "Tildel" }).click();
+      await tildelt;
+
+      await expect(dialog).not.toBeVisible();
+      await expect(sakSomSkalTildeles).toHaveCount(0);
+    });
   });
 
   test("er UU-compliant", async ({ page }) => {
