@@ -89,6 +89,14 @@ describe("OpprettSakSide action", () => {
       payload: expect.objectContaining({
         personIdent: "12345678901",
         personNavn: "Ola Testesen",
+        saksbehandlere: {
+          eier: {
+            navIdent: "Z123456",
+            navn: "Test Saksbehandler",
+            enhet: undefined,
+          },
+          deltMed: [],
+        },
         kategori: "DOKUMENTFALSK",
         kilde: "NAV_KONTROLL",
         prioritet: "NORMAL",

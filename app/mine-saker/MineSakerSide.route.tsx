@@ -1,13 +1,17 @@
 import { Page } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
 import { useLoaderData } from "react-router";
+import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { RouteConfig } from "~/routeConfig";
 import { hentMineSaker } from "~/saker/mock-alle-saker.server";
+import type { Route } from "./+types/MineSakerSide.route";
 import { MineSakerInnhold } from "./MineSakerInnhold";
 
-export function loader() {
+export async function loader({ request }: Route.LoaderArgs) {
+  const innloggetBruker = await hentInnloggetBruker({ request });
+
   return {
-    saker: hentMineSaker(),
+    saker: hentMineSaker(innloggetBruker.navIdent),
   };
 }
 

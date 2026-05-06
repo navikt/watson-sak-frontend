@@ -1,3 +1,5 @@
+import type { LoaderFunctionArgs } from "react-router";
+import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import {
   mockMineSakerAvslutningsdatoer,
   mockMineSakerTidligereTipsSakIder,
@@ -8,8 +10,9 @@ import { hentUlesteVarsler } from "~/varsler/mock-data.server";
 import { beregnDineSakerSiste14Dager } from "./beregninger";
 import { lagVelkomstOppsummering } from "./velkomst";
 
-export function loader() {
-  const mineSakerHosInnloggetBruker = hentMineSaker();
+export async function loader({ request }: LoaderFunctionArgs) {
+  const innloggetBruker = await hentInnloggetBruker({ request });
+  const mineSakerHosInnloggetBruker = hentMineSaker(innloggetBruker.navIdent);
 
   const aktiveMineSaker = mineSakerHosInnloggetBruker.filter(
     (sak) => sak.status !== "ANMELDT" && sak.status !== "HENLAGT" && sak.status !== "AVSLUTTET",
