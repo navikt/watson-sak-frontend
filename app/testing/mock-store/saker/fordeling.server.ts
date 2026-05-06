@@ -5,6 +5,7 @@ import {
   normaliserLegacyKontrollsak,
   oppdaterTilgjengeligeHandlinger,
 } from "~/saker/mock-uuid";
+import { registrerTomtFilområdeForSak } from "~/testing/mock-store/filer.server";
 import { berikLegacySakMedPerson } from "~/testing/mock-store/personer.server";
 
 type NyMockFordelingssak = {
@@ -561,6 +562,7 @@ export function leggTilMockSakIFordeling(nySak: NyMockFordelingssak): Kontrollsa
 
   const kontrollsakMedHandlinger = oppdaterTilgjengeligeHandlinger(kontrollsak);
 
+  registrerTomtFilområdeForSak(kontrollsakMedHandlinger.id);
   mockKontrollsaker.unshift(kontrollsakMedHandlinger);
 
   return kontrollsakMedHandlinger;
