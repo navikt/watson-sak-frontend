@@ -56,45 +56,34 @@ function renderMedRouter(ui: React.ReactNode) {
 
 describe("SakHandlingerKnapper", () => {
   it("viser ingen handlinger for AVSLUTTET sak", () => {
-    renderMedRouter(
-      <SakHandlingerKnapper
-        sak={lagKontrollsak({ status: "AVSLUTTET" })}
-        seksjoner={[]}
-        historikk={[]}
-        filer={[]}
-      />,
-    );
+    renderMedRouter(<SakHandlingerKnapper sak={lagKontrollsak({ status: "AVSLUTTET" })} />);
 
     expect(screen.queryByRole("button")).toBeNull();
   });
 
   it("viser Endre status og Sett på vent for aktiv ikke-blokkert sak med eier", () => {
     renderMedRouter(
-      <SakHandlingerKnapper
-        sak={lagKontrollsak({ status: "UTREDES", blokkert: null })}
-        seksjoner={[]}
-        historikk={[]}
-        filer={[]}
-      />,
+      <SakHandlingerKnapper sak={lagKontrollsak({ status: "UTREDES", blokkert: null })} />,
     );
 
     expect(screen.getByRole("button", { name: "Endre status" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Sett på vent" })).toBeDefined();
+    expect(screen.getByRole("separator")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Opprett notat" })).toBeDefined();
     expect(screen.queryByRole("button", { name: "Stans ytelse" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Gjenoppta" })).toBeNull();
   });
 
-  it("viser kun Gjenoppta for blokkert sak med eier", () => {
+  it("viser Gjenoppta og Opprett notat for blokkert sak med eier", () => {
     renderMedRouter(
       <SakHandlingerKnapper
         sak={lagKontrollsak({ status: "UTREDES", blokkert: "VENTER_PA_INFORMASJON" })}
-        seksjoner={[]}
-        historikk={[]}
-        filer={[]}
       />,
     );
 
     expect(screen.getByRole("button", { name: "Gjenoppta" })).toBeDefined();
+    expect(screen.getByRole("separator")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Opprett notat" })).toBeDefined();
     expect(screen.queryByRole("button", { name: "Endre status" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Sett på vent" })).toBeNull();
   });
@@ -110,18 +99,17 @@ describe("SakHandlingerKnapper", () => {
             opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
           },
         })}
-        seksjoner={["4812", "4813"]}
-        historikk={[]}
-        filer={[]}
       />,
     );
 
     expect(screen.getByRole("button", { name: "Endre status" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Sett på vent" })).toBeDefined();
+    expect(screen.getByRole("separator")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Opprett notat" })).toBeDefined();
     expect(screen.queryByRole("button", { name: "Send til annen enhet" })).toBeNull();
   });
 
-  it("viser kun Gjenoppta for eierløs blokkert sak", () => {
+  it("viser Gjenoppta og Opprett notat for eierløs blokkert sak", () => {
     renderMedRouter(
       <SakHandlingerKnapper
         sak={lagKontrollsak({
@@ -133,13 +121,12 @@ describe("SakHandlingerKnapper", () => {
             opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
           },
         })}
-        seksjoner={["4812", "4813"]}
-        historikk={[]}
-        filer={[]}
       />,
     );
 
     expect(screen.getByRole("button", { name: "Gjenoppta" })).toBeDefined();
+    expect(screen.getByRole("separator")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Opprett notat" })).toBeDefined();
     expect(screen.queryByRole("button", { name: "Sett på vent" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Endre status" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Tildel saksbehandler" })).toBeNull();
