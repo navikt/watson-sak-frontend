@@ -80,7 +80,7 @@ describe("SakHistorikk", () => {
       />,
     );
 
-    expect(screen.getByText("Status endret")).toBeDefined();
+    expect(screen.getByText("Sak anmeldt")).toBeDefined();
     expect(screen.getByText(/Saken er vurdert og anmeldt – Status: Anmeldt/)).toBeDefined();
   });
 

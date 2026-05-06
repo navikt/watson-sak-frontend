@@ -50,7 +50,7 @@ function hendelseTittel(hendelse: SakHendelse): string {
     case "SAK_TILDELT":
       return "Sak tildelt";
     case "STATUS_ENDRET":
-      return "Status endret";
+      return `Sak ${formaterStatus(hendelse.status).toLocaleLowerCase("nb-NO")}`;
     case "SAKSINFORMASJON_ENDRET":
       return "Saksinformasjon endret";
     case "MOTTAKSENHET_ENDRET":
