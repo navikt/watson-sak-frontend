@@ -267,6 +267,37 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     expect(historikk[0]?.notat).toBe("Avklarte dokumentasjon og neste steg.");
   });
 
+  it("sorterer manuelle historikkinnslag stabilt når de har samme tidspunkt", async () => {
+    const saker = hentAlleSaker();
+    const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
+    expect(sak).toBeDefined();
+    if (!sak) return;
+
+    const { getSaksreferanse } = await import("./id");
+    const sakId = getSaksreferanse(sak.id);
+    const tidspunkt = {
+      dato: "04.05.2026",
+      tid: "12:34",
+    };
+
+    await utforAction(sakId, {
+      handling: "legg_til_historikk",
+      tittel: "Første innslag",
+      notat: "Skrevet først.",
+      ...tidspunkt,
+    });
+    await utforAction(sakId, {
+      handling: "legg_til_historikk",
+      tittel: "Andre innslag",
+      notat: "Skrevet sist.",
+      ...tidspunkt,
+    });
+
+    const historikk = hentHistorikk(sak.id);
+    expect(historikk[0]?.tittel).toBe("Andre innslag");
+    expect(historikk[1]?.tittel).toBe("Første innslag");
+  });
+
   it("endre_status avviser for avsluttet sak", async () => {
     const saker = hentAlleSaker();
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");

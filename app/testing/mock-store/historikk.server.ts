@@ -55,9 +55,15 @@ function leggTilBackendHendelse(
 /** Hent historikken for en sak, sortert med nyeste først */
 export function hentHistorikk(sakId: string): SakHendelse[] {
   const hendelser = historikkMap.get(sakId) ?? [];
-  return [...hendelser].sort(
-    (a, b) => new Date(b.tidspunkt).getTime() - new Date(a.tidspunkt).getTime(),
-  );
+  return [...hendelser].sort((a, b) => {
+    const tidspunktSortering = new Date(b.tidspunkt).getTime() - new Date(a.tidspunkt).getTime();
+
+    if (tidspunktSortering !== 0) {
+      return tidspunktSortering;
+    }
+
+    return b.hendelseId.localeCompare(a.hendelseId);
+  });
 }
 
 function lagSnapshotFraKontrollsak(

@@ -1,6 +1,7 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { act } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { SakHendelse } from "./typer";
 import { SakHistorikk } from "./SakHistorikk";
 
@@ -26,6 +27,10 @@ function renderMedRouter(ui: React.ReactNode) {
 }
 
 describe("SakHistorikk", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("renderer backend hendelsestype og statusfelt", () => {
     renderMedRouter(<SakHistorikk sakId="test-sak-id" hendelser={[lagBackendHendelse()]} />);
 
@@ -176,5 +181,20 @@ describe("SakHistorikk", () => {
 
     expect(screen.getByText("Ringte bruker")).toBeDefined();
     expect(screen.getByText("Avklarte dokumentasjon og neste steg.")).toBeDefined();
+  });
+
+  it("setter tidspunkt for nytt historikkinnslag når modalen åpnes", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-06T08:15:00"));
+
+    renderMedRouter(<SakHistorikk sakId="test-sak-id" hendelser={[lagBackendHendelse()]} />);
+
+    vi.setSystemTime(new Date("2026-05-06T09:42:00"));
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "Legg til" }));
+    });
+
+    expect((screen.getByLabelText("Dato") as HTMLInputElement).value).toBe("06.05.2026");
+    expect((screen.getByLabelText("Klokkeslett") as HTMLInputElement).value).toBe("09:42");
   });
 });

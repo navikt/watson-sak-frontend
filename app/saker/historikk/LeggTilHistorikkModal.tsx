@@ -9,7 +9,7 @@ import {
   useDatepicker,
   VStack,
 } from "@navikt/ds-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
@@ -20,35 +20,41 @@ interface LeggTilHistorikkModalProps {
   onClose: () => void;
 }
 
-function standardDato(): string {
-  const nå = new Date();
+function formaterDato(nå: Date): string {
   const dag = String(nå.getDate()).padStart(2, "0");
   const måned = String(nå.getMonth() + 1).padStart(2, "0");
   const år = nå.getFullYear();
   return `${dag}.${måned}.${år}`;
 }
 
-function standardTid(): string {
-  const nå = new Date();
+function formaterTid(nå: Date): string {
   return `${String(nå.getHours()).padStart(2, "0")}:${String(nå.getMinutes()).padStart(2, "0")}`;
 }
 
 export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorikkModalProps) {
   const modalRef = useRef<HTMLDialogElement>(null);
   const fetcher = useFetcher();
-  const [dato, setDato] = useState(standardDato);
-  const [tid, setTid] = useState(standardTid);
+  const [dato, setDato] = useState(() => formaterDato(new Date()));
+  const [tid, setTid] = useState(() => formaterTid(new Date()));
 
-  const { datepickerProps, inputProps } = useDatepicker({
+  const { datepickerProps, inputProps, setSelected } = useDatepicker({
     defaultSelected: new Date(),
     onDateChange: (val) => {
       if (!val) return;
-      const dag = String(val.getDate()).padStart(2, "0");
-      const måned = String(val.getMonth() + 1).padStart(2, "0");
-      const år = val.getFullYear();
-      setDato(`${dag}.${måned}.${år}`);
+      setDato(formaterDato(val));
     },
   });
+
+  useEffect(() => {
+    if (!åpen) {
+      return;
+    }
+
+    const nå = new Date();
+    setDato(formaterDato(nå));
+    setTid(formaterTid(nå));
+    setSelected(nå);
+  }, [åpen]);
 
   function handleLagre(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -61,8 +67,10 @@ export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorik
       action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),
     });
     form.reset();
-    setDato(standardDato());
-    setTid(standardTid());
+    const nå = new Date();
+    setDato(formaterDato(nå));
+    setTid(formaterTid(nå));
+    setSelected(nå);
     onClose();
   }
 
