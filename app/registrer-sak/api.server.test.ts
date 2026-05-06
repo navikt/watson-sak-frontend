@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { resetMockStore } from "~/testing/mock-store/reset.server";
 import { søkSaker } from "~/søk/søk.server";
 import { mockKontrollsaker } from "~/fordeling/mock-data.server";
-import { leggTilMockSakIFordeling } from "~/saker/mock-alle-saker.server";
+import { hentMineSaker, leggTilMockSakIFordeling } from "~/saker/mock-alle-saker.server";
 
 vi.mock("~/config/env.server", () => ({
   BACKEND_API_URL: "https://backend.test",
@@ -123,6 +123,36 @@ describe("opprettKontrollsak", () => {
       ),
     ).toBe(true);
     expect(søkSaker("12345678901").some((sak) => sak.personIdent === "12345678901")).toBe(true);
+  });
+
+  it("legger mock-sak med eier i Mine saker", async () => {
+    const nySak = leggTilMockSakIFordeling({
+      personIdent: "12345678901",
+      personNavn: "Ola Testesen",
+      saksbehandlere: {
+        eier: {
+          navIdent: "Z999999",
+          navn: "Saks Behandlersen",
+          enhet: "Seksjon A",
+        },
+        deltMed: [],
+      },
+      kategori: "SAMLIV",
+      kilde: "NAV_KONTROLL",
+      prioritet: "NORMAL",
+      misbruktype: ["SKJULT_SAMLIV"],
+      ytelser: [
+        {
+          type: "Dagpenger",
+          periodeFra: "2026-01-01",
+          periodeTil: "2026-12-31",
+          belop: 300000,
+        },
+      ],
+    });
+
+    expect(nySak.saksbehandlere.eier?.navIdent).toBe("Z999999");
+    expect(hentMineSaker()).toContain(nySak);
   });
 
   it("godtar gyldige kilde- og misbruktypeverdier fra delt kontrakt i mock-modus", async () => {

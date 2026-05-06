@@ -522,7 +522,13 @@ export function leggTilMockSakIFordeling(nySak: NyMockFordelingssak): Kontrollsa
     personIdent: nySak.personIdent,
     personNavn: nySak.personNavn,
     saksbehandlere: {
-      eier: null,
+      eier: nySak.saksbehandlere?.eier
+        ? {
+            navIdent: nySak.saksbehandlere.eier.navIdent,
+            navn: nySak.saksbehandlere.eier.navn,
+            enhet: nySak.saksbehandlere.eier.enhet ?? null,
+          }
+        : null,
       deltMed: (nySak.saksbehandlere?.deltMed ?? []).map((saksbehandler) => ({
         navIdent: saksbehandler.navIdent,
         navn: saksbehandler.navn,

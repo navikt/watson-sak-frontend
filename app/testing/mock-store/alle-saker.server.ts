@@ -23,7 +23,7 @@ function hentAlleMineSaker(): KontrollsakResponse[] {
 export function hentMineSaker(
   navIdent: string = mockMineSakerInnloggetNavIdent,
 ): KontrollsakResponse[] {
-  return hentAlleMineSaker().filter((sak) => sak.saksbehandlere.eier?.navIdent === navIdent);
+  return hentAlleSaker().filter((sak) => sak.saksbehandlere.eier?.navIdent === navIdent);
 }
 
 export function hentSakMedReferanse(sakId: string): KontrollsakResponse | undefined {

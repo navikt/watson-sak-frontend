@@ -32,6 +32,22 @@ describe("mock-store konsistens", () => {
     }
   });
 
+  it("viser fordelingssaker i Mine saker når de tildeles innlogget bruker", () => {
+    const fordelingssak = hentFordelingssaker()[0];
+
+    if (!fordelingssak) {
+      throw new Error("Forventet minst én fordelingssak");
+    }
+
+    fordelingssak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Saks Behandlersen",
+      enhet: "Seksjon A",
+    };
+
+    expect(hentMineSaker()).toContain(fordelingssak);
+  });
+
   it("har samme navn for samme personident i saker og personoppslag", () => {
     for (const sak of hentAlleSaker()) {
       const personNavn = hentMockPersonNavn(sak.personIdent);
