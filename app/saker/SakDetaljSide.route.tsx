@@ -587,7 +587,6 @@ export default function SakDetaljSide() {
     filer,
     andreSaker,
     saksbehandlerDetaljer,
-    seksjoner,
     ytelser,
   } = useLoaderData<typeof loader>();
   const [sak, setSak] = useState(loaderSak);
@@ -1084,12 +1083,7 @@ export default function SakDetaljSide() {
                 ansvarligSaksbehandler={ansvarligSaksbehandler}
               />
 
-              <SakHandlingerKnapper
-                sak={sak}
-                seksjoner={seksjoner}
-                historikk={historikk}
-                filer={filer}
-              />
+              <SakHandlingerKnapper sak={sak} />
 
               <SakHistorikk sakId={sak.id} hendelser={historikk} />
             </VStack>
