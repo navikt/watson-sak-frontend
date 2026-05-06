@@ -54,7 +54,7 @@ export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorik
     setDato(formaterDato(nå));
     setTid(formaterTid(nå));
     setSelected(nå);
-  }, [åpen]);
+  }, [åpen, setSelected]);
 
   function handleLagre(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
