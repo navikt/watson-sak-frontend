@@ -39,12 +39,12 @@ type NyMockFordelingssak = {
 const deltMedEksempel = [
   {
     navn: "Kari Nordmann",
-    enhet: "Seksjon A",
+    enhet: "Nord",
     navIdent: "Z123456",
   },
   {
     navn: "Ada Larsen",
-    enhet: "Seksjon B",
+    enhet: "Øst",
     navIdent: "Z234567",
   },
 ];
@@ -58,7 +58,7 @@ const initialeMockKontrollsaker = [
     status: "OPPRETTET",
     kategori: "SAMLIV",
     prioritet: "NORMAL",
-    mottakEnhet: "Seksjon A",
+    mottakEnhet: "Nord",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -89,7 +89,7 @@ const initialeMockKontrollsaker = [
     status: "OPPRETTET",
     kategori: "ARBEID",
     prioritet: "NORMAL",
-    mottakEnhet: "Seksjon B",
+    mottakEnhet: "Øst",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -120,7 +120,7 @@ const initialeMockKontrollsaker = [
     status: "AVKLART",
     kategori: "SAMLIV",
     prioritet: "NORMAL",
-    mottakEnhet: "Seksjon A",
+    mottakEnhet: "Nord",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -151,7 +151,7 @@ const initialeMockKontrollsaker = [
     status: "OPPRETTET",
     kategori: "UTLAND",
     prioritet: "NORMAL",
-    mottakEnhet: "Seksjon C",
+    mottakEnhet: "Vest",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -184,7 +184,7 @@ const initialeMockKontrollsaker = [
     status: "OPPRETTET",
     kategori: "ARBEID",
     prioritet: "NORMAL",
-    mottakEnhet: "Seksjon B",
+    mottakEnhet: "Øst",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -235,7 +235,7 @@ const initialeMockKontrollsaker = [
     status: "AVKLART",
     kategori: "SAMLIV",
     prioritet: "NORMAL",
-    mottakEnhet: "Seksjon A",
+    mottakEnhet: "Nord",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -266,7 +266,7 @@ const initialeMockKontrollsaker = [
     status: "OPPRETTET",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Seksjon C",
+    mottakEnhet: "Vest",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -296,7 +296,7 @@ const initialeMockKontrollsaker = [
     status: "OPPRETTET",
     kategori: "DOKUMENTFALSK",
     prioritet: "NORMAL",
-    mottakEnhet: "Seksjon B",
+    mottakEnhet: "Øst",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -326,7 +326,7 @@ const initialeMockKontrollsaker = [
     status: "AVKLART",
     kategori: "ARBEID",
     prioritet: "NORMAL",
-    mottakEnhet: "Seksjon A",
+    mottakEnhet: "Nord",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -357,7 +357,7 @@ const initialeMockKontrollsaker = [
     status: "OPPRETTET",
     kategori: "UTLAND",
     prioritet: "NORMAL",
-    mottakEnhet: "Seksjon C",
+    mottakEnhet: "Vest",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -388,7 +388,7 @@ const initialeMockKontrollsaker = [
     status: "OPPRETTET",
     kategori: "TILTAK",
     prioritet: "NORMAL",
-    mottakEnhet: "Seksjon D",
+    mottakEnhet: "Analyse",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -419,7 +419,7 @@ const initialeMockKontrollsaker = [
     status: "AVKLART",
     kategori: "IDENTITET",
     prioritet: "NORMAL",
-    mottakEnhet: "Seksjon A",
+    mottakEnhet: "Nord",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -450,7 +450,7 @@ const initialeMockKontrollsaker = [
     status: "UTREDES",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Seksjon A",
+    mottakEnhet: "Nord",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -480,7 +480,7 @@ const initialeMockKontrollsaker = [
     status: "AVSLUTTET",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Seksjon B",
+    mottakEnhet: "Øst",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {

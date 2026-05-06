@@ -11,7 +11,7 @@ export const mockMineSakerInnloggetNavIdent = "Z999999";
 const innloggetEier = {
   navIdent: mockMineSakerInnloggetNavIdent,
   navn: "Saks Behandlersen",
-  enhet: "Seksjon A",
+  enhet: "Nord",
 };
 
 const initialeMockMineKontrollsaker = [
@@ -24,7 +24,7 @@ const initialeMockMineKontrollsaker = [
     status: "UTREDES",
     kategori: "ARBEID",
     prioritet: "NORMAL",
-    mottakEnhet: "Seksjon A",
+    mottakEnhet: "Nord",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -56,7 +56,7 @@ const initialeMockMineKontrollsaker = [
     status: "AVKLART",
     kategori: "ARBEID",
     prioritet: "NORMAL",
-    mottakEnhet: "Seksjon B",
+    mottakEnhet: "Øst",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -89,12 +89,12 @@ const initialeMockMineKontrollsaker = [
       eier: {
         navIdent: "Z123456",
         navn: "Kari Nordmann",
-        enhet: "Seksjon A",
+        enhet: "Nord",
       },
       deltMed: [
         {
           navn: "Kari Nordmann",
-          enhet: "Seksjon A",
+          enhet: "Nord",
           navIdent: "Z123456",
         },
       ],
@@ -142,7 +142,7 @@ const initialeMockMineKontrollsaker = [
     status: "OPPRETTET",
     kategori: "ARBEID",
     prioritet: "NORMAL",
-    mottakEnhet: "Seksjon C",
+    mottakEnhet: "Vest",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -186,7 +186,7 @@ const initialeMockMineKontrollsaker = [
     status: "AVKLART",
     kategori: "ARBEID",
     prioritet: "NORMAL",
-    mottakEnhet: "Seksjon B",
+    mottakEnhet: "Øst",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -218,7 +218,7 @@ const initialeMockMineKontrollsaker = [
     status: "VENTER_PA_VEDTAK",
     kategori: "ARBEID",
     prioritet: "NORMAL",
-    mottakEnhet: "Seksjon A",
+    mottakEnhet: "Nord",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -250,7 +250,7 @@ const initialeMockMineKontrollsaker = [
     status: "HENLAGT",
     kategori: "DOKUMENTFALSK",
     prioritet: "NORMAL",
-    mottakEnhet: "Seksjon C",
+    mottakEnhet: "Vest",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -281,7 +281,7 @@ const initialeMockMineKontrollsaker = [
     status: "UTREDES",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Seksjon A",
+    mottakEnhet: "Nord",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -312,7 +312,7 @@ const initialeMockMineKontrollsaker = [
     status: "AVSLUTTET",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Seksjon B",
+    mottakEnhet: "Øst",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -349,7 +349,7 @@ const initialeMockMineKontrollsaker = [
     status: "HENLAGT",
     kategori: "IDENTITET",
     prioritet: "NORMAL",
-    mottakEnhet: "Seksjon D",
+    mottakEnhet: "Analyse",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
