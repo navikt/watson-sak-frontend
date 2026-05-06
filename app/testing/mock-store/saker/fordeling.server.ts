@@ -5,6 +5,7 @@ import {
   normaliserLegacyKontrollsak,
   oppdaterTilgjengeligeHandlinger,
 } from "~/saker/mock-uuid";
+import { berikLegacySakMedPerson } from "~/testing/mock-store/personer.server";
 
 type NyMockFordelingssak = {
   personIdent: string;
@@ -504,7 +505,7 @@ const initialeMockKontrollsaker = [
 
 function lagMockKontrollsaker() {
   return initialeMockKontrollsaker.map((sak) =>
-    kontrollsakResponseSchema.parse(normaliserLegacyKontrollsak(sak, 1)),
+    kontrollsakResponseSchema.parse(normaliserLegacyKontrollsak(berikLegacySakMedPerson(sak), 1)),
   );
 }
 

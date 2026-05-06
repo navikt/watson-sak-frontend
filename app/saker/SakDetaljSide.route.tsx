@@ -25,6 +25,7 @@ import {
   useFetcher,
   useLoaderData,
   useNavigate,
+  useRevalidator,
 } from "react-router";
 import { mockYtelser } from "~/fordeling/mock-data.server";
 import { Kort } from "~/komponenter/Kort";
@@ -566,6 +567,7 @@ export default function SakDetaljSide() {
     useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const fetcher = useFetcher<typeof action>();
+  const revalidator = useRevalidator();
   const personIdent = getPersonIdent(sak);
   const statusTekst = getStatus(sak);
   const kildeTekst = getKildeText(sak);
@@ -604,6 +606,7 @@ export default function SakDetaljSide() {
     if (fetcher.data?.ok) {
       setVisFeil(false);
       setRedigerer(false);
+      void revalidator.revalidate();
       return;
     }
 
@@ -613,7 +616,7 @@ export default function SakDetaljSide() {
         setLokaleVerdier(fetcher.data.verdier);
       }
     }
-  }, [fetcher.data]);
+  }, [fetcher.data, revalidator]);
 
   useEffect(() => {
     if (blocker.state !== "blocked") {

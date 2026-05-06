@@ -1,5 +1,6 @@
 import { kontrollsakResponseSchema, type KontrollsakResponse } from "~/saker/types.backend";
-import { lagMockSakUuid, normaliserLegacyKontrollsak } from "~/saker/mock-uuid";
+import { normaliserLegacyKontrollsak } from "~/saker/mock-uuid";
+import { berikLegacySakMedPerson } from "~/testing/mock-store/personer.server";
 
 /** Avslutningsdatoer for avsluttede/henlagte saker (sakId → ISO-dato) */
 export type Avslutningsdatoer = Record<string, string>;
@@ -986,22 +987,8 @@ const initialeMockStatistikkSaker = [
 
 function lagMockStatistikkSaker() {
   return initialeMockStatistikkSaker.map((sak) =>
-    kontrollsakResponseSchema.parse(normaliserLegacyKontrollsak(sak, 3)),
+    kontrollsakResponseSchema.parse(normaliserLegacyKontrollsak(berikLegacySakMedPerson(sak), 3)),
   );
 }
 
 export const mockStatistikkSaker: KontrollsakResponse[] = lagMockStatistikkSaker();
-
-export const mockAvslutningsdatoer: Avslutningsdatoer = {
-  [lagMockSakUuid("S-401", 3)]: "2025-08-20",
-  [lagMockSakUuid("S-402", 3)]: "2025-08-15",
-  [lagMockSakUuid("S-403", 3)]: "2025-09-18",
-  [lagMockSakUuid("S-404", 3)]: "2025-12-10",
-  [lagMockSakUuid("S-405", 3)]: "2025-10-28",
-  [lagMockSakUuid("S-406", 3)]: "2025-10-18",
-  [lagMockSakUuid("S-407", 3)]: "2025-12-20",
-  [lagMockSakUuid("S-408", 3)]: "2025-12-22",
-  [lagMockSakUuid("S-501", 3)]: "2025-08-15",
-  [lagMockSakUuid("S-502", 3)]: "2025-10-01",
-  [lagMockSakUuid("S-503", 3)]: "2025-11-05",
-};

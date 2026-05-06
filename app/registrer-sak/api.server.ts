@@ -6,8 +6,7 @@ import type {
   KontrollsakKilde,
   KontrollsakMisbrukstype,
 } from "~/saker/types.backend";
-import { leggTilMockSak } from "./person-oppslag.mock.server";
-import { leggTilMockSakIFordeling } from "~/testing/mock-store/saker/fordeling.server";
+import { leggTilMockSakIFordeling } from "~/saker/mock-alle-saker.server";
 
 export type OpprettKontrollsakRequest = {
   personIdent: string;
@@ -80,10 +79,6 @@ export async function opprettKontrollsak({
   payload,
 }: OpprettKontrollsakArgs): Promise<OpprettKontrollsakResultat> {
   if (skalBrukeMockdata) {
-    const saksbehandler = payload.saksbehandlere?.deltMed?.[0]?.navIdent ?? "Ukjent";
-    const enhet = payload.saksbehandlere?.deltMed?.[0]?.enhet ?? "Ukjent";
-    leggTilMockSak(payload.personIdent, saksbehandler, enhet);
-
     if (
       !erGyldigKategori(payload.kategori) ||
       !erGyldigKilde(payload.kilde) ||

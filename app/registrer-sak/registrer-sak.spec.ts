@@ -25,7 +25,9 @@ test.describe("Opprett sak", () => {
     await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("12345678901");
     await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
 
-    await expect(page.getByText("Ola Testesen")).toBeVisible();
+    await expect(
+      page.getByLabel("Personinformasjon").getByText("Ola Testesen", { exact: true }),
+    ).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "Grunnleggende saksinformasjon" }),
     ).toBeVisible();

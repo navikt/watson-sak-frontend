@@ -4,6 +4,7 @@ import {
   normaliserLegacyKontrollsak,
   nullstillMockStatushistorikk,
 } from "~/saker/mock-uuid";
+import { berikLegacySakMedPerson } from "~/testing/mock-store/personer.server";
 
 export const mockMineSakerInnloggetNavIdent = "Z999999";
 
@@ -375,7 +376,7 @@ const initialeMockMineKontrollsaker = [
 
 function lagMockMineKontrollsaker() {
   return initialeMockMineKontrollsaker.map((sak) =>
-    kontrollsakResponseSchema.parse(normaliserLegacyKontrollsak(sak, 2)),
+    kontrollsakResponseSchema.parse(normaliserLegacyKontrollsak(berikLegacySakMedPerson(sak), 2)),
   );
 }
 

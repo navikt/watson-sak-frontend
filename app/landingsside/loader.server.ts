@@ -1,18 +1,15 @@
 import {
-  mockMineKontrollsaker,
-  mockMineSakerInnloggetNavIdent,
   mockMineSakerAvslutningsdatoer,
   mockMineSakerTidligereTipsSakIder,
 } from "~/mine-saker/mock-data.server";
+import { hentMineSaker } from "~/saker/mock-alle-saker.server";
 import { getOpprettetDato } from "~/saker/selectors";
 import { hentUlesteVarsler } from "~/varsler/mock-data.server";
 import { beregnDineSakerSiste14Dager } from "./beregninger";
 import { lagVelkomstOppsummering } from "./velkomst";
 
 export function loader() {
-  const mineSakerHosInnloggetBruker = mockMineKontrollsaker.filter(
-    (sak) => sak.saksbehandlere.eier?.navIdent === mockMineSakerInnloggetNavIdent,
-  );
+  const mineSakerHosInnloggetBruker = hentMineSaker();
 
   const aktiveMineSaker = mineSakerHosInnloggetBruker.filter(
     (sak) => sak.status !== "ANMELDT" && sak.status !== "HENLAGT" && sak.status !== "AVSLUTTET",

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { resetMockStore } from "~/testing/mock-store/reset.server";
 import { søkSaker } from "~/søk/søk.server";
 import { mockKontrollsaker } from "~/fordeling/mock-data.server";
-import { leggTilMockSakIFordeling } from "~/testing/mock-store/saker/fordeling.server";
+import { leggTilMockSakIFordeling } from "~/saker/mock-alle-saker.server";
 
 vi.mock("~/config/env.server", () => ({
   BACKEND_API_URL: "https://backend.test",
