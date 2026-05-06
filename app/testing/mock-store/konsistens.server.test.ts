@@ -42,7 +42,7 @@ describe("mock-store konsistens", () => {
     fordelingssak.saksbehandlere.eier = {
       navIdent: "Z999999",
       navn: "Saks Behandlersen",
-      enhet: "Seksjon A",
+      enhet: "Nord",
     };
 
     expect(hentMineSaker()).toContain(fordelingssak);

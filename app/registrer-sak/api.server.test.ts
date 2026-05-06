@@ -157,7 +157,7 @@ describe("opprettKontrollsak", () => {
         eier: {
           navIdent: "Z999999",
           navn: "Saks Behandlersen",
-          enhet: "Seksjon A",
+          enhet: "Nord",
         },
         deltMed: [],
       },

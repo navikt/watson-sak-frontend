@@ -48,7 +48,7 @@ describe("SakDetaljSide action", () => {
     expect(kontrollsak.saksbehandlere?.deltMed).toEqual([
       {
         navn: "Kari Nordmann",
-        enhet: "Seksjon A",
+        enhet: "Nord",
         navIdent: "Z123456",
       },
     ]);
@@ -65,12 +65,12 @@ describe("SakDetaljSide action", () => {
     expect(kontrollsak.saksbehandlere?.deltMed).toEqual([
       {
         navn: "Kari Nordmann",
-        enhet: "Seksjon A",
+        enhet: "Nord",
         navIdent: "Z123456",
       },
       {
         navn: "Ada Larsen",
-        enhet: "Seksjon B",
+        enhet: "Øst",
         navIdent: "Z234567",
       },
     ]);
@@ -90,7 +90,7 @@ describe("SakDetaljSide action", () => {
     expect(kontrollsak.saksbehandlere?.deltMed).toEqual([
       {
         navn: "Ada Larsen",
-        enhet: "Seksjon B",
+        enhet: "Øst",
         navIdent: "Z234567",
       },
     ]);
@@ -120,7 +120,7 @@ describe("SakDetaljSide action", () => {
     expect(kontrollsak.saksbehandlere?.deltMed).toEqual([
       {
         navn: "Ada Larsen",
-        enhet: "Seksjon B",
+        enhet: "Øst",
         navIdent: "Z234567",
       },
     ]);
@@ -282,7 +282,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     kontrollsak.saksbehandlere.opprettetAv = {
       navn: "Tidligere Saksbehandler",
       navIdent: "Z999999",
-      enhet: "Seksjon A",
+      enhet: "Nord",
     };
 
     expect(kontrollsak.status).toBe("OPPRETTET");
@@ -303,7 +303,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(kontrollsak.saksbehandlere.eier).toEqual({
       navn: "Kari Nordmann",
       navIdent: "Z123456",
-      enhet: "Seksjon A",
+      enhet: "Nord",
     });
   });
 
@@ -329,7 +329,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(kontrollsak.saksbehandlere.eier).toEqual({
       navn: "Saks Behandlersen",
       navIdent: "Z999999",
-      enhet: "Seksjon A",
+      enhet: "Nord",
     });
   });
 
@@ -342,15 +342,15 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     kontrollsak.saksbehandlere.opprettetAv = {
       navn: "Tidligere Saksbehandler",
       navIdent: "Z999999",
-      enhet: "Seksjon A",
+      enhet: "Nord",
     };
 
     expect(kontrollsak.saksbehandlere.eier).toBeNull();
-    expect(kontrollsak.saksbehandlere.opprettetAv.enhet).toBe("Seksjon A");
+    expect(kontrollsak.saksbehandlere.opprettetAv.enhet).toBe("Nord");
 
     const formData = new FormData();
     formData.set("handling", "videresend_seksjon");
-    formData.set("seksjon", "Seksjon B");
+    formData.set("seksjon", "Øst");
 
     await action({
       request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
@@ -360,7 +360,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
       params: { sakId: kontrollsakRef },
     } as Route.ActionArgs);
 
-    expect(kontrollsak.saksbehandlere.opprettetAv.enhet).toBe("Seksjon B");
+    expect(kontrollsak.saksbehandlere.opprettetAv.enhet).toBe("Øst");
   });
 
   it("sender sak til annen enhet og fristiller saksbehandler", async () => {
@@ -370,12 +370,12 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     kontrollsak.saksbehandlere.eier = {
       navn: "Tidligere Saksbehandler",
       navIdent: "Z999999",
-      enhet: "Seksjon A",
+      enhet: "Nord",
     };
     kontrollsak.saksbehandlere.opprettetAv = {
       navn: "Kari Oppretter",
       navIdent: "Z654321",
-      enhet: "Seksjon A",
+      enhet: "Nord",
     };
 
     const formData = new FormData();
