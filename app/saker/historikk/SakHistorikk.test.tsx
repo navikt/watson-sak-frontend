@@ -38,6 +38,17 @@ describe("SakHistorikk", () => {
     expect(screen.getByText(/Status: Opprettet/)).toBeDefined();
   });
 
+  it("viser historikktidspunkt i norsk tidssone", () => {
+    renderMedRouter(
+      <SakHistorikk
+        sakId="test-sak-id"
+        hendelser={[lagBackendHendelse({ tidspunkt: "2026-01-01T10:00:00Z" })]}
+      />,
+    );
+
+    expect(screen.getByText(/11:00/)).toBeDefined();
+  });
+
   it("renderer avklaringshendelse med oppdatert status", () => {
     renderMedRouter(
       <SakHistorikk

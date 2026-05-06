@@ -265,6 +265,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     expect(historikk[0]?.hendelsesType).toBe("MANUELL_NOTAT");
     expect(historikk[0]?.tittel).toBe("Ringte bruker");
     expect(historikk[0]?.notat).toBe("Avklarte dokumentasjon og neste steg.");
+    expect(historikk[0]?.tidspunkt).toBe("2026-05-04T10:34:00.000Z");
   });
 
   it("sorterer manuelle historikkinnslag stabilt når de har samme tidspunkt", async () => {

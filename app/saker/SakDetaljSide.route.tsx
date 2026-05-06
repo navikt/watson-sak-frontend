@@ -57,6 +57,7 @@ import {
 import { mockSaksbehandlere, mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import { mockSeksjoner } from "~/saker/mock-seksjoner.server";
 import type { Blokkeringsarsak, KontrollsakSaksbehandler } from "~/saker/types.backend";
+import { lagIsoTidspunktFraNorskDatoTid } from "~/utils/date-utils";
 import type { Route } from "./+types/SakDetaljSide.route";
 import { hentFilerForSak } from "./filer/mock-data.server";
 import { SakFilområde } from "./filer/SakFilområde";
@@ -213,11 +214,7 @@ function hentMisbrukstypeAlternativer(kategori: string): readonly string[] {
 }
 
 function lagTidspunktFraSkjema(dato: string, tid: string): string {
-  if (/^\d{2}\.\d{2}\.\d{4}$/.test(dato)) {
-    const [dag, måned, år] = dato.split(".");
-    return new Date(`${år}-${måned}-${dag}T${tid ?? "00:00"}:00`).toISOString();
-  }
-  return new Date(`${dato}T${tid ?? "00:00"}:00`).toISOString();
+  return lagIsoTidspunktFraNorskDatoTid(dato, tid);
 }
 
 function finnNotatMalLabel(verdi: FormDataEntryValue | null): string | undefined {
