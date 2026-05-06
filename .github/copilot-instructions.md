@@ -23,22 +23,34 @@ Koden er organisert i feature-mapper under `app/`. Hver feature er en selvstendi
 
 ```
 app/
+  admin/             # Interne API-er, f.eks. innlogget bruker
   auth/              # Autentisering (OBO-tokens via @navikt/oasis)
-  layout/            # Root layout, header, footer, ErrorBoundary
-  feature-toggling/  # Unleash feature-flagg
-  sikkerhet/         # Sikkerhetsheadere, CSP, /.well-known
-  tema/              # Lys/mørk modus (cookie-basert)
+  landingsside/      # Forside med loader/action delt i .server.ts
+  fordeling/         # Fordeling av eierløse kontrollsaker
+  saker/             # Saksdetaljer, kontrakter, mockdata og saksrelaterte komponenter
+  registrer-sak/     # Opprettelse av kontrollsak og personoppslag
+  søk/               # Søkeflyt
+  preferanser/       # Cookie-baserte brukerpreferanser
+  layout/            # Root layout, header, footer, ErrorBoundary og innstillinger
+  feature-toggling/  # Unleash feature-flagg og statusmeldinger
+  sikkerhet/         # Sikkerhetsheadere, CSP og /.well-known
+  tema/              # Lys/mørk/system-tema via preferanser og Aksel Theme
   config/            # Miljøvariabler (Zod-validert)
   monitorering/      # Helsesjekk, Faro-observability
   analytics/         # Umami-sporing
+  testing/           # Mock-store og test-API for Playwright
   utils/             # Delte hjelpefunksjoner
 ```
 
 Legg ny funksjonalitet i en ny feature-mappe. Bruk `utils/` kun for genuint tverrgående hjelpefunksjoner.
 
+Route-filer (`*.route.tsx`) bør primært koble React Router til feature-komponenter og eksportere `loader`/`action`. Når serverlogikken blir mer enn triviell, legg den i en tilhørende `.server.ts`-fil og re-eksporter fra route-filen (se `fordeling/` og `landingsside/`).
+
 ### Ruting
 
 Ruter defineres manuelt i `app/routes.ts` med sentraliserte stier i `app/routeConfig.ts`. Bruk alltid `RouteConfig`-konstantene for lenker og rutedefinisjoner.
+
+API-ruter ligger også i `app/routes.ts` og bruker `RouteConfig.API`. Nye API-endepunkter bør være smale React Router `loader`/`action`-moduler som returnerer `data`/`Response`, validerer input eksplisitt og bruker etablerte serverhjelpere.
 
 ### Server/klient-separasjon
 
@@ -54,9 +66,29 @@ Bruk hjelpere i `app/auth/` – aldri rull egen auth-logikk:
 - `hentInnloggetBruker({ request })` – hent brukerinfo server-side
 - `useInnloggetBruker()` – hook for brukerinfo i klientkode
 
+### Backend, kontrakter og mockdata
+
+- Backend-URL og mockmodus styres av `app/config/backend-config.ts` og `app/config/env.server.ts`.
+- `local-mock`, `demo` og `dev` bruker mockdata (`skalBrukeMockdata`). `local-backend` peker mot `http://localhost:8080`, mens `local-dev`/`dev` bruker `WATSON_ADMIN_API_URL` eller dev-URL.
+- Backend-kall skal hente token med `getBackendOboToken(request)`, bruke `BACKEND_API_URL`, sende `Authorization: Bearer ...` og logge med `logger` før de kaster tydelige feil ved `!response.ok`.
+- Valider responskontrakter med Zod-skjemaer i feature-nære filer, særlig `app/saker/types.backend.ts`. Bruk `z.infer` for typer i stedet for dupliserte TypeScript-typer der det er praktisk.
+- Mockdata som påvirker saksflyt ligger hovedsakelig i `app/saker/*mock*.server.ts` og `app/testing/mock-store/`. Husk å oppdatere reset-logikk når du legger til ny muterbar mocktilstand.
+
+### Preferanser og tema
+
+Bruk `app/preferanser/PreferencesCookie.ts` og `PreferencesContext` for brukerpreferanser. Preferanser lagres i en httpOnly `preferences`-cookie med `sidebarKollapset`, `tema` (`light`/`dark`/`system`) og `visVelkomstmelding`. Ikke lag egne cookies/localStorage for tilsvarende innstillinger.
+
 ### Miljøvariabler
 
 Valideres med Zod i `app/config/env.server.ts`. Legg til nye variabler i Zod-skjemaet og `.env.example`.
+
+## Testing
+
+- Vitest-testene ligger ved siden av koden som `.test.ts(x)` og bruker norsk testbeskrivelse.
+- Playwright-testene ligger under `app/` som `.spec.ts(x)` og kjører mot dev-server på port 5174 med `playwright.backend.mock.cjs`.
+- Copilot kan ikke kjøre E2E-testene selv. Be utvikleren kjøre `npm run test:e2e` eller relevant `npx playwright test ...` og rapportere resultatet.
+- E2E-tester kan resette mockdata via `RouteConfig.API.RESET_MOCK_DATA` (`/api/reset-mock-data`). Bruk dette når tester muterer felles mock-store.
+- Test serverfunksjoner direkte ved å kalle `loader`/`action` med minimale `Request`-/args-objekter, slik eksisterende route- og API-tester gjør.
 
 ## Konvensjoner
 
