@@ -1,6 +1,5 @@
 import { redirect } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
-import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
 import { mockYtelser } from "~/fordeling/mock-data.server";
 import { RouteConfig } from "~/routeConfig";
@@ -121,7 +120,6 @@ export async function action({ request }: Route.ActionArgs) {
     return { feil: bygFeilkartFraIssues(resultat.error.issues), verdier };
   }
 
-  const innloggetBruker = await hentInnloggetBruker({ request });
   const data = resultat.data;
   const personOppslag = slaOppPerson(data.personIdent);
   const personNavn = personOppslag?.person.navn;
@@ -135,11 +133,6 @@ export async function action({ request }: Route.ActionArgs) {
     payload: byggOpprettKontrollsakPayload({
       skjema: data,
       personNavn,
-      eier: {
-        navIdent: innloggetBruker.navIdent,
-        navn: innloggetBruker.name,
-        enhet: data.enhet || undefined,
-      },
     }),
   });
 

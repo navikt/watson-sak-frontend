@@ -5,20 +5,10 @@ const testState = vi.hoisted(() => ({
   skalBrukeMockdata: true,
 }));
 
-const hentInnloggetBrukerMock = vi.fn().mockResolvedValue({
-  navIdent: "Z123456",
-  name: "Test Saksbehandler",
-  organisasjoner: "4812, 9999",
-});
-
 const getBackendOboTokenMock = vi.fn().mockResolvedValue("token-123");
 
 vi.mock("./api.server", () => ({
   opprettKontrollsak: vi.fn().mockResolvedValue({ id: "00000000-0000-4000-8000-000000301000" }),
-}));
-
-vi.mock("~/auth/innlogget-bruker.server", () => ({
-  hentInnloggetBruker: hentInnloggetBrukerMock,
 }));
 
 vi.mock("~/auth/access-token", () => ({
@@ -61,11 +51,6 @@ describe("OpprettSakSide action", () => {
   afterEach(() => {
     vi.clearAllMocks();
     testState.skalBrukeMockdata = true;
-    hentInnloggetBrukerMock.mockResolvedValue({
-      navIdent: "Z123456",
-      name: "Test Saksbehandler",
-      organisasjoner: "4812, 9999",
-    });
     getBackendOboTokenMock.mockResolvedValue("token-123");
   });
 
@@ -90,11 +75,7 @@ describe("OpprettSakSide action", () => {
         personIdent: "12345678901",
         personNavn: "Ola Testesen",
         saksbehandlere: {
-          eier: {
-            navIdent: "Z123456",
-            navn: "Test Saksbehandler",
-            enhet: undefined,
-          },
+          eier: null,
           deltMed: [],
         },
         kategori: "DOKUMENTFALSK",
