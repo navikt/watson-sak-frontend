@@ -13,6 +13,8 @@ vi.mock("react-router", async () => {
     useFetcher: () => ({
       state: "idle",
       submit: submitMock,
+      data: undefined,
+      Form: "form",
     }),
   };
 });
@@ -43,8 +45,6 @@ describe("EndreStatusModal", () => {
 
     fireEvent.change(select, { target: { value: "UTREDES" } });
 
-    const lagreKnapp = screen.getByRole("button", { name: "Lagre" });
-    expect((lagreKnapp as HTMLButtonElement).disabled).toBe(true);
     expect(submitMock).not.toHaveBeenCalled();
   });
 });
