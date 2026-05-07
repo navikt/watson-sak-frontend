@@ -22,8 +22,9 @@ import { BehandlingstidVisning } from "./komponenter/BehandlingstidVisning";
 import { HorisontaltSoylediagram } from "./komponenter/HorisontaltSoylediagram";
 import { Nokkeltallkort } from "./komponenter/Nokkeltallkort";
 import { VertikaltSoylediagram } from "./komponenter/VertikaltSoylediagram";
+import type { Route } from "./+types/StatistikkSide.route";
 
-export function loader({ request }: { request: Request }) {
+export function loader({ request }: Route.LoaderArgs) {
   const saker = hentAlleSaker(request);
 
   return {

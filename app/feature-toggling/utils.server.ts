@@ -21,6 +21,9 @@ function initialiserUnleash(): Promise<Unleash> {
     customHeaders: {
       Authorization: env.UNLEASH_SERVER_API_TOKEN,
     },
+  }).catch((error) => {
+    unleashPromise = undefined;
+    throw error;
   });
   return unleashPromise;
 }

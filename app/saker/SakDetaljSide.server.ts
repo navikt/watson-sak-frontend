@@ -333,14 +333,14 @@ export async function action({ request, params }: Route.ActionArgs) {
         } satisfies ActionResult;
       }
 
-      const data = resultat.data;
+      const validert = resultat.data;
       const eksisterendeYtelser = sak.ytelser;
 
-      sak.kategori = data.kategori;
-      sak.misbruktype = [...data.misbruktype];
-      sak.merking = data.merking[0] ?? null;
-      sak.kilde = data.kilde;
-      sak.ytelser = data.ytelser.map((ytelse, indeks) => ({
+      sak.kategori = validert.kategori;
+      sak.misbruktype = [...validert.misbruktype];
+      sak.merking = validert.merking[0] ?? null;
+      sak.kilde = validert.kilde;
+      sak.ytelser = validert.ytelser.map((ytelse, indeks) => ({
         id: eksisterendeYtelser[indeks]?.id ?? crypto.randomUUID(),
         type: ytelse.type ?? "",
         periodeFra: ytelse.fraDato ?? "",

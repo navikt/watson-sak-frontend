@@ -22,7 +22,7 @@ export default defineConfig({
   /* Deaktiver parallelle tester på CI. */
   workers: process.env.CI ? 1 : undefined,
 
-  /* Testtimeout inkluderer ventetid på mockdata-lås, så vi setter den høyere enn standard */
+  /* Testtimeout satt høyere enn standard for å gi rom til cookie-isolerte mock-sesjoner */
   timeout: 60_000,
 
   /* Reporter å bruke. Se https://playwright.dev/docs/test-reporters */
