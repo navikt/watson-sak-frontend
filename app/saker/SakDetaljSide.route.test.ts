@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mockKontrollsaker } from "~/fordeling/mock-data.server";
 import { resetMockSaker } from "~/fordeling/mock-data.server";
 import { resetMockMineSaker } from "~/mine-saker/mock-data.server";
@@ -9,6 +9,10 @@ import type { Route } from "./+types/SakDetaljSide.route";
 import { hentHistorikk, resetHistorikk } from "./historikk/mock-data.server";
 import { hentAlleSaker } from "./mock-alle-saker.server";
 import { action, loader } from "./SakDetaljSide.server";
+
+vi.mock("~/config/env.server", () => ({
+  skalBrukeMockdata: true,
+}));
 
 describe("SakDetaljSide action", () => {
   const utredningSakId = lagMockSakUuid("113", 1);

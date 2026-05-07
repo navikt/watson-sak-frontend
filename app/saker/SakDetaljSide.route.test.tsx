@@ -1,8 +1,12 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach, vi } from "vitest";
 import type { KontrollsakResponse } from "./types.backend";
 import { action } from "./SakDetaljSide.server";
 import { hentHistorikk, resetHistorikk } from "./historikk/mock-data.server";
 import { hentAlleSaker } from "./mock-alle-saker.server";
+
+vi.mock("~/config/env.server", () => ({
+  skalBrukeMockdata: true,
+}));
 
 function lagFormData(felter: Record<string, string>): FormData {
   const formData = new FormData();

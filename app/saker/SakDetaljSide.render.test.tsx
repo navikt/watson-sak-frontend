@@ -6,6 +6,10 @@ import { resetMockMineSaker } from "~/mine-saker/mock-data.server";
 import { resetHistorikk } from "./historikk/mock-data.server";
 import SakDetaljSide, { loader } from "./SakDetaljSide.route";
 
+vi.mock("~/config/env.server", () => ({
+  skalBrukeMockdata: true,
+}));
+
 vi.mock("~/auth/innlogget-bruker", () => ({
   useInnloggetBruker: () => ({
     navIdent: "Z999999",

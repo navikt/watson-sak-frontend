@@ -133,7 +133,31 @@ function lagRedigeringsdata(
 }
 
 function erLikeRedigeringsdata(a: RedigerSaksinformasjonData, b: RedigerSaksinformasjonData) {
-  return JSON.stringify(a) === JSON.stringify(b);
+  return (
+    a.kategori === b.kategori &&
+    a.kilde === b.kilde &&
+    erLikeStringArrays(a.misbruktype, b.misbruktype) &&
+    erLikeStringArrays(a.merking, b.merking) &&
+    erLikeYtelser(a.ytelser, b.ytelser)
+  );
+}
+
+function erLikeStringArrays(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  const sortA = [...a].sort();
+  const sortB = [...b].sort();
+  return sortA.every((val, i) => val === sortB[i]);
+}
+
+function erLikeYtelser(a: YtelseRadVerdier[], b: YtelseRadVerdier[]): boolean {
+  if (a.length !== b.length) return false;
+  return a.every(
+    (rad, i) =>
+      rad.type === b[i].type &&
+      rad.fraDato === b[i].fraDato &&
+      rad.tilDato === b[i].tilDato &&
+      rad.beløp === b[i].beløp,
+  );
 }
 
 function hentMisbrukstypeAlternativer(kategori: string): readonly string[] {

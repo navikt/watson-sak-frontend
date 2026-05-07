@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
+import { skalBrukeMockdata } from "~/config/env.server";
 import {
   mockMineSakerAvslutningsdatoer,
   mockMineSakerTidligereTipsSakIder,
@@ -12,6 +13,12 @@ import { lagVelkomstOppsummering } from "./velkomst";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const innloggetBruker = await hentInnloggetBruker({ request });
+
+  if (!skalBrukeMockdata) {
+    // TODO: Implementer backend-kall for landingsside
+    throw new Response("Landingsside er ikke tilgjengelig uten mockdata", { status: 501 });
+  }
+
   const mineSakerHosInnloggetBruker = hentMineSaker(innloggetBruker.navIdent);
 
   const aktiveMineSaker = mineSakerHosInnloggetBruker.filter(

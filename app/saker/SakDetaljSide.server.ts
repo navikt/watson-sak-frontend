@@ -1,5 +1,6 @@
 import { data } from "react-router";
 import { mockYtelser } from "~/fordeling/mock-data.server";
+import { skalBrukeMockdata } from "~/config/env.server";
 import { enhetAlternativer, redigerSaksinformasjonSchema } from "~/registrer-sak/validering";
 import {
   bygFeilkartFraIssues,
@@ -11,6 +12,7 @@ import { mockSaksbehandlere, mockSaksbehandlerDetaljer } from "~/saker/mock-saks
 import { mockSeksjoner } from "~/saker/mock-seksjoner.server";
 import type { Blokkeringsarsak, KontrollsakSaksbehandler } from "~/saker/types.backend";
 import { lagIsoTidspunktFraNorskDatoTid } from "~/utils/date-utils";
+import { hentTekstfelt, hentValgfriTekst } from "~/utils/form-data";
 import { hentFilerForSak } from "./filer/mock-data.server";
 import { notatMalValg } from "./handlinger/notatValg";
 import { erAktivSakKontrollsak } from "./handlinger/tilgjengeligeHandlinger";
@@ -93,16 +95,6 @@ function finnSaksbehandlerDetalj(
   );
 }
 
-function hentTekstfelt(formData: FormData, felt: string, feilmelding: string) {
-  const verdi = formData.get(felt);
-
-  if (typeof verdi !== "string" || verdi.trim().length === 0) {
-    throw data(feilmelding, { status: 400 });
-  }
-
-  return verdi;
-}
-
 function lagTidspunktFraSkjema(dato: string, tid: string): string {
   return lagIsoTidspunktFraNorskDatoTid(dato, tid);
 }
@@ -115,6 +107,11 @@ function finnNotatMalLabel(verdi: FormDataEntryValue | null): string | undefined
 // --- Loader ---
 
 export function loader({ params }: Route.LoaderArgs) {
+  if (!skalBrukeMockdata) {
+    // TODO: Implementer backend-kall for sakdetalj
+    throw new Response("Sakdetalj er ikke tilgjengelig uten mockdata", { status: 501 });
+  }
+
   const alleSaker = hentAlleSaker();
   const sak = finnSakMedReferanse(alleSaker, params.sakId);
   if (!sak) {
@@ -140,8 +137,13 @@ export function loader({ params }: Route.LoaderArgs) {
 // --- Action ---
 
 export async function action({ request, params }: Route.ActionArgs) {
+  if (!skalBrukeMockdata) {
+    // TODO: Implementer backend-kall for sakdetalj-handlinger
+    throw new Response("Sakdetalj-handlinger er ikke tilgjengelig uten mockdata", { status: 501 });
+  }
+
   const formData = await request.formData();
-  const handling = formData.get("handling") as string;
+  const handling = hentTekstfelt(formData, "handling", "Ugyldig handling");
   const sakId = params.sakId;
 
   const sak = finnSakMedReferanse(hentAlleSaker(), sakId);
@@ -161,7 +163,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   switch (handling) {
     case "TILDEL": {
       const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
-      const navn = (formData.get("navn") as string | null) ?? navIdent;
+      const navn = hentValgfriTekst(formData, "navn") ?? navIdent;
       const valgtSaksbehandler = finnSaksbehandlerDetalj(mockSaksbehandlerDetaljer, navIdent) ?? {
         navIdent,
         navn,
@@ -177,7 +179,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       break;
     }
     case "endre_status": {
-      const nyStatus = formData.get("status") as string;
+      const nyStatus = hentTekstfelt(formData, "status", "Ugyldig status");
 
       if (!erGyldigStatus(nyStatus)) {
         throw data("Ugyldig status", { status: 400 });
@@ -187,7 +189,7 @@ export async function action({ request, params }: Route.ActionArgs) {
         throw data("Status er uendret", { status: 400 });
       }
 
-      const beskrivelse = (formData.get("beskrivelse") as string | null) || undefined;
+      const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
       const forrigeBlokkering = sak.blokkert;
 
       sak.status = nyStatus;
@@ -201,13 +203,13 @@ export async function action({ request, params }: Route.ActionArgs) {
       break;
     }
     case "endre_blokkering": {
-      const blokkert = formData.get("blokkert") as string;
+      const blokkert = hentTekstfelt(formData, "blokkert", "Ugyldig blokkeringsårsak");
 
       if (!erGyldigBlokkeringsarsak(blokkert)) {
         throw data("Ugyldig blokkeringsårsak", { status: 400 });
       }
 
-      const beskrivelse = (formData.get("beskrivelse") as string | null) || undefined;
+      const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
 
       sak.blokkert = blokkert;
       leggTilHendelse(sak, getHendelsestypeForBlokkering(blokkert), undefined, {
@@ -229,7 +231,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       break;
     }
     case "overfor_ansvarlig": {
-      const navIdent = formData.get("navIdent") as string;
+      const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
       const valgtSaksbehandler = finnSaksbehandlerDetalj(mockSaksbehandlerDetaljer, navIdent);
 
       if (!valgtSaksbehandler) {
@@ -252,7 +254,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       break;
     }
     case "videresend_seksjon": {
-      const nySeksjon = formData.get("seksjon") as string;
+      const nySeksjon = hentTekstfelt(formData, "seksjon", "Ugyldig seksjon");
 
       if (sak.saksbehandlere.eier) {
         sak.saksbehandlere.eier = {
@@ -355,7 +357,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       } satisfies ActionResult;
     }
     case "del_tilgang": {
-      const navIdent = formData.get("navIdent") as string;
+      const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
       const valgtSaksbehandler = finnSaksbehandlerDetalj(mockSaksbehandlerDetaljer, navIdent);
 
       if (!valgtSaksbehandler) {
@@ -382,7 +384,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       break;
     }
     case "fjern_delt_tilgang": {
-      const navIdent = formData.get("navIdent") as string;
+      const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
       const saksbehandler = saksbehandlere.deltMed.find(
         (deltSaksbehandler) => deltSaksbehandler.navIdent === navIdent,
       );
@@ -405,17 +407,13 @@ export async function action({ request, params }: Route.ActionArgs) {
       break;
     }
     case "legg_til_historikk": {
-      const tittel = formData.get("tittel") as string;
-      const notat = formData.get("notat") as string;
-      const dato = formData.get("dato") as string;
-      const tid = formData.get("tid") as string;
-
-      if (!tittel) {
-        throw data("Tittel er påkrevd", { status: 400 });
-      }
+      const tittel = hentTekstfelt(formData, "tittel", "Tittel er påkrevd");
+      const notat = hentValgfriTekst(formData, "notat") ?? "";
+      const dato = hentTekstfelt(formData, "dato", "Dato er påkrevd");
+      const tid = hentTekstfelt(formData, "tid", "Tid er påkrevd");
 
       const tidspunkt = lagTidspunktFraSkjema(dato, tid);
-      leggTilManuellHendelse(sak, tittel, notat ?? "", tidspunkt);
+      leggTilManuellHendelse(sak, tittel, notat, tidspunkt);
       break;
     }
     case "send_notat": {
@@ -426,7 +424,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       const notat = notatRaw.trim();
       const malLabel = finnNotatMalLabel(formData.get("mal"));
       const knyttTilOppgave = formData.get("knyttTilOppgave") === "true";
-      const oppgavetype = (formData.get("oppgavetype") as string | null) ?? "";
+      const oppgavetype = hentValgfriTekst(formData, "oppgavetype") ?? "";
 
       const deler = [notat];
       if (malLabel) {
