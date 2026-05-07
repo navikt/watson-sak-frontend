@@ -1,14 +1,16 @@
 import { z } from "zod";
-import { hentBackendApiUrl, skalBrukeMockdataForMiljø, type Miljø } from "~/config/backend-config";
+import {
+  hentBackendApiUrl,
+  miljøVerdier,
+  skalBrukeMockdataForMiljø,
+} from "~/config/backend-config";
 import { logger } from "~/logging/logging";
 
 const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "test", "production"])
     .describe("The mode the app is running in"),
-  ENVIRONMENT: z
-    .enum(["local-backend", "local-dev", "local-mock", "demo", "dev", "prod"])
-    .describe("The environment the app is running in"),
+  ENVIRONMENT: z.enum(miljøVerdier).describe("The environment the app is running in"),
   CLUSTER: z.string().describe("The cluster the app is running in"),
   FARO_URL: z.string().describe("The URL of the Faro instance"),
   UMAMI_SITE_ID: z.string().describe("The ID of the Umami instance"),
@@ -53,12 +55,9 @@ if (!envResult.success) {
 
 export const env = envResult.data;
 
-export const BACKEND_API_URL = hentBackendApiUrl(
-  env.ENVIRONMENT as Miljø,
-  env.WATSON_ADMIN_API_URL,
-);
+export const BACKEND_API_URL = hentBackendApiUrl(env.ENVIRONMENT, env.WATSON_ADMIN_API_URL);
 
 export const isProd = env.NODE_ENV === "production";
 export const isDev = env.NODE_ENV === "development";
 
-export const skalBrukeMockdata = skalBrukeMockdataForMiljø(env.ENVIRONMENT as Miljø);
+export const skalBrukeMockdata = skalBrukeMockdataForMiljø(env.ENVIRONMENT);

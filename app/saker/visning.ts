@@ -7,7 +7,11 @@ import type {
   KontrollsakStatus,
   KontrollsakYtelse,
 } from "./types.backend";
-import { kontrollsakKategoriEtiketter, kontrollsakMisbrukstypeEtiketter } from "./kategorier";
+import {
+  kontrollsakKategoriEtiketter,
+  kontrollsakKildeEtiketter,
+  kontrollsakMisbrukstypeEtiketter,
+} from "./kategorier";
 
 export type { KontrollsakStatus };
 
@@ -37,22 +41,6 @@ const blokkeringsarsakEtiketter: Record<Blokkeringsarsak, string> = {
   I_BERO: "I bero",
 };
 
-const kildeEtiketter: Record<KontrollsakKilde, string> = {
-  PUBLIKUM: "Publikum",
-  NAV_KONTROLL: "Nav kontroll",
-  NAV_OVRIG: "Nav øvrig",
-  REGISTERSAMKJORING: "Registersamkjøring",
-  A_KRIMSAMARBEID: "A-krimsamarbeid",
-  POLITIET: "Politiet",
-  SKATTEETATEN: "Skatteetaten",
-  UTLENDINGSMYNDIGHETEN: "Utlendingsmyndighetene",
-  UTENRIKSTJENESTEN: "Utenrikstjenesten",
-  STATENS_VEGVESEN: "Statens vegvesen",
-  KOMMUNE: "Kommune",
-  BANK_OG_FINANS: "Bank og finans",
-  ANNET: "Annet",
-};
-
 export function formaterStatus(status: KontrollsakStatus): string {
   return statusEtiketter[status];
 }
@@ -78,7 +66,7 @@ function formaterKilde(kilde: KontrollsakKilde | null | undefined): string {
     return "Ukjent kilde";
   }
 
-  return kildeEtiketter[kilde] ?? kilde;
+  return kontrollsakKildeEtiketter[kilde] ?? kilde;
 }
 
 function hentYtelseTyper(ytelser: KontrollsakYtelse[]): string[] {

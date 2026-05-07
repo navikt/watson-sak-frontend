@@ -8,7 +8,7 @@ import { getBeskrivelse, getKildeText, getPersonIdent, getYtelseTyper } from "~/
 import type { Route } from "./+types/SakDetaljSide.route";
 import { hentHistorikk, resetHistorikk } from "./historikk/mock-data.server";
 import { hentAlleSaker } from "./mock-alle-saker.server";
-import { action, loader } from "./SakDetaljSide.route";
+import { action, loader } from "./SakDetaljSide.server";
 
 describe("SakDetaljSide action", () => {
   const utredningSakId = lagMockSakUuid("113", 1);

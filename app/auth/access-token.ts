@@ -1,7 +1,6 @@
 import { getToken, requestOboToken, validateToken } from "@navikt/oasis";
 import { redirect } from "react-router";
 import { env, isDev } from "~/config/env.server";
-import { logger } from "~/logging/logging";
 
 /**
  * Returnerer et OBO-token for å kalle backend-APIene
@@ -48,24 +47,11 @@ export async function getValidToken(request: Request): Promise<string> {
 
   const token: string | null | undefined = getToken(authHeader);
   if (!token) {
-    if (isDev) {
-      logger.error("Du må sette DEVELOPMENT_OAUTH_TOKEN i .env");
-      throw new Error("Du må sette DEVELOPMENT_OAUTH_TOKEN i .env");
-    }
     throw redirect(`/oauth2/login`);
   }
 
   const validationResult = await validateToken(token);
   if (!validationResult.ok) {
-    if (isDev) {
-      logger.error(
-        "DEVELOPMENT_OAUTH_TOKEN er ikke gyldig. Generer et nytt token og sett det i .env",
-        { error: validationResult.error },
-      );
-      throw new Error(
-        "DEVELOPMENT_OAUTH_TOKEN er ikke gyldig. Generer et nytt token og sett det i .env",
-      );
-    }
     throw redirect(`/oauth2/login`);
   }
 

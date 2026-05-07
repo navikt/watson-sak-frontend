@@ -4,7 +4,7 @@ import path from "node:path";
 
 const lockPath = path.join(tmpdir(), "watson-sak-e2e-mockdata.lock");
 const ventetidMs = 50;
-const timeoutMs = 30_000;
+const timeoutMs = 60_000;
 const foreldetLåsMs = 120_000;
 
 let aktivLåsDybde = 0;

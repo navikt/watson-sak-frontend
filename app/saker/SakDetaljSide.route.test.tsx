@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import type { KontrollsakResponse } from "./types.backend";
-import { action } from "./SakDetaljSide.route";
+import { action } from "./SakDetaljSide.server";
 import { hentHistorikk, resetHistorikk } from "./historikk/mock-data.server";
 import { hentAlleSaker } from "./mock-alle-saker.server";
 

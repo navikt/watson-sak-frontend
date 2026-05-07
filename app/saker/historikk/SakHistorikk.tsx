@@ -17,7 +17,7 @@ import { BodyShort, Box, Button, Heading, HStack, Process, VStack } from "@navik
 import { useState } from "react";
 import { formaterBlokkeringsarsak, formaterStatus } from "~/saker/visning";
 import { NORSK_TIDSSONE } from "~/utils/date-utils";
-import { useDisclosure } from "~/use-disclosure/useDisclosure";
+import { useDisclosure } from "~/utils/useDisclosure";
 import { LeggTilHistorikkModal } from "./LeggTilHistorikkModal";
 import type { SakHendelse } from "./typer";
 

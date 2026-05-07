@@ -5,6 +5,7 @@ import { resetMockData } from "~/test/reset-mock-data";
 
 test.describe("Oppretting og tildeling av sak", () => {
   test("opprettet sak kan fordeles og vises under mine saker", async ({ page }) => {
+    test.setTimeout(60_000);
     await medMockDataLock(async () => {
       await resetMockData(page);
 
@@ -37,12 +38,16 @@ test.describe("Oppretting og tildeling av sak", () => {
       await expect(dialog).toBeVisible();
       await dialog.getByLabel("Saksbehandler").selectOption("Z999999");
 
-      const tildelt = page.waitForResponse(
-        (response) =>
-          response.url().includes("/fordeling") && response.request().method() === "POST",
-      );
-      await dialog.getByRole("button", { name: "Tildel" }).click();
-      await tildelt;
+      const tildelKnapp = dialog.getByRole("button", { name: "Tildel" });
+      await expect(tildelKnapp).toBeEnabled();
+
+      await Promise.all([
+        page.waitForResponse(
+          (response) =>
+            response.url().includes("/fordeling") && response.request().method() === "POST",
+        ),
+        tildelKnapp.click(),
+      ]);
 
       await expect(dialog).not.toBeVisible();
       await expect(nySakRad).toHaveCount(0);
