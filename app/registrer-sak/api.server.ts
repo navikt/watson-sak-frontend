@@ -37,6 +37,7 @@ export type OpprettKontrollsakRequest = {
 };
 
 type OpprettKontrollsakArgs = {
+  request: Request;
   token: string;
   payload: OpprettKontrollsakRequest;
 };
@@ -75,6 +76,7 @@ function erGyldigeMisbrukstyper(verdier: string[]): verdier is KontrollsakMisbru
 }
 
 export async function opprettKontrollsak({
+  request,
   token,
   payload,
 }: OpprettKontrollsakArgs): Promise<OpprettKontrollsakResultat> {
@@ -88,7 +90,7 @@ export async function opprettKontrollsak({
       throw new Error("Ugyldig mock-payload for opprettelse av kontrollsak.");
     }
 
-    const kontrollsak = leggTilMockSakIFordeling({
+    const kontrollsak = leggTilMockSakIFordeling(request, {
       personIdent: payload.personIdent,
       personNavn: payload.personNavn,
       saksbehandlere: payload.saksbehandlere,

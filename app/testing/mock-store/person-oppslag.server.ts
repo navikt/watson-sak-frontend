@@ -3,6 +3,7 @@ import { getSaksenhet } from "~/saker/selectors";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { getStatus } from "~/saker/visning";
 import { hentAlleSaker } from "./alle-saker.server";
+import { hentMockState } from "./session.server";
 import { formaterMockPersonnummer, hentMockPerson, type MockPerson } from "./personer.server";
 
 export type PersonOppslagResultat = {
@@ -62,9 +63,9 @@ function mapEksisterendeSak(sak: KontrollsakResponse): EksisterendeSak {
   };
 }
 
-function hentEksisterendeSaker(personIdent: string): EksisterendeSak[] {
+function hentEksisterendeSaker(request: Request, personIdent: string): EksisterendeSak[] {
   const normalisertIdent = normaliserPersonIdent(personIdent);
-  const sakerFraMockStore = hentAlleSaker()
+  const sakerFraMockStore = hentAlleSaker(hentMockState(request))
     .filter((sak) => sak.personIdent === normalisertIdent)
     .map(mapEksisterendeSak);
   const manuelleSaker = manuelleEksisterendeSaker[normalisertIdent] ?? [];
@@ -74,7 +75,7 @@ function hentEksisterendeSaker(personIdent: string): EksisterendeSak[] {
   );
 }
 
-export function slaOppPerson(fnr: string): PersonOppslagResultat | null {
+export function slaOppPerson(request: Request, fnr: string): PersonOppslagResultat | null {
   const personIdent = normaliserPersonIdent(fnr);
   const person = hentMockPerson(personIdent);
 
@@ -84,6 +85,6 @@ export function slaOppPerson(fnr: string): PersonOppslagResultat | null {
 
   return {
     person: mapPerson(person),
-    eksisterendeSaker: hentEksisterendeSaker(personIdent),
+    eksisterendeSaker: hentEksisterendeSaker(request, personIdent),
   };
 }

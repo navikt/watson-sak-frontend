@@ -1,10 +1,12 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { resetMockSaker } from "~/fordeling/mock-data.server";
-import { resetMockMineSaker } from "~/mine-saker/mock-data.server";
-import { resetHistorikk } from "./historikk/mock-data.server";
+import { resetDefaultSession } from "~/testing/mock-store/session.server";
 import SakDetaljSide, { loader } from "./SakDetaljSide.route";
+
+vi.mock("~/config/env.server", () => ({
+  skalBrukeMockdata: true,
+}));
 
 vi.mock("~/auth/innlogget-bruker", () => ({
   useInnloggetBruker: () => ({
@@ -14,12 +16,15 @@ vi.mock("~/auth/innlogget-bruker", () => ({
   }),
 }));
 
+const testRequest = new Request("http://localhost");
+
 function renderDetaljside() {
   const router = createMemoryRouter(
     [
       {
         path: "/saker/:sakId",
-        loader: ({ params }) => loader({ params: { sakId: params.sakId ?? "101" } } as never),
+        loader: ({ params }) =>
+          loader({ request: testRequest, params: { sakId: params.sakId ?? "101" } } as never),
         Component: SakDetaljSide,
       },
     ],
@@ -33,9 +38,7 @@ function renderDetaljside() {
 
 describe("SakDetaljSide render", () => {
   beforeEach(() => {
-    resetMockSaker();
-    resetMockMineSaker();
-    resetHistorikk();
+    resetDefaultSession();
   });
 
   it("viser lagre og avbryt i redigeringsmodus", async () => {

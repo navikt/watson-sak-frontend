@@ -6,11 +6,11 @@ import { getKategoriText } from "~/saker/selectors";
 
 type Søksak = KontrollsakResponse;
 
-export function søkSaker(søketekst: string): Søksak[] {
+export function søkSaker(request: Request, søketekst: string): Søksak[] {
   const normalisert = søketekst.trim().toLowerCase();
   if (!normalisert) return [];
 
-  const alleSaker: Søksak[] = hentAlleSaker();
+  const alleSaker: Søksak[] = hentAlleSaker(request);
 
   return alleSaker.filter((sak) => {
     if (sak.id.toLowerCase().includes(normalisert)) return true;

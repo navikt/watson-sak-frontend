@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { mockKontrollsaker } from "~/fordeling/mock-data.server";
-import { mockMineKontrollsaker } from "~/mine-saker/mock-data.server";
+import { hentMockState } from "~/testing/mock-store/session.server";
+import { hentFordelingssaker } from "~/testing/mock-store/alle-saker.server";
+import { lagInitialMineKontrollsaker } from "~/testing/mock-store/saker/mine-saker.server";
 import { mockStatistikkSaker } from "~/statistikk/mock-data.server";
 import { hentHistorikk } from "./historikk/mock-data.server";
 import {
@@ -8,6 +9,11 @@ import {
   kontrollsakPageResponseSchema,
   kontrollsakResponseSchema,
 } from "./types.backend";
+
+const testRequest = new Request("http://localhost");
+function state() {
+  return hentMockState(testRequest);
+}
 
 const uuidMønster = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -157,6 +163,8 @@ describe("Kontrollsak-kontrakter", () => {
   });
 
   it("parser runtime-mockene som native backend-shapede kontrollsaker", () => {
+    const mockKontrollsaker = hentFordelingssaker(state());
+    const mockMineKontrollsaker = lagInitialMineKontrollsaker();
     expect(() => {
       for (const sak of [...mockKontrollsaker, ...mockMineKontrollsaker, ...mockStatistikkSaker]) {
         kontrollsakResponseSchema.parse(sak);
@@ -165,6 +173,8 @@ describe("Kontrollsak-kontrakter", () => {
   });
 
   it("bruker backend-valide UUID-er i aktive mock-kontrollsaker og generert historikk", () => {
+    const mockKontrollsaker = hentFordelingssaker(state());
+    const mockMineKontrollsaker = lagInitialMineKontrollsaker();
     const aktiveMockSaker = [...mockKontrollsaker, ...mockMineKontrollsaker];
 
     for (const sak of aktiveMockSaker) {
@@ -174,7 +184,7 @@ describe("Kontrollsak-kontrakter", () => {
         expect(ytelse.id).toMatch(uuidMønster);
       }
 
-      for (const hendelse of hentHistorikk(sak.id)) {
+      for (const hendelse of hentHistorikk(testRequest, sak.id)) {
         expect(hendelse.hendelseId).toMatch(uuidMønster);
         expect(hendelse.sakId).toMatch(uuidMønster);
       }

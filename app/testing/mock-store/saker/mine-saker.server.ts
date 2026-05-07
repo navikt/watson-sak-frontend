@@ -1,9 +1,5 @@
-import { kontrollsakResponseSchema, type KontrollsakResponse } from "~/saker/types.backend";
-import {
-  lagMockSakUuid,
-  normaliserLegacyKontrollsak,
-  nullstillMockStatushistorikk,
-} from "~/saker/mock-uuid";
+import { kontrollsakResponseSchema } from "~/saker/types.backend";
+import { lagMockSakUuid, normaliserLegacyKontrollsak } from "~/saker/mock-uuid";
 import { berikLegacySakMedPerson } from "~/testing/mock-store/personer.server";
 
 export const mockMineSakerInnloggetNavIdent = "Z999999";
@@ -380,7 +376,8 @@ function lagMockMineKontrollsaker() {
   );
 }
 
-export let mockMineKontrollsaker: KontrollsakResponse[] = lagMockMineKontrollsaker();
+/** Factory som brukes av session.server.ts for å bygge initial tilstand */
+export const lagInitialMineKontrollsaker = lagMockMineKontrollsaker;
 
 export const mockMineSakerAvslutningsdatoer = {
   [lagMockSakUuid("207", 2)]: "2026-03-12",
@@ -389,8 +386,3 @@ export const mockMineSakerAvslutningsdatoer = {
 };
 
 export const mockMineSakerTidligereTipsSakIder = [lagMockSakUuid("207", 2)];
-
-export function resetMockMineSaker() {
-  nullstillMockStatushistorikk();
-  mockMineKontrollsaker = lagMockMineKontrollsaker();
-}

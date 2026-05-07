@@ -8,6 +8,7 @@ import {
   XMarkOctagonIcon,
 } from "@navikt/aksel-icons";
 import { useLoaderData } from "react-router";
+import { skalBrukeMockdata } from "~/config/env.server";
 import { hentAlleSaker, hentAvslutningsdatoer } from "~/saker/mock-alle-saker.server";
 import { formaterStatus, type KontrollsakStatus } from "~/saker/visning";
 import {
@@ -22,15 +23,20 @@ import { BehandlingstidVisning } from "./komponenter/BehandlingstidVisning";
 import { HorisontaltSoylediagram } from "./komponenter/HorisontaltSoylediagram";
 import { Nokkeltallkort } from "./komponenter/Nokkeltallkort";
 import { VertikaltSoylediagram } from "./komponenter/VertikaltSoylediagram";
+import type { Route } from "./+types/StatistikkSide.route";
 
-export function loader() {
-  const saker = hentAlleSaker();
+export function loader({ request }: Route.LoaderArgs) {
+  if (!skalBrukeMockdata) {
+    throw new Response("Statistikk er ikke tilgjengelig uten mockdata", { status: 501 });
+  }
+
+  const saker = hentAlleSaker(request);
 
   return {
     totaltAntall: saker.length,
     antallPerStatus: beregnAntallPerStatus(saker),
     antallIBero: beregnAntallIBero(saker),
-    behandlingstid: beregnBehandlingstid(saker, hentAvslutningsdatoer()),
+    behandlingstid: beregnBehandlingstid(saker, hentAvslutningsdatoer(request)),
     antallPerSeksjon: beregnAntallPerSeksjon(saker),
     fordelingPerYtelse: beregnFordelingPerYtelse(saker),
     fordelingPerAntallYtelser: beregnFordelingPerAntallYtelser(saker),

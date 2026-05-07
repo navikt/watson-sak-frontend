@@ -176,7 +176,8 @@ export function UfordelteSakerInnhold({
                   renderRadHandling={(rad) => (
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={(event) => {
+                        event.stopPropagation();
                         const valgtSak = paginerteSaker.elementer.find((sak) => sak.id === rad.id);
 
                         if (valgtSak) {

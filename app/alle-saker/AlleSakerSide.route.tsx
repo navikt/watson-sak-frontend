@@ -5,6 +5,7 @@ import { ArrowsUpDownIcon } from "@navikt/aksel-icons";
 import { Heading, HGrid, HStack, Page, Pagination, VStack } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
 import { useLoaderData, useSearchParams } from "react-router";
+import { skalBrukeMockdata } from "~/config/env.server";
 import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
 import { getKategoriText, getMisbrukstyper, getSaksenhet } from "~/saker/selectors";
@@ -31,6 +32,10 @@ const STANDARD_KOLONNE: AlleSakerKolonne = "opprettet";
 const STANDARD_RETNING: Sorteringsretning = "desc";
 
 export function loader({ request }: Route.LoaderArgs) {
+  if (!skalBrukeMockdata) {
+    throw new Response("Alle saker er ikke tilgjengelig uten mockdata", { status: 501 });
+  }
+
   const url = new URL(request.url);
   const side = Math.max(1, Number.parseInt(url.searchParams.get("side") ?? "1", 10) || 1);
   const sorterKolonne = parseKolonne(url.searchParams.get("sorter"));
@@ -42,7 +47,7 @@ export function loader({ request }: Route.LoaderArgs) {
   const filterMisbrukstype = normaliserFilterVerdier(url.searchParams.getAll("misbrukstype"));
   const filterMerking = normaliserFilterVerdier(url.searchParams.getAll("merking"));
 
-  const alleSaker = hentAlleSaker();
+  const alleSaker = hentAlleSaker(request);
 
   // Tilgjengelige filterverdier beregnes fra alle saker (uavhengig av aktivt filter)
   const filterAlternativer = {

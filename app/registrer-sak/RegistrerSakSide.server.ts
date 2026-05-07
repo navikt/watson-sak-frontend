@@ -121,7 +121,7 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   const data = resultat.data;
-  const personOppslag = slaOppPerson(data.personIdent);
+  const personOppslag = slaOppPerson(request, data.personIdent);
   const personNavn = personOppslag?.person.navn;
 
   if (typeof personNavn !== "string" || personNavn.trim() === "") {
@@ -129,6 +129,7 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   const opprettetSak = await opprettKontrollsak({
+    request,
     token: skalBrukeMockdata ? "demo" : await getBackendOboToken(request),
     payload: byggOpprettKontrollsakPayload({
       skjema: data,

@@ -3,7 +3,9 @@ import { BodyShort, Heading, Page, Search, VStack } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
 import { useEffect, useRef } from "react";
 import { Form, useActionData } from "react-router";
+import { skalBrukeMockdata } from "~/config/env.server";
 import type { KontrollsakResponse } from "~/saker/types.backend";
+import { hentValgfriTekst } from "~/utils/form-data";
 import { SøkResultatKort } from "./SøkResultatKort";
 import { søkSaker } from "./søk.server";
 import type { Route } from "./+types/SøkSide.route";
@@ -11,14 +13,19 @@ import type { Route } from "./+types/SøkSide.route";
 type Søksak = KontrollsakResponse;
 
 export async function action({ request }: Route.ActionArgs) {
+  if (!skalBrukeMockdata) {
+    // TODO: Implementer backend-kall for søk
+    throw new Response("Søk er ikke tilgjengelig uten mockdata", { status: 501 });
+  }
+
   const formData = await request.formData();
-  const søketekst = (formData.get("søketekst") as string) ?? "";
+  const søketekst = hentValgfriTekst(formData, "søketekst") ?? "";
 
   if (!søketekst.trim()) {
     return { søketekst: "", resultater: [] as Søksak[] };
   }
 
-  const resultater = søkSaker(søketekst);
+  const resultater = søkSaker(request, søketekst);
   return { søketekst, resultater };
 }
 

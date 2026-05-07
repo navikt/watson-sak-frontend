@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { loader } from "./loader.server";
 
+vi.mock("~/config/env.server", () => ({
+  skalBrukeMockdata: true,
+}));
+
 vi.mock("~/auth/innlogget-bruker.server", () => ({
   hentInnloggetBruker: vi.fn().mockResolvedValue({
     preferredUsername: "test",

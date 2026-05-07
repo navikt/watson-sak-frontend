@@ -1,40 +1,12 @@
 import { kontrollsakResponseSchema, type KontrollsakResponse } from "~/saker/types.backend";
 import {
   lagMockSakUuid,
-  nullstillMockStatushistorikk,
   normaliserLegacyKontrollsak,
   oppdaterTilgjengeligeHandlinger,
 } from "~/saker/mock-uuid";
 import { registrerTomtFilområdeForSak } from "~/testing/mock-store/filer.server";
 import { berikLegacySakMedPerson } from "~/testing/mock-store/personer.server";
-
-type NyMockFordelingssak = {
-  personIdent: string;
-  personNavn: string;
-  saksbehandlere?: {
-    eier?: {
-      navIdent: string;
-      navn: string;
-      enhet?: string;
-    } | null;
-    deltMed?: Array<{
-      navIdent: string;
-      navn: string;
-      enhet?: string;
-    }>;
-  };
-  kategori: KontrollsakResponse["kategori"];
-  kilde: KontrollsakResponse["kilde"];
-  misbruktype: KontrollsakResponse["misbruktype"];
-  prioritet: KontrollsakResponse["prioritet"];
-  merking?: KontrollsakResponse["merking"];
-  ytelser: Array<{
-    type: string;
-    periodeFra: string;
-    periodeTil: string;
-    belop?: number;
-  }>;
-};
+import type { MockState } from "~/testing/mock-store/session.server";
 
 const deltMedEksempel = [
   {
@@ -510,12 +482,42 @@ function lagMockKontrollsaker() {
   );
 }
 
-export let mockKontrollsaker: KontrollsakResponse[] = lagMockKontrollsaker();
+/** Factory som brukes av session.server.ts for å bygge initial tilstand */
+export const lagInitialKontrollsaker = lagMockKontrollsaker;
 
-let nesteMockFordelingssakId = 200;
+type NyMockFordelingssak = {
+  personIdent: string;
+  personNavn: string;
+  saksbehandlere?: {
+    eier?: {
+      navIdent: string;
+      navn: string;
+      enhet?: string;
+    } | null;
+    deltMed?: Array<{
+      navIdent: string;
+      navn: string;
+      enhet?: string;
+    }>;
+  };
+  kategori: KontrollsakResponse["kategori"];
+  kilde: KontrollsakResponse["kilde"];
+  misbruktype: KontrollsakResponse["misbruktype"];
+  prioritet: KontrollsakResponse["prioritet"];
+  merking?: KontrollsakResponse["merking"];
+  ytelser: Array<{
+    type: string;
+    periodeFra: string;
+    periodeTil: string;
+    belop?: number;
+  }>;
+};
 
-export function leggTilMockSakIFordeling(nySak: NyMockFordelingssak): KontrollsakResponse {
-  const saksnummer = String(nesteMockFordelingssakId++);
+export function leggTilMockSakIFordeling(
+  state: MockState,
+  nySak: NyMockFordelingssak,
+): KontrollsakResponse {
+  const saksnummer = String(state.nesteFordelingssakId++);
   const opprettet = new Date().toISOString();
 
   const kontrollsak = kontrollsakResponseSchema.parse({
@@ -562,16 +564,10 @@ export function leggTilMockSakIFordeling(nySak: NyMockFordelingssak): Kontrollsa
 
   const kontrollsakMedHandlinger = oppdaterTilgjengeligeHandlinger(kontrollsak);
 
-  registrerTomtFilområdeForSak(kontrollsakMedHandlinger.id);
-  mockKontrollsaker.unshift(kontrollsakMedHandlinger);
+  registrerTomtFilområdeForSak(state, kontrollsakMedHandlinger.id);
+  state.kontrollsaker.unshift(kontrollsakMedHandlinger);
 
   return kontrollsakMedHandlinger;
-}
-
-export function resetMockSaker() {
-  nullstillMockStatushistorikk();
-  mockKontrollsaker = lagMockKontrollsaker();
-  nesteMockFordelingssakId = 200;
 }
 
 export const mockYtelser = ["Dagpenger", "Sykepenger", "Barnetrygd", "AAP", "Foreldrepenger"];

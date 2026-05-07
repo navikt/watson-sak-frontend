@@ -1,5 +1,1 @@
-export {
-  mockKontrollsaker,
-  mockYtelser,
-  resetMockSaker,
-} from "~/testing/mock-store/saker/fordeling.server";
+export { mockYtelser } from "~/testing/mock-store/saker/fordeling.server";

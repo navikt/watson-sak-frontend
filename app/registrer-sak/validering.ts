@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   kontrollsakKategoriVerdier,
+  kontrollsakKildeEtiketter,
   kontrollsakKildeVerdier,
   kontrollsakMisbrukstypeVerdier,
   misbrukstyperPerKategori,
@@ -8,21 +9,7 @@ import {
 
 export const kildeAlternativer = kontrollsakKildeVerdier;
 
-export const kildeEtiketter: Record<(typeof kildeAlternativer)[number], string> = {
-  PUBLIKUM: "Publikum",
-  NAV_KONTROLL: "Nav kontroll",
-  NAV_OVRIG: "Nav øvrig",
-  REGISTERSAMKJORING: "Registersamkjøring",
-  A_KRIMSAMARBEID: "A-krimsamarbeid",
-  POLITIET: "Politiet",
-  SKATTEETATEN: "Skatteetaten",
-  UTLENDINGSMYNDIGHETEN: "Utlendingsmyndighetene",
-  UTENRIKSTJENESTEN: "Utenrikstjenesten",
-  STATENS_VEGVESEN: "Statens vegvesen",
-  KOMMUNE: "Kommune",
-  BANK_OG_FINANS: "Bank og finans",
-  ANNET: "Annet",
-};
+export const kildeEtiketter = kontrollsakKildeEtiketter;
 
 export const kategoriAlternativer = kontrollsakKategoriVerdier;
 export { misbrukstyperPerKategori as misbrukstypePerKategori };

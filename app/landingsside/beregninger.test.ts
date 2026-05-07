@@ -1,7 +1,14 @@
-import { describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import type { Avslutningsdatoer } from "~/statistikk/mock-data.server";
+import { resetDefaultSession } from "~/testing/mock-store/reset.server";
 import { beregnDineSakerSiste14Dager } from "./beregninger";
+
+const testRequest = new Request("http://localhost");
+
+beforeEach(() => {
+  resetDefaultSession();
+});
 
 function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
@@ -66,6 +73,7 @@ describe("beregnDineSakerSiste14Dager", () => {
     };
 
     const resultat = beregnDineSakerSiste14Dager({
+      request: testRequest,
       saker,
       avslutningsdatoer,
       tidligereTipsSakIder: ["4"],
@@ -99,6 +107,7 @@ describe("beregnDineSakerSiste14Dager", () => {
     ];
 
     const resultat = beregnDineSakerSiste14Dager({
+      request: testRequest,
       saker,
       avslutningsdatoer: {},
       tidligereTipsSakIder: [],
@@ -141,6 +150,7 @@ describe("beregnDineSakerSiste14Dager", () => {
     };
 
     const resultat = beregnDineSakerSiste14Dager({
+      request: testRequest,
       saker,
       avslutningsdatoer,
       tidligereTipsSakIder: ["ks-4"],
@@ -174,6 +184,7 @@ describe("beregnDineSakerSiste14Dager", () => {
     ];
 
     const resultat = beregnDineSakerSiste14Dager({
+      request: testRequest,
       saker,
       avslutningsdatoer: {},
       tidligereTipsSakIder: [],

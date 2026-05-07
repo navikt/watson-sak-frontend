@@ -1,34 +1,40 @@
-import { beforeEach, describe, expect, it } from "vitest";
-import { mockKontrollsaker } from "~/fordeling/mock-data.server";
-import { resetMockSaker } from "~/fordeling/mock-data.server";
-import { resetMockMineSaker } from "~/mine-saker/mock-data.server";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { hentMockState, resetDefaultSession } from "~/testing/mock-store/session.server";
+import { hentFordelingssaker } from "~/testing/mock-store/alle-saker.server";
+import { hentAlleSaker } from "./mock-alle-saker.server";
+import { hentHistorikk } from "./historikk/mock-data.server";
 import { getSaksreferanse } from "~/saker/id";
 import { lagMockSakUuid } from "~/saker/mock-uuid";
 import { getBeskrivelse, getKildeText, getPersonIdent, getYtelseTyper } from "~/saker/visning";
 import type { Route } from "./+types/SakDetaljSide.route";
-import { hentHistorikk, resetHistorikk } from "./historikk/mock-data.server";
-import { hentAlleSaker } from "./mock-alle-saker.server";
-import { action, loader } from "./SakDetaljSide.route";
+import { action, loader } from "./SakDetaljSide.server";
+
+vi.mock("~/config/env.server", () => ({
+  skalBrukeMockdata: true,
+}));
+
+const testRequest = new Request("http://localhost");
+function state() {
+  return hentMockState(testRequest);
+}
 
 describe("SakDetaljSide action", () => {
   const utredningSakId = lagMockSakUuid("113", 1);
   const utredningSakRef = getSaksreferanse(utredningSakId);
 
   beforeEach(() => {
-    resetMockSaker();
-    resetMockMineSaker();
-    resetHistorikk();
+    resetDefaultSession();
   });
 
   it("eksponerer tildeling som tilgjengelig handling når kontrollsaken er ownerløs under utredning", async () => {
-    const sak = hentAlleSaker().find((sak) => sak.id === utredningSakId);
+    const sak = hentAlleSaker(testRequest).find((sak) => sak.id === utredningSakId);
 
     expect(sak?.status).toBe("UTREDES");
     expect(sak?.saksbehandlere.eier).toBeNull();
   });
 
   it("legger til delt saksbehandler og logger historikk", async () => {
-    const kontrollsak = mockKontrollsaker[1];
+    const kontrollsak = hentFordelingssaker(state())[1];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
 
     expect(kontrollsak.saksbehandlere?.deltMed ?? []).toHaveLength(0);
@@ -53,13 +59,13 @@ describe("SakDetaljSide action", () => {
       },
     ]);
 
-    const historikk = hentHistorikk(kontrollsak.id);
+    const historikk = hentHistorikk(testRequest, kontrollsak.id);
     expect(historikk[0]?.hendelsesType).toBe("TILGANG_DELT");
     expect(historikk[0]?.berortSaksbehandlerNavn).toBe("Kari Nordmann");
   });
 
   it("fjerner delt saksbehandler og logger historikk", async () => {
-    const kontrollsak = mockKontrollsaker[0];
+    const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
 
     expect(kontrollsak.saksbehandlere?.deltMed).toEqual([
@@ -95,13 +101,13 @@ describe("SakDetaljSide action", () => {
       },
     ]);
 
-    const historikk = hentHistorikk(kontrollsak.id);
+    const historikk = hentHistorikk(testRequest, kontrollsak.id);
     expect(historikk[0]?.hendelsesType).toBe("TILGANG_FJERNET");
     expect(historikk[0]?.berortSaksbehandlerNavn).toBe("Kari Nordmann");
   });
 
   it("overfører ansvarlig saksbehandler, fjerner vedkommende fra delt med og logger historikk", async () => {
-    const kontrollsak = mockKontrollsaker[0];
+    const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
 
     const formData = new FormData();
@@ -125,13 +131,13 @@ describe("SakDetaljSide action", () => {
       },
     ]);
 
-    const historikk = hentHistorikk(kontrollsak.id);
+    const historikk = hentHistorikk(testRequest, kontrollsak.id);
     expect(historikk[0]?.hendelsesType).toBe("ANSVARLIG_SAKSBEHANDLER_ENDRET");
     expect(historikk[0]?.berortSaksbehandlerNavIdent).toBe("Z123456");
   });
 
   it("inkluderer valgt mal når notat logges i historikk", async () => {
-    const kontrollsak = mockKontrollsaker[0];
+    const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
 
     const formData = new FormData();
@@ -148,7 +154,7 @@ describe("SakDetaljSide action", () => {
       params: { sakId: kontrollsakRef },
     } as Route.ActionArgs);
 
-    const historikk = hentHistorikk(kontrollsak.id);
+    const historikk = hentHistorikk(testRequest, kontrollsak.id);
     expect(historikk[0]).toEqual(
       expect.objectContaining({
         hendelsesType: "NOTAT_SENDT",
@@ -181,12 +187,11 @@ describe("SakDetaljSide helper-integrasjon", () => {
   const fordelingSakId = lagMockSakUuid("101", 1);
 
   beforeEach(() => {
-    resetMockSaker();
-    resetMockMineSaker();
+    resetDefaultSession();
   });
 
   it("leser personident, kilde, ytelser og beskrivelse via helpers for backend-shapede saker", () => {
-    const sak = hentAlleSaker().find((sak) => sak.id === fordelingSakId);
+    const sak = hentAlleSaker(testRequest).find((sak) => sak.id === fordelingSakId);
 
     expect(sak).toBeDefined();
 
@@ -201,7 +206,9 @@ describe("SakDetaljSide helper-integrasjon", () => {
   });
 
   it("returnerer backend-shapede saker i samlet mockdatasett for øvrige flows", () => {
-    const sak = hentAlleSaker().find((eksisterendeSak) => eksisterendeSak.id === fordelingSakId);
+    const sak = hentAlleSaker(testRequest).find(
+      (eksisterendeSak) => eksisterendeSak.id === fordelingSakId,
+    );
 
     expect(sak).toBeDefined();
 
@@ -218,16 +225,17 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   const mineSakRef = getSaksreferanse(mineSakId);
 
   beforeEach(() => {
-    resetMockSaker();
-    resetMockMineSaker();
-    resetHistorikk();
+    resetDefaultSession();
   });
 
   it("loader returnerer backend-shapet kontrollsak når sakId peker på kontrollsak", () => {
-    const kontrollsakId = mockKontrollsaker[0].id;
+    const kontrollsakId = hentFordelingssaker(state())[0].id;
     const kontrollsakRef = getSaksreferanse(kontrollsakId);
 
-    const resultat = loader({ params: { sakId: kontrollsakRef } } as Route.LoaderArgs);
+    const resultat = loader({
+      request: testRequest,
+      params: { sakId: kontrollsakRef },
+    } as Route.LoaderArgs);
 
     expect(resultat.sak.id).toBe(kontrollsakId);
     expect("personIdent" in resultat.sak).toBe(true);
@@ -237,7 +245,10 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   });
 
   it("loader returnerer backend-shapet mine sak når sakId peker på backend-shaped mine saker", () => {
-    const resultat = loader({ params: { sakId: mineSakRef } } as Route.LoaderArgs);
+    const resultat = loader({
+      request: testRequest,
+      params: { sakId: mineSakRef },
+    } as Route.LoaderArgs);
 
     expect(resultat.sak.id).toBe(mineSakId);
     expect("personIdent" in resultat.sak).toBe(true);
@@ -245,14 +256,14 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   });
 
   it("beholder hentAlleSaker som backend-shaped aggregat", () => {
-    const saker = hentAlleSaker();
+    const saker = hentAlleSaker(testRequest);
 
     expect(saker.length).toBeGreaterThan(0);
     expect(saker.every((sak) => "personIdent" in sak)).toBe(true);
   });
 
   it("beholder kontrollsak-status og setter owner ved tildeling", async () => {
-    const kontrollsak = mockKontrollsaker[0];
+    const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
 
     expect(kontrollsak.status).toBe("OPPRETTET");
@@ -274,7 +285,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   });
 
   it("tildeler ownerløs sak med konsistent saksbehandlerident", async () => {
-    const kontrollsak = mockKontrollsaker[0];
+    const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
 
     kontrollsak.status = "OPPRETTET";
@@ -308,7 +319,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   });
 
   it("tildeler ownerløs sak til lokal mock-bruker", async () => {
-    const kontrollsak = mockKontrollsaker[0];
+    const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
 
     kontrollsak.status = "OPPRETTET";
@@ -334,7 +345,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   });
 
   it("oppdaterer fallback-enhet når ownerløs sak videresendes til seksjon", async () => {
-    const kontrollsak = mockKontrollsaker[0];
+    const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
 
     kontrollsak.status = "OPPRETTET";
@@ -364,7 +375,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   });
 
   it("sender sak til annen enhet og fristiller saksbehandler", async () => {
-    const kontrollsak = mockKontrollsaker[0];
+    const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
 
     kontrollsak.saksbehandlere.eier = {
@@ -392,11 +403,13 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
 
     expect(kontrollsak.saksbehandlere.eier).toBeNull();
     expect(kontrollsak.saksbehandlere.opprettetAv.enhet).toBe("NORD");
-    expect(hentHistorikk(kontrollsak.id)[0]?.hendelsesType).toBe("MOTTAKSENHET_ENDRET");
+    expect(hentHistorikk(testRequest, kontrollsak.id)[0]?.hendelsesType).toBe(
+      "MOTTAKSENHET_ENDRET",
+    );
   });
 
   it("oppdaterer redigerbare saksdetaljer uten å endre låste felt", async () => {
-    const kontrollsak = mockKontrollsaker[0];
+    const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
 
     const opprinneligPersonIdent = kontrollsak.personIdent;
@@ -444,12 +457,12 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(kontrollsak.status).toBe(opprinneligStatus);
     expect(kontrollsak.saksbehandlere.eier?.navn ?? null).toBe(opprinneligSaksbehandler);
 
-    const historikk = hentHistorikk(kontrollsak.id);
+    const historikk = hentHistorikk(testRequest, kontrollsak.id);
     expect(historikk[0]?.hendelsesType).toBe("SAKSINFORMASJON_ENDRET");
   });
 
   it("oppdaterer kilde når sak får oppdatert kilde", async () => {
-    const kontrollsak = mockKontrollsaker[0];
+    const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
 
     const formData = new FormData();
@@ -469,7 +482,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
       params: { sakId: kontrollsakRef },
     } as Route.ActionArgs);
 
-    const oppdatertSak = hentAlleSaker().find((sak) => sak.id === kontrollsak.id);
+    const oppdatertSak = hentAlleSaker(testRequest).find((sak) => sak.id === kontrollsak.id);
 
     if (!oppdatertSak) {
       throw new Error("Forventet at saken finnes etter oppdatering");
@@ -479,7 +492,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   });
 
   it("avviser redigering når saken er inaktiv selv om payloaden er gyldig", async () => {
-    const kontrollsak = mockKontrollsaker[0];
+    const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
     kontrollsak.status = "AVSLUTTET";
 

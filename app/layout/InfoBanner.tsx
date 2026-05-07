@@ -6,7 +6,7 @@ import {
   GlobalAlertTitle,
 } from "@navikt/ds-react/GlobalAlert";
 import { unstable_useRoute } from "react-router";
-import { useDisclosure } from "~/use-disclosure/useDisclosure";
+import { useDisclosure } from "~/utils/useDisclosure";
 
 /** Viser statusmelding fra Unleash */
 export function InfoBanner() {

@@ -1,9 +1,22 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { hentFilerForSak, registrerTomtFilområdeForSak, resetMockFiler } from "./filer.server";
+import { hentMockState, resetDefaultSession } from "~/testing/mock-store/session.server";
+import {
+  hentFilerForSak as _hentFilerForSak,
+  registrerTomtFilområdeForSak as _registrerTomtFilområdeForSak,
+} from "./filer.server";
+
+const testRequest = new Request("http://localhost");
+
+function hentFilerForSak(sakId: string) {
+  return _hentFilerForSak(hentMockState(testRequest), sakId);
+}
+function registrerTomtFilområdeForSak(sakId: string) {
+  return _registrerTomtFilområdeForSak(hentMockState(testRequest), sakId);
+}
 
 describe("mock-store filer", () => {
   beforeEach(() => {
-    resetMockFiler();
+    resetDefaultSession();
   });
 
   it("viser eksempelfiler for eksisterende demosaker med filer", () => {
@@ -19,7 +32,7 @@ describe("mock-store filer", () => {
   it("tilbakestiller tomme filområder", () => {
     registrerTomtFilområdeForSak("102");
 
-    resetMockFiler();
+    resetDefaultSession();
 
     expect(hentFilerForSak("102")).not.toEqual([]);
   });

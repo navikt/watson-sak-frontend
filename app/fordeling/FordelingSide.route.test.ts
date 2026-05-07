@@ -1,9 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { formaterMisbrukstype } from "~/saker/visning";
 import { RouteConfig } from "~/routeConfig";
+import { hentMockState, resetDefaultSession } from "~/testing/mock-store/session.server";
+import { hentFordelingssaker } from "~/testing/mock-store/alle-saker.server";
 import type { Route } from "./+types/FordelingSide.route";
-import { mockKontrollsaker } from "./mock-data.server";
-import { resetMockSaker } from "./mock-data.server";
+
+const testRequest = new Request("http://localhost");
+function state() {
+  return hentMockState(testRequest);
+}
 
 const testState = vi.hoisted(() => ({
   skalBrukeMockdata: true,
@@ -36,12 +41,13 @@ describe("FordelingSide action", () => {
     getBackendOboTokenMock.mockResolvedValue("token-123");
     tildelKontrollsakMock.mockReset();
     tildelKontrollsakMock.mockResolvedValue(undefined);
-    resetMockSaker();
+    resetDefaultSession();
     vi.clearAllMocks();
   });
 
   it("flytter sak ut av Fordeling i mockmiljø når den tildeles", async () => {
     const { action } = await import("./FordelingSide.server");
+    const mockKontrollsaker = hentFordelingssaker(state());
     const tildelbarKontrollsakId = mockKontrollsaker.find(
       (sak) => sak.saksbehandlere.eier === null,
     )?.id;
@@ -66,11 +72,12 @@ describe("FordelingSide action", () => {
       context: {},
     } as Route.ActionArgs);
 
-    expect(mockKontrollsaker.find((sak) => sak.id === tildelbarKontrollsakId)?.status).toBe(
-      "OPPRETTET",
-    );
     expect(
-      mockKontrollsaker.find((sak) => sak.id === tildelbarKontrollsakId)?.saksbehandlere.eier,
+      hentFordelingssaker(state()).find((sak) => sak.id === tildelbarKontrollsakId)?.status,
+    ).toBe("OPPRETTET");
+    expect(
+      hentFordelingssaker(state()).find((sak) => sak.id === tildelbarKontrollsakId)?.saksbehandlere
+        .eier,
     ).toMatchObject({ navIdent: "Z123456", navn: "Kari Nordmann" });
     expect(tildelKontrollsakMock).not.toHaveBeenCalled();
   });
@@ -164,7 +171,7 @@ describe("FordelingSide action", () => {
 describe("FordelingSide loader", () => {
   beforeEach(() => {
     testState.skalBrukeMockdata = true;
-    resetMockSaker();
+    resetDefaultSession();
     vi.clearAllMocks();
   });
 
@@ -177,6 +184,7 @@ describe("FordelingSide loader", () => {
       context: {},
     } as Route.LoaderArgs);
 
+    const mockKontrollsaker = hentFordelingssaker(state());
     const forventedeSaker = mockKontrollsaker
       .filter((sak) => sak.saksbehandlere.eier === null)
       .map((sak) => sak.id);

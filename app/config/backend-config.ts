@@ -1,4 +1,12 @@
-export type Miljø = "local-backend" | "local-dev" | "local-mock" | "demo" | "dev" | "prod";
+export const miljøVerdier = [
+  "local-backend",
+  "local-dev",
+  "local-mock",
+  "demo",
+  "dev",
+  "prod",
+] as const;
+type Miljø = (typeof miljøVerdier)[number];
 
 const WATSON_ADMIN_API_DEV_URL = "https://watson-admin-api.intern.dev.nav.no";
 

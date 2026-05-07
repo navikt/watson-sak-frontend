@@ -1,8 +1,15 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach, vi } from "vitest";
 import type { KontrollsakResponse } from "./types.backend";
-import { action } from "./SakDetaljSide.route";
-import { hentHistorikk, resetHistorikk } from "./historikk/mock-data.server";
+import { action } from "./SakDetaljSide.server";
+import { hentHistorikk } from "./historikk/mock-data.server";
 import { hentAlleSaker } from "./mock-alle-saker.server";
+import { resetDefaultSession } from "~/testing/mock-store/session.server";
+
+vi.mock("~/config/env.server", () => ({
+  skalBrukeMockdata: true,
+}));
+
+const testRequest = new Request("http://localhost");
 
 function lagFormData(felter: Record<string, string>): FormData {
   const formData = new FormData();
@@ -23,11 +30,11 @@ async function utforAction(sakId: string, felter: Record<string, string>) {
 
 describe("SakDetaljSide route action – ny statusflyt", () => {
   beforeEach(() => {
-    resetHistorikk();
+    resetDefaultSession();
   });
 
   it("endre_status oppdaterer sakens status", async () => {
-    const saker = hentAlleSaker();
+    const saker = hentAlleSaker(testRequest);
     const sak = saker.find(
       (s: KontrollsakResponse) => s.status !== "AVSLUTTET" && s.blokkert === null,
     );
@@ -45,12 +52,12 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     expect(resultat).toEqual({ ok: true });
     expect(sak.status).toBe("ANMELDT");
 
-    const historikk = hentHistorikk(sak.id);
+    const historikk = hentHistorikk(testRequest, sak.id);
     expect(historikk[0]?.hendelsesType).toBe("POLITIANMELDT");
   });
 
   it("endre_status til HENLAGT logger henleggelse", async () => {
-    const saker = hentAlleSaker();
+    const saker = hentAlleSaker(testRequest);
     const sak = saker.find(
       (s: KontrollsakResponse) => s.status !== "AVSLUTTET" && s.blokkert === null,
     );
@@ -68,12 +75,12 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     expect(resultat).toEqual({ ok: true });
     expect(sak.status).toBe("HENLAGT");
 
-    const historikk = hentHistorikk(sak.id);
+    const historikk = hentHistorikk(testRequest, sak.id);
     expect(historikk[0]?.hendelsesType).toBe("SAK_HENLAGT");
   });
 
   it("endre_status med beskrivelse lagrer hendelse med beskrivelse", async () => {
-    const saker = hentAlleSaker();
+    const saker = hentAlleSaker(testRequest);
     const sak = saker.find(
       (s: KontrollsakResponse) => s.status !== "AVSLUTTET" && s.blokkert === null,
     );
@@ -91,12 +98,12 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
 
     expect(resultat).toEqual({ ok: true });
 
-    const historikk = hentHistorikk(sak.id);
+    const historikk = hentHistorikk(testRequest, sak.id);
     expect(historikk[0]?.beskrivelse).toBe("Saken tas videre til utredning");
   });
 
   it("endre_status til AVSLUTTET nullstiller blokkert", async () => {
-    const saker = hentAlleSaker();
+    const saker = hentAlleSaker(testRequest);
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
@@ -114,13 +121,13 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     expect(sak.blokkert).toBeNull();
     expect(sak.status).toBe("AVSLUTTET");
 
-    const historikk = hentHistorikk(sak.id);
+    const historikk = hentHistorikk(testRequest, sak.id);
     expect(historikk[0]?.hendelsesType).toBe("STATUS_ENDRET");
     expect(historikk[0]?.blokkert).toBe("I_BERO");
   });
 
   it("endre_blokkering setter blokkeringsårsak på saken", async () => {
-    const saker = hentAlleSaker();
+    const saker = hentAlleSaker(testRequest);
     const sak = saker.find(
       (s: KontrollsakResponse) => s.status !== "AVSLUTTET" && s.blokkert === null,
     );
@@ -138,13 +145,13 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     expect(resultat).toEqual({ ok: true });
     expect(sak.blokkert).toBe("VENTER_PA_INFORMASJON");
 
-    const historikk = hentHistorikk(sak.id);
+    const historikk = hentHistorikk(testRequest, sak.id);
     expect(historikk[0]?.hendelsesType).toBe("SAK_SATT_PA_VENT");
     expect(historikk[0]?.blokkert).toBe("VENTER_PA_INFORMASJON");
   });
 
   it("endre_blokkering med I_BERO logger bero-hendelse", async () => {
-    const saker = hentAlleSaker();
+    const saker = hentAlleSaker(testRequest);
     const sak = saker.find(
       (s: KontrollsakResponse) => s.status !== "AVSLUTTET" && s.blokkert === null,
     );
@@ -161,13 +168,13 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
 
     expect(resultat).toEqual({ ok: true });
 
-    const historikk = hentHistorikk(sak.id);
+    const historikk = hentHistorikk(testRequest, sak.id);
     expect(historikk[0]?.hendelsesType).toBe("SAK_SATT_I_BERO");
     expect(historikk[0]?.blokkert).toBe("I_BERO");
   });
 
   it("gjenoppta nullstiller blokkert uten modaldata", async () => {
-    const saker = hentAlleSaker();
+    const saker = hentAlleSaker(testRequest);
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
@@ -184,13 +191,13 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     expect(resultat).toEqual({ ok: true });
     expect(sak.blokkert).toBeNull();
 
-    const historikk = hentHistorikk(sak.id);
+    const historikk = hentHistorikk(testRequest, sak.id);
     expect(historikk[0]?.hendelsesType).toBe("SAK_GJENOPPTATT");
     expect(historikk[0]?.blokkert).toBe("VENTER_PA_VEDTAK");
   });
 
   it("endre_status avviser ugyldig status", async () => {
-    const saker = hentAlleSaker();
+    const saker = hentAlleSaker(testRequest);
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
@@ -207,7 +214,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
   });
 
   it("endre_status avviser uendret status", async () => {
-    const saker = hentAlleSaker();
+    const saker = hentAlleSaker(testRequest);
     const sak = saker.find(
       (s: KontrollsakResponse) => s.status === "UTREDES" && s.blokkert === null,
     );
@@ -226,7 +233,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
   });
 
   it("endre_blokkering avviser ugyldig årsak", async () => {
-    const saker = hentAlleSaker();
+    const saker = hentAlleSaker(testRequest);
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
@@ -243,7 +250,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
   });
 
   it("legger til manuelt historikkinnslag", async () => {
-    const saker = hentAlleSaker();
+    const saker = hentAlleSaker(testRequest);
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
@@ -261,7 +268,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
 
     expect(resultat).toEqual({ ok: true });
 
-    const historikk = hentHistorikk(sak.id);
+    const historikk = hentHistorikk(testRequest, sak.id);
     expect(historikk[0]?.hendelsesType).toBe("MANUELL_NOTAT");
     expect(historikk[0]?.tittel).toBe("Ringte bruker");
     expect(historikk[0]?.notat).toBe("Avklarte dokumentasjon og neste steg.");
@@ -269,7 +276,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
   });
 
   it("sorterer manuelle historikkinnslag stabilt når de har samme tidspunkt", async () => {
-    const saker = hentAlleSaker();
+    const saker = hentAlleSaker(testRequest);
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
@@ -294,13 +301,13 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
       ...tidspunkt,
     });
 
-    const historikk = hentHistorikk(sak.id);
+    const historikk = hentHistorikk(testRequest, sak.id);
     expect(historikk[0]?.tittel).toBe("Andre innslag");
     expect(historikk[1]?.tittel).toBe("Første innslag");
   });
 
   it("endre_status avviser for avsluttet sak", async () => {
-    const saker = hentAlleSaker();
+    const saker = hentAlleSaker(testRequest);
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
@@ -319,7 +326,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
   });
 
   it("endre_blokkering avviser for avsluttet sak", async () => {
-    const saker = hentAlleSaker();
+    const saker = hentAlleSaker(testRequest);
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
@@ -338,7 +345,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
   });
 
   it("gjenoppta avviser for avsluttet sak", async () => {
-    const saker = hentAlleSaker();
+    const saker = hentAlleSaker(testRequest);
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;

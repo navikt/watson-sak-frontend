@@ -3,24 +3,29 @@ import { env, isProd } from "~/config/env.server";
 import { logger } from "~/logging/logging";
 import { FeatureFlagg } from "./featureflagg";
 
-let unleash: Unleash;
-/** Initialiserer Unleash-singletonen */
-async function initialiserUnleash() {
-  if (unleash) {
-    return;
+let unleashPromise: Promise<Unleash> | undefined;
+
+/** Initialiserer Unleash-singletonen (trådsikker via cached promise) */
+function initialiserUnleash(): Promise<Unleash> {
+  if (unleashPromise) {
+    return unleashPromise;
   }
   if (!env.UNLEASH_SERVER_API_TOKEN) {
     throw new Error("UNLEASH_SERVER_API_TOKEN er ikke satt som miljøvariabel.");
   }
-  unleash = await startUnleash({
+  unleashPromise = startUnleash({
     url: `${env.UNLEASH_SERVER_API_URL}/api`,
-    appName: "oppslag-bruker-frontend",
+    appName: "watson-sak",
     environment: env.ENVIRONMENT === "prod" ? "production" : "development",
     projectName: env.UNLEASH_SERVER_API_PROJECTS,
     customHeaders: {
       Authorization: env.UNLEASH_SERVER_API_TOKEN,
     },
+  }).catch((error) => {
+    unleashPromise = undefined;
+    throw error;
   });
+  return unleashPromise;
 }
 
 /** Henter alle påskrudde feature-flaggene */
@@ -40,7 +45,7 @@ export async function hentAlleFeatureFlagg(
       ),
     );
   }
-  await initialiserUnleash();
+  const unleash = await initialiserUnleash();
   const toggles = unleash.getFeatureToggleDefinitions();
   return toggles
     .filter((toggle) => toggle.name !== FeatureFlagg.STATUSMELDING)
@@ -63,7 +68,7 @@ export async function hentStatusmeldingFeatureFlagg(): Promise<Statusmelding | f
   if (!isProd) {
     return false;
   }
-  await initialiserUnleash();
+  const unleash = await initialiserUnleash();
   const erPåskrudd = unleash.isEnabled(FeatureFlagg.STATUSMELDING);
   if (!erPåskrudd) {
     return false;

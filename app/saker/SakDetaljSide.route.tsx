@@ -19,7 +19,6 @@ import {
 import { PageBlock } from "@navikt/ds-react/Page";
 import { useEffect, useId, useMemo, useState } from "react";
 import {
-  data,
   useBeforeUnload,
   useBlocker,
   useFetcher,
@@ -27,7 +26,6 @@ import {
   useNavigate,
   useRevalidator,
 } from "react-router";
-import { mockYtelser } from "~/fordeling/mock-data.server";
 import { Kort } from "~/komponenter/Kort";
 import {
   kategoriAlternativer,
@@ -36,8 +34,6 @@ import {
   merkingAlternativer,
   merkingEtiketter,
   misbrukstypePerKategori,
-  redigerSaksinformasjonSchema,
-  enhetAlternativer,
 } from "~/registrer-sak/validering";
 import {
   ankerIdForFelt,
@@ -45,33 +41,17 @@ import {
   samleFeilElementer,
   YtelseRadFelt,
 } from "~/registrer-sak/YtelseRadFelt";
-import {
-  bygFeilkartFraIssues,
-  parseYtelseRader,
-  type YtelseRadVerdier,
-} from "~/registrer-sak/skjema-helpers";
+import type { YtelseRadVerdier } from "~/registrer-sak/skjema-helpers";
 import {
   kontrollsakMisbrukstypeEtiketter,
   kontrollsakMisbrukstypeVerdier,
 } from "~/saker/kategorier";
-import { mockSaksbehandlere, mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
-import { mockSeksjoner } from "~/saker/mock-seksjoner.server";
-import type { Blokkeringsarsak, KontrollsakSaksbehandler } from "~/saker/types.backend";
-import { lagIsoTidspunktFraNorskDatoTid } from "~/utils/date-utils";
 import type { Route } from "./+types/SakDetaljSide.route";
-import { hentFilerForSak } from "./filer/mock-data.server";
 import { SakFilområde } from "./filer/SakFilområde";
-import { notatMalValg } from "./handlinger/notatValg";
 import { SakHandlingerKnapper } from "./handlinger/SakHandlingerKnapper";
 import { erAktivSakKontrollsak } from "./handlinger/tilgjengeligeHandlinger";
 import { SakHistorikk } from "./historikk/SakHistorikk";
-import {
-  hentHistorikk,
-  leggTilHendelse,
-  leggTilManuellHendelse,
-} from "./historikk/mock-data.server";
-import { finnSakMedReferanse, getSaksreferanse } from "./id";
-import { hentAlleSaker } from "./mock-alle-saker.server";
+import { getSaksreferanse } from "./id";
 import { SakerPåSammePerson } from "./komponenter/SakerPåSammePerson";
 import { SaksbehandlereKort } from "./komponenter/SaksbehandlereKort";
 import {
@@ -79,74 +59,14 @@ import {
   getKategoriText,
   getMisbrukstyper,
   getNavn,
-  getSaksenhet,
   getStatusVariantForSak,
   getTags,
 } from "./selectors";
-import {
-  formaterBelop,
-  getKildeText,
-  getPersonIdent,
-  getStatus,
-  type KontrollsakStatus,
-} from "./visning";
+import { formaterBelop, getKildeText, getPersonIdent, getStatus } from "./visning";
+import { action, loader } from "./SakDetaljSide.server";
+import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
 
-type Feltfeil = Record<string, string[]>;
-
-type RedigerSaksinformasjonData = {
-  kategori: string;
-  kilde: string;
-  misbruktype: string[];
-  merking: string[];
-  ytelser: YtelseRadVerdier[];
-};
-
-type ActionResult =
-  | { ok: true; sak?: Route.ComponentProps["loaderData"]["sak"] }
-  | { ok: false; feil: Feltfeil; verdier?: RedigerSaksinformasjonData };
-const unsupportedKobleSakFeil = "Denne funksjonen er ikke tilgjengelig ennå.";
-
-const gyldigeStatuser = new Set<KontrollsakStatus>([
-  "OPPRETTET",
-  "UTREDES",
-  "STRAFFERETTSLIG_VURDERING",
-  "ANMELDT",
-  "HENLAGT",
-  "AVSLUTTET",
-]);
-
-const gyldigeBlokkeringsarsaker = new Set<Blokkeringsarsak>([
-  "VENTER_PA_INFORMASJON",
-  "VENTER_PA_VEDTAK",
-  "I_BERO",
-]);
-
-function erGyldigStatus(verdi: string): verdi is KontrollsakStatus {
-  return gyldigeStatuser.has(verdi as KontrollsakStatus);
-}
-
-function erGyldigBlokkeringsarsak(verdi: string): verdi is Blokkeringsarsak {
-  return gyldigeBlokkeringsarsaker.has(verdi as Blokkeringsarsak);
-}
-
-function getHendelsestypeForBlokkering(blokkert: Blokkeringsarsak) {
-  return blokkert === "I_BERO" ? "SAK_SATT_I_BERO" : "SAK_SATT_PA_VENT";
-}
-
-function getHendelsestypeForStatusendring(status: KontrollsakStatus) {
-  switch (status) {
-    case "ANMELDT":
-      return "POLITIANMELDT";
-    case "HENLAGT":
-      return "SAK_HENLAGT";
-    default:
-      return "STATUS_ENDRET";
-  }
-}
-
-function hentDetaljSaker() {
-  return hentAlleSaker();
-}
+export { action, loader };
 
 function finnSaksbehandlerDetalj(
   saksbehandlerDetaljer: KontrollsakSaksbehandler[],
@@ -158,6 +78,16 @@ function finnSaksbehandlerDetalj(
     ) ?? null
   );
 }
+
+type Feltfeil = Record<string, string[]>;
+
+type RedigerSaksinformasjonData = {
+  kategori: string;
+  kilde: string;
+  misbruktype: string[];
+  merking: string[];
+  ytelser: YtelseRadVerdier[];
+};
 
 function formaterIsoTilNorskDato(iso: string | undefined | null): string {
   if (!iso) return "";
@@ -203,7 +133,31 @@ function lagRedigeringsdata(
 }
 
 function erLikeRedigeringsdata(a: RedigerSaksinformasjonData, b: RedigerSaksinformasjonData) {
-  return JSON.stringify(a) === JSON.stringify(b);
+  return (
+    a.kategori === b.kategori &&
+    a.kilde === b.kilde &&
+    erLikeStringArrays(a.misbruktype, b.misbruktype) &&
+    erLikeStringArrays(a.merking, b.merking) &&
+    erLikeYtelser(a.ytelser, b.ytelser)
+  );
+}
+
+function erLikeStringArrays(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  const sortA = [...a].sort();
+  const sortB = [...b].sort();
+  return sortA.every((val, i) => val === sortB[i]);
+}
+
+function erLikeYtelser(a: YtelseRadVerdier[], b: YtelseRadVerdier[]): boolean {
+  if (a.length !== b.length) return false;
+  return a.every(
+    (rad, i) =>
+      rad.type === b[i].type &&
+      rad.fraDato === b[i].fraDato &&
+      rad.tilDato === b[i].tilDato &&
+      rad.beløp === b[i].beløp,
+  );
 }
 
 function hentMisbrukstypeAlternativer(kategori: string): readonly string[] {
@@ -211,362 +165,6 @@ function hentMisbrukstypeAlternativer(kategori: string): readonly string[] {
     return [];
   }
   return (misbrukstypePerKategori as Partial<Record<string, readonly string[]>>)[kategori] ?? [];
-}
-
-function lagTidspunktFraSkjema(dato: string, tid: string): string {
-  return lagIsoTidspunktFraNorskDatoTid(dato, tid);
-}
-
-function finnNotatMalLabel(verdi: FormDataEntryValue | null): string | undefined {
-  if (typeof verdi !== "string" || verdi.length === 0) return undefined;
-  return notatMalValg.find((mal) => mal.verdi === verdi)?.label;
-}
-
-export function loader({ params }: Route.LoaderArgs) {
-  const alleSaker = hentDetaljSaker();
-  const sak = finnSakMedReferanse(alleSaker, params.sakId);
-  if (!sak) {
-    throw data("Sak ikke funnet", { status: 404 });
-  }
-  const historikk = hentHistorikk(sak.id);
-  const filer = hentFilerForSak(sak.id);
-  const andreSaker = alleSaker.filter(
-    (annenSak) => annenSak.personIdent === sak.personIdent && annenSak.id !== sak.id,
-  );
-  return {
-    sak,
-    historikk,
-    filer,
-    andreSaker,
-    saksbehandlere: mockSaksbehandlere,
-    saksbehandlerDetaljer: mockSaksbehandlerDetaljer,
-    seksjoner: mockSeksjoner,
-    ytelser: mockYtelser,
-  };
-}
-
-function hentDelteSaksbehandlere(sak: Route.ComponentProps["loaderData"]["sak"]) {
-  return sak.saksbehandlere.deltMed;
-}
-
-function hentTekstfelt(formData: FormData, felt: string, feilmelding: string) {
-  const verdi = formData.get(felt);
-
-  if (typeof verdi !== "string" || verdi.trim().length === 0) {
-    throw data(feilmelding, { status: 400 });
-  }
-
-  return verdi;
-}
-
-export async function action({ request, params }: Route.ActionArgs) {
-  const formData = await request.formData();
-  const handling = formData.get("handling") as string;
-  const sakId = params.sakId;
-
-  const sak = finnSakMedReferanse(hentDetaljSaker(), sakId);
-  if (!sak) {
-    throw data("Sak ikke funnet", { status: 404 });
-  }
-
-  if (
-    sak.status === "AVSLUTTET" &&
-    (handling === "endre_status" || handling === "endre_blokkering" || handling === "gjenoppta")
-  ) {
-    throw data("Kan ikke endre avsluttet sak", { status: 400 });
-  }
-
-  const saksbehandlere = sak.saksbehandlere;
-
-  switch (handling) {
-    case "TILDEL": {
-      const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
-      const navn = (formData.get("navn") as string | null) ?? navIdent;
-      const valgtSaksbehandler = finnSaksbehandlerDetalj(mockSaksbehandlerDetaljer, navIdent) ?? {
-        navIdent,
-        navn,
-        enhet: null,
-      };
-
-      sak.saksbehandlere.eier = valgtSaksbehandler;
-      leggTilHendelse(sak, "SAK_TILDELT");
-      break;
-    }
-    case "FRISTILL": {
-      sak.saksbehandlere.eier = null;
-      break;
-    }
-    case "endre_status": {
-      const nyStatus = formData.get("status") as string;
-
-      if (!erGyldigStatus(nyStatus)) {
-        throw data("Ugyldig status", { status: 400 });
-      }
-
-      if (nyStatus === sak.status) {
-        throw data("Status er uendret", { status: 400 });
-      }
-
-      const beskrivelse = (formData.get("beskrivelse") as string | null) || undefined;
-      const forrigeBlokkering = sak.blokkert;
-
-      sak.status = nyStatus;
-      if (nyStatus === "AVSLUTTET") {
-        sak.blokkert = null;
-      }
-      leggTilHendelse(sak, getHendelsestypeForStatusendring(nyStatus), undefined, {
-        beskrivelse,
-        blokkert: nyStatus === "AVSLUTTET" ? forrigeBlokkering : sak.blokkert,
-      });
-      break;
-    }
-    case "endre_blokkering": {
-      const blokkert = formData.get("blokkert") as string;
-
-      if (!erGyldigBlokkeringsarsak(blokkert)) {
-        throw data("Ugyldig blokkeringsårsak", { status: 400 });
-      }
-
-      const beskrivelse = (formData.get("beskrivelse") as string | null) || undefined;
-
-      sak.blokkert = blokkert;
-      leggTilHendelse(sak, getHendelsestypeForBlokkering(blokkert), undefined, {
-        beskrivelse,
-      });
-      break;
-    }
-    case "gjenoppta": {
-      const forrigeBlokkering = sak.blokkert;
-
-      if (forrigeBlokkering === null) {
-        throw data("Saken er ikke blokkert", { status: 400 });
-      }
-
-      sak.blokkert = null;
-      leggTilHendelse(sak, "SAK_GJENOPPTATT", undefined, {
-        blokkert: forrigeBlokkering,
-      });
-      break;
-    }
-    case "overfor_ansvarlig": {
-      const navIdent = formData.get("navIdent") as string;
-      const valgtSaksbehandler = finnSaksbehandlerDetalj(mockSaksbehandlerDetaljer, navIdent);
-
-      if (!valgtSaksbehandler) {
-        throw data("Ugyldig saksbehandler", { status: 400 });
-      }
-
-      const berortSaksbehandlerEnhet =
-        valgtSaksbehandler.enhet === null ? undefined : valgtSaksbehandler.enhet;
-
-      sak.saksbehandlere.eier = valgtSaksbehandler;
-      sak.saksbehandlere.deltMed = sak.saksbehandlere.deltMed.filter(
-        (saksbehandler) => saksbehandler.navIdent !== valgtSaksbehandler.navIdent,
-      );
-
-      leggTilHendelse(sak, "ANSVARLIG_SAKSBEHANDLER_ENDRET", undefined, {
-        berortSaksbehandlerNavn: valgtSaksbehandler.navn,
-        berortSaksbehandlerNavIdent: valgtSaksbehandler.navIdent,
-        berortSaksbehandlerEnhet,
-      });
-      break;
-    }
-    case "videresend_seksjon": {
-      const nySeksjon = formData.get("seksjon") as string;
-
-      if (sak.saksbehandlere.eier) {
-        sak.saksbehandlere.eier = {
-          ...sak.saksbehandlere.eier,
-          enhet: nySeksjon,
-        };
-      } else {
-        sak.saksbehandlere.opprettetAv = {
-          ...sak.saksbehandlere.opprettetAv,
-          enhet: nySeksjon,
-        };
-      }
-      leggTilHendelse(sak, "MOTTAKSENHET_ENDRET");
-      break;
-    }
-    case "send_til_annen_enhet": {
-      const nySeksjon = hentTekstfelt(formData, "seksjon", "Ugyldig enhet");
-
-      if (!enhetAlternativer.includes(nySeksjon as (typeof enhetAlternativer)[number])) {
-        throw data("Ugyldig enhet", { status: 400 });
-      }
-
-      if (nySeksjon === getSaksenhet(sak)) {
-        throw data("Velg en annen enhet", { status: 400 });
-      }
-
-      sak.saksbehandlere.opprettetAv = {
-        ...sak.saksbehandlere.opprettetAv,
-        enhet: nySeksjon,
-      };
-      sak.saksbehandlere.eier = null;
-      leggTilHendelse(sak, "MOTTAKSENHET_ENDRET");
-      break;
-    }
-    case "henlegg": {
-      sak.status = "AVSLUTTET";
-      leggTilHendelse(sak, "SAK_HENLAGT");
-      break;
-    }
-    case "rediger_saksinformasjon": {
-      if (!erAktivSakKontrollsak(sak.status)) {
-        return {
-          ok: false,
-          feil: { skjema: ["Saken kan ikke redigeres i denne statusen."] },
-        } satisfies ActionResult;
-      }
-
-      const ytelseRader = parseYtelseRader(formData);
-      const rådata = {
-        kategori: formData.get("kategori") || undefined,
-        kilde: formData.get("kilde") || undefined,
-        misbruktype: formData
-          .getAll("misbruktype")
-          .filter((v): v is string => typeof v === "string" && v.length > 0),
-        merking: formData
-          .getAll("merking")
-          .filter((v): v is string => typeof v === "string" && v.length > 0),
-        ytelser: ytelseRader,
-      };
-
-      const verdier: RedigerSaksinformasjonData = {
-        kategori: typeof rådata.kategori === "string" ? rådata.kategori : "",
-        kilde: typeof rådata.kilde === "string" ? rådata.kilde : "",
-        misbruktype: rådata.misbruktype,
-        merking: rådata.merking,
-        ytelser: ytelseRader.length > 0 ? ytelseRader : [{}],
-      };
-
-      const resultat = redigerSaksinformasjonSchema.safeParse(rådata);
-
-      if (!resultat.success) {
-        return {
-          ok: false,
-          feil: bygFeilkartFraIssues(resultat.error.issues),
-          verdier,
-        } satisfies ActionResult;
-      }
-
-      const data = resultat.data;
-      const eksisterendeYtelser = sak.ytelser;
-
-      sak.kategori = data.kategori;
-      sak.misbruktype = [...data.misbruktype];
-      sak.merking = data.merking[0] ?? null;
-      sak.kilde = data.kilde;
-      sak.ytelser = data.ytelser.map((ytelse, indeks) => ({
-        id: eksisterendeYtelser[indeks]?.id ?? crypto.randomUUID(),
-        type: ytelse.type ?? "",
-        periodeFra: ytelse.fraDato ?? "",
-        periodeTil: ytelse.tilDato ?? "",
-        belop: ytelse.beløp ?? null,
-      }));
-      leggTilHendelse(sak, "SAKSINFORMASJON_ENDRET");
-      return { ok: true, sak } satisfies ActionResult;
-    }
-    case "koble_sak": {
-      return {
-        ok: false,
-        feil: { skjema: [unsupportedKobleSakFeil] },
-      } satisfies ActionResult;
-    }
-    case "del_tilgang": {
-      const navIdent = formData.get("navIdent") as string;
-      const valgtSaksbehandler = finnSaksbehandlerDetalj(mockSaksbehandlerDetaljer, navIdent);
-
-      if (!valgtSaksbehandler) {
-        throw data("Ugyldig saksbehandler", { status: 400 });
-      }
-
-      const berortSaksbehandlerEnhet =
-        valgtSaksbehandler.enhet === null ? undefined : valgtSaksbehandler.enhet;
-
-      const erAnsvarlig = sak.saksbehandlere.eier?.navIdent === valgtSaksbehandler.navIdent;
-      const erAlleredeDelt = saksbehandlere.deltMed.some(
-        (saksbehandler) => saksbehandler.navIdent === valgtSaksbehandler.navIdent,
-      );
-
-      if (!erAnsvarlig && !erAlleredeDelt) {
-        saksbehandlere.deltMed.push(valgtSaksbehandler);
-        leggTilHendelse(sak, "TILGANG_DELT", undefined, {
-          berortSaksbehandlerNavn: valgtSaksbehandler.navn,
-          berortSaksbehandlerNavIdent: valgtSaksbehandler.navIdent,
-          berortSaksbehandlerEnhet,
-        });
-      }
-
-      break;
-    }
-    case "fjern_delt_tilgang": {
-      const navIdent = formData.get("navIdent") as string;
-      const saksbehandler = saksbehandlere.deltMed.find(
-        (deltSaksbehandler) => deltSaksbehandler.navIdent === navIdent,
-      );
-
-      saksbehandlere.deltMed = saksbehandlere.deltMed.filter(
-        (deltSaksbehandler) => deltSaksbehandler.navIdent !== navIdent,
-      );
-
-      if (saksbehandler) {
-        const berortSaksbehandlerEnhet =
-          saksbehandler.enhet === null ? undefined : saksbehandler.enhet;
-
-        leggTilHendelse(sak, "TILGANG_FJERNET", undefined, {
-          berortSaksbehandlerNavn: saksbehandler.navn,
-          berortSaksbehandlerNavIdent: saksbehandler.navIdent,
-          berortSaksbehandlerEnhet,
-        });
-      }
-
-      break;
-    }
-    case "legg_til_historikk": {
-      const tittel = formData.get("tittel") as string;
-      const notat = formData.get("notat") as string;
-      const dato = formData.get("dato") as string;
-      const tid = formData.get("tid") as string;
-
-      if (!tittel) {
-        throw data("Tittel er påkrevd", { status: 400 });
-      }
-
-      const tidspunkt = lagTidspunktFraSkjema(dato, tid);
-      leggTilManuellHendelse(sak, tittel, notat ?? "", tidspunkt);
-      break;
-    }
-    case "send_notat": {
-      const notatRaw = formData.get("notat");
-      if (typeof notatRaw !== "string" || !notatRaw.trim()) {
-        throw data("Notat er påkrevd", { status: 400 });
-      }
-      const notat = notatRaw.trim();
-      const malLabel = finnNotatMalLabel(formData.get("mal"));
-      const knyttTilOppgave = formData.get("knyttTilOppgave") === "true";
-      const oppgavetype = (formData.get("oppgavetype") as string | null) ?? "";
-
-      const deler = [notat];
-      if (malLabel) {
-        deler.push(`Mal: ${malLabel}`);
-      }
-      if (knyttTilOppgave) {
-        deler.push(`Knyttet til oppgave${oppgavetype ? `: ${oppgavetype}` : ""}`);
-      }
-
-      leggTilHendelse(sak, "NOTAT_SENDT", undefined, {
-        beskrivelse: deler.join("\n"),
-      });
-      break;
-    }
-    default: {
-      throw data("Ugyldig handling", { status: 400 });
-    }
-  }
-
-  return { ok: true } satisfies ActionResult;
 }
 
 function Felt({ label, children }: { label: string; children: React.ReactNode }) {
@@ -606,7 +204,7 @@ export default function SakDetaljSide() {
   const ansvarligSaksbehandler = sak.saksbehandlere.eier
     ? finnSaksbehandlerDetalj(saksbehandlerDetaljer, sak.saksbehandlere.eier.navIdent)
     : null;
-  const delteSaksbehandlere = hentDelteSaksbehandlere(sak);
+  const delteSaksbehandlere = sak.saksbehandlere.deltMed;
   const [redigerer, setRedigerer] = useState(false);
   const [redigeringsøkt, setRedigeringsøkt] = useState(0);
   const [visFeil, setVisFeil] = useState(false);
