@@ -1,9 +1,6 @@
 import { lagMockSakUuid } from "~/saker/mock-uuid";
 import { type Varsel, varselSchema } from "~/varsler/typer";
-
-declare global {
-  var __watsonSakMockVarsler: Varsel[] | undefined;
-}
+import type { MockState } from "./session.server";
 
 const rådata: Varsel[] = [
   {
@@ -71,30 +68,26 @@ const rådata: Varsel[] = [
   },
 ];
 
-function lagInitialeVarsler() {
+export function lagInitialeVarsler(): Varsel[] {
   return rådata.map((varsel) => varselSchema.parse(varsel));
 }
 
-globalThis.__watsonSakMockVarsler ??= lagInitialeVarsler();
-
-export const mockVarsler = globalThis.__watsonSakMockVarsler;
-
-export function hentUlesteVarsler() {
-  return mockVarsler
+export function hentUlesteVarsler(state: MockState): Varsel[] {
+  return state.varsler
     .filter((varsel) => !varsel.erLest)
     .sort((a, b) => b.tidspunkt.localeCompare(a.tidspunkt));
 }
 
-export function markerVarselSomLest(varselId: string) {
-  const varsel = mockVarsler.find((item) => item.id === varselId);
+export function hentVarsler(state: MockState): Varsel[] {
+  return state.varsler;
+}
+
+export function markerVarselSomLest(state: MockState, varselId: string) {
+  const varsel = state.varsler.find((item) => item.id === varselId);
 
   if (!varsel) {
     throw new Error(`Fant ikke varsel med id ${varselId}`);
   }
 
   varsel.erLest = true;
-}
-
-export function resetMockVarsler() {
-  mockVarsler.splice(0, mockVarsler.length, ...lagInitialeVarsler());
 }

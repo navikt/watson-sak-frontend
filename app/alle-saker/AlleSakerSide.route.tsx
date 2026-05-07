@@ -42,7 +42,7 @@ export function loader({ request }: Route.LoaderArgs) {
   const filterMisbrukstype = normaliserFilterVerdier(url.searchParams.getAll("misbrukstype"));
   const filterMerking = normaliserFilterVerdier(url.searchParams.getAll("merking"));
 
-  const alleSaker = hentAlleSaker();
+  const alleSaker = hentAlleSaker(request);
 
   // Tilgjengelige filterverdier beregnes fra alle saker (uavhengig av aktivt filter)
   const filterAlternativer = {

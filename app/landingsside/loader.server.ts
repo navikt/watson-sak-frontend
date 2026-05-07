@@ -19,7 +19,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     throw new Response("Landingsside er ikke tilgjengelig uten mockdata", { status: 501 });
   }
 
-  const mineSakerHosInnloggetBruker = hentMineSaker(innloggetBruker.navIdent);
+  const mineSakerHosInnloggetBruker = hentMineSaker(request, innloggetBruker.navIdent);
 
   const aktiveMineSaker = mineSakerHosInnloggetBruker.filter(
     (sak) => sak.status !== "ANMELDT" && sak.status !== "HENLAGT" && sak.status !== "AVSLUTTET",
@@ -32,10 +32,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const mineSaker = [...aktiveMineSaker]
     .sort((a, b) => getOpprettetDato(b).localeCompare(getOpprettetDato(a)))
     .slice(0, 5);
-  const varsler = hentUlesteVarsler();
+  const varsler = hentUlesteVarsler(request);
   const velkomstOppsummering = lagVelkomstOppsummering(sakerForVelkomstOppsummering);
   const referansedato = new Date().toISOString().split("T")[0];
   const dineSakerSiste14Dager = beregnDineSakerSiste14Dager({
+    request,
     saker: aktiveMineSaker,
     avslutningsdatoer: mockMineSakerAvslutningsdatoer,
     tidligereTipsSakIder: mockMineSakerTidligereTipsSakIder,

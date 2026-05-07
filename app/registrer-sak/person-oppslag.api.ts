@@ -17,7 +17,7 @@ export async function action({ request }: { request: Request }) {
     );
   }
 
-  const resultat = slaOppPerson(fnr);
+  const resultat = slaOppPerson(request, fnr);
 
   if (!resultat) {
     return Response.json({ person: null, eksisterendeSaker: [] });

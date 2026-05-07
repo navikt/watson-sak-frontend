@@ -4,6 +4,7 @@ import { beregnBehandlingstid } from "~/statistikk/beregninger";
 import type { Avslutningsdatoer } from "~/statistikk/mock-data.server";
 
 interface BeregnDineSakerSiste14DagerArgs {
+  request: Request;
   saker: KontrollsakResponse[];
   avslutningsdatoer: Avslutningsdatoer;
   tidligereTipsSakIder: string[];
@@ -28,8 +29,8 @@ function harEier(sak: KontrollsakResponse) {
   return sak.saksbehandlere.eier !== null;
 }
 
-function erSendtTilNayNfp(sak: KontrollsakResponse) {
-  return hentHistorikk(sak.id).some(
+function erSendtTilNayNfp(request: Request, sak: KontrollsakResponse) {
+  return hentHistorikk(request, sak.id).some(
     (hendelse) => hendelse.hendelsesType === "VIDERESENDT_TIL_NAY_NFP",
   );
 }
@@ -43,6 +44,7 @@ function erInnenforSiste14Dager(dato: string, referansedato: string) {
 }
 
 export function beregnDineSakerSiste14Dager({
+  request,
   saker,
   avslutningsdatoer,
   tidligereTipsSakIder,
@@ -57,7 +59,7 @@ export function beregnDineSakerSiste14Dager({
   return {
     antallSakerJobbetMed: sakerSiste14Dager.length,
     antallTipsTilVurdering: 0,
-    antallSendtTilNayNfp: sakerSiste14Dager.filter((sak) => erSendtTilNayNfp(sak)).length,
+    antallSendtTilNayNfp: sakerSiste14Dager.filter((sak) => erSendtTilNayNfp(request, sak)).length,
     snittBehandlingstidPerSak: behandlingstid?.gjennomsnitt ?? null,
     antallHenlagteSaker: sakerSiste14Dager.filter(
       (sak) => sak.status === "HENLAGT" && !tidligereTipsSakIder.includes(sak.id),

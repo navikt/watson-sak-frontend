@@ -22,7 +22,7 @@ vi.mock("~/config/env.server", () => ({
 }));
 
 vi.mock("./person-oppslag.mock.server", () => ({
-  slaOppPerson: vi.fn((fnr: string) =>
+  slaOppPerson: vi.fn((_request: Request, fnr: string) =>
     fnr === "12345678901"
       ? {
           person: {
@@ -69,22 +69,24 @@ describe("OpprettSakSide action", () => {
       context: {},
     } as Route.ActionArgs);
 
-    expect(opprettKontrollsak).toHaveBeenCalledWith({
-      token: "demo",
-      payload: expect.objectContaining({
-        personIdent: "12345678901",
-        personNavn: "Ola Testesen",
-        saksbehandlere: {
-          eier: null,
-          deltMed: [],
-        },
-        kategori: "DOKUMENTFALSK",
-        kilde: "NAV_KONTROLL",
-        prioritet: "NORMAL",
-        misbruktype: [],
-        ytelser: [],
+    expect(opprettKontrollsak).toHaveBeenCalledWith(
+      expect.objectContaining({
+        token: "demo",
+        payload: expect.objectContaining({
+          personIdent: "12345678901",
+          personNavn: "Ola Testesen",
+          saksbehandlere: {
+            eier: null,
+            deltMed: [],
+          },
+          kategori: "DOKUMENTFALSK",
+          kilde: "NAV_KONTROLL",
+          prioritet: "NORMAL",
+          misbruktype: [],
+          ytelser: [],
+        }),
       }),
-    });
+    );
 
     expect(response).toBeInstanceOf(Response);
     expect((response as Response).status).toBe(302);

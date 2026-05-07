@@ -23,14 +23,14 @@ import { HorisontaltSoylediagram } from "./komponenter/HorisontaltSoylediagram";
 import { Nokkeltallkort } from "./komponenter/Nokkeltallkort";
 import { VertikaltSoylediagram } from "./komponenter/VertikaltSoylediagram";
 
-export function loader() {
-  const saker = hentAlleSaker();
+export function loader({ request }: { request: Request }) {
+  const saker = hentAlleSaker(request);
 
   return {
     totaltAntall: saker.length,
     antallPerStatus: beregnAntallPerStatus(saker),
     antallIBero: beregnAntallIBero(saker),
-    behandlingstid: beregnBehandlingstid(saker, hentAvslutningsdatoer()),
+    behandlingstid: beregnBehandlingstid(saker, hentAvslutningsdatoer(request)),
     antallPerSeksjon: beregnAntallPerSeksjon(saker),
     fordelingPerYtelse: beregnFordelingPerYtelse(saker),
     fordelingPerAntallYtelser: beregnFordelingPerAntallYtelser(saker),

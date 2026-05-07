@@ -106,19 +106,19 @@ function finnNotatMalLabel(verdi: FormDataEntryValue | null): string | undefined
 
 // --- Loader ---
 
-export function loader({ params }: Route.LoaderArgs) {
+export function loader({ request, params }: Route.LoaderArgs) {
   if (!skalBrukeMockdata) {
     // TODO: Implementer backend-kall for sakdetalj
     throw new Response("Sakdetalj er ikke tilgjengelig uten mockdata", { status: 501 });
   }
 
-  const alleSaker = hentAlleSaker();
+  const alleSaker = hentAlleSaker(request);
   const sak = finnSakMedReferanse(alleSaker, params.sakId);
   if (!sak) {
     throw data("Sak ikke funnet", { status: 404 });
   }
-  const historikk = hentHistorikk(sak.id);
-  const filer = hentFilerForSak(sak.id);
+  const historikk = hentHistorikk(request, sak.id);
+  const filer = hentFilerForSak(request, sak.id);
   const andreSaker = alleSaker.filter(
     (annenSak) => annenSak.personIdent === sak.personIdent && annenSak.id !== sak.id,
   );
@@ -146,7 +146,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   const handling = hentTekstfelt(formData, "handling", "Ugyldig handling");
   const sakId = params.sakId;
 
-  const sak = finnSakMedReferanse(hentAlleSaker(), sakId);
+  const sak = finnSakMedReferanse(hentAlleSaker(request), sakId);
   if (!sak) {
     throw data("Sak ikke funnet", { status: 404 });
   }
@@ -171,7 +171,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       };
 
       sak.saksbehandlere.eier = valgtSaksbehandler;
-      leggTilHendelse(sak, "SAK_TILDELT");
+      leggTilHendelse(request, sak, "SAK_TILDELT");
       break;
     }
     case "FRISTILL": {
@@ -196,7 +196,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       if (nyStatus === "AVSLUTTET") {
         sak.blokkert = null;
       }
-      leggTilHendelse(sak, getHendelsestypeForStatusendring(nyStatus), undefined, {
+      leggTilHendelse(request, sak, getHendelsestypeForStatusendring(nyStatus), undefined, {
         beskrivelse,
         blokkert: nyStatus === "AVSLUTTET" ? forrigeBlokkering : sak.blokkert,
       });
@@ -212,7 +212,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
 
       sak.blokkert = blokkert;
-      leggTilHendelse(sak, getHendelsestypeForBlokkering(blokkert), undefined, {
+      leggTilHendelse(request, sak, getHendelsestypeForBlokkering(blokkert), undefined, {
         beskrivelse,
       });
       break;
@@ -225,7 +225,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       }
 
       sak.blokkert = null;
-      leggTilHendelse(sak, "SAK_GJENOPPTATT", undefined, {
+      leggTilHendelse(request, sak, "SAK_GJENOPPTATT", undefined, {
         blokkert: forrigeBlokkering,
       });
       break;
@@ -246,7 +246,7 @@ export async function action({ request, params }: Route.ActionArgs) {
         (saksbehandler) => saksbehandler.navIdent !== valgtSaksbehandler.navIdent,
       );
 
-      leggTilHendelse(sak, "ANSVARLIG_SAKSBEHANDLER_ENDRET", undefined, {
+      leggTilHendelse(request, sak, "ANSVARLIG_SAKSBEHANDLER_ENDRET", undefined, {
         berortSaksbehandlerNavn: valgtSaksbehandler.navn,
         berortSaksbehandlerNavIdent: valgtSaksbehandler.navIdent,
         berortSaksbehandlerEnhet,
@@ -267,7 +267,7 @@ export async function action({ request, params }: Route.ActionArgs) {
           enhet: nySeksjon,
         };
       }
-      leggTilHendelse(sak, "MOTTAKSENHET_ENDRET");
+      leggTilHendelse(request, sak, "MOTTAKSENHET_ENDRET");
       break;
     }
     case "send_til_annen_enhet": {
@@ -286,12 +286,12 @@ export async function action({ request, params }: Route.ActionArgs) {
         enhet: nySeksjon,
       };
       sak.saksbehandlere.eier = null;
-      leggTilHendelse(sak, "MOTTAKSENHET_ENDRET");
+      leggTilHendelse(request, sak, "MOTTAKSENHET_ENDRET");
       break;
     }
     case "henlegg": {
       sak.status = "AVSLUTTET";
-      leggTilHendelse(sak, "SAK_HENLAGT");
+      leggTilHendelse(request, sak, "SAK_HENLAGT");
       break;
     }
     case "rediger_saksinformasjon": {
@@ -347,7 +347,7 @@ export async function action({ request, params }: Route.ActionArgs) {
         periodeTil: ytelse.tilDato ?? "",
         belop: ytelse.beløp ?? null,
       }));
-      leggTilHendelse(sak, "SAKSINFORMASJON_ENDRET");
+      leggTilHendelse(request, sak, "SAKSINFORMASJON_ENDRET");
       return { ok: true, sak } satisfies ActionResult;
     }
     case "koble_sak": {
@@ -374,7 +374,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
       if (!erAnsvarlig && !erAlleredeDelt) {
         saksbehandlere.deltMed.push(valgtSaksbehandler);
-        leggTilHendelse(sak, "TILGANG_DELT", undefined, {
+        leggTilHendelse(request, sak, "TILGANG_DELT", undefined, {
           berortSaksbehandlerNavn: valgtSaksbehandler.navn,
           berortSaksbehandlerNavIdent: valgtSaksbehandler.navIdent,
           berortSaksbehandlerEnhet,
@@ -397,7 +397,7 @@ export async function action({ request, params }: Route.ActionArgs) {
         const berortSaksbehandlerEnhet =
           saksbehandler.enhet === null ? undefined : saksbehandler.enhet;
 
-        leggTilHendelse(sak, "TILGANG_FJERNET", undefined, {
+        leggTilHendelse(request, sak, "TILGANG_FJERNET", undefined, {
           berortSaksbehandlerNavn: saksbehandler.navn,
           berortSaksbehandlerNavIdent: saksbehandler.navIdent,
           berortSaksbehandlerEnhet,
@@ -413,7 +413,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       const tid = hentTekstfelt(formData, "tid", "Tid er påkrevd");
 
       const tidspunkt = lagTidspunktFraSkjema(dato, tid);
-      leggTilManuellHendelse(sak, tittel, notat, tidspunkt);
+      leggTilManuellHendelse(request, sak, tittel, notat, tidspunkt);
       break;
     }
     case "send_notat": {
@@ -434,7 +434,7 @@ export async function action({ request, params }: Route.ActionArgs) {
         deler.push(`Knyttet til oppgave${oppgavetype ? `: ${oppgavetype}` : ""}`);
       }
 
-      leggTilHendelse(sak, "NOTAT_SENDT", undefined, {
+      leggTilHendelse(request, sak, "NOTAT_SENDT", undefined, {
         beskrivelse: deler.join("\n"),
       });
       break;

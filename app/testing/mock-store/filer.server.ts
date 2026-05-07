@@ -1,7 +1,7 @@
 import type { FilNode } from "~/saker/filer/typer";
+import type { MockState } from "./session.server";
 
 const sharepointBase = "https://navno.sharepoint.com/sites/watson/saker";
-const tommeFilområder = new Set<string>();
 
 function lagUrl(sakId: string, sti: string): string {
   return `${sharepointBase}/${sakId}/${sti}`;
@@ -108,8 +108,8 @@ function lagFilstruktur(sakId: string): FilNode[] {
   ];
 }
 
-export function hentFilerForSak(sakId: string): FilNode[] {
-  if (tommeFilområder.has(sakId)) {
+export function hentFilerForSak(state: MockState, sakId: string): FilNode[] {
+  if (state.tommeFilområder.has(sakId)) {
     return [];
   }
 
@@ -123,10 +123,6 @@ export function hentFilerForSak(sakId: string): FilNode[] {
   return lagFilstruktur(sakId);
 }
 
-export function registrerTomtFilområdeForSak(sakId: string) {
-  tommeFilområder.add(sakId);
-}
-
-export function resetMockFiler() {
-  tommeFilområder.clear();
+export function registrerTomtFilområdeForSak(state: MockState, sakId: string) {
+  state.tommeFilområder.add(sakId);
 }

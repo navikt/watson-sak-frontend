@@ -1,18 +1,27 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { resetMockStore } from "~/testing/mock-store/reset.server";
+import { hentMockState, resetDefaultSession } from "~/testing/mock-store/session.server";
+import {
+  hentFordelingssaker,
+  hentMineSaker,
+  leggTilMockSakIFordeling,
+} from "~/testing/mock-store/alle-saker.server";
+import { hentFilerForSak } from "~/testing/mock-store/filer.server";
 import { søkSaker } from "~/søk/søk.server";
-import { mockKontrollsaker } from "~/fordeling/mock-data.server";
-import { hentMineSaker, leggTilMockSakIFordeling } from "~/saker/mock-alle-saker.server";
+import { opprettKontrollsak } from "./api.server";
 
 vi.mock("~/config/env.server", () => ({
   BACKEND_API_URL: "https://backend.test",
   skalBrukeMockdata: true,
 }));
 
+const testRequest = new Request("http://localhost");
+function state() {
+  return hentMockState(testRequest);
+}
+
 describe("opprettKontrollsak", () => {
   beforeEach(() => {
-    resetMockStore();
-    vi.resetModules();
+    resetDefaultSession();
   });
 
   afterEach(() => {
@@ -21,6 +30,7 @@ describe("opprettKontrollsak", () => {
   });
 
   it("poster OpprettKontrollsakRequest til backend med bearer-token", async () => {
+    vi.resetModules();
     vi.doMock("~/config/env.server", () => ({
       BACKEND_API_URL: "https://backend.test",
       skalBrukeMockdata: false,
@@ -32,9 +42,10 @@ describe("opprettKontrollsak", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    const { opprettKontrollsak } = await import("./api.server");
+    const { opprettKontrollsak: opprettKontrollsakBackend } = await import("./api.server");
 
-    await opprettKontrollsak({
+    await opprettKontrollsakBackend({
+      request: testRequest,
       token: "token-123",
       payload: {
         personIdent: "12345678901",
@@ -86,14 +97,10 @@ describe("opprettKontrollsak", () => {
         ],
       }),
     });
-    vi.doMock("~/config/env.server", () => ({
-      BACKEND_API_URL: "https://backend.test",
-      skalBrukeMockdata: true,
-    }));
   });
 
   it("legger til ny mock-sak i fordeling slik at den blir søkbar og ownerløs", async () => {
-    leggTilMockSakIFordeling({
+    leggTilMockSakIFordeling(state(), {
       personIdent: "12345678901",
       personNavn: "Ola Testesen",
       saksbehandlere: {
@@ -115,21 +122,21 @@ describe("opprettKontrollsak", () => {
     });
 
     expect(
-      mockKontrollsaker.some(
+      hentFordelingssaker(state()).some(
         (sak) =>
           sak.personIdent === "12345678901" &&
           sak.status === "OPPRETTET" &&
           sak.saksbehandlere.eier === null,
       ),
     ).toBe(true);
-    expect(søkSaker("12345678901").some((sak) => sak.personIdent === "12345678901")).toBe(true);
+    expect(
+      søkSaker(testRequest, "12345678901").some((sak) => sak.personIdent === "12345678901"),
+    ).toBe(true);
   });
 
   it("oppretter mock-saker med tom filliste", async () => {
-    const { opprettKontrollsak } = await import("./api.server");
-    const { hentFilerForSak } = await import("~/testing/mock-store/filer.server");
-
     const opprettetSak = await opprettKontrollsak({
+      request: testRequest,
       token: "token-123",
       payload: {
         personIdent: "12345678901",
@@ -146,11 +153,11 @@ describe("opprettKontrollsak", () => {
       },
     });
 
-    expect(hentFilerForSak(opprettetSak.id)).toEqual([]);
+    expect(hentFilerForSak(state(), opprettetSak.id)).toEqual([]);
   });
 
   it("legger mock-sak med eier i Mine saker", async () => {
-    const nySak = leggTilMockSakIFordeling({
+    const nySak = leggTilMockSakIFordeling(state(), {
       personIdent: "12345678901",
       personNavn: "Ola Testesen",
       saksbehandlere: {
@@ -176,14 +183,13 @@ describe("opprettKontrollsak", () => {
     });
 
     expect(nySak.saksbehandlere.eier?.navIdent).toBe("Z999999");
-    expect(hentMineSaker()).toContain(nySak);
+    expect(hentMineSaker(state())).toContain(nySak);
   });
 
   it("godtar gyldige kilde- og misbruktypeverdier fra delt kontrakt i mock-modus", async () => {
-    const { opprettKontrollsak } = await import("./api.server");
-
     await expect(
       opprettKontrollsak({
+        request: testRequest,
         token: "token-123",
         payload: {
           personIdent: "12345678901",
@@ -209,10 +215,9 @@ describe("opprettKontrollsak", () => {
   });
 
   it("avviser ugyldige kontraktverdier i mock-modus", async () => {
-    const { opprettKontrollsak } = await import("./api.server");
-
     await expect(
       opprettKontrollsak({
+        request: testRequest,
         token: "token-123",
         payload: {
           personIdent: "12345678901",

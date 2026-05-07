@@ -17,7 +17,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   return {
-    saker: hentMineSaker(innloggetBruker.navIdent),
+    saker: hentMineSaker(request, innloggetBruker.navIdent),
   };
 }
 

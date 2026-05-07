@@ -8,16 +8,21 @@ import {
   hentMineSaker,
   hentSakMedReferanse,
 } from "./alle-saker.server";
-import { resetMockStore } from "./reset.server";
+import { hentMockState, resetDefaultSession } from "./session.server";
+
+const testRequest = new Request("http://localhost");
+function state() {
+  return hentMockState(testRequest);
+}
 
 describe("mock-store konsistens", () => {
   beforeEach(() => {
-    resetMockStore();
+    resetDefaultSession();
   });
 
   it("bruker samme saksobjekt for Mine saker og detaljoppslag", () => {
-    for (const mineSak of hentMineSaker()) {
-      const detaljSak = hentSakMedReferanse(getSaksreferanse(mineSak.id));
+    for (const mineSak of hentMineSaker(state())) {
+      const detaljSak = hentSakMedReferanse(state(), getSaksreferanse(mineSak.id));
 
       expect(detaljSak?.id).toBe(mineSak.id);
       expect(detaljSak?.personNavn).toBe(mineSak.personNavn);
@@ -25,15 +30,15 @@ describe("mock-store konsistens", () => {
   });
 
   it("lar view-spesifikke spørringer peke på samme saker som samlet sakskatalog", () => {
-    const alleSaker = hentAlleSaker();
+    const alleSaker = hentAlleSaker(state());
 
-    for (const sak of [...hentFordelingssaker(), ...hentMineSaker()]) {
+    for (const sak of [...hentFordelingssaker(state()), ...hentMineSaker(state())]) {
       expect(alleSaker).toContain(sak);
     }
   });
 
   it("viser fordelingssaker i Mine saker når de tildeles innlogget bruker", () => {
-    const fordelingssak = hentFordelingssaker()[0];
+    const fordelingssak = hentFordelingssaker(state())[0];
 
     if (!fordelingssak) {
       throw new Error("Forventet minst én fordelingssak");
@@ -45,11 +50,11 @@ describe("mock-store konsistens", () => {
       enhet: "Nord",
     };
 
-    expect(hentMineSaker()).toContain(fordelingssak);
+    expect(hentMineSaker(state())).toContain(fordelingssak);
   });
 
   it("har samme navn for samme personident i saker og personoppslag", () => {
-    for (const sak of hentAlleSaker()) {
+    for (const sak of hentAlleSaker(state())) {
       const personNavn = hentMockPersonNavn(sak.personIdent);
 
       if (personNavn !== null) {
@@ -58,20 +63,20 @@ describe("mock-store konsistens", () => {
     }
 
     for (const person of hentAlleMockPersoner()) {
-      expect(slaOppPerson(person.personIdent)?.person.navn).toBe(person.navn);
+      expect(slaOppPerson(testRequest, person.personIdent)?.person.navn).toBe(person.navn);
     }
   });
 
   it("lenker ikke personoppslag til saker på andre personer", () => {
     for (const person of hentAlleMockPersoner()) {
-      const personOppslag = slaOppPerson(person.personIdent);
+      const personOppslag = slaOppPerson(testRequest, person.personIdent);
 
       for (const eksisterendeSak of personOppslag?.eksisterendeSaker ?? []) {
         if (!eksisterendeSak.sakId) {
           continue;
         }
 
-        const sak = hentSakMedReferanse(eksisterendeSak.sakId);
+        const sak = hentSakMedReferanse(state(), eksisterendeSak.sakId);
 
         expect(sak?.personIdent).toBe(person.personIdent);
       }

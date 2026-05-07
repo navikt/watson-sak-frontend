@@ -29,7 +29,7 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   if (skalBrukeMockdata) {
-    const kontrollsak = hentFordelingssaker().find(
+    const kontrollsak = hentFordelingssaker(request).find(
       (eksisterendeSak) => eksisterendeSak.id === sakId,
     );
 
@@ -65,5 +65,5 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   return kontrollsaker
     ? kontrollsaker.items.filter(erEierlosKontrollsak).map(mapKontrollsakTilFordelingSak)
-    : hentFordelingssaker().filter(erEierlosKontrollsak).map(mapKontrollsakTilFordelingSak);
+    : hentFordelingssaker(request).filter(erEierlosKontrollsak).map(mapKontrollsakTilFordelingSak);
 }

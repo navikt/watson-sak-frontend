@@ -1,35 +1,29 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { lagMockSakUuid } from "~/saker/mock-uuid";
-import * as varslerModule from "./mock-data.server";
+import { hentMockState, resetDefaultSession } from "~/testing/mock-store/session.server";
+import { hentUlesteVarsler, markerVarselSomLest } from "~/testing/mock-store/varsler.server";
+
+const testRequest = new Request("http://localhost");
+function state() {
+  return hentMockState(testRequest);
+}
 
 describe("varsler mock-data", () => {
+  beforeEach(() => {
+    resetDefaultSession();
+  });
+
   it("kan markere et varsel som lest uten å slette det fra datalaget", () => {
-    const resetMockVarsler = Reflect.get(varslerModule, "resetMockVarsler");
-    const markerVarselSomLest = Reflect.get(varslerModule, "markerVarselSomLest");
+    const antallVarslerFør = state().varsler.length;
+    markerVarselSomLest(state(), "varsel-107");
 
-    expect(resetMockVarsler).toBeTypeOf("function");
-    expect(markerVarselSomLest).toBeTypeOf("function");
-
-    if (typeof resetMockVarsler !== "function" || typeof markerVarselSomLest !== "function") {
-      throw new Error("Forventet funksjoner for å nullstille og markere varsler som lest");
-    }
-
-    resetMockVarsler();
-
-    const antallVarslerFør = varslerModule.mockVarsler.length;
-    markerVarselSomLest("varsel-107");
-
-    expect(varslerModule.mockVarsler).toHaveLength(antallVarslerFør);
-    expect(varslerModule.mockVarsler.find((varsel) => varsel.id === "varsel-107")?.erLest).toBe(
-      true,
-    );
-    expect(varslerModule.hentUlesteVarsler().map((varsel) => varsel.id)).not.toContain(
-      "varsel-107",
-    );
+    expect(state().varsler).toHaveLength(antallVarslerFør);
+    expect(state().varsler.find((varsel) => varsel.id === "varsel-107")?.erLest).toBe(true);
+    expect(hentUlesteVarsler(state()).map((varsel) => varsel.id)).not.toContain("varsel-107");
   });
 
   it("bruker normaliserte kontrollsak-UUID-er i varsel-lenker", () => {
-    const varsler = varslerModule.hentUlesteVarsler();
+    const varsler = hentUlesteVarsler(state());
 
     expect(varsler.find((varsel) => varsel.id === "varsel-101")?.sakId).toBe(
       lagMockSakUuid("101", 1),

@@ -1,42 +1,35 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import {
-  mockKontrollsaker as adapterFordeling,
-  resetMockSaker,
-} from "~/fordeling/mock-data.server";
-import {
-  mockMineKontrollsaker as adapterMineSaker,
-  resetMockMineSaker,
-} from "~/mine-saker/mock-data.server";
-import { mockKontrollsaker as storeFordeling } from "./saker/fordeling.server";
-import { mockMineKontrollsaker as storeMineSaker } from "./saker/mine-saker.server";
-import { resetMockStore } from "./reset.server";
+import { hentMockState, resetDefaultSession } from "./session.server";
+import { hentFordelingssaker, hentMineSaker } from "./alle-saker.server";
+
+const testRequest = new Request("http://localhost");
+function state() {
+  return hentMockState(testRequest);
+}
 
 describe("shared mock-store", () => {
   beforeEach(() => {
-    resetMockStore();
+    resetDefaultSession();
   });
 
-  it("eksponerer samme live state gjennom adapter og store", () => {
-    adapterFordeling[0].status = "UTREDES";
+  it("tilbakestiller mocktilstand via resetDefaultSession", () => {
+    const fordelingssaker = hentFordelingssaker(state());
+    fordelingssaker[0].status = "UTREDES";
 
-    expect(storeFordeling[0]?.status).toBe("UTREDES");
+    expect(hentFordelingssaker(state())[0]?.status).toBe("UTREDES");
 
-    resetMockSaker();
+    resetDefaultSession();
 
-    expect(adapterFordeling[0]?.status).toBe("OPPRETTET");
-    expect(storeFordeling[0]?.status).toBe("OPPRETTET");
+    expect(hentFordelingssaker(state())[0]?.status).toBe("OPPRETTET");
   });
 
   it("tilbakestiller flere saksdomener via sentral reset", () => {
-    adapterFordeling[0].status = "UTREDES";
-    adapterMineSaker[0].status = "AVSLUTTET";
+    hentFordelingssaker(state())[0].status = "UTREDES";
+    hentMineSaker(state())[0].status = "AVSLUTTET";
 
-    resetMockStore();
+    resetDefaultSession();
 
-    expect(storeFordeling[0]?.status).toBe("OPPRETTET");
-    expect(storeMineSaker[0]?.status).toBe("UTREDES");
-
-    resetMockMineSaker();
-    expect(adapterMineSaker[0]?.status).toBe("UTREDES");
+    expect(hentFordelingssaker(state())[0]?.status).toBe("OPPRETTET");
+    expect(hentMineSaker(state())[0]?.status).toBe("UTREDES");
   });
 });

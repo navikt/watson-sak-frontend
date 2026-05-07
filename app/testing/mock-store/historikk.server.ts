@@ -1,9 +1,6 @@
-import { mockKontrollsaker } from "~/testing/mock-store/saker/fordeling.server";
-import { mockMineKontrollsaker } from "~/testing/mock-store/saker/mine-saker.server";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import type { SakHendelse } from "~/saker/historikk/typer";
-
-const historikkMap = new Map<string, SakHendelse[]>();
+import type { MockState } from "./session.server";
 
 type BackendHendelsestype =
   | "SAK_OPPRETTET"
@@ -25,36 +22,35 @@ type BackendHendelsestype =
   | "MANUELL_NOTAT"
   | "NOTAT_SENDT";
 
-let nesteId = 1;
-
-function lagId(): string {
-  return `00000000-0000-4000-8000-${String(nesteId++).padStart(12, "0")}`;
+function lagId(state: MockState): string {
+  return `00000000-0000-4000-8000-${String(state.nesteHistorikkId++).padStart(12, "0")}`;
 }
 
 function leggTilBackendHendelse(
+  state: MockState,
   sakId: string,
   type: BackendHendelsestype,
   snapshot: Omit<SakHendelse, "hendelseId" | "tidspunkt" | "hendelsesType" | "sakId">,
   tidspunkt?: string,
 ): SakHendelse {
   const hendelse: SakHendelse = {
-    hendelseId: lagId(),
+    hendelseId: lagId(state),
     tidspunkt: tidspunkt ?? new Date().toISOString(),
     hendelsesType: type,
     sakId,
     ...snapshot,
   };
 
-  const eksisterende = historikkMap.get(sakId) ?? [];
+  const eksisterende = state.historikk.get(sakId) ?? [];
   eksisterende.push(hendelse);
-  historikkMap.set(sakId, eksisterende);
+  state.historikk.set(sakId, eksisterende);
 
   return hendelse;
 }
 
 /** Hent historikken for en sak, sortert med nyeste først */
-export function hentHistorikk(sakId: string): SakHendelse[] {
-  const hendelser = historikkMap.get(sakId) ?? [];
+export function hentHistorikk(state: MockState, sakId: string): SakHendelse[] {
+  const hendelser = state.historikk.get(sakId) ?? [];
   return [...hendelser].sort((a, b) => {
     const tidspunktSortering = new Date(b.tidspunkt).getTime() - new Date(a.tidspunkt).getTime();
 
@@ -79,6 +75,7 @@ function lagSnapshotFraKontrollsak(
 }
 
 export function leggTilHendelse(
+  state: MockState,
   sak: KontrollsakResponse,
   type: Exclude<BackendHendelsestype, "SAK_OPPRETTET" | "AVKLARING_OPPRETTET" | "MANUELL_NOTAT">,
   tidspunkt?: string,
@@ -92,6 +89,7 @@ export function leggTilHendelse(
   >,
 ) {
   return leggTilBackendHendelse(
+    state,
     sak.id,
     type,
     {
@@ -103,13 +101,14 @@ export function leggTilHendelse(
 }
 
 export function leggTilManuellHendelse(
+  state: MockState,
   sak: KontrollsakResponse,
   tittel: string,
   notat: string,
   tidspunkt: string,
 ): SakHendelse {
   const hendelse: SakHendelse = {
-    hendelseId: lagId(),
+    hendelseId: lagId(state),
     tidspunkt,
     hendelsesType: "MANUELL_NOTAT",
     sakId: sak.id,
@@ -118,19 +117,41 @@ export function leggTilManuellHendelse(
     ...lagSnapshotFraKontrollsak(sak),
   };
 
-  const eksisterende = historikkMap.get(sak.id) ?? [];
+  const eksisterende = state.historikk.get(sak.id) ?? [];
   eksisterende.push(hendelse);
-  historikkMap.set(sak.id, eksisterende);
+  state.historikk.set(sak.id, eksisterende);
 
   return hendelse;
 }
 
-function genererHistorikk(saker: KontrollsakResponse[]) {
+/** Generer initial historikk for et sett med saker. Returnerer oppdatert nesteId. */
+export function genererHistorikkForSaker(
+  saker: KontrollsakResponse[],
+  historikk: Map<string, SakHendelse[]>,
+  nesteId: number,
+): number {
+  const tempState: MockState = {
+    kontrollsaker: [],
+    mineKontrollsaker: [],
+    historikk,
+    tommeFilområder: new Set(),
+    varsler: [],
+    nesteFordelingssakId: 0,
+    nesteHistorikkId: nesteId,
+  };
+
   for (const sak of saker) {
-    leggTilBackendHendelse(sak.id, "SAK_OPPRETTET", lagSnapshotFraKontrollsak(sak), sak.opprettet);
+    leggTilBackendHendelse(
+      tempState,
+      sak.id,
+      "SAK_OPPRETTET",
+      lagSnapshotFraKontrollsak(sak),
+      sak.opprettet,
+    );
 
     if (sak.resultat?.utredning) {
       leggTilBackendHendelse(
+        tempState,
         sak.id,
         "AVKLARING_OPPRETTET",
         lagSnapshotFraKontrollsak(sak),
@@ -138,15 +159,6 @@ function genererHistorikk(saker: KontrollsakResponse[]) {
       );
     }
   }
-}
 
-genererHistorikk(mockKontrollsaker);
-genererHistorikk(mockMineKontrollsaker);
-
-/** Tilbakestill historikk til opprinnelig tilstand */
-export function resetHistorikk() {
-  historikkMap.clear();
-  nesteId = 1;
-  genererHistorikk(mockKontrollsaker);
-  genererHistorikk(mockMineKontrollsaker);
+  return tempState.nesteHistorikkId;
 }
