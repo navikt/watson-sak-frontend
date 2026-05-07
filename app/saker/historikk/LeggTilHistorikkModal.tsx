@@ -1,7 +1,10 @@
+import { getFormProps, getInputProps, getTextareaProps, useForm } from "@conform-to/react";
+import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { PlusIcon } from "@navikt/aksel-icons";
 import {
   Button,
   DatePicker,
+  ErrorMessage,
   HStack,
   Modal,
   Textarea,
@@ -11,8 +14,35 @@ import {
 } from "@navikt/ds-react";
 import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
+import { z } from "zod";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
+
+function parseDato(dato: string): Date | null {
+  const deler = dato.split(".");
+  if (deler.length !== 3) return null;
+  const [dag, måned, år] = deler.map(Number);
+  const d = new Date(år, måned - 1, dag);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+const leggTilHistorikkSkjema = z
+  .object({
+    tittel: z.string({ error: "Tittel er påkrevd" }).min(1, "Tittel er påkrevd"),
+    notat: z.string().max(500, "Maks 500 tegn").optional(),
+    dato: z.string({ error: "Dato er påkrevd" }).min(1, "Dato er påkrevd"),
+    tid: z.string({ error: "Klokkeslett er påkrevd" }).min(1, "Klokkeslett er påkrevd"),
+  })
+  .refine(
+    ({ dato, tid }) => {
+      const d = parseDato(dato);
+      if (!d) return true;
+      const [timer, minutter] = tid.split(":").map(Number);
+      d.setHours(timer, minutter, 0, 0);
+      return d <= new Date();
+    },
+    { message: "Tidspunktet kan ikke være i fremtiden", path: ["tid"] },
+  );
 
 interface LeggTilHistorikkModalProps {
   sakId: string;
@@ -35,44 +65,50 @@ export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorik
   const modalRef = useRef<HTMLDialogElement>(null);
   const fetcher = useFetcher();
   const [dato, setDato] = useState(() => formaterDato(new Date()));
-  const [tid, setTid] = useState(() => formaterTid(new Date()));
 
   const { datepickerProps, inputProps, setSelected } = useDatepicker({
     defaultSelected: new Date(),
+    toDate: new Date(),
     onDateChange: (val) => {
       if (!val) return;
       setDato(formaterDato(val));
     },
   });
 
+  const [form, fields] = useForm({
+    id: "legg-til-historikk",
+    lastResult: fetcher.state === "idle" ? fetcher.data : null,
+    constraint: getZodConstraint(leggTilHistorikkSkjema),
+    onValidate({ formData }) {
+      return parseWithZod(formData, { schema: leggTilHistorikkSkjema });
+    },
+    shouldValidate: "onBlur",
+    shouldRevalidate: "onInput",
+    defaultValue: {
+      tid: formaterTid(new Date()),
+    },
+    onSubmit(event, { formData }) {
+      event.preventDefault();
+      formData.set("handling", "legg_til_historikk");
+      fetcher.submit(formData, {
+        method: "post",
+        action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),
+      });
+      form.reset();
+      const nå = new Date();
+      setDato(formaterDato(nå));
+      setSelected(nå);
+      onClose();
+    },
+  });
+
   useEffect(() => {
-    if (!åpen) {
-      return;
-    }
-
+    if (!åpen) return;
     const nå = new Date();
     setDato(formaterDato(nå));
-    setTid(formaterTid(nå));
     setSelected(nå);
-  }, [åpen]);
-
-  function handleLagre(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-    formData.set("handling", "legg_til_historikk");
-    formData.set("dato", dato);
-    fetcher.submit(formData, {
-      method: "post",
-      action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),
-    });
     form.reset();
-    const nå = new Date();
-    setDato(formaterDato(nå));
-    setTid(formaterTid(nå));
-    setSelected(nå);
-    onClose();
-  }
+  }, [åpen]);
 
   return (
     <Modal
@@ -82,31 +118,43 @@ export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorik
       header={{ heading: "Legg til historikkinnslag", icon: <PlusIcon aria-hidden /> }}
       width="medium"
     >
-      <form onSubmit={handleLagre}>
+      <fetcher.Form method="post" {...getFormProps(form)}>
         <Modal.Body>
           <VStack gap="space-4">
-            <TextField name="tittel" label="Tittel" autoComplete="off" required />
-            <Textarea name="notat" label="Beskrivelse" maxLength={500} />
-            <DatePicker {...datepickerProps}>
-              <HStack gap="space-4" align="end">
-                <DatePicker.Input
-                  {...inputProps}
-                  label="Dato"
-                  value={dato}
-                  onChange={(e) => {
-                    inputProps.onChange?.(e);
-                    setDato(e.target.value);
-                  }}
-                />
-                <TextField
-                  name="tid"
-                  label="Klokkeslett"
-                  type="time"
-                  value={tid}
-                  onChange={(e) => setTid(e.target.value)}
-                />
-              </HStack>
-            </DatePicker>
+            <TextField
+              {...getInputProps(fields.tittel, { type: "text" })}
+              label="Tittel"
+              autoComplete="off"
+              error={fields.tittel.errors?.[0]}
+            />
+            <Textarea
+              {...getTextareaProps(fields.notat)}
+              label="Beskrivelse"
+              maxLength={500}
+              error={fields.notat.errors?.[0]}
+            />
+            <input type="hidden" name={fields.dato.name} value={dato} />
+            <fieldset>
+              <DatePicker {...datepickerProps}>
+                <HStack gap="space-4" align="end">
+                  <DatePicker.Input
+                    {...inputProps}
+                    label="Dato"
+                    value={dato}
+                    onChange={(e) => {
+                      inputProps.onChange?.(e);
+                      setDato(e.target.value);
+                    }}
+                  />
+                  <TextField {...getInputProps(fields.tid, { type: "time" })} label="Klokkeslett" />
+                </HStack>
+              </DatePicker>
+              {fields.tid.errors?.[0] && (
+                <ErrorMessage size="small" className="mt-1">
+                  {fields.tid.errors[0]}
+                </ErrorMessage>
+              )}
+            </fieldset>
           </VStack>
         </Modal.Body>
         <Modal.Footer>
@@ -117,7 +165,7 @@ export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorik
             Avbryt
           </Button>
         </Modal.Footer>
-      </form>
+      </fetcher.Form>
     </Modal>
   );
 }
