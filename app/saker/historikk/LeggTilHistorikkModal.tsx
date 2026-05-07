@@ -1,4 +1,10 @@
-import { getFormProps, getInputProps, getTextareaProps, useForm } from "@conform-to/react";
+import {
+  getFormProps,
+  getInputProps,
+  getTextareaProps,
+  useForm,
+  useInputControl,
+} from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { PlusIcon } from "@navikt/aksel-icons";
 import {
@@ -12,7 +18,7 @@ import {
   useDatepicker,
   VStack,
 } from "@navikt/ds-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useFetcher } from "react-router";
 import { z } from "zod";
 import { RouteConfig } from "~/routeConfig";
@@ -64,14 +70,13 @@ function formaterTid(nå: Date): string {
 export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorikkModalProps) {
   const modalRef = useRef<HTMLDialogElement>(null);
   const fetcher = useFetcher();
-  const [dato, setDato] = useState(() => formaterDato(new Date()));
 
   const { datepickerProps, inputProps, setSelected } = useDatepicker({
     defaultSelected: new Date(),
     toDate: new Date(),
     onDateChange: (val) => {
       if (!val) return;
-      setDato(formaterDato(val));
+      dato.change(formaterDato(val));
     },
   });
 
@@ -85,6 +90,7 @@ export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorik
     shouldValidate: "onBlur",
     shouldRevalidate: "onInput",
     defaultValue: {
+      dato: formaterDato(new Date()),
       tid: formaterTid(new Date()),
     },
     onSubmit(event, { formData }) {
@@ -95,17 +101,16 @@ export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorik
         action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),
       });
       form.reset();
-      const nå = new Date();
-      setDato(formaterDato(nå));
-      setSelected(nå);
+      setSelected(new Date());
       onClose();
     },
   });
 
+  const dato = useInputControl(fields.dato);
+
   useEffect(() => {
     if (!åpen) return;
     const nå = new Date();
-    setDato(formaterDato(nå));
     setSelected(nå);
     form.reset();
   }, [åpen]);
@@ -133,17 +138,23 @@ export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorik
               maxLength={500}
               error={fields.notat.errors?.[0]}
             />
-            <input type="hidden" name={fields.dato.name} value={dato} />
+            <input
+              name={fields.dato.name}
+              defaultValue={fields.dato.initialValue}
+              hidden
+              tabIndex={-1}
+              onFocus={() => dato.focus()}
+            />
             <fieldset>
               <DatePicker {...datepickerProps}>
                 <HStack gap="space-4" align="end">
                   <DatePicker.Input
                     {...inputProps}
                     label="Dato"
-                    value={dato}
+                    value={dato.value ?? ""}
                     onChange={(e) => {
                       inputProps.onChange?.(e);
-                      setDato(e.target.value);
+                      dato.change(e.target.value);
                     }}
                   />
                   <TextField {...getInputProps(fields.tid, { type: "time" })} label="Klokkeslett" />

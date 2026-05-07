@@ -1,8 +1,7 @@
-import { getFormProps, getTextareaProps, useForm } from "@conform-to/react";
+import { getFormProps, getTextareaProps, useForm, useInputControl } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { ClockDashedIcon } from "@navikt/aksel-icons";
 import { Button, Modal, Radio, RadioGroup, Textarea, VStack } from "@navikt/ds-react";
-import { useState } from "react";
 import { useFetcher } from "react-router";
 import { z } from "zod";
 import { RouteConfig } from "~/routeConfig";
@@ -29,7 +28,6 @@ const settPaVentSkjema = z.object({
 
 export function SettPaVentModal({ sakId, åpen, onClose }: SettPaVentModalProps) {
   const fetcher = useFetcher();
-  const [valgtÅrsak, setValgtÅrsak] = useState("");
   const erSubmitting = fetcher.state !== "idle";
 
   const [form, fields] = useForm({
@@ -48,15 +46,15 @@ export function SettPaVentModal({ sakId, åpen, onClose }: SettPaVentModalProps)
         method: "post",
         action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),
       });
-      setValgtÅrsak("");
       form.reset();
       onClose();
     },
   });
 
+  const blokkert = useInputControl(fields.blokkert);
+
   function handleLukk() {
     if (erSubmitting) return;
-    setValgtÅrsak("");
     form.reset();
     onClose();
   }
@@ -71,11 +69,18 @@ export function SettPaVentModal({ sakId, åpen, onClose }: SettPaVentModalProps)
       <fetcher.Form method="post" {...getFormProps(form)}>
         <Modal.Body>
           <VStack gap="space-4">
-            <input type="hidden" name={fields.blokkert.name} value={valgtÅrsak} />
+            <input
+              name={fields.blokkert.name}
+              defaultValue={fields.blokkert.initialValue}
+              hidden
+              tabIndex={-1}
+              onFocus={() => blokkert.focus()}
+            />
             <RadioGroup
               legend="Årsak til venting"
-              value={valgtÅrsak}
-              onChange={setValgtÅrsak}
+              value={blokkert.value ?? ""}
+              onChange={blokkert.change}
+              onBlur={blokkert.blur}
               error={fields.blokkert.errors?.[0]}
             >
               {blokkeringsårsaker.map((årsak) => (
