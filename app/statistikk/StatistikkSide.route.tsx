@@ -8,6 +8,7 @@ import {
   XMarkOctagonIcon,
 } from "@navikt/aksel-icons";
 import { useLoaderData } from "react-router";
+import { skalBrukeMockdata } from "~/config/env.server";
 import { hentAlleSaker, hentAvslutningsdatoer } from "~/saker/mock-alle-saker.server";
 import { formaterStatus, type KontrollsakStatus } from "~/saker/visning";
 import {
@@ -25,6 +26,10 @@ import { VertikaltSoylediagram } from "./komponenter/VertikaltSoylediagram";
 import type { Route } from "./+types/StatistikkSide.route";
 
 export function loader({ request }: Route.LoaderArgs) {
+  if (!skalBrukeMockdata) {
+    throw new Response("Statistikk er ikke tilgjengelig uten mockdata", { status: 501 });
+  }
+
   const saker = hentAlleSaker(request);
 
   return {
