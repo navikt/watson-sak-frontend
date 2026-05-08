@@ -1,10 +1,16 @@
+import { getFormProps, useForm, useInputControl } from "@conform-to/react";
+import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { PersonPencilIcon } from "@navikt/aksel-icons";
 import { BodyShort, Button, Modal, Select, VStack } from "@navikt/ds-react";
-import { useRef, useState } from "react";
 import { useFetcher } from "react-router";
+import { z } from "zod";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
+
+const overforSkjema = z.object({
+  navIdent: z.string({ error: "Velg en saksbehandler" }).min(1, "Velg en saksbehandler"),
+});
 
 interface OverforAnsvarligModalProps {
   sakId: string;
@@ -19,47 +25,43 @@ export function OverforAnsvarligModal({
   åpen,
   onClose,
 }: OverforAnsvarligModalProps) {
-  const [valgtNavIdent, setValgtNavIdent] = useState("");
   const fetcher = useFetcher();
-  const modalRef = useRef<HTMLDialogElement>(null);
   const saksreferanse = getSaksreferanse(sakId);
 
   const erSubmitting = fetcher.state !== "idle";
+  const actionPath = RouteConfig.SAKER_DETALJ.replace(":sakId", saksreferanse);
+
+  const [form, fields] = useForm({
+    id: "overfor-ansvarlig",
+    constraint: getZodConstraint(overforSkjema),
+    onValidate({ formData }) {
+      return parseWithZod(formData, { schema: overforSkjema });
+    },
+    shouldValidate: "onBlur",
+    shouldRevalidate: "onInput",
+    onSubmit(event, { formData }) {
+      event.preventDefault();
+      formData.set("handling", "overfor_ansvarlig");
+      fetcher.submit(formData, { method: "post", action: actionPath });
+      form.reset();
+      onClose();
+    },
+  });
+
+  const navIdent = useInputControl(fields.navIdent);
 
   function handleClose() {
-    setValgtNavIdent("");
+    form.reset();
     onClose();
   }
 
-  function handleSubmit() {
-    if (!valgtNavIdent) {
-      return;
-    }
-
-    fetcher.submit(
-      { handling: "overfor_ansvarlig", navIdent: valgtNavIdent },
-      {
-        method: "post",
-        action: RouteConfig.SAKER_DETALJ.replace(":sakId", saksreferanse),
-      },
-    );
-    handleClose();
-  }
-
   function handleFjernSaksbehandler() {
-    fetcher.submit(
-      { handling: "FRISTILL" },
-      {
-        method: "post",
-        action: RouteConfig.SAKER_DETALJ.replace(":sakId", saksreferanse),
-      },
-    );
+    fetcher.submit({ handling: "FRISTILL" }, { method: "post", action: actionPath });
     handleClose();
   }
 
   return (
     <Modal
-      ref={modalRef}
       open={åpen}
       onClose={handleClose}
       header={{
@@ -68,34 +70,50 @@ export function OverforAnsvarligModal({
       }}
       width="small"
     >
-      <Modal.Body>
-        <VStack gap="space-4">
-          <BodyShort>Velg ny ansvarlig saksbehandler for sak {saksreferanse}.</BodyShort>
-          <Select
-            label="Saksbehandler"
-            value={valgtNavIdent}
-            onChange={(event) => setValgtNavIdent(event.target.value)}
+      <fetcher.Form method="post" {...getFormProps(form)}>
+        <Modal.Body>
+          <VStack gap="space-4">
+            <BodyShort>Velg ny ansvarlig saksbehandler for sak {saksreferanse}.</BodyShort>
+            <input
+              name={fields.navIdent.name}
+              defaultValue={fields.navIdent.initialValue}
+              hidden
+              tabIndex={-1}
+              onFocus={() => navIdent.focus()}
+            />
+            <Select
+              label="Saksbehandler"
+              value={navIdent.value ?? ""}
+              onChange={(event) => navIdent.change(event.target.value)}
+              onBlur={navIdent.blur}
+              error={fields.navIdent.errors?.[0]}
+            >
+              <option value="">Velg saksbehandler</option>
+              {saksbehandlerDetaljer.map((saksbehandler) => (
+                <option key={saksbehandler.navIdent} value={saksbehandler.navIdent}>
+                  {`${saksbehandler.navn} (${saksbehandler.navIdent})`}
+                </option>
+              ))}
+            </Select>
+          </VStack>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button type="submit" disabled={erSubmitting}>
+            Overfør sak
+          </Button>
+          <Button
+            type="button"
+            variant="danger"
+            onClick={handleFjernSaksbehandler}
+            disabled={erSubmitting}
           >
-            <option value="">Velg saksbehandler</option>
-            {saksbehandlerDetaljer.map((saksbehandler) => (
-              <option key={saksbehandler.navIdent} value={saksbehandler.navIdent}>
-                {`${saksbehandler.navn} (${saksbehandler.navIdent})`}
-              </option>
-            ))}
-          </Select>
-        </VStack>
-      </Modal.Body>
-      <Modal.Footer>
-        <Button onClick={handleSubmit} disabled={!valgtNavIdent || erSubmitting}>
-          Overfør sak
-        </Button>
-        <Button variant="danger" onClick={handleFjernSaksbehandler} disabled={erSubmitting}>
-          Fjern saksbehandler
-        </Button>
-        <Button variant="secondary" onClick={handleClose}>
-          Avbryt
-        </Button>
-      </Modal.Footer>
+            Fjern saksbehandler
+          </Button>
+          <Button type="button" variant="secondary" onClick={handleClose}>
+            Avbryt
+          </Button>
+        </Modal.Footer>
+      </fetcher.Form>
     </Modal>
   );
 }

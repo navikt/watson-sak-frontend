@@ -10,10 +10,6 @@ function lesString(formData: FormData, navn: string): string {
   return typeof verdi === "string" ? verdi : "";
 }
 
-export function lesStringliste(formData: FormData, navn: string): string[] {
-  return formData.getAll(navn).filter((v): v is string => typeof v === "string" && v !== "");
-}
-
 export function parseYtelseRader(formData: FormData): YtelseRadVerdier[] {
   const indekser = new Set<number>();
   for (const nøkkel of formData.keys()) {

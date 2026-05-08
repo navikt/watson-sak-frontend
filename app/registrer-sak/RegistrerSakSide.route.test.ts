@@ -228,7 +228,8 @@ describe("OpprettSakSide action", () => {
     } as Route.ActionArgs);
 
     expect(response).toMatchObject({
-      feil: { kategori: expect.any(Array) },
+      status: "error",
+      error: { kategori: expect.any(Array) },
     });
   }, 15000);
 
@@ -251,7 +252,7 @@ describe("OpprettSakSide action", () => {
       context: {},
     } as Route.ActionArgs);
 
-    expect(response).toHaveProperty("feil");
+    expect(response).toHaveProperty("status", "error");
   }, 15000);
 
   it("henter backend-token når mockdata er avslått", async () => {
@@ -286,7 +287,8 @@ describe("OpprettSakSide action", () => {
     } as Route.ActionArgs);
 
     expect(response).toMatchObject({
-      feil: { skjema: ["Fant ikke navn på personen som saken opprettes for"] },
+      status: "error",
+      error: { "": ["Fant ikke navn på personen som saken opprettes for"] },
     });
   }, 15000);
 });

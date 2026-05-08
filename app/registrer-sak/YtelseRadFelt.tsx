@@ -11,7 +11,7 @@ import { useMemo, useState } from "react";
 import { lagRegistrerSakDatepickerValg } from "./registrerSakDatepicker";
 import type { YtelseRadVerdier } from "./skjema-helpers";
 
-export type Feil = Partial<Record<string, string[]>>;
+type Feil = Partial<Record<string, string[]>>;
 
 export function førsteFeilForFelt(feil: Feil | undefined, felt: string): string | undefined {
   return feil?.[felt]?.[0];

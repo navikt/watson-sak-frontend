@@ -18,6 +18,7 @@ vi.mock("react-router", async () => {
       state: "idle",
       data: fetcherData,
       submit: submitMock,
+      Form: "form",
     }),
     useNavigate: () => navigateMock,
   };
@@ -161,13 +162,12 @@ describe("SaksbehandlereKort", () => {
     }
     fireEvent.click(sendKnapp);
 
-    expect(submitMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        handling: "send_til_annen_enhet",
-        seksjon: "NORD",
-      }),
-      expect.objectContaining({ method: "post" }),
-    );
+    expect(submitMock).toHaveBeenCalledTimes(1);
+    const [formData, options] = submitMock.mock.calls[0];
+    expect(formData).toBeInstanceOf(FormData);
+    expect(formData.get("handling")).toBe("send_til_annen_enhet");
+    expect(formData.get("seksjon")).toBe("NORD");
+    expect(options).toEqual(expect.objectContaining({ method: "post" }));
   });
 
   it("sender brukeren til dashboardet når saken er sendt til annen enhet", () => {
