@@ -1,5 +1,5 @@
-import { getFormProps, useForm, useInputControl } from "@conform-to/react";
-import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
+import { useForm } from "@conform-to/react";
+import { parseWithZod } from "@conform-to/zod/v4";
 import {
   LocalAlert,
   BodyShort,
@@ -53,7 +53,6 @@ export default function OpprettSakSide() {
   const [form, fields] = useForm({
     id: "opprett-sak",
     lastResult: lastResult && "status" in lastResult ? lastResult : undefined,
-    constraint: getZodConstraint(opprettSakSchema),
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: opprettSakSchema });
     },
@@ -61,9 +60,7 @@ export default function OpprettSakSide() {
     shouldRevalidate: "onInput",
   });
 
-  const kategori = useInputControl(fields.kategori);
-  const kilde = useInputControl(fields.kilde);
-  const enhet = useInputControl(fields.enhet);
+  const [valgtKategori, setValgtKategori] = useState(fields.kategori.initialValue ?? "");
 
   const [valgteMisbruktyper, setValgteMisbruktyper] = useState<string[]>(
     (fields.misbruktype.initialValue as string[]) ?? [],
@@ -103,10 +100,10 @@ export default function OpprettSakSide() {
   const sisteSak = useMemo(() => velgSisteSak(åpneSaker), [åpneSaker]);
 
   const tilgjengeligeMisbruktyper = useMemo(() => {
-    if (!kategori.value) return [];
-    const filtrert = (misbrukstypePerKategori as Record<string, string[]>)[kategori.value];
+    if (!valgtKategori) return [];
+    const filtrert = (misbrukstypePerKategori as Record<string, string[]>)[valgtKategori];
     return filtrert && filtrert.length > 0 ? (filtrert as readonly string[]) : [];
-  }, [kategori.value, misbrukstypePerKategori]);
+  }, [valgtKategori, misbrukstypePerKategori]);
 
   const feilElementer = useMemo(() => {
     const elementer: Array<{ id: string; melding: string }> = [];
@@ -246,7 +243,9 @@ export default function OpprettSakSide() {
               <Form
                 method="post"
                 aria-label="Grunnleggende saksinformasjon"
-                {...getFormProps(form)}
+                id={form.id}
+                onSubmit={form.onSubmit}
+                noValidate
               >
                 <input
                   type="hidden"
@@ -280,21 +279,15 @@ export default function OpprettSakSide() {
 
                   {/* Rad 1: Kategori, Kilde, Organisasjonsnummer */}
                   <HStack gap="space-24" align="start" wrap>
-                    <input
-                      name={fields.kategori.name}
-                      defaultValue={fields.kategori.initialValue}
-                      hidden
-                      tabIndex={-1}
-                      onFocus={() => kategori.focus()}
-                    />
                     <Select
+                      name={fields.kategori.name}
                       id={fields.kategori.id}
                       label="Kategori"
                       error={fields.kategori.errors?.[0]}
                       className="w-52"
-                      value={kategori.value ?? ""}
+                      value={valgtKategori}
                       onChange={(e) => {
-                        kategori.change(e.target.value);
+                        setValgtKategori(e.target.value);
                         const nyligeGyldige = (misbrukstypePerKategori as Record<string, string[]>)[
                           e.target.value
                         ];
@@ -306,7 +299,6 @@ export default function OpprettSakSide() {
                           setValgteMisbruktyper([]);
                         }
                       }}
-                      onBlur={kategori.blur}
                     >
                       <option value="">Velg kategori</option>
                       {kategorier.map((k) => (
@@ -318,21 +310,13 @@ export default function OpprettSakSide() {
                       ))}
                     </Select>
 
-                    <input
-                      name={fields.kilde.name}
-                      defaultValue={fields.kilde.initialValue}
-                      hidden
-                      tabIndex={-1}
-                      onFocus={() => kilde.focus()}
-                    />
                     <Select
+                      name={fields.kilde.name}
                       id={fields.kilde.id}
                       label="Kilde"
                       error={fields.kilde.errors?.[0]}
                       className="w-52"
-                      value={kilde.value ?? ""}
-                      onChange={(e) => kilde.change(e.target.value)}
-                      onBlur={kilde.blur}
+                      defaultValue={fields.kilde.initialValue ?? ""}
                     >
                       <option value="">Velg kilde</option>
                       {kilder.map((k) => (
@@ -420,21 +404,13 @@ export default function OpprettSakSide() {
                       ))}
                     </div>
 
-                    <input
-                      name={fields.enhet.name}
-                      defaultValue={fields.enhet.initialValue}
-                      hidden
-                      tabIndex={-1}
-                      onFocus={() => enhet.focus()}
-                    />
                     <Select
+                      name={fields.enhet.name}
                       id={fields.enhet.id}
                       label="Enhet (valgfritt)"
                       error={fields.enhet.errors?.[0]}
                       className="w-44"
-                      value={enhet.value ?? ""}
-                      onChange={(e) => enhet.change(e.target.value)}
-                      onBlur={enhet.blur}
+                      defaultValue={fields.enhet.initialValue ?? ""}
                     >
                       <option value="">Velg enhet</option>
                       {enheter.map((e) => (
