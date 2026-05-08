@@ -1,7 +1,8 @@
-import { getFormProps, getTextareaProps, useForm, useInputControl } from "@conform-to/react";
+import { getFormProps, getTextareaProps, useForm } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { ExclamationmarkTriangleIcon, PencilIcon } from "@navikt/aksel-icons";
 import { Button, InfoCard, Modal, Select, Textarea, VStack } from "@navikt/ds-react";
+import { useState } from "react";
 import { useFetcher } from "react-router";
 import { z } from "zod";
 import { RouteConfig } from "~/routeConfig";
@@ -55,7 +56,7 @@ export function EndreStatusModal({ sakId, nåværendeStatus, åpen, onClose }: E
     },
   });
 
-  const status = useInputControl(fields.status);
+  const [statusVerdi, setStatusVerdi] = useState("");
 
   function handleLukk() {
     if (erSubmitting) return;
@@ -74,18 +75,13 @@ export function EndreStatusModal({ sakId, nåværendeStatus, åpen, onClose }: E
         <Modal.Body>
           <VStack gap="space-4">
             <VStack gap="space-8">
-              <input
-                name={fields.status.name}
-                defaultValue={fields.status.initialValue}
-                hidden
-                tabIndex={-1}
-                onFocus={() => status.focus()}
-              />
               <Select
+                key={fields.status.key}
+                name={fields.status.name}
+                id={fields.status.id}
+                defaultValue={fields.status.initialValue ?? ""}
                 label="Ny status"
-                value={status.value ?? ""}
-                onChange={(event) => status.change(event.target.value)}
-                onBlur={status.blur}
+                onChange={(event) => setStatusVerdi(event.target.value)}
                 error={fields.status.errors?.[0]}
               >
                 <option value="">Velg status</option>
@@ -95,7 +91,7 @@ export function EndreStatusModal({ sakId, nåværendeStatus, åpen, onClose }: E
                   </option>
                 ))}
               </Select>
-              {status.value === "AVSLUTTET" ? (
+              {statusVerdi === "AVSLUTTET" ? (
                 <InfoCard size="small" data-color="warning">
                   <InfoCard.Message icon={<ExclamationmarkTriangleIcon aria-hidden />}>
                     Avsluttet er en endelig status – du kan ikke endre tilbake

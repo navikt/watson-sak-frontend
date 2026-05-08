@@ -75,10 +75,7 @@ export function OpprettNotatModal({ sakId, åpen, onClose }: OpprettNotatModalPr
     },
   });
 
-  const mal = useInputControl(fields.mal);
   const [knyttTilOppgave, setKnyttTilOppgave] = useState(false);
-  const oppgavetype = useInputControl(fields.oppgavetype);
-  const prioritet = useInputControl(fields.prioritet);
   const frist = useInputControl(fields.frist);
   const behandlendeEnhet = useInputControl(fields.behandlendeEnhet);
 
@@ -114,18 +111,12 @@ export function OpprettNotatModal({ sakId, åpen, onClose }: OpprettNotatModalPr
               <p className="mt-0.5 text-medium">Kontroll</p>
             </div>
 
-            <input
-              name={fields.mal.name}
-              defaultValue={fields.mal.initialValue}
-              hidden
-              tabIndex={-1}
-              onFocus={() => mal.focus()}
-            />
             <Select
+              key={fields.mal.key}
+              name={fields.mal.name}
+              id={fields.mal.id}
+              defaultValue={fields.mal.initialValue ?? ""}
               label="Mal"
-              value={mal.value ?? ""}
-              onChange={(e) => mal.change(e.target.value)}
-              onBlur={mal.blur}
             >
               <option value="">Velg mal</option>
               {notatMalValg.map(({ verdi, label }) => (
@@ -168,18 +159,12 @@ export function OpprettNotatModal({ sakId, åpen, onClose }: OpprettNotatModalPr
                   className="-mx-5 px-5 py-4"
                 >
                   <VStack gap="space-4">
-                    <input
-                      name={fields.oppgavetype.name}
-                      defaultValue={fields.oppgavetype.initialValue}
-                      hidden
-                      tabIndex={-1}
-                      onFocus={() => oppgavetype.focus()}
-                    />
                     <Select
+                      key={fields.oppgavetype.key}
+                      name={fields.oppgavetype.name}
+                      id={fields.oppgavetype.id}
+                      defaultValue={fields.oppgavetype.initialValue ?? ""}
                       label="Oppgavetype"
-                      value={oppgavetype.value ?? ""}
-                      onChange={(e) => oppgavetype.change(e.target.value)}
-                      onBlur={oppgavetype.blur}
                     >
                       <option value="">Velg oppgavetype</option>
                       {oppgavetypeValg.map(({ verdi, label }) => (
@@ -190,18 +175,12 @@ export function OpprettNotatModal({ sakId, åpen, onClose }: OpprettNotatModalPr
                     </Select>
 
                     <HStack gap="space-4" align="start">
-                      <input
-                        name={fields.prioritet.name}
-                        defaultValue={fields.prioritet.initialValue}
-                        hidden
-                        tabIndex={-1}
-                        onFocus={() => prioritet.focus()}
-                      />
                       <Select
+                        key={fields.prioritet.key}
+                        name={fields.prioritet.name}
+                        id={fields.prioritet.id}
+                        defaultValue={fields.prioritet.initialValue ?? ""}
                         label="Prioritet"
-                        value={prioritet.value ?? ""}
-                        onChange={(e) => prioritet.change(e.target.value)}
-                        onBlur={prioritet.blur}
                         className="flex-1"
                       >
                         <option value="">Velg prioritet</option>

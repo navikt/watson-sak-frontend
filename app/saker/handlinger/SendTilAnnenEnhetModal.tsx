@@ -1,4 +1,4 @@
-import { getFormProps, useForm, useInputControl } from "@conform-to/react";
+import { getFormProps, useForm } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { ArrowForwardIcon } from "@navikt/aksel-icons";
 import { BodyShort, Button, Modal, Select, VStack } from "@navikt/ds-react";
@@ -57,8 +57,6 @@ export function SendTilAnnenEnhetModal({
     },
   });
 
-  const seksjon = useInputControl(fields.seksjon);
-
   function handleClose() {
     form.reset();
     onClose();
@@ -77,18 +75,12 @@ export function SendTilAnnenEnhetModal({
             <BodyShort>
               Velg enhet saken skal sendes til. Ansvarlig saksbehandler fristilles fra saken.
             </BodyShort>
-            <input
-              name={fields.seksjon.name}
-              defaultValue={fields.seksjon.initialValue}
-              hidden
-              tabIndex={-1}
-              onFocus={() => seksjon.focus()}
-            />
             <Select
+              key={fields.seksjon.key}
+              name={fields.seksjon.name}
+              id={fields.seksjon.id}
+              defaultValue={fields.seksjon.initialValue ?? ""}
               label="Ny enhet"
-              value={seksjon.value ?? ""}
-              onChange={(event) => seksjon.change(event.target.value)}
-              onBlur={seksjon.blur}
               error={fields.seksjon.errors?.[0]}
             >
               <option value="">Velg enhet</option>

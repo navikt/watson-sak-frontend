@@ -1,4 +1,4 @@
-import { getFormProps, useForm, useInputControl } from "@conform-to/react";
+import { getFormProps, useForm } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { PersonPencilIcon } from "@navikt/aksel-icons";
 import { BodyShort, Button, Modal, Select, VStack } from "@navikt/ds-react";
@@ -48,8 +48,6 @@ export function OverforAnsvarligModal({
     },
   });
 
-  const navIdent = useInputControl(fields.navIdent);
-
   function handleClose() {
     form.reset();
     onClose();
@@ -74,18 +72,12 @@ export function OverforAnsvarligModal({
         <Modal.Body>
           <VStack gap="space-4">
             <BodyShort>Velg ny ansvarlig saksbehandler for sak {saksreferanse}.</BodyShort>
-            <input
-              name={fields.navIdent.name}
-              defaultValue={fields.navIdent.initialValue}
-              hidden
-              tabIndex={-1}
-              onFocus={() => navIdent.focus()}
-            />
             <Select
+              key={fields.navIdent.key}
+              name={fields.navIdent.name}
+              id={fields.navIdent.id}
+              defaultValue={fields.navIdent.initialValue ?? ""}
               label="Saksbehandler"
-              value={navIdent.value ?? ""}
-              onChange={(event) => navIdent.change(event.target.value)}
-              onBlur={navIdent.blur}
               error={fields.navIdent.errors?.[0]}
             >
               <option value="">Velg saksbehandler</option>

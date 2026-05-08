@@ -5,7 +5,7 @@ import {
   useForm,
   useInputControl,
 } from "@conform-to/react";
-import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
+import { parseWithZod } from "@conform-to/zod/v4";
 import { PlusIcon } from "@navikt/aksel-icons";
 import {
   Button,
@@ -83,7 +83,6 @@ export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorik
   const [form, fields] = useForm({
     id: "legg-til-historikk",
     lastResult: fetcher.state === "idle" ? fetcher.data : null,
-    constraint: getZodConstraint(leggTilHistorikkSkjema),
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: leggTilHistorikkSkjema });
     },
@@ -160,9 +159,9 @@ export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorik
                   <TextField {...getInputProps(fields.tid, { type: "time" })} label="Klokkeslett" />
                 </HStack>
               </DatePicker>
-              {fields.tid.errors?.[0] && (
+              {(fields.dato.errors?.[0] || fields.tid.errors?.[0]) && (
                 <ErrorMessage size="small" className="mt-1">
-                  {fields.tid.errors[0]}
+                  {fields.dato.errors?.[0] || fields.tid.errors?.[0]}
                 </ErrorMessage>
               )}
             </fieldset>
