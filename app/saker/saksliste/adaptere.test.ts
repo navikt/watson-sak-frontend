@@ -55,6 +55,7 @@ function lagFordelingSak(overrides: Partial<FordelingSak> = {}): FordelingSak {
     kategori: "Arbeid",
     misbrukstyper: ["Skjult samliv"],
     ytelser: ["Dagpenger"],
+    status: { tekst: "Opprettet", variant: "info" },
     ...overrides,
   };
 }
@@ -89,7 +90,7 @@ describe("sakslisteadaptere", () => {
       navn: "Kari Nordmann",
       kategori: "Arbeid",
       misbrukstyper: ["Skjult samliv"],
-      status: null,
+      status: { tekst: "Opprettet", variant: "info" },
       saksbehandler: null,
       opprettet: "2026-03-20",
       oppdatert: "2026-03-21",

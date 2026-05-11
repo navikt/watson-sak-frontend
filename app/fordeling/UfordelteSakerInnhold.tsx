@@ -132,14 +132,32 @@ export function UfordelteSakerInnhold({
               <div className="overflow-x-auto">
                 <Saksliste
                   rader={sakslisteRader}
-                  kolonner={["saksid", "kategori", "misbrukstype", "opprettet", "oppdatert"]}
+                  kolonner={["saksid", "kategori", "misbrukstype", "status", "opprettet", "oppdatert"]}
                   tomTekst="Ingen ufordelte saker matcher filtrene."
                   handlingKolonneTittel={<span className="sr-only">Handling</span>}
                   kolonneHeaderInnhold={{
+                    saksid: (
+                      <KolonneSorteringsknapp
+                        tittel="Saksid"
+                        kolonne="saksid"
+                        aktivKolonne={sorteringskolonne}
+                        retning={sorteringsretning}
+                        onSort={sorterPåKolonne}
+                      />
+                    ),
                     kategori: (
                       <KolonneSorteringsknapp
                         tittel="Kategori"
                         kolonne="kategori"
+                        aktivKolonne={sorteringskolonne}
+                        retning={sorteringsretning}
+                        onSort={sorterPåKolonne}
+                      />
+                    ),
+                    status: (
+                      <KolonneSorteringsknapp
+                        tittel="Status"
+                        kolonne="status"
                         aktivKolonne={sorteringskolonne}
                         retning={sorteringsretning}
                         onSort={sorterPåKolonne}
@@ -154,8 +172,25 @@ export function UfordelteSakerInnhold({
                         onSort={sorterPåKolonne}
                       />
                     ),
+                    oppdatert: (
+                      <KolonneSorteringsknapp
+                        tittel="Oppdatert"
+                        kolonne="oppdatert"
+                        aktivKolonne={sorteringskolonne}
+                        retning={sorteringsretning}
+                        onSort={sorterPåKolonne}
+                      />
+                    ),
                   }}
                   kolonneHeaderProps={{
+                    saksid: {
+                      "aria-sort":
+                        sorteringskolonne === "saksid"
+                          ? sorteringsretning === "stigende"
+                            ? "ascending"
+                            : "descending"
+                          : "none",
+                    },
                     kategori: {
                       "aria-sort":
                         sorteringskolonne === "kategori"
@@ -164,9 +199,25 @@ export function UfordelteSakerInnhold({
                             : "descending"
                           : "none",
                     },
+                    status: {
+                      "aria-sort":
+                        sorteringskolonne === "status"
+                          ? sorteringsretning === "stigende"
+                            ? "ascending"
+                            : "descending"
+                          : "none",
+                    },
                     opprettet: {
                       "aria-sort":
                         sorteringskolonne === "opprettet"
+                          ? sorteringsretning === "stigende"
+                            ? "ascending"
+                            : "descending"
+                          : "none",
+                    },
+                    oppdatert: {
+                      "aria-sort":
+                        sorteringskolonne === "oppdatert"
                           ? sorteringsretning === "stigende"
                             ? "ascending"
                             : "descending"
@@ -260,7 +311,13 @@ function hentSorteringsretning(verdi: string | null): UfordeltSorteringsretning 
 }
 
 function hentStandardRetning(kolonne: UfordeltSorteringskolonne): UfordeltSorteringsretning {
-  return kolonne === "opprettet" ? "synkende" : "stigende";
+  switch (kolonne) {
+    case "opprettet":
+    case "oppdatert":
+      return "synkende";
+    default:
+      return "stigende";
+  }
 }
 
 function KolonneSorteringsknapp({

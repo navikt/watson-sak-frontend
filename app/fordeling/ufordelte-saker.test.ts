@@ -16,6 +16,7 @@ const lagSak = (overstyringer: Partial<FordelingSak>): FordelingSak => ({
   kategori: "Arbeid",
   misbrukstyper: [],
   ytelser: ["Dagpenger"],
+  status: { tekst: "Opprettet", variant: "info" },
   ...overstyringer,
 });
 
@@ -89,39 +90,60 @@ describe("ufordelte-saker", () => {
   it("sorterer ufordelte saker på valgt kolonne og retning", () => {
     const saker = [
       lagSak({
-        id: "1",
+        id: "00000000-0000-4000-8000-000000003000",
         opprettetDato: "2026-01-13",
+        oppdatertDato: "2026-01-14",
         kategori: "Tiltak",
         ytelser: ["Sykepenger"],
+        status: { tekst: "Utredes", variant: "warning" },
       }),
       lagSak({
-        id: "2",
+        id: "00000000-0000-4000-8000-000000001000",
         opprettetDato: "2026-02-16",
+        oppdatertDato: "2026-02-17",
         kategori: "Arbeid",
         ytelser: ["Barnetrygd"],
+        status: { tekst: "Opprettet", variant: "info" },
       }),
       lagSak({
-        id: "3",
+        id: "00000000-0000-4000-8000-000000002000",
         opprettetDato: "2026-01-20",
+        oppdatertDato: "2026-01-21",
         kategori: "Samliv",
         ytelser: ["Dagpenger"],
+        status: { tekst: "Avsluttet", variant: "neutral" },
       }),
     ];
 
     expect(sorterUfordelteSaker(saker, "kategori", "stigende").map((sak) => sak.id)).toEqual([
-      "2",
-      "3",
-      "1",
-    ]);
-    expect(sorterUfordelteSaker(saker, "ytelse", "synkende").map((sak) => sak.id)).toEqual([
-      "1",
-      "3",
-      "2",
+      saker[1].id,
+      saker[2].id,
+      saker[0].id,
     ]);
     expect(sorterUfordelteSaker(saker, "opprettet", "synkende").map((sak) => sak.id)).toEqual([
-      "2",
-      "3",
-      "1",
+      saker[1].id,
+      saker[2].id,
+      saker[0].id,
+    ]);
+    expect(sorterUfordelteSaker(saker, "saksid", "stigende").map((sak) => sak.id)).toEqual([
+      saker[1].id,
+      saker[2].id,
+      saker[0].id,
+    ]);
+    expect(sorterUfordelteSaker(saker, "saksid", "synkende").map((sak) => sak.id)).toEqual([
+      saker[0].id,
+      saker[2].id,
+      saker[1].id,
+    ]);
+    expect(sorterUfordelteSaker(saker, "status", "stigende").map((sak) => sak.id)).toEqual([
+      saker[2].id,
+      saker[1].id,
+      saker[0].id,
+    ]);
+    expect(sorterUfordelteSaker(saker, "oppdatert", "stigende").map((sak) => sak.id)).toEqual([
+      saker[0].id,
+      saker[2].id,
+      saker[1].id,
     ]);
   });
 });

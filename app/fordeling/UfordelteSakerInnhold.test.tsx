@@ -19,6 +19,7 @@ const lagSak = (overstyringer: Partial<FordelingSak> = {}): FordelingSak => ({
   kategori: "Arbeid",
   misbrukstyper: ["Skjult samliv"],
   ytelser: ["Dagpenger"],
+  status: { tekst: "Opprettet", variant: "info" },
   ...overstyringer,
 });
 
@@ -54,7 +55,8 @@ describe("UfordelteSakerInnhold", () => {
     expect(screen.queryByRole("columnheader", { name: "Navn" })).toBeNull();
     expect(screen.getByRole("columnheader", { name: "Kategori" })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Misbrukstype" })).toBeDefined();
-    expect(screen.getByRole("columnheader", { name: "Opprettet" })).toBeDefined();
+    expect(screen.getByRole("columnheader", { name: /Status/ })).toBeDefined();
+    expect(screen.getByRole("columnheader", { name: /Opprettet/ })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Oppdatert" })).toBeDefined();
     expect(screen.getByRole("link", { name: "301" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Tildel" })).toBeDefined();
