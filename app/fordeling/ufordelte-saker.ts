@@ -73,18 +73,15 @@ export function sorterUfordelteSaker(
   retning: UfordeltSorteringsretning,
 ) {
   const retningFaktor = retning === "stigende" ? 1 : -1;
+  const collator = new Intl.Collator("nb", {
+    sensitivity: "base",
+    numeric: kolonne === "saksid",
+  });
 
   return [...saker].sort((a, b) => {
-    if (kolonne === "saksid") {
-      const numA = Number.parseInt(getSaksreferanse(a.id), 10) || 0;
-      const numB = Number.parseInt(getSaksreferanse(b.id), 10) || 0;
-      return (numA - numB) * retningFaktor;
-    }
-
     const verdiA = hentSorteringsverdi(a, kolonne);
     const verdiB = hentSorteringsverdi(b, kolonne);
-
-    return verdiA.localeCompare(verdiB, "nb", { sensitivity: "base" }) * retningFaktor;
+    return collator.compare(verdiA, verdiB) * retningFaktor;
   });
 }
 
@@ -92,11 +89,10 @@ function hentSorterteUnikeVerdier(verdier: string[]) {
   return [...new Set(verdier)].sort((a, b) => a.localeCompare(b, "nb"));
 }
 
-function hentSorteringsverdi(
-  sak: FordelingSak,
-  kolonne: Exclude<UfordeltSorteringskolonne, "saksid">,
-) {
+function hentSorteringsverdi(sak: FordelingSak, kolonne: UfordeltSorteringskolonne) {
   switch (kolonne) {
+    case "saksid":
+      return getSaksreferanse(sak.id);
     case "kategori":
       return sak.kategori ?? "Uten kategori";
     case "status":

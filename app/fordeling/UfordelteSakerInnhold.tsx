@@ -191,44 +191,19 @@ export function UfordelteSakerInnhold({
                   }}
                   kolonneHeaderProps={{
                     saksid: {
-                      "aria-sort":
-                        sorteringskolonne === "saksid"
-                          ? sorteringsretning === "stigende"
-                            ? "ascending"
-                            : "descending"
-                          : "none",
+                      "aria-sort": hentAriaSortVerdi("saksid", sorteringskolonne, sorteringsretning),
                     },
                     kategori: {
-                      "aria-sort":
-                        sorteringskolonne === "kategori"
-                          ? sorteringsretning === "stigende"
-                            ? "ascending"
-                            : "descending"
-                          : "none",
+                      "aria-sort": hentAriaSortVerdi("kategori", sorteringskolonne, sorteringsretning),
                     },
                     status: {
-                      "aria-sort":
-                        sorteringskolonne === "status"
-                          ? sorteringsretning === "stigende"
-                            ? "ascending"
-                            : "descending"
-                          : "none",
+                      "aria-sort": hentAriaSortVerdi("status", sorteringskolonne, sorteringsretning),
                     },
                     opprettet: {
-                      "aria-sort":
-                        sorteringskolonne === "opprettet"
-                          ? sorteringsretning === "stigende"
-                            ? "ascending"
-                            : "descending"
-                          : "none",
+                      "aria-sort": hentAriaSortVerdi("opprettet", sorteringskolonne, sorteringsretning),
                     },
                     oppdatert: {
-                      "aria-sort":
-                        sorteringskolonne === "oppdatert"
-                          ? sorteringsretning === "stigende"
-                            ? "ascending"
-                            : "descending"
-                          : "none",
+                      "aria-sort": hentAriaSortVerdi("oppdatert", sorteringskolonne, sorteringsretning),
                     },
                   }}
                   renderRadHandling={(rad) => (
@@ -325,6 +300,17 @@ function hentStandardRetning(kolonne: UfordeltSorteringskolonne): UfordeltSorter
     default:
       return "stigende";
   }
+}
+
+function hentAriaSortVerdi(
+  kolonne: UfordeltSorteringskolonne,
+  aktivKolonne: UfordeltSorteringskolonne | null,
+  retning: UfordeltSorteringsretning | null,
+): "ascending" | "descending" | "none" {
+  if (aktivKolonne !== kolonne || retning === null) {
+    return "none";
+  }
+  return retning === "stigende" ? "ascending" : "descending";
 }
 
 function KolonneSorteringsknapp({

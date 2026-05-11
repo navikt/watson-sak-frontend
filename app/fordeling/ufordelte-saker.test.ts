@@ -146,4 +146,18 @@ describe("ufordelte-saker", () => {
       saker[1].id,
     ]);
   });
+
+  it("sorterer saksid med strengsammenligning når id-er ikke er numeriske mock-UUIDer", () => {
+    const saker = [
+      lagSak({ id: "b1234567-aaaa-4000-8000-000000000001" }),
+      lagSak({ id: "a9876543-bbbb-4000-8000-000000000002" }),
+      lagSak({ id: "c0000000-cccc-4000-8000-000000000003" }),
+    ];
+
+    expect(sorterUfordelteSaker(saker, "saksid", "stigende").map((sak) => sak.id)).toEqual([
+      saker[1].id,
+      saker[0].id,
+      saker[2].id,
+    ]);
+  });
 });
