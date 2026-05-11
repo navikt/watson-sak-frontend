@@ -1,7 +1,10 @@
+import { getFormProps, useForm } from "@conform-to/react";
+import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { ArrowForwardIcon } from "@navikt/aksel-icons";
 import { BodyShort, Button, Modal, Select, VStack } from "@navikt/ds-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useFetcher, useNavigate } from "react-router";
+import { z } from "zod";
 import { enhetAlternativer, enhetEtiketter } from "~/registrer-sak/validering";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
@@ -13,6 +16,10 @@ interface SendTilAnnenEnhetModalProps {
   onClose: () => void;
 }
 
+const sendTilAnnenEnhetSkjema = z.object({
+  seksjon: z.string({ error: "Velg en enhet" }).min(1, "Velg en enhet"),
+});
+
 export function SendTilAnnenEnhetModal({
   sakId,
   nåværendeEnhet,
@@ -21,7 +28,6 @@ export function SendTilAnnenEnhetModal({
 }: SendTilAnnenEnhetModalProps) {
   const fetcher = useFetcher<{ ok: boolean }>();
   const navigate = useNavigate();
-  const [valgtEnhet, setValgtEnhet] = useState("");
   const saksreferanse = getSaksreferanse(sakId);
   const erSubmitting = fetcher.state !== "idle";
 
@@ -31,24 +37,29 @@ export function SendTilAnnenEnhetModal({
     }
   }, [fetcher.data, fetcher.state, navigate]);
 
-  function handleClose() {
-    setValgtEnhet("");
-    onClose();
-  }
-
-  function handleSubmit() {
-    if (!valgtEnhet || valgtEnhet === nåværendeEnhet) {
-      return;
-    }
-
-    fetcher.submit(
-      { handling: "send_til_annen_enhet", seksjon: valgtEnhet },
-      {
+  const [form, fields] = useForm({
+    id: "send-til-annen-enhet",
+    constraint: getZodConstraint(sendTilAnnenEnhetSkjema),
+    onValidate({ formData }) {
+      return parseWithZod(formData, { schema: sendTilAnnenEnhetSkjema });
+    },
+    shouldValidate: "onBlur",
+    shouldRevalidate: "onInput",
+    onSubmit(event, { formData }) {
+      event.preventDefault();
+      formData.set("handling", "send_til_annen_enhet");
+      fetcher.submit(formData, {
         method: "post",
         action: RouteConfig.SAKER_DETALJ.replace(":sakId", saksreferanse),
-      },
-    );
-    handleClose();
+      });
+      form.reset();
+      onClose();
+    },
+  });
+
+  function handleClose() {
+    form.reset();
+    onClose();
   }
 
   return (
@@ -58,33 +69,38 @@ export function SendTilAnnenEnhetModal({
       header={{ heading: "Send til annen enhet", icon: <ArrowForwardIcon aria-hidden /> }}
       width="small"
     >
-      <Modal.Body>
-        <VStack gap="space-4">
-          <BodyShort>
-            Velg enhet saken skal sendes til. Ansvarlig saksbehandler fristilles fra saken.
-          </BodyShort>
-          <Select
-            label="Ny enhet"
-            value={valgtEnhet}
-            onChange={(event) => setValgtEnhet(event.target.value)}
-          >
-            <option value="">Velg enhet</option>
-            {enhetAlternativer.map((enhet) => (
-              <option key={enhet} value={enhet} disabled={enhet === nåværendeEnhet}>
-                {enhetEtiketter[enhet]}
-              </option>
-            ))}
-          </Select>
-        </VStack>
-      </Modal.Body>
-      <Modal.Footer>
-        <Button onClick={handleSubmit} disabled={!valgtEnhet || erSubmitting}>
-          Send til annen enhet
-        </Button>
-        <Button variant="secondary" onClick={handleClose}>
-          Avbryt
-        </Button>
-      </Modal.Footer>
+      <fetcher.Form method="post" {...getFormProps(form)}>
+        <Modal.Body>
+          <VStack gap="space-4">
+            <BodyShort>
+              Velg enhet saken skal sendes til. Ansvarlig saksbehandler fristilles fra saken.
+            </BodyShort>
+            <Select
+              key={fields.seksjon.key}
+              name={fields.seksjon.name}
+              id={fields.seksjon.id}
+              defaultValue={fields.seksjon.initialValue ?? ""}
+              label="Ny enhet"
+              error={fields.seksjon.errors?.[0]}
+            >
+              <option value="">Velg enhet</option>
+              {enhetAlternativer.map((enhet) => (
+                <option key={enhet} value={enhet} disabled={enhet === nåværendeEnhet}>
+                  {enhetEtiketter[enhet]}
+                </option>
+              ))}
+            </Select>
+          </VStack>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button type="submit" disabled={erSubmitting}>
+            Send til annen enhet
+          </Button>
+          <Button variant="secondary" onClick={handleClose}>
+            Avbryt
+          </Button>
+        </Modal.Footer>
+      </fetcher.Form>
     </Modal>
   );
 }

@@ -25,7 +25,7 @@ export function hentAvslutningsdatoer(request: Request) {
 
 export function leggTilMockSakIFordeling(
   request: Request,
-  ...args: Parameters<typeof _leggTilMockSakIFordeling> extends [infer _, ...infer Rest]
+  ...args: Parameters<typeof _leggTilMockSakIFordeling> extends [unknown, ...infer Rest]
     ? Rest
     : never
 ) {

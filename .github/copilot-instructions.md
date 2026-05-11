@@ -90,6 +90,10 @@ Valideres med Zod i `app/config/env.server.ts`. Legg til nye variabler i Zod-skj
 - E2E-tester kan resette mockdata via `RouteConfig.API.RESET_MOCK_DATA` (`/api/reset-mock-data`). Bruk dette når tester muterer felles mock-store.
 - Test serverfunksjoner direkte ved å kalle `loader`/`action` med minimale `Request`-/args-objekter, slik eksisterende route- og API-tester gjør.
 
+## Kommunikasjon
+
+- **Forklar uvanlige mønstre**: Når du bruker funksjoner, API-er eller mønstre som ikke er åpenbare (f.eks. `z.preprocess`, `useInputControl`, `getZodConstraint`), forklar kort hva de gjør og hvorfor de trengs – i svaret til utvikleren, ikke bare i koden.
+
 ## Konvensjoner
 
 - **Språk**: Skriv kode og kommentarer på norsk. Commit-meldinger på norsk, imperativ form.

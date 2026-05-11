@@ -1,3 +1,5 @@
+import { getFormProps, useForm, useInputControl } from "@conform-to/react";
+import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { DocPencilIcon } from "@navikt/aksel-icons";
 import {
   Box,
@@ -15,10 +17,22 @@ import {
 } from "@navikt/ds-react";
 import { useState } from "react";
 import { useFetcher } from "react-router";
+import { z } from "zod";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { behandlendeEnheter } from "./behandlendeEnheter";
 import { notatMalValg } from "./notatValg";
+
+const opprettNotatSkjema = z.object({
+  notat: z.string({ error: "Skriv et notat" }).trim().min(1, "Skriv et notat"),
+  mal: z.string().optional(),
+  knyttTilOppgave: z.string().optional(),
+  oppgavetype: z.string().optional(),
+  prioritet: z.string().optional(),
+  frist: z.string().optional(),
+  behandlendeEnhet: z.string().optional(),
+  beskrivelse: z.string().optional(),
+});
 
 interface OpprettNotatModalProps {
   sakId: string;
@@ -34,63 +48,53 @@ const oppgavetypeValg = [
 
 export function OpprettNotatModal({ sakId, åpen, onClose }: OpprettNotatModalProps) {
   const fetcher = useFetcher();
-  const [mal, setMal] = useState("");
-  const [notat, setNotat] = useState("");
-  const [knyttTilOppgave, setKnyttTilOppgave] = useState(false);
-  const [oppgavetype, setOppgavetype] = useState("");
-  const [prioritet, setPrioritet] = useState("");
-  const [behandlendeEnhet, setBehandlendeEnhet] = useState("");
-  const [beskrivelse, setBeskrivelse] = useState("");
 
-  const [frist, setFrist] = useState<Date | undefined>(undefined);
+  const [form, fields] = useForm({
+    id: "opprett-notat",
+    constraint: getZodConstraint(opprettNotatSkjema),
+    onValidate({ formData }) {
+      return parseWithZod(formData, { schema: opprettNotatSkjema });
+    },
+    shouldValidate: "onBlur",
+    shouldRevalidate: "onInput",
+    onSubmit(event, { formData }) {
+      event.preventDefault();
+      formData.set("handling", "send_notat");
+      const oppgavetypeVerdi = formData.get("oppgavetype") as string;
+      if (oppgavetypeVerdi) {
+        const oppgavetypeLabel =
+          oppgavetypeValg.find((v) => v.verdi === oppgavetypeVerdi)?.label ?? oppgavetypeVerdi;
+        formData.set("oppgavetype", oppgavetypeLabel);
+      }
+      fetcher.submit(formData, {
+        method: "post",
+        action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),
+      });
+      form.reset();
+      setKnyttTilOppgave(false);
+      onClose();
+    },
+  });
+
+  const [knyttTilOppgave, setKnyttTilOppgave] = useState(false);
+  const frist = useInputControl(fields.frist);
+  const behandlendeEnhet = useInputControl(fields.behandlendeEnhet);
+
   const { datepickerProps, inputProps } = useDatepicker({
     fromDate: new Date(),
-    onDateChange: setFrist,
+    onDateChange: (date) => {
+      frist.change(date ? date.toISOString().split("T")[0] : "");
+    },
   });
 
   function handleLukk() {
-    nullstill();
-    onClose();
-  }
-
-  function nullstill() {
-    setMal("");
-    setNotat("");
+    form.reset();
     setKnyttTilOppgave(false);
-    setOppgavetype("");
-    setPrioritet("");
-    setFrist(undefined);
-    setBehandlendeEnhet("");
-    setBeskrivelse("");
-  }
-
-  function handleLagre() {
-    const oppgavetypeLabel =
-      oppgavetypeValg.find((v) => v.verdi === oppgavetype)?.label ?? oppgavetype;
-    fetcher.submit(
-      {
-        handling: "send_notat",
-        notat: notat.trim(),
-        mal,
-        knyttTilOppgave: String(knyttTilOppgave),
-        oppgavetype: oppgavetypeLabel,
-        prioritet,
-        frist: frist ? frist.toISOString().split("T")[0] : "",
-        behandlendeEnhet,
-        beskrivelse,
-      },
-      {
-        method: "post",
-        action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),
-      },
-    );
-    nullstill();
     onClose();
   }
 
-  const kanLagre = notat.trim().length > 0;
   const valgtBehandlendeEnhet = behandlendeEnheter.find(
-    (enhet) => enhet.value === behandlendeEnhet,
+    (enhet) => enhet.value === behandlendeEnhet.value,
   );
 
   return (
@@ -100,109 +104,144 @@ export function OpprettNotatModal({ sakId, åpen, onClose }: OpprettNotatModalPr
       header={{ heading: "Opprett notat", icon: <DocPencilIcon aria-hidden /> }}
       width="medium"
     >
-      <Modal.Body>
-        <VStack gap="space-4">
-          <div>
-            <Label size="small">TEMA</Label>
-            <p className="mt-0.5 text-medium">Kontroll</p>
-          </div>
+      <fetcher.Form method="post" {...getFormProps(form)}>
+        <Modal.Body>
+          <VStack gap="space-4">
+            <div>
+              <Label size="small">TEMA</Label>
+              <p className="mt-0.5 text-medium">Kontroll</p>
+            </div>
 
-          <Select label="Mal" value={mal} onChange={(e) => setMal(e.target.value)}>
-            <option value="">Velg mal</option>
-            {notatMalValg.map(({ verdi, label }) => (
-              <option key={verdi} value={verdi}>
-                {label}
-              </option>
-            ))}
-          </Select>
-
-          <Textarea
-            label="Notat"
-            value={notat}
-            onChange={(e) => setNotat(e.target.value)}
-            minRows={4}
-            maxRows={10}
-          />
-
-          <VStack gap="space-2">
-            <Checkbox
-              checked={knyttTilOppgave}
-              onChange={(e) => setKnyttTilOppgave(e.target.checked)}
+            <Select
+              key={fields.mal.key}
+              name={fields.mal.name}
+              id={fields.mal.id}
+              defaultValue={fields.mal.initialValue ?? ""}
+              label="Mal"
             >
-              Knytt til oppgave
-            </Checkbox>
+              <option value="">Velg mal</option>
+              {notatMalValg.map(({ verdi, label }) => (
+                <option key={verdi} value={verdi}>
+                  {label}
+                </option>
+              ))}
+            </Select>
 
-            {knyttTilOppgave && (
-              <Box
-                background="sunken"
-                borderRadius="8 8 0 0"
-                borderWidth="1"
-                borderColor="neutral-subtle"
-                className="-mx-5 px-5 py-4"
+            <Textarea
+              key={fields.notat.key}
+              name={fields.notat.name}
+              defaultValue={fields.notat.initialValue}
+              label="Notat"
+              error={fields.notat.errors?.[0]}
+              minRows={4}
+              maxRows={10}
+            />
+
+            <VStack gap="space-2">
+              <input
+                name={fields.knyttTilOppgave.name}
+                value={knyttTilOppgave ? "true" : "false"}
+                hidden
+                readOnly
+              />
+              <Checkbox
+                checked={knyttTilOppgave}
+                onChange={(e) => setKnyttTilOppgave(e.target.checked)}
               >
-                <VStack gap="space-4">
-                  <Select
-                    label="Oppgavetype"
-                    value={oppgavetype}
-                    onChange={(e) => setOppgavetype(e.target.value)}
-                  >
-                    <option value="">Velg oppgavetype</option>
-                    {oppgavetypeValg.map(({ verdi, label }) => (
-                      <option key={verdi} value={verdi}>
-                        {label}
-                      </option>
-                    ))}
-                  </Select>
+                Knytt til oppgave
+              </Checkbox>
 
-                  <HStack gap="space-4" align="start">
+              {knyttTilOppgave && (
+                <Box
+                  background="sunken"
+                  borderRadius="8 8 0 0"
+                  borderWidth="1"
+                  borderColor="neutral-subtle"
+                  className="-mx-5 px-5 py-4"
+                >
+                  <VStack gap="space-4">
                     <Select
-                      label="Prioritet"
-                      value={prioritet}
-                      onChange={(e) => setPrioritet(e.target.value)}
-                      className="flex-1"
+                      key={fields.oppgavetype.key}
+                      name={fields.oppgavetype.name}
+                      id={fields.oppgavetype.id}
+                      defaultValue={fields.oppgavetype.initialValue ?? ""}
+                      label="Oppgavetype"
                     >
-                      <option value="">Velg prioritet</option>
-                      <option value="LAV">Lav</option>
-                      <option value="NORMAL">Normal</option>
-                      <option value="HOY">Høy</option>
+                      <option value="">Velg oppgavetype</option>
+                      {oppgavetypeValg.map(({ verdi, label }) => (
+                        <option key={verdi} value={verdi}>
+                          {label}
+                        </option>
+                      ))}
                     </Select>
 
-                    <DatePicker {...datepickerProps}>
-                      <DatePicker.Input {...inputProps} label="Frist" className="flex-1" />
-                    </DatePicker>
-                  </HStack>
+                    <HStack gap="space-4" align="start">
+                      <Select
+                        key={fields.prioritet.key}
+                        name={fields.prioritet.name}
+                        id={fields.prioritet.id}
+                        defaultValue={fields.prioritet.initialValue ?? ""}
+                        label="Prioritet"
+                        className="flex-1"
+                      >
+                        <option value="">Velg prioritet</option>
+                        <option value="LAV">Lav</option>
+                        <option value="NORMAL">Normal</option>
+                        <option value="HOY">Høy</option>
+                      </Select>
 
-                  <UNSAFE_Combobox
-                    label="Behandlende enhet"
-                    options={behandlendeEnheter}
-                    placeholder="Søk etter enhet"
-                    selectedOptions={valgtBehandlendeEnhet ? [valgtBehandlendeEnhet] : []}
-                    onToggleSelected={(enhetsnummer, isSelected) =>
-                      setBehandlendeEnhet(isSelected ? enhetsnummer : "")
-                    }
-                  />
+                      <input
+                        name={fields.frist.name}
+                        defaultValue={fields.frist.initialValue}
+                        hidden
+                        tabIndex={-1}
+                        onFocus={() => frist.focus()}
+                      />
+                      <DatePicker {...datepickerProps}>
+                        <DatePicker.Input {...inputProps} label="Frist" className="flex-1" />
+                      </DatePicker>
+                    </HStack>
 
-                  <Textarea
-                    label="Beskrivelse"
-                    value={beskrivelse}
-                    onChange={(e) => setBeskrivelse(e.target.value)}
-                    minRows={2}
-                    maxRows={5}
-                  />
-                </VStack>
-              </Box>
-            )}
+                    <input
+                      name={fields.behandlendeEnhet.name}
+                      defaultValue={fields.behandlendeEnhet.initialValue}
+                      hidden
+                      tabIndex={-1}
+                      onFocus={() => behandlendeEnhet.focus()}
+                    />
+                    <UNSAFE_Combobox
+                      label="Behandlende enhet"
+                      options={behandlendeEnheter}
+                      placeholder="Søk etter enhet"
+                      selectedOptions={valgtBehandlendeEnhet ? [valgtBehandlendeEnhet] : []}
+                      onToggleSelected={(enhetsnummer, isSelected) =>
+                        behandlendeEnhet.change(isSelected ? enhetsnummer : "")
+                      }
+                    />
+
+                    <Textarea
+                      key={fields.beskrivelse.key}
+                      name={fields.beskrivelse.name}
+                      defaultValue={fields.beskrivelse.initialValue}
+                      label="Beskrivelse"
+                      minRows={2}
+                      maxRows={5}
+                    />
+                  </VStack>
+                </Box>
+              )}
+            </VStack>
           </VStack>
-        </VStack>
-      </Modal.Body>
-      <Modal.Footer>
-        <Button variant="primary" onClick={handleLagre} disabled={!kanLagre}>
-          Lagre
-        </Button>
-        <Button variant="secondary" onClick={handleLukk}>
-          Avbryt
-        </Button>
-      </Modal.Footer>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button type="submit" variant="primary">
+            Lagre
+          </Button>
+          <Button type="button" variant="secondary" onClick={handleLukk}>
+            Avbryt
+          </Button>
+        </Modal.Footer>
+      </fetcher.Form>
     </Modal>
   );
 }

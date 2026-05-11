@@ -11,14 +11,14 @@ export function hentHistorikk(request: Request, sakId: string) {
 
 export function leggTilHendelse(
   request: Request,
-  ...args: Parameters<typeof _leggTilHendelse> extends [infer _, ...infer Rest] ? Rest : never
+  ...args: Parameters<typeof _leggTilHendelse> extends [unknown, ...infer Rest] ? Rest : never
 ) {
   return _leggTilHendelse(hentMockState(request), ...args);
 }
 
 export function leggTilManuellHendelse(
   request: Request,
-  ...args: Parameters<typeof _leggTilManuellHendelse> extends [infer _, ...infer Rest]
+  ...args: Parameters<typeof _leggTilManuellHendelse> extends [unknown, ...infer Rest]
     ? Rest
     : never
 ) {

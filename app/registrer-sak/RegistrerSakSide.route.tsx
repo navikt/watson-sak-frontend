@@ -1,3 +1,5 @@
+import { useForm } from "@conform-to/react";
+import { parseWithZod } from "@conform-to/zod/v4";
 import {
   LocalAlert,
   BodyShort,
@@ -16,7 +18,7 @@ import {
 } from "@navikt/ds-react";
 import { PersonIcon, PlusIcon } from "@navikt/aksel-icons";
 import { PageBlock } from "@navikt/ds-react/Page";
-import { useId, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Form, Link, useFetcher, useActionData, useLoaderData } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import {
@@ -24,18 +26,13 @@ import {
   merkingEtiketter,
   merkingAlternativer as alleMerkinger,
   enhetEtiketter,
+  opprettSakSchema,
 } from "~/registrer-sak/validering";
 import { kontrollsakKategoriEtiketter, kontrollsakMisbrukstypeEtiketter } from "~/saker/kategorier";
 import type { PersonOppslagResultat } from "./person-oppslag.mock.server";
-import { action, loader, type SkjemaVerdier } from "./RegistrerSakSide.server";
+import { action, loader } from "./RegistrerSakSide.server";
 import type { YtelseRadVerdier } from "./skjema-helpers";
-import {
-  ankerIdForFelt,
-  type Feil,
-  førsteFeilForFelt,
-  samleFeilElementer,
-  YtelseRadFelt,
-} from "./YtelseRadFelt";
+import { YtelseRadFelt } from "./YtelseRadFelt";
 
 export { action, loader };
 
@@ -51,22 +48,34 @@ function nyYtelseRad(defaults: YtelseRadVerdier = {}): YtelseRadState {
 export default function OpprettSakSide() {
   const { ytelser, kategorier, misbrukstypePerKategori, enheter, kilder } =
     useLoaderData<typeof loader>();
-  const actionData = useActionData<typeof action>();
-  const feil = actionData && "feil" in actionData ? (actionData.feil as Feil) : undefined;
-  const verdier =
-    actionData && "verdier" in actionData ? (actionData.verdier as SkjemaVerdier) : undefined;
+  const lastResult = useActionData<typeof action>();
 
-  const [valgtKategori, setValgtKategori] = useState<string>(verdier?.kategori ?? "");
+  const [form, fields] = useForm({
+    id: "opprett-sak",
+    lastResult: lastResult && "status" in lastResult ? lastResult : undefined,
+    onValidate({ formData }) {
+      return parseWithZod(formData, { schema: opprettSakSchema });
+    },
+    shouldValidate: "onSubmit",
+    shouldRevalidate: "onInput",
+  });
+
+  const [valgtKategori, setValgtKategori] = useState(fields.kategori.initialValue ?? "");
+
   const [valgteMisbruktyper, setValgteMisbruktyper] = useState<string[]>(
-    verdier?.misbruktype ?? [],
+    (fields.misbruktype.initialValue as string[]) ?? [],
   );
-  const [valgteMerkinger, setValgteMerkinger] = useState<string[]>(verdier?.merking ?? []);
+  const [valgteMerkinger, setValgteMerkinger] = useState<string[]>(
+    (fields.merking.initialValue as string[]) ?? [],
+  );
   const [søkeFnr, setSøkeFnr] = useState("");
-  const [ytelseRader, setYtelseRader] = useState<YtelseRadState[]>(() =>
-    verdier && verdier.ytelser.length > 0
-      ? verdier.ytelser.map((rad) => nyYtelseRad(rad))
-      : [nyYtelseRad()],
-  );
+  const [ytelseRader, setYtelseRader] = useState<YtelseRadState[]>(() => {
+    const initial = fields.ytelser.initialValue;
+    if (Array.isArray(initial) && initial.length > 0) {
+      return initial.map((rad) => nyYtelseRad(rad as YtelseRadVerdier));
+    }
+    return [nyYtelseRad()];
+  });
   const [filer, setFiler] = useState<File[]>([]);
 
   const personFetcher = useFetcher<
@@ -96,8 +105,16 @@ export default function OpprettSakSide() {
     return filtrert && filtrert.length > 0 ? (filtrert as readonly string[]) : [];
   }, [valgtKategori, misbrukstypePerKategori]);
 
-  const feilElementer = samleFeilElementer(feil);
-  const errorSummaryId = useId();
+  const feilElementer = useMemo(() => {
+    const elementer: Array<{ id: string; melding: string }> = [];
+    for (const [navn, feil] of Object.entries(form.allErrors)) {
+      if (navn === "" || !feil || feil.length === 0) continue;
+      const id =
+        fields[navn as keyof typeof fields]?.id ?? `felt-${navn.replace(/[^\p{L}\p{N}]+/gu, "-")}`;
+      elementer.push({ id, melding: feil[0] });
+    }
+    return elementer;
+  }, [form.allErrors, fields]);
 
   function leggTilYtelseRad() {
     setYtelseRader((rader) => [...rader, nyYtelseRad()]);
@@ -223,7 +240,13 @@ export default function OpprettSakSide() {
               )}
 
               {/* Skjema */}
-              <Form method="post" aria-label="Grunnleggende saksinformasjon" noValidate>
+              <Form
+                method="post"
+                aria-label="Grunnleggende saksinformasjon"
+                id={form.id}
+                onSubmit={form.onSubmit}
+                noValidate
+              >
                 <input
                   type="hidden"
                   name="personIdent"
@@ -233,7 +256,6 @@ export default function OpprettSakSide() {
                   {/* ErrorSummary */}
                   {feilElementer.length > 0 && (
                     <ErrorSummary
-                      id={errorSummaryId}
                       heading="Du må rette disse feilene før du kan gå videre"
                       className="max-w-2xl"
                     >
@@ -245,9 +267,9 @@ export default function OpprettSakSide() {
                     </ErrorSummary>
                   )}
 
-                  {feil?.skjema?.[0] && (
+                  {form.errors && form.errors.length > 0 && (
                     <LocalAlert status="error" className="max-w-2xl">
-                      <LocalAlert.Content>{feil.skjema[0]}</LocalAlert.Content>
+                      <LocalAlert.Content>{form.errors[0]}</LocalAlert.Content>
                     </LocalAlert>
                   )}
 
@@ -258,10 +280,10 @@ export default function OpprettSakSide() {
                   {/* Rad 1: Kategori, Kilde, Organisasjonsnummer */}
                   <HStack gap="space-24" align="start" wrap>
                     <Select
-                      id={ankerIdForFelt("kategori")}
-                      name="kategori"
+                      name={fields.kategori.name}
+                      id={fields.kategori.id}
                       label="Kategori"
-                      error={førsteFeilForFelt(feil, "kategori")}
+                      error={fields.kategori.errors?.[0]}
                       className="w-52"
                       value={valgtKategori}
                       onChange={(e) => {
@@ -289,12 +311,12 @@ export default function OpprettSakSide() {
                     </Select>
 
                     <Select
-                      id={ankerIdForFelt("kilde")}
-                      name="kilde"
+                      name={fields.kilde.name}
+                      id={fields.kilde.id}
                       label="Kilde"
-                      error={førsteFeilForFelt(feil, "kilde")}
+                      error={fields.kilde.errors?.[0]}
                       className="w-52"
-                      defaultValue={verdier?.kilde ?? ""}
+                      defaultValue={fields.kilde.initialValue ?? ""}
                     >
                       <option value="">Velg kilde</option>
                       {kilder.map((k) => (
@@ -305,21 +327,22 @@ export default function OpprettSakSide() {
                     </Select>
 
                     <TextField
-                      id={ankerIdForFelt("organisasjonsnummer")}
-                      name="organisasjonsnummer"
+                      id={fields.organisasjonsnummer.id}
+                      key={fields.organisasjonsnummer.key}
+                      name={fields.organisasjonsnummer.name}
+                      defaultValue={fields.organisasjonsnummer.initialValue}
                       label="Organisasjonsnummer (valgfritt)"
                       inputMode="numeric"
                       htmlSize={14}
-                      error={førsteFeilForFelt(feil, "organisasjonsnummer")}
+                      error={fields.organisasjonsnummer.errors?.[0]}
                       autoComplete="off"
-                      defaultValue={verdier?.organisasjonsnummer ?? ""}
                     />
                   </HStack>
 
                   {/* Rad 2: Misbruktype, Merking, Enhet */}
                   <HStack gap="space-24" align="start" wrap>
                     {tilgjengeligeMisbruktyper.length > 0 && (
-                      <div id={ankerIdForFelt("misbruktype")} className="w-72">
+                      <div id={fields.misbruktype.id} className="w-72">
                         <UNSAFE_Combobox
                           label="Misbruktype (valgfritt)"
                           options={tilgjengeligeMisbruktyper.map((verdi) => ({
@@ -345,7 +368,7 @@ export default function OpprettSakSide() {
                               return prev.filter((m) => m !== option);
                             });
                           }}
-                          error={førsteFeilForFelt(feil, "misbruktype")}
+                          error={fields.misbruktype.errors?.[0]}
                         />
                         {valgteMisbruktyper.map((m) => (
                           <input key={m} type="hidden" name="misbruktype" value={m} />
@@ -353,7 +376,7 @@ export default function OpprettSakSide() {
                       </div>
                     )}
 
-                    <div id={ankerIdForFelt("merking")} className="w-72">
+                    <div id={fields.merking.id} className="w-72">
                       <UNSAFE_Combobox
                         label="Merking (valgfritt)"
                         options={alleMerkinger.map((verdi) => ({
@@ -374,7 +397,7 @@ export default function OpprettSakSide() {
                             return prev.filter((m) => m !== option);
                           });
                         }}
-                        error={førsteFeilForFelt(feil, "merking")}
+                        error={fields.merking.errors?.[0]}
                       />
                       {valgteMerkinger.map((m) => (
                         <input key={m} type="hidden" name="merking" value={m} />
@@ -382,12 +405,12 @@ export default function OpprettSakSide() {
                     </div>
 
                     <Select
-                      id={ankerIdForFelt("enhet")}
-                      name="enhet"
+                      name={fields.enhet.name}
+                      id={fields.enhet.id}
                       label="Enhet (valgfritt)"
-                      error={førsteFeilForFelt(feil, "enhet")}
+                      error={fields.enhet.errors?.[0]}
                       className="w-44"
-                      defaultValue={verdier?.enhet ?? ""}
+                      defaultValue={(fields.enhet.initialValue ?? "") as string}
                     >
                       <option value="">Velg enhet</option>
                       {enheter.map((e) => (
@@ -421,7 +444,7 @@ export default function OpprettSakSide() {
                           kanFjernes={ytelseRader.length > 1}
                           onFjern={() => fjernYtelseRad(rad.id)}
                           defaults={rad.defaults}
-                          feil={feil}
+                          feil={form.allErrors}
                         />
                       ))}
                     </VStack>

@@ -18,7 +18,7 @@ function state() {
 function lagRequestMedCookie(setCookieHeader: string): Request {
   const match = setCookieHeader.match(/^([^;]+)/);
   return new Request("http://localhost", {
-    headers: { Cookie: match![1] },
+    headers: { Cookie: match?.[1] ?? "" },
   });
 }
 
@@ -33,7 +33,7 @@ describe("reset-api", () => {
     expect(hentUlesteVarsler(state()).map((varsel) => varsel.id)).not.toContain("varsel-107");
 
     const response = action({ request: testRequest });
-    const setCookie = response.headers.get("Set-Cookie")!;
+    const setCookie = response.headers.get("Set-Cookie") ?? "";
     const requestMedCookie = lagRequestMedCookie(setCookie);
 
     expect(hentUlesteVarsler(hentMockState(requestMedCookie)).map((v) => v.id)).toContain(
@@ -58,7 +58,7 @@ describe("reset-api", () => {
     expect(resultatFørReset?.eksisterendeSaker).toHaveLength(opprinneligAntall + 1);
 
     const response = action({ request: testRequest });
-    const setCookie = response.headers.get("Set-Cookie")!;
+    const setCookie = response.headers.get("Set-Cookie") ?? "";
     const requestMedCookie = lagRequestMedCookie(setCookie);
 
     const resultatEtterReset = slaOppPerson(requestMedCookie, "12345678901");

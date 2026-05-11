@@ -13,6 +13,7 @@ vi.mock("react-router", async () => {
     useFetcher: () => ({
       state: "idle",
       submit: submitMock,
+      Form: "form",
     }),
   };
 });
@@ -36,42 +37,38 @@ describe("OpprettNotatModal", () => {
     submitMock.mockClear();
   });
 
-  it("deaktiverer Lagre-knappen når notat er tomt", () => {
+  it("validerer at notat er påkrevd – submit kalles ikke når notat er tomt", () => {
     renderMedRouter(<OpprettNotatModal {...defaultProps} />);
 
-    const lagreKnapp = screen.getByRole("button", { name: "Lagre" });
-    expect((lagreKnapp as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+
+    expect(submitMock).not.toHaveBeenCalled();
   });
 
-  it("deaktiverer Lagre-knappen når notat kun inneholder whitespace", () => {
+  it("validerer at notat er påkrevd – submit kalles ikke for kun whitespace", () => {
     renderMedRouter(<OpprettNotatModal {...defaultProps} />);
 
     const textarea = screen.getByLabelText("Notat");
     fireEvent.change(textarea, { target: { value: "   " } });
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
 
-    const lagreKnapp = screen.getByRole("button", { name: "Lagre" });
-    expect((lagreKnapp as HTMLButtonElement).disabled).toBe(true);
+    expect(submitMock).not.toHaveBeenCalled();
   });
 
-  it("aktiverer Lagre-knappen og kaller submit med forventet payload når notat er fylt ut", () => {
+  it("kaller submit med forventet payload når notat er fylt ut", () => {
     renderMedRouter(<OpprettNotatModal {...defaultProps} />);
 
     const textarea = screen.getByLabelText("Notat");
     fireEvent.change(textarea, { target: { value: "Et viktig notat" } });
 
-    const lagreKnapp = screen.getByRole("button", { name: "Lagre" });
-    expect((lagreKnapp as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
 
-    fireEvent.click(lagreKnapp);
-
-    expect(submitMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        handling: "send_notat",
-        notat: "Et viktig notat",
-        knyttTilOppgave: "false",
-      }),
-      expect.objectContaining({ method: "post" }),
-    );
+    expect(submitMock).toHaveBeenCalledTimes(1);
+    const [formData, options] = submitMock.mock.calls[0];
+    expect(formData).toBeInstanceOf(FormData);
+    expect(formData.get("handling")).toBe("send_notat");
+    expect(formData.get("notat")).toBe("Et viktig notat");
+    expect(options).toEqual(expect.objectContaining({ method: "post" }));
   });
 
   it("inkluderer oppgavetype i payload når 'Knytt til oppgave' er huket av", () => {
@@ -87,15 +84,13 @@ describe("OpprettNotatModal", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
 
-    expect(submitMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        handling: "send_notat",
-        notat: "Notat med oppgave",
-        knyttTilOppgave: "true",
-        oppgavetype: "Vurder dokument",
-      }),
-      expect.objectContaining({ method: "post" }),
-    );
+    expect(submitMock).toHaveBeenCalledTimes(1);
+    const [formData, options] = submitMock.mock.calls[0];
+    expect(formData.get("handling")).toBe("send_notat");
+    expect(formData.get("notat")).toBe("Notat med oppgave");
+    expect(formData.get("knyttTilOppgave")).toBe("true");
+    expect(formData.get("oppgavetype")).toBe("Vurder dokument");
+    expect(options).toEqual(expect.objectContaining({ method: "post" }));
   });
 
   it("lar saksbehandler søke opp og sende behandlende enhet", async () => {
@@ -116,13 +111,11 @@ describe("OpprettNotatModal", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
 
-    expect(submitMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        notat: "Notat med behandlende enhet",
-        knyttTilOppgave: "true",
-        behandlendeEnhet: "4111",
-      }),
-      expect.objectContaining({ method: "post" }),
-    );
+    expect(submitMock).toHaveBeenCalledTimes(1);
+    const [formData, options] = submitMock.mock.calls[0];
+    expect(formData.get("notat")).toBe("Notat med behandlende enhet");
+    expect(formData.get("knyttTilOppgave")).toBe("true");
+    expect(formData.get("behandlendeEnhet")).toBe("4111");
+    expect(options).toEqual(expect.objectContaining({ method: "post" }));
   });
 });

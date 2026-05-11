@@ -1,3 +1,4 @@
+import { parseWithZod } from "@conform-to/zod/v4";
 import { redirect } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { skalBrukeMockdata } from "~/config/env.server";
@@ -63,69 +64,22 @@ export function loader() {
   };
 }
 
-import {
-  bygFeilkartFraIssues,
-  lesStringliste,
-  parseYtelseRader,
-  type YtelseRadVerdier,
-} from "./skjema-helpers";
-
-export type SkjemaVerdier = {
-  personIdent: string;
-  kategori: string;
-  kilde: string;
-  misbruktype: string[];
-  merking: string[];
-  enhet: string;
-  organisasjonsnummer: string;
-  ytelser: YtelseRadVerdier[];
-};
-
-function lesString(formData: FormData, navn: string): string {
-  const verdi = formData.get(navn);
-  return typeof verdi === "string" ? verdi : "";
-}
-
-function plukkVerdier(formData: FormData): SkjemaVerdier {
-  return {
-    personIdent: lesString(formData, "personIdent"),
-    kategori: lesString(formData, "kategori"),
-    kilde: lesString(formData, "kilde"),
-    misbruktype: lesStringliste(formData, "misbruktype"),
-    merking: lesStringliste(formData, "merking"),
-    enhet: lesString(formData, "enhet"),
-    organisasjonsnummer: lesString(formData, "organisasjonsnummer"),
-    ytelser: parseYtelseRader(formData),
-  };
-}
-
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
-  const verdier = plukkVerdier(formData);
+  const submission = parseWithZod(formData, { schema: opprettSakSchema });
 
-  const rådata = {
-    personIdent: verdier.personIdent,
-    kategori: verdier.kategori,
-    kilde: verdier.kilde,
-    misbruktype: verdier.misbruktype,
-    merking: verdier.merking,
-    enhet: verdier.enhet || undefined,
-    organisasjonsnummer: verdier.organisasjonsnummer || undefined,
-    ytelser: verdier.ytelser,
-  };
-
-  const resultat = opprettSakSchema.safeParse(rådata);
-
-  if (!resultat.success) {
-    return { feil: bygFeilkartFraIssues(resultat.error.issues), verdier };
+  if (submission.status !== "success") {
+    return submission.reply();
   }
 
-  const data = resultat.data;
+  const data = submission.value;
   const personOppslag = slaOppPerson(request, data.personIdent);
   const personNavn = personOppslag?.person.navn;
 
   if (typeof personNavn !== "string" || personNavn.trim() === "") {
-    return { feil: { skjema: ["Fant ikke navn på personen som saken opprettes for"] }, verdier };
+    return submission.reply({
+      formErrors: ["Fant ikke navn på personen som saken opprettes for"],
+    });
   }
 
   const opprettetSak = await opprettKontrollsak({
