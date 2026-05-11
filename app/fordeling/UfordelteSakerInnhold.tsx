@@ -161,6 +161,9 @@ export function UfordelteSakerInnhold({
                         onSort={sorterPåKolonne}
                       />
                     ),
+                    misbrukstype: (
+                      <span className="text-sm font-semibold">Misbrukstype</span>
+                    ),
                     status: (
                       <KolonneSorteringsknapp
                         tittel="Status"
