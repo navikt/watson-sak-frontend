@@ -132,7 +132,14 @@ export function UfordelteSakerInnhold({
               <div className="overflow-x-auto">
                 <Saksliste
                   rader={sakslisteRader}
-                  kolonner={["saksid", "kategori", "misbrukstype", "status", "opprettet", "oppdatert"]}
+                  kolonner={[
+                    "saksid",
+                    "kategori",
+                    "misbrukstype",
+                    "status",
+                    "opprettet",
+                    "oppdatert",
+                  ]}
                   tomTekst="Ingen ufordelte saker matcher filtrene."
                   handlingKolonneTittel={<span className="sr-only">Handling</span>}
                   kolonneHeaderInnhold={{
