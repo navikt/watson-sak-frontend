@@ -191,19 +191,39 @@ export function UfordelteSakerInnhold({
                   }}
                   kolonneHeaderProps={{
                     saksid: {
-                      "aria-sort": hentAriaSortVerdi("saksid", sorteringskolonne, sorteringsretning),
+                      "aria-sort": hentAriaSortVerdi(
+                        "saksid",
+                        sorteringskolonne,
+                        sorteringsretning,
+                      ),
                     },
                     kategori: {
-                      "aria-sort": hentAriaSortVerdi("kategori", sorteringskolonne, sorteringsretning),
+                      "aria-sort": hentAriaSortVerdi(
+                        "kategori",
+                        sorteringskolonne,
+                        sorteringsretning,
+                      ),
                     },
                     status: {
-                      "aria-sort": hentAriaSortVerdi("status", sorteringskolonne, sorteringsretning),
+                      "aria-sort": hentAriaSortVerdi(
+                        "status",
+                        sorteringskolonne,
+                        sorteringsretning,
+                      ),
                     },
                     opprettet: {
-                      "aria-sort": hentAriaSortVerdi("opprettet", sorteringskolonne, sorteringsretning),
+                      "aria-sort": hentAriaSortVerdi(
+                        "opprettet",
+                        sorteringskolonne,
+                        sorteringsretning,
+                      ),
                     },
                     oppdatert: {
-                      "aria-sort": hentAriaSortVerdi("oppdatert", sorteringskolonne, sorteringsretning),
+                      "aria-sort": hentAriaSortVerdi(
+                        "oppdatert",
+                        sorteringskolonne,
+                        sorteringsretning,
+                      ),
                     },
                   }}
                   renderRadHandling={(rad) => (
