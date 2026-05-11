@@ -410,7 +410,7 @@ export default function OpprettSakSide() {
                       label="Enhet (valgfritt)"
                       error={fields.enhet.errors?.[0]}
                       className="w-44"
-                      defaultValue={fields.enhet.initialValue ?? ""}
+                      defaultValue={(fields.enhet.initialValue ?? "") as string}
                     >
                       <option value="">Velg enhet</option>
                       {enheter.map((e) => (

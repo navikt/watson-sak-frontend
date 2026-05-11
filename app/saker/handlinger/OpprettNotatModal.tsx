@@ -71,6 +71,7 @@ export function OpprettNotatModal({ sakId, åpen, onClose }: OpprettNotatModalPr
         action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),
       });
       form.reset();
+      setKnyttTilOppgave(false);
       onClose();
     },
   });

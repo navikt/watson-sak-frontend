@@ -116,7 +116,10 @@ export const opprettSakSchema = z
     kilde: z.enum(kildeAlternativer, { message: "Velg kilde" }),
     misbruktype: z.array(misbrukstypeSchema).optional().default([]),
     merking: z.array(merkingSchema).optional().default([]),
-    enhet: z.enum(enhetAlternativer).optional(),
+    enhet: z.preprocess(
+      (val) => (val === "" ? undefined : val),
+      z.enum(enhetAlternativer).optional(),
+    ),
     organisasjonsnummer: z
       .string()
       .regex(/^\d{9}$/, "Organisasjonsnummer må bestå av 9 siffer")

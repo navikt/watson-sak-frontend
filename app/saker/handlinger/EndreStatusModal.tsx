@@ -52,6 +52,7 @@ export function EndreStatusModal({ sakId, nåværendeStatus, åpen, onClose }: E
         action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),
       });
       form.reset();
+      setStatusVerdi("");
       onClose();
     },
   });
@@ -61,6 +62,7 @@ export function EndreStatusModal({ sakId, nåværendeStatus, åpen, onClose }: E
   function handleLukk() {
     if (erSubmitting) return;
     form.reset();
+    setStatusVerdi("");
     onClose();
   }
 
