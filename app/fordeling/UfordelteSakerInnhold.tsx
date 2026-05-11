@@ -129,7 +129,7 @@ export function UfordelteSakerInnhold({
         <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start">
           <div className="min-w-0">
             <div className="overflow-hidden rounded-2xl border border-ax-border-neutral-subtle bg-ax-bg-default">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto px-4">
                 <Saksliste
                   rader={sakslisteRader}
                   kolonner={[
