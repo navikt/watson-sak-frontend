@@ -6,6 +6,7 @@ import type { FordelingSak } from "./typer";
 export const ufordelteSorteringskolonner = [
   "saksid",
   "kategori",
+  "misbrukstype",
   "status",
   "opprettet",
   "oppdatert",
@@ -95,6 +96,8 @@ function hentSorteringsverdi(sak: FordelingSak, kolonne: UfordeltSorteringskolon
       return getSaksreferanse(sak.id);
     case "kategori":
       return sak.kategori ?? "Uten kategori";
+    case "misbrukstype":
+      return sak.misbrukstyper.join(", ");
     case "status":
       return sak.status.tekst;
     case "opprettet":
