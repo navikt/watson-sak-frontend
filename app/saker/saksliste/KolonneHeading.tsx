@@ -1,8 +1,4 @@
-import {
-  ArrowDownIcon,
-  ArrowsUpDownIcon,
-  ArrowUpIcon,
-} from "@navikt/aksel-icons";
+import { ArrowDownIcon, ArrowsUpDownIcon, ArrowUpIcon } from "@navikt/aksel-icons";
 
 export type Sorteringsretning = "stigende" | "synkende";
 
@@ -33,21 +29,9 @@ export function KolonneHeading({ tittel, sortering }: KolonneHeadingProps) {
   );
 }
 
-function SorteringsIkon({
-  aktiv,
-  retning,
-}: {
-  aktiv: boolean;
-  retning: Sorteringsretning | null;
-}) {
+function SorteringsIkon({ aktiv, retning }: { aktiv: boolean; retning: Sorteringsretning | null }) {
   if (!aktiv || retning === null) {
-    return (
-      <ArrowsUpDownIcon
-        aria-hidden
-        fontSize="1rem"
-        className="text-ax-text-neutral-subtle"
-      />
-    );
+    return <ArrowsUpDownIcon aria-hidden fontSize="1rem" className="text-ax-text-neutral-subtle" />;
   }
 
   const Ikon = retning === "stigende" ? ArrowUpIcon : ArrowDownIcon;
