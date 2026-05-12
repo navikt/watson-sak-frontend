@@ -19,8 +19,6 @@ import {
   parseVentestatuser,
 } from "./filtre";
 
-export { filtrerMineSaker } from "./filtre";
-
 export async function loader({ request }: Route.LoaderArgs) {
   const innloggetBruker = await hentInnloggetBruker({ request });
 
