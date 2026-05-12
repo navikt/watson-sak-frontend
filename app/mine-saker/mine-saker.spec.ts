@@ -9,27 +9,20 @@ test.describe("Mine saker", () => {
     await page.goto("/mine-saker", { waitUntil: "networkidle" });
   });
 
-  test("viser aktive saker og lukkede seksjoner for ventende og fullførte saker", async ({
-    page,
-  }) => {
+  test("viser saksliste med statusfiltre", async ({ page }) => {
     const hovedinnhold = page.locator("#maincontent");
 
     await expect(page.getByRole("heading", { name: "Mine saker" })).toBeVisible();
-    await expect(hovedinnhold.getByRole("button", { name: "Oppgaver på vent" })).toBeVisible();
-    await expect(hovedinnhold.getByRole("button", { name: "Fullførte oppgaver" })).toBeVisible();
+    await expect(hovedinnhold.getByLabel("Filtrer saker")).toBeVisible();
     await expect(hovedinnhold.getByRole("link")).toHaveCount(5);
   });
 
-  test("kan åpne ventende og fullførte saker", async ({ page }) => {
+  test("kan filtrere på ventestatus for å vise ventende saker", async ({ page }) => {
     const hovedinnhold = page.locator("#maincontent");
-    const ventendeKnapp = hovedinnhold.getByRole("button", { name: "Oppgaver på vent" });
-    const fullførteKnapp = hovedinnhold.getByRole("button", { name: "Fullførte oppgaver" });
 
-    await ventendeKnapp.click();
+    // Klikk «Venter på vedtak» for å inkludere ventende saker
+    await hovedinnhold.getByRole("button", { name: "Venter på vedtak" }).click();
     await expect(hovedinnhold.getByRole("link")).toHaveCount(6);
-
-    await fullførteKnapp.click();
-    await expect(hovedinnhold.getByRole("link")).toHaveCount(9);
   });
 
   test("kan navigere til sakdetalj", async ({ page }) => {
