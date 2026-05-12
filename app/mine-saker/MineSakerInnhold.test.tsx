@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react";
-import { fireEvent } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
 import { getSaksreferanse } from "~/saker/id";
@@ -40,6 +39,28 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
   };
 }
 
+const standardFilterAlternativer = {
+  status: [
+    { verdi: "OPPRETTET", etikett: "Opprettet" },
+    { verdi: "UTREDES", etikett: "Utredes" },
+    { verdi: "STRAFFERETTSLIG_VURDERING", etikett: "Strafferettslig vurdering" },
+    { verdi: "ANMELDT", etikett: "Anmeldt" },
+    { verdi: "HENLAGT", etikett: "Henlagt" },
+    { verdi: "AVSLUTTET", etikett: "Avsluttet" },
+  ],
+  ventestatus: [
+    { verdi: "INGEN", etikett: "Ingen" },
+    { verdi: "VENTER_PA_INFORMASJON", etikett: "Venter på informasjon" },
+    { verdi: "VENTER_PA_VEDTAK", etikett: "Venter på vedtak" },
+    { verdi: "I_BERO", etikett: "I bero" },
+  ],
+};
+
+const standardAktivtFilter = {
+  status: ["OPPRETTET" as const, "UTREDES" as const, "STRAFFERETTSLIG_VURDERING" as const],
+  ventestatus: ["INGEN" as const, "VENTER_PA_INFORMASJON" as const],
+};
+
 function renderMedRouter(ui: React.ReactNode) {
   const router = createMemoryRouter([{ path: "/", element: ui }], {
     initialEntries: ["/"],
@@ -49,19 +70,13 @@ function renderMedRouter(ui: React.ReactNode) {
 }
 
 describe("MineSakerInnhold", () => {
-  it("viser felles saksliste i aktive saker og beholder grupperingene", () => {
+  it("viser saksliste med kolonner", () => {
     renderMedRouter(
       <MineSakerInnhold
-        saker={[
-          lagKontrollsak(),
-          lagKontrollsak({
-            id: lagMockSakUuid("202", 2),
-            status: "UTREDES",
-            blokkert: "VENTER_PA_VEDTAK",
-            oppdatert: "2026-02-05T10:11:12Z",
-          }),
-        ]}
+        saker={[lagKontrollsak()]}
         detaljSti="/saker"
+        filterAlternativer={standardFilterAlternativer}
+        aktivtFilter={standardAktivtFilter}
       />,
     );
 
@@ -71,33 +86,66 @@ describe("MineSakerInnhold", () => {
     expect(screen.getByRole("columnheader", { name: "Misbrukstype" })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Opprettet" })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Oppdatert" })).toBeDefined();
+  });
+
+  it("viser sakslenke med riktig detaljsti", () => {
+    renderMedRouter(
+      <MineSakerInnhold
+        saker={[lagKontrollsak()]}
+        detaljSti="/saker"
+        filterAlternativer={standardFilterAlternativer}
+        aktivtFilter={standardAktivtFilter}
+      />,
+    );
 
     const lenke = screen.getByRole("link", { name: "201" });
     expect(lenke.getAttribute("href")).toBe(`/saker/${getSaksreferanse(lagMockSakUuid("201", 2))}`);
-    expect(screen.getByText("Ola Nordmann")).toBeDefined();
-
-    fireEvent.click(screen.getByRole("button", { name: "Oppgaver på vent" }));
-
-    expect(screen.getByRole("link", { name: "202" })).toBeDefined();
   });
 
-  it("bruker oppgitt detaljsti for sakslenker", () => {
-    renderMedRouter(<MineSakerInnhold saker={[lagKontrollsak()]} detaljSti="/mine-saker/detalj" />);
-
-    expect(screen.getByRole("link", { name: "201" }).getAttribute("href")).toBe(
-      "/mine-saker/detalj/201",
+  it("viser Chips-filtre for status og ventestatus", () => {
+    renderMedRouter(
+      <MineSakerInnhold
+        saker={[lagKontrollsak()]}
+        detaljSti="/saker"
+        filterAlternativer={standardFilterAlternativer}
+        aktivtFilter={standardAktivtFilter}
+      />,
     );
+
+    expect(screen.getByText("Ventestatus")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Opprettet" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Utredes" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Ingen" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "I bero" })).toBeDefined();
   });
 
-  it("viser riktige tomtekster for aktive, ventende og fullførte grupper", () => {
-    renderMedRouter(<MineSakerInnhold saker={[]} detaljSti="/mine-saker/detalj" />);
+  it("viser tomtekst når ingen saker matcher filter", () => {
+    renderMedRouter(
+      <MineSakerInnhold
+        saker={[]}
+        detaljSti="/saker"
+        filterAlternativer={standardFilterAlternativer}
+        aktivtFilter={standardAktivtFilter}
+      />,
+    );
 
-    expect(screen.getByText("Du har ingen aktive saker.")).toBeDefined();
+    expect(screen.getByText("Ingen saker matcher valgte filtre.")).toBeDefined();
+  });
 
-    fireEvent.click(screen.getByRole("button", { name: "Oppgaver på vent" }));
-    expect(screen.getByText("Du har ingen saker som venter.")).toBeDefined();
+  it("markerer aktive filtre som selected", () => {
+    renderMedRouter(
+      <MineSakerInnhold
+        saker={[lagKontrollsak()]}
+        detaljSti="/saker"
+        filterAlternativer={standardFilterAlternativer}
+        aktivtFilter={standardAktivtFilter}
+      />,
+    );
 
-    fireEvent.click(screen.getByRole("button", { name: "Fullførte oppgaver" }));
-    expect(screen.getByText("Du har ingen fullførte saker.")).toBeDefined();
+    const opprettetChip = screen.getByRole("button", { name: "Opprettet" });
+    expect(opprettetChip.getAttribute("aria-pressed")).toBe("true");
+
+    const avsluttetChip = screen.getByRole("button", { name: "Avsluttet" });
+    expect(avsluttetChip.getAttribute("aria-pressed")).toBe("false");
   });
 });

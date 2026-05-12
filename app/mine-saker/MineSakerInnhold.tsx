@@ -1,27 +1,61 @@
-import { ChevronDownIcon, FolderIcon } from "@navikt/aksel-icons";
-import { Heading, HStack, VStack } from "@navikt/ds-react";
-import { useState, type ReactNode } from "react";
-import type { KontrollsakResponse } from "~/saker/types.backend";
-import { getMineSakerGruppeStatus } from "~/saker/selectors";
+import { FolderIcon } from "@navikt/aksel-icons";
+import { Chips, Heading, HStack, Label } from "@navikt/ds-react";
+import { useSearchParams } from "react-router";
+import type {
+  Blokkeringsarsak,
+  KontrollsakResponse,
+  KontrollsakStatus,
+} from "~/saker/types.backend";
 import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
+import { DEFAULT_STATUSER, DEFAULT_VENTESTATUSER } from "./filtre";
 
-type SakGrupper = {
-  aktive: KontrollsakResponse[];
-  ventende: KontrollsakResponse[];
-  fullførte: KontrollsakResponse[];
+type FilterAlternativ = {
+  verdi: string;
+  etikett: string;
 };
 
-export function MineSakerInnhold({
-  saker,
-  detaljSti,
-}: {
+type Props = {
   saker: KontrollsakResponse[];
   detaljSti: string;
-}) {
-  const [viserVentende, setViserVentende] = useState(false);
-  const [viserFullførte, setViserFullførte] = useState(false);
-  const grupper = grupperSaker(saker);
+  filterAlternativer: {
+    status: FilterAlternativ[];
+    ventestatus: FilterAlternativ[];
+  };
+  aktivtFilter: {
+    status: KontrollsakStatus[];
+    ventestatus: (Blokkeringsarsak | "INGEN")[];
+  };
+};
+
+export function MineSakerInnhold({ saker, detaljSti, filterAlternativer, aktivtFilter }: Props) {
+  const [, setSearchParams] = useSearchParams();
+
+  function toggleFilter(key: "status" | "ventestatus", verdi: string) {
+    setSearchParams((forrige) => {
+      const neste = new URLSearchParams(forrige);
+
+      // Hvis vi ikke har noen filterparams ennå, initialiser med defaults
+      if (!forrige.has("status") && !forrige.has("ventestatus")) {
+        for (const s of DEFAULT_STATUSER) neste.append("status", s);
+        for (const v of DEFAULT_VENTESTATUSER) neste.append("ventestatus", v);
+      }
+
+      const gjeldende = neste.getAll(key);
+      neste.delete(key);
+
+      if (gjeldende.includes(verdi)) {
+        for (const v of gjeldende.filter((v) => v !== verdi)) {
+          neste.append(key, v);
+        }
+      } else {
+        for (const v of [...gjeldende, verdi]) {
+          neste.append(key, v);
+        }
+      }
+      return neste;
+    });
+  }
 
   return (
     <section aria-labelledby="mine-saker-overskrift" className="pb-12">
@@ -32,99 +66,57 @@ export function MineSakerInnhold({
         </Heading>
       </HStack>
 
-      <VStack gap="space-8">
-        <Heading level="2" size="small" className="sr-only">
-          Aktive saker
-        </Heading>
-        <SakGrid
-          saker={grupper.aktive}
-          detaljSti={detaljSti}
-          tomTekst="Du har ingen aktive saker."
-        />
-
-        <SammenleggbarSeksjon
-          tittel="Oppgaver på vent"
-          erÅpen={viserVentende}
-          toggle={() => setViserVentende((åpen) => !åpen)}
-        >
-          <SakGrid
-            saker={grupper.ventende}
-            detaljSti={detaljSti}
-            tomTekst="Du har ingen saker som venter."
+      {/* Responsiv layout: filtre over tabellen på small, til høyre på xl+ */}
+      <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:gap-8">
+        {/* Tabell */}
+        <div className="min-w-0 flex-1 xl:order-first">
+          <Saksliste
+            rader={saker.map((sak) => mapKontrollsakTilSakslisteRad(sak, detaljSti))}
+            tomTekst="Ingen saker matcher valgte filtre."
           />
-        </SammenleggbarSeksjon>
+        </div>
 
-        <SammenleggbarSeksjon
-          tittel="Fullførte oppgaver"
-          erÅpen={viserFullførte}
-          toggle={() => setViserFullførte((åpen) => !åpen)}
-        >
-          <SakGrid
-            saker={grupper.fullførte}
-            detaljSti={detaljSti}
-            tomTekst="Du har ingen fullførte saker."
-          />
-        </SammenleggbarSeksjon>
-      </VStack>
-    </section>
-  );
-}
+        {/* Filterpanel: horisontalt over tabellen på small, vertikal kolonne til høyre på xl+ */}
+        <div role="group" aria-label="Filtrer saker" className="xl:order-last xl:w-56 xl:shrink-0">
+          <div className="flex flex-wrap gap-6 xl:flex-col xl:flex-nowrap xl:gap-5">
+            <div>
+              <Label as="p" size="small" spacing>
+                Status
+              </Label>
+              <Chips size="small">
+                {filterAlternativer.status.map((alt) => (
+                  <Chips.Toggle
+                    key={alt.verdi}
+                    selected={aktivtFilter.status.includes(alt.verdi as KontrollsakStatus)}
+                    onClick={() => toggleFilter("status", alt.verdi)}
+                  >
+                    {alt.etikett}
+                  </Chips.Toggle>
+                ))}
+              </Chips>
+            </div>
 
-function grupperSaker(saker: KontrollsakResponse[]): SakGrupper {
-  return {
-    aktive: saker.filter((sak) => getMineSakerGruppeStatus(sak) === "aktive"),
-    ventende: saker.filter((sak) => getMineSakerGruppeStatus(sak) === "ventende"),
-    fullførte: saker.filter((sak) => getMineSakerGruppeStatus(sak) === "fullførte"),
-  };
-}
-
-function SakGrid({
-  saker,
-  detaljSti,
-  tomTekst,
-}: {
-  saker: KontrollsakResponse[];
-  detaljSti: string;
-  tomTekst: string;
-}) {
-  return (
-    <Saksliste
-      rader={saker.map((sak) => mapKontrollsakTilSakslisteRad(sak, detaljSti))}
-      tomTekst={tomTekst}
-    />
-  );
-}
-
-function SammenleggbarSeksjon({
-  tittel,
-  erÅpen,
-  toggle,
-  children,
-}: {
-  tittel: string;
-  erÅpen: boolean;
-  toggle: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <section className="space-y-4">
-      <Heading level="2" size="small">
-        <button
-          type="button"
-          onClick={toggle}
-          aria-expanded={erÅpen}
-          className="flex items-center gap-3 rounded-md border-none bg-transparent p-0 text-left text-ax-text-neutral hover:text-ax-text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
-        >
-          {tittel}
-          <ChevronDownIcon
-            aria-hidden
-            fontSize="1.25rem"
-            className={`transition-transform duration-200 ${erÅpen ? "rotate-180" : ""}`}
-          />
-        </button>
-      </Heading>
-
-      {erÅpen && children}
+            <div>
+              <Label as="p" size="small" spacing>
+                Ventestatus
+              </Label>
+              <Chips size="small">
+                {filterAlternativer.ventestatus.map((alt) => (
+                  <Chips.Toggle
+                    key={alt.verdi}
+                    selected={aktivtFilter.ventestatus.includes(
+                      alt.verdi as Blokkeringsarsak | "INGEN",
+                    )}
+                    onClick={() => toggleFilter("ventestatus", alt.verdi)}
+                  >
+                    {alt.etikett}
+                  </Chips.Toggle>
+                ))}
+              </Chips>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
