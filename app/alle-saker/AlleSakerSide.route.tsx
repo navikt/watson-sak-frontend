@@ -1,7 +1,6 @@
 // Alle saker-siden viser en oversikt over samtlige saker i systemet.
 // Inneholder nøkkeltall, trakt-visualisering og en sorterbar, paginert saksliste.
 
-import { ArrowsUpDownIcon } from "@navikt/aksel-icons";
 import { Heading, HGrid, HStack, Page, Pagination, VStack } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
 import { useLoaderData, useSearchParams } from "react-router";
@@ -137,11 +136,6 @@ export default function AlleSakerSide() {
     });
   }
 
-  function ariaSort(kolonne: AlleSakerKolonne): "ascending" | "descending" | "none" {
-    if (sorteringskolonne !== kolonne) return "none";
-    return sorteringsretning === "asc" ? "ascending" : "descending";
-  }
-
   return (
     <Page>
       <title>Alle saker – Watson Sak</title>
@@ -197,87 +191,20 @@ export default function AlleSakerSide() {
                       "saksbehandler",
                     ]}
                     tomTekst="Ingen saker funnet."
-                    kolonneHeaderInnhold={{
-                      saksid: (
-                        <KolonneSorteringsknapp
-                          tittel="Saksid"
-                          kolonne="saksid"
-                          aktivKolonne={sorteringskolonne}
-                          onSort={sorterPåKolonne}
-                        />
-                      ),
-                      kategori: (
-                        <KolonneSorteringsknapp
-                          tittel="Kategori"
-                          kolonne="kategori"
-                          aktivKolonne={sorteringskolonne}
-                          onSort={sorterPåKolonne}
-                        />
-                      ),
-                      misbrukstype: (
-                        <KolonneSorteringsknapp
-                          tittel="Misbrukstype"
-                          kolonne="misbrukstype"
-                          aktivKolonne={sorteringskolonne}
-                          onSort={sorterPåKolonne}
-                        />
-                      ),
-                      status: (
-                        <KolonneSorteringsknapp
-                          tittel="Status"
-                          kolonne="status"
-                          aktivKolonne={sorteringskolonne}
-                          onSort={sorterPåKolonne}
-                        />
-                      ),
-                      opprettet: (
-                        <KolonneSorteringsknapp
-                          tittel="Opprettet"
-                          kolonne="opprettet"
-                          aktivKolonne={sorteringskolonne}
-                          onSort={sorterPåKolonne}
-                        />
-                      ),
-                      oppdatert: (
-                        <KolonneSorteringsknapp
-                          tittel="Sist endret"
-                          kolonne="oppdatert"
-                          aktivKolonne={sorteringskolonne}
-                          onSort={sorterPåKolonne}
-                        />
-                      ),
-                      saksbehandler: (
-                        <KolonneSorteringsknapp
-                          tittel="Saksbehandler"
-                          kolonne="saksbehandler"
-                          aktivKolonne={sorteringskolonne}
-                          onSort={sorterPåKolonne}
-                        />
-                      ),
+                    sortering={{
+                      kolonne: sorteringskolonne,
+                      retning: sorteringsretning === "asc" ? "stigende" : "synkende",
+                      onSort: (kolonne) => sorterPåKolonne(kolonne as AlleSakerKolonne),
+                      sorterbare: [...sorteringskolonner],
                     }}
                     kolonneHeaderProps={{
-                      saksid: { "aria-sort": ariaSort("saksid"), className: "min-w-[100px] !py-5" },
-                      kategori: {
-                        "aria-sort": ariaSort("kategori"),
-                        className: "min-w-[165px] !py-5",
-                      },
-                      misbrukstype: {
-                        "aria-sort": ariaSort("misbrukstype"),
-                        className: "min-w-[210px] !py-5",
-                      },
-                      status: { "aria-sort": ariaSort("status"), className: "min-w-[200px] !py-5" },
-                      opprettet: {
-                        "aria-sort": ariaSort("opprettet"),
-                        className: "min-w-[140px] !py-5",
-                      },
-                      oppdatert: {
-                        "aria-sort": ariaSort("oppdatert"),
-                        className: "min-w-[140px] !py-5",
-                      },
-                      saksbehandler: {
-                        "aria-sort": ariaSort("saksbehandler"),
-                        className: "min-w-[165px] !py-5",
-                      },
+                      saksid: { className: "min-w-[100px] !py-5" },
+                      kategori: { className: "min-w-[165px] !py-5" },
+                      misbrukstype: { className: "min-w-[210px] !py-5" },
+                      status: { className: "min-w-[200px] !py-5" },
+                      opprettet: { className: "min-w-[140px] !py-5" },
+                      oppdatert: { className: "min-w-[140px] !py-5" },
+                      saksbehandler: { className: "min-w-[165px] !py-5" },
                     }}
                   />
                 </div>
@@ -320,34 +247,4 @@ function parseRetning(verdi: string | null): Sorteringsretning {
 
 function standardRetningForKolonne(kolonne: AlleSakerKolonne): Sorteringsretning {
   return kolonne === "opprettet" || kolonne === "oppdatert" ? "desc" : "asc";
-}
-
-// ─── Interne komponenter ────────────────────────────────────────────────────
-
-function KolonneSorteringsknapp({
-  tittel,
-  kolonne,
-  aktivKolonne,
-  onSort,
-}: {
-  tittel: string;
-  kolonne: AlleSakerKolonne;
-  aktivKolonne: AlleSakerKolonne;
-  onSort: (kolonne: AlleSakerKolonne) => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => onSort(kolonne)}
-      aria-label={`Sorter på ${tittel.toLowerCase()}`}
-      className="inline-flex cursor-pointer items-center gap-1 border-none bg-transparent p-0 text-left text-base font-semibold text-ax-text-accent-subtle hover:text-ax-text-accent focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
-    >
-      <span>{tittel}</span>
-      <ArrowsUpDownIcon
-        aria-hidden
-        fontSize="1rem"
-        className={aktivKolonne === kolonne ? "text-ax-text-accent" : "text-ax-text-accent-subtle"}
-      />
-    </button>
-  );
 }

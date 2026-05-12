@@ -129,7 +129,7 @@ export function UfordelteSakerInnhold({
         <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start">
           <div className="min-w-0">
             <div className="overflow-hidden rounded-2xl border border-ax-border-neutral-subtle bg-ax-bg-default">
-              <div className="overflow-x-auto px-4">
+              <div className="overflow-x-auto">
                 <Saksliste
                   rader={sakslisteRader}
                   kolonner={[
@@ -142,90 +142,11 @@ export function UfordelteSakerInnhold({
                   ]}
                   tomTekst="Ingen ufordelte saker matcher filtrene."
                   handlingKolonneTittel={<span className="sr-only">Handling</span>}
-                  kolonneHeaderInnhold={{
-                    saksid: (
-                      <KolonneSorteringsknapp
-                        tittel="Saksid"
-                        kolonne="saksid"
-                        aktivKolonne={sorteringskolonne}
-                        retning={sorteringsretning}
-                        onSort={sorterPåKolonne}
-                      />
-                    ),
-                    kategori: (
-                      <KolonneSorteringsknapp
-                        tittel="Kategori"
-                        kolonne="kategori"
-                        aktivKolonne={sorteringskolonne}
-                        retning={sorteringsretning}
-                        onSort={sorterPåKolonne}
-                      />
-                    ),
-                    misbrukstype: <span className="text-sm font-semibold">Misbrukstype</span>,
-                    status: (
-                      <KolonneSorteringsknapp
-                        tittel="Status"
-                        kolonne="status"
-                        aktivKolonne={sorteringskolonne}
-                        retning={sorteringsretning}
-                        onSort={sorterPåKolonne}
-                      />
-                    ),
-                    opprettet: (
-                      <KolonneSorteringsknapp
-                        tittel="Opprettet"
-                        kolonne="opprettet"
-                        aktivKolonne={sorteringskolonne}
-                        retning={sorteringsretning}
-                        onSort={sorterPåKolonne}
-                      />
-                    ),
-                    oppdatert: (
-                      <KolonneSorteringsknapp
-                        tittel="Oppdatert"
-                        kolonne="oppdatert"
-                        aktivKolonne={sorteringskolonne}
-                        retning={sorteringsretning}
-                        onSort={sorterPåKolonne}
-                      />
-                    ),
-                  }}
-                  kolonneHeaderProps={{
-                    saksid: {
-                      "aria-sort": hentAriaSortVerdi(
-                        "saksid",
-                        sorteringskolonne,
-                        sorteringsretning,
-                      ),
-                    },
-                    kategori: {
-                      "aria-sort": hentAriaSortVerdi(
-                        "kategori",
-                        sorteringskolonne,
-                        sorteringsretning,
-                      ),
-                    },
-                    status: {
-                      "aria-sort": hentAriaSortVerdi(
-                        "status",
-                        sorteringskolonne,
-                        sorteringsretning,
-                      ),
-                    },
-                    opprettet: {
-                      "aria-sort": hentAriaSortVerdi(
-                        "opprettet",
-                        sorteringskolonne,
-                        sorteringsretning,
-                      ),
-                    },
-                    oppdatert: {
-                      "aria-sort": hentAriaSortVerdi(
-                        "oppdatert",
-                        sorteringskolonne,
-                        sorteringsretning,
-                      ),
-                    },
+                  sortering={{
+                    kolonne: sorteringskolonne,
+                    retning: sorteringsretning,
+                    onSort: (kolonne) => sorterPåKolonne(kolonne as UfordeltSorteringskolonne),
+                    sorterbare: [...ufordelteSorteringskolonner],
                   }}
                   renderRadHandling={(rad) => (
                     <button
@@ -321,45 +242,6 @@ function hentStandardRetning(kolonne: UfordeltSorteringskolonne): UfordeltSorter
     default:
       return "stigende";
   }
-}
-
-function hentAriaSortVerdi(
-  kolonne: UfordeltSorteringskolonne,
-  aktivKolonne: UfordeltSorteringskolonne | null,
-  retning: UfordeltSorteringsretning | null,
-): "ascending" | "descending" | "none" {
-  if (aktivKolonne !== kolonne || retning === null) {
-    return "none";
-  }
-  return retning === "stigende" ? "ascending" : "descending";
-}
-
-function KolonneSorteringsknapp({
-  tittel,
-  kolonne,
-  aktivKolonne,
-  retning,
-  onSort,
-}: {
-  tittel: string;
-  kolonne: UfordeltSorteringskolonne;
-  aktivKolonne: UfordeltSorteringskolonne | null;
-  retning: UfordeltSorteringsretning | null;
-  onSort: (kolonne: UfordeltSorteringskolonne) => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => onSort(kolonne)}
-      aria-label={`Sorter på ${tittel.toLowerCase()}`}
-      className="inline-flex cursor-pointer items-center gap-2 border-none bg-transparent p-0 text-left text-sm font-semibold text-ax-text-neutral hover:text-ax-text-accent focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
-    >
-      <span>{tittel}</span>
-      <span aria-hidden className="text-xs text-ax-text-neutral-subtle">
-        {aktivKolonne === kolonne ? (retning === "stigende" ? "▲" : "▼") : "↕"}
-      </span>
-    </button>
-  );
 }
 
 function Filtergruppe({
