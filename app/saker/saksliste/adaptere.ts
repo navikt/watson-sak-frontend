@@ -45,7 +45,7 @@ export function mapFordelingSakTilSakslisteRad(
     navn: sak.navn,
     kategori: sak.kategori,
     misbrukstyper: sak.misbrukstyper,
-    status: null,
+    status: sak.status,
     opprettet: sak.opprettetDato,
     oppdatert: sak.oppdatertDato,
     saksbehandler: null,

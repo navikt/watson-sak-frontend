@@ -1,7 +1,7 @@
 {
   "collection": "fullstack",
-  "version": "2026.05.07-083824-2a026d8",
-  "source_sha": "2a026d8",
+  "version": "2026.05.11-162147-9823212",
+  "source_sha": "9823212",
   "installed_at": "2026-04-13T13:00:26Z",
   "files": [
     {
@@ -54,7 +54,7 @@
     },
     {
       "path": ".github/agents/nav-pilot.agent.md",
-      "hash": "8384742b958b4b84"
+      "hash": "71eaa207ac601d66"
     },
     {
       "path": ".github/agents/nav-pilot.metadata.json",
@@ -86,7 +86,7 @@
     },
     {
       "path": ".github/skills/nav-deep-interview/",
-      "hash": "42e9aab52e591ef0"
+      "hash": "eeb3399ecd4e352c"
     },
     {
       "path": ".github/skills/nav-architecture-review/",

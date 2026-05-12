@@ -132,46 +132,21 @@ export function UfordelteSakerInnhold({
               <div className="overflow-x-auto">
                 <Saksliste
                   rader={sakslisteRader}
-                  kolonner={["saksid", "kategori", "misbrukstype", "opprettet", "oppdatert"]}
+                  kolonner={[
+                    "saksid",
+                    "kategori",
+                    "misbrukstype",
+                    "status",
+                    "opprettet",
+                    "oppdatert",
+                  ]}
                   tomTekst="Ingen ufordelte saker matcher filtrene."
                   handlingKolonneTittel={<span className="sr-only">Handling</span>}
-                  kolonneHeaderInnhold={{
-                    kategori: (
-                      <KolonneSorteringsknapp
-                        tittel="Kategori"
-                        kolonne="kategori"
-                        aktivKolonne={sorteringskolonne}
-                        retning={sorteringsretning}
-                        onSort={sorterPåKolonne}
-                      />
-                    ),
-                    opprettet: (
-                      <KolonneSorteringsknapp
-                        tittel="Opprettet"
-                        kolonne="opprettet"
-                        aktivKolonne={sorteringskolonne}
-                        retning={sorteringsretning}
-                        onSort={sorterPåKolonne}
-                      />
-                    ),
-                  }}
-                  kolonneHeaderProps={{
-                    kategori: {
-                      "aria-sort":
-                        sorteringskolonne === "kategori"
-                          ? sorteringsretning === "stigende"
-                            ? "ascending"
-                            : "descending"
-                          : "none",
-                    },
-                    opprettet: {
-                      "aria-sort":
-                        sorteringskolonne === "opprettet"
-                          ? sorteringsretning === "stigende"
-                            ? "ascending"
-                            : "descending"
-                          : "none",
-                    },
+                  sortering={{
+                    kolonne: sorteringskolonne,
+                    retning: sorteringsretning,
+                    onSort: (kolonne) => sorterPåKolonne(kolonne as UfordeltSorteringskolonne),
+                    sorterbare: [...ufordelteSorteringskolonner],
                   }}
                   renderRadHandling={(rad) => (
                     <button
@@ -260,35 +235,13 @@ function hentSorteringsretning(verdi: string | null): UfordeltSorteringsretning 
 }
 
 function hentStandardRetning(kolonne: UfordeltSorteringskolonne): UfordeltSorteringsretning {
-  return kolonne === "opprettet" ? "synkende" : "stigende";
-}
-
-function KolonneSorteringsknapp({
-  tittel,
-  kolonne,
-  aktivKolonne,
-  retning,
-  onSort,
-}: {
-  tittel: string;
-  kolonne: UfordeltSorteringskolonne;
-  aktivKolonne: UfordeltSorteringskolonne | null;
-  retning: UfordeltSorteringsretning | null;
-  onSort: (kolonne: UfordeltSorteringskolonne) => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => onSort(kolonne)}
-      aria-label={`Sorter på ${tittel.toLowerCase()}`}
-      className="inline-flex cursor-pointer items-center gap-2 border-none bg-transparent p-0 text-left text-sm font-semibold text-ax-text-neutral hover:text-ax-text-accent focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
-    >
-      <span>{tittel}</span>
-      <span aria-hidden className="text-xs text-ax-text-neutral-subtle">
-        {aktivKolonne === kolonne ? (retning === "stigende" ? "▲" : "▼") : "↕"}
-      </span>
-    </button>
-  );
+  switch (kolonne) {
+    case "opprettet":
+    case "oppdatert":
+      return "synkende";
+    default:
+      return "stigende";
+  }
 }
 
 function Filtergruppe({

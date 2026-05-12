@@ -2,6 +2,7 @@ import { BodyShort, HStack, Link, Table, Tag } from "@navikt/ds-react";
 import type { ReactNode } from "react";
 import { Link as RouterLink, useNavigate } from "react-router";
 import { formaterDato } from "~/utils/date-utils";
+import { KolonneHeading, type Sorteringsretning } from "./KolonneHeading";
 
 type SakslisteKolonne =
   | "saksid"
@@ -31,6 +32,13 @@ export type SakslisteRad = {
   saksbehandler: string | null;
 };
 
+export type SakslisteSortering = {
+  kolonne: SakslisteKolonne | null;
+  retning: Sorteringsretning | null;
+  onSort: (kolonne: SakslisteKolonne) => void;
+  sorterbare: SakslisteKolonne[];
+};
+
 type SakslisteProps = {
   rader: SakslisteRad[];
   kolonner?: SakslisteKolonne[];
@@ -38,6 +46,7 @@ type SakslisteProps = {
   size?: "small" | "medium";
   renderRadHandling?: (rad: SakslisteRad) => ReactNode;
   handlingKolonneTittel?: ReactNode;
+  sortering?: SakslisteSortering;
   kolonneHeaderInnhold?: Partial<Record<SakslisteKolonne, ReactNode>>;
   kolonneHeaderProps?: Partial<
     Record<
@@ -75,6 +84,7 @@ export function Saksliste({
   size = "medium",
   renderRadHandling,
   handlingKolonneTittel,
+  sortering,
   kolonneHeaderInnhold,
   kolonneHeaderProps,
 }: SakslisteProps) {
@@ -89,8 +99,12 @@ export function Saksliste({
       <Table.Header>
         <Table.Row>
           {kolonner.map((kolonne) => (
-            <Table.HeaderCell key={kolonne} scope="col" {...kolonneHeaderProps?.[kolonne]}>
-              {kolonneHeaderInnhold?.[kolonne] ?? standardTitler[kolonne]}
+            <Table.HeaderCell
+              key={kolonne}
+              scope="col"
+              {...hentHeaderCellProps(kolonne, sortering, kolonneHeaderProps)}
+            >
+              {kolonneHeaderInnhold?.[kolonne] ?? hentHeaderInnhold(kolonne, sortering)}
             </Table.HeaderCell>
           ))}
           {renderRadHandling ? (
@@ -169,4 +183,49 @@ function renderCelle(rad: SakslisteRad, kolonne: SakslisteKolonne) {
     case "saksbehandler":
       return <BodyShort size="small">{rad.saksbehandler ?? "–"}</BodyShort>;
   }
+}
+
+function hentHeaderInnhold(kolonne: SakslisteKolonne, sortering?: SakslisteSortering): ReactNode {
+  const tittel = standardTitler[kolonne];
+
+  if (!sortering) {
+    return <KolonneHeading tittel={tittel} />;
+  }
+
+  const erSorterbar = sortering.sorterbare.includes(kolonne);
+  if (!erSorterbar) {
+    return <KolonneHeading tittel={tittel} />;
+  }
+
+  return (
+    <KolonneHeading
+      tittel={tittel}
+      sortering={{
+        aktiv: sortering.kolonne === kolonne,
+        retning: sortering.kolonne === kolonne ? sortering.retning : null,
+        onSort: () => sortering.onSort(kolonne),
+      }}
+    />
+  );
+}
+
+function hentHeaderCellProps(
+  kolonne: SakslisteKolonne,
+  sortering?: SakslisteSortering,
+  kolonneHeaderProps?: SakslisteProps["kolonneHeaderProps"],
+) {
+  const ekstraProps = kolonneHeaderProps?.[kolonne];
+
+  if (!sortering || !sortering.sorterbare.includes(kolonne)) {
+    return ekstraProps;
+  }
+
+  const ariaSortVerdi: "ascending" | "descending" | "none" =
+    sortering.kolonne === kolonne && sortering.retning
+      ? sortering.retning === "stigende"
+        ? "ascending"
+        : "descending"
+      : "none";
+
+  return { ...ekstraProps, "aria-sort": ariaSortVerdi };
 }

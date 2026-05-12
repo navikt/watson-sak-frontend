@@ -1,8 +1,16 @@
 import { forskjellIDager } from "~/utils/date-utils";
+import { getSaksreferanse } from "~/saker/id";
 export { paginerElementer } from "~/utils/paginering";
 import type { FordelingSak } from "./typer";
 
-export const ufordelteSorteringskolonner = ["kategori", "ytelse", "opprettet"] as const;
+export const ufordelteSorteringskolonner = [
+  "saksid",
+  "kategori",
+  "misbrukstype",
+  "status",
+  "opprettet",
+  "oppdatert",
+] as const;
 export type UfordeltSorteringskolonne = (typeof ufordelteSorteringskolonner)[number];
 export type UfordeltSorteringsretning = "stigende" | "synkende";
 
@@ -66,12 +74,15 @@ export function sorterUfordelteSaker(
   retning: UfordeltSorteringsretning,
 ) {
   const retningFaktor = retning === "stigende" ? 1 : -1;
+  const collator = new Intl.Collator("nb", {
+    sensitivity: "base",
+    numeric: kolonne === "saksid",
+  });
 
   return [...saker].sort((a, b) => {
     const verdiA = hentSorteringsverdi(a, kolonne);
     const verdiB = hentSorteringsverdi(b, kolonne);
-
-    return verdiA.localeCompare(verdiB, "nb", { sensitivity: "base" }) * retningFaktor;
+    return collator.compare(verdiA, verdiB) * retningFaktor;
   });
 }
 
@@ -81,12 +92,18 @@ function hentSorterteUnikeVerdier(verdier: string[]) {
 
 function hentSorteringsverdi(sak: FordelingSak, kolonne: UfordeltSorteringskolonne) {
   switch (kolonne) {
+    case "saksid":
+      return getSaksreferanse(sak.id);
     case "kategori":
       return sak.kategori ?? "Uten kategori";
-    case "ytelse":
-      return sak.ytelser.join(", ");
+    case "misbrukstype":
+      return sak.misbrukstyper.join(", ");
+    case "status":
+      return sak.status.tekst;
     case "opprettet":
       return sak.opprettetDato;
+    case "oppdatert":
+      return sak.oppdatertDato;
   }
 }
 
