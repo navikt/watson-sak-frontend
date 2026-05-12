@@ -13,7 +13,7 @@ type KolonneHeadingProps = {
 
 export function KolonneHeading({ tittel, sortering }: KolonneHeadingProps) {
   if (!sortering) {
-    return <span className="text-sm font-semibold">{tittel}</span>;
+    return <span className="text-md font-semibold p-2 px-0">{tittel}</span>;
   }
 
   return (
@@ -21,7 +21,7 @@ export function KolonneHeading({ tittel, sortering }: KolonneHeadingProps) {
       type="button"
       onClick={sortering.onSort}
       aria-label={`Sorter på ${tittel.toLowerCase()}`}
-      className="inline-flex cursor-pointer items-center gap-1 border-none bg-transparent px-2 text-left text-sm font-semibold text-ax-text-neutral hover:text-ax-text-accent focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
+      className="inline-flex cursor-pointer items-center gap-1 border-none bg-transparent p-2 text-left text-md font-semibold text-ax-text-neutral hover:text-ax-text-accent focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
     >
       <span>{tittel}</span>
       <SorteringsIkon aktiv={sortering.aktiv} retning={sortering.retning} />

@@ -32,7 +32,9 @@ const STANDARD_RETNING: Sorteringsretning = "desc";
 
 export function loader({ request }: Route.LoaderArgs) {
   if (!skalBrukeMockdata) {
-    throw new Response("Alle saker er ikke tilgjengelig uten mockdata", { status: 501 });
+    throw new Response("Alle saker er ikke tilgjengelig uten mockdata", {
+      status: 501,
+    });
   }
 
   const url = new URL(request.url);
@@ -139,7 +141,7 @@ export default function AlleSakerSide() {
   return (
     <Page>
       <title>Alle saker – Watson Sak</title>
-      <PageBlock width="2xl" gutters className="!mx-0">
+      <PageBlock width="2xl" gutters className="mx-0!">
         <VStack gap="space-12" className="mt-4 mb-8">
           <Heading level="1" size="large">
             Alle saker
