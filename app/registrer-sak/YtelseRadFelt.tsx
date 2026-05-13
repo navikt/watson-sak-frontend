@@ -130,7 +130,7 @@ export function YtelseRadFelt({
       <TextField
         id={ankerIdForFelt(`ytelser.${indeks}.beløp`)}
         name={beløpFeltnavn}
-        label="Ca beløp"
+        label="Beløp"
         size={size}
         inputMode="numeric"
         htmlSize={12}

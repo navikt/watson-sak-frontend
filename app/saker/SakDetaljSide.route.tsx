@@ -616,7 +616,7 @@ export default function SakDetaljSide() {
                                     Periode
                                   </Table.HeaderCell>
                                   <Table.HeaderCell scope="col" className="text-sm">
-                                    Ca. beløp
+                                    Beløp
                                   </Table.HeaderCell>
                                 </Table.Row>
                               </Table.Header>
