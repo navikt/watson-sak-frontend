@@ -86,7 +86,6 @@ Valideres med Zod i `app/config/env.server.ts`. Legg til nye variabler i Zod-skj
 
 - Vitest-testene ligger ved siden av koden som `.test.ts(x)` og bruker norsk testbeskrivelse.
 - Playwright-testene ligger under `app/` som `.spec.ts(x)` og kjører mot dev-server på port 5174 med `playwright.backend.mock.cjs`.
-- Copilot kan ikke kjøre E2E-testene selv. Be utvikleren kjøre `npm run test:e2e` eller relevant `npx playwright test ...` og rapportere resultatet.
 - E2E-tester kan resette mockdata via `RouteConfig.API.RESET_MOCK_DATA` (`/api/reset-mock-data`). Bruk dette når tester muterer felles mock-store.
 - Test serverfunksjoner direkte ved å kalle `loader`/`action` med minimale `Request`-/args-objekter, slik eksisterende route- og API-tester gjør.
 
