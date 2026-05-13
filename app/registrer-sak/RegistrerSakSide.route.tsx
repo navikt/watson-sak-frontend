@@ -430,7 +430,7 @@ export default function OpprettSakSide() {
                         Ytelser med mulig misbruk
                       </Heading>
                       <BodyShort textColor="subtle">
-                        Legg til én eller flere ytelser med tilhørende periode og ca beløp. Alle
+                        Legg til én eller flere ytelser med tilhørende periode og beløp. Alle
                         feltene er valgfrie.
                       </BodyShort>
                     </VStack>

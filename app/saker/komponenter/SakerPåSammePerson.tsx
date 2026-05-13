@@ -162,7 +162,7 @@ function SakKort({ sak }: SakKortProps) {
               <VStack gap="space-16">
                 {periodeText && <SakFelt label="Periode">{periodeText}</SakFelt>}
 
-                {belop !== null && <SakFelt label="Ca beløp">{formaterBelop(belop)}</SakFelt>}
+                {belop !== null && <SakFelt label="Beløp">{formaterBelop(belop)}</SakFelt>}
 
                 {ytelseTyper.length > 0 && (
                   <VStack gap="space-4">
