@@ -12,6 +12,7 @@ import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
 import { paginerElementer } from "~/utils/paginering";
 import type { Route } from "./+types/AlleSakerSide.route";
 import { mockNokkeltall } from "./mock-data.server";
+import { parseMultiValueParam } from "~/filtre/parseMultiValueParam";
 import {
   type AlleSakerKolonne,
   beregnTraktSteg,
@@ -42,11 +43,17 @@ export function loader({ request }: Route.LoaderArgs) {
   const sorterKolonne = parseKolonne(url.searchParams.get("sorter"));
   const sorterRetning = parseRetning(url.searchParams.get("retning"));
 
-  const filterEnhet = normaliserFilterVerdier(url.searchParams.getAll("enhet"));
-  const filterSaksbehandler = normaliserFilterVerdier(url.searchParams.getAll("saksbehandler"));
-  const filterKategori = normaliserFilterVerdier(url.searchParams.getAll("kategori"));
-  const filterMisbrukstype = normaliserFilterVerdier(url.searchParams.getAll("misbrukstype"));
-  const filterMerking = normaliserFilterVerdier(url.searchParams.getAll("merking"));
+  const filterEnhet = normaliserFilterVerdier(parseMultiValueParam(url.searchParams, "enhet"));
+  const filterSaksbehandler = normaliserFilterVerdier(
+    parseMultiValueParam(url.searchParams, "saksbehandler"),
+  );
+  const filterKategori = normaliserFilterVerdier(
+    parseMultiValueParam(url.searchParams, "kategori"),
+  );
+  const filterMisbrukstype = normaliserFilterVerdier(
+    parseMultiValueParam(url.searchParams, "misbrukstype"),
+  );
+  const filterMerking = normaliserFilterVerdier(parseMultiValueParam(url.searchParams, "merking"));
 
   const alleSaker = hentAlleSaker(request);
 
@@ -89,13 +96,6 @@ export function loader({ request }: Route.LoaderArgs) {
     nokkeltall: mockNokkeltall,
     traktSteg: beregnTraktSteg(alleSaker),
     filterAlternativer,
-    aktivtFilter: {
-      enhet: filterEnhet,
-      saksbehandler: filterSaksbehandler,
-      kategori: filterKategori,
-      misbrukstype: filterMisbrukstype,
-      merking: filterMerking,
-    },
   };
 }
 
@@ -109,7 +109,6 @@ export default function AlleSakerSide() {
     nokkeltall,
     traktSteg,
     filterAlternativer,
-    aktivtFilter,
   } = useLoaderData<typeof loader>();
 
   const [, setSearchParams] = useSearchParams();
@@ -225,7 +224,7 @@ export default function AlleSakerSide() {
 
               {/* Filterpanel: horisontalt wrapping over tabellen på small, vertikal kolonne til høyre på xl+ */}
               <aside aria-label="Filtrer saker" className="xl:order-last xl:w-56 xl:shrink-0">
-                <Filtre alternativer={filterAlternativer} aktivtFilter={aktivtFilter} />
+                <Filtre alternativer={filterAlternativer} />
               </aside>
             </div>
           </section>

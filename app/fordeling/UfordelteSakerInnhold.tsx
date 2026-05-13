@@ -1,6 +1,9 @@
-import { BodyShort, Chips, Heading, HStack, Label, Pagination, VStack } from "@navikt/ds-react";
+import { BodyShort, Heading, HStack, Pagination, VStack } from "@navikt/ds-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router";
+import { ChipsFiltergruppe } from "~/filtre/ChipsFiltergruppe";
+import { Filterpanel } from "~/filtre/Filterpanel";
+import { useFilterParam } from "~/filtre/useFilterParam";
 import { RouteConfig } from "~/routeConfig";
 import { TildelSaksbehandlerModal } from "~/saker/handlinger/TildelSaksbehandlerModal";
 import { mapFordelingSakTilSakslisteRad } from "~/saker/saksliste/adaptere";
@@ -19,6 +22,7 @@ import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
 import type { FordelingSak } from "./typer";
 
 const antallPerSide = 6;
+const RESET_KEYS = ["side"];
 
 interface UfordelteSakerInnholdProps {
   saker: FordelingSak[];
@@ -36,8 +40,9 @@ export function UfordelteSakerInnhold({
   const [searchParams, setSearchParams] = useSearchParams();
   const [sakSomTildeles, setSakSomTildeles] = useState<FordelingSak | null>(null);
 
-  const valgteKategorier = hentValgteVerdier(searchParams, "kategori");
-  const valgteYtelser = hentValgteVerdier(searchParams, "ytelse");
+  const kategoriFilter = useFilterParam("kategori", { resetKeys: RESET_KEYS });
+  const ytelseFilter = useFilterParam("ytelse", { resetKeys: RESET_KEYS });
+
   const valgtSide = Number.parseInt(searchParams.get("side") ?? "1", 10) || 1;
   const sorteringskolonne = hentSorteringskolonne(searchParams.get("sorter"));
   const sorteringsretning = hentSorteringsretning(searchParams.get("retning"));
@@ -46,10 +51,10 @@ export function UfordelteSakerInnhold({
   const filtrerteSaker = useMemo(
     () =>
       filtrerUfordelteSaker(saker, {
-        kategorier: valgteKategorier,
-        ytelser: valgteYtelser,
+        kategorier: kategoriFilter.valgteVerdier,
+        ytelser: ytelseFilter.valgteVerdier,
       }),
-    [saker, valgteKategorier, valgteYtelser],
+    [saker, kategoriFilter.valgteVerdier, ytelseFilter.valgteVerdier],
   );
   const sorterteSaker = useMemo(() => {
     if (!sorteringskolonne || !sorteringsretning) {
@@ -67,26 +72,6 @@ export function UfordelteSakerInnhold({
     () => paginerteSaker.elementer.map((sak) => mapFordelingSakTilSakslisteRad(sak)),
     [paginerteSaker.elementer],
   );
-
-  function oppdaterValg(nøkkel: "kategori" | "ytelse", verdi: string) {
-    const eksisterendeVerdier = hentValgteVerdier(searchParams, nøkkel);
-    const nesteVerdier = eksisterendeVerdier.includes(verdi)
-      ? eksisterendeVerdier.filter((eksisterendeVerdi) => eksisterendeVerdi !== verdi)
-      : [...eksisterendeVerdier, verdi];
-
-    setSearchParams((forrige) => {
-      const neste = new URLSearchParams(forrige);
-
-      if (nesteVerdier.length > 0) {
-        neste.set(nøkkel, nesteVerdier.join(","));
-      } else {
-        neste.delete(nøkkel);
-      }
-
-      neste.delete("side");
-      return neste;
-    });
-  }
 
   function gåTilSide(side: number) {
     setSearchParams((forrige) => {
@@ -180,20 +165,22 @@ export function UfordelteSakerInnhold({
             )}
           </div>
 
-          <div className="space-y-8">
-            <Filtergruppe
+          <Filterpanel>
+            <ChipsFiltergruppe
               tittel="Kategori"
-              verdier={filtervalg.kategorier}
-              valgteVerdier={valgteKategorier}
-              onToggle={(verdi) => oppdaterValg("kategori", verdi)}
+              alternativer={filtervalg.kategorier.map((v) => ({ verdi: v, etikett: v }))}
+              valgteVerdier={kategoriFilter.valgteVerdier}
+              onToggle={kategoriFilter.toggle}
+              size="small"
             />
-            <Filtergruppe
+            <ChipsFiltergruppe
               tittel="Ytelse"
-              verdier={filtervalg.ytelser}
-              valgteVerdier={valgteYtelser}
-              onToggle={(verdi) => oppdaterValg("ytelse", verdi)}
+              alternativer={filtervalg.ytelser.map((v) => ({ verdi: v, etikett: v }))}
+              valgteVerdier={ytelseFilter.valgteVerdier}
+              onToggle={ytelseFilter.toggle}
+              size="small"
             />
-          </div>
+          </Filterpanel>
         </div>
       </VStack>
 
@@ -220,10 +207,6 @@ function Oppsummeringskort({ tittel, children }: { tittel: string; children: Rea
   );
 }
 
-function hentValgteVerdier(searchParams: URLSearchParams, nøkkel: "kategori" | "ytelse") {
-  return searchParams.get(nøkkel)?.split(",").filter(Boolean) ?? [];
-}
-
 function hentSorteringskolonne(verdi: string | null): UfordeltSorteringskolonne | null {
   return ufordelteSorteringskolonner.includes(verdi as UfordeltSorteringskolonne)
     ? (verdi as UfordeltSorteringskolonne)
@@ -242,35 +225,4 @@ function hentStandardRetning(kolonne: UfordeltSorteringskolonne): UfordeltSorter
     default:
       return "stigende";
   }
-}
-
-function Filtergruppe({
-  tittel,
-  verdier,
-  valgteVerdier,
-  onToggle,
-}: {
-  tittel: string;
-  verdier: string[];
-  valgteVerdier: string[];
-  onToggle: (verdi: string) => void;
-}) {
-  return (
-    <div>
-      <Label size="small" spacing>
-        {tittel}
-      </Label>
-      <Chips>
-        {verdier.map((verdi) => (
-          <Chips.Toggle
-            key={verdi}
-            selected={valgteVerdier.includes(verdi)}
-            onClick={() => onToggle(verdi)}
-          >
-            {verdi}
-          </Chips.Toggle>
-        ))}
-      </Chips>
-    </div>
-  );
 }
