@@ -1,9 +1,7 @@
-// Filterpanel for Alle saker-siden.
-// På xl+ vises filtrene som en vertikal kolonne til høyre for tabellen.
-// På mindre skjermer vises de horisontalt med wrapping over tabellen.
-
-import { Chips, Label, UNSAFE_Combobox } from "@navikt/ds-react";
-import { useSearchParams } from "react-router";
+import { UNSAFE_Combobox } from "@navikt/ds-react";
+import { ChipsFiltergruppe } from "~/filtre/ChipsFiltergruppe";
+import { Filterpanel } from "~/filtre/Filterpanel";
+import { useFilterParam } from "~/filtre/useFilterParam";
 
 type FilterAlternativer = {
   enhet: string[];
@@ -13,12 +11,11 @@ type FilterAlternativer = {
   merking: string[];
 };
 
-type AktivtFilter = FilterAlternativer;
-
 interface Props {
   alternativer: FilterAlternativer;
-  aktivtFilter: AktivtFilter;
 }
+
+const RESET_KEYS = ["side"];
 
 const CHIPS_GRUPPER: Array<{
   heading: string;
@@ -30,27 +27,8 @@ const CHIPS_GRUPPER: Array<{
   { heading: "Merking", paramKey: "merking" },
 ];
 
-export function Filtre({ alternativer, aktivtFilter }: Props) {
-  const [, setSearchParams] = useSearchParams();
-
-  function toggleFilterverdi(key: keyof FilterAlternativer, verdi: string) {
-    setSearchParams((forrige) => {
-      const neste = new URLSearchParams(forrige);
-      const gjeldende = forrige.getAll(key);
-      neste.delete(key);
-      if (gjeldende.includes(verdi)) {
-        for (const v of gjeldende.filter((v) => v !== verdi)) {
-          neste.append(key, v);
-        }
-      } else {
-        for (const v of [...gjeldende, verdi]) {
-          neste.append(key, v);
-        }
-      }
-      neste.delete("side");
-      return neste;
-    });
-  }
+export function Filtre({ alternativer }: Props) {
+  const saksbehandlerFilter = useFilterParam("saksbehandler", { resetKeys: RESET_KEYS });
 
   const harAlternativer =
     alternativer.saksbehandler.length > 0 ||
@@ -59,8 +37,7 @@ export function Filtre({ alternativer, aktivtFilter }: Props) {
   if (!harAlternativer) return null;
 
   return (
-    <div className="flex flex-wrap gap-6 xl:flex-col xl:flex-nowrap xl:gap-5">
-      {/* Saksbehandler-filter: combobox med multi-select, alltid øverst */}
+    <Filterpanel>
       {alternativer.saksbehandler.length > 0 && (
         <div className="min-w-48 xl:min-w-0">
           <UNSAFE_Combobox
@@ -68,34 +45,45 @@ export function Filtre({ alternativer, aktivtFilter }: Props) {
             size="small"
             placeholder="Søk etter saksbehandler"
             options={alternativer.saksbehandler}
-            selectedOptions={aktivtFilter.saksbehandler}
+            selectedOptions={saksbehandlerFilter.valgteVerdier}
             isMultiSelect
-            onToggleSelected={(verdi) => toggleFilterverdi("saksbehandler", verdi)}
+            onToggleSelected={saksbehandlerFilter.toggle}
           />
         </div>
       )}
 
-      {/* Øvrige filtre: chips per gruppe */}
       {CHIPS_GRUPPER.filter(({ paramKey }) => alternativer[paramKey].length > 0).map(
         ({ heading, paramKey }) => (
-          <div key={paramKey}>
-            <Label as="p" size="small" spacing>
-              {heading}
-            </Label>
-            <Chips size="small">
-              {alternativer[paramKey].map((alt) => (
-                <Chips.Toggle
-                  key={alt}
-                  selected={aktivtFilter[paramKey].includes(alt)}
-                  onClick={() => toggleFilterverdi(paramKey, alt)}
-                >
-                  {alt}
-                </Chips.Toggle>
-              ))}
-            </Chips>
-          </div>
+          <ChipsFiltergruppeForParam
+            key={paramKey}
+            tittel={heading}
+            paramKey={paramKey}
+            alternativer={alternativer[paramKey]}
+          />
         ),
       )}
-    </div>
+    </Filterpanel>
+  );
+}
+
+function ChipsFiltergruppeForParam({
+  tittel,
+  paramKey,
+  alternativer,
+}: {
+  tittel: string;
+  paramKey: string;
+  alternativer: string[];
+}) {
+  const { valgteVerdier, toggle } = useFilterParam(paramKey, { resetKeys: RESET_KEYS });
+
+  return (
+    <ChipsFiltergruppe
+      tittel={tittel}
+      alternativer={alternativer.map((alt) => ({ verdi: alt, etikett: alt }))}
+      valgteVerdier={valgteVerdier}
+      onToggle={toggle}
+      size="small"
+    />
   );
 }

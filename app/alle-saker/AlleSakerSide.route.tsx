@@ -89,13 +89,6 @@ export function loader({ request }: Route.LoaderArgs) {
     nokkeltall: mockNokkeltall,
     traktSteg: beregnTraktSteg(alleSaker),
     filterAlternativer,
-    aktivtFilter: {
-      enhet: filterEnhet,
-      saksbehandler: filterSaksbehandler,
-      kategori: filterKategori,
-      misbrukstype: filterMisbrukstype,
-      merking: filterMerking,
-    },
   };
 }
 
@@ -109,7 +102,6 @@ export default function AlleSakerSide() {
     nokkeltall,
     traktSteg,
     filterAlternativer,
-    aktivtFilter,
   } = useLoaderData<typeof loader>();
 
   const [, setSearchParams] = useSearchParams();
@@ -225,7 +217,7 @@ export default function AlleSakerSide() {
 
               {/* Filterpanel: horisontalt wrapping over tabellen på small, vertikal kolonne til høyre på xl+ */}
               <aside aria-label="Filtrer saker" className="xl:order-last xl:w-56 xl:shrink-0">
-                <Filtre alternativer={filterAlternativer} aktivtFilter={aktivtFilter} />
+                <Filtre alternativer={filterAlternativer} />
               </aside>
             </div>
           </section>
