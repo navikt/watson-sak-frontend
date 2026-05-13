@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseMultiValueParam } from "./useFilterParam";
+import { parseMultiValueParam } from "./parseMultiValueParam";
 
 describe("parseMultiValueParam", () => {
   it("returnerer tom liste når param ikke finnes", () => {

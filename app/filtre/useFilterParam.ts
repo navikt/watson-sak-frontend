@@ -1,4 +1,5 @@
 import { useSearchParams } from "react-router";
+import { parseMultiValueParam } from "./parseMultiValueParam";
 
 /**
  * Hook for å lese og toggle en multi-value URL search param.
@@ -35,12 +36,4 @@ export function useFilterParam(nøkkel: string, options: { resetKeys?: string[] 
   }
 
   return { valgteVerdier, toggle };
-}
-
-/** Parser som håndterer både repeated params og komma-separerte verdier. */
-export function parseMultiValueParam(params: URLSearchParams, key: string): string[] {
-  return params
-    .getAll(key)
-    .flatMap((v) => v.split(","))
-    .filter(Boolean);
 }
