@@ -115,7 +115,15 @@ export async function opprettKontrollsak({
       "Content-Type": "application/json",
       Accept: "application/json",
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      personIdent: payload.personIdent,
+      kategori: payload.kategori,
+      kilde: payload.kilde,
+      misbruktype: payload.misbruktype,
+      prioritet: payload.prioritet,
+      ytelser: payload.ytelser,
+      merking: payload.merking,
+    }),
   });
 
   if (!response.ok) {

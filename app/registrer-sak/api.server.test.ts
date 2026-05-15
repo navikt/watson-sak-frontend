@@ -78,15 +78,10 @@ describe("opprettKontrollsak", () => {
       },
       body: JSON.stringify({
         personIdent: "12345678901",
-        personNavn: "Ola Nordmann",
-        saksbehandlere: {
-          eier: null,
-          deltMed: [],
-        },
         kategori: "SAMLIV",
         kilde: "NAV_KONTROLL",
-        prioritet: "NORMAL",
         misbruktype: ["SKJULT_SAMLIV"],
+        prioritet: "NORMAL",
         ytelser: [
           {
             type: "Dagpenger",
