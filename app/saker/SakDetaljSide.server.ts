@@ -1,4 +1,5 @@
 import { data } from "react-router";
+import { getBackendOboToken } from "~/auth/access-token";
 import { mockYtelser } from "~/fordeling/mock-data.server";
 import { skalBrukeMockdata } from "~/config/env.server";
 import { enhetAlternativer, redigerSaksinformasjonSchema } from "~/registrer-sak/validering";
@@ -7,6 +8,7 @@ import {
   parseYtelseRader,
   type YtelseRadVerdier,
 } from "~/registrer-sak/skjema-helpers";
+import * as backendApi from "~/saker/api.server";
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
 import { mockSaksbehandlere, mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import { mockSeksjoner } from "~/saker/mock-seksjoner.server";
@@ -106,10 +108,35 @@ function finnNotatMalLabel(verdi: FormDataEntryValue | null): string | undefined
 
 // --- Loader ---
 
-export function loader({ request, params }: Route.LoaderArgs) {
+export async function loader({ request, params }: Route.LoaderArgs) {
   if (!skalBrukeMockdata) {
-    // TODO: Implementer backend-kall for sakdetalj
-    throw new Response("Sakdetalj er ikke tilgjengelig uten mockdata", { status: 501 });
+    const token = await getBackendOboToken(request);
+    const sakId = params.sakId;
+
+    const [sak, historikk, journalposter, saksbehandlerDetaljer] = await Promise.all([
+      backendApi.hentKontrollsak(token, sakId),
+      backendApi.hentHendelser(token, sakId),
+      backendApi.hentJournalposter(token, sakId),
+      backendApi.hentSaksbehandlere(token),
+    ]);
+
+    const andreSaker = sak.personIdent
+      ? (await backendApi.søkKontrollsaker(token, sak.personIdent)).filter(
+          (annenSak) => annenSak.id !== sak.id,
+        )
+      : [];
+
+    return {
+      sak,
+      historikk,
+      journalposter,
+      filer: [],
+      andreSaker,
+      saksbehandlere: saksbehandlerDetaljer.map((sb) => sb.navn),
+      saksbehandlerDetaljer,
+      seksjoner: mockSeksjoner,
+      ytelser: mockYtelser,
+    };
   }
 
   const alleSaker = hentAlleSaker(request);
@@ -125,6 +152,7 @@ export function loader({ request, params }: Route.LoaderArgs) {
   return {
     sak,
     historikk,
+    journalposter: [],
     filer,
     andreSaker,
     saksbehandlere: mockSaksbehandlere,
@@ -137,15 +165,100 @@ export function loader({ request, params }: Route.LoaderArgs) {
 // --- Action ---
 
 export async function action({ request, params }: Route.ActionArgs) {
-  if (!skalBrukeMockdata) {
-    // TODO: Implementer backend-kall for sakdetalj-handlinger
-    throw new Response("Sakdetalj-handlinger er ikke tilgjengelig uten mockdata", { status: 501 });
-  }
-
   const formData = await request.formData();
   const handling = hentTekstfelt(formData, "handling", "Ugyldig handling");
   const sakId = params.sakId;
 
+  if (!skalBrukeMockdata) {
+    return backendAction(request, sakId, handling, formData);
+  }
+
+  return mockAction(request, sakId, handling, formData);
+}
+
+// --- Backend-action (ekte API-kall) ---
+
+async function backendAction(
+  request: Request,
+  sakId: string,
+  handling: string,
+  formData: FormData,
+): Promise<ActionResult> {
+  const token = await getBackendOboToken(request);
+
+  switch (handling) {
+    case "TILDEL": {
+      const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
+      const sak = await backendApi.tildelKontrollsak(token, sakId, navIdent);
+      return { ok: true, sak };
+    }
+    case "FRISTILL": {
+      const sak = await backendApi.fristillKontrollsak(token, sakId);
+      return { ok: true, sak };
+    }
+    case "endre_status": {
+      const nyStatus = hentTekstfelt(formData, "status", "Ugyldig status");
+      if (!erGyldigStatus(nyStatus)) {
+        throw data("Ugyldig status", { status: 400 });
+      }
+      const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
+      const sak = await backendApi.endreStatus(token, sakId, nyStatus, beskrivelse ?? undefined);
+      return { ok: true, sak };
+    }
+    case "endre_blokkering": {
+      const blokkert = hentTekstfelt(formData, "blokkert", "Ugyldig blokkeringsårsak");
+      if (!erGyldigBlokkeringsarsak(blokkert)) {
+        throw data("Ugyldig blokkeringsårsak", { status: 400 });
+      }
+      const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
+      const sak = await backendApi.endreBlokkering(
+        token,
+        sakId,
+        blokkert,
+        beskrivelse ?? undefined,
+      );
+      return { ok: true, sak };
+    }
+    case "gjenoppta": {
+      const sak = await backendApi.endreBlokkering(token, sakId, null);
+      return { ok: true, sak };
+    }
+    case "del_tilgang": {
+      const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
+      const sak = await backendApi.delKontrollsak(token, sakId, navIdent);
+      return { ok: true, sak };
+    }
+    case "send_notat": {
+      const notatRaw = formData.get("notat");
+      if (typeof notatRaw !== "string" || !notatRaw.trim()) {
+        throw data("Notat er påkrevd", { status: 400 });
+      }
+      const malLabel = finnNotatMalLabel(formData.get("mal"));
+      const tittel = malLabel ?? "Notat";
+      await backendApi.opprettNotat(token, sakId, tittel, notatRaw.trim());
+      return { ok: true };
+    }
+    case "henlegg": {
+      const sak = await backendApi.endreStatus(token, sakId, "HENLAGT");
+      return { ok: true, sak };
+    }
+    default: {
+      // Handlinger uten backend-støtte ennå
+      throw new Response(`Handlingen «${handling}» er ikke tilgjengelig uten mockdata`, {
+        status: 501,
+      });
+    }
+  }
+}
+
+// --- Mock-action (lokal mock-tilstand) ---
+
+async function mockAction(
+  request: Request,
+  sakId: string,
+  handling: string,
+  formData: FormData,
+): Promise<ActionResult> {
   const sak = finnSakMedReferanse(hentAlleSaker(request), sakId);
   if (!sak) {
     throw data("Sak ikke funnet", { status: 404 });

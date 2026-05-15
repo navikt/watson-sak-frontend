@@ -25,7 +25,7 @@ export async function action({ request }: Route.ActionArgs) {
     return { søketekst: "", resultater: [] as Søksak[] };
   }
 
-  const resultater = søkSaker(request, søketekst);
+  const resultater = await søkSaker(request, søketekst);
   return { søketekst, resultater };
 }
 

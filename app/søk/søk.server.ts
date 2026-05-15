@@ -1,3 +1,6 @@
+import { getBackendOboToken } from "~/auth/access-token";
+import { skalBrukeMockdata } from "~/config/env.server";
+import * as backendApi from "~/saker/api.server";
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
 import { getSaksreferanse } from "~/saker/id";
 import type { KontrollsakResponse } from "~/saker/types.backend";
@@ -6,9 +9,20 @@ import { getKategoriText } from "~/saker/selectors";
 
 type Søksak = KontrollsakResponse;
 
-export function søkSaker(request: Request, søketekst: string): Søksak[] {
+export async function søkSaker(request: Request, søketekst: string): Promise<Søksak[]> {
   const normalisert = søketekst.trim().toLowerCase();
   if (!normalisert) return [];
+
+  if (!skalBrukeMockdata) {
+    // Søk mot backend — personIdent-basert
+    const erPersonIdent = /^\d{11}$/.test(normalisert);
+    if (erPersonIdent) {
+      const token = await getBackendOboToken(request);
+      return backendApi.søkKontrollsaker(token, normalisert);
+    }
+    // Backend støtter kun søk på personIdent — for andre søkeord, returner tom liste
+    return [];
+  }
 
   const alleSaker: Søksak[] = hentAlleSaker(request);
 

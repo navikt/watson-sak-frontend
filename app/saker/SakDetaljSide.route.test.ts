@@ -227,11 +227,11 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     resetDefaultSession();
   });
 
-  it("loader returnerer backend-shapet kontrollsak når sakId peker på kontrollsak", () => {
+  it("loader returnerer backend-shapet kontrollsak når sakId peker på kontrollsak", async () => {
     const kontrollsakId = hentFordelingssaker(state())[0].id;
     const kontrollsakRef = getSaksreferanse(kontrollsakId);
 
-    const resultat = loader({
+    const resultat = await loader({
       request: testRequest,
       params: { sakId: kontrollsakRef },
     } as Route.LoaderArgs);
@@ -243,8 +243,8 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(resultat.andreSaker.every((s) => s.id !== resultat.sak.id)).toBe(true);
   });
 
-  it("loader returnerer backend-shapet mine sak når sakId peker på backend-shaped mine saker", () => {
-    const resultat = loader({
+  it("loader returnerer backend-shapet mine sak når sakId peker på backend-shaped mine saker", async () => {
+    const resultat = await loader({
       request: testRequest,
       params: { sakId: mineSakRef },
     } as Route.LoaderArgs);

@@ -125,7 +125,7 @@ describe("opprettKontrollsak", () => {
       ),
     ).toBe(true);
     expect(
-      søkSaker(testRequest, "12345678901").some((sak) => sak.personIdent === "12345678901"),
+      (await søkSaker(testRequest, "12345678901")).some((sak) => sak.personIdent === "12345678901"),
     ).toBe(true);
   });
 
