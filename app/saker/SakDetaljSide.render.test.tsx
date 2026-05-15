@@ -13,7 +13,7 @@ vi.mock("~/auth/innlogget-bruker", () => ({
   useInnloggetBruker: () => ({
     navIdent: "Z999999",
     name: "Test Saksbehandler",
-    organisasjoner: [],
+    enhet: "4812",
   }),
 }));
 

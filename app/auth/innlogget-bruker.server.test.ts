@@ -50,7 +50,8 @@ describe("hentInnloggetBruker", () => {
     });
     hentSaksbehandlerInfoMock.mockResolvedValue({
       navIdent: "Z123456",
-      organisasjoner: ["4812", "9999"],
+      navn: "Test Saksbehandler",
+      enhet: "4812",
     });
   });
 
@@ -79,7 +80,7 @@ describe("hentInnloggetBruker", () => {
     expect(getBackendOboTokenMock).not.toHaveBeenCalled();
     expect(hentSaksbehandlerInfoMock).not.toHaveBeenCalled();
     expect(bruker).not.toHaveProperty("token");
-    expect(bruker.organisasjoner).toBe("Ukjent");
+    expect(bruker.enhet).toBe("Ukjent");
   });
 
   it("beholder mockbruker i local-mock", async () => {
@@ -96,7 +97,7 @@ describe("hentInnloggetBruker", () => {
       preferredUsername: "test",
       name: "Saks Behandlersen",
       navIdent: "Z999999",
-      organisasjoner: "4812",
+      enhet: "4812",
     });
   });
 });

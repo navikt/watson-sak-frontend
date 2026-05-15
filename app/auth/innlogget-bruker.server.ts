@@ -9,7 +9,7 @@ interface InnloggetBruker {
   preferredUsername: string;
   name: string;
   navIdent: string;
-  organisasjoner: string;
+  enhet: string;
 }
 
 type HentInnloggetBrukerArgs = {
@@ -26,7 +26,7 @@ export async function hentInnloggetBruker({
       preferredUsername: "test",
       name: "Saks Behandlersen",
       navIdent: "Z999999",
-      organisasjoner: "4812",
+      enhet: "4812",
     };
   }
   const token = await getValidToken(request);
@@ -42,7 +42,7 @@ export async function hentInnloggetBruker({
       preferredUsername: parseResult.preferred_username,
       name: parseResult.name,
       navIdent: parseResult.NAVident,
-      organisasjoner: "Ukjent",
+      enhet: "Ukjent",
     };
   }
 
@@ -54,6 +54,6 @@ export async function hentInnloggetBruker({
     preferredUsername: parseResult.preferred_username,
     name: parseResult.name,
     navIdent: parseResult.NAVident,
-    organisasjoner: saksbehandlerInfo.organisasjoner?.join(", ") || "Ukjent",
+    enhet: saksbehandlerInfo.enhet ?? "Ukjent",
   };
 }
