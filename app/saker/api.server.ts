@@ -25,7 +25,6 @@ const journalpostReferanseSchema = z.object({
   opprettet: z.string(),
 });
 
-type JournalpostReferanse = z.infer<typeof journalpostReferanseSchema>;
 
 function apiUrl(sti: string): string {
   if (!BACKEND_API_URL) {
