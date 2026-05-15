@@ -24,7 +24,7 @@
   "dependencies": {
     "@conform-to/react": "^1.19.1",
     "@conform-to/zod": "^1.19.1",
-    "@grafana/faro-react": "^2.3.1",
+    "@grafana/faro-react": "^2.6.3",
     "@navikt/aksel-icons": "^8.6.0",
     "@navikt/ds-css": "^8.6.0",
     "@navikt/ds-react": "^8.6.0",
@@ -43,7 +43,7 @@
     "react-router": "^7.14.1",
     "recharts": "^3.8.1",
     "tailwindcss": "^4.2.2",
-    "unleash-client": "^6.10.1",
+    "unleash-client": "^6.11.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -65,5 +65,8 @@
     "typescript": "^6.0.3",
     "vite": "^8.0.8",
     "vitest": "^4.1.4"
+  },
+  "overrides": {
+    "protobufjs": "8.0.2"
   }
 }
