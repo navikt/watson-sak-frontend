@@ -16,7 +16,7 @@ RUN pnpm run build
 
 FROM node:24-alpine
 WORKDIR /app
-COPY package.json .npmrc ./
+COPY package.json ./
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY --from=builder /app/build ./build
 
@@ -25,5 +25,5 @@ USER watson
 
 ENV NODE_ENV=production
 EXPOSE 3000
-CMD ["node", "./build/server/index.js"]
+CMD ["./node_modules/.bin/react-router-serve", "./build/server/index.js"]
 
