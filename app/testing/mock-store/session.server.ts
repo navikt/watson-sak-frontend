@@ -32,7 +32,7 @@ function lagFreshState(): MockState {
     historikk,
     tommeFilområder: new Set(),
     varsler: lagInitialeVarsler(),
-    nesteFordelingssakId: 200,
+    nesteFordelingssakId: 10000,
     nesteHistorikkId,
   };
 }

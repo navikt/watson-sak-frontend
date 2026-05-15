@@ -33,11 +33,12 @@ function leggTilBackendHendelse(
   snapshot: Omit<SakHendelse, "hendelseId" | "tidspunkt" | "hendelsesType" | "sakId">,
   tidspunkt?: string,
 ): SakHendelse {
+  const numeriskSakId = Number(sakId);
   const hendelse: SakHendelse = {
     hendelseId: lagId(state),
     tidspunkt: tidspunkt ?? new Date().toISOString(),
     hendelsesType: type,
-    sakId: undefined,
+    sakId: Number.isNaN(numeriskSakId) ? null : numeriskSakId,
     ...snapshot,
   };
 
@@ -112,7 +113,7 @@ export function leggTilManuellHendelse(
     hendelseId: lagId(state),
     tidspunkt,
     hendelsesType: "MANUELL_NOTAT",
-    sakId: undefined,
+    sakId: sak.id,
     tittel,
     notat,
     ...lagSnapshotFraKontrollsak(sak),
