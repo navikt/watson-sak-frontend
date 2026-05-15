@@ -12,13 +12,13 @@ vi.mock("~/auth/innlogget-bruker.server", () => ({
     preferredUsername: "test",
     name: "Saks Behandlersen",
     navIdent: "Z999999",
-    organisasjoner: "4812",
+    enhet: "4812",
   }),
 }));
 
 function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
-    id: "ks-test",
+    id: 9,
     personIdent: "10987654321",
     personNavn: "Test Person",
     saksbehandlere: {
@@ -34,9 +34,9 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     blokkert: null,
     ytelser: [],
     merking: null,
-    resultat: null,
     opprettet: "2026-02-03T10:11:12Z",
     oppdatert: null,
+    oppgaver: [],
     ...overrides,
   };
 }

@@ -7,7 +7,7 @@ export type Avslutningsdatoer = Record<string, string>;
 
 const initialeMockStatistikkSaker = [
   {
-    id: "S-101",
+    id: "3101",
     personIdent: "10010199901",
     saksbehandler: "Z999999",
     status: "OPPRETTET",
@@ -36,7 +36,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-102",
+    id: "3102",
     personIdent: "10010299902",
     saksbehandler: "Z999999",
     status: "OPPRETTET",
@@ -71,7 +71,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-103",
+    id: "3103",
     personIdent: "10010399903",
     saksbehandler: "Z999999",
     status: "OPPRETTET",
@@ -100,7 +100,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-104",
+    id: "3104",
     personIdent: "10010499904",
     saksbehandler: "Z999999",
     status: "OPPRETTET",
@@ -129,7 +129,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-105",
+    id: "3105",
     personIdent: "10010599905",
     saksbehandler: "Z999999",
     status: "OPPRETTET",
@@ -158,7 +158,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-106",
+    id: "3106",
     personIdent: "10010699906",
     saksbehandler: "Z999999",
     status: "OPPRETTET",
@@ -193,7 +193,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-201",
+    id: "3201",
     personIdent: "20010199901",
     saksbehandler: "Z999999",
     status: "AVKLART",
@@ -222,7 +222,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-202",
+    id: "3202",
     personIdent: "20010299902",
     saksbehandler: "Z999999",
     status: "AVKLART",
@@ -257,7 +257,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-203",
+    id: "3203",
     personIdent: "20010399903",
     saksbehandler: "Z999999",
     status: "AVKLART",
@@ -286,7 +286,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-204",
+    id: "3204",
     personIdent: "20010499904",
     saksbehandler: "Z999999",
     status: "AVKLART",
@@ -315,7 +315,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-205",
+    id: "3205",
     personIdent: "20010599905",
     saksbehandler: "Z999999",
     status: "AVKLART",
@@ -350,7 +350,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-301",
+    id: "3301",
     personIdent: "30010199901",
     saksbehandler: "Z999999",
     status: "UTREDES",
@@ -379,7 +379,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-302",
+    id: "3302",
     personIdent: "30010299902",
     saksbehandler: "Z999999",
     status: "UTREDES",
@@ -414,7 +414,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-303",
+    id: "3303",
     personIdent: "30010399903",
     saksbehandler: "Z999999",
     status: "UTREDES",
@@ -455,7 +455,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-304",
+    id: "3304",
     personIdent: "30010499904",
     saksbehandler: "Z999999",
     status: "UTREDES",
@@ -484,7 +484,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-305",
+    id: "3305",
     personIdent: "30010599905",
     saksbehandler: "Z999999",
     status: "UTREDES",
@@ -519,7 +519,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-306",
+    id: "3306",
     personIdent: "30010699906",
     saksbehandler: "Z999999",
     status: "UTREDES",
@@ -548,7 +548,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-307",
+    id: "3307",
     personIdent: "30010799907",
     saksbehandler: "Z999999",
     status: "UTREDES",
@@ -577,7 +577,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-308",
+    id: "3308",
     personIdent: "30010899908",
     saksbehandler: "Z999999",
     status: "UTREDES",
@@ -612,7 +612,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-309",
+    id: "3309",
     personIdent: "30010999909",
     saksbehandler: "Z999999",
     status: "I_BERO",
@@ -641,7 +641,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-401",
+    id: "3401",
     personIdent: "40010199901",
     saksbehandler: "Z999999",
     status: "AVSLUTTET",
@@ -670,7 +670,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-402",
+    id: "3402",
     personIdent: "40010299902",
     saksbehandler: "Z999999",
     status: "AVSLUTTET",
@@ -705,7 +705,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-403",
+    id: "3403",
     personIdent: "40010399903",
     saksbehandler: "Z999999",
     status: "AVSLUTTET",
@@ -734,7 +734,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-404",
+    id: "3404",
     personIdent: "40010499904",
     saksbehandler: "Z999999",
     status: "AVSLUTTET",
@@ -769,7 +769,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-405",
+    id: "3405",
     personIdent: "40010599905",
     saksbehandler: "Z999999",
     status: "AVSLUTTET",
@@ -798,7 +798,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-406",
+    id: "3406",
     personIdent: "40010699906",
     saksbehandler: "Z999999",
     status: "AVSLUTTET",
@@ -827,7 +827,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-407",
+    id: "3407",
     personIdent: "40010799907",
     saksbehandler: "Z999999",
     status: "AVSLUTTET",
@@ -862,7 +862,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-408",
+    id: "3408",
     personIdent: "40010899908",
     saksbehandler: "Z999999",
     status: "AVSLUTTET",
@@ -891,7 +891,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-501",
+    id: "3501",
     personIdent: "50010199901",
     saksbehandler: "Z999999",
     status: "HENLAGT",
@@ -920,7 +920,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-502",
+    id: "3502",
     personIdent: "50010299902",
     saksbehandler: "Z999999",
     status: "HENLAGT",
@@ -955,7 +955,7 @@ const initialeMockStatistikkSaker = [
     oppdatert: null,
   },
   {
-    id: "S-503",
+    id: "3503",
     personIdent: "50010399903",
     saksbehandler: "Z999999",
     status: "HENLAGT",
@@ -987,7 +987,7 @@ const initialeMockStatistikkSaker = [
 
 function lagMockStatistikkSaker() {
   return initialeMockStatistikkSaker.map((sak) =>
-    kontrollsakResponseSchema.parse(normaliserLegacyKontrollsak(berikLegacySakMedPerson(sak), 3)),
+    kontrollsakResponseSchema.parse(normaliserLegacyKontrollsak(berikLegacySakMedPerson(sak))),
   );
 }
 

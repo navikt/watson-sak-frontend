@@ -20,7 +20,7 @@ type SakslisteStatus = {
 };
 
 export type SakslisteRad = {
-  id: string;
+  id: number;
   saksreferanse: string;
   detaljHref?: string;
   navn: string | null;

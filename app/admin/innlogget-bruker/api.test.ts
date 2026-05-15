@@ -49,7 +49,7 @@ describe("innlogget-bruker-api", () => {
       preferredUsername: "test@nav.no",
       name: "Test Saksbehandler",
       navIdent: "Z994531",
-      organisasjoner: "4812",
+      enhet: "4812",
     });
     getBackendOboTokenMock.mockResolvedValue("obo-token");
   });
@@ -64,7 +64,7 @@ describe("innlogget-bruker-api", () => {
       preferredUsername: "test@nav.no",
       name: "Test Saksbehandler",
       navIdent: "Z994531",
-      organisasjoner: "4812",
+      enhet: "4812",
       token: "obo-token",
     });
   });
@@ -81,7 +81,7 @@ describe("innlogget-bruker-api", () => {
       preferredUsername: "test@nav.no",
       name: "Test Saksbehandler",
       navIdent: "Z994531",
-      organisasjoner: "4812",
+      enhet: "4812",
     });
   });
 
@@ -90,7 +90,7 @@ describe("innlogget-bruker-api", () => {
       preferredUsername: "annen@nav.no",
       name: "Annen Saksbehandler",
       navIdent: "Z111111",
-      organisasjoner: "4812",
+      enhet: "4812",
     });
 
     const { loader } = await import("./api");

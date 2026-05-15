@@ -1,35 +1,5 @@
 import type { Blokkeringsarsak, KontrollsakResponse, KontrollsakStatus } from "./types.backend";
 
-function erGyldigUuid(verdi: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(verdi);
-}
-
-function hentSaknummer(fixtureId: string): bigint {
-  const siffer = fixtureId.replace(/\D/g, "");
-
-  if (!siffer) {
-    throw new Error(`Kunne ikke utlede saksnummer fra fixture-id ${fixtureId}`);
-  }
-
-  return BigInt(siffer);
-}
-
-function lagMockUuid(verdi: bigint | number): string {
-  return `00000000-0000-4000-8000-${String(verdi).padStart(12, "0")}`;
-}
-
-function lagEntityBase(fixtureId: string, namespace: number): bigint {
-  return BigInt(namespace) * 1_000_000n + hentSaknummer(fixtureId) * 1_000n;
-}
-
-export function lagMockSakUuid(fixtureId: string, namespace: number): string {
-  return lagMockUuid(lagEntityBase(fixtureId, namespace));
-}
-
-function lagMockEntityUuid(fixtureId: string, namespace: number, offset = 0): string {
-  return lagMockUuid(lagEntityBase(fixtureId, namespace) + BigInt(offset));
-}
-
 export function nullstillMockStatushistorikk() {}
 
 /** Ingen-op etter migrering til ny modell – beholdes for bakoverkompatibilitet i tester */
@@ -91,11 +61,9 @@ function normaliserLegacyOpprettetAv(
   };
 }
 
-export function normaliserLegacyKontrollsak(
-  sak: LegacyKontrollsak,
-  namespace: number,
-): KontrollsakResponse {
+export function normaliserLegacyKontrollsak(sak: LegacyKontrollsak): KontrollsakResponse {
   const id = String(sak.id);
+  const numericId = Number.parseInt(id.replace(/\D/g, ""), 10) || 0;
   const personNavn = typeof sak.navn === "string" ? sak.navn : "Ukjent navn";
   const saksbehandlerNavn = typeof sak.saksbehandler === "string" ? sak.saksbehandler : "Ukjent";
   const saksbehandlerEnhet = typeof sak.mottakEnhet === "string" ? sak.mottakEnhet : null;
@@ -179,7 +147,7 @@ export function normaliserLegacyKontrollsak(
   const eier = normaliserLegacyEier(sak);
 
   const normalisert: KontrollsakResponse = {
-    id: erGyldigUuid(id) ? id : lagMockEntityUuid(id, namespace),
+    id: numericId,
     personIdent: String(sak.personIdent ?? ""),
     personNavn,
     saksbehandlere: {
@@ -217,10 +185,7 @@ export function normaliserLegacyKontrollsak(
     ytelser: legacyYtelser.map((ytelse, indeks) => {
       const typed = ytelse as Record<string, unknown>;
       return {
-        id:
-          typeof typed.id === "string" && erGyldigUuid(typed.id)
-            ? typed.id
-            : lagMockEntityUuid(id, namespace, 100 + indeks + 1),
+        id: crypto.randomUUID(),
         type: String(typed.type ?? "Ukjent ytelse"),
         periodeFra: String(typed.periodeFra ?? "1970-01-01"),
         periodeTil: String(typed.periodeTil ?? typed.periodeFra ?? "1970-01-01"),
@@ -237,66 +202,7 @@ export function normaliserLegacyKontrollsak(
       : typeof sak.merking === "string"
         ? sak.merking
         : null,
-    resultat:
-      sak.resultat && typeof sak.resultat === "object"
-        ? {
-            utredning: (sak.resultat as { utredning?: Record<string, unknown> | null }).utredning
-              ? {
-                  id: String((sak.resultat as { utredning: Record<string, unknown> }).utredning.id),
-                  opprettet: String(
-                    (sak.resultat as { utredning: Record<string, unknown> }).utredning.opprettet ??
-                      (sak.resultat as { utredning: Record<string, unknown> }).utredning.dato ??
-                      sak.opprettet,
-                  ),
-                  resultat: String(
-                    (sak.resultat as { utredning: Record<string, unknown> }).utredning.resultat ??
-                      "INFOSAK",
-                  ),
-                }
-              : null,
-            forvaltning: (sak.resultat as { forvaltning?: Record<string, unknown> | null })
-              .forvaltning
-              ? {
-                  id: String(
-                    (sak.resultat as { forvaltning: Record<string, unknown> }).forvaltning.id,
-                  ),
-                  dato: String(
-                    (sak.resultat as { forvaltning: Record<string, unknown> }).forvaltning.dato,
-                  ),
-                  resultat: String(
-                    (sak.resultat as { forvaltning: Record<string, unknown> }).forvaltning.resultat,
-                  ),
-                }
-              : null,
-            strafferettsligVurdering: (
-              sak.resultat as { strafferettsligVurdering?: Record<string, unknown> | null }
-            ).strafferettsligVurdering
-              ? {
-                  id: String(
-                    (
-                      sak.resultat as {
-                        strafferettsligVurdering: Record<string, unknown>;
-                      }
-                    ).strafferettsligVurdering.id,
-                  ),
-                  dato: String(
-                    (
-                      sak.resultat as {
-                        strafferettsligVurdering: Record<string, unknown>;
-                      }
-                    ).strafferettsligVurdering.dato,
-                  ),
-                  resultat: String(
-                    (
-                      sak.resultat as {
-                        strafferettsligVurdering: Record<string, unknown>;
-                      }
-                    ).strafferettsligVurdering.resultat,
-                  ),
-                }
-              : null,
-          }
-        : null,
+    oppgaver: [],
     opprettet: String(sak.opprettet ?? new Date().toISOString()),
     oppdatert: typeof sak.oppdatert === "string" ? sak.oppdatert : null,
   };

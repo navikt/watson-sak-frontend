@@ -51,7 +51,7 @@ const leggTilHistorikkSkjema = z
   );
 
 interface LeggTilHistorikkModalProps {
-  sakId: string;
+  sakId: number;
   åpen: boolean;
   onClose: () => void;
 }

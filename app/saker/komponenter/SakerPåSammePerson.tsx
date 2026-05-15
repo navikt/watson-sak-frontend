@@ -33,7 +33,7 @@ import {
 
 interface SakerPåSammePersonProps {
   saker: KontrollsakResponse[];
-  gjeldendeSakId: string;
+  gjeldendeSakId: number;
 }
 
 interface SakKortProps {

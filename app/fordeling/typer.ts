@@ -1,5 +1,5 @@
 export interface FordelingSak {
-  id: string;
+  id: number;
   navn: string | null;
   opprettetDato: string;
   oppdatertDato: string;

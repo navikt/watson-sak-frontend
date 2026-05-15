@@ -10,7 +10,7 @@ import type { KontrollsakResponse } from "~/saker/types.backend";
 
 function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
-    id: "ks-101",
+    id: 8,
     personIdent: "10987654321",
     personNavn: "Ola Nordmann",
     saksbehandlere: {
@@ -26,9 +26,9 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     blokkert: null,
     ytelser: [],
     merking: null,
-    resultat: null,
     opprettet: "2026-02-03T10:11:12Z",
     oppdatert: null,
+    oppgaver: [],
     ...overrides,
   };
 }

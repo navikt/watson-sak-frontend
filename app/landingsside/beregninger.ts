@@ -7,7 +7,7 @@ interface BeregnDineSakerSiste14DagerArgs {
   request: Request;
   saker: KontrollsakResponse[];
   avslutningsdatoer: Avslutningsdatoer;
-  tidligereTipsSakIder: string[];
+  tidligereTipsSakIder: number[];
   referansedato: string;
 }
 
@@ -30,7 +30,7 @@ function harEier(sak: KontrollsakResponse) {
 }
 
 function erSendtTilNayNfp(request: Request, sak: KontrollsakResponse) {
-  return hentHistorikk(request, sak.id).some(
+  return hentHistorikk(request, String(sak.id)).some(
     (hendelse) => hendelse.hendelsesType === "VIDERESENDT_TIL_NAY_NFP",
   );
 }

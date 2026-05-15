@@ -60,7 +60,7 @@ describe("Fordeling api.server", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://backend.test/api/v1/kontrollsaker/sak-1/overgang",
+      "https://backend.test/api/v1/kontrollsaker/sak-1/tildel",
       {
         method: "POST",
         headers: {
@@ -68,7 +68,7 @@ describe("Fordeling api.server", () => {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify({ handling: "TILDEL", navIdent: "Z123456" }),
+        body: JSON.stringify({ navIdent: "Z123456" }),
       },
     );
   }, 15000);

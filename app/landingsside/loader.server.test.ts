@@ -10,7 +10,7 @@ vi.mock("~/auth/innlogget-bruker.server", () => ({
     preferredUsername: "test",
     name: "Saks Behandlersen",
     navIdent: "Z999999",
-    organisasjoner: "4812",
+    enhet: "4812",
   }),
 }));
 

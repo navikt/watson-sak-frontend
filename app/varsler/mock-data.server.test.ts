@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { lagMockSakUuid } from "~/saker/mock-uuid";
 import { hentMockState, resetDefaultSession } from "~/testing/mock-store/session.server";
 import { hentUlesteVarsler, markerVarselSomLest } from "~/testing/mock-store/varsler.server";
 
@@ -13,7 +12,7 @@ describe("varsler mock-data", () => {
     resetDefaultSession();
   });
 
-  it("kan markere et varsel som lest uten å slette det fra datalaget", () => {
+  it("kan markere et varsel som lest uten å slette det fra varsellisten", () => {
     const antallVarslerFør = state().varsler.length;
     markerVarselSomLest(state(), "varsel-107");
 
@@ -22,20 +21,12 @@ describe("varsler mock-data", () => {
     expect(hentUlesteVarsler(state()).map((varsel) => varsel.id)).not.toContain("varsel-107");
   });
 
-  it("bruker normaliserte kontrollsak-UUID-er i varsel-lenker", () => {
+  it("bruker numeriske sak-IDer i varsel-lenker", () => {
     const varsler = hentUlesteVarsler(state());
 
-    expect(varsler.find((varsel) => varsel.id === "varsel-101")?.sakId).toBe(
-      lagMockSakUuid("101", 1),
-    );
-    expect(varsler.find((varsel) => varsel.id === "varsel-102")?.sakId).toBe(
-      lagMockSakUuid("102", 1),
-    );
-    expect(varsler.find((varsel) => varsel.id === "varsel-103")?.sakId).toBe(
-      lagMockSakUuid("103", 1),
-    );
-    expect(varsler.find((varsel) => varsel.id === "varsel-104")?.sakId).toBe(
-      lagMockSakUuid("104", 1),
-    );
+    expect(varsler.find((varsel) => varsel.id === "varsel-101")?.sakId).toBe("101");
+    expect(varsler.find((varsel) => varsel.id === "varsel-102")?.sakId).toBe("102");
+    expect(varsler.find((varsel) => varsel.id === "varsel-103")?.sakId).toBe("103");
+    expect(varsler.find((varsel) => varsel.id === "varsel-104")?.sakId).toBe("104");
   });
 });

@@ -70,10 +70,6 @@ export function getBelop(sak: KontrollsakResponse): number | null {
   return sak.ytelser.find((ytelse) => ytelse.belop !== null)?.belop ?? null;
 }
 
-export function getResultat(sak: KontrollsakResponse) {
-  return sak.resultat;
-}
-
 export function getMineSakerGruppeStatus(sak: KontrollsakResponse): MineSakerGruppeStatus {
   if (sak.blokkert !== null) {
     return "ventende";

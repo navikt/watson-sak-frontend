@@ -12,24 +12,26 @@ vi.mock("~/auth/innlogget-bruker", () => ({
   useInnloggetBruker: () => ({
     navIdent: "Z999999",
     name: "Test Saksbehandler",
-    organisasjoner: [],
+    enhet: "4812",
   }),
 }));
 
 const testRequest = new Request("http://localhost");
+const testSakId = "201";
+const deltMedSakId = "101";
 
-function renderDetaljside() {
+function renderDetaljside(sakId = testSakId) {
   const router = createMemoryRouter(
     [
       {
         path: "/saker/:sakId",
         loader: ({ params }) =>
-          loader({ request: testRequest, params: { sakId: params.sakId ?? "101" } } as never),
+          loader({ request: testRequest, params: { sakId: params.sakId ?? sakId } } as never),
         Component: SakDetaljSide,
       },
     ],
     {
-      initialEntries: ["/saker/101"],
+      initialEntries: [`/saker/${sakId}`],
     },
   );
 
@@ -63,7 +65,7 @@ describe("SakDetaljSide render", () => {
   }, 15000);
 
   it("viser saksbehandlere over handlinger med ansvarlig og delte brukere", async () => {
-    renderDetaljside();
+    renderDetaljside(deltMedSakId);
 
     const saksbehandlereHeading = await screen.findByRole("heading", { name: "Saksbehandlere" });
     const handlingerHeading = await screen.findByRole("heading", { name: "Handlinger" });

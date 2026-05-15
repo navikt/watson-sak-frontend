@@ -2,7 +2,6 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
 import { RouteConfig } from "~/routeConfig";
-import { lagMockSakUuid } from "~/saker/mock-uuid";
 import { mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import { UfordelteSakerInnhold } from "./UfordelteSakerInnhold";
 import type { FordelingSak } from "./typer";
@@ -12,7 +11,7 @@ vi.mock("~/saker/handlinger/TildelSaksbehandlerModal", () => ({
 }));
 
 const lagSak = (overstyringer: Partial<FordelingSak> = {}): FordelingSak => ({
-  id: lagMockSakUuid("301", 2),
+  id: 301,
   navn: "Kari Nordmann",
   opprettetDato: "2026-01-13",
   oppdatertDato: "2026-01-14",

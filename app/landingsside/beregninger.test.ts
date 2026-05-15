@@ -12,7 +12,7 @@ beforeEach(() => {
 
 function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
-    id: "ks-1",
+    id: 2,
     personIdent: "12345678901",
     personNavn: "Ola Nordmann",
     saksbehandlere: {
@@ -36,9 +36,9 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
       },
     ],
     merking: null,
-    resultat: null,
     opprettet: "2026-03-18T00:00:00Z",
     oppdatert: null,
+    oppgaver: [],
     ...overstyringer,
   };
 }
@@ -46,18 +46,18 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
 describe("beregnDineSakerSiste14Dager", () => {
   test("filtrerer på opprettet og beregner nøkkeltall for siste 14 dager", () => {
     const saker = [
-      lagKontrollsak({ id: "1", opprettet: "2026-03-18T00:00:00Z", status: "UTREDES" }),
-      lagKontrollsak({ id: "2", opprettet: "2026-03-10T00:00:00Z", status: "OPPRETTET" }),
+      lagKontrollsak({ id: 101, opprettet: "2026-03-18T00:00:00Z", status: "UTREDES" }),
+      lagKontrollsak({ id: 102, opprettet: "2026-03-10T00:00:00Z", status: "OPPRETTET" }),
       lagKontrollsak({
-        id: "3",
+        id: 103,
         opprettet: "2026-03-09T00:00:00Z",
         status: "UTREDES",
         blokkert: "VENTER_PA_VEDTAK",
       }),
-      lagKontrollsak({ id: "4", opprettet: "2026-03-08T00:00:00Z", status: "HENLAGT" }),
-      lagKontrollsak({ id: "5", opprettet: "2026-03-07T00:00:00Z", status: "HENLAGT" }),
+      lagKontrollsak({ id: 104, opprettet: "2026-03-08T00:00:00Z", status: "HENLAGT" }),
+      lagKontrollsak({ id: 105, opprettet: "2026-03-07T00:00:00Z", status: "HENLAGT" }),
       lagKontrollsak({
-        id: "6",
+        id: 106,
         opprettet: "2026-02-20T00:00:00Z",
         status: "OPPRETTET",
         saksbehandlere: {
@@ -76,7 +76,7 @@ describe("beregnDineSakerSiste14Dager", () => {
       request: testRequest,
       saker,
       avslutningsdatoer,
-      tidligereTipsSakIder: ["4"],
+      tidligereTipsSakIder: [104],
       referansedato: "2026-03-18",
     });
 
@@ -93,9 +93,9 @@ describe("beregnDineSakerSiste14Dager", () => {
 
   test("returnerer null for snitt behandlingstid når ingen avsluttede eller henlagte saker finnes", () => {
     const saker = [
-      lagKontrollsak({ id: "1", opprettet: "2026-03-18T00:00:00Z", status: "UTREDES" }),
+      lagKontrollsak({ id: 107, opprettet: "2026-03-18T00:00:00Z", status: "UTREDES" }),
       lagKontrollsak({
-        id: "2",
+        id: 108,
         opprettet: "2026-03-10T00:00:00Z",
         status: "OPPRETTET",
         saksbehandlere: {
@@ -122,18 +122,18 @@ describe("beregnDineSakerSiste14Dager", () => {
 
   test("bruker backend opprettet og backend-status for kontrollsaker", () => {
     const saker = [
-      lagKontrollsak({ id: "ks-1", opprettet: "2026-03-18T00:00:00Z", status: "UTREDES" }),
-      lagKontrollsak({ id: "ks-2", opprettet: "2026-03-10T00:00:00Z", status: "OPPRETTET" }),
+      lagKontrollsak({ id: 109, opprettet: "2026-03-18T00:00:00Z", status: "UTREDES" }),
+      lagKontrollsak({ id: 110, opprettet: "2026-03-10T00:00:00Z", status: "OPPRETTET" }),
       lagKontrollsak({
-        id: "ks-3",
+        id: 111,
         opprettet: "2026-03-09T00:00:00Z",
         status: "UTREDES",
         blokkert: "VENTER_PA_VEDTAK",
       }),
-      lagKontrollsak({ id: "ks-4", opprettet: "2026-03-08T00:00:00Z", status: "HENLAGT" }),
-      lagKontrollsak({ id: "ks-5", opprettet: "2026-03-07T00:00:00Z", status: "HENLAGT" }),
+      lagKontrollsak({ id: 112, opprettet: "2026-03-08T00:00:00Z", status: "HENLAGT" }),
+      lagKontrollsak({ id: 113, opprettet: "2026-03-07T00:00:00Z", status: "HENLAGT" }),
       lagKontrollsak({
-        id: "ks-6",
+        id: 114,
         opprettet: "2026-02-20T00:00:00Z",
         status: "OPPRETTET",
         saksbehandlere: {
@@ -153,7 +153,7 @@ describe("beregnDineSakerSiste14Dager", () => {
       request: testRequest,
       saker,
       avslutningsdatoer,
-      tidligereTipsSakIder: ["ks-4"],
+      tidligereTipsSakIder: [112],
       referansedato: "2026-03-18",
     });
 
@@ -171,7 +171,7 @@ describe("beregnDineSakerSiste14Dager", () => {
   test("teller ikke eierløse saker som jobbet med de siste 14 dagene", () => {
     const saker = [
       lagKontrollsak({
-        id: "1",
+        id: 115,
         opprettet: "2026-03-18T00:00:00Z",
         status: "OPPRETTET",
         saksbehandlere: {
@@ -180,7 +180,7 @@ describe("beregnDineSakerSiste14Dager", () => {
           opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
         },
       }),
-      lagKontrollsak({ id: "2", opprettet: "2026-03-17T00:00:00Z", status: "UTREDES" }),
+      lagKontrollsak({ id: 116, opprettet: "2026-03-17T00:00:00Z", status: "UTREDES" }),
     ];
 
     const resultat = beregnDineSakerSiste14Dager({

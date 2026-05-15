@@ -1,7 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { lagMockSakUuid } from "~/saker/mock-uuid";
 import type { KontrollsakResponse, KontrollsakSaksbehandler } from "~/saker/types.backend";
 import { SaksbehandlereKort } from "./SaksbehandlereKort";
 
@@ -28,7 +27,7 @@ vi.mock("~/auth/innlogget-bruker", () => ({
   useInnloggetBruker: () => ({
     navIdent: "Z999999",
     name: "Test Saksbehandler",
-    organisasjoner: [],
+    enhet: "4812",
   }),
 }));
 
@@ -45,7 +44,7 @@ function lagSaksbehandler(
 
 function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
-    id: lagMockSakUuid("101", 9),
+    id: 101,
     personIdent: "10987654321",
     personNavn: "Ola Nordmann",
     saksbehandlere: {
@@ -61,9 +60,9 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     prioritet: "NORMAL",
     ytelser: [],
     merking: null,
-    resultat: null,
     opprettet: "2026-02-03T10:11:12Z",
     oppdatert: null,
+    oppgaver: [],
     ...overrides,
   };
 }

@@ -101,7 +101,7 @@ export async function opprettKontrollsak({
       merking: payload.merking,
       ytelser: payload.ytelser,
     });
-    return { id: kontrollsak.id };
+    return { id: String(kontrollsak.id) };
   }
 
   if (!BACKEND_API_URL) {
@@ -115,7 +115,15 @@ export async function opprettKontrollsak({
       "Content-Type": "application/json",
       Accept: "application/json",
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      personIdent: payload.personIdent,
+      kategori: payload.kategori,
+      kilde: payload.kilde,
+      misbruktype: payload.misbruktype,
+      prioritet: payload.prioritet,
+      ytelser: payload.ytelser,
+      merking: payload.merking,
+    }),
   });
 
   if (!response.ok) {
@@ -125,7 +133,7 @@ export async function opprettKontrollsak({
     throw new Error("Kunne ikke opprette kontrollsak.");
   }
 
-  const body = (await response.json()) as { id: string };
+  const body = (await response.json()) as { id: number };
 
-  return { id: body.id };
+  return { id: String(body.id) };
 }

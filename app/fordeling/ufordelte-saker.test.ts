@@ -9,7 +9,7 @@ import {
 import type { FordelingSak } from "./typer";
 
 const lagSak = (overstyringer: Partial<FordelingSak>): FordelingSak => ({
-  id: "1",
+  id: 1,
   navn: null,
   opprettetDato: "2026-01-15",
   oppdatertDato: "2026-01-15",
@@ -23,10 +23,10 @@ const lagSak = (overstyringer: Partial<FordelingSak>): FordelingSak => ({
 describe("ufordelte-saker", () => {
   it("utleder alfabetisk sorterte filtervalg fra de ufordelte sakene", () => {
     const saker = [
-      lagSak({ id: "1", kategori: "Tiltak", ytelser: ["Sykepenger"] }),
-      lagSak({ id: "2", kategori: "Samliv", ytelser: ["Barnetrygd"] }),
-      lagSak({ id: "3", kategori: "Arbeid", ytelser: ["Dagpenger"] }),
-      lagSak({ id: "4", kategori: "Arbeid", ytelser: ["Barnetrygd"] }),
+      lagSak({ id: 1, kategori: "Tiltak", ytelser: ["Sykepenger"] }),
+      lagSak({ id: 2, kategori: "Samliv", ytelser: ["Barnetrygd"] }),
+      lagSak({ id: 3, kategori: "Arbeid", ytelser: ["Dagpenger"] }),
+      lagSak({ id: 4, kategori: "Arbeid", ytelser: ["Barnetrygd"] }),
     ];
 
     expect(hentUfordelteFiltervalg(saker)).toEqual({
@@ -37,11 +37,11 @@ describe("ufordelte-saker", () => {
 
   it("filtrerer med kategori og ytelse og justerer ugyldig side ved paginering", () => {
     const saker = [
-      lagSak({ id: "1", kategori: "Arbeid", ytelser: ["Dagpenger"] }),
-      lagSak({ id: "2", kategori: "Arbeid", ytelser: ["AAP"] }),
-      lagSak({ id: "3", kategori: "Arbeid", ytelser: ["Dagpenger"] }),
-      lagSak({ id: "4", kategori: "Tiltak", ytelser: ["Dagpenger"] }),
-      lagSak({ id: "5", kategori: "Samliv", ytelser: ["Dagpenger"] }),
+      lagSak({ id: 1, kategori: "Arbeid", ytelser: ["Dagpenger"] }),
+      lagSak({ id: 2, kategori: "Arbeid", ytelser: ["AAP"] }),
+      lagSak({ id: 3, kategori: "Arbeid", ytelser: ["Dagpenger"] }),
+      lagSak({ id: 4, kategori: "Tiltak", ytelser: ["Dagpenger"] }),
+      lagSak({ id: 5, kategori: "Samliv", ytelser: ["Dagpenger"] }),
     ];
 
     const filtrerteSaker = filtrerUfordelteSaker(saker, {
@@ -49,7 +49,7 @@ describe("ufordelte-saker", () => {
       ytelser: ["Dagpenger"],
     });
 
-    expect(filtrerteSaker.map((sak) => sak.id)).toEqual(["1", "3"]);
+    expect(filtrerteSaker.map((sak) => sak.id)).toEqual([1, 3]);
 
     expect(paginerElementer(filtrerteSaker, 5, 1)).toEqual({
       aktivSide: 2,
@@ -61,19 +61,19 @@ describe("ufordelte-saker", () => {
   it("lager oppsummering med antall saker, eldste liggetid og relevante ytelser", () => {
     const saker = [
       lagSak({
-        id: "1",
+        id: 1,
         opprettetDato: "2026-01-13",
         kategori: "Tiltak",
         ytelser: ["Barnetrygd"],
       }),
       lagSak({
-        id: "2",
+        id: 2,
         opprettetDato: "2026-02-16",
         kategori: "Arbeid",
         ytelser: ["Dagpenger", "Barnetrygd"],
       }),
       lagSak({
-        id: "3",
+        id: 3,
         opprettetDato: "2026-02-18",
         kategori: "Samliv",
         ytelser: ["Sykepenger"],
@@ -90,7 +90,7 @@ describe("ufordelte-saker", () => {
   it("sorterer ufordelte saker på valgt kolonne og retning", () => {
     const saker = [
       lagSak({
-        id: "00000000-0000-4000-8000-000000003000",
+        id: 3000,
         opprettetDato: "2026-01-13",
         oppdatertDato: "2026-01-14",
         kategori: "Tiltak",
@@ -98,7 +98,7 @@ describe("ufordelte-saker", () => {
         status: { tekst: "Utredes", variant: "warning" },
       }),
       lagSak({
-        id: "00000000-0000-4000-8000-000000001000",
+        id: 1000,
         opprettetDato: "2026-02-16",
         oppdatertDato: "2026-02-17",
         kategori: "Arbeid",
@@ -106,7 +106,7 @@ describe("ufordelte-saker", () => {
         status: { tekst: "Opprettet", variant: "info" },
       }),
       lagSak({
-        id: "00000000-0000-4000-8000-000000002000",
+        id: 2000,
         opprettetDato: "2026-01-20",
         oppdatertDato: "2026-01-21",
         kategori: "Samliv",
@@ -147,17 +147,11 @@ describe("ufordelte-saker", () => {
     ]);
   });
 
-  it("sorterer saksid med strengsammenligning når id-er ikke er numeriske mock-UUIDer", () => {
-    const saker = [
-      lagSak({ id: "b1234567-aaaa-4000-8000-000000000001" }),
-      lagSak({ id: "a9876543-bbbb-4000-8000-000000000002" }),
-      lagSak({ id: "c0000000-cccc-4000-8000-000000000003" }),
-    ];
+  it("sorterer saksid numerisk for tall-IDer", () => {
+    const saker = [lagSak({ id: 10001 }), lagSak({ id: 10002 }), lagSak({ id: 10003 })];
 
     expect(sorterUfordelteSaker(saker, "saksid", "stigende").map((sak) => sak.id)).toEqual([
-      saker[1].id,
-      saker[0].id,
-      saker[2].id,
+      10001, 10002, 10003,
     ]);
   });
 });

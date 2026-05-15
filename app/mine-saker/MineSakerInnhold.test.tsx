@@ -2,13 +2,12 @@ import { render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
 import { getSaksreferanse } from "~/saker/id";
-import { lagMockSakUuid } from "~/saker/mock-uuid";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { MineSakerInnhold } from "./MineSakerInnhold";
 
 function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
-    id: lagMockSakUuid("201", 2),
+    id: 201,
     personIdent: "10987654321",
     personNavn: "Ola Nordmann",
     saksbehandlere: {
@@ -24,7 +23,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     blokkert: null,
     ytelser: [
       {
-        id: "00000000-0000-4000-8000-000000020101",
+        id: "ytelse-1",
         type: "Sykepenger",
         periodeFra: "2026-01-01",
         periodeTil: "2026-01-31",
@@ -32,9 +31,9 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
       },
     ],
     merking: null,
-    resultat: null,
     opprettet: "2026-02-03T10:11:12Z",
     oppdatert: null,
+    oppgaver: [],
     ...overrides,
   };
 }
@@ -98,8 +97,9 @@ describe("MineSakerInnhold", () => {
       />,
     );
 
-    const lenke = screen.getByRole("link", { name: "201" });
-    expect(lenke.getAttribute("href")).toBe(`/saker/${getSaksreferanse(lagMockSakUuid("201", 2))}`);
+    const sakId = 201;
+    const lenke = screen.getByRole("link", { name: String(sakId) });
+    expect(lenke.getAttribute("href")).toBe(`/saker/${getSaksreferanse(sakId)}`);
   });
 
   it("viser Chips-filtre for status og ventestatus", () => {

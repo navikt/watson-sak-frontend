@@ -1,9 +1,5 @@
 import { kontrollsakResponseSchema, type KontrollsakResponse } from "~/saker/types.backend";
-import {
-  lagMockSakUuid,
-  normaliserLegacyKontrollsak,
-  oppdaterTilgjengeligeHandlinger,
-} from "~/saker/mock-uuid";
+import { normaliserLegacyKontrollsak, oppdaterTilgjengeligeHandlinger } from "~/saker/mock-uuid";
 import { registrerTomtFilområdeForSak } from "~/testing/mock-store/filer.server";
 import { berikLegacySakMedPerson } from "~/testing/mock-store/personer.server";
 import type { MockState } from "~/testing/mock-store/session.server";
@@ -478,7 +474,7 @@ const initialeMockKontrollsaker = [
 
 function lagMockKontrollsaker() {
   return initialeMockKontrollsaker.map((sak) =>
-    kontrollsakResponseSchema.parse(normaliserLegacyKontrollsak(berikLegacySakMedPerson(sak), 1)),
+    kontrollsakResponseSchema.parse(normaliserLegacyKontrollsak(berikLegacySakMedPerson(sak))),
   );
 }
 
@@ -517,11 +513,10 @@ export function leggTilMockSakIFordeling(
   state: MockState,
   nySak: NyMockFordelingssak,
 ): KontrollsakResponse {
-  const saksnummer = String(state.nesteFordelingssakId++);
   const opprettet = new Date().toISOString();
 
   const kontrollsak = kontrollsakResponseSchema.parse({
-    id: lagMockSakUuid(saksnummer, 1),
+    id: state.nesteFordelingssakId++,
     personIdent: nySak.personIdent,
     personNavn: nySak.personNavn,
     saksbehandlere: {
@@ -549,22 +544,22 @@ export function leggTilMockSakIFordeling(
     kilde: nySak.kilde,
     misbruktype: nySak.misbruktype,
     prioritet: nySak.prioritet,
-    ytelser: nySak.ytelser.map((ytelse, indeks) => ({
-      id: lagMockSakUuid(`${saksnummer}${indeks + 1}`, 1),
+    ytelser: nySak.ytelser.map((ytelse) => ({
+      id: crypto.randomUUID(),
       type: ytelse.type,
       periodeFra: ytelse.periodeFra,
       periodeTil: ytelse.periodeTil,
       belop: ytelse.belop ?? null,
     })),
     merking: nySak.merking ?? null,
-    resultat: null,
+    oppgaver: [],
     opprettet,
     oppdatert: null,
   });
 
   const kontrollsakMedHandlinger = oppdaterTilgjengeligeHandlinger(kontrollsak);
 
-  registrerTomtFilområdeForSak(state, kontrollsakMedHandlinger.id);
+  registrerTomtFilområdeForSak(state, String(kontrollsakMedHandlinger.id));
   state.kontrollsaker.unshift(kontrollsakMedHandlinger);
 
   return kontrollsakMedHandlinger;

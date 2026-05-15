@@ -30,7 +30,7 @@ export async function action({ request }: Route.ActionArgs) {
 
   if (skalBrukeMockdata) {
     const kontrollsak = hentFordelingssaker(request).find(
-      (eksisterendeSak) => eksisterendeSak.id === sakId,
+      (eksisterendeSak) => eksisterendeSak.id === Number(sakId),
     );
 
     if (!kontrollsak) {

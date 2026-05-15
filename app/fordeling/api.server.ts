@@ -64,14 +64,14 @@ export async function tildelKontrollsak({
     throw new Error("Mangler backend-url for tildeling av kontrollsak.");
   }
 
-  const response = await fetch(`${BACKEND_API_URL}/api/v1/kontrollsaker/${sakId}/overgang`, {
+  const response = await fetch(`${BACKEND_API_URL}/api/v1/kontrollsaker/${sakId}/tildel`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
       Accept: "application/json",
     },
-    body: JSON.stringify({ handling: "TILDEL", navIdent: saksbehandler }),
+    body: JSON.stringify({ navIdent: saksbehandler }),
   });
 
   if (!response.ok) {

@@ -4,7 +4,7 @@ import type { KontrollsakResponse } from "./types.backend";
 
 function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
-    id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    id: 4,
     personIdent: "12345678901",
     personNavn: "Ola Nordmann",
     saksbehandlere: {
@@ -32,9 +32,9 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
       },
     ],
     merking: null,
-    resultat: null,
     opprettet: "2026-03-20T12:34:56Z",
     oppdatert: null,
+    oppgaver: [],
     ...overrides,
   };
 }
@@ -64,7 +64,7 @@ describe("Fordeling mapper", () => {
 
   it("mapper kontrollsak til FordelingSak", () => {
     expect(mapKontrollsakTilFordelingSak(lagKontrollsak())).toEqual({
-      id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      id: 4,
       navn: "Ola Nordmann",
       opprettetDato: "2026-03-20",
       oppdatertDato: "2026-03-20",
@@ -81,7 +81,7 @@ describe("Fordeling mapper", () => {
         lagKontrollsak({ kategori: "UVENTET" as KontrollsakResponse["kategori"] }),
       ),
     ).toEqual({
-      id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      id: 4,
       navn: "Ola Nordmann",
       opprettetDato: "2026-03-20",
       oppdatertDato: "2026-03-20",

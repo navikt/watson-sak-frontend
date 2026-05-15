@@ -30,14 +30,14 @@ export function hentSakMedReferanse(
 }
 
 export function hentAvslutningsdatoer(state: MockState): Record<string, string> {
-  const avslutningsdatoer = { ...mockMineSakerAvslutningsdatoer };
+  const avslutningsdatoer: Record<string, string> = { ...mockMineSakerAvslutningsdatoer };
 
   for (const sak of hentAlleSaker(state)) {
     if (
       (sak.status === "AVSLUTTET" || sak.status === "HENLAGT") &&
-      avslutningsdatoer[sak.id] === undefined
+      avslutningsdatoer[String(sak.id)] === undefined
     ) {
-      avslutningsdatoer[sak.id] = (sak.oppdatert ?? sak.opprettet).slice(0, 10);
+      avslutningsdatoer[String(sak.id)] = (sak.oppdatert ?? sak.opprettet).slice(0, 10);
     }
   }
 

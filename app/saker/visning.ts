@@ -41,11 +41,13 @@ const blokkeringsarsakEtiketter: Record<Blokkeringsarsak, string> = {
   I_BERO: "I bero",
 };
 
-export function formaterStatus(status: KontrollsakStatus): string {
+export function formaterStatus(status: KontrollsakStatus | null | undefined): string {
+  if (!status) return "Ukjent";
   return statusEtiketter[status];
 }
 
-export function hentStatusVariant(status: KontrollsakStatus): StatusVariant {
+export function hentStatusVariant(status: KontrollsakStatus | null | undefined): StatusVariant {
+  if (!status) return "neutral";
   return statusVarianter[status];
 }
 
