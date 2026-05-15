@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { lagMockSakUuid } from "~/saker/mock-uuid";
+import { lagMockSakId } from "~/saker/mock-uuid";
 import { hentMockState, resetDefaultSession } from "~/testing/mock-store/session.server";
 import { hentUlesteVarsler, markerVarselSomLest } from "~/testing/mock-store/varsler.server";
 
@@ -26,16 +26,16 @@ describe("varsler mock-data", () => {
     const varsler = hentUlesteVarsler(state());
 
     expect(varsler.find((varsel) => varsel.id === "varsel-101")?.sakId).toBe(
-      lagMockSakUuid("101", 1),
+      String(lagMockSakId("101", 1)),
     );
     expect(varsler.find((varsel) => varsel.id === "varsel-102")?.sakId).toBe(
-      lagMockSakUuid("102", 1),
+      String(lagMockSakId("102", 1)),
     );
     expect(varsler.find((varsel) => varsel.id === "varsel-103")?.sakId).toBe(
-      lagMockSakUuid("103", 1),
+      String(lagMockSakId("103", 1)),
     );
     expect(varsler.find((varsel) => varsel.id === "varsel-104")?.sakId).toBe(
-      lagMockSakUuid("104", 1),
+      String(lagMockSakId("104", 1)),
     );
   });
 });

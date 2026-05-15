@@ -4,7 +4,7 @@ import { hentFordelingssaker } from "~/testing/mock-store/alle-saker.server";
 import { hentAlleSaker } from "./mock-alle-saker.server";
 import { hentHistorikk } from "./historikk/mock-data.server";
 import { getSaksreferanse } from "~/saker/id";
-import { lagMockSakUuid } from "~/saker/mock-uuid";
+import { lagMockSakId } from "~/saker/mock-uuid";
 import { getBeskrivelse, getKildeText, getPersonIdent, getYtelseTyper } from "~/saker/visning";
 import type { Route } from "./+types/SakDetaljSide.route";
 import { action, loader } from "./SakDetaljSide.server";
@@ -19,7 +19,7 @@ function state() {
 }
 
 describe("SakDetaljSide action", () => {
-  const utredningSakId = lagMockSakUuid("113", 1);
+  const utredningSakId = lagMockSakId("113", 1);
   const utredningSakRef = getSaksreferanse(utredningSakId);
 
   beforeEach(() => {
@@ -59,7 +59,7 @@ describe("SakDetaljSide action", () => {
       },
     ]);
 
-    const historikk = hentHistorikk(testRequest, kontrollsak.id);
+    const historikk = hentHistorikk(testRequest, String(kontrollsak.id));
     expect(historikk[0]?.hendelsesType).toBe("TILGANG_DELT");
     expect(historikk[0]?.berortSaksbehandlerNavn).toBe("Kari Nordmann");
   });
@@ -101,7 +101,7 @@ describe("SakDetaljSide action", () => {
       },
     ]);
 
-    const historikk = hentHistorikk(testRequest, kontrollsak.id);
+    const historikk = hentHistorikk(testRequest, String(kontrollsak.id));
     expect(historikk[0]?.hendelsesType).toBe("TILGANG_FJERNET");
     expect(historikk[0]?.berortSaksbehandlerNavn).toBe("Kari Nordmann");
   });
@@ -131,7 +131,7 @@ describe("SakDetaljSide action", () => {
       },
     ]);
 
-    const historikk = hentHistorikk(testRequest, kontrollsak.id);
+    const historikk = hentHistorikk(testRequest, String(kontrollsak.id));
     expect(historikk[0]?.hendelsesType).toBe("ANSVARLIG_SAKSBEHANDLER_ENDRET");
     expect(historikk[0]?.berortSaksbehandlerNavIdent).toBe("Z123456");
   });
@@ -154,7 +154,7 @@ describe("SakDetaljSide action", () => {
       params: { sakId: kontrollsakRef },
     } as Route.ActionArgs);
 
-    const historikk = hentHistorikk(testRequest, kontrollsak.id);
+    const historikk = hentHistorikk(testRequest, String(kontrollsak.id));
     expect(historikk[0]).toEqual(
       expect.objectContaining({
         hendelsesType: "NOTAT_SENDT",
@@ -166,7 +166,7 @@ describe("SakDetaljSide action", () => {
   it("returnerer lokal feilmelding når koble sak ikke er tilgjengelig ennå", async () => {
     const formData = new FormData();
     formData.set("handling", "koble_sak");
-    formData.set("relatertSakId", lagMockSakUuid("114", 1));
+    formData.set("relatertSakId", String(lagMockSakId("114", 1)));
 
     const resultat = await action({
       request: new Request(`http://localhost/saker/${utredningSakRef}`, {
@@ -184,7 +184,7 @@ describe("SakDetaljSide action", () => {
 });
 
 describe("SakDetaljSide helper-integrasjon", () => {
-  const fordelingSakId = lagMockSakUuid("101", 1);
+  const fordelingSakId = lagMockSakId("101", 1);
 
   beforeEach(() => {
     resetDefaultSession();
@@ -221,7 +221,7 @@ describe("SakDetaljSide helper-integrasjon", () => {
 });
 
 describe("SakDetaljSide kontrollsak-runtime", () => {
-  const mineSakId = lagMockSakUuid("201", 2);
+  const mineSakId = lagMockSakId("201", 2);
   const mineSakRef = getSaksreferanse(mineSakId);
 
   beforeEach(() => {
@@ -403,7 +403,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
 
     expect(kontrollsak.saksbehandlere.eier).toBeNull();
     expect(kontrollsak.saksbehandlere.opprettetAv.enhet).toBe("NORD");
-    expect(hentHistorikk(testRequest, kontrollsak.id)[0]?.hendelsesType).toBe(
+    expect(hentHistorikk(testRequest, String(kontrollsak.id))[0]?.hendelsesType).toBe(
       "MOTTAKSENHET_ENDRET",
     );
   });
@@ -457,7 +457,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(kontrollsak.status).toBe(opprinneligStatus);
     expect(kontrollsak.saksbehandlere.eier?.navn ?? null).toBe(opprinneligSaksbehandler);
 
-    const historikk = hentHistorikk(testRequest, kontrollsak.id);
+    const historikk = hentHistorikk(testRequest, String(kontrollsak.id));
     expect(historikk[0]?.hendelsesType).toBe("SAKSINFORMASJON_ENDRET");
   });
 

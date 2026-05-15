@@ -116,18 +116,18 @@ export function SakHandlingerKnapper({ sak }: SakHandlingerKnapperProps) {
       </VStack>
 
       <EndreStatusModal
-        sakId={sak.id}
+        sakId={String(sak.id)}
         nåværendeStatus={sak.status}
         åpen={åpenModal === "endre-status"}
         onClose={() => setÅpenModal(null)}
       />
       <SettPaVentModal
-        sakId={sak.id}
+        sakId={String(sak.id)}
         åpen={åpenModal === "sett-pa-vent"}
         onClose={() => setÅpenModal(null)}
       />
       <OpprettNotatModal
-        sakId={sak.id}
+        sakId={String(sak.id)}
         åpen={åpenModal === "opprett-notat"}
         onClose={() => setÅpenModal(null)}
       />

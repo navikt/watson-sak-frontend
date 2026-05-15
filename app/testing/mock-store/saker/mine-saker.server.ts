@@ -1,5 +1,5 @@
 import { kontrollsakResponseSchema } from "~/saker/types.backend";
-import { lagMockSakUuid, normaliserLegacyKontrollsak } from "~/saker/mock-uuid";
+import { lagMockSakId, normaliserLegacyKontrollsak } from "~/saker/mock-uuid";
 import { berikLegacySakMedPerson } from "~/testing/mock-store/personer.server";
 
 export const mockMineSakerInnloggetNavIdent = "Z999999";
@@ -379,10 +379,10 @@ function lagMockMineKontrollsaker() {
 /** Factory som brukes av session.server.ts for å bygge initial tilstand */
 export const lagInitialMineKontrollsaker = lagMockMineKontrollsaker;
 
-export const mockMineSakerAvslutningsdatoer = {
-  [lagMockSakUuid("207", 2)]: "2026-03-12",
-  [lagMockSakUuid("209", 2)]: "2026-03-16",
-  [lagMockSakUuid("210", 2)]: "2026-03-18",
+export const mockMineSakerAvslutningsdatoer: Record<string, string> = {
+  [String(lagMockSakId("207", 2))]: "2026-03-12",
+  [String(lagMockSakId("209", 2))]: "2026-03-16",
+  [String(lagMockSakId("210", 2))]: "2026-03-18",
 };
 
-export const mockMineSakerTidligereTipsSakIder = [lagMockSakUuid("207", 2)];
+export const mockMineSakerTidligereTipsSakIder = [lagMockSakId("207", 2)];

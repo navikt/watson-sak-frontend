@@ -10,7 +10,7 @@ import {
 
 function lagSak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
-    id: "00000000-0000-4000-8000-000000000001",
+    id: 1,
     personIdent: "10987654321",
     personNavn: "Ola Nordmann",
     saksbehandlere: {
@@ -26,9 +26,9 @@ function lagSak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakRespon
     blokkert: null,
     ytelser: [],
     merking: null,
-    resultat: null,
     opprettet: "2026-02-03T10:00:00Z",
     oppdatert: null,
+    oppgaver: [],
     ...overrides,
   };
 }
@@ -89,7 +89,7 @@ describe("beregnTraktSteg", () => {
 describe("filtrerSaker", () => {
   const saker = [
     lagSak({
-      id: "00000000-0000-4000-8000-000000000001",
+      id: 100,
       kategori: "SAMLIV",
       misbruktype: ["SKJULT_SAMLIV"],
       merking: null,
@@ -100,7 +100,7 @@ describe("filtrerSaker", () => {
       },
     }),
     lagSak({
-      id: "00000000-0000-4000-8000-000000000002",
+      id: 200,
       kategori: "ARBEID",
       misbruktype: ["FIKTIVT_ARBEIDSFORHOLD"],
       merking: "HASTEBEHANDLING",
@@ -133,7 +133,7 @@ describe("filtrerSaker", () => {
       merking: [],
     });
     expect(resultat).toHaveLength(1);
-    expect(resultat[0].id).toBe("00000000-0000-4000-8000-000000000001");
+    expect(resultat[0].id).toBe(100);
   });
 
   it("filtrerer på saksbehandler", () => {
@@ -145,7 +145,7 @@ describe("filtrerSaker", () => {
       merking: [],
     });
     expect(resultat).toHaveLength(1);
-    expect(resultat[0].id).toBe("00000000-0000-4000-8000-000000000002");
+    expect(resultat[0].id).toBe(200);
   });
 
   it("kombinerte filtre gir AND-logikk", () => {
@@ -163,38 +163,30 @@ describe("filtrerSaker", () => {
 describe("sorterSaker", () => {
   it("sorterer saksid numerisk (ikke leksikografisk)", () => {
     const saker = [
-      lagSak({ id: "00000000-0000-4000-8000-000000010000" }), // saksid: 10
-      lagSak({ id: "00000000-0000-4000-8000-000000002000" }), // saksid: 2
-      lagSak({ id: "00000000-0000-4000-8000-000000100000" }), // saksid: 100
+      lagSak({ id: 10 }),
+      lagSak({ id: 2 }),
+      lagSak({ id: 100 }),
     ];
 
     const sortert = sorterSaker(saker, "saksid", "asc");
 
-    expect(sortert.map((s) => s.id)).toEqual([
-      "00000000-0000-4000-8000-000000002000",
-      "00000000-0000-4000-8000-000000010000",
-      "00000000-0000-4000-8000-000000100000",
-    ]);
+    expect(sortert.map((s) => s.id)).toEqual([2, 10, 100]);
   });
 
   it("sorterer synkende på opprettet-dato", () => {
     const saker = [
-      lagSak({ id: "00000000-0000-4000-8000-000000001000", opprettet: "2026-01-01T00:00:00Z" }),
-      lagSak({ id: "00000000-0000-4000-8000-000000002000", opprettet: "2026-03-01T00:00:00Z" }),
-      lagSak({ id: "00000000-0000-4000-8000-000000003000", opprettet: "2026-02-01T00:00:00Z" }),
+      lagSak({ id: 1, opprettet: "2026-01-01T00:00:00Z" }),
+      lagSak({ id: 2, opprettet: "2026-03-01T00:00:00Z" }),
+      lagSak({ id: 3, opprettet: "2026-02-01T00:00:00Z" }),
     ];
 
     const sortert = sorterSaker(saker, "opprettet", "desc");
 
-    expect(sortert.map((s) => s.id)).toEqual([
-      "00000000-0000-4000-8000-000000002000",
-      "00000000-0000-4000-8000-000000003000",
-      "00000000-0000-4000-8000-000000001000",
-    ]);
+    expect(sortert.map((s) => s.id)).toEqual([2, 3, 1]);
   });
 
   it("sorterer saksbehandler alfabetisk", () => {
-    const lagMedSaksbehandler = (navn: string, id: string) =>
+    const lagMedSaksbehandler = (navn: string, id: number) =>
       lagSak({
         id,
         saksbehandlere: {
@@ -205,9 +197,9 @@ describe("sorterSaker", () => {
       });
 
     const saker = [
-      lagMedSaksbehandler("Øyvind", "00000000-0000-4000-8000-000000001000"),
-      lagMedSaksbehandler("Anna", "00000000-0000-4000-8000-000000002000"),
-      lagMedSaksbehandler("Bjørn", "00000000-0000-4000-8000-000000003000"),
+      lagMedSaksbehandler("Øyvind", 1001),
+      lagMedSaksbehandler("Anna", 1002),
+      lagMedSaksbehandler("Bjørn", 1003),
     ];
 
     const sortert = sorterSaker(saker, "saksbehandler", "asc");

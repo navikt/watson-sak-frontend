@@ -1,6 +1,6 @@
 import { kontrollsakResponseSchema, type KontrollsakResponse } from "~/saker/types.backend";
 import {
-  lagMockSakUuid,
+  lagMockSakId,
   normaliserLegacyKontrollsak,
   oppdaterTilgjengeligeHandlinger,
 } from "~/saker/mock-uuid";
@@ -521,7 +521,7 @@ export function leggTilMockSakIFordeling(
   const opprettet = new Date().toISOString();
 
   const kontrollsak = kontrollsakResponseSchema.parse({
-    id: lagMockSakUuid(saksnummer, 1),
+    id: lagMockSakId(saksnummer, 1),
     personIdent: nySak.personIdent,
     personNavn: nySak.personNavn,
     saksbehandlere: {
@@ -549,22 +549,22 @@ export function leggTilMockSakIFordeling(
     kilde: nySak.kilde,
     misbruktype: nySak.misbruktype,
     prioritet: nySak.prioritet,
-    ytelser: nySak.ytelser.map((ytelse, indeks) => ({
-      id: lagMockSakUuid(`${saksnummer}${indeks + 1}`, 1),
+    ytelser: nySak.ytelser.map((ytelse) => ({
+      id: crypto.randomUUID(),
       type: ytelse.type,
       periodeFra: ytelse.periodeFra,
       periodeTil: ytelse.periodeTil,
       belop: ytelse.belop ?? null,
     })),
     merking: nySak.merking ?? null,
-    resultat: null,
+    oppgaver: [],
     opprettet,
     oppdatert: null,
   });
 
   const kontrollsakMedHandlinger = oppdaterTilgjengeligeHandlinger(kontrollsak);
 
-  registrerTomtFilområdeForSak(state, kontrollsakMedHandlinger.id);
+  registrerTomtFilområdeForSak(state, String(kontrollsakMedHandlinger.id));
   state.kontrollsaker.unshift(kontrollsakMedHandlinger);
 
   return kontrollsakMedHandlinger;

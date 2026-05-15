@@ -185,7 +185,7 @@ export function UfordelteSakerInnhold({
       </VStack>
 
       <TildelSaksbehandlerModal
-        sakId={sakSomTildeles?.id ?? ""}
+        sakId={sakSomTildeles ? String(sakSomTildeles.id) : ""}
         saksbehandlere={saksbehandlere}
         saksbehandlerDetaljer={saksbehandlerDetaljer}
         submitPath={submitPath}

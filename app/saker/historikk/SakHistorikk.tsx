@@ -22,7 +22,7 @@ import { LeggTilHistorikkModal } from "./LeggTilHistorikkModal";
 import type { SakHendelse } from "./typer";
 
 interface SakHistorikkProps {
-  sakId: string;
+  sakId: number;
   hendelser: SakHendelse[];
 }
 

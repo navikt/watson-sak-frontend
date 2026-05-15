@@ -193,26 +193,26 @@ export function SaksbehandlereKort({
       </Kort>
 
       <DelTilgangModal
-        sakId={sak.id}
+        sakId={String(sak.id)}
         saksbehandlerDetaljer={saksbehandlerDetaljer}
         åpen={visDelTilgangModal}
         onClose={() => setVisDelTilgangModal(false)}
       />
       <OverforAnsvarligModal
-        sakId={sak.id}
+        sakId={String(sak.id)}
         saksbehandlerDetaljer={saksbehandlerDetaljer}
         åpen={visOverforModal}
         onClose={() => setVisOverforModal(false)}
       />
       <TildelSaksbehandlerModal
-        sakId={sak.id}
+        sakId={String(sak.id)}
         saksbehandlere={[]}
         saksbehandlerDetaljer={saksbehandlerDetaljer}
         åpen={visTildelModal}
         onClose={() => setVisTildelModal(false)}
       />
       <SendTilAnnenEnhetModal
-        sakId={sak.id}
+        sakId={String(sak.id)}
         nåværendeEnhet={getSaksenhet(sak)}
         åpen={visSendTilAnnenEnhetModal}
         onClose={() => setVisSendTilAnnenEnhetModal(false)}

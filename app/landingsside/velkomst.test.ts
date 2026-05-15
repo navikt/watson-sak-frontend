@@ -4,7 +4,7 @@ import { lagVelkomstOppsummering } from "./velkomst";
 
 function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
-    id: "ks-1",
+    id: 3,
     personIdent: "12345678901",
     personNavn: "Ola Nordmann",
     saksbehandlere: {
@@ -20,9 +20,9 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
     blokkert: null,
     ytelser: [],
     merking: null,
-    resultat: null,
     opprettet: "2026-03-01T00:00:00Z",
     oppdatert: null,
+    oppgaver: [],
     ...overstyringer,
   };
 }
@@ -30,11 +30,11 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
 describe("lagVelkomstOppsummering", () => {
   test("oppsummerer de to mest relevante arbeidstypene", () => {
     const saker = [
-      lagKontrollsak({ id: "1", status: "OPPRETTET" }),
-      lagKontrollsak({ id: "2", status: "OPPRETTET" }),
-      lagKontrollsak({ id: "3", status: "UTREDES" }),
-      lagKontrollsak({ id: "4", status: "UTREDES" }),
-      lagKontrollsak({ id: "5", status: "UTREDES", blokkert: "VENTER_PA_VEDTAK" }),
+      lagKontrollsak({ id: 101, status: "OPPRETTET" }),
+      lagKontrollsak({ id: 102, status: "OPPRETTET" }),
+      lagKontrollsak({ id: 103, status: "UTREDES" }),
+      lagKontrollsak({ id: 104, status: "UTREDES" }),
+      lagKontrollsak({ id: 105, status: "UTREDES", blokkert: "VENTER_PA_VEDTAK" }),
     ];
 
     expect(lagVelkomstOppsummering(saker)).toBe(
@@ -44,9 +44,9 @@ describe("lagVelkomstOppsummering", () => {
 
   test("viser en oppmuntrende tekst når brukeren ikke har aktive saker", () => {
     const saker = [
-      lagKontrollsak({ id: "1", status: "AVSLUTTET" }),
-      lagKontrollsak({ id: "2", status: "AVSLUTTET" }),
-      lagKontrollsak({ id: "3", status: "AVSLUTTET" }),
+      lagKontrollsak({ id: 106, status: "AVSLUTTET" }),
+      lagKontrollsak({ id: 107, status: "AVSLUTTET" }),
+      lagKontrollsak({ id: 108, status: "AVSLUTTET" }),
     ];
 
     expect(lagVelkomstOppsummering(saker)).toBe(
@@ -56,10 +56,10 @@ describe("lagVelkomstOppsummering", () => {
 
   test("tar med ventende saker når de utgjør en større del av arbeidsbildet", () => {
     const saker = [
-      lagKontrollsak({ id: "1", status: "UTREDES", blokkert: "VENTER_PA_VEDTAK" }),
-      lagKontrollsak({ id: "2", status: "UTREDES", blokkert: "VENTER_PA_VEDTAK" }),
-      lagKontrollsak({ id: "3", status: "UTREDES", blokkert: "VENTER_PA_VEDTAK" }),
-      lagKontrollsak({ id: "4", status: "UTREDES" }),
+      lagKontrollsak({ id: 109, status: "UTREDES", blokkert: "VENTER_PA_VEDTAK" }),
+      lagKontrollsak({ id: 110, status: "UTREDES", blokkert: "VENTER_PA_VEDTAK" }),
+      lagKontrollsak({ id: 111, status: "UTREDES", blokkert: "VENTER_PA_VEDTAK" }),
+      lagKontrollsak({ id: 112, status: "UTREDES" }),
     ];
 
     expect(lagVelkomstOppsummering(saker)).toBe(
@@ -69,11 +69,11 @@ describe("lagVelkomstOppsummering", () => {
 
   test("oppsummerer backend-statuser med samme arbeidsbilde", () => {
     const saker = [
-      lagKontrollsak({ id: "ks-1", status: "OPPRETTET" }),
-      lagKontrollsak({ id: "ks-2", status: "OPPRETTET" }),
-      lagKontrollsak({ id: "ks-3", status: "UTREDES" }),
-      lagKontrollsak({ id: "ks-4", status: "UTREDES" }),
-      lagKontrollsak({ id: "ks-5", status: "UTREDES", blokkert: "VENTER_PA_VEDTAK" }),
+      lagKontrollsak({ id: 113, status: "OPPRETTET" }),
+      lagKontrollsak({ id: 114, status: "OPPRETTET" }),
+      lagKontrollsak({ id: 115, status: "UTREDES" }),
+      lagKontrollsak({ id: 116, status: "UTREDES" }),
+      lagKontrollsak({ id: 117, status: "UTREDES", blokkert: "VENTER_PA_VEDTAK" }),
     ];
 
     expect(lagVelkomstOppsummering(saker)).toBe(
@@ -83,9 +83,9 @@ describe("lagVelkomstOppsummering", () => {
 
   test("behandler saker i bero som egen oppsummeringskategori", () => {
     const saker = [
-      lagKontrollsak({ id: "1", status: "OPPRETTET", blokkert: "I_BERO" }),
-      lagKontrollsak({ id: "2", status: "UTREDES", blokkert: "I_BERO" }),
-      lagKontrollsak({ id: "3", status: "OPPRETTET" }),
+      lagKontrollsak({ id: 118, status: "OPPRETTET", blokkert: "I_BERO" }),
+      lagKontrollsak({ id: 119, status: "UTREDES", blokkert: "I_BERO" }),
+      lagKontrollsak({ id: 120, status: "OPPRETTET" }),
     ];
 
     expect(lagVelkomstOppsummering(saker)).toBe(
@@ -94,13 +94,13 @@ describe("lagVelkomstOppsummering", () => {
   });
 
   test("behandler opprettede saker som aktive i velkomstoppsummeringen", () => {
-    const saker = [lagKontrollsak({ id: "1", status: "OPPRETTET" })];
+    const saker = [lagKontrollsak({ id: 121, status: "OPPRETTET" })];
 
     expect(lagVelkomstOppsummering(saker)).toBe("Akkurat nå har du 1 aktiv sak.");
   });
 
   test("behandler anmeldte saker som aktive i velkomstoppsummeringen", () => {
-    const saker = [lagKontrollsak({ id: "1", status: "ANMELDT" })];
+    const saker = [lagKontrollsak({ id: 122, status: "ANMELDT" })];
 
     expect(lagVelkomstOppsummering(saker)).toBe("Akkurat nå har du 1 aktiv sak.");
   });

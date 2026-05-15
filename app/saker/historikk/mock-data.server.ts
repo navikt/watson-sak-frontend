@@ -5,8 +5,8 @@ import {
   leggTilManuellHendelse as _leggTilManuellHendelse,
 } from "~/testing/mock-store/historikk.server";
 
-export function hentHistorikk(request: Request, sakId: string) {
-  return _hentHistorikk(hentMockState(request), sakId);
+export function hentHistorikk(request: Request, sakId: number | string) {
+  return _hentHistorikk(hentMockState(request), String(sakId));
 }
 
 export function leggTilHendelse(

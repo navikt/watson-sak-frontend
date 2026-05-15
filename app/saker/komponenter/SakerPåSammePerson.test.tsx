@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
-import { lagMockSakUuid } from "~/saker/mock-uuid";
+import { lagMockSakId } from "~/saker/mock-uuid";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { SakerPåSammePerson } from "./SakerPåSammePerson";
 
@@ -10,7 +10,7 @@ function lagKontrollsak(
   overrides: Partial<KontrollsakResponse> = {},
 ): KontrollsakResponse {
   return {
-    id: lagMockSakUuid(idNum, 1),
+    id: lagMockSakId(idNum, 1),
     personIdent: "12345678901",
     personNavn: "Ola Nordmann",
     saksbehandlere: {
@@ -26,7 +26,7 @@ function lagKontrollsak(
     blokkert: null,
     ytelser: [
       {
-        id: lagMockSakUuid(`${idNum}1`, 1),
+        id: crypto.randomUUID(),
         type: "Foreldrepenger",
         periodeFra: "2022-01-01",
         periodeTil: "2025-01-01",
@@ -34,9 +34,9 @@ function lagKontrollsak(
       },
     ],
     merking: null,
-    resultat: null,
     opprettet: "2026-02-01T00:00:00Z",
     oppdatert: null,
+    oppgaver: [],
     ...overrides,
   };
 }
@@ -63,13 +63,13 @@ function renderMedRouter(ui: React.ReactNode) {
 describe("SakerPåSammePerson", () => {
   it("rendrer ingenting når lista er tom", () => {
     const { container } = renderMedRouter(
-      <SakerPåSammePerson saker={[]} gjeldendeSakId={lagMockSakUuid("105", 1)} />,
+      <SakerPåSammePerson saker={[]} gjeldendeSakId={lagMockSakId("105", 1)} />,
     );
     expect(container.firstChild).toBeNull();
   });
 
   it("rendrer ingenting når alle saker er gjeldende sak", () => {
-    const sakId = lagMockSakUuid("105", 1);
+    const sakId = lagMockSakId("105", 1);
     const { container } = renderMedRouter(
       <SakerPåSammePerson saker={[lagKontrollsak("105")]} gjeldendeSakId={sakId} />,
     );
@@ -80,7 +80,7 @@ describe("SakerPåSammePerson", () => {
     renderMedRouter(
       <SakerPåSammePerson
         saker={[lagKontrollsak("203")]}
-        gjeldendeSakId={lagMockSakUuid("105", 1)}
+        gjeldendeSakId={lagMockSakId("105", 1)}
       />,
     );
 
@@ -92,7 +92,7 @@ describe("SakerPåSammePerson", () => {
     renderMedRouter(
       <SakerPåSammePerson
         saker={[lagKontrollsak("203")]}
-        gjeldendeSakId={lagMockSakUuid("105", 1)}
+        gjeldendeSakId={lagMockSakId("105", 1)}
       />,
     );
 
@@ -107,7 +107,7 @@ describe("SakerPåSammePerson", () => {
     renderMedRouter(
       <SakerPåSammePerson
         saker={[lagKontrollsak("203")]}
-        gjeldendeSakId={lagMockSakUuid("105", 1)}
+        gjeldendeSakId={lagMockSakId("105", 1)}
       />,
     );
 

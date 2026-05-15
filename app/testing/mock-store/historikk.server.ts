@@ -37,7 +37,7 @@ function leggTilBackendHendelse(
     hendelseId: lagId(state),
     tidspunkt: tidspunkt ?? new Date().toISOString(),
     hendelsesType: type,
-    sakId,
+    sakId: undefined,
     ...snapshot,
   };
 
@@ -90,7 +90,7 @@ export function leggTilHendelse(
 ) {
   return leggTilBackendHendelse(
     state,
-    sak.id,
+    String(sak.id),
     type,
     {
       ...lagSnapshotFraKontrollsak(sak),
@@ -107,19 +107,20 @@ export function leggTilManuellHendelse(
   notat: string,
   tidspunkt: string,
 ): SakHendelse {
+  const sakIdKey = String(sak.id);
   const hendelse: SakHendelse = {
     hendelseId: lagId(state),
     tidspunkt,
     hendelsesType: "MANUELL_NOTAT",
-    sakId: sak.id,
+    sakId: undefined,
     tittel,
     notat,
     ...lagSnapshotFraKontrollsak(sak),
   };
 
-  const eksisterende = state.historikk.get(sak.id) ?? [];
+  const eksisterende = state.historikk.get(sakIdKey) ?? [];
   eksisterende.push(hendelse);
-  state.historikk.set(sak.id, eksisterende);
+  state.historikk.set(sakIdKey, eksisterende);
 
   return hendelse;
 }
@@ -143,21 +144,11 @@ export function genererHistorikkForSaker(
   for (const sak of saker) {
     leggTilBackendHendelse(
       tempState,
-      sak.id,
+      String(sak.id),
       "SAK_OPPRETTET",
       lagSnapshotFraKontrollsak(sak),
       sak.opprettet,
     );
-
-    if (sak.resultat?.utredning) {
-      leggTilBackendHendelse(
-        tempState,
-        sak.id,
-        "AVKLARING_OPPRETTET",
-        lagSnapshotFraKontrollsak(sak),
-        sak.resultat.utredning.opprettet,
-      );
-    }
   }
 
   return tempState.nesteHistorikkId;

@@ -21,7 +21,7 @@ describe("Kontrollsak-kontrakter", () => {
   it("parser en backend-shapet kontrollsak", () => {
     expect(
       kontrollsakResponseSchema.parse({
-        id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        id: 42,
         personIdent: "12345678901",
         saksbehandlere: {
           ansvarlig: {
@@ -52,19 +52,11 @@ describe("Kontrollsak-kontrakter", () => {
           },
         ],
         merking: "PRIORITERT",
-        resultat: {
-          utredning: {
-            id: "8fa85f64-5717-4562-b3fc-2c963f66afa6",
-            opprettet: "2026-03-20T12:34:56Z",
-            resultat: "INFOSAK",
-          },
-          forvaltning: null,
-          strafferettsligVurdering: null,
-        },
         opprettet: "2026-03-20T12:34:56Z",
         oppdatert: null,
       }),
     ).toMatchObject({
+      id: 42,
       status: "OPPRETTET",
       personNavn: null,
       ytelser: [{ type: "Dagpenger" }],
@@ -72,10 +64,10 @@ describe("Kontrollsak-kontrakter", () => {
     });
   });
 
-  it("tillater nullable resultat og oppdatert", () => {
+  it("tillater nullable oppdatert og ansvarlig", () => {
     expect(
       kontrollsakResponseSchema.parse({
-        id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        id: 99,
         personIdent: "12345678901",
         saksbehandlere: {
           ansvarlig: null,
@@ -94,13 +86,12 @@ describe("Kontrollsak-kontrakter", () => {
         prioritet: "NORMAL",
         ytelser: [],
         merking: null,
-        resultat: null,
         opprettet: "2026-03-20T12:34:56Z",
         oppdatert: null,
       }),
     ).toMatchObject({
-      resultat: null,
       oppdatert: null,
+      saksbehandlere: { eier: null },
     });
   });
 
@@ -109,7 +100,7 @@ describe("Kontrollsak-kontrakter", () => {
       kontrollsakPageResponseSchema.parse({
         items: [
           {
-            id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+            id: 1,
             personIdent: "12345678901",
             saksbehandlere: {
               ansvarlig: null,
@@ -128,7 +119,6 @@ describe("Kontrollsak-kontrakter", () => {
             prioritet: "NORMAL",
             ytelser: [],
             merking: null,
-            resultat: null,
             opprettet: "2026-03-20T12:34:56Z",
             oppdatert: null,
           },
@@ -150,7 +140,7 @@ describe("Kontrollsak-kontrakter", () => {
         hendelseId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
         tidspunkt: "2026-03-31T10:15:00Z",
         hendelsesType: "SAK_OPPRETTET",
-        sakId: "4fa85f64-5717-4562-b3fc-2c963f66afa6",
+        sakId: 42,
         kategori: "ARBEID",
         prioritet: "NORMAL",
         status: "OPPRETTET",
@@ -172,21 +162,20 @@ describe("Kontrollsak-kontrakter", () => {
     }).not.toThrow();
   });
 
-  it("bruker backend-valide UUID-er i aktive mock-kontrollsaker og generert historikk", () => {
+  it("bruker numeriske sak-IDer og gyldige UUID-er for ytelser og hendelser", () => {
     const mockKontrollsaker = hentFordelingssaker(state());
     const mockMineKontrollsaker = lagInitialMineKontrollsaker();
     const aktiveMockSaker = [...mockKontrollsaker, ...mockMineKontrollsaker];
 
     for (const sak of aktiveMockSaker) {
-      expect(sak.id).toMatch(uuidMønster);
+      expect(typeof sak.id).toBe("number");
 
       for (const ytelse of sak.ytelser) {
         expect(ytelse.id).toMatch(uuidMønster);
       }
 
-      for (const hendelse of hentHistorikk(testRequest, sak.id)) {
+      for (const hendelse of hentHistorikk(testRequest, String(sak.id))) {
         expect(hendelse.hendelseId).toMatch(uuidMønster);
-        expect(hendelse.sakId).toMatch(uuidMønster);
       }
     }
   });

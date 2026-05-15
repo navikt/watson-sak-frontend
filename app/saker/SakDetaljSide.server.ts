@@ -117,8 +117,8 @@ export function loader({ request, params }: Route.LoaderArgs) {
   if (!sak) {
     throw data("Sak ikke funnet", { status: 404 });
   }
-  const historikk = hentHistorikk(request, sak.id);
-  const filer = hentFilerForSak(request, sak.id);
+  const historikk = hentHistorikk(request, String(sak.id));
+  const filer = hentFilerForSak(request, String(sak.id));
   const andreSaker = alleSaker.filter(
     (annenSak) => annenSak.personIdent === sak.personIdent && annenSak.id !== sak.id,
   );

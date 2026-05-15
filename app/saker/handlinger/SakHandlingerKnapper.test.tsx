@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it, vi } from "vitest";
-import { lagMockSakUuid } from "~/saker/mock-uuid";
+import { lagMockSakId } from "~/saker/mock-uuid";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { SakHandlingerKnapper } from "./SakHandlingerKnapper";
 
@@ -15,7 +15,7 @@ vi.mock("~/auth/innlogget-bruker", () => ({
 
 function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
-    id: lagMockSakUuid("101", 9),
+    id: lagMockSakId("101", 9),
     personIdent: "10987654321",
     personNavn: "Ola Nordmann",
     saksbehandlere: {
@@ -31,7 +31,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     prioritet: "NORMAL",
     ytelser: [
       {
-        id: "00000000-0000-4000-8000-000000090101",
+        id: "ytelse-1",
         type: "Sykepenger",
         periodeFra: "2026-01-01",
         periodeTil: "2026-01-31",
@@ -39,9 +39,9 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
       },
     ],
     merking: null,
-    resultat: null,
     opprettet: "2026-02-03T10:11:12Z",
     oppdatert: null,
+    oppgaver: [],
     ...overrides,
   };
 }

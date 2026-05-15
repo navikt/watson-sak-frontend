@@ -13,7 +13,7 @@ function renderMedRouter(ui: React.ReactNode) {
 
 const rader: SakslisteRad[] = [
   {
-    id: "1",
+    id: 1,
     saksreferanse: "201",
     detaljHref: "/saker/201",
     navn: "Ola Nordmann",

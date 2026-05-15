@@ -101,7 +101,7 @@ export async function opprettKontrollsak({
       merking: payload.merking,
       ytelser: payload.ytelser,
     });
-    return { id: kontrollsak.id };
+    return { id: String(kontrollsak.id) };
   }
 
   if (!BACKEND_API_URL) {
@@ -125,7 +125,7 @@ export async function opprettKontrollsak({
     throw new Error("Kunne ikke opprette kontrollsak.");
   }
 
-  const body = (await response.json()) as { id: string };
+  const body = (await response.json()) as { id: number };
 
-  return { id: body.id };
+  return { id: String(body.id) };
 }

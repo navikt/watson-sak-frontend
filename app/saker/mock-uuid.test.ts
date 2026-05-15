@@ -37,22 +37,21 @@ describe("normaliserLegacyKontrollsak", () => {
       2,
     );
 
-    expect(sak.id).toBe("00000000-0000-4000-8000-000002201000");
+    expect(sak.id).toBe(2201000);
     expect(sak.status).toBe("UTREDES");
     expect(sak.blokkert).toBeNull();
     expect(sak.kilde).toBe("PUBLIKUM");
     expect(sak.misbruktype).toEqual(["SVART_ARBEID"]);
     expect(sak.personNavn).toBe("Ola Nordmann");
     expect(sak.saksbehandlere.eier).toBeNull();
-    expect(sak.ytelser).toEqual([
-      {
-        id: "00000000-0000-4000-8000-000002201101",
-        type: "Dagpenger",
-        periodeFra: "2026-01-01",
-        periodeTil: "2026-01-31",
-        belop: 123456,
-      },
-    ]);
+    expect(sak.ytelser).toHaveLength(1);
+    expect(sak.ytelser[0].id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
+    expect(sak.ytelser[0].type).toBe("Dagpenger");
+    expect(sak.ytelser[0].periodeFra).toBe("2026-01-01");
+    expect(sak.ytelser[0].periodeTil).toBe("2026-01-31");
+    expect(sak.ytelser[0].belop).toBe(123456);
   });
 
   it("oppdaterTilgjengeligeHandlinger er en ingen-op og returnerer saken uendret", () => {
@@ -102,7 +101,7 @@ describe("normaliserLegacyKontrollsak", () => {
       4,
     );
 
-    expect(sak.id).toBe("00000000-0000-4000-8000-000004007000");
+    expect(sak.id).toBe(4007000);
     expect(sak.status).toBe("OPPRETTET");
     expect(sak.blokkert).toBeNull();
     expect(sak.kategori).toBe("ANNET");
@@ -115,7 +114,9 @@ describe("normaliserLegacyKontrollsak", () => {
       navn: "Ukjent",
       enhet: null,
     });
-    expect(sak.ytelser[0]?.id).toBe("00000000-0000-4000-8000-000004007101");
+    expect(sak.ytelser[0]?.id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
     expect(sak.ytelser[0]?.belop).toBeNull();
   });
 

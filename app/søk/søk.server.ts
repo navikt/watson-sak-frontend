@@ -13,7 +13,7 @@ export function søkSaker(request: Request, søketekst: string): Søksak[] {
   const alleSaker: Søksak[] = hentAlleSaker(request);
 
   return alleSaker.filter((sak) => {
-    if (sak.id.toLowerCase().includes(normalisert)) return true;
+    if (String(sak.id).includes(normalisert)) return true;
     if (getSaksreferanse(sak.id).toLowerCase().includes(normalisert)) return true;
     if (getPersonIdent(sak).includes(normalisert)) return true;
 

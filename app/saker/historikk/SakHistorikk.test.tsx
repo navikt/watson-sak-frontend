@@ -10,7 +10,7 @@ function lagBackendHendelse(overrides: Partial<SakHendelse> = {}): SakHendelse {
     hendelseId: "00000000-0000-4000-8000-000000000123",
     tidspunkt: "2026-03-31T10:15:00Z",
     hendelsesType: "SAK_OPPRETTET",
-    sakId: "00000000-0000-4000-8000-000000000124",
+    sakId: 1,
     kategori: "ARBEID",
     prioritet: "NORMAL",
     status: "OPPRETTET",
@@ -32,7 +32,7 @@ describe("SakHistorikk", () => {
   });
 
   it("renderer backend hendelsestype og statusfelt", () => {
-    renderMedRouter(<SakHistorikk sakId="test-sak-id" hendelser={[lagBackendHendelse()]} />);
+    renderMedRouter(<SakHistorikk sakId={1} hendelser={[lagBackendHendelse()]} />);
 
     expect(screen.getByText("Sak opprettet")).toBeDefined();
     expect(screen.getByText(/Status: Opprettet/)).toBeDefined();
@@ -41,7 +41,7 @@ describe("SakHistorikk", () => {
   it("viser historikktidspunkt i norsk tidssone", () => {
     renderMedRouter(
       <SakHistorikk
-        sakId="test-sak-id"
+        sakId={1}
         hendelser={[lagBackendHendelse({ tidspunkt: "2026-01-01T10:00:00Z" })]}
       />,
     );
@@ -52,7 +52,7 @@ describe("SakHistorikk", () => {
   it("renderer avklaringshendelse med oppdatert status", () => {
     renderMedRouter(
       <SakHistorikk
-        sakId="test-sak-id"
+        sakId={1}
         hendelser={[
           lagBackendHendelse({
             hendelsesType: "AVKLARING_OPPRETTET",
@@ -69,7 +69,7 @@ describe("SakHistorikk", () => {
   it("renderer beskrivelse for statusendring", () => {
     renderMedRouter(
       <SakHistorikk
-        sakId="test-sak-id"
+        sakId={1}
         hendelser={[
           lagBackendHendelse({
             hendelsesType: "STATUS_ENDRET",
@@ -87,7 +87,7 @@ describe("SakHistorikk", () => {
   it("renderer historikk for endret ansvarlig saksbehandler", () => {
     renderMedRouter(
       <SakHistorikk
-        sakId="test-sak-id"
+        sakId={1}
         hendelser={[
           lagBackendHendelse({
             hendelsesType: "ANSVARLIG_SAKSBEHANDLER_ENDRET",
@@ -108,7 +108,7 @@ describe("SakHistorikk", () => {
   it("renderer historikk for fjernet deling", () => {
     renderMedRouter(
       <SakHistorikk
-        sakId="test-sak-id"
+        sakId={1}
         hendelser={[
           lagBackendHendelse({
             hendelsesType: "TILGANG_FJERNET",
@@ -129,7 +129,7 @@ describe("SakHistorikk", () => {
   it("renderer sak satt på vent med blokkeringsårsak og status", () => {
     renderMedRouter(
       <SakHistorikk
-        sakId="test-sak-id"
+        sakId={1}
         hendelser={[
           lagBackendHendelse({
             hendelsesType: "SAK_SATT_PA_VENT",
@@ -147,7 +147,7 @@ describe("SakHistorikk", () => {
   it("renderer gjenoppta som vanlig gjenopptak for ventesaker", () => {
     renderMedRouter(
       <SakHistorikk
-        sakId="test-sak-id"
+        sakId={1}
         hendelser={[
           lagBackendHendelse({
             hendelsesType: "SAK_GJENOPPTATT",
@@ -163,7 +163,7 @@ describe("SakHistorikk", () => {
   it("renderer gjenoppta som tatt ut av bero for bero-saker", () => {
     renderMedRouter(
       <SakHistorikk
-        sakId="test-sak-id"
+        sakId={1}
         hendelser={[
           lagBackendHendelse({
             hendelsesType: "SAK_GJENOPPTATT",
@@ -179,7 +179,7 @@ describe("SakHistorikk", () => {
   it("renderer fritekst for manuelt historikkinnslag", () => {
     renderMedRouter(
       <SakHistorikk
-        sakId="test-sak-id"
+        sakId={1}
         hendelser={[
           lagBackendHendelse({
             hendelsesType: "MANUELL_NOTAT",
@@ -198,7 +198,7 @@ describe("SakHistorikk", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-05-06T08:15:00"));
 
-    renderMedRouter(<SakHistorikk sakId="test-sak-id" hendelser={[lagBackendHendelse()]} />);
+    renderMedRouter(<SakHistorikk sakId={1} hendelser={[lagBackendHendelse()]} />);
 
     vi.setSystemTime(new Date("2026-05-06T09:42:00"));
     act(() => {

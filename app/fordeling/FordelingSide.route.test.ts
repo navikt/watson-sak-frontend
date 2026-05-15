@@ -60,7 +60,7 @@ describe("FordelingSide action", () => {
 
     const formData = new FormData();
     formData.set("handling", "tildel");
-    formData.set("sakId", tildelbarKontrollsakId);
+    formData.set("sakId", String(tildelbarKontrollsakId));
     formData.set("navIdent", "Z123456");
 
     await action({

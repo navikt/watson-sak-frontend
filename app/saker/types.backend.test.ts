@@ -6,11 +6,11 @@ import {
 } from "./types.backend";
 
 const basisSak = {
-  id: "00000000-0000-4000-8000-000000000001",
+  id: 1,
   personIdent: "12345678901",
   personNavn: "Ola Nordmann",
   saksbehandlere: {
-    eier: { navIdent: "Z123456", navn: "Ola Saksbehandler", enhet: "4812" },
+    ansvarlig: { navIdent: "Z123456", navn: "Ola Saksbehandler", enhet: "4812" },
     deltMed: [],
     opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
   },
@@ -21,7 +21,6 @@ const basisSak = {
   prioritet: "NORMAL",
   ytelser: [],
   merking: null,
-  resultat: null,
   opprettet: "2026-01-01T00:00:00Z",
   oppdatert: null,
 } as const;
@@ -100,7 +99,7 @@ describe("kontrollsakHendelseResponseSchema – historikkfelt", () => {
     hendelseId: "00000000-0000-4000-8000-000000000099",
     tidspunkt: "2026-01-01T10:00:00Z",
     hendelsesType: "STATUS_ENDRET",
-    sakId: "00000000-0000-4000-8000-000000000001",
+    sakId: 1,
     kategori: "ARBEID",
     prioritet: "NORMAL",
     status: "UTREDES",

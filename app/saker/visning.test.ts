@@ -16,7 +16,7 @@ import {
 
 function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
-    id: "00000000-0000-4000-8000-000000000001",
+    id: 7,
     personIdent: "10987654321",
     personNavn: "Kari Nordmann",
     saksbehandlere: {
@@ -40,7 +40,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     blokkert: null,
     ytelser: [
       {
-        id: "00000000-0000-4000-8000-000000000002",
+        id: "ytelse-1",
         type: "Sykepenger",
         periodeFra: "2026-01-01",
         periodeTil: "2026-01-31",
@@ -48,9 +48,9 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
       },
     ],
     merking: "PRIORITERT",
-    resultat: null,
     opprettet: "2026-01-01T00:00:00Z",
     oppdatert: null,
+    oppgaver: [],
     ...overrides,
   };
 }
@@ -82,7 +82,7 @@ describe("sak-visning", () => {
     expect(
       formaterPeriodeForYtelser([
         {
-          id: "00000000-0000-4000-8000-000000000003",
+          id: "ytelse-1",
           type: "Dagpenger",
           periodeFra: "2026-01-01",
           periodeTil: "2026-12-31",

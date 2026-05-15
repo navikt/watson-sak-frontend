@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { lagMockSakId } from "~/saker/mock-uuid";
 import { resetDefaultSession } from "~/testing/mock-store/session.server";
 import SakDetaljSide, { loader } from "./SakDetaljSide.route";
 
@@ -17,19 +18,21 @@ vi.mock("~/auth/innlogget-bruker", () => ({
 }));
 
 const testRequest = new Request("http://localhost");
+const testSakId = String(lagMockSakId("201", 2));
+const deltMedSakId = String(lagMockSakId("101", 1));
 
-function renderDetaljside() {
+function renderDetaljside(sakId = testSakId) {
   const router = createMemoryRouter(
     [
       {
         path: "/saker/:sakId",
         loader: ({ params }) =>
-          loader({ request: testRequest, params: { sakId: params.sakId ?? "101" } } as never),
+          loader({ request: testRequest, params: { sakId: params.sakId ?? sakId } } as never),
         Component: SakDetaljSide,
       },
     ],
     {
-      initialEntries: ["/saker/101"],
+      initialEntries: [`/saker/${sakId}`],
     },
   );
 
@@ -63,7 +66,7 @@ describe("SakDetaljSide render", () => {
   }, 15000);
 
   it("viser saksbehandlere over handlinger med ansvarlig og delte brukere", async () => {
-    renderDetaljside();
+    renderDetaljside(deltMedSakId);
 
     const saksbehandlereHeading = await screen.findByRole("heading", { name: "Saksbehandlere" });
     const handlingerHeading = await screen.findByRole("heading", { name: "Handlinger" });

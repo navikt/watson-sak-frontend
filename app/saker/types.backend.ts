@@ -51,39 +51,28 @@ const kontrollsakYtelseSchema = z.object({
   belop: z.number().nullable(),
 });
 
-const kontrollsakUtredningSchema = z.object({
-  id: z.string().uuid(),
-  opprettet: z.string(),
-  resultat: z.string(),
-});
-
-const kontrollsakForvaltningSchema = z.object({
-  id: z.string().uuid(),
-  dato: z.string(),
-  resultat: z.string(),
-});
-
 const kontrollsakSaksbehandlerSchema = z.object({
   navIdent: z.string(),
   navn: z.string(),
   enhet: z.string().nullable(),
 });
 
-const kontrollsakStrafferettsligVurderingSchema = z.object({
-  id: z.string().uuid(),
-  dato: z.string(),
-  resultat: z.string(),
-});
-
-const kontrollsakResultatSchema = z.object({
-  utredning: kontrollsakUtredningSchema.nullable(),
-  forvaltning: kontrollsakForvaltningSchema.nullable(),
-  strafferettsligVurdering: kontrollsakStrafferettsligVurderingSchema.nullable(),
+const oppgaveKortSchema = z.object({
+  oppgaveId: z.number(),
+  status: z.string(),
+  tema: z.string().nullable(),
+  oppgavetype: z.string().nullable(),
+  tildeltEnhetsnr: z.string().nullable(),
+  tilordnetRessurs: z.string().nullable(),
+  aktivDato: z.string().nullable(),
+  fristDato: z.string().nullable(),
+  sistEndret: z.string().nullable(),
+  opprettet: z.string(),
 });
 
 export const kontrollsakResponseSchema = z
   .object({
-    id: z.string().uuid(),
+    id: z.number(),
     personIdent: z.string(),
     personNavn: z.string().nullable().optional(),
     saksbehandlere: saksbehandlereSchema,
@@ -95,7 +84,7 @@ export const kontrollsakResponseSchema = z
     prioritet: kontrollsakPrioritetSchema,
     ytelser: z.array(kontrollsakYtelseSchema),
     merking: z.string().nullable(),
-    resultat: kontrollsakResultatSchema.nullable(),
+    oppgaver: z.array(oppgaveKortSchema).default([]),
     opprettet: z.string(),
     oppdatert: z.string().nullable(),
   })
@@ -116,24 +105,24 @@ export const kontrollsakHendelseResponseSchema = z.object({
   hendelseId: z.string().uuid(),
   tidspunkt: z.string(),
   hendelsesType: z.string(),
-  sakId: z.string().uuid(),
-  kategori: kontrollsakKategoriSchema,
-  prioritet: kontrollsakPrioritetSchema,
-  status: kontrollsakStatusSchema,
+  sakId: z.number().nullable().optional(),
+  kategori: kontrollsakKategoriSchema.nullable().optional(),
+  prioritet: kontrollsakPrioritetSchema.nullable().optional(),
+  status: kontrollsakStatusSchema.nullable().optional(),
+  ytelseTyper: z.array(z.string()).default([]),
+  kilde: kontrollsakKildeSchema.nullable().optional(),
   blokkert: blokkeringsarsakSchema.nullable().optional(),
   beskrivelse: z.string().nullable().optional(),
-  ytelseTyper: z.array(z.string()),
-  berortSaksbehandlerNavn: z.string().optional(),
-  berortSaksbehandlerNavIdent: z.string().optional(),
-  berortSaksbehandlerEnhet: z.string().optional(),
 });
 
 export type KontrollsakYtelse = z.infer<typeof kontrollsakYtelseSchema>;
 export type KontrollsakSaksbehandler = z.infer<typeof kontrollsakSaksbehandlerSchema>;
 export type KontrollsakResponse = z.infer<typeof kontrollsakResponseSchema>;
 export type KontrollsakPageResponse = z.infer<typeof kontrollsakPageResponseSchema>;
+export type KontrollsakHendelse = z.infer<typeof kontrollsakHendelseResponseSchema>;
 export type KontrollsakStatus = z.infer<typeof kontrollsakStatusSchema>;
 export type Blokkeringsarsak = z.infer<typeof blokkeringsarsakSchema>;
 export type KontrollsakKategori = z.infer<typeof kontrollsakKategoriSchema>;
 export type KontrollsakKilde = z.infer<typeof kontrollsakKildeSchema>;
 export type KontrollsakMisbrukstype = z.infer<typeof kontrollsakMisbrukstypeSchema>;
+export type OppgaveKort = z.infer<typeof oppgaveKortSchema>;
