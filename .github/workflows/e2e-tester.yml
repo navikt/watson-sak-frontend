@@ -18,25 +18,27 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Installer pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Sett opp Node.js
         uses: actions/setup-node@v5
         with:
           node-version: "24"
-          cache: "npm"
+          cache: "pnpm"
           registry-url: "https://npm.pkg.github.com"
           scope: "@navikt"
 
       - name: Installer avhengigheter
-        run: npm ci
+        run: pnpm install --frozen-lockfile
         env:
           NODE_AUTH_TOKEN: ${{ secrets.READER_TOKEN }}
-          NPM_AUTH_TOKEN: ${{ secrets.READER_TOKEN }}
 
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium
 
       - name: Kjør E2E-tester
-        run: npm run test:e2e
+        run: pnpm run test:e2e
         env:
           CLUSTER: dev-gcp
           FARO_URL: https://telemetry.ekstern.dev.nav.no/collect
