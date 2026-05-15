@@ -4,7 +4,7 @@ COPY package.json pnpm-lock.yaml .npmrc ./
 
 RUN corepack enable && corepack prepare --activate
 RUN --mount=type=secret,id=NODE_AUTH_TOKEN sh -c \
-    'export NODE_AUTH_TOKEN=$(cat /run/secrets/NODE_AUTH_TOKEN) && \
+    'echo "//npm.pkg.github.com/:_authToken=$(cat /run/secrets/NODE_AUTH_TOKEN)" >> .npmrc && \
     pnpm install --frozen-lockfile'
 
 FROM node:24-alpine AS builder
