@@ -19,7 +19,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
-    "verify": "concurrently -n test,lint,format,types,unused -c green,yellow,magenta,cyan,blue \"npm run test\" \"npm run lint\" \"npm run format\" \"npm run typecheck\" \"npm run unused\""
+    "verify": "concurrently -n test,lint,format,types,unused -c green,yellow,magenta,cyan,blue \"pnpm run test\" \"pnpm run lint\" \"pnpm run format\" \"pnpm run typecheck\" \"pnpm run unused\""
   },
   "dependencies": {
     "@conform-to/react": "^1.19.1",
@@ -66,7 +66,10 @@
     "vite": "^8.0.8",
     "vitest": "^4.1.4"
   },
-  "overrides": {
-    "protobufjs": "8.0.2"
+  "packageManager": "pnpm@10.30.2",
+  "pnpm": {
+    "overrides": {
+      "protobufjs": "8.0.2"
+    }
   }
 }
