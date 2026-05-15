@@ -19,14 +19,14 @@ test.describe("Oppretting og tildeling av sak", () => {
     await page.getByLabel("Kilde").selectOption("NAV_KONTROLL");
     await page.getByRole("button", { name: "Opprett sak" }).click();
 
-    await expect(page).toHaveURL(/\/saker\/200$/);
-    await expect(page.getByRole("heading", { name: /^Sak 200/ })).toBeVisible();
+    await expect(page).toHaveURL(/\/saker\/10000$/);
+    await expect(page.getByRole("heading", { name: /^Sak 10000/ })).toBeVisible();
 
     await page.goto("/fordeling", { waitUntil: "networkidle" });
 
     const nySakRad = page
       .locator("tbody tr")
-      .filter({ hasText: "200" })
+      .filter({ hasText: "10000" })
       .filter({ hasText: "Dokumentfalsk" });
 
     await expect(nySakRad).toHaveCount(1);
@@ -46,11 +46,11 @@ test.describe("Oppretting og tildeling av sak", () => {
 
     await page.goto("/mine-saker", { waitUntil: "networkidle" });
 
-    const minSakLenke = page.locator("#maincontent").getByRole("link", { name: "200" });
+    const minSakLenke = page.locator("#maincontent").getByRole("link", { name: "10000" });
     await expect(minSakLenke).toBeVisible();
 
     await minSakLenke.click();
-    await expect(page).toHaveURL(/\/saker\/200$/);
-    await expect(page.getByRole("heading", { name: /^Sak 200/ })).toBeVisible();
+    await expect(page).toHaveURL(/\/saker\/10000$/);
+    await expect(page.getByRole("heading", { name: /^Sak 10000/ })).toBeVisible();
   });
 });
