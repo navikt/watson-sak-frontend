@@ -148,16 +148,10 @@ describe("ufordelte-saker", () => {
   });
 
   it("sorterer saksid numerisk for tall-IDer", () => {
-    const saker = [
-      lagSak({ id: 10001 }),
-      lagSak({ id: 10002 }),
-      lagSak({ id: 10003 }),
-    ];
+    const saker = [lagSak({ id: 10001 }), lagSak({ id: 10002 }), lagSak({ id: 10003 })];
 
     expect(sorterUfordelteSaker(saker, "saksid", "stigende").map((sak) => sak.id)).toEqual([
-      10001,
-      10002,
-      10003,
+      10001, 10002, 10003,
     ]);
   });
 });

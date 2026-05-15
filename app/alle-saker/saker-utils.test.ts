@@ -162,11 +162,7 @@ describe("filtrerSaker", () => {
 
 describe("sorterSaker", () => {
   it("sorterer saksid numerisk (ikke leksikografisk)", () => {
-    const saker = [
-      lagSak({ id: 10 }),
-      lagSak({ id: 2 }),
-      lagSak({ id: 100 }),
-    ];
+    const saker = [lagSak({ id: 10 }), lagSak({ id: 2 }), lagSak({ id: 100 })];
 
     const sortert = sorterSaker(saker, "saksid", "asc");
 
