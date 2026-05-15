@@ -12,7 +12,7 @@ describe("varsler mock-data", () => {
     resetDefaultSession();
   });
 
-  it("kan markere et varsel som lest uten å slette det fra datalaget", () => {
+  it("kan markere et varsel som lest uten å slette det fra varsellisten", () => {
     const antallVarslerFør = state().varsler.length;
     markerVarselSomLest(state(), "varsel-107");
 
@@ -21,7 +21,7 @@ describe("varsler mock-data", () => {
     expect(hentUlesteVarsler(state()).map((varsel) => varsel.id)).not.toContain("varsel-107");
   });
 
-  it("bruker normaliserte kontrollsak-UUID-er i varsel-lenker", () => {
+  it("bruker numeriske sak-IDer i varsel-lenker", () => {
     const varsler = hentUlesteVarsler(state());
 
     expect(varsler.find((varsel) => varsel.id === "varsel-101")?.sakId).toBe("101");

@@ -10,7 +10,7 @@ describe("normaliserLegacyKontrollsak", () => {
     nullstillMockStatushistorikk();
   });
 
-  it("mapper legacy-felter til backend-shape og lager stabile mock-uuid-er", () => {
+  it("mapper legacy-felter til backend-shape med numeriske sak-IDer og UUID-er for ytelser", () => {
     const sak = normaliserLegacyKontrollsak({
       id: "201",
       personIdent: "12345678901",

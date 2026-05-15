@@ -305,7 +305,7 @@ async function backendAction(
       return { ok: true };
     }
     case "koble_sak": {
-      const kobletSakIdRaw = formData.get("kobletSakId");
+      const kobletSakIdRaw = formData.get("relatertSakId");
       if (typeof kobletSakIdRaw !== "string" || !kobletSakIdRaw.trim()) {
         return {
           ok: false,
