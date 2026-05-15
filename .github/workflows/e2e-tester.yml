@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Installer pnpm
-        uses: pnpm/action-setup@3e83581 # v4
+        uses: pnpm/action-setup@3e835812ef01165f4f8ae08ade56da44427ed4e0 # v4
 
       - name: Sett opp Node.js
         uses: actions/setup-node@v5
