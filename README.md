@@ -23,13 +23,12 @@ TODO
 
 ## Forutsetninger
 
-Du må ha nyeste LTS-versjonen av Node og NPM installert, i tillegg til browserne til `playwright` (for å kjøre tester).
+Du må ha nyeste LTS-versjonen av Node og pnpm installert, i tillegg til browserne til `playwright` (for å kjøre tester).
 
 ```bash
 brew install node # installerer node om du ikke har det allerede
-npm i -g n # installerer en node version manager for deg
-n lts # installerer nyeste LTS (long-term support)-versjon av Node og NPM
-npx playwright install # installerer headless browsers for Playwright
+corepack enable # aktiverer corepack for å bruke pnpm
+pnpm exec playwright install # installerer headless browsers for Playwright
 ```
 
 For utvikling mot lokal backend trenger du også `gcloud` og `k9s`. Se utviklings-seksjonen for mer informasjon om hvordan det settes opp.
@@ -46,30 +45,30 @@ cd watson-sak
 2. Installer avhengigheter:
 
 ```bash
-npm install
+pnpm install
 ```
 
 3. Start utviklingsserveren:
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 4. Åpne [http://localhost:5174](http://localhost:5174) i nettleseren
 
 ## Tilgjengelige scripts
 
-- `npm run dev` - Starter utviklingsserveren
-- `npm run dev:local` - Starter utviklingsserveren, men kjører mot lokal backend
-- `npm run build` - Bygger applikasjonen for produksjon
-- `npm run start` - Starter produksjonsserveren
-- `npm run test:e2e` – Kjører ende-til-ende tester
-- `npm run lint` - Kjører Oxlint
-- `npm run typecheck` - Kjører TypeScript typesjekk
-- `npm run format` - Sjekker Oxfmt formatering
-- `npm run format:fix` - Fikser Oxfmt formatering
-- `npm run unused` - Sjekker om du har ubrukt kode eller avhengigheter
-- `npm run verify` – Kjører lint, typecheck, format og unused
+- `pnpm run dev` - Starter utviklingsserveren
+- `pnpm run dev:local` - Starter utviklingsserveren, men kjører mot lokal backend
+- `pnpm run build` - Bygger applikasjonen for produksjon
+- `pnpm run start` - Starter produksjonsserveren
+- `pnpm run test:e2e` – Kjører ende-til-ende tester
+- `pnpm run lint` - Kjører Oxlint
+- `pnpm run typecheck` - Kjører TypeScript typesjekk
+- `pnpm run format` - Sjekker Oxfmt formatering
+- `pnpm run format:fix` - Fikser Oxfmt formatering
+- `pnpm run unused` - Sjekker om du har ubrukt kode eller avhengigheter
+- `pnpm run verify` – Kjører lint, typecheck, format og unused
 </details>
 
 <details>

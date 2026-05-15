@@ -4,16 +4,16 @@ Watson Sak er en React Router v7-applikasjon (framework mode, SSR) for å admini
 
 ## Kommandoer
 
-- `npm run dev` – utviklingsserver (port 5174)
-- `npm run dev:local` – utviklingsserver mot lokal backend
-- `npm run build` – produksjonsbygg
-- `npm run verify` – kjør **alltid** dette før du anser en oppgave som ferdig (tester, lint, format, typecheck, knip)
-- `npm run test` – Vitest enhetstester, `npm run test -- app/utils/string-utils.test.ts` for enkeltfil
-- `npm run test:e2e` – Playwright e2e-tester, `npx playwright test app/path/to/test.spec.ts` for enkeltfil
-- `npm run typecheck` – React Router typegen + tsc
-- `npm run lint` / `npm run format` – kodekvalitet (Oxlint og Oxfmt)
+- `pnpm run dev` – utviklingsserver (port 5174)
+- `pnpm run dev:local` – utviklingsserver mot lokal backend
+- `pnpm run build` – produksjonsbygg
+- `pnpm run verify` – kjør **alltid** dette før du anser en oppgave som ferdig (tester, lint, format, typecheck, knip)
+- `pnpm run test` – Vitest enhetstester, `pnpm run test -- app/utils/string-utils.test.ts` for enkeltfil
+- `pnpm run test:e2e` – Playwright e2e-tester, `pnpm exec playwright test app/path/to/test.spec.ts` for enkeltfil
+- `pnpm run typecheck` – React Router typegen + tsc
+- `pnpm run lint` / `pnpm run format` – kodekvalitet (Oxlint og Oxfmt)
 
-Når du kjører `npm run verify`, ikke pipe output til `tail` eller andre kommandoer som kan skjule feil fra parallelle deljobber. Hvis output er for stor, les den lagrede outputfilen og sjekk exit-kode/oppsummering for alle deljobber separat: `test`, `lint`, `format`, `typecheck` og `unused`. Ikke rapporter at verify er grønn før alle deljobber har `exited with code 0`.
+Når du kjører `pnpm run verify`, ikke pipe output til `tail` eller andre kommandoer som kan skjule feil fra parallelle deljobber. Hvis output er for stor, les den lagrede outputfilen og sjekk exit-kode/oppsummering for alle deljobber separat: `test`, `lint`, `format`, `typecheck` og `unused`. Ikke rapporter at verify er grønn før alle deljobber har `exited with code 0`.
 
 ## Arkitektur
 
