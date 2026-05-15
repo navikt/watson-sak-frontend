@@ -1,11 +1,10 @@
-import { lagMockSakId } from "~/saker/mock-uuid";
 import { type Varsel, varselSchema } from "~/varsler/typer";
 import type { MockState } from "./session.server";
 
 const rådata: Varsel[] = [
   {
     id: "varsel-101",
-    sakId: String(lagMockSakId("101", 1)),
+    sakId: "101",
     tittel: "Ny aktivitet på sak #101",
     tekst: "Det er registrert en ny vurdering på saken.",
     tidspunkt: "2026-03-10",
@@ -14,7 +13,7 @@ const rådata: Varsel[] = [
   },
   {
     id: "varsel-102",
-    sakId: String(lagMockSakId("102", 1)),
+    sakId: "102",
     tittel: "Sak #102 er oppdatert",
     tekst: "Saken har fått ny status og er klar for videre oppfølging.",
     tidspunkt: "2026-03-11",
@@ -23,7 +22,7 @@ const rådata: Varsel[] = [
   },
   {
     id: "varsel-103",
-    sakId: String(lagMockSakId("103", 1)),
+    sakId: "103",
     tittel: "Ny kommentar på sak #103",
     tekst: "Det har kommet inn en ny kommentar fra saksbehandler.",
     tidspunkt: "2026-03-12",
@@ -32,7 +31,7 @@ const rådata: Varsel[] = [
   },
   {
     id: "varsel-104",
-    sakId: String(lagMockSakId("104", 1)),
+    sakId: "104",
     tittel: "Sak #104 trenger oppfølging",
     tekst: "Fristen nærmer seg og saken bør vurderes i dag.",
     tidspunkt: "2026-03-13",
@@ -41,7 +40,7 @@ const rådata: Varsel[] = [
   },
   {
     id: "varsel-105",
-    sakId: String(lagMockSakId("101", 1)),
+    sakId: "101",
     tittel: "Sak #101 er klar for neste steg",
     tekst: "Alle nødvendige dokumenter er nå tilgjengelige.",
     tidspunkt: "2026-03-14",
@@ -50,7 +49,7 @@ const rådata: Varsel[] = [
   },
   {
     id: "varsel-106",
-    sakId: String(lagMockSakId("102", 1)),
+    sakId: "102",
     tittel: "Sak #102 har ny hendelse",
     tekst: "Det er loggført en ny hendelse i historikken.",
     tidspunkt: "2026-03-15",
@@ -59,7 +58,7 @@ const rådata: Varsel[] = [
   },
   {
     id: "varsel-107",
-    sakId: String(lagMockSakId("103", 1)),
+    sakId: "103",
     tittel: "Sak #103 må vurderes",
     tekst: "Det har kommet inn nye opplysninger som krever vurdering.",
     tidspunkt: "2026-03-16",

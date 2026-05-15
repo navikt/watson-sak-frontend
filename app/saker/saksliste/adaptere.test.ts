@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { lagMockSakId } from "~/saker/mock-uuid";
 import { RouteConfig } from "~/routeConfig";
 import type { FordelingSak } from "~/fordeling/typer";
 import type { KontrollsakResponse } from "~/saker/types.backend";
@@ -7,7 +6,7 @@ import { mapFordelingSakTilSakslisteRad, mapKontrollsakTilSakslisteRad } from ".
 
 function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
-    id: lagMockSakId("201", 2),
+    id: 201,
     personIdent: "10987654321",
     personNavn: "Ola Nordmann",
     saksbehandlere: {
@@ -48,7 +47,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
 
 function lagFordelingSak(overrides: Partial<FordelingSak> = {}): FordelingSak {
   return {
-    id: lagMockSakId("301", 2),
+    id: 301,
     navn: "Kari Nordmann",
     opprettetDato: "2026-03-20",
     oppdatertDato: "2026-03-21",
@@ -61,12 +60,12 @@ function lagFordelingSak(overrides: Partial<FordelingSak> = {}): FordelingSak {
 }
 
 describe("sakslisteadaptere", () => {
-  const kontrollsakId = String(lagMockSakId("201", 2));
-  const fordelingSakId = String(lagMockSakId("301", 2));
+  const kontrollsakId = "201";
+  const fordelingSakId = "301";
 
   it("mapper kontrollsak til standard sakslisterad", () => {
     expect(mapKontrollsakTilSakslisteRad(lagKontrollsak())).toEqual({
-      id: lagMockSakId("201", 2),
+      id: 201,
       saksreferanse: kontrollsakId,
       detaljHref: RouteConfig.SAKER_DETALJ.replace(":sakId", kontrollsakId),
       navn: "Ola Nordmann",
@@ -87,7 +86,7 @@ describe("sakslisteadaptere", () => {
 
   it("mapper fordeling-sak til standard sakslisterad", () => {
     expect(mapFordelingSakTilSakslisteRad(lagFordelingSak())).toEqual({
-      id: lagMockSakId("301", 2),
+      id: 301,
       saksreferanse: fordelingSakId,
       detaljHref: RouteConfig.SAKER_DETALJ.replace(":sakId", fordelingSakId),
       navn: "Kari Nordmann",

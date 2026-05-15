@@ -2,7 +2,6 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
 import { RouteConfig } from "~/routeConfig";
-import { lagMockSakId } from "~/saker/mock-uuid";
 import { mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import { UfordelteSakerInnhold } from "./UfordelteSakerInnhold";
 import type { FordelingSak } from "./typer";
@@ -12,7 +11,7 @@ vi.mock("~/saker/handlinger/TildelSaksbehandlerModal", () => ({
 }));
 
 const lagSak = (overstyringer: Partial<FordelingSak> = {}): FordelingSak => ({
-  id: lagMockSakId("301", 2),
+  id: 301,
   navn: "Kari Nordmann",
   opprettetDato: "2026-01-13",
   oppdatertDato: "2026-01-14",
@@ -58,7 +57,7 @@ describe("UfordelteSakerInnhold", () => {
     expect(screen.getByRole("columnheader", { name: /Status/ })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: /Opprettet/ })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Oppdatert" })).toBeDefined();
-    expect(screen.getByRole("link", { name: String(lagMockSakId("301", 2)) })).toBeDefined();
+    expect(screen.getByRole("link", { name: "301" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Tildel" })).toBeDefined();
   });
 });

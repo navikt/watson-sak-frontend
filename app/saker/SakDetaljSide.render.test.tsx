@@ -1,7 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { lagMockSakId } from "~/saker/mock-uuid";
 import { resetDefaultSession } from "~/testing/mock-store/session.server";
 import SakDetaljSide, { loader } from "./SakDetaljSide.route";
 
@@ -18,8 +17,8 @@ vi.mock("~/auth/innlogget-bruker", () => ({
 }));
 
 const testRequest = new Request("http://localhost");
-const testSakId = String(lagMockSakId("201", 2));
-const deltMedSakId = String(lagMockSakId("101", 1));
+const testSakId = "201";
+const deltMedSakId = "101";
 
 function renderDetaljside(sakId = testSakId) {
   const router = createMemoryRouter(

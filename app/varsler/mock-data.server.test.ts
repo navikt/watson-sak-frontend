@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { lagMockSakId } from "~/saker/mock-uuid";
 import { hentMockState, resetDefaultSession } from "~/testing/mock-store/session.server";
 import { hentUlesteVarsler, markerVarselSomLest } from "~/testing/mock-store/varsler.server";
 
@@ -25,17 +24,9 @@ describe("varsler mock-data", () => {
   it("bruker normaliserte kontrollsak-UUID-er i varsel-lenker", () => {
     const varsler = hentUlesteVarsler(state());
 
-    expect(varsler.find((varsel) => varsel.id === "varsel-101")?.sakId).toBe(
-      String(lagMockSakId("101", 1)),
-    );
-    expect(varsler.find((varsel) => varsel.id === "varsel-102")?.sakId).toBe(
-      String(lagMockSakId("102", 1)),
-    );
-    expect(varsler.find((varsel) => varsel.id === "varsel-103")?.sakId).toBe(
-      String(lagMockSakId("103", 1)),
-    );
-    expect(varsler.find((varsel) => varsel.id === "varsel-104")?.sakId).toBe(
-      String(lagMockSakId("104", 1)),
-    );
+    expect(varsler.find((varsel) => varsel.id === "varsel-101")?.sakId).toBe("101");
+    expect(varsler.find((varsel) => varsel.id === "varsel-102")?.sakId).toBe("102");
+    expect(varsler.find((varsel) => varsel.id === "varsel-103")?.sakId).toBe("103");
+    expect(varsler.find((varsel) => varsel.id === "varsel-104")?.sakId).toBe("104");
   });
 });

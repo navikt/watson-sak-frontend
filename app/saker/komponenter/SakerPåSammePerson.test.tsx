@@ -1,7 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
-import { lagMockSakId } from "~/saker/mock-uuid";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { SakerPåSammePerson } from "./SakerPåSammePerson";
 
@@ -10,7 +9,7 @@ function lagKontrollsak(
   overrides: Partial<KontrollsakResponse> = {},
 ): KontrollsakResponse {
   return {
-    id: lagMockSakId(idNum, 1),
+    id: Number(idNum),
     personIdent: "12345678901",
     personNavn: "Ola Nordmann",
     saksbehandlere: {
@@ -62,14 +61,12 @@ function renderMedRouter(ui: React.ReactNode) {
 
 describe("SakerPåSammePerson", () => {
   it("rendrer ingenting når lista er tom", () => {
-    const { container } = renderMedRouter(
-      <SakerPåSammePerson saker={[]} gjeldendeSakId={lagMockSakId("105", 1)} />,
-    );
+    const { container } = renderMedRouter(<SakerPåSammePerson saker={[]} gjeldendeSakId={105} />);
     expect(container.firstChild).toBeNull();
   });
 
   it("rendrer ingenting når alle saker er gjeldende sak", () => {
-    const sakId = lagMockSakId("105", 1);
+    const sakId = 105;
     const { container } = renderMedRouter(
       <SakerPåSammePerson saker={[lagKontrollsak("105")]} gjeldendeSakId={sakId} />,
     );
@@ -77,24 +74,14 @@ describe("SakerPåSammePerson", () => {
   });
 
   it("viser seksjonsoverskrift og kompakt rad for annen sak", () => {
-    renderMedRouter(
-      <SakerPåSammePerson
-        saker={[lagKontrollsak("203")]}
-        gjeldendeSakId={lagMockSakId("105", 1)}
-      />,
-    );
+    renderMedRouter(<SakerPåSammePerson saker={[lagKontrollsak("203")]} gjeldendeSakId={105} />);
 
     expect(screen.getByRole("heading", { name: "Saker på samme person" })).toBeDefined();
     expect(screen.getByText("12345678901", { exact: false })).toBeDefined();
   });
 
   it("ekspanderer og viser Koble til saken-knapp ved klikk", () => {
-    renderMedRouter(
-      <SakerPåSammePerson
-        saker={[lagKontrollsak("203")]}
-        gjeldendeSakId={lagMockSakId("105", 1)}
-      />,
-    );
+    renderMedRouter(<SakerPåSammePerson saker={[lagKontrollsak("203")]} gjeldendeSakId={105} />);
 
     const ekspanderKnapp = screen.getByRole("button", { name: "Vis detaljer" });
     fireEvent.click(ekspanderKnapp);
@@ -104,12 +91,7 @@ describe("SakerPåSammePerson", () => {
   });
 
   it("viser lokal feilmelding når koble til saken ikke er tilgjengelig", async () => {
-    renderMedRouter(
-      <SakerPåSammePerson
-        saker={[lagKontrollsak("203")]}
-        gjeldendeSakId={lagMockSakId("105", 1)}
-      />,
-    );
+    renderMedRouter(<SakerPåSammePerson saker={[lagKontrollsak("203")]} gjeldendeSakId={105} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Vis detaljer" }));
     fireEvent.click(screen.getByRole("button", { name: "Koble til saken" }));

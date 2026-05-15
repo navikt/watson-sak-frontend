@@ -1,5 +1,5 @@
 import { kontrollsakResponseSchema } from "~/saker/types.backend";
-import { lagMockSakId, normaliserLegacyKontrollsak } from "~/saker/mock-uuid";
+import { normaliserLegacyKontrollsak } from "~/saker/mock-uuid";
 import { berikLegacySakMedPerson } from "~/testing/mock-store/personer.server";
 
 export const mockMineSakerInnloggetNavIdent = "Z999999";
@@ -372,7 +372,7 @@ const initialeMockMineKontrollsaker = [
 
 function lagMockMineKontrollsaker() {
   return initialeMockMineKontrollsaker.map((sak) =>
-    kontrollsakResponseSchema.parse(normaliserLegacyKontrollsak(berikLegacySakMedPerson(sak), 2)),
+    kontrollsakResponseSchema.parse(normaliserLegacyKontrollsak(berikLegacySakMedPerson(sak))),
   );
 }
 
@@ -380,9 +380,9 @@ function lagMockMineKontrollsaker() {
 export const lagInitialMineKontrollsaker = lagMockMineKontrollsaker;
 
 export const mockMineSakerAvslutningsdatoer: Record<string, string> = {
-  [String(lagMockSakId("207", 2))]: "2026-03-12",
-  [String(lagMockSakId("209", 2))]: "2026-03-16",
-  [String(lagMockSakId("210", 2))]: "2026-03-18",
+  [String(207)]: "2026-03-12",
+  [String(209)]: "2026-03-16",
+  [String(210)]: "2026-03-18",
 };
 
-export const mockMineSakerTidligereTipsSakIder = [lagMockSakId("207", 2)];
+export const mockMineSakerTidligereTipsSakIder = [207];

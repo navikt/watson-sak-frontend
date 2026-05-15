@@ -1,23 +1,5 @@
 import type { Blokkeringsarsak, KontrollsakResponse, KontrollsakStatus } from "./types.backend";
 
-function hentSaknummer(fixtureId: string): number {
-  const siffer = fixtureId.replace(/\D/g, "");
-
-  if (!siffer) {
-    throw new Error(`Kunne ikke utlede saksnummer fra fixture-id ${fixtureId}`);
-  }
-
-  return Number.parseInt(siffer, 10);
-}
-
-function lagEntityBase(fixtureId: string, namespace: number): number {
-  return namespace * 1_000_000 + hentSaknummer(fixtureId) * 1_000;
-}
-
-export function lagMockSakId(fixtureId: string, namespace: number): number {
-  return lagEntityBase(fixtureId, namespace);
-}
-
 export function nullstillMockStatushistorikk() {}
 
 /** Ingen-op etter migrering til ny modell – beholdes for bakoverkompatibilitet i tester */
@@ -79,11 +61,9 @@ function normaliserLegacyOpprettetAv(
   };
 }
 
-export function normaliserLegacyKontrollsak(
-  sak: LegacyKontrollsak,
-  namespace: number,
-): KontrollsakResponse {
+export function normaliserLegacyKontrollsak(sak: LegacyKontrollsak): KontrollsakResponse {
   const id = String(sak.id);
+  const numericId = Number.parseInt(id.replace(/\D/g, ""), 10) || 0;
   const personNavn = typeof sak.navn === "string" ? sak.navn : "Ukjent navn";
   const saksbehandlerNavn = typeof sak.saksbehandler === "string" ? sak.saksbehandler : "Ukjent";
   const saksbehandlerEnhet = typeof sak.mottakEnhet === "string" ? sak.mottakEnhet : null;
@@ -165,8 +145,6 @@ export function normaliserLegacyKontrollsak(
   const blokkert: Blokkeringsarsak | null = blokkertMap[legacyStatus] ?? null;
   const opprettetAv = normaliserLegacyOpprettetAv(sak, saksbehandlerNavn, saksbehandlerEnhet);
   const eier = normaliserLegacyEier(sak);
-
-  const numericId = lagMockSakId(id, namespace);
 
   const normalisert: KontrollsakResponse = {
     id: numericId,

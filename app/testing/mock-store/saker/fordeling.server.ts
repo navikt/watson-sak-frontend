@@ -1,9 +1,5 @@
 import { kontrollsakResponseSchema, type KontrollsakResponse } from "~/saker/types.backend";
-import {
-  lagMockSakId,
-  normaliserLegacyKontrollsak,
-  oppdaterTilgjengeligeHandlinger,
-} from "~/saker/mock-uuid";
+import { normaliserLegacyKontrollsak, oppdaterTilgjengeligeHandlinger } from "~/saker/mock-uuid";
 import { registrerTomtFilområdeForSak } from "~/testing/mock-store/filer.server";
 import { berikLegacySakMedPerson } from "~/testing/mock-store/personer.server";
 import type { MockState } from "~/testing/mock-store/session.server";
@@ -478,7 +474,7 @@ const initialeMockKontrollsaker = [
 
 function lagMockKontrollsaker() {
   return initialeMockKontrollsaker.map((sak) =>
-    kontrollsakResponseSchema.parse(normaliserLegacyKontrollsak(berikLegacySakMedPerson(sak), 1)),
+    kontrollsakResponseSchema.parse(normaliserLegacyKontrollsak(berikLegacySakMedPerson(sak))),
   );
 }
 
@@ -517,11 +513,10 @@ export function leggTilMockSakIFordeling(
   state: MockState,
   nySak: NyMockFordelingssak,
 ): KontrollsakResponse {
-  const saksnummer = String(state.nesteFordelingssakId++);
   const opprettet = new Date().toISOString();
 
   const kontrollsak = kontrollsakResponseSchema.parse({
-    id: lagMockSakId(saksnummer, 1),
+    id: state.nesteFordelingssakId++,
     personIdent: nySak.personIdent,
     personNavn: nySak.personNavn,
     saksbehandlere: {

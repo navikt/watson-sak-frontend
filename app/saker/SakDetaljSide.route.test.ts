@@ -4,7 +4,6 @@ import { hentFordelingssaker } from "~/testing/mock-store/alle-saker.server";
 import { hentAlleSaker } from "./mock-alle-saker.server";
 import { hentHistorikk } from "./historikk/mock-data.server";
 import { getSaksreferanse } from "~/saker/id";
-import { lagMockSakId } from "~/saker/mock-uuid";
 import { getBeskrivelse, getKildeText, getPersonIdent, getYtelseTyper } from "~/saker/visning";
 import type { Route } from "./+types/SakDetaljSide.route";
 import { action, loader } from "./SakDetaljSide.server";
@@ -19,7 +18,7 @@ function state() {
 }
 
 describe("SakDetaljSide action", () => {
-  const utredningSakId = lagMockSakId("113", 1);
+  const utredningSakId = 113;
   const utredningSakRef = getSaksreferanse(utredningSakId);
 
   beforeEach(() => {
@@ -166,7 +165,7 @@ describe("SakDetaljSide action", () => {
   it("returnerer lokal feilmelding når koble sak ikke er tilgjengelig ennå", async () => {
     const formData = new FormData();
     formData.set("handling", "koble_sak");
-    formData.set("relatertSakId", String(lagMockSakId("114", 1)));
+    formData.set("relatertSakId", "114");
 
     const resultat = await action({
       request: new Request(`http://localhost/saker/${utredningSakRef}`, {
@@ -184,7 +183,7 @@ describe("SakDetaljSide action", () => {
 });
 
 describe("SakDetaljSide helper-integrasjon", () => {
-  const fordelingSakId = lagMockSakId("101", 1);
+  const fordelingSakId = 101;
 
   beforeEach(() => {
     resetDefaultSession();
@@ -221,7 +220,7 @@ describe("SakDetaljSide helper-integrasjon", () => {
 });
 
 describe("SakDetaljSide kontrollsak-runtime", () => {
-  const mineSakId = lagMockSakId("201", 2);
+  const mineSakId = 201;
   const mineSakRef = getSaksreferanse(mineSakId);
 
   beforeEach(() => {

@@ -1,7 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it, vi } from "vitest";
-import { lagMockSakId } from "~/saker/mock-uuid";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { SakHandlingerKnapper } from "./SakHandlingerKnapper";
 
@@ -15,7 +14,7 @@ vi.mock("~/auth/innlogget-bruker", () => ({
 
 function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
-    id: lagMockSakId("101", 9),
+    id: 101,
     personIdent: "10987654321",
     personNavn: "Ola Nordmann",
     saksbehandlere: {

@@ -2,13 +2,12 @@ import { render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
 import { getSaksreferanse } from "~/saker/id";
-import { lagMockSakId } from "~/saker/mock-uuid";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { MineSakerInnhold } from "./MineSakerInnhold";
 
 function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
-    id: lagMockSakId("201", 2),
+    id: 201,
     personIdent: "10987654321",
     personNavn: "Ola Nordmann",
     saksbehandlere: {
@@ -98,7 +97,7 @@ describe("MineSakerInnhold", () => {
       />,
     );
 
-    const sakId = lagMockSakId("201", 2);
+    const sakId = 201;
     const lenke = screen.getByRole("link", { name: String(sakId) });
     expect(lenke.getAttribute("href")).toBe(`/saker/${getSaksreferanse(sakId)}`);
   });
