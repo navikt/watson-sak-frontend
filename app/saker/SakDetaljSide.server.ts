@@ -242,11 +242,97 @@ async function backendAction(
       const sak = await backendApi.endreStatus(token, sakId, "HENLAGT");
       return { ok: true, sak };
     }
-    default: {
-      // Handlinger uten backend-støtte ennå
-      throw new Response(`Handlingen «${handling}» er ikke tilgjengelig uten mockdata`, {
-        status: 501,
+    case "overfor_ansvarlig": {
+      const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
+      const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
+      await backendApi.overforAnsvarlig(token, sakId, navIdent, beskrivelse ?? undefined);
+      return { ok: true };
+    }
+    case "fjern_delt_tilgang": {
+      const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
+      await backendApi.fjernDeltTilgang(token, sakId, navIdent);
+      return { ok: true };
+    }
+    case "videresend_seksjon":
+    case "send_til_annen_enhet": {
+      const enhet = hentTekstfelt(formData, "seksjon", "Ugyldig enhet");
+      const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
+      await backendApi.videresend(token, sakId, enhet, beskrivelse ?? undefined);
+      return { ok: true };
+    }
+    case "rediger_saksinformasjon": {
+      const ytelseRader = parseYtelseRader(formData);
+      const rådata = {
+        kategori: formData.get("kategori") || undefined,
+        kilde: formData.get("kilde") || undefined,
+        misbruktype: formData
+          .getAll("misbruktype")
+          .filter((v): v is string => typeof v === "string" && v.length > 0),
+        merking: formData
+          .getAll("merking")
+          .filter((v): v is string => typeof v === "string" && v.length > 0),
+        ytelser: ytelseRader,
+      };
+
+      const resultat = redigerSaksinformasjonSchema.safeParse(rådata);
+      if (!resultat.success) {
+        return {
+          ok: false,
+          feil: bygFeilkartFraIssues(resultat.error.issues),
+          verdier: {
+            kategori: typeof rådata.kategori === "string" ? rådata.kategori : "",
+            kilde: typeof rådata.kilde === "string" ? rådata.kilde : "",
+            misbruktype: rådata.misbruktype,
+            merking: rådata.merking,
+            ytelser: ytelseRader.length > 0 ? ytelseRader : [{}],
+          },
+        } satisfies ActionResult;
+      }
+
+      const validert = resultat.data;
+      await backendApi.redigerKontrollsak(token, sakId, {
+        kategori: validert.kategori,
+        kilde: validert.kilde,
+        misbruktype: validert.misbruktype,
+        merking: validert.merking[0] ?? null,
+        ytelser: validert.ytelser.map((y) => ({
+          type: y.type ?? "",
+          periodeFra: y.fraDato ?? "",
+          periodeTil: y.tilDato ?? "",
+          belop: y.beløp ?? null,
+        })),
       });
+      return { ok: true };
+    }
+    case "koble_sak": {
+      const kobletSakIdRaw = formData.get("kobletSakId");
+      if (typeof kobletSakIdRaw !== "string" || !kobletSakIdRaw.trim()) {
+        return {
+          ok: false,
+          feil: { skjema: ["Mangler sak-ID å koble til"] },
+        } satisfies ActionResult;
+      }
+      const kobletSakId = Number(kobletSakIdRaw);
+      if (Number.isNaN(kobletSakId)) {
+        return {
+          ok: false,
+          feil: { skjema: ["Ugyldig sak-ID"] },
+        } satisfies ActionResult;
+      }
+      await backendApi.kobleSak(token, sakId, kobletSakId);
+      return { ok: true };
+    }
+    case "legg_til_historikk": {
+      const tittel = hentTekstfelt(formData, "tittel", "Tittel er påkrevd");
+      const notat = hentValgfriTekst(formData, "notat") ?? "";
+      const dato = hentTekstfelt(formData, "dato", "Dato er påkrevd");
+      const tid = hentTekstfelt(formData, "tid", "Tid er påkrevd");
+      const tidspunkt = lagTidspunktFraSkjema(dato, tid);
+      await backendApi.opprettManuellHendelse(token, sakId, tittel, notat || undefined, tidspunkt);
+      return { ok: true };
+    }
+    default: {
+      throw data("Ugyldig handling", { status: 400 });
     }
   }
 }

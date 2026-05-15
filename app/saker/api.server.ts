@@ -25,7 +25,6 @@ const journalpostReferanseSchema = z.object({
   opprettet: z.string(),
 });
 
-
 function apiUrl(sti: string): string {
   if (!BACKEND_API_URL) {
     throw new Error(`Mangler backend-URL for kall til ${sti}`);
@@ -182,4 +181,94 @@ export async function hentSaksbehandlere(token: string): Promise<KontrollsakSaks
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke hente saksbehandlere");
   return saksbehandlerListeSchema.parse(await respons.json());
+}
+
+// --- Placeholder-endepunkter (backend returnerer 501 inntil implementert) ---
+
+export async function overforAnsvarlig(
+  token: string,
+  sakId: string,
+  navIdent: string,
+  beskrivelse?: string,
+): Promise<void> {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/overforing`), {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify({ navIdent, beskrivelse }),
+  });
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke overføre ansvarlig");
+}
+
+export async function fjernDeltTilgang(
+  token: string,
+  sakId: string,
+  navIdent: string,
+): Promise<void> {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/del/${navIdent}`), {
+    method: "DELETE",
+    headers: authHeaders(token),
+  });
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke fjerne delt tilgang");
+}
+
+export async function redigerKontrollsak(
+  token: string,
+  sakId: string,
+  data: {
+    kategori?: string;
+    kilde?: string;
+    misbruktype?: string[];
+    merking?: string | null;
+    ytelser?: { type: string; periodeFra: string; periodeTil: string; belop?: number | null }[];
+  },
+): Promise<void> {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}`), {
+    method: "PATCH",
+    headers: authHeaders(token),
+    body: JSON.stringify(data),
+  });
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke redigere saksinformasjon");
+}
+
+export async function videresend(
+  token: string,
+  sakId: string,
+  enhet: string,
+  beskrivelse?: string,
+): Promise<void> {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/videresend`), {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify({ enhet, beskrivelse }),
+  });
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke videresende kontrollsak");
+}
+
+export async function kobleSak(
+  token: string,
+  sakId: string,
+  kobletSakId: number,
+  beskrivelse?: string,
+): Promise<void> {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/kobling`), {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify({ kobletSakId, beskrivelse }),
+  });
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke koble sak");
+}
+
+export async function opprettManuellHendelse(
+  token: string,
+  sakId: string,
+  tittel: string,
+  beskrivelse?: string,
+  tidspunkt?: string,
+): Promise<void> {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/hendelser`), {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify({ tittel, beskrivelse, tidspunkt }),
+  });
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke opprette manuell hendelse");
 }
