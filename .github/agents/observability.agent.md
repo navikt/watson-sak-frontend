@@ -1,9 +1,7 @@
 ---
 name: observability-agent
 description: Prometheus-metrikker, OpenTelemetry-tracing, Grafana-dashboards og varsling
-model:
-  - Claude Haiku 4.5
-  - GPT-5.3-Codex
+model: Claude Sonnet 4.6
 tools:
   - execute
   - read
