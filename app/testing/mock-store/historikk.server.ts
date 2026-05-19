@@ -110,6 +110,7 @@ export function leggTilManuellHendelse(
   tittel: string,
   notat: string,
   tidspunkt: string,
+  opprettetAvNavIdent?: string,
 ): SakHendelse {
   const sakIdKey = String(sak.id);
   const hendelse: SakHendelse = {
@@ -119,12 +120,35 @@ export function leggTilManuellHendelse(
     sakId: sak.id,
     tittel,
     notat,
+    opprettetAvNavIdent,
     ...lagSnapshotFraKontrollsak(sak),
   };
 
   const eksisterende = state.historikk.get(sakIdKey) ?? [];
   eksisterende.push(hendelse);
   state.historikk.set(sakIdKey, eksisterende);
+
+  return hendelse;
+}
+
+export function redigerManuellHendelse(
+  state: MockState,
+  sakId: string,
+  hendelseId: string,
+  tittel: string,
+  notat: string,
+  tidspunkt: string,
+): SakHendelse | null {
+  const hendelser = state.historikk.get(sakId) ?? [];
+  const hendelse = hendelser.find(
+    (h) => h.hendelseId === hendelseId && h.hendelsesType === "MANUELL_NOTAT",
+  );
+
+  if (!hendelse) return null;
+
+  hendelse.tittel = tittel;
+  hendelse.notat = notat;
+  hendelse.tidspunkt = tidspunkt;
 
   return hendelse;
 }

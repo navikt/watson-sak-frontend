@@ -3,6 +3,7 @@ import {
   hentHistorikk as _hentHistorikk,
   leggTilHendelse as _leggTilHendelse,
   leggTilManuellHendelse as _leggTilManuellHendelse,
+  redigerManuellHendelse as _redigerManuellHendelse,
 } from "~/testing/mock-store/historikk.server";
 
 export function hentHistorikk(request: Request, sakId: number | string) {
@@ -23,4 +24,22 @@ export function leggTilManuellHendelse(
     : never
 ) {
   return _leggTilManuellHendelse(hentMockState(request), ...args);
+}
+
+export function redigerManuellHendelse(
+  request: Request,
+  sakId: string,
+  hendelseId: string,
+  tittel: string,
+  notat: string,
+  tidspunkt: string,
+) {
+  return _redigerManuellHendelse(
+    hentMockState(request),
+    sakId,
+    hendelseId,
+    tittel,
+    notat,
+    tidspunkt,
+  );
 }

@@ -5,6 +5,15 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { SakHendelse } from "./typer";
 import { SakHistorikk } from "./SakHistorikk";
 
+vi.mock("~/auth/innlogget-bruker", () => ({
+  useInnloggetBruker: () => ({
+    navIdent: "Z999999",
+    name: "Saks Behandlersen",
+    preferredUsername: "test",
+    enhet: "4812",
+  }),
+}));
+
 function lagBackendHendelse(overrides: Partial<SakHendelse> = {}): SakHendelse {
   return {
     hendelseId: "00000000-0000-4000-8000-000000000123",
@@ -207,5 +216,31 @@ describe("SakHistorikk", () => {
 
     expect((screen.getByLabelText("Dato") as HTMLInputElement).value).toBe("06.05.2026");
     expect((screen.getByLabelText("Klokkeslett") as HTMLInputElement).value).toBe("09:42");
+  });
+
+  it("viser 'Vis all historikk'-knapp når det er mer enn 5 hendelser", () => {
+    const hendelser = Array.from({ length: 7 }, (_, i) =>
+      lagBackendHendelse({
+        hendelseId: `00000000-0000-4000-8000-00000000${String(i).padStart(4, "0")}`,
+        tidspunkt: `2026-03-${String(20 + i).padStart(2, "0")}T10:00:00Z`,
+      }),
+    );
+
+    renderMedRouter(<SakHistorikk sakId={1} hendelser={hendelser} />);
+
+    expect(screen.getByRole("button", { name: "Vis all historikk (7)" })).toBeDefined();
+  });
+
+  it("viser ikke 'Vis all historikk'-knapp når det er 5 eller færre hendelser", () => {
+    const hendelser = Array.from({ length: 5 }, (_, i) =>
+      lagBackendHendelse({
+        hendelseId: `00000000-0000-4000-8000-00000000${String(i).padStart(4, "0")}`,
+        tidspunkt: `2026-03-${String(20 + i).padStart(2, "0")}T10:00:00Z`,
+      }),
+    );
+
+    renderMedRouter(<SakHistorikk sakId={1} hendelser={hendelser} />);
+
+    expect(screen.queryByRole("button", { name: /Vis all historikk/ })).toBeNull();
   });
 });
