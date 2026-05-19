@@ -1,1 +1,1 @@
-export { resetMockSession, resetDefaultSession } from "./session.server";
+export { resetMockSession } from "./session.server";

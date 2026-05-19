@@ -1,10 +1,10 @@
-import { HGrid, Page, VStack } from "@navikt/ds-react";
+import { Heading, Page, VStack } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
 import { useEffect } from "react";
 import { useFetcher, useLoaderData, useRevalidator } from "react-router";
+import { Trakt } from "~/alle-saker/Trakt";
 import { usePreferences } from "~/preferanser/PreferencesContext";
 import type { loader } from "./loader.server";
-import { DineSakerSiste14Dager } from "./komponenter/DineSakerSiste14Dager";
 import { SisteVarsler } from "./komponenter/SisteVarsler";
 import { Velkomst } from "./komponenter/Velkomst";
 import { MineSakerOversikt } from "./komponenter/MineSakerOversikt";
@@ -33,21 +33,29 @@ export default function LandingSide() {
             <Velkomst oppsummering={loaderData.velkomstOppsummering} />
           ) : null}
           <MineSakerOversikt saker={loaderData.mineSaker} />
-          <HGrid columns={{ xs: 1, md: 2 }} gap="space-8">
-            <SisteVarsler
-              varsler={loaderData.varsler}
-              erSubmitting={fetcher.state !== "idle"}
-              onMarkerSomLest={(varselId) => {
-                fetcher.submit(
-                  { handling: "marker_varsel_som_lest", varselId },
-                  {
-                    method: "post",
-                  },
-                );
-              }}
-            />
-            <DineSakerSiste14Dager statistikk={loaderData.dineSakerSiste14Dager} />
-          </HGrid>
+
+          <section
+            aria-labelledby="trakt-heading"
+            className="rounded-2xl border border-ax-border-neutral-subtle bg-ax-bg-default p-6"
+          >
+            <Heading level="2" size="medium" spacing id="trakt-heading">
+              Dine saker per steg
+            </Heading>
+            <Trakt steg={loaderData.traktSteg} />
+          </section>
+
+          <SisteVarsler
+            varsler={loaderData.varsler}
+            erSubmitting={fetcher.state !== "idle"}
+            onMarkerSomLest={(varselId) => {
+              fetcher.submit(
+                { handling: "marker_varsel_som_lest", varselId },
+                {
+                  method: "post",
+                },
+              );
+            }}
+          />
         </VStack>
       </PageBlock>
     </Page>

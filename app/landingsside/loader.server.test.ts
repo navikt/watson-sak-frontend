@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { loader } from "./loader.server";
 
 vi.mock("~/config/env.server", () => ({
@@ -21,10 +21,6 @@ describe("landingsside-loader", () => {
     context: {},
   } as Parameters<typeof loader>[0];
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
   it("returnerer alle uleste varsler sortert nyest først", async () => {
     const data = await loader(loaderArgs);
 
@@ -41,21 +37,14 @@ describe("landingsside-loader", () => {
     expect(data.varsler.every((varsel) => !varsel.erLest)).toBe(true);
   });
 
-  it("returnerer nøkkeltall for dine saker siste 14 dager", async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-03-18T12:00:00Z"));
-
+  it("returnerer traktSteg for brukerens saker", async () => {
     const data = await loader(loaderArgs);
 
-    expect(data.dineSakerSiste14Dager).toEqual({
-      antallSakerJobbetMed: 3,
-      antallTipsTilVurdering: 0,
-      antallSendtTilNayNfp: 0,
-      snittBehandlingstidPerSak: null,
-      antallHenlagteSaker: 0,
-      antallHenlagteTips: 0,
-      antallSakerIBero: 0,
-    });
+    expect(data.traktSteg).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: expect.any(String), antall: expect.any(Number) }),
+      ]),
+    );
   });
 
   it("returnerer kun aktive saker (ikke avsluttede)", async () => {

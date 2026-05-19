@@ -1,14 +1,10 @@
 import type { LoaderFunctionArgs } from "react-router";
+import { beregnTraktSteg } from "~/alle-saker/saker-utils";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
-import {
-  mockMineSakerAvslutningsdatoer,
-  mockMineSakerTidligereTipsSakIder,
-} from "~/mine-saker/mock-data.server";
 import { hentMineSaker } from "~/saker/mock-alle-saker.server";
 import { getOpprettetDato } from "~/saker/selectors";
 import { hentUlesteVarsler } from "~/varsler/mock-data.server";
-import { beregnDineSakerSiste14Dager } from "./beregninger";
 import { lagVelkomstOppsummering } from "./velkomst";
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -34,14 +30,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .slice(0, 5);
   const varsler = hentUlesteVarsler(request);
   const velkomstOppsummering = lagVelkomstOppsummering(sakerForVelkomstOppsummering);
-  const referansedato = new Date().toISOString().split("T")[0];
-  const dineSakerSiste14Dager = beregnDineSakerSiste14Dager({
-    request,
-    saker: aktiveMineSaker,
-    avslutningsdatoer: mockMineSakerAvslutningsdatoer,
-    tidligereTipsSakIder: mockMineSakerTidligereTipsSakIder,
-    referansedato,
-  });
+  const traktSteg = beregnTraktSteg(mineSakerHosInnloggetBruker);
 
-  return { mineSaker, varsler, velkomstOppsummering, dineSakerSiste14Dager };
+  return { mineSaker, varsler, velkomstOppsummering, traktSteg };
 }
