@@ -1,13 +1,8 @@
 import type { KontrollsakResponse } from "~/saker/types.backend";
+import type { Nokkeltall } from "~/statistikk/types";
 import type { Avslutningsdatoer } from "~/statistikk/mock-data.server";
 
-export interface Nokkeltall {
-  pagaendeSaker: number;
-  paVent: number;
-  utredetInnen12Uker: number;
-  utredetInnen15Uker: number;
-  gjennomsnittligSaksbehandlingstid: number;
-}
+export type { Nokkeltall } from "~/statistikk/types";
 
 const DAGER_12_UKER = 84;
 const DAGER_15_UKER = 105;

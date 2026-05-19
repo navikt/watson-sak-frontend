@@ -1,7 +1,7 @@
 import { BodyShort } from "@navikt/ds-react";
-import type { Nokkeltall as NokkeltallType } from "~/landingsside/beregninger";
+import type { Nokkeltall } from "~/statistikk/types";
 
-type Props = NokkeltallType;
+type Props = Nokkeltall;
 
 export function Nokkeltall({
   pagaendeSaker,
