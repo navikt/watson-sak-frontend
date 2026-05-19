@@ -57,8 +57,8 @@ export function OpprettOppgaveModal({ sakId, åpen, onClose }: OpprettOppgaveMod
       header={{ heading: "Opprett oppgave", icon: <TasklistIcon aria-hidden /> }}
       width="medium"
     >
-      <fetcher.Form method="post" {...getFormProps(form)}>
-        <Modal.Body>
+      <Modal.Body>
+        <fetcher.Form method="post" {...getFormProps(form)} name="opprett-oppgave">
           <VStack gap="space-4">
             <OppgaveSkjema
               fields={{
@@ -70,16 +70,16 @@ export function OpprettOppgaveModal({ sakId, åpen, onClose }: OpprettOppgaveMod
               }}
             />
           </VStack>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button type="submit" variant="primary">
-            Lagre
-          </Button>
-          <Button type="button" variant="secondary" onClick={handleLukk}>
-            Avbryt
-          </Button>
-        </Modal.Footer>
-      </fetcher.Form>
+        </fetcher.Form>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button type="submit" form="opprett-oppgave" variant="primary">
+          Lagre
+        </Button>
+        <Button type="button" variant="secondary" onClick={handleLukk}>
+          Avbryt
+        </Button>
+      </Modal.Footer>
     </Modal>
   );
 }
