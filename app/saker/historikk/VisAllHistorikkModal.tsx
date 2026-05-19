@@ -63,7 +63,7 @@ export function VisAllHistorikkModal({
           {hendelser.length === 0 ? (
             <BodyShort>Ingen historikk for denne saken.</BodyShort>
           ) : (
-            <Process>
+            <Process className="pt-1">
               {hendelser.map((hendelse, index) => {
                 const beskrivelse = hendelseBeskrivelse(hendelse);
                 const erEgetManueltNotat =
