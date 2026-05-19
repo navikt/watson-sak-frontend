@@ -112,9 +112,7 @@ test.describe("Landingsside", () => {
       .getByRole("heading", { name: "Siste varsler" })
       .locator("xpath=ancestor::section[1]");
 
-    await expect(
-      traktSeksjon.getByRole("heading", { name: "Dine saker per steg" }),
-    ).toBeVisible();
+    await expect(traktSeksjon.getByRole("heading", { name: "Dine saker per steg" })).toBeVisible();
 
     const traktBoks = await traktSeksjon.boundingBox();
     const varslerBoks = await varslerSeksjon.boundingBox();
