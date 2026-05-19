@@ -277,7 +277,7 @@ export default function OpprettSakSide() {
                     Grunnleggende saksinformasjon
                   </Heading>
 
-                  {/* Rad 1: Kategori, Kilde, Organisasjonsnummer */}
+                  {/* Rad 1: Kategori, Misbruktype, Merking */}
                   <HStack gap="space-24" align="start" wrap>
                     <Select
                       name={fields.kategori.name}
@@ -310,71 +310,39 @@ export default function OpprettSakSide() {
                       ))}
                     </Select>
 
-                    <Select
-                      name={fields.kilde.name}
-                      id={fields.kilde.id}
-                      label="Kilde"
-                      error={fields.kilde.errors?.[0]}
-                      className="w-52"
-                      defaultValue={fields.kilde.initialValue ?? ""}
-                    >
-                      <option value="">Velg kilde</option>
-                      {kilder.map((k) => (
-                        <option key={k} value={k}>
-                          {kildeEtiketter[k] ?? k}
-                        </option>
+                    <div id={fields.misbruktype.id} className="w-72">
+                      <UNSAFE_Combobox
+                        label="Misbruktype"
+                        options={tilgjengeligeMisbruktyper.map((verdi) => ({
+                          value: verdi,
+                          label:
+                            kontrollsakMisbrukstypeEtiketter[
+                              verdi as keyof typeof kontrollsakMisbrukstypeEtiketter
+                            ] ?? verdi,
+                        }))}
+                        isMultiSelect
+                        disabled={tilgjengeligeMisbruktyper.length === 0}
+                        selectedOptions={valgteMisbruktyper.map((verdi) => ({
+                          value: verdi,
+                          label:
+                            kontrollsakMisbrukstypeEtiketter[
+                              verdi as keyof typeof kontrollsakMisbrukstypeEtiketter
+                            ] ?? verdi,
+                        }))}
+                        onToggleSelected={(option, isSelected) => {
+                          setValgteMisbruktyper((prev) => {
+                            if (isSelected) {
+                              return prev.includes(option) ? prev : [...prev, option];
+                            }
+                            return prev.filter((m) => m !== option);
+                          });
+                        }}
+                        error={fields.misbruktype.errors?.[0]}
+                      />
+                      {valgteMisbruktyper.map((m) => (
+                        <input key={m} type="hidden" name="misbruktype" value={m} />
                       ))}
-                    </Select>
-
-                    <TextField
-                      id={fields.organisasjonsnummer.id}
-                      key={fields.organisasjonsnummer.key}
-                      name={fields.organisasjonsnummer.name}
-                      defaultValue={fields.organisasjonsnummer.initialValue}
-                      label="Organisasjonsnummer (valgfritt)"
-                      inputMode="numeric"
-                      htmlSize={14}
-                      error={fields.organisasjonsnummer.errors?.[0]}
-                      autoComplete="off"
-                    />
-                  </HStack>
-
-                  {/* Rad 2: Misbruktype, Merking, Enhet */}
-                  <HStack gap="space-24" align="start" wrap>
-                    {tilgjengeligeMisbruktyper.length > 0 && (
-                      <div id={fields.misbruktype.id} className="w-72">
-                        <UNSAFE_Combobox
-                          label="Misbruktype (valgfritt)"
-                          options={tilgjengeligeMisbruktyper.map((verdi) => ({
-                            value: verdi,
-                            label:
-                              kontrollsakMisbrukstypeEtiketter[
-                                verdi as keyof typeof kontrollsakMisbrukstypeEtiketter
-                              ] ?? verdi,
-                          }))}
-                          isMultiSelect
-                          selectedOptions={valgteMisbruktyper.map((verdi) => ({
-                            value: verdi,
-                            label:
-                              kontrollsakMisbrukstypeEtiketter[
-                                verdi as keyof typeof kontrollsakMisbrukstypeEtiketter
-                              ] ?? verdi,
-                          }))}
-                          onToggleSelected={(option, isSelected) => {
-                            setValgteMisbruktyper((prev) => {
-                              if (isSelected) {
-                                return prev.includes(option) ? prev : [...prev, option];
-                              }
-                              return prev.filter((m) => m !== option);
-                            });
-                          }}
-                          error={fields.misbruktype.errors?.[0]}
-                        />
-                        {valgteMisbruktyper.map((m) => (
-                          <input key={m} type="hidden" name="misbruktype" value={m} />
-                        ))}
-                      </div>
-                    )}
+                    </div>
 
                     <div id={fields.merking.id} className="w-72">
                       <UNSAFE_Combobox
@@ -403,6 +371,37 @@ export default function OpprettSakSide() {
                         <input key={m} type="hidden" name="merking" value={m} />
                       ))}
                     </div>
+                  </HStack>
+
+                  {/* Rad 2: Kilde, Organisasjonsnummer, Enhet */}
+                  <HStack gap="space-24" align="start" wrap>
+                    <Select
+                      name={fields.kilde.name}
+                      id={fields.kilde.id}
+                      label="Kilde"
+                      error={fields.kilde.errors?.[0]}
+                      className="w-52"
+                      defaultValue={fields.kilde.initialValue ?? ""}
+                    >
+                      <option value="">Velg kilde</option>
+                      {kilder.map((k) => (
+                        <option key={k} value={k}>
+                          {kildeEtiketter[k] ?? k}
+                        </option>
+                      ))}
+                    </Select>
+
+                    <TextField
+                      id={fields.organisasjonsnummer.id}
+                      key={fields.organisasjonsnummer.key}
+                      name={fields.organisasjonsnummer.name}
+                      defaultValue={fields.organisasjonsnummer.initialValue}
+                      label="Organisasjonsnummer (valgfritt)"
+                      inputMode="numeric"
+                      htmlSize={14}
+                      error={fields.organisasjonsnummer.errors?.[0]}
+                      autoComplete="off"
+                    />
 
                     <Select
                       name={fields.enhet.name}

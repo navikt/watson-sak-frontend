@@ -78,6 +78,19 @@ describe("opprettSakSchema", () => {
     expect(resultat.success).toBe(true);
   });
 
+  it("krever minst én misbruktype når kategorien har misbrukstyper", () => {
+    const resultat = opprettSakSchema.safeParse({
+      ...minimaltGyldigSkjema,
+      kategori: "ARBEID",
+      misbruktype: [],
+    });
+    expect(resultat.success).toBe(false);
+    if (!resultat.success) {
+      const feil = resultat.error.issues.find((i) => i.path.includes("misbruktype"));
+      expect(feil?.message).toBe("Velg minst én misbruktype");
+    }
+  });
+
   it("godtar merking som array", () => {
     const resultat = opprettSakSchema.safeParse({
       ...minimaltGyldigSkjema,
@@ -216,6 +229,30 @@ describe("opprettSakSchema", () => {
     const resultat = opprettSakSchema.safeParse({
       ...minimaltGyldigSkjema,
       enhet: undefined,
+    });
+    expect(resultat.success).toBe(true);
+  });
+});
+
+describe("redigerSaksinformasjonSchema", () => {
+  it("krever minst én misbruktype når kategorien har misbrukstyper", () => {
+    const resultat = redigerSaksinformasjonSchema.safeParse({
+      kategori: "UTLAND",
+      kilde: "NAV_KONTROLL",
+      misbruktype: [],
+    });
+    expect(resultat.success).toBe(false);
+    if (!resultat.success) {
+      const feil = resultat.error.issues.find((i) => i.path.includes("misbruktype"));
+      expect(feil?.message).toBe("Velg minst én misbruktype");
+    }
+  });
+
+  it("godtar tom misbruktype-liste når kategorien ikke har misbrukstyper", () => {
+    const resultat = redigerSaksinformasjonSchema.safeParse({
+      kategori: "DOKUMENTFALSK",
+      kilde: "NAV_KONTROLL",
+      misbruktype: [],
     });
     expect(resultat.success).toBe(true);
   });

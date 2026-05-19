@@ -133,13 +133,13 @@ export const opprettSakSchema = z
   }))
   .refine(
     ({ kategori, misbruktype }) => {
-      if (misbruktype.length === 0) return true;
       const gyldige = misbrukstyperPerKategori[kategori as keyof typeof misbrukstyperPerKategori];
-      if (!gyldige || gyldige.length === 0) return false;
+      if (!gyldige || gyldige.length === 0) return misbruktype.length === 0;
+      if (misbruktype.length === 0) return false;
       return misbruktype.every((type) => gyldige.includes(type as (typeof gyldige)[number]));
     },
     {
-      message: "En eller flere misbruktyper passer ikke for valgt kategori",
+      message: "Velg minst én misbruktype",
       path: ["misbruktype"],
     },
   );
@@ -158,13 +158,13 @@ export const redigerSaksinformasjonSchema = z
   }))
   .refine(
     ({ kategori, misbruktype }) => {
-      if (misbruktype.length === 0) return true;
       const gyldige = misbrukstyperPerKategori[kategori as keyof typeof misbrukstyperPerKategori];
-      if (!gyldige || gyldige.length === 0) return false;
+      if (!gyldige || gyldige.length === 0) return misbruktype.length === 0;
+      if (misbruktype.length === 0) return false;
       return misbruktype.every((type) => gyldige.includes(type as (typeof gyldige)[number]));
     },
     {
-      message: "En eller flere misbruktyper passer ikke for valgt kategori",
+      message: "Velg minst én misbruktype",
       path: ["misbruktype"],
     },
   );
