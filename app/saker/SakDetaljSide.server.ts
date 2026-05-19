@@ -238,6 +238,11 @@ async function backendAction(
       await backendApi.opprettNotat(token, sakId, tittel, notatRaw.trim());
       return { ok: true };
     }
+    case "opprett_journalpost":
+    case "opprett_oppgave": {
+      // Placeholder — backend-endepunkt finnes ikke ennå
+      return { ok: true };
+    }
     case "henlegg": {
       const sak = await backendApi.endreStatus(token, sakId, "HENLAGT");
       return { ok: true, sak };
@@ -634,6 +639,40 @@ async function mockAction(
       }
 
       leggTilHendelse(request, sak, "NOTAT_SENDT", undefined, {
+        beskrivelse: deler.join("\n"),
+      });
+      break;
+    }
+    case "opprett_journalpost": {
+      const journalposttype = hentValgfriTekst(formData, "journalposttype") ?? "NOTAT";
+      const jpTittel = hentValgfriTekst(formData, "tittel") ?? "Journalpost";
+      const innhold = hentValgfriTekst(formData, "innhold") ?? "";
+      const knyttTilOppgave = formData.get("knyttTilOppgave") === "true";
+
+      const deler = [`Type: ${journalposttype}`, `Tittel: ${jpTittel}`, innhold];
+      if (knyttTilOppgave) {
+        const oppgavetype = hentValgfriTekst(formData, "oppgavetype") ?? "";
+        deler.push(`Knyttet til oppgave${oppgavetype ? `: ${oppgavetype}` : ""}`);
+      }
+
+      leggTilHendelse(request, sak, "JOURNALPOST_OPPRETTET", undefined, {
+        beskrivelse: deler.join("\n"),
+      });
+      break;
+    }
+    case "opprett_oppgave": {
+      const oppgavetype = hentValgfriTekst(formData, "oppgavetype") ?? "";
+      const prioritet = hentValgfriTekst(formData, "prioritet") ?? "";
+      const fristVerdi = hentValgfriTekst(formData, "frist") ?? "";
+      const beskrivelse = hentValgfriTekst(formData, "beskrivelse") ?? "";
+
+      const deler = ["Oppgave opprettet"];
+      if (oppgavetype) deler.push(`Type: ${oppgavetype}`);
+      if (prioritet) deler.push(`Prioritet: ${prioritet}`);
+      if (fristVerdi) deler.push(`Frist: ${fristVerdi}`);
+      if (beskrivelse) deler.push(beskrivelse);
+
+      leggTilHendelse(request, sak, "OPPGAVE_OPPRETTET", undefined, {
         beskrivelse: deler.join("\n"),
       });
       break;
