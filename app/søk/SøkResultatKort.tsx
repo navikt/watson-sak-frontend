@@ -36,11 +36,11 @@ export function SøkResultatKort({ sak }: SøkResultatKortProps) {
             </Heading>
           </Link>
           {sak.blokkert ? (
-            <Tag variant="outline" data-color="warning" size="medium">
+            <Tag variant="outline" data-color="warning" size="small">
               {formaterBlokkeringsarsak(sak.blokkert)}
             </Tag>
           ) : (
-            <Tag variant="outline" data-color="success" size="medium">
+            <Tag variant="outline" data-color="success" size="small">
               {getStatus(sak)}
             </Tag>
           )}

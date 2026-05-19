@@ -58,9 +58,9 @@ import { getAlder, getKategoriText, getMisbrukstyper, getNavn, getTags } from ".
 import {
   formaterBelop,
   formaterBlokkeringsarsak,
+  formaterStatus,
   getKildeText,
   getPersonIdent,
-  getStatus,
 } from "./visning";
 import { action, loader } from "./SakDetaljSide.server";
 import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
@@ -191,7 +191,7 @@ export default function SakDetaljSide() {
   const fetcher = useFetcher<typeof action>();
   const revalidator = useRevalidator();
   const personIdent = getPersonIdent(sak);
-  const statusTekst = getStatus(sak);
+  const statusTekst = formaterStatus(sak.status);
   const kildeTekst = getKildeText(sak);
   const erAktiv = erAktivSakKontrollsak(sak.status);
   const saksreferanse = getSaksreferanse(sak.id);
@@ -333,7 +333,7 @@ export default function SakDetaljSide() {
                         {tittel}
                       </Heading>
                     </VStack>
-                    <HStack gap="space-2">
+                    <HStack gap="space-4">
                       {sak.blokkert && (
                         <Tag variant="outline" data-color="warning" size="medium">
                           {formaterBlokkeringsarsak(sak.blokkert)}

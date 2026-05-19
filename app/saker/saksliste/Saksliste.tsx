@@ -166,11 +166,11 @@ function renderCelle(rad: SakslisteRad, kolonne: SakslisteKolonne) {
       );
     case "status":
       return rad.ventestatus ? (
-        <Tag variant="outline" data-color="warning" size="medium">
+        <Tag variant="outline" data-color="warning" size="small">
           {rad.ventestatus}
         </Tag>
       ) : rad.status ? (
-        <Tag variant="outline" data-color="success" size="medium">
+        <Tag variant="outline" data-color="success" size="small">
           {rad.status}
         </Tag>
       ) : (
