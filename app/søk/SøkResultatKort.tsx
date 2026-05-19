@@ -5,8 +5,14 @@ import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import type { KontrollsakResponse } from "~/saker/types.backend";
-import { getKategoriText, getOpprettetDato, getStatusVariantForSak } from "~/saker/selectors";
-import { getBeskrivelse, getKildeText, getPersonIdent, getStatus } from "~/saker/visning";
+import { getKategoriText, getOpprettetDato } from "~/saker/selectors";
+import {
+  formaterBlokkeringsarsak,
+  getBeskrivelse,
+  getKildeText,
+  getPersonIdent,
+  getStatus,
+} from "~/saker/visning";
 import { formaterDato } from "~/utils/date-utils";
 
 interface SøkResultatKortProps {
@@ -29,9 +35,15 @@ export function SøkResultatKort({ sak }: SøkResultatKortProps) {
               Sak {saksreferanse}
             </Heading>
           </Link>
-          <Tag variant={getStatusVariantForSak(sak)} size="small">
-            {getStatus(sak)}
-          </Tag>
+          {sak.blokkert ? (
+            <Tag variant="outline" data-color="warning" size="small">
+              {formaterBlokkeringsarsak(sak.blokkert)}
+            </Tag>
+          ) : (
+            <Tag variant="outline" data-color="success" size="small">
+              {getStatus(sak)}
+            </Tag>
+          )}
         </HStack>
 
         <HStack gap="space-6" align="center" wrap>

@@ -18,7 +18,8 @@ const lagSak = (overstyringer: Partial<FordelingSak> = {}): FordelingSak => ({
   kategori: "Arbeid",
   misbrukstyper: ["Skjult samliv"],
   ytelser: ["Dagpenger"],
-  status: { tekst: "Opprettet", variant: "info" },
+  status: "Opprettet",
+  ventestatus: null,
   ...overstyringer,
 });
 

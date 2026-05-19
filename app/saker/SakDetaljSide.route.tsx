@@ -54,15 +54,14 @@ import { SakHistorikk } from "./historikk/SakHistorikk";
 import { getSaksreferanse } from "./id";
 import { SakerPåSammePerson } from "./komponenter/SakerPåSammePerson";
 import { SaksbehandlereKort } from "./komponenter/SaksbehandlereKort";
+import { getAlder, getKategoriText, getMisbrukstyper, getNavn, getTags } from "./selectors";
 import {
-  getAlder,
-  getKategoriText,
-  getMisbrukstyper,
-  getNavn,
-  getStatusVariantForSak,
-  getTags,
-} from "./selectors";
-import { formaterBelop, getKildeText, getPersonIdent, getStatus } from "./visning";
+  formaterBelop,
+  formaterBlokkeringsarsak,
+  formaterStatus,
+  getKildeText,
+  getPersonIdent,
+} from "./visning";
 import { action, loader } from "./SakDetaljSide.server";
 import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
 
@@ -192,7 +191,7 @@ export default function SakDetaljSide() {
   const fetcher = useFetcher<typeof action>();
   const revalidator = useRevalidator();
   const personIdent = getPersonIdent(sak);
-  const statusTekst = getStatus(sak);
+  const statusTekst = formaterStatus(sak.status);
   const kildeTekst = getKildeText(sak);
   const erAktiv = erAktivSakKontrollsak(sak.status);
   const saksreferanse = getSaksreferanse(sak.id);
@@ -334,7 +333,16 @@ export default function SakDetaljSide() {
                         {tittel}
                       </Heading>
                     </VStack>
-                    <Tag variant={getStatusVariantForSak(sak)}>{statusTekst}</Tag>
+                    <HStack gap="space-4">
+                      {sak.blokkert && (
+                        <Tag variant="outline" data-color="warning" size="medium">
+                          {formaterBlokkeringsarsak(sak.blokkert)}
+                        </Tag>
+                      )}
+                      <Tag variant="outline" data-color="success" size="medium">
+                        {statusTekst}
+                      </Tag>
+                    </HStack>
                   </HStack>
 
                   <hr className="border-ax-border-neutral-subtle" />
@@ -560,7 +568,7 @@ export default function SakDetaljSide() {
                                 Kategori
                               </Detail>
                               <div>
-                                <Tag variant="neutral" size="small">
+                                <Tag variant="outline" data-color="info" size="small">
                                   {kategoriText}
                                 </Tag>
                               </div>
@@ -574,7 +582,7 @@ export default function SakDetaljSide() {
                               </Detail>
                               <HStack gap="space-2" wrap>
                                 {misbrukstyper.map((type) => (
-                                  <Tag key={type} variant="warning" size="small">
+                                  <Tag key={type} variant="outline" data-color="info" size="small">
                                     {type}
                                   </Tag>
                                 ))}
@@ -589,7 +597,7 @@ export default function SakDetaljSide() {
                               </Detail>
                               <HStack gap="space-2" wrap>
                                 {tags.map((tag) => (
-                                  <Tag key={tag} variant="neutral" size="small">
+                                  <Tag key={tag} variant="outline" data-color="info" size="small">
                                     {merkingEtiketter[tag as keyof typeof merkingEtiketter] ?? tag}
                                   </Tag>
                                 ))}
@@ -622,7 +630,7 @@ export default function SakDetaljSide() {
                                 {sak.ytelser.map((ytelse) => (
                                   <Table.Row key={ytelse.id}>
                                     <Table.DataCell>
-                                      <Tag variant="success" size="xsmall">
+                                      <Tag variant="outline" data-color="brand-beige" size="small">
                                         {ytelse.type}
                                       </Tag>
                                     </Table.DataCell>

@@ -6,8 +6,6 @@ export interface FordelingSak {
   kategori: string | null;
   misbrukstyper: string[];
   ytelser: string[];
-  status: {
-    tekst: string;
-    variant: "info" | "warning" | "success" | "neutral";
-  };
+  status: string;
+  ventestatus: string | null;
 }

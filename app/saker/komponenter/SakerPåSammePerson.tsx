@@ -20,11 +20,11 @@ import {
   getKategoriText,
   getMisbrukstyper,
   getPeriodeText,
-  getStatusVariantForSak,
   getTags,
 } from "~/saker/selectors";
 import {
   formaterBelop,
+  formaterBlokkeringsarsak,
   getKildeText,
   getPersonIdent,
   getStatus,
@@ -87,9 +87,15 @@ function SakKort({ sak }: SakKortProps) {
             <BodyShort size="small">
               Saksbehandler: <span className="font-bold">{saksbehandler}</span>
             </BodyShort>
-            <Tag variant={getStatusVariantForSak(sak)} size="small">
-              {statusTekst}
-            </Tag>
+            {sak.blokkert ? (
+              <Tag variant="outline" data-color="warning" size="small">
+                {formaterBlokkeringsarsak(sak.blokkert)}
+              </Tag>
+            ) : (
+              <Tag variant="outline" data-color="success" size="small">
+                {statusTekst}
+              </Tag>
+            )}
           </HStack>
           <Button
             variant="tertiary"
@@ -120,7 +126,7 @@ function SakKort({ sak }: SakKortProps) {
 
                 {kategoriText && (
                   <SakFelt label="Kategori">
-                    <Tag variant="neutral" size="small">
+                    <Tag variant="outline" data-color="info" size="small">
                       {kategoriText}
                     </Tag>
                   </SakFelt>
@@ -133,7 +139,7 @@ function SakKort({ sak }: SakKortProps) {
                     </Detail>
                     <HStack gap="space-4" wrap>
                       {misbrukstyper.map((type) => (
-                        <Tag key={type} variant="warning" size="small">
+                        <Tag key={type} variant="outline" data-color="info" size="small">
                           {type}
                         </Tag>
                       ))}
@@ -148,7 +154,7 @@ function SakKort({ sak }: SakKortProps) {
                     </Detail>
                     <HStack gap="space-4" wrap>
                       {tags.map((tag) => (
-                        <Tag key={tag} variant="neutral" size="small">
+                        <Tag key={tag} variant="outline" data-color="info" size="small">
                           {tag}
                         </Tag>
                       ))}
@@ -171,7 +177,7 @@ function SakKort({ sak }: SakKortProps) {
                     </Detail>
                     <HStack gap="space-4" wrap>
                       {ytelseTyper.map((ytelse) => (
-                        <Tag key={ytelse} variant="success" size="small">
+                        <Tag key={ytelse} variant="outline" data-color="brand-beige" size="small">
                           {ytelse}
                         </Tag>
                       ))}

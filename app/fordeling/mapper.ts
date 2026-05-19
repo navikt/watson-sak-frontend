@@ -1,7 +1,7 @@
 import type { KontrollsakResponse } from "./types.backend";
 import type { FordelingSak } from "./typer";
 import { kontrollsakKategoriEtiketter } from "~/saker/kategorier";
-import { formaterMisbrukstype, getStatus, hentStatusVariant } from "~/saker/visning";
+import { formaterBlokkeringsarsak, formaterMisbrukstype, getStatus } from "~/saker/visning";
 
 export function erEierlosKontrollsak(kontrollsak: KontrollsakResponse) {
   return kontrollsak.saksbehandlere.eier === null;
@@ -16,10 +16,8 @@ export function mapKontrollsakTilFordelingSak(kontrollsak: KontrollsakResponse):
     kategori: kategoriEtikett(kontrollsak.kategori),
     misbrukstyper: kontrollsak.misbruktype.map(formaterMisbrukstype),
     ytelser: kontrollsak.ytelser.map((ytelse) => ytelse.type),
-    status: {
-      tekst: getStatus(kontrollsak),
-      variant: hentStatusVariant(kontrollsak.status),
-    },
+    status: getStatus(kontrollsak),
+    ventestatus: kontrollsak.blokkert ? formaterBlokkeringsarsak(kontrollsak.blokkert) : null,
   };
 }
 
