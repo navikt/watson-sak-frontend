@@ -89,6 +89,7 @@ export function leggTilHendelse(
     | "berortSaksbehandlerEnhet"
     | "blokkert"
     | "beskrivelse"
+    | "tittel"
   >,
 ) {
   return leggTilBackendHendelse(

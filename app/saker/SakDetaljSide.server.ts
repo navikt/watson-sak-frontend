@@ -342,6 +342,19 @@ async function backendAction(
   }
 }
 
+function formaterJournalposttype(type: string): string {
+  switch (type) {
+    case "INNGAAENDE":
+      return "Inngående";
+    case "UTGAAENDE":
+      return "Utgående";
+    case "NOTAT":
+      return "Notat";
+    default:
+      return type;
+  }
+}
+
 // --- Mock-action (lokal mock-tilstand) ---
 
 async function mockAction(
@@ -649,13 +662,14 @@ async function mockAction(
       const innhold = hentValgfriTekst(formData, "innhold") ?? "";
       const knyttTilOppgave = formData.get("knyttTilOppgave") === "true";
 
-      const deler = [`Type: ${journalposttype}`, `Tittel: ${jpTittel}`, innhold];
+      const deler = [innhold];
       if (knyttTilOppgave) {
         const oppgavetype = hentValgfriTekst(formData, "oppgavetype") ?? "";
         deler.push(`Knyttet til oppgave${oppgavetype ? `: ${oppgavetype}` : ""}`);
       }
 
       leggTilHendelse(request, sak, "JOURNALPOST_OPPRETTET", undefined, {
+        tittel: `${formaterJournalposttype(journalposttype)}: ${jpTittel}`,
         beskrivelse: deler.join("\n"),
       });
       break;
@@ -666,13 +680,13 @@ async function mockAction(
       const fristVerdi = hentValgfriTekst(formData, "frist") ?? "";
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse") ?? "";
 
-      const deler = ["Oppgave opprettet"];
-      if (oppgavetype) deler.push(`Type: ${oppgavetype}`);
-      if (prioritet) deler.push(`Prioritet: ${prioritet}`);
+      const deler: string[] = [];
+      if (prioritet) deler.push(`Prioritet: ${prioritet.toLowerCase()}`);
       if (fristVerdi) deler.push(`Frist: ${fristVerdi}`);
       if (beskrivelse) deler.push(beskrivelse);
 
       leggTilHendelse(request, sak, "OPPGAVE_OPPRETTET", undefined, {
+        tittel: oppgavetype || "Oppgave",
         beskrivelse: deler.join("\n"),
       });
       break;

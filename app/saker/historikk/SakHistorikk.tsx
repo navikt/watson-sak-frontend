@@ -11,6 +11,7 @@ import {
   PersonGroupIcon,
   PersonIcon,
   PlusCircleIcon,
+  TasklistIcon,
   XMarkOctagonIcon,
 } from "@navikt/aksel-icons";
 import { BodyShort, Box, Button, Heading, HStack, Process, VStack } from "@navikt/ds-react";
@@ -79,6 +80,10 @@ function hendelseTittel(hendelse: SakHendelse): string {
       return hendelse.tittel ?? "Notat";
     case "NOTAT_SENDT":
       return "Notat opprettet i Gosys";
+    case "JOURNALPOST_OPPRETTET":
+      return "Journalpost opprettet";
+    case "OPPGAVE_OPPRETTET":
+      return "Oppgave opprettet";
     default:
       return hendelse.hendelsesType;
   }
@@ -90,6 +95,13 @@ function hendelseBeskrivelse(hendelse: SakHendelse): string | null {
   }
 
   if (hendelse.hendelsesType === "NOTAT_SENDT") {
+    return hendelse.beskrivelse ?? null;
+  }
+
+  if (
+    hendelse.hendelsesType === "JOURNALPOST_OPPRETTET" ||
+    hendelse.hendelsesType === "OPPGAVE_OPPRETTET"
+  ) {
     return hendelse.beskrivelse ?? null;
   }
 
@@ -198,9 +210,44 @@ function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
       return <ArrowUndoIcon {...iconProps} />;
     case "NOTAT_SENDT":
       return <DocPencilIcon {...iconProps} />;
+    case "JOURNALPOST_OPPRETTET":
+      return <DocPencilIcon {...iconProps} />;
+    case "OPPGAVE_OPPRETTET":
+      return <TasklistIcon {...iconProps} />;
     default:
       return <ClockIcon {...iconProps} />;
   }
+}
+
+function HendelseInnhold({
+  hendelse,
+  beskrivelse,
+}: {
+  hendelse: SakHendelse;
+  beskrivelse: string | null;
+}) {
+  if (
+    (hendelse.hendelsesType === "JOURNALPOST_OPPRETTET" ||
+      hendelse.hendelsesType === "OPPGAVE_OPPRETTET") &&
+    hendelse.tittel
+  ) {
+    return (
+      <VStack gap="space-1">
+        <BodyShort size="small" weight="semibold">
+          {hendelse.tittel}
+        </BodyShort>
+        {hendelse.beskrivelse && <BodyShort size="small">{hendelse.beskrivelse}</BodyShort>}
+      </VStack>
+    );
+  }
+
+  if (!beskrivelse) return null;
+
+  return (
+    <VStack gap="space-1">
+      <BodyShort size="small">{beskrivelse}</BodyShort>
+    </VStack>
+  );
 }
 
 const MAKS_SYNLIGE_HENDELSER = 5;
@@ -241,9 +288,7 @@ export function SakHistorikk({ sakId, hendelser }: SakHistorikkProps) {
                   status={index === 0 ? "active" : "completed"}
                   bullet={<HendelseBullet hendelse={hendelse} />}
                 >
-                  <VStack gap="space-1">
-                    {beskrivelse && <BodyShort size="small">{beskrivelse}</BodyShort>}
-                  </VStack>
+                  <HendelseInnhold hendelse={hendelse} beskrivelse={beskrivelse} />
                 </Process.Event>
               );
             })}
