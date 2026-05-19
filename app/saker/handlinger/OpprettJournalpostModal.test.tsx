@@ -94,8 +94,19 @@ describe("OpprettJournalpostModal", () => {
     });
     fireEvent.click(screen.getByLabelText("Knytt til oppgave"));
 
-    const oppgavetypeSelect = screen.getByLabelText("Oppgavetype");
-    fireEvent.change(oppgavetypeSelect, { target: { value: "vurder_dokument" } });
+    fireEvent.change(screen.getByLabelText("Oppgavetype"), {
+      target: { value: "vurder_dokument" },
+    });
+    fireEvent.change(screen.getByLabelText("Prioritet"), {
+      target: { value: "NORMAL" },
+    });
+    const fristInput = document.querySelector('input[name="frist"]') as HTMLInputElement;
+    fireEvent.change(fristInput, { target: { value: "2026-06-01" } });
+    const enhetInput = document.querySelector('input[name="behandlendeEnhet"]') as HTMLInputElement;
+    fireEvent.change(enhetInput, { target: { value: "4100" } });
+    fireEvent.change(screen.getByLabelText("Beskrivelse"), {
+      target: { value: "Oppgavebeskrivelse" },
+    });
 
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
 

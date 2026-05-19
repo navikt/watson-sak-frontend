@@ -57,6 +57,11 @@ describe("OpprettOppgaveModal", () => {
     fireEvent.change(screen.getByLabelText("Prioritet"), {
       target: { value: "HOY" },
     });
+    // Frist og behandlendeEnhet bruker useInputControl med hidden inputs
+    const fristInput = document.querySelector('input[name="frist"]') as HTMLInputElement;
+    fireEvent.change(fristInput, { target: { value: "2026-06-01" } });
+    const enhetInput = document.querySelector('input[name="behandlendeEnhet"]') as HTMLInputElement;
+    fireEvent.change(enhetInput, { target: { value: "4100" } });
     fireEvent.change(screen.getByLabelText("Beskrivelse"), {
       target: { value: "En beskrivelse" },
     });

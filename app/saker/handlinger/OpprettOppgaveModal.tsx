@@ -9,11 +9,11 @@ import { getSaksreferanse } from "~/saker/id";
 import { OppgaveSkjema } from "./OppgaveSkjema";
 
 const opprettOppgaveSkjema = z.object({
-  oppgavetype: z.string().optional(),
-  prioritet: z.string().optional(),
-  frist: z.string().optional(),
-  behandlendeEnhet: z.string().optional(),
-  beskrivelse: z.string().optional(),
+  oppgavetype: z.string({ error: "Velg oppgavetype" }).min(1, "Velg oppgavetype"),
+  prioritet: z.string({ error: "Velg prioritet" }).min(1, "Velg prioritet"),
+  frist: z.string({ error: "Velg frist" }).min(1, "Velg frist"),
+  behandlendeEnhet: z.string({ error: "Velg behandlende enhet" }).min(1, "Velg behandlende enhet"),
+  beskrivelse: z.string({ error: "Skriv en beskrivelse" }).trim().min(1, "Skriv en beskrivelse"),
 });
 
 interface OpprettOppgaveModalProps {

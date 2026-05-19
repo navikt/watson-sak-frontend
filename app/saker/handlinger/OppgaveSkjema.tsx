@@ -49,6 +49,7 @@ export function OppgaveSkjema({ fields }: OppgaveSkjemaProps) {
         id={fields.oppgavetype.id}
         defaultValue={fields.oppgavetype.initialValue ?? ""}
         label="Oppgavetype"
+        error={fields.oppgavetype.errors?.[0]}
       >
         <option value="">Velg oppgavetype</option>
         {oppgavetypeValg.map(({ verdi, label }) => (
@@ -65,6 +66,7 @@ export function OppgaveSkjema({ fields }: OppgaveSkjemaProps) {
           id={fields.prioritet.id}
           defaultValue={fields.prioritet.initialValue ?? ""}
           label="Prioritet"
+          error={fields.prioritet.errors?.[0]}
         >
           <option value="">Velg prioritet</option>
           <option value="LAV">Lav</option>
@@ -80,7 +82,7 @@ export function OppgaveSkjema({ fields }: OppgaveSkjemaProps) {
           onFocus={() => frist.focus()}
         />
         <DatePicker {...datepickerProps}>
-          <DatePicker.Input {...inputProps} label="Frist" />
+          <DatePicker.Input {...inputProps} label="Frist" error={fields.frist.errors?.[0]} />
         </DatePicker>
       </div>
 
@@ -99,6 +101,7 @@ export function OppgaveSkjema({ fields }: OppgaveSkjemaProps) {
         onToggleSelected={(enhetsnummer, isSelected) =>
           behandlendeEnhet.change(isSelected ? enhetsnummer : "")
         }
+        error={fields.behandlendeEnhet.errors?.[0]}
       />
 
       <Textarea
@@ -106,6 +109,7 @@ export function OppgaveSkjema({ fields }: OppgaveSkjemaProps) {
         name={fields.beskrivelse.name}
         defaultValue={fields.beskrivelse.initialValue}
         label="Beskrivelse"
+        error={fields.beskrivelse.errors?.[0]}
         minRows={2}
         maxRows={5}
       />

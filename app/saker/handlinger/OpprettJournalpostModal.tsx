@@ -20,17 +20,41 @@ import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { OppgaveSkjema } from "./OppgaveSkjema";
 
-const opprettJournalpostSkjema = z.object({
-  journalposttype: z.string({ error: "Velg journalposttype" }).min(1, "Velg journalposttype"),
-  tittel: z.string({ error: "Skriv en tittel" }).trim().min(1, "Skriv en tittel"),
-  innhold: z.string({ error: "Skriv innhold" }).trim().min(1, "Skriv innhold"),
-  knyttTilOppgave: z.string().optional(),
-  oppgavetype: z.string().optional(),
-  prioritet: z.string().optional(),
-  frist: z.string().optional(),
-  behandlendeEnhet: z.string().optional(),
-  beskrivelse: z.string().optional(),
-});
+const opprettJournalpostSkjema = z
+  .object({
+    journalposttype: z.string({ error: "Velg journalposttype" }).min(1, "Velg journalposttype"),
+    tittel: z.string({ error: "Skriv en tittel" }).trim().min(1, "Skriv en tittel"),
+    innhold: z.string({ error: "Skriv innhold" }).trim().min(1, "Skriv innhold"),
+    knyttTilOppgave: z.string().optional(),
+    oppgavetype: z.string().optional(),
+    prioritet: z.string().optional(),
+    frist: z.string().optional(),
+    behandlendeEnhet: z.string().optional(),
+    beskrivelse: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.knyttTilOppgave !== "true") return;
+
+    if (!data.oppgavetype) {
+      ctx.addIssue({ code: "custom", path: ["oppgavetype"], message: "Velg oppgavetype" });
+    }
+    if (!data.prioritet) {
+      ctx.addIssue({ code: "custom", path: ["prioritet"], message: "Velg prioritet" });
+    }
+    if (!data.frist) {
+      ctx.addIssue({ code: "custom", path: ["frist"], message: "Velg frist" });
+    }
+    if (!data.behandlendeEnhet) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["behandlendeEnhet"],
+        message: "Velg behandlende enhet",
+      });
+    }
+    if (!data.beskrivelse?.trim()) {
+      ctx.addIssue({ code: "custom", path: ["beskrivelse"], message: "Skriv en beskrivelse" });
+    }
+  });
 
 interface OpprettJournalpostModalProps {
   sakId: string;
