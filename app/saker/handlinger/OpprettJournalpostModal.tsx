@@ -79,8 +79,8 @@ export function OpprettJournalpostModal({ sakId, åpen, onClose }: OpprettJourna
       header={{ heading: "Opprett journalpost", icon: <DocPencilIcon aria-hidden /> }}
       width="medium"
     >
-      <fetcher.Form method="post" {...getFormProps(form)}>
-        <Modal.Body>
+      <Modal.Body>
+        <fetcher.Form method="post" {...getFormProps(form)} name="opprett-journalpost">
           <VStack gap="space-4">
             <RadioGroup
               name={fields.journalposttype.name}
@@ -173,16 +173,16 @@ export function OpprettJournalpostModal({ sakId, åpen, onClose }: OpprettJourna
               )}
             </VStack>
           </VStack>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button type="submit" variant="primary">
-            Lagre
-          </Button>
-          <Button type="button" variant="secondary" onClick={handleLukk}>
-            Avbryt
-          </Button>
-        </Modal.Footer>
-      </fetcher.Form>
+        </fetcher.Form>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button type="submit" form="opprett-journalpost" variant="primary">
+          Lagre
+        </Button>
+        <Button type="button" variant="secondary" onClick={handleLukk}>
+          Avbryt
+        </Button>
+      </Modal.Footer>
     </Modal>
   );
 }
