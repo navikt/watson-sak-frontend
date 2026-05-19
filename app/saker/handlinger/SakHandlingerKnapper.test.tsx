@@ -68,12 +68,13 @@ describe("SakHandlingerKnapper", () => {
     expect(screen.getByRole("button", { name: "Endre status" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Sett på vent" })).toBeDefined();
     expect(screen.getByRole("separator")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Opprett notat" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Opprett journalpost" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Opprett oppgave" })).toBeDefined();
     expect(screen.queryByRole("button", { name: "Stans ytelse" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Gjenoppta" })).toBeNull();
   });
 
-  it("viser Gjenoppta og Opprett notat for blokkert sak med eier", () => {
+  it("viser Gjenoppta, Opprett journalpost og Opprett oppgave for blokkert sak med eier", () => {
     renderMedRouter(
       <SakHandlingerKnapper
         sak={lagKontrollsak({ status: "UTREDES", blokkert: "VENTER_PA_INFORMASJON" })}
@@ -82,7 +83,8 @@ describe("SakHandlingerKnapper", () => {
 
     expect(screen.getByRole("button", { name: "Gjenoppta" })).toBeDefined();
     expect(screen.getByRole("separator")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Opprett notat" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Opprett journalpost" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Opprett oppgave" })).toBeDefined();
     expect(screen.queryByRole("button", { name: "Endre status" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Sett på vent" })).toBeNull();
   });
@@ -104,11 +106,12 @@ describe("SakHandlingerKnapper", () => {
     expect(screen.getByRole("button", { name: "Endre status" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Sett på vent" })).toBeDefined();
     expect(screen.getByRole("separator")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Opprett notat" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Opprett journalpost" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Opprett oppgave" })).toBeDefined();
     expect(screen.queryByRole("button", { name: "Send til annen enhet" })).toBeNull();
   });
 
-  it("viser Gjenoppta og Opprett notat for eierløs blokkert sak", () => {
+  it("viser Gjenoppta, Opprett journalpost og Opprett oppgave for eierløs blokkert sak", () => {
     renderMedRouter(
       <SakHandlingerKnapper
         sak={lagKontrollsak({
@@ -125,7 +128,8 @@ describe("SakHandlingerKnapper", () => {
 
     expect(screen.getByRole("button", { name: "Gjenoppta" })).toBeDefined();
     expect(screen.getByRole("separator")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Opprett notat" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Opprett journalpost" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Opprett oppgave" })).toBeDefined();
     expect(screen.queryByRole("button", { name: "Sett på vent" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Endre status" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Tildel saksbehandler" })).toBeNull();

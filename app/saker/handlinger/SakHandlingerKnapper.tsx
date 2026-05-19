@@ -1,4 +1,10 @@
-import { ArrowRightIcon, ClockDashedIcon, DocPencilIcon, PencilIcon } from "@navikt/aksel-icons";
+import {
+  ArrowRightIcon,
+  ClockDashedIcon,
+  DocPencilIcon,
+  PencilIcon,
+  TasklistIcon,
+} from "@navikt/aksel-icons";
 import { Button, Heading, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import { useFetcher } from "react-router";
@@ -6,9 +12,10 @@ import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { EndreStatusModal } from "./EndreStatusModal";
-import { hentTilgjengeligeSakshandlinger, type Sakshandling } from "./tilgjengeligeHandlinger";
-import { OpprettNotatModal } from "./OpprettNotatModal";
+import { OpprettJournalpostModal } from "./OpprettJournalpostModal";
+import { OpprettOppgaveModal } from "./OpprettOppgaveModal";
 import { SettPaVentModal } from "./SettPaVentModal";
+import { hentTilgjengeligeSakshandlinger, type Sakshandling } from "./tilgjengeligeHandlinger";
 
 interface SakHandlingerKnapperProps {
   sak: KontrollsakResponse;
@@ -39,19 +46,26 @@ const handlingsvisning: Record<
     variant: "primary",
     icon: <ArrowRightIcon aria-hidden />,
   },
-  "opprett-notat": {
-    label: "Opprett notat",
+  "opprett-journalpost": {
+    label: "Opprett journalpost",
     variant: "secondary-neutral",
     icon: <DocPencilIcon aria-hidden />,
   },
+  "opprett-oppgave": {
+    label: "Opprett oppgave",
+    variant: "secondary-neutral",
+    icon: <TasklistIcon aria-hidden />,
+  },
 };
+
+const sekundærhandlinger: Sakshandling[] = ["opprett-journalpost", "opprett-oppgave"];
 
 export function SakHandlingerKnapper({ sak }: SakHandlingerKnapperProps) {
   const gjenopptaFetcher = useFetcher();
   const [åpenModal, setÅpenModal] = useState<ModalHandling | null>(null);
   const handlinger = hentTilgjengeligeSakshandlinger(sak);
-  const primærhandlinger = handlinger.filter((handling) => handling !== "opprett-notat");
-  const visNotathandling = handlinger.includes("opprett-notat");
+  const primærhandlinger = handlinger.filter((handling) => !sekundærhandlinger.includes(handling));
+  const visSekundærhandlinger = handlinger.some((h) => sekundærhandlinger.includes(h));
 
   if (handlinger.length === 0) {
     return null;
@@ -100,17 +114,25 @@ export function SakHandlingerKnapper({ sak }: SakHandlingerKnapperProps) {
           );
         })}
 
-        {visNotathandling ? (
+        {visSekundærhandlinger ? (
           <>
             <hr className="my-4 border-ax-border-neutral-subtle" />
-            <Button
-              variant={handlingsvisning["opprett-notat"].variant}
-              size="medium"
-              icon={handlingsvisning["opprett-notat"].icon}
-              onClick={() => handleKlikk("opprett-notat")}
-            >
-              {handlingsvisning["opprett-notat"].label}
-            </Button>
+            {sekundærhandlinger
+              .filter((h) => handlinger.includes(h))
+              .map((handling) => {
+                const visning = handlingsvisning[handling];
+                return (
+                  <Button
+                    key={handling}
+                    variant={visning.variant}
+                    size="medium"
+                    icon={visning.icon}
+                    onClick={() => handleKlikk(handling)}
+                  >
+                    {visning.label}
+                  </Button>
+                );
+              })}
           </>
         ) : null}
       </VStack>
@@ -126,9 +148,14 @@ export function SakHandlingerKnapper({ sak }: SakHandlingerKnapperProps) {
         åpen={åpenModal === "sett-pa-vent"}
         onClose={() => setÅpenModal(null)}
       />
-      <OpprettNotatModal
+      <OpprettJournalpostModal
         sakId={String(sak.id)}
-        åpen={åpenModal === "opprett-notat"}
+        åpen={åpenModal === "opprett-journalpost"}
+        onClose={() => setÅpenModal(null)}
+      />
+      <OpprettOppgaveModal
+        sakId={String(sak.id)}
+        åpen={åpenModal === "opprett-oppgave"}
         onClose={() => setÅpenModal(null)}
       />
     </>

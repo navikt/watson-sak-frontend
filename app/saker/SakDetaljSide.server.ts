@@ -238,6 +238,10 @@ async function backendAction(
       await backendApi.opprettNotat(token, sakId, tittel, notatRaw.trim());
       return { ok: true };
     }
+    case "opprett_journalpost":
+    case "opprett_oppgave": {
+      throw data("Handlingen er ikke støttet ennå", { status: 501 });
+    }
     case "henlegg": {
       const sak = await backendApi.endreStatus(token, sakId, "HENLAGT");
       return { ok: true, sak };
@@ -334,6 +338,32 @@ async function backendAction(
     default: {
       throw data("Ugyldig handling", { status: 400 });
     }
+  }
+}
+
+function formaterJournalposttype(type: string): string {
+  switch (type) {
+    case "INNGAAENDE":
+      return "Inngående";
+    case "UTGAAENDE":
+      return "Utgående";
+    case "NOTAT":
+      return "Notat";
+    default:
+      return type;
+  }
+}
+
+function formaterPrioritet(prioritet: string): string {
+  switch (prioritet) {
+    case "LAV":
+      return "lav";
+    case "NORMAL":
+      return "normal";
+    case "HOY":
+      return "høy";
+    default:
+      return prioritet.toLowerCase();
   }
 }
 
@@ -634,6 +664,48 @@ async function mockAction(
       }
 
       leggTilHendelse(request, sak, "NOTAT_SENDT", undefined, {
+        beskrivelse: deler.join("\n"),
+      });
+      break;
+    }
+    case "opprett_journalpost": {
+      const journalposttype = hentValgfriTekst(formData, "journalposttype") ?? "NOTAT";
+      const jpTittel = hentValgfriTekst(formData, "tittel") ?? "Journalpost";
+      const innhold = hentValgfriTekst(formData, "innhold") ?? "";
+      const knyttTilOppgave = formData.get("knyttTilOppgave") === "true";
+
+      const deler = [innhold];
+      if (knyttTilOppgave) {
+        const oppgavetype = hentValgfriTekst(formData, "oppgavetype") ?? "";
+        const prioritet = hentValgfriTekst(formData, "prioritet") ?? "";
+        const frist = hentValgfriTekst(formData, "frist") ?? "";
+        const oppgaveDeler = [`Knyttet til oppgave${oppgavetype ? `: ${oppgavetype}` : ""}`];
+        if (prioritet) oppgaveDeler.push(`Prioritet: ${formaterPrioritet(prioritet)}`);
+        if (frist) oppgaveDeler.push(`Frist: ${frist}`);
+        deler.push(oppgaveDeler.join(", "));
+      }
+
+      leggTilHendelse(request, sak, "JOURNALPOST_OPPRETTET", undefined, {
+        tittel: `${formaterJournalposttype(journalposttype)}: ${jpTittel}`,
+        beskrivelse: deler.join("\n"),
+      });
+      break;
+    }
+    case "opprett_oppgave": {
+      const oppgavetype = hentValgfriTekst(formData, "oppgavetype") ?? "";
+      const prioritet = hentValgfriTekst(formData, "prioritet") ?? "";
+      const fristVerdi = hentValgfriTekst(formData, "frist") ?? "";
+      const behandlendeEnhet = hentValgfriTekst(formData, "behandlendeEnhet") ?? "";
+      const beskrivelse = hentValgfriTekst(formData, "beskrivelse") ?? "";
+
+      const deler: string[] = [];
+      if (prioritet) deler.push(`Prioritet: ${formaterPrioritet(prioritet)}`);
+      if (fristVerdi) deler.push(`Frist: ${fristVerdi}`);
+      if (behandlendeEnhet) deler.push(`Enhet: ${behandlendeEnhet}`);
+      if (beskrivelse) deler.push(beskrivelse);
+
+      leggTilHendelse(request, sak, "OPPGAVE_OPPRETTET", undefined, {
+        tittel: oppgavetype || "Oppgave",
         beskrivelse: deler.join("\n"),
       });
       break;

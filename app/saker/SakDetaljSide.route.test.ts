@@ -520,4 +520,57 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(kontrollsak.status).toBe("AVSLUTTET");
     expect(kontrollsak.kategori).not.toBe("ARBEID");
   });
+
+  it("opprett_journalpost logger hendelse med tittel og beskrivelse", async () => {
+    const kontrollsak = hentFordelingssaker(state())[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+
+    const formData = new FormData();
+    formData.set("handling", "opprett_journalpost");
+    formData.set("journalposttype", "INNGAAENDE");
+    formData.set("tittel", "Dokumentasjon mottatt");
+    formData.set("innhold", "Vedlagt kopi av arbeidsavtale");
+    formData.set("knyttTilOppgave", "false");
+
+    await action({
+      request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: kontrollsakRef },
+    } as Route.ActionArgs);
+
+    const historikk = hentHistorikk(testRequest, String(kontrollsak.id));
+    expect(historikk[0]?.hendelsesType).toBe("JOURNALPOST_OPPRETTET");
+    expect(historikk[0]?.tittel).toBe("Inngående: Dokumentasjon mottatt");
+    expect(historikk[0]?.beskrivelse).toContain("Vedlagt kopi av arbeidsavtale");
+  });
+
+  it("opprett_oppgave logger hendelse med oppgavetype og beskrivelse", async () => {
+    const kontrollsak = hentFordelingssaker(state())[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+
+    const formData = new FormData();
+    formData.set("handling", "opprett_oppgave");
+    formData.set("oppgavetype", "vurder_dokument");
+    formData.set("prioritet", "HOY");
+    formData.set("frist", "2026-06-01");
+    formData.set("behandlendeEnhet", "4100");
+    formData.set("beskrivelse", "Sjekk dokumentasjon");
+
+    await action({
+      request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: kontrollsakRef },
+    } as Route.ActionArgs);
+
+    const historikk = hentHistorikk(testRequest, String(kontrollsak.id));
+    expect(historikk[0]?.hendelsesType).toBe("OPPGAVE_OPPRETTET");
+    expect(historikk[0]?.tittel).toBe("vurder_dokument");
+    expect(historikk[0]?.beskrivelse).toContain("Prioritet: høy");
+    expect(historikk[0]?.beskrivelse).toContain("Frist: 2026-06-01");
+    expect(historikk[0]?.beskrivelse).toContain("Sjekk dokumentasjon");
+  });
 });
