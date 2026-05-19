@@ -153,6 +153,18 @@ export function redigerManuellHendelse(
   return hendelse;
 }
 
+export function slettManuellHendelse(state: MockState, sakId: string, hendelseId: string): boolean {
+  const hendelser = state.historikk.get(sakId) ?? [];
+  const index = hendelser.findIndex(
+    (h) => h.hendelseId === hendelseId && h.hendelsesType === "MANUELL_NOTAT",
+  );
+
+  if (index === -1) return false;
+
+  hendelser.splice(index, 1);
+  return true;
+}
+
 /** Generer initial historikk for et sett med saker. Returnerer oppdatert nesteId. */
 export function genererHistorikkForSaker(
   saker: KontrollsakResponse[],

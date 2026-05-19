@@ -289,3 +289,16 @@ export async function redigerManuellHendelse(
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke redigere manuell hendelse");
 }
+
+export async function slettManuellHendelse(
+  token: string,
+  sakId: string,
+  hendelseId: string,
+): Promise<void> {
+  logger.info(`Sletter manuell hendelse ${hendelseId} for sak ${sakId}`);
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/hendelser/${hendelseId}`), {
+    method: "DELETE",
+    headers: authHeaders(token),
+  });
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke slette manuell hendelse");
+}

@@ -1,7 +1,10 @@
-import { ClockIcon, PencilIcon } from "@navikt/aksel-icons";
-import { BodyShort, Button, Modal, Process, VStack } from "@navikt/ds-react";
+import { ClockIcon, PencilIcon, TrashIcon } from "@navikt/aksel-icons";
+import { BodyShort, Button, HStack, Modal, Process } from "@navikt/ds-react";
 import { useRef, useState } from "react";
+import { useFetcher } from "react-router";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
+import { RouteConfig } from "~/routeConfig";
+import { getSaksreferanse } from "~/saker/id";
 import { useDisclosure } from "~/utils/useDisclosure";
 import { RedigerHistorikkModal } from "./RedigerHistorikkModal";
 import type { SakHendelse } from "./typer";
@@ -28,12 +31,23 @@ export function VisAllHistorikkModal({
 }: VisAllHistorikkModalProps) {
   const modalRef = useRef<HTMLDialogElement>(null);
   const innloggetBruker = useInnloggetBruker();
+  const fetcher = useFetcher();
   const { erÅpen: redigerÅpen, onÅpne: onÅpneRediger, onLukk: onLukkRediger } = useDisclosure();
   const [valgtHendelse, setValgtHendelse] = useState<SakHendelse | null>(null);
 
   function åpneRediger(hendelse: SakHendelse) {
     setValgtHendelse(hendelse);
     onÅpneRediger();
+  }
+
+  function slettHendelse(hendelse: SakHendelse) {
+    fetcher.submit(
+      { handling: "slett_historikk", hendelseId: hendelse.hendelseId },
+      {
+        method: "post",
+        action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),
+      },
+    );
   }
 
   return (
@@ -64,19 +78,29 @@ export function VisAllHistorikkModal({
                     status={index === 0 ? "active" : "completed"}
                     bullet={<HendelseBullet hendelse={hendelse} />}
                   >
-                    <VStack gap="space-2">
+                    <HStack justify="space-between" align="start" wrap={false}>
                       <HendelseInnhold hendelse={hendelse} beskrivelse={beskrivelse} />
                       {erEgetManueltNotat && (
-                        <Button
-                          variant="tertiary"
-                          size="xsmall"
-                          icon={<PencilIcon aria-hidden />}
-                          onClick={() => åpneRediger(hendelse)}
-                        >
-                          Rediger
-                        </Button>
+                        <HStack gap="space-2" className="shrink-0">
+                          <Button
+                            variant="tertiary"
+                            size="xsmall"
+                            icon={<PencilIcon aria-hidden />}
+                            onClick={() => åpneRediger(hendelse)}
+                          >
+                            Rediger
+                          </Button>
+                          <Button
+                            variant="tertiary-neutral"
+                            size="xsmall"
+                            icon={<TrashIcon aria-hidden />}
+                            onClick={() => slettHendelse(hendelse)}
+                          >
+                            Slett
+                          </Button>
+                        </HStack>
                       )}
-                    </VStack>
+                    </HStack>
                   </Process.Event>
                 );
               })}

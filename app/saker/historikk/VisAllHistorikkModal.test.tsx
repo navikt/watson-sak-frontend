@@ -71,6 +71,42 @@ describe("VisAllHistorikkModal", () => {
     expect(screen.getByRole("button", { name: "Rediger" })).toBeDefined();
   });
 
+  it("viser 'Slett'-knapp for egne manuelle notater", () => {
+    const hendelser = [
+      lagHendelse({
+        hendelseId: "00000000-0000-4000-8000-000000000001",
+        hendelsesType: "MANUELL_NOTAT",
+        tittel: "Mitt notat",
+        notat: "En beskrivelse",
+        opprettetAvNavIdent: "Z999999",
+      }),
+    ];
+
+    renderMedRouter(
+      <VisAllHistorikkModal sakId={1} hendelser={hendelser} åpen={true} onClose={() => {}} />,
+    );
+
+    expect(screen.getByRole("button", { name: "Slett" })).toBeDefined();
+  });
+
+  it("viser ikke 'Slett'-knapp for andres manuelle notater", () => {
+    const hendelser = [
+      lagHendelse({
+        hendelseId: "00000000-0000-4000-8000-000000000001",
+        hendelsesType: "MANUELL_NOTAT",
+        tittel: "Andres notat",
+        notat: "En beskrivelse",
+        opprettetAvNavIdent: "Z111111",
+      }),
+    ];
+
+    renderMedRouter(
+      <VisAllHistorikkModal sakId={1} hendelser={hendelser} åpen={true} onClose={() => {}} />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Slett" })).toBeNull();
+  });
+
   it("viser ikke 'Rediger'-knapp for andres manuelle notater", () => {
     const hendelser = [
       lagHendelse({

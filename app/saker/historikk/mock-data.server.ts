@@ -4,6 +4,7 @@ import {
   leggTilHendelse as _leggTilHendelse,
   leggTilManuellHendelse as _leggTilManuellHendelse,
   redigerManuellHendelse as _redigerManuellHendelse,
+  slettManuellHendelse as _slettManuellHendelse,
 } from "~/testing/mock-store/historikk.server";
 
 export function hentHistorikk(request: Request, sakId: number | string) {
@@ -42,4 +43,8 @@ export function redigerManuellHendelse(
     notat,
     tidspunkt,
   );
+}
+
+export function slettManuellHendelse(request: Request, sakId: string, hendelseId: string) {
+  return _slettManuellHendelse(hentMockState(request), sakId, hendelseId);
 }
