@@ -272,3 +272,33 @@ export async function opprettManuellHendelse(
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke opprette manuell hendelse");
 }
+
+export async function redigerManuellHendelse(
+  token: string,
+  sakId: string,
+  hendelseId: string,
+  tittel: string,
+  beskrivelse?: string,
+  tidspunkt?: string,
+): Promise<void> {
+  logger.info(`Redigerer manuell hendelse ${hendelseId} for sak ${sakId}`);
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/hendelser/${hendelseId}`), {
+    method: "PUT",
+    headers: authHeaders(token),
+    body: JSON.stringify({ tittel, beskrivelse, tidspunkt }),
+  });
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke redigere manuell hendelse");
+}
+
+export async function slettManuellHendelse(
+  token: string,
+  sakId: string,
+  hendelseId: string,
+): Promise<void> {
+  logger.info(`Sletter manuell hendelse ${hendelseId} for sak ${sakId}`);
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/hendelser/${hendelseId}`), {
+    method: "DELETE",
+    headers: authHeaders(token),
+  });
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke slette manuell hendelse");
+}

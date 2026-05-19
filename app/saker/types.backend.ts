@@ -113,6 +113,7 @@ export const kontrollsakHendelseResponseSchema = z.object({
   kilde: kontrollsakKildeSchema.nullable().optional(),
   blokkert: blokkeringsarsakSchema.nullable().optional(),
   beskrivelse: z.string().nullable().optional(),
+  opprettetAvNavIdent: z.string().nullable().optional(),
 });
 
 export type KontrollsakYtelse = z.infer<typeof kontrollsakYtelseSchema>;

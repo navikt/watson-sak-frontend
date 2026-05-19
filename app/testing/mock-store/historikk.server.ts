@@ -110,6 +110,7 @@ export function leggTilManuellHendelse(
   tittel: string,
   notat: string,
   tidspunkt: string,
+  opprettetAvNavIdent?: string,
 ): SakHendelse {
   const sakIdKey = String(sak.id);
   const hendelse: SakHendelse = {
@@ -119,6 +120,7 @@ export function leggTilManuellHendelse(
     sakId: sak.id,
     tittel,
     notat,
+    opprettetAvNavIdent,
     ...lagSnapshotFraKontrollsak(sak),
   };
 
@@ -127,6 +129,40 @@ export function leggTilManuellHendelse(
   state.historikk.set(sakIdKey, eksisterende);
 
   return hendelse;
+}
+
+export function redigerManuellHendelse(
+  state: MockState,
+  sakId: string,
+  hendelseId: string,
+  tittel: string,
+  notat: string,
+  tidspunkt: string,
+): SakHendelse | null {
+  const hendelser = state.historikk.get(sakId) ?? [];
+  const hendelse = hendelser.find(
+    (h) => h.hendelseId === hendelseId && h.hendelsesType === "MANUELL_NOTAT",
+  );
+
+  if (!hendelse) return null;
+
+  hendelse.tittel = tittel;
+  hendelse.notat = notat;
+  hendelse.tidspunkt = tidspunkt;
+
+  return hendelse;
+}
+
+export function slettManuellHendelse(state: MockState, sakId: string, hendelseId: string): boolean {
+  const hendelser = state.historikk.get(sakId) ?? [];
+  const index = hendelser.findIndex(
+    (h) => h.hendelseId === hendelseId && h.hendelsesType === "MANUELL_NOTAT",
+  );
+
+  if (index === -1) return false;
+
+  hendelser.splice(index, 1);
+  return true;
 }
 
 /** Generer initial historikk for et sett med saker. Returnerer oppdatert nesteId. */

@@ -22,6 +22,8 @@ import {
   hentHistorikk,
   leggTilHendelse,
   leggTilManuellHendelse,
+  redigerManuellHendelse,
+  slettManuellHendelse,
 } from "./historikk/mock-data.server";
 import { finnSakMedReferanse } from "./id";
 import { getSaksenhet } from "./selectors";
@@ -335,6 +337,28 @@ async function backendAction(
       await backendApi.opprettManuellHendelse(token, sakId, tittel, notat || undefined, tidspunkt);
       return { ok: true };
     }
+    case "rediger_historikk": {
+      const hendelseId = hentTekstfelt(formData, "hendelseId", "Hendelse-ID er påkrevd");
+      const tittel = hentTekstfelt(formData, "tittel", "Tittel er påkrevd");
+      const notat = hentValgfriTekst(formData, "notat") ?? "";
+      const dato = hentTekstfelt(formData, "dato", "Dato er påkrevd");
+      const tid = hentTekstfelt(formData, "tid", "Tid er påkrevd");
+      const tidspunkt = lagTidspunktFraSkjema(dato, tid);
+      await backendApi.redigerManuellHendelse(
+        token,
+        sakId,
+        hendelseId,
+        tittel,
+        notat || undefined,
+        tidspunkt,
+      );
+      return { ok: true };
+    }
+    case "slett_historikk": {
+      const hendelseId = hentTekstfelt(formData, "hendelseId", "Hendelse-ID er påkrevd");
+      await backendApi.slettManuellHendelse(token, sakId, hendelseId);
+      return { ok: true };
+    }
     default: {
       throw data("Ugyldig handling", { status: 400 });
     }
@@ -642,7 +666,23 @@ async function mockAction(
       const tid = hentTekstfelt(formData, "tid", "Tid er påkrevd");
 
       const tidspunkt = lagTidspunktFraSkjema(dato, tid);
-      leggTilManuellHendelse(request, sak, tittel, notat, tidspunkt);
+      leggTilManuellHendelse(request, sak, tittel, notat, tidspunkt, "Z999999");
+      break;
+    }
+    case "rediger_historikk": {
+      const hendelseId = hentTekstfelt(formData, "hendelseId", "Hendelse-ID er påkrevd");
+      const tittel = hentTekstfelt(formData, "tittel", "Tittel er påkrevd");
+      const notat = hentValgfriTekst(formData, "notat") ?? "";
+      const dato = hentTekstfelt(formData, "dato", "Dato er påkrevd");
+      const tid = hentTekstfelt(formData, "tid", "Tid er påkrevd");
+
+      const tidspunkt = lagTidspunktFraSkjema(dato, tid);
+      redigerManuellHendelse(request, String(sak.id), hendelseId, tittel, notat, tidspunkt);
+      break;
+    }
+    case "slett_historikk": {
+      const hendelseId = hentTekstfelt(formData, "hendelseId", "Hendelse-ID er påkrevd");
+      slettManuellHendelse(request, String(sak.id), hendelseId);
       break;
     }
     case "send_notat": {
