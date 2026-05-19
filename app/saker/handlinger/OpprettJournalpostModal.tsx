@@ -155,10 +155,10 @@ export function OpprettJournalpostModal({ sakId, åpen, onClose }: OpprettJourna
               {knyttTilOppgave && (
                 <Box
                   background="sunken"
-                  borderRadius="8 8 0 0"
+                  borderRadius="8"
                   borderWidth="1"
                   borderColor="neutral-subtle"
-                  className="-mx-5 px-5 py-4"
+                  padding="space-4"
                 >
                   <OppgaveSkjema
                     fields={{

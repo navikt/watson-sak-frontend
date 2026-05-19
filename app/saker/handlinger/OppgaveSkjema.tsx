@@ -2,7 +2,6 @@ import type { FieldMetadata } from "@conform-to/react";
 import { useInputControl } from "@conform-to/react";
 import {
   DatePicker,
-  HStack,
   Select,
   Textarea,
   UNSAFE_Combobox,
@@ -59,14 +58,13 @@ export function OppgaveSkjema({ fields }: OppgaveSkjemaProps) {
         ))}
       </Select>
 
-      <HStack gap="space-4" align="start">
+      <div className="grid grid-cols-2 gap-x-4">
         <Select
           key={fields.prioritet.key}
           name={fields.prioritet.name}
           id={fields.prioritet.id}
           defaultValue={fields.prioritet.initialValue ?? ""}
           label="Prioritet"
-          className="flex-1"
         >
           <option value="">Velg prioritet</option>
           <option value="LAV">Lav</option>
@@ -82,9 +80,9 @@ export function OppgaveSkjema({ fields }: OppgaveSkjemaProps) {
           onFocus={() => frist.focus()}
         />
         <DatePicker {...datepickerProps}>
-          <DatePicker.Input {...inputProps} label="Frist" className="flex-1" />
+          <DatePicker.Input {...inputProps} label="Frist" />
         </DatePicker>
-      </HStack>
+      </div>
 
       <input
         name={fields.behandlendeEnhet.name}
