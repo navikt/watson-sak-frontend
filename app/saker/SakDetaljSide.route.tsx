@@ -215,7 +215,6 @@ export default function SakDetaljSide() {
   const feil: Feltfeil | undefined =
     visFeil && fetcher.data && !fetcher.data.ok ? fetcher.data.feil : undefined;
   const misbrukstypeAlternativer = hentMisbrukstypeAlternativer(lokaleVerdier.kategori);
-  const visMisbruktype = misbrukstypeAlternativer.length > 0;
   const harUlagredeEndringer = redigerer && !erLikeRedigeringsdata(lokaleVerdier, utgangspunkt);
   const blocker = useBlocker(harUlagredeEndringer);
   const errorSummaryId = useId();
@@ -417,47 +416,46 @@ export default function SakDetaljSide() {
                         </HGrid>
 
                         <HGrid columns={{ xs: 1, md: 2 }} gap="space-4">
-                          {visMisbruktype && (
-                            <div id={ankerIdForFelt("misbruktype")}>
-                              <UNSAFE_Combobox
-                                label="Misbruktype"
-                                size="small"
-                                options={misbrukstypeAlternativer.map((type) => ({
-                                  label:
-                                    kontrollsakMisbrukstypeEtiketter[
-                                      type as (typeof kontrollsakMisbrukstypeVerdier)[number]
-                                    ] ?? type,
-                                  value: type,
-                                }))}
-                                isMultiSelect
-                                selectedOptions={lokaleVerdier.misbruktype}
-                                onToggleSelected={(option, isSelected) => {
-                                  setLokaleVerdier((gjeldende) => {
-                                    const har = gjeldende.misbruktype.includes(option);
-                                    if (isSelected && !har) {
-                                      return {
-                                        ...gjeldende,
-                                        misbruktype: [...gjeldende.misbruktype, option],
-                                      };
-                                    }
-                                    if (!isSelected) {
-                                      return {
-                                        ...gjeldende,
-                                        misbruktype: gjeldende.misbruktype.filter(
-                                          (v) => v !== option,
-                                        ),
-                                      };
-                                    }
-                                    return gjeldende;
-                                  });
-                                }}
-                                error={førsteFeilForFelt(feil, "misbruktype")}
-                              />
-                              {lokaleVerdier.misbruktype.map((type) => (
-                                <input key={type} type="hidden" name="misbruktype" value={type} />
-                              ))}
-                            </div>
-                          )}
+                          <div id={ankerIdForFelt("misbruktype")}>
+                            <UNSAFE_Combobox
+                              label="Misbruktype"
+                              size="small"
+                              options={misbrukstypeAlternativer.map((type) => ({
+                                label:
+                                  kontrollsakMisbrukstypeEtiketter[
+                                    type as (typeof kontrollsakMisbrukstypeVerdier)[number]
+                                  ] ?? type,
+                                value: type,
+                              }))}
+                              isMultiSelect
+                              disabled={misbrukstypeAlternativer.length === 0}
+                              selectedOptions={lokaleVerdier.misbruktype}
+                              onToggleSelected={(option, isSelected) => {
+                                setLokaleVerdier((gjeldende) => {
+                                  const har = gjeldende.misbruktype.includes(option);
+                                  if (isSelected && !har) {
+                                    return {
+                                      ...gjeldende,
+                                      misbruktype: [...gjeldende.misbruktype, option],
+                                    };
+                                  }
+                                  if (!isSelected) {
+                                    return {
+                                      ...gjeldende,
+                                      misbruktype: gjeldende.misbruktype.filter(
+                                        (v) => v !== option,
+                                      ),
+                                    };
+                                  }
+                                  return gjeldende;
+                                });
+                              }}
+                              error={førsteFeilForFelt(feil, "misbruktype")}
+                            />
+                            {lokaleVerdier.misbruktype.map((type) => (
+                              <input key={type} type="hidden" name="misbruktype" value={type} />
+                            ))}
+                          </div>
 
                           <div id={ankerIdForFelt("merking")}>
                             <UNSAFE_Combobox
