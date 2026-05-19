@@ -16,7 +16,8 @@ const lagSak = (overstyringer: Partial<FordelingSak>): FordelingSak => ({
   kategori: "Arbeid",
   misbrukstyper: [],
   ytelser: ["Dagpenger"],
-  status: { tekst: "Opprettet", variant: "info" },
+  status: "Opprettet",
+  ventestatus: null,
   ...overstyringer,
 });
 
@@ -95,7 +96,7 @@ describe("ufordelte-saker", () => {
         oppdatertDato: "2026-01-14",
         kategori: "Tiltak",
         ytelser: ["Sykepenger"],
-        status: { tekst: "Utredes", variant: "warning" },
+        status: "Utredes",
       }),
       lagSak({
         id: 1000,
@@ -103,7 +104,7 @@ describe("ufordelte-saker", () => {
         oppdatertDato: "2026-02-17",
         kategori: "Arbeid",
         ytelser: ["Barnetrygd"],
-        status: { tekst: "Opprettet", variant: "info" },
+        status: "Opprettet",
       }),
       lagSak({
         id: 2000,
@@ -111,7 +112,7 @@ describe("ufordelte-saker", () => {
         oppdatertDato: "2026-01-21",
         kategori: "Samliv",
         ytelser: ["Dagpenger"],
-        status: { tekst: "Avsluttet", variant: "neutral" },
+        status: "Avsluttet",
       }),
     ];
 

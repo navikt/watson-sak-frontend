@@ -14,11 +14,6 @@ type SakslisteKolonne =
   | "oppdatert"
   | "saksbehandler";
 
-type SakslisteStatus = {
-  tekst: string;
-  variant: "info" | "warning" | "success" | "neutral";
-};
-
 export type SakslisteRad = {
   id: number;
   saksreferanse: string;
@@ -26,7 +21,8 @@ export type SakslisteRad = {
   navn: string | null;
   kategori: string | null;
   misbrukstyper: string[];
-  status: SakslisteStatus | null;
+  status: string | null;
+  ventestatus: string | null;
   opprettet: string;
   oppdatert: string | null;
   saksbehandler: string | null;
@@ -150,7 +146,7 @@ function renderCelle(rad: SakslisteRad, kolonne: SakslisteKolonne) {
       );
     case "kategori":
       return rad.kategori ? (
-        <Tag variant="neutral" size="small">
+        <Tag variant="outline" data-color="info" size="small">
           {rad.kategori}
         </Tag>
       ) : (
@@ -160,7 +156,7 @@ function renderCelle(rad: SakslisteRad, kolonne: SakslisteKolonne) {
       return rad.misbrukstyper.length > 0 ? (
         <HStack gap="space-2" wrap>
           {rad.misbrukstyper.map((misbrukstype) => (
-            <Tag key={misbrukstype} variant="warning" size="small">
+            <Tag key={misbrukstype} variant="outline" data-color="info" size="small">
               {misbrukstype}
             </Tag>
           ))}
@@ -169,9 +165,13 @@ function renderCelle(rad: SakslisteRad, kolonne: SakslisteKolonne) {
         <BodyShort size="small">–</BodyShort>
       );
     case "status":
-      return rad.status ? (
-        <Tag variant={rad.status.variant} size="small">
-          {rad.status.tekst}
+      return rad.ventestatus ? (
+        <Tag variant="outline" data-color="warning" size="medium">
+          {rad.ventestatus}
+        </Tag>
+      ) : rad.status ? (
+        <Tag variant="outline" data-color="success" size="medium">
+          {rad.status}
         </Tag>
       ) : (
         <BodyShort size="small">–</BodyShort>
