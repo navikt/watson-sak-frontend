@@ -99,40 +99,36 @@ test.describe("Landingsside", () => {
     await expect(page.getByRole("button", { name: "Vis flere" })).not.toBeVisible();
   });
 
-  test("viser seksjonen for dine saker siste 14 dager ved siden av varslinger på brede skjermer", async ({
+  test("viser seksjonen for dine saker per steg ved siden av varslinger på brede skjermer", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1400, height: 1200 });
     await page.reload({ waitUntil: "networkidle" });
 
-    const statistikkSeksjon = page
-      .getByRole("heading", { name: "Dine saker siste 14 dager" })
+    const traktSeksjon = page
+      .getByRole("heading", { name: "Dine saker per steg" })
       .locator("xpath=ancestor::section[1]");
     const varslerSeksjon = page
       .getByRole("heading", { name: "Siste varsler" })
       .locator("xpath=ancestor::section[1]");
 
     await expect(
-      statistikkSeksjon.getByRole("heading", { name: "Dine saker siste 14 dager" }),
+      traktSeksjon.getByRole("heading", { name: "Dine saker per steg" }),
     ).toBeVisible();
-    await expect(statistikkSeksjon.getByText("Behandlet")).toBeVisible();
-    await expect(statistikkSeksjon.getByText("Dager behandlingstid, snitt")).toBeVisible();
-    await expect(statistikkSeksjon.getByText("Henlagte saker")).toBeVisible();
-    await expect(statistikkSeksjon.getByText("Henlagte tips")).toBeVisible();
 
-    const statistikkBoks = await statistikkSeksjon.boundingBox();
+    const traktBoks = await traktSeksjon.boundingBox();
     const varslerBoks = await varslerSeksjon.boundingBox();
 
-    expect(statistikkBoks).not.toBeNull();
+    expect(traktBoks).not.toBeNull();
     expect(varslerBoks).not.toBeNull();
 
-    if (!statistikkBoks || !varslerBoks) {
+    if (!traktBoks || !varslerBoks) {
       throw new Error("Fant ikke seksjonsboksene som forventet");
     }
 
-    expect(Math.abs(statistikkBoks.y - varslerBoks.y)).toBeLessThan(10);
-    expect(varslerBoks.x).toBeLessThan(statistikkBoks.x);
-    expect(Math.abs(varslerBoks.width - statistikkBoks.width)).toBeLessThan(20);
+    expect(Math.abs(traktBoks.y - varslerBoks.y)).toBeLessThan(10);
+    expect(varslerBoks.x).toBeLessThan(traktBoks.x);
+    expect(Math.abs(varslerBoks.width - traktBoks.width)).toBeLessThan(20);
   });
 
   test("er UU-compliant", async ({ page }) => {
