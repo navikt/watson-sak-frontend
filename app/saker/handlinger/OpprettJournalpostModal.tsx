@@ -76,6 +76,7 @@ export function OpprettJournalpostModal({ sakId, åpen, onClose }: OpprettJourna
     <Modal
       open={åpen}
       onClose={handleLukk}
+      closeOnBackdropClick
       header={{ heading: "Opprett journalpost", icon: <DocPencilIcon aria-hidden /> }}
       width="medium"
     >

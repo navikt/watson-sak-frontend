@@ -54,6 +54,7 @@ export function OpprettOppgaveModal({ sakId, åpen, onClose }: OpprettOppgaveMod
     <Modal
       open={åpen}
       onClose={handleLukk}
+      closeOnBackdropClick
       header={{ heading: "Opprett oppgave", icon: <TasklistIcon aria-hidden /> }}
       width="medium"
     >
