@@ -1,5 +1,5 @@
 import { ClockIcon, PencilIcon, TrashIcon } from "@navikt/aksel-icons";
-import { BodyShort, Button, HStack, Modal, Process } from "@navikt/ds-react";
+import { BodyShort, Button, HStack, Modal, Process, VStack } from "@navikt/ds-react";
 import { useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
@@ -78,10 +78,10 @@ export function VisAllHistorikkModal({
                     status={index === 0 ? "active" : "completed"}
                     bullet={<HendelseBullet hendelse={hendelse} />}
                   >
-                    <HStack justify="space-between" align="start" wrap={false}>
+                    <VStack gap="space-2">
                       <HendelseInnhold hendelse={hendelse} beskrivelse={beskrivelse} />
                       {erEgetManueltNotat && (
-                        <HStack gap="space-2" className="shrink-0">
+                        <HStack gap="space-2">
                           <Button
                             variant="tertiary"
                             size="xsmall"
@@ -100,7 +100,7 @@ export function VisAllHistorikkModal({
                           </Button>
                         </HStack>
                       )}
-                    </HStack>
+                    </VStack>
                   </Process.Event>
                 );
               })}
