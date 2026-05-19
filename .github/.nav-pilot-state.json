@@ -1,12 +1,12 @@
 {
   "collection": "fullstack",
-  "version": "2026.05.13-124131-a42d43a",
-  "source_sha": "a42d43a",
+  "version": "2026.05.15-141852-d0c0363",
+  "source_sha": "d0c0363",
   "installed_at": "2026-04-13T13:00:26Z",
   "files": [
     {
       "path": ".github/agents/auth.agent.md",
-      "hash": "93f6ccd0feb67964"
+      "hash": "bdadec09cbdaf722"
     },
     {
       "path": ".github/agents/auth.metadata.json",
@@ -14,7 +14,7 @@
     },
     {
       "path": ".github/agents/code-review.agent.md",
-      "hash": "0dcd77f75b92d723"
+      "hash": "3f32b4e215bca95d"
     },
     {
       "path": ".github/agents/code-review.metadata.json",
@@ -38,7 +38,7 @@
     },
     {
       "path": ".github/agents/observability.agent.md",
-      "hash": "29814d262472524e"
+      "hash": "6f7b01a64b6fd461"
     },
     {
       "path": ".github/agents/observability.metadata.json",
@@ -46,7 +46,7 @@
     },
     {
       "path": ".github/agents/security-champion.agent.md",
-      "hash": "a42ca95f2a459fbb"
+      "hash": "5ccba48b66938fd0"
     },
     {
       "path": ".github/agents/security-champion.metadata.json",
