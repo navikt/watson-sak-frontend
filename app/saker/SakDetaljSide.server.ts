@@ -240,8 +240,7 @@ async function backendAction(
     }
     case "opprett_journalpost":
     case "opprett_oppgave": {
-      // Placeholder — backend-endepunkt finnes ikke ennå
-      return { ok: true };
+      throw data("Handlingen er ikke støttet ennå", { status: 501 });
     }
     case "henlegg": {
       const sak = await backendApi.endreStatus(token, sakId, "HENLAGT");
@@ -352,6 +351,19 @@ function formaterJournalposttype(type: string): string {
       return "Notat";
     default:
       return type;
+  }
+}
+
+function formaterPrioritet(prioritet: string): string {
+  switch (prioritet) {
+    case "LAV":
+      return "lav";
+    case "NORMAL":
+      return "normal";
+    case "HOY":
+      return "høy";
+    default:
+      return prioritet.toLowerCase();
   }
 }
 
@@ -665,7 +677,12 @@ async function mockAction(
       const deler = [innhold];
       if (knyttTilOppgave) {
         const oppgavetype = hentValgfriTekst(formData, "oppgavetype") ?? "";
-        deler.push(`Knyttet til oppgave${oppgavetype ? `: ${oppgavetype}` : ""}`);
+        const prioritet = hentValgfriTekst(formData, "prioritet") ?? "";
+        const frist = hentValgfriTekst(formData, "frist") ?? "";
+        const oppgaveDeler = [`Knyttet til oppgave${oppgavetype ? `: ${oppgavetype}` : ""}`];
+        if (prioritet) oppgaveDeler.push(`Prioritet: ${formaterPrioritet(prioritet)}`);
+        if (frist) oppgaveDeler.push(`Frist: ${frist}`);
+        deler.push(oppgaveDeler.join(", "));
       }
 
       leggTilHendelse(request, sak, "JOURNALPOST_OPPRETTET", undefined, {
@@ -678,11 +695,13 @@ async function mockAction(
       const oppgavetype = hentValgfriTekst(formData, "oppgavetype") ?? "";
       const prioritet = hentValgfriTekst(formData, "prioritet") ?? "";
       const fristVerdi = hentValgfriTekst(formData, "frist") ?? "";
+      const behandlendeEnhet = hentValgfriTekst(formData, "behandlendeEnhet") ?? "";
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse") ?? "";
 
       const deler: string[] = [];
-      if (prioritet) deler.push(`Prioritet: ${prioritet.toLowerCase()}`);
+      if (prioritet) deler.push(`Prioritet: ${formaterPrioritet(prioritet)}`);
       if (fristVerdi) deler.push(`Frist: ${fristVerdi}`);
+      if (behandlendeEnhet) deler.push(`Enhet: ${behandlendeEnhet}`);
       if (beskrivelse) deler.push(beskrivelse);
 
       leggTilHendelse(request, sak, "OPPGAVE_OPPRETTET", undefined, {

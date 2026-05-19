@@ -108,6 +108,7 @@ export function OpprettJournalpostModal({ sakId, åpen, onClose }: OpprettJourna
         <fetcher.Form method="post" {...getFormProps(form)} name="opprett-journalpost">
           <VStack gap="space-4">
             <RadioGroup
+              key={fields.journalposttype.key}
               name={fields.journalposttype.name}
               legend="Journalposttype"
               error={fields.journalposttype.errors?.[0]}
