@@ -6,10 +6,10 @@ import {
 } from "./backend-config";
 
 describe("backend-config", () => {
-  it("beholder mockdata for lokal utvikling og dev-deploy inntil flere backend-endepunkter er koblet på", () => {
+  it("bruker mockdata kun for local-mock og demo", () => {
     expect(skalBrukeMockdataForMiljø("local-mock")).toBe(true);
     expect(skalBrukeMockdataForMiljø("demo")).toBe(true);
-    expect(skalBrukeMockdataForMiljø("dev")).toBe(true);
+    expect(skalBrukeMockdataForMiljø("dev")).toBe(false);
     expect(skalBrukeMockdataForMiljø("local-backend")).toBe(false);
   });
 

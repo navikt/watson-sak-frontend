@@ -11,7 +11,7 @@ type Miljø = (typeof miljøVerdier)[number];
 const WATSON_ADMIN_API_DEV_URL = "https://watson-admin-api.intern.dev.nav.no";
 
 export function skalBrukeMockdataForMiljø(miljø: Miljø) {
-  return miljø === "local-mock" || miljø === "demo" || miljø === "dev";
+  return miljø === "local-mock" || miljø === "demo";
 }
 
 export function hentBackendApiUrl(miljø: Miljø, watsonAdminApiUrl?: string) {
