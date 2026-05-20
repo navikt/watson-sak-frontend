@@ -1,11 +1,14 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { beregnTraktSteg } from "~/alle-saker/saker-utils";
+import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
+import { hentKontrollsaker } from "~/fordeling/api.server";
 import { hentMineSaker } from "~/saker/mock-alle-saker.server";
 import { getOpprettetDato } from "~/saker/selectors";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { hentUlesteVarsler } from "~/varsler/mock-data.server";
+import type { Varsel } from "~/varsler/typer";
 import { lagVelkomstOppsummering } from "./velkomst";
 
 function hentOppdatertDato(sak: KontrollsakResponse): string {
@@ -27,12 +30,23 @@ function finnReferansedato(saker: KontrollsakResponse[]): Date {
 export async function loader({ request }: LoaderFunctionArgs) {
   const innloggetBruker = await hentInnloggetBruker({ request });
 
-  if (!skalBrukeMockdata) {
-    // TODO: Implementer backend-kall for landingsside
-    throw new Response("Landingsside er ikke tilgjengelig uten mockdata", { status: 501 });
-  }
+  let mineSakerHosInnloggetBruker: KontrollsakResponse[];
+  let varsler: Varsel[];
 
-  const mineSakerHosInnloggetBruker = hentMineSaker(request, innloggetBruker.navIdent);
+  if (!skalBrukeMockdata) {
+    const token = await getBackendOboToken(request);
+    const resultat = await hentKontrollsaker({
+      token,
+      page: 1,
+      size: 200,
+      ansvarligNavIdent: innloggetBruker.navIdent,
+    });
+    mineSakerHosInnloggetBruker = resultat.items;
+    varsler = []; // TODO: hent varsler fra backend når endepunktet er klart
+  } else {
+    mineSakerHosInnloggetBruker = hentMineSaker(request, innloggetBruker.navIdent);
+    varsler = hentUlesteVarsler(request);
+  }
 
   const aktiveMineSaker = mineSakerHosInnloggetBruker.filter(
     (sak) => sak.status !== "ANMELDT" && sak.status !== "HENLAGT" && sak.status !== "AVSLUTTET",
@@ -45,7 +59,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const mineSaker = [...aktiveMineSaker]
     .sort((a, b) => getOpprettetDato(b).localeCompare(getOpprettetDato(a)))
     .slice(0, 5);
-  const varsler = hentUlesteVarsler(request);
+
   const velkomstOppsummering = lagVelkomstOppsummering(sakerForVelkomstOppsummering);
 
   const referansedato = finnReferansedato(mineSakerHosInnloggetBruker);

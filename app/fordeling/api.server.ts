@@ -8,19 +8,24 @@ type HentKontrollsakerArgs = {
   token: string;
   page: number;
   size: number;
+  ansvarligNavIdent?: string;
 };
 
 export async function hentKontrollsaker({
   token,
   page,
   size,
+  ansvarligNavIdent,
 }: HentKontrollsakerArgs): Promise<KontrollsakPageResponse> {
   if (!BACKEND_API_URL) {
     throw new Error("Mangler backend-url for henting av kontrollsaker.");
   }
 
+  const params = new URLSearchParams({ page: String(page), size: String(size) });
+  if (ansvarligNavIdent) params.set("ansvarligNavIdent", ansvarligNavIdent);
+
   const response = await fetch(
-    `${BACKEND_API_URL}/api/v1/kontrollsaker?page=${page}&size=${size}`,
+    `${BACKEND_API_URL}/api/v1/kontrollsaker?${params}`,
     {
       method: "GET",
       headers: {

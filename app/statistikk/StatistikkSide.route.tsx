@@ -1,4 +1,4 @@
-import { BodyShort, Heading, HGrid, Page, VStack } from "@navikt/ds-react";
+import { Alert, BodyShort, Heading, HGrid, Page, VStack } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
 import {
   BarChartIcon,
@@ -27,12 +27,13 @@ import type { Route } from "./+types/StatistikkSide.route";
 
 export function loader({ request }: Route.LoaderArgs) {
   if (!skalBrukeMockdata) {
-    throw new Response("Statistikk er ikke tilgjengelig uten mockdata", { status: 501 });
+    return { ikkeImplementert: true as const };
   }
 
   const saker = hentAlleSaker(request);
 
   return {
+    ikkeImplementert: false as const,
     totaltAntall: saker.length,
     antallPerStatus: beregnAntallPerStatus(saker),
     antallIBero: beregnAntallIBero(saker),
@@ -44,6 +45,26 @@ export function loader({ request }: Route.LoaderArgs) {
 }
 
 export default function StatistikkSide() {
+  const data = useLoaderData<typeof loader>();
+
+  if (data.ikkeImplementert) {
+    return (
+      <Page>
+        <title>Statistikk – Watson Sak</title>
+        <PageBlock width="lg" gutters>
+          <VStack gap="space-12" className="mt-4 mb-8">
+            <Heading level="1" size="large">
+              Statistikk
+            </Heading>
+            <Alert variant="info">
+              Statistikk er ikke tilgjengelig ennå — endepunktet er under utvikling.
+            </Alert>
+          </VStack>
+        </PageBlock>
+      </Page>
+    );
+  }
+
   const {
     totaltAntall,
     antallPerStatus,
@@ -52,7 +73,7 @@ export default function StatistikkSide() {
     antallPerSeksjon,
     fordelingPerYtelse,
     fordelingPerAntallYtelser,
-  } = useLoaderData<typeof loader>();
+  } = data;
 
   const statusData = (Object.keys(antallPerStatus) as KontrollsakStatus[]).map((status) => ({
     navn: formaterStatus(status),

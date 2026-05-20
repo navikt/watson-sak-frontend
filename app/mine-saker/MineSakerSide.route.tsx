@@ -1,8 +1,10 @@
 import { Page } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
 import { useLoaderData } from "react-router";
+import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
+import { hentKontrollsaker } from "~/fordeling/api.server";
 import { RouteConfig } from "~/routeConfig";
 import { hentMineSaker } from "~/saker/mock-alle-saker.server";
 import { formaterStatus } from "~/saker/visning";
@@ -22,10 +24,6 @@ import {
 export async function loader({ request }: Route.LoaderArgs) {
   const innloggetBruker = await hentInnloggetBruker({ request });
 
-  if (!skalBrukeMockdata) {
-    throw new Response("Mine saker er ikke tilgjengelig uten mockdata", { status: 501 });
-  }
-
   const url = new URL(request.url);
   const harFilterParams = url.searchParams.has("status") || url.searchParams.has("ventestatus");
 
@@ -37,7 +35,20 @@ export async function loader({ request }: Route.LoaderArgs) {
     ? parseVentestatuser(url.searchParams.getAll("ventestatus"))
     : DEFAULT_VENTESTATUSER;
 
-  const alleSaker = hentMineSaker(request, innloggetBruker.navIdent);
+  let alleSaker;
+  if (!skalBrukeMockdata) {
+    const token = await getBackendOboToken(request);
+    const resultat = await hentKontrollsaker({
+      token,
+      page: 1,
+      size: 500,
+      ansvarligNavIdent: innloggetBruker.navIdent,
+    });
+    alleSaker = resultat.items;
+  } else {
+    alleSaker = hentMineSaker(request, innloggetBruker.navIdent);
+  }
+
   const filtrerteSaker = filtrerMineSaker(alleSaker, statusFilter, ventestatusFilter);
 
   return {
