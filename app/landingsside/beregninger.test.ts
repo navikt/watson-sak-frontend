@@ -1,14 +1,7 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import type { Avslutningsdatoer } from "~/statistikk/mock-data.server";
-import { resetDefaultSession } from "~/testing/mock-store/reset.server";
-import { beregnDineSakerSiste14Dager } from "./beregninger";
-
-const testRequest = new Request("http://localhost");
-
-beforeEach(() => {
-  resetDefaultSession();
-});
+import { beregnNokkeltall } from "./beregninger";
 
 function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
@@ -43,156 +36,90 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
   };
 }
 
-describe("beregnDineSakerSiste14Dager", () => {
-  test("filtrerer på opprettet og beregner nøkkeltall for siste 14 dager", () => {
+describe("beregnNokkeltall", () => {
+  test("teller pågående saker (ekskluderer henlagte og avsluttede)", () => {
     const saker = [
-      lagKontrollsak({ id: 101, opprettet: "2026-03-18T00:00:00Z", status: "UTREDES" }),
-      lagKontrollsak({ id: 102, opprettet: "2026-03-10T00:00:00Z", status: "OPPRETTET" }),
-      lagKontrollsak({
-        id: 103,
-        opprettet: "2026-03-09T00:00:00Z",
-        status: "UTREDES",
-        blokkert: "VENTER_PA_VEDTAK",
-      }),
-      lagKontrollsak({ id: 104, opprettet: "2026-03-08T00:00:00Z", status: "HENLAGT" }),
-      lagKontrollsak({ id: 105, opprettet: "2026-03-07T00:00:00Z", status: "HENLAGT" }),
-      lagKontrollsak({
-        id: 106,
-        opprettet: "2026-02-20T00:00:00Z",
-        status: "OPPRETTET",
-        saksbehandlere: {
-          eier: null,
-          deltMed: [],
-          opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
-        },
-      }),
-    ];
-    const avslutningsdatoer: Avslutningsdatoer = {
-      "4": "2026-03-12",
-      "5": "2026-03-13",
-    };
-
-    const resultat = beregnDineSakerSiste14Dager({
-      request: testRequest,
-      saker,
-      avslutningsdatoer,
-      tidligereTipsSakIder: [104],
-      referansedato: "2026-03-18",
-    });
-
-    expect(resultat).toEqual({
-      antallSakerJobbetMed: 5,
-      antallTipsTilVurdering: 0,
-      antallSendtTilNayNfp: 0,
-      snittBehandlingstidPerSak: null,
-      antallHenlagteSaker: 1,
-      antallHenlagteTips: 1,
-      antallSakerIBero: 0,
-    });
-  });
-
-  test("returnerer null for snitt behandlingstid når ingen avsluttede eller henlagte saker finnes", () => {
-    const saker = [
-      lagKontrollsak({ id: 107, opprettet: "2026-03-18T00:00:00Z", status: "UTREDES" }),
-      lagKontrollsak({
-        id: 108,
-        opprettet: "2026-03-10T00:00:00Z",
-        status: "OPPRETTET",
-        saksbehandlere: {
-          eier: null,
-          deltMed: [],
-          opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
-        },
-      }),
+      lagKontrollsak({ id: 1, status: "OPPRETTET" }),
+      lagKontrollsak({ id: 2, status: "UTREDES" }),
+      lagKontrollsak({ id: 3, status: "HENLAGT" }),
+      lagKontrollsak({ id: 4, status: "AVSLUTTET" }),
+      lagKontrollsak({ id: 5, status: "STRAFFERETTSLIG_VURDERING" }),
     ];
 
-    const resultat = beregnDineSakerSiste14Dager({
-      request: testRequest,
-      saker,
-      avslutningsdatoer: {},
-      tidligereTipsSakIder: [],
-      referansedato: "2026-03-18",
-    });
+    const resultat = beregnNokkeltall(saker, {});
 
-    expect(resultat.snittBehandlingstidPerSak).toBeNull();
-    expect(resultat.antallHenlagteSaker).toBe(0);
-    expect(resultat.antallHenlagteTips).toBe(0);
-    expect(resultat.antallSakerIBero).toBe(0);
+    expect(resultat.pagaendeSaker).toBe(3);
   });
 
-  test("bruker backend opprettet og backend-status for kontrollsaker", () => {
+  test("teller saker på vent (blokkert er satt)", () => {
     const saker = [
-      lagKontrollsak({ id: 109, opprettet: "2026-03-18T00:00:00Z", status: "UTREDES" }),
-      lagKontrollsak({ id: 110, opprettet: "2026-03-10T00:00:00Z", status: "OPPRETTET" }),
-      lagKontrollsak({
-        id: 111,
-        opprettet: "2026-03-09T00:00:00Z",
-        status: "UTREDES",
-        blokkert: "VENTER_PA_VEDTAK",
-      }),
-      lagKontrollsak({ id: 112, opprettet: "2026-03-08T00:00:00Z", status: "HENLAGT" }),
-      lagKontrollsak({ id: 113, opprettet: "2026-03-07T00:00:00Z", status: "HENLAGT" }),
-      lagKontrollsak({
-        id: 114,
-        opprettet: "2026-02-20T00:00:00Z",
-        status: "OPPRETTET",
-        saksbehandlere: {
-          eier: null,
-          deltMed: [],
-          opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
-        },
-      }),
+      lagKontrollsak({ id: 1, blokkert: "I_BERO" }),
+      lagKontrollsak({ id: 2, blokkert: "VENTER_PA_VEDTAK" }),
+      lagKontrollsak({ id: 3, blokkert: null }),
+    ];
+
+    const resultat = beregnNokkeltall(saker, {});
+
+    expect(resultat.paVent).toBe(2);
+  });
+
+  test("beregner prosent utredet innen 12 og 15 uker", () => {
+    const saker = [
+      lagKontrollsak({ id: 1, status: "AVSLUTTET", opprettet: "2026-01-01T00:00:00Z" }),
+      lagKontrollsak({ id: 2, status: "AVSLUTTET", opprettet: "2026-01-01T00:00:00Z" }),
+      lagKontrollsak({ id: 3, status: "HENLAGT", opprettet: "2026-01-01T00:00:00Z" }),
     ];
 
     const avslutningsdatoer: Avslutningsdatoer = {
-      "ks-4": "2026-03-12",
-      "ks-5": "2026-03-13",
+      "1": "2026-02-01", // 31 dager – innen 12 uker
+      "2": "2026-04-15", // 104 dager – innen 15 uker, men ikke 12
+      "3": "2026-05-01", // 120 dager – over 15 uker
     };
 
-    const resultat = beregnDineSakerSiste14Dager({
-      request: testRequest,
-      saker,
-      avslutningsdatoer,
-      tidligereTipsSakIder: [112],
-      referansedato: "2026-03-18",
-    });
+    const resultat = beregnNokkeltall(saker, avslutningsdatoer);
 
-    expect(resultat).toEqual({
-      antallSakerJobbetMed: 5,
-      antallTipsTilVurdering: 0,
-      antallSendtTilNayNfp: 0,
-      snittBehandlingstidPerSak: null,
-      antallHenlagteSaker: 1,
-      antallHenlagteTips: 1,
-      antallSakerIBero: 0,
-    });
+    expect(resultat.utredetInnen12Uker).toBe(33); // 1/3
+    expect(resultat.utredetInnen15Uker).toBe(67); // 2/3
   });
 
-  test("teller ikke eierløse saker som jobbet med de siste 14 dagene", () => {
+  test("beregner gjennomsnittlig saksbehandlingstid", () => {
     const saker = [
-      lagKontrollsak({
-        id: 115,
-        opprettet: "2026-03-18T00:00:00Z",
-        status: "OPPRETTET",
-        saksbehandlere: {
-          eier: null,
-          deltMed: [],
-          opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
-        },
-      }),
-      lagKontrollsak({ id: 116, opprettet: "2026-03-17T00:00:00Z", status: "UTREDES" }),
+      lagKontrollsak({ id: 1, status: "AVSLUTTET", opprettet: "2026-01-01T00:00:00Z" }),
+      lagKontrollsak({ id: 2, status: "HENLAGT", opprettet: "2026-01-01T00:00:00Z" }),
     ];
 
-    const resultat = beregnDineSakerSiste14Dager({
-      request: testRequest,
-      saker,
-      avslutningsdatoer: {},
-      tidligereTipsSakIder: [],
-      referansedato: "2026-03-18",
-    });
+    const avslutningsdatoer: Avslutningsdatoer = {
+      "1": "2026-01-11", // 10 dager
+      "2": "2026-01-21", // 20 dager
+    };
 
-    expect(resultat.antallSakerJobbetMed).toBe(1);
-    expect(resultat.antallTipsTilVurdering).toBe(0);
-    expect(resultat.antallSakerIBero).toBe(0);
+    const resultat = beregnNokkeltall(saker, avslutningsdatoer);
+
+    expect(resultat.gjennomsnittligSaksbehandlingstid).toBe(15);
+  });
+
+  test("returnerer 0 for prosenter og snitt når ingen saker er avsluttet", () => {
+    const saker = [
+      lagKontrollsak({ id: 1, status: "OPPRETTET" }),
+      lagKontrollsak({ id: 2, status: "UTREDES" }),
+    ];
+
+    const resultat = beregnNokkeltall(saker, {});
+
+    expect(resultat.utredetInnen12Uker).toBe(0);
+    expect(resultat.utredetInnen15Uker).toBe(0);
+    expect(resultat.gjennomsnittligSaksbehandlingstid).toBe(0);
+  });
+
+  test("håndterer tom saksliste", () => {
+    const resultat = beregnNokkeltall([], {});
+
+    expect(resultat).toEqual({
+      pagaendeSaker: 0,
+      paVent: 0,
+      utredetInnen12Uker: 0,
+      utredetInnen15Uker: 0,
+      gjennomsnittligSaksbehandlingstid: 0,
+    });
   });
 });

@@ -1,7 +1,7 @@
 import { BodyShort } from "@navikt/ds-react";
-import type { mockNokkeltall } from "./mock-data.server";
+import type { Nokkeltall } from "~/statistikk/types";
 
-type Props = typeof mockNokkeltall;
+type Props = Nokkeltall;
 
 export function Nokkeltall({
   pagaendeSaker,

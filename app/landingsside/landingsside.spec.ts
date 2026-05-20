@@ -105,7 +105,7 @@ test.describe("Landingsside", () => {
     await page.setViewportSize({ width: 1400, height: 1200 });
     await page.reload({ waitUntil: "networkidle" });
 
-    const statistikkSeksjon = page
+    const traktSeksjon = page
       .getByRole("heading", { name: "Dine saker siste 14 dager" })
       .locator("xpath=ancestor::section[1]");
     const varslerSeksjon = page
@@ -113,26 +113,22 @@ test.describe("Landingsside", () => {
       .locator("xpath=ancestor::section[1]");
 
     await expect(
-      statistikkSeksjon.getByRole("heading", { name: "Dine saker siste 14 dager" }),
+      traktSeksjon.getByRole("heading", { name: "Dine saker siste 14 dager" }),
     ).toBeVisible();
-    await expect(statistikkSeksjon.getByText("Behandlet")).toBeVisible();
-    await expect(statistikkSeksjon.getByText("Dager behandlingstid, snitt")).toBeVisible();
-    await expect(statistikkSeksjon.getByText("Henlagte saker")).toBeVisible();
-    await expect(statistikkSeksjon.getByText("Henlagte tips")).toBeVisible();
 
-    const statistikkBoks = await statistikkSeksjon.boundingBox();
+    const traktBoks = await traktSeksjon.boundingBox();
     const varslerBoks = await varslerSeksjon.boundingBox();
 
-    expect(statistikkBoks).not.toBeNull();
+    expect(traktBoks).not.toBeNull();
     expect(varslerBoks).not.toBeNull();
 
-    if (!statistikkBoks || !varslerBoks) {
+    if (!traktBoks || !varslerBoks) {
       throw new Error("Fant ikke seksjonsboksene som forventet");
     }
 
-    expect(Math.abs(statistikkBoks.y - varslerBoks.y)).toBeLessThan(10);
-    expect(varslerBoks.x).toBeLessThan(statistikkBoks.x);
-    expect(Math.abs(varslerBoks.width - statistikkBoks.width)).toBeLessThan(20);
+    expect(Math.abs(traktBoks.y - varslerBoks.y)).toBeLessThan(10);
+    expect(varslerBoks.x).toBeLessThan(traktBoks.x);
+    expect(Math.abs(varslerBoks.width - traktBoks.width)).toBeLessThan(20);
   });
 
   test("er UU-compliant", async ({ page }) => {

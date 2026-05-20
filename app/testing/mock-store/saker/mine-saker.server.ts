@@ -384,5 +384,3 @@ export const mockMineSakerAvslutningsdatoer: Record<string, string> = {
   [String(209)]: "2026-03-16",
   [String(210)]: "2026-03-18",
 };
-
-export const mockMineSakerTidligereTipsSakIder = [207];

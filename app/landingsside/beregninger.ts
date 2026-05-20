@@ -1,72 +1,57 @@
 import type { KontrollsakResponse } from "~/saker/types.backend";
-import { hentHistorikk } from "~/saker/historikk/mock-data.server";
-import { beregnBehandlingstid } from "~/statistikk/beregninger";
+import type { Nokkeltall } from "~/statistikk/types";
 import type { Avslutningsdatoer } from "~/statistikk/mock-data.server";
 
-interface BeregnDineSakerSiste14DagerArgs {
-  request: Request;
-  saker: KontrollsakResponse[];
-  avslutningsdatoer: Avslutningsdatoer;
-  tidligereTipsSakIder: number[];
-  referansedato: string;
+const DAGER_12_UKER = 84;
+const DAGER_15_UKER = 105;
+
+function dagerMellom(fra: string, til: string): number {
+  const fraDato = new Date(fra);
+  const tilDato = new Date(til);
+  return Math.round((tilDato.getTime() - fraDato.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-export interface DineSakerSiste14DagerStatistikk {
-  antallSakerJobbetMed: number;
-  antallTipsTilVurdering: number;
-  antallSendtTilNayNfp: number;
-  snittBehandlingstidPerSak: number | null;
-  antallHenlagteSaker: number;
-  antallHenlagteTips: number;
-  antallSakerIBero: number;
-}
+export function beregnNokkeltall(
+  saker: KontrollsakResponse[],
+  avslutningsdatoer: Avslutningsdatoer,
+): Nokkeltall {
+  const pagaendeSaker = saker.filter(
+    (sak) => sak.status !== "HENLAGT" && sak.status !== "AVSLUTTET",
+  ).length;
 
-function getOpprettet(sak: KontrollsakResponse): string {
-  return sak.opprettet;
-}
+  const paVent = saker.filter((sak) => sak.blokkert !== null).length;
 
-function harEier(sak: KontrollsakResponse) {
-  return sak.saksbehandlere.eier !== null;
-}
+  const avsluttedeMedDato = saker
+    .filter((s) => s.status === "AVSLUTTET" || s.status === "HENLAGT")
+    .filter((s) => avslutningsdatoer[s.id] !== undefined)
+    .map((s) => dagerMellom(s.opprettet, avslutningsdatoer[s.id]));
 
-function erSendtTilNayNfp(request: Request, sak: KontrollsakResponse) {
-  return hentHistorikk(request, String(sak.id)).some(
-    (hendelse) => hendelse.hendelsesType === "VIDERESENDT_TIL_NAY_NFP",
-  );
-}
+  const antallAvsluttede = avsluttedeMedDato.length;
 
-function erInnenforSiste14Dager(dato: string, referansedato: string) {
-  const referanse = new Date(referansedato);
-  const fjortenDagerSiden = new Date(referanse);
-  fjortenDagerSiden.setDate(referanse.getDate() - 14);
+  const utredetInnen12Uker =
+    antallAvsluttede > 0
+      ? Math.round(
+          (avsluttedeMedDato.filter((d) => d <= DAGER_12_UKER).length / antallAvsluttede) * 100,
+        )
+      : 0;
 
-  return new Date(dato) >= fjortenDagerSiden;
-}
+  const utredetInnen15Uker =
+    antallAvsluttede > 0
+      ? Math.round(
+          (avsluttedeMedDato.filter((d) => d <= DAGER_15_UKER).length / antallAvsluttede) * 100,
+        )
+      : 0;
 
-export function beregnDineSakerSiste14Dager({
-  request,
-  saker,
-  avslutningsdatoer,
-  tidligereTipsSakIder,
-  referansedato,
-}: BeregnDineSakerSiste14DagerArgs): DineSakerSiste14DagerStatistikk {
-  const sakerSiste14Dager = saker.filter(
-    (sak) => erInnenforSiste14Dager(getOpprettet(sak), referansedato) && harEier(sak),
-  );
-
-  const behandlingstid = beregnBehandlingstid(sakerSiste14Dager, avslutningsdatoer);
+  const gjennomsnittligSaksbehandlingstid =
+    antallAvsluttede > 0
+      ? Math.round(avsluttedeMedDato.reduce((sum, d) => sum + d, 0) / antallAvsluttede)
+      : 0;
 
   return {
-    antallSakerJobbetMed: sakerSiste14Dager.length,
-    antallTipsTilVurdering: 0,
-    antallSendtTilNayNfp: sakerSiste14Dager.filter((sak) => erSendtTilNayNfp(request, sak)).length,
-    snittBehandlingstidPerSak: behandlingstid?.gjennomsnitt ?? null,
-    antallHenlagteSaker: sakerSiste14Dager.filter(
-      (sak) => sak.status === "HENLAGT" && !tidligereTipsSakIder.includes(sak.id),
-    ).length,
-    antallHenlagteTips: sakerSiste14Dager.filter(
-      (sak) => sak.status === "HENLAGT" && tidligereTipsSakIder.includes(sak.id),
-    ).length,
-    antallSakerIBero: sakerSiste14Dager.filter((sak) => sak.blokkert === "I_BERO").length,
+    pagaendeSaker,
+    paVent,
+    utredetInnen12Uker,
+    utredetInnen15Uker,
+    gjennomsnittligSaksbehandlingstid,
   };
 }

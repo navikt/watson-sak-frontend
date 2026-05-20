@@ -1,13 +1,7 @@
 // Mock-data for Alle saker-siden.
 // Nøkkeltall er statisk inntil backend-integrasjon er på plass.
 
-type Nokkeltall = {
-  pagaendeSaker: number;
-  paVent: number;
-  utredetInnen12Uker: number;
-  utredetInnen15Uker: number;
-  gjennomsnittligSaksbehandlingstid: number;
-};
+import type { Nokkeltall } from "~/statistikk/types";
 
 export const mockNokkeltall: Nokkeltall = {
   pagaendeSaker: 38,

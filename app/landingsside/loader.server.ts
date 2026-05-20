@@ -1,15 +1,28 @@
 import type { LoaderFunctionArgs } from "react-router";
+import { beregnTraktSteg } from "~/alle-saker/saker-utils";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
-import {
-  mockMineSakerAvslutningsdatoer,
-  mockMineSakerTidligereTipsSakIder,
-} from "~/mine-saker/mock-data.server";
 import { hentMineSaker } from "~/saker/mock-alle-saker.server";
 import { getOpprettetDato } from "~/saker/selectors";
+import type { KontrollsakResponse } from "~/saker/types.backend";
 import { hentUlesteVarsler } from "~/varsler/mock-data.server";
-import { beregnDineSakerSiste14Dager } from "./beregninger";
 import { lagVelkomstOppsummering } from "./velkomst";
+
+function hentOppdatertDato(sak: KontrollsakResponse): string {
+  return sak.oppdatert ?? sak.opprettet;
+}
+
+function erInnenforSiste14Dager(dato: string, referansedato: Date): boolean {
+  const fjortenDagerSiden = new Date(referansedato);
+  fjortenDagerSiden.setDate(fjortenDagerSiden.getDate() - 14);
+  return new Date(dato) >= fjortenDagerSiden;
+}
+
+function finnReferansedato(saker: KontrollsakResponse[]): Date {
+  if (saker.length === 0) return new Date();
+  const nyeste = saker.reduce((a, b) => (hentOppdatertDato(a) > hentOppdatertDato(b) ? a : b));
+  return new Date(hentOppdatertDato(nyeste));
+}
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const innloggetBruker = await hentInnloggetBruker({ request });
@@ -34,14 +47,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .slice(0, 5);
   const varsler = hentUlesteVarsler(request);
   const velkomstOppsummering = lagVelkomstOppsummering(sakerForVelkomstOppsummering);
-  const referansedato = new Date().toISOString().split("T")[0];
-  const dineSakerSiste14Dager = beregnDineSakerSiste14Dager({
-    request,
-    saker: aktiveMineSaker,
-    avslutningsdatoer: mockMineSakerAvslutningsdatoer,
-    tidligereTipsSakIder: mockMineSakerTidligereTipsSakIder,
-    referansedato,
-  });
 
-  return { mineSaker, varsler, velkomstOppsummering, dineSakerSiste14Dager };
+  const referansedato = finnReferansedato(mineSakerHosInnloggetBruker);
+  const sakerSiste14Dager = mineSakerHosInnloggetBruker.filter((sak) =>
+    erInnenforSiste14Dager(hentOppdatertDato(sak), referansedato),
+  );
+  const traktSteg = beregnTraktSteg(sakerSiste14Dager);
+
+  return { mineSaker, varsler, velkomstOppsummering, traktSteg };
 }
