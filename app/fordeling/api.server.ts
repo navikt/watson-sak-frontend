@@ -24,16 +24,13 @@ export async function hentKontrollsaker({
   const params = new URLSearchParams({ page: String(page), size: String(size) });
   if (ansvarligNavIdent) params.set("ansvarligNavIdent", ansvarligNavIdent);
 
-  const response = await fetch(
-    `${BACKEND_API_URL}/api/v1/kontrollsaker?${params}`,
-    {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-      },
+  const response = await fetch(`${BACKEND_API_URL}/api/v1/kontrollsaker?${params}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
     },
-  );
+  });
 
   if (!response.ok) {
     logger.error("Kunne ikke hente kontrollsaker fra Watson Admin API", {
