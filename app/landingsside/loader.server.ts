@@ -4,13 +4,20 @@ import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
 import { hentMineSaker } from "~/saker/mock-alle-saker.server";
 import { getOpprettetDato } from "~/saker/selectors";
+import type { KontrollsakResponse } from "~/saker/types.backend";
 import { hentUlesteVarsler } from "~/varsler/mock-data.server";
 import { lagVelkomstOppsummering } from "./velkomst";
 
-function erInnenforSiste14Dager(dato: string): boolean {
-  const fjortenDagerSiden = new Date();
+function erInnenforSiste14Dager(dato: string, referansedato: Date): boolean {
+  const fjortenDagerSiden = new Date(referansedato);
   fjortenDagerSiden.setDate(fjortenDagerSiden.getDate() - 14);
   return new Date(dato) >= fjortenDagerSiden;
+}
+
+function finnReferansedato(saker: KontrollsakResponse[]): Date {
+  if (saker.length === 0) return new Date();
+  const nyeste = saker.reduce((a, b) => (a.opprettet > b.opprettet ? a : b));
+  return new Date(nyeste.opprettet);
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -37,8 +44,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const varsler = hentUlesteVarsler(request);
   const velkomstOppsummering = lagVelkomstOppsummering(sakerForVelkomstOppsummering);
 
+  const referansedato = finnReferansedato(mineSakerHosInnloggetBruker);
   const sakerSiste14Dager = mineSakerHosInnloggetBruker.filter((sak) =>
-    erInnenforSiste14Dager(sak.opprettet),
+    erInnenforSiste14Dager(sak.opprettet, referansedato),
   );
   const traktSteg = beregnTraktSteg(sakerSiste14Dager);
 

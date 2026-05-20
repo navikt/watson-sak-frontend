@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { loader } from "./loader.server";
 
 vi.mock("~/config/env.server", () => ({
@@ -21,10 +21,6 @@ describe("landingsside-loader", () => {
     context: {},
   } as Parameters<typeof loader>[0];
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
   it("returnerer alle uleste varsler sortert nyest først", async () => {
     const data = await loader(loaderArgs);
 
@@ -42,9 +38,6 @@ describe("landingsside-loader", () => {
   });
 
   it("returnerer traktSteg for brukerens saker siste 14 dager", async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-03-18T12:00:00Z"));
-
     const data = await loader(loaderArgs);
 
     expect(data.traktSteg).toEqual(
