@@ -84,7 +84,10 @@ export const kontrollsakResponseSchema = z
     misbruktype: z.array(kontrollsakMisbrukstypeSchema),
     prioritet: kontrollsakPrioritetSchema,
     ytelser: z.array(kontrollsakYtelseSchema),
-    merking: z.string().nullable(),
+    merking: z
+      .union([z.string(), z.array(z.string())])
+      .transform((v) => (Array.isArray(v) ? (v[0] ?? null) : v))
+      .nullable(),
     oppgaver: z.array(oppgaveKortSchema).default([]),
     opprettet: z.string(),
     oppdatert: z.string().nullable(),
