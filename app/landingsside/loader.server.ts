@@ -8,6 +8,10 @@ import type { KontrollsakResponse } from "~/saker/types.backend";
 import { hentUlesteVarsler } from "~/varsler/mock-data.server";
 import { lagVelkomstOppsummering } from "./velkomst";
 
+function hentOppdatertDato(sak: KontrollsakResponse): string {
+  return sak.oppdatert ?? sak.opprettet;
+}
+
 function erInnenforSiste14Dager(dato: string, referansedato: Date): boolean {
   const fjortenDagerSiden = new Date(referansedato);
   fjortenDagerSiden.setDate(fjortenDagerSiden.getDate() - 14);
@@ -16,8 +20,8 @@ function erInnenforSiste14Dager(dato: string, referansedato: Date): boolean {
 
 function finnReferansedato(saker: KontrollsakResponse[]): Date {
   if (saker.length === 0) return new Date();
-  const nyeste = saker.reduce((a, b) => (a.opprettet > b.opprettet ? a : b));
-  return new Date(nyeste.opprettet);
+  const nyeste = saker.reduce((a, b) => (hentOppdatertDato(a) > hentOppdatertDato(b) ? a : b));
+  return new Date(hentOppdatertDato(nyeste));
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -46,7 +50,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   const referansedato = finnReferansedato(mineSakerHosInnloggetBruker);
   const sakerSiste14Dager = mineSakerHosInnloggetBruker.filter((sak) =>
-    erInnenforSiste14Dager(sak.opprettet, referansedato),
+    erInnenforSiste14Dager(hentOppdatertDato(sak), referansedato),
   );
   const traktSteg = beregnTraktSteg(sakerSiste14Dager);
 
