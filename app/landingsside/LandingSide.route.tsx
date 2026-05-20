@@ -1,4 +1,4 @@
-import { Heading, HGrid, Page, VStack } from "@navikt/ds-react";
+import { BodyShort, Heading, HGrid, Page, VStack } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
 import { useEffect } from "react";
 import { useFetcher, useLoaderData, useRevalidator } from "react-router";
@@ -55,7 +55,13 @@ export default function LandingSide() {
               <Heading level="2" size="medium" spacing id="trakt-heading">
                 Dine saker siste 14 dager
               </Heading>
-              <Trakt steg={loaderData.traktSteg} />
+              {loaderData.traktSteg.length > 0 ? (
+                <Trakt steg={loaderData.traktSteg} />
+              ) : (
+                <BodyShort className="text-ax-text-neutral-subtle">
+                  Du har ikke jobbet på noen saker de siste 14 dagene.
+                </BodyShort>
+              )}
             </section>
           </HGrid>
         </VStack>
