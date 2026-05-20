@@ -4,7 +4,10 @@
 import { Heading, HGrid, HStack, Page, Pagination, VStack } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
 import { useLoaderData, useSearchParams } from "react-router";
+import { getBackendOboToken } from "~/auth/access-token";
 import { skalBrukeMockdata } from "~/config/env.server";
+import { hentKontrollsaker } from "~/fordeling/api.server";
+import { parseMultiValueParam } from "~/filtre/parseMultiValueParam";
 import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
 import { getKategoriText, getMisbrukstyper, getSaksenhet } from "~/saker/selectors";
@@ -12,7 +15,6 @@ import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
 import { paginerElementer } from "~/utils/paginering";
 import type { Route } from "./+types/AlleSakerSide.route";
 import { mockNokkeltall } from "./mock-data.server";
-import { parseMultiValueParam } from "~/filtre/parseMultiValueParam";
 import {
   type AlleSakerKolonne,
   beregnTraktSteg,
@@ -31,13 +33,7 @@ const RADER_PER_SIDE = 20;
 const STANDARD_KOLONNE: AlleSakerKolonne = "opprettet";
 const STANDARD_RETNING: Sorteringsretning = "desc";
 
-export function loader({ request }: Route.LoaderArgs) {
-  if (!skalBrukeMockdata) {
-    throw new Response("Alle saker er ikke tilgjengelig uten mockdata", {
-      status: 501,
-    });
-  }
-
+export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const side = Math.max(1, Number.parseInt(url.searchParams.get("side") ?? "1", 10) || 1);
   const sorterKolonne = parseKolonne(url.searchParams.get("sorter"));
@@ -55,7 +51,14 @@ export function loader({ request }: Route.LoaderArgs) {
   );
   const filterMerking = normaliserFilterVerdier(parseMultiValueParam(url.searchParams, "merking"));
 
-  const alleSaker = hentAlleSaker(request);
+  let alleSaker;
+  if (!skalBrukeMockdata) {
+    const token = await getBackendOboToken(request);
+    const resultat = await hentKontrollsaker({ token, page: 1, size: 500 });
+    alleSaker = resultat.items;
+  } else {
+    alleSaker = hentAlleSaker(request);
+  }
 
   // Tilgjengelige filterverdier beregnes fra alle saker (uavhengig av aktivt filter)
   const filterAlternativer = {
@@ -93,7 +96,7 @@ export function loader({ request }: Route.LoaderArgs) {
     totalAntall: filtrerteSaker.length,
     sorteringskolonne: sorterKolonne,
     sorteringsretning: sorterRetning,
-    nokkeltall: mockNokkeltall,
+    nokkeltall: mockNokkeltall, // TODO: hent nøkkeltall fra backend når endepunktet er klart
     traktSteg: beregnTraktSteg(alleSaker),
     filterAlternativer,
   };
