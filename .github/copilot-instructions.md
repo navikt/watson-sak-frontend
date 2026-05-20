@@ -69,7 +69,7 @@ Bruk hjelpere i `app/auth/` – aldri rull egen auth-logikk:
 ### Backend, kontrakter og mockdata
 
 - Backend-URL og mockmodus styres av `app/config/backend-config.ts` og `app/config/env.server.ts`.
-- `local-mock`, `demo` og `dev` bruker mockdata (`skalBrukeMockdata`). `local-backend` peker mot `http://localhost:8080`, mens `local-dev`/`dev` bruker `WATSON_ADMIN_API_URL` eller dev-URL.
+- `local-mock` og `demo` bruker mockdata (`skalBrukeMockdata`). `local-backend` peker mot `http://localhost:8080`, mens `local-dev`/`dev` bruker `WATSON_ADMIN_API_URL` eller dev-URL.
 - Backend-kall skal hente token med `getBackendOboToken(request)`, bruke `BACKEND_API_URL`, sende `Authorization: Bearer ...` og logge med `logger` før de kaster tydelige feil ved `!response.ok`.
 - Valider responskontrakter med Zod-skjemaer i feature-nære filer, særlig `app/saker/types.backend.ts`. Bruk `z.infer` for typer i stedet for dupliserte TypeScript-typer der det er praktisk.
 - Mockdata som påvirker saksflyt ligger hovedsakelig i `app/saker/*mock*.server.ts` og `app/testing/mock-store/`. Husk å oppdatere reset-logikk når du legger til ny muterbar mocktilstand.
