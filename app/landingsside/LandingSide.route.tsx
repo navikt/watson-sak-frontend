@@ -53,7 +53,7 @@ export default function LandingSide() {
               className="rounded-2xl border border-ax-border-neutral-subtle bg-ax-bg-default p-6"
             >
               <Heading level="2" size="medium" spacing id="trakt-heading">
-                Dine saker per steg
+                Dine saker siste 14 dager
               </Heading>
               <Trakt steg={loaderData.traktSteg} />
             </section>

@@ -99,20 +99,22 @@ test.describe("Landingsside", () => {
     await expect(page.getByRole("button", { name: "Vis flere" })).not.toBeVisible();
   });
 
-  test("viser seksjonen for dine saker per steg ved siden av varslinger på brede skjermer", async ({
+  test("viser seksjonen for dine saker siste 14 dager ved siden av varslinger på brede skjermer", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1400, height: 1200 });
     await page.reload({ waitUntil: "networkidle" });
 
     const traktSeksjon = page
-      .getByRole("heading", { name: "Dine saker per steg" })
+      .getByRole("heading", { name: "Dine saker siste 14 dager" })
       .locator("xpath=ancestor::section[1]");
     const varslerSeksjon = page
       .getByRole("heading", { name: "Siste varsler" })
       .locator("xpath=ancestor::section[1]");
 
-    await expect(traktSeksjon.getByRole("heading", { name: "Dine saker per steg" })).toBeVisible();
+    await expect(
+      traktSeksjon.getByRole("heading", { name: "Dine saker siste 14 dager" }),
+    ).toBeVisible();
 
     const traktBoks = await traktSeksjon.boundingBox();
     const varslerBoks = await varslerSeksjon.boundingBox();

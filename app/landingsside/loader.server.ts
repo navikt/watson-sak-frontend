@@ -7,6 +7,12 @@ import { getOpprettetDato } from "~/saker/selectors";
 import { hentUlesteVarsler } from "~/varsler/mock-data.server";
 import { lagVelkomstOppsummering } from "./velkomst";
 
+function erInnenforSiste14Dager(dato: string): boolean {
+  const fjortenDagerSiden = new Date();
+  fjortenDagerSiden.setDate(fjortenDagerSiden.getDate() - 14);
+  return new Date(dato) >= fjortenDagerSiden;
+}
+
 export async function loader({ request }: LoaderFunctionArgs) {
   const innloggetBruker = await hentInnloggetBruker({ request });
 
@@ -30,7 +36,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .slice(0, 5);
   const varsler = hentUlesteVarsler(request);
   const velkomstOppsummering = lagVelkomstOppsummering(sakerForVelkomstOppsummering);
-  const traktSteg = beregnTraktSteg(mineSakerHosInnloggetBruker);
+
+  const sakerSiste14Dager = mineSakerHosInnloggetBruker.filter((sak) =>
+    erInnenforSiste14Dager(sak.opprettet),
+  );
+  const traktSteg = beregnTraktSteg(sakerSiste14Dager);
 
   return { mineSaker, varsler, velkomstOppsummering, traktSteg };
 }
