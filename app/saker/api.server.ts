@@ -124,12 +124,11 @@ export async function tildelKontrollsak(
   token: string,
   sakId: string,
   navIdent: string,
-  beskrivelse?: string,
 ): Promise<KontrollsakResponse> {
-  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/tildel`), {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/saksbehandler`), {
     method: "POST",
     headers: authHeaders(token),
-    body: JSON.stringify({ navIdent, beskrivelse }),
+    body: JSON.stringify({ aksjon: "TILDEL", navIdent }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke tildele kontrollsak");
   return kontrollsakResponseSchema.parse(await respons.json());
@@ -138,12 +137,11 @@ export async function tildelKontrollsak(
 export async function fristillKontrollsak(
   token: string,
   sakId: string,
-  beskrivelse?: string,
 ): Promise<KontrollsakResponse> {
-  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/fristill`), {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/saksbehandler`), {
     method: "POST",
     headers: authHeaders(token),
-    body: JSON.stringify({ beskrivelse }),
+    body: JSON.stringify({ aksjon: "FRISTILL" }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke fristille kontrollsak");
   return kontrollsakResponseSchema.parse(await respons.json());
@@ -154,10 +152,10 @@ export async function delKontrollsak(
   sakId: string,
   navIdent: string,
 ): Promise<KontrollsakResponse> {
-  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/del`), {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/deling`), {
     method: "POST",
     headers: authHeaders(token),
-    body: JSON.stringify({ navIdent }),
+    body: JSON.stringify({ aksjon: "DEL", navIdent }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke dele kontrollsak");
   return kontrollsakResponseSchema.parse(await respons.json());
@@ -183,32 +181,32 @@ export async function hentSaksbehandlere(token: string): Promise<KontrollsakSaks
   return saksbehandlerListeSchema.parse(await respons.json());
 }
 
-// --- Placeholder-endepunkter (backend returnerer 501 inntil implementert) ---
-
 export async function overforAnsvarlig(
   token: string,
   sakId: string,
   navIdent: string,
-  beskrivelse?: string,
-): Promise<void> {
-  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/overforing`), {
+): Promise<KontrollsakResponse> {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/saksbehandler`), {
     method: "POST",
     headers: authHeaders(token),
-    body: JSON.stringify({ navIdent, beskrivelse }),
+    body: JSON.stringify({ aksjon: "OVERFOR", navIdent }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke overføre ansvarlig");
+  return kontrollsakResponseSchema.parse(await respons.json());
 }
 
 export async function fjernDeltTilgang(
   token: string,
   sakId: string,
   navIdent: string,
-): Promise<void> {
-  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/del/${navIdent}`), {
-    method: "DELETE",
+): Promise<KontrollsakResponse> {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/deling`), {
+    method: "POST",
     headers: authHeaders(token),
+    body: JSON.stringify({ aksjon: "FJERN", navIdent }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke fjerne delt tilgang");
+  return kontrollsakResponseSchema.parse(await respons.json());
 }
 
 export async function redigerKontrollsak(

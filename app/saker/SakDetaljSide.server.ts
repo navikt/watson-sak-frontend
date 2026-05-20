@@ -251,14 +251,13 @@ async function backendAction(
     }
     case "overfor_ansvarlig": {
       const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
-      const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
-      await backendApi.overforAnsvarlig(token, sakId, navIdent, beskrivelse ?? undefined);
-      return { ok: true };
+      const sak = await backendApi.overforAnsvarlig(token, sakId, navIdent);
+      return { ok: true, sak };
     }
     case "fjern_delt_tilgang": {
       const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
-      await backendApi.fjernDeltTilgang(token, sakId, navIdent);
-      return { ok: true };
+      const sak = await backendApi.fjernDeltTilgang(token, sakId, navIdent);
+      return { ok: true, sak };
     }
     case "videresend_seksjon":
     case "send_til_annen_enhet": {
