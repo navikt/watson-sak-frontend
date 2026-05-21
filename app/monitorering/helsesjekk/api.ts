@@ -40,7 +40,7 @@ export async function loader({ request }: HelsesjekkLoaderArgs) {
   }
 
   try {
-    const response = await fetch(`${BACKEND_API_URL}/api/health`, {
+    const response = await fetch(`${BACKEND_API_URL}/actuator/health`, {
       headers: {
         Accept: "application/json, text/plain",
       },

@@ -38,7 +38,7 @@ describe("helsesjekk-api", () => {
     });
 
     expect(mockedFetch).toHaveBeenCalledWith(
-      "https://watson-admin-api.intern.dev.nav.no/api/health",
+      "https://watson-admin-api.intern.dev.nav.no/actuator/health",
       expect.objectContaining({
         headers: { Accept: "application/json, text/plain" },
       }),
