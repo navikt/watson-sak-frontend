@@ -216,7 +216,7 @@ export async function redigerKontrollsak(
     kategori?: string;
     kilde?: string;
     misbruktype?: string[];
-    merking?: string | null;
+    merking?: string[] | null;
     ytelser?: {
       type: string;
       periodeFra: string;

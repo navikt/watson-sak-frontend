@@ -301,7 +301,7 @@ async function backendAction(
         kategori: validert.kategori,
         kilde: validert.kilde,
         misbruktype: validert.misbruktype,
-        merking: validert.merking[0] ?? null,
+        merking: validert.merking.length > 0 ? validert.merking : null,
         ytelser: validert.ytelser.map((y) => ({
           type: y.type ?? "",
           periodeFra: y.fraDato ?? "",

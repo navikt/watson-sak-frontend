@@ -122,7 +122,7 @@ export async function opprettKontrollsak({
       misbruktype: payload.misbruktype,
       prioritet: payload.prioritet,
       ytelser: payload.ytelser,
-      merking: payload.merking,
+      merking: payload.merking ? [payload.merking] : [],
     }),
   });
 
