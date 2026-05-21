@@ -627,10 +627,16 @@ export default function SakDetaljSide() {
                                   <Table.HeaderCell scope="col" className="text-sm">
                                     Periode
                                   </Table.HeaderCell>
-                                  <Table.HeaderCell scope="col" className="text-sm">
+                                  <Table.HeaderCell
+                                    scope="col"
+                                    className="text-sm whitespace-nowrap"
+                                  >
                                     Antatt beløp
                                   </Table.HeaderCell>
-                                  <Table.HeaderCell scope="col" className="text-sm">
+                                  <Table.HeaderCell
+                                    scope="col"
+                                    className="text-sm whitespace-nowrap"
+                                  >
                                     Endelig beløp
                                   </Table.HeaderCell>
                                 </Table.Row>
