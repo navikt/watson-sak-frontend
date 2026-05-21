@@ -204,6 +204,7 @@ export function normaliserLegacyKontrollsak(sak: LegacyKontrollsak): Kontrollsak
         ? sak.merking
         : null,
     oppgaver: [],
+    kobledeSaker: [],
     opprettet: String(sak.opprettet ?? new Date().toISOString()),
     oppdatert: typeof sak.oppdatert === "string" ? sak.oppdatert : null,
   };
