@@ -9,6 +9,16 @@ vi.mock("~/config/env.server", () => ({
   skalBrukeMockdata: true,
 }));
 
+vi.mock("~/auth/innlogget-bruker.server", () => ({
+  hentInnloggetBruker: () =>
+    Promise.resolve({
+      preferredUsername: "test",
+      name: "Saks Behandlersen",
+      navIdent: "Z999999",
+      enhet: "4812",
+    }),
+}));
+
 const testRequest = new Request("http://localhost");
 
 function lagFormData(felter: Record<string, string>): FormData {
