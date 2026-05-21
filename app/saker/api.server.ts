@@ -219,7 +219,13 @@ export async function redigerKontrollsak(
     kilde?: string;
     misbruktype?: string[];
     merking?: string | null;
-    ytelser?: { type: string; periodeFra: string; periodeTil: string; belop?: number | null }[];
+    ytelser?: {
+      type: string;
+      periodeFra: string;
+      periodeTil: string;
+      belop?: number | null;
+      endeligBelop?: number | null;
+    }[];
   },
 ): Promise<void> {
   const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}`), {

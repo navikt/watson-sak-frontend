@@ -49,6 +49,7 @@ describe("Kontrollsak-kontrakter", () => {
             periodeFra: "2026-01-01",
             periodeTil: "2026-12-31",
             belop: 1000,
+            endeligBelop: null,
           },
         ],
         merking: "PRIORITERT",

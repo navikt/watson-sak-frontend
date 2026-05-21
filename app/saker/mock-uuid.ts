@@ -195,6 +195,7 @@ export function normaliserLegacyKontrollsak(sak: LegacyKontrollsak): Kontrollsak
             : typeof sak.belop === "number" && indeks === 0
               ? sak.belop
               : null,
+        endeligBelop: typeof typed.endeligBelop === "number" ? typed.endeligBelop : null,
       };
     }),
     merking: Array.isArray(sak.merking)

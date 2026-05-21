@@ -57,6 +57,7 @@ type YtelseRadFeltProps = {
   defaults: YtelseRadVerdier;
   feil: Feil | undefined;
   size?: "medium" | "small";
+  endeligBeløpDisabled?: boolean;
 };
 
 export function YtelseRadFelt({
@@ -67,6 +68,7 @@ export function YtelseRadFelt({
   defaults,
   feil,
   size = "medium",
+  endeligBeløpDisabled = false,
 }: YtelseRadFeltProps) {
   const [valgtYtelse, setValgtYtelse] = useState<string>(defaults.type ?? "");
   const registrerSakDatepickerValg = useMemo(() => lagRegistrerSakDatepickerValg(new Date()), []);
@@ -86,11 +88,13 @@ export function YtelseRadFelt({
   const fraFeltnavn = `ytelser[${indeks}].fraDato`;
   const tilFeltnavn = `ytelser[${indeks}].tilDato`;
   const beløpFeltnavn = `ytelser[${indeks}].beløp`;
+  const endeligBeløpFeltnavn = `ytelser[${indeks}].endeligBeløp`;
 
   const ytelseFeil = førsteFeilForFelt(feil, `ytelser.${indeks}.type`);
   const fraFeil = førsteFeilForFelt(feil, `ytelser.${indeks}.fraDato`);
   const tilFeil = førsteFeilForFelt(feil, `ytelser.${indeks}.tilDato`);
   const beløpFeil = førsteFeilForFelt(feil, `ytelser.${indeks}.beløp`);
+  const endeligBeløpFeil = førsteFeilForFelt(feil, `ytelser.${indeks}.endeligBeløp`);
 
   return (
     <HStack gap="space-16" align="end" wrap>
@@ -130,13 +134,26 @@ export function YtelseRadFelt({
       <TextField
         id={ankerIdForFelt(`ytelser.${indeks}.beløp`)}
         name={beløpFeltnavn}
-        label="Beløp"
+        label="Antatt beløp"
         size={size}
         inputMode="numeric"
         htmlSize={12}
         autoComplete="off"
         defaultValue={defaults.beløp ?? ""}
         error={beløpFeil}
+      />
+
+      <TextField
+        id={ankerIdForFelt(`ytelser.${indeks}.endeligBeløp`)}
+        name={endeligBeløpFeltnavn}
+        label="Endelig beløp"
+        size={size}
+        inputMode="numeric"
+        htmlSize={12}
+        autoComplete="off"
+        defaultValue={defaults.endeligBeløp ?? ""}
+        error={endeligBeløpFeil}
+        disabled={endeligBeløpDisabled}
       />
 
       <Button

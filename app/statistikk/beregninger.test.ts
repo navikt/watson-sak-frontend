@@ -33,6 +33,7 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
         periodeFra: "2025-01-01",
         periodeTil: "2025-01-31",
         belop: null,
+        endeligBelop: null,
       },
     ],
     merking: null,
@@ -58,6 +59,7 @@ function lagYtelse(id: string, type: string) {
     periodeFra: "2025-01-01",
     periodeTil: "2025-01-31",
     belop: null,
+    endeligBelop: null,
   };
 }
 

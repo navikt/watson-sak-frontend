@@ -49,6 +49,7 @@ const kontrollsakYtelseSchema = z.object({
   periodeFra: z.string(),
   periodeTil: z.string(),
   belop: z.number().nullable(),
+  endeligBelop: z.number().nullable(),
 });
 
 const kontrollsakSaksbehandlerSchema = z.object({

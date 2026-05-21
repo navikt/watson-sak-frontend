@@ -307,6 +307,7 @@ async function backendAction(
           periodeFra: y.fraDato ?? "",
           periodeTil: y.tilDato ?? "",
           belop: y.beløp ?? null,
+          endeligBelop: y.endeligBeløp ?? null,
         })),
       });
       return { ok: true };
@@ -600,6 +601,7 @@ async function mockAction(
         periodeFra: ytelse.fraDato ?? "",
         periodeTil: ytelse.tilDato ?? "",
         belop: ytelse.beløp ?? null,
+        endeligBelop: ytelse.endeligBeløp ?? null,
       }));
       leggTilHendelse(request, sak, "SAKSINFORMASJON_ENDRET");
       return { ok: true, sak } satisfies ActionResult;

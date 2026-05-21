@@ -33,6 +33,7 @@ export type OpprettKontrollsakRequest = {
     periodeFra: string;
     periodeTil: string;
     belop?: number;
+    endeligBelop?: number;
   }>;
 };
 

@@ -82,6 +82,12 @@ const valgfrittBeløpSchema = z.preprocess((verdi) => {
   return Number.isFinite(tall) ? tall : verdi;
 }, z.number({ message: "Beløp må være et gyldig tall" }).positive("Beløp må være et positivt tall").optional());
 
+const valgfrittEndeligBeløpSchema = z.preprocess((verdi) => {
+  if (verdi === "" || verdi === null || verdi === undefined) return undefined;
+  const tall = Number(verdi);
+  return Number.isFinite(tall) ? tall : verdi;
+}, z.number({ message: "Endelig beløp må være et gyldig tall" }).positive("Endelig beløp må være et positivt tall").optional());
+
 const ytelseRadSchema = z
   .object({
     type: z
@@ -91,6 +97,7 @@ const ytelseRadSchema = z
     fraDato: lagValgfrittDatofelt(),
     tilDato: lagValgfrittDatofelt(),
     beløp: valgfrittBeløpSchema,
+    endeligBeløp: valgfrittEndeligBeløpSchema,
   })
   .refine(({ fraDato, tilDato }) => !fraDato || !tilDato || fraDato <= tilDato, {
     message: "Til dato må være lik eller etter fra dato",
@@ -102,8 +109,14 @@ function erUtfyltYtelseRad(rad: {
   fraDato?: string;
   tilDato?: string;
   beløp?: number;
+  endeligBeløp?: number;
 }) {
-  return Boolean(rad.type ?? rad.fraDato ?? rad.tilDato ?? rad.beløp !== undefined);
+  return Boolean(
+    rad.type ??
+    rad.fraDato ??
+    rad.tilDato ??
+    (rad.beløp !== undefined || rad.endeligBeløp !== undefined),
+  );
 }
 
 export const opprettSakSchema = z

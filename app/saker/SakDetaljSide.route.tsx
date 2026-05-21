@@ -116,6 +116,10 @@ function lagYtelseRaderFraSak(sak: Route.ComponentProps["loaderData"]["sak"]): Y
     fraDato: formaterIsoTilNorskDato(ytelse.periodeFra) || undefined,
     tilDato: formaterIsoTilNorskDato(ytelse.periodeTil) || undefined,
     beløp: ytelse.belop !== null && ytelse.belop !== undefined ? String(ytelse.belop) : undefined,
+    endeligBeløp:
+      ytelse.endeligBelop !== null && ytelse.endeligBelop !== undefined
+        ? String(ytelse.endeligBelop)
+        : undefined,
   }));
 }
 
@@ -155,7 +159,8 @@ function erLikeYtelser(a: YtelseRadVerdier[], b: YtelseRadVerdier[]): boolean {
       rad.type === b[i].type &&
       rad.fraDato === b[i].fraDato &&
       rad.tilDato === b[i].tilDato &&
-      rad.beløp === b[i].beløp,
+      rad.beløp === b[i].beløp &&
+      rad.endeligBeløp === b[i].endeligBeløp,
   );
 }
 
@@ -518,6 +523,7 @@ export default function SakDetaljSide() {
                               defaults={rad}
                               feil={feil}
                               size="small"
+                              endeligBeløpDisabled={sak.status !== "STRAFFERETTSLIG_VURDERING"}
                             />
                           ))}
                           <div>
@@ -622,7 +628,10 @@ export default function SakDetaljSide() {
                                     Periode
                                   </Table.HeaderCell>
                                   <Table.HeaderCell scope="col" className="text-sm">
-                                    Beløp
+                                    Antatt beløp
+                                  </Table.HeaderCell>
+                                  <Table.HeaderCell scope="col" className="text-sm">
+                                    Endelig beløp
                                   </Table.HeaderCell>
                                 </Table.Row>
                               </Table.Header>
@@ -640,6 +649,12 @@ export default function SakDetaljSide() {
                                     <Table.DataCell className="text-sm">
                                       {ytelse.belop !== null && ytelse.belop !== undefined
                                         ? formaterBelop(ytelse.belop)
+                                        : "–"}
+                                    </Table.DataCell>
+                                    <Table.DataCell className="text-sm">
+                                      {ytelse.endeligBelop !== null &&
+                                      ytelse.endeligBelop !== undefined
+                                        ? formaterBelop(ytelse.endeligBelop)
                                         : "–"}
                                     </Table.DataCell>
                                   </Table.Row>
