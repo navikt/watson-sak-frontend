@@ -14,7 +14,7 @@ test.describe("Mine saker", () => {
 
     await expect(page.getByRole("heading", { name: "Mine saker" })).toBeVisible();
     await expect(hovedinnhold.getByLabel("Filtrer saker")).toBeVisible();
-    await expect(hovedinnhold.getByRole("link")).toHaveCount(5);
+    await expect(hovedinnhold.getByRole("link")).toHaveCount(6);
   });
 
   test("kan filtrere på ventestatus for å vise ventende saker", async ({ page }) => {
@@ -22,7 +22,7 @@ test.describe("Mine saker", () => {
 
     // Klikk «Venter på vedtak» for å inkludere ventende saker
     await hovedinnhold.getByRole("button", { name: "Venter på vedtak" }).click();
-    await expect(hovedinnhold.getByRole("link")).toHaveCount(6);
+    await expect(hovedinnhold.getByRole("link")).toHaveCount(7);
   });
 
   test("kan navigere til sakdetalj", async ({ page }) => {
