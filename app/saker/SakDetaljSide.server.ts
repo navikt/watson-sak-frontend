@@ -1,5 +1,6 @@
 import { data } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
+import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { mockYtelser } from "~/fordeling/mock-data.server";
 import { skalBrukeMockdata } from "~/config/env.server";
 import { enhetAlternativer, redigerSaksinformasjonSchema } from "~/registrer-sak/validering";
@@ -666,7 +667,8 @@ async function mockAction(
       const tid = hentTekstfelt(formData, "tid", "Tid er påkrevd");
 
       const tidspunkt = lagTidspunktFraSkjema(dato, tid);
-      leggTilManuellHendelse(request, sak, tittel, notat, tidspunkt, "Z999999");
+      const { navIdent } = await hentInnloggetBruker({ request });
+      leggTilManuellHendelse(request, sak, tittel, notat, tidspunkt, navIdent);
       break;
     }
     case "rediger_historikk": {
