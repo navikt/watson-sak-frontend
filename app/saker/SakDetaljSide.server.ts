@@ -297,17 +297,23 @@ async function backendAction(
       }
 
       const validert = resultat.data;
+      const eksisterendeSak = await backendApi.hentKontrollsak(token, sakId);
+      const kanRedigereEndeligBelop =
+        eksisterendeSak.status === "STRAFFERETTSLIG_VURDERING";
+
       await backendApi.redigerKontrollsak(token, sakId, {
         kategori: validert.kategori,
         kilde: validert.kilde,
         misbruktype: validert.misbruktype,
         merking: validert.merking[0] ?? null,
-        ytelser: validert.ytelser.map((y) => ({
+        ytelser: validert.ytelser.map((y, indeks) => ({
           type: y.type ?? "",
           periodeFra: y.fraDato ?? "",
           periodeTil: y.tilDato ?? "",
           belop: y.beløp ?? null,
-          endeligBelop: y.endeligBeløp ?? null,
+          endeligBelop: kanRedigereEndeligBelop
+            ? (y.endeligBeløp ?? null)
+            : (eksisterendeSak.ytelser[indeks]?.endeligBelop ?? null),
         })),
       });
       return { ok: true };
@@ -595,13 +601,16 @@ async function mockAction(
       sak.misbruktype = [...validert.misbruktype];
       sak.merking = validert.merking[0] ?? null;
       sak.kilde = validert.kilde;
+      const kanRedigereEndeligBelop = sak.status === "STRAFFERETTSLIG_VURDERING";
       sak.ytelser = validert.ytelser.map((ytelse, indeks) => ({
         id: eksisterendeYtelser[indeks]?.id ?? crypto.randomUUID(),
         type: ytelse.type ?? "",
         periodeFra: ytelse.fraDato ?? "",
         periodeTil: ytelse.tilDato ?? "",
         belop: ytelse.beløp ?? null,
-        endeligBelop: ytelse.endeligBeløp ?? null,
+        endeligBelop: kanRedigereEndeligBelop
+          ? (ytelse.endeligBeløp ?? null)
+          : (eksisterendeYtelser[indeks]?.endeligBelop ?? null),
       }));
       leggTilHendelse(request, sak, "SAKSINFORMASJON_ENDRET");
       return { ok: true, sak } satisfies ActionResult;
