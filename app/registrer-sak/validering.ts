@@ -80,7 +80,7 @@ const valgfrittBeløpSchema = z.preprocess((verdi) => {
   if (verdi === "" || verdi === null || verdi === undefined) return undefined;
   const tall = Number(verdi);
   return Number.isFinite(tall) ? tall : verdi;
-}, z.number({ message: "Beløp må være et gyldig tall" }).positive("Beløp må være et positivt tall").optional());
+}, z.number({ message: "Antatt beløp må være et gyldig tall" }).positive("Antatt beløp må være et positivt tall").optional());
 
 const valgfrittEndeligBeløpSchema = z.preprocess((verdi) => {
   if (verdi === "" || verdi === null || verdi === undefined) return undefined;

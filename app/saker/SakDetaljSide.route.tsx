@@ -523,7 +523,7 @@ export default function SakDetaljSide() {
                               defaults={rad}
                               feil={feil}
                               size="small"
-                              endeligBeløpDisabled={sak.status !== "STRAFFERETTSLIG_VURDERING"}
+                              endeligBeløpReadOnly={sak.status !== "STRAFFERETTSLIG_VURDERING"}
                             />
                           ))}
                           <div>

@@ -57,7 +57,7 @@ type YtelseRadFeltProps = {
   defaults: YtelseRadVerdier;
   feil: Feil | undefined;
   size?: "medium" | "small";
-  endeligBeløpDisabled?: boolean;
+  endeligBeløpReadOnly?: boolean;
 };
 
 export function YtelseRadFelt({
@@ -68,7 +68,7 @@ export function YtelseRadFelt({
   defaults,
   feil,
   size = "medium",
-  endeligBeløpDisabled = false,
+  endeligBeløpReadOnly = false,
 }: YtelseRadFeltProps) {
   const [valgtYtelse, setValgtYtelse] = useState<string>(defaults.type ?? "");
   const registrerSakDatepickerValg = useMemo(() => lagRegistrerSakDatepickerValg(new Date()), []);
@@ -153,7 +153,7 @@ export function YtelseRadFelt({
         autoComplete="off"
         defaultValue={defaults.endeligBeløp ?? ""}
         error={endeligBeløpFeil}
-        disabled={endeligBeløpDisabled}
+        readOnly={endeligBeløpReadOnly}
       />
 
       <Button
