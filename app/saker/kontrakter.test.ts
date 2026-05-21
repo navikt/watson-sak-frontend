@@ -163,17 +163,13 @@ describe("Kontrollsak-kontrakter", () => {
     }).not.toThrow();
   });
 
-  it("bruker numeriske sak-IDer og gyldige UUID-er for ytelser og hendelser", () => {
+  it("bruker numeriske sak-IDer og gyldige UUID-er for hendelser", () => {
     const mockKontrollsaker = hentFordelingssaker(state());
     const mockMineKontrollsaker = lagInitialMineKontrollsaker();
     const aktiveMockSaker = [...mockKontrollsaker, ...mockMineKontrollsaker];
 
     for (const sak of aktiveMockSaker) {
       expect(typeof sak.id).toBe("number");
-
-      for (const ytelse of sak.ytelser) {
-        expect(ytelse.id).toMatch(uuidMønster);
-      }
 
       for (const hendelse of hentHistorikk(testRequest, String(sak.id))) {
         expect(hendelse.hendelseId).toMatch(uuidMønster);

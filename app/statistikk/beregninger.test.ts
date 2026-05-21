@@ -28,7 +28,6 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
     blokkert: null,
     ytelser: [
       {
-        id: "ytelse-1",
         type: "Dagpenger",
         periodeFra: "2025-01-01",
         periodeTil: "2025-01-31",
@@ -40,6 +39,7 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
     opprettet: "2025-01-01T00:00:00Z",
     oppdatert: null,
     oppgaver: [],
+    kobledeSaker: [],
     ...overstyringer,
   };
 }

@@ -185,7 +185,6 @@ export function normaliserLegacyKontrollsak(sak: LegacyKontrollsak): Kontrollsak
     ytelser: legacyYtelser.map((ytelse, indeks) => {
       const typed = ytelse as Record<string, unknown>;
       return {
-        id: crypto.randomUUID(),
         type: String(typed.type ?? "Ukjent ytelse"),
         periodeFra: String(typed.periodeFra ?? "1970-01-01"),
         periodeTil: String(typed.periodeTil ?? typed.periodeFra ?? "1970-01-01"),

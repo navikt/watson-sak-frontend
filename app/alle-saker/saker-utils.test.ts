@@ -29,6 +29,7 @@ function lagSak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakRespon
     opprettet: "2026-02-03T10:00:00Z",
     oppdatert: null,
     oppgaver: [],
+    kobledeSaker: [],
     ...overrides,
   };
 }

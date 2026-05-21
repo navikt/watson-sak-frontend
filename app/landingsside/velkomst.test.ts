@@ -23,6 +23,7 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
     opprettet: "2026-03-01T00:00:00Z",
     oppdatert: null,
     oppgaver: [],
+    kobledeSaker: [],
     ...overstyringer,
   };
 }

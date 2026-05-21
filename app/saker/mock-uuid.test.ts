@@ -42,9 +42,6 @@ describe("normaliserLegacyKontrollsak", () => {
     expect(sak.personNavn).toBe("Ola Nordmann");
     expect(sak.saksbehandlere.eier).toBeNull();
     expect(sak.ytelser).toHaveLength(1);
-    expect(sak.ytelser[0].id).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
-    );
     expect(sak.ytelser[0].type).toBe("Dagpenger");
     expect(sak.ytelser[0].periodeFra).toBe("2026-01-01");
     expect(sak.ytelser[0].periodeTil).toBe("2026-01-31");
@@ -105,9 +102,6 @@ describe("normaliserLegacyKontrollsak", () => {
       navn: "Ukjent",
       enhet: null,
     });
-    expect(sak.ytelser[0]?.id).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
-    );
     expect(sak.ytelser[0]?.belop).toBeNull();
   });
 

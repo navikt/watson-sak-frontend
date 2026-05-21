@@ -90,6 +90,7 @@ describe("opprettKontrollsak", () => {
             belop: 300000,
           },
         ],
+        merking: [],
       }),
     });
   });
