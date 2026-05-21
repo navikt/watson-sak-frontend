@@ -49,7 +49,6 @@ export function byggOpprettKontrollsakPayload({
         periodeFra: rad.fraDato ?? "",
         periodeTil: rad.tilDato ?? "",
         belop: rad.beløp,
-        endeligBelop: rad.endeligBeløp,
       })),
   };
 }

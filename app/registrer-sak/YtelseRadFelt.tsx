@@ -57,6 +57,7 @@ type YtelseRadFeltProps = {
   defaults: YtelseRadVerdier;
   feil: Feil | undefined;
   size?: "medium" | "small";
+  visEndeligBeløp?: boolean;
   endeligBeløpReadOnly?: boolean;
 };
 
@@ -68,6 +69,7 @@ export function YtelseRadFelt({
   defaults,
   feil,
   size = "medium",
+  visEndeligBeløp = true,
   endeligBeløpReadOnly = false,
 }: YtelseRadFeltProps) {
   const [valgtYtelse, setValgtYtelse] = useState<string>(defaults.type ?? "");
@@ -143,18 +145,20 @@ export function YtelseRadFelt({
         error={beløpFeil}
       />
 
-      <TextField
-        id={ankerIdForFelt(`ytelser.${indeks}.endeligBeløp`)}
-        name={endeligBeløpFeltnavn}
-        label="Endelig beløp"
-        size={size}
-        inputMode="numeric"
-        htmlSize={12}
-        autoComplete="off"
-        defaultValue={defaults.endeligBeløp ?? ""}
-        error={endeligBeløpFeil}
-        readOnly={endeligBeløpReadOnly}
-      />
+      {visEndeligBeløp && (
+        <TextField
+          id={ankerIdForFelt(`ytelser.${indeks}.endeligBeløp`)}
+          name={endeligBeløpFeltnavn}
+          label="Endelig beløp"
+          size={size}
+          inputMode="numeric"
+          htmlSize={12}
+          autoComplete="off"
+          defaultValue={defaults.endeligBeløp ?? ""}
+          error={endeligBeløpFeil}
+          readOnly={endeligBeløpReadOnly}
+        />
+      )}
 
       <Button
         type="button"
