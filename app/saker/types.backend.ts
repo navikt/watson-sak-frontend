@@ -88,6 +88,7 @@ export const kontrollsakResponseSchema = z
       .transform((v) => (Array.isArray(v) ? (v[0] ?? null) : v))
       .nullable(),
     oppgaver: z.array(oppgaveKortSchema).default([]),
+    kobledeSaker: z.array(z.number()).default([]),
     opprettet: z.string(),
     oppdatert: z.string().nullable(),
   })

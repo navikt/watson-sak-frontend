@@ -252,12 +252,13 @@ export async function kobleSak(
   token: string,
   sakId: string,
   kobletSakId: number,
+  aksjon: "KOBLE" | "FJERN",
   beskrivelse?: string,
 ): Promise<void> {
   const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/kobling`), {
     method: "POST",
     headers: authHeaders(token),
-    body: JSON.stringify({ kobletSakId, beskrivelse }),
+    body: JSON.stringify({ kobletSakId, aksjon, beskrivelse }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke koble sak");
 }

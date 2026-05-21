@@ -327,7 +327,7 @@ async function backendAction(
           feil: { skjema: ["Ugyldig sak-ID"] },
         } satisfies ActionResult;
       }
-      await backendApi.kobleSak(token, sakId, kobletSakId);
+      await backendApi.kobleSak(token, sakId, kobletSakId, "KOBLE");
       return { ok: true };
     }
     case "legg_til_historikk": {
