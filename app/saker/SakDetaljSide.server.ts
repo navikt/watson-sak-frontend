@@ -589,14 +589,11 @@ async function mockAction(
       }
 
       const validert = resultat.data;
-      const eksisterendeYtelser = sak.ytelser;
-
       sak.kategori = validert.kategori;
       sak.misbruktype = [...validert.misbruktype];
       sak.merking = validert.merking[0] ?? null;
       sak.kilde = validert.kilde;
-      sak.ytelser = validert.ytelser.map((ytelse, indeks) => ({
-        id: eksisterendeYtelser[indeks]?.id ?? crypto.randomUUID(),
+      sak.ytelser = validert.ytelser.map((ytelse) => ({
         type: ytelse.type ?? "",
         periodeFra: ytelse.fraDato ?? "",
         periodeTil: ytelse.tilDato ?? "",

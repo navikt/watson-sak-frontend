@@ -44,7 +44,6 @@ const saksbehandlereSchema = z
   }));
 
 const kontrollsakYtelseSchema = z.object({
-  id: z.string().uuid(),
   type: z.string(),
   periodeFra: z.string(),
   periodeTil: z.string(),

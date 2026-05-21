@@ -647,8 +647,8 @@ export default function SakDetaljSide() {
                                 </Table.Row>
                               </Table.Header>
                               <Table.Body>
-                                {sak.ytelser.map((ytelse) => (
-                                  <Table.Row key={ytelse.id}>
+                                {sak.ytelser.map((ytelse, indeks) => (
+                                  <Table.Row key={`${ytelse.type}-${ytelse.periodeFra}-${indeks}`}>
                                     <Table.DataCell>
                                       <Tag variant="outline" data-color="brand-beige" size="small">
                                         {ytelse.type}
