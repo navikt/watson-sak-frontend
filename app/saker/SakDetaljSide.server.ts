@@ -298,8 +298,7 @@ async function backendAction(
 
       const validert = resultat.data;
       const eksisterendeSak = await backendApi.hentKontrollsak(token, sakId);
-      const kanRedigereEndeligBelop =
-        eksisterendeSak.status === "STRAFFERETTSLIG_VURDERING";
+      const kanRedigereEndeligBelop = eksisterendeSak.status === "STRAFFERETTSLIG_VURDERING";
 
       await backendApi.redigerKontrollsak(token, sakId, {
         kategori: validert.kategori,
