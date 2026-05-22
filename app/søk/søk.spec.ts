@@ -20,12 +20,12 @@ test.describe("Søk", () => {
     });
 
     test("kan søke på saksnummer og viser resultater", async ({ page }) => {
-      await page.getByLabel("Søk etter saker").fill("101");
+      await page.getByLabel("Søk etter saker").fill("1028");
       await page.getByLabel("Søk etter saker").press("Enter");
 
-      await expect(page.getByText(/1 treff for "101"/)).toBeVisible();
+      await expect(page.getByText(/1 treff for "1028"/)).toBeVisible();
       await expect(page.getByRole("article")).toHaveCount(1);
-      await expect(page.getByRole("heading", { name: "Sak 101" })).toHaveCount(1);
+      await expect(page.getByRole("heading", { name: "Sak 1028" })).toHaveCount(1);
     });
 
     test("kan søke på tags og viser resultater", async ({ page }) => {
@@ -53,11 +53,11 @@ test.describe("Søk", () => {
     });
 
     test("kan navigere til sakdetalj fra søkeresultat", async ({ page }) => {
-      await page.getByLabel("Søk etter saker").fill("101");
+      await page.getByLabel("Søk etter saker").fill("1028");
       await page.getByLabel("Søk etter saker").press("Enter");
 
-      await page.getByRole("article").first().getByRole("link", { name: "Sak 101" }).click();
-      await expect(page).toHaveURL(/\/saker\/101/);
+      await page.getByRole("article").first().getByRole("link", { name: "Sak 1028" }).click();
+      await expect(page).toHaveURL(/\/saker\/1028/);
     });
 
     test("er UU-compliant", async ({ page }) => {
@@ -123,11 +123,11 @@ test.describe("Søk", () => {
       await page.goto("/", { waitUntil: "networkidle" });
 
       const headerSøk = page.getByRole("search", { name: "Hurtigsøk" }).getByRole("searchbox");
-      await headerSøk.fill("101");
+      await headerSøk.fill("1028");
       await headerSøk.press("Enter");
 
       await expect(page).toHaveURL("/søk");
-      await expect(page.getByText(/treff for "101"/)).toBeVisible();
+      await expect(page.getByText(/treff for "1028"/)).toBeVisible();
     });
 
     test("Cmd+K fokuserer søkefeltet i header", async ({ page }) => {
