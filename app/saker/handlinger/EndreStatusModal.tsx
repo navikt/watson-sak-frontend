@@ -34,7 +34,10 @@ const valgbareStatuser: KontrollsakStatus[] = [
 const endreStatusSkjema = z
   .object({
     status: z.string({ error: "Velg en status" }).min(1, "Velg en status"),
-    henleggelsesarsak: henleggelsesarsakSchema.optional(),
+    henleggelsesarsak: z.preprocess(
+      (val) => (val === "" ? undefined : val),
+      henleggelsesarsakSchema.optional(),
+    ),
     beskrivelse: z.string().optional(),
   })
   .refine((data) => data.status !== "HENLAGT" || data.henleggelsesarsak !== undefined, {
@@ -95,7 +98,7 @@ export function EndreStatusModal({ sakId, nåværendeStatus, åpen, onClose }: E
                 key={fields.status.key}
                 name={fields.status.name}
                 id={fields.status.id}
-                defaultValue={fields.status.initialValue ?? ""}
+                value={statusVerdi}
                 label="Ny status"
                 onChange={(event) => {
                   setStatusVerdi(event.target.value);

@@ -13,7 +13,11 @@ import * as backendApi from "~/saker/api.server";
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
 import { mockSaksbehandlere, mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import { mockSeksjoner } from "~/saker/mock-seksjoner.server";
-import type { Blokkeringsarsak, KontrollsakSaksbehandler } from "~/saker/types.backend";
+import type {
+  Blokkeringsarsak,
+  Henleggelsesarsak,
+  KontrollsakSaksbehandler,
+} from "~/saker/types.backend";
 import { henleggelsesarsakSchema } from "~/saker/types.backend";
 import { lagIsoTidspunktFraNorskDatoTid } from "~/utils/date-utils";
 import { hentTekstfelt, hentValgfriTekst } from "~/utils/form-data";
@@ -207,8 +211,14 @@ async function backendAction(
       }
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
       const råHenleggelsesarsak = hentValgfriTekst(formData, "henleggelsesarsak");
-      const henleggelsesarsak =
-        nyStatus === "HENLAGT" ? henleggelsesarsakSchema.parse(råHenleggelsesarsak) : undefined;
+      let henleggelsesarsak: Henleggelsesarsak | undefined;
+      if (nyStatus === "HENLAGT") {
+        const parsed = henleggelsesarsakSchema.safeParse(råHenleggelsesarsak);
+        if (!parsed.success) {
+          throw data("Ugyldig henleggelsesårsak", { status: 400 });
+        }
+        henleggelsesarsak = parsed.data;
+      }
       const sak = await backendApi.endreStatus(
         token,
         sakId,
@@ -455,8 +465,15 @@ async function mockAction(
       const forrigeBlokkering = sak.blokkert;
 
       sak.status = nyStatus;
-      sak.henleggelsesarsak =
-        nyStatus === "HENLAGT" ? henleggelsesarsakSchema.parse(råHenleggelsesarsak) : null;
+      if (nyStatus === "HENLAGT") {
+        const parsed = henleggelsesarsakSchema.safeParse(råHenleggelsesarsak);
+        if (!parsed.success) {
+          throw data("Ugyldig henleggelsesårsak", { status: 400 });
+        }
+        sak.henleggelsesarsak = parsed.data;
+      } else {
+        sak.henleggelsesarsak = null;
+      }
       if (nyStatus === "AVSLUTTET") {
         sak.blokkert = null;
       }

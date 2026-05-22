@@ -8,6 +8,7 @@ import type {
   KontrollsakStatus,
   KontrollsakYtelse,
 } from "./types.backend";
+import { henleggelsesarsakSchema } from "./types.backend";
 import {
   kontrollsakKategoriEtiketter,
   kontrollsakKildeEtiketter,
@@ -69,11 +70,7 @@ export function formaterHenleggelsesarsak(arsak: Henleggelsesarsak): string {
 }
 
 export const henleggelsesarsakAlternativer: Henleggelsesarsak[] = [
-  "IKKE_KAPASITET",
-  "IKKE_TILSTREKKELIG_BEVISGRUNNLAG",
-  "IKKE_TILSTREKKELIG_SKYLD",
-  "INGEN_UTREDNING",
-  "FORELDET",
+  ...henleggelsesarsakSchema.options,
 ];
 
 export function formaterKategori(kategori: KontrollsakKategori | null | undefined): string | null {
