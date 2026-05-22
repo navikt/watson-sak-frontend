@@ -17,7 +17,7 @@ import {
   VStack,
 } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   useBeforeUnload,
   useBlocker,
@@ -228,7 +228,12 @@ export default function SakDetaljSide() {
     ? `Sak ${saksreferanse} – ${navn}${alder !== null ? ` (${alder})` : ""}`
     : `Sak ${saksreferanse}`;
 
+  const sisteBehandledeData = useRef<typeof fetcher.data>(undefined);
+
   useEffect(() => {
+    if (fetcher.data === sisteBehandledeData.current) return;
+    sisteBehandledeData.current = fetcher.data;
+
     if (fetcher.data?.ok) {
       if (fetcher.data.sak) {
         setSak(fetcher.data.sak);
