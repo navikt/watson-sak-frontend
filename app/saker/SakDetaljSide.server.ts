@@ -777,5 +777,7 @@ async function mockAction(
     }
   }
 
+  sak.oppdatert = new Date().toISOString();
+
   return { ok: true } satisfies ActionResult;
 }
