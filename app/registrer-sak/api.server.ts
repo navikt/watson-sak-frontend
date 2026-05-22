@@ -27,7 +27,7 @@ export type OpprettKontrollsakRequest = {
   kilde: string;
   misbruktype: string[];
   prioritet: string;
-  merking?: string;
+  merking: string[];
   ytelser: Array<{
     type: string;
     periodeFra: string;

@@ -8,27 +8,29 @@ type HentKontrollsakerArgs = {
   token: string;
   page: number;
   size: number;
+  ansvarligNavIdent?: string;
 };
 
 export async function hentKontrollsaker({
   token,
   page,
   size,
+  ansvarligNavIdent,
 }: HentKontrollsakerArgs): Promise<KontrollsakPageResponse> {
   if (!BACKEND_API_URL) {
     throw new Error("Mangler backend-url for henting av kontrollsaker.");
   }
 
-  const response = await fetch(
-    `${BACKEND_API_URL}/api/v1/kontrollsaker?page=${page}&size=${size}`,
-    {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-      },
+  const params = new URLSearchParams({ page: String(page), size: String(size) });
+  if (ansvarligNavIdent) params.set("ansvarligNavIdent", ansvarligNavIdent);
+
+  const response = await fetch(`${BACKEND_API_URL}/api/v1/kontrollsaker?${params}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
     },
-  );
+  });
 
   if (!response.ok) {
     logger.error("Kunne ikke hente kontrollsaker fra Watson Admin API", {
@@ -64,14 +66,14 @@ export async function tildelKontrollsak({
     throw new Error("Mangler backend-url for tildeling av kontrollsak.");
   }
 
-  const response = await fetch(`${BACKEND_API_URL}/api/v1/kontrollsaker/${sakId}/tildel`, {
+  const response = await fetch(`${BACKEND_API_URL}/api/v1/kontrollsaker/${sakId}/saksbehandler`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
       Accept: "application/json",
     },
-    body: JSON.stringify({ navIdent: saksbehandler }),
+    body: JSON.stringify({ aksjon: "TILDEL", navIdent: saksbehandler }),
   });
 
   if (!response.ok) {

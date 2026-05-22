@@ -25,7 +25,6 @@ function lagKontrollsak(
     blokkert: null,
     ytelser: [
       {
-        id: crypto.randomUUID(),
         type: "Foreldrepenger",
         periodeFra: "2022-01-01",
         periodeTil: "2025-01-01",
@@ -33,10 +32,11 @@ function lagKontrollsak(
         endeligBelop: null,
       },
     ],
-    merking: null,
+    merking: [],
     opprettet: "2026-02-01T00:00:00Z",
     oppdatert: null,
     oppgaver: [],
+    kobledeSaker: [],
     ...overrides,
   };
 }

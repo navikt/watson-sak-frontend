@@ -251,14 +251,13 @@ async function backendAction(
     }
     case "overfor_ansvarlig": {
       const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
-      const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
-      await backendApi.overforAnsvarlig(token, sakId, navIdent, beskrivelse ?? undefined);
-      return { ok: true };
+      const sak = await backendApi.overforAnsvarlig(token, sakId, navIdent);
+      return { ok: true, sak };
     }
     case "fjern_delt_tilgang": {
       const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
-      await backendApi.fjernDeltTilgang(token, sakId, navIdent);
-      return { ok: true };
+      const sak = await backendApi.fjernDeltTilgang(token, sakId, navIdent);
+      return { ok: true, sak };
     }
     case "videresend_seksjon":
     case "send_til_annen_enhet": {
@@ -302,7 +301,7 @@ async function backendAction(
         kategori: validert.kategori,
         kilde: validert.kilde,
         misbruktype: validert.misbruktype,
-        merking: validert.merking[0] ?? null,
+        merking: validert.merking,
         ytelser: validert.ytelser.map((y) => ({
           type: y.type ?? "",
           periodeFra: y.fraDato ?? "",
@@ -328,7 +327,7 @@ async function backendAction(
           feil: { skjema: ["Ugyldig sak-ID"] },
         } satisfies ActionResult;
       }
-      await backendApi.kobleSak(token, sakId, kobletSakId);
+      await backendApi.kobleSak(token, sakId, kobletSakId, "KOBLE");
       return { ok: true };
     }
     case "legg_til_historikk": {
@@ -590,14 +589,11 @@ async function mockAction(
       }
 
       const validert = resultat.data;
-      const eksisterendeYtelser = sak.ytelser;
-
       sak.kategori = validert.kategori;
       sak.misbruktype = [...validert.misbruktype];
-      sak.merking = validert.merking[0] ?? null;
+      sak.merking = [...validert.merking];
       sak.kilde = validert.kilde;
-      sak.ytelser = validert.ytelser.map((ytelse, indeks) => ({
-        id: eksisterendeYtelser[indeks]?.id ?? crypto.randomUUID(),
+      sak.ytelser = validert.ytelser.map((ytelse) => ({
         type: ytelse.type ?? "",
         periodeFra: ytelse.fraDato ?? "",
         periodeTil: ytelse.tilDato ?? "",

@@ -44,7 +44,6 @@ const saksbehandlereSchema = z
   }));
 
 const kontrollsakYtelseSchema = z.object({
-  id: z.string().uuid(),
   type: z.string(),
   periodeFra: z.string(),
   periodeTil: z.string(),
@@ -84,8 +83,9 @@ export const kontrollsakResponseSchema = z
     misbruktype: z.array(kontrollsakMisbrukstypeSchema),
     prioritet: kontrollsakPrioritetSchema,
     ytelser: z.array(kontrollsakYtelseSchema),
-    merking: z.string().nullable(),
+    merking: z.array(z.string()).default([]),
     oppgaver: z.array(oppgaveKortSchema).default([]),
+    kobledeSaker: z.array(z.number()),
     opprettet: z.string(),
     oppdatert: z.string().nullable(),
   })

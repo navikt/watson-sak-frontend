@@ -181,7 +181,7 @@ describe("OpprettSakSide action", () => {
       expect.objectContaining({
         payload: expect.objectContaining({
           misbruktype: ["INNENFOR_EOS", "UTENFOR_EOS"],
-          merking: "PRIORITERT",
+          merking: ["PRIORITERT", "SENSITIV"],
         }),
       }),
     );
@@ -206,7 +206,7 @@ describe("OpprettSakSide action", () => {
     expect(opprettKontrollsak).toHaveBeenCalledWith(
       expect.objectContaining({
         payload: expect.objectContaining({
-          merking: "Egen merking",
+          merking: ["Egen merking"],
         }),
       }),
     );
@@ -326,7 +326,7 @@ describe("byggOpprettKontrollsakPayload", () => {
       kilde: "NAV_KONTROLL",
       prioritet: "NORMAL",
       misbruktype: ["SKJULT_SAMLIV"],
-      merking: "PRIORITERT",
+      merking: ["PRIORITERT"],
       ytelser: [
         {
           type: "Dagpenger",

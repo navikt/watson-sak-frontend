@@ -75,7 +75,8 @@ export function filtrerSaker(
       !getMisbrukstyper(sak).some((m) => filter.misbrukstype.includes(m))
     )
       return false;
-    if (filter.merking.length > 0 && !filter.merking.includes(sak.merking ?? "")) return false;
+    if (filter.merking.length > 0 && !sak.merking.some((m) => filter.merking.includes(m)))
+      return false;
     return true;
   });
 }

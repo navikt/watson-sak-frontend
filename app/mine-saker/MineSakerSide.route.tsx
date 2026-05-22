@@ -1,11 +1,14 @@
 import { Page } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
 import { useLoaderData } from "react-router";
+import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
+import { hentKontrollsaker } from "~/fordeling/api.server";
 import { RouteConfig } from "~/routeConfig";
 import { hentMineSaker } from "~/saker/mock-alle-saker.server";
 import { formaterStatus } from "~/saker/visning";
+import type { KontrollsakResponse } from "~/saker/types.backend";
 import type { Route } from "./+types/MineSakerSide.route";
 import { MineSakerInnhold } from "./MineSakerInnhold";
 import {
@@ -22,10 +25,6 @@ import {
 export async function loader({ request }: Route.LoaderArgs) {
   const innloggetBruker = await hentInnloggetBruker({ request });
 
-  if (!skalBrukeMockdata) {
-    throw new Response("Mine saker er ikke tilgjengelig uten mockdata", { status: 501 });
-  }
-
   const url = new URL(request.url);
   const harFilterParams = url.searchParams.has("status") || url.searchParams.has("ventestatus");
 
@@ -37,7 +36,21 @@ export async function loader({ request }: Route.LoaderArgs) {
     ? parseVentestatuser(url.searchParams.getAll("ventestatus"))
     : DEFAULT_VENTESTATUSER;
 
-  const alleSaker = hentMineSaker(request, innloggetBruker.navIdent);
+  let alleSaker: KontrollsakResponse[];
+  if (!skalBrukeMockdata) {
+    const token = await getBackendOboToken(request);
+    // TODO: Implementer fullstendig backend-paginering. Nåværende løsning henter maks 500 saker.
+    const resultat = await hentKontrollsaker({
+      token,
+      page: 1,
+      size: 500,
+      ansvarligNavIdent: innloggetBruker.navIdent,
+    });
+    alleSaker = resultat.items;
+  } else {
+    alleSaker = hentMineSaker(request, innloggetBruker.navIdent);
+  }
+
   const filtrerteSaker = filtrerMineSaker(alleSaker, statusFilter, ventestatusFilter);
 
   return {

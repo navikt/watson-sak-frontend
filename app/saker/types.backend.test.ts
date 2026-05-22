@@ -20,7 +20,8 @@ const basisSak = {
   misbruktype: [],
   prioritet: "NORMAL",
   ytelser: [],
-  merking: null,
+  merking: [],
+  kobledeSaker: [],
   opprettet: "2026-01-01T00:00:00Z",
   oppdatert: null,
 } as const;
