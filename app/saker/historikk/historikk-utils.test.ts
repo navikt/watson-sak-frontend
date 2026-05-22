@@ -8,7 +8,7 @@ function lagHendelse(overrides: Partial<SakHendelse>): SakHendelse {
     tidspunkt: "2025-01-01T12:00:00Z",
     hendelsesType: "STATUS_ENDRET",
     sakId: 1,
-    status: "UNDER_ARBEID",
+    status: "UTREDES",
     ytelseTyper: [],
     ...overrides,
   };
