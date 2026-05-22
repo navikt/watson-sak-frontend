@@ -15,7 +15,7 @@ function lagHendelse(overrides: Partial<SakHendelse>): SakHendelse {
 }
 
 describe("hendelseBeskrivelse", () => {
-  it("viser henleggelsesårsak for SAK_HENLAGT-hendelse", () => {
+  it("viser status for SAK_HENLAGT uten årsak i beskrivelsen", () => {
     const hendelse = lagHendelse({
       hendelsesType: "SAK_HENLAGT",
       status: "HENLAGT",
@@ -24,8 +24,8 @@ describe("hendelseBeskrivelse", () => {
 
     const resultat = hendelseBeskrivelse(hendelse);
 
-    expect(resultat).toContain("Årsak: Ikke kapasitet");
     expect(resultat).toContain("Status: Henlagt");
+    expect(resultat).not.toContain("Årsak:");
   });
 
   it("viser SAK_HENLAGT uten årsak når henleggelsesarsak mangler", () => {
@@ -41,7 +41,7 @@ describe("hendelseBeskrivelse", () => {
     expect(resultat).toContain("Status: Henlagt");
   });
 
-  it("viser beskrivelse sammen med årsak for SAK_HENLAGT", () => {
+  it("viser beskrivelse sammen med status for SAK_HENLAGT", () => {
     const hendelse = lagHendelse({
       hendelsesType: "SAK_HENLAGT",
       status: "HENLAGT",
@@ -51,8 +51,8 @@ describe("hendelseBeskrivelse", () => {
 
     const resultat = hendelseBeskrivelse(hendelse);
 
-    expect(resultat).toContain("Årsak: Foreldet");
     expect(resultat).toContain("Saken er for gammel");
     expect(resultat).toContain("Status: Henlagt");
+    expect(resultat).not.toContain("Årsak:");
   });
 });

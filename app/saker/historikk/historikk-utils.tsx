@@ -114,17 +114,11 @@ export function hendelseBeskrivelse(hendelse: SakHendelse): string | null {
   }
 
   if (hendelse.hendelsesType === "SAK_HENLAGT") {
-    const deler: string[] = [];
-
-    if (hendelse.henleggelsesarsak) {
-      deler.push(`Årsak: ${formaterHenleggelsesarsak(hendelse.henleggelsesarsak)}`);
-    }
+    const deler: string[] = [`Status: ${formaterStatus(hendelse.status)}`];
 
     if (hendelse.beskrivelse) {
       deler.push(hendelse.beskrivelse);
     }
-
-    deler.push(`Status: ${formaterStatus(hendelse.status)}`);
 
     return deler.join(" – ");
   }
@@ -249,6 +243,19 @@ export function HendelseInnhold({
           {hendelse.tittel}
         </BodyShort>
         {hendelse.beskrivelse && <BodyShort size="small">{hendelse.beskrivelse}</BodyShort>}
+      </VStack>
+    );
+  }
+
+  if (hendelse.hendelsesType === "SAK_HENLAGT") {
+    return (
+      <VStack gap="space-1">
+        {beskrivelse && <BodyShort size="small">{beskrivelse}</BodyShort>}
+        {hendelse.henleggelsesarsak && (
+          <BodyShort size="small">
+            Årsak: {formaterHenleggelsesarsak(hendelse.henleggelsesarsak)}
+          </BodyShort>
+        )}
       </VStack>
     );
   }
