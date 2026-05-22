@@ -13,6 +13,7 @@ import { Saksliste } from "~/saker/saksliste/Saksliste";
 import { getKategoriText, getMisbrukstyper, getSaksenhet } from "~/saker/selectors";
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
 import { paginerElementer } from "~/utils/paginering";
+import type { KontrollsakResponse } from "~/saker/types.backend";
 import type { Route } from "./+types/AlleSakerSide.route";
 import { mockNokkeltall } from "./mock-data.server";
 import {
@@ -51,7 +52,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   );
   const filterMerking = normaliserFilterVerdier(parseMultiValueParam(url.searchParams, "merking"));
 
-  let alleSaker;
+  let alleSaker: KontrollsakResponse[];
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
     const resultat = await hentKontrollsaker({ token, page: 1, size: 500 });

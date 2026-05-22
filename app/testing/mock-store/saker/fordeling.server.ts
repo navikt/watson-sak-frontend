@@ -555,6 +555,7 @@ export function leggTilMockSakIFordeling(
     })),
     merking: nySak.merking ?? [],
     oppgaver: [],
+    kobledeSaker: [],
     opprettet,
     oppdatert: null,
   });

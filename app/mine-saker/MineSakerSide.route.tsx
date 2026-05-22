@@ -8,6 +8,7 @@ import { hentKontrollsaker } from "~/fordeling/api.server";
 import { RouteConfig } from "~/routeConfig";
 import { hentMineSaker } from "~/saker/mock-alle-saker.server";
 import { formaterStatus } from "~/saker/visning";
+import type { KontrollsakResponse } from "~/saker/types.backend";
 import type { Route } from "./+types/MineSakerSide.route";
 import { MineSakerInnhold } from "./MineSakerInnhold";
 import {
@@ -35,7 +36,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     ? parseVentestatuser(url.searchParams.getAll("ventestatus"))
     : DEFAULT_VENTESTATUSER;
 
-  let alleSaker;
+  let alleSaker: KontrollsakResponse[];
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
     const resultat = await hentKontrollsaker({
