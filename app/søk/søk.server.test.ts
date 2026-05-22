@@ -33,8 +33,8 @@ describe("søkSaker", () => {
   });
 
   it("finner bare én backend-shapet sak på saksnummer etter migreringen", async () => {
-    const resultater = await søkSaker(testRequest, "101");
+    const resultater = await søkSaker(testRequest, "1028");
 
-    expect(resultater.map((sak) => sak.id)).toEqual([101]);
+    expect(resultater.map((sak) => sak.id)).toEqual([1028]);
   });
 });
