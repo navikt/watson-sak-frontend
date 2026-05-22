@@ -123,6 +123,7 @@ export const kontrollsakHendelseResponseSchema = z.object({
   ytelseTyper: z.array(z.string()).default([]),
   kilde: kontrollsakKildeSchema.nullable().optional(),
   blokkert: blokkeringsarsakSchema.nullable().optional(),
+  henleggelsesarsak: henleggelsesarsakSchema.nullable().optional(),
   beskrivelse: z.string().nullable().optional(),
   opprettetAvNavIdent: z.string().nullable().optional(),
 });

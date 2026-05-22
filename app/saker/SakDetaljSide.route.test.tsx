@@ -89,6 +89,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
 
     const historikk = hentHistorikk(testRequest, sak.id);
     expect(historikk[0]?.hendelsesType).toBe("SAK_HENLAGT");
+    expect(historikk[0]?.henleggelsesarsak).toBe("IKKE_KAPASITET");
   });
 
   it("endre_status med beskrivelse lagrer hendelse med beskrivelse", async () => {
