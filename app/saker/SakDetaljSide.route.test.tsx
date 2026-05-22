@@ -66,7 +66,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     expect(historikk[0]?.hendelsesType).toBe("POLITIANMELDT");
   });
 
-  it("endre_status til HENLAGT logger henleggelse", async () => {
+  it("endre_status til HENLAGT logger henleggelse med årsak", async () => {
     const saker = hentAlleSaker(testRequest);
     const sak = saker.find(
       (s: KontrollsakResponse) => s.status !== "AVSLUTTET" && s.blokkert === null,
@@ -80,10 +80,12 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     const resultat = await utforAction(sakId, {
       handling: "endre_status",
       status: "HENLAGT",
+      henleggelsesarsak: "IKKE_KAPASITET",
     });
 
     expect(resultat).toEqual({ ok: true });
     expect(sak.status).toBe("HENLAGT");
+    expect((sak as Record<string, unknown>).henleggelsesarsak).toBe("IKKE_KAPASITET");
 
     const historikk = hentHistorikk(testRequest, sak.id);
     expect(historikk[0]?.hendelsesType).toBe("SAK_HENLAGT");

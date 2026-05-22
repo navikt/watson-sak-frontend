@@ -24,6 +24,7 @@ function lagSak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakRespon
     misbruktype: ["SKJULT_SAMLIV"],
     prioritet: "NORMAL",
     blokkert: null,
+    henleggelsesarsak: null,
     ytelser: [],
     merking: [],
     opprettet: "2026-02-03T10:00:00Z",

@@ -1,7 +1,7 @@
 {
   "collection": "fullstack",
-  "version": "2026.05.19-124507-b57b838",
-  "source_sha": "b57b838",
+  "version": "2026.05.21-074240-3f5dac0",
+  "source_sha": "3f5dac0",
   "installed_at": "2026-04-13T13:00:26Z",
   "files": [
     {
@@ -30,7 +30,7 @@
     },
     {
       "path": ".github/agents/kafka.agent.md",
-      "hash": "fdf4869940190473"
+      "hash": "9660e586ca26c47a"
     },
     {
       "path": ".github/agents/kafka.metadata.json",
@@ -82,7 +82,7 @@
     },
     {
       "path": ".github/skills/nav-plan/",
-      "hash": "0849265460ea23e2"
+      "hash": "0a160744cf2b4e82"
     },
     {
       "path": ".github/skills/nav-deep-interview/",
@@ -94,11 +94,11 @@
     },
     {
       "path": ".github/skills/nav-troubleshoot/",
-      "hash": "ce043cf29ce427b1"
+      "hash": "e9900d58d91ee0ee"
     },
     {
       "path": ".github/instructions/kotlin-ktor.instructions.md",
-      "hash": "5d85d53d8f375ec2"
+      "hash": "495a1016fde29289"
     },
     {
       "path": ".github/instructions/kotlin-spring.instructions.md",
@@ -138,7 +138,7 @@
     },
     {
       "path": ".github/prompts/kafka-topic.prompt.md",
-      "hash": "4e3cb2fe36ecb2f4"
+      "hash": "d485c12c7b6d44d6"
     },
     {
       "path": ".github/prompts/nais-manifest.prompt.md",

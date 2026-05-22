@@ -161,6 +161,7 @@ export function normaliserLegacyKontrollsak(sak: LegacyKontrollsak): Kontrollsak
     },
     status: normalisertStatus,
     blokkert,
+    henleggelsesarsak: null,
     kategori: (legacyKategori in
     {
       BEHANDLER: true,

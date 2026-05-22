@@ -8,7 +8,11 @@ import { z } from "zod";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import type { KontrollsakStatus } from "~/saker/types.backend";
-import { formaterStatus } from "~/saker/visning";
+import {
+  formaterHenleggelsesarsak,
+  formaterStatus,
+  henleggelsesarsakAlternativer,
+} from "~/saker/visning";
 
 interface EndreStatusModalProps {
   sakId: string;
@@ -26,10 +30,20 @@ const valgbareStatuser: KontrollsakStatus[] = [
   "AVSLUTTET",
 ];
 
-const endreStatusSkjema = z.object({
-  status: z.string({ error: "Velg en status" }).min(1, "Velg en status"),
-  beskrivelse: z.string().optional(),
-});
+const endreStatusSkjema = z
+  .object({
+    status: z.string({ error: "Velg en status" }).min(1, "Velg en status"),
+    henleggelsesarsak: z.string().optional(),
+    beskrivelse: z.string().optional(),
+  })
+  .refine(
+    (data) =>
+      data.status !== "HENLAGT" || (data.henleggelsesarsak && data.henleggelsesarsak.length > 0),
+    {
+      message: "Velg en henleggelsesårsak",
+      path: ["henleggelsesarsak"],
+    },
+  );
 
 export function EndreStatusModal({ sakId, nåværendeStatus, åpen, onClose }: EndreStatusModalProps) {
   const fetcher = useFetcher();
@@ -53,16 +67,19 @@ export function EndreStatusModal({ sakId, nåværendeStatus, åpen, onClose }: E
       });
       form.reset();
       setStatusVerdi("");
+      setHenleggelsesarsakVerdi("");
       onClose();
     },
   });
 
   const [statusVerdi, setStatusVerdi] = useState("");
+  const [henleggelsesarsakVerdi, setHenleggelsesarsakVerdi] = useState("");
 
   function handleLukk() {
     if (erSubmitting) return;
     form.reset();
     setStatusVerdi("");
+    setHenleggelsesarsakVerdi("");
     onClose();
   }
 
@@ -83,7 +100,12 @@ export function EndreStatusModal({ sakId, nåværendeStatus, åpen, onClose }: E
                 id={fields.status.id}
                 defaultValue={fields.status.initialValue ?? ""}
                 label="Ny status"
-                onChange={(event) => setStatusVerdi(event.target.value)}
+                onChange={(event) => {
+                  setStatusVerdi(event.target.value);
+                  if (event.target.value !== "HENLAGT") {
+                    setHenleggelsesarsakVerdi("");
+                  }
+                }}
                 error={fields.status.errors?.[0]}
               >
                 <option value="">Velg status</option>
@@ -93,6 +115,24 @@ export function EndreStatusModal({ sakId, nåværendeStatus, åpen, onClose }: E
                   </option>
                 ))}
               </Select>
+              {statusVerdi === "HENLAGT" ? (
+                <Select
+                  key={fields.henleggelsesarsak.key}
+                  name={fields.henleggelsesarsak.name}
+                  id={fields.henleggelsesarsak.id}
+                  label="Henleggelsesårsak"
+                  value={henleggelsesarsakVerdi}
+                  onChange={(event) => setHenleggelsesarsakVerdi(event.target.value)}
+                  error={fields.henleggelsesarsak.errors?.[0]}
+                >
+                  <option value="">Velg årsak</option>
+                  {henleggelsesarsakAlternativer.map((arsak) => (
+                    <option key={arsak} value={arsak}>
+                      {formaterHenleggelsesarsak(arsak)}
+                    </option>
+                  ))}
+                </Select>
+              ) : null}
               {statusVerdi === "AVSLUTTET" ? (
                 <InfoCard size="small" data-color="warning">
                   <InfoCard.Message icon={<ExclamationmarkTriangleIcon aria-hidden />}>

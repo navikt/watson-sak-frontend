@@ -205,7 +205,14 @@ async function backendAction(
         throw data("Ugyldig status", { status: 400 });
       }
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
-      const sak = await backendApi.endreStatus(token, sakId, nyStatus, beskrivelse ?? undefined);
+      const henleggelsesarsak = hentValgfriTekst(formData, "henleggelsesarsak");
+      const sak = await backendApi.endreStatus(
+        token,
+        sakId,
+        nyStatus,
+        beskrivelse ?? undefined,
+        henleggelsesarsak ?? undefined,
+      );
       return { ok: true, sak };
     }
     case "endre_blokkering": {
@@ -244,10 +251,6 @@ async function backendAction(
     case "opprett_journalpost":
     case "opprett_oppgave": {
       throw data("Handlingen er ikke støttet ennå", { status: 501 });
-    }
-    case "henlegg": {
-      const sak = await backendApi.endreStatus(token, sakId, "HENLAGT");
-      return { ok: true, sak };
     }
     case "overfor_ansvarlig": {
       const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
@@ -445,9 +448,12 @@ async function mockAction(
       }
 
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
+      const henleggelsesarsak = hentValgfriTekst(formData, "henleggelsesarsak");
       const forrigeBlokkering = sak.blokkert;
 
       sak.status = nyStatus;
+      (sak as Record<string, unknown>).henleggelsesarsak =
+        nyStatus === "HENLAGT" ? (henleggelsesarsak ?? null) : null;
       if (nyStatus === "AVSLUTTET") {
         sak.blokkert = null;
       }
@@ -542,11 +548,6 @@ async function mockAction(
       };
       sak.saksbehandlere.eier = null;
       leggTilHendelse(request, sak, "MOTTAKSENHET_ENDRET");
-      break;
-    }
-    case "henlegg": {
-      sak.status = "AVSLUTTET";
-      leggTilHendelse(request, sak, "SAK_HENLAGT");
       break;
     }
     case "rediger_saksinformasjon": {

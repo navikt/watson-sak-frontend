@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   blokkeringsarsakSchema,
+  henleggelsesarsakSchema,
   kontrollsakResponseSchema,
   kontrollsakHendelseResponseSchema,
 } from "./types.backend";
@@ -92,6 +93,47 @@ describe("blokkeringsarsakSchema", () => {
 
   it("avviser ukjent årsak", () => {
     expect(blokkeringsarsakSchema.safeParse("UKJENT").success).toBe(false);
+  });
+});
+
+describe("henleggelsesarsakSchema", () => {
+  it("godtar alle gyldige henleggelsesårsaker", () => {
+    const gyldige = [
+      "IKKE_KAPASITET",
+      "IKKE_TILSTREKKELIG_BEVISGRUNNLAG",
+      "IKKE_TILSTREKKELIG_SKYLD",
+      "INGEN_UTREDNING",
+      "FORELDET",
+    ];
+    for (const arsak of gyldige) {
+      expect(henleggelsesarsakSchema.safeParse(arsak).success, `${arsak} skal være gyldig`).toBe(
+        true,
+      );
+    }
+  });
+
+  it("avviser ukjent årsak", () => {
+    expect(henleggelsesarsakSchema.safeParse("UKJENT").success).toBe(false);
+  });
+
+  it("parser sak med henleggelsesarsak", () => {
+    const resultat = kontrollsakResponseSchema.safeParse({
+      ...basisSak,
+      status: "HENLAGT",
+      henleggelsesarsak: "IKKE_KAPASITET",
+    });
+    expect(resultat.success).toBe(true);
+    if (resultat.success) {
+      expect(resultat.data.henleggelsesarsak).toBe("IKKE_KAPASITET");
+    }
+  });
+
+  it("parser sak uten henleggelsesarsak til null", () => {
+    const resultat = kontrollsakResponseSchema.safeParse({ ...basisSak, status: "UTREDES" });
+    expect(resultat.success).toBe(true);
+    if (resultat.success) {
+      expect(resultat.data.henleggelsesarsak).toBeNull();
+    }
   });
 });
 

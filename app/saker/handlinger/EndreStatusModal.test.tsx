@@ -47,4 +47,43 @@ describe("EndreStatusModal", () => {
 
     expect(submitMock).not.toHaveBeenCalled();
   });
+
+  it("viser henleggelsesårsak når HENLAGT velges", () => {
+    renderMedRouter(
+      <EndreStatusModal
+        sakId="00000000-0000-4000-8000-000000000001"
+        nåværendeStatus="UTREDES"
+        åpen={true}
+        onClose={() => {}}
+      />,
+    );
+
+    expect(screen.queryByLabelText("Henleggelsesårsak")).toBeNull();
+
+    const statusSelect = screen.getByLabelText("Ny status");
+    fireEvent.change(statusSelect, { target: { value: "HENLAGT" } });
+
+    expect(screen.getByLabelText("Henleggelsesårsak")).toBeDefined();
+    expect(screen.getByRole("option", { name: "Ikke kapasitet" })).toBeDefined();
+    expect(screen.getByRole("option", { name: "Ikke tilstrekkelig bevisgrunnlag" })).toBeDefined();
+    expect(screen.getByRole("option", { name: "Foreldet" })).toBeDefined();
+  });
+
+  it("skjuler henleggelsesårsak når annen status velges", () => {
+    renderMedRouter(
+      <EndreStatusModal
+        sakId="00000000-0000-4000-8000-000000000001"
+        nåværendeStatus="UTREDES"
+        åpen={true}
+        onClose={() => {}}
+      />,
+    );
+
+    const statusSelect = screen.getByLabelText("Ny status");
+    fireEvent.change(statusSelect, { target: { value: "HENLAGT" } });
+    expect(screen.getByLabelText("Henleggelsesårsak")).toBeDefined();
+
+    fireEvent.change(statusSelect, { target: { value: "ANMELDT" } });
+    expect(screen.queryByLabelText("Henleggelsesårsak")).toBeNull();
+  });
 });
