@@ -22,9 +22,7 @@ export function hentMineSaker(
   // I demo bruker mockdata "Z999999" som eier, mens innlogget bruker har sin
   // ekte Azure-ident. Normaliser slik at begge behandles som samme bruker.
   const effektivIdent = normaliserTilMockIdent(navIdent);
-  return hentAlleSaker(state).filter(
-    (sak) => sak.saksbehandlere.eier?.navIdent === effektivIdent,
-  );
+  return hentAlleSaker(state).filter((sak) => sak.saksbehandlere.eier?.navIdent === effektivIdent);
 }
 
 /**
@@ -35,9 +33,7 @@ export function hentMineSaker(
 function normaliserTilMockIdent(navIdent: string): string {
   // Alle mock-saker er eid av mockMineSakerInnloggetNavIdent.
   // Enhver annen ident som ikke finnes i mockdata behandles som innlogget bruker.
-  return navIdent === mockMineSakerInnloggetNavIdent
-    ? navIdent
-    : mockMineSakerInnloggetNavIdent;
+  return navIdent === mockMineSakerInnloggetNavIdent ? navIdent : mockMineSakerInnloggetNavIdent;
 }
 
 export function hentSakMedReferanse(
