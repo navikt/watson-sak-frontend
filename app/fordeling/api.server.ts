@@ -39,7 +39,15 @@ export async function hentKontrollsaker({
     throw new Error("Kunne ikke hente kontrollsaker.");
   }
 
-  return kontrollsakPageResponseSchema.parse(await response.json());
+  const json = await response.json();
+  const parsed = kontrollsakPageResponseSchema.safeParse(json);
+  if (!parsed.success) {
+    logger.error("Schema-validering feilet for hentKontrollsaker", {
+      feil: parsed.error.format(),
+    });
+    throw new Error("Ugyldig svar fra watson-admin-api (hentKontrollsaker)");
+  }
+  return parsed.data;
 }
 
 export async function hentKontrollsakerForFordeling(request: Request) {

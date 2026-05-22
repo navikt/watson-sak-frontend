@@ -46,6 +46,15 @@ async function håndterFeil(respons: Response, beskrivelse: string): Promise<nev
   throw new Error(beskrivelse);
 }
 
+function parseEllerKastFeil<T>(schema: z.ZodType<T>, data: unknown, kontekst: string): T {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    logger.error(`Schema-validering feilet for ${kontekst}`, { feil: result.error.format() });
+    throw new Error(`Ugyldig svar fra watson-admin-api (${kontekst})`);
+  }
+  return result.data;
+}
+
 // --- Kontrollsak ---
 
 export async function hentKontrollsak(token: string, sakId: string): Promise<KontrollsakResponse> {
@@ -53,7 +62,7 @@ export async function hentKontrollsak(token: string, sakId: string): Promise<Kon
     headers: authHeaders(token),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke hente kontrollsak");
-  return kontrollsakResponseSchema.parse(await respons.json());
+  return parseEllerKastFeil(kontrollsakResponseSchema, await respons.json(), "hentKontrollsak");
 }
 
 export async function søkKontrollsaker(
@@ -66,7 +75,7 @@ export async function søkKontrollsaker(
     body: JSON.stringify({ personIdent }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke søke etter kontrollsaker");
-  return z.array(kontrollsakResponseSchema).parse(await respons.json());
+  return parseEllerKastFeil(z.array(kontrollsakResponseSchema), await respons.json(), "søkKontrollsaker");
 }
 
 // --- Hendelser ---
@@ -76,7 +85,7 @@ export async function hentHendelser(token: string, sakId: string) {
     headers: authHeaders(token),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke hente hendelser");
-  return z.array(kontrollsakHendelseResponseSchema).parse(await respons.json());
+  return parseEllerKastFeil(z.array(kontrollsakHendelseResponseSchema), await respons.json(), "hentHendelser");
 }
 
 // --- Journalposter ---
@@ -86,7 +95,7 @@ export async function hentJournalposter(token: string, sakId: string) {
     headers: authHeaders(token),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke hente journalposter");
-  return z.array(journalpostReferanseSchema).parse(await respons.json());
+  return parseEllerKastFeil(z.array(journalpostReferanseSchema), await respons.json(), "hentJournalposter");
 }
 
 // --- Handlinger ---
@@ -104,7 +113,7 @@ export async function endreStatus(
     body: JSON.stringify({ status, beskrivelse, henleggelsesarsak: henleggelsesarsak ?? null }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke endre status");
-  return kontrollsakResponseSchema.parse(await respons.json());
+  return parseEllerKastFeil(kontrollsakResponseSchema, await respons.json(), "endreStatus");
 }
 
 export async function endreBlokkering(
@@ -119,7 +128,7 @@ export async function endreBlokkering(
     body: JSON.stringify({ blokkert, beskrivelse }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke endre blokkering");
-  return kontrollsakResponseSchema.parse(await respons.json());
+  return parseEllerKastFeil(kontrollsakResponseSchema, await respons.json(), "endreBlokkering");
 }
 
 export async function tildelKontrollsak(
@@ -133,7 +142,7 @@ export async function tildelKontrollsak(
     body: JSON.stringify({ aksjon: "TILDEL", navIdent }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke tildele kontrollsak");
-  return kontrollsakResponseSchema.parse(await respons.json());
+  return parseEllerKastFeil(kontrollsakResponseSchema, await respons.json(), "tildelKontrollsak");
 }
 
 export async function fristillKontrollsak(
@@ -146,7 +155,7 @@ export async function fristillKontrollsak(
     body: JSON.stringify({ aksjon: "FRISTILL" }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke fristille kontrollsak");
-  return kontrollsakResponseSchema.parse(await respons.json());
+  return parseEllerKastFeil(kontrollsakResponseSchema, await respons.json(), "fristillKontrollsak");
 }
 
 export async function delKontrollsak(
@@ -160,7 +169,7 @@ export async function delKontrollsak(
     body: JSON.stringify({ aksjon: "DEL", navIdent }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke dele kontrollsak");
-  return kontrollsakResponseSchema.parse(await respons.json());
+  return parseEllerKastFeil(kontrollsakResponseSchema, await respons.json(), "delKontrollsak");
 }
 
 export async function opprettNotat(token: string, sakId: string, tittel: string, tekst: string) {
@@ -180,7 +189,7 @@ export async function hentSaksbehandlere(token: string): Promise<KontrollsakSaks
     headers: authHeaders(token),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke hente saksbehandlere");
-  return saksbehandlerListeSchema.parse(await respons.json());
+  return parseEllerKastFeil(saksbehandlerListeSchema, await respons.json(), "hentSaksbehandlere");
 }
 
 export async function overforAnsvarlig(
@@ -194,7 +203,7 @@ export async function overforAnsvarlig(
     body: JSON.stringify({ aksjon: "OVERFOR", navIdent }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke overføre ansvarlig");
-  return kontrollsakResponseSchema.parse(await respons.json());
+  return parseEllerKastFeil(kontrollsakResponseSchema, await respons.json(), "overforAnsvarlig");
 }
 
 export async function fjernDeltTilgang(
@@ -208,7 +217,7 @@ export async function fjernDeltTilgang(
     body: JSON.stringify({ aksjon: "FJERN", navIdent }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke fjerne delt tilgang");
-  return kontrollsakResponseSchema.parse(await respons.json());
+  return parseEllerKastFeil(kontrollsakResponseSchema, await respons.json(), "fjernDeltTilgang");
 }
 
 export async function redigerKontrollsak(
