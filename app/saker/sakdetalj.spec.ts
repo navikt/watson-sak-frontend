@@ -63,7 +63,7 @@ test.describe("Sakdetalj", () => {
     await expect(page.getByText("Publikum", { exact: true })).toBeVisible();
     await expect(page.getByText("Dagpenger", { exact: true })).toBeVisible();
     await expect(page.getByText("01.02.2026 – 28.02.2026")).toBeVisible();
-    await expect(page.getByText("12345678901")).toBeVisible();
+    await expect(page.getByText("12345678901").first()).toBeVisible();
   });
 
   test("kan avbryte redigering uten å lagre endringer", async ({ page }) => {
