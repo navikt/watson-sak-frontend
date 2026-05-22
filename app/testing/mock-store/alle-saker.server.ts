@@ -19,7 +19,13 @@ export function hentMineSaker(
   state: MockState,
   navIdent: string = mockMineSakerInnloggetNavIdent,
 ): KontrollsakResponse[] {
-  return hentAlleSaker(state).filter((sak) => sak.saksbehandlere.eier?.navIdent === navIdent);
+  // I mock-modus tilhører mineKontrollsaker alltid innlogget bruker,
+  // uavhengig av hardkodet navIdent i mockdataen (Z999999 vs ekte Azure-ident).
+  return hentAlleSaker(state).filter(
+    (sak) =>
+      sak.saksbehandlere.eier?.navIdent === navIdent ||
+      sak.saksbehandlere.eier?.navIdent === mockMineSakerInnloggetNavIdent,
+  );
 }
 
 export function hentSakMedReferanse(
