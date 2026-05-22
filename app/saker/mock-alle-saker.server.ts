@@ -15,8 +15,8 @@ export function hentFordelingssaker(request: Request) {
   return _hentFordelingssaker(hentMockState(request));
 }
 
-export function hentMineSaker(request: Request, navIdent?: string) {
-  return _hentMineSaker(hentMockState(request), navIdent);
+export function hentMineSaker(request: Request, navIdent?: string, navn?: string) {
+  return _hentMineSaker(hentMockState(request), navIdent, navn);
 }
 
 export function hentAvslutningsdatoer(request: Request) {
