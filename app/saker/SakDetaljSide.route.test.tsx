@@ -85,7 +85,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
 
     expect(resultat).toEqual({ ok: true });
     expect(sak.status).toBe("HENLAGT");
-    expect((sak as Record<string, unknown>).henleggelsesarsak).toBe("IKKE_KAPASITET");
+    expect(sak.henleggelsesarsak).toBe("IKKE_KAPASITET");
 
     const historikk = hentHistorikk(testRequest, sak.id);
     expect(historikk[0]?.hendelsesType).toBe("SAK_HENLAGT");

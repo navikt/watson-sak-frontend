@@ -8,6 +8,7 @@ import { z } from "zod";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import type { KontrollsakStatus } from "~/saker/types.backend";
+import { henleggelsesarsakSchema } from "~/saker/types.backend";
 import {
   formaterHenleggelsesarsak,
   formaterStatus,
@@ -33,17 +34,13 @@ const valgbareStatuser: KontrollsakStatus[] = [
 const endreStatusSkjema = z
   .object({
     status: z.string({ error: "Velg en status" }).min(1, "Velg en status"),
-    henleggelsesarsak: z.string().optional(),
+    henleggelsesarsak: henleggelsesarsakSchema.optional(),
     beskrivelse: z.string().optional(),
   })
-  .refine(
-    (data) =>
-      data.status !== "HENLAGT" || (data.henleggelsesarsak && data.henleggelsesarsak.length > 0),
-    {
-      message: "Velg en henleggelsesårsak",
-      path: ["henleggelsesarsak"],
-    },
-  );
+  .refine((data) => data.status !== "HENLAGT" || data.henleggelsesarsak !== undefined, {
+    message: "Velg en henleggelsesårsak",
+    path: ["henleggelsesarsak"],
+  });
 
 export function EndreStatusModal({ sakId, nåværendeStatus, åpen, onClose }: EndreStatusModalProps) {
   const fetcher = useFetcher();

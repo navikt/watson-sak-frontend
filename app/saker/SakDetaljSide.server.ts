@@ -14,6 +14,7 @@ import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
 import { mockSaksbehandlere, mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import { mockSeksjoner } from "~/saker/mock-seksjoner.server";
 import type { Blokkeringsarsak, KontrollsakSaksbehandler } from "~/saker/types.backend";
+import { henleggelsesarsakSchema } from "~/saker/types.backend";
 import { lagIsoTidspunktFraNorskDatoTid } from "~/utils/date-utils";
 import { hentTekstfelt, hentValgfriTekst } from "~/utils/form-data";
 import { hentFilerForSak } from "./filer/mock-data.server";
@@ -205,13 +206,15 @@ async function backendAction(
         throw data("Ugyldig status", { status: 400 });
       }
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
-      const henleggelsesarsak = hentValgfriTekst(formData, "henleggelsesarsak");
+      const råHenleggelsesarsak = hentValgfriTekst(formData, "henleggelsesarsak");
+      const henleggelsesarsak =
+        nyStatus === "HENLAGT" ? henleggelsesarsakSchema.parse(råHenleggelsesarsak) : undefined;
       const sak = await backendApi.endreStatus(
         token,
         sakId,
         nyStatus,
         beskrivelse ?? undefined,
-        henleggelsesarsak ?? undefined,
+        henleggelsesarsak,
       );
       return { ok: true, sak };
     }
@@ -448,12 +451,12 @@ async function mockAction(
       }
 
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
-      const henleggelsesarsak = hentValgfriTekst(formData, "henleggelsesarsak");
+      const råHenleggelsesarsak = hentValgfriTekst(formData, "henleggelsesarsak");
       const forrigeBlokkering = sak.blokkert;
 
       sak.status = nyStatus;
-      (sak as Record<string, unknown>).henleggelsesarsak =
-        nyStatus === "HENLAGT" ? (henleggelsesarsak ?? null) : null;
+      sak.henleggelsesarsak =
+        nyStatus === "HENLAGT" ? henleggelsesarsakSchema.parse(råHenleggelsesarsak) : null;
       if (nyStatus === "AVSLUTTET") {
         sak.blokkert = null;
       }
