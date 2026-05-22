@@ -55,6 +55,8 @@ export async function loader({ request }: Route.LoaderArgs) {
   let alleSaker: KontrollsakResponse[];
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
+    // TODO: Implementer fullstendig backend-paginering. Nåværende løsning henter maks 500 saker
+    // og paginerer lokalt, som gir ufullstendig visning ved >500 saker.
     const resultat = await hentKontrollsaker({ token, page: 1, size: 500 });
     alleSaker = resultat.items;
   } else {

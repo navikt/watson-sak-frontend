@@ -85,7 +85,7 @@ export const kontrollsakResponseSchema = z
     ytelser: z.array(kontrollsakYtelseSchema),
     merking: z.array(z.string()).default([]),
     oppgaver: z.array(oppgaveKortSchema).default([]),
-    kobledeSaker: z.array(z.number()).default([]),
+    kobledeSaker: z.array(z.number()),
     opprettet: z.string(),
     oppdatert: z.string().nullable(),
   })
