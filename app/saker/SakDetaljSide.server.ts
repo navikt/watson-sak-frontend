@@ -10,7 +10,7 @@ import {
   type YtelseRadVerdier,
 } from "~/registrer-sak/skjema-helpers";
 import * as backendApi from "~/saker/api.server";
-import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
+import { hentAlleSaker, medInnloggetEier } from "~/saker/mock-alle-saker.server";
 import { mockSaksbehandlere, mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import { mockSeksjoner } from "~/saker/mock-seksjoner.server";
 import type {
@@ -148,10 +148,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   }
 
   const alleSaker = hentAlleSaker(request);
-  const sak = finnSakMedReferanse(alleSaker, params.sakId);
-  if (!sak) {
+  const rawSak = finnSakMedReferanse(alleSaker, params.sakId);
+  if (!rawSak) {
     throw data("Sak ikke funnet", { status: 404 });
   }
+  const innlogget = await hentInnloggetBruker({ request });
+  const sak = medInnloggetEier(rawSak, innlogget.navIdent, innlogget.name);
   const historikk = hentHistorikk(request, String(sak.id));
   const filer = hentFilerForSak(request, String(sak.id));
   const andreSaker = alleSaker.filter(

@@ -29,7 +29,7 @@ export function hentMineSaker(
 }
 
 /** Overskriver eier med den faktiske innloggede brukeren, slik at UI-et viser riktig identitet. */
-function medInnloggetEier(
+export function medInnloggetEier(
   sak: KontrollsakResponse,
   navIdent: string,
   navn?: string,

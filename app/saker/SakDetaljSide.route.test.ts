@@ -10,6 +10,16 @@ import { action, loader } from "./SakDetaljSide.server";
 
 vi.mock("~/config/env.server", () => ({
   skalBrukeMockdata: true,
+  env: { ENVIRONMENT: "local-mock" },
+}));
+
+vi.mock("~/auth/innlogget-bruker.server", () => ({
+  hentInnloggetBruker: async () => ({
+    navIdent: "Z999999",
+    name: "Test Saksbehandler",
+    preferredUsername: "test@nav.no",
+    enhet: "4812",
+  }),
 }));
 
 const testRequest = new Request("http://localhost");
