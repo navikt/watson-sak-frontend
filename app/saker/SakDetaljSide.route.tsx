@@ -17,7 +17,7 @@ import {
   VStack,
 } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   useBeforeUnload,
   useBlocker,
@@ -116,6 +116,10 @@ function lagYtelseRaderFraSak(sak: Route.ComponentProps["loaderData"]["sak"]): Y
     fraDato: formaterIsoTilNorskDato(ytelse.periodeFra) || undefined,
     tilDato: formaterIsoTilNorskDato(ytelse.periodeTil) || undefined,
     beløp: ytelse.belop !== null && ytelse.belop !== undefined ? String(ytelse.belop) : undefined,
+    endeligBeløp:
+      ytelse.endeligBelop !== null && ytelse.endeligBelop !== undefined
+        ? String(ytelse.endeligBelop)
+        : undefined,
   }));
 }
 
@@ -155,7 +159,8 @@ function erLikeYtelser(a: YtelseRadVerdier[], b: YtelseRadVerdier[]): boolean {
       rad.type === b[i].type &&
       rad.fraDato === b[i].fraDato &&
       rad.tilDato === b[i].tilDato &&
-      rad.beløp === b[i].beløp,
+      rad.beløp === b[i].beløp &&
+      rad.endeligBeløp === b[i].endeligBeløp,
   );
 }
 
@@ -223,7 +228,12 @@ export default function SakDetaljSide() {
     ? `Sak ${saksreferanse} – ${navn}${alder !== null ? ` (${alder})` : ""}`
     : `Sak ${saksreferanse}`;
 
+  const sisteBehandledeData = useRef<typeof fetcher.data>(undefined);
+
   useEffect(() => {
+    if (fetcher.data === sisteBehandledeData.current) return;
+    sisteBehandledeData.current = fetcher.data;
+
     if (fetcher.data?.ok) {
       if (fetcher.data.sak) {
         setSak(fetcher.data.sak);
@@ -518,6 +528,7 @@ export default function SakDetaljSide() {
                               defaults={rad}
                               feil={feil}
                               size="small"
+                              endeligBeløpReadOnly={sak.status !== "STRAFFERETTSLIG_VURDERING"}
                             />
                           ))}
                           <div>
@@ -621,8 +632,17 @@ export default function SakDetaljSide() {
                                   <Table.HeaderCell scope="col" className="text-sm">
                                     Periode
                                   </Table.HeaderCell>
-                                  <Table.HeaderCell scope="col" className="text-sm">
-                                    Beløp
+                                  <Table.HeaderCell
+                                    scope="col"
+                                    className="text-sm whitespace-nowrap"
+                                  >
+                                    Antatt beløp
+                                  </Table.HeaderCell>
+                                  <Table.HeaderCell
+                                    scope="col"
+                                    className="text-sm whitespace-nowrap"
+                                  >
+                                    Endelig beløp
                                   </Table.HeaderCell>
                                 </Table.Row>
                               </Table.Header>
@@ -640,6 +660,12 @@ export default function SakDetaljSide() {
                                     <Table.DataCell className="text-sm">
                                       {ytelse.belop !== null && ytelse.belop !== undefined
                                         ? formaterBelop(ytelse.belop)
+                                        : "–"}
+                                    </Table.DataCell>
+                                    <Table.DataCell className="text-sm">
+                                      {ytelse.endeligBelop !== null &&
+                                      ytelse.endeligBelop !== undefined
+                                        ? formaterBelop(ytelse.endeligBelop)
                                         : "–"}
                                     </Table.DataCell>
                                   </Table.Row>

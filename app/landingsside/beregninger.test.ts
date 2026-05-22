@@ -26,6 +26,7 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
         periodeFra: "2026-03-18",
         periodeTil: "2026-03-18",
         belop: null,
+        endeligBelop: null,
       },
     ],
     merking: null,

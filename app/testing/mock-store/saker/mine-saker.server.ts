@@ -368,6 +368,41 @@ const initialeMockMineKontrollsaker = [
     opprettet: "2026-03-14T00:00:00Z",
     oppdatert: "2026-03-17T00:00:00Z",
   },
+  {
+    id: "211",
+    personIdent: "11223300112",
+    navn: "Eva Martinsen",
+    saksbehandler: "Z999999",
+    saksbehandlere: { eier: innloggetEier, deltMed: [] },
+    status: "STRAFFERETTSLIG_VURDERING",
+    kategori: "ARBEID",
+    prioritet: "HOY",
+    mottakEnhet: "Øst",
+    mottakSaksbehandler: "Z999999",
+    ytelser: [
+      {
+        id: "211-ytelse-1",
+        type: "Dagpenger",
+        periodeFra: "2025-06-01",
+        periodeTil: "2026-01-31",
+        belop: 450000,
+        endeligBelop: 380000,
+      },
+    ],
+    misbrukstyper: ["Svart arbeid"],
+    bakgrunn: {
+      id: "00000000-0000-4000-8000-000000000011",
+      kilde: "INTERN",
+      innhold:
+        "Avdekket urapportert inntekt i kontrollperioden. Sak til strafferettslig vurdering.",
+      avsender: null,
+      vedlegg: [],
+      tilleggsopplysninger: null,
+    },
+    resultat: null,
+    opprettet: "2025-09-15T00:00:00Z",
+    oppdatert: "2026-04-02T00:00:00Z",
+  },
 ];
 
 function lagMockMineKontrollsaker() {

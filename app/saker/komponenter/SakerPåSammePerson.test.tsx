@@ -30,6 +30,7 @@ function lagKontrollsak(
         periodeFra: "2022-01-01",
         periodeTil: "2025-01-01",
         belop: null,
+        endeligBelop: null,
       },
     ],
     merking: null,

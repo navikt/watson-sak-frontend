@@ -45,6 +45,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
         periodeFra: "2026-01-01",
         periodeTil: "2026-01-31",
         belop: 1000,
+        endeligBelop: null,
       },
     ],
     merking: "PRIORITERT",
@@ -87,6 +88,7 @@ describe("sak-visning", () => {
           periodeFra: "2026-01-01",
           periodeTil: "2026-12-31",
           belop: null,
+          endeligBelop: null,
         },
       ]),
     ).toBe("2026-01-01 – 2026-12-31");

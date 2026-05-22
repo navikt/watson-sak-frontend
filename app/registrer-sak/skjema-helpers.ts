@@ -3,6 +3,7 @@ export type YtelseRadVerdier = {
   fraDato?: string;
   tilDato?: string;
   beløp?: string;
+  endeligBeløp?: string;
 };
 
 function lesString(formData: FormData, navn: string): string {
@@ -13,7 +14,7 @@ function lesString(formData: FormData, navn: string): string {
 export function parseYtelseRader(formData: FormData): YtelseRadVerdier[] {
   const indekser = new Set<number>();
   for (const nøkkel of formData.keys()) {
-    const treff = nøkkel.match(/^ytelser\[(\d+)\]\.(?:type|fraDato|tilDato|beløp)$/);
+    const treff = nøkkel.match(/^ytelser\[(\d+)\]\.(?:type|fraDato|tilDato|beløp|endeligBeløp)$/);
     if (treff) {
       indekser.add(Number(treff[1]));
     }
@@ -26,6 +27,7 @@ export function parseYtelseRader(formData: FormData): YtelseRadVerdier[] {
       fraDato: lesString(formData, `ytelser[${i}].fraDato`) || undefined,
       tilDato: lesString(formData, `ytelser[${i}].tilDato`) || undefined,
       beløp: lesString(formData, `ytelser[${i}].beløp`) || undefined,
+      endeligBeløp: lesString(formData, `ytelser[${i}].endeligBeløp`) || undefined,
     }));
 }
 

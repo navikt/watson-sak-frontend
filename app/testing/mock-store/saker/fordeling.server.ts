@@ -506,6 +506,7 @@ type NyMockFordelingssak = {
     periodeFra: string;
     periodeTil: string;
     belop?: number;
+    endeligBelop?: number;
   }>;
 };
 
@@ -550,6 +551,7 @@ export function leggTilMockSakIFordeling(
       periodeFra: ytelse.periodeFra,
       periodeTil: ytelse.periodeTil,
       belop: ytelse.belop ?? null,
+      endeligBelop: ytelse.endeligBelop ?? null,
     })),
     merking: nySak.merking ?? null,
     oppgaver: [],

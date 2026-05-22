@@ -70,6 +70,7 @@ describe("Mine saker selectors", () => {
               periodeFra: "2026-01-01",
               periodeTil: "2026-01-31",
               belop: null,
+              endeligBelop: null,
             },
             {
               id: "ytelse-2",
@@ -77,6 +78,7 @@ describe("Mine saker selectors", () => {
               periodeFra: "2026-01-01",
               periodeTil: "2026-01-31",
               belop: null,
+              endeligBelop: null,
             },
           ],
         }),
@@ -94,6 +96,7 @@ describe("Mine saker selectors", () => {
           periodeFra: "2026-01-01",
           periodeTil: "2026-01-31",
           belop: null,
+          endeligBelop: null,
         },
       ],
     });

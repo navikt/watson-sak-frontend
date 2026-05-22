@@ -444,6 +444,7 @@ export default function OpprettSakSide() {
                           onFjern={() => fjernYtelseRad(rad.id)}
                           defaults={rad.defaults}
                           feil={form.allErrors}
+                          visEndeligBeløp={false}
                         />
                       ))}
                     </VStack>
