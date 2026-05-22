@@ -1,5 +1,6 @@
 import type {
   Blokkeringsarsak,
+  Henleggelsesarsak,
   KontrollsakKategori,
   KontrollsakKilde,
   KontrollsakMisbrukstype,
@@ -7,6 +8,7 @@ import type {
   KontrollsakStatus,
   KontrollsakYtelse,
 } from "./types.backend";
+import { henleggelsesarsakSchema } from "./types.backend";
 import {
   kontrollsakKategoriEtiketter,
   kontrollsakKildeEtiketter,
@@ -41,6 +43,14 @@ const blokkeringsarsakEtiketter: Record<Blokkeringsarsak, string> = {
   I_BERO: "I bero",
 };
 
+const henleggelsesarsakEtiketter: Record<Henleggelsesarsak, string> = {
+  IKKE_KAPASITET: "Ikke kapasitet",
+  IKKE_TILSTREKKELIG_BEVISGRUNNLAG: "Ikke tilstrekkelig bevisgrunnlag",
+  IKKE_TILSTREKKELIG_SKYLD: "Ikke tilstrekkelig skyld",
+  INGEN_UTREDNING: "Ingen utredning",
+  FORELDET: "Foreldet",
+};
+
 export function formaterStatus(status: KontrollsakStatus | null | undefined): string {
   if (!status) return "Ukjent";
   return statusEtiketter[status];
@@ -54,6 +64,14 @@ export function hentStatusVariant(status: KontrollsakStatus | null | undefined):
 export function formaterBlokkeringsarsak(arsak: Blokkeringsarsak): string {
   return blokkeringsarsakEtiketter[arsak];
 }
+
+export function formaterHenleggelsesarsak(arsak: Henleggelsesarsak): string {
+  return henleggelsesarsakEtiketter[arsak];
+}
+
+export const henleggelsesarsakAlternativer: Henleggelsesarsak[] = [
+  ...henleggelsesarsakSchema.options,
+];
 
 export function formaterKategori(kategori: KontrollsakKategori | null | undefined): string | null {
   if (!kategori) {

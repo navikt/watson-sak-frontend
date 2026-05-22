@@ -13,7 +13,12 @@ import * as backendApi from "~/saker/api.server";
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
 import { mockSaksbehandlere, mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import { mockSeksjoner } from "~/saker/mock-seksjoner.server";
-import type { Blokkeringsarsak, KontrollsakSaksbehandler } from "~/saker/types.backend";
+import type {
+  Blokkeringsarsak,
+  Henleggelsesarsak,
+  KontrollsakSaksbehandler,
+} from "~/saker/types.backend";
+import { henleggelsesarsakSchema } from "~/saker/types.backend";
 import { lagIsoTidspunktFraNorskDatoTid } from "~/utils/date-utils";
 import { hentTekstfelt, hentValgfriTekst } from "~/utils/form-data";
 import { hentFilerForSak } from "./filer/mock-data.server";
@@ -205,7 +210,22 @@ async function backendAction(
         throw data("Ugyldig status", { status: 400 });
       }
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
-      const sak = await backendApi.endreStatus(token, sakId, nyStatus, beskrivelse ?? undefined);
+      const råHenleggelsesarsak = hentValgfriTekst(formData, "henleggelsesarsak");
+      let henleggelsesarsak: Henleggelsesarsak | undefined;
+      if (nyStatus === "HENLAGT") {
+        const parsed = henleggelsesarsakSchema.safeParse(råHenleggelsesarsak);
+        if (!parsed.success) {
+          throw data("Ugyldig henleggelsesårsak", { status: 400 });
+        }
+        henleggelsesarsak = parsed.data;
+      }
+      const sak = await backendApi.endreStatus(
+        token,
+        sakId,
+        nyStatus,
+        beskrivelse ?? undefined,
+        henleggelsesarsak,
+      );
       return { ok: true, sak };
     }
     case "endre_blokkering": {
@@ -244,10 +264,6 @@ async function backendAction(
     case "opprett_journalpost":
     case "opprett_oppgave": {
       throw data("Handlingen er ikke støttet ennå", { status: 501 });
-    }
-    case "henlegg": {
-      const sak = await backendApi.endreStatus(token, sakId, "HENLAGT");
-      return { ok: true, sak };
     }
     case "overfor_ansvarlig": {
       const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
@@ -445,9 +461,19 @@ async function mockAction(
       }
 
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
+      const råHenleggelsesarsak = hentValgfriTekst(formData, "henleggelsesarsak");
       const forrigeBlokkering = sak.blokkert;
 
       sak.status = nyStatus;
+      if (nyStatus === "HENLAGT") {
+        const parsed = henleggelsesarsakSchema.safeParse(råHenleggelsesarsak);
+        if (!parsed.success) {
+          throw data("Ugyldig henleggelsesårsak", { status: 400 });
+        }
+        sak.henleggelsesarsak = parsed.data;
+      } else {
+        sak.henleggelsesarsak = null;
+      }
       if (nyStatus === "AVSLUTTET") {
         sak.blokkert = null;
       }
@@ -542,11 +568,6 @@ async function mockAction(
       };
       sak.saksbehandlere.eier = null;
       leggTilHendelse(request, sak, "MOTTAKSENHET_ENDRET");
-      break;
-    }
-    case "henlegg": {
-      sak.status = "AVSLUTTET";
-      leggTilHendelse(request, sak, "SAK_HENLAGT");
       break;
     }
     case "rediger_saksinformasjon": {

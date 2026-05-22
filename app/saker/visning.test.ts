@@ -38,6 +38,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     misbruktype: ["FIKTIVT_ARBEIDSFORHOLD"],
     prioritet: "NORMAL",
     blokkert: null,
+    henleggelsesarsak: null,
     ytelser: [
       {
         type: "Sykepenger",

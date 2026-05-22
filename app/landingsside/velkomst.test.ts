@@ -18,6 +18,7 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
     misbruktype: [],
     prioritet: "NORMAL",
     blokkert: null,
+    henleggelsesarsak: null,
     ytelser: [],
     merking: [],
     opprettet: "2026-03-01T00:00:00Z",

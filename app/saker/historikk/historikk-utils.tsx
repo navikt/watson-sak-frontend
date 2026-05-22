@@ -15,7 +15,11 @@ import {
   XMarkOctagonIcon,
 } from "@navikt/aksel-icons";
 import { BodyShort, VStack } from "@navikt/ds-react";
-import { formaterBlokkeringsarsak, formaterStatus } from "~/saker/visning";
+import {
+  formaterBlokkeringsarsak,
+  formaterHenleggelsesarsak,
+  formaterStatus,
+} from "~/saker/visning";
 import { NORSK_TIDSSONE } from "~/utils/date-utils";
 import type { SakHendelse } from "./typer";
 
@@ -109,7 +113,17 @@ export function hendelseBeskrivelse(hendelse: SakHendelse): string | null {
     return deler.join(" – ");
   }
 
-  if (hendelse.hendelsesType === "POLITIANMELDT" || hendelse.hendelsesType === "SAK_HENLAGT") {
+  if (hendelse.hendelsesType === "SAK_HENLAGT") {
+    const deler: string[] = [`Status: ${formaterStatus(hendelse.status)}`];
+
+    if (hendelse.beskrivelse) {
+      deler.push(hendelse.beskrivelse);
+    }
+
+    return deler.join(" – ");
+  }
+
+  if (hendelse.hendelsesType === "POLITIANMELDT") {
     const deler: string[] = [];
 
     if (hendelse.beskrivelse) {
@@ -229,6 +243,19 @@ export function HendelseInnhold({
           {hendelse.tittel}
         </BodyShort>
         {hendelse.beskrivelse && <BodyShort size="small">{hendelse.beskrivelse}</BodyShort>}
+      </VStack>
+    );
+  }
+
+  if (hendelse.hendelsesType === "SAK_HENLAGT") {
+    return (
+      <VStack gap="space-1">
+        {beskrivelse && <BodyShort size="small">{beskrivelse}</BodyShort>}
+        {hendelse.henleggelsesarsak && (
+          <BodyShort size="small">
+            Årsak: {formaterHenleggelsesarsak(hendelse.henleggelsesarsak)}
+          </BodyShort>
+        )}
       </VStack>
     );
   }

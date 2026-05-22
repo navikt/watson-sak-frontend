@@ -5,6 +5,7 @@ import {
   kontrollsakHendelseResponseSchema,
   kontrollsakResponseSchema,
   type Blokkeringsarsak,
+  type Henleggelsesarsak,
   type KontrollsakResponse,
   type KontrollsakSaksbehandler,
   type KontrollsakStatus,
@@ -95,11 +96,12 @@ export async function endreStatus(
   sakId: string,
   status: KontrollsakStatus,
   beskrivelse?: string,
+  henleggelsesarsak?: Henleggelsesarsak | null,
 ): Promise<KontrollsakResponse> {
   const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/status`), {
     method: "POST",
     headers: authHeaders(token),
-    body: JSON.stringify({ status, beskrivelse }),
+    body: JSON.stringify({ status, beskrivelse, henleggelsesarsak: henleggelsesarsak ?? null }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke endre status");
   return kontrollsakResponseSchema.parse(await respons.json());

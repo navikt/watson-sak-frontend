@@ -73,6 +73,7 @@ function lagSnapshotFraKontrollsak(
     prioritet: sak.prioritet,
     status: sak.status,
     blokkert: sak.blokkert,
+    henleggelsesarsak: sak.henleggelsesarsak,
     ytelseTyper: sak.ytelser.map((ytelse) => ytelse.type),
   };
 }

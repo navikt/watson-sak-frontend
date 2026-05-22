@@ -28,6 +28,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     misbruktype: ["SKJULT_SAMLIV"],
     prioritet: "NORMAL",
     blokkert: null,
+    henleggelsesarsak: null,
     ytelser: [
       {
         type: "Sykepenger",

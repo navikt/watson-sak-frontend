@@ -26,6 +26,7 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
     misbruktype: [],
     prioritet: "NORMAL",
     blokkert: null,
+    henleggelsesarsak: null,
     ytelser: [
       {
         type: "Dagpenger",

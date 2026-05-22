@@ -20,6 +20,14 @@ export const blokkeringsarsakSchema = z.enum([
   "I_BERO",
 ]);
 
+export const henleggelsesarsakSchema = z.enum([
+  "IKKE_KAPASITET",
+  "IKKE_TILSTREKKELIG_BEVISGRUNNLAG",
+  "IKKE_TILSTREKKELIG_SKYLD",
+  "INGEN_UTREDNING",
+  "FORELDET",
+]);
+
 const kontrollsakKategoriSchema = z.enum(kontrollsakKategoriVerdier);
 const kontrollsakKildeSchema = z.enum(kontrollsakKildeVerdier);
 const kontrollsakMisbrukstypeSchema = z.enum(kontrollsakMisbrukstypeVerdier);
@@ -78,6 +86,7 @@ export const kontrollsakResponseSchema = z
     saksbehandlere: saksbehandlereSchema,
     status: kontrollsakStatusSchema,
     blokkert: blokkeringsarsakSchema.nullable(),
+    henleggelsesarsak: henleggelsesarsakSchema.nullable().optional(),
     kategori: kontrollsakKategoriSchema,
     kilde: kontrollsakKildeSchema,
     misbruktype: z.array(kontrollsakMisbrukstypeSchema),
@@ -92,6 +101,7 @@ export const kontrollsakResponseSchema = z
   .transform((sak) => ({
     ...sak,
     personNavn: sak.personNavn ?? null,
+    henleggelsesarsak: sak.henleggelsesarsak ?? null,
   }));
 
 export const kontrollsakPageResponseSchema = z.object({
@@ -113,6 +123,7 @@ export const kontrollsakHendelseResponseSchema = z.object({
   ytelseTyper: z.array(z.string()).default([]),
   kilde: kontrollsakKildeSchema.nullable().optional(),
   blokkert: blokkeringsarsakSchema.nullable().optional(),
+  henleggelsesarsak: henleggelsesarsakSchema.nullable().optional(),
   beskrivelse: z.string().nullable().optional(),
   opprettetAvNavIdent: z.string().nullable().optional(),
 });
@@ -123,6 +134,7 @@ export type KontrollsakResponse = z.infer<typeof kontrollsakResponseSchema>;
 export type KontrollsakPageResponse = z.infer<typeof kontrollsakPageResponseSchema>;
 export type KontrollsakStatus = z.infer<typeof kontrollsakStatusSchema>;
 export type Blokkeringsarsak = z.infer<typeof blokkeringsarsakSchema>;
+export type Henleggelsesarsak = z.infer<typeof henleggelsesarsakSchema>;
 export type KontrollsakKategori = z.infer<typeof kontrollsakKategoriSchema>;
 export type KontrollsakKilde = z.infer<typeof kontrollsakKildeSchema>;
 export type KontrollsakMisbrukstype = z.infer<typeof kontrollsakMisbrukstypeSchema>;

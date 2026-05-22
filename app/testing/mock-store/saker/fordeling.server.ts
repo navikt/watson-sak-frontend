@@ -541,6 +541,7 @@ export function leggTilMockSakIFordeling(
     },
     status: "OPPRETTET",
     blokkert: null,
+    henleggelsesarsak: null,
     kategori: nySak.kategori,
     kilde: nySak.kilde,
     misbruktype: nySak.misbruktype,
