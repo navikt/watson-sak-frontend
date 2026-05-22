@@ -591,7 +591,7 @@ async function mockAction(
       const validert = resultat.data;
       sak.kategori = validert.kategori;
       sak.misbruktype = [...validert.misbruktype];
-      sak.merking = validert.merking[0] ?? null;
+      sak.merking = [...validert.merking];
       sak.kilde = validert.kilde;
       sak.ytelser = validert.ytelser.map((ytelse) => ({
         type: ytelse.type ?? "",

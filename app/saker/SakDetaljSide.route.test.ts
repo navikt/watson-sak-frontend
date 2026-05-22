@@ -441,7 +441,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
 
     expect(kontrollsak.kategori).toBe("ARBEID");
     expect(kontrollsak.misbruktype).toEqual(["SVART_ARBEID"]);
-    expect(kontrollsak.merking).toBe("PRIORITERT");
+    expect(kontrollsak.merking).toEqual(["PRIORITERT"]);
     expect(kontrollsak.kilde).toBe("PUBLIKUM");
     expect(kontrollsak.ytelser.map((ytelse) => ytelse.type)).toEqual(["Dagpenger", "Sykepenger"]);
     expect(kontrollsak.ytelser.map((ytelse) => ytelse.periodeFra)).toEqual([

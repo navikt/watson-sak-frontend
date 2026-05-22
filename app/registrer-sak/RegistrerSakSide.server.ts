@@ -41,7 +41,7 @@ export function byggOpprettKontrollsakPayload({
     kilde: skjema.kilde,
     prioritet: "NORMAL",
     misbruktype: skjema.misbruktype,
-    merking: skjema.merking[0],
+    merking: skjema.merking,
     ytelser: skjema.ytelser
       .filter((rad) => rad.type !== undefined)
       .map((rad) => ({

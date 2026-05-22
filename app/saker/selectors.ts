@@ -51,7 +51,7 @@ export function getAvdeling(_sak: KontrollsakResponse): string | null {
 }
 
 export function getTags(sak: KontrollsakResponse): string[] {
-  return sak.merking ? [sak.merking] : [];
+  return sak.merking;
 }
 
 export function getNavn(sak: KontrollsakResponse): string | null {

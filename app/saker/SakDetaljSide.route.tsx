@@ -130,7 +130,7 @@ function lagRedigeringsdata(
     kategori: sak.kategori,
     kilde: sak.kilde,
     misbruktype: [...sak.misbruktype],
-    merking: sak.merking ? [sak.merking] : [],
+    merking: [...sak.merking],
     ytelser: lagYtelseRaderFraSak(sak),
   };
 }

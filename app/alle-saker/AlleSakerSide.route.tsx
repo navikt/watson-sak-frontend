@@ -70,7 +70,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       alleSaker.map((s) => getKategoriText(s)).filter((k): k is string => !!k),
     ),
     misbrukstype: unikeVerdier(alleSaker.flatMap(getMisbrukstyper)),
-    merking: unikeVerdier(alleSaker.map((s) => s.merking).filter((m): m is string => !!m)),
+    merking: unikeVerdier(alleSaker.flatMap((s) => s.merking)),
   };
 
   // Filtrering gjelder kun tabellen – nøkkeltall og trakt vises for alle saker

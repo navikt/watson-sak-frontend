@@ -58,6 +58,7 @@ describe("opprettKontrollsak", () => {
         kilde: "NAV_KONTROLL",
         prioritet: "NORMAL",
         misbruktype: ["SKJULT_SAMLIV"],
+        merking: [],
         ytelser: [
           {
             type: "Dagpenger",
@@ -107,6 +108,7 @@ describe("opprettKontrollsak", () => {
       kilde: "NAV_KONTROLL",
       prioritet: "NORMAL",
       misbruktype: ["SKJULT_SAMLIV"],
+      merking: [],
       ytelser: [
         {
           type: "Dagpenger",
@@ -145,6 +147,7 @@ describe("opprettKontrollsak", () => {
         kilde: "NAV_KONTROLL",
         prioritet: "NORMAL",
         misbruktype: ["SKJULT_SAMLIV"],
+        merking: [],
         ytelser: [],
       },
     });
@@ -168,6 +171,7 @@ describe("opprettKontrollsak", () => {
       kilde: "NAV_KONTROLL",
       prioritet: "NORMAL",
       misbruktype: ["SKJULT_SAMLIV"],
+      merking: [],
       ytelser: [
         {
           type: "Dagpenger",
@@ -198,6 +202,7 @@ describe("opprettKontrollsak", () => {
           kilde: "SKATTEETATEN",
           prioritet: "NORMAL",
           misbruktype: ["FEIL_INNTEKTSGRUNNLAG", "SKJULT_AKTIVITET"],
+          merking: [],
           ytelser: [
             {
               type: "Dagpenger",
@@ -226,6 +231,7 @@ describe("opprettKontrollsak", () => {
           kilde: "UGYLDIG_KILDE",
           prioritet: "NORMAL",
           misbruktype: ["UGYLDIG_MISBRUKSTYPE"],
+          merking: [],
           ytelser: [
             {
               type: "Dagpenger",

@@ -553,7 +553,7 @@ export function leggTilMockSakIFordeling(
       belop: ytelse.belop ?? null,
       endeligBelop: ytelse.endeligBelop ?? null,
     })),
-    merking: nySak.merking ?? null,
+    merking: nySak.merking ?? [],
     oppgaver: [],
     opprettet,
     oppdatert: null,

@@ -31,7 +31,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
         endeligBelop: null,
       },
     ],
-    merking: null,
+    merking: [],
     opprettet: "2026-03-20T12:34:56Z",
     oppdatert: null,
     oppgaver: [],

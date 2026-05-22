@@ -198,10 +198,10 @@ export function normaliserLegacyKontrollsak(sak: LegacyKontrollsak): Kontrollsak
       };
     }),
     merking: Array.isArray(sak.merking)
-      ? String(sak.merking[0] ?? "") || null
-      : typeof sak.merking === "string"
-        ? sak.merking
-        : null,
+      ? (sak.merking as string[]).filter((v) => typeof v === "string" && v.length > 0)
+      : typeof sak.merking === "string" && sak.merking.length > 0
+        ? [sak.merking]
+        : [],
     oppgaver: [],
     kobledeSaker: [],
     opprettet: String(sak.opprettet ?? new Date().toISOString()),

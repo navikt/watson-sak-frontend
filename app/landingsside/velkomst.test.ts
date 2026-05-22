@@ -19,7 +19,7 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
     prioritet: "NORMAL",
     blokkert: null,
     ytelser: [],
-    merking: null,
+    merking: [],
     opprettet: "2026-03-01T00:00:00Z",
     oppdatert: null,
     oppgaver: [],

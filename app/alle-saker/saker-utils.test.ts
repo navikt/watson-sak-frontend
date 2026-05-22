@@ -25,7 +25,7 @@ function lagSak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakRespon
     prioritet: "NORMAL",
     blokkert: null,
     ytelser: [],
-    merking: null,
+    merking: [],
     opprettet: "2026-02-03T10:00:00Z",
     oppdatert: null,
     oppgaver: [],
@@ -93,7 +93,7 @@ describe("filtrerSaker", () => {
       id: 100,
       kategori: "SAMLIV",
       misbruktype: ["SKJULT_SAMLIV"],
-      merking: null,
+      merking: [],
       saksbehandlere: {
         eier: { navIdent: "Z1", navn: "Anne", enhet: "4812" },
         deltMed: [],
@@ -104,7 +104,7 @@ describe("filtrerSaker", () => {
       id: 200,
       kategori: "ARBEID",
       misbruktype: ["FIKTIVT_ARBEIDSFORHOLD"],
-      merking: "HASTEBEHANDLING",
+      merking: ["HASTEBEHANDLING"],
       saksbehandlere: {
         eier: { navIdent: "Z2", navn: "Bjørn", enhet: "4801" },
         deltMed: [],

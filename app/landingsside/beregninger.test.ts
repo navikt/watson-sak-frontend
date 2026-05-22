@@ -28,7 +28,7 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
         endeligBelop: null,
       },
     ],
-    merking: null,
+    merking: [],
     opprettet: "2026-03-18T00:00:00Z",
     oppdatert: null,
     oppgaver: [],

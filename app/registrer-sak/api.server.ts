@@ -27,7 +27,7 @@ export type OpprettKontrollsakRequest = {
   kilde: string;
   misbruktype: string[];
   prioritet: string;
-  merking?: string;
+  merking: string[];
   ytelser: Array<{
     type: string;
     periodeFra: string;
@@ -122,7 +122,7 @@ export async function opprettKontrollsak({
       misbruktype: payload.misbruktype,
       prioritet: payload.prioritet,
       ytelser: payload.ytelser,
-      merking: payload.merking ? [payload.merking] : [],
+      merking: payload.merking,
     }),
   });
 
