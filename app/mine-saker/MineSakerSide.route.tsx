@@ -48,7 +48,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     });
     alleSaker = resultat.items;
   } else {
-    alleSaker = hentMineSaker(request, innloggetBruker.navIdent);
+    alleSaker = hentMineSaker(request, innloggetBruker.navIdent, innloggetBruker.name);
   }
 
   const filtrerteSaker = filtrerMineSaker(alleSaker, statusFilter, ventestatusFilter);

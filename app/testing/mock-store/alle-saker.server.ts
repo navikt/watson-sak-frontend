@@ -18,8 +18,41 @@ export function hentFordelingssaker(state: MockState): KontrollsakResponse[] {
 export function hentMineSaker(
   state: MockState,
   navIdent: string = mockMineSakerInnloggetNavIdent,
+  navn?: string,
 ): KontrollsakResponse[] {
-  return hentAlleSaker(state).filter((sak) => sak.saksbehandlere.eier?.navIdent === navIdent);
+  // I demo bruker mockdata "Z999999" som eier, mens innlogget bruker har sin
+  // ekte Azure-ident. Normaliser slik at begge behandles som samme bruker.
+  const effektivIdent = normaliserTilMockIdent(navIdent);
+  return hentAlleSaker(state)
+    .filter((sak) => sak.saksbehandlere.eier?.navIdent === effektivIdent)
+    .map((sak) => medInnloggetEier(sak, navIdent, navn));
+}
+
+/** Overskriver eier med den faktiske innloggede brukeren, slik at UI-et viser riktig identitet. */
+export function medInnloggetEier(
+  sak: KontrollsakResponse,
+  navIdent: string,
+  navn?: string,
+): KontrollsakResponse {
+  if (navIdent === mockMineSakerInnloggetNavIdent || !sak.saksbehandlere.eier) return sak;
+  return {
+    ...sak,
+    saksbehandlere: {
+      ...sak.saksbehandlere,
+      eier: { ...sak.saksbehandlere.eier, navIdent, ...(navn && { navn }) },
+    },
+  };
+}
+
+/**
+ * Mapper innlogget brukers navIdent til mock-identen brukt i testdata.
+ * I local-mock er identen allerede "Z999999". I demo (Azure AD) er den noe
+ * annet, men representerer samme bruker — så vi normaliserer til mock-identen.
+ */
+function normaliserTilMockIdent(navIdent: string): string {
+  // Alle mock-saker er eid av mockMineSakerInnloggetNavIdent.
+  // Enhver annen ident som ikke finnes i mockdata behandles som innlogget bruker.
+  return navIdent === mockMineSakerInnloggetNavIdent ? navIdent : mockMineSakerInnloggetNavIdent;
 }
 
 export function hentSakMedReferanse(

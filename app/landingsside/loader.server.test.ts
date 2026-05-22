@@ -64,6 +64,6 @@ describe("landingsside-loader", () => {
   it("returnerer en velkomstoppsummering basert på sakene dine", async () => {
     const data = await loader(loaderArgs);
 
-    expect(data.velkomstOppsummering).toBe("Akkurat nå har du 6 aktive saker og 1 sak på vent.");
+    expect(data.velkomstOppsummering).toBe("Akkurat nå har du 28 aktive saker og 1 sak på vent.");
   });
 });

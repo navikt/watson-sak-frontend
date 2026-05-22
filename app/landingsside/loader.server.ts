@@ -44,7 +44,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
     mineSakerHosInnloggetBruker = resultat.items;
     varsler = []; // TODO: hent varsler fra backend når endepunktet er klart
   } else {
-    mineSakerHosInnloggetBruker = hentMineSaker(request, innloggetBruker.navIdent);
+    mineSakerHosInnloggetBruker = hentMineSaker(
+      request,
+      innloggetBruker.navIdent,
+      innloggetBruker.name,
+    );
     varsler = hentUlesteVarsler(request);
   }
 

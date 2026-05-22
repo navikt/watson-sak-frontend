@@ -5,7 +5,10 @@ import {
   hentFordelingssaker as _hentFordelingssaker,
   hentMineSaker as _hentMineSaker,
   leggTilMockSakIFordeling as _leggTilMockSakIFordeling,
+  medInnloggetEier,
 } from "~/testing/mock-store/alle-saker.server";
+
+export { medInnloggetEier };
 
 export function hentAlleSaker(request: Request) {
   return _hentAlleSaker(hentMockState(request));
@@ -15,8 +18,8 @@ export function hentFordelingssaker(request: Request) {
   return _hentFordelingssaker(hentMockState(request));
 }
 
-export function hentMineSaker(request: Request, navIdent?: string) {
-  return _hentMineSaker(hentMockState(request), navIdent);
+export function hentMineSaker(request: Request, navIdent?: string, navn?: string) {
+  return _hentMineSaker(hentMockState(request), navIdent, navn);
 }
 
 export function hentAvslutningsdatoer(request: Request) {
