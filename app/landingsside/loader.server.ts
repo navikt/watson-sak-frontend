@@ -15,10 +15,10 @@ function hentOppdatertDato(sak: KontrollsakResponse): string {
   return sak.oppdatert ?? sak.opprettet;
 }
 
-function erInnenforSiste14Dager(dato: string, referansedato: Date): boolean {
-  const fjortenDagerSiden = new Date(referansedato);
-  fjortenDagerSiden.setDate(fjortenDagerSiden.getDate() - 14);
-  return new Date(dato) >= fjortenDagerSiden;
+function erInnenforSiste30Dager(dato: string, referansedato: Date): boolean {
+  const trettiDagerSiden = new Date(referansedato);
+  trettiDagerSiden.setDate(trettiDagerSiden.getDate() - 30);
+  return new Date(dato) >= trettiDagerSiden;
 }
 
 function finnReferansedato(saker: KontrollsakResponse[]): Date {
@@ -67,10 +67,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const velkomstOppsummering = lagVelkomstOppsummering(sakerForVelkomstOppsummering);
 
   const referansedato = finnReferansedato(mineSakerHosInnloggetBruker);
-  const sakerSiste14Dager = mineSakerHosInnloggetBruker.filter((sak) =>
-    erInnenforSiste14Dager(hentOppdatertDato(sak), referansedato),
+  const sakerSiste30Dager = mineSakerHosInnloggetBruker.filter((sak) =>
+    erInnenforSiste30Dager(hentOppdatertDato(sak), referansedato),
   );
-  const traktSteg = beregnTraktSteg(sakerSiste14Dager);
+  const traktSteg = beregnTraktSteg(sakerSiste30Dager);
 
   return { mineSaker, varsler, velkomstOppsummering, traktSteg };
 }

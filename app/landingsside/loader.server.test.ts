@@ -37,7 +37,7 @@ describe("landingsside-loader", () => {
     expect(data.varsler.every((varsel) => !varsel.erLest)).toBe(true);
   });
 
-  it("returnerer traktSteg for brukerens saker siste 14 dager", async () => {
+  it("returnerer traktSteg for brukerens saker siste 30 dager", async () => {
     const data = await loader(loaderArgs);
 
     expect(data.traktSteg).toEqual(
