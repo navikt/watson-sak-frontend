@@ -9,6 +9,7 @@ import { getOpprettetDato } from "~/saker/selectors";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { hentUlesteVarsler } from "~/varsler/mock-data.server";
 import type { Varsel } from "~/varsler/typer";
+import { beregnDashboardNokkeltall } from "./dashboard-nokkeltall";
 import { lagVelkomstOppsummering } from "./velkomst";
 
 function hentOppdatertDato(sak: KontrollsakResponse): string {
@@ -72,5 +73,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   );
   const traktSteg = beregnTraktSteg(sakerSiste30Dager);
 
-  return { mineSaker, varsler, velkomstOppsummering, traktSteg };
+  const dashboardNokkeltall = beregnDashboardNokkeltall(mineSakerHosInnloggetBruker);
+
+  return { mineSaker, varsler, velkomstOppsummering, traktSteg, dashboardNokkeltall };
 }
