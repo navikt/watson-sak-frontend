@@ -65,8 +65,9 @@ export function formaterBlokkeringsarsak(arsak: Blokkeringsarsak): string {
   return blokkeringsarsakEtiketter[arsak];
 }
 
-export function formaterHenleggelsesarsak(arsak: Henleggelsesarsak): string {
-  return henleggelsesarsakEtiketter[arsak];
+export function formaterHenleggelsesarsak(arsak: Henleggelsesarsak | null | undefined): string {
+  if (!arsak) return "Ukjent";
+  return henleggelsesarsakEtiketter[arsak] ?? "Ukjent";
 }
 
 export const henleggelsesarsakAlternativer: Henleggelsesarsak[] = [
