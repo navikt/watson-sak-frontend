@@ -53,13 +53,13 @@ export default function LandingSide() {
               className="rounded-2xl border border-ax-border-neutral-subtle bg-ax-bg-default p-6"
             >
               <Heading level="2" size="medium" spacing id="trakt-heading">
-                Dine saker siste 14 dager
+                Dine saker siste 30 dager
               </Heading>
               {loaderData.traktSteg.length > 0 ? (
                 <Trakt steg={loaderData.traktSteg} />
               ) : (
                 <BodyShort className="text-ax-text-neutral-subtle">
-                  Du har ikke jobbet på noen saker de siste 14 dagene.
+                  Du har ikke jobbet på noen saker de siste 30 dagene.
                 </BodyShort>
               )}
             </section>

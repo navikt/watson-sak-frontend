@@ -34,10 +34,10 @@ type FilterState = {
 const TRAKT_STATUS_REKKEFOLGE: KontrollsakStatus[] = [
   "OPPRETTET",
   "UTREDES",
+  "HENLAGT",
   "STRAFFERETTSLIG_VURDERING",
   "ANMELDT",
   "AVSLUTTET",
-  "HENLAGT",
 ];
 
 export function normaliserFilterVerdier(verdier: string[]): string[] {
@@ -87,7 +87,10 @@ export function beregnTraktSteg(saker: KontrollsakResponse[]) {
     teller.set(sak.status, (teller.get(sak.status) ?? 0) + 1);
   }
   return TRAKT_STATUS_REKKEFOLGE.filter((status) => (teller.get(status) ?? 0) > 0).map(
-    (status) => ({ label: formaterStatus(status), antall: teller.get(status) ?? 0 }),
+    (status) => ({
+      label: status === "OPPRETTET" ? "Tildelt" : formaterStatus(status),
+      antall: teller.get(status) ?? 0,
+    }),
   );
 }
 

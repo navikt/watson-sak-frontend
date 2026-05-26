@@ -70,7 +70,7 @@ describe("beregnTraktSteg", () => {
     const steg = beregnTraktSteg(saker);
 
     expect(steg.map((s) => s.antall)).toEqual([2, 1]);
-    expect(steg[0].label).toBe("Opprettet");
+    expect(steg[0].label).toBe("Tildelt");
     expect(steg[1].label).toBe("Utredes");
   });
 
