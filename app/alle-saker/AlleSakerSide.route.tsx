@@ -15,9 +15,9 @@ import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
 import { paginerElementer } from "~/utils/paginering";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import type { Route } from "./+types/AlleSakerSide.route";
-import { mockNokkeltall } from "./mock-data.server";
 import {
   type AlleSakerKolonne,
+  beregnNokkeltall,
   beregnTraktSteg,
   filtrerSaker,
   normaliserFilterVerdier,
@@ -99,7 +99,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     totalAntall: filtrerteSaker.length,
     sorteringskolonne: sorterKolonne,
     sorteringsretning: sorterRetning,
-    nokkeltall: mockNokkeltall, // TODO: hent nøkkeltall fra backend når endepunktet er klart
+    nokkeltall: beregnNokkeltall(alleSaker),
     traktSteg: beregnTraktSteg(alleSaker),
     filterAlternativer,
   };
