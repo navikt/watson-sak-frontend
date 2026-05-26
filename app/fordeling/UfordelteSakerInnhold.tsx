@@ -1,4 +1,4 @@
-import { BodyShort, Heading, HStack, Pagination, VStack } from "@navikt/ds-react";
+import { BodyShort, Heading, HStack, LocalAlert, Pagination, VStack } from "@navikt/ds-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router";
 import { ChipsFiltergruppe } from "~/filtre/ChipsFiltergruppe";
@@ -98,6 +98,9 @@ export function UfordelteSakerInnhold({
     });
   }
 
+  const harSaker = saker.length > 0;
+  const harFiltrerteSaker = filtrerteSaker.length > 0;
+
   return (
     <section aria-labelledby="ufordelte-saker-overskrift" className="pb-12">
       <VStack gap="space-6" className="mt-4">
@@ -105,83 +108,113 @@ export function UfordelteSakerInnhold({
           Ufordelte saker
         </Heading>
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <Oppsummeringskort tittel="Antall">{oppsummering.antallTekst}</Oppsummeringskort>
-          <Oppsummeringskort tittel="Liggetid">{oppsummering.eldsteTekst}</Oppsummeringskort>
-          <Oppsummeringskort tittel="Ytelser">{oppsummering.ytelserTekst}</Oppsummeringskort>
-        </div>
+        {harSaker && (
+          <div className="grid gap-4 md:grid-cols-3">
+            <Oppsummeringskort tittel="Antall">{oppsummering.antallTekst}</Oppsummeringskort>
+            <Oppsummeringskort tittel="Liggetid">{oppsummering.eldsteTekst}</Oppsummeringskort>
+            <Oppsummeringskort tittel="Ytelser">{oppsummering.ytelserTekst}</Oppsummeringskort>
+          </div>
+        )}
 
-        <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start">
-          <div className="min-w-0">
-            <div className="overflow-hidden rounded-2xl border border-ax-border-neutral-subtle bg-ax-bg-default">
-              <div className="overflow-x-auto">
-                <Saksliste
-                  rader={sakslisteRader}
-                  kolonner={[
-                    "saksid",
-                    "kategori",
-                    "misbrukstype",
-                    "status",
-                    "opprettet",
-                    "oppdatert",
-                  ]}
-                  tomTekst="Ingen ufordelte saker matcher filtrene."
-                  handlingKolonneTittel={<span className="sr-only">Handling</span>}
-                  sortering={{
-                    kolonne: sorteringskolonne,
-                    retning: sorteringsretning,
-                    onSort: (kolonne) => sorterPåKolonne(kolonne as UfordeltSorteringskolonne),
-                    sorterbare: [...ufordelteSorteringskolonner],
-                  }}
-                  renderRadHandling={(rad) => (
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        const valgtSak = paginerteSaker.elementer.find((sak) => sak.id === rad.id);
-
-                        if (valgtSak) {
-                          setSakSomTildeles(valgtSak);
-                        }
+        {!harSaker ? (
+          <LocalAlert status="announcement">
+            <LocalAlert.Header>
+              <LocalAlert.Title as="h2">Ingen ufordelte saker</LocalAlert.Title>
+            </LocalAlert.Header>
+            <LocalAlert.Content>
+              Det er for øyeblikket ingen saker som venter på fordeling.
+            </LocalAlert.Content>
+          </LocalAlert>
+        ) : (
+          <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start">
+            <div className="min-w-0">
+              {harFiltrerteSaker ? (
+                <div className="overflow-hidden rounded-2xl border border-ax-border-neutral-subtle bg-ax-bg-default">
+                  <div className="overflow-x-auto">
+                    <Saksliste
+                      rader={sakslisteRader}
+                      kolonner={[
+                        "saksid",
+                        "kategori",
+                        "misbrukstype",
+                        "status",
+                        "opprettet",
+                        "oppdatert",
+                      ]}
+                      tomTekst="Ingen ufordelte saker matcher filtrene."
+                      handlingKolonneTittel={<span className="sr-only">Handling</span>}
+                      sortering={{
+                        kolonne: sorteringskolonne,
+                        retning: sorteringsretning,
+                        onSort: (kolonne) => sorterPåKolonne(kolonne as UfordeltSorteringskolonne),
+                        sorterbare: [...ufordelteSorteringskolonner],
                       }}
-                      className="cursor-pointer border-none bg-transparent p-0 text-sm font-semibold text-ax-text-accent underline-offset-2 hover:underline focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
-                    >
-                      Tildel
-                    </button>
-                  )}
-                />
-              </div>
+                      renderRadHandling={(rad) => (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            const valgtSak = paginerteSaker.elementer.find(
+                              (sak) => sak.id === rad.id,
+                            );
+
+                            if (valgtSak) {
+                              setSakSomTildeles(valgtSak);
+                            }
+                          }}
+                          className="cursor-pointer border-none bg-transparent p-0 text-sm font-semibold text-ax-text-accent underline-offset-2 hover:underline focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
+                        >
+                          Tildel
+                        </button>
+                      )}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <LocalAlert status="announcement">
+                  <LocalAlert.Header>
+                    <LocalAlert.Title as="h2">Ingen treff</LocalAlert.Title>
+                  </LocalAlert.Header>
+                  <LocalAlert.Content>
+                    Ingen ufordelte saker matcher de valgte filtrene. Prøv å fjerne noen filtre.
+                  </LocalAlert.Content>
+                </LocalAlert>
+              )}
+
+              {paginerteSaker.totalSider > 1 && (
+                <HStack justify="center" className="mt-6">
+                  <Pagination
+                    page={paginerteSaker.aktivSide}
+                    onPageChange={gåTilSide}
+                    count={paginerteSaker.totalSider}
+                    size="small"
+                  />
+                </HStack>
+              )}
             </div>
 
-            {paginerteSaker.totalSider > 1 && (
-              <HStack justify="center" className="mt-6">
-                <Pagination
-                  page={paginerteSaker.aktivSide}
-                  onPageChange={gåTilSide}
-                  count={paginerteSaker.totalSider}
+            <Filterpanel>
+              {filtervalg.kategorier.length > 0 && (
+                <ChipsFiltergruppe
+                  tittel="Kategori"
+                  alternativer={filtervalg.kategorier.map((v) => ({ verdi: v, etikett: v }))}
+                  valgteVerdier={kategoriFilter.valgteVerdier}
+                  onToggle={kategoriFilter.toggle}
                   size="small"
                 />
-              </HStack>
-            )}
+              )}
+              {filtervalg.ytelser.length > 0 && (
+                <ChipsFiltergruppe
+                  tittel="Ytelse"
+                  alternativer={filtervalg.ytelser.map((v) => ({ verdi: v, etikett: v }))}
+                  valgteVerdier={ytelseFilter.valgteVerdier}
+                  onToggle={ytelseFilter.toggle}
+                  size="small"
+                />
+              )}
+            </Filterpanel>
           </div>
-
-          <Filterpanel>
-            <ChipsFiltergruppe
-              tittel="Kategori"
-              alternativer={filtervalg.kategorier.map((v) => ({ verdi: v, etikett: v }))}
-              valgteVerdier={kategoriFilter.valgteVerdier}
-              onToggle={kategoriFilter.toggle}
-              size="small"
-            />
-            <ChipsFiltergruppe
-              tittel="Ytelse"
-              alternativer={filtervalg.ytelser.map((v) => ({ verdi: v, etikett: v }))}
-              valgteVerdier={ytelseFilter.valgteVerdier}
-              onToggle={ytelseFilter.toggle}
-              size="small"
-            />
-          </Filterpanel>
-        </div>
+        )}
       </VStack>
 
       <TildelSaksbehandlerModal
