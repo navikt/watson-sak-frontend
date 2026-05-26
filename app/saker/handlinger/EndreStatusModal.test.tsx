@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { EndreStatusModal } from "./EndreStatusModal";
 
 const submitMock = vi.fn();
@@ -28,6 +28,9 @@ function renderMedRouter(ui: React.ReactNode) {
 }
 
 describe("EndreStatusModal", () => {
+  beforeEach(() => {
+    submitMock.mockClear();
+  });
   it("deaktiverer gjeldende status i listen", async () => {
     renderMedRouter(
       <EndreStatusModal
@@ -85,5 +88,33 @@ describe("EndreStatusModal", () => {
 
     fireEvent.change(statusSelect, { target: { value: "ANMELDT" } });
     expect(screen.queryByLabelText("Henleggelsesårsak")).toBeNull();
+  });
+
+  it("lar brukeren velge henleggelsesårsak og sende inn skjema med riktig data", () => {
+    renderMedRouter(
+      <EndreStatusModal
+        sakId="00000000-0000-4000-8000-000000000001"
+        nåværendeStatus="UTREDES"
+        åpen={true}
+        onClose={() => {}}
+      />,
+    );
+
+    const statusSelect = screen.getByLabelText("Ny status");
+    fireEvent.change(statusSelect, { target: { value: "HENLAGT" } });
+
+    const arsakSelect = screen.getByLabelText("Henleggelsesårsak");
+    fireEvent.change(arsakSelect, { target: { value: "IKKE_KAPASITET" } });
+
+    expect((arsakSelect as HTMLSelectElement).value).toBe("IKKE_KAPASITET");
+
+    const lagreKnapp = screen.getByRole("button", { name: "Lagre" });
+    fireEvent.click(lagreKnapp);
+
+    expect(submitMock).toHaveBeenCalledOnce();
+    const formData = submitMock.mock.calls[0][0] as FormData;
+    expect(formData.get("status")).toBe("HENLAGT");
+    expect(formData.get("henleggelsesarsak")).toBe("IKKE_KAPASITET");
+    expect(formData.get("handling")).toBe("endre_status");
   });
 });
