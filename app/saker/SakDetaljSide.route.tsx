@@ -524,7 +524,7 @@ export default function SakDetaljSide() {
                           </div>
                         </HGrid>
 
-                        <hr className="border-ax-border-neutral-subtle" />
+                        <hr className="my-4 border-ax-border-neutral-subtle" />
 
                         <VStack gap="space-8">
                           <Heading level="2" size="small">
