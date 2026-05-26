@@ -73,7 +73,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   );
   const traktSteg = beregnTraktSteg(sakerSiste30Dager);
 
-  const dashboardNokkeltall = beregnDashboardNokkeltall(mineSakerHosInnloggetBruker);
+  const dashboardNokkeltall = beregnDashboardNokkeltall(mineSakerHosInnloggetBruker, referansedato);
 
   return { mineSaker, varsler, velkomstOppsummering, traktSteg, dashboardNokkeltall };
 }

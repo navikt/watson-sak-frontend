@@ -102,7 +102,7 @@ export function DashboardNokkeltallKort({ nokkeltall }: Props) {
             suffiks={nokkeltall.eldsteApneSakDager !== null ? "dager" : undefined}
             overskrift="Eldste åpne sak"
             underoverskrift={
-              nokkeltall.eldsteApneSakId ? `#${nokkeltall.eldsteApneSakId}` : "Ingen"
+              nokkeltall.eldsteApneSakId !== null ? `#${nokkeltall.eldsteApneSakId}` : "Ingen"
             }
           />
         </div>
