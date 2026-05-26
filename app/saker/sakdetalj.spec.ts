@@ -40,7 +40,7 @@ test.describe("Sakdetalj", () => {
 
     const merkingCombobox = page.getByLabel("Merking");
     await merkingCombobox.click();
-    await page.getByRole("option", { name: "Prioritert" }).click();
+    await page.getByRole("option", { name: "Lime" }).click();
     await merkingCombobox.press("Escape");
 
     await page.getByLabel("Kilde").selectOption("PUBLIKUM");
@@ -59,7 +59,7 @@ test.describe("Sakdetalj", () => {
     await expect(page.getByRole("combobox", { name: "Kategori" })).toHaveCount(0);
     await expect(page.getByText("Arbeid", { exact: true })).toBeVisible();
     await expect(page.getByText("Svart arbeid", { exact: true })).toBeVisible();
-    await expect(page.getByText("Prioritert", { exact: true })).toBeVisible();
+    await expect(page.getByText("Lime", { exact: true })).toBeVisible();
     await expect(page.getByText("Publikum", { exact: true })).toBeVisible();
     await expect(page.getByText("Dagpenger", { exact: true })).toBeVisible();
     await expect(page.getByText("01.02.2026 – 28.02.2026")).toBeVisible();

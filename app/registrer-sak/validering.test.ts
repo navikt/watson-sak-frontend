@@ -94,7 +94,7 @@ describe("opprettSakSchema", () => {
   it("godtar merking som array", () => {
     const resultat = opprettSakSchema.safeParse({
       ...minimaltGyldigSkjema,
-      merking: ["PRIORITERT", "SENSITIV"],
+      merking: ["LIME", "REGMAN"],
     });
     expect(resultat.success).toBe(true);
   });
