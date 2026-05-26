@@ -1,4 +1,4 @@
-import { BooksIcon, LightBulbIcon, MenuGridIcon, PersonIcon } from "@navikt/aksel-icons";
+import { BooksIcon, LeaveIcon, LightBulbIcon, MenuGridIcon, PersonIcon } from "@navikt/aksel-icons";
 import { ActionMenu, InternalHeader, Search, Spacer, Tag } from "@navikt/ds-react";
 import { useEffect, useRef } from "react";
 import { Form, Link } from "react-router";
@@ -92,6 +92,11 @@ export function AppHeader() {
             icon={<LightBulbIcon />}
           >
             Idéportal
+          </ActionMenu.Item>
+
+          <ActionMenu.Divider />
+          <ActionMenu.Item as="a" href="/oauth2/logout" icon={<LeaveIcon />}>
+            Logg ut
           </ActionMenu.Item>
         </ActionMenu.Content>
       </ActionMenu>
