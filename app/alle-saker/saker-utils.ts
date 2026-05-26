@@ -6,6 +6,7 @@ import {
   getSaksenhet,
 } from "~/saker/selectors";
 import type { KontrollsakResponse, KontrollsakStatus } from "~/saker/types.backend";
+import type { Nokkeltall } from "~/statistikk/types";
 import { formaterStatus, getStatus } from "~/saker/visning";
 import { getSaksreferanse } from "~/saker/id";
 
@@ -45,6 +46,39 @@ export function normaliserFilterVerdier(verdier: string[]): string[] {
 
 export function unikeVerdier(verdier: string[]): string[] {
   return [...new Set(verdier.filter(Boolean))].sort((a, b) => a.localeCompare(b, "nb"));
+}
+
+const AVSLUTTEDE_STATUSER: KontrollsakStatus[] = ["AVSLUTTET", "HENLAGT"];
+const MS_PER_DAG = 1000 * 60 * 60 * 24;
+const UKER_12_MS = 12 * 7 * MS_PER_DAG;
+const UKER_15_MS = 15 * 7 * MS_PER_DAG;
+
+export function beregnNokkeltall(saker: KontrollsakResponse[]): Nokkeltall {
+  const pagaendeSaker = saker.filter((s) => !AVSLUTTEDE_STATUSER.includes(s.status));
+  const paVent = saker.filter((s) => s.blokkert !== null);
+
+  const avsluttedeSaker = saker.filter((s) => s.status === "AVSLUTTET" && s.oppdatert);
+  const saksbehandlingstider = avsluttedeSaker.map((s) => {
+    const opprettet = new Date(s.opprettet).getTime();
+    const avsluttet = new Date(s.oppdatert!).getTime();
+    return avsluttet - opprettet;
+  });
+
+  const antallAvsluttet = saksbehandlingstider.length;
+  const innen12Uker = saksbehandlingstider.filter((tid) => tid <= UKER_12_MS).length;
+  const innen15Uker = saksbehandlingstider.filter((tid) => tid <= UKER_15_MS).length;
+  const gjennomsnittMs =
+    antallAvsluttet > 0
+      ? saksbehandlingstider.reduce((sum, tid) => sum + tid, 0) / antallAvsluttet
+      : 0;
+
+  return {
+    pagaendeSaker: pagaendeSaker.length,
+    paVent: paVent.length,
+    utredetInnen12Uker: antallAvsluttet > 0 ? Math.round((innen12Uker / antallAvsluttet) * 100) : 0,
+    utredetInnen15Uker: antallAvsluttet > 0 ? Math.round((innen15Uker / antallAvsluttet) * 100) : 0,
+    gjennomsnittligSaksbehandlingstid: Math.round(gjennomsnittMs / MS_PER_DAG),
+  };
 }
 
 export function beregnTraktSteg(saker: KontrollsakResponse[]) {
