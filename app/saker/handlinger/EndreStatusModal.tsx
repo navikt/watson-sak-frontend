@@ -66,20 +66,22 @@ export function EndreStatusModal({ sakId, nåværendeStatus, åpen, onClose }: E
         action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),
       });
       form.reset();
-      setStatusVerdi("");
-      setHenleggelsesarsakVerdi("");
+      setVisHenleggelse(false);
+      setVisAvsluttetAdvarsel(false);
       onClose();
     },
   });
 
-  const [statusVerdi, setStatusVerdi] = useState("");
-  const [henleggelsesarsakVerdi, setHenleggelsesarsakVerdi] = useState("");
+  const [visHenleggelse, setVisHenleggelse] = useState(fields.status.initialValue === "HENLAGT");
+  const [visAvsluttetAdvarsel, setVisAvsluttetAdvarsel] = useState(
+    fields.status.initialValue === "AVSLUTTET",
+  );
 
   function handleLukk() {
     if (erSubmitting) return;
     form.reset();
-    setStatusVerdi("");
-    setHenleggelsesarsakVerdi("");
+    setVisHenleggelse(false);
+    setVisAvsluttetAdvarsel(false);
     onClose();
   }
 
@@ -98,13 +100,11 @@ export function EndreStatusModal({ sakId, nåværendeStatus, åpen, onClose }: E
                 key={fields.status.key}
                 name={fields.status.name}
                 id={fields.status.id}
-                value={statusVerdi}
+                defaultValue={fields.status.initialValue ?? ""}
                 label="Ny status"
                 onChange={(event) => {
-                  setStatusVerdi(event.target.value);
-                  if (event.target.value !== "HENLAGT") {
-                    setHenleggelsesarsakVerdi("");
-                  }
+                  setVisHenleggelse(event.target.value === "HENLAGT");
+                  setVisAvsluttetAdvarsel(event.target.value === "AVSLUTTET");
                 }}
                 error={fields.status.errors?.[0]}
               >
@@ -115,14 +115,13 @@ export function EndreStatusModal({ sakId, nåværendeStatus, åpen, onClose }: E
                   </option>
                 ))}
               </Select>
-              {statusVerdi === "HENLAGT" ? (
+              {visHenleggelse ? (
                 <Select
                   key={fields.henleggelsesarsak.key}
                   name={fields.henleggelsesarsak.name}
                   id={fields.henleggelsesarsak.id}
+                  defaultValue={(fields.henleggelsesarsak.initialValue as string) ?? ""}
                   label="Henleggelsesårsak"
-                  value={henleggelsesarsakVerdi}
-                  onChange={(event) => setHenleggelsesarsakVerdi(event.target.value)}
                   error={fields.henleggelsesarsak.errors?.[0]}
                 >
                   <option value="">Velg årsak</option>
@@ -133,7 +132,7 @@ export function EndreStatusModal({ sakId, nåværendeStatus, åpen, onClose }: E
                   ))}
                 </Select>
               ) : null}
-              {statusVerdi === "AVSLUTTET" ? (
+              {visAvsluttetAdvarsel ? (
                 <InfoCard size="small" data-color="warning">
                   <InfoCard.Message icon={<ExclamationmarkTriangleIcon aria-hidden />}>
                     Avsluttet er en endelig status – du kan ikke endre tilbake
