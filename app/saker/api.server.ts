@@ -75,7 +75,11 @@ export async function søkKontrollsaker(
     body: JSON.stringify({ personIdent }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke søke etter kontrollsaker");
-  return parseEllerKastFeil(z.array(kontrollsakResponseSchema), await respons.json(), "søkKontrollsaker");
+  return parseEllerKastFeil(
+    z.array(kontrollsakResponseSchema),
+    await respons.json(),
+    "søkKontrollsaker",
+  );
 }
 
 // --- Hendelser ---
@@ -85,7 +89,11 @@ export async function hentHendelser(token: string, sakId: string) {
     headers: authHeaders(token),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke hente hendelser");
-  return parseEllerKastFeil(z.array(kontrollsakHendelseResponseSchema), await respons.json(), "hentHendelser");
+  return parseEllerKastFeil(
+    z.array(kontrollsakHendelseResponseSchema),
+    await respons.json(),
+    "hentHendelser",
+  );
 }
 
 // --- Journalposter ---
@@ -95,7 +103,11 @@ export async function hentJournalposter(token: string, sakId: string) {
     headers: authHeaders(token),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke hente journalposter");
-  return parseEllerKastFeil(z.array(journalpostReferanseSchema), await respons.json(), "hentJournalposter");
+  return parseEllerKastFeil(
+    z.array(journalpostReferanseSchema),
+    await respons.json(),
+    "hentJournalposter",
+  );
 }
 
 // --- Handlinger ---

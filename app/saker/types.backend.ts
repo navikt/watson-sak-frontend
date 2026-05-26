@@ -86,7 +86,7 @@ export const kontrollsakResponseSchema = z
     saksbehandlere: saksbehandlereSchema,
     status: kontrollsakStatusSchema,
     blokkert: blokkeringsarsakSchema.nullable(),
-    henleggelsesarsak: henleggelsesarsakSchema.nullable().optional(),
+    henleggelsesarsak: henleggelsesarsakSchema.nullable().optional().catch(null),
     kategori: kontrollsakKategoriSchema,
     kilde: kontrollsakKildeSchema,
     misbruktype: z.array(kontrollsakMisbrukstypeSchema),
@@ -123,7 +123,7 @@ export const kontrollsakHendelseResponseSchema = z.object({
   ytelseTyper: z.array(z.string()).default([]),
   kilde: kontrollsakKildeSchema.nullable().optional(),
   blokkert: blokkeringsarsakSchema.nullable().optional(),
-  henleggelsesarsak: henleggelsesarsakSchema.nullable().optional(),
+  henleggelsesarsak: henleggelsesarsakSchema.nullable().optional().catch(null),
   beskrivelse: z.string().nullable().optional(),
   opprettetAvNavIdent: z.string().nullable().optional(),
 });
