@@ -101,8 +101,8 @@ describe("saker-selectors", () => {
   });
 
   it("returnerer merking fra sak når feltet er satt", () => {
-    const sak = lagKontrollsak({ merking: ["PRIORITERT"] });
-    expect(getTags(sak)).toEqual(["PRIORITERT"]);
+    const sak = lagKontrollsak({ merking: ["LIME"] });
+    expect(getTags(sak)).toEqual(["LIME"]);
   });
 
   it("returnerer personnavn når feltet er satt", () => {

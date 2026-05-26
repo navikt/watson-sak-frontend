@@ -429,7 +429,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     formData.set("handling", "rediger_saksinformasjon");
     formData.set("kategori", "ARBEID");
     formData.append("misbruktype", "SVART_ARBEID");
-    formData.append("merking", "PRIORITERT");
+    formData.append("merking", "LIME");
     formData.set("kilde", "PUBLIKUM");
     formData.set("ytelser[0].type", "Dagpenger");
     formData.set("ytelser[0].fraDato", "2026-02-01");
@@ -451,7 +451,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
 
     expect(kontrollsak.kategori).toBe("ARBEID");
     expect(kontrollsak.misbruktype).toEqual(["SVART_ARBEID"]);
-    expect(kontrollsak.merking).toEqual(["PRIORITERT"]);
+    expect(kontrollsak.merking).toEqual(["LIME"]);
     expect(kontrollsak.kilde).toBe("PUBLIKUM");
     expect(kontrollsak.ytelser.map((ytelse) => ytelse.type)).toEqual(["Dagpenger", "Sykepenger"]);
     expect(kontrollsak.ytelser.map((ytelse) => ytelse.periodeFra)).toEqual([
@@ -509,7 +509,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     formData.set("handling", "rediger_saksinformasjon");
     formData.set("kategori", "ARBEID");
     formData.append("misbruktype", "SVART_ARBEID");
-    formData.append("merking", "PRIORITERT");
+    formData.append("merking", "LIME");
     formData.set("kilde", "PUBLIKUM");
     formData.set("ytelser[0].type", "Dagpenger");
     formData.set("ytelser[0].fraDato", "2026-02-01");

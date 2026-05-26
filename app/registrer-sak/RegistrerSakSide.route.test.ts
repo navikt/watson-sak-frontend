@@ -165,8 +165,8 @@ describe("OpprettSakSide action", () => {
     const formData = lagFormDataMedMinimum({ kategori: "UTLAND" });
     formData.append("misbruktype", "INNENFOR_EOS");
     formData.append("misbruktype", "UTENFOR_EOS");
-    formData.append("merking", "PRIORITERT");
-    formData.append("merking", "SENSITIV");
+    formData.append("merking", "LIME");
+    formData.append("merking", "REGMAN");
 
     await action({
       request: new Request("http://localhost/registrer-sak", {
@@ -181,7 +181,7 @@ describe("OpprettSakSide action", () => {
       expect.objectContaining({
         payload: expect.objectContaining({
           misbruktype: ["INNENFOR_EOS", "UTENFOR_EOS"],
-          merking: ["PRIORITERT", "SENSITIV"],
+          merking: ["LIME", "REGMAN"],
         }),
       }),
     );
@@ -304,7 +304,7 @@ describe("byggOpprettKontrollsakPayload", () => {
           kategori: "SAMLIV",
           kilde: "NAV_KONTROLL",
           misbruktype: ["SKJULT_SAMLIV"],
-          merking: ["PRIORITERT"],
+          merking: ["LIME"],
           enhet: "ØST",
           organisasjonsnummer: "123456789",
           ytelser: [
@@ -326,7 +326,7 @@ describe("byggOpprettKontrollsakPayload", () => {
       kilde: "NAV_KONTROLL",
       prioritet: "NORMAL",
       misbruktype: ["SKJULT_SAMLIV"],
-      merking: ["PRIORITERT"],
+      merking: ["LIME"],
       ytelser: [
         {
           type: "Dagpenger",

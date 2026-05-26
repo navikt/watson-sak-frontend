@@ -14,13 +14,12 @@ export const kildeEtiketter = kontrollsakKildeEtiketter;
 export const kategoriAlternativer = kontrollsakKategoriVerdier;
 export { misbrukstyperPerKategori as misbrukstypePerKategori };
 
-export const merkingAlternativer = ["PRIORITERT", "SENSITIV", "POLITIANMELDELSE", "ANNET"] as const;
+export const merkingAlternativer = ["LIME", "REGMAN", "A_KRIM"] as const;
 
 export const merkingEtiketter: Record<(typeof merkingAlternativer)[number], string> = {
-  PRIORITERT: "Prioritert",
-  SENSITIV: "Sensitiv",
-  POLITIANMELDELSE: "Politianmeldelse",
-  ANNET: "Annet",
+  LIME: "Lime",
+  REGMAN: "Regman",
+  A_KRIM: "A-krim",
 };
 
 export const enhetAlternativer = ["ØST", "VEST", "NORD", "ANALYSE"] as const;
