@@ -447,7 +447,13 @@ export default function SakDetaljSide() {
                               }))}
                               isMultiSelect
                               disabled={misbrukstypeAlternativer.length === 0}
-                              selectedOptions={lokaleVerdier.misbruktype}
+                              selectedOptions={lokaleVerdier.misbruktype.map((type) => ({
+                                label:
+                                  kontrollsakMisbrukstypeEtiketter[
+                                    type as (typeof kontrollsakMisbrukstypeVerdier)[number]
+                                  ] ?? type,
+                                value: type,
+                              }))}
                               onToggleSelected={(option, isSelected) => {
                                 setLokaleVerdier((gjeldende) => {
                                   const har = gjeldende.misbruktype.includes(option);
@@ -485,7 +491,13 @@ export default function SakDetaljSide() {
                               }))}
                               isMultiSelect
                               allowNewValues
-                              selectedOptions={lokaleVerdier.merking}
+                              selectedOptions={lokaleVerdier.merking.map((merking) => ({
+                                label:
+                                  merkingEtiketter[
+                                    merking as (typeof merkingAlternativer)[number]
+                                  ] ?? merking,
+                                value: merking,
+                              }))}
                               onToggleSelected={(option, isSelected) => {
                                 setLokaleVerdier((gjeldende) => {
                                   const har = gjeldende.merking.includes(option);
@@ -512,7 +524,7 @@ export default function SakDetaljSide() {
                           </div>
                         </HGrid>
 
-                        <hr className="border-ax-border-neutral-subtle" />
+                        <hr className="my-4 border-ax-border-neutral-subtle" />
 
                         <VStack gap="space-8">
                           <Heading level="2" size="small">

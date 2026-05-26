@@ -168,10 +168,9 @@ export function YtelseRadFelt({
         onClick={onFjern}
         disabled={!kanFjernes}
         title={kanFjernes ? "Fjern rad" : "Det må være minst én rad"}
-        className="mb-2"
-      >
-        <span className="sr-only">Fjern rad {indeks + 1}</span>
-      </Button>
+        aria-label={`Fjern rad ${indeks + 1}`}
+        className="self-end"
+      />
     </HStack>
   );
 }
