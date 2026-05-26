@@ -1,8 +1,9 @@
-import { BodyShort, HStack, Link, Table, Tag } from "@navikt/ds-react";
+import { BodyShort, Link, Table, Tag } from "@navikt/ds-react";
 import type { ReactNode } from "react";
 import { Link as RouterLink, useNavigate } from "react-router";
 import { formaterDato } from "~/utils/date-utils";
 import { KolonneHeading, type Sorteringsretning } from "./KolonneHeading";
+import { TagOverflow } from "./TagOverflow";
 
 type SakslisteKolonne =
   | "saksid"
@@ -153,16 +154,8 @@ function renderCelle(rad: SakslisteRad, kolonne: SakslisteKolonne) {
         <BodyShort size="small">–</BodyShort>
       );
     case "misbrukstype":
-      return rad.misbrukstyper.length > 0 ? (
-        <HStack gap="space-2" wrap>
-          {rad.misbrukstyper.map((misbrukstype) => (
-            <Tag key={misbrukstype} variant="outline" data-color="info" size="small">
-              {misbrukstype}
-            </Tag>
-          ))}
-        </HStack>
-      ) : (
-        <BodyShort size="small">–</BodyShort>
+      return (
+        <TagOverflow tags={rad.misbrukstyper} tomInnhold={<BodyShort size="small">–</BodyShort>} />
       );
     case "status":
       return rad.ventestatus ? (
