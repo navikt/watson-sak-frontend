@@ -170,7 +170,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const innlogget = await hentInnloggetBruker({ request });
   const sak = medInnloggetEier(rawSak, innlogget.navIdent, innlogget.name);
   const historikk = hentHistorikk(request, String(sak.id));
-  const filer = hentFilerForSak(request, String(sak.id));
+  const erEier = sak.saksbehandlere.eier?.navIdent === innlogget.navIdent;
+  const harDeltTilgang = sak.saksbehandlere.deltMed.some((s) => s.navIdent === innlogget.navIdent);
+  const filer = erEier || harDeltTilgang ? hentFilerForSak(request, String(sak.id)) : [];
   const andreSaker = alleSaker.filter(
     (annenSak) => annenSak.personIdent === sak.personIdent && annenSak.id !== sak.id,
   );
