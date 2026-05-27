@@ -339,7 +339,7 @@ const personOppslagResponseSchema = z.object({
   alder: z.number(),
 });
 
-export type PersonOppslagBackendResponse = z.infer<typeof personOppslagResponseSchema>;
+type PersonOppslagBackendResponse = z.infer<typeof personOppslagResponseSchema>;
 
 export type SlåOppPersonResultat =
   | { type: "success"; person: PersonOppslagBackendResponse }
@@ -347,7 +347,10 @@ export type SlåOppPersonResultat =
   | { type: "ingen-tilgang" }
   | { type: "feil"; melding: string };
 
-export async function slåOppPerson(token: string, personIdent: string): Promise<SlåOppPersonResultat> {
+export async function slåOppPerson(
+  token: string,
+  personIdent: string,
+): Promise<SlåOppPersonResultat> {
   const respons = await fetch(apiUrl("/api/v1/person/oppslag"), {
     method: "POST",
     headers: authHeaders(token),
@@ -355,7 +358,11 @@ export async function slåOppPerson(token: string, personIdent: string): Promise
   });
 
   if (respons.ok) {
-    const person = parseEllerKastFeil(personOppslagResponseSchema, await respons.json(), "slåOppPerson");
+    const person = parseEllerKastFeil(
+      personOppslagResponseSchema,
+      await respons.json(),
+      "slåOppPerson",
+    );
     return { type: "success", person };
   }
 
