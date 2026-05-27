@@ -1,6 +1,11 @@
-import { slaOppPerson } from "./person-oppslag.mock.server";
+import { getBackendOboToken } from "~/auth/access-token";
 import { skalBrukeMockdata } from "~/config/env.server";
+import { getSaksreferanse } from "~/saker/id";
+import * as backendApi from "~/saker/api.server";
+import { getSaksenhet } from "~/saker/selectors";
+import { getStatus } from "~/saker/visning";
 import { hentValgfriTekst } from "~/utils/form-data";
+import { slaOppPerson } from "./person-oppslag.mock.server";
 
 export async function action({ request }: { request: Request }) {
   const formData = await request.formData();
@@ -10,18 +15,51 @@ export async function action({ request }: { request: Request }) {
     return Response.json({ feil: "Ugyldig fødselsnummer" }, { status: 400 });
   }
 
-  if (!skalBrukeMockdata) {
-    return Response.json(
-      { feil: "Personoppslag mot backend er ikke implementert ennå" },
-      { status: 501 },
-    );
+  if (skalBrukeMockdata) {
+    const resultat = slaOppPerson(request, fnr);
+    if (!resultat) {
+      return Response.json({ person: null, eksisterendeSaker: [] });
+    }
+    return Response.json(resultat);
   }
 
-  const resultat = slaOppPerson(request, fnr);
+  const token = await getBackendOboToken(request);
 
-  if (!resultat) {
-    return Response.json({ person: null, eksisterendeSaker: [] });
+  const resultat = await backendApi.slåOppPerson(token, fnr);
+
+  switch (resultat.type) {
+    case "success": {
+      const saker = await backendApi.søkKontrollsaker(token, fnr);
+      const eksisterendeSaker = saker.map((sak) => ({
+        sakId: getSaksreferanse(sak.id),
+        opprettetDato: sak.opprettet.slice(0, 10),
+        personNavn: sak.personNavn ?? resultat.person.navn,
+        saksbehandler: sak.saksbehandlere.eier?.navn ?? sak.saksbehandlere.opprettetAv.navn,
+        enhet: getSaksenhet(sak) || "Ukjent",
+        status: getStatus(sak),
+      }));
+
+      return Response.json({
+        person: {
+          navn: resultat.person.navn,
+          personnummer: resultat.person.personIdent,
+          aktørId: "",
+          alder: resultat.person.alder,
+        },
+        eksisterendeSaker,
+      });
+    }
+
+    case "ikke-funnet":
+      return Response.json({ person: null, eksisterendeSaker: [] });
+
+    case "ingen-tilgang":
+      return Response.json(
+        { feil: "Du har ikke tilgang til å slå opp denne personen" },
+        { status: 403 },
+      );
+
+    case "feil":
+      return Response.json({ feil: resultat.melding }, { status: 502 });
   }
-
-  return Response.json(resultat);
 }
