@@ -77,11 +77,11 @@ export default function SøkSide() {
   return (
     <>
       <title>Søk – Watson Sak</title>
-      <VStack gap="space-8" className="py-6">
+      <VStack gap="space-12" className="mt-4 mb-8">
+        <Heading level="1" size="large">
+          Søk i saker
+        </Heading>
         <VStack gap="space-4">
-          <Heading level="1" size="large">
-            Søk i saker
-          </Heading>
           <Form
             method="post"
             role="search"

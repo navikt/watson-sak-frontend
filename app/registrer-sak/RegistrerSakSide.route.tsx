@@ -127,7 +127,7 @@ export default function OpprettSakSide() {
   return (
     <>
       <title>Opprett sak – Watson Sak</title>
-      <VStack gap="space-8" className="py-6">
+      <VStack gap="space-12" className="mt-4 mb-8">
         <Heading level="1" size="large">
           Opprett sak
         </Heading>

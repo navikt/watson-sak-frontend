@@ -29,7 +29,7 @@ export default function LandingSide() {
   return (
     <>
       <title>Dashboard – Watson Sak</title>
-      <VStack gap="space-16" className="mt-4 mb-8">
+      <VStack gap="space-12" className="mt-4 mb-8">
         {preferences.visVelkomstmelding ? (
           <Velkomst oppsummering={loaderData.velkomstOppsummering} />
         ) : null}

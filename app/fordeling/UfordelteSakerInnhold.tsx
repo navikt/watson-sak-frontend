@@ -103,7 +103,7 @@ export function UfordelteSakerInnhold({
 
   return (
     <section aria-labelledby="ufordelte-saker-overskrift" className="pb-12">
-      <VStack gap="space-6" className="mt-4">
+      <VStack gap="space-12" className="mt-4 mb-8">
         <Heading id="ufordelte-saker-overskrift" level="1" size="large">
           Ufordelte saker
         </Heading>

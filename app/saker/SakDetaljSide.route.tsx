@@ -317,7 +317,7 @@ export default function SakDetaljSide() {
   return (
     <>
       <title>{`Sak ${saksreferanse} – Watson Sak`}</title>
-      <VStack gap="space-12" className="py-6">
+      <VStack gap="space-12" className="mt-4 mb-8">
         <div>
           <Button
             type="button"
