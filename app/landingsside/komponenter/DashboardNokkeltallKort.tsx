@@ -65,7 +65,7 @@ export function DashboardNokkeltallKort({ nokkeltall }: Props) {
         <Heading level="2" size="medium" id="nokkeltall-heading">
           Nøkkeltall
         </Heading>
-        <div className="grid grid-cols-2 gap-[38px] md:grid-cols-3 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-9 md:grid-cols-3 lg:grid-cols-6">
           <Nokkeltallkort
             farge="accent"
             verdi={nokkeltall.totalt}
