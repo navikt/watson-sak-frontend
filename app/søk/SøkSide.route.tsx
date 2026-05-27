@@ -1,6 +1,5 @@
 import { MagnifyingGlassIcon } from "@navikt/aksel-icons";
-import { BodyShort, Heading, Page, Search, VStack } from "@navikt/ds-react";
-import { PageBlock } from "@navikt/ds-react/Page";
+import { BodyShort, Heading, Search, VStack } from "@navikt/ds-react";
 import { useEffect, useRef } from "react";
 import { Form, useActionData } from "react-router";
 import type { KontrollsakResponse } from "~/saker/types.backend";
@@ -76,77 +75,75 @@ export default function SøkSide() {
   }
 
   return (
-    <Page>
+    <>
       <title>Søk – Watson Sak</title>
-      <PageBlock width="lg" gutters>
-        <VStack gap="space-8" className="py-6">
-          <VStack gap="space-4">
-            <Heading level="1" size="large">
-              Søk i saker
-            </Heading>
-            <Form
-              method="post"
-              role="search"
-              aria-label="Søk i saker"
-              className="max-w-xl"
-              ref={skjemaRef}
-            >
-              <Search
-                label="Søk etter saker"
-                name="søketekst"
-                defaultValue={søketekst}
-                variant="primary"
-                autoFocus
-                onKeyDown={handleSøkefeltKeyDown}
-              />
-            </Form>
-          </VStack>
-
-          {harSøkt && (
-            <VStack gap="space-4">
-              <BodyShort>
-                {resultater && resultater.length > 0
-                  ? `${resultater.length} treff for "${søketekst}"`
-                  : `Ingen treff for "${søketekst}"`}
-              </BodyShort>
-
-              {resultater && resultater.length > 0 && (
-                <VStack gap="space-8" ref={resultatlisteRef} onKeyDown={handleResultatlisteKeyDown}>
-                  {resultater.map((sak) => (
-                    <SøkResultatKort key={sak.id} sak={sak} />
-                  ))}
-                </VStack>
-              )}
-
-              {resultater && resultater.length === 0 && (
-                <VStack gap="space-4" align="center" className="py-12">
-                  <MagnifyingGlassIcon
-                    aria-hidden
-                    fontSize="3rem"
-                    className="text-ax-icon-neutral-subtle"
-                  />
-                  <BodyShort className="text-ax-text-neutral-subtle">
-                    Prøv å søke på saksnummer, fødselsnummer eller kategorier.
-                  </BodyShort>
-                </VStack>
-              )}
-            </VStack>
-          )}
-
-          {!harSøkt && (
-            <VStack gap="space-4" align="center" className="py-12">
-              <MagnifyingGlassIcon
-                aria-hidden
-                fontSize="3rem"
-                className="text-ax-icon-neutral-subtle"
-              />
-              <BodyShort className="text-ax-text-neutral-subtle">
-                Søk etter saker på saksnummer, fødselsnummer eller kategorier.
-              </BodyShort>
-            </VStack>
-          )}
+      <VStack gap="space-8" className="py-6">
+        <VStack gap="space-4">
+          <Heading level="1" size="large">
+            Søk i saker
+          </Heading>
+          <Form
+            method="post"
+            role="search"
+            aria-label="Søk i saker"
+            className="max-w-xl"
+            ref={skjemaRef}
+          >
+            <Search
+              label="Søk etter saker"
+              name="søketekst"
+              defaultValue={søketekst}
+              variant="primary"
+              autoFocus
+              onKeyDown={handleSøkefeltKeyDown}
+            />
+          </Form>
         </VStack>
-      </PageBlock>
-    </Page>
+
+        {harSøkt && (
+          <VStack gap="space-4">
+            <BodyShort>
+              {resultater && resultater.length > 0
+                ? `${resultater.length} treff for "${søketekst}"`
+                : `Ingen treff for "${søketekst}"`}
+            </BodyShort>
+
+            {resultater && resultater.length > 0 && (
+              <VStack gap="space-8" ref={resultatlisteRef} onKeyDown={handleResultatlisteKeyDown}>
+                {resultater.map((sak) => (
+                  <SøkResultatKort key={sak.id} sak={sak} />
+                ))}
+              </VStack>
+            )}
+
+            {resultater && resultater.length === 0 && (
+              <VStack gap="space-4" align="center" className="py-12">
+                <MagnifyingGlassIcon
+                  aria-hidden
+                  fontSize="3rem"
+                  className="text-ax-icon-neutral-subtle"
+                />
+                <BodyShort className="text-ax-text-neutral-subtle">
+                  Prøv å søke på saksnummer, fødselsnummer eller kategorier.
+                </BodyShort>
+              </VStack>
+            )}
+          </VStack>
+        )}
+
+        {!harSøkt && (
+          <VStack gap="space-4" align="center" className="py-12">
+            <MagnifyingGlassIcon
+              aria-hidden
+              fontSize="3rem"
+              className="text-ax-icon-neutral-subtle"
+            />
+            <BodyShort className="text-ax-text-neutral-subtle">
+              Søk etter saker på saksnummer, fødselsnummer eller kategorier.
+            </BodyShort>
+          </VStack>
+        )}
+      </VStack>
+    </>
   );
 }

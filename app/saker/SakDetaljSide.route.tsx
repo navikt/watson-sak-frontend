@@ -9,14 +9,12 @@ import {
   Heading,
   HGrid,
   HStack,
-  Page,
   Select,
   Table,
   Tag,
   UNSAFE_Combobox,
   VStack,
 } from "@navikt/ds-react";
-import { PageBlock } from "@navikt/ds-react/Page";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   useBeforeUnload,
@@ -317,66 +315,260 @@ export default function SakDetaljSide() {
   }
 
   return (
-    <Page>
+    <>
       <title>{`Sak ${saksreferanse} – Watson Sak`}</title>
-      <PageBlock width="xl" gutters className="!mx-0">
-        <VStack gap="space-12" className="py-6">
-          <div>
-            <Button
-              type="button"
-              variant="tertiary"
-              size="small"
-              icon={<ArrowLeftIcon aria-hidden />}
-              onClick={() => navigate(-1)}
-            >
-              Tilbake
-            </Button>
-          </div>
+      <VStack gap="space-12" className="py-6">
+        <div>
+          <Button
+            type="button"
+            variant="tertiary"
+            size="small"
+            icon={<ArrowLeftIcon aria-hidden />}
+            onClick={() => navigate(-1)}
+          >
+            Tilbake
+          </Button>
+        </div>
 
-          <HGrid columns={{ xs: 1, md: "1fr 280px" }} gap="space-8">
-            <VStack gap="space-8">
-              <Kort>
-                <VStack gap="space-4">
-                  <HStack justify="space-between" align="start">
-                    <VStack gap="space-2">
-                      <Heading level="1" size="large">
-                        {tittel}
-                      </Heading>
-                    </VStack>
-                    <HStack gap="space-4">
-                      {sak.blokkert && (
-                        <Tag variant="outline" data-color="warning" size="medium">
-                          {formaterBlokkeringsarsak(sak.blokkert)}
-                        </Tag>
-                      )}
-                      <Tag variant="outline" data-color="success" size="medium">
-                        {statusTekst}
+        <HGrid columns={{ xs: 1, md: "1fr 280px" }} gap="space-8">
+          <VStack gap="space-8">
+            <Kort>
+              <VStack gap="space-4">
+                <HStack justify="space-between" align="start">
+                  <VStack gap="space-2">
+                    <Heading level="1" size="large">
+                      {tittel}
+                    </Heading>
+                  </VStack>
+                  <HStack gap="space-4">
+                    {sak.blokkert && (
+                      <Tag variant="outline" data-color="warning" size="medium">
+                        {formaterBlokkeringsarsak(sak.blokkert)}
                       </Tag>
-                    </HStack>
+                    )}
+                    <Tag variant="outline" data-color="success" size="medium">
+                      {statusTekst}
+                    </Tag>
                   </HStack>
+                </HStack>
 
-                  <hr className="border-ax-border-neutral-subtle" />
+                <hr className="border-ax-border-neutral-subtle" />
 
-                  {redigerer ? (
-                    <fetcher.Form method="post" key={redigeringsøkt}>
-                      <input type="hidden" name="handling" value="rediger_saksinformasjon" />
+                {redigerer ? (
+                  <fetcher.Form method="post" key={redigeringsøkt}>
+                    <input type="hidden" name="handling" value="rediger_saksinformasjon" />
 
-                      <VStack gap="space-6">
-                        {feilElementer.length > 0 && (
-                          <ErrorSummary
-                            id={errorSummaryId}
-                            heading="Du må rette følgende feil før du kan lagre:"
+                    <VStack gap="space-6">
+                      {feilElementer.length > 0 && (
+                        <ErrorSummary
+                          id={errorSummaryId}
+                          heading="Du må rette følgende feil før du kan lagre:"
+                        >
+                          {feilElementer.map((element) => (
+                            <ErrorSummary.Item key={element.id} href={`#${element.id}`}>
+                              {element.melding}
+                            </ErrorSummary.Item>
+                          ))}
+                        </ErrorSummary>
+                      )}
+
+                      {feil?.skjema?.[0] && <Alert variant="error">{feil.skjema[0]}</Alert>}
+
+                      <VStack gap="space-1">
+                        <Detail className="text-ax-text-neutral-subtle" uppercase>
+                          Personnummer
+                        </Detail>
+                        <HStack gap="space-1" align="center">
+                          <BodyShort>{personIdent}</BodyShort>
+                          <CopyButton size="xsmall" copyText={personIdent} />
+                        </HStack>
+                      </VStack>
+
+                      <HGrid columns={{ xs: 1, md: 2 }} gap="space-4">
+                        <Select
+                          id={ankerIdForFelt("kategori")}
+                          name="kategori"
+                          label="Kategori"
+                          size="small"
+                          value={lokaleVerdier.kategori}
+                          error={førsteFeilForFelt(feil, "kategori")}
+                          onChange={(event) => {
+                            const kategori = event.target.value;
+                            const gyldige = hentMisbrukstypeAlternativer(kategori);
+                            setLokaleVerdier((gjeldende) => ({
+                              ...gjeldende,
+                              kategori,
+                              misbruktype: gjeldende.misbruktype.filter((type) =>
+                                gyldige.includes(type),
+                              ),
+                            }));
+                          }}
+                        >
+                          <option value="">Velg kategori</option>
+                          {kategoriAlternativer.map((kategori) => (
+                            <option key={kategori} value={kategori}>
+                              {getKategoriText({ ...sak, kategori }) ?? kategori}
+                            </option>
+                          ))}
+                        </Select>
+
+                        <Select
+                          id={ankerIdForFelt("kilde")}
+                          name="kilde"
+                          label="Kilde"
+                          size="small"
+                          value={lokaleVerdier.kilde}
+                          error={førsteFeilForFelt(feil, "kilde")}
+                          onChange={(event) => oppdaterLokaleVerdier("kilde", event.target.value)}
+                        >
+                          <option value="">Velg kilde</option>
+                          {kildeAlternativer.map((kilde) => (
+                            <option key={kilde} value={kilde}>
+                              {kildeEtiketter[kilde] ?? kilde}
+                            </option>
+                          ))}
+                        </Select>
+                      </HGrid>
+
+                      <HGrid columns={{ xs: 1, md: 2 }} gap="space-4">
+                        <div id={ankerIdForFelt("misbruktype")}>
+                          <UNSAFE_Combobox
+                            label="Misbruktype"
+                            size="small"
+                            options={misbrukstypeAlternativer.map((type) => ({
+                              label:
+                                kontrollsakMisbrukstypeEtiketter[
+                                  type as (typeof kontrollsakMisbrukstypeVerdier)[number]
+                                ] ?? type,
+                              value: type,
+                            }))}
+                            isMultiSelect
+                            disabled={misbrukstypeAlternativer.length === 0}
+                            selectedOptions={lokaleVerdier.misbruktype.map((type) => ({
+                              label:
+                                kontrollsakMisbrukstypeEtiketter[
+                                  type as (typeof kontrollsakMisbrukstypeVerdier)[number]
+                                ] ?? type,
+                              value: type,
+                            }))}
+                            onToggleSelected={(option, isSelected) => {
+                              setLokaleVerdier((gjeldende) => {
+                                const har = gjeldende.misbruktype.includes(option);
+                                if (isSelected && !har) {
+                                  return {
+                                    ...gjeldende,
+                                    misbruktype: [...gjeldende.misbruktype, option],
+                                  };
+                                }
+                                if (!isSelected) {
+                                  return {
+                                    ...gjeldende,
+                                    misbruktype: gjeldende.misbruktype.filter((v) => v !== option),
+                                  };
+                                }
+                                return gjeldende;
+                              });
+                            }}
+                            error={førsteFeilForFelt(feil, "misbruktype")}
+                          />
+                          {lokaleVerdier.misbruktype.map((type) => (
+                            <input key={type} type="hidden" name="misbruktype" value={type} />
+                          ))}
+                        </div>
+
+                        <div id={ankerIdForFelt("merking")}>
+                          <UNSAFE_Combobox
+                            label="Merking"
+                            size="small"
+                            options={merkingAlternativer.map((merking) => ({
+                              label: merkingEtiketter[merking] ?? merking,
+                              value: merking,
+                            }))}
+                            isMultiSelect
+                            allowNewValues
+                            selectedOptions={lokaleVerdier.merking.map((merking) => ({
+                              label:
+                                merkingEtiketter[merking as (typeof merkingAlternativer)[number]] ??
+                                merking,
+                              value: merking,
+                            }))}
+                            onToggleSelected={(option, isSelected) => {
+                              setLokaleVerdier((gjeldende) => {
+                                const har = gjeldende.merking.includes(option);
+                                if (isSelected && !har) {
+                                  return {
+                                    ...gjeldende,
+                                    merking: [...gjeldende.merking, option],
+                                  };
+                                }
+                                if (!isSelected) {
+                                  return {
+                                    ...gjeldende,
+                                    merking: gjeldende.merking.filter((v) => v !== option),
+                                  };
+                                }
+                                return gjeldende;
+                              });
+                            }}
+                            error={førsteFeilForFelt(feil, "merking")}
+                          />
+                          {lokaleVerdier.merking.map((merking) => (
+                            <input key={merking} type="hidden" name="merking" value={merking} />
+                          ))}
+                        </div>
+                      </HGrid>
+
+                      <hr className="my-4 border-ax-border-neutral-subtle" />
+
+                      <VStack gap="space-8">
+                        <Heading level="2" size="small">
+                          Ytelser
+                        </Heading>
+                        {lokaleVerdier.ytelser.map((rad, indeks) => (
+                          <YtelseRadFelt
+                            key={`${redigeringsøkt}-${indeks}`}
+                            indeks={indeks}
+                            ytelser={ytelser}
+                            kanFjernes={lokaleVerdier.ytelser.length > 1}
+                            onFjern={() => fjernYtelseRad(indeks)}
+                            defaults={rad}
+                            feil={feil}
+                            size="small"
+                            endeligBeløpReadOnly={sak.status !== "STRAFFERETTSLIG_VURDERING"}
+                          />
+                        ))}
+                        <div>
+                          <Button
+                            type="button"
+                            variant="tertiary"
+                            size="small"
+                            icon={<PlusIcon aria-hidden />}
+                            onClick={leggTilYtelseRad}
                           >
-                            {feilElementer.map((element) => (
-                              <ErrorSummary.Item key={element.id} href={`#${element.id}`}>
-                                {element.melding}
-                              </ErrorSummary.Item>
-                            ))}
-                          </ErrorSummary>
-                        )}
+                            Legg til ytelse
+                          </Button>
+                        </div>
+                      </VStack>
 
-                        {feil?.skjema?.[0] && <Alert variant="error">{feil.skjema[0]}</Alert>}
-
+                      <HStack justify="end" gap="space-4">
+                        <Button
+                          size="small"
+                          type="button"
+                          variant="secondary"
+                          onClick={avbrytRedigering}
+                        >
+                          Avbryt
+                        </Button>
+                        <Button size="small" type="submit" loading={fetcher.state !== "idle"}>
+                          Lagre
+                        </Button>
+                      </HStack>
+                    </VStack>
+                  </fetcher.Form>
+                ) : (
+                  <VStack gap="space-4">
+                    <HGrid columns={{ xs: 1, md: 2 }} gap="space-6">
+                      <VStack gap="space-4">
                         <VStack gap="space-1">
                           <Detail className="text-ax-text-neutral-subtle" uppercase>
                             Personnummer
@@ -387,351 +579,146 @@ export default function SakDetaljSide() {
                           </HStack>
                         </VStack>
 
-                        <HGrid columns={{ xs: 1, md: 2 }} gap="space-4">
-                          <Select
-                            id={ankerIdForFelt("kategori")}
-                            name="kategori"
-                            label="Kategori"
-                            size="small"
-                            value={lokaleVerdier.kategori}
-                            error={førsteFeilForFelt(feil, "kategori")}
-                            onChange={(event) => {
-                              const kategori = event.target.value;
-                              const gyldige = hentMisbrukstypeAlternativer(kategori);
-                              setLokaleVerdier((gjeldende) => ({
-                                ...gjeldende,
-                                kategori,
-                                misbruktype: gjeldende.misbruktype.filter((type) =>
-                                  gyldige.includes(type),
-                                ),
-                              }));
-                            }}
-                          >
-                            <option value="">Velg kategori</option>
-                            {kategoriAlternativer.map((kategori) => (
-                              <option key={kategori} value={kategori}>
-                                {getKategoriText({ ...sak, kategori }) ?? kategori}
-                              </option>
-                            ))}
-                          </Select>
-
-                          <Select
-                            id={ankerIdForFelt("kilde")}
-                            name="kilde"
-                            label="Kilde"
-                            size="small"
-                            value={lokaleVerdier.kilde}
-                            error={førsteFeilForFelt(feil, "kilde")}
-                            onChange={(event) => oppdaterLokaleVerdier("kilde", event.target.value)}
-                          >
-                            <option value="">Velg kilde</option>
-                            {kildeAlternativer.map((kilde) => (
-                              <option key={kilde} value={kilde}>
-                                {kildeEtiketter[kilde] ?? kilde}
-                              </option>
-                            ))}
-                          </Select>
-                        </HGrid>
-
-                        <HGrid columns={{ xs: 1, md: 2 }} gap="space-4">
-                          <div id={ankerIdForFelt("misbruktype")}>
-                            <UNSAFE_Combobox
-                              label="Misbruktype"
-                              size="small"
-                              options={misbrukstypeAlternativer.map((type) => ({
-                                label:
-                                  kontrollsakMisbrukstypeEtiketter[
-                                    type as (typeof kontrollsakMisbrukstypeVerdier)[number]
-                                  ] ?? type,
-                                value: type,
-                              }))}
-                              isMultiSelect
-                              disabled={misbrukstypeAlternativer.length === 0}
-                              selectedOptions={lokaleVerdier.misbruktype.map((type) => ({
-                                label:
-                                  kontrollsakMisbrukstypeEtiketter[
-                                    type as (typeof kontrollsakMisbrukstypeVerdier)[number]
-                                  ] ?? type,
-                                value: type,
-                              }))}
-                              onToggleSelected={(option, isSelected) => {
-                                setLokaleVerdier((gjeldende) => {
-                                  const har = gjeldende.misbruktype.includes(option);
-                                  if (isSelected && !har) {
-                                    return {
-                                      ...gjeldende,
-                                      misbruktype: [...gjeldende.misbruktype, option],
-                                    };
-                                  }
-                                  if (!isSelected) {
-                                    return {
-                                      ...gjeldende,
-                                      misbruktype: gjeldende.misbruktype.filter(
-                                        (v) => v !== option,
-                                      ),
-                                    };
-                                  }
-                                  return gjeldende;
-                                });
-                              }}
-                              error={førsteFeilForFelt(feil, "misbruktype")}
-                            />
-                            {lokaleVerdier.misbruktype.map((type) => (
-                              <input key={type} type="hidden" name="misbruktype" value={type} />
-                            ))}
-                          </div>
-
-                          <div id={ankerIdForFelt("merking")}>
-                            <UNSAFE_Combobox
-                              label="Merking"
-                              size="small"
-                              options={merkingAlternativer.map((merking) => ({
-                                label: merkingEtiketter[merking] ?? merking,
-                                value: merking,
-                              }))}
-                              isMultiSelect
-                              allowNewValues
-                              selectedOptions={lokaleVerdier.merking.map((merking) => ({
-                                label:
-                                  merkingEtiketter[
-                                    merking as (typeof merkingAlternativer)[number]
-                                  ] ?? merking,
-                                value: merking,
-                              }))}
-                              onToggleSelected={(option, isSelected) => {
-                                setLokaleVerdier((gjeldende) => {
-                                  const har = gjeldende.merking.includes(option);
-                                  if (isSelected && !har) {
-                                    return {
-                                      ...gjeldende,
-                                      merking: [...gjeldende.merking, option],
-                                    };
-                                  }
-                                  if (!isSelected) {
-                                    return {
-                                      ...gjeldende,
-                                      merking: gjeldende.merking.filter((v) => v !== option),
-                                    };
-                                  }
-                                  return gjeldende;
-                                });
-                              }}
-                              error={førsteFeilForFelt(feil, "merking")}
-                            />
-                            {lokaleVerdier.merking.map((merking) => (
-                              <input key={merking} type="hidden" name="merking" value={merking} />
-                            ))}
-                          </div>
-                        </HGrid>
-
-                        <hr className="my-4 border-ax-border-neutral-subtle" />
-
-                        <VStack gap="space-8">
-                          <Heading level="2" size="small">
-                            Ytelser
-                          </Heading>
-                          {lokaleVerdier.ytelser.map((rad, indeks) => (
-                            <YtelseRadFelt
-                              key={`${redigeringsøkt}-${indeks}`}
-                              indeks={indeks}
-                              ytelser={ytelser}
-                              kanFjernes={lokaleVerdier.ytelser.length > 1}
-                              onFjern={() => fjernYtelseRad(indeks)}
-                              defaults={rad}
-                              feil={feil}
-                              size="small"
-                              endeligBeløpReadOnly={sak.status !== "STRAFFERETTSLIG_VURDERING"}
-                            />
-                          ))}
-                          <div>
-                            <Button
-                              type="button"
-                              variant="tertiary"
-                              size="small"
-                              icon={<PlusIcon aria-hidden />}
-                              onClick={leggTilYtelseRad}
-                            >
-                              Legg til ytelse
-                            </Button>
-                          </div>
-                        </VStack>
-
-                        <HStack justify="end" gap="space-4">
-                          <Button
-                            size="small"
-                            type="button"
-                            variant="secondary"
-                            onClick={avbrytRedigering}
-                          >
-                            Avbryt
-                          </Button>
-                          <Button size="small" type="submit" loading={fetcher.state !== "idle"}>
-                            Lagre
-                          </Button>
-                        </HStack>
-                      </VStack>
-                    </fetcher.Form>
-                  ) : (
-                    <VStack gap="space-4">
-                      <HGrid columns={{ xs: 1, md: 2 }} gap="space-6">
-                        <VStack gap="space-4">
+                        {kategoriText && (
                           <VStack gap="space-1">
                             <Detail className="text-ax-text-neutral-subtle" uppercase>
-                              Personnummer
+                              Kategori
                             </Detail>
-                            <HStack gap="space-1" align="center">
-                              <BodyShort>{personIdent}</BodyShort>
-                              <CopyButton size="xsmall" copyText={personIdent} />
+                            <div>
+                              <Tag variant="outline" data-color="info" size="small">
+                                {kategoriText}
+                              </Tag>
+                            </div>
+                          </VStack>
+                        )}
+
+                        {misbrukstyper.length > 0 && (
+                          <VStack gap="space-1">
+                            <Detail className="text-ax-text-neutral-subtle" uppercase>
+                              Misbrukstype
+                            </Detail>
+                            <HStack gap="space-2" wrap>
+                              {misbrukstyper.map((type) => (
+                                <Tag key={type} variant="outline" data-color="info" size="small">
+                                  {type}
+                                </Tag>
+                              ))}
                             </HStack>
                           </VStack>
+                        )}
 
-                          {kategoriText && (
-                            <VStack gap="space-1">
-                              <Detail className="text-ax-text-neutral-subtle" uppercase>
-                                Kategori
-                              </Detail>
-                              <div>
-                                <Tag variant="outline" data-color="info" size="small">
-                                  {kategoriText}
+                        {tags.length > 0 && (
+                          <VStack gap="space-1">
+                            <Detail className="text-ax-text-neutral-subtle" uppercase>
+                              Merking
+                            </Detail>
+                            <HStack gap="space-2" wrap>
+                              {tags.map((tag) => (
+                                <Tag key={tag} variant="outline" data-color="info" size="small">
+                                  {merkingEtiketter[tag as keyof typeof merkingEtiketter] ?? tag}
                                 </Tag>
-                              </div>
-                            </VStack>
-                          )}
+                              ))}
+                            </HStack>
+                          </VStack>
+                        )}
 
-                          {misbrukstyper.length > 0 && (
-                            <VStack gap="space-1">
-                              <Detail className="text-ax-text-neutral-subtle" uppercase>
-                                Misbrukstype
-                              </Detail>
-                              <HStack gap="space-2" wrap>
-                                {misbrukstyper.map((type) => (
-                                  <Tag key={type} variant="outline" data-color="info" size="small">
-                                    {type}
-                                  </Tag>
-                                ))}
-                              </HStack>
-                            </VStack>
-                          )}
+                        <Felt label="Kilde">{kildeTekst}</Felt>
+                      </VStack>
 
-                          {tags.length > 0 && (
-                            <VStack gap="space-1">
-                              <Detail className="text-ax-text-neutral-subtle" uppercase>
-                                Merking
-                              </Detail>
-                              <HStack gap="space-2" wrap>
-                                {tags.map((tag) => (
-                                  <Tag key={tag} variant="outline" data-color="info" size="small">
-                                    {merkingEtiketter[tag as keyof typeof merkingEtiketter] ?? tag}
-                                  </Tag>
-                                ))}
-                              </HStack>
-                            </VStack>
-                          )}
-
-                          <Felt label="Kilde">{kildeTekst}</Felt>
-                        </VStack>
-
-                        <VStack gap="space-1">
-                          {sak.ytelser.length === 0 ? (
-                            <BodyShort>–</BodyShort>
-                          ) : (
-                            <Table size="small" className="[&_td]:py-1 [&_th]:py-1 text-sm">
-                              <Table.Header>
-                                <Table.Row>
-                                  <Table.HeaderCell scope="col" className="text-sm">
-                                    Ytelse
-                                  </Table.HeaderCell>
-                                  <Table.HeaderCell scope="col" className="text-sm">
-                                    Periode
-                                  </Table.HeaderCell>
-                                  <Table.HeaderCell
-                                    scope="col"
-                                    className="text-sm whitespace-nowrap"
-                                  >
-                                    Antatt beløp
-                                  </Table.HeaderCell>
-                                  <Table.HeaderCell
-                                    scope="col"
-                                    className="text-sm whitespace-nowrap"
-                                  >
-                                    Endelig beløp
-                                  </Table.HeaderCell>
+                      <VStack gap="space-1">
+                        {sak.ytelser.length === 0 ? (
+                          <BodyShort>–</BodyShort>
+                        ) : (
+                          <Table size="small" className="[&_td]:py-1 [&_th]:py-1 text-sm">
+                            <Table.Header>
+                              <Table.Row>
+                                <Table.HeaderCell scope="col" className="text-sm">
+                                  Ytelse
+                                </Table.HeaderCell>
+                                <Table.HeaderCell scope="col" className="text-sm">
+                                  Periode
+                                </Table.HeaderCell>
+                                <Table.HeaderCell scope="col" className="text-sm whitespace-nowrap">
+                                  Antatt beløp
+                                </Table.HeaderCell>
+                                <Table.HeaderCell scope="col" className="text-sm whitespace-nowrap">
+                                  Endelig beløp
+                                </Table.HeaderCell>
+                              </Table.Row>
+                            </Table.Header>
+                            <Table.Body>
+                              {sak.ytelser.map((ytelse, indeks) => (
+                                <Table.Row key={`${ytelse.type}-${ytelse.periodeFra}-${indeks}`}>
+                                  <Table.DataCell>
+                                    <Tag variant="outline" data-color="brand-beige" size="small">
+                                      {ytelse.type}
+                                    </Tag>
+                                  </Table.DataCell>
+                                  <Table.DataCell className="text-sm">
+                                    {formaterPeriode(ytelse.periodeFra, ytelse.periodeTil)}
+                                  </Table.DataCell>
+                                  <Table.DataCell className="text-sm">
+                                    {ytelse.belop !== null && ytelse.belop !== undefined
+                                      ? formaterBelop(ytelse.belop)
+                                      : "–"}
+                                  </Table.DataCell>
+                                  <Table.DataCell className="text-sm">
+                                    {ytelse.endeligBelop !== null &&
+                                    ytelse.endeligBelop !== undefined
+                                      ? formaterBelop(ytelse.endeligBelop)
+                                      : "–"}
+                                  </Table.DataCell>
                                 </Table.Row>
-                              </Table.Header>
-                              <Table.Body>
-                                {sak.ytelser.map((ytelse, indeks) => (
-                                  <Table.Row key={`${ytelse.type}-${ytelse.periodeFra}-${indeks}`}>
-                                    <Table.DataCell>
-                                      <Tag variant="outline" data-color="brand-beige" size="small">
-                                        {ytelse.type}
-                                      </Tag>
-                                    </Table.DataCell>
-                                    <Table.DataCell className="text-sm">
-                                      {formaterPeriode(ytelse.periodeFra, ytelse.periodeTil)}
-                                    </Table.DataCell>
-                                    <Table.DataCell className="text-sm">
-                                      {ytelse.belop !== null && ytelse.belop !== undefined
-                                        ? formaterBelop(ytelse.belop)
-                                        : "–"}
-                                    </Table.DataCell>
-                                    <Table.DataCell className="text-sm">
-                                      {ytelse.endeligBelop !== null &&
-                                      ytelse.endeligBelop !== undefined
-                                        ? formaterBelop(ytelse.endeligBelop)
-                                        : "–"}
-                                    </Table.DataCell>
-                                  </Table.Row>
-                                ))}
-                              </Table.Body>
-                            </Table>
-                          )}
-                        </VStack>
-                      </HGrid>
+                              ))}
+                            </Table.Body>
+                          </Table>
+                        )}
+                      </VStack>
+                    </HGrid>
 
-                      {erAktiv && (
-                        <HStack justify="end">
-                          <Button
-                            type="button"
-                            variant="tertiary"
-                            size="xsmall"
-                            icon={<PencilIcon aria-hidden />}
-                            aria-label="Rediger saksinformasjon"
-                            onClick={startRedigering}
-                          >
-                            Rediger
-                          </Button>
-                        </HStack>
-                      )}
-                    </VStack>
-                  )}
-                </VStack>
-              </Kort>
+                    {erAktiv && (
+                      <HStack justify="end">
+                        <Button
+                          type="button"
+                          variant="tertiary"
+                          size="xsmall"
+                          icon={<PencilIcon aria-hidden />}
+                          aria-label="Rediger saksinformasjon"
+                          onClick={startRedigering}
+                        >
+                          Rediger
+                        </Button>
+                      </HStack>
+                    )}
+                  </VStack>
+                )}
+              </VStack>
+            </Kort>
 
-              <SakFilområde filer={filer} redigerbar={erAktiv} />
+            <SakFilområde filer={filer} redigerbar={erAktiv} />
 
-              <SakerPåSammePerson saker={andreSaker} gjeldendeSakId={sak.id} />
-            </VStack>
+            <SakerPåSammePerson saker={andreSaker} gjeldendeSakId={sak.id} />
+          </VStack>
 
-            <VStack gap="space-6" className="md:sticky md:top-4 md:self-start">
-              <SaksbehandlereKort
-                sak={{
-                  ...sak,
-                  saksbehandlere: {
-                    ...sak.saksbehandlere,
-                    deltMed: delteSaksbehandlere,
-                  },
-                }}
-                saksbehandlerDetaljer={saksbehandlerDetaljer}
-                ansvarligSaksbehandler={ansvarligSaksbehandler}
-              />
+          <VStack gap="space-6" className="md:sticky md:top-4 md:self-start">
+            <SaksbehandlereKort
+              sak={{
+                ...sak,
+                saksbehandlere: {
+                  ...sak.saksbehandlere,
+                  deltMed: delteSaksbehandlere,
+                },
+              }}
+              saksbehandlerDetaljer={saksbehandlerDetaljer}
+              ansvarligSaksbehandler={ansvarligSaksbehandler}
+            />
 
-              <SakHandlingerKnapper sak={sak} />
+            <SakHandlingerKnapper sak={sak} />
 
-              <SakHistorikk sakId={sak.id} hendelser={historikk} />
-            </VStack>
-          </HGrid>
-        </VStack>
-      </PageBlock>
-    </Page>
+            <SakHistorikk sakId={sak.id} hendelser={historikk} />
+          </VStack>
+        </HGrid>
+      </VStack>
+    </>
   );
 }
