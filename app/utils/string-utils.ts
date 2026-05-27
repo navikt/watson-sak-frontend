@@ -93,3 +93,23 @@ export function formaterFødselsnummer(fødselsnummer: string | null): string {
 
   return fødselsnummer.slice(0, 6) + " " + fødselsnummer.slice(6);
 }
+
+/**
+ * Formaterer organisasjonsnummer med mellomrom (xxx xxx xxx)
+ *
+ * @param organisasjonsnummer - Organisasjonsnummer som skal formateres
+ * @returns Formatert organisasjonsnummer, eller uendret verdi hvis lengden ikke er 9
+ */
+export function formaterOrganisasjonsnummer(organisasjonsnummer: string | null): string {
+  if (!organisasjonsnummer || organisasjonsnummer.length !== 9) {
+    return organisasjonsnummer ?? "";
+  }
+
+  return (
+    organisasjonsnummer.slice(0, 3) +
+    " " +
+    organisasjonsnummer.slice(3, 6) +
+    " " +
+    organisasjonsnummer.slice(6)
+  );
+}

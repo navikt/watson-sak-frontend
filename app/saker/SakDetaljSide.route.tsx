@@ -47,6 +47,7 @@ import {
   kontrollsakMisbrukstypeEtiketter,
   kontrollsakMisbrukstypeVerdier,
 } from "~/saker/kategorier";
+import { formaterOrganisasjonsnummer } from "~/utils/string-utils";
 import type { Route } from "./+types/SakDetaljSide.route";
 import { SakFilområde } from "./filer/SakFilområde";
 import { SakHandlingerKnapper } from "./handlinger/SakHandlingerKnapper";
@@ -651,7 +652,9 @@ export default function SakDetaljSide() {
                           <Felt label="Kilde">{kildeTekst}</Felt>
 
                           {sak.organisasjonsnummer && (
-                            <Felt label="Organisasjonsnummer">{sak.organisasjonsnummer}</Felt>
+                            <Felt label="Organisasjonsnummer">
+                              {formaterOrganisasjonsnummer(sak.organisasjonsnummer)}
+                            </Felt>
                           )}
                         </VStack>
 

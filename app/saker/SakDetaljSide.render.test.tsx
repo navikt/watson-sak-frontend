@@ -100,7 +100,7 @@ describe("SakDetaljSide render", () => {
 
     renderDetaljside(deltMedSakId);
 
-    expect(await screen.findByText("987654321")).toBeDefined();
+    expect(await screen.findByText("987 654 321")).toBeDefined();
     expect(screen.getByText("Organisasjonsnummer")).toBeDefined();
   }, 15000);
 
