@@ -1,10 +1,12 @@
 import { getBackendOboToken } from "~/auth/access-token";
 import { skalBrukeMockdata } from "~/config/env.server";
+import { logger } from "~/logging/logging";
 import { getSaksreferanse } from "~/saker/id";
 import * as backendApi from "~/saker/api.server";
 import { getSaksenhet } from "~/saker/selectors";
 import { getStatus } from "~/saker/visning";
 import { hentValgfriTekst } from "~/utils/form-data";
+import { formaterFødselsnummer } from "~/utils/string-utils";
 import { slaOppPerson } from "./person-oppslag.mock.server";
 
 export async function action({ request }: { request: Request }) {
@@ -29,20 +31,33 @@ export async function action({ request }: { request: Request }) {
 
   switch (resultat.type) {
     case "success": {
-      const saker = await backendApi.søkKontrollsaker(token, fnr);
-      const eksisterendeSaker = saker.map((sak) => ({
-        sakId: getSaksreferanse(sak.id),
-        opprettetDato: sak.opprettet.slice(0, 10),
-        personNavn: sak.personNavn ?? resultat.person.navn,
-        saksbehandler: sak.saksbehandlere.eier?.navn ?? sak.saksbehandlere.opprettetAv.navn,
-        enhet: getSaksenhet(sak) || "Ukjent",
-        status: getStatus(sak),
-      }));
+      let eksisterendeSaker: Array<{
+        sakId: string;
+        opprettetDato: string;
+        personNavn: string;
+        saksbehandler: string;
+        enhet: string;
+        status: string;
+      }> = [];
+
+      try {
+        const saker = await backendApi.søkKontrollsaker(token, fnr);
+        eksisterendeSaker = saker.map((sak) => ({
+          sakId: getSaksreferanse(sak.id),
+          opprettetDato: sak.opprettet.slice(0, 10),
+          personNavn: sak.personNavn ?? resultat.person.navn,
+          saksbehandler: sak.saksbehandlere.eier?.navn ?? sak.saksbehandlere.opprettetAv.navn,
+          enhet: getSaksenhet(sak) || "Ukjent",
+          status: getStatus(sak),
+        }));
+      } catch (error) {
+        logger.warn("Kunne ikke hente eksisterende saker for person", { error });
+      }
 
       return Response.json({
         person: {
           navn: resultat.person.navn,
-          personnummer: resultat.person.personIdent,
+          personnummer: formaterFødselsnummer(resultat.person.personIdent),
           aktørId: "",
           alder: resultat.person.alder,
         },
