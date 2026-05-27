@@ -212,6 +212,8 @@ export default function SakDetaljSide() {
   const delteSaksbehandlere = sak.saksbehandlere.deltMed;
   const innloggetBruker = useInnloggetBruker();
   const erEier = erSakseier(sak, innloggetBruker.navIdent);
+  const harDeltTilgang = delteSaksbehandlere.some((s) => s.navIdent === innloggetBruker.navIdent);
+  const kanSeFilområde = erEier || harDeltTilgang;
   const kanRedigere = erEier && erAktiv;
   const [redigerer, setRedigerer] = useState(false);
   const [redigeringsøkt, setRedigeringsøkt] = useState(0);
@@ -711,7 +713,7 @@ export default function SakDetaljSide() {
                 </VStack>
               </Kort>
 
-              <SakFilområde filer={filer} redigerbar={kanRedigere} />
+              {kanSeFilområde && <SakFilområde filer={filer} redigerbar={kanRedigere} />}
 
               <SakerPåSammePerson saker={andreSaker} gjeldendeSakId={sak.id} />
             </VStack>
