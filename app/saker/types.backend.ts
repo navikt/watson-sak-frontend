@@ -91,6 +91,7 @@ export const kontrollsakResponseSchema = z
     kilde: kontrollsakKildeSchema,
     misbruktype: z.array(kontrollsakMisbrukstypeSchema),
     prioritet: kontrollsakPrioritetSchema,
+    organisasjonsnummer: z.string().nullable().default(null),
     ytelser: z.array(kontrollsakYtelseSchema),
     merking: z.array(z.string()).default([]),
     oppgaver: z.array(oppgaveKortSchema).default([]),

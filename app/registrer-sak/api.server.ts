@@ -28,6 +28,7 @@ export type OpprettKontrollsakRequest = {
   misbruktype: string[];
   prioritet: string;
   merking: string[];
+  organisasjonsnummer?: string | null;
   ytelser: Array<{
     type: string;
     periodeFra: string;
@@ -99,6 +100,7 @@ export async function opprettKontrollsak({
       prioritet: payload.prioritet,
       misbruktype: payload.misbruktype,
       merking: payload.merking,
+      organisasjonsnummer: payload.organisasjonsnummer ?? null,
       ytelser: payload.ytelser,
     });
     return { id: String(kontrollsak.id) };
@@ -123,6 +125,7 @@ export async function opprettKontrollsak({
       prioritet: payload.prioritet,
       ytelser: payload.ytelser,
       merking: payload.merking,
+      organisasjonsnummer: payload.organisasjonsnummer ?? null,
     }),
   });
 
