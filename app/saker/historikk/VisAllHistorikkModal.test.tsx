@@ -189,4 +189,29 @@ describe("VisAllHistorikkModal", () => {
 
     expect(screen.getByText("Ingen historikk for denne saken.")).toBeDefined();
   });
+
+  it("skjuler Rediger/Slett for egne notater når redigerbar er false", () => {
+    const hendelser = [
+      lagHendelse({
+        hendelseId: "00000000-0000-4000-8000-000000000001",
+        hendelsesType: "MANUELL_NOTAT",
+        tittel: "Mitt notat",
+        notat: "En beskrivelse",
+        opprettetAvNavIdent: "Z999999",
+      }),
+    ];
+
+    renderMedRouter(
+      <VisAllHistorikkModal
+        redigerbar={false}
+        sakId={1}
+        hendelser={hendelser}
+        åpen={true}
+        onClose={() => {}}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Rediger" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Slett" })).toBeNull();
+  });
 });
