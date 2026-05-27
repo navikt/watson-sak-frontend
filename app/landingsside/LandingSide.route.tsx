@@ -1,10 +1,13 @@
-import { BodyShort, Heading, HGrid, Page, VStack } from "@navikt/ds-react";
+import { BodyShort, Heading, HGrid, HStack, Page, VStack } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
 import { useEffect } from "react";
 import { useFetcher, useLoaderData, useRevalidator } from "react-router";
+import { BarChartIcon } from "@navikt/aksel-icons";
 import { Trakt } from "~/alle-saker/Trakt";
+import { Kort } from "~/komponenter/Kort";
 import { usePreferences } from "~/preferanser/PreferencesContext";
 import type { loader } from "./loader.server";
+import { DashboardNokkeltallKort } from "./komponenter/DashboardNokkeltallKort";
 import { SisteVarsler } from "./komponenter/SisteVarsler";
 import { Velkomst } from "./komponenter/Velkomst";
 import { MineSakerOversikt } from "./komponenter/MineSakerOversikt";
@@ -27,11 +30,12 @@ export default function LandingSide() {
   return (
     <Page>
       <title>Dashboard – Watson Sak</title>
-      <PageBlock width="xl" gutters>
+      <PageBlock width="2xl" gutters className="mx-0!">
         <VStack gap="space-16" className="mt-4 mb-8">
           {preferences.visVelkomstmelding ? (
             <Velkomst oppsummering={loaderData.velkomstOppsummering} />
           ) : null}
+          <DashboardNokkeltallKort nokkeltall={loaderData.dashboardNokkeltall} />
           <MineSakerOversikt saker={loaderData.mineSaker} />
 
           <HGrid columns={{ xs: 1, md: 2 }} gap="space-6">
@@ -48,21 +52,23 @@ export default function LandingSide() {
               }}
             />
 
-            <section
-              aria-labelledby="trakt-heading"
-              className="rounded-2xl border border-ax-border-neutral-subtle bg-ax-bg-default p-6"
-            >
-              <Heading level="2" size="medium" spacing id="trakt-heading">
-                Dine saker siste 30 dager
-              </Heading>
-              {loaderData.traktSteg.length > 0 ? (
-                <Trakt steg={loaderData.traktSteg} />
-              ) : (
-                <BodyShort className="text-ax-text-neutral-subtle">
-                  Du har ikke jobbet på noen saker de siste 30 dagene.
-                </BodyShort>
-              )}
-            </section>
+            <Kort as="section" aria-labelledby="trakt-heading">
+              <VStack gap="space-4">
+                <HStack gap="space-4" align="center">
+                  <BarChartIcon aria-hidden fontSize="1.25rem" />
+                  <Heading level="2" size="medium" id="trakt-heading">
+                    Dine saker siste 30 dager
+                  </Heading>
+                </HStack>
+                {loaderData.traktSteg.length > 0 ? (
+                  <Trakt steg={loaderData.traktSteg} />
+                ) : (
+                  <BodyShort className="text-ax-text-neutral-subtle">
+                    Du har ikke jobbet på noen saker de siste 30 dagene.
+                  </BodyShort>
+                )}
+              </VStack>
+            </Kort>
           </HGrid>
         </VStack>
       </PageBlock>
