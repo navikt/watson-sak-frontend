@@ -45,6 +45,11 @@ describe("SakDetaljSide action", () => {
   it("legger til delt saksbehandler og logger historikk", async () => {
     const kontrollsak = hentFordelingssaker(state())[1];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
 
     expect(kontrollsak.saksbehandlere?.deltMed ?? []).toHaveLength(0);
 
@@ -76,6 +81,11 @@ describe("SakDetaljSide action", () => {
   it("fjerner delt saksbehandler og logger historikk", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
 
     expect(kontrollsak.saksbehandlere?.deltMed).toEqual([
       {
@@ -148,6 +158,11 @@ describe("SakDetaljSide action", () => {
   it("inkluderer valgt mal når notat logges i historikk", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
 
     const formData = new FormData();
     formData.set("handling", "send_notat");
@@ -173,6 +188,13 @@ describe("SakDetaljSide action", () => {
   });
 
   it("returnerer lokal feilmelding når koble sak ikke er tilgjengelig ennå", async () => {
+    const kontrollsak = hentAlleSaker(testRequest).find((sak) => sak.id === utredningSakId)!;
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
+
     const formData = new FormData();
     formData.set("handling", "koble_sak");
     formData.set("relatertSakId", "114");
@@ -420,6 +442,11 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   it("oppdaterer redigerbare saksdetaljer uten å endre låste felt", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
 
     const opprinneligPersonIdent = kontrollsak.personIdent;
     const opprinneligStatus = kontrollsak.status;
@@ -473,6 +500,11 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   it("oppdaterer kilde når sak får oppdatert kilde", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
 
     const formData = new FormData();
     formData.set("handling", "rediger_saksinformasjon");
@@ -503,6 +535,11 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   it("avviser redigering når saken er inaktiv selv om payloaden er gyldig", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
     kontrollsak.status = "AVSLUTTET";
 
     const formData = new FormData();
@@ -534,6 +571,11 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   it("opprett_journalpost logger hendelse med tittel og beskrivelse", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
 
     const formData = new FormData();
     formData.set("handling", "opprett_journalpost");
@@ -559,6 +601,11 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   it("opprett_oppgave logger hendelse med oppgavetype og beskrivelse", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
 
     const formData = new FormData();
     formData.set("handling", "opprett_oppgave");

@@ -21,11 +21,12 @@ import type { SakHendelse } from "./typer";
 interface SakHistorikkProps {
   sakId: number;
   hendelser: SakHendelse[];
+  redigerbar: boolean;
 }
 
 const MAKS_SYNLIGE_HENDELSER = 5;
 
-export function SakHistorikk({ sakId, hendelser }: SakHistorikkProps) {
+export function SakHistorikk({ sakId, hendelser, redigerbar }: SakHistorikkProps) {
   const { erÅpen: leggTilÅpen, onÅpne: onÅpneLeggTil, onLukk: onLukkLeggTil } = useDisclosure();
   const { erÅpen: visAlleÅpen, onÅpne: onÅpneVisAlle, onLukk: onLukkVisAlle } = useDisclosure();
   const { erÅpen: redigerÅpen, onÅpne: onÅpneRediger, onLukk: onLukkRediger } = useDisclosure();
@@ -56,14 +57,16 @@ export function SakHistorikk({ sakId, hendelser }: SakHistorikkProps) {
         <Heading level="2" size="small">
           Historikk
         </Heading>
-        <Button
-          variant="tertiary"
-          size="small"
-          icon={<PlusCircleIcon aria-hidden />}
-          onClick={onÅpneLeggTil}
-        >
-          Legg til
-        </Button>
+        {redigerbar && (
+          <Button
+            variant="tertiary"
+            size="small"
+            icon={<PlusCircleIcon aria-hidden />}
+            onClick={onÅpneLeggTil}
+          >
+            Legg til
+          </Button>
+        )}
       </HStack>
       {hendelser.length === 0 ? (
         <BodyShort>Ingen historikk for denne saken.</BodyShort>
@@ -86,7 +89,7 @@ export function SakHistorikk({ sakId, hendelser }: SakHistorikkProps) {
                 >
                   <VStack gap="space-2">
                     <HendelseInnhold hendelse={hendelse} beskrivelse={beskrivelse} />
-                    {erEgetManueltNotat && (
+                    {redigerbar && erEgetManueltNotat && (
                       <HStack gap="space-2">
                         <Button
                           variant="tertiary"
@@ -133,6 +136,7 @@ export function SakHistorikk({ sakId, hendelser }: SakHistorikkProps) {
           hendelser={hendelser}
           åpen={visAlleÅpen}
           onClose={onLukkVisAlle}
+          redigerbar={redigerbar}
         />
       )}
     </Box>

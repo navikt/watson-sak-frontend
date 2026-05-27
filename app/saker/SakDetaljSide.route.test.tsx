@@ -50,6 +50,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     );
     expect(sak).toBeDefined();
     if (!sak) return;
+    sak.saksbehandlere.eier = { navIdent: "Z999999", navn: "Test Saksbehandler", enhet: "4812" };
 
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
@@ -73,6 +74,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     );
     expect(sak).toBeDefined();
     if (!sak) return;
+    sak.saksbehandlere.eier = { navIdent: "Z999999", navn: "Test Saksbehandler", enhet: "4812" };
 
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
@@ -99,6 +101,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     );
     expect(sak).toBeDefined();
     if (!sak) return;
+    sak.saksbehandlere.eier = { navIdent: "Z999999", navn: "Test Saksbehandler", enhet: "4812" };
 
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
@@ -120,6 +123,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
+    sak.saksbehandlere.eier = { navIdent: "Z999999", navn: "Test Saksbehandler", enhet: "4812" };
 
     sak.blokkert = "I_BERO";
 
@@ -146,6 +150,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     );
     expect(sak).toBeDefined();
     if (!sak) return;
+    sak.saksbehandlere.eier = { navIdent: "Z999999", navn: "Test Saksbehandler", enhet: "4812" };
 
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
@@ -170,6 +175,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     );
     expect(sak).toBeDefined();
     if (!sak) return;
+    sak.saksbehandlere.eier = { navIdent: "Z999999", navn: "Test Saksbehandler", enhet: "4812" };
 
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
@@ -191,6 +197,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
+    sak.saksbehandlere.eier = { navIdent: "Z999999", navn: "Test Saksbehandler", enhet: "4812" };
 
     sak.blokkert = "VENTER_PA_VEDTAK";
 
@@ -214,6 +221,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
+    sak.saksbehandlere.eier = { navIdent: "Z999999", navn: "Test Saksbehandler", enhet: "4812" };
 
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
@@ -233,6 +241,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     );
     expect(sak).toBeDefined();
     if (!sak) return;
+    sak.saksbehandlere.eier = { navIdent: "Z999999", navn: "Test Saksbehandler", enhet: "4812" };
 
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
@@ -250,6 +259,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
+    sak.saksbehandlere.eier = { navIdent: "Z999999", navn: "Test Saksbehandler", enhet: "4812" };
 
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
@@ -267,6 +277,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
+    sak.saksbehandlere.eier = { navIdent: "Z999999", navn: "Test Saksbehandler", enhet: "4812" };
 
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
@@ -293,6 +304,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
+    sak.saksbehandlere.eier = { navIdent: "Z999999", navn: "Test Saksbehandler", enhet: "4812" };
 
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
@@ -324,6 +336,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
+    sak.saksbehandlere.eier = { navIdent: "Z999999", navn: "Test Saksbehandler", enhet: "4812" };
 
     sak.status = "AVSLUTTET";
 
@@ -343,6 +356,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
+    sak.saksbehandlere.eier = { navIdent: "Z999999", navn: "Test Saksbehandler", enhet: "4812" };
 
     sak.status = "AVSLUTTET";
 
@@ -362,6 +376,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
+    sak.saksbehandlere.eier = { navIdent: "Z999999", navn: "Test Saksbehandler", enhet: "4812" };
 
     sak.status = "AVSLUTTET";
     sak.blokkert = "VENTER_PA_VEDTAK";
