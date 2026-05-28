@@ -114,6 +114,21 @@ function finnNotatMalLabel(verdi: FormDataEntryValue | null): string | undefined
   return notatMalValg.find((mal) => mal.verdi === verdi)?.label;
 }
 
+// --- Hjelpefunksjoner for tilgangskontroll ---
+
+/** Handlinger som tillates uten å være sakseier */
+const tildelingshandlinger = new Set([
+  "TILDEL",
+  "FRISTILL",
+  "overfor_ansvarlig",
+  "send_til_annen_enhet",
+  "videresend_seksjon",
+]);
+
+function erTildelingshandling(handling: string): boolean {
+  return tildelingshandlinger.has(handling);
+}
+
 // --- Loader ---
 
 export async function loader({ request, params }: Route.LoaderArgs) {
@@ -155,7 +170,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const innlogget = await hentInnloggetBruker({ request });
   const sak = medInnloggetEier(rawSak, innlogget.navIdent, innlogget.name);
   const historikk = hentHistorikk(request, String(sak.id));
-  const filer = hentFilerForSak(request, String(sak.id));
+  const erEier = sak.saksbehandlere.eier?.navIdent === innlogget.navIdent;
+  const harDeltTilgang = sak.saksbehandlere.deltMed.some((s) => s.navIdent === innlogget.navIdent);
+  const filer = erEier || harDeltTilgang ? hentFilerForSak(request, String(sak.id)) : [];
   const andreSaker = alleSaker.filter(
     (annenSak) => annenSak.personIdent === sak.personIdent && annenSak.id !== sak.id,
   );
@@ -195,6 +212,14 @@ async function backendAction(
   formData: FormData,
 ): Promise<ActionResult> {
   const token = await getBackendOboToken(request);
+
+  if (!erTildelingshandling(handling)) {
+    const innlogget = await hentInnloggetBruker({ request });
+    const sak = await backendApi.hentKontrollsak(token, sakId);
+    if (sak.saksbehandlere.eier?.navIdent !== innlogget.navIdent) {
+      throw data("Du må være tildelt saken for å utføre denne handlingen", { status: 403 });
+    }
+  }
 
   switch (handling) {
     case "TILDEL": {
@@ -422,6 +447,14 @@ async function mockAction(
   const sak = finnSakMedReferanse(hentAlleSaker(request), sakId);
   if (!sak) {
     throw data("Sak ikke funnet", { status: 404 });
+  }
+
+  if (!erTildelingshandling(handling)) {
+    const innlogget = await hentInnloggetBruker({ request });
+    const sakMedEier = medInnloggetEier(sak, innlogget.navIdent, innlogget.name);
+    if (sakMedEier.saksbehandlere.eier?.navIdent !== innlogget.navIdent) {
+      throw data("Du må være tildelt saken for å utføre denne handlingen", { status: 403 });
+    }
   }
 
   if (

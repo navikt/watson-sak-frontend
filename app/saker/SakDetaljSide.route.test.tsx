@@ -21,6 +21,11 @@ vi.mock("~/auth/innlogget-bruker.server", () => ({
 
 const testRequest = new Request("http://localhost");
 
+/** Setter innlogget bruker som eier av saken, slik at tilgangskontroll tillater mutasjoner. */
+function settInnloggetSomEier(sak: KontrollsakResponse) {
+  sak.saksbehandlere.eier = { navIdent: "Z999999", navn: "Test Saksbehandler", enhet: "4812" };
+}
+
 function lagFormData(felter: Record<string, string>): FormData {
   const formData = new FormData();
   for (const [key, value] of Object.entries(felter)) {
@@ -50,6 +55,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     );
     expect(sak).toBeDefined();
     if (!sak) return;
+    settInnloggetSomEier(sak);
 
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
@@ -73,6 +79,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     );
     expect(sak).toBeDefined();
     if (!sak) return;
+    settInnloggetSomEier(sak);
 
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
@@ -99,6 +106,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     );
     expect(sak).toBeDefined();
     if (!sak) return;
+    settInnloggetSomEier(sak);
 
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
@@ -120,6 +128,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
+    settInnloggetSomEier(sak);
 
     sak.blokkert = "I_BERO";
 
@@ -146,6 +155,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     );
     expect(sak).toBeDefined();
     if (!sak) return;
+    settInnloggetSomEier(sak);
 
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
@@ -170,6 +180,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     );
     expect(sak).toBeDefined();
     if (!sak) return;
+    settInnloggetSomEier(sak);
 
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
@@ -191,6 +202,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
+    settInnloggetSomEier(sak);
 
     sak.blokkert = "VENTER_PA_VEDTAK";
 
@@ -214,6 +226,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
+    settInnloggetSomEier(sak);
 
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
@@ -233,6 +246,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     );
     expect(sak).toBeDefined();
     if (!sak) return;
+    settInnloggetSomEier(sak);
 
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
@@ -250,6 +264,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
+    settInnloggetSomEier(sak);
 
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
@@ -267,6 +282,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
+    settInnloggetSomEier(sak);
 
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
@@ -293,6 +309,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
+    settInnloggetSomEier(sak);
 
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
@@ -324,6 +341,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
+    settInnloggetSomEier(sak);
 
     sak.status = "AVSLUTTET";
 
@@ -343,6 +361,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
+    settInnloggetSomEier(sak);
 
     sak.status = "AVSLUTTET";
 
@@ -362,6 +381,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
     expect(sak).toBeDefined();
     if (!sak) return;
+    settInnloggetSomEier(sak);
 
     sak.status = "AVSLUTTET";
     sak.blokkert = "VENTER_PA_VEDTAK";
