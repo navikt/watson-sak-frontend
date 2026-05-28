@@ -410,15 +410,7 @@ function lagMockMineKontrollsaker() {
     kontrollsakResponseSchema.parse(normaliserLegacyKontrollsak(berikLegacySakMedPerson(sak))),
   );
 
-  const nyeSaker = backendGenererteDemoSaker.map((sak) =>
-    kontrollsakResponseSchema.parse({
-      ...sak,
-      kontrollobjekt: {
-        personIdent: sak.personIdent,
-        navn: hentMockPersonNavn(sak.personIdent),
-      },
-    }),
-  );
+  const nyeSaker = backendGenererteDemoSaker.map((sak) => kontrollsakResponseSchema.parse(sak));
 
   return [...legacySaker, ...nyeSaker];
 }
@@ -442,7 +434,7 @@ export const mockMineSakerAvslutningsdatoer: Record<string, string> = {
 const backendGenererteDemoSaker = [
   {
     id: 1001,
-    personIdent: "12345678901",
+    kontrollobjekt: { personIdent: "12345678901", navn: hentMockPersonNavn("12345678901") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -472,7 +464,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1002,
-    personIdent: "12345678902",
+    kontrollobjekt: { personIdent: "12345678902", navn: hentMockPersonNavn("12345678902") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -502,7 +494,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1003,
-    personIdent: "12345678903",
+    kontrollobjekt: { personIdent: "12345678903", navn: hentMockPersonNavn("12345678903") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -532,7 +524,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1004,
-    personIdent: "12345678904",
+    kontrollobjekt: { personIdent: "12345678904", navn: hentMockPersonNavn("12345678904") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -569,7 +561,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1005,
-    personIdent: "12345678905",
+    kontrollobjekt: { personIdent: "12345678905", navn: hentMockPersonNavn("12345678905") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -599,7 +591,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1006,
-    personIdent: "12345678906",
+    kontrollobjekt: { personIdent: "12345678906", navn: hentMockPersonNavn("12345678906") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -629,7 +621,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1007,
-    personIdent: "12345678907",
+    kontrollobjekt: { personIdent: "12345678907", navn: hentMockPersonNavn("12345678907") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -659,7 +651,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1008,
-    personIdent: "12345678908",
+    kontrollobjekt: { personIdent: "12345678908", navn: hentMockPersonNavn("12345678908") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -689,7 +681,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1009,
-    personIdent: "12345678909",
+    kontrollobjekt: { personIdent: "12345678909", navn: hentMockPersonNavn("12345678909") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -719,7 +711,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1010,
-    personIdent: "12345678910",
+    kontrollobjekt: { personIdent: "12345678910", navn: hentMockPersonNavn("12345678910") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -749,7 +741,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1011,
-    personIdent: "12345678911",
+    kontrollobjekt: { personIdent: "12345678911", navn: hentMockPersonNavn("12345678911") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -779,7 +771,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1012,
-    personIdent: "12345678912",
+    kontrollobjekt: { personIdent: "12345678912", navn: hentMockPersonNavn("12345678912") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -809,7 +801,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1013,
-    personIdent: "12345678913",
+    kontrollobjekt: { personIdent: "12345678913", navn: hentMockPersonNavn("12345678913") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -846,7 +838,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1014,
-    personIdent: "12345678914",
+    kontrollobjekt: { personIdent: "12345678914", navn: hentMockPersonNavn("12345678914") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -876,7 +868,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1015,
-    personIdent: "12345678915",
+    kontrollobjekt: { personIdent: "12345678915", navn: hentMockPersonNavn("12345678915") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -906,7 +898,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1016,
-    personIdent: "12345678916",
+    kontrollobjekt: { personIdent: "12345678916", navn: hentMockPersonNavn("12345678916") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -936,7 +928,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1017,
-    personIdent: "12345678917",
+    kontrollobjekt: { personIdent: "12345678917", navn: hentMockPersonNavn("12345678917") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -966,7 +958,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1018,
-    personIdent: "12345678918",
+    kontrollobjekt: { personIdent: "12345678918", navn: hentMockPersonNavn("12345678918") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -996,7 +988,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1019,
-    personIdent: "12345678919",
+    kontrollobjekt: { personIdent: "12345678919", navn: hentMockPersonNavn("12345678919") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -1026,7 +1018,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1020,
-    personIdent: "12345678920",
+    kontrollobjekt: { personIdent: "12345678920", navn: hentMockPersonNavn("12345678920") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -1056,7 +1048,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1021,
-    personIdent: "12345678921",
+    kontrollobjekt: { personIdent: "12345678921", navn: hentMockPersonNavn("12345678921") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -1086,7 +1078,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1022,
-    personIdent: "12345678922",
+    kontrollobjekt: { personIdent: "12345678922", navn: hentMockPersonNavn("12345678922") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -1123,7 +1115,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1023,
-    personIdent: "12345678923",
+    kontrollobjekt: { personIdent: "12345678923", navn: hentMockPersonNavn("12345678923") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -1153,7 +1145,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1024,
-    personIdent: "12345678924",
+    kontrollobjekt: { personIdent: "12345678924", navn: hentMockPersonNavn("12345678924") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -1183,7 +1175,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1025,
-    personIdent: "12345678925",
+    kontrollobjekt: { personIdent: "12345678925", navn: hentMockPersonNavn("12345678925") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -1220,7 +1212,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1026,
-    personIdent: "12345678926",
+    kontrollobjekt: { personIdent: "12345678926", navn: hentMockPersonNavn("12345678926") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -1250,7 +1242,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1027,
-    personIdent: "12345678927",
+    kontrollobjekt: { personIdent: "12345678927", navn: hentMockPersonNavn("12345678927") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
@@ -1280,7 +1272,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1028,
-    personIdent: "12345678928",
+    kontrollobjekt: { personIdent: "12345678928", navn: hentMockPersonNavn("12345678928") },
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],
