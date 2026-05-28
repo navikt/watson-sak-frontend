@@ -56,7 +56,7 @@ function mapEksisterendeSak(sak: KontrollsakResponse): EksisterendeSak {
   return {
     sakId: getSaksreferanse(sak.id),
     opprettetDato: sak.opprettet.slice(0, 10),
-    personNavn: sak.kontrollobjekt.navn ?? "Ukjent navn",
+    personNavn: sak.kontrollobjekt.navn,
     saksbehandler: sak.saksbehandlere.eier?.navn ?? sak.saksbehandlere.opprettetAv.navn,
     enhet: getSaksenhet(sak) || "Ukjent",
     status: getStatus(sak),

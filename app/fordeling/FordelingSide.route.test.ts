@@ -191,7 +191,7 @@ describe("FordelingSide loader", () => {
 
     expect(resultat.map((sak) => sak.id)).toEqual(forventedeSaker);
     expect(resultat[0]).toMatchObject({
-      navn: mockKontrollsaker[0].kontrollobjekt.navn ?? null,
+      navn: mockKontrollsaker[0].kontrollobjekt.navn,
       opprettetDato: mockKontrollsaker[0].opprettet.slice(0, 10),
       oppdatertDato: (mockKontrollsaker[0].oppdatert ?? mockKontrollsaker[0].opprettet).slice(
         0,

@@ -45,7 +45,7 @@ export async function action({ request }: { request: Request }) {
         eksisterendeSaker = saker.map((sak) => ({
           sakId: getSaksreferanse(sak.id),
           opprettetDato: sak.opprettet.slice(0, 10),
-          personNavn: sak.kontrollobjekt.navn ?? resultat.person.navn,
+          personNavn: sak.kontrollobjekt.navn,
           saksbehandler: sak.saksbehandlere.eier?.navn ?? sak.saksbehandlere.opprettetAv.navn,
           enhet: getSaksenhet(sak) || "Ukjent",
           status: getStatus(sak),

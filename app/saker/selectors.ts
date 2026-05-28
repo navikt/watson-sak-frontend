@@ -54,7 +54,7 @@ export function getTags(sak: KontrollsakResponse): string[] {
   return sak.merking;
 }
 
-export function getNavn(sak: KontrollsakResponse): string | null {
+export function getNavn(sak: KontrollsakResponse): string {
   return sak.kontrollobjekt.navn;
 }
 
