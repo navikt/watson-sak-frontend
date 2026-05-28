@@ -57,14 +57,19 @@ function renderMedRouter(ui: React.ReactNode) {
 
 describe("SakHandlingerKnapper", () => {
   it("viser ingen handlinger for AVSLUTTET sak", () => {
-    renderMedRouter(<SakHandlingerKnapper sak={lagKontrollsak({ status: "AVSLUTTET" })} />);
+    renderMedRouter(
+      <SakHandlingerKnapper erEier={true} sak={lagKontrollsak({ status: "AVSLUTTET" })} />,
+    );
 
     expect(screen.queryByRole("button")).toBeNull();
   });
 
   it("viser Endre status og Sett på vent for aktiv ikke-blokkert sak med eier", () => {
     renderMedRouter(
-      <SakHandlingerKnapper sak={lagKontrollsak({ status: "UTREDES", blokkert: null })} />,
+      <SakHandlingerKnapper
+        erEier={true}
+        sak={lagKontrollsak({ status: "UTREDES", blokkert: null })}
+      />,
     );
 
     expect(screen.getByRole("button", { name: "Endre status" })).toBeDefined();
@@ -79,6 +84,7 @@ describe("SakHandlingerKnapper", () => {
   it("viser Gjenoppta, Opprett journalpost og Opprett oppgave for blokkert sak med eier", () => {
     renderMedRouter(
       <SakHandlingerKnapper
+        erEier={true}
         sak={lagKontrollsak({ status: "UTREDES", blokkert: "VENTER_PA_INFORMASJON" })}
       />,
     );
@@ -91,9 +97,10 @@ describe("SakHandlingerKnapper", () => {
     expect(screen.queryByRole("button", { name: "Sett på vent" })).toBeNull();
   });
 
-  it("viser status- og ventehandlinger for eierløs sak", () => {
+  it("viser ingen handlinger for eierløs sak når bruker ikke er eier", () => {
     renderMedRouter(
       <SakHandlingerKnapper
+        erEier={false}
         sak={lagKontrollsak({
           status: "OPPRETTET",
           saksbehandlere: {
@@ -105,17 +112,13 @@ describe("SakHandlingerKnapper", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: "Endre status" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Sett på vent" })).toBeDefined();
-    expect(screen.getByRole("separator")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Opprett journalpost" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Opprett oppgave" })).toBeDefined();
-    expect(screen.queryByRole("button", { name: "Send til annen enhet" })).toBeNull();
+    expect(screen.queryByRole("button")).toBeNull();
   });
 
-  it("viser Gjenoppta, Opprett journalpost og Opprett oppgave for eierløs blokkert sak", () => {
+  it("viser ingen handlinger for eierløs blokkert sak når bruker ikke er eier", () => {
     renderMedRouter(
       <SakHandlingerKnapper
+        erEier={false}
         sak={lagKontrollsak({
           status: "OPPRETTET",
           blokkert: "I_BERO",
@@ -128,13 +131,6 @@ describe("SakHandlingerKnapper", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: "Gjenoppta" })).toBeDefined();
-    expect(screen.getByRole("separator")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Opprett journalpost" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Opprett oppgave" })).toBeDefined();
-    expect(screen.queryByRole("button", { name: "Sett på vent" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Endre status" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Tildel saksbehandler" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Tildel meg" })).toBeNull();
+    expect(screen.queryByRole("button")).toBeNull();
   });
 });

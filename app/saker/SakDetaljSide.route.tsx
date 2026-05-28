@@ -46,10 +46,11 @@ import {
   kontrollsakMisbrukstypeEtiketter,
   kontrollsakMisbrukstypeVerdier,
 } from "~/saker/kategorier";
+import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import type { Route } from "./+types/SakDetaljSide.route";
 import { SakFilområde } from "./filer/SakFilområde";
 import { SakHandlingerKnapper } from "./handlinger/SakHandlingerKnapper";
-import { erAktivSakKontrollsak } from "./handlinger/tilgjengeligeHandlinger";
+import { erAktivSakKontrollsak, erSakseier } from "./handlinger/tilgjengeligeHandlinger";
 import { SakHistorikk } from "./historikk/SakHistorikk";
 import { getSaksreferanse } from "./id";
 import { SakerPåSammePerson } from "./komponenter/SakerPåSammePerson";
@@ -209,6 +210,11 @@ export default function SakDetaljSide() {
     ? finnSaksbehandlerDetalj(saksbehandlerDetaljer, sak.saksbehandlere.eier.navIdent)
     : null;
   const delteSaksbehandlere = sak.saksbehandlere.deltMed;
+  const innloggetBruker = useInnloggetBruker();
+  const erEier = erSakseier(sak, innloggetBruker.navIdent);
+  const harDeltTilgang = delteSaksbehandlere.some((s) => s.navIdent === innloggetBruker.navIdent);
+  const kanSeFilområde = erEier || harDeltTilgang;
+  const kanRedigere = erEier && erAktiv;
   const [redigerer, setRedigerer] = useState(false);
   const [redigeringsøkt, setRedigeringsøkt] = useState(0);
   const [visFeil, setVisFeil] = useState(false);
@@ -688,7 +694,7 @@ export default function SakDetaljSide() {
                         </VStack>
                       </HGrid>
 
-                      {erAktiv && (
+                      {kanRedigere && (
                         <HStack justify="end">
                           <Button
                             type="button"
@@ -707,7 +713,7 @@ export default function SakDetaljSide() {
                 </VStack>
               </Kort>
 
-              <SakFilområde filer={filer} redigerbar={erAktiv} />
+              {kanSeFilområde && <SakFilområde filer={filer} redigerbar={kanRedigere} />}
 
               <SakerPåSammePerson saker={andreSaker} gjeldendeSakId={sak.id} />
             </VStack>
@@ -723,11 +729,12 @@ export default function SakDetaljSide() {
                 }}
                 saksbehandlerDetaljer={saksbehandlerDetaljer}
                 ansvarligSaksbehandler={ansvarligSaksbehandler}
+                erEier={erEier}
               />
 
-              <SakHandlingerKnapper sak={sak} />
+              <SakHandlingerKnapper sak={sak} erEier={erEier} />
 
-              <SakHistorikk sakId={sak.id} hendelser={historikk} />
+              <SakHistorikk sakId={sak.id} hendelser={historikk} redigerbar={kanRedigere} />
             </VStack>
           </HGrid>
         </VStack>

@@ -87,6 +87,7 @@ describe("SaksbehandlereKort", () => {
   it("viser Del tilgang i saksbehandler-boksen for aktiv sak med ansvarlig saksbehandler", () => {
     renderMedRouter(
       <SaksbehandlereKort
+        erEier={true}
         sak={lagKontrollsak()}
         saksbehandlerDetaljer={[lagSaksbehandler()]}
         ansvarligSaksbehandler={lagSaksbehandler()}
@@ -99,6 +100,7 @@ describe("SaksbehandlereKort", () => {
   it("viser Send til annen enhet nederst for aktiv sak", () => {
     renderMedRouter(
       <SaksbehandlereKort
+        erEier={true}
         sak={lagKontrollsak()}
         saksbehandlerDetaljer={[lagSaksbehandler()]}
         ansvarligSaksbehandler={lagSaksbehandler()}
@@ -112,6 +114,7 @@ describe("SaksbehandlereKort", () => {
   it("viser ikke Del tilgang for avsluttet sak", () => {
     renderMedRouter(
       <SaksbehandlereKort
+        erEier={true}
         sak={lagKontrollsak({ status: "AVSLUTTET" })}
         saksbehandlerDetaljer={[lagSaksbehandler()]}
         ansvarligSaksbehandler={lagSaksbehandler()}
@@ -125,6 +128,7 @@ describe("SaksbehandlereKort", () => {
   it("viser ikke Del tilgang for blokkert sak", () => {
     renderMedRouter(
       <SaksbehandlereKort
+        erEier={true}
         sak={lagKontrollsak({ blokkert: "VENTER_PA_VEDTAK" })}
         saksbehandlerDetaljer={[lagSaksbehandler()]}
         ansvarligSaksbehandler={lagSaksbehandler()}
@@ -138,6 +142,7 @@ describe("SaksbehandlereKort", () => {
   it("sender valgt enhet når saken sendes til annen enhet", async () => {
     renderMedRouter(
       <SaksbehandlereKort
+        erEier={true}
         sak={lagKontrollsak({
           saksbehandlere: {
             eier: lagSaksbehandler({ enhet: "ØST" }),
@@ -176,6 +181,7 @@ describe("SaksbehandlereKort", () => {
 
     renderMedRouter(
       <SaksbehandlereKort
+        erEier={true}
         sak={lagKontrollsak()}
         saksbehandlerDetaljer={[lagSaksbehandler()]}
         ansvarligSaksbehandler={lagSaksbehandler()}

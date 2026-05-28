@@ -10,15 +10,20 @@ test.describe("Sakdetalj", () => {
     await resetMockData(page);
     await page.goto("/saker/101", { waitUntil: "networkidle" });
     await expect(page.getByRole("heading", { name: /^Sak 101/ })).toBeVisible();
+    // Tildel saken til innlogget bruker for å aktivere redigeringsknapper
+    await page.getByRole("button", { name: "Tildel meg" }).click();
+    await expect(page.getByRole("button", { name: "Rediger saksinformasjon" })).toBeVisible();
   });
 
-  test("kan åpne og lukke tildel-modal", async ({ page }) => {
-    await expect(page.getByRole("button", { name: "Tildel saksbehandler" })).toBeEnabled();
-    await page.getByRole("button", { name: "Tildel saksbehandler" }).click();
+  test("kan åpne og lukke endre-ansvarlig-modal", async ({ page }) => {
+    await expect(page.getByRole("button", { name: "Endre ansvarlig saksbehandler" })).toBeEnabled();
+    await page.getByRole("button", { name: "Endre ansvarlig saksbehandler" }).click();
 
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole("heading", { name: "Tildel saksbehandler" })).toBeVisible();
+    await expect(
+      dialog.getByRole("heading", { name: "Endre ansvarlig saksbehandler" }),
+    ).toBeVisible();
     await expect(dialog.getByRole("combobox", { name: "Saksbehandler" })).toBeVisible();
 
     // Vent til modal-animasjonen er ferdig før UU-sjekk
