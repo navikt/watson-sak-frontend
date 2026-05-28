@@ -32,7 +32,6 @@ export function SakHistorikk({ sakId, hendelser }: SakHistorikkProps) {
   const [valgtHendelse, setValgtHendelse] = useState<SakHendelse | null>(null);
   const innloggetBruker = useInnloggetBruker();
   const fetcher = useFetcher();
-  const harFlere = hendelser.length > MAKS_SYNLIGE_HENDELSER;
   const synligeHendelser = hendelser.slice(0, MAKS_SYNLIGE_HENDELSER);
 
   function åpneRediger(hendelse: SakHendelse) {
@@ -81,7 +80,7 @@ export function SakHistorikk({ sakId, hendelser }: SakHistorikkProps) {
                   key={hendelse.hendelseId}
                   title={hendelseTittel(hendelse)}
                   timestamp={formaterTidspunkt(hendelse.tidspunkt)}
-                  status={index === 0 ? "active" : "completed"}
+                  status="completed"
                   bullet={<HendelseBullet hendelse={hendelse} />}
                 >
                   <VStack gap="space-2">
@@ -111,11 +110,9 @@ export function SakHistorikk({ sakId, hendelser }: SakHistorikkProps) {
               );
             })}
           </Process>
-          {harFlere && (
-            <Button variant="tertiary" size="small" onClick={onÅpneVisAlle} className="mt-2">
-              Vis all historikk ({hendelser.length})
-            </Button>
-          )}
+          <Button variant="tertiary" size="small" onClick={onÅpneVisAlle} className="mt-2">
+            Vis all historikk ({hendelser.length})
+          </Button>
         </>
       )}
       <LeggTilHistorikkModal sakId={sakId} åpen={leggTilÅpen} onClose={onLukkLeggTil} />

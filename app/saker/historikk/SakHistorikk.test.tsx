@@ -218,8 +218,8 @@ describe("SakHistorikk", () => {
     expect((screen.getByLabelText("Klokkeslett") as HTMLInputElement).value).toBe("09:42");
   });
 
-  it("viser 'Vis all historikk'-knapp når det er mer enn 5 hendelser", () => {
-    const hendelser = Array.from({ length: 7 }, (_, i) =>
+  it("viser 'Vis all historikk'-knapp uansett antall hendelser", () => {
+    const hendelser = Array.from({ length: 3 }, (_, i) =>
       lagBackendHendelse({
         hendelseId: `00000000-0000-4000-8000-00000000${String(i).padStart(4, "0")}`,
         tidspunkt: `2026-03-${String(20 + i).padStart(2, "0")}T10:00:00Z`,
@@ -228,19 +228,6 @@ describe("SakHistorikk", () => {
 
     renderMedRouter(<SakHistorikk sakId={1} hendelser={hendelser} />);
 
-    expect(screen.getByRole("button", { name: "Vis all historikk (7)" })).toBeDefined();
-  });
-
-  it("viser ikke 'Vis all historikk'-knapp når det er 5 eller færre hendelser", () => {
-    const hendelser = Array.from({ length: 5 }, (_, i) =>
-      lagBackendHendelse({
-        hendelseId: `00000000-0000-4000-8000-00000000${String(i).padStart(4, "0")}`,
-        tidspunkt: `2026-03-${String(20 + i).padStart(2, "0")}T10:00:00Z`,
-      }),
-    );
-
-    renderMedRouter(<SakHistorikk sakId={1} hendelser={hendelser} />);
-
-    expect(screen.queryByRole("button", { name: /Vis all historikk/ })).toBeNull();
+    expect(screen.getByRole("button", { name: "Vis all historikk (3)" })).toBeDefined();
   });
 });
