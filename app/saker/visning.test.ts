@@ -17,8 +17,7 @@ import {
 function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
     id: 7,
-    personIdent: "10987654321",
-    personNavn: "Kari Nordmann",
+    kontrollobjekt: { personIdent: "10987654321", navn: "Kari Nordmann" },
     saksbehandlere: {
       eier: {
         navIdent: "Z123456",

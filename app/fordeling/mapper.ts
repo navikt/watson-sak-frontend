@@ -10,7 +10,7 @@ export function erEierlosKontrollsak(kontrollsak: KontrollsakResponse) {
 export function mapKontrollsakTilFordelingSak(kontrollsak: KontrollsakResponse): FordelingSak {
   return {
     id: kontrollsak.id,
-    navn: kontrollsak.personNavn ?? null,
+    navn: kontrollsak.kontrollobjekt.navn,
     opprettetDato: kontrollsak.opprettet.slice(0, 10),
     oppdatertDato: (kontrollsak.oppdatert ?? kontrollsak.opprettet).slice(0, 10),
     kategori: kategoriEtikett(kontrollsak.kategori),

@@ -22,7 +22,7 @@ describe("Kontrollsak-kontrakter", () => {
     expect(
       kontrollsakResponseSchema.parse({
         id: 42,
-        personIdent: "12345678901",
+        kontrollobjekt: { personIdent: "12345678901", navn: "Ukjent" },
         saksbehandlere: {
           ansvarlig: {
             navIdent: "Z123456",
@@ -60,7 +60,7 @@ describe("Kontrollsak-kontrakter", () => {
     ).toMatchObject({
       id: 42,
       status: "OPPRETTET",
-      personNavn: null,
+
       ytelser: [{ type: "Dagpenger" }],
       kilde: "NAV_KONTROLL",
     });
@@ -70,7 +70,7 @@ describe("Kontrollsak-kontrakter", () => {
     expect(
       kontrollsakResponseSchema.parse({
         id: 99,
-        personIdent: "12345678901",
+        kontrollobjekt: { personIdent: "12345678901", navn: "Ukjent" },
         saksbehandlere: {
           ansvarlig: null,
           deltMed: [],
@@ -104,7 +104,7 @@ describe("Kontrollsak-kontrakter", () => {
         items: [
           {
             id: 1,
-            personIdent: "12345678901",
+            kontrollobjekt: { personIdent: "12345678901", navn: "Ukjent" },
             saksbehandlere: {
               ansvarlig: null,
               deltMed: [],

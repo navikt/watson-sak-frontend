@@ -18,8 +18,7 @@ import {
 function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
     id: 6,
-    personIdent: "10987654321",
-    personNavn: "Ola Nordmann",
+    kontrollobjekt: { personIdent: "10987654321", navn: "Ola Nordmann" },
     saksbehandlere: {
       eier: {
         navIdent: "Z123456",
@@ -106,7 +105,9 @@ describe("saker-selectors", () => {
   });
 
   it("returnerer personnavn når feltet er satt", () => {
-    const sak = lagKontrollsak({ personNavn: "Ola Nordmann" });
+    const sak = lagKontrollsak({
+      kontrollobjekt: { personIdent: "10987654321", navn: "Ola Nordmann" },
+    });
     expect(getNavn(sak)).toBe("Ola Nordmann");
     expect(getAlder(sak)).toBeNull();
   });

@@ -79,6 +79,7 @@ describe("opprettKontrollsak", () => {
       },
       body: JSON.stringify({
         personIdent: "12345678901",
+        navn: "Ola Nordmann",
         kategori: "SAMLIV",
         kilde: "NAV_KONTROLL",
         misbruktype: ["SKJULT_SAMLIV"],
@@ -122,13 +123,15 @@ describe("opprettKontrollsak", () => {
     expect(
       hentFordelingssaker(state()).some(
         (sak) =>
-          sak.personIdent === "12345678901" &&
+          sak.kontrollobjekt.personIdent === "12345678901" &&
           sak.status === "OPPRETTET" &&
           sak.saksbehandlere.eier === null,
       ),
     ).toBe(true);
     expect(
-      (await søkSaker(testRequest, "12345678901")).some((sak) => sak.personIdent === "12345678901"),
+      (await søkSaker(testRequest, "12345678901")).some(
+        (sak) => sak.kontrollobjekt.personIdent === "12345678901",
+      ),
     ).toBe(true);
   });
 

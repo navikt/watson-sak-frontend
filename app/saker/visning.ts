@@ -111,7 +111,7 @@ export function formaterPeriodeForYtelser(ytelser: KontrollsakYtelse[]): string 
 }
 
 export function getPersonIdent(sak: KontrollsakResponse): string {
-  return sak.personIdent;
+  return sak.kontrollobjekt.personIdent;
 }
 
 export function getStatus(sak: KontrollsakResponse): string {

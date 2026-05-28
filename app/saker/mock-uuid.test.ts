@@ -39,7 +39,7 @@ describe("normaliserLegacyKontrollsak", () => {
     expect(sak.blokkert).toBeNull();
     expect(sak.kilde).toBe("PUBLIKUM");
     expect(sak.misbruktype).toEqual(["SVART_ARBEID"]);
-    expect(sak.personNavn).toBe("Ola Nordmann");
+    expect(sak.kontrollobjekt.navn).toBe("Ola Nordmann");
     expect(sak.saksbehandlere.eier).toBeNull();
     expect(sak.ytelser).toHaveLength(1);
     expect(sak.ytelser[0].type).toBe("Dagpenger");
@@ -95,7 +95,7 @@ describe("normaliserLegacyKontrollsak", () => {
     expect(sak.kategori).toBe("ANNET");
     expect(sak.kilde).toBe("ANNET");
     expect(sak.misbruktype).toEqual([]);
-    expect(sak.personNavn).toBe("Ukjent navn");
+    expect(sak.kontrollobjekt.navn).toBe("Ukjent navn");
     expect(sak.saksbehandlere.eier).toBeNull();
     expect(sak.saksbehandlere.opprettetAv).toEqual({
       navIdent: "Z999999",

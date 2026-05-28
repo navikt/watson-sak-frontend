@@ -7,8 +7,7 @@ import { mapFordelingSakTilSakslisteRad, mapKontrollsakTilSakslisteRad } from ".
 function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
     id: 201,
-    personIdent: "10987654321",
-    personNavn: "Ola Nordmann",
+    kontrollobjekt: { personIdent: "10987654321", navn: "Ola Nordmann" },
     saksbehandlere: {
       eier: {
         navIdent: "Z123456",

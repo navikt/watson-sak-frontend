@@ -55,7 +55,7 @@ export function getTags(sak: KontrollsakResponse): string[] {
 }
 
 export function getNavn(sak: KontrollsakResponse): string | null {
-  return sak.personNavn ?? null;
+  return sak.kontrollobjekt.navn;
 }
 
 export function getAlder(_sak: KontrollsakResponse): number | null {

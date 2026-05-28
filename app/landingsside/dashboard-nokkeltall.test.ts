@@ -5,8 +5,7 @@ import { beregnDashboardNokkeltall } from "./dashboard-nokkeltall";
 function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
     id: 1,
-    personIdent: "12345678901",
-    personNavn: "Ola Nordmann",
+    kontrollobjekt: { personIdent: "12345678901", navn: "Ola Nordmann" },
     saksbehandlere: {
       eier: { navIdent: "Z123456", navn: "Ola Saksbehandler", enhet: "4812" },
       deltMed: [],

@@ -78,11 +78,15 @@ const oppgaveKortSchema = z.object({
   opprettet: z.string(),
 });
 
+const kontrollobjektSchema = z.object({
+  personIdent: z.string(),
+  navn: z.string(),
+});
+
 export const kontrollsakResponseSchema = z
   .object({
     id: z.number(),
-    personIdent: z.string(),
-    personNavn: z.string().nullable().optional(),
+    kontrollobjekt: kontrollobjektSchema,
     saksbehandlere: saksbehandlereSchema,
     status: kontrollsakStatusSchema,
     blokkert: blokkeringsarsakSchema.nullable(),
@@ -100,7 +104,6 @@ export const kontrollsakResponseSchema = z
   })
   .transform((sak) => ({
     ...sak,
-    personNavn: sak.personNavn ?? null,
     henleggelsesarsak: sak.henleggelsesarsak ?? null,
   }));
 

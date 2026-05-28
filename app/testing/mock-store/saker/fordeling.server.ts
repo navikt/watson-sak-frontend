@@ -518,8 +518,10 @@ export function leggTilMockSakIFordeling(
 
   const kontrollsak = kontrollsakResponseSchema.parse({
     id: state.nesteFordelingssakId++,
-    personIdent: nySak.personIdent,
-    personNavn: nySak.personNavn,
+    kontrollobjekt: {
+      personIdent: nySak.personIdent,
+      navn: nySak.personNavn,
+    },
     saksbehandlere: {
       eier: nySak.saksbehandlere?.eier
         ? {

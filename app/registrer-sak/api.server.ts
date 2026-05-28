@@ -117,6 +117,7 @@ export async function opprettKontrollsak({
     },
     body: JSON.stringify({
       personIdent: payload.personIdent,
+      navn: payload.personNavn,
       kategori: payload.kategori,
       kilde: payload.kilde,
       misbruktype: payload.misbruktype,

@@ -56,7 +56,7 @@ function mapEksisterendeSak(sak: KontrollsakResponse): EksisterendeSak {
   return {
     sakId: getSaksreferanse(sak.id),
     opprettetDato: sak.opprettet.slice(0, 10),
-    personNavn: sak.personNavn ?? "Ukjent navn",
+    personNavn: sak.kontrollobjekt.navn ?? "Ukjent navn",
     saksbehandler: sak.saksbehandlere.eier?.navn ?? sak.saksbehandlere.opprettetAv.navn,
     enhet: getSaksenhet(sak) || "Ukjent",
     status: getStatus(sak),
@@ -66,7 +66,7 @@ function mapEksisterendeSak(sak: KontrollsakResponse): EksisterendeSak {
 function hentEksisterendeSaker(request: Request, personIdent: string): EksisterendeSak[] {
   const normalisertIdent = normaliserPersonIdent(personIdent);
   const sakerFraMockStore = hentAlleSaker(hentMockState(request))
-    .filter((sak) => sak.personIdent === normalisertIdent)
+    .filter((sak) => sak.kontrollobjekt.personIdent === normalisertIdent)
     .map(mapEksisterendeSak);
   const manuelleSaker = manuelleEksisterendeSaker[normalisertIdent] ?? [];
 

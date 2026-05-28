@@ -10,8 +10,7 @@ function lagKontrollsak(
 ): KontrollsakResponse {
   return {
     id: Number(idNum),
-    personIdent: "12345678901",
-    personNavn: "Ola Nordmann",
+    kontrollobjekt: { personIdent: "12345678901", navn: "Ola Nordmann" },
     saksbehandlere: {
       eier: { navIdent: "Z999999", navn: "Lise Raus", enhet: "Øst" },
       deltMed: [],

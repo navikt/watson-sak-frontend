@@ -128,8 +128,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       backendApi.hentSaksbehandlere(token),
     ]);
 
-    const andreSaker = sak.personIdent
-      ? (await backendApi.søkKontrollsaker(token, sak.personIdent)).filter(
+    const andreSaker = sak.kontrollobjekt.personIdent
+      ? (await backendApi.søkKontrollsaker(token, sak.kontrollobjekt.personIdent)).filter(
           (annenSak) => annenSak.id !== sak.id,
         )
       : [];
@@ -157,7 +157,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const historikk = hentHistorikk(request, String(sak.id));
   const filer = hentFilerForSak(request, String(sak.id));
   const andreSaker = alleSaker.filter(
-    (annenSak) => annenSak.personIdent === sak.personIdent && annenSak.id !== sak.id,
+    (annenSak) =>
+      annenSak.kontrollobjekt.personIdent === sak.kontrollobjekt.personIdent &&
+      annenSak.id !== sak.id,
   );
   return {
     sak,

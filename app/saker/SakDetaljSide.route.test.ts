@@ -225,7 +225,7 @@ describe("SakDetaljSide helper-integrasjon", () => {
       throw new Error("Fant ikke forventet legacy-sak i testdata");
     }
 
-    expect("personIdent" in sak).toBe(true);
+    expect("kontrollobjekt" in sak).toBe(true);
   });
 });
 
@@ -247,9 +247,13 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     } as Route.LoaderArgs);
 
     expect(resultat.sak.id).toBe(kontrollsakId);
-    expect("personIdent" in resultat.sak).toBe(true);
+    expect("kontrollobjekt" in resultat.sak).toBe(true);
     expect(Array.isArray(resultat.andreSaker)).toBe(true);
-    expect(resultat.andreSaker.every((s) => s.personIdent === resultat.sak.personIdent)).toBe(true);
+    expect(
+      resultat.andreSaker.every(
+        (s) => s.kontrollobjekt.personIdent === resultat.sak.kontrollobjekt.personIdent,
+      ),
+    ).toBe(true);
     expect(resultat.andreSaker.every((s) => s.id !== resultat.sak.id)).toBe(true);
   });
 
@@ -260,7 +264,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     } as Route.LoaderArgs);
 
     expect(resultat.sak.id).toBe(mineSakId);
-    expect("personIdent" in resultat.sak).toBe(true);
+    expect("kontrollobjekt" in resultat.sak).toBe(true);
     expect(Array.isArray(resultat.andreSaker)).toBe(true);
   });
 
@@ -268,7 +272,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     const saker = hentAlleSaker(testRequest);
 
     expect(saker.length).toBeGreaterThan(0);
-    expect(saker.every((sak) => "personIdent" in sak)).toBe(true);
+    expect(saker.every((sak) => "kontrollobjekt" in sak)).toBe(true);
   });
 
   it("beholder kontrollsak-status og setter owner ved tildeling", async () => {
@@ -421,7 +425,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
 
-    const opprinneligPersonIdent = kontrollsak.personIdent;
+    const opprinneligPersonIdent = kontrollsak.kontrollobjekt.personIdent;
     const opprinneligStatus = kontrollsak.status;
     const opprinneligSaksbehandler = kontrollsak.saksbehandlere.eier?.navn ?? null;
 
@@ -462,7 +466,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
       "2026-02-28",
       "2026-02-28",
     ]);
-    expect(kontrollsak.personIdent).toBe(opprinneligPersonIdent);
+    expect(kontrollsak.kontrollobjekt.personIdent).toBe(opprinneligPersonIdent);
     expect(kontrollsak.status).toBe(opprinneligStatus);
     expect(kontrollsak.saksbehandlere.eier?.navn ?? null).toBe(opprinneligSaksbehandler);
 

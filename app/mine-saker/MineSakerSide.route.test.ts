@@ -19,8 +19,7 @@ vi.mock("~/auth/innlogget-bruker.server", () => ({
 function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
     id: 9,
-    personIdent: "10987654321",
-    personNavn: "Test Person",
+    kontrollobjekt: { personIdent: "10987654321", navn: "Test Person" },
     saksbehandlere: {
       eier: { navIdent: "Z999999", navn: "Saks Behandlersen", enhet: "4812" },
       deltMed: [],
@@ -54,7 +53,7 @@ describe("MineSakerSide loader", () => {
     const resultat = await loader(loaderArgs);
 
     expect(resultat.saker.length).toBeGreaterThan(0);
-    expect("personIdent" in resultat.saker[0]).toBe(true);
+    expect("kontrollobjekt" in resultat.saker[0]).toBe(true);
   });
 
   it("returnerer bare saker eid av innlogget bruker", async () => {

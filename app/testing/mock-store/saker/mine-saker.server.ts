@@ -413,7 +413,10 @@ function lagMockMineKontrollsaker() {
   const nyeSaker = backendGenererteDemoSaker.map((sak) =>
     kontrollsakResponseSchema.parse({
       ...sak,
-      personNavn: hentMockPersonNavn(sak.personIdent),
+      kontrollobjekt: {
+        personIdent: sak.personIdent,
+        navn: hentMockPersonNavn(sak.personIdent),
+      },
     }),
   );
 

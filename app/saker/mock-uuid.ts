@@ -148,8 +148,10 @@ export function normaliserLegacyKontrollsak(sak: LegacyKontrollsak): Kontrollsak
 
   const normalisert: KontrollsakResponse = {
     id: numericId,
-    personIdent: String(sak.personIdent ?? ""),
-    personNavn,
+    kontrollobjekt: {
+      personIdent: String(sak.personIdent ?? ""),
+      navn: personNavn,
+    },
     saksbehandlere: {
       eier,
       deltMed: legacyDelteSaksbehandlere

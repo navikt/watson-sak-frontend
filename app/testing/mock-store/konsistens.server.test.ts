@@ -25,7 +25,7 @@ describe("mock-store konsistens", () => {
       const detaljSak = hentSakMedReferanse(state(), getSaksreferanse(mineSak.id));
 
       expect(detaljSak?.id).toBe(mineSak.id);
-      expect(detaljSak?.personNavn).toBe(mineSak.personNavn);
+      expect(detaljSak?.kontrollobjekt.navn).toBe(mineSak.kontrollobjekt.navn);
     }
   });
 
@@ -55,10 +55,10 @@ describe("mock-store konsistens", () => {
 
   it("har samme navn for samme personident i saker og personoppslag", () => {
     for (const sak of hentAlleSaker(state())) {
-      const personNavn = hentMockPersonNavn(sak.personIdent);
+      const personNavn = hentMockPersonNavn(sak.kontrollobjekt.personIdent);
 
       if (personNavn !== null) {
-        expect(sak.personNavn).toBe(personNavn);
+        expect(sak.kontrollobjekt.navn).toBe(personNavn);
       }
     }
 
@@ -78,7 +78,7 @@ describe("mock-store konsistens", () => {
 
         const sak = hentSakMedReferanse(state(), eksisterendeSak.sakId);
 
-        expect(sak?.personIdent).toBe(person.personIdent);
+        expect(sak?.kontrollobjekt.personIdent).toBe(person.personIdent);
       }
     }
   });
