@@ -7,6 +7,11 @@ const testState = vi.hoisted(() => ({
 
 const getBackendOboTokenMock = vi.fn().mockResolvedValue("token-123");
 
+const slåOppPersonMock = vi.fn().mockResolvedValue({
+  type: "success",
+  person: { navn: "Ola Testesen", personIdent: "12345678901", alder: 30 },
+});
+
 vi.mock("./api.server", () => ({
   opprettKontrollsak: vi.fn().mockResolvedValue({ id: "00000000-0000-4000-8000-000000301000" }),
 }));
@@ -19,6 +24,10 @@ vi.mock("~/config/env.server", () => ({
   get skalBrukeMockdata() {
     return testState.skalBrukeMockdata;
   },
+}));
+
+vi.mock("~/saker/api.server", () => ({
+  slåOppPerson: (...args: unknown[]) => slåOppPersonMock(...args),
 }));
 
 vi.mock("./person-oppslag.mock.server", () => ({
@@ -52,6 +61,10 @@ describe("OpprettSakSide action", () => {
     vi.clearAllMocks();
     testState.skalBrukeMockdata = true;
     getBackendOboTokenMock.mockResolvedValue("token-123");
+    slåOppPersonMock.mockResolvedValue({
+      type: "success",
+      person: { navn: "Ola Testesen", personIdent: "12345678901", alder: 30 },
+    });
   });
 
   it("godtar minimal payload med kun kategori og kilde, og redirecter til ny sak", async () => {
@@ -255,10 +268,11 @@ describe("OpprettSakSide action", () => {
     expect(response).toHaveProperty("status", "error");
   }, 15000);
 
-  it("henter backend-token når mockdata er avslått", async () => {
+  it("henter backend-token og slår opp person via backend når mockdata er avslått", async () => {
     testState.skalBrukeMockdata = false;
 
     const { action } = await import("./RegistrerSakSide.server");
+    const { opprettKontrollsak } = await import("./api.server");
 
     await action({
       request: new Request("http://localhost/registrer-sak", {
@@ -270,6 +284,15 @@ describe("OpprettSakSide action", () => {
     } as Route.ActionArgs);
 
     expect(getBackendOboTokenMock).toHaveBeenCalled();
+    expect(slåOppPersonMock).toHaveBeenCalledWith("token-123", "12345678901");
+    expect(opprettKontrollsak).toHaveBeenCalledWith(
+      expect.objectContaining({
+        token: "token-123",
+        payload: expect.objectContaining({
+          personNavn: "Ola Testesen",
+        }),
+      }),
+    );
   }, 15000);
 
   it("returnerer skjema-feil når personnavn ikke kan slås opp server-side", async () => {

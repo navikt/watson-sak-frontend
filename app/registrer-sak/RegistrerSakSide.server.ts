@@ -4,6 +4,7 @@ import { getBackendOboToken } from "~/auth/access-token";
 import { skalBrukeMockdata } from "~/config/env.server";
 import { mockYtelser } from "~/fordeling/mock-data.server";
 import { RouteConfig } from "~/routeConfig";
+import { slåOppPerson } from "~/saker/api.server";
 import { getSaksreferanse } from "~/saker/id";
 import { slaOppPerson } from "./person-oppslag.mock.server";
 import type { OpprettKontrollsakRequest } from "./api.server";
@@ -73,8 +74,17 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   const data = submission.value;
-  const personOppslag = slaOppPerson(request, data.personIdent);
-  const personNavn = personOppslag?.person.navn;
+  const token = skalBrukeMockdata ? "demo" : await getBackendOboToken(request);
+
+  let personNavn: string | undefined;
+  if (skalBrukeMockdata) {
+    personNavn = slaOppPerson(request, data.personIdent)?.person.navn;
+  } else {
+    const resultat = await slåOppPerson(token, data.personIdent);
+    if (resultat.type === "success") {
+      personNavn = resultat.person.navn;
+    }
+  }
 
   if (typeof personNavn !== "string" || personNavn.trim() === "") {
     return submission.reply({
@@ -84,7 +94,7 @@ export async function action({ request }: Route.ActionArgs) {
 
   const opprettetSak = await opprettKontrollsak({
     request,
-    token: skalBrukeMockdata ? "demo" : await getBackendOboToken(request),
+    token,
     payload: byggOpprettKontrollsakPayload({
       skjema: data,
       personNavn,
