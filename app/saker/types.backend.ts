@@ -78,30 +78,62 @@ const oppgaveKortSchema = z.object({
   opprettet: z.string(),
 });
 
+const kontrollobjektSchema = z.object({
+  personIdent: z.string(),
+  navn: z.string(),
+});
+
+/**
+ * Normaliserer input til ny backend-kontrakt med kontrollobjekt.
+ * Støtter også det gamle flate formatet (personIdent/personNavn på rotnivå)
+ * for bakoverkompatibilitet med mock-data.
+ */
+function normaliserKontrollsakInput(input: unknown): unknown {
+  if (
+    input &&
+    typeof input === "object" &&
+    !("kontrollobjekt" in input) &&
+    "personIdent" in input
+  ) {
+    const obj = input as Record<string, unknown>;
+    return {
+      ...obj,
+      kontrollobjekt: {
+        personIdent: obj.personIdent,
+        navn: obj.personNavn ?? obj.navn ?? "Ukjent navn",
+      },
+    };
+  }
+  return input;
+}
+
 export const kontrollsakResponseSchema = z
-  .object({
-    id: z.number(),
-    personIdent: z.string(),
-    personNavn: z.string().nullable().optional(),
-    saksbehandlere: saksbehandlereSchema,
-    status: kontrollsakStatusSchema,
-    blokkert: blokkeringsarsakSchema.nullable(),
-    henleggelsesarsak: henleggelsesarsakSchema.nullable().optional().catch(null),
-    kategori: kontrollsakKategoriSchema,
-    kilde: kontrollsakKildeSchema,
-    misbruktype: z.array(kontrollsakMisbrukstypeSchema),
-    prioritet: kontrollsakPrioritetSchema,
-    organisasjonsnummer: z.string().nullable().default(null),
-    ytelser: z.array(kontrollsakYtelseSchema),
-    merking: z.array(z.string()).default([]),
-    oppgaver: z.array(oppgaveKortSchema).default([]),
-    kobledeSaker: z.array(z.number()).default([]),
-    opprettet: z.string(),
-    oppdatert: z.string().nullable(),
-  })
-  .transform((sak) => ({
+  .preprocess(
+    normaliserKontrollsakInput,
+    z.object({
+      id: z.number(),
+      kontrollobjekt: kontrollobjektSchema,
+      saksbehandlere: saksbehandlereSchema,
+      status: kontrollsakStatusSchema,
+      blokkert: blokkeringsarsakSchema.nullable(),
+      henleggelsesarsak: henleggelsesarsakSchema.nullable().optional().catch(null),
+      kategori: kontrollsakKategoriSchema,
+      kilde: kontrollsakKildeSchema,
+      misbruktype: z.array(kontrollsakMisbrukstypeSchema),
+      prioritet: kontrollsakPrioritetSchema,
+      organisasjonsnummer: z.string().nullable().default(null),
+      ytelser: z.array(kontrollsakYtelseSchema),
+      merking: z.array(z.string()).default([]),
+      oppgaver: z.array(oppgaveKortSchema).default([]),
+      kobledeSaker: z.array(z.number()).default([]),
+      opprettet: z.string(),
+      oppdatert: z.string().nullable(),
+    }),
+  )
+  .transform(({ kontrollobjekt, ...sak }) => ({
     ...sak,
-    personNavn: sak.personNavn ?? null,
+    personIdent: kontrollobjekt.personIdent,
+    personNavn: kontrollobjekt.navn,
     henleggelsesarsak: sak.henleggelsesarsak ?? null,
   }));
 
