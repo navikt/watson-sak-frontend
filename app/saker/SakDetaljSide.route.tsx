@@ -12,6 +12,7 @@ import {
   Select,
   Table,
   Tag,
+  TextField,
   UNSAFE_Combobox,
   VStack,
 } from "@navikt/ds-react";
@@ -44,6 +45,7 @@ import {
   kontrollsakMisbrukstypeEtiketter,
   kontrollsakMisbrukstypeVerdier,
 } from "~/saker/kategorier";
+import { formaterOrganisasjonsnummer } from "~/utils/string-utils";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import type { Route } from "./+types/SakDetaljSide.route";
 import { SakFilområde } from "./filer/SakFilområde";
@@ -84,6 +86,7 @@ type RedigerSaksinformasjonData = {
   kilde: string;
   misbruktype: string[];
   merking: string[];
+  organisasjonsnummer: string;
   ytelser: YtelseRadVerdier[];
 };
 
@@ -130,6 +133,7 @@ function lagRedigeringsdata(
     kilde: sak.kilde,
     misbruktype: [...sak.misbruktype],
     merking: [...sak.merking],
+    organisasjonsnummer: sak.organisasjonsnummer ?? "",
     ytelser: lagYtelseRaderFraSak(sak),
   };
 }
@@ -138,6 +142,7 @@ function erLikeRedigeringsdata(a: RedigerSaksinformasjonData, b: RedigerSaksinfo
   return (
     a.kategori === b.kategori &&
     a.kilde === b.kilde &&
+    a.organisasjonsnummer === b.organisasjonsnummer &&
     erLikeStringArrays(a.misbruktype, b.misbruktype) &&
     erLikeStringArrays(a.merking, b.merking) &&
     erLikeYtelser(a.ytelser, b.ytelser)
@@ -436,6 +441,22 @@ export default function SakDetaljSide() {
                         </Select>
                       </HGrid>
 
+                      <TextField
+                        id={ankerIdForFelt("organisasjonsnummer")}
+                        name="organisasjonsnummer"
+                        label="Organisasjonsnummer (valgfritt)"
+                        size="small"
+                        value={lokaleVerdier.organisasjonsnummer}
+                        error={førsteFeilForFelt(feil, "organisasjonsnummer")}
+                        onChange={(event) =>
+                          oppdaterLokaleVerdier("organisasjonsnummer", event.target.value)
+                        }
+                        inputMode="numeric"
+                        htmlSize={14}
+                        maxLength={9}
+                        autoComplete="off"
+                      />
+
                       <HGrid columns={{ xs: 1, md: 2 }} gap="space-4">
                         <div id={ankerIdForFelt("misbruktype")}>
                           <UNSAFE_Combobox
@@ -629,6 +650,12 @@ export default function SakDetaljSide() {
                         )}
 
                         <Felt label="Kilde">{kildeTekst}</Felt>
+
+                        {sak.organisasjonsnummer && (
+                          <Felt label="Organisasjonsnummer">
+                            {formaterOrganisasjonsnummer(sak.organisasjonsnummer)}
+                          </Felt>
+                        )}
                       </VStack>
 
                       <VStack gap="space-1">

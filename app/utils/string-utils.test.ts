@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   camelCaseTilNorsk,
   formaterFødselsnummer,
+  formaterOrganisasjonsnummer,
   snakeCaseTilSetning,
   storFørsteBokstav,
   storFørsteBokstavPerOrd,
@@ -118,6 +119,27 @@ describe("snakeCaseTilSetning", () => {
 
   it("returnerer tom streng for tom streng", () => {
     expect(snakeCaseTilSetning("")).toBe("");
+  });
+});
+
+describe("formaterOrganisasjonsnummer", () => {
+  it("formaterer 9-sifret organisasjonsnummer med mellomrom", () => {
+    expect(formaterOrganisasjonsnummer("123456789")).toBe("123 456 789");
+    expect(formaterOrganisasjonsnummer("987654321")).toBe("987 654 321");
+  });
+
+  it("returnerer uendret verdi for ugyldig lengde", () => {
+    expect(formaterOrganisasjonsnummer("12345678")).toBe("12345678");
+    expect(formaterOrganisasjonsnummer("1234567890")).toBe("1234567890");
+    expect(formaterOrganisasjonsnummer("12345")).toBe("12345");
+  });
+
+  it("returnerer tom streng for null", () => {
+    expect(formaterOrganisasjonsnummer(null)).toBe("");
+  });
+
+  it("returnerer tom streng for tom streng", () => {
+    expect(formaterOrganisasjonsnummer("")).toBe("");
   });
 });
 

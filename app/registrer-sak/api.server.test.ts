@@ -92,6 +92,7 @@ describe("opprettKontrollsak", () => {
           },
         ],
         merking: [],
+        organisasjonsnummer: null,
       }),
     });
   });

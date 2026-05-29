@@ -240,6 +240,7 @@ export async function redigerKontrollsak(
     kilde?: string;
     misbruktype?: string[];
     merking?: string[];
+    organisasjonsnummer?: string | null;
     ytelser?: {
       type: string;
       periodeFra: string;

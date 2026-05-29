@@ -28,6 +28,7 @@ const initialeMockKontrollsaker = [
     prioritet: "NORMAL",
     mottakEnhet: "Nord",
     mottakSaksbehandler: "Z999999",
+    organisasjonsnummer: "987654321",
     ytelser: [
       {
         id: "101-ytelse-1",
@@ -501,6 +502,7 @@ type NyMockFordelingssak = {
   misbruktype: KontrollsakResponse["misbruktype"];
   prioritet: KontrollsakResponse["prioritet"];
   merking?: KontrollsakResponse["merking"];
+  organisasjonsnummer?: string | null;
   ytelser: Array<{
     type: string;
     periodeFra: string;
@@ -555,6 +557,7 @@ export function leggTilMockSakIFordeling(
       endeligBelop: ytelse.endeligBelop ?? null,
     })),
     merking: nySak.merking ?? [],
+    organisasjonsnummer: nySak.organisasjonsnummer ?? null,
     oppgaver: [],
     kobledeSaker: [],
     opprettet,

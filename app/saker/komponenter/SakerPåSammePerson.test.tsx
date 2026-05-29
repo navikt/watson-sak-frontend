@@ -34,6 +34,7 @@ function lagKontrollsak(
       },
     ],
     merking: [],
+    organisasjonsnummer: null,
     opprettet: "2026-02-01T00:00:00Z",
     oppdatert: null,
     oppgaver: [],

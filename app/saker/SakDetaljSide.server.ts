@@ -45,6 +45,7 @@ type RedigerSaksinformasjonData = {
   kilde: string;
   misbruktype: string[];
   merking: string[];
+  organisasjonsnummer: string;
   ytelser: YtelseRadVerdier[];
 };
 
@@ -311,6 +312,7 @@ async function backendAction(
     }
     case "rediger_saksinformasjon": {
       const ytelseRader = parseYtelseRader(formData);
+      const organisasjonsnummerRå = formData.get("organisasjonsnummer");
       const rådata = {
         kategori: formData.get("kategori") || undefined,
         kilde: formData.get("kilde") || undefined,
@@ -320,6 +322,8 @@ async function backendAction(
         merking: formData
           .getAll("merking")
           .filter((v): v is string => typeof v === "string" && v.length > 0),
+        organisasjonsnummer:
+          typeof organisasjonsnummerRå === "string" ? organisasjonsnummerRå : undefined,
         ytelser: ytelseRader,
       };
 
@@ -333,6 +337,8 @@ async function backendAction(
             kilde: typeof rådata.kilde === "string" ? rådata.kilde : "",
             misbruktype: rådata.misbruktype,
             merking: rådata.merking,
+            organisasjonsnummer:
+              typeof rådata.organisasjonsnummer === "string" ? rådata.organisasjonsnummer : "",
             ytelser: ytelseRader.length > 0 ? ytelseRader : [{}],
           },
         } satisfies ActionResult;
@@ -345,6 +351,7 @@ async function backendAction(
         kilde: validert.kilde,
         misbruktype: validert.misbruktype,
         merking: validert.merking,
+        organisasjonsnummer: validert.organisasjonsnummer || null,
         ytelser: validert.ytelser.map((y) => ({
           type: y.type ?? "",
           periodeFra: y.fraDato ?? "",
@@ -614,6 +621,7 @@ async function mockAction(
       }
 
       const ytelseRader = parseYtelseRader(formData);
+      const organisasjonsnummerRå = formData.get("organisasjonsnummer");
       const rådata = {
         kategori: formData.get("kategori") || undefined,
         kilde: formData.get("kilde") || undefined,
@@ -623,6 +631,8 @@ async function mockAction(
         merking: formData
           .getAll("merking")
           .filter((v): v is string => typeof v === "string" && v.length > 0),
+        organisasjonsnummer:
+          typeof organisasjonsnummerRå === "string" ? organisasjonsnummerRå : undefined,
         ytelser: ytelseRader,
       };
 
@@ -631,6 +641,8 @@ async function mockAction(
         kilde: typeof rådata.kilde === "string" ? rådata.kilde : "",
         misbruktype: rådata.misbruktype,
         merking: rådata.merking,
+        organisasjonsnummer:
+          typeof rådata.organisasjonsnummer === "string" ? rådata.organisasjonsnummer : "",
         ytelser: ytelseRader.length > 0 ? ytelseRader : [{}],
       };
 
@@ -649,6 +661,7 @@ async function mockAction(
       sak.misbruktype = [...validert.misbruktype];
       sak.merking = [...validert.merking];
       sak.kilde = validert.kilde;
+      sak.organisasjonsnummer = validert.organisasjonsnummer || null;
       sak.ytelser = validert.ytelser.map((ytelse) => ({
         type: ytelse.type ?? "",
         periodeFra: ytelse.fraDato ?? "",
