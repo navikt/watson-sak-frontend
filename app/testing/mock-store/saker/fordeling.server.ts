@@ -32,7 +32,7 @@ const initialeMockKontrollsaker = [
     ytelser: [
       {
         id: "101-ytelse-1",
-        type: "Barnetrygd",
+        type: "BARNETRYGD",
         periodeFra: "2026-01-13",
         periodeTil: "2026-01-13",
       },
@@ -63,7 +63,7 @@ const initialeMockKontrollsaker = [
     ytelser: [
       {
         id: "102-ytelse-1",
-        type: "Dagpenger",
+        type: "DAGPENGER",
         periodeFra: "2026-01-13",
         periodeTil: "2026-01-13",
       },
@@ -94,7 +94,7 @@ const initialeMockKontrollsaker = [
     ytelser: [
       {
         id: "103-ytelse-1",
-        type: "Barnetrygd",
+        type: "BARNETRYGD",
         periodeFra: "2026-02-16",
         periodeTil: "2026-02-16",
       },
@@ -125,7 +125,7 @@ const initialeMockKontrollsaker = [
     ytelser: [
       {
         id: "104-ytelse-1",
-        type: "Dagpenger",
+        type: "DAGPENGER",
         periodeFra: "2026-01-13",
         periodeTil: "2026-01-13",
       },
@@ -158,7 +158,7 @@ const initialeMockKontrollsaker = [
     ytelser: [
       {
         id: "105-ytelse-1",
-        type: "Dagpenger",
+        type: "DAGPENGER",
         periodeFra: "2022-01-01",
         periodeTil: "2025-01-01",
       },
@@ -170,7 +170,7 @@ const initialeMockKontrollsaker = [
       },
       {
         id: "105-ytelse-3",
-        type: "Foreldrepenger",
+        type: "FORELDREPENGER",
         periodeFra: "2022-01-01",
         periodeTil: "2025-01-01",
       },
@@ -209,7 +209,7 @@ const initialeMockKontrollsaker = [
     ytelser: [
       {
         id: "106-ytelse-1",
-        type: "Barnetrygd",
+        type: "BARNETRYGD",
         periodeFra: "2026-02-16",
         periodeTil: "2026-02-16",
       },
@@ -270,7 +270,7 @@ const initialeMockKontrollsaker = [
     ytelser: [
       {
         id: "108-ytelse-1",
-        type: "Foreldrepenger",
+        type: "FORELDREPENGER",
         periodeFra: "2026-01-13",
         periodeTil: "2026-01-13",
       },
@@ -300,7 +300,7 @@ const initialeMockKontrollsaker = [
     ytelser: [
       {
         id: "109-ytelse-1",
-        type: "Dagpenger",
+        type: "DAGPENGER",
         periodeFra: "2026-01-13",
         periodeTil: "2026-01-13",
       },
@@ -331,7 +331,7 @@ const initialeMockKontrollsaker = [
     ytelser: [
       {
         id: "110-ytelse-1",
-        type: "Sykepenger",
+        type: "SYKEPENGER",
         periodeFra: "2026-01-13",
         periodeTil: "2026-01-13",
       },
@@ -362,7 +362,7 @@ const initialeMockKontrollsaker = [
     ytelser: [
       {
         id: "111-ytelse-1",
-        type: "Foreldrepenger",
+        type: "FORELDREPENGER",
         periodeFra: "2026-01-13",
         periodeTil: "2026-01-13",
       },
@@ -393,7 +393,7 @@ const initialeMockKontrollsaker = [
     ytelser: [
       {
         id: "112-ytelse-1",
-        type: "Barnetrygd",
+        type: "BARNETRYGD",
         periodeFra: "2026-02-16",
         periodeTil: "2026-02-16",
       },
@@ -424,7 +424,7 @@ const initialeMockKontrollsaker = [
     ytelser: [
       {
         id: "113-ytelse-1",
-        type: "Barnetrygd",
+        type: "BARNETRYGD",
         periodeFra: "2026-02-10",
         periodeTil: "2026-02-10",
       },
@@ -454,7 +454,7 @@ const initialeMockKontrollsaker = [
     ytelser: [
       {
         id: "114-ytelse-1",
-        type: "Dagpenger",
+        type: "DAGPENGER",
         periodeFra: "2026-02-18",
         periodeTil: "2026-02-18",
       },
@@ -572,4 +572,4 @@ export function leggTilMockSakIFordeling(
   return kontrollsakMedHandlinger;
 }
 
-export const mockYtelser = ["Dagpenger", "Sykepenger", "Barnetrygd", "AAP", "Foreldrepenger"];
+export const mockYtelser = ["DAGPENGER", "SYKEPENGER", "BARNETRYGD", "AAP", "FORELDREPENGER"];

@@ -49,9 +49,11 @@ function parseTilDate(verdi: string | undefined): Date | undefined {
   return undefined;
 }
 
+type YtelseAlternativ = { value: string; label: string };
+
 type YtelseRadFeltProps = {
   indeks: number;
-  ytelser: readonly string[];
+  ytelser: readonly YtelseAlternativ[];
   kanFjernes: boolean;
   onFjern: () => void;
   defaults: YtelseRadVerdier;
@@ -104,8 +106,17 @@ export function YtelseRadFelt({
         <UNSAFE_Combobox
           label="Ytelse"
           size={size}
-          options={ytelser as string[]}
-          selectedOptions={valgtYtelse ? [valgtYtelse] : []}
+          options={ytelser.map((y) => ({ value: y.value, label: y.label }))}
+          selectedOptions={
+            valgtYtelse
+              ? [
+                  {
+                    value: valgtYtelse,
+                    label: ytelser.find((y) => y.value === valgtYtelse)?.label ?? valgtYtelse,
+                  },
+                ]
+              : []
+          }
           onToggleSelected={(option, isSelected) => setValgtYtelse(isSelected ? option : "")}
           error={ytelseFeil}
         />

@@ -26,7 +26,11 @@ import {
   enhetEtiketter,
   opprettSakSchema,
 } from "~/registrer-sak/validering";
-import { kontrollsakKategoriEtiketter, kontrollsakMisbrukstypeEtiketter } from "~/saker/kategorier";
+import {
+  kontrollsakKategoriEtiketter,
+  kontrollsakMisbrukstypeEtiketter,
+  kontrollsakYtelseTypeEtiketter,
+} from "~/saker/kategorier";
 import type { PersonOppslagResultat } from "./person-oppslag.mock.server";
 import { action, loader } from "./RegistrerSakSide.server";
 import type { YtelseRadVerdier } from "./skjema-helpers";
@@ -47,6 +51,17 @@ export default function OpprettSakSide() {
   const { ytelser, kategorier, misbrukstypePerKategori, enheter, kilder } =
     useLoaderData<typeof loader>();
   const lastResult = useActionData<typeof action>();
+
+  const ytelseAlternativer = useMemo(
+    () =>
+      ytelser.map((verdi) => ({
+        value: verdi,
+        label:
+          kontrollsakYtelseTypeEtiketter[verdi as keyof typeof kontrollsakYtelseTypeEtiketter] ??
+          verdi,
+      })),
+    [ytelser],
+  );
 
   const [form, fields] = useForm({
     id: "opprett-sak",
@@ -432,7 +447,7 @@ export default function OpprettSakSide() {
                       <YtelseRadFelt
                         key={rad.id}
                         indeks={indeks}
-                        ytelser={ytelser}
+                        ytelser={ytelseAlternativer}
                         kanFjernes={ytelseRader.length > 1}
                         onFjern={() => fjernYtelseRad(rad.id)}
                         defaults={rad.defaults}

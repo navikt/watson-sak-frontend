@@ -45,7 +45,7 @@ describe("Kontrollsak-kontrakter", () => {
         ytelser: [
           {
             id: "2fa85f64-5717-4562-b3fc-2c963f66afa6",
-            type: "Dagpenger",
+            type: "DAGPENGER",
             periodeFra: "2026-01-01",
             periodeTil: "2026-12-31",
             belop: 1000,
@@ -61,7 +61,7 @@ describe("Kontrollsak-kontrakter", () => {
       id: 42,
       status: "OPPRETTET",
       personNavn: null,
-      ytelser: [{ type: "Dagpenger" }],
+      ytelser: [{ type: "DAGPENGER" }],
       kilde: "NAV_KONTROLL",
     });
   });
@@ -148,7 +148,7 @@ describe("Kontrollsak-kontrakter", () => {
         kategori: "ARBEID",
         prioritet: "NORMAL",
         status: "OPPRETTET",
-        ytelseTyper: ["Sykepenger"],
+        ytelseTyper: ["SYKEPENGER"],
       }),
     ).toMatchObject({
       hendelsesType: "SAK_OPPRETTET",

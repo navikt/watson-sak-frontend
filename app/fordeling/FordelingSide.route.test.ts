@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { formaterMisbrukstype } from "~/saker/visning";
+import { formaterMisbrukstype, formaterYtelseType } from "~/saker/visning";
 import { RouteConfig } from "~/routeConfig";
 import { hentMockState, resetDefaultSession } from "~/testing/mock-store/session.server";
 import { hentFordelingssaker } from "~/testing/mock-store/alle-saker.server";
@@ -198,7 +198,7 @@ describe("FordelingSide loader", () => {
         10,
       ),
       misbrukstyper: mockKontrollsaker[0].misbruktype.map(formaterMisbrukstype),
-      ytelser: mockKontrollsaker[0].ytelser.map((ytelse) => ytelse.type),
+      ytelser: mockKontrollsaker[0].ytelser.map((ytelse) => formaterYtelseType(ytelse.type)),
     });
   });
 });

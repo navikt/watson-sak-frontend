@@ -44,6 +44,7 @@ import type { YtelseRadVerdier } from "~/registrer-sak/skjema-helpers";
 import {
   kontrollsakMisbrukstypeEtiketter,
   kontrollsakMisbrukstypeVerdier,
+  kontrollsakYtelseTypeEtiketter,
 } from "~/saker/kategorier";
 import { formaterOrganisasjonsnummer } from "~/utils/string-utils";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
@@ -60,6 +61,7 @@ import {
   formaterBelop,
   formaterBlokkeringsarsak,
   formaterStatus,
+  formaterYtelseType,
   getKildeText,
   getPersonIdent,
 } from "./visning";
@@ -196,6 +198,16 @@ export default function SakDetaljSide() {
     ytelser,
   } = useLoaderData<typeof loader>();
   const [sak, setSak] = useState(loaderSak);
+  const ytelseAlternativer = useMemo(
+    () =>
+      ytelser.map((verdi) => ({
+        value: verdi,
+        label:
+          kontrollsakYtelseTypeEtiketter[verdi as keyof typeof kontrollsakYtelseTypeEtiketter] ??
+          verdi,
+      })),
+    [ytelser],
+  );
   const navigate = useNavigate();
   const fetcher = useFetcher<typeof action>();
   const revalidator = useRevalidator();
@@ -555,7 +567,7 @@ export default function SakDetaljSide() {
                           <YtelseRadFelt
                             key={`${redigeringsøkt}-${indeks}`}
                             indeks={indeks}
-                            ytelser={ytelser}
+                            ytelser={ytelseAlternativer}
                             kanFjernes={lokaleVerdier.ytelser.length > 1}
                             onFjern={() => fjernYtelseRad(indeks)}
                             defaults={rad}
@@ -684,7 +696,7 @@ export default function SakDetaljSide() {
                                 <Table.Row key={`${ytelse.type}-${ytelse.periodeFra}-${indeks}`}>
                                   <Table.DataCell>
                                     <Tag variant="outline" data-color="brand-beige" size="small">
-                                      {ytelse.type}
+                                      {formaterYtelseType(ytelse.type)}
                                     </Tag>
                                   </Table.DataCell>
                                   <Table.DataCell className="text-sm">

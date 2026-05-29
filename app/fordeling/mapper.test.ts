@@ -25,7 +25,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     henleggelsesarsak: null,
     ytelser: [
       {
-        type: "Dagpenger",
+        type: "DAGPENGER",
         periodeFra: "2026-01-01",
         periodeTil: "2026-12-31",
         belop: null,

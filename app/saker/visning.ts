@@ -13,6 +13,7 @@ import {
   kontrollsakKategoriEtiketter,
   kontrollsakKildeEtiketter,
   kontrollsakMisbrukstypeEtiketter,
+  kontrollsakYtelseTypeEtiketter,
 } from "./kategorier";
 
 export type { KontrollsakStatus };
@@ -90,8 +91,14 @@ function formaterKilde(kilde: KontrollsakKilde | null | undefined): string {
   return kontrollsakKildeEtiketter[kilde] ?? kilde;
 }
 
+export function formaterYtelseType(type: string): string {
+  return (
+    kontrollsakYtelseTypeEtiketter[type as keyof typeof kontrollsakYtelseTypeEtiketter] ?? type
+  );
+}
+
 function hentYtelseTyper(ytelser: KontrollsakYtelse[]): string[] {
-  return ytelser.map((ytelse) => ytelse.type);
+  return ytelser.map((ytelse) => formaterYtelseType(ytelse.type));
 }
 
 function formaterPeriode(fra: string, til: string): string {

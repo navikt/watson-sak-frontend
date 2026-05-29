@@ -61,7 +61,7 @@ describe("opprettKontrollsak", () => {
         merking: [],
         ytelser: [
           {
-            type: "Dagpenger",
+            type: "DAGPENGER",
             periodeFra: "2026-01-01",
             periodeTil: "2026-12-31",
             belop: 300000,
@@ -85,7 +85,7 @@ describe("opprettKontrollsak", () => {
         prioritet: "NORMAL",
         ytelser: [
           {
-            type: "Dagpenger",
+            type: "DAGPENGER",
             periodeFra: "2026-01-01",
             periodeTil: "2026-12-31",
             belop: 300000,
@@ -112,7 +112,7 @@ describe("opprettKontrollsak", () => {
       merking: [],
       ytelser: [
         {
-          type: "Dagpenger",
+          type: "DAGPENGER",
           periodeFra: "2026-01-01",
           periodeTil: "2026-12-31",
           belop: 300000,
@@ -175,7 +175,7 @@ describe("opprettKontrollsak", () => {
       merking: [],
       ytelser: [
         {
-          type: "Dagpenger",
+          type: "DAGPENGER",
           periodeFra: "2026-01-01",
           periodeTil: "2026-12-31",
           belop: 300000,
@@ -206,7 +206,7 @@ describe("opprettKontrollsak", () => {
           merking: [],
           ytelser: [
             {
-              type: "Dagpenger",
+              type: "DAGPENGER",
               periodeFra: "2026-01-01",
               periodeTil: "2026-12-31",
             },
@@ -235,7 +235,7 @@ describe("opprettKontrollsak", () => {
           merking: [],
           ytelser: [
             {
-              type: "Dagpenger",
+              type: "DAGPENGER",
               periodeFra: "2026-01-01",
               periodeTil: "2026-12-31",
             },

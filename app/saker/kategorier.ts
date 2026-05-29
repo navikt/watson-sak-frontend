@@ -1,3 +1,21 @@
+const kontrollsakYtelseTypeVerdier = [
+  "DAGPENGER",
+  "SYKEPENGER",
+  "BARNETRYGD",
+  "AAP",
+  "FORELDREPENGER",
+] as const;
+
+type KontrollsakYtelseTypeVerdi = (typeof kontrollsakYtelseTypeVerdier)[number];
+
+export const kontrollsakYtelseTypeEtiketter: Record<KontrollsakYtelseTypeVerdi, string> = {
+  DAGPENGER: "Dagpenger",
+  SYKEPENGER: "Sykepenger",
+  BARNETRYGD: "Barnetrygd",
+  AAP: "AAP",
+  FORELDREPENGER: "Foreldrepenger",
+};
+
 export const kontrollsakKategoriVerdier = [
   "BEHANDLER",
   "ARBEID",

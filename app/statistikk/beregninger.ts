@@ -1,5 +1,6 @@
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import type { KontrollsakStatus } from "~/saker/visning";
+import { formaterYtelseType } from "~/saker/visning";
 import type { Avslutningsdatoer } from "./mock-data.server";
 
 type Statistikksak = KontrollsakResponse;
@@ -18,7 +19,7 @@ function getMottakEnhet(sak: Statistikksak): string {
 }
 
 function getYtelseTyper(sak: Statistikksak): string[] {
-  return sak.ytelser.map((ytelse) => ytelse.type);
+  return sak.ytelser.map((ytelse) => formaterYtelseType(ytelse.type));
 }
 
 /** Antall saker gruppert etter status */

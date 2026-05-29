@@ -18,7 +18,7 @@ const initialeMockStatistikkSaker = [
     ytelser: [
       {
         id: "S-101-ytelse-1",
-        type: "Dagpenger",
+        type: "DAGPENGER",
         periodeFra: "2025-12-10",
         periodeTil: "2025-12-10",
       },
@@ -47,13 +47,13 @@ const initialeMockStatistikkSaker = [
     ytelser: [
       {
         id: "S-102-ytelse-1",
-        type: "Sykepenger",
+        type: "SYKEPENGER",
         periodeFra: "2026-01-05",
         periodeTil: "2026-01-05",
       },
       {
         id: "S-102-ytelse-2",
-        type: "Dagpenger",
+        type: "DAGPENGER",
         periodeFra: "2026-01-05",
         periodeTil: "2026-01-05",
       },
@@ -111,7 +111,7 @@ const initialeMockStatistikkSaker = [
     ytelser: [
       {
         id: "S-104-ytelse-1",
-        type: "Foreldrepenger",
+        type: "FORELDREPENGER",
         periodeFra: "2026-02-01",
         periodeTil: "2026-02-01",
       },
@@ -169,13 +169,13 @@ const initialeMockStatistikkSaker = [
     ytelser: [
       {
         id: "S-106-ytelse-1",
-        type: "Dagpenger",
+        type: "DAGPENGER",
         periodeFra: "2026-03-01",
         periodeTil: "2026-03-01",
       },
       {
         id: "S-106-ytelse-2",
-        type: "Sykepenger",
+        type: "SYKEPENGER",
         periodeFra: "2026-03-01",
         periodeTil: "2026-03-01",
       },
@@ -204,7 +204,7 @@ const initialeMockStatistikkSaker = [
     ytelser: [
       {
         id: "S-201-ytelse-1",
-        type: "Sykepenger",
+        type: "SYKEPENGER",
         periodeFra: "2025-11-15",
         periodeTil: "2025-11-15",
       },
@@ -233,7 +233,7 @@ const initialeMockStatistikkSaker = [
     ytelser: [
       {
         id: "S-202-ytelse-1",
-        type: "Foreldrepenger",
+        type: "FORELDREPENGER",
         periodeFra: "2025-12-01",
         periodeTil: "2025-12-01",
       },
@@ -326,7 +326,7 @@ const initialeMockStatistikkSaker = [
     ytelser: [
       {
         id: "S-205-ytelse-1",
-        type: "Dagpenger",
+        type: "DAGPENGER",
         periodeFra: "2026-01-25",
         periodeTil: "2026-01-25",
       },
@@ -361,7 +361,7 @@ const initialeMockStatistikkSaker = [
     ytelser: [
       {
         id: "S-301-ytelse-1",
-        type: "Dagpenger",
+        type: "DAGPENGER",
         periodeFra: "2025-10-01",
         periodeTil: "2025-10-01",
       },
@@ -390,7 +390,7 @@ const initialeMockStatistikkSaker = [
     ytelser: [
       {
         id: "S-302-ytelse-1",
-        type: "Sykepenger",
+        type: "SYKEPENGER",
         periodeFra: "2025-10-15",
         periodeTil: "2025-10-15",
       },
@@ -425,7 +425,7 @@ const initialeMockStatistikkSaker = [
     ytelser: [
       {
         id: "S-303-ytelse-1",
-        type: "Foreldrepenger",
+        type: "FORELDREPENGER",
         periodeFra: "2025-11-01",
         periodeTil: "2025-11-01",
       },
@@ -495,13 +495,13 @@ const initialeMockStatistikkSaker = [
     ytelser: [
       {
         id: "S-305-ytelse-1",
-        type: "Dagpenger",
+        type: "DAGPENGER",
         periodeFra: "2025-12-05",
         periodeTil: "2025-12-05",
       },
       {
         id: "S-305-ytelse-2",
-        type: "Sykepenger",
+        type: "SYKEPENGER",
         periodeFra: "2025-12-05",
         periodeTil: "2025-12-05",
       },
@@ -559,7 +559,7 @@ const initialeMockStatistikkSaker = [
     ytelser: [
       {
         id: "S-307-ytelse-1",
-        type: "Sykepenger",
+        type: "SYKEPENGER",
         periodeFra: "2026-01-02",
         periodeTil: "2026-01-02",
       },
@@ -594,7 +594,7 @@ const initialeMockStatistikkSaker = [
       },
       {
         id: "S-308-ytelse-2",
-        type: "Foreldrepenger",
+        type: "FORELDREPENGER",
         periodeFra: "2026-01-15",
         periodeTil: "2026-01-15",
       },
@@ -623,7 +623,7 @@ const initialeMockStatistikkSaker = [
     ytelser: [
       {
         id: "S-309-ytelse-1",
-        type: "Dagpenger",
+        type: "DAGPENGER",
         periodeFra: "2026-01-20",
         periodeTil: "2026-01-20",
       },
@@ -652,7 +652,7 @@ const initialeMockStatistikkSaker = [
     ytelser: [
       {
         id: "S-401-ytelse-1",
-        type: "Dagpenger",
+        type: "DAGPENGER",
         periodeFra: "2025-06-15",
         periodeTil: "2025-06-15",
       },
@@ -681,13 +681,13 @@ const initialeMockStatistikkSaker = [
     ytelser: [
       {
         id: "S-402-ytelse-1",
-        type: "Sykepenger",
+        type: "SYKEPENGER",
         periodeFra: "2025-07-01",
         periodeTil: "2025-07-01",
       },
       {
         id: "S-402-ytelse-2",
-        type: "Dagpenger",
+        type: "DAGPENGER",
         periodeFra: "2025-07-01",
         periodeTil: "2025-07-01",
       },
@@ -716,7 +716,7 @@ const initialeMockStatistikkSaker = [
     ytelser: [
       {
         id: "S-403-ytelse-1",
-        type: "Foreldrepenger",
+        type: "FORELDREPENGER",
         periodeFra: "2025-08-10",
         periodeTil: "2025-08-10",
       },
@@ -838,7 +838,7 @@ const initialeMockStatistikkSaker = [
     ytelser: [
       {
         id: "S-407-ytelse-1",
-        type: "Dagpenger",
+        type: "DAGPENGER",
         periodeFra: "2025-11-05",
         periodeTil: "2025-11-05",
       },
@@ -873,7 +873,7 @@ const initialeMockStatistikkSaker = [
     ytelser: [
       {
         id: "S-408-ytelse-1",
-        type: "Sykepenger",
+        type: "SYKEPENGER",
         periodeFra: "2025-12-01",
         periodeTil: "2025-12-01",
       },
@@ -902,7 +902,7 @@ const initialeMockStatistikkSaker = [
     ytelser: [
       {
         id: "S-501-ytelse-1",
-        type: "Dagpenger",
+        type: "DAGPENGER",
         periodeFra: "2025-08-01",
         periodeTil: "2025-08-01",
       },
@@ -931,13 +931,13 @@ const initialeMockStatistikkSaker = [
     ytelser: [
       {
         id: "S-502-ytelse-1",
-        type: "Sykepenger",
+        type: "SYKEPENGER",
         periodeFra: "2025-09-15",
         periodeTil: "2025-09-15",
       },
       {
         id: "S-502-ytelse-2",
-        type: "Foreldrepenger",
+        type: "FORELDREPENGER",
         periodeFra: "2025-09-15",
         periodeTil: "2025-09-15",
       },
