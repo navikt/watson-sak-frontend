@@ -327,6 +327,7 @@ describe("byggOpprettKontrollsakPayload", () => {
       prioritet: "NORMAL",
       misbruktype: ["SKJULT_SAMLIV"],
       merking: ["LIME"],
+      organisasjonsnummer: "123456789",
       ytelser: [
         {
           type: "Dagpenger",

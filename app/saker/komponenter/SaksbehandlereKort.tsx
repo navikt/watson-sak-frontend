@@ -18,6 +18,7 @@ interface SaksbehandlereKortProps {
   sak: KontrollsakResponse;
   saksbehandlerDetaljer: KontrollsakSaksbehandler[];
   ansvarligSaksbehandler: KontrollsakSaksbehandler | null;
+  erEier: boolean;
 }
 
 function hentInitialer(navn: string) {
@@ -53,6 +54,7 @@ export function SaksbehandlereKort({
   sak,
   saksbehandlerDetaljer,
   ansvarligSaksbehandler: ansvarligFraProps,
+  erEier,
 }: SaksbehandlereKortProps) {
   const [visOverforModal, setVisOverforModal] = useState(false);
   const [visDelTilgangModal, setVisDelTilgangModal] = useState(false);
@@ -148,7 +150,7 @@ export function SaksbehandlereKort({
                     key={saksbehandler.navIdent}
                     saksbehandler={saksbehandler}
                     handling={
-                      kanEndreTilgang ? (
+                      erEier && kanEndreTilgang ? (
                         <Button
                           type="button"
                           variant="tertiary"
@@ -167,7 +169,7 @@ export function SaksbehandlereKort({
             </>
           )}
 
-          {kanEndreTilgang && ansvarligSaksbehandler && (
+          {erEier && kanEndreTilgang && ansvarligSaksbehandler && (
             <Button
               type="button"
               variant="secondary"

@@ -1,5 +1,4 @@
-import { FolderIcon } from "@navikt/aksel-icons";
-import { Heading, HStack } from "@navikt/ds-react";
+import { Heading, VStack } from "@navikt/ds-react";
 import { useSearchParams } from "react-router";
 import { ChipsFiltergruppe } from "~/filtre/ChipsFiltergruppe";
 import { Filterpanel } from "~/filtre/Filterpanel";
@@ -62,12 +61,11 @@ export function MineSakerInnhold({ saker, detaljSti, filterAlternativer, aktivtF
 
   return (
     <section aria-labelledby="mine-saker-overskrift" className="pb-12">
-      <HStack gap="space-4" align="center" className="mt-6 mb-6">
-        <FolderIcon aria-hidden fontSize="1.25rem" className="text-ax-text-neutral" />
-        <Heading id="mine-saker-overskrift" level="1" size="medium">
+      <VStack gap="space-12" className="mt-4 mb-8">
+        <Heading id="mine-saker-overskrift" level="1" size="large">
           Mine saker
         </Heading>
-      </HStack>
+      </VStack>
 
       <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:gap-8">
         <div className="min-w-0 flex-1 xl:order-first">

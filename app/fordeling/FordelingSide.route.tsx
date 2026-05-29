@@ -1,5 +1,3 @@
-import { Page } from "@navikt/ds-react";
-import { PageBlock } from "@navikt/ds-react/Page";
 import { useLoaderData } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { skalBrukeMockdata } from "~/config/env.server";
@@ -35,16 +33,14 @@ export default function FordelingSide() {
   const { saker, saksbehandlere, saksbehandlerDetaljer } = useLoaderData<typeof loader>();
 
   return (
-    <Page>
+    <>
       <title>Fordeling – Watson Sak</title>
-      <PageBlock width="xl" gutters className="!mx-0">
-        <UfordelteSakerInnhold
-          saker={saker}
-          saksbehandlere={saksbehandlere}
-          saksbehandlerDetaljer={saksbehandlerDetaljer}
-          submitPath={RouteConfig.FORDELING}
-        />
-      </PageBlock>
-    </Page>
+      <UfordelteSakerInnhold
+        saker={saker}
+        saksbehandlere={saksbehandlere}
+        saksbehandlerDetaljer={saksbehandlerDetaljer}
+        submitPath={RouteConfig.FORDELING}
+      />
+    </>
   );
 }

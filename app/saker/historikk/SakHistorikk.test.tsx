@@ -41,7 +41,9 @@ describe("SakHistorikk", () => {
   });
 
   it("renderer backend hendelsestype og statusfelt", () => {
-    renderMedRouter(<SakHistorikk sakId={1} hendelser={[lagBackendHendelse()]} />);
+    renderMedRouter(
+      <SakHistorikk redigerbar={true} sakId={1} hendelser={[lagBackendHendelse()]} />,
+    );
 
     expect(screen.getByText("Sak opprettet")).toBeDefined();
     expect(screen.getByText(/Status: Opprettet/)).toBeDefined();
@@ -50,6 +52,7 @@ describe("SakHistorikk", () => {
   it("viser historikktidspunkt i norsk tidssone", () => {
     renderMedRouter(
       <SakHistorikk
+        redigerbar={true}
         sakId={1}
         hendelser={[lagBackendHendelse({ tidspunkt: "2026-01-01T10:00:00Z" })]}
       />,
@@ -61,6 +64,7 @@ describe("SakHistorikk", () => {
   it("renderer avklaringshendelse med oppdatert status", () => {
     renderMedRouter(
       <SakHistorikk
+        redigerbar={true}
         sakId={1}
         hendelser={[
           lagBackendHendelse({
@@ -78,6 +82,7 @@ describe("SakHistorikk", () => {
   it("renderer beskrivelse for statusendring", () => {
     renderMedRouter(
       <SakHistorikk
+        redigerbar={true}
         sakId={1}
         hendelser={[
           lagBackendHendelse({
@@ -96,6 +101,7 @@ describe("SakHistorikk", () => {
   it("renderer historikk for endret ansvarlig saksbehandler", () => {
     renderMedRouter(
       <SakHistorikk
+        redigerbar={true}
         sakId={1}
         hendelser={[
           lagBackendHendelse({
@@ -117,6 +123,7 @@ describe("SakHistorikk", () => {
   it("renderer historikk for fjernet deling", () => {
     renderMedRouter(
       <SakHistorikk
+        redigerbar={true}
         sakId={1}
         hendelser={[
           lagBackendHendelse({
@@ -138,6 +145,7 @@ describe("SakHistorikk", () => {
   it("renderer sak satt på vent med blokkeringsårsak og status", () => {
     renderMedRouter(
       <SakHistorikk
+        redigerbar={true}
         sakId={1}
         hendelser={[
           lagBackendHendelse({
@@ -156,6 +164,7 @@ describe("SakHistorikk", () => {
   it("renderer gjenoppta som vanlig gjenopptak for ventesaker", () => {
     renderMedRouter(
       <SakHistorikk
+        redigerbar={true}
         sakId={1}
         hendelser={[
           lagBackendHendelse({
@@ -172,6 +181,7 @@ describe("SakHistorikk", () => {
   it("renderer gjenoppta som tatt ut av bero for bero-saker", () => {
     renderMedRouter(
       <SakHistorikk
+        redigerbar={true}
         sakId={1}
         hendelser={[
           lagBackendHendelse({
@@ -188,6 +198,7 @@ describe("SakHistorikk", () => {
   it("renderer fritekst for manuelt historikkinnslag", () => {
     renderMedRouter(
       <SakHistorikk
+        redigerbar={true}
         sakId={1}
         hendelser={[
           lagBackendHendelse({
@@ -207,7 +218,9 @@ describe("SakHistorikk", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-05-06T08:15:00"));
 
-    renderMedRouter(<SakHistorikk sakId={1} hendelser={[lagBackendHendelse()]} />);
+    renderMedRouter(
+      <SakHistorikk redigerbar={true} sakId={1} hendelser={[lagBackendHendelse()]} />,
+    );
 
     vi.setSystemTime(new Date("2026-05-06T09:42:00"));
     act(() => {
@@ -226,7 +239,7 @@ describe("SakHistorikk", () => {
       }),
     );
 
-    renderMedRouter(<SakHistorikk sakId={1} hendelser={hendelser} />);
+    renderMedRouter(<SakHistorikk redigerbar={true} sakId={1} hendelser={hendelser} />);
 
     expect(screen.getByRole("button", { name: "Vis all historikk (3)" })).toBeDefined();
   });

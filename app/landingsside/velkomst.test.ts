@@ -21,6 +21,7 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
     henleggelsesarsak: null,
     ytelser: [],
     merking: [],
+    organisasjonsnummer: null,
     opprettet: "2026-03-01T00:00:00Z",
     oppdatert: null,
     oppgaver: [],

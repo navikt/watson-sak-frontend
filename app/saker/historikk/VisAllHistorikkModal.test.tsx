@@ -46,7 +46,13 @@ describe("VisAllHistorikkModal", () => {
     ];
 
     renderMedRouter(
-      <VisAllHistorikkModal sakId={1} hendelser={hendelser} åpen={true} onClose={() => {}} />,
+      <VisAllHistorikkModal
+        redigerbar={true}
+        sakId={1}
+        hendelser={hendelser}
+        åpen={true}
+        onClose={() => {}}
+      />,
     );
 
     expect(screen.getByText("Sak opprettet")).toBeDefined();
@@ -65,7 +71,13 @@ describe("VisAllHistorikkModal", () => {
     ];
 
     renderMedRouter(
-      <VisAllHistorikkModal sakId={1} hendelser={hendelser} åpen={true} onClose={() => {}} />,
+      <VisAllHistorikkModal
+        redigerbar={true}
+        sakId={1}
+        hendelser={hendelser}
+        åpen={true}
+        onClose={() => {}}
+      />,
     );
 
     expect(screen.getByRole("button", { name: "Rediger" })).toBeDefined();
@@ -83,7 +95,13 @@ describe("VisAllHistorikkModal", () => {
     ];
 
     renderMedRouter(
-      <VisAllHistorikkModal sakId={1} hendelser={hendelser} åpen={true} onClose={() => {}} />,
+      <VisAllHistorikkModal
+        redigerbar={true}
+        sakId={1}
+        hendelser={hendelser}
+        åpen={true}
+        onClose={() => {}}
+      />,
     );
 
     expect(screen.getByRole("button", { name: "Slett" })).toBeDefined();
@@ -101,7 +119,13 @@ describe("VisAllHistorikkModal", () => {
     ];
 
     renderMedRouter(
-      <VisAllHistorikkModal sakId={1} hendelser={hendelser} åpen={true} onClose={() => {}} />,
+      <VisAllHistorikkModal
+        redigerbar={true}
+        sakId={1}
+        hendelser={hendelser}
+        åpen={true}
+        onClose={() => {}}
+      />,
     );
 
     expect(screen.queryByRole("button", { name: "Slett" })).toBeNull();
@@ -119,7 +143,13 @@ describe("VisAllHistorikkModal", () => {
     ];
 
     renderMedRouter(
-      <VisAllHistorikkModal sakId={1} hendelser={hendelser} åpen={true} onClose={() => {}} />,
+      <VisAllHistorikkModal
+        redigerbar={true}
+        sakId={1}
+        hendelser={hendelser}
+        åpen={true}
+        onClose={() => {}}
+      />,
     );
 
     expect(screen.queryByRole("button", { name: "Rediger" })).toBeNull();
@@ -134,7 +164,13 @@ describe("VisAllHistorikkModal", () => {
     ];
 
     renderMedRouter(
-      <VisAllHistorikkModal sakId={1} hendelser={hendelser} åpen={true} onClose={() => {}} />,
+      <VisAllHistorikkModal
+        redigerbar={true}
+        sakId={1}
+        hendelser={hendelser}
+        åpen={true}
+        onClose={() => {}}
+      />,
     );
 
     expect(screen.queryByRole("button", { name: "Rediger" })).toBeNull();
@@ -142,9 +178,40 @@ describe("VisAllHistorikkModal", () => {
 
   it("viser tom-melding når det ikke er noen hendelser", () => {
     renderMedRouter(
-      <VisAllHistorikkModal sakId={1} hendelser={[]} åpen={true} onClose={() => {}} />,
+      <VisAllHistorikkModal
+        redigerbar={true}
+        sakId={1}
+        hendelser={[]}
+        åpen={true}
+        onClose={() => {}}
+      />,
     );
 
     expect(screen.getByText("Ingen historikk for denne saken.")).toBeDefined();
+  });
+
+  it("skjuler Rediger/Slett for egne notater når redigerbar er false", () => {
+    const hendelser = [
+      lagHendelse({
+        hendelseId: "00000000-0000-4000-8000-000000000001",
+        hendelsesType: "MANUELL_NOTAT",
+        tittel: "Mitt notat",
+        notat: "En beskrivelse",
+        opprettetAvNavIdent: "Z999999",
+      }),
+    ];
+
+    renderMedRouter(
+      <VisAllHistorikkModal
+        redigerbar={false}
+        sakId={1}
+        hendelser={hendelser}
+        åpen={true}
+        onClose={() => {}}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Rediger" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Slett" })).toBeNull();
   });
 });

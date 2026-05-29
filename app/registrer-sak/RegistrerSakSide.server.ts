@@ -42,6 +42,7 @@ export function byggOpprettKontrollsakPayload({
     prioritet: "NORMAL",
     misbruktype: skjema.misbruktype,
     merking: skjema.merking,
+    organisasjonsnummer: skjema.organisasjonsnummer || null,
     ytelser: skjema.ytelser
       .filter((rad) => rad.type !== undefined)
       .map((rad) => ({

@@ -45,6 +45,11 @@ describe("SakDetaljSide action", () => {
   it("legger til delt saksbehandler og logger historikk", async () => {
     const kontrollsak = hentFordelingssaker(state())[1];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
 
     expect(kontrollsak.saksbehandlere?.deltMed ?? []).toHaveLength(0);
 
@@ -76,6 +81,11 @@ describe("SakDetaljSide action", () => {
   it("fjerner delt saksbehandler og logger historikk", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
 
     expect(kontrollsak.saksbehandlere?.deltMed).toEqual([
       {
@@ -148,6 +158,11 @@ describe("SakDetaljSide action", () => {
   it("inkluderer valgt mal når notat logges i historikk", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
 
     const formData = new FormData();
     formData.set("handling", "send_notat");
@@ -173,6 +188,13 @@ describe("SakDetaljSide action", () => {
   });
 
   it("returnerer lokal feilmelding når koble sak ikke er tilgjengelig ennå", async () => {
+    const kontrollsak = hentAlleSaker(testRequest).find((sak) => sak.id === utredningSakId)!;
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
+
     const formData = new FormData();
     formData.set("handling", "koble_sak");
     formData.set("relatertSakId", "114");
@@ -420,6 +442,11 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   it("oppdaterer redigerbare saksdetaljer uten å endre låste felt", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
 
     const opprinneligPersonIdent = kontrollsak.personIdent;
     const opprinneligStatus = kontrollsak.status;
@@ -473,6 +500,11 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   it("oppdaterer kilde når sak får oppdatert kilde", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
 
     const formData = new FormData();
     formData.set("handling", "rediger_saksinformasjon");
@@ -503,6 +535,11 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   it("avviser redigering når saken er inaktiv selv om payloaden er gyldig", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
     kontrollsak.status = "AVSLUTTET";
 
     const formData = new FormData();
@@ -534,6 +571,11 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   it("opprett_journalpost logger hendelse med tittel og beskrivelse", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
 
     const formData = new FormData();
     formData.set("handling", "opprett_journalpost");
@@ -559,6 +601,11 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   it("opprett_oppgave logger hendelse med oppgavetype og beskrivelse", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
 
     const formData = new FormData();
     formData.set("handling", "opprett_oppgave");
@@ -582,5 +629,332 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(historikk[0]?.beskrivelse).toContain("Prioritet: høy");
     expect(historikk[0]?.beskrivelse).toContain("Frist: 2026-06-01");
     expect(historikk[0]?.beskrivelse).toContain("Sjekk dokumentasjon");
+  });
+});
+
+describe("SakDetaljSide tilgangskontroll", () => {
+  beforeEach(() => {
+    resetDefaultSession();
+  });
+
+  it("avviser mutasjon fra ikke-eier med 403", async () => {
+    const kontrollsak = hentFordelingssaker(hentMockState(testRequest))[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    // Sett en annen saksbehandler som eier
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z111111",
+      navn: "Annen Saksbehandler",
+      enhet: "4800",
+    };
+
+    const formData = new FormData();
+    formData.set("handling", "endre_status");
+    formData.set("status", "ANMELDT");
+
+    await expect(
+      action({
+        request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+          method: "POST",
+          body: formData,
+        }),
+        params: { sakId: kontrollsakRef },
+      } as Route.ActionArgs),
+    ).rejects.toSatisfy((thrown: { init?: { status?: number } }) => thrown.init?.status === 403);
+  });
+
+  it("avviser mutasjon på sak uten eier med 403", async () => {
+    const kontrollsak = hentFordelingssaker(hentMockState(testRequest))[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = null;
+
+    const formData = new FormData();
+    formData.set("handling", "rediger_saksinformasjon");
+    formData.set("kategori", "ARBEID");
+    formData.append("misbruktype", "SVART_ARBEID");
+    formData.set("kilde", "PUBLIKUM");
+    formData.set("ytelser[0].type", "Dagpenger");
+    formData.set("ytelser[0].fraDato", "2026-02-01");
+    formData.set("ytelser[0].tilDato", "2026-02-28");
+
+    await expect(
+      action({
+        request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+          method: "POST",
+          body: formData,
+        }),
+        params: { sakId: kontrollsakRef },
+      } as Route.ActionArgs),
+    ).rejects.toSatisfy((thrown: { init?: { status?: number } }) => thrown.init?.status === 403);
+  });
+
+  it("tillater TILDEL for ikke-eier", async () => {
+    const kontrollsak = hentFordelingssaker(hentMockState(testRequest))[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z111111",
+      navn: "Annen Saksbehandler",
+      enhet: "4800",
+    };
+
+    const formData = new FormData();
+    formData.set("handling", "TILDEL");
+    formData.set("navIdent", "Z999999");
+
+    const resultat = await action({
+      request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: kontrollsakRef },
+    } as Route.ActionArgs);
+
+    expect(resultat).toMatchObject({ ok: true });
+  });
+
+  it("tillater FRISTILL for ikke-eier", async () => {
+    const kontrollsak = hentFordelingssaker(hentMockState(testRequest))[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z111111",
+      navn: "Annen Saksbehandler",
+      enhet: "4800",
+    };
+
+    const formData = new FormData();
+    formData.set("handling", "FRISTILL");
+
+    const resultat = await action({
+      request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: kontrollsakRef },
+    } as Route.ActionArgs);
+
+    expect(resultat).toMatchObject({ ok: true });
+  });
+
+  it("tillater overfor_ansvarlig for ikke-eier", async () => {
+    const kontrollsak = hentFordelingssaker(hentMockState(testRequest))[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z111111",
+      navn: "Annen Saksbehandler",
+      enhet: "4800",
+    };
+
+    const formData = new FormData();
+    formData.set("handling", "overfor_ansvarlig");
+    formData.set("navIdent", "Z123456");
+
+    const resultat = await action({
+      request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: kontrollsakRef },
+    } as Route.ActionArgs);
+
+    expect(resultat).toMatchObject({ ok: true });
+  });
+
+  it("tillater send_til_annen_enhet for ikke-eier", async () => {
+    const kontrollsak = hentFordelingssaker(hentMockState(testRequest))[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z111111",
+      navn: "Annen Saksbehandler",
+      enhet: "4800",
+    };
+
+    const formData = new FormData();
+    formData.set("handling", "send_til_annen_enhet");
+    formData.set("seksjon", "NORD");
+
+    const resultat = await action({
+      request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: kontrollsakRef },
+    } as Route.ActionArgs);
+
+    expect(resultat).toMatchObject({ ok: true });
+  });
+
+  it("returnerer tom filer-liste i loader for bruker uten tilgang", async () => {
+    const kontrollsak = hentFordelingssaker(hentMockState(testRequest))[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    // Sett en annen saksbehandler som eier, og innlogget bruker er ikke i deltMed
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z111111",
+      navn: "Annen Saksbehandler",
+      enhet: "4800",
+    };
+    kontrollsak.saksbehandlere.deltMed = [];
+
+    const resultat = await loader({
+      request: testRequest,
+      params: { sakId: kontrollsakRef },
+    } as unknown as Route.LoaderArgs);
+
+    expect(resultat.filer).toEqual([]);
+  });
+
+  it("returnerer filer i loader for eier", async () => {
+    const kontrollsak = hentFordelingssaker(hentMockState(testRequest))[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
+
+    const resultat = await loader({
+      request: testRequest,
+      params: { sakId: kontrollsakRef },
+    } as unknown as Route.LoaderArgs);
+
+    // Filer returneres (kan være tom array fra mock, men funksjonen blir kalt)
+    expect(resultat.filer).toBeDefined();
+  });
+
+  it("returnerer filer i loader for bruker med delt tilgang", async () => {
+    const kontrollsak = hentFordelingssaker(hentMockState(testRequest))[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z111111",
+      navn: "Annen Saksbehandler",
+      enhet: "4800",
+    };
+    kontrollsak.saksbehandlere.deltMed = [
+      { navIdent: "Z999999", navn: "Test Saksbehandler", enhet: "4812" },
+    ];
+
+    const resultat = await loader({
+      request: testRequest,
+      params: { sakId: kontrollsakRef },
+    } as unknown as Route.LoaderArgs);
+
+    expect(resultat.filer).toBeDefined();
+  });
+});
+
+describe("SakDetaljSide rediger organisasjonsnummer", () => {
+  beforeEach(() => {
+    resetDefaultSession();
+  });
+
+  function lagRedigerFormData(overrides: Record<string, string> = {}): FormData {
+    const formData = new FormData();
+    formData.set("handling", "rediger_saksinformasjon");
+    formData.set("kategori", "SAMLIV");
+    formData.set("kilde", "ANNET");
+    formData.append("misbruktype", "SKJULT_SAMLIV");
+    if (!("organisasjonsnummer" in overrides)) {
+      formData.set("organisasjonsnummer", "");
+    }
+    for (const [key, value] of Object.entries(overrides)) {
+      formData.set(key, value);
+    }
+    return formData;
+  }
+
+  it("lagrer gyldig organisasjonsnummer", async () => {
+    const kontrollsak = hentFordelingssaker(state())[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
+
+    const formData = lagRedigerFormData({ organisasjonsnummer: "123456789" });
+
+    const resultat = await action({
+      request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: kontrollsakRef },
+    } as Route.ActionArgs);
+
+    expect(resultat).toMatchObject({ ok: true });
+    expect(kontrollsak.organisasjonsnummer).toBe("123456789");
+  });
+
+  it("nullstiller organisasjonsnummer når tom streng sendes", async () => {
+    const kontrollsak = hentFordelingssaker(state())[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
+
+    // Sett en verdi først
+    kontrollsak.organisasjonsnummer = "987654321";
+
+    const formData = lagRedigerFormData({ organisasjonsnummer: "" });
+
+    const resultat = await action({
+      request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: kontrollsakRef },
+    } as Route.ActionArgs);
+
+    expect(resultat).toMatchObject({ ok: true });
+    expect(kontrollsak.organisasjonsnummer).toBeNull();
+  });
+
+  it("returnerer feil for ugyldig organisasjonsnummer", async () => {
+    const kontrollsak = hentFordelingssaker(state())[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
+
+    const formData = lagRedigerFormData({ organisasjonsnummer: "1234" });
+
+    const resultat = await action({
+      request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: kontrollsakRef },
+    } as Route.ActionArgs);
+
+    expect(resultat).toMatchObject({ ok: false });
+    expect((resultat as { feil: Record<string, string[]> }).feil.organisasjonsnummer).toBeDefined();
+  });
+
+  it("bevarer eksisterende organisasjonsnummer via loader", async () => {
+    const kontrollsak = hentFordelingssaker(state())[0];
+    kontrollsak.organisasjonsnummer = "987654321";
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+
+    const resultat = await loader({
+      request: testRequest,
+      params: { sakId: kontrollsakRef },
+    } as Route.LoaderArgs);
+
+    expect(resultat.sak.organisasjonsnummer).toBe("987654321");
+  });
+
+  it("loader returnerer null når organisasjonsnummer ikke er satt", async () => {
+    const kontrollsak = hentFordelingssaker(state())[0];
+    kontrollsak.organisasjonsnummer = null;
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+
+    const resultat = await loader({
+      request: testRequest,
+      params: { sakId: kontrollsakRef },
+    } as Route.LoaderArgs);
+
+    expect(resultat.sak.organisasjonsnummer).toBeNull();
   });
 });

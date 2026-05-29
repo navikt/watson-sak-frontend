@@ -19,6 +19,7 @@ import { hentTilgjengeligeSakshandlinger, type Sakshandling } from "./tilgjengel
 
 interface SakHandlingerKnapperProps {
   sak: KontrollsakResponse;
+  erEier: boolean;
 }
 
 type ModalHandling = Exclude<Sakshandling, "gjenoppta">;
@@ -60,14 +61,14 @@ const handlingsvisning: Record<
 
 const sekundærhandlinger: Sakshandling[] = ["opprett-journalpost", "opprett-oppgave"];
 
-export function SakHandlingerKnapper({ sak }: SakHandlingerKnapperProps) {
+export function SakHandlingerKnapper({ sak, erEier }: SakHandlingerKnapperProps) {
   const gjenopptaFetcher = useFetcher();
   const [åpenModal, setÅpenModal] = useState<ModalHandling | null>(null);
   const handlinger = hentTilgjengeligeSakshandlinger(sak);
   const primærhandlinger = handlinger.filter((handling) => !sekundærhandlinger.includes(handling));
   const visSekundærhandlinger = handlinger.some((h) => sekundærhandlinger.includes(h));
 
-  if (handlinger.length === 0) {
+  if (!erEier || handlinger.length === 0) {
     return null;
   }
 
