@@ -22,7 +22,10 @@ describe("Kontrollsak-kontrakter", () => {
     expect(
       kontrollsakResponseSchema.parse({
         id: 42,
-        personIdent: "12345678901",
+        kontrollobjekt: {
+          personIdent: "12345678901",
+          navn: "Birger Testesen",
+        },
         saksbehandlere: {
           ansvarlig: {
             navIdent: "Z123456",
@@ -60,7 +63,8 @@ describe("Kontrollsak-kontrakter", () => {
     ).toMatchObject({
       id: 42,
       status: "OPPRETTET",
-      personNavn: null,
+      personIdent: "12345678901",
+      personNavn: "Birger Testesen",
       ytelser: [{ type: "DAGPENGER" }],
       kilde: "NAV_KONTROLL",
     });

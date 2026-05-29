@@ -11,6 +11,13 @@ vi.mock("./api.server", () => ({
   opprettKontrollsak: vi.fn().mockResolvedValue({ id: "00000000-0000-4000-8000-000000301000" }),
 }));
 
+vi.mock("~/saker/api.server", () => ({
+  slåOppPerson: vi.fn().mockResolvedValue({
+    type: "success",
+    person: { navn: "Ola Testesen", personIdent: "12345678901", alder: 30 },
+  }),
+}));
+
 vi.mock("~/auth/access-token", () => ({
   getBackendOboToken: getBackendOboTokenMock,
 }));
