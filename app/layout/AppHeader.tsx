@@ -15,6 +15,7 @@ export function AppHeader() {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "k" && event.metaKey) {
         event.preventDefault();
+        sporHendelse("hurtigsøk aktivert");
         skjemaRef.current?.querySelector("input")?.focus();
       }
     }

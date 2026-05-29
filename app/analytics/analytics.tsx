@@ -46,4 +46,10 @@ type Hendelse =
   | "søk resultat valgt"
   | "person oppslag"
   | "sak åpnet"
-  | "filter brukt";
+  | "filter brukt"
+  | "journalpost opprettet"
+  | "oppgave opprettet"
+  | "fil lastet opp"
+  | "innstillinger endret"
+  | "varsel åpnet"
+  | "hurtigsøk aktivert";

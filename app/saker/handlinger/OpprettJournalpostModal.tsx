@@ -16,6 +16,7 @@ import {
 import { useState } from "react";
 import { useFetcher } from "react-router";
 import { z } from "zod";
+import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { OppgaveSkjema } from "./OppgaveSkjema";
@@ -78,6 +79,7 @@ export function OpprettJournalpostModal({ sakId, åpen, onClose }: OpprettJourna
     onSubmit(event, { formData }) {
       event.preventDefault();
       formData.set("handling", "opprett_journalpost");
+      sporHendelse("journalpost opprettet");
       fetcher.submit(formData, {
         method: "post",
         action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),
@@ -142,9 +144,12 @@ export function OpprettJournalpostModal({ sakId, åpen, onClose }: OpprettJourna
                 label="Last opp vedlegg (valgfritt)"
                 description="Maks 50 MB per fil."
                 accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx"
-                onSelect={(_, partitioned) =>
-                  setFiler((eksisterende) => [...eksisterende, ...partitioned.accepted])
-                }
+                onSelect={(_, partitioned) => {
+                  if (partitioned.accepted.length > 0) {
+                    sporHendelse("fil lastet opp", { antall: partitioned.accepted.length });
+                  }
+                  setFiler((eksisterende) => [...eksisterende, ...partitioned.accepted]);
+                }}
               />
               {filer.length > 0 && (
                 <VStack gap="space-4" as="ul" aria-label="Opplastede filer">
