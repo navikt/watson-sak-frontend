@@ -154,6 +154,7 @@ export default function OpprettSakSide() {
           action={RouteConfig.API.PERSON_OPPSLAG}
           aria-label="Søk etter person"
           className="mb-6"
+          onSubmit={() => sporHendelse("person oppslag")}
         >
           <Search
             label="Fødsels- eller d-nummer"

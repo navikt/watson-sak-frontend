@@ -41,4 +41,9 @@ type Hendelse =
   | "sak satt på vent"
   | "sak gjenopptatt"
   | "sak redigert"
-  | "fordeling utført";
+  | "fordeling utført"
+  | "søk utført"
+  | "søk resultat valgt"
+  | "person oppslag"
+  | "sak åpnet"
+  | "filter brukt";

@@ -2,6 +2,7 @@ import { MagnifyingGlassIcon } from "@navikt/aksel-icons";
 import { BodyShort, Heading, Search, VStack } from "@navikt/ds-react";
 import { useEffect, useRef } from "react";
 import { Form, useActionData } from "react-router";
+import { sporHendelse } from "~/analytics/analytics";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { hentValgfriTekst } from "~/utils/form-data";
 import { SøkResultatKort } from "./SøkResultatKort";
@@ -88,6 +89,7 @@ export default function SøkSide() {
             aria-label="Søk i saker"
             className="max-w-xl"
             ref={skjemaRef}
+            onSubmit={() => sporHendelse("søk utført", { kilde: "søkeside" })}
           >
             <Search
               label="Søk etter saker"
