@@ -79,6 +79,7 @@ describe("opprettKontrollsak", () => {
       },
       body: JSON.stringify({
         personIdent: "12345678901",
+        navn: "Ola Nordmann",
         kategori: "SAMLIV",
         kilde: "NAV_KONTROLL",
         misbruktype: ["SKJULT_SAMLIV"],
