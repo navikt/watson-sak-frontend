@@ -18,6 +18,7 @@ import {
 import { PersonIcon, PlusIcon } from "@navikt/aksel-icons";
 import { useMemo, useState } from "react";
 import { Form, Link, useFetcher, useActionData, useLoaderData } from "react-router";
+import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import {
   kildeEtiketter,
@@ -252,7 +253,10 @@ export default function OpprettSakSide() {
               method="post"
               aria-label="Grunnleggende saksinformasjon"
               id={form.id}
-              onSubmit={form.onSubmit}
+              onSubmit={(event) => {
+                sporHendelse("sak opprettet", { kategori: valgtKategori });
+                form.onSubmit(event);
+              }}
               noValidate
             >
               <input

@@ -33,4 +33,12 @@ export function sporHendelse(hendelse: Hendelse, data: Record<string, unknown> =
   }
 }
 
-type Hendelse = "endre tema" | "side lastet på nytt grunnet ny versjon";
+type Hendelse =
+  | "endre tema"
+  | "side lastet på nytt grunnet ny versjon"
+  | "sak opprettet"
+  | "sak status endret"
+  | "sak satt på vent"
+  | "sak gjenopptatt"
+  | "sak redigert"
+  | "fordeling utført";

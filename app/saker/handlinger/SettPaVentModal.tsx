@@ -4,6 +4,7 @@ import { ClockDashedIcon } from "@navikt/aksel-icons";
 import { Button, Modal, Radio, RadioGroup, Textarea, VStack } from "@navikt/ds-react";
 import { useFetcher } from "react-router";
 import { z } from "zod";
+import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import type { Blokkeringsarsak } from "~/saker/types.backend";
@@ -42,6 +43,8 @@ export function SettPaVentModal({ sakId, åpen, onClose }: SettPaVentModalProps)
     onSubmit(event, { formData }) {
       event.preventDefault();
       formData.set("handling", "endre_blokkering");
+      const årsak = formData.get("blokkert") as string;
+      sporHendelse("sak satt på vent", { årsak });
       fetcher.submit(formData, {
         method: "post",
         action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),

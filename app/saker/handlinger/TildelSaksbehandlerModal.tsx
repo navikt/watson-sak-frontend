@@ -4,6 +4,7 @@ import { PersonPencilIcon } from "@navikt/aksel-icons";
 import { BodyShort, Button, Modal, Select, VStack } from "@navikt/ds-react";
 import { useFetcher } from "react-router";
 import { z } from "zod";
+import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
@@ -50,6 +51,7 @@ export function TildelSaksbehandlerModal({
       event.preventDefault();
       formData.set("handling", "TILDEL");
       formData.set("sakId", sakId);
+      sporHendelse("fordeling utført");
       fetcher.submit(formData, { method: "post", action: actionPath });
       form.reset();
       onClose();
