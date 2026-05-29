@@ -97,7 +97,7 @@ describe("OpprettSakSide action", () => {
     const { opprettKontrollsak } = await import("./api.server");
 
     const formData = lagFormDataMedMinimum();
-    formData.set("ytelser[0].type", "Dagpenger");
+    formData.set("ytelser[0].type", "DAGPENGER");
     formData.set("ytelser[0].fraDato", "2024-01-01");
     formData.set("ytelser[0].tilDato", "2024-06-30");
     formData.set("ytelser[0].beløp", "12000");
@@ -119,7 +119,7 @@ describe("OpprettSakSide action", () => {
         payload: expect.objectContaining({
           ytelser: [
             {
-              type: "Dagpenger",
+              type: "DAGPENGER",
               periodeFra: "2024-01-01",
               periodeTil: "2024-06-30",
               belop: 12000,
@@ -141,7 +141,7 @@ describe("OpprettSakSide action", () => {
     const { opprettKontrollsak } = await import("./api.server");
 
     const formData = lagFormDataMedMinimum();
-    formData.set("ytelser[0].type", "Dagpenger");
+    formData.set("ytelser[0].type", "DAGPENGER");
     formData.set("ytelser[1].type", "");
     formData.set("ytelser[1].fraDato", "");
 
@@ -309,7 +309,7 @@ describe("byggOpprettKontrollsakPayload", () => {
           organisasjonsnummer: "123456789",
           ytelser: [
             {
-              type: "Dagpenger",
+              type: "DAGPENGER",
               fraDato: "2024-01-01",
               tilDato: "2024-12-31",
               beløp: 300000,
@@ -330,7 +330,7 @@ describe("byggOpprettKontrollsakPayload", () => {
       organisasjonsnummer: "123456789",
       ytelser: [
         {
-          type: "Dagpenger",
+          type: "DAGPENGER",
           periodeFra: "2024-01-01",
           periodeTil: "2024-12-31",
           belop: 300000,

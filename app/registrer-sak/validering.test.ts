@@ -126,7 +126,7 @@ describe("opprettSakSchema", () => {
     const resultat = opprettSakSchema.safeParse({
       ...minimaltGyldigSkjema,
       ytelser: [
-        { type: "Dagpenger", fraDato: "2024-01-01", tilDato: "2024-12-31", beløp: 1000 },
+        { type: "DAGPENGER", fraDato: "2024-01-01", tilDato: "2024-12-31", beløp: 1000 },
         { type: undefined, fraDato: undefined, tilDato: undefined, beløp: undefined },
       ],
     });
@@ -134,7 +134,7 @@ describe("opprettSakSchema", () => {
     if (resultat.success) {
       expect(resultat.data.ytelser).toHaveLength(1);
       expect(resultat.data.ytelser[0]).toEqual({
-        type: "Dagpenger",
+        type: "DAGPENGER",
         fraDato: "2024-01-01",
         tilDato: "2024-12-31",
         beløp: 1000,
@@ -145,7 +145,7 @@ describe("opprettSakSchema", () => {
   it("godtar ytelse-rader hvor kun ett felt er fylt ut", () => {
     const resultat = opprettSakSchema.safeParse({
       ...minimaltGyldigSkjema,
-      ytelser: [{ type: "Dagpenger" }],
+      ytelser: [{ type: "DAGPENGER" }],
     });
     expect(resultat.success).toBe(true);
   });
@@ -193,7 +193,7 @@ describe("opprettSakSchema", () => {
   it("godtar beløp som valgfritt tall", () => {
     const resultat = opprettSakSchema.safeParse({
       ...minimaltGyldigSkjema,
-      ytelser: [{ type: "Dagpenger", beløp: 300000 }],
+      ytelser: [{ type: "DAGPENGER", beløp: 300000 }],
     });
     expect(resultat.success).toBe(true);
     if (resultat.success) {

@@ -22,7 +22,7 @@ function lagHendelse(overrides: Partial<SakHendelse> = {}): SakHendelse {
     kategori: "ARBEID",
     prioritet: "NORMAL",
     status: "OPPRETTET",
-    ytelseTyper: ["Sykepenger"],
+    ytelseTyper: ["SYKEPENGER"],
     ...overrides,
   };
 }
