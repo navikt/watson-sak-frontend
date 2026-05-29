@@ -77,7 +77,7 @@ export function VisAllHistorikkModal({
                     key={hendelse.hendelseId}
                     title={hendelseTittel(hendelse)}
                     timestamp={formaterTidspunkt(hendelse.tidspunkt)}
-                    status={index === 0 ? "active" : "completed"}
+                    status="completed"
                     bullet={<HendelseBullet hendelse={hendelse} />}
                   >
                     <VStack gap="space-2">
