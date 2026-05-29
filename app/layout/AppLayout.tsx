@@ -1,3 +1,5 @@
+import { Page } from "@navikt/ds-react";
+import { PageBlock } from "@navikt/ds-react/Page";
 import { Outlet } from "react-router";
 import { AppFooter } from "./AppFooter";
 import { AppHeader } from "./AppHeader";
@@ -12,7 +14,11 @@ export default function RootLayout() {
       <div className="flex flex-1">
         <AppSidebar />
         <main id="maincontent" className="flex-1 min-w-0">
-          <Outlet />
+          <Page>
+            <PageBlock width="2xl" gutters className="mx-0!">
+              <Outlet />
+            </PageBlock>
+          </Page>
         </main>
       </div>
       <AppFooter />

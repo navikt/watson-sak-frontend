@@ -1,5 +1,3 @@
-import { Page } from "@navikt/ds-react";
-import { PageBlock } from "@navikt/ds-react/Page";
 import { useLoaderData } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
@@ -70,16 +68,14 @@ export default function MineSakerSide() {
   const { saker, filterAlternativer, aktivtFilter } = useLoaderData<typeof loader>();
 
   return (
-    <Page>
+    <>
       <title>Mine saker – Watson Sak</title>
-      <PageBlock width="2xl" gutters className="mx-0!">
-        <MineSakerInnhold
-          saker={saker}
-          detaljSti={RouteConfig.SAKER_DETALJ.replace("/:sakId", "")}
-          filterAlternativer={filterAlternativer}
-          aktivtFilter={aktivtFilter}
-        />
-      </PageBlock>
-    </Page>
+      <MineSakerInnhold
+        saker={saker}
+        detaljSti={RouteConfig.SAKER_DETALJ.replace("/:sakId", "")}
+        filterAlternativer={filterAlternativer}
+        aktivtFilter={aktivtFilter}
+      />
+    </>
   );
 }

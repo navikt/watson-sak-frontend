@@ -1,15 +1,14 @@
-import { BodyLong, Box, Heading, Link, List, Page } from "@navikt/ds-react";
+import { BodyLong, Box, Heading, Link, List, VStack } from "@navikt/ds-react";
 import { ListItem } from "@navikt/ds-react/List";
-import { PageBlock } from "@navikt/ds-react/Page";
 import { useMiljø } from "~/miljø/useMiljø";
 
 export default function PersonvernSide() {
   const miljø = useMiljø();
   return (
-    <Page>
-      <PageBlock width="text" gutters>
-        <title>{`Personvern – Watson Sak ${miljø !== "prod" ? `(${miljø})` : ""}`}</title>
-        <Heading level="1" size="large" spacing className="mt-4">
+    <>
+      <title>{`Personvern – Watson Sak ${miljø !== "prod" ? `(${miljø})` : ""}`}</title>
+      <VStack gap="space-12" className="mt-4 mb-8">
+        <Heading level="1" size="large">
           Personvern
         </Heading>
         <BodyLong size="large" spacing>
@@ -53,7 +52,7 @@ export default function PersonvernSide() {
           Har du spørsmål om personvern eller om hvordan vi bruker informasjonen vi samler inn, kan
           du kontakte teamet på <Link href="mailto:espen.einn@nav.no">espen.einn@nav.no</Link>.
         </BodyLong>
-      </PageBlock>
-    </Page>
+      </VStack>
+    </>
   );
 }

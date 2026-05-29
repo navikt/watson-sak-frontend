@@ -21,6 +21,7 @@ interface VisAllHistorikkModalProps {
   hendelser: SakHendelse[];
   åpen: boolean;
   onClose: () => void;
+  redigerbar: boolean;
 }
 
 export function VisAllHistorikkModal({
@@ -28,6 +29,7 @@ export function VisAllHistorikkModal({
   hendelser,
   åpen,
   onClose,
+  redigerbar,
 }: VisAllHistorikkModalProps) {
   const modalRef = useRef<HTMLDialogElement>(null);
   const innloggetBruker = useInnloggetBruker();
@@ -80,7 +82,7 @@ export function VisAllHistorikkModal({
                   >
                     <VStack gap="space-2">
                       <HendelseInnhold hendelse={hendelse} beskrivelse={beskrivelse} />
-                      {erEgetManueltNotat && (
+                      {redigerbar && erEgetManueltNotat && (
                         <HStack gap="space-2">
                           <Button
                             variant="tertiary"
