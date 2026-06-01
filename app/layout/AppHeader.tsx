@@ -48,7 +48,13 @@ export function AppHeader() {
         aria-label="Hurtigsøk"
         className="flex items-center self-stretch"
         ref={skjemaRef}
-        onSubmit={() => sporHendelse("søk utført", { kilde: "hurtigsøk" })}
+        onSubmit={(event) => {
+          const formData = new FormData(event.currentTarget);
+          const søketekst = formData.get("søketekst")?.toString().trim();
+          if (søketekst) {
+            sporHendelse("søk utført", { kilde: "hurtigsøk" });
+          }
+        }}
       >
         <Search
           label="Søk i saker"

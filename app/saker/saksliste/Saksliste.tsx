@@ -116,7 +116,14 @@ export function Saksliste({
         {rader.map((rad) => (
           <Table.Row
             key={rad.id}
-            onClick={rad.detaljHref ? () => { sporHendelse("sak åpnet"); navigate(rad.detaljHref ?? ""); } : undefined}
+            onClick={
+              rad.detaljHref
+                ? () => {
+                    sporHendelse("sak åpnet");
+                    navigate(rad.detaljHref ?? "");
+                  }
+                : undefined
+            }
             className={rad.detaljHref ? "cursor-pointer" : undefined}
           >
             {kolonner.map((kolonne) => (

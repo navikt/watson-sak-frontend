@@ -255,8 +255,10 @@ export default function OpprettSakSide() {
               aria-label="Grunnleggende saksinformasjon"
               id={form.id}
               onSubmit={(event) => {
-                sporHendelse("sak opprettet", { kategori: valgtKategori });
                 form.onSubmit(event);
+                if (!event.defaultPrevented) {
+                  sporHendelse("sak opprettet", { kategori: valgtKategori });
+                }
               }}
               noValidate
             >

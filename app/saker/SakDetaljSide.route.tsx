@@ -382,7 +382,9 @@ export default function SakDetaljSide() {
                   <fetcher.Form
                     method="post"
                     key={redigeringsøkt}
-                    onSubmit={() => sporHendelse("sak redigert", { kategori: lokaleVerdier.kategori })}
+                    onSubmit={() =>
+                      sporHendelse("sak redigert", { kategori: lokaleVerdier.kategori })
+                    }
                   >
                     <input type="hidden" name="handling" value="rediger_saksinformasjon" />
 
