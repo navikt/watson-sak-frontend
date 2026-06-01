@@ -1,6 +1,7 @@
 import { BodyShort, Heading, HStack, LocalAlert, Pagination, VStack } from "@navikt/ds-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router";
+import { sporHendelse } from "~/analytics/analytics";
 import { ChipsFiltergruppe } from "~/filtre/ChipsFiltergruppe";
 import { Filterpanel } from "~/filtre/Filterpanel";
 import { useFilterParam } from "~/filtre/useFilterParam";
@@ -199,7 +200,10 @@ export function UfordelteSakerInnhold({
                   tittel="Kategori"
                   alternativer={filtervalg.kategorier.map((v) => ({ verdi: v, etikett: v }))}
                   valgteVerdier={kategoriFilter.valgteVerdier}
-                  onToggle={kategoriFilter.toggle}
+                  onToggle={(verdi) => {
+                    sporHendelse("filter brukt", { filtergruppe: "kategori", side: "fordeling" });
+                    kategoriFilter.toggle(verdi);
+                  }}
                   size="small"
                 />
               )}
@@ -208,7 +212,10 @@ export function UfordelteSakerInnhold({
                   tittel="Ytelse"
                   alternativer={filtervalg.ytelser.map((v) => ({ verdi: v, etikett: v }))}
                   valgteVerdier={ytelseFilter.valgteVerdier}
-                  onToggle={ytelseFilter.toggle}
+                  onToggle={(verdi) => {
+                    sporHendelse("filter brukt", { filtergruppe: "ytelse", side: "fordeling" });
+                    ytelseFilter.toggle(verdi);
+                  }}
                   size="small"
                 />
               )}

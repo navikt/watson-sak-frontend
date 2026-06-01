@@ -4,6 +4,7 @@ import { TasklistIcon } from "@navikt/aksel-icons";
 import { Button, Modal, VStack } from "@navikt/ds-react";
 import { useFetcher } from "react-router";
 import { z } from "zod";
+import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { OppgaveSkjema } from "./OppgaveSkjema";
@@ -36,6 +37,7 @@ export function OpprettOppgaveModal({ sakId, åpen, onClose }: OpprettOppgaveMod
     onSubmit(event, { formData }) {
       event.preventDefault();
       formData.set("handling", "opprett_oppgave");
+      sporHendelse("oppgave opprettet");
       fetcher.submit(formData, {
         method: "post",
         action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),

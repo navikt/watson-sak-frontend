@@ -1,5 +1,6 @@
 import { Heading, VStack } from "@navikt/ds-react";
 import { useSearchParams } from "react-router";
+import { sporHendelse } from "~/analytics/analytics";
 import { ChipsFiltergruppe } from "~/filtre/ChipsFiltergruppe";
 import { Filterpanel } from "~/filtre/Filterpanel";
 import type {
@@ -35,6 +36,7 @@ export function MineSakerInnhold({ saker, detaljSti, filterAlternativer, aktivtF
   // Mine saker har en spesiell default-initialiseringslogikk:
   // Første toggle seeder begge filtergrupper med standardverdier.
   function toggleFilter(key: "status" | "ventestatus", verdi: string) {
+    sporHendelse("filter brukt", { filtergruppe: key, side: "mine-saker" });
     setSearchParams((forrige) => {
       const neste = new URLSearchParams(forrige);
 

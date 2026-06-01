@@ -5,6 +5,7 @@ import { Button, InfoCard, Modal, Select, Textarea, VStack } from "@navikt/ds-re
 import { useState } from "react";
 import { useFetcher } from "react-router";
 import { z } from "zod";
+import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import type { KontrollsakStatus } from "~/saker/types.backend";
@@ -61,6 +62,8 @@ export function EndreStatusModal({ sakId, nåværendeStatus, åpen, onClose }: E
     onSubmit(event, { formData }) {
       event.preventDefault();
       formData.set("handling", "endre_status");
+      const nyStatus = formData.get("status") as string;
+      sporHendelse("sak status endret", { fraStatus: nåværendeStatus, tilStatus: nyStatus });
       fetcher.submit(formData, {
         method: "post",
         action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),

@@ -8,6 +8,7 @@ import {
 import { Button, Heading, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import { useFetcher } from "react-router";
+import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import type { KontrollsakResponse } from "~/saker/types.backend";
@@ -73,6 +74,7 @@ export function SakHandlingerKnapper({ sak, erEier }: SakHandlingerKnapperProps)
   }
 
   function handleGjenoppta() {
+    sporHendelse("sak gjenopptatt");
     gjenopptaFetcher.submit(
       { handling: "gjenoppta" },
       {

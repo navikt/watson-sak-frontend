@@ -6,7 +6,7 @@ describe("sikkerhetHeaders", () => {
     const csp = sikkerhetHeaders()["Content-Security-Policy"];
 
     expect(csp).toContain(
-      "connect-src 'self' telemetry.nav.no telemetry.ekstern.dev.nav.no umami.nav.no reops-event-proxy.nav.no;",
+      "connect-src 'self' telemetry.nav.no telemetry.ekstern.dev.nav.no umami.nav.no reops-event-proxy.nav.no reops-event-proxy.ekstern.dev.nav.no;",
     );
   });
 });

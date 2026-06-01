@@ -18,6 +18,7 @@ import {
 import { PersonIcon, PlusIcon } from "@navikt/aksel-icons";
 import { useMemo, useState } from "react";
 import { Form, Link, useFetcher, useActionData, useLoaderData } from "react-router";
+import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import {
   kildeEtiketter,
@@ -153,6 +154,7 @@ export default function OpprettSakSide() {
           action={RouteConfig.API.PERSON_OPPSLAG}
           aria-label="Søk etter person"
           className="mb-6"
+          onSubmit={() => sporHendelse("person oppslag")}
         >
           <Search
             label="Fødsels- eller d-nummer"
@@ -252,7 +254,12 @@ export default function OpprettSakSide() {
               method="post"
               aria-label="Grunnleggende saksinformasjon"
               id={form.id}
-              onSubmit={form.onSubmit}
+              onSubmit={(event) => {
+                form.onSubmit(event);
+                if (!event.defaultPrevented) {
+                  sporHendelse("sak opprettet", { kategori: valgtKategori });
+                }
+              }}
               noValidate
             >
               <input

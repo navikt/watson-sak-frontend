@@ -1,5 +1,6 @@
 import { CogIcon } from "@navikt/aksel-icons";
 import { BodyLong, Button, Modal, Radio, RadioGroup, Switch, VStack } from "@navikt/ds-react";
+import { sporHendelse } from "~/analytics/analytics";
 import type { Preferences } from "~/preferanser/PreferencesCookie";
 
 interface InnstillingerModalProps {
@@ -38,7 +39,10 @@ export function InnstillingerModal({
           <RadioGroup
             legend="Tema"
             value={preferences.tema}
-            onChange={(value) => onPreferenceChange("tema", value)}
+            onChange={(value) => {
+              sporHendelse("innstillinger endret", { innstilling: "tema", verdi: value });
+              onPreferenceChange("tema", value);
+            }}
           >
             <Radio value="system">Følg systemet</Radio>
             <Radio value="light">Lyst tema</Radio>
@@ -47,7 +51,13 @@ export function InnstillingerModal({
 
           <Switch
             checked={preferences.visVelkomstmelding}
-            onChange={(event) => onPreferenceChange("visVelkomstmelding", event.target.checked)}
+            onChange={(event) => {
+              sporHendelse("innstillinger endret", {
+                innstilling: "visVelkomstmelding",
+                verdi: event.target.checked,
+              });
+              onPreferenceChange("visVelkomstmelding", event.target.checked);
+            }}
           >
             Vis velkomstmelding
           </Switch>

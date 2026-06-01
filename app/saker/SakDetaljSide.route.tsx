@@ -25,6 +25,7 @@ import {
   useNavigate,
   useRevalidator,
 } from "react-router";
+import { sporHendelse } from "~/analytics/analytics";
 import { Kort } from "~/komponenter/Kort";
 import {
   kategoriAlternativer,
@@ -378,7 +379,13 @@ export default function SakDetaljSide() {
                 <hr className="border-ax-border-neutral-subtle" />
 
                 {redigerer ? (
-                  <fetcher.Form method="post" key={redigeringsøkt}>
+                  <fetcher.Form
+                    method="post"
+                    key={redigeringsøkt}
+                    onSubmit={() =>
+                      sporHendelse("sak redigert", { kategori: lokaleVerdier.kategori })
+                    }
+                  >
                     <input type="hidden" name="handling" value="rediger_saksinformasjon" />
 
                     <VStack gap="space-6">

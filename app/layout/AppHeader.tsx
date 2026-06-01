@@ -2,6 +2,7 @@ import { BooksIcon, LeaveIcon, LightBulbIcon, MenuGridIcon, PersonIcon } from "@
 import { ActionMenu, InternalHeader, Search, Spacer, Tag } from "@navikt/ds-react";
 import { useEffect, useRef } from "react";
 import { Form, Link } from "react-router";
+import { sporHendelse } from "~/analytics/analytics";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { useMiljø } from "~/miljø/useMiljø";
 import { RouteConfig } from "~/routeConfig";
@@ -14,6 +15,7 @@ export function AppHeader() {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "k" && event.metaKey) {
         event.preventDefault();
+        sporHendelse("hurtigsøk aktivert");
         skjemaRef.current?.querySelector("input")?.focus();
       }
     }
@@ -46,6 +48,13 @@ export function AppHeader() {
         aria-label="Hurtigsøk"
         className="flex items-center self-stretch"
         ref={skjemaRef}
+        onSubmit={(event) => {
+          const formData = new FormData(event.currentTarget);
+          const søketekst = formData.get("søketekst")?.toString().trim();
+          if (søketekst) {
+            sporHendelse("søk utført", { kilde: "hurtigsøk" });
+          }
+        }}
       >
         <Search
           label="Søk i saker"

@@ -2,6 +2,7 @@ import { BodyShort, Button, Heading, HStack, InfoCard, VStack } from "@navikt/ds
 import { useState } from "react";
 import { Link as RouterLink } from "react-router";
 import { BellIcon, InformationSquareIcon } from "@navikt/aksel-icons";
+import { sporHendelse } from "~/analytics/analytics";
 import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
@@ -60,6 +61,7 @@ export function SisteVarsler({
                           )}
                           size="small"
                           data-color="accent"
+                          onClick={() => sporHendelse("varsel åpnet")}
                         >
                           Gå til sak
                         </Button>

@@ -1,6 +1,7 @@
 import { CalendarIcon, TagIcon } from "@navikt/aksel-icons";
 import { BodyShort, Detail, Heading, HStack, Tag, VStack } from "@navikt/ds-react";
 import { Link } from "react-router";
+import { sporHendelse } from "~/analytics/analytics";
 import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
@@ -30,7 +31,11 @@ export function SøkResultatKort({ sak }: SøkResultatKortProps) {
     >
       <VStack gap="space-4">
         <HStack gap="space-4" align="center" justify="space-between">
-          <Link to={detaljSti} className="no-underline focus-visible:outline-none">
+          <Link
+            to={detaljSti}
+            className="no-underline focus-visible:outline-none"
+            onClick={() => sporHendelse("søk resultat valgt")}
+          >
             <Heading level="2" size="small">
               Sak {saksreferanse}
             </Heading>

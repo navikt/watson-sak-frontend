@@ -1,6 +1,7 @@
 import { BodyShort, Link, Table, Tag } from "@navikt/ds-react";
 import type { ReactNode } from "react";
 import { Link as RouterLink, useNavigate } from "react-router";
+import { sporHendelse } from "~/analytics/analytics";
 import { formaterDato } from "~/utils/date-utils";
 import { KolonneHeading, type Sorteringsretning } from "./KolonneHeading";
 import { TagOverflow } from "./TagOverflow";
@@ -115,7 +116,14 @@ export function Saksliste({
         {rader.map((rad) => (
           <Table.Row
             key={rad.id}
-            onClick={rad.detaljHref ? () => navigate(rad.detaljHref ?? "") : undefined}
+            onClick={
+              rad.detaljHref
+                ? () => {
+                    sporHendelse("sak åpnet");
+                    navigate(rad.detaljHref ?? "");
+                  }
+                : undefined
+            }
             className={rad.detaljHref ? "cursor-pointer" : undefined}
           >
             {kolonner.map((kolonne) => (
