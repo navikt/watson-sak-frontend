@@ -30,7 +30,7 @@ export async function hentUlesteVarsler(token: string): Promise<Varsel[]> {
     throw new Error("Ugyldig svar fra watson-admin-api (hentUlesteVarsler)");
   }
 
-  return parsed.data.items.map(tilVarsel);
+  return parsed.data.items.map(tilVarsel).sort((a, b) => b.tidspunkt.localeCompare(a.tidspunkt));
 }
 
 export async function markerVarselSomLest(token: string, varselId: string): Promise<void> {

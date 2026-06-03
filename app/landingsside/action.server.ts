@@ -19,10 +19,10 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   if (skalBrukeMockdata) {
-    if (!hentVarsler(request).some((varsel) => varsel.id === varselId)) {
-      throw data("Varsel ikke funnet", { status: 404 });
+    const varsel = hentVarsler(request).find((v) => v.id === varselId);
+    if (varsel) {
+      markerSomLestMock(request, varselId);
     }
-    markerSomLestMock(request, varselId);
   } else {
     const token = await getBackendOboToken(request);
     await markerSomLestApi(token, varselId);
