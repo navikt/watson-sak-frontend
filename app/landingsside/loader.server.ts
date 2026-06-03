@@ -7,9 +7,6 @@ import { hentKontrollsaker } from "~/fordeling/api.server";
 import { hentMineSaker } from "~/saker/mock-alle-saker.server";
 import { getOpprettetDato } from "~/saker/selectors";
 import type { KontrollsakResponse } from "~/saker/types.backend";
-import { hentUlesteVarsler as hentUlesteVarslerFraMock } from "~/varsler/mock-data.server";
-import { hentUlesteVarsler as hentUlesteVarslerFraApi } from "~/varsler/api.server";
-import type { Varsel } from "~/varsler/typer";
 import { beregnDashboardNokkeltall } from "./dashboard-nokkeltall";
 import { lagVelkomstOppsummering } from "./velkomst";
 
@@ -33,7 +30,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const innloggetBruker = await hentInnloggetBruker({ request });
 
   let mineSakerHosInnloggetBruker: KontrollsakResponse[];
-  let varsler: Varsel[];
 
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
@@ -44,14 +40,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
       ansvarligNavIdent: innloggetBruker.navIdent,
     });
     mineSakerHosInnloggetBruker = resultat.items;
-    varsler = await hentUlesteVarslerFraApi(token);
   } else {
     mineSakerHosInnloggetBruker = hentMineSaker(
       request,
       innloggetBruker.navIdent,
       innloggetBruker.name,
     );
-    varsler = hentUlesteVarslerFraMock(request);
   }
 
   const aktiveMineSaker = mineSakerHosInnloggetBruker.filter(
@@ -76,5 +70,5 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   const dashboardNokkeltall = beregnDashboardNokkeltall(mineSakerHosInnloggetBruker, referansedato);
 
-  return { mineSaker, varsler, velkomstOppsummering, traktSteg, dashboardNokkeltall };
+  return { mineSaker, velkomstOppsummering, traktSteg, dashboardNokkeltall };
 }

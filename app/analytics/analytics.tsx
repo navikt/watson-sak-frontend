@@ -52,4 +52,7 @@ type Hendelse =
   | "fil lastet opp"
   | "innstillinger endret"
   | "varsel åpnet"
+  | "varsel åpnet fra bjelle"
+  | "varsel åpnet fra varsler-side"
+  | "varsler oversikt åpnet"
   | "hurtigsøk aktivert";

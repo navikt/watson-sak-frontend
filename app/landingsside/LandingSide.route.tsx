@@ -1,10 +1,11 @@
 import { BodyShort, Heading, HGrid, HStack, VStack } from "@navikt/ds-react";
-import { useEffect } from "react";
-import { useFetcher, useLoaderData, useRevalidator } from "react-router";
 import { BarChartIcon } from "@navikt/aksel-icons";
+import { useFetcher, useLoaderData } from "react-router";
 import { Trakt } from "~/alle-saker/Trakt";
 import { Kort } from "~/komponenter/Kort";
 import { usePreferences } from "~/preferanser/PreferencesContext";
+import { RouteConfig } from "~/routeConfig";
+import { useVarsler } from "~/varsler/bruk-varsler";
 import type { loader } from "./loader.server";
 import { DashboardNokkeltallKort } from "./komponenter/DashboardNokkeltallKort";
 import { SisteVarsler } from "./komponenter/SisteVarsler";
@@ -17,14 +18,8 @@ export { loader } from "./loader.server";
 export default function LandingSide() {
   const loaderData = useLoaderData<typeof loader>();
   const fetcher = useFetcher();
-  const revalidator = useRevalidator();
   const { preferences } = usePreferences();
-
-  useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data?.ok) {
-      revalidator.revalidate();
-    }
-  }, [fetcher.state, fetcher.data, revalidator]);
+  const varsler = useVarsler();
 
   return (
     <>
@@ -38,14 +33,12 @@ export default function LandingSide() {
 
         <HGrid columns={{ xs: 1, md: 2 }} gap="space-6">
           <SisteVarsler
-            varsler={loaderData.varsler}
+            varsler={varsler}
             erSubmitting={fetcher.state !== "idle"}
             onMarkerSomLest={(varselId) => {
               fetcher.submit(
-                { handling: "marker_varsel_som_lest", varselId },
-                {
-                  method: "post",
-                },
+                { varselId },
+                { method: "post", action: RouteConfig.API.MARKER_VARSEL_LEST },
               );
             }}
           />

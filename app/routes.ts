@@ -13,6 +13,7 @@ export default [
     route(RouteConfig.STATISTIKK, "statistikk/StatistikkSide.route.tsx"),
     route(RouteConfig.PERSONVERN, "personvern/PersonvernSide.route.tsx"),
     route(RouteConfig.SØK, "søk/SøkSide.route.tsx"),
+    route(RouteConfig.VARSLER, "varsler/VarslerSide.route.tsx"),
   ]),
 
   // API routes
@@ -22,6 +23,7 @@ export default [
   route(RouteConfig.API.VERSION, "versjonsvarsling/api.ts"),
   route(RouteConfig.API.RESET_MOCK_DATA, "testing/reset-api.ts"),
   route(RouteConfig.API.PERSON_OPPSLAG, "registrer-sak/person-oppslag.api.ts"),
+  route(RouteConfig.API.MARKER_VARSEL_LEST, "varsler/marker-lest.api.ts"),
 
   // Well-known routes
   route(RouteConfig.WELL_KNOWN.SECURITY_TXT, "sikkerhet/well-known/api.ts"),

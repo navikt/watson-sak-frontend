@@ -12,6 +12,7 @@ export const RouteConfig = {
   STATISTIKK: "/statistikk",
   PERSONVERN: "/personvern",
   SØK: "/søk",
+  VARSLER: "/varsler",
 
   WELL_KNOWN: {
     SECURITY_TXT: "/.well-known/security.txt",
@@ -24,5 +25,6 @@ export const RouteConfig = {
     PREFERENCES: "/api/preferences",
     RESET_MOCK_DATA: "/api/reset-mock-data",
     PERSON_OPPSLAG: "/api/registrer-sak/person-oppslag",
+    MARKER_VARSEL_LEST: "/api/varsler/lest",
   },
 };
