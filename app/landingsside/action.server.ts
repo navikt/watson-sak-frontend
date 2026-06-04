@@ -1,5 +1,8 @@
 import { data } from "react-router";
-import { hentVarsler, markerVarselSomLest } from "~/varsler/mock-data.server";
+import { getBackendOboToken } from "~/auth/access-token";
+import { skalBrukeMockdata } from "~/config/env.server";
+import { hentVarsler, markerVarselSomLest as markerSomLestMock } from "~/varsler/mock-data.server";
+import { markerVarselSomLest as markerSomLestApi } from "~/varsler/api.server";
 import type { Route } from "./+types/LandingSide.route";
 
 export async function action({ request }: Route.ActionArgs) {
@@ -15,11 +18,15 @@ export async function action({ request }: Route.ActionArgs) {
     throw data("Varsel-ID mangler", { status: 400 });
   }
 
-  if (!hentVarsler(request).some((varsel) => varsel.id === varselId)) {
-    throw data("Varsel ikke funnet", { status: 404 });
+  if (skalBrukeMockdata) {
+    const varsel = hentVarsler(request).find((v) => v.id === varselId);
+    if (varsel) {
+      markerSomLestMock(request, varselId);
+    }
+  } else {
+    const token = await getBackendOboToken(request);
+    await markerSomLestApi(token, varselId);
   }
-
-  markerVarselSomLest(request, varselId);
 
   return { ok: true };
 }
