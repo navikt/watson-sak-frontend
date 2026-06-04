@@ -3,12 +3,11 @@ import { logger } from "~/logging/logging";
 import { tilVarsel, varselPageBackendResponseSchema } from "./typer";
 import type { Varsel } from "./typer";
 
-export async function hentUlesteVarsler(token: string): Promise<Varsel[]> {
+async function fetchVarslerPage(token: string, params: URLSearchParams, kontekst: string) {
   if (!BACKEND_API_URL) {
     throw new Error("Mangler backend-url for henting av varsler.");
   }
 
-  const params = new URLSearchParams({ kunUleste: "true", page: "1", size: "50" });
   const response = await fetch(`${BACKEND_API_URL}/api/v1/varsler?${params}`, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -17,20 +16,24 @@ export async function hentUlesteVarsler(token: string): Promise<Varsel[]> {
   });
 
   if (!response.ok) {
-    logger.error("Kunne ikke hente varsler fra Watson Admin API", { status: response.status });
+    logger.error(`Kunne ikke hente varsler (${kontekst})`, { status: response.status });
     throw new Error("Kunne ikke hente varsler.");
   }
 
   const json = await response.json();
   const parsed = varselPageBackendResponseSchema.safeParse(json);
   if (!parsed.success) {
-    logger.error("Schema-validering feilet for hentUlesteVarsler", {
-      feil: parsed.error.format(),
-    });
-    throw new Error("Ugyldig svar fra watson-admin-api (hentUlesteVarsler)");
+    logger.error(`Schema-validering feilet (${kontekst})`, { feil: parsed.error.format() });
+    throw new Error(`Ugyldig svar fra watson-admin-api (${kontekst})`);
   }
 
-  return parsed.data.items.map(tilVarsel).sort((a, b) => b.tidspunkt.localeCompare(a.tidspunkt));
+  return parsed.data;
+}
+
+export async function hentUlesteVarsler(token: string): Promise<Varsel[]> {
+  const params = new URLSearchParams({ kunUleste: "true", page: "1", size: "50" });
+  const data = await fetchVarslerPage(token, params, "hentUlesteVarsler");
+  return data.items.map(tilVarsel).sort((a, b) => b.tidspunkt.localeCompare(a.tidspunkt));
 }
 
 export interface VarslerPage {
@@ -44,44 +47,21 @@ export async function hentAlleVarsler(
   page: number,
   size: number,
 ): Promise<VarslerPage> {
-  if (!BACKEND_API_URL) {
-    throw new Error("Mangler backend-url for henting av varsler.");
-  }
-
   const params = new URLSearchParams({
     kunUleste: "false",
     page: String(page),
     size: String(size),
   });
-  const response = await fetch(`${BACKEND_API_URL}/api/v1/varsler?${params}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-    },
-  });
+  const data = await fetchVarslerPage(token, params, "hentAlleVarsler");
 
-  if (!response.ok) {
-    logger.error("Kunne ikke hente alle varsler fra Watson Admin API", { status: response.status });
-    throw new Error("Kunne ikke hente varsler.");
-  }
-
-  const json = await response.json();
-  const parsed = varselPageBackendResponseSchema.safeParse(json);
-  if (!parsed.success) {
-    logger.error("Schema-validering feilet for hentAlleVarsler", {
-      feil: parsed.error.format(),
-    });
-    throw new Error("Ugyldig svar fra watson-admin-api (hentAlleVarsler)");
-  }
-
-  const varsler = parsed.data.items
+  const varsler = data.items
     .map(tilVarsel)
     .sort((a, b) => b.tidspunkt.localeCompare(a.tidspunkt));
 
   return {
     varsler,
-    harFlere: page < parsed.data.totalPages,
-    totalItems: parsed.data.totalItems,
+    harFlere: page < data.totalPages,
+    totalItems: data.totalItems,
   };
 }
 

@@ -8,7 +8,8 @@ const SIDE_STØRRELSE = 20;
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
-  const page = Math.max(1, Number(url.searchParams.get("page") ?? "1"));
+  const rawPage = parseInt(url.searchParams.get("page") ?? "1", 10);
+  const page = Number.isFinite(rawPage) && rawPage >= 1 ? rawPage : 1;
 
   if (skalBrukeMockdata) {
     const alleVarsler = hentVarslerFraMock(request);

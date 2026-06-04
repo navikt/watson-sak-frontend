@@ -1,7 +1,7 @@
 import { BellIcon } from "@navikt/aksel-icons";
 import { BodyShort, Button, Heading, HStack, Popover, VStack } from "@navikt/ds-react";
-import { useRef, useState } from "react";
-import { useFetcher, useNavigate } from "react-router";
+import { useEffect, useRef, useState } from "react";
+import { useFetcher, useNavigate, useRevalidator } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
@@ -9,6 +9,7 @@ import { useVarsler } from "./bruk-varsler";
 import type { Varsel } from "./typer";
 
 const ANTALL_VARSLER_I_OVERLAY = 5;
+const POLLING_INTERVALL_MS = 60_000;
 
 export function VarselBjelle() {
   const varsler = useVarsler();
@@ -16,6 +17,12 @@ export function VarselBjelle() {
   const knappRef = useRef<HTMLButtonElement>(null);
   const fetcher = useFetcher();
   const navigate = useNavigate();
+  const { revalidate } = useRevalidator();
+
+  useEffect(() => {
+    const intervall = setInterval(revalidate, POLLING_INTERVALL_MS);
+    return () => clearInterval(intervall);
+  }, [revalidate]);
 
   const antallUleste = varsler.filter((v) => !v.erLest).length;
   const varslerIOverlay = varsler.filter((v) => !v.erLest).slice(0, ANTALL_VARSLER_I_OVERLAY);
@@ -40,7 +47,6 @@ export function VarselBjelle() {
             antallUleste > 0 ? `Varsler, ${antallUleste} uleste` : "Varsler, ingen uleste"
           }
           aria-expanded={erÅpen}
-          aria-haspopup="dialog"
           onClick={() => setErÅpen((prev) => !prev)}
           className="flex items-center justify-center h-full px-3 text-ax-text-on-inverted hover:bg-surface-neutral-subtle-hover transition-colors"
         >
@@ -49,7 +55,7 @@ export function VarselBjelle() {
         {antallUleste > 0 && (
           <span
             aria-hidden
-            className="absolute top-2 right-1 min-w-[1.1rem] h-[1.1rem] bg-red-500 text-white text-[0.65rem] font-bold rounded-full flex items-center justify-center px-1 pointer-events-none"
+            className="absolute top-2 right-1 min-w-[1.1rem] h-[1.1rem] bg-surface-danger text-text-on-danger text-[0.65rem] font-bold rounded-full flex items-center justify-center px-1 pointer-events-none"
           >
             {antallUleste > 99 ? "99+" : antallUleste}
           </span>
