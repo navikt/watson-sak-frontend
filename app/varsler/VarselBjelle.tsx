@@ -1,11 +1,11 @@
 import { BellIcon } from "@navikt/aksel-icons";
 import { BodyShort, Button, Heading, HStack, Popover, VStack } from "@navikt/ds-react";
 import { useEffect, useRef, useState } from "react";
-import { Link as RouterLink, useFetcher, useNavigate, useRevalidator } from "react-router";
+import { Link as RouterLink, useFetcher, useNavigate } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
-import { useVarsler } from "./bruk-varsler";
+import { useVarsler, useRefreshVarsler, VARSLER_FETCHER_KEY } from "./bruk-varsler";
 import type { Varsel } from "./typer";
 
 const ANTALL_VARSLER_I_OVERLAY = 5;
@@ -16,13 +16,18 @@ export function VarselBjelle() {
   const [erÅpen, setErÅpen] = useState(false);
   const knappRef = useRef<HTMLButtonElement>(null);
   const fetcher = useFetcher();
+  const pollingFetcher = useFetcher<{ varsler: Varsel[] }>({ key: VARSLER_FETCHER_KEY });
   const navigate = useNavigate();
-  const { revalidate } = useRevalidator();
+  const refreshVarsler = useRefreshVarsler();
 
   useEffect(() => {
-    const intervall = setInterval(revalidate, POLLING_INTERVALL_MS);
+    const intervall = setInterval(() => {
+      pollingFetcher.load(RouteConfig.API.VARSLER_ULESTE);
+    }, POLLING_INTERVALL_MS);
     return () => clearInterval(intervall);
-  }, [revalidate]);
+    // pollingFetcher.load er stabil med key
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const antallUleste = varsler.filter((v) => !v.erLest).length;
   const varslerIOverlay = varsler.filter((v) => !v.erLest).slice(0, ANTALL_VARSLER_I_OVERLAY);
@@ -34,6 +39,7 @@ export function VarselBjelle() {
       { method: "post", action: RouteConfig.API.MARKER_VARSEL_LEST },
     );
     sporHendelse("varsel åpnet fra bjelle");
+    refreshVarsler();
     navigate(RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(varsel.sakId)));
   }
 

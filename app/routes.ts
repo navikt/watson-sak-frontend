@@ -23,6 +23,7 @@ export default [
   route(RouteConfig.API.VERSION, "versjonsvarsling/api.ts"),
   route(RouteConfig.API.RESET_MOCK_DATA, "testing/reset-api.ts"),
   route(RouteConfig.API.PERSON_OPPSLAG, "registrer-sak/person-oppslag.api.ts"),
+  route(RouteConfig.API.VARSLER_ULESTE, "varsler/uleste.api.ts"),
   route(RouteConfig.API.MARKER_VARSEL_LEST, "varsler/marker-lest.api.ts"),
 
   // Well-known routes

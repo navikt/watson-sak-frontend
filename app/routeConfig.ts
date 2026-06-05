@@ -25,6 +25,7 @@ export const RouteConfig = {
     PREFERENCES: "/api/preferences",
     RESET_MOCK_DATA: "/api/reset-mock-data",
     PERSON_OPPSLAG: "/api/registrer-sak/person-oppslag",
+    VARSLER_ULESTE: "/api/varsler/uleste",
     MARKER_VARSEL_LEST: "/api/varsler/lest",
   },
 };

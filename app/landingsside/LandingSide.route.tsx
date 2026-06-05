@@ -1,12 +1,12 @@
 import { BodyShort, Heading, HGrid, HStack, VStack } from "@navikt/ds-react";
 import { BarChartIcon } from "@navikt/aksel-icons";
 import { useEffect, useRef } from "react";
-import { useFetcher, useLoaderData, useRevalidator } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
 import { Trakt } from "~/alle-saker/Trakt";
 import { Kort } from "~/komponenter/Kort";
 import { usePreferences } from "~/preferanser/PreferencesContext";
 import { RouteConfig } from "~/routeConfig";
-import { useVarsler } from "~/varsler/bruk-varsler";
+import { useVarsler, useRefreshVarsler } from "~/varsler/bruk-varsler";
 import type { loader } from "./loader.server";
 import { DashboardNokkeltallKort } from "./komponenter/DashboardNokkeltallKort";
 import { SisteVarsler } from "./komponenter/SisteVarsler";
@@ -19,19 +19,18 @@ export { loader } from "./loader.server";
 export default function LandingSide() {
   const loaderData = useLoaderData<typeof loader>();
   const fetcher = useFetcher();
-  const { revalidate } = useRevalidator();
   const prevFetcherState = useRef(fetcher.state);
   const { preferences } = usePreferences();
   const varsler = useVarsler();
+  const refreshVarsler = useRefreshVarsler();
 
-  // Revalider AppLayout-loaderen manuelt etter markering som lest.
-  // API-ruten er utenfor layout-treet, så React Router gjør ikke dette automatisk.
+  // Refresh varsler etter markering som lest
   useEffect(() => {
     if (prevFetcherState.current !== "idle" && fetcher.state === "idle" && fetcher.data) {
-      revalidate();
+      refreshVarsler();
     }
     prevFetcherState.current = fetcher.state;
-  }, [fetcher.state, fetcher.data, revalidate]);
+  }, [fetcher.state, fetcher.data, refreshVarsler]);
 
   return (
     <>
