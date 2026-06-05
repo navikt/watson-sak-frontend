@@ -41,7 +41,8 @@ function lagRequest(body: Record<string, string | string[]>) {
 async function runAction(body: Record<string, string | string[]>) {
   const { action } = await import("./VarslerSide.action.server");
   const request = lagRequest(body);
-  return action({ request, params: {}, context: {} });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return action({ request, params: {}, context: {} } as any);
 }
 
 describe("VarslerSide action", () => {

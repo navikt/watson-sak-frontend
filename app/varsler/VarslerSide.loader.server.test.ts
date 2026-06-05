@@ -31,7 +31,8 @@ vi.mock("~/varsler/mock-data.server", () => ({
 async function runLoader(url: string) {
   const { loader } = await import("./VarslerSide.loader.server");
   const request = new Request(url);
-  return loader({ request, params: {}, context: {} });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return loader({ request, params: {}, context: {} } as any);
 }
 
 describe("VarslerSide loader", () => {

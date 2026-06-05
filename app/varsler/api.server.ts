@@ -54,9 +54,7 @@ export async function hentAlleVarsler(
   });
   const data = await fetchVarslerPage(token, params, "hentAlleVarsler");
 
-  const varsler = data.items
-    .map(tilVarsel)
-    .sort((a, b) => b.tidspunkt.localeCompare(a.tidspunkt));
+  const varsler = data.items.map(tilVarsel).sort((a, b) => b.tidspunkt.localeCompare(a.tidspunkt));
 
   return {
     varsler,
