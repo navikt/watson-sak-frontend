@@ -6,7 +6,7 @@ const testState = vi.hoisted(() => ({
 
 const getBackendOboTokenMock = vi.hoisted(() => vi.fn().mockResolvedValue("token-123"));
 const markerSomLestApiMock = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
-const markerAlleSomLestMockMock = vi.hoisted(() => vi.fn());
+const markerSomLestMockMock = vi.hoisted(() => vi.fn());
 
 vi.mock("~/config/env.server", () => ({
   get skalBrukeMockdata() {
@@ -23,7 +23,7 @@ vi.mock("~/varsler/api.server", () => ({
 }));
 
 vi.mock("~/varsler/mock-data.server", () => ({
-  markerAlleVarslerSomLest: markerAlleSomLestMockMock,
+  markerVarselSomLest: markerSomLestMockMock,
 }));
 
 function lagRequest(body: Record<string, string | string[]>) {
@@ -59,10 +59,13 @@ describe("VarslerSide action", () => {
   });
 
   describe("mock-modus", () => {
-    it("kaller markerAlleVarslerSomLest og returnerer ok", async () => {
-      const resultat = await runAction({ handling: "marker_alle_som_lest" });
+    it("kaller markerVarselSomLest for hvert varsel-id og returnerer ok", async () => {
+      const resultat = await runAction({
+        handling: "marker_alle_som_lest",
+        varselId: ["id-1", "id-2"],
+      });
 
-      expect(markerAlleSomLestMockMock).toHaveBeenCalledOnce();
+      expect(markerSomLestMockMock).toHaveBeenCalledTimes(2);
       expect(resultat).toEqual({ ok: true });
     });
   });
