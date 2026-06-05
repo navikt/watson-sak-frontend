@@ -14,9 +14,17 @@ export { loader } from "./VarslerSide.loader.server";
 export default function VarslerSide() {
   const loaderData = useLoaderData<typeof loader>();
   const lastFlereFetcher = useFetcher<typeof loader>();
+  const markerLestFetcher = useFetcher();
   const [akkumulerteVarsler, setAkkumulerteVarsler] = useState<Varsel[]>(loaderData.varsler);
   const [nesteSide, setNesteSide] = useState(loaderData.page + 1);
   const [harFlere, setHarFlere] = useState(loaderData.harFlere);
+
+  // Synkroniser state når loaderen revalideres (f.eks. etter «Merk alle som lest»)
+  useEffect(() => {
+    setAkkumulerteVarsler(loaderData.varsler);
+    setNesteSide(loaderData.page + 1);
+    setHarFlere(loaderData.harFlere);
+  }, [loaderData]);
 
   useEffect(() => {
     if (lastFlereFetcher.data) {
@@ -85,7 +93,15 @@ export default function VarslerSide() {
                         )}
                         size="small"
                         data-color="accent"
-                        onClick={() => sporHendelse("varsel åpnet fra varsler-side")}
+                        onClick={() => {
+                          sporHendelse("varsel åpnet fra varsler-side");
+                          if (!varsel.erLest) {
+                            markerLestFetcher.submit(
+                              { varselId: varsel.id },
+                              { method: "post", action: RouteConfig.API.MARKER_VARSEL_LEST },
+                            );
+                          }
+                        }}
                       >
                         Gå til sak
                       </Button>

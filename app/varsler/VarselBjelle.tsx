@@ -1,7 +1,7 @@
 import { BellIcon } from "@navikt/aksel-icons";
 import { BodyShort, Button, Heading, HStack, Popover, VStack } from "@navikt/ds-react";
 import { useEffect, useRef, useState } from "react";
-import { useFetcher, useNavigate, useRevalidator } from "react-router";
+import { Link as RouterLink, useFetcher, useNavigate, useRevalidator } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
@@ -113,8 +113,8 @@ export function VarselBjelle() {
               <Button
                 variant="tertiary"
                 size="small"
-                as="a"
-                href={RouteConfig.VARSLER}
+                as={RouterLink}
+                to={RouteConfig.VARSLER}
                 onClick={() => {
                   setErÅpen(false);
                   sporHendelse("varsler oversikt åpnet");

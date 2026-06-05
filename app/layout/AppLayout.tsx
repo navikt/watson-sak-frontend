@@ -16,7 +16,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return { varsler: hentUlesteVarslerFraMock(request) };
   }
   const token = await getBackendOboToken(request);
-  return { varsler: await hentUlesteVarslerFraApi(token) };
+  try {
+    return { varsler: await hentUlesteVarslerFraApi(token) };
+  } catch {
+    return { varsler: [] };
+  }
 }
 
 export default function RootLayout() {
