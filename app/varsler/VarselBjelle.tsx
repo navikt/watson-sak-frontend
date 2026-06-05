@@ -38,7 +38,10 @@ export function VarselBjelle() {
       { varselId: varsel.id },
       { method: "post", action: RouteConfig.API.MARKER_VARSEL_LEST },
     );
-    sporHendelse("navigere", { kilde: "varsel-bjelle", destinasjon: `/saker/${getSaksreferanse(varsel.sakId)}` });
+    sporHendelse("navigere", {
+      kilde: "varsel-bjelle",
+      destinasjon: `/saker/${getSaksreferanse(varsel.sakId)}`,
+    });
     refreshVarsler();
     navigate(RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(varsel.sakId)));
   }
@@ -128,7 +131,11 @@ export function VarselBjelle() {
                 to={RouteConfig.VARSLER}
                 onClick={() => {
                   setErÅpen(false);
-                  sporHendelse("navigere", { kilde: "varsel-bjelle", destinasjon: "/varsler", lenketekst: "Se alle varsler" });
+                  sporHendelse("navigere", {
+                    kilde: "varsel-bjelle",
+                    destinasjon: "/varsler",
+                    lenketekst: "Se alle varsler",
+                  });
                 }}
               >
                 Se alle varsler

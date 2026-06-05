@@ -61,7 +61,12 @@ export function SisteVarsler({
                           )}
                           size="small"
                           data-color="accent"
-                          onClick={() => sporHendelse("navigere", { kilde: "dashboard", destinasjon: `/saker/${getSaksreferanse(varsel.sakId)}` })}
+                          onClick={() =>
+                            sporHendelse("navigere", {
+                              kilde: "dashboard",
+                              destinasjon: `/saker/${getSaksreferanse(varsel.sakId)}`,
+                            })
+                          }
                         >
                           Gå til sak
                         </Button>

@@ -51,7 +51,9 @@ export default function VarslerSide() {
           {ulesteVarsler.length > 0 && (
             <Form
               method="post"
-              onSubmit={() => sporHendelse("varsler markert som lest", { antall: ulesteVarsler.length })}
+              onSubmit={() =>
+                sporHendelse("varsler markert som lest", { antall: ulesteVarsler.length })
+              }
             >
               <input type="hidden" name="handling" value="marker_alle_som_lest" />
               {ulesteVarsler.map((v) => (
@@ -97,7 +99,10 @@ export default function VarslerSide() {
                         size="small"
                         data-color="accent"
                         onClick={() => {
-                          sporHendelse("navigere", { kilde: "varsler-side", destinasjon: `/saker/${getSaksreferanse(varsel.sakId)}` });
+                          sporHendelse("navigere", {
+                            kilde: "varsler-side",
+                            destinasjon: `/saker/${getSaksreferanse(varsel.sakId)}`,
+                          });
                           if (!varsel.erLest) {
                             markerLestFetcher.submit(
                               { varselId: varsel.id },
