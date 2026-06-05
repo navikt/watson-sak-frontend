@@ -38,6 +38,7 @@ test.describe("Mine saker", () => {
   });
 
   test("er UU-compliant", async ({ page }) => {
+    await page.waitForLoadState("networkidle");
     await sjekkTilgjengelighet(page);
   });
 });

@@ -1,7 +1,7 @@
 import { Page } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
 import { Outlet } from "react-router";
-import type { LoaderFunctionArgs } from "react-router";
+import type { LoaderFunctionArgs, ShouldRevalidateFunctionArgs } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { skalBrukeMockdata } from "~/config/env.server";
 import { logger } from "~/logging/logging";
@@ -11,6 +11,15 @@ import { AppFooter } from "./AppFooter";
 import { AppHeader } from "./AppHeader";
 import { AppSidebar } from "./AppSidebar";
 import { InfoBanner } from "./InfoBanner";
+
+// Ikke revalider layout-loaderen etter fetcher-actions til API-ruter.
+// Varsler oppdateres via polling (useRevalidator i VarselBjelle).
+export function shouldRevalidate({ formAction, defaultShouldRevalidate }: ShouldRevalidateFunctionArgs) {
+  if (formAction?.startsWith("/api/")) {
+    return false;
+  }
+  return defaultShouldRevalidate;
+}
 
 export async function loader({ request }: LoaderFunctionArgs) {
   if (skalBrukeMockdata) {
