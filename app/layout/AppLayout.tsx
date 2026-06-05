@@ -14,7 +14,10 @@ import { InfoBanner } from "./InfoBanner";
 
 // Ikke revalider layout-loaderen etter fetcher-actions til API-ruter.
 // Varsler oppdateres via polling (useRevalidator i VarselBjelle).
-export function shouldRevalidate({ formAction, defaultShouldRevalidate }: ShouldRevalidateFunctionArgs) {
+export function shouldRevalidate({
+  formAction,
+  defaultShouldRevalidate,
+}: ShouldRevalidateFunctionArgs) {
   if (formAction?.startsWith("/api/")) {
     return false;
   }
