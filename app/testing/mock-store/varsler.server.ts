@@ -78,15 +78,18 @@ export function hentUlesteVarsler(state: MockState): Varsel[] {
 }
 
 export function hentVarsler(state: MockState): Varsel[] {
-  return state.varsler;
+  return [...state.varsler].sort((a, b) => b.tidspunkt.localeCompare(a.tidspunkt));
 }
 
 export function markerVarselSomLest(state: MockState, varselId: string) {
   const varsel = state.varsler.find((item) => item.id === varselId);
-
-  if (!varsel) {
-    throw new Error(`Fant ikke varsel med id ${varselId}`);
+  if (varsel) {
+    varsel.erLest = true;
   }
+}
 
-  varsel.erLest = true;
+export function markerAlleVarslerSomLest(state: MockState) {
+  for (const varsel of state.varsler) {
+    varsel.erLest = true;
+  }
 }

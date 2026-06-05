@@ -6,6 +6,7 @@ import { sporHendelse } from "~/analytics/analytics";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { useMiljø } from "~/miljø/useMiljø";
 import { RouteConfig } from "~/routeConfig";
+import { VarselBjelle } from "~/varsler/VarselBjelle";
 
 export function AppHeader() {
   const innloggetBruker = useInnloggetBruker();
@@ -66,6 +67,7 @@ export function AppHeader() {
         />
       </Form>
       <Spacer />
+      <VarselBjelle />
       <ActionMenu>
         <ActionMenu.Trigger>
           <InternalHeader.Button>

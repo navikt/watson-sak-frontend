@@ -114,6 +114,68 @@ describe("varsler api.server", () => {
     });
   });
 
+  describe("hentAlleVarsler", () => {
+    it("kaller riktig URL med kunUleste=false og paginering", async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => gyldigVarselPageResponse,
+      });
+      vi.stubGlobal("fetch", fetchMock);
+
+      const { hentAlleVarsler } = await import("./api.server");
+      await hentAlleVarsler("token-abc", 2, 20);
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://backend.test/api/v1/varsler?kunUleste=false&page=2&size=20",
+        {
+          headers: {
+            Authorization: "Bearer token-abc",
+            Accept: "application/json",
+          },
+        },
+      );
+    });
+
+    it("returnerer harFlere=true når det finnes flere sider", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: async () => ({ ...gyldigVarselPageResponse, page: 1, totalPages: 3 }),
+        }),
+      );
+
+      const { hentAlleVarsler } = await import("./api.server");
+      const resultat = await hentAlleVarsler("token-abc", 1, 20);
+
+      expect(resultat.harFlere).toBe(true);
+    });
+
+    it("returnerer harFlere=false på siste side", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: async () => ({ ...gyldigVarselPageResponse, page: 2, totalPages: 2 }),
+        }),
+      );
+
+      const { hentAlleVarsler } = await import("./api.server");
+      const resultat = await hentAlleVarsler("token-abc", 2, 20);
+
+      expect(resultat.harFlere).toBe(false);
+    });
+
+    it("kaster feil ved ikke-ok HTTP-svar", async () => {
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 503 }));
+
+      const { hentAlleVarsler } = await import("./api.server");
+      await expect(hentAlleVarsler("token-abc", 1, 20)).rejects.toThrow(
+        "Kunne ikke hente varsler.",
+      );
+    });
+  });
+
   describe("markerVarselSomLest", () => {
     it("sender POST til riktig URL med bearer-token", async () => {
       const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 204 });

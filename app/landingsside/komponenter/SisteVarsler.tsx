@@ -61,7 +61,12 @@ export function SisteVarsler({
                           )}
                           size="small"
                           data-color="accent"
-                          onClick={() => sporHendelse("varsel åpnet")}
+                          onClick={() =>
+                            sporHendelse("navigere", {
+                              kilde: "dashboard",
+                              destinasjon: `/saker/${getSaksreferanse(varsel.sakId)}`,
+                            })
+                          }
                         >
                           Gå til sak
                         </Button>
@@ -71,7 +76,10 @@ export function SisteVarsler({
                           size="small"
                           data-color="accent"
                           disabled={erSubmitting}
-                          onClick={() => onMarkerSomLest(varsel.id)}
+                          onClick={() => {
+                            sporHendelse("varsel markert som lest", { kilde: "dashboard" });
+                            onMarkerSomLest(varsel.id);
+                          }}
                         >
                           Marker som lest
                         </Button>

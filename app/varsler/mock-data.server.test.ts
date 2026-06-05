@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { hentMockState, resetDefaultSession } from "~/testing/mock-store/session.server";
-import { hentUlesteVarsler, markerVarselSomLest } from "~/testing/mock-store/varsler.server";
+import {
+  hentUlesteVarsler,
+  markerAlleVarslerSomLest,
+  markerVarselSomLest,
+} from "~/testing/mock-store/varsler.server";
 
 const testRequest = new Request("http://localhost");
 function state() {
@@ -28,5 +32,14 @@ describe("varsler mock-data", () => {
     expect(varsler.find((varsel) => varsel.id === "varsel-102")?.sakId).toBe("102");
     expect(varsler.find((varsel) => varsel.id === "varsel-103")?.sakId).toBe("103");
     expect(varsler.find((varsel) => varsel.id === "varsel-104")?.sakId).toBe("104");
+  });
+
+  it("markerAlleVarslerSomLest markerer alle som lest og tømmer uleste-lista", () => {
+    expect(hentUlesteVarsler(state()).length).toBeGreaterThan(0);
+
+    markerAlleVarslerSomLest(state());
+
+    expect(hentUlesteVarsler(state())).toHaveLength(0);
+    expect(state().varsler.every((v) => v.erLest)).toBe(true);
   });
 });
