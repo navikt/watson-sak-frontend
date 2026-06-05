@@ -38,7 +38,7 @@ export function VarselBjelle() {
       { varselId: varsel.id },
       { method: "post", action: RouteConfig.API.MARKER_VARSEL_LEST },
     );
-    sporHendelse("varsel åpnet fra bjelle");
+    sporHendelse("navigere", { kilde: "varsel-bjelle", destinasjon: `/saker/${getSaksreferanse(varsel.sakId)}` });
     refreshVarsler();
     navigate(RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(varsel.sakId)));
   }
@@ -53,7 +53,12 @@ export function VarselBjelle() {
             antallUleste > 0 ? `Varsler, ${antallUleste} uleste` : "Varsler, ingen uleste"
           }
           aria-expanded={erÅpen}
-          onClick={() => setErÅpen((prev) => !prev)}
+          onClick={() => {
+            setErÅpen((prev) => {
+              if (!prev) sporHendelse("varsler åpnet", { kilde: "bjelle" });
+              return !prev;
+            });
+          }}
           className="flex items-center justify-center h-full px-3 text-ax-text-on-inverted hover:bg-surface-neutral-subtle-hover transition-colors"
         >
           <BellIcon fontSize="1.5rem" aria-hidden />
@@ -123,7 +128,7 @@ export function VarselBjelle() {
                 to={RouteConfig.VARSLER}
                 onClick={() => {
                   setErÅpen(false);
-                  sporHendelse("varsler oversikt åpnet");
+                  sporHendelse("navigere", { kilde: "varsel-bjelle", destinasjon: "/varsler", lenketekst: "Se alle varsler" });
                 }}
               >
                 Se alle varsler

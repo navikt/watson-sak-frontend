@@ -49,7 +49,10 @@ export default function VarslerSide() {
           </HStack>
 
           {ulesteVarsler.length > 0 && (
-            <Form method="post">
+            <Form
+              method="post"
+              onSubmit={() => sporHendelse("varsler markert som lest", { antall: ulesteVarsler.length })}
+            >
               <input type="hidden" name="handling" value="marker_alle_som_lest" />
               {ulesteVarsler.map((v) => (
                 <input key={v.id} type="hidden" name="varselId" value={v.id} />
@@ -94,7 +97,7 @@ export default function VarslerSide() {
                         size="small"
                         data-color="accent"
                         onClick={() => {
-                          sporHendelse("varsel åpnet fra varsler-side");
+                          sporHendelse("navigere", { kilde: "varsler-side", destinasjon: `/saker/${getSaksreferanse(varsel.sakId)}` });
                           if (!varsel.erLest) {
                             markerLestFetcher.submit(
                               { varselId: varsel.id },

@@ -51,8 +51,8 @@ type Hendelse =
   | "oppgave opprettet"
   | "fil lastet opp"
   | "innstillinger endret"
-  | "varsel åpnet"
-  | "varsel åpnet fra bjelle"
-  | "varsel åpnet fra varsler-side"
-  | "varsler oversikt åpnet"
+  | "navigere"
+  | "varsler åpnet"
+  | "varsel markert som lest"
+  | "varsler markert som lest"
   | "hurtigsøk aktivert";
