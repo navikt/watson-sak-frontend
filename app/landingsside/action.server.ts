@@ -1,9 +1,6 @@
 import { data } from "react-router";
 import type { Route } from "./+types/LandingSide.route";
 
-export async function action({ request }: Route.ActionArgs) {
-  const formData = await request.formData();
-  const handling = formData.get("handling");
-
-  throw data(`Ukjent handling: ${handling}`, { status: 400 });
+export async function action(_: Route.ActionArgs) {
+  throw data("POST støttes ikke på denne ruten", { status: 405 });
 }

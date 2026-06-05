@@ -17,7 +17,7 @@ export async function action({ request }: ActionFunctionArgs) {
   } else {
     const varselIder = formData
       .getAll("varselId")
-      .filter((id): id is string => typeof id === "string");
+      .filter((id): id is string => typeof id === "string" && id.trim().length > 0);
     const token = await getBackendOboToken(request);
     await Promise.all(varselIder.map((id) => markerSomLestApi(token, id)));
   }

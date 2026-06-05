@@ -4,9 +4,9 @@ import { Outlet } from "react-router";
 import type { LoaderFunctionArgs } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { skalBrukeMockdata } from "~/config/env.server";
+import { logger } from "~/logging/logging";
 import { hentUlesteVarsler as hentUlesteVarslerFraApi } from "~/varsler/api.server";
 import { hentUlesteVarsler as hentUlesteVarslerFraMock } from "~/varsler/mock-data.server";
-import { AppFooter } from "./AppFooter";
 import { AppHeader } from "./AppHeader";
 import { AppSidebar } from "./AppSidebar";
 import { InfoBanner } from "./InfoBanner";
@@ -18,7 +18,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const token = await getBackendOboToken(request);
   try {
     return { varsler: await hentUlesteVarslerFraApi(token) };
-  } catch {
+  } catch (err) {
+    logger.warn("Klarte ikke hente varsler, faller tilbake til tom liste", {
+      feil: String(err),
+    });
     return { varsler: [] };
   }
 }

@@ -1,6 +1,7 @@
 import { BodyShort, Heading, HGrid, HStack, VStack } from "@navikt/ds-react";
 import { BarChartIcon } from "@navikt/aksel-icons";
-import { useFetcher, useLoaderData } from "react-router";
+import { useEffect, useRef } from "react";
+import { useFetcher, useLoaderData, useRevalidator } from "react-router";
 import { Trakt } from "~/alle-saker/Trakt";
 import { Kort } from "~/komponenter/Kort";
 import { usePreferences } from "~/preferanser/PreferencesContext";
@@ -18,8 +19,19 @@ export { loader } from "./loader.server";
 export default function LandingSide() {
   const loaderData = useLoaderData<typeof loader>();
   const fetcher = useFetcher();
+  const { revalidate } = useRevalidator();
+  const prevFetcherState = useRef(fetcher.state);
   const { preferences } = usePreferences();
   const varsler = useVarsler();
+
+  // Revalider AppLayout-loaderen manuelt etter markering som lest.
+  // API-ruten er utenfor layout-treet, så React Router gjør ikke dette automatisk.
+  useEffect(() => {
+    if (prevFetcherState.current !== "idle" && fetcher.state === "idle" && fetcher.data) {
+      revalidate();
+    }
+    prevFetcherState.current = fetcher.state;
+  }, [fetcher.state, fetcher.data, revalidate]);
 
   return (
     <>
