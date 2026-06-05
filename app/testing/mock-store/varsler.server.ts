@@ -78,7 +78,7 @@ export function hentUlesteVarsler(state: MockState): Varsel[] {
 }
 
 export function hentVarsler(state: MockState): Varsel[] {
-  return state.varsler;
+  return [...state.varsler].sort((a, b) => b.tidspunkt.localeCompare(a.tidspunkt));
 }
 
 export function markerVarselSomLest(state: MockState, varselId: string) {

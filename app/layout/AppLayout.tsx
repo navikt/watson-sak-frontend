@@ -12,24 +12,24 @@ import { AppHeader } from "./AppHeader";
 import { AppSidebar } from "./AppSidebar";
 import { InfoBanner } from "./InfoBanner";
 
-// Ikke revalider layout-loaderen etter fetcher-actions til API-ruter.
-// Varsler oppdateres via polling (useRevalidator i VarselBjelle).
+// Ikke revalider layout-loaderen etter fetcher-actions til varsel-API-ruter.
+// Varsler oppdateres via polling (useFetcher + setInterval i VarselBjelle).
 export function shouldRevalidate({
   formAction,
   defaultShouldRevalidate,
 }: ShouldRevalidateFunctionArgs) {
-  if (formAction?.startsWith("/api/")) {
+  if (formAction?.startsWith("/api/varsler")) {
     return false;
   }
   return defaultShouldRevalidate;
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  if (skalBrukeMockdata) {
-    return { varsler: hentUlesteVarslerFraMock(request) };
-  }
-  const token = await getBackendOboToken(request);
   try {
+    if (skalBrukeMockdata) {
+      return { varsler: hentUlesteVarslerFraMock(request) };
+    }
+    const token = await getBackendOboToken(request);
     return { varsler: await hentUlesteVarslerFraApi(token) };
   } catch (err) {
     logger.warn("Klarte ikke hente varsler, faller tilbake til tom liste", {

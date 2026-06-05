@@ -1,7 +1,7 @@
 import { BellIcon, InformationSquareIcon } from "@navikt/aksel-icons";
 import { BodyShort, Button, Heading, HStack, InfoCard, Tag, VStack } from "@navikt/ds-react";
 import { useEffect, useState } from "react";
-import { Form, Link as RouterLink, useFetcher, useLoaderData } from "react-router";
+import { Form, useFetcher, useLoaderData, useNavigate } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
@@ -14,10 +14,10 @@ export { loader } from "./VarslerSide.loader.server";
 export default function VarslerSide() {
   const loaderData = useLoaderData<typeof loader>();
   const lastFlereFetcher = useFetcher<typeof loader>();
-  const markerLestFetcher = useFetcher();
   const [akkumulerteVarsler, setAkkumulerteVarsler] = useState<Varsel[]>(loaderData.varsler);
   const [nesteSide, setNesteSide] = useState(loaderData.page + 1);
   const [harFlere, setHarFlere] = useState(loaderData.harFlere);
+  const navigate = useNavigate();
 
   // Synkroniser state når loaderen revalideres (f.eks. etter «Merk alle som lest»)
   useEffect(() => {
@@ -60,7 +60,7 @@ export default function VarslerSide() {
                 <input key={v.id} type="hidden" name="varselId" value={v.id} />
               ))}
               <Button type="submit" variant="secondary" size="small">
-                Merk alle som lest
+                Merk alle viste som lest
               </Button>
             </Form>
           )}
@@ -91,11 +91,6 @@ export default function VarslerSide() {
                     <BodyShort>{varsel.tekst}</BodyShort>
                     <HStack gap="space-4" justify="end">
                       <Button
-                        as={RouterLink}
-                        to={RouteConfig.SAKER_DETALJ.replace(
-                          ":sakId",
-                          getSaksreferanse(varsel.sakId),
-                        )}
                         size="small"
                         data-color="accent"
                         onClick={() => {
@@ -104,11 +99,21 @@ export default function VarslerSide() {
                             destinasjon: `/saker/${getSaksreferanse(varsel.sakId)}`,
                           });
                           if (!varsel.erLest) {
-                            markerLestFetcher.submit(
-                              { varselId: varsel.id },
-                              { method: "post", action: RouteConfig.API.MARKER_VARSEL_LEST },
-                            );
+                            // Fire-and-forget med keepalive slik at requesten overlever navigasjon
+                            const fd = new FormData();
+                            fd.set("varselId", varsel.id);
+                            fetch(RouteConfig.API.MARKER_VARSEL_LEST, {
+                              method: "POST",
+                              body: fd,
+                              keepalive: true,
+                            });
                           }
+                          navigate(
+                            RouteConfig.SAKER_DETALJ.replace(
+                              ":sakId",
+                              getSaksreferanse(varsel.sakId),
+                            ),
+                          );
                         }}
                       >
                         Gå til sak

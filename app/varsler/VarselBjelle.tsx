@@ -19,6 +19,7 @@ export function VarselBjelle() {
   const pollingFetcher = useFetcher<{ varsler: Varsel[] }>({ key: VARSLER_FETCHER_KEY });
   const navigate = useNavigate();
   const refreshVarsler = useRefreshVarsler();
+  const prevFetcherState = useRef(fetcher.state);
 
   useEffect(() => {
     const intervall = setInterval(() => {
@@ -28,6 +29,14 @@ export function VarselBjelle() {
     // pollingFetcher.load er stabil med key
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Refresh varsler-data etter at markering som lest er fullført
+  useEffect(() => {
+    if (prevFetcherState.current !== "idle" && fetcher.state === "idle") {
+      refreshVarsler();
+    }
+    prevFetcherState.current = fetcher.state;
+  }, [fetcher.state, refreshVarsler]);
 
   const antallUleste = varsler.filter((v) => !v.erLest).length;
   const varslerIOverlay = varsler.filter((v) => !v.erLest).slice(0, ANTALL_VARSLER_I_OVERLAY);
@@ -42,7 +51,6 @@ export function VarselBjelle() {
       kilde: "varsel-bjelle",
       destinasjon: `/saker/${getSaksreferanse(varsel.sakId)}`,
     });
-    refreshVarsler();
     navigate(RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(varsel.sakId)));
   }
 
