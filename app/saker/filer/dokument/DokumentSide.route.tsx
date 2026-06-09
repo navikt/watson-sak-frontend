@@ -106,32 +106,35 @@ function DokumentRedigering({
   );
 
   return (
-    <VStack gap="space-12" className="mt-4 mb-8">
-      <div>
-        <Button
-          type="button"
-          variant="tertiary"
-          size="small"
-          icon={<ArrowLeftIcon aria-hidden />}
-          onClick={() => navigate(-1)}
-        >
-          Tilbake
-        </Button>
-      </div>
+    <>
+      <title>{`${tittel || "Uten tittel"} – Sak ${sakReferanse} – Watson Sak`}</title>
+      <VStack gap="space-12" className="mt-4 mb-8">
+        <div>
+          <Button
+            type="button"
+            variant="tertiary"
+            size="small"
+            icon={<ArrowLeftIcon aria-hidden />}
+            onClick={() => navigate(-1)}
+          >
+            Tilbake
+          </Button>
+        </div>
 
-      <Kort>
-        <VStack gap="space-16">
-          <DokumentTittel tittel={tittel} redigerbar={kanRedigere} onEndre={håndterTittel} />
+        <Kort>
+          <VStack gap="space-16">
+            <DokumentTittel tittel={tittel} redigerbar={kanRedigere} onEndre={håndterTittel} />
 
-          <DokumentEditor
-            startInnhold={dokument.innhold}
-            redigerbar={kanRedigere}
-            onEndring={håndterInnhold}
-            verktøylinjeSlutt={<LagreStatusVisning status={status} sistLagret={sistLagret} />}
-          />
-        </VStack>
-      </Kort>
-    </VStack>
+            <DokumentEditor
+              startInnhold={dokument.innhold}
+              redigerbar={kanRedigere}
+              onEndring={håndterInnhold}
+              verktøylinjeSlutt={<LagreStatusVisning status={status} sistLagret={sistLagret} />}
+            />
+          </VStack>
+        </Kort>
+      </VStack>
+    </>
   );
 }
 
