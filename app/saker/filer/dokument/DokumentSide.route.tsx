@@ -86,12 +86,16 @@ function DokumentRedigering({
   );
 
   const lagre = useCallback(
-    async (data: Autolagringsdata) => {
+    async (data: Autolagringsdata, { forlater }: { forlater: boolean }) => {
       const respons = await fetch(lagreUrl, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
-        keepalive: true,
+        // `keepalive` brukes kun ved navigasjon/lukking, slik at kallet rekker ut selv
+        // om siden rives ned. Det har en 64 KB body-grense, så vanlige (debouncede)
+        // lagringer bruker vanlig fetch – ellers kunne store dokumenter (f.eks. tabeller)
+        // feile lagringen.
+        keepalive: forlater,
       });
       if (!respons.ok) {
         throw new Error("Lagring feilet");

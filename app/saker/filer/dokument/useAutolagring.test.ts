@@ -31,7 +31,7 @@ describe("useAutolagring", () => {
     });
 
     expect(lagre).toHaveBeenCalledTimes(1);
-    expect(lagre).toHaveBeenCalledWith({ tittel: "A", innhold });
+    expect(lagre).toHaveBeenCalledWith({ tittel: "A", innhold }, { forlater: false });
     expect(result.current.status).toBe("lagret");
     expect(result.current.sistLagret).toBeInstanceOf(Date);
   });
@@ -50,7 +50,7 @@ describe("useAutolagring", () => {
     });
 
     expect(lagre).toHaveBeenCalledTimes(1);
-    expect(lagre).toHaveBeenCalledWith({ tittel: "B", innhold });
+    expect(lagre).toHaveBeenCalledWith({ tittel: "B", innhold }, { forlater: false });
   });
 
   it("beholder endringer og viser feilstatus når lagring feiler", async () => {
@@ -70,6 +70,18 @@ describe("useAutolagring", () => {
     });
 
     expect(result.current.status).toBe("lagret");
-    expect(lagre).toHaveBeenLastCalledWith({ tittel: "B", innhold });
+    expect(lagre).toHaveBeenLastCalledWith({ tittel: "B", innhold }, { forlater: false });
+  });
+
+  it("flusher med forlater=true (keepalive) ved unmount", async () => {
+    const lagre = vi.fn().mockResolvedValue(undefined);
+    const { result, unmount } = renderHook(() => useAutolagring({ lagre, forsinkelseMs: 800 }));
+
+    // Endre uten å la debouncen fullføre, og rive ned komponenten (route-bytte).
+    act(() => result.current.registrerEndring({ tittel: "A", innhold }));
+    unmount();
+
+    expect(lagre).toHaveBeenCalledTimes(1);
+    expect(lagre).toHaveBeenCalledWith({ tittel: "A", innhold }, { forlater: true });
   });
 });

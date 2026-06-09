@@ -9,8 +9,12 @@ export type Autolagringsdata = {
 };
 
 type UseAutolagringArgs = {
-  /** Lagrer dataene. Skal avvise (throw) ved feil. */
-  lagre: (data: Autolagringsdata) => Promise<void>;
+  /**
+   * Lagrer dataene. Skal avvise (throw) ved feil. `forlater` er `true` når lagringen
+   * skjer fordi brukeren navigerer bort eller lukker fanen – da bør kallet bruke
+   * `keepalive` så det rekker ut selv om siden rives ned.
+   */
+  lagre: (data: Autolagringsdata, opts: { forlater: boolean }) => Promise<void>;
   /** Hvor lenge vi venter etter siste endring før vi lagrer. Standard 800 ms. */
   forsinkelseMs?: number;
 };
@@ -60,7 +64,7 @@ export function useAutolagring({ lagre, forsinkelseMs = 800 }: UseAutolagringArg
       // tilfellet der brukeren skriver videre mens et kall er underveis.
       while (ventende.current) {
         const data: Autolagringsdata = ventende.current;
-        await lagreRef.current(data);
+        await lagreRef.current(data, { forlater: false });
         if (ventende.current === data) {
           ventende.current = null;
           setSistLagret(new Date());
@@ -96,7 +100,7 @@ export function useAutolagring({ lagre, forsinkelseMs = 800 }: UseAutolagringArg
     return () => {
       stoppTimer();
       if (ventende.current && !lagrerNå.current) {
-        void lagreRef.current(ventende.current).catch(() => {});
+        void lagreRef.current(ventende.current, { forlater: true }).catch(() => {});
       }
     };
   }, [stoppTimer]);
@@ -106,7 +110,7 @@ export function useAutolagring({ lagre, forsinkelseMs = 800 }: UseAutolagringArg
   useEffect(() => {
     function håndterLukking() {
       if (ventende.current && !lagrerNå.current) {
-        void lagreRef.current(ventende.current).catch(() => {});
+        void lagreRef.current(ventende.current, { forlater: true }).catch(() => {});
       }
     }
     window.addEventListener("beforeunload", håndterLukking);
