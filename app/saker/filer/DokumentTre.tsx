@@ -222,15 +222,22 @@ export function DokumentTre({
   noder,
   sakId,
   redigerbar = false,
+  redirectVedSletting,
 }: {
   noder: DokumentNode[];
   sakId: string;
   redigerbar?: boolean;
+  /** Valgfri: redirect-URL etter sletting av et gitt dokument (se useDokumentSletting). */
+  redirectVedSletting?: (docId: string) => string | undefined;
 }) {
   const [åpneMapper, setÅpneMapper] = useState<Set<string>>(new Set());
   const [fokusertId, setFokusertId] = useState<string | null>(noder[0]?.id ?? null);
   const treRef = useRef<HTMLUListElement>(null);
-  const sletting = useDokumentSletting({ sakId, kilde: "dokumentliste" });
+  const sletting = useDokumentSletting({
+    sakId,
+    kilde: "dokumentliste",
+    redirectTo: redirectVedSletting,
+  });
 
   const toggleMappe = useCallback((id: string) => {
     setÅpneMapper((prev) => {

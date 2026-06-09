@@ -45,6 +45,18 @@ export async function action({ request, params }: ActionFunctionArgs) {
     if (!slettet) {
       throw data("Dokument ikke funnet", { status: 404 });
     }
+
+    // Når man sletter dokumentet man ser på, redirecter vi til en trygg, intern URL.
+    // Det hindrer at React Router revaliderer den nå-døde dokument-loaderen (som ville
+    // gitt 404). Treet på saksvisningen sender ingen redirectTo og revalideres som vanlig.
+    const redirectTo = formData.get("redirectTo");
+    if (
+      typeof redirectTo === "string" &&
+      redirectTo.startsWith("/") &&
+      !redirectTo.startsWith("//")
+    ) {
+      return redirect(redirectTo);
+    }
     return { ok: true as const };
   }
 

@@ -79,6 +79,42 @@ describe("dokumenter.api DELETE", () => {
     expect(hentDokument(state(), String(sak.id), docId)).toBeUndefined();
   });
 
+  it("redirecter til oppgitt intern URL etter sletting", async () => {
+    const { sak, ref, docId } = settOppSakMedDokument({
+      eier: eierMeg,
+      deltMed: [],
+      status: "UTREDES",
+    });
+
+    const formData = new FormData();
+    formData.set("docId", docId);
+    formData.set("redirectTo", `/saker/${ref}`);
+
+    const respons = (await action({
+      request: new Request("http://localhost", { method: "DELETE", body: formData }),
+      params: { sakId: ref },
+    } as Route.ActionArgs)) as Response;
+
+    expect(respons.status).toBe(302);
+    expect(respons.headers.get("Location")).toBe(`/saker/${ref}`);
+    expect(hentDokument(state(), String(sak.id), docId)).toBeUndefined();
+  });
+
+  it("ignorerer redirectTo som ikke er en trygg intern URL", async () => {
+    const { ref, docId } = settOppSakMedDokument({ eier: eierMeg, deltMed: [], status: "UTREDES" });
+
+    const formData = new FormData();
+    formData.set("docId", docId);
+    formData.set("redirectTo", "https://evil.example.com");
+
+    const resultat = await action({
+      request: new Request("http://localhost", { method: "DELETE", body: formData }),
+      params: { sakId: ref },
+    } as Route.ActionArgs);
+
+    expect(resultat).toEqual({ ok: true });
+  });
+
   it("avviser sletting uten tilgang med 403", async () => {
     const { ref, docId } = settOppSakMedDokument({
       eier: annenSaksbehandler,

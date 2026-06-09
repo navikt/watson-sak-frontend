@@ -75,8 +75,9 @@ function DokumentRedigering({
   const sletting = useDokumentSletting({
     sakId: sakReferanse,
     kilde: "dokumentside",
-    // Etter sletting finnes ikke dokumentet lenger – send saksbehandleren tilbake til saken.
-    onSlettet: () => navigate(sakUrl),
+    // Etter sletting finnes ikke dokumentet lenger – redirect til saken via action-en,
+    // slik at den døde dokument-loaderen ikke revalideres (som ville gitt 404).
+    redirectTo: () => sakUrl,
   });
 
   const lagreUrl = RouteConfig.SAKER_DOKUMENT.replace(":sakId", sakReferanse).replace(
@@ -155,7 +156,12 @@ function DokumentRedigering({
                 </Dialog.Header>
                 <Dialog.Body>
                   {dokumenter.length > 0 ? (
-                    <DokumentTre noder={dokumenter} sakId={sakReferanse} />
+                    <DokumentTre
+                      noder={dokumenter}
+                      sakId={sakReferanse}
+                      redigerbar={kanRedigere}
+                      redirectVedSletting={(docId) => (docId === dokument.id ? sakUrl : undefined)}
+                    />
                   ) : (
                     <Detail className="text-ax-text-neutral-subtle">Ingen andre dokumenter.</Detail>
                   )}
@@ -167,6 +173,7 @@ function DokumentRedigering({
               <Button
                 type="button"
                 variant="tertiary"
+                data-color="danger"
                 size="small"
                 icon={<TrashIcon aria-hidden />}
                 onClick={() => sletting.start({ id: dokument.id, tittel })}
