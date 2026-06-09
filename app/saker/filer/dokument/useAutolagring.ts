@@ -24,8 +24,6 @@ export type Autolagring = {
   sistLagret: Date | null;
   /** Registrer en endring. Trigger debounced lagring. */
   registrerEndring: (data: Autolagringsdata) => void;
-  /** Tving lagring nå (uten å vente på debounce). */
-  lagreNå: () => void;
 };
 
 export function useAutolagring({ lagre, forsinkelseMs = 800 }: UseAutolagringArgs): Autolagring {
@@ -94,10 +92,6 @@ export function useAutolagring({ lagre, forsinkelseMs = 800 }: UseAutolagringArg
     [flush, forsinkelseMs, stoppTimer],
   );
 
-  const lagreNå = useCallback(() => {
-    void flush();
-  }, [flush]);
-
   // Flush ved navigasjon bort fra siden (route-bytte i SPA). Kallet er «best effort»:
   // lagre-funksjonen bruker keepalive slik at det rekker ut selv om komponenten rives ned.
   useEffect(() => {
@@ -109,17 +103,17 @@ export function useAutolagring({ lagre, forsinkelseMs = 800 }: UseAutolagringArg
     };
   }, [stoppTimer]);
 
-  // ... og ved full sidelukking/refresh.
+  // ... og ved full sidelukking/refresh. Vi blokkerer bevisst ikke navigasjonen med en
+  // «forlat siden?»-dialog: autolagringen (keepalive) tar vare på endringene.
   useEffect(() => {
-    function håndterLukking(event: BeforeUnloadEvent) {
+    function håndterLukking() {
       if (ventende.current) {
         void lagreRef.current(ventende.current).catch(() => {});
-        event.preventDefault();
       }
     }
     window.addEventListener("beforeunload", håndterLukking);
     return () => window.removeEventListener("beforeunload", håndterLukking);
   }, []);
 
-  return { status, sistLagret, registrerEndring, lagreNå };
+  return { status, sistLagret, registrerEndring };
 }

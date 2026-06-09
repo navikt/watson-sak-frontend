@@ -72,18 +72,4 @@ describe("useAutolagring", () => {
     expect(result.current.status).toBe("lagret");
     expect(lagre).toHaveBeenLastCalledWith({ tittel: "B", innhold });
   });
-
-  it("lagrer umiddelbart med lagreNå", async () => {
-    const lagre = vi.fn().mockResolvedValue(undefined);
-    const { result } = renderHook(() => useAutolagring({ lagre, forsinkelseMs: 800 }));
-
-    act(() => result.current.registrerEndring({ tittel: "A", innhold }));
-    await act(async () => {
-      result.current.lagreNå();
-      await vi.advanceTimersByTimeAsync(0);
-    });
-
-    expect(lagre).toHaveBeenCalledTimes(1);
-    expect(result.current.status).toBe("lagret");
-  });
 });
