@@ -143,6 +143,7 @@ export function UfordelteSakerInnhold({
                         "oppdatert",
                       ]}
                       tomTekst="Ingen ufordelte saker matcher filtrene."
+                      tilbake={{ to: RouteConfig.FORDELING, label: "Fordeling" }}
                       handlingKolonneTittel={<span className="sr-only">Handling</span>}
                       sortering={{
                         kolonne: sorteringskolonne,

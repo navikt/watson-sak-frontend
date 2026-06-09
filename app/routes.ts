@@ -7,6 +7,7 @@ export default [
     route(RouteConfig.INDEX, "landingsside/LandingSide.route.tsx"),
     route(RouteConfig.FORDELING, "fordeling/FordelingSide.route.tsx"),
     route(RouteConfig.SAKER_DETALJ, "saker/SakDetaljSide.route.tsx"),
+    route(RouteConfig.SAKER_DOKUMENT, "saker/filer/dokument/DokumentSide.route.tsx"),
     route(RouteConfig.MINE_SAKER, "mine-saker/MineSakerSide.route.tsx"),
     route(RouteConfig.ALLE_SAKER, "alle-saker/AlleSakerSide.route.tsx"),
     route(RouteConfig.REGISTRER_SAK, "registrer-sak/RegistrerSakSide.route.tsx"),
@@ -23,6 +24,7 @@ export default [
   route(RouteConfig.API.VERSION, "versjonsvarsling/api.ts"),
   route(RouteConfig.API.RESET_MOCK_DATA, "testing/reset-api.ts"),
   route(RouteConfig.API.PERSON_OPPSLAG, "registrer-sak/person-oppslag.api.ts"),
+  route(RouteConfig.API.SAK_DOKUMENTER, "saker/filer/dokument/dokumenter.api.ts"),
   route(RouteConfig.API.VARSLER_ULESTE, "varsler/uleste.api.ts"),
   route(RouteConfig.API.MARKER_VARSEL_LEST, "varsler/marker-lest.api.ts"),
 

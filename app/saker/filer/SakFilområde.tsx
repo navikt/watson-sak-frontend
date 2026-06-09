@@ -1,17 +1,39 @@
-import {
-  FileExcelIcon,
-  FileIcon,
-  FileWordIcon,
-  FolderPlusIcon,
-  PresentationIcon,
-  UploadIcon,
-} from "@navikt/aksel-icons";
-import { ActionMenu, BodyShort, Button, Heading, HStack, VStack } from "@navikt/ds-react";
+import { DocPencilIcon, FilePlusIcon, UploadIcon } from "@navikt/aksel-icons";
+import { BodyShort, Button, Heading, HStack, VStack } from "@navikt/ds-react";
+import { Form } from "react-router";
+import { sporHendelse } from "~/analytics/analytics";
 import { Kort } from "~/komponenter/Kort";
-import { FilTre } from "./FilTre";
-import type { FilNode } from "./typer";
+import { RouteConfig } from "~/routeConfig";
+import { DokumentTre } from "./DokumentTre";
+import type { DokumentNode } from "./typer";
 
-function OpprettFilMeny({
+function OpprettDokumentKnapp({
+  sakId,
+  size,
+  variant = "secondary",
+}: {
+  sakId: string;
+  size: "small" | "xsmall";
+  variant?: "secondary" | "tertiary";
+}) {
+  const action = RouteConfig.API.SAK_DOKUMENTER.replace(":sakId", sakId);
+  return (
+    <Form method="post" action={action}>
+      <Button
+        type="submit"
+        size={size}
+        variant={variant}
+        icon={<FilePlusIcon aria-hidden />}
+        onClick={() => sporHendelse("dokument opprettet", { sakId })}
+      >
+        Opprett dokument
+      </Button>
+    </Form>
+  );
+}
+
+/** Knapp for filopplasting. Foreløpig en no-op – støtte for opplasting til GCP kommer senere. */
+function LastOppFilKnapp({
   size,
   variant = "secondary",
 }: {
@@ -19,56 +41,28 @@ function OpprettFilMeny({
   variant?: "secondary" | "tertiary";
 }) {
   return (
-    <ActionMenu>
-      <ActionMenu.Trigger>
-        <Button size={size} variant={variant} icon={<FileIcon aria-hidden />}>
-          Opprett fil
-        </Button>
-      </ActionMenu.Trigger>
-
-      <ActionMenu.Content>
-        <ActionMenu.Group label="Velg filtype">
-          <ActionMenu.Item icon={<FileWordIcon aria-hidden />} onClick={() => {}}>
-            Word-fil
-          </ActionMenu.Item>
-          <ActionMenu.Item icon={<FileExcelIcon aria-hidden />} onClick={() => {}}>
-            Excel-fil
-          </ActionMenu.Item>
-          <ActionMenu.Item icon={<PresentationIcon aria-hidden />} onClick={() => {}}>
-            PowerPoint-fil
-          </ActionMenu.Item>
-        </ActionMenu.Group>
-      </ActionMenu.Content>
-    </ActionMenu>
+    <Button size={size} variant={variant} icon={<UploadIcon aria-hidden />} onClick={() => {}}>
+      Last opp fil
+    </Button>
   );
 }
 
-function TomtFilområde({ redigerbar }: { redigerbar: boolean }) {
+function TomtDokumentområde({ sakId, redigerbar }: { sakId: string; redigerbar: boolean }) {
   return (
     <VStack gap="space-8" align="center" className="py-12 bg-ax-bg-neutral-soft rounded-lg">
-      <FileIcon aria-hidden className="text-ax-icon-neutral-subtle" fontSize="3rem" />
+      <DocPencilIcon aria-hidden className="text-ax-icon-neutral-subtle" fontSize="3rem" />
       <VStack gap="space-2" align="center">
-        <BodyShort weight="semibold">Ingen filer ennå</BodyShort>
+        <BodyShort weight="semibold">Ingen dokumenter ennå</BodyShort>
         {redigerbar && (
           <BodyShort size="small" className="text-ax-text-neutral-subtle">
-            Last opp filer, opprett en fil eller opprett en mappe for å komme i gang.
+            Opprett et dokument eller last opp en fil for å komme i gang.
           </BodyShort>
         )}
       </VStack>
       {redigerbar && (
         <HStack gap="space-4">
-          <Button size="small" icon={<UploadIcon aria-hidden />} onClick={() => {}}>
-            Last opp fil
-          </Button>
-          <OpprettFilMeny size="small" />
-          <Button
-            size="small"
-            variant="secondary"
-            icon={<FolderPlusIcon aria-hidden />}
-            onClick={() => {}}
-          >
-            Opprett mappe
-          </Button>
+          <OpprettDokumentKnapp sakId={sakId} size="small" />
+          <LastOppFilKnapp size="small" variant="secondary" />
         </HStack>
       )}
     </VStack>
@@ -76,43 +70,34 @@ function TomtFilområde({ redigerbar }: { redigerbar: boolean }) {
 }
 
 interface SakFilområdeProps {
-  filer: FilNode[];
-  /** Om brukeren kan laste opp filer og opprette mapper. Standard: `true` */
+  dokumenter: DokumentNode[];
+  /** Saksreferansen, brukt til å bygge lenker og opprette-handlingen. */
+  sakId: string;
+  /** Om brukeren kan opprette og redigere dokumenter. Standard: `true` */
   redigerbar?: boolean;
 }
 
-export function SakFilområde({ filer, redigerbar = true }: SakFilområdeProps) {
-  const harFiler = filer.length > 0;
+export function SakFilområde({ dokumenter, sakId, redigerbar = true }: SakFilområdeProps) {
+  const harDokumenter = dokumenter.length > 0;
 
   return (
     <Kort>
       <HStack justify="space-between" align="center" className="mb-4">
         <Heading level="2" size="small">
-          Filer
+          Dokumenter
         </Heading>
-        {harFiler && redigerbar && (
-          <HStack gap="space-2">
-            <Button
-              size="xsmall"
-              variant="tertiary"
-              icon={<UploadIcon aria-hidden />}
-              onClick={() => {}}
-            >
-              Last opp fil
-            </Button>
-            <OpprettFilMeny size="xsmall" variant="tertiary" />
-            <Button
-              size="xsmall"
-              variant="tertiary"
-              icon={<FolderPlusIcon aria-hidden />}
-              onClick={() => {}}
-            >
-              Opprett mappe
-            </Button>
+        {harDokumenter && redigerbar && (
+          <HStack gap="space-2" align="center">
+            <OpprettDokumentKnapp sakId={sakId} size="xsmall" variant="tertiary" />
+            <LastOppFilKnapp size="xsmall" variant="tertiary" />
           </HStack>
         )}
       </HStack>
-      {harFiler ? <FilTre noder={filer} /> : <TomtFilområde redigerbar={redigerbar} />}
+      {harDokumenter ? (
+        <DokumentTre noder={dokumenter} sakId={sakId} redigerbar={redigerbar} />
+      ) : (
+        <TomtDokumentområde sakId={sakId} redigerbar={redigerbar} />
+      )}
     </Kort>
   );
 }

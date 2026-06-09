@@ -44,6 +44,39 @@ export function formaterDato(isoDate: string): string {
   }
 }
 
+/**
+ * Formaterer tiden som har gått siden et tidspunkt, som relativ norsk tekst.
+ * Bruker `Intl.RelativeTimeFormat` (ingen eksterne avhengigheter).
+ *
+ * @example
+ * formaterRelativTid(for3SekSiden) // "akkurat nå"
+ * formaterRelativTid(for32SekSiden) // "for 32 sekunder siden"
+ * formaterRelativTid(for1TimeSiden) // "for 1 time siden"
+ */
+export function formaterRelativTid(tidspunkt: Date, nå: Date = new Date()): string {
+  const rtf = new Intl.RelativeTimeFormat("nb-NO", { numeric: "auto" });
+  const diffSek = Math.floor((nå.getTime() - tidspunkt.getTime()) / 1000);
+
+  if (diffSek < 0) {
+    return "i fremtiden";
+  }
+  if (diffSek < 5) {
+    return "akkurat nå";
+  }
+  if (diffSek < 60) {
+    return rtf.format(-diffSek, "second");
+  }
+  const diffMin = Math.floor(diffSek / 60);
+  if (diffMin < 60) {
+    return rtf.format(-diffMin, "minute");
+  }
+  const diffTimer = Math.floor(diffMin / 60);
+  if (diffTimer < 24) {
+    return rtf.format(-diffTimer, "hour");
+  }
+  return rtf.format(-Math.floor(diffTimer / 24), "day");
+}
+
 export function formaterTilIsoDato(dato: Date): string {
   // Dette returnerer en streng i formatet "YYYY-MM-DD"
   return new Intl.DateTimeFormat("sv-SE", {

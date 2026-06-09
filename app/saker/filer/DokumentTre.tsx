@@ -1,25 +1,23 @@
-import { ChevronDownIcon, ChevronRightIcon } from "@navikt/aksel-icons";
-import { BodyShort, Detail, HStack, Tag } from "@navikt/ds-react";
+import {
+  ChevronDownIcon,
+  ChevronRightIcon,
+  FilePdfIcon,
+  MenuElipsisVerticalIcon,
+  TrashIcon,
+} from "@navikt/aksel-icons";
+import { ActionMenu, BodyShort, Button, Detail, HStack } from "@navikt/ds-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "react-router";
+import { sporHendelse } from "~/analytics/analytics";
+import { RouteConfig } from "~/routeConfig";
 import { formaterDato } from "~/utils/date-utils";
-import { FilIkon } from "./fil-ikon";
-import type { FilNode, FilType } from "./typer";
-
-const formatNavn: Record<FilType, string> = {
-  word: "Word",
-  excel: "Excel",
-  pdf: "PDF",
-  powerpoint: "PowerPoint",
-  bilde: "Bilde",
-  csv: "CSV",
-  json: "JSON",
-  kode: "Kode",
-  tekst: "Tekst",
-  annet: "Fil",
-};
+import { DokumentIkon } from "./dokument-ikon";
+import { SlettDokumentModal } from "./dokument/SlettDokumentModal";
+import { useDokumentSletting } from "./dokument/useDokumentSletting";
+import type { DokumentNode, Dokumentrad } from "./typer";
 
 /** Returnerer alle synlige node-IDer i trekkordion-rekkefølge */
-function hentSynligeNodeIder(noder: FilNode[], åpneMapper: Set<string>): string[] {
+function hentSynligeNodeIder(noder: DokumentNode[], åpneMapper: Set<string>): string[] {
   const ider: string[] = [];
   for (const node of noder) {
     ider.push(node.id);
@@ -31,7 +29,7 @@ function hentSynligeNodeIder(noder: FilNode[], åpneMapper: Set<string>): string
 }
 
 /** Finner en node i treet basert på ID */
-function finnNode(id: string, noder: FilNode[]): FilNode | undefined {
+function finnNode(id: string, noder: DokumentNode[]): DokumentNode | undefined {
   for (const node of noder) {
     if (node.id === id) return node;
     if (node.type === "mappe") {
@@ -43,7 +41,7 @@ function finnNode(id: string, noder: FilNode[]): FilNode | undefined {
 }
 
 /** Finner foreldernoden til en gitt node */
-function finnForelder(nodeId: string, noder: FilNode[]): FilNode | undefined {
+function finnForelder(nodeId: string, noder: DokumentNode[]): DokumentNode | undefined {
   for (const node of noder) {
     if (node.type === "mappe") {
       if (node.barn.some((b) => b.id === nodeId)) return node;
@@ -54,18 +52,82 @@ function finnForelder(nodeId: string, noder: FilNode[]): FilNode | undefined {
   return undefined;
 }
 
-function FilRad({
+function DokumentHandlinger({
+  dokument,
+  sakId,
+  redigerbar,
+  erFokusert,
+  onFokus,
+  onSlett,
+}: {
+  dokument: Dokumentrad;
+  sakId: string;
+  redigerbar: boolean;
+  erFokusert: boolean;
+  onFokus: () => void;
+  onSlett: (dokument: Dokumentrad) => void;
+}) {
+  return (
+    <ActionMenu>
+      <ActionMenu.Trigger>
+        <Button
+          variant="tertiary"
+          size="small"
+          icon={<MenuElipsisVerticalIcon aria-hidden />}
+          aria-label={`Handlinger for ${dokument.tittel}`}
+          tabIndex={erFokusert ? 0 : -1}
+          onFocus={onFokus}
+        />
+      </ActionMenu.Trigger>
+      <ActionMenu.Content>
+        {/* «Last ned som PDF» er foreløpig en no-op – støtte kommer senere. */}
+        <ActionMenu.Item
+          icon={<FilePdfIcon aria-hidden />}
+          onSelect={() =>
+            sporHendelse("dokument lastet ned", { sakId, docId: dokument.id, format: "pdf" })
+          }
+        >
+          Last ned som PDF
+        </ActionMenu.Item>
+        {redigerbar && (
+          <>
+            <ActionMenu.Divider />
+            <ActionMenu.Item
+              variant="danger"
+              icon={<TrashIcon aria-hidden />}
+              onSelect={() => onSlett(dokument)}
+            >
+              Slett
+            </ActionMenu.Item>
+          </>
+        )}
+      </ActionMenu.Content>
+    </ActionMenu>
+  );
+}
+
+function DokumentRad({
   node,
   nivå,
+  sakId,
   fokusertId,
+  fremhevetId,
   åpneMapper,
+  redigerbar,
   onToggle,
+  onFokus,
+  onSlett,
 }: {
-  node: FilNode;
+  node: DokumentNode;
   nivå: number;
+  sakId: string;
   fokusertId: string | null;
+  fremhevetId?: string;
   åpneMapper: Set<string>;
+  redigerbar: boolean;
   onToggle: (id: string) => void;
+  onFokus: (id: string) => void;
+  onSlett: (dokument: Dokumentrad) => void;
 }) {
   const erFokusert = fokusertId === node.id;
 
@@ -77,6 +139,7 @@ function FilRad({
           role="treeitem"
           type="button"
           onClick={() => onToggle(node.id)}
+          onFocus={() => onFokus(node.id)}
           className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-ax-bg-neutral-moderate-hover transition-colors cursor-pointer"
           style={{ paddingLeft: `${(nivå - 1) * 1.5 + 0.5}rem` }}
           aria-expanded={åpen}
@@ -89,7 +152,7 @@ function FilRad({
           ) : (
             <ChevronRightIcon aria-hidden className="shrink-0" />
           )}
-          <FilIkon node={node} aria-hidden className="shrink-0 text-ax-icon-info" />
+          <DokumentIkon node={node} aria-hidden className="shrink-0 text-ax-icon-info" />
           <BodyShort weight="semibold" size="small" className="truncate">
             {node.navn}
           </BodyShort>
@@ -97,13 +160,18 @@ function FilRad({
         {åpen && (
           <ul role="group">
             {node.barn.map((barn) => (
-              <FilRad
+              <DokumentRad
                 key={barn.id}
                 node={barn}
                 nivå={nivå + 1}
+                sakId={sakId}
                 fokusertId={fokusertId}
+                fremhevetId={fremhevetId}
                 åpneMapper={åpneMapper}
+                redigerbar={redigerbar}
                 onToggle={onToggle}
+                onFokus={onFokus}
+                onSlett={onSlett}
               />
             ))}
           </ul>
@@ -112,40 +180,78 @@ function FilRad({
     );
   }
 
+  const dokumentUrl = RouteConfig.SAKER_DOKUMENT.replace(":sakId", sakId).replace(
+    ":docId",
+    node.id,
+  );
+  const erFremhevet = fremhevetId === node.id;
+
   return (
-    <li role="none">
-      <a
+    <li role="none" className="flex items-center gap-1">
+      <Link
         role="treeitem"
-        href={node.sharepointUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 no-underline hover:bg-ax-bg-neutral-moderate-hover transition-colors text-ax-text-default"
-        style={{ paddingLeft: `${(nivå - 1) * 1.5 + 0.5 + 1.75}rem` }}
+        to={dokumentUrl}
+        onFocus={() => onFokus(node.id)}
+        aria-current={erFremhevet ? "page" : undefined}
+        className={`flex flex-1 min-w-0 items-center gap-2 rounded-md px-2 py-1.5 no-underline transition-colors text-ax-text-default ${
+          erFremhevet ? "bg-ax-bg-neutral-moderate-hover" : "hover:bg-ax-bg-neutral-moderate-hover"
+        }`}
+        style={{ paddingLeft: `${(nivå - 1) * 1.5 + 0.5}rem` }}
         aria-level={nivå}
         tabIndex={erFokusert ? 0 : -1}
         data-tree-id={node.id}
       >
-        <FilIkon node={node} aria-hidden className="shrink-0" />
-        <BodyShort size="small" className="truncate flex-1">
-          {node.navn}
+        <DokumentIkon node={node} aria-hidden className="shrink-0 text-ax-icon-info" />
+        <BodyShort
+          size="small"
+          weight={erFremhevet ? "semibold" : "regular"}
+          className="truncate flex-1"
+        >
+          {node.tittel}
         </BodyShort>
         <HStack gap="space-8" align="center" className="shrink-0">
-          <Tag variant="info" size="xsmall">
-            {formatNavn[node.format]}
-          </Tag>
           <Detail className="text-ax-text-neutral-subtle whitespace-nowrap">
             {formaterDato(node.endretDato)} – {node.endretAv}
           </Detail>
         </HStack>
-      </a>
+      </Link>
+      <div className="shrink-0">
+        <DokumentHandlinger
+          dokument={node}
+          sakId={sakId}
+          redigerbar={redigerbar}
+          erFokusert={erFokusert}
+          onFokus={() => onFokus(node.id)}
+          onSlett={onSlett}
+        />
+      </div>
     </li>
   );
 }
 
-export function FilTre({ noder }: { noder: FilNode[] }) {
+export function DokumentTre({
+  noder,
+  sakId,
+  redigerbar = false,
+  fremhevetId,
+  redirectVedSletting,
+}: {
+  noder: DokumentNode[];
+  sakId: string;
+  redigerbar?: boolean;
+  /** Valgfri: id-en til dokumentet som skal fremheves (f.eks. det man ser på akkurat nå). */
+  fremhevetId?: string;
+  /** Valgfri: redirect-URL etter sletting av et gitt dokument (se useDokumentSletting). */
+  redirectVedSletting?: (docId: string) => string | undefined;
+}) {
   const [åpneMapper, setÅpneMapper] = useState<Set<string>>(new Set());
   const [fokusertId, setFokusertId] = useState<string | null>(noder[0]?.id ?? null);
   const treRef = useRef<HTMLUListElement>(null);
+  const sletting = useDokumentSletting({
+    sakId,
+    kilde: "dokumentliste",
+    redirectTo: redirectVedSletting,
+  });
 
   const toggleMappe = useCallback((id: string) => {
     setÅpneMapper((prev) => {
@@ -248,23 +354,37 @@ export function FilTre({ noder }: { noder: FilNode[] }) {
   );
 
   return (
-    <ul
-      className="flex flex-col"
-      role="tree"
-      aria-label="Filstruktur"
-      ref={treRef}
-      onKeyDown={handleKeyDown}
-    >
-      {noder.map((node) => (
-        <FilRad
-          key={node.id}
-          node={node}
-          nivå={1}
-          fokusertId={fokusertId}
-          åpneMapper={åpneMapper}
-          onToggle={toggleMappe}
-        />
-      ))}
-    </ul>
+    <>
+      <ul
+        className="flex flex-col"
+        role="tree"
+        aria-label="Dokumenter"
+        ref={treRef}
+        onKeyDown={handleKeyDown}
+      >
+        {noder.map((node) => (
+          <DokumentRad
+            key={node.id}
+            node={node}
+            nivå={1}
+            sakId={sakId}
+            fokusertId={fokusertId}
+            fremhevetId={fremhevetId}
+            åpneMapper={åpneMapper}
+            redigerbar={redigerbar}
+            onToggle={toggleMappe}
+            onFokus={setFokusertId}
+            onSlett={sletting.start}
+          />
+        ))}
+      </ul>
+
+      <SlettDokumentModal
+        kandidat={sletting.kandidat}
+        sletter={sletting.sletter}
+        onBekreft={sletting.bekreft}
+        onAvbryt={sletting.avbryt}
+      />
+    </>
   );
 }

@@ -51,7 +51,9 @@ export function VarselBjelle() {
       kilde: "varsel-bjelle",
       destinasjon: `/saker/${getSaksreferanse(varsel.sakId)}`,
     });
-    navigate(RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(varsel.sakId)));
+    navigate(RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(varsel.sakId)), {
+      state: { tilbake: { to: RouteConfig.VARSLER, label: "Varsler" } },
+    });
   }
 
   return (

@@ -25,7 +25,11 @@ export function MineSakerOversikt({ saker }: { saker: KontrollsakResponse[] }) {
           </Link>
         </HStack>
 
-        <Saksliste rader={rader} tomTekst="Du har ingen aktive saker." />
+        <Saksliste
+          rader={rader}
+          tomTekst="Du har ingen aktive saker."
+          tilbake={{ to: RouteConfig.INDEX, label: "Forsiden" }}
+        />
       </VStack>
     </Kort>
   );

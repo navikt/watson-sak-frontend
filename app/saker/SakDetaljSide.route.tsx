@@ -68,6 +68,8 @@ import {
 } from "./visning";
 import { action, loader } from "./SakDetaljSide.server";
 import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
+import { RouteConfig } from "~/routeConfig";
+import { useTilbakeLenke } from "./tilbake";
 
 export { action, loader };
 
@@ -193,7 +195,7 @@ export default function SakDetaljSide() {
   const {
     sak: loaderSak,
     historikk,
-    filer,
+    dokumenter,
     andreSaker,
     saksbehandlerDetaljer,
     ytelser,
@@ -210,6 +212,7 @@ export default function SakDetaljSide() {
     [ytelser],
   );
   const navigate = useNavigate();
+  const tilbake = useTilbakeLenke({ to: RouteConfig.MINE_SAKER, label: "Mine saker" });
   const fetcher = useFetcher<typeof action>();
   const revalidator = useRevalidator();
   const personIdent = getPersonIdent(sak);
@@ -231,6 +234,9 @@ export default function SakDetaljSide() {
   const harDeltTilgang = delteSaksbehandlere.some((s) => s.navIdent === innloggetBruker.navIdent);
   const kanSeFilområde = erEier || harDeltTilgang;
   const kanRedigere = erEier && erAktiv;
+  // Dokumenter kan redigeres av eier ELLER delt-med, så lenge saken er aktiv.
+  // (Skiller seg fra `kanRedigere` som styrer redigering av selve saksinformasjonen.)
+  const kanRedigereDokumenter = kanSeFilområde && erAktiv;
   const [redigerer, setRedigerer] = useState(false);
   const [redigeringsøkt, setRedigeringsøkt] = useState(0);
   const [visFeil, setVisFeil] = useState(false);
@@ -348,9 +354,9 @@ export default function SakDetaljSide() {
             variant="tertiary"
             size="small"
             icon={<ArrowLeftIcon aria-hidden />}
-            onClick={() => navigate(-1)}
+            onClick={() => navigate(tilbake.to)}
           >
-            Tilbake
+            Tilbake til {tilbake.label}
           </Button>
         </div>
 
@@ -747,7 +753,13 @@ export default function SakDetaljSide() {
               </VStack>
             </Kort>
 
-            {kanSeFilområde && <SakFilområde filer={filer} redigerbar={kanRedigere} />}
+            {kanSeFilområde && (
+              <SakFilområde
+                dokumenter={dokumenter}
+                sakId={saksreferanse}
+                redigerbar={kanRedigereDokumenter}
+              />
+            )}
 
             <SakerPåSammePerson saker={andreSaker} gjeldendeSakId={sak.id} />
           </VStack>

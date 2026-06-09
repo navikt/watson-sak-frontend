@@ -1,6 +1,6 @@
 import { kontrollsakResponseSchema, type KontrollsakResponse } from "~/saker/types.backend";
 import { normaliserLegacyKontrollsak, oppdaterTilgjengeligeHandlinger } from "~/saker/mock-uuid";
-import { registrerTomtFilområdeForSak } from "~/testing/mock-store/filer.server";
+import { registrerTomtDokumentområdeForSak } from "~/testing/mock-store/dokumenter.server";
 import { berikLegacySakMedPerson } from "~/testing/mock-store/personer.server";
 import type { MockState } from "~/testing/mock-store/session.server";
 
@@ -566,7 +566,7 @@ export function leggTilMockSakIFordeling(
 
   const kontrollsakMedHandlinger = oppdaterTilgjengeligeHandlinger(kontrollsak);
 
-  registrerTomtFilområdeForSak(state, String(kontrollsakMedHandlinger.id));
+  registrerTomtDokumentområdeForSak(state, String(kontrollsakMedHandlinger.id));
   state.kontrollsaker.unshift(kontrollsakMedHandlinger);
 
   return kontrollsakMedHandlinger;

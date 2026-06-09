@@ -33,6 +33,7 @@ export function SøkResultatKort({ sak }: SøkResultatKortProps) {
         <HStack gap="space-4" align="center" justify="space-between">
           <Link
             to={detaljSti}
+            state={{ tilbake: { to: RouteConfig.SØK, label: "Søk" } }}
             className="no-underline focus-visible:outline-none"
             onClick={() => sporHendelse("søk resultat valgt")}
           >

@@ -1,11 +1,42 @@
 import { describe, expect, it } from "vitest";
 import {
   formaterDato,
+  formaterRelativTid,
   formaterTilIsoDato,
   formaterÅrMåned,
   forskjellIDager,
   lagIsoTidspunktFraNorskDatoTid,
 } from "./date-utils";
+
+describe("formaterRelativTid", () => {
+  const nå = new Date("2026-06-09T13:00:00+02:00");
+  const sekunderSiden = (s: number) => new Date(nå.getTime() - s * 1000);
+
+  it("viser «akkurat nå» for de første sekundene", () => {
+    expect(formaterRelativTid(sekunderSiden(0), nå)).toBe("akkurat nå");
+    expect(formaterRelativTid(sekunderSiden(4), nå)).toBe("akkurat nå");
+  });
+
+  it("viser sekunder", () => {
+    expect(formaterRelativTid(sekunderSiden(32), nå)).toBe("for 32 sekunder siden");
+  });
+
+  it("viser minutter", () => {
+    expect(formaterRelativTid(sekunderSiden(5 * 60), nå)).toBe("for 5 minutter siden");
+  });
+
+  it("viser timer", () => {
+    expect(formaterRelativTid(sekunderSiden(60 * 60), nå)).toBe("for 1 time siden");
+  });
+
+  it("viser dager for eldre tidspunkt", () => {
+    expect(formaterRelativTid(sekunderSiden(3 * 24 * 60 * 60), nå)).toBe("for 3 døgn siden");
+  });
+
+  it("viser «i fremtiden» for tidspunkt fram i tid", () => {
+    expect(formaterRelativTid(sekunderSiden(-3600), nå)).toBe("i fremtiden");
+  });
+});
 
 describe("formaterÅrMåned", () => {
   it("formaterer gyldig år-måned streng", () => {
