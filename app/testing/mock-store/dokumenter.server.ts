@@ -258,3 +258,28 @@ export function registrerTomtDokumentområdeForSak(state: MockState, sakId: stri
   state.tommeDokumentområder.add(sakId);
   state.dokumenter.set(sakId, []);
 }
+
+/** Fjerner en dokumentnode (rekursivt) fra en nodeliste. Returnerer true om den ble funnet. */
+function fjernDokumentNode(noder: DokumentNode[], docId: string): boolean {
+  const indeks = noder.findIndex((node) => node.type === "dokument" && node.id === docId);
+  if (indeks !== -1) {
+    noder.splice(indeks, 1);
+    return true;
+  }
+  for (const node of noder) {
+    if (node.type === "mappe" && fjernDokumentNode(node.barn, docId)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/** Sletter et dokument og dets innhold. Returnerer true om dokumentet fantes. */
+export function slettDokument(state: MockState, sakId: string, docId: string): boolean {
+  const tre = hentEllerSeed(state, sakId);
+  const fjernet = fjernDokumentNode(tre, docId);
+  if (fjernet) {
+    state.dokumentInnhold.delete(innholdsnøkkel(sakId, docId));
+  }
+  return fjernet;
+}

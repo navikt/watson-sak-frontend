@@ -5,6 +5,7 @@ import {
   lagreDokument,
   opprettDokument,
   registrerTomtDokumentområdeForSak,
+  slettDokument,
 } from "./dokumenter.server";
 import { hentMockState, resetDefaultSession } from "./session.server";
 
@@ -87,5 +88,30 @@ describe("mock-store dokumenter", () => {
       endretAv: "Ola Nordmann",
     });
     expect(resultat).toBeUndefined();
+  });
+
+  it("sletter et dokument på rot og fjerner innholdet", () => {
+    const { id } = opprettDokument(state(), sakUtenDokumenter, "Ola Nordmann");
+    expect(hentDokument(state(), sakUtenDokumenter, id)).toBeDefined();
+
+    const slettet = slettDokument(state(), sakUtenDokumenter, id);
+
+    expect(slettet).toBe(true);
+    expect(hentDokument(state(), sakUtenDokumenter, id)).toBeUndefined();
+    expect(hentDokumenttreForSak(state(), sakUtenDokumenter).some((n) => n.id === id)).toBe(false);
+  });
+
+  it("sletter et dokument som ligger i en mappe", () => {
+    // «1-1» (Saksframlegg) ligger i mappen «Dokumentasjon» i seed-dataene.
+    expect(hentDokument(state(), sakMedDokumenter, "1-1")).toBeDefined();
+
+    const slettet = slettDokument(state(), sakMedDokumenter, "1-1");
+
+    expect(slettet).toBe(true);
+    expect(hentDokument(state(), sakMedDokumenter, "1-1")).toBeUndefined();
+  });
+
+  it("returnerer false når man sletter et ukjent dokument", () => {
+    expect(slettDokument(state(), sakMedDokumenter, "finnes-ikke")).toBe(false);
   });
 });

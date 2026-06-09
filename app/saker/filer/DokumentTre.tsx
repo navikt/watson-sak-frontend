@@ -1,11 +1,19 @@
-import { ChevronDownIcon, ChevronRightIcon } from "@navikt/aksel-icons";
-import { BodyShort, Detail, HStack } from "@navikt/ds-react";
+import {
+  ChevronDownIcon,
+  ChevronRightIcon,
+  FilePdfIcon,
+  MenuElipsisVerticalIcon,
+  TrashIcon,
+} from "@navikt/aksel-icons";
+import { ActionMenu, BodyLong, BodyShort, Button, Detail, HStack, Modal } from "@navikt/ds-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link } from "react-router";
+import { Link, useFetcher } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { formaterDato } from "~/utils/date-utils";
 import { DokumentIkon } from "./dokument-ikon";
 import type { DokumentNode } from "./typer";
+
+type Dokumentrad = Extract<DokumentNode, { type: "dokument" }>;
 
 /** Returnerer alle synlige node-IDer i trekkordion-rekkefølge */
 function hentSynligeNodeIder(noder: DokumentNode[], åpneMapper: Set<string>): string[] {
@@ -43,20 +51,65 @@ function finnForelder(nodeId: string, noder: DokumentNode[]): DokumentNode | und
   return undefined;
 }
 
+function DokumentHandlinger({
+  dokument,
+  redigerbar,
+  onSlett,
+}: {
+  dokument: Dokumentrad;
+  redigerbar: boolean;
+  onSlett: (dokument: Dokumentrad) => void;
+}) {
+  return (
+    <ActionMenu>
+      <ActionMenu.Trigger>
+        <Button
+          variant="tertiary"
+          size="small"
+          icon={<MenuElipsisVerticalIcon aria-hidden />}
+          aria-label={`Handlinger for ${dokument.tittel}`}
+        />
+      </ActionMenu.Trigger>
+      <ActionMenu.Content>
+        {/* «Last ned som PDF» er foreløpig en no-op – støtte kommer senere. */}
+        <ActionMenu.Item icon={<FilePdfIcon aria-hidden />} onSelect={() => {}}>
+          Last ned som PDF
+        </ActionMenu.Item>
+        {redigerbar && (
+          <>
+            <ActionMenu.Divider />
+            <ActionMenu.Item
+              variant="danger"
+              icon={<TrashIcon aria-hidden />}
+              onSelect={() => onSlett(dokument)}
+            >
+              Slett
+            </ActionMenu.Item>
+          </>
+        )}
+      </ActionMenu.Content>
+    </ActionMenu>
+  );
+}
+
 function DokumentRad({
   node,
   nivå,
   sakId,
   fokusertId,
   åpneMapper,
+  redigerbar,
   onToggle,
+  onSlett,
 }: {
   node: DokumentNode;
   nivå: number;
   sakId: string;
   fokusertId: string | null;
   åpneMapper: Set<string>;
+  redigerbar: boolean;
   onToggle: (id: string) => void;
+  onSlett: (dokument: Dokumentrad) => void;
 }) {
   const erFokusert = fokusertId === node.id;
 
@@ -95,7 +148,9 @@ function DokumentRad({
                 sakId={sakId}
                 fokusertId={fokusertId}
                 åpneMapper={åpneMapper}
+                redigerbar={redigerbar}
                 onToggle={onToggle}
+                onSlett={onSlett}
               />
             ))}
           </ul>
@@ -110,11 +165,11 @@ function DokumentRad({
   );
 
   return (
-    <li role="none">
+    <li role="none" className="flex items-center gap-1">
       <Link
         role="treeitem"
         to={dokumentUrl}
-        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 no-underline hover:bg-ax-bg-neutral-moderate-hover transition-colors text-ax-text-default"
+        className="flex flex-1 min-w-0 items-center gap-2 rounded-md px-2 py-1.5 no-underline hover:bg-ax-bg-neutral-moderate-hover transition-colors text-ax-text-default"
         style={{ paddingLeft: `${(nivå - 1) * 1.5 + 0.5}rem` }}
         aria-level={nivå}
         tabIndex={erFokusert ? 0 : -1}
@@ -130,14 +185,39 @@ function DokumentRad({
           </Detail>
         </HStack>
       </Link>
+      <div className="shrink-0">
+        <DokumentHandlinger dokument={node} redigerbar={redigerbar} onSlett={onSlett} />
+      </div>
     </li>
   );
 }
 
-export function DokumentTre({ noder, sakId }: { noder: DokumentNode[]; sakId: string }) {
+export function DokumentTre({
+  noder,
+  sakId,
+  redigerbar = false,
+}: {
+  noder: DokumentNode[];
+  sakId: string;
+  redigerbar?: boolean;
+}) {
   const [åpneMapper, setÅpneMapper] = useState<Set<string>>(new Set());
   const [fokusertId, setFokusertId] = useState<string | null>(noder[0]?.id ?? null);
+  const [sletteKandidat, setSletteKandidat] = useState<Dokumentrad | null>(null);
   const treRef = useRef<HTMLUListElement>(null);
+  const slettFetcher = useFetcher();
+  const sletter = slettFetcher.state !== "idle";
+
+  const bekreftSletting = useCallback(() => {
+    if (!sletteKandidat) {
+      return;
+    }
+    slettFetcher.submit(
+      { docId: sletteKandidat.id },
+      { method: "delete", action: RouteConfig.API.SAK_DOKUMENTER.replace(":sakId", sakId) },
+    );
+    setSletteKandidat(null);
+  }, [sletteKandidat, slettFetcher, sakId]);
 
   const toggleMappe = useCallback((id: string) => {
     setÅpneMapper((prev) => {
@@ -240,24 +320,50 @@ export function DokumentTre({ noder, sakId }: { noder: DokumentNode[]; sakId: st
   );
 
   return (
-    <ul
-      className="flex flex-col"
-      role="tree"
-      aria-label="Dokumenter"
-      ref={treRef}
-      onKeyDown={handleKeyDown}
-    >
-      {noder.map((node) => (
-        <DokumentRad
-          key={node.id}
-          node={node}
-          nivå={1}
-          sakId={sakId}
-          fokusertId={fokusertId}
-          åpneMapper={åpneMapper}
-          onToggle={toggleMappe}
-        />
-      ))}
-    </ul>
+    <>
+      <ul
+        className="flex flex-col"
+        role="tree"
+        aria-label="Dokumenter"
+        ref={treRef}
+        onKeyDown={handleKeyDown}
+      >
+        {noder.map((node) => (
+          <DokumentRad
+            key={node.id}
+            node={node}
+            nivå={1}
+            sakId={sakId}
+            fokusertId={fokusertId}
+            åpneMapper={åpneMapper}
+            redigerbar={redigerbar}
+            onToggle={toggleMappe}
+            onSlett={setSletteKandidat}
+          />
+        ))}
+      </ul>
+
+      <Modal
+        open={sletteKandidat !== null}
+        onClose={() => setSletteKandidat(null)}
+        header={{ heading: "Slette dokument?", icon: <TrashIcon aria-hidden /> }}
+        width="small"
+      >
+        <Modal.Body>
+          <BodyLong>
+            Er du sikker på at du vil slette{" "}
+            <strong>{sletteKandidat?.tittel || "Uten tittel"}</strong>? Dette kan ikke angres.
+          </BodyLong>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="danger" onClick={bekreftSletting} loading={sletter}>
+            Slett dokument
+          </Button>
+          <Button variant="secondary" onClick={() => setSletteKandidat(null)} disabled={sletter}>
+            Avbryt
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </>
   );
 }

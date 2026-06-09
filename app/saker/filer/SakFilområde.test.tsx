@@ -162,4 +162,12 @@ describe("SakFilområde", () => {
     expect(dokumentLenke.getAttribute("href")).toBe("/saker/ABC-123/dokumenter/2");
     expect(dokumentLenke.getAttribute("target")).toBeNull();
   });
+
+  it("viser en handlingsmeny per dokument (ikke for mapper)", () => {
+    renderOmråde({ dokumenter: mockDokumenter, sakId: "ABC-123" });
+
+    expect(screen.getByRole("button", { name: "Handlinger for Notat" })).toBeDefined();
+    // Mappen «Dokumentasjon» skal ikke ha en handlingsmeny.
+    expect(screen.queryByRole("button", { name: "Handlinger for Dokumentasjon" })).toBeNull();
+  });
 });

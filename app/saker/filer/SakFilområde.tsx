@@ -94,7 +94,7 @@ export function SakFilområde({ dokumenter, sakId, redigerbar = true }: SakFilom
         )}
       </HStack>
       {harDokumenter ? (
-        <DokumentTre noder={dokumenter} sakId={sakId} />
+        <DokumentTre noder={dokumenter} sakId={sakId} redigerbar={redigerbar} />
       ) : (
         <TomtDokumentområde sakId={sakId} redigerbar={redigerbar} />
       )}
