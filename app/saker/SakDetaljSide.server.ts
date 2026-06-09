@@ -154,7 +154,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       sak,
       historikk,
       journalposter,
-      filer: [],
+      dokumenter: [],
       andreSaker,
       saksbehandlere: saksbehandlerDetaljer.map((sb) => sb.navn),
       saksbehandlerDetaljer,
@@ -173,7 +173,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const historikk = hentHistorikk(request, String(sak.id));
   const erEier = sak.saksbehandlere.eier?.navIdent === innlogget.navIdent;
   const harDeltTilgang = sak.saksbehandlere.deltMed.some((s) => s.navIdent === innlogget.navIdent);
-  const filer = erEier || harDeltTilgang ? hentDokumenttreForSak(request, String(sak.id)) : [];
+  const dokumenter = erEier || harDeltTilgang ? hentDokumenttreForSak(request, String(sak.id)) : [];
   const andreSaker = alleSaker.filter(
     (annenSak) => annenSak.personIdent === sak.personIdent && annenSak.id !== sak.id,
   );
@@ -181,7 +181,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     sak,
     historikk,
     journalposter: [],
-    filer,
+    dokumenter,
     andreSaker,
     saksbehandlere: mockSaksbehandlere,
     saksbehandlerDetaljer: mockSaksbehandlerDetaljer,

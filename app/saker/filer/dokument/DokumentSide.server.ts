@@ -65,7 +65,12 @@ export async function action({ request, params }: Route.ActionArgs) {
     throw data("Ingen tilgang til å redigere dokumentet", { status: 403 });
   }
 
-  const kropp = (await request.json()) as { tittel?: unknown; innhold?: unknown };
+  let kropp: { tittel?: unknown; innhold?: unknown };
+  try {
+    kropp = (await request.json()) as { tittel?: unknown; innhold?: unknown };
+  } catch {
+    throw data("Ugyldig JSON i forespørselen", { status: 400 });
+  }
   if (!erGyldigInnhold(kropp.innhold)) {
     throw data("Ugyldig dokumentinnhold", { status: 400 });
   }

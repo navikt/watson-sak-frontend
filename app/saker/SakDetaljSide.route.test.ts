@@ -798,7 +798,7 @@ describe("SakDetaljSide tilgangskontroll", () => {
       params: { sakId: kontrollsakRef },
     } as unknown as Route.LoaderArgs);
 
-    expect(resultat.filer).toEqual([]);
+    expect(resultat.dokumenter).toEqual([]);
   });
 
   it("returnerer filer i loader for eier", async () => {
@@ -816,7 +816,7 @@ describe("SakDetaljSide tilgangskontroll", () => {
     } as unknown as Route.LoaderArgs);
 
     // Filer returneres (kan være tom array fra mock, men funksjonen blir kalt)
-    expect(resultat.filer).toBeDefined();
+    expect(resultat.dokumenter).toBeDefined();
   });
 
   it("returnerer filer i loader for bruker med delt tilgang", async () => {
@@ -836,7 +836,7 @@ describe("SakDetaljSide tilgangskontroll", () => {
       params: { sakId: kontrollsakRef },
     } as unknown as Route.LoaderArgs);
 
-    expect(resultat.filer).toBeDefined();
+    expect(resultat.dokumenter).toBeDefined();
   });
 });
 

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
@@ -27,6 +27,8 @@ export function useDokumentSletting({ sakId, kilde, redirectTo }: UseDokumentSle
   const [kandidat, setKandidat] = useState<Slettekandidat | null>(null);
   const fetcher = useFetcher<{ ok: true }>();
   const sletter = fetcher.state !== "idle";
+  // Dokument vi venter på suksess-svar for (kun når slettingen ikke redirecter bort).
+  const venterPåResultat = useRef<string | null>(null);
 
   const start = useCallback(
     (dokument: Slettekandidat) => {
@@ -40,9 +42,15 @@ export function useDokumentSletting({ sakId, kilde, redirectTo }: UseDokumentSle
     if (!kandidat) {
       return;
     }
-    sporHendelse("dokument slettet", { sakId, docId: kandidat.id, kilde });
-
     const redirect = redirectTo?.(kandidat.id);
+    if (redirect) {
+      // Etter en vellykket sletting redirecter action-en og komponenten rives ned, så vi
+      // kan ikke observere resultatet. Da sporer vi optimistisk her (navigasjon = suksess).
+      sporHendelse("dokument slettet", { sakId, docId: kandidat.id, kilde });
+    } else {
+      // Ellers venter vi på at DELETE-kallet faktisk lykkes (se effekten under).
+      venterPåResultat.current = kandidat.id;
+    }
     fetcher.submit(
       { docId: kandidat.id, ...(redirect ? { redirectTo: redirect } : {}) },
       { method: "delete", action: RouteConfig.API.SAK_DOKUMENTER.replace(":sakId", sakId) },
@@ -56,6 +64,14 @@ export function useDokumentSletting({ sakId, kilde, redirectTo }: UseDokumentSle
     }
     setKandidat(null);
   }, [kandidat, sakId, kilde]);
+
+  // Spor «dokument slettet» når DELETE-kallet faktisk har lykkes (ikke-redirect-tilfellet).
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data?.ok && venterPåResultat.current) {
+      sporHendelse("dokument slettet", { sakId, docId: venterPåResultat.current, kilde });
+      venterPåResultat.current = null;
+    }
+  }, [fetcher.state, fetcher.data, sakId, kilde]);
 
   return { kandidat, sletter, start, bekreft, avbryt };
 }

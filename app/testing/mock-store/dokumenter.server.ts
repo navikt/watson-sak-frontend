@@ -9,21 +9,18 @@ function iDag(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-/** Bygger et enkelt Tiptap-dokument med overskrift og brødtekst (ufarlig dummytekst). */
-function lagDummyInnhold(tittel: string, avsnitt: string[]): DokumentInnhold {
+/**
+ * Bygger et enkelt Tiptap-dokument med brødtekst (ufarlig dummytekst). Tittelen
+ * rendres separat (inline h1), så vi tar den bevisst ikke med som overskrift her –
+ * det ville gitt dobbel tittel og innhold som ikke følger tittelendringer.
+ */
+function lagDummyInnhold(avsnitt: string[]): DokumentInnhold {
   return {
     type: "doc",
-    content: [
-      {
-        type: "heading",
-        attrs: { level: 2 },
-        content: [{ type: "text", text: tittel }],
-      },
-      ...avsnitt.map((tekst) => ({
-        type: "paragraph",
-        content: [{ type: "text", text: tekst }],
-      })),
-    ],
+    content: avsnitt.map((tekst) => ({
+      type: "paragraph",
+      content: [{ type: "text", text: tekst }],
+    })),
   };
 }
 
@@ -109,10 +106,7 @@ function seedDokumenter(state: MockState, sakId: string): DokumentNode[] {
   const noder: DokumentNode[] = [];
 
   function leggTilDokument(seed: DokumentSeed): DokumentNode {
-    state.dokumentInnhold.set(
-      innholdsnøkkel(sakId, seed.id),
-      lagDummyInnhold(seed.tittel, seed.avsnitt),
-    );
+    state.dokumentInnhold.set(innholdsnøkkel(sakId, seed.id), lagDummyInnhold(seed.avsnitt));
     return {
       id: seed.id,
       type: "dokument",

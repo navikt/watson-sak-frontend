@@ -55,7 +55,7 @@ export function formaterDato(isoDate: string): string {
  */
 export function formaterRelativTid(tidspunkt: Date, nå: Date = new Date()): string {
   const rtf = new Intl.RelativeTimeFormat("nb-NO", { numeric: "auto" });
-  const diffSek = Math.round((nå.getTime() - tidspunkt.getTime()) / 1000);
+  const diffSek = Math.floor((nå.getTime() - tidspunkt.getTime()) / 1000);
 
   if (diffSek < 0) {
     return "i fremtiden";
@@ -66,15 +66,15 @@ export function formaterRelativTid(tidspunkt: Date, nå: Date = new Date()): str
   if (diffSek < 60) {
     return rtf.format(-diffSek, "second");
   }
-  const diffMin = Math.round(diffSek / 60);
+  const diffMin = Math.floor(diffSek / 60);
   if (diffMin < 60) {
     return rtf.format(-diffMin, "minute");
   }
-  const diffTimer = Math.round(diffMin / 60);
+  const diffTimer = Math.floor(diffMin / 60);
   if (diffTimer < 24) {
     return rtf.format(-diffTimer, "hour");
   }
-  return rtf.format(-Math.round(diffTimer / 24), "day");
+  return rtf.format(-Math.floor(diffTimer / 24), "day");
 }
 
 export function formaterTilIsoDato(dato: Date): string {

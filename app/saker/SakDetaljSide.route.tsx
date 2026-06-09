@@ -195,7 +195,7 @@ export default function SakDetaljSide() {
   const {
     sak: loaderSak,
     historikk,
-    filer,
+    dokumenter,
     andreSaker,
     saksbehandlerDetaljer,
     ytelser,
@@ -755,7 +755,7 @@ export default function SakDetaljSide() {
 
             {kanSeFilområde && (
               <SakFilområde
-                dokumenter={filer}
+                dokumenter={dokumenter}
                 sakId={saksreferanse}
                 redigerbar={kanRedigereDokumenter}
               />

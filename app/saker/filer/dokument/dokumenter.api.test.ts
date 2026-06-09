@@ -2,7 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getSaksreferanse } from "~/saker/id";
 import type { KontrollsakSaksbehandler, KontrollsakStatus } from "~/saker/types.backend";
 import { hentFordelingssaker } from "~/testing/mock-store/alle-saker.server";
-import { hentDokument, opprettDokument } from "~/testing/mock-store/dokumenter.server";
+import {
+  hentDokument,
+  hentDokumenttreForSak,
+  opprettDokument,
+} from "~/testing/mock-store/dokumenter.server";
 import { hentMockState, resetDefaultSession } from "~/testing/mock-store/session.server";
 import type { Route } from "./+types/dokumenter.api";
 import { action } from "./dokumenter.api";
@@ -57,6 +61,51 @@ function deleteRequest(docId: string) {
   formData.set("docId", docId);
   return new Request("http://localhost", { method: "DELETE", body: formData });
 }
+
+describe("dokumenter.api POST", () => {
+  beforeEach(() => {
+    resetDefaultSession();
+  });
+
+  it("oppretter et tomt dokument og redirecter til editoren", async () => {
+    const sak = hentFordelingssaker(state())[0];
+    sak.saksbehandlere.eier = eierMeg;
+    sak.saksbehandlere.deltMed = [];
+    sak.status = "UTREDES";
+    const ref = getSaksreferanse(sak.id);
+    const antallFør = hentDokumenttreForSak(state(), String(sak.id)).length;
+
+    const respons = (await action({
+      request: new Request("http://localhost", { method: "POST" }),
+      params: { sakId: ref },
+    } as Route.ActionArgs)) as Response;
+
+    expect(respons.status).toBe(302);
+    const location = respons.headers.get("Location") ?? "";
+    expect(location).toMatch(new RegExp(`^/saker/${ref}/dokumenter/.+`));
+
+    const tre = hentDokumenttreForSak(state(), String(sak.id));
+    expect(tre.length).toBe(antallFør + 1);
+
+    const nyId = location.split("/").at(-1) as string;
+    expect(hentDokument(state(), String(sak.id), nyId)?.tittel).toBe("Uten tittel");
+  });
+
+  it("avviser opprettelse uten redigeringstilgang med 403", async () => {
+    const sak = hentFordelingssaker(state())[0];
+    sak.saksbehandlere.eier = annenSaksbehandler;
+    sak.saksbehandlere.deltMed = [];
+    sak.status = "UTREDES";
+    const ref = getSaksreferanse(sak.id);
+
+    await expect(
+      action({
+        request: new Request("http://localhost", { method: "POST" }),
+        params: { sakId: ref },
+      } as Route.ActionArgs),
+    ).rejects.toMatchObject({ init: { status: 403 } });
+  });
+});
 
 describe("dokumenter.api DELETE", () => {
   beforeEach(() => {

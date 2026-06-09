@@ -20,7 +20,15 @@ const innhold: DokumentInnhold = {
 
 describe("DokumentEditor", () => {
   it("viser verktøylinje og innhold når redigerbar", async () => {
-    render(<DokumentEditor startInnhold={innhold} redigerbar onEndring={() => {}} />);
+    render(
+      <DokumentEditor
+        startInnhold={innhold}
+        redigerbar
+        onEndring={() => {}}
+        sakId="ABC-1"
+        docId="d1"
+      />,
+    );
 
     expect(await screen.findByRole("toolbar", { name: "Formatering" })).toBeDefined();
     expect(screen.getByLabelText("Fet")).toBeDefined();
@@ -33,7 +41,15 @@ describe("DokumentEditor", () => {
 
   it("kan sette inn en tabell via verktøylinjen", async () => {
     const onEndring = vi.fn();
-    render(<DokumentEditor startInnhold={innhold} redigerbar onEndring={onEndring} />);
+    render(
+      <DokumentEditor
+        startInnhold={innhold}
+        redigerbar
+        onEndring={onEndring}
+        sakId="ABC-1"
+        docId="d1"
+      />,
+    );
 
     const settInnTabell = await screen.findByLabelText("Sett inn tabell");
     fireEvent.click(settInnTabell);
@@ -47,13 +63,29 @@ describe("DokumentEditor", () => {
   });
 
   it("har et tilgjengelig redigeringsfelt med aria-label", async () => {
-    render(<DokumentEditor startInnhold={innhold} redigerbar onEndring={() => {}} />);
+    render(
+      <DokumentEditor
+        startInnhold={innhold}
+        redigerbar
+        onEndring={() => {}}
+        sakId="ABC-1"
+        docId="d1"
+      />,
+    );
 
     expect(await screen.findByLabelText("Dokumentinnhold")).toBeDefined();
   });
 
   it("skjuler verktøylinjen i lesemodus", async () => {
-    render(<DokumentEditor startInnhold={innhold} redigerbar={false} onEndring={() => {}} />);
+    render(
+      <DokumentEditor
+        startInnhold={innhold}
+        redigerbar={false}
+        onEndring={() => {}}
+        sakId="ABC-1"
+        docId="d1"
+      />,
+    );
 
     expect(await screen.findByText("Min overskrift")).toBeDefined();
     expect(screen.queryByRole("toolbar")).toBeNull();

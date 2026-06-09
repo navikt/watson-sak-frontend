@@ -9,7 +9,7 @@ import { Button, HStack } from "@navikt/ds-react";
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { TableKit } from "@tiptap/extension-table";
-import { useEffect } from "react";
+import { createContext, useContext, useEffect } from "react";
 import { sporHendelse } from "~/analytics/analytics";
 import type { DokumentInnhold } from "~/saker/filer/typer";
 import {
@@ -19,6 +19,9 @@ import {
   SlettRadIkon,
 } from "./tabell-ikoner";
 
+/** Sporer hvilken formateringsknapp som brukes, knyttet til riktig dokument. */
+const FormaterContext = createContext<(etikett: string) => void>(() => {});
+
 type VerktøyKnappProps = {
   etikett: string;
   aktiv?: boolean;
@@ -27,6 +30,7 @@ type VerktøyKnappProps = {
 };
 
 function VerktøyKnapp({ etikett, aktiv, onClick, children }: VerktøyKnappProps) {
+  const onFormater = useContext(FormaterContext);
   return (
     <Button
       type="button"
@@ -35,7 +39,7 @@ function VerktøyKnapp({ etikett, aktiv, onClick, children }: VerktøyKnappProps
       aria-label={etikett}
       aria-pressed={aktiv}
       onClick={() => {
-        sporHendelse("dokument formatert", { format: etikett });
+        onFormater(etikett);
         onClick();
       }}
     >
@@ -44,116 +48,126 @@ function VerktøyKnapp({ etikett, aktiv, onClick, children }: VerktøyKnappProps
   );
 }
 
-function Verktøylinje({ editor, slutt }: { editor: Editor; slutt?: React.ReactNode }) {
+function Verktøylinje({
+  editor,
+  slutt,
+  onFormater,
+}: {
+  editor: Editor;
+  slutt?: React.ReactNode;
+  onFormater: (etikett: string) => void;
+}) {
   return (
-    <HStack
-      justify="space-between"
-      align="center"
-      gap="space-4"
-      wrap
-      className="border-b border-ax-border-neutral-subtle pb-2 mb-2"
-    >
-      <HStack gap="space-2" align="center" wrap role="toolbar" aria-label="Formatering">
-        <VerktøyKnapp
-          etikett="Fet"
-          aktiv={editor.isActive("bold")}
-          onClick={() => editor.chain().focus().toggleBold().run()}
-        >
-          <span className="font-bold">F</span>
-        </VerktøyKnapp>
-        <VerktøyKnapp
-          etikett="Kursiv"
-          aktiv={editor.isActive("italic")}
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-        >
-          <span className="italic">K</span>
-        </VerktøyKnapp>
-        <VerktøyKnapp
-          etikett="Overskrift 2"
-          aktiv={editor.isActive("heading", { level: 2 })}
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        >
-          H2
-        </VerktøyKnapp>
-        <VerktøyKnapp
-          etikett="Overskrift 3"
-          aktiv={editor.isActive("heading", { level: 3 })}
-          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-        >
-          H3
-        </VerktøyKnapp>
-        <VerktøyKnapp
-          etikett="Punktliste"
-          aktiv={editor.isActive("bulletList")}
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-        >
-          <BulletListIcon aria-hidden />
-        </VerktøyKnapp>
-        <VerktøyKnapp
-          etikett="Nummerert liste"
-          aktiv={editor.isActive("orderedList")}
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        >
-          <NumberListIcon aria-hidden />
-        </VerktøyKnapp>
-        <VerktøyKnapp
-          etikett="Sitat"
-          aktiv={editor.isActive("blockquote")}
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
-        >
-          <span aria-hidden>&rdquo;</span>
-        </VerktøyKnapp>
-        <VerktøyKnapp etikett="Angre" onClick={() => editor.chain().focus().undo().run()}>
-          <ArrowUndoIcon aria-hidden />
-        </VerktøyKnapp>
-        <VerktøyKnapp etikett="Gjenta" onClick={() => editor.chain().focus().redo().run()}>
-          <ArrowRedoIcon aria-hidden />
-        </VerktøyKnapp>
-        <VerktøyKnapp
-          etikett="Sett inn tabell"
-          onClick={() =>
-            editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
-          }
-        >
-          <TableIcon aria-hidden />
-        </VerktøyKnapp>
-        {editor.isActive("table") && (
-          <>
-            <VerktøyKnapp
-              etikett="Legg til kolonne"
-              onClick={() => editor.chain().focus().addColumnAfter().run()}
-            >
-              <LeggTilKolonneIkon aria-hidden />
-            </VerktøyKnapp>
-            <VerktøyKnapp
-              etikett="Slett kolonne"
-              onClick={() => editor.chain().focus().deleteColumn().run()}
-            >
-              <SlettKolonneIkon aria-hidden />
-            </VerktøyKnapp>
-            <VerktøyKnapp
-              etikett="Legg til rad"
-              onClick={() => editor.chain().focus().addRowAfter().run()}
-            >
-              <LeggTilRadIkon aria-hidden />
-            </VerktøyKnapp>
-            <VerktøyKnapp
-              etikett="Slett rad"
-              onClick={() => editor.chain().focus().deleteRow().run()}
-            >
-              <SlettRadIkon aria-hidden />
-            </VerktøyKnapp>
-            <VerktøyKnapp
-              etikett="Slett tabell"
-              onClick={() => editor.chain().focus().deleteTable().run()}
-            >
-              Slett tabell
-            </VerktøyKnapp>
-          </>
-        )}
+    <FormaterContext.Provider value={onFormater}>
+      <HStack
+        justify="space-between"
+        align="center"
+        gap="space-4"
+        wrap
+        className="border-b border-ax-border-neutral-subtle pb-2 mb-2"
+      >
+        <HStack gap="space-2" align="center" wrap role="toolbar" aria-label="Formatering">
+          <VerktøyKnapp
+            etikett="Fet"
+            aktiv={editor.isActive("bold")}
+            onClick={() => editor.chain().focus().toggleBold().run()}
+          >
+            <span className="font-bold">F</span>
+          </VerktøyKnapp>
+          <VerktøyKnapp
+            etikett="Kursiv"
+            aktiv={editor.isActive("italic")}
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+          >
+            <span className="italic">K</span>
+          </VerktøyKnapp>
+          <VerktøyKnapp
+            etikett="Overskrift 2"
+            aktiv={editor.isActive("heading", { level: 2 })}
+            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          >
+            H2
+          </VerktøyKnapp>
+          <VerktøyKnapp
+            etikett="Overskrift 3"
+            aktiv={editor.isActive("heading", { level: 3 })}
+            onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+          >
+            H3
+          </VerktøyKnapp>
+          <VerktøyKnapp
+            etikett="Punktliste"
+            aktiv={editor.isActive("bulletList")}
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+          >
+            <BulletListIcon aria-hidden />
+          </VerktøyKnapp>
+          <VerktøyKnapp
+            etikett="Nummerert liste"
+            aktiv={editor.isActive("orderedList")}
+            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          >
+            <NumberListIcon aria-hidden />
+          </VerktøyKnapp>
+          <VerktøyKnapp
+            etikett="Sitat"
+            aktiv={editor.isActive("blockquote")}
+            onClick={() => editor.chain().focus().toggleBlockquote().run()}
+          >
+            <span aria-hidden>&rdquo;</span>
+          </VerktøyKnapp>
+          <VerktøyKnapp etikett="Angre" onClick={() => editor.chain().focus().undo().run()}>
+            <ArrowUndoIcon aria-hidden />
+          </VerktøyKnapp>
+          <VerktøyKnapp etikett="Gjenta" onClick={() => editor.chain().focus().redo().run()}>
+            <ArrowRedoIcon aria-hidden />
+          </VerktøyKnapp>
+          <VerktøyKnapp
+            etikett="Sett inn tabell"
+            onClick={() =>
+              editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+            }
+          >
+            <TableIcon aria-hidden />
+          </VerktøyKnapp>
+          {editor.isActive("table") && (
+            <>
+              <VerktøyKnapp
+                etikett="Legg til kolonne"
+                onClick={() => editor.chain().focus().addColumnAfter().run()}
+              >
+                <LeggTilKolonneIkon aria-hidden />
+              </VerktøyKnapp>
+              <VerktøyKnapp
+                etikett="Slett kolonne"
+                onClick={() => editor.chain().focus().deleteColumn().run()}
+              >
+                <SlettKolonneIkon aria-hidden />
+              </VerktøyKnapp>
+              <VerktøyKnapp
+                etikett="Legg til rad"
+                onClick={() => editor.chain().focus().addRowAfter().run()}
+              >
+                <LeggTilRadIkon aria-hidden />
+              </VerktøyKnapp>
+              <VerktøyKnapp
+                etikett="Slett rad"
+                onClick={() => editor.chain().focus().deleteRow().run()}
+              >
+                <SlettRadIkon aria-hidden />
+              </VerktøyKnapp>
+              <VerktøyKnapp
+                etikett="Slett tabell"
+                onClick={() => editor.chain().focus().deleteTable().run()}
+              >
+                Slett tabell
+              </VerktøyKnapp>
+            </>
+          )}
+        </HStack>
+        {slutt}
       </HStack>
-      {slutt}
-    </HStack>
+    </FormaterContext.Provider>
   );
 }
 
@@ -161,6 +175,9 @@ type DokumentEditorProps = {
   startInnhold: DokumentInnhold;
   redigerbar: boolean;
   onEndring: (innhold: DokumentInnhold) => void;
+  /** Brukes til å knytte «dokument formatert»-analytics til riktig dokument. */
+  sakId: string;
+  docId: string;
   /** Innhold som vises til høyre i verktøylinjen (f.eks. lagrestatus). */
   verktøylinjeSlutt?: React.ReactNode;
 };
@@ -169,6 +186,8 @@ export function DokumentEditor({
   startInnhold,
   redigerbar,
   onEndring,
+  sakId,
+  docId,
   verktøylinjeSlutt,
 }: DokumentEditorProps) {
   const editor = useEditor({
@@ -211,7 +230,13 @@ export function DokumentEditor({
 
   return (
     <div>
-      {redigerbar && <Verktøylinje editor={editor} slutt={verktøylinjeSlutt} />}
+      {redigerbar && (
+        <Verktøylinje
+          editor={editor}
+          slutt={verktøylinjeSlutt}
+          onFormater={(format) => sporHendelse("dokument formatert", { sakId, docId, format })}
+        />
+      )}
       <EditorContent editor={editor} />
     </div>
   );

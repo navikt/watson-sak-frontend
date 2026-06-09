@@ -197,6 +197,8 @@ function DokumentRedigering({
               startInnhold={dokument.innhold}
               redigerbar={kanRedigere}
               onEndring={håndterInnhold}
+              sakId={sakReferanse}
+              docId={dokument.id}
               verktøylinjeSlutt={<LagreStatusVisning status={status} sistLagret={sistLagret} />}
             />
           </VStack>
