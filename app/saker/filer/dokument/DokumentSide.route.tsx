@@ -160,6 +160,7 @@ function DokumentRedigering({
                       noder={dokumenter}
                       sakId={sakReferanse}
                       redigerbar={kanRedigere}
+                      fremhevetId={dokument.id}
                       redirectVedSletting={(docId) => (docId === dokument.id ? sakUrl : undefined)}
                     />
                   ) : (

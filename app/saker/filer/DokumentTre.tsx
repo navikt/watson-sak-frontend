@@ -111,6 +111,7 @@ function DokumentRad({
   nivå,
   sakId,
   fokusertId,
+  fremhevetId,
   åpneMapper,
   redigerbar,
   onToggle,
@@ -121,6 +122,7 @@ function DokumentRad({
   nivå: number;
   sakId: string;
   fokusertId: string | null;
+  fremhevetId?: string;
   åpneMapper: Set<string>;
   redigerbar: boolean;
   onToggle: (id: string) => void;
@@ -164,6 +166,7 @@ function DokumentRad({
                 nivå={nivå + 1}
                 sakId={sakId}
                 fokusertId={fokusertId}
+                fremhevetId={fremhevetId}
                 åpneMapper={åpneMapper}
                 redigerbar={redigerbar}
                 onToggle={onToggle}
@@ -181,6 +184,7 @@ function DokumentRad({
     ":docId",
     node.id,
   );
+  const erFremhevet = fremhevetId === node.id;
 
   return (
     <li role="none" className="flex items-center gap-1">
@@ -188,14 +192,21 @@ function DokumentRad({
         role="treeitem"
         to={dokumentUrl}
         onFocus={() => onFokus(node.id)}
-        className="flex flex-1 min-w-0 items-center gap-2 rounded-md px-2 py-1.5 no-underline hover:bg-ax-bg-neutral-moderate-hover transition-colors text-ax-text-default"
+        aria-current={erFremhevet ? "page" : undefined}
+        className={`flex flex-1 min-w-0 items-center gap-2 rounded-md px-2 py-1.5 no-underline transition-colors text-ax-text-default ${
+          erFremhevet ? "bg-ax-bg-neutral-moderate-hover" : "hover:bg-ax-bg-neutral-moderate-hover"
+        }`}
         style={{ paddingLeft: `${(nivå - 1) * 1.5 + 0.5}rem` }}
         aria-level={nivå}
         tabIndex={erFokusert ? 0 : -1}
         data-tree-id={node.id}
       >
         <DokumentIkon node={node} aria-hidden className="shrink-0 text-ax-icon-info" />
-        <BodyShort size="small" className="truncate flex-1">
+        <BodyShort
+          size="small"
+          weight={erFremhevet ? "semibold" : "regular"}
+          className="truncate flex-1"
+        >
           {node.tittel}
         </BodyShort>
         <HStack gap="space-8" align="center" className="shrink-0">
@@ -222,11 +233,14 @@ export function DokumentTre({
   noder,
   sakId,
   redigerbar = false,
+  fremhevetId,
   redirectVedSletting,
 }: {
   noder: DokumentNode[];
   sakId: string;
   redigerbar?: boolean;
+  /** Valgfri: id-en til dokumentet som skal fremheves (f.eks. det man ser på akkurat nå). */
+  fremhevetId?: string;
   /** Valgfri: redirect-URL etter sletting av et gitt dokument (se useDokumentSletting). */
   redirectVedSletting?: (docId: string) => string | undefined;
 }) {
@@ -355,6 +369,7 @@ export function DokumentTre({
             nivå={1}
             sakId={sakId}
             fokusertId={fokusertId}
+            fremhevetId={fremhevetId}
             åpneMapper={åpneMapper}
             redigerbar={redigerbar}
             onToggle={toggleMappe}

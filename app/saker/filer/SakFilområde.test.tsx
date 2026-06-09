@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it } from "vitest";
+import { DokumentTre } from "./DokumentTre";
 import { SakFilområde } from "./SakFilområde";
 import type { DokumentNode } from "./typer";
 
@@ -33,6 +34,16 @@ function renderOmråde(props: Parameters<typeof SakFilområde>[0]) {
     {
       path: "/saker/:sakId",
       Component: () => <SakFilområde {...props} />,
+    },
+  ]);
+  return render(<Stub initialEntries={["/saker/ABC-123"]} />);
+}
+
+function renderTre(props: Parameters<typeof DokumentTre>[0]) {
+  const Stub = createRoutesStub([
+    {
+      path: "/saker/:sakId",
+      Component: () => <DokumentTre {...props} />,
     },
   ]);
   return render(<Stub initialEntries={["/saker/ABC-123"]} />);
@@ -178,5 +189,19 @@ describe("SakFilområde", () => {
     // være tabbbar (roving tabindex).
     const meny = screen.getByRole("button", { name: "Handlinger for Notat" });
     expect(meny.getAttribute("tabindex")).toBe("-1");
+  });
+
+  it("fremhever dokumentet som er angitt med fremhevetId", () => {
+    renderTre({ noder: mockDokumenter, sakId: "ABC-123", fremhevetId: "2" });
+
+    const fremhevet = screen.getByText("Notat").closest("a") as HTMLAnchorElement;
+    expect(fremhevet.getAttribute("aria-current")).toBe("page");
+  });
+
+  it("setter ikke aria-current når fremhevetId ikke er oppgitt", () => {
+    renderTre({ noder: mockDokumenter, sakId: "ABC-123" });
+
+    const lenke = screen.getByText("Notat").closest("a") as HTMLAnchorElement;
+    expect(lenke.getAttribute("aria-current")).toBeNull();
   });
 });
