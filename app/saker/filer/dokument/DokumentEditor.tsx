@@ -1,7 +1,14 @@
-import { ArrowRedoIcon, ArrowUndoIcon, BulletListIcon, NumberListIcon } from "@navikt/aksel-icons";
+import {
+  ArrowRedoIcon,
+  ArrowUndoIcon,
+  BulletListIcon,
+  NumberListIcon,
+  TableIcon,
+} from "@navikt/aksel-icons";
 import { Button, HStack } from "@navikt/ds-react";
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import { TableKit } from "@tiptap/extension-table";
 import { useEffect } from "react";
 import { sporHendelse } from "~/analytics/analytics";
 import type { DokumentInnhold } from "~/saker/filer/typer";
@@ -96,6 +103,48 @@ function Verktøylinje({ editor, slutt }: { editor: Editor; slutt?: React.ReactN
         <VerktøyKnapp etikett="Gjenta" onClick={() => editor.chain().focus().redo().run()}>
           <ArrowRedoIcon aria-hidden />
         </VerktøyKnapp>
+        <VerktøyKnapp
+          etikett="Sett inn tabell"
+          onClick={() =>
+            editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+          }
+        >
+          <TableIcon aria-hidden />
+        </VerktøyKnapp>
+        {editor.isActive("table") && (
+          <>
+            <VerktøyKnapp
+              etikett="Legg til kolonne"
+              onClick={() => editor.chain().focus().addColumnAfter().run()}
+            >
+              +kol
+            </VerktøyKnapp>
+            <VerktøyKnapp
+              etikett="Slett kolonne"
+              onClick={() => editor.chain().focus().deleteColumn().run()}
+            >
+              −kol
+            </VerktøyKnapp>
+            <VerktøyKnapp
+              etikett="Legg til rad"
+              onClick={() => editor.chain().focus().addRowAfter().run()}
+            >
+              +rad
+            </VerktøyKnapp>
+            <VerktøyKnapp
+              etikett="Slett rad"
+              onClick={() => editor.chain().focus().deleteRow().run()}
+            >
+              −rad
+            </VerktøyKnapp>
+            <VerktøyKnapp
+              etikett="Slett tabell"
+              onClick={() => editor.chain().focus().deleteTable().run()}
+            >
+              Slett tabell
+            </VerktøyKnapp>
+          </>
+        )}
       </HStack>
       {slutt}
     </HStack>
@@ -117,10 +166,13 @@ export function DokumentEditor({
   verktøylinjeSlutt,
 }: DokumentEditorProps) {
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions: [StarterKit, TableKit.configure({ table: { resizable: true } })],
     content: startInnhold,
     editable: redigerbar,
     immediatelyRender: false,
+    // Re-render verktøylinjen på hver transaksjon, slik at aktiv-tilstand (fet, tabell osv.)
+    // og kontekstuelle tabell-knapper holder seg i synk med markøren.
+    shouldRerenderOnTransaction: true,
     editorProps: {
       attributes: {
         role: "textbox",
@@ -130,7 +182,11 @@ export function DokumentEditor({
           "min-h-80 focus:outline-none [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg " +
           "[&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
           "[&_blockquote]:border-l-4 [&_blockquote]:border-ax-border-neutral-subtle " +
-          "[&_blockquote]:pl-4 [&_blockquote]:italic [&_p]:my-2",
+          "[&_blockquote]:pl-4 [&_blockquote]:italic [&_p]:my-2 " +
+          "[&_table]:border-collapse [&_table]:my-3 [&_table]:w-full " +
+          "[&_td]:border [&_td]:border-ax-border-neutral-subtle [&_td]:p-2 [&_td]:align-top " +
+          "[&_th]:border [&_th]:border-ax-border-neutral-subtle [&_th]:p-2 [&_th]:align-top " +
+          "[&_th]:bg-ax-bg-neutral-soft [&_th]:text-left [&_th]:font-semibold",
       },
     },
     onUpdate: ({ editor: gjeldende }) => {

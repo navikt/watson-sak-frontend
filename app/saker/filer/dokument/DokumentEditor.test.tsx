@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import type { DokumentInnhold } from "~/saker/filer/typer";
 import { DokumentEditor } from "./DokumentEditor";
 
@@ -29,6 +29,21 @@ describe("DokumentEditor", () => {
     expect(screen.getByLabelText("Angre")).toBeDefined();
     expect(screen.getByText("Min overskrift")).toBeDefined();
     expect(screen.getByText("Brødtekst her")).toBeDefined();
+  });
+
+  it("kan sette inn en tabell via verktøylinjen", async () => {
+    const onEndring = vi.fn();
+    render(<DokumentEditor startInnhold={innhold} redigerbar onEndring={onEndring} />);
+
+    const settInnTabell = await screen.findByLabelText("Sett inn tabell");
+    fireEvent.click(settInnTabell);
+
+    // Editoren rendrer en faktisk <table>, og endringen propageres som Tiptap-JSON.
+    expect(document.querySelector("table")).not.toBeNull();
+    expect(onEndring).toHaveBeenCalled();
+    // Tabell-kontekstuelle knapper dukker opp når markøren står i tabellen.
+    expect(screen.getByLabelText("Legg til rad")).toBeDefined();
+    expect(screen.getByLabelText("Slett tabell")).toBeDefined();
   });
 
   it("har et tilgjengelig redigeringsfelt med aria-label", async () => {
