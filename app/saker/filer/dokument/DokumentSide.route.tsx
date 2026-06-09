@@ -45,12 +45,23 @@ function LagreStatusVisning({
   );
 }
 
-export default function DokumentSide() {
-  const { dokument, sakReferanse, kanRedigere } = useLoaderData<typeof loader>();
+type DokumentData = Awaited<ReturnType<typeof loader>>["dokument"];
 
+function DokumentRedigering({
+  dokument,
+  sakReferanse,
+  kanRedigere,
+}: {
+  dokument: DokumentData;
+  sakReferanse: string;
+  kanRedigere: boolean;
+}) {
   const [tittel, setTittel] = useState(dokument.tittel);
   const tittelRef = useRef(dokument.tittel);
   const innholdRef = useRef<DokumentInnhold>(dokument.innhold);
+  // Spor «dokument lagret» kun én gang per redigeringsøkt, ikke per autolagring,
+  // for å unngå å oversvømme analytics med ett event hver gang debouncen utløses.
+  const harSporetLagring = useRef(false);
 
   const lagreUrl = RouteConfig.SAKER_DOKUMENT.replace(":sakId", sakReferanse).replace(
     ":docId",
@@ -69,7 +80,10 @@ export default function DokumentSide() {
         sporHendelse("dokument lagring feilet", { sakId: sakReferanse, docId: dokument.id });
         throw new Error("Lagring feilet");
       }
-      sporHendelse("dokument lagret", { sakId: sakReferanse, docId: dokument.id });
+      if (!harSporetLagring.current) {
+        harSporetLagring.current = true;
+        sporHendelse("dokument lagret", { sakId: sakReferanse, docId: dokument.id });
+      }
     },
     [lagreUrl, sakReferanse, dokument.id],
   );
@@ -117,5 +131,21 @@ export default function DokumentSide() {
         </VStack>
       </Kort>
     </VStack>
+  );
+}
+
+export default function DokumentSide() {
+  const { dokument, sakReferanse, kanRedigere } = useLoaderData<typeof loader>();
+
+  // `key` på dokument-id sørger for at all lokal redigeringstilstand (tittel, innhold,
+  // editor-instans og autolagring) nullstilles når man navigerer til et annet dokument
+  // på samme route.
+  return (
+    <DokumentRedigering
+      key={dokument.id}
+      dokument={dokument}
+      sakReferanse={sakReferanse}
+      kanRedigere={kanRedigere}
+    />
   );
 }
