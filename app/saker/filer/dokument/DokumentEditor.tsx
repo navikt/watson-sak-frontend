@@ -12,6 +12,12 @@ import { TableKit } from "@tiptap/extension-table";
 import { useEffect } from "react";
 import { sporHendelse } from "~/analytics/analytics";
 import type { DokumentInnhold } from "~/saker/filer/typer";
+import {
+  LeggTilKolonneIkon,
+  LeggTilRadIkon,
+  SlettKolonneIkon,
+  SlettRadIkon,
+} from "./tabell-ikoner";
 
 type VerktøyKnappProps = {
   etikett: string;
@@ -117,25 +123,25 @@ function Verktøylinje({ editor, slutt }: { editor: Editor; slutt?: React.ReactN
               etikett="Legg til kolonne"
               onClick={() => editor.chain().focus().addColumnAfter().run()}
             >
-              +kol
+              <LeggTilKolonneIkon aria-hidden />
             </VerktøyKnapp>
             <VerktøyKnapp
               etikett="Slett kolonne"
               onClick={() => editor.chain().focus().deleteColumn().run()}
             >
-              −kol
+              <SlettKolonneIkon aria-hidden />
             </VerktøyKnapp>
             <VerktøyKnapp
               etikett="Legg til rad"
               onClick={() => editor.chain().focus().addRowAfter().run()}
             >
-              +rad
+              <LeggTilRadIkon aria-hidden />
             </VerktøyKnapp>
             <VerktøyKnapp
               etikett="Slett rad"
               onClick={() => editor.chain().focus().deleteRow().run()}
             >
-              −rad
+              <SlettRadIkon aria-hidden />
             </VerktøyKnapp>
             <VerktøyKnapp
               etikett="Slett tabell"
