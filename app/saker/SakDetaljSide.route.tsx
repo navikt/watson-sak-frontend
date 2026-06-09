@@ -69,6 +69,7 @@ import {
 import { action, loader } from "./SakDetaljSide.server";
 import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
 import { RouteConfig } from "~/routeConfig";
+import { useTilbakeLenke } from "./tilbake";
 
 export { action, loader };
 
@@ -211,6 +212,7 @@ export default function SakDetaljSide() {
     [ytelser],
   );
   const navigate = useNavigate();
+  const tilbake = useTilbakeLenke({ to: RouteConfig.MINE_SAKER, label: "Mine saker" });
   const fetcher = useFetcher<typeof action>();
   const revalidator = useRevalidator();
   const personIdent = getPersonIdent(sak);
@@ -352,9 +354,9 @@ export default function SakDetaljSide() {
             variant="tertiary"
             size="small"
             icon={<ArrowLeftIcon aria-hidden />}
-            onClick={() => navigate(RouteConfig.MINE_SAKER)}
+            onClick={() => navigate(tilbake.to)}
           >
-            Til mine saker
+            Tilbake til {tilbake.label}
           </Button>
         </div>
 

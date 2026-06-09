@@ -2,6 +2,7 @@ import { BodyShort, Link, Table, Tag } from "@navikt/ds-react";
 import type { ReactNode } from "react";
 import { Link as RouterLink, useNavigate } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
+import type { Tilbakemål } from "~/saker/tilbake";
 import { formaterDato } from "~/utils/date-utils";
 import { KolonneHeading, type Sorteringsretning } from "./KolonneHeading";
 import { TagOverflow } from "./TagOverflow";
@@ -45,6 +46,8 @@ type SakslisteProps = {
   renderRadHandling?: (rad: SakslisteRad) => ReactNode;
   handlingKolonneTittel?: ReactNode;
   sortering?: SakslisteSortering;
+  /** Opphav som følger med til saken, slik at sakens «tilbake»-knapp fører hit. */
+  tilbake?: Tilbakemål;
   kolonneHeaderInnhold?: Partial<Record<SakslisteKolonne, ReactNode>>;
   kolonneHeaderProps?: Partial<
     Record<
@@ -83,10 +86,12 @@ export function Saksliste({
   renderRadHandling,
   handlingKolonneTittel,
   sortering,
+  tilbake,
   kolonneHeaderInnhold,
   kolonneHeaderProps,
 }: SakslisteProps) {
   const navigate = useNavigate();
+  const lenkeState = tilbake ? { tilbake } : undefined;
 
   if (rader.length === 0) {
     return <BodyShort className="text-ax-text-neutral-subtle">{tomTekst}</BodyShort>;
@@ -120,14 +125,14 @@ export function Saksliste({
               rad.detaljHref
                 ? () => {
                     sporHendelse("sak åpnet");
-                    navigate(rad.detaljHref ?? "");
+                    navigate(rad.detaljHref ?? "", { state: lenkeState });
                   }
                 : undefined
             }
             className={rad.detaljHref ? "cursor-pointer" : undefined}
           >
             {kolonner.map((kolonne) => (
-              <Table.DataCell key={kolonne}>{renderCelle(rad, kolonne)}</Table.DataCell>
+              <Table.DataCell key={kolonne}>{renderCelle(rad, kolonne, lenkeState)}</Table.DataCell>
             ))}
             {renderRadHandling ? <Table.DataCell>{renderRadHandling(rad)}</Table.DataCell> : null}
           </Table.Row>
@@ -137,11 +142,15 @@ export function Saksliste({
   );
 }
 
-function renderCelle(rad: SakslisteRad, kolonne: SakslisteKolonne) {
+function renderCelle(
+  rad: SakslisteRad,
+  kolonne: SakslisteKolonne,
+  lenkeState?: { tilbake: Tilbakemål },
+) {
   switch (kolonne) {
     case "saksid":
       return rad.detaljHref ? (
-        <Link as={RouterLink} to={rad.detaljHref}>
+        <Link as={RouterLink} to={rad.detaljHref} state={lenkeState}>
           {rad.saksreferanse}
         </Link>
       ) : (

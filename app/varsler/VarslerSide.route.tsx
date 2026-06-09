@@ -113,6 +113,7 @@ export default function VarslerSide() {
                               ":sakId",
                               getSaksreferanse(varsel.sakId),
                             ),
+                            { state: { tilbake: { to: RouteConfig.VARSLER, label: "Varsler" } } },
                           );
                         }}
                       >

@@ -9,6 +9,7 @@ import { hentKontrollsaker } from "~/fordeling/api.server";
 import { parseMultiValueParam } from "~/filtre/parseMultiValueParam";
 import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
+import { RouteConfig } from "~/routeConfig";
 import { getKategoriText, getMisbrukstyper, getSaksenhet } from "~/saker/selectors";
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
 import { paginerElementer } from "~/utils/paginering";
@@ -196,6 +197,7 @@ export default function AlleSakerSide() {
                     "saksbehandler",
                   ]}
                   tomTekst="Ingen saker funnet."
+                  tilbake={{ to: RouteConfig.ALLE_SAKER, label: "Alle saker" }}
                   sortering={{
                     kolonne: sorteringskolonne,
                     retning: sorteringsretning === "asc" ? "stigende" : "synkende",

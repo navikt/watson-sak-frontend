@@ -10,6 +10,7 @@ import type {
 } from "~/saker/types.backend";
 import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
+import { RouteConfig } from "~/routeConfig";
 import { DEFAULT_STATUSER, DEFAULT_VENTESTATUSER } from "./filtre";
 
 type FilterAlternativ = {
@@ -74,6 +75,7 @@ export function MineSakerInnhold({ saker, detaljSti, filterAlternativer, aktivtF
           <Saksliste
             rader={saker.map((sak) => mapKontrollsakTilSakslisteRad(sak, detaljSti))}
             tomTekst="Ingen saker matcher valgte filtre."
+            tilbake={{ to: RouteConfig.MINE_SAKER, label: "Mine saker" }}
           />
         </div>
 
