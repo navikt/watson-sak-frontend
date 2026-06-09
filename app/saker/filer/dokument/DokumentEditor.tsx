@@ -31,71 +31,73 @@ function VerktøyKnapp({ etikett, aktiv, onClick, children }: VerktøyKnappProps
   );
 }
 
-function Verktøylinje({ editor }: { editor: Editor }) {
+function Verktøylinje({ editor, slutt }: { editor: Editor; slutt?: React.ReactNode }) {
   return (
     <HStack
-      gap="space-2"
+      justify="space-between"
       align="center"
+      gap="space-4"
       wrap
       className="border-b border-ax-border-neutral-subtle pb-2 mb-2"
-      role="toolbar"
-      aria-label="Formatering"
     >
-      <VerktøyKnapp
-        etikett="Fet"
-        aktiv={editor.isActive("bold")}
-        onClick={() => editor.chain().focus().toggleBold().run()}
-      >
-        <span className="font-bold">F</span>
-      </VerktøyKnapp>
-      <VerktøyKnapp
-        etikett="Kursiv"
-        aktiv={editor.isActive("italic")}
-        onClick={() => editor.chain().focus().toggleItalic().run()}
-      >
-        <span className="italic">K</span>
-      </VerktøyKnapp>
-      <VerktøyKnapp
-        etikett="Overskrift 2"
-        aktiv={editor.isActive("heading", { level: 2 })}
-        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-      >
-        H2
-      </VerktøyKnapp>
-      <VerktøyKnapp
-        etikett="Overskrift 3"
-        aktiv={editor.isActive("heading", { level: 3 })}
-        onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-      >
-        H3
-      </VerktøyKnapp>
-      <VerktøyKnapp
-        etikett="Punktliste"
-        aktiv={editor.isActive("bulletList")}
-        onClick={() => editor.chain().focus().toggleBulletList().run()}
-      >
-        <BulletListIcon aria-hidden />
-      </VerktøyKnapp>
-      <VerktøyKnapp
-        etikett="Nummerert liste"
-        aktiv={editor.isActive("orderedList")}
-        onClick={() => editor.chain().focus().toggleOrderedList().run()}
-      >
-        <NumberListIcon aria-hidden />
-      </VerktøyKnapp>
-      <VerktøyKnapp
-        etikett="Sitat"
-        aktiv={editor.isActive("blockquote")}
-        onClick={() => editor.chain().focus().toggleBlockquote().run()}
-      >
-        <span aria-hidden>&rdquo;</span>
-      </VerktøyKnapp>
-      <VerktøyKnapp etikett="Angre" onClick={() => editor.chain().focus().undo().run()}>
-        <ArrowUndoIcon aria-hidden />
-      </VerktøyKnapp>
-      <VerktøyKnapp etikett="Gjenta" onClick={() => editor.chain().focus().redo().run()}>
-        <ArrowRedoIcon aria-hidden />
-      </VerktøyKnapp>
+      <HStack gap="space-2" align="center" wrap role="toolbar" aria-label="Formatering">
+        <VerktøyKnapp
+          etikett="Fet"
+          aktiv={editor.isActive("bold")}
+          onClick={() => editor.chain().focus().toggleBold().run()}
+        >
+          <span className="font-bold">F</span>
+        </VerktøyKnapp>
+        <VerktøyKnapp
+          etikett="Kursiv"
+          aktiv={editor.isActive("italic")}
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+        >
+          <span className="italic">K</span>
+        </VerktøyKnapp>
+        <VerktøyKnapp
+          etikett="Overskrift 2"
+          aktiv={editor.isActive("heading", { level: 2 })}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+        >
+          H2
+        </VerktøyKnapp>
+        <VerktøyKnapp
+          etikett="Overskrift 3"
+          aktiv={editor.isActive("heading", { level: 3 })}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+        >
+          H3
+        </VerktøyKnapp>
+        <VerktøyKnapp
+          etikett="Punktliste"
+          aktiv={editor.isActive("bulletList")}
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+        >
+          <BulletListIcon aria-hidden />
+        </VerktøyKnapp>
+        <VerktøyKnapp
+          etikett="Nummerert liste"
+          aktiv={editor.isActive("orderedList")}
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+        >
+          <NumberListIcon aria-hidden />
+        </VerktøyKnapp>
+        <VerktøyKnapp
+          etikett="Sitat"
+          aktiv={editor.isActive("blockquote")}
+          onClick={() => editor.chain().focus().toggleBlockquote().run()}
+        >
+          <span aria-hidden>&rdquo;</span>
+        </VerktøyKnapp>
+        <VerktøyKnapp etikett="Angre" onClick={() => editor.chain().focus().undo().run()}>
+          <ArrowUndoIcon aria-hidden />
+        </VerktøyKnapp>
+        <VerktøyKnapp etikett="Gjenta" onClick={() => editor.chain().focus().redo().run()}>
+          <ArrowRedoIcon aria-hidden />
+        </VerktøyKnapp>
+      </HStack>
+      {slutt}
     </HStack>
   );
 }
@@ -104,9 +106,16 @@ type DokumentEditorProps = {
   startInnhold: DokumentInnhold;
   redigerbar: boolean;
   onEndring: (innhold: DokumentInnhold) => void;
+  /** Innhold som vises til høyre i verktøylinjen (f.eks. lagrestatus). */
+  verktøylinjeSlutt?: React.ReactNode;
 };
 
-export function DokumentEditor({ startInnhold, redigerbar, onEndring }: DokumentEditorProps) {
+export function DokumentEditor({
+  startInnhold,
+  redigerbar,
+  onEndring,
+  verktøylinjeSlutt,
+}: DokumentEditorProps) {
   const editor = useEditor({
     extensions: [StarterKit],
     content: startInnhold,
@@ -140,7 +149,7 @@ export function DokumentEditor({ startInnhold, redigerbar, onEndring }: Dokument
 
   return (
     <div>
-      {redigerbar && <Verktøylinje editor={editor} />}
+      {redigerbar && <Verktøylinje editor={editor} slutt={verktøylinjeSlutt} />}
       <EditorContent editor={editor} />
     </div>
   );

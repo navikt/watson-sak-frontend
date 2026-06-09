@@ -115,7 +115,7 @@ function DokumentRad({
         role="treeitem"
         to={dokumentUrl}
         className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 no-underline hover:bg-ax-bg-neutral-moderate-hover transition-colors text-ax-text-default"
-        style={{ paddingLeft: `${(nivå - 1) * 1.5 + 0.5 + 1.75}rem` }}
+        style={{ paddingLeft: `${(nivå - 1) * 1.5 + 0.5}rem` }}
         aria-level={nivå}
         tabIndex={erFokusert ? 0 : -1}
         data-tree-id={node.id}

@@ -1,20 +1,17 @@
 import { ArrowLeftIcon } from "@navikt/aksel-icons";
-import { Button, Detail, HStack, VStack } from "@navikt/ds-react";
-import { useCallback, useRef, useState } from "react";
+import { Button, Detail, VStack } from "@navikt/ds-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLoaderData, useNavigate } from "react-router";
 import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
 import type { DokumentInnhold } from "~/saker/filer/typer";
+import { formaterRelativTid } from "~/utils/date-utils";
 import { DokumentEditor } from "./DokumentEditor";
 import { DokumentTittel } from "./DokumentTittel";
 import { action, loader } from "./DokumentSide.server";
 import { useAutolagring, type Autolagringsdata, type LagreStatus } from "./useAutolagring";
 
 export { action, loader };
-
-function formaterKlokkeslett(dato: Date): string {
-  return new Intl.DateTimeFormat("nb-NO", { hour: "2-digit", minute: "2-digit" }).format(dato);
-}
 
 function LagreStatusVisning({
   status,
@@ -23,6 +20,15 @@ function LagreStatusVisning({
   status: LagreStatus;
   sistLagret: Date | null;
 }) {
+  // Oppdater jevnlig så den relative tiden («for 32 sekunder siden») holder seg fersk
+  // mens dokumentet ligger åpent uten endringer.
+  const [nå, setNå] = useState(() => Date.now());
+  useEffect(() => {
+    setNå(Date.now());
+    const id = setInterval(() => setNå(Date.now()), 15_000);
+    return () => clearInterval(id);
+  }, [sistLagret]);
+
   const tekst =
     status === "lagrer"
       ? "Lagrer…"
@@ -31,7 +37,7 @@ function LagreStatusVisning({
         : status === "feil"
           ? "Kunne ikke lagre – endringene er beholdt"
           : sistLagret
-            ? `Lagret kl. ${formaterKlokkeslett(sistLagret)}`
+            ? `Lagret ${formaterRelativTid(sistLagret, new Date(nå))}`
             : "Lagret";
 
   return (
@@ -100,7 +106,7 @@ function DokumentRedigering({
   );
 
   return (
-    <VStack gap="space-16" className="py-6">
+    <VStack gap="space-12" className="mt-4 mb-8">
       <div>
         <Button
           type="button"
@@ -115,15 +121,13 @@ function DokumentRedigering({
 
       <Kort>
         <VStack gap="space-16">
-          <HStack justify="space-between" align="start" gap="space-16" wrap>
-            <DokumentTittel tittel={tittel} redigerbar={kanRedigere} onEndre={håndterTittel} />
-            {kanRedigere && <LagreStatusVisning status={status} sistLagret={sistLagret} />}
-          </HStack>
+          <DokumentTittel tittel={tittel} redigerbar={kanRedigere} onEndre={håndterTittel} />
 
           <DokumentEditor
             startInnhold={dokument.innhold}
             redigerbar={kanRedigere}
             onEndring={håndterInnhold}
+            verktøylinjeSlutt={<LagreStatusVisning status={status} sistLagret={sistLagret} />}
           />
         </VStack>
       </Kort>
