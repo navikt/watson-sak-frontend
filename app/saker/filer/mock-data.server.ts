@@ -1,6 +1,29 @@
 import { hentMockState } from "~/testing/mock-store/session.server";
-import { hentFilerForSak as _hentFilerForSak } from "~/testing/mock-store/filer.server";
+import {
+  hentDokument as _hentDokument,
+  hentDokumenttreForSak as _hentDokumenttreForSak,
+  lagreDokument as _lagreDokument,
+  opprettDokument as _opprettDokument,
+} from "~/testing/mock-store/dokumenter.server";
+import type { DokumentInnhold } from "./typer";
 
-export function hentFilerForSak(request: Request, sakId: string) {
-  return _hentFilerForSak(hentMockState(request), sakId);
+export function hentDokumenttreForSak(request: Request, sakId: string) {
+  return _hentDokumenttreForSak(hentMockState(request), sakId);
+}
+
+export function hentDokument(request: Request, sakId: string, docId: string) {
+  return _hentDokument(hentMockState(request), sakId, docId);
+}
+
+export function opprettDokument(request: Request, sakId: string, opprettetAv: string) {
+  return _opprettDokument(hentMockState(request), sakId, opprettetAv);
+}
+
+export function lagreDokument(
+  request: Request,
+  sakId: string,
+  docId: string,
+  endringer: { tittel: string; innhold: DokumentInnhold; endretAv: string },
+) {
+  return _lagreDokument(hentMockState(request), sakId, docId, endringer);
 }

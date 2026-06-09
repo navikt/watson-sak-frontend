@@ -5,7 +5,7 @@ import {
   hentMineSaker,
   leggTilMockSakIFordeling,
 } from "~/testing/mock-store/alle-saker.server";
-import { hentFilerForSak } from "~/testing/mock-store/filer.server";
+import { hentDokumenttreForSak } from "~/testing/mock-store/dokumenter.server";
 import { søkSaker } from "~/søk/søk.server";
 import { opprettKontrollsak } from "./api.server";
 
@@ -154,7 +154,7 @@ describe("opprettKontrollsak", () => {
       },
     });
 
-    expect(hentFilerForSak(state(), opprettetSak.id)).toEqual([]);
+    expect(hentDokumenttreForSak(state(), opprettetSak.id)).toEqual([]);
   });
 
   it("legger mock-sak med eier i Mine saker", async () => {
