@@ -110,4 +110,15 @@ describe("dokumenter.api DELETE", () => {
       action({ request: deleteRequest("finnes-ikke"), params: { sakId: ref } } as Route.ActionArgs),
     ).rejects.toMatchObject({ init: { status: 404 } });
   });
+
+  it("avviser metoder utenom POST/DELETE med 405", async () => {
+    const { ref } = settOppSakMedDokument({ eier: eierMeg, deltMed: [], status: "UTREDES" });
+
+    await expect(
+      action({
+        request: new Request("http://localhost", { method: "PUT" }),
+        params: { sakId: ref },
+      } as Route.ActionArgs),
+    ).rejects.toMatchObject({ init: { status: 405 } });
+  });
 });

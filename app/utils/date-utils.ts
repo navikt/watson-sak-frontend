@@ -57,6 +57,9 @@ export function formaterRelativTid(tidspunkt: Date, nå: Date = new Date()): str
   const rtf = new Intl.RelativeTimeFormat("nb-NO", { numeric: "auto" });
   const diffSek = Math.round((nå.getTime() - tidspunkt.getTime()) / 1000);
 
+  if (diffSek < 0) {
+    return "i fremtiden";
+  }
   if (diffSek < 5) {
     return "akkurat nå";
   }

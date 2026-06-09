@@ -23,6 +23,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
     throw data("Dokumenter er ikke tilgjengelig ennå", { status: 501 });
   }
 
+  if (request.method !== "POST" && request.method !== "DELETE") {
+    throw data("Metoden støttes ikke", { status: 405 });
+  }
+
   const tilgang = await hentSakstilgangFraMock(request, sakReferanse);
   if (!tilgang) {
     throw data("Sak ikke funnet", { status: 404 });

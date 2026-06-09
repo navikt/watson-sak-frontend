@@ -8,6 +8,7 @@ import {
 import { ActionMenu, BodyLong, BodyShort, Button, Detail, HStack, Modal } from "@navikt/ds-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useFetcher } from "react-router";
+import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { formaterDato } from "~/utils/date-utils";
 import { DokumentIkon } from "./dokument-ikon";
@@ -53,10 +54,12 @@ function finnForelder(nodeId: string, noder: DokumentNode[]): DokumentNode | und
 
 function DokumentHandlinger({
   dokument,
+  sakId,
   redigerbar,
   onSlett,
 }: {
   dokument: Dokumentrad;
+  sakId: string;
   redigerbar: boolean;
   onSlett: (dokument: Dokumentrad) => void;
 }) {
@@ -72,7 +75,12 @@ function DokumentHandlinger({
       </ActionMenu.Trigger>
       <ActionMenu.Content>
         {/* «Last ned som PDF» er foreløpig en no-op – støtte kommer senere. */}
-        <ActionMenu.Item icon={<FilePdfIcon aria-hidden />} onSelect={() => {}}>
+        <ActionMenu.Item
+          icon={<FilePdfIcon aria-hidden />}
+          onSelect={() =>
+            sporHendelse("dokument lastet ned", { sakId, docId: dokument.id, format: "pdf" })
+          }
+        >
           Last ned som PDF
         </ActionMenu.Item>
         {redigerbar && (
@@ -81,7 +89,10 @@ function DokumentHandlinger({
             <ActionMenu.Item
               variant="danger"
               icon={<TrashIcon aria-hidden />}
-              onSelect={() => onSlett(dokument)}
+              onSelect={() => {
+                sporHendelse("dokument sletting påbegynt", { sakId, docId: dokument.id });
+                onSlett(dokument);
+              }}
             >
               Slett
             </ActionMenu.Item>
@@ -186,7 +197,12 @@ function DokumentRad({
         </HStack>
       </Link>
       <div className="shrink-0">
-        <DokumentHandlinger dokument={node} redigerbar={redigerbar} onSlett={onSlett} />
+        <DokumentHandlinger
+          dokument={node}
+          sakId={sakId}
+          redigerbar={redigerbar}
+          onSlett={onSlett}
+        />
       </div>
     </li>
   );
@@ -212,12 +228,20 @@ export function DokumentTre({
     if (!sletteKandidat) {
       return;
     }
+    sporHendelse("dokument slettet", { sakId, docId: sletteKandidat.id });
     slettFetcher.submit(
       { docId: sletteKandidat.id },
       { method: "delete", action: RouteConfig.API.SAK_DOKUMENTER.replace(":sakId", sakId) },
     );
     setSletteKandidat(null);
   }, [sletteKandidat, slettFetcher, sakId]);
+
+  const avbrytSletting = useCallback(() => {
+    if (sletteKandidat) {
+      sporHendelse("dokument sletting avbrutt", { sakId, docId: sletteKandidat.id });
+    }
+    setSletteKandidat(null);
+  }, [sletteKandidat, sakId]);
 
   const toggleMappe = useCallback((id: string) => {
     setÅpneMapper((prev) => {
@@ -345,7 +369,7 @@ export function DokumentTre({
 
       <Modal
         open={sletteKandidat !== null}
-        onClose={() => setSletteKandidat(null)}
+        onClose={avbrytSletting}
         header={{ heading: "Slette dokument?", icon: <TrashIcon aria-hidden /> }}
         width="small"
       >
@@ -359,7 +383,7 @@ export function DokumentTre({
           <Button variant="danger" onClick={bekreftSletting} loading={sletter}>
             Slett dokument
           </Button>
-          <Button variant="secondary" onClick={() => setSletteKandidat(null)} disabled={sletter}>
+          <Button variant="secondary" onClick={avbrytSletting} disabled={sletter}>
             Avbryt
           </Button>
         </Modal.Footer>

@@ -32,6 +32,10 @@ describe("formaterRelativTid", () => {
   it("viser dager for eldre tidspunkt", () => {
     expect(formaterRelativTid(sekunderSiden(3 * 24 * 60 * 60), nå)).toBe("for 3 døgn siden");
   });
+
+  it("viser «i fremtiden» for tidspunkt fram i tid", () => {
+    expect(formaterRelativTid(sekunderSiden(-3600), nå)).toBe("i fremtiden");
+  });
 });
 
 describe("formaterÅrMåned", () => {
