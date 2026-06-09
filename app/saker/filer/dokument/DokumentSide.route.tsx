@@ -1,8 +1,7 @@
 import { ArrowLeftIcon } from "@navikt/aksel-icons";
-import { Detail, HStack, Link as AkselLink, VStack } from "@navikt/ds-react";
+import { Button, Detail, HStack, VStack } from "@navikt/ds-react";
 import { useCallback, useRef, useState } from "react";
-import { Link, useLoaderData } from "react-router";
-import { sporHendelse } from "~/analytics/analytics";
+import { useLoaderData, useNavigate } from "react-router";
 import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
 import type { DokumentInnhold } from "~/saker/filer/typer";
@@ -30,7 +29,7 @@ function LagreStatusVisning({
       : status === "endret"
         ? "Ulagrede endringer"
         : status === "feil"
-          ? "Kunne ikke lagre – prøver igjen"
+          ? "Kunne ikke lagre – endringene er beholdt"
           : sistLagret
             ? `Lagret kl. ${formaterKlokkeslett(sistLagret)}`
             : "Lagret";
@@ -59,9 +58,7 @@ function DokumentRedigering({
   const [tittel, setTittel] = useState(dokument.tittel);
   const tittelRef = useRef(dokument.tittel);
   const innholdRef = useRef<DokumentInnhold>(dokument.innhold);
-  // Spor «dokument lagret» kun én gang per redigeringsøkt, ikke per autolagring,
-  // for å unngå å oversvømme analytics med ett event hver gang debouncen utløses.
-  const harSporetLagring = useRef(false);
+  const navigate = useNavigate();
 
   const lagreUrl = RouteConfig.SAKER_DOKUMENT.replace(":sakId", sakReferanse).replace(
     ":docId",
@@ -77,15 +74,10 @@ function DokumentRedigering({
         keepalive: true,
       });
       if (!respons.ok) {
-        sporHendelse("dokument lagring feilet", { sakId: sakReferanse, docId: dokument.id });
         throw new Error("Lagring feilet");
       }
-      if (!harSporetLagring.current) {
-        harSporetLagring.current = true;
-        sporHendelse("dokument lagret", { sakId: sakReferanse, docId: dokument.id });
-      }
     },
-    [lagreUrl, sakReferanse, dokument.id],
+    [lagreUrl],
   );
 
   const { status, sistLagret, registrerEndring } = useAutolagring({ lagre });
@@ -110,10 +102,15 @@ function DokumentRedigering({
   return (
     <VStack gap="space-16" className="py-6">
       <div>
-        <AkselLink as={Link} to={RouteConfig.SAKER_DETALJ.replace(":sakId", sakReferanse)}>
-          <ArrowLeftIcon aria-hidden />
-          Tilbake til saken
-        </AkselLink>
+        <Button
+          type="button"
+          variant="tertiary"
+          size="small"
+          icon={<ArrowLeftIcon aria-hidden />}
+          onClick={() => navigate(-1)}
+        >
+          Tilbake
+        </Button>
       </div>
 
       <Kort>

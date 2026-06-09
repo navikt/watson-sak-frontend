@@ -3,11 +3,8 @@ import { Button, HStack } from "@navikt/ds-react";
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useEffect } from "react";
+import { sporHendelse } from "~/analytics/analytics";
 import type { DokumentInnhold } from "~/saker/filer/typer";
-
-// 🔴 Rød sone: Tiptap-oppsett er ny teknologi for teamet. Innhold serialiseres som
-// ProseMirror/Tiptap-JSON via `editor.getJSON()`. `immediatelyRender: false` er
-// nødvendig for server-rendering (unngår hydration-mismatch).
 
 type VerktøyKnappProps = {
   etikett: string;
@@ -24,7 +21,10 @@ function VerktøyKnapp({ etikett, aktiv, onClick, children }: VerktøyKnappProps
       variant={aktiv ? "secondary" : "tertiary"}
       aria-label={etikett}
       aria-pressed={aktiv}
-      onClick={onClick}
+      onClick={() => {
+        sporHendelse("dokument formatert", { format: etikett });
+        onClick();
+      }}
     >
       {children}
     </Button>

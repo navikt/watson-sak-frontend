@@ -6,7 +6,7 @@ export const RouteConfig = {
   INDEX: "/",
   FORDELING: "/fordeling",
   SAKER_DETALJ: "/saker/:sakId",
-  SAKER_DOKUMENT: "/saker/:sakId/filer/:docId",
+  SAKER_DOKUMENT: "/saker/:sakId/dokumenter/:docId",
   MINE_SAKER: "/mine-saker",
   ALLE_SAKER: "/alle-saker",
   REGISTRER_SAK: "/registrer-sak",

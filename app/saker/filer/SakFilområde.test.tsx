@@ -159,7 +159,7 @@ describe("SakFilområde", () => {
     renderOmråde({ dokumenter: mockDokumenter, sakId: "ABC-123" });
     const dokumentLenke = screen.getByText("Notat").closest("a") as HTMLAnchorElement;
 
-    expect(dokumentLenke.getAttribute("href")).toBe("/saker/ABC-123/filer/2");
+    expect(dokumentLenke.getAttribute("href")).toBe("/saker/ABC-123/dokumenter/2");
     expect(dokumentLenke.getAttribute("target")).toBeNull();
   });
 });

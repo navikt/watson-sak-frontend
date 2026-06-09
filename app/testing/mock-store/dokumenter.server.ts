@@ -32,7 +32,7 @@ function tomtInnhold(): DokumentInnhold {
   return { type: "doc", content: [{ type: "paragraph" }] };
 }
 
-type Frø = {
+type DokumentSeed = {
   id: string;
   tittel: string;
   endretAv: string;
@@ -40,7 +40,7 @@ type Frø = {
   avsnitt: string[];
 };
 
-const dokumentFrø: Array<{ mappe?: string; mappeId?: string; barn: Frø[] }> = [
+const dokumentSeeds: Array<{ mappe?: string; mappeId?: string; barn: DokumentSeed[] }> = [
   {
     mappe: "Dokumentasjon",
     mappeId: "1",
@@ -108,21 +108,21 @@ const dokumentFrø: Array<{ mappe?: string; mappeId?: string; barn: Frø[] }> = 
 function seedDokumenter(state: MockState, sakId: string): DokumentNode[] {
   const noder: DokumentNode[] = [];
 
-  function leggTilDokument(frø: Frø): DokumentNode {
+  function leggTilDokument(seed: DokumentSeed): DokumentNode {
     state.dokumentInnhold.set(
-      innholdsnøkkel(sakId, frø.id),
-      lagDummyInnhold(frø.tittel, frø.avsnitt),
+      innholdsnøkkel(sakId, seed.id),
+      lagDummyInnhold(seed.tittel, seed.avsnitt),
     );
     return {
-      id: frø.id,
+      id: seed.id,
       type: "dokument",
-      tittel: frø.tittel,
-      endretAv: frø.endretAv,
-      endretDato: frø.endretDato,
+      tittel: seed.tittel,
+      endretAv: seed.endretAv,
+      endretDato: seed.endretDato,
     };
   }
 
-  for (const gruppe of dokumentFrø) {
+  for (const gruppe of dokumentSeeds) {
     if (gruppe.mappe && gruppe.mappeId) {
       noder.push({
         id: gruppe.mappeId,
@@ -131,8 +131,8 @@ function seedDokumenter(state: MockState, sakId: string): DokumentNode[] {
         barn: gruppe.barn.map(leggTilDokument),
       });
     } else {
-      for (const frø of gruppe.barn) {
-        noder.push(leggTilDokument(frø));
+      for (const seed of gruppe.barn) {
+        noder.push(leggTilDokument(seed));
       }
     }
   }

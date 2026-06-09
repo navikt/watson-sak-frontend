@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { DokumentInnhold } from "~/saker/filer/typer";
 
-// 🔴 Rød sone: kjernelogikk for autolagring. Subtile race conditions oppstår når
-// brukeren skriver mens en lagring pågår, eller navigerer bort før siste endring er
-// lagret. Les gjennom hele filen før du stoler på den.
-
 export type LagreStatus = "lagret" | "endret" | "lagrer" | "feil";
 
 export type Autolagringsdata = {
@@ -72,8 +68,8 @@ export function useAutolagring({ lagre, forsinkelseMs = 800 }: UseAutolagringArg
         }
       }
     } catch {
-      // Behold `ventende` slik at brukerens endringer ikke går tapt. Neste endring
-      // (eller lagreNå) forsøker på nytt.
+      // Behold `ventende` slik at brukerens endringer ikke går tapt. Status settes til
+      // «feil»; neste endring forsøker lagring på nytt.
       setStatus("feil");
     } finally {
       lagrerNå.current = false;
@@ -94,10 +90,12 @@ export function useAutolagring({ lagre, forsinkelseMs = 800 }: UseAutolagringArg
 
   // Flush ved navigasjon bort fra siden (route-bytte i SPA). Kallet er «best effort»:
   // lagre-funksjonen bruker keepalive slik at det rekker ut selv om komponenten rives ned.
+  // Vi hopper over dersom en lagring allerede pågår — den in-flight flush-løkken plukker
+  // opp den nyeste endringen og lagrer den, så vi unngår å sende samme payload to ganger.
   useEffect(() => {
     return () => {
       stoppTimer();
-      if (ventende.current) {
+      if (ventende.current && !lagrerNå.current) {
         void lagreRef.current(ventende.current).catch(() => {});
       }
     };
@@ -107,7 +105,7 @@ export function useAutolagring({ lagre, forsinkelseMs = 800 }: UseAutolagringArg
   // «forlat siden?»-dialog: autolagringen (keepalive) tar vare på endringene.
   useEffect(() => {
     function håndterLukking() {
-      if (ventende.current) {
+      if (ventende.current && !lagrerNå.current) {
         void lagreRef.current(ventende.current).catch(() => {});
       }
     }
