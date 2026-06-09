@@ -68,6 +68,7 @@ import {
 } from "./visning";
 import { action, loader } from "./SakDetaljSide.server";
 import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
+import { RouteConfig } from "~/routeConfig";
 
 export { action, loader };
 
@@ -351,9 +352,9 @@ export default function SakDetaljSide() {
             variant="tertiary"
             size="small"
             icon={<ArrowLeftIcon aria-hidden />}
-            onClick={() => navigate(-1)}
+            onClick={() => navigate(RouteConfig.MINE_SAKER)}
           >
-            Tilbake
+            Til mine saker
           </Button>
         </div>
 

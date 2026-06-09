@@ -55,7 +55,7 @@ describe("DokumentSide", () => {
   it("viser tilbake- og «Se andre dokumenter»-knapp", async () => {
     renderSide(true);
 
-    expect(await screen.findByRole("button", { name: "Tilbake" })).toBeDefined();
+    expect(await screen.findByRole("button", { name: "Tilbake til saken" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Se andre dokumenter" })).toBeDefined();
   });
 

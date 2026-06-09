@@ -129,9 +129,9 @@ function DokumentRedigering({
             variant="tertiary"
             size="small"
             icon={<ArrowLeftIcon aria-hidden />}
-            onClick={() => navigate(-1)}
+            onClick={() => navigate(sakUrl)}
           >
-            Tilbake
+            Tilbake til saken
           </Button>
 
           <HStack gap="space-2" align="center" wrap>
