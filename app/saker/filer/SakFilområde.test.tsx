@@ -1,117 +1,110 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { createRoutesStub } from "react-router";
 import { describe, expect, it } from "vitest";
 import { SakFilområde } from "./SakFilområde";
-import type { FilNode } from "./typer";
+import type { DokumentNode } from "./typer";
 
-const mockFiler: FilNode[] = [
+const mockDokumenter: DokumentNode[] = [
   {
     id: "1",
     type: "mappe",
     navn: "Dokumentasjon",
-    sharepointUrl: "https://example.com/docs",
     barn: [
       {
         id: "1-1",
-        type: "fil",
-        navn: "Rapport.pdf",
-        format: "pdf",
+        type: "dokument",
+        tittel: "Rapport",
         endretAv: "Ola Nordmann",
         endretDato: "2026-02-15",
-        sharepointUrl: "https://example.com/docs/rapport.pdf",
       },
     ],
   },
   {
     id: "2",
-    type: "fil",
-    navn: "Notat.docx",
-    format: "word",
+    type: "dokument",
+    tittel: "Notat",
     endretAv: "Kari Hansen",
     endretDato: "2026-03-01",
-    sharepointUrl: "https://example.com/notat.docx",
   },
 ];
 
+function renderOmråde(props: Parameters<typeof SakFilområde>[0]) {
+  const Stub = createRoutesStub([
+    {
+      path: "/saker/:sakId",
+      Component: () => <SakFilområde {...props} />,
+    },
+  ]);
+  return render(<Stub initialEntries={["/saker/ABC-123"]} />);
+}
+
 describe("SakFilområde", () => {
-  it("viser tomtilstand når det ikke er noen filer", () => {
-    render(<SakFilområde filer={[]} />);
-    expect(screen.getByText("Ingen filer ennå")).toBeDefined();
+  it("viser tomtilstand når det ikke er noen dokumenter", () => {
+    renderOmråde({ dokumenter: [], sakId: "ABC-123" });
+    expect(screen.getByText("Ingen dokumenter ennå")).toBeDefined();
     expect(screen.getByText("Last opp fil")).toBeDefined();
-    expect(screen.getByText("Opprett fil")).toBeDefined();
-    expect(screen.getByText("Opprett mappe")).toBeDefined();
+    expect(screen.getByText("Opprett dokument")).toBeDefined();
+  });
+
+  it("viser ikke lenger valg for å opprette mappe eller Office-filer", () => {
+    renderOmråde({ dokumenter: [], sakId: "ABC-123" });
+    expect(screen.queryByText("Opprett mappe")).toBeNull();
+    expect(screen.queryByText("Opprett fil")).toBeNull();
   });
 
   it("skjuler knapper i tomtilstand når redigerbar er false", () => {
-    render(<SakFilområde filer={[]} redigerbar={false} />);
-    expect(screen.getByText("Ingen filer ennå")).toBeDefined();
+    renderOmråde({ dokumenter: [], sakId: "ABC-123", redigerbar: false });
+    expect(screen.getByText("Ingen dokumenter ennå")).toBeDefined();
     expect(screen.queryByText("Last opp fil")).toBeNull();
-    expect(screen.queryByText("Opprett fil")).toBeNull();
-    expect(screen.queryByText("Opprett mappe")).toBeNull();
+    expect(screen.queryByText("Opprett dokument")).toBeNull();
   });
 
-  it("viser heading 'Filer' alltid", () => {
-    render(<SakFilområde filer={[]} />);
-    expect(screen.getByText("Filer")).toBeDefined();
+  it("viser heading 'Dokumenter' alltid", () => {
+    renderOmråde({ dokumenter: [], sakId: "ABC-123" });
+    expect(screen.getByText("Dokumenter")).toBeDefined();
   });
 
-  it("viser filer og mapper når det finnes data", () => {
-    render(<SakFilområde filer={mockFiler} />);
+  it("viser dokumenter og mapper når det finnes data", () => {
+    renderOmråde({ dokumenter: mockDokumenter, sakId: "ABC-123" });
     expect(screen.getByText("Dokumentasjon")).toBeDefined();
-    expect(screen.getByText("Notat.docx")).toBeDefined();
+    expect(screen.getByText("Notat")).toBeDefined();
   });
 
-  it("viser format-tag for filer", () => {
-    render(<SakFilområde filer={mockFiler} />);
-    expect(screen.getByText("Word")).toBeDefined();
-  });
-
-  it("viser handlingsknapper når det er filer", () => {
-    render(<SakFilområde filer={mockFiler} />);
-    const lastOppKnapper = screen.getAllByText("Last opp fil");
-    expect(lastOppKnapper.length).toBeGreaterThan(0);
-    expect(screen.getByText("Opprett fil")).toBeDefined();
-  });
-
-  it("viser valg for filtype når opprett fil-menyen åpnes", () => {
-    render(<SakFilområde filer={mockFiler} />);
-
-    fireEvent.click(screen.getByRole("button", { name: "Opprett fil" }));
-
-    expect(screen.getByText("Word-fil")).toBeDefined();
-    expect(screen.getByText("Excel-fil")).toBeDefined();
-    expect(screen.getByText("PowerPoint-fil")).toBeDefined();
+  it("viser handlingsknapper når det er dokumenter", () => {
+    renderOmråde({ dokumenter: mockDokumenter, sakId: "ABC-123" });
+    expect(screen.getByText("Last opp fil")).toBeDefined();
+    expect(screen.getByText("Opprett dokument")).toBeDefined();
   });
 
   it("skjuler handlingsknapper når redigerbar er false", () => {
-    render(<SakFilområde filer={mockFiler} redigerbar={false} />);
+    renderOmråde({ dokumenter: mockDokumenter, sakId: "ABC-123", redigerbar: false });
     expect(screen.queryByText("Last opp fil")).toBeNull();
-    expect(screen.queryByText("Opprett fil")).toBeNull();
-    expect(screen.queryByText("Opprett mappe")).toBeNull();
+    expect(screen.queryByText("Opprett dokument")).toBeNull();
   });
 
   it("ekspanderer mappe ved klikk og viser barn", () => {
-    render(<SakFilområde filer={mockFiler} />);
-    expect(screen.queryByText("Rapport.pdf")).toBeNull();
+    renderOmråde({ dokumenter: mockDokumenter, sakId: "ABC-123" });
+    expect(screen.queryByText("Rapport")).toBeNull();
 
     const mappeKnapp = screen.getByText("Dokumentasjon").closest("button") as HTMLButtonElement;
     fireEvent.click(mappeKnapp);
 
-    expect(screen.getByText("Rapport.pdf")).toBeDefined();
+    expect(screen.getByText("Rapport")).toBeDefined();
   });
 
   it("kollapser mappe ved nytt klikk", () => {
-    render(<SakFilområde filer={mockFiler} />);
+    renderOmråde({ dokumenter: mockDokumenter, sakId: "ABC-123" });
     const mappeKnapp = screen.getByText("Dokumentasjon").closest("button") as HTMLButtonElement;
 
     fireEvent.click(mappeKnapp);
-    expect(screen.getByText("Rapport.pdf")).toBeDefined();
+    expect(screen.getByText("Rapport")).toBeDefined();
 
     fireEvent.click(mappeKnapp);
-    expect(screen.queryByText("Rapport.pdf")).toBeNull();
+    expect(screen.queryByText("Rapport")).toBeNull();
   });
 
   it("setter aria-expanded riktig ved toggle av mappe", () => {
-    render(<SakFilområde filer={mockFiler} />);
+    renderOmråde({ dokumenter: mockDokumenter, sakId: "ABC-123" });
     const mappeKnapp = screen.getByText("Dokumentasjon").closest("button") as HTMLButtonElement;
 
     expect(mappeKnapp.getAttribute("aria-expanded")).toBe("false");
@@ -122,9 +115,8 @@ describe("SakFilområde", () => {
   });
 
   it("har riktig ARIA-trestruktur", () => {
-    render(<SakFilområde filer={mockFiler} />);
-    const tre = screen.getByRole("tree");
-    expect(tre).toBeDefined();
+    renderOmråde({ dokumenter: mockDokumenter, sakId: "ABC-123" });
+    expect(screen.getByRole("tree")).toBeDefined();
 
     const treElementer = screen.getAllByRole("treeitem");
     expect(treElementer.length).toBe(2);
@@ -134,42 +126,40 @@ describe("SakFilområde", () => {
   });
 
   it("viser group-rolle for barn i ekspandert mappe", () => {
-    render(<SakFilområde filer={mockFiler} />);
+    renderOmråde({ dokumenter: mockDokumenter, sakId: "ABC-123" });
     const mappeKnapp = screen.getByText("Dokumentasjon").closest("button") as HTMLButtonElement;
     fireEvent.click(mappeKnapp);
 
-    const grupper = screen.getAllByRole("group");
-    expect(grupper.length).toBe(1);
+    expect(screen.getAllByRole("group").length).toBe(1);
 
-    const barnElement = screen.getByText("Rapport.pdf").closest("a") as HTMLAnchorElement;
+    const barnElement = screen.getByText("Rapport").closest("a") as HTMLAnchorElement;
     expect(barnElement.getAttribute("aria-level")).toBe("2");
   });
 
   it("åpner mappe med Enter-tasten", () => {
-    render(<SakFilområde filer={mockFiler} />);
+    renderOmråde({ dokumenter: mockDokumenter, sakId: "ABC-123" });
     const tre = screen.getByRole("tree");
 
     fireEvent.keyDown(tre, { key: "Enter" });
-    expect(screen.getByText("Rapport.pdf")).toBeDefined();
+    expect(screen.getByText("Rapport")).toBeDefined();
   });
 
   it("toggler mappe med mellomromstasten", () => {
-    render(<SakFilområde filer={mockFiler} />);
+    renderOmråde({ dokumenter: mockDokumenter, sakId: "ABC-123" });
     const tre = screen.getByRole("tree");
 
     fireEvent.keyDown(tre, { key: " " });
-    expect(screen.getByText("Rapport.pdf")).toBeDefined();
+    expect(screen.getByText("Rapport")).toBeDefined();
 
     fireEvent.keyDown(tre, { key: " " });
-    expect(screen.queryByText("Rapport.pdf")).toBeNull();
+    expect(screen.queryByText("Rapport")).toBeNull();
   });
 
-  it("har riktige lenkeattributter for filer", () => {
-    render(<SakFilområde filer={mockFiler} />);
-    const filLenke = screen.getByText("Notat.docx").closest("a") as HTMLAnchorElement;
+  it("lenker dokumenter internt til editoren (ikke ekstern SharePoint-lenke)", () => {
+    renderOmråde({ dokumenter: mockDokumenter, sakId: "ABC-123" });
+    const dokumentLenke = screen.getByText("Notat").closest("a") as HTMLAnchorElement;
 
-    expect(filLenke.getAttribute("href")).toBe("https://example.com/notat.docx");
-    expect(filLenke.getAttribute("target")).toBe("_blank");
-    expect(filLenke.getAttribute("rel")).toBe("noopener noreferrer");
+    expect(dokumentLenke.getAttribute("href")).toBe("/saker/ABC-123/filer/2");
+    expect(dokumentLenke.getAttribute("target")).toBeNull();
   });
 });

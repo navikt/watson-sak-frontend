@@ -21,7 +21,7 @@ import type {
 import { henleggelsesarsakSchema } from "~/saker/types.backend";
 import { lagIsoTidspunktFraNorskDatoTid } from "~/utils/date-utils";
 import { hentTekstfelt, hentValgfriTekst } from "~/utils/form-data";
-import { hentFilerForSak } from "./filer/mock-data.server";
+import { hentDokumenttreForSak } from "./filer/mock-data.server";
 import { notatMalValg } from "./handlinger/notatValg";
 import { erAktivSakKontrollsak } from "./handlinger/tilgjengeligeHandlinger";
 import {
@@ -173,7 +173,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const historikk = hentHistorikk(request, String(sak.id));
   const erEier = sak.saksbehandlere.eier?.navIdent === innlogget.navIdent;
   const harDeltTilgang = sak.saksbehandlere.deltMed.some((s) => s.navIdent === innlogget.navIdent);
-  const filer = erEier || harDeltTilgang ? hentFilerForSak(request, String(sak.id)) : [];
+  const filer = erEier || harDeltTilgang ? hentDokumenttreForSak(request, String(sak.id)) : [];
   const andreSaker = alleSaker.filter(
     (annenSak) => annenSak.personIdent === sak.personIdent && annenSak.id !== sak.id,
   );

@@ -1,25 +1,14 @@
 import { ChevronDownIcon, ChevronRightIcon } from "@navikt/aksel-icons";
-import { BodyShort, Detail, HStack, Tag } from "@navikt/ds-react";
+import { BodyShort, Detail, HStack } from "@navikt/ds-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "react-router";
+import { RouteConfig } from "~/routeConfig";
 import { formaterDato } from "~/utils/date-utils";
-import { FilIkon } from "./fil-ikon";
-import type { FilNode, FilType } from "./typer";
-
-const formatNavn: Record<FilType, string> = {
-  word: "Word",
-  excel: "Excel",
-  pdf: "PDF",
-  powerpoint: "PowerPoint",
-  bilde: "Bilde",
-  csv: "CSV",
-  json: "JSON",
-  kode: "Kode",
-  tekst: "Tekst",
-  annet: "Fil",
-};
+import { DokumentIkon } from "./dokument-ikon";
+import type { DokumentNode } from "./typer";
 
 /** Returnerer alle synlige node-IDer i trekkordion-rekkefølge */
-function hentSynligeNodeIder(noder: FilNode[], åpneMapper: Set<string>): string[] {
+function hentSynligeNodeIder(noder: DokumentNode[], åpneMapper: Set<string>): string[] {
   const ider: string[] = [];
   for (const node of noder) {
     ider.push(node.id);
@@ -31,7 +20,7 @@ function hentSynligeNodeIder(noder: FilNode[], åpneMapper: Set<string>): string
 }
 
 /** Finner en node i treet basert på ID */
-function finnNode(id: string, noder: FilNode[]): FilNode | undefined {
+function finnNode(id: string, noder: DokumentNode[]): DokumentNode | undefined {
   for (const node of noder) {
     if (node.id === id) return node;
     if (node.type === "mappe") {
@@ -43,7 +32,7 @@ function finnNode(id: string, noder: FilNode[]): FilNode | undefined {
 }
 
 /** Finner foreldernoden til en gitt node */
-function finnForelder(nodeId: string, noder: FilNode[]): FilNode | undefined {
+function finnForelder(nodeId: string, noder: DokumentNode[]): DokumentNode | undefined {
   for (const node of noder) {
     if (node.type === "mappe") {
       if (node.barn.some((b) => b.id === nodeId)) return node;
@@ -54,15 +43,17 @@ function finnForelder(nodeId: string, noder: FilNode[]): FilNode | undefined {
   return undefined;
 }
 
-function FilRad({
+function DokumentRad({
   node,
   nivå,
+  sakId,
   fokusertId,
   åpneMapper,
   onToggle,
 }: {
-  node: FilNode;
+  node: DokumentNode;
   nivå: number;
+  sakId: string;
   fokusertId: string | null;
   åpneMapper: Set<string>;
   onToggle: (id: string) => void;
@@ -89,7 +80,7 @@ function FilRad({
           ) : (
             <ChevronRightIcon aria-hidden className="shrink-0" />
           )}
-          <FilIkon node={node} aria-hidden className="shrink-0 text-ax-icon-info" />
+          <DokumentIkon node={node} aria-hidden className="shrink-0 text-ax-icon-info" />
           <BodyShort weight="semibold" size="small" className="truncate">
             {node.navn}
           </BodyShort>
@@ -97,10 +88,11 @@ function FilRad({
         {åpen && (
           <ul role="group">
             {node.barn.map((barn) => (
-              <FilRad
+              <DokumentRad
                 key={barn.id}
                 node={barn}
                 nivå={nivå + 1}
+                sakId={sakId}
                 fokusertId={fokusertId}
                 åpneMapper={åpneMapper}
                 onToggle={onToggle}
@@ -112,37 +104,37 @@ function FilRad({
     );
   }
 
+  const dokumentUrl = RouteConfig.SAKER_DOKUMENT.replace(":sakId", sakId).replace(
+    ":docId",
+    node.id,
+  );
+
   return (
     <li role="none">
-      <a
+      <Link
         role="treeitem"
-        href={node.sharepointUrl}
-        target="_blank"
-        rel="noopener noreferrer"
+        to={dokumentUrl}
         className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 no-underline hover:bg-ax-bg-neutral-moderate-hover transition-colors text-ax-text-default"
         style={{ paddingLeft: `${(nivå - 1) * 1.5 + 0.5 + 1.75}rem` }}
         aria-level={nivå}
         tabIndex={erFokusert ? 0 : -1}
         data-tree-id={node.id}
       >
-        <FilIkon node={node} aria-hidden className="shrink-0" />
+        <DokumentIkon node={node} aria-hidden className="shrink-0 text-ax-icon-info" />
         <BodyShort size="small" className="truncate flex-1">
-          {node.navn}
+          {node.tittel}
         </BodyShort>
         <HStack gap="space-8" align="center" className="shrink-0">
-          <Tag variant="info" size="xsmall">
-            {formatNavn[node.format]}
-          </Tag>
           <Detail className="text-ax-text-neutral-subtle whitespace-nowrap">
             {formaterDato(node.endretDato)} – {node.endretAv}
           </Detail>
         </HStack>
-      </a>
+      </Link>
     </li>
   );
 }
 
-export function FilTre({ noder }: { noder: FilNode[] }) {
+export function DokumentTre({ noder, sakId }: { noder: DokumentNode[]; sakId: string }) {
   const [åpneMapper, setÅpneMapper] = useState<Set<string>>(new Set());
   const [fokusertId, setFokusertId] = useState<string | null>(noder[0]?.id ?? null);
   const treRef = useRef<HTMLUListElement>(null);
@@ -251,15 +243,16 @@ export function FilTre({ noder }: { noder: FilNode[] }) {
     <ul
       className="flex flex-col"
       role="tree"
-      aria-label="Filstruktur"
+      aria-label="Dokumenter"
       ref={treRef}
       onKeyDown={handleKeyDown}
     >
       {noder.map((node) => (
-        <FilRad
+        <DokumentRad
           key={node.id}
           node={node}
           nivå={1}
+          sakId={sakId}
           fokusertId={fokusertId}
           åpneMapper={åpneMapper}
           onToggle={toggleMappe}

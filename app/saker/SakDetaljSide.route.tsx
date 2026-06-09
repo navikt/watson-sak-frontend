@@ -231,6 +231,9 @@ export default function SakDetaljSide() {
   const harDeltTilgang = delteSaksbehandlere.some((s) => s.navIdent === innloggetBruker.navIdent);
   const kanSeFilområde = erEier || harDeltTilgang;
   const kanRedigere = erEier && erAktiv;
+  // Dokumenter kan redigeres av eier ELLER delt-med, så lenge saken er aktiv.
+  // (Skiller seg fra `kanRedigere` som styrer redigering av selve saksinformasjonen.)
+  const kanRedigereDokumenter = kanSeFilområde && erAktiv;
   const [redigerer, setRedigerer] = useState(false);
   const [redigeringsøkt, setRedigeringsøkt] = useState(0);
   const [visFeil, setVisFeil] = useState(false);
@@ -747,7 +750,13 @@ export default function SakDetaljSide() {
               </VStack>
             </Kort>
 
-            {kanSeFilområde && <SakFilområde filer={filer} redigerbar={kanRedigere} />}
+            {kanSeFilområde && (
+              <SakFilområde
+                dokumenter={filer}
+                sakId={saksreferanse}
+                redigerbar={kanRedigereDokumenter}
+              />
+            )}
 
             <SakerPåSammePerson saker={andreSaker} gjeldendeSakId={sak.id} />
           </VStack>
