@@ -170,4 +170,13 @@ describe("SakFilområde", () => {
     // Mappen «Dokumentasjon» skal ikke ha en handlingsmeny.
     expect(screen.queryByRole("button", { name: "Handlinger for Dokumentasjon" })).toBeNull();
   });
+
+  it("holder handlingsmenyen utenfor tab-rekkefølgen for ufokuserte rader", () => {
+    renderOmråde({ dokumenter: mockDokumenter, sakId: "ABC-123" });
+
+    // Første node (mappen) er fokusert som standard, så «Notat»-radens meny skal ikke
+    // være tabbbar (roving tabindex).
+    const meny = screen.getByRole("button", { name: "Handlinger for Notat" });
+    expect(meny.getAttribute("tabindex")).toBe("-1");
+  });
 });

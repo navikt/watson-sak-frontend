@@ -56,11 +56,15 @@ function DokumentHandlinger({
   dokument,
   sakId,
   redigerbar,
+  erFokusert,
+  onFokus,
   onSlett,
 }: {
   dokument: Dokumentrad;
   sakId: string;
   redigerbar: boolean;
+  erFokusert: boolean;
+  onFokus: () => void;
   onSlett: (dokument: Dokumentrad) => void;
 }) {
   return (
@@ -71,6 +75,8 @@ function DokumentHandlinger({
           size="small"
           icon={<MenuElipsisVerticalIcon aria-hidden />}
           aria-label={`Handlinger for ${dokument.tittel}`}
+          tabIndex={erFokusert ? 0 : -1}
+          onFocus={onFokus}
         />
       </ActionMenu.Trigger>
       <ActionMenu.Content>
@@ -111,6 +117,7 @@ function DokumentRad({
   åpneMapper,
   redigerbar,
   onToggle,
+  onFokus,
   onSlett,
 }: {
   node: DokumentNode;
@@ -120,6 +127,7 @@ function DokumentRad({
   åpneMapper: Set<string>;
   redigerbar: boolean;
   onToggle: (id: string) => void;
+  onFokus: (id: string) => void;
   onSlett: (dokument: Dokumentrad) => void;
 }) {
   const erFokusert = fokusertId === node.id;
@@ -132,6 +140,7 @@ function DokumentRad({
           role="treeitem"
           type="button"
           onClick={() => onToggle(node.id)}
+          onFocus={() => onFokus(node.id)}
           className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-ax-bg-neutral-moderate-hover transition-colors cursor-pointer"
           style={{ paddingLeft: `${(nivå - 1) * 1.5 + 0.5}rem` }}
           aria-expanded={åpen}
@@ -161,6 +170,7 @@ function DokumentRad({
                 åpneMapper={åpneMapper}
                 redigerbar={redigerbar}
                 onToggle={onToggle}
+                onFokus={onFokus}
                 onSlett={onSlett}
               />
             ))}
@@ -180,6 +190,7 @@ function DokumentRad({
       <Link
         role="treeitem"
         to={dokumentUrl}
+        onFocus={() => onFokus(node.id)}
         className="flex flex-1 min-w-0 items-center gap-2 rounded-md px-2 py-1.5 no-underline hover:bg-ax-bg-neutral-moderate-hover transition-colors text-ax-text-default"
         style={{ paddingLeft: `${(nivå - 1) * 1.5 + 0.5}rem` }}
         aria-level={nivå}
@@ -201,6 +212,8 @@ function DokumentRad({
           dokument={node}
           sakId={sakId}
           redigerbar={redigerbar}
+          erFokusert={erFokusert}
+          onFokus={() => onFokus(node.id)}
           onSlett={onSlett}
         />
       </div>
@@ -362,6 +375,7 @@ export function DokumentTre({
             åpneMapper={åpneMapper}
             redigerbar={redigerbar}
             onToggle={toggleMappe}
+            onFokus={setFokusertId}
             onSlett={setSletteKandidat}
           />
         ))}
