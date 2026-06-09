@@ -3,7 +3,7 @@ import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
 import type { DokumentInnhold } from "~/saker/filer/typer";
 import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
-import { hentDokument, lagreDokument } from "../mock-data.server";
+import { hentDokument, hentDokumenttreForSak, lagreDokument } from "../mock-data.server";
 import type { Route } from "./+types/DokumentSide.route";
 
 const dokumenterIkkeTilgjengelig = "Dokumenter er ikke tilgjengelig ennå";
@@ -28,6 +28,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   return {
     dokument,
+    dokumenter: hentDokumenttreForSak(request, String(tilgang.sak.id)),
     sakReferanse: params.sakId,
     kanRedigere: tilgang.kanRedigereDokumenter,
   };

@@ -5,16 +5,16 @@ import {
   MenuElipsisVerticalIcon,
   TrashIcon,
 } from "@navikt/aksel-icons";
-import { ActionMenu, BodyLong, BodyShort, Button, Detail, HStack, Modal } from "@navikt/ds-react";
+import { ActionMenu, BodyShort, Button, Detail, HStack } from "@navikt/ds-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useFetcher } from "react-router";
+import { Link } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { formaterDato } from "~/utils/date-utils";
 import { DokumentIkon } from "./dokument-ikon";
-import type { DokumentNode } from "./typer";
-
-type Dokumentrad = Extract<DokumentNode, { type: "dokument" }>;
+import { SlettDokumentModal } from "./dokument/SlettDokumentModal";
+import { useDokumentSletting } from "./dokument/useDokumentSletting";
+import type { DokumentNode, Dokumentrad } from "./typer";
 
 /** Returnerer alle synlige node-IDer i trekkordion-rekkefølge */
 function hentSynligeNodeIder(noder: DokumentNode[], åpneMapper: Set<string>): string[] {
@@ -95,10 +95,7 @@ function DokumentHandlinger({
             <ActionMenu.Item
               variant="danger"
               icon={<TrashIcon aria-hidden />}
-              onSelect={() => {
-                sporHendelse("dokument sletting påbegynt", { sakId, docId: dokument.id });
-                onSlett(dokument);
-              }}
+              onSelect={() => onSlett(dokument)}
             >
               Slett
             </ActionMenu.Item>
@@ -232,29 +229,8 @@ export function DokumentTre({
 }) {
   const [åpneMapper, setÅpneMapper] = useState<Set<string>>(new Set());
   const [fokusertId, setFokusertId] = useState<string | null>(noder[0]?.id ?? null);
-  const [sletteKandidat, setSletteKandidat] = useState<Dokumentrad | null>(null);
   const treRef = useRef<HTMLUListElement>(null);
-  const slettFetcher = useFetcher();
-  const sletter = slettFetcher.state !== "idle";
-
-  const bekreftSletting = useCallback(() => {
-    if (!sletteKandidat) {
-      return;
-    }
-    sporHendelse("dokument slettet", { sakId, docId: sletteKandidat.id });
-    slettFetcher.submit(
-      { docId: sletteKandidat.id },
-      { method: "delete", action: RouteConfig.API.SAK_DOKUMENTER.replace(":sakId", sakId) },
-    );
-    setSletteKandidat(null);
-  }, [sletteKandidat, slettFetcher, sakId]);
-
-  const avbrytSletting = useCallback(() => {
-    if (sletteKandidat) {
-      sporHendelse("dokument sletting avbrutt", { sakId, docId: sletteKandidat.id });
-    }
-    setSletteKandidat(null);
-  }, [sletteKandidat, sakId]);
+  const sletting = useDokumentSletting({ sakId, kilde: "dokumentliste" });
 
   const toggleMappe = useCallback((id: string) => {
     setÅpneMapper((prev) => {
@@ -376,32 +352,17 @@ export function DokumentTre({
             redigerbar={redigerbar}
             onToggle={toggleMappe}
             onFokus={setFokusertId}
-            onSlett={setSletteKandidat}
+            onSlett={sletting.start}
           />
         ))}
       </ul>
 
-      <Modal
-        open={sletteKandidat !== null}
-        onClose={avbrytSletting}
-        header={{ heading: "Slette dokument?", icon: <TrashIcon aria-hidden /> }}
-        width="small"
-      >
-        <Modal.Body>
-          <BodyLong>
-            Er du sikker på at du vil slette{" "}
-            <strong>{sletteKandidat?.tittel || "Uten tittel"}</strong>? Dette kan ikke angres.
-          </BodyLong>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="danger" onClick={bekreftSletting} loading={sletter}>
-            Slett dokument
-          </Button>
-          <Button variant="secondary" onClick={avbrytSletting} disabled={sletter}>
-            Avbryt
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <SlettDokumentModal
+        kandidat={sletting.kandidat}
+        sletter={sletting.sletter}
+        onBekreft={sletting.bekreft}
+        onAvbryt={sletting.avbryt}
+      />
     </>
   );
 }

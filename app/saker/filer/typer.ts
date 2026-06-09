@@ -35,3 +35,6 @@ export type Dokument = {
   endretAv: string;
   endretDato: string;
 };
+
+/** En dokument-node (ikke mappe) i dokumenttreet. */
+export type Dokumentrad = Extract<DokumentNode, { type: "dokument" }>;

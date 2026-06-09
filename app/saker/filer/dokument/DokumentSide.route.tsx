@@ -1,15 +1,18 @@
-import { ArrowLeftIcon } from "@navikt/aksel-icons";
-import { Button, Detail, VStack } from "@navikt/ds-react";
+import { ArrowLeftIcon, FilesIcon, TrashIcon } from "@navikt/aksel-icons";
+import { Button, Detail, Dialog, Heading, HStack, VStack } from "@navikt/ds-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLoaderData, useNavigate } from "react-router";
 import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
+import { DokumentTre } from "~/saker/filer/DokumentTre";
 import type { DokumentInnhold } from "~/saker/filer/typer";
 import { formaterRelativTid } from "~/utils/date-utils";
 import { DokumentEditor } from "./DokumentEditor";
 import { DokumentTittel } from "./DokumentTittel";
 import { action, loader } from "./DokumentSide.server";
+import { SlettDokumentModal } from "./SlettDokumentModal";
 import { useAutolagring, type Autolagringsdata, type LagreStatus } from "./useAutolagring";
+import { useDokumentSletting } from "./useDokumentSletting";
 
 export { action, loader };
 
@@ -50,14 +53,16 @@ function LagreStatusVisning({
   );
 }
 
-type DokumentData = Awaited<ReturnType<typeof loader>>["dokument"];
+type LoaderData = Awaited<ReturnType<typeof loader>>;
 
 function DokumentRedigering({
   dokument,
+  dokumenter,
   sakReferanse,
   kanRedigere,
 }: {
-  dokument: DokumentData;
+  dokument: LoaderData["dokument"];
+  dokumenter: LoaderData["dokumenter"];
   sakReferanse: string;
   kanRedigere: boolean;
 }) {
@@ -65,6 +70,14 @@ function DokumentRedigering({
   const tittelRef = useRef(dokument.tittel);
   const innholdRef = useRef<DokumentInnhold>(dokument.innhold);
   const navigate = useNavigate();
+
+  const sakUrl = RouteConfig.SAKER_DETALJ.replace(":sakId", sakReferanse);
+  const sletting = useDokumentSletting({
+    sakId: sakReferanse,
+    kilde: "dokumentside",
+    // Etter sletting finnes ikke dokumentet lenger – send saksbehandleren tilbake til saken.
+    onSlettet: () => navigate(sakUrl),
+  });
 
   const lagreUrl = RouteConfig.SAKER_DOKUMENT.replace(":sakId", sakReferanse).replace(
     ":docId",
@@ -109,7 +122,7 @@ function DokumentRedigering({
     <>
       <title>{`${tittel || "Uten tittel"} – Sak ${sakReferanse} – Watson Sak`}</title>
       <VStack gap="space-12" className="mt-4 mb-8">
-        <div>
+        <HStack justify="space-between" align="center" gap="space-4" wrap>
           <Button
             type="button"
             variant="tertiary"
@@ -119,7 +132,50 @@ function DokumentRedigering({
           >
             Tilbake
           </Button>
-        </div>
+
+          <HStack gap="space-2" align="center" wrap>
+            <Dialog>
+              <Dialog.Trigger>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="small"
+                  icon={<FilesIcon aria-hidden />}
+                >
+                  Se andre dokumenter
+                </Button>
+              </Dialog.Trigger>
+              <Dialog.Popup position="right" width="medium">
+                <Dialog.Header>
+                  <Dialog.Title>
+                    <Heading level="2" size="small">
+                      Dokumenter
+                    </Heading>
+                  </Dialog.Title>
+                </Dialog.Header>
+                <Dialog.Body>
+                  {dokumenter.length > 0 ? (
+                    <DokumentTre noder={dokumenter} sakId={sakReferanse} />
+                  ) : (
+                    <Detail className="text-ax-text-neutral-subtle">Ingen andre dokumenter.</Detail>
+                  )}
+                </Dialog.Body>
+              </Dialog.Popup>
+            </Dialog>
+
+            {kanRedigere && (
+              <Button
+                type="button"
+                variant="tertiary"
+                size="small"
+                icon={<TrashIcon aria-hidden />}
+                onClick={() => sletting.start({ id: dokument.id, tittel })}
+              >
+                Slett dokument
+              </Button>
+            )}
+          </HStack>
+        </HStack>
 
         <Kort>
           <VStack gap="space-16">
@@ -134,12 +190,19 @@ function DokumentRedigering({
           </VStack>
         </Kort>
       </VStack>
+
+      <SlettDokumentModal
+        kandidat={sletting.kandidat}
+        sletter={sletting.sletter}
+        onBekreft={sletting.bekreft}
+        onAvbryt={sletting.avbryt}
+      />
     </>
   );
 }
 
 export default function DokumentSide() {
-  const { dokument, sakReferanse, kanRedigere } = useLoaderData<typeof loader>();
+  const { dokument, dokumenter, sakReferanse, kanRedigere } = useLoaderData<typeof loader>();
 
   // `key` på dokument-id sørger for at all lokal redigeringstilstand (tittel, innhold,
   // editor-instans og autolagring) nullstilles når man navigerer til et annet dokument
@@ -148,6 +211,7 @@ export default function DokumentSide() {
     <DokumentRedigering
       key={dokument.id}
       dokument={dokument}
+      dokumenter={dokumenter}
       sakReferanse={sakReferanse}
       kanRedigere={kanRedigere}
     />
