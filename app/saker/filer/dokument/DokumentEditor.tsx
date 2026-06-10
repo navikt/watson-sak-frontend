@@ -64,7 +64,7 @@ function Verktøylinje({
         align="center"
         gap="space-4"
         wrap
-        className="border-b border-ax-border-neutral-subtle pb-2 mb-2"
+        className="sticky top-0 z-10 bg-ax-bg-raised border-b border-ax-border-neutral-subtle py-2 mb-2"
       >
         <HStack gap="space-2" align="center" wrap role="toolbar" aria-label="Formatering">
           <VerktøyKnapp
