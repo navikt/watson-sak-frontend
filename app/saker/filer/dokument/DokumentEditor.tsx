@@ -60,14 +60,16 @@ function Verktøylinje({
   return (
     <FormaterContext.Provider value={onFormater}>
       {/* Den negative margen nuller ut den horisontale paddingen til dokumentkortet
-          (space-24 / space-64 ved md) slik at den festede verktøylinja går helt ut
-          til kantene, mens px-en justerer knappene tilbake på linje med teksten. */}
+          slik at den festede verktøylinja går helt ut til kantene, mens px-en
+          justerer knappene tilbake på linje med teksten. Vi bruker de samme Aksel
+          spacing-variablene som kortet (space-24 / space-64 ved md), så verdiene
+          ikke drifter fra hverandre om spacing-skalaen endres. */}
       <HStack
         justify="space-between"
         align="center"
         gap="space-4"
         wrap
-        className="sticky top-0 z-10 bg-ax-bg-raised border-b border-ax-border-neutral-subtle py-2 mb-2 -mx-6 px-6 md:-mx-16 md:px-16"
+        className="sticky top-0 z-10 bg-ax-bg-raised border-b border-ax-border-neutral-subtle py-2 mb-2 mx-[calc(var(--ax-space-24)_*_-1)] px-[var(--ax-space-24)] md:mx-[calc(var(--ax-space-64)_*_-1)] md:px-[var(--ax-space-64)]"
       >
         <HStack gap="space-2" align="center" wrap role="toolbar" aria-label="Formatering">
           <VerktøyKnapp
