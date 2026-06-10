@@ -59,12 +59,17 @@ function Verktøylinje({
 }) {
   return (
     <FormaterContext.Provider value={onFormater}>
+      {/* Den negative margen nuller ut den horisontale paddingen til dokumentkortet
+          slik at den festede verktøylinja går helt ut til kantene, mens px-en
+          justerer knappene tilbake på linje med teksten. Vi bruker de samme Aksel
+          spacing-variablene som kortet (space-24 / space-64 ved md), så verdiene
+          ikke drifter fra hverandre om spacing-skalaen endres. */}
       <HStack
         justify="space-between"
         align="center"
         gap="space-4"
         wrap
-        className="border-b border-ax-border-neutral-subtle pb-2 mb-2"
+        className="sticky top-0 z-10 bg-ax-bg-raised border-b border-ax-border-neutral-subtle py-2 mb-2 mx-[calc(var(--ax-space-24)_*_-1)] px-[var(--ax-space-24)] md:mx-[calc(var(--ax-space-64)_*_-1)] md:px-[var(--ax-space-64)]"
       >
         <HStack gap="space-2" align="center" wrap role="toolbar" aria-label="Formatering">
           <VerktøyKnapp
@@ -204,7 +209,7 @@ export function DokumentEditor({
         "aria-multiline": "true",
         "aria-label": "Dokumentinnhold",
         class:
-          "min-h-80 focus:outline-none [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg " +
+          "min-h-[60vh] focus:outline-none [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg " +
           "[&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
           "[&_blockquote]:border-l-4 [&_blockquote]:border-ax-border-neutral-subtle " +
           "[&_blockquote]:pl-4 [&_blockquote]:italic [&_p]:my-2 " +
