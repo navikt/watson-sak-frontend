@@ -126,7 +126,7 @@ function DokumentRedigering({
   return (
     <>
       <title>{`${tittel || "Uten tittel"} – Sak ${sakReferanse} – Watson Sak`}</title>
-      <VStack gap="space-12" className="mt-4 mb-8">
+      <VStack gap="space-12" className="mt-4 mb-8 mx-auto w-full max-w-[210mm]">
         <HStack justify="space-between" align="center" gap="space-4" wrap>
           <Button
             type="button"
@@ -189,7 +189,10 @@ function DokumentRedigering({
           </HStack>
         </HStack>
 
-        <Kort>
+        <Kort
+          padding={{ xs: "space-24", md: "space-64" }}
+          className="shadow-[var(--ax-shadow-dialog)]"
+        >
           <VStack gap="space-16">
             <DokumentTittel tittel={tittel} redigerbar={kanRedigere} onEndre={håndterTittel} />
 

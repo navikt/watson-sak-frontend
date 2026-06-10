@@ -204,7 +204,7 @@ export function DokumentEditor({
         "aria-multiline": "true",
         "aria-label": "Dokumentinnhold",
         class:
-          "min-h-80 focus:outline-none [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg " +
+          "min-h-[60vh] focus:outline-none [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg " +
           "[&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
           "[&_blockquote]:border-l-4 [&_blockquote]:border-ax-border-neutral-subtle " +
           "[&_blockquote]:pl-4 [&_blockquote]:italic [&_p]:my-2 " +
