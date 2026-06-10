@@ -59,12 +59,15 @@ function Verktøylinje({
 }) {
   return (
     <FormaterContext.Provider value={onFormater}>
+      {/* Den negative margen nuller ut den horisontale paddingen til dokumentkortet
+          (space-24 / space-64 ved md) slik at den festede verktøylinja går helt ut
+          til kantene, mens px-en justerer knappene tilbake på linje med teksten. */}
       <HStack
         justify="space-between"
         align="center"
         gap="space-4"
         wrap
-        className="sticky top-0 z-10 bg-ax-bg-raised border-b border-ax-border-neutral-subtle py-2 mb-2"
+        className="sticky top-0 z-10 bg-ax-bg-raised border-b border-ax-border-neutral-subtle py-2 mb-2 -mx-6 px-6 md:-mx-16 md:px-16"
       >
         <HStack gap="space-2" align="center" wrap role="toolbar" aria-label="Formatering">
           <VerktøyKnapp
