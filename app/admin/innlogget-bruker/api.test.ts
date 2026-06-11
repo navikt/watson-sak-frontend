@@ -1,4 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
+import { RouterContextProvider } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const testState = vi.hoisted(() => ({
@@ -35,7 +36,7 @@ describe("innlogget-bruker-api", () => {
     return {
       request: new Request("http://localhost/api/logged-in-user"),
       params: {},
-      context: {},
+      context: new RouterContextProvider(),
       pattern: "/api/logged-in-user",
       url: new URL("http://localhost/api/logged-in-user"),
     };
