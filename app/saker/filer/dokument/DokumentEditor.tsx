@@ -53,11 +53,9 @@ function VerktøyKnapp({ etikett, aktiv, onClick, children }: VerktøyKnappProps
 
 function Verktøylinje({
   editor,
-  slutt,
   onFormater,
 }: {
   editor: Editor;
-  slutt?: React.ReactNode;
   onFormater: (etikett: string) => void;
 }) {
   return (
@@ -173,7 +171,6 @@ function Verktøylinje({
             </>
           )}
         </HStack>
-        {slutt}
       </HStack>
     </FormaterContext.Provider>
   );
@@ -186,8 +183,6 @@ type DokumentEditorProps = {
   /** Brukes til å knytte «dokument formatert»-analytics til riktig dokument. */
   sakId: string;
   docId: string;
-  /** Innhold som vises til høyre i verktøylinjen (f.eks. lagrestatus). */
-  verktøylinjeSlutt?: React.ReactNode;
 };
 
 export function DokumentEditor({
@@ -196,7 +191,6 @@ export function DokumentEditor({
   onEndring,
   sakId,
   docId,
-  verktøylinjeSlutt,
 }: DokumentEditorProps) {
   const editor = useEditor({
     extensions: [StarterKit, TableKit.configure({ table: { resizable: true } })],
@@ -241,7 +235,6 @@ export function DokumentEditor({
       {redigerbar && (
         <Verktøylinje
           editor={editor}
-          slutt={verktøylinjeSlutt}
           onFormater={(format) => sporHendelse("dokument formatert", { sakId, docId, format })}
         />
       )}

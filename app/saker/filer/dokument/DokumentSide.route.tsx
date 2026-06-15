@@ -1,6 +1,7 @@
 import { ArrowLeftIcon, FilesIcon, TrashIcon } from "@navikt/aksel-icons";
 import { Button, Detail, Dialog, Heading, HStack, VStack } from "@navikt/ds-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { isRouteErrorResponse, useLoaderData, useNavigate, useParams } from "react-router";
 import { DokumentIkkeFunnet } from "~/feilhåndtering/DokumentIkkeFunnet";
 import { Kort } from "~/komponenter/Kort";
@@ -203,11 +204,17 @@ function DokumentRedigering({
               onEndring={håndterInnhold}
               sakId={sakReferanse}
               docId={dokument.id}
-              verktøylinjeSlutt={<LagreStatusVisning status={status} sistLagret={sistLagret} />}
             />
           </VStack>
         </Kort>
       </VStack>
+
+      {createPortal(
+        <div className="fixed bottom-0 right-0 px-4 py-2 bg-ax-bg-raised border-t border-l border-ax-border-neutral-subtle">
+          <LagreStatusVisning status={status} sistLagret={sistLagret} />
+        </div>,
+        document.body,
+      )}
 
       <SlettDokumentModal
         kandidat={sletting.kandidat}
