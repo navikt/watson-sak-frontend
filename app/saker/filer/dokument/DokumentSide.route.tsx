@@ -1,7 +1,8 @@
 import { ArrowLeftIcon, FilesIcon, TrashIcon } from "@navikt/aksel-icons";
 import { Button, Detail, Dialog, Heading, HStack, VStack } from "@navikt/ds-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useLoaderData, useNavigate } from "react-router";
+import { isRouteErrorResponse, useLoaderData, useNavigate, useParams } from "react-router";
+import { DokumentIkkeFunnet } from "~/feilhåndtering/DokumentIkkeFunnet";
 import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
 import { DokumentTre } from "~/saker/filer/DokumentTre";
@@ -23,12 +24,12 @@ function LagreStatusVisning({
   status: LagreStatus;
   sistLagret: Date | null;
 }) {
-  // Oppdater jevnlig så den relative tiden («for 32 sekunder siden») holder seg fersk
+  // Oppdater jevnlig så den relative tiden («for noen sekunder siden») holder seg fersk
   // mens dokumentet ligger åpent uten endringer.
   const [nå, setNå] = useState(() => Date.now());
   useEffect(() => {
     setNå(Date.now());
-    const id = setInterval(() => setNå(Date.now()), 15_000);
+    const id = setInterval(() => setNå(Date.now()), 5_000);
     return () => clearInterval(id);
   }, [sistLagret]);
 
@@ -202,11 +203,14 @@ function DokumentRedigering({
               onEndring={håndterInnhold}
               sakId={sakReferanse}
               docId={dokument.id}
-              verktøylinjeSlutt={<LagreStatusVisning status={status} sistLagret={sistLagret} />}
             />
           </VStack>
         </Kort>
       </VStack>
+
+      <div className="sticky bottom-0 flex justify-end px-[var(--ax-space-24)] py-2 bg-ax-bg-raised border-t border-ax-border-neutral-subtle">
+        <LagreStatusVisning status={status} sistLagret={sistLagret} />
+      </div>
 
       <SlettDokumentModal
         kandidat={sletting.kandidat}
@@ -233,4 +237,16 @@ export default function DokumentSide() {
       kanRedigere={kanRedigere}
     />
   );
+}
+
+export function ErrorBoundary({ error }: { error: unknown }) {
+  const { sakId } = useParams();
+  if (
+    isRouteErrorResponse(error) &&
+    error.status === 404 &&
+    error.data === "Dokument ikke funnet"
+  ) {
+    return <DokumentIkkeFunnet sakId={sakId} />;
+  }
+  throw error;
 }

@@ -5,7 +5,7 @@ import {
   NumberListIcon,
   TableIcon,
 } from "@navikt/aksel-icons";
-import { Button, HStack } from "@navikt/ds-react";
+import { Button, HStack, Tooltip } from "@navikt/ds-react";
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { TableKit } from "@tiptap/extension-table";
@@ -17,6 +17,7 @@ import {
   LeggTilRadIkon,
   SlettKolonneIkon,
   SlettRadIkon,
+  SlettTabellIkon,
 } from "./tabell-ikoner";
 
 /** Sporer hvilken formateringsknapp som brukes, knyttet til riktig dokument. */
@@ -32,29 +33,29 @@ type VerktøyKnappProps = {
 function VerktøyKnapp({ etikett, aktiv, onClick, children }: VerktøyKnappProps) {
   const onFormater = useContext(FormaterContext);
   return (
-    <Button
-      type="button"
-      size="small"
-      variant={aktiv ? "secondary" : "tertiary"}
-      aria-label={etikett}
-      aria-pressed={aktiv}
-      onClick={() => {
-        onFormater(etikett);
-        onClick();
-      }}
-    >
-      {children}
-    </Button>
+    <Tooltip content={etikett}>
+      <Button
+        type="button"
+        size="small"
+        variant={aktiv ? "secondary" : "tertiary"}
+        aria-label={etikett}
+        aria-pressed={aktiv}
+        onClick={() => {
+          onFormater(etikett);
+          onClick();
+        }}
+      >
+        {children}
+      </Button>
+    </Tooltip>
   );
 }
 
 function Verktøylinje({
   editor,
-  slutt,
   onFormater,
 }: {
   editor: Editor;
-  slutt?: React.ReactNode;
   onFormater: (etikett: string) => void;
 }) {
   return (
@@ -165,12 +166,11 @@ function Verktøylinje({
                 etikett="Slett tabell"
                 onClick={() => editor.chain().focus().deleteTable().run()}
               >
-                Slett tabell
+                <SlettTabellIkon aria-hidden />
               </VerktøyKnapp>
             </>
           )}
         </HStack>
-        {slutt}
       </HStack>
     </FormaterContext.Provider>
   );
@@ -183,8 +183,6 @@ type DokumentEditorProps = {
   /** Brukes til å knytte «dokument formatert»-analytics til riktig dokument. */
   sakId: string;
   docId: string;
-  /** Innhold som vises til høyre i verktøylinjen (f.eks. lagrestatus). */
-  verktøylinjeSlutt?: React.ReactNode;
 };
 
 export function DokumentEditor({
@@ -193,7 +191,6 @@ export function DokumentEditor({
   onEndring,
   sakId,
   docId,
-  verktøylinjeSlutt,
 }: DokumentEditorProps) {
   const editor = useEditor({
     extensions: [StarterKit, TableKit.configure({ table: { resizable: true } })],
@@ -238,7 +235,6 @@ export function DokumentEditor({
       {redigerbar && (
         <Verktøylinje
           editor={editor}
-          slutt={verktøylinjeSlutt}
           onFormater={(format) => sporHendelse("dokument formatert", { sakId, docId, format })}
         />
       )}
