@@ -50,7 +50,7 @@ export function formaterDato(isoDate: string): string {
  *
  * @example
  * formaterRelativTid(for3SekSiden) // "akkurat nå"
- * formaterRelativTid(for32SekSiden) // "for 32 sekunder siden"
+ * formaterRelativTid(for32SekSiden) // "for noen sekunder siden"
  * formaterRelativTid(for1TimeSiden) // "for 1 time siden"
  */
 export function formaterRelativTid(tidspunkt: Date, nå: Date = new Date()): string {

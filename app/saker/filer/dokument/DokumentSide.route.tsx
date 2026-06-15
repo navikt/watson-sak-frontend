@@ -24,7 +24,7 @@ function LagreStatusVisning({
   status: LagreStatus;
   sistLagret: Date | null;
 }) {
-  // Oppdater jevnlig så den relative tiden («for 32 sekunder siden») holder seg fersk
+  // Oppdater jevnlig så den relative tiden («for noen sekunder siden») holder seg fersk
   // mens dokumentet ligger åpent uten endringer.
   const [nå, setNå] = useState(() => Date.now());
   useEffect(() => {
@@ -241,7 +241,11 @@ export default function DokumentSide() {
 
 export function ErrorBoundary({ error }: { error: unknown }) {
   const { sakId } = useParams();
-  if (isRouteErrorResponse(error) && error.status === 404) {
+  if (
+    isRouteErrorResponse(error) &&
+    error.status === 404 &&
+    error.data === "Dokument ikke funnet"
+  ) {
     return <DokumentIkkeFunnet sakId={sakId} />;
   }
   throw error;

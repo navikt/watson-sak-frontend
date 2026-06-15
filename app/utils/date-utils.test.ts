@@ -18,6 +18,7 @@ describe("formaterRelativTid", () => {
   });
 
   it("viser «noen sekunder siden» mellom 5 og 59 sekunder", () => {
+    expect(formaterRelativTid(sekunderSiden(5), nå)).toBe("for noen sekunder siden");
     expect(formaterRelativTid(sekunderSiden(32), nå)).toBe("for noen sekunder siden");
     expect(formaterRelativTid(sekunderSiden(59), nå)).toBe("for noen sekunder siden");
   });
