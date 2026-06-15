@@ -138,61 +138,54 @@ function DokumentRedigering({
             Tilbake til saken
           </Button>
 
-          <HStack gap="space-4" align="center" wrap>
-            <LagreStatusVisning status={status} sistLagret={sistLagret} />
-            <HStack gap="space-2" align="center" wrap>
-              <Dialog>
-                <Dialog.Trigger>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="small"
-                    icon={<FilesIcon aria-hidden />}
-                  >
-                    Se andre dokumenter
-                  </Button>
-                </Dialog.Trigger>
-                <Dialog.Popup position="right" width="medium">
-                  <Dialog.Header>
-                    <Dialog.Title>
-                      <Heading level="2" size="small">
-                        Dokumenter
-                      </Heading>
-                    </Dialog.Title>
-                  </Dialog.Header>
-                  <Dialog.Body>
-                    {dokumenter.length > 0 ? (
-                      <DokumentTre
-                        noder={dokumenter}
-                        sakId={sakReferanse}
-                        redigerbar={kanRedigere}
-                        fremhevetId={dokument.id}
-                        redirectVedSletting={(docId) =>
-                          docId === dokument.id ? sakUrl : undefined
-                        }
-                      />
-                    ) : (
-                      <Detail className="text-ax-text-neutral-subtle">
-                        Ingen andre dokumenter.
-                      </Detail>
-                    )}
-                  </Dialog.Body>
-                </Dialog.Popup>
-              </Dialog>
-
-              {kanRedigere && (
+          <HStack gap="space-2" align="center" wrap>
+            <Dialog>
+              <Dialog.Trigger>
                 <Button
                   type="button"
-                  variant="tertiary"
-                  data-color="danger"
+                  variant="secondary"
                   size="small"
-                  icon={<TrashIcon aria-hidden />}
-                  onClick={() => sletting.start({ id: dokument.id, tittel })}
+                  icon={<FilesIcon aria-hidden />}
                 >
-                  Slett dokument
+                  Se andre dokumenter
                 </Button>
-              )}
-            </HStack>
+              </Dialog.Trigger>
+              <Dialog.Popup position="right" width="medium">
+                <Dialog.Header>
+                  <Dialog.Title>
+                    <Heading level="2" size="small">
+                      Dokumenter
+                    </Heading>
+                  </Dialog.Title>
+                </Dialog.Header>
+                <Dialog.Body>
+                  {dokumenter.length > 0 ? (
+                    <DokumentTre
+                      noder={dokumenter}
+                      sakId={sakReferanse}
+                      redigerbar={kanRedigere}
+                      fremhevetId={dokument.id}
+                      redirectVedSletting={(docId) => (docId === dokument.id ? sakUrl : undefined)}
+                    />
+                  ) : (
+                    <Detail className="text-ax-text-neutral-subtle">Ingen andre dokumenter.</Detail>
+                  )}
+                </Dialog.Body>
+              </Dialog.Popup>
+            </Dialog>
+
+            {kanRedigere && (
+              <Button
+                type="button"
+                variant="tertiary"
+                data-color="danger"
+                size="small"
+                icon={<TrashIcon aria-hidden />}
+                onClick={() => sletting.start({ id: dokument.id, tittel })}
+              >
+                Slett dokument
+              </Button>
+            )}
           </HStack>
         </HStack>
 
@@ -209,6 +202,7 @@ function DokumentRedigering({
               onEndring={håndterInnhold}
               sakId={sakReferanse}
               docId={dokument.id}
+              verktøylinjeSlutt={<LagreStatusVisning status={status} sistLagret={sistLagret} />}
             />
           </VStack>
         </Kort>
