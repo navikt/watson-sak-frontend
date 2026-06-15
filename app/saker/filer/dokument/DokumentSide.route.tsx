@@ -28,7 +28,7 @@ function LagreStatusVisning({
   const [nå, setNå] = useState(() => Date.now());
   useEffect(() => {
     setNå(Date.now());
-    const id = setInterval(() => setNå(Date.now()), 1_000);
+    const id = setInterval(() => setNå(Date.now()), 5_000);
     return () => clearInterval(id);
   }, [sistLagret]);
 
