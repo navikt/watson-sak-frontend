@@ -208,7 +208,7 @@ function DokumentRedigering({
         </Kort>
       </VStack>
 
-      <div className="sticky bottom-0 flex justify-end px-6 py-2 bg-ax-bg-raised border-t border-ax-border-neutral-subtle">
+      <div className="sticky bottom-0 flex justify-end px-[var(--ax-space-24)] py-2 bg-ax-bg-raised border-t border-ax-border-neutral-subtle">
         <LagreStatusVisning status={status} sistLagret={sistLagret} />
       </div>
 
