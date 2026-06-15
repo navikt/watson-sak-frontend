@@ -1,7 +1,8 @@
 import { ArrowLeftIcon, FilesIcon, TrashIcon } from "@navikt/aksel-icons";
 import { Button, Detail, Dialog, Heading, HStack, VStack } from "@navikt/ds-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useLoaderData, useNavigate } from "react-router";
+import { isRouteErrorResponse, useLoaderData, useNavigate, useParams } from "react-router";
+import { DokumentIkkeFunnet } from "~/feilhåndtering/DokumentIkkeFunnet";
 import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
 import { DokumentTre } from "~/saker/filer/DokumentTre";
@@ -233,4 +234,12 @@ export default function DokumentSide() {
       kanRedigere={kanRedigere}
     />
   );
+}
+
+export function ErrorBoundary({ error }: { error: unknown }) {
+  const { sakId } = useParams();
+  if (isRouteErrorResponse(error) && error.status === 404) {
+    return <DokumentIkkeFunnet sakId={sakId} />;
+  }
+  throw error;
 }
