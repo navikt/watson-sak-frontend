@@ -1,6 +1,7 @@
 import { BodyShort, Box, Heading, List, Link as NavLink, VStack } from "@navikt/ds-react";
 import { ListItem } from "@navikt/ds-react/List";
 import { Link } from "react-router";
+import { useMiljø } from "~/miljø/useMiljø";
 import { RouteConfig } from "~/routeConfig";
 
 type Props = {
@@ -8,10 +9,12 @@ type Props = {
 };
 
 export function DokumentIkkeFunnet({ sakId }: Props) {
+  const miljø = useMiljø();
   const sakUrl = sakId ? RouteConfig.SAKER_DETALJ.replace(":sakId", sakId) : null;
 
   return (
     <Box paddingBlock="space-80 space-64" data-aksel-template="404-v2">
+      <title>{`Dokument ikke funnet – Watson Sak${miljø !== "prod" ? ` (${miljø})` : ""}`}</title>
       <VStack gap="space-16">
         <VStack gap="space-12" align="start">
           <div>
