@@ -167,10 +167,14 @@ function DokumentRedigering({
                         sakId={sakReferanse}
                         redigerbar={kanRedigere}
                         fremhevetId={dokument.id}
-                        redirectVedSletting={(docId) => (docId === dokument.id ? sakUrl : undefined)}
+                        redirectVedSletting={(docId) =>
+                          docId === dokument.id ? sakUrl : undefined
+                        }
                       />
                     ) : (
-                      <Detail className="text-ax-text-neutral-subtle">Ingen andre dokumenter.</Detail>
+                      <Detail className="text-ax-text-neutral-subtle">
+                        Ingen andre dokumenter.
+                      </Detail>
                     )}
                   </Dialog.Body>
                 </Dialog.Popup>
