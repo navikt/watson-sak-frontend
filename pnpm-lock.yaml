@@ -6,8 +6,8 @@ settings:
 
 overrides:
   protobufjs: 8.0.2
-  esbuild: '>=0.28.1'
-  shell-quote: '>=1.8.4'
+  esbuild: 0.28.1
+  shell-quote: 1.8.4
 
 importers:
 
@@ -3368,7 +3368,7 @@ packages:
     peerDependencies:
       '@types/node': ^20.19.0 || >=22.12.0
       '@vitejs/devtools': ^0.1.18
-      esbuild: '>=0.28.1'
+      esbuild: 0.28.1
       jiti: '>=1.21.0'
       less: ^4.0.0
       sass: ^1.70.0
