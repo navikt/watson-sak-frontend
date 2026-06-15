@@ -50,11 +50,9 @@ function VerktøyKnapp({ etikett, aktiv, onClick, children }: VerktøyKnappProps
 
 function Verktøylinje({
   editor,
-  slutt,
   onFormater,
 }: {
   editor: Editor;
-  slutt?: React.ReactNode;
   onFormater: (etikett: string) => void;
 }) {
   return (
@@ -65,8 +63,6 @@ function Verktøylinje({
           spacing-variablene som kortet (space-24 / space-64 ved md), så verdiene
           ikke drifter fra hverandre om spacing-skalaen endres. */}
       <HStack
-        justify="space-between"
-        align="center"
         gap="space-4"
         wrap
         className="sticky top-0 z-10 bg-ax-bg-raised border-b border-ax-border-neutral-subtle py-2 mb-2 mx-[calc(var(--ax-space-24)_*_-1)] px-[var(--ax-space-24)] md:mx-[calc(var(--ax-space-64)_*_-1)] md:px-[var(--ax-space-64)]"
@@ -170,7 +166,6 @@ function Verktøylinje({
             </>
           )}
         </HStack>
-        {slutt}
       </HStack>
     </FormaterContext.Provider>
   );
@@ -183,8 +178,6 @@ type DokumentEditorProps = {
   /** Brukes til å knytte «dokument formatert»-analytics til riktig dokument. */
   sakId: string;
   docId: string;
-  /** Innhold som vises til høyre i verktøylinjen (f.eks. lagrestatus). */
-  verktøylinjeSlutt?: React.ReactNode;
 };
 
 export function DokumentEditor({
@@ -193,7 +186,6 @@ export function DokumentEditor({
   onEndring,
   sakId,
   docId,
-  verktøylinjeSlutt,
 }: DokumentEditorProps) {
   const editor = useEditor({
     extensions: [StarterKit, TableKit.configure({ table: { resizable: true } })],
@@ -238,7 +230,6 @@ export function DokumentEditor({
       {redigerbar && (
         <Verktøylinje
           editor={editor}
-          slutt={verktøylinjeSlutt}
           onFormater={(format) => sporHendelse("dokument formatert", { sakId, docId, format })}
         />
       )}
