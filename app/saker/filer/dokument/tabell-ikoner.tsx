@@ -50,6 +50,12 @@ const pluss = (
 const minus = (
   <path d="M14.5 18H21.5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
 );
+const kryss = (
+  <>
+    <path d="M14.5 14.5L21.5 21.5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+    <path d="M21.5 14.5L14.5 21.5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+  </>
+);
 
 export function LeggTilKolonneIkon(props: SVGProps<SVGSVGElement>) {
   return (
@@ -87,6 +93,15 @@ export function SlettRadIkon(props: SVGProps<SVGSVGElement>) {
       {rutenett}
       {horisontaleStreker}
       {minus}
+    </TabellIkon>
+  );
+}
+
+export function SlettTabellIkon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <TabellIkon {...props}>
+      {rutenett}
+      {kryss}
     </TabellIkon>
   );
 }

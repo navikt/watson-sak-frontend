@@ -5,7 +5,7 @@ import {
   NumberListIcon,
   TableIcon,
 } from "@navikt/aksel-icons";
-import { Button, HStack } from "@navikt/ds-react";
+import { Button, HStack, Tooltip } from "@navikt/ds-react";
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { TableKit } from "@tiptap/extension-table";
@@ -17,6 +17,7 @@ import {
   LeggTilRadIkon,
   SlettKolonneIkon,
   SlettRadIkon,
+  SlettTabellIkon,
 } from "./tabell-ikoner";
 
 /** Sporer hvilken formateringsknapp som brukes, knyttet til riktig dokument. */
@@ -32,19 +33,21 @@ type VerktøyKnappProps = {
 function VerktøyKnapp({ etikett, aktiv, onClick, children }: VerktøyKnappProps) {
   const onFormater = useContext(FormaterContext);
   return (
-    <Button
-      type="button"
-      size="small"
-      variant={aktiv ? "secondary" : "tertiary"}
-      aria-label={etikett}
-      aria-pressed={aktiv}
-      onClick={() => {
-        onFormater(etikett);
-        onClick();
-      }}
-    >
-      {children}
-    </Button>
+    <Tooltip content={etikett}>
+      <Button
+        type="button"
+        size="small"
+        variant={aktiv ? "secondary" : "tertiary"}
+        aria-label={etikett}
+        aria-pressed={aktiv}
+        onClick={() => {
+          onFormater(etikett);
+          onClick();
+        }}
+      >
+        {children}
+      </Button>
+    </Tooltip>
   );
 }
 
@@ -165,7 +168,7 @@ function Verktøylinje({
                 etikett="Slett tabell"
                 onClick={() => editor.chain().focus().deleteTable().run()}
               >
-                Slett tabell
+                <SlettTabellIkon aria-hidden />
               </VerktøyKnapp>
             </>
           )}
