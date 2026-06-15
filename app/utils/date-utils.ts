@@ -64,7 +64,7 @@ export function formaterRelativTid(tidspunkt: Date, nå: Date = new Date()): str
     return "akkurat nå";
   }
   if (diffSek < 60) {
-    return "noen sekunder siden";
+    return "for noen sekunder siden";
   }
   const diffMin = Math.floor(diffSek / 60);
   if (diffMin < 60) {
