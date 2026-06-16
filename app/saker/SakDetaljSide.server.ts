@@ -223,6 +223,7 @@ async function backendAction(
   formData: FormData,
 ): Promise<ActionResult> {
   const token = await getBackendOboToken(request);
+  let sakFraTilgangskontroll: Route.ComponentProps["loaderData"]["sak"] | undefined;
 
   if (!erTildelingshandling(handling)) {
     const innlogget = await hentInnloggetBruker({ request });
@@ -230,6 +231,7 @@ async function backendAction(
     if (nåværendeSak.saksbehandlere.eier?.navIdent !== innlogget.navIdent) {
       throw data("Du må være tildelt saken for å utføre denne handlingen", { status: 403 });
     }
+    sakFraTilgangskontroll = nåværendeSak;
   }
 
   switch (handling) {
@@ -261,7 +263,8 @@ async function backendAction(
         henleggelsesarsak = parsed.data;
       }
 
-      const nåværendeSak = await backendApi.hentKontrollsak(token, sakId);
+      const nåværendeSak =
+        sakFraTilgangskontroll ?? (await backendApi.hentKontrollsak(token, sakId));
       if (handling === "endre_status" && nyStatus === nåværendeSak.status) {
         throw data("Status er uendret", { status: 400 });
       }

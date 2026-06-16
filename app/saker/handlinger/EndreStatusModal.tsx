@@ -142,12 +142,21 @@ export function EndreStatusModal({
   useEffect(() => {
     if (åpen && !forrigeÅpen.current) {
       sporHendelse("endre status dialog åpnet");
+      statusControl.change(nåværendeStatus);
+      blokkertControl.change(nåværendeBlokkering ?? "AKTIV");
       setValgtHenleggelsesarsak(
         nåværendeStatus === "HENLAGT" ? (nåværendeHenleggelsesarsak ?? "") : "",
       );
     }
     forrigeÅpen.current = åpen;
-  }, [åpen, nåværendeHenleggelsesarsak, nåværendeStatus]);
+  }, [
+    åpen,
+    nåværendeBlokkering,
+    nåværendeHenleggelsesarsak,
+    nåværendeStatus,
+    blokkertControl,
+    statusControl,
+  ]);
 
   useEffect(() => {
     if (!submitPågår.current || fetcher.state !== "idle") {
@@ -176,7 +185,8 @@ export function EndreStatusModal({
               <input
                 key={fields.status.key}
                 name={fields.status.name}
-                defaultValue={nåværendeStatus}
+                value={valgtStatus}
+                readOnly
                 hidden
                 tabIndex={-1}
                 onFocus={() => statusControl.focus()}
@@ -233,7 +243,8 @@ export function EndreStatusModal({
               <input
                 key={fields.blokkert.key}
                 name={fields.blokkert.name}
-                defaultValue={nåværendeBlokkering ?? "AKTIV"}
+                value={valgtBlokkering}
+                readOnly
                 hidden
                 tabIndex={-1}
                 onFocus={() => blokkertControl.focus()}
