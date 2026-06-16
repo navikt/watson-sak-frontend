@@ -176,7 +176,7 @@ export function EndreStatusModal({
       open={åpen}
       onClose={handleLukk}
       header={{ heading: "Endre status", icon: <PencilIcon aria-hidden /> }}
-      width="small"
+      width="medium"
     >
       <fetcher.Form method="post" {...getFormProps(form)}>
         <Modal.Body>
@@ -233,6 +233,7 @@ export function EndreStatusModal({
                   ))}
                 </Select>
               ) : null}
+              <hr className="border-ax-border-neutral-subtle" />
               {visAvsluttetAdvarsel ? (
                 <InfoCard size="small" data-color="warning">
                   <InfoCard.Message icon={<ExclamationmarkTriangleIcon aria-hidden />}>
@@ -267,6 +268,7 @@ export function EndreStatusModal({
                       </Radio>
                     ))}
                   </RadioGroup>
+                  <hr className="border-ax-border-neutral-subtle" />
                 </>
               ) : null}
             </VStack>
