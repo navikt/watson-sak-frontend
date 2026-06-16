@@ -1,4 +1,8 @@
-import { FilePdfIcon, MenuElipsisVerticalIcon, TrashIcon } from "@navikt/aksel-icons";
+import {
+  FilePdfIcon,
+  MenuElipsisVerticalIcon,
+  TrashIcon,
+} from "@navikt/aksel-icons";
 import { ActionMenu, BodyShort, Button, Detail } from "@navikt/ds-react";
 import { Link } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
@@ -34,7 +38,11 @@ function DokumentHandlinger({
         <ActionMenu.Item
           icon={<FilePdfIcon aria-hidden />}
           onSelect={() =>
-            sporHendelse("dokument lastet ned", { sakId, docId: dokument.id, format: "pdf" })
+            sporHendelse("dokument lastet ned", {
+              sakId,
+              docId: dokument.id,
+              format: "pdf",
+            })
           }
         >
           Last ned som PDF
@@ -69,19 +77,21 @@ function DokumentRad({
   redigerbar: boolean;
   onSlett: (dokument: DokumentNode) => void;
 }) {
-  const dokumentUrl = RouteConfig.SAKER_DOKUMENT.replace(":sakId", sakId).replace(
-    ":docId",
-    node.id,
-  );
+  const dokumentUrl = RouteConfig.SAKER_DOKUMENT.replace(
+    ":sakId",
+    sakId,
+  ).replace(":docId", node.id);
   const erFremhevet = fremhevetId === node.id;
 
   return (
-    <li className="flex items-center gap-2 py-2">
+    <li className="flex items-center gap-2">
       <Link
         to={dokumentUrl}
         aria-current={erFremhevet ? "page" : undefined}
         className={`flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 no-underline transition-colors text-ax-text-default ${
-          erFremhevet ? "bg-ax-bg-neutral-moderate-hover" : "hover:bg-ax-bg-neutral-moderate-hover"
+          erFremhevet
+            ? "bg-ax-bg-neutral-moderate-hover"
+            : "hover:bg-ax-bg-neutral-moderate-hover"
         }`}
       >
         <DokumentIkon aria-hidden className="shrink-0 text-ax-icon-info" />
