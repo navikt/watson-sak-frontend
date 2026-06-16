@@ -108,6 +108,9 @@ export function EndreStatusModal({
       if (nyStatus !== "AVSLUTTET") {
         formData.set("blokkert", arbeidsstatus);
       }
+      if (nyStatus === "HENLAGT") {
+        formData.set("henleggelsesarsak", valgtHenleggelsesarsak);
+      }
       submitPågår.current = true;
       fetcher.submit(formData, {
         method: "post",

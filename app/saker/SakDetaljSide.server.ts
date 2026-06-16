@@ -292,12 +292,21 @@ async function backendAction(
       }
 
       if (skalEndreBlokkering) {
-        sak = await backendApi.endreBlokkering(
+        const sakEtterStatus = sak;
+        const sakEtterBlokkering = await backendApi.endreBlokkering(
           token,
           sakId,
           ønsketBlokkering,
           !skalEndreStatus ? (beskrivelse ?? undefined) : undefined,
         );
+        sak = skalEndreStatus
+          ? {
+              ...sakEtterBlokkering,
+              status: sakEtterStatus.status,
+              henleggelsesarsak:
+                sakEtterStatus.henleggelsesarsak ?? sakEtterBlokkering.henleggelsesarsak,
+            }
+          : sakEtterBlokkering;
       }
 
       return { ok: true, sak };
