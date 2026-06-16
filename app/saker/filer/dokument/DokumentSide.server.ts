@@ -1,16 +1,45 @@
 import { data } from "react-router";
+import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
+import * as backendApi from "~/saker/api.server";
 import type { DokumentInnhold } from "~/saker/filer/typer";
 import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
 import { hentDokument, hentDokumenttreForSak, lagreDokument } from "../mock-data.server";
+import { erAktivSakKontrollsak } from "../../handlinger/tilgjengeligeHandlinger";
 import type { Route } from "./+types/DokumentSide.route";
-
-const dokumenterIkkeTilgjengelig = "Dokumenter er ikke tilgjengelig ennå";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   if (!skalBrukeMockdata) {
-    throw data(dokumenterIkkeTilgjengelig, { status: 501 });
+    const sakReferanse = params.sakId;
+    const docId = params.docId;
+    if (!sakReferanse || !docId) {
+      throw data("Mangler sak eller dokument", { status: 400 });
+    }
+
+    const token = await getBackendOboToken(request);
+    const [sak, dokument, innlogget] = await Promise.all([
+      backendApi.hentKontrollsak(token, sakReferanse),
+      backendApi.hentDokument(token, sakReferanse, docId),
+      hentInnloggetBruker({ request }),
+    ]);
+
+    const kanSe =
+      sak.saksbehandlere.eier?.navIdent === innlogget.navIdent ||
+      sak.saksbehandlere.deltMed.some(
+        (saksbehandler) => saksbehandler.navIdent === innlogget.navIdent,
+      );
+
+    if (!kanSe) {
+      throw data("Ingen tilgang til denne saken", { status: 403 });
+    }
+
+    return {
+      dokument,
+      dokumenter: sak.dokumenter ?? [],
+      sakReferanse,
+      kanRedigere: kanSe && erAktivSakKontrollsak(sak.status),
+    };
   }
 
   const tilgang = await hentSakstilgangFraMock(request, params.sakId);
@@ -51,7 +80,33 @@ function erGyldigInnhold(verdi: unknown): verdi is DokumentInnhold {
 
 export async function action({ request, params }: Route.ActionArgs) {
   if (!skalBrukeMockdata) {
-    throw data(dokumenterIkkeTilgjengelig, { status: 501 });
+    if (request.method !== "PUT") {
+      throw data("Metoden støttes ikke", { status: 405 });
+    }
+
+    const sakReferanse = params.sakId;
+    const docId = params.docId;
+    if (!sakReferanse || !docId) {
+      throw data("Mangler sak eller dokument", { status: 400 });
+    }
+
+    const token = await getBackendOboToken(request);
+    let kropp: { tittel?: unknown; innhold?: unknown };
+    try {
+      kropp = (await request.json()) as { tittel?: unknown; innhold?: unknown };
+    } catch {
+      throw data("Ugyldig JSON i forespørselen", { status: 400 });
+    }
+    if (!erGyldigInnhold(kropp.innhold)) {
+      throw data("Ugyldig dokumentinnhold", { status: 400 });
+    }
+
+    const oppdatert = await backendApi.lagreDokument(token, sakReferanse, docId, {
+      tittel: normaliserTittel(kropp.tittel),
+      innhold: kropp.innhold,
+    });
+
+    return { ok: true as const, tittel: oppdatert.tittel, endretDato: oppdatert.endretDato };
   }
   if (request.method !== "PUT") {
     throw data("Metoden støttes ikke", { status: 405 });

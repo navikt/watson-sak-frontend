@@ -1,7 +1,9 @@
 import { data, redirect, type ActionFunctionArgs } from "react-router";
+import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
 import { RouteConfig } from "~/routeConfig";
+import * as backendApi from "~/saker/api.server";
 import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
 import { opprettDokument, slettDokument } from "../mock-data.server";
 
@@ -19,12 +21,38 @@ export async function action({ request, params }: ActionFunctionArgs) {
     throw data("Mangler sak", { status: 400 });
   }
 
-  if (!skalBrukeMockdata) {
-    throw data("Dokumenter er ikke tilgjengelig ennå", { status: 501 });
-  }
-
   if (request.method !== "POST" && request.method !== "DELETE") {
     throw data("Metoden støttes ikke", { status: 405 });
+  }
+
+  if (!skalBrukeMockdata) {
+    const token = await getBackendOboToken(request);
+
+    if (request.method === "DELETE") {
+      const formData = await request.formData();
+      const docId = formData.get("docId");
+      if (typeof docId !== "string" || !docId) {
+        throw data("Mangler dokument-id", { status: 400 });
+      }
+
+      await backendApi.slettDokument(token, sakReferanse, docId);
+
+      const redirectTo = formData.get("redirectTo");
+      if (
+        typeof redirectTo === "string" &&
+        redirectTo.startsWith("/") &&
+        !redirectTo.startsWith("//")
+      ) {
+        return redirect(redirectTo);
+      }
+      return { ok: true as const };
+    }
+
+    const opprettet = await backendApi.opprettDokument(token, sakReferanse);
+    if (!opprettet.id) {
+      throw data("Kunne ikke opprette dokument", { status: 502 });
+    }
+    return redirect(byggDokumentUrl(sakReferanse, opprettet.id));
   }
 
   const tilgang = await hentSakstilgangFraMock(request, sakReferanse);
@@ -63,5 +91,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const innlogget = await hentInnloggetBruker({ request });
   const { id } = opprettDokument(request, String(tilgang.sak.id), innlogget.name);
 
-  return redirect(RouteConfig.SAKER_DOKUMENT.replace(":sakId", sakReferanse).replace(":docId", id));
+  return redirect(byggDokumentUrl(sakReferanse, id));
+}
+
+function byggDokumentUrl(sakReferanse: string, docId: string): string {
+  return RouteConfig.SAKER_DOKUMENT.replace(":sakId", sakReferanse).replace(":docId", docId);
 }

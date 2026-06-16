@@ -1,8 +1,11 @@
+import { data } from "react-router";
 import { z } from "zod";
 import { BACKEND_API_URL } from "~/config/env.server";
 import { logger } from "~/logging/logging";
+import type { Dokument, DokumentInnhold, DokumentNode } from "~/saker/filer/typer";
 import {
   kontrollsakHendelseResponseSchema,
+  dokumentNodeSchema,
   kontrollsakResponseSchema,
   type Blokkeringsarsak,
   type Henleggelsesarsak,
@@ -26,6 +29,16 @@ const journalpostReferanseSchema = z.object({
   opprettet: z.string(),
 });
 
+const dokumentInnholdSchema: z.ZodType<DokumentInnhold> = z
+  .object({
+    type: z.string(),
+  })
+  .passthrough();
+
+const dokumentResponseSchema = dokumentNodeSchema.extend({
+  innhold: dokumentInnholdSchema,
+});
+
 function apiUrl(sti: string): string {
   if (!BACKEND_API_URL) {
     throw new Error(`Mangler backend-URL for kall til ${sti}`);
@@ -46,6 +59,12 @@ async function håndterFeil(respons: Response, beskrivelse: string): Promise<nev
   throw new Error(beskrivelse);
 }
 
+function kastHvisIkkeFunnet(respons: Response): void {
+  if (respons.status === 404) {
+    throw data("Dokument ikke funnet", { status: 404 });
+  }
+}
+
 function parseEllerKastFeil<T>(schema: z.ZodType<T>, data: unknown, kontekst: string): T {
   const result = schema.safeParse(data);
   if (!result.success) {
@@ -61,6 +80,9 @@ export async function hentKontrollsak(token: string, sakId: string): Promise<Kon
   const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}`), {
     headers: authHeaders(token),
   });
+  if (respons.status === 404) {
+    throw data("Sak ikke funnet", { status: 404 });
+  }
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke hente kontrollsak");
   return parseEllerKastFeil(kontrollsakResponseSchema, await respons.json(), "hentKontrollsak");
 }
@@ -108,6 +130,15 @@ export async function hentJournalposter(token: string, sakId: string) {
     await respons.json(),
     "hentJournalposter",
   );
+}
+
+export async function hentDokument(token: string, sakId: string, docId: string): Promise<Dokument> {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/dokumenter/${docId}`), {
+    headers: authHeaders(token),
+  });
+  kastHvisIkkeFunnet(respons);
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke hente dokument");
+  return parseEllerKastFeil(dokumentResponseSchema, await respons.json(), "hentDokument");
 }
 
 // --- Handlinger ---
@@ -300,6 +331,40 @@ export async function opprettManuellHendelse(
     body: JSON.stringify({ tittel, beskrivelse, tidspunkt }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke opprette manuell hendelse");
+}
+
+export async function opprettDokument(token: string, sakId: string): Promise<DokumentNode> {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/dokumenter`), {
+    method: "POST",
+    headers: authHeaders(token),
+  });
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke opprette dokument");
+  return parseEllerKastFeil(dokumentNodeSchema, await respons.json(), "opprettDokument");
+}
+
+export async function lagreDokument(
+  token: string,
+  sakId: string,
+  docId: string,
+  data: Pick<Dokument, "tittel" | "innhold">,
+): Promise<Dokument> {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/dokumenter/${docId}`), {
+    method: "PUT",
+    headers: authHeaders(token),
+    body: JSON.stringify(data),
+  });
+  kastHvisIkkeFunnet(respons);
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke lagre dokument");
+  return parseEllerKastFeil(dokumentResponseSchema, await respons.json(), "lagreDokument");
+}
+
+export async function slettDokument(token: string, sakId: string, docId: string): Promise<void> {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/dokumenter/${docId}`), {
+    method: "DELETE",
+    headers: authHeaders(token),
+  });
+  kastHvisIkkeFunnet(respons);
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke slette dokument");
 }
 
 export async function redigerManuellHendelse(
