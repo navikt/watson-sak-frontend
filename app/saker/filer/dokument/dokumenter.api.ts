@@ -13,7 +13,6 @@ import { opprettDokument, slettDokument } from "../mock-data.server";
  * - POST oppretter et tomt dokument og redirecter saksbehandleren rett inn i editoren.
  * - DELETE sletter dokumentet med `docId` fra skjemadataene.
  *
- * Backend er ikke klar ennå, så funksjonen er foreløpig kun tilgjengelig med mockdata.
  */
 export async function action({ request, params }: ActionFunctionArgs) {
   const sakReferanse = params.sakId;

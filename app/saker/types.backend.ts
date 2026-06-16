@@ -146,10 +146,7 @@ export const kontrollsakResponseSchema = z
     henleggelsesarsak: sak.henleggelsesarsak ?? null,
   }));
 
-type DokumentNodeResponse = z.infer<typeof dokumentNodeSchema>;
-export type KontrollsakResponse = Omit<z.infer<typeof kontrollsakResponseSchema>, "dokumenter"> & {
-  dokumenter?: DokumentNodeResponse[];
-};
+export type KontrollsakResponse = z.infer<typeof kontrollsakResponseSchema>;
 
 export const kontrollsakPageResponseSchema = z.object({
   items: z.array(kontrollsakResponseSchema),

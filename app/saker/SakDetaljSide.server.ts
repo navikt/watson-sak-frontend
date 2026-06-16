@@ -154,7 +154,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       sak,
       historikk,
       journalposter,
-      dokumenter: sak.dokumenter ?? [],
+      dokumenter: sak.dokumenter,
       andreSaker,
       saksbehandlere: saksbehandlerDetaljer.map((sb) => sb.navn),
       saksbehandlerDetaljer,

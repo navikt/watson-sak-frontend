@@ -27,7 +27,7 @@ function DokumentHandlinger({
           variant="tertiary"
           size="small"
           icon={<MenuElipsisVerticalIcon aria-hidden />}
-          aria-label={`Handlinger for ${dokument.tittel}`}
+          aria-label={`Handlinger for ${dokument.tittel || "Uten tittel"}`}
         />
       </ActionMenu.Trigger>
       <ActionMenu.Content>
