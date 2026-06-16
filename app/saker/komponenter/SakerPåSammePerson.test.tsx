@@ -39,6 +39,7 @@ function lagKontrollsak(
     oppdatert: null,
     oppgaver: [],
     kobledeSaker: [],
+    dokumenter: [],
     ...overrides,
   };
 }

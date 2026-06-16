@@ -101,8 +101,7 @@ describe("mock-store dokumenter", () => {
     expect(hentDokumenttreForSak(state(), sakUtenDokumenter).some((n) => n.id === id)).toBe(false);
   });
 
-  it("sletter et dokument som ligger i en mappe", () => {
-    // «1-1» (Saksframlegg) ligger i mappen «Dokumentasjon» i seed-dataene.
+  it("sletter et seedet dokument på rot", () => {
     expect(hentDokument(state(), sakMedDokumenter, "1-1")).toBeDefined();
 
     const slettet = slettDokument(state(), sakMedDokumenter, "1-1");

@@ -78,6 +78,14 @@ const oppgaveKortSchema = z.object({
   opprettet: z.string(),
 });
 
+export const dokumentNodeSchema = z.object({
+  id: z.string(),
+  tittel: z.string(),
+  endretAv: z.string(),
+  endretDato: z.string(),
+  låsAv: z.string().nullable(),
+});
+
 const kontrollobjektSchema = z.object({
   personIdent: z.string(),
   navn: z.string(),
@@ -126,6 +134,7 @@ export const kontrollsakResponseSchema = z
       merking: z.array(z.string()).default([]),
       oppgaver: z.array(oppgaveKortSchema).default([]),
       kobledeSaker: z.array(z.number()).default([]),
+      dokumenter: z.array(dokumentNodeSchema).default([]),
       opprettet: z.string(),
       oppdatert: z.string().nullable(),
     }),
@@ -136,6 +145,8 @@ export const kontrollsakResponseSchema = z
     personNavn: kontrollobjekt.navn,
     henleggelsesarsak: sak.henleggelsesarsak ?? null,
   }));
+
+export type KontrollsakResponse = z.infer<typeof kontrollsakResponseSchema>;
 
 export const kontrollsakPageResponseSchema = z.object({
   items: z.array(kontrollsakResponseSchema),
@@ -163,7 +174,6 @@ export const kontrollsakHendelseResponseSchema = z.object({
 
 export type KontrollsakYtelse = z.infer<typeof kontrollsakYtelseSchema>;
 export type KontrollsakSaksbehandler = z.infer<typeof kontrollsakSaksbehandlerSchema>;
-export type KontrollsakResponse = z.infer<typeof kontrollsakResponseSchema>;
 export type KontrollsakPageResponse = z.infer<typeof kontrollsakPageResponseSchema>;
 export type KontrollsakStatus = z.infer<typeof kontrollsakStatusSchema>;
 export type Blokkeringsarsak = z.infer<typeof blokkeringsarsakSchema>;

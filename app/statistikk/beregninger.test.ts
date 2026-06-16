@@ -42,6 +42,7 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
     oppdatert: null,
     oppgaver: [],
     kobledeSaker: [],
+    dokumenter: [],
     ...overstyringer,
   };
 }

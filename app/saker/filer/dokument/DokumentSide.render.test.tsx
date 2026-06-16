@@ -25,8 +25,20 @@ vi.mock("~/analytics/analytics", () => ({
 const innhold: DokumentInnhold = { type: "doc", content: [{ type: "paragraph" }] };
 
 const dokumenter: DokumentNode[] = [
-  { id: "1", type: "dokument", tittel: "Saksframlegg", endretAv: "Ola", endretDato: "2026-02-15" },
-  { id: "2", type: "dokument", tittel: "Vedtak", endretAv: "Kari", endretDato: "2026-02-20" },
+  {
+    id: "1",
+    tittel: "Saksframlegg",
+    endretAv: "Ola",
+    endretDato: "2026-02-15",
+    låsAv: null,
+  },
+  {
+    id: "2",
+    tittel: "Vedtak",
+    endretAv: "Kari",
+    endretDato: "2026-02-20",
+    låsAv: null,
+  },
 ];
 
 function renderSide(kanRedigere: boolean) {
@@ -41,6 +53,7 @@ function renderSide(kanRedigere: boolean) {
           innhold,
           endretAv: "Ola",
           endretDato: "2026-02-15",
+          låsAv: null,
         },
         dokumenter,
         sakReferanse: "ABC-123",
