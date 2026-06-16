@@ -31,31 +31,54 @@ describe("EndreStatusModal", () => {
   beforeEach(() => {
     submitMock.mockClear();
   });
-  it("deaktiverer gjeldende status i listen", async () => {
+
+  it("viser saksstatusvalg i radiogruppe", () => {
     renderMedRouter(
       <EndreStatusModal
         sakId="00000000-0000-4000-8000-000000000001"
         nåværendeStatus="UTREDES"
+        nåværendeBlokkering={null}
+        nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
       />,
     );
 
-    const select = screen.getByLabelText("Ny status");
-    const utredesOption = screen.getByRole("option", { name: "Utredes" });
-
-    expect((utredesOption as HTMLOptionElement).disabled).toBe(true);
-
-    fireEvent.change(select, { target: { value: "UTREDES" } });
-
-    expect(submitMock).not.toHaveBeenCalled();
+    expect(screen.getByRole("radiogroup", { name: "Saksstatus" })).toBeDefined();
+    expect(screen.getByRole("radio", { name: "Opprettet" })).toBeDefined();
+    expect(screen.getByRole("radio", { name: "Utredes" })).toBeDefined();
+    expect(screen.getByRole("radio", { name: "Strafferettslig vurdering" })).toBeDefined();
+    expect(screen.getByRole("radio", { name: "Anmeldt" })).toBeDefined();
+    expect(screen.getByRole("radio", { name: "Henlagt" })).toBeDefined();
+    expect(screen.getByRole("radio", { name: "Avsluttet" })).toBeDefined();
   });
 
-  it("viser henleggelsesårsak når HENLAGT velges", () => {
+  it("viser arbeidsstatusvalg som standard", () => {
     renderMedRouter(
       <EndreStatusModal
         sakId="00000000-0000-4000-8000-000000000001"
         nåværendeStatus="UTREDES"
+        nåværendeBlokkering={null}
+        nåværendeHenleggelsesarsak={null}
+        åpen={true}
+        onClose={() => {}}
+      />,
+    );
+
+    expect(screen.getByRole("radiogroup", { name: "Arbeidsstatus" })).toBeDefined();
+    expect(screen.getByRole("radio", { name: "Aktiv" })).toBeDefined();
+    expect(screen.getByRole("radio", { name: "Venter på vedtak" })).toBeDefined();
+    expect(screen.getByRole("radio", { name: "Venter på informasjon" })).toBeDefined();
+    expect(screen.getByRole("radio", { name: "I bero" })).toBeDefined();
+  });
+
+  it("viser henleggelsesårsak når Henlagt velges", () => {
+    renderMedRouter(
+      <EndreStatusModal
+        sakId="00000000-0000-4000-8000-000000000001"
+        nåværendeStatus="UTREDES"
+        nåværendeBlokkering={null}
+        nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
       />,
@@ -63,8 +86,7 @@ describe("EndreStatusModal", () => {
 
     expect(screen.queryByLabelText("Henleggelsesårsak")).toBeNull();
 
-    const statusSelect = screen.getByLabelText("Ny status");
-    fireEvent.change(statusSelect, { target: { value: "HENLAGT" } });
+    fireEvent.click(screen.getByRole("radio", { name: "Henlagt" }));
 
     expect(screen.getByLabelText("Henleggelsesårsak")).toBeDefined();
     expect(screen.getByRole("option", { name: "Ikke kapasitet" })).toBeDefined();
@@ -77,44 +99,125 @@ describe("EndreStatusModal", () => {
       <EndreStatusModal
         sakId="00000000-0000-4000-8000-000000000001"
         nåværendeStatus="UTREDES"
+        nåværendeBlokkering={null}
+        nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
       />,
     );
 
-    const statusSelect = screen.getByLabelText("Ny status");
-    fireEvent.change(statusSelect, { target: { value: "HENLAGT" } });
+    fireEvent.click(screen.getByRole("radio", { name: "Henlagt" }));
     expect(screen.getByLabelText("Henleggelsesårsak")).toBeDefined();
 
-    fireEvent.change(statusSelect, { target: { value: "ANMELDT" } });
+    fireEvent.click(screen.getByRole("radio", { name: "Anmeldt" }));
     expect(screen.queryByLabelText("Henleggelsesårsak")).toBeNull();
   });
 
-  it("lar brukeren velge henleggelsesårsak og sende inn skjema med riktig data", () => {
+  it("skjuler arbeidsstatus og viser advarsel ved Avsluttet", () => {
     renderMedRouter(
       <EndreStatusModal
         sakId="00000000-0000-4000-8000-000000000001"
         nåværendeStatus="UTREDES"
+        nåværendeBlokkering={"I_BERO"}
+        nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
       />,
     );
 
-    const statusSelect = screen.getByLabelText("Ny status");
-    fireEvent.change(statusSelect, { target: { value: "HENLAGT" } });
+    fireEvent.click(screen.getByRole("radio", { name: "Avsluttet" }));
 
-    const arsakSelect = screen.getByLabelText("Henleggelsesårsak");
-    fireEvent.change(arsakSelect, { target: { value: "IKKE_KAPASITET" } });
+    expect(screen.queryByRole("radiogroup", { name: "Arbeidsstatus" })).toBeNull();
+    expect(
+      screen.getByText("Avsluttet er en endelig status – du kan ikke endre tilbake"),
+    ).toBeDefined();
+  });
 
-    expect((arsakSelect as HTMLSelectElement).value).toBe("IKKE_KAPASITET");
+  it("kan lagre når status settes til Avsluttet", () => {
+    renderMedRouter(
+      <EndreStatusModal
+        sakId="00000000-0000-4000-8000-000000000001"
+        nåværendeStatus="UTREDES"
+        nåværendeBlokkering={"I_BERO"}
+        nåværendeHenleggelsesarsak={null}
+        åpen={true}
+        onClose={() => {}}
+      />,
+    );
 
-    const lagreKnapp = screen.getByRole("button", { name: "Lagre" });
-    fireEvent.click(lagreKnapp);
+    fireEvent.click(screen.getByRole("radio", { name: "Avsluttet" }));
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+
+    expect(submitMock).toHaveBeenCalledOnce();
+    const formData = submitMock.mock.calls[0][0] as FormData;
+    expect(formData.get("status")).toBe("AVSLUTTET");
+    expect(formData.get("blokkert")).toBe("I_BERO");
+  });
+
+  it("viser feil ved henlagt uten henleggelsesårsak", () => {
+    renderMedRouter(
+      <EndreStatusModal
+        sakId="00000000-0000-4000-8000-000000000001"
+        nåværendeStatus="UTREDES"
+        nåværendeBlokkering={null}
+        nåværendeHenleggelsesarsak={null}
+        åpen={true}
+        onClose={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("radio", { name: "Henlagt" }));
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+
+    expect(screen.getByText("Du må velge henleggelsesårsak.")).toBeDefined();
+    expect(submitMock).not.toHaveBeenCalled();
+  });
+
+  it("sender inn samlet statusdialog med riktig payload", () => {
+    renderMedRouter(
+      <EndreStatusModal
+        sakId="00000000-0000-4000-8000-000000000001"
+        nåværendeStatus="UTREDES"
+        nåværendeBlokkering={null}
+        nåværendeHenleggelsesarsak={null}
+        åpen={true}
+        onClose={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("radio", { name: "Henlagt" }));
+    fireEvent.change(screen.getByLabelText("Henleggelsesårsak"), {
+      target: { value: "IKKE_KAPASITET" },
+    });
+    fireEvent.click(screen.getByRole("radio", { name: "Venter på informasjon" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
 
     expect(submitMock).toHaveBeenCalledOnce();
     const formData = submitMock.mock.calls[0][0] as FormData;
     expect(formData.get("status")).toBe("HENLAGT");
     expect(formData.get("henleggelsesarsak")).toBe("IKKE_KAPASITET");
-    expect(formData.get("handling")).toBe("endre_status");
+    expect(formData.get("handling")).toBe("endre_status_dialog");
+    expect(formData.get("blokkert")).toBe("VENTER_PA_INFORMASJON");
+  });
+
+  it("tillater no-op for henlagt med eksisterende henleggelsesårsak", () => {
+    renderMedRouter(
+      <EndreStatusModal
+        sakId="00000000-0000-4000-8000-000000000001"
+        nåværendeStatus="HENLAGT"
+        nåværendeBlokkering={null}
+        nåværendeHenleggelsesarsak="IKKE_KAPASITET"
+        åpen={true}
+        onClose={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+
+    expect(submitMock).toHaveBeenCalledOnce();
+    const formData = submitMock.mock.calls[0][0] as FormData;
+    expect(formData.get("status")).toBe("HENLAGT");
+    expect(formData.get("henleggelsesarsak")).toBe("IKKE_KAPASITET");
   });
 });

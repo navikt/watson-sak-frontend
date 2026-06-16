@@ -1,8 +1,4 @@
-import {
-  FilePdfIcon,
-  MenuElipsisVerticalIcon,
-  TrashIcon,
-} from "@navikt/aksel-icons";
+import { FilePdfIcon, MenuElipsisVerticalIcon, TrashIcon } from "@navikt/aksel-icons";
 import { ActionMenu, BodyShort, Button, Detail } from "@navikt/ds-react";
 import { Link } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
@@ -77,10 +73,10 @@ function DokumentRad({
   redigerbar: boolean;
   onSlett: (dokument: DokumentNode) => void;
 }) {
-  const dokumentUrl = RouteConfig.SAKER_DOKUMENT.replace(
-    ":sakId",
-    sakId,
-  ).replace(":docId", node.id);
+  const dokumentUrl = RouteConfig.SAKER_DOKUMENT.replace(":sakId", sakId).replace(
+    ":docId",
+    node.id,
+  );
   const erFremhevet = fremhevetId === node.id;
 
   return (
@@ -89,9 +85,7 @@ function DokumentRad({
         to={dokumentUrl}
         aria-current={erFremhevet ? "page" : undefined}
         className={`flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 no-underline transition-colors text-ax-text-default ${
-          erFremhevet
-            ? "bg-ax-bg-neutral-moderate-hover"
-            : "hover:bg-ax-bg-neutral-moderate-hover"
+          erFremhevet ? "bg-ax-bg-neutral-moderate-hover" : "hover:bg-ax-bg-neutral-moderate-hover"
         }`}
       >
         <DokumentIkon aria-hidden className="shrink-0 text-ax-icon-info" />

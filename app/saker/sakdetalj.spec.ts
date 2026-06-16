@@ -83,6 +83,34 @@ test.describe("Sakdetalj", () => {
     await expect(page.getByText("Arbeid", { exact: true })).toHaveCount(0);
   });
 
+  test("kan endre status og arbeidsstatus i samlet dialog", async ({ page }) => {
+    await page.getByRole("button", { name: "Endre status" }).click();
+
+    const dialog = page.getByRole("dialog", { name: "Endre status" });
+    await expect(dialog).toBeVisible();
+
+    await dialog.getByRole("radio", { name: "Anmeldt" }).click();
+    await dialog.getByRole("radio", { name: "Venter på informasjon" }).click();
+    await dialog.getByRole("button", { name: "Lagre" }).click();
+
+    await expect(dialog).not.toBeVisible();
+    await expect(page.locator(".aksel-tag", { hasText: "Anmeldt" })).toBeVisible();
+    await expect(page.locator(".aksel-tag", { hasText: "Venter på informasjon" })).toBeVisible();
+  });
+
+  test("krever henleggelsesårsak når status settes til henlagt", async ({ page }) => {
+    await page.getByRole("button", { name: "Endre status" }).click();
+
+    const dialog = page.getByRole("dialog", { name: "Endre status" });
+    await expect(dialog).toBeVisible();
+
+    await dialog.getByRole("radio", { name: "Henlagt" }).click();
+    await dialog.getByRole("button", { name: "Lagre" }).click();
+
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByLabel("Henleggelsesårsak")).toBeVisible();
+  });
+
   test("resetter datofelter etter avbryt og ny redigering", async ({ page }) => {
     await page.getByRole("button", { name: "Rediger saksinformasjon" }).click();
 

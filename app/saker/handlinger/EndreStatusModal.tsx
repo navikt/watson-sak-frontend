@@ -1,16 +1,26 @@
-import { getFormProps, getTextareaProps, useForm } from "@conform-to/react";
+import { getFormProps, getTextareaProps, useForm, useInputControl } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { ExclamationmarkTriangleIcon, PencilIcon } from "@navikt/aksel-icons";
-import { Button, InfoCard, Modal, Select, Textarea, VStack } from "@navikt/ds-react";
-import { useState } from "react";
+import {
+  Button,
+  InfoCard,
+  Modal,
+  Radio,
+  RadioGroup,
+  Select,
+  Textarea,
+  VStack,
+} from "@navikt/ds-react";
+import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { z } from "zod";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
-import type { KontrollsakStatus } from "~/saker/types.backend";
+import type { Blokkeringsarsak, Henleggelsesarsak, KontrollsakStatus } from "~/saker/types.backend";
 import { henleggelsesarsakSchema } from "~/saker/types.backend";
 import {
+  formaterBlokkeringsarsak,
   formaterHenleggelsesarsak,
   formaterStatus,
   henleggelsesarsakAlternativer,
@@ -19,6 +29,8 @@ import {
 interface EndreStatusModalProps {
   sakId: string;
   nåværendeStatus: KontrollsakStatus;
+  nåværendeBlokkering: Blokkeringsarsak | null;
+  nåværendeHenleggelsesarsak: Henleggelsesarsak | null;
   åpen: boolean;
   onClose: () => void;
 }
@@ -35,20 +47,45 @@ const valgbareStatuser: KontrollsakStatus[] = [
 const endreStatusSkjema = z
   .object({
     status: z.string({ error: "Velg en status" }).min(1, "Velg en status"),
+    blokkert: z.string({ error: "Velg arbeidsstatus" }).min(1, "Velg arbeidsstatus"),
     henleggelsesarsak: z.preprocess(
       (val) => (val === "" ? undefined : val),
       henleggelsesarsakSchema.optional(),
     ),
     beskrivelse: z.string().optional(),
   })
-  .refine((data) => data.status !== "HENLAGT" || data.henleggelsesarsak !== undefined, {
-    message: "Velg en henleggelsesårsak",
-    path: ["henleggelsesarsak"],
+  .superRefine((data, ctx) => {
+    if (data.status === "HENLAGT" && data.henleggelsesarsak === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["henleggelsesarsak"],
+        message: "Du må velge henleggelsesårsak.",
+      });
+    }
   });
 
-export function EndreStatusModal({ sakId, nåværendeStatus, åpen, onClose }: EndreStatusModalProps) {
+const arbeidsstatusValg: Array<{ value: "AKTIV" | Blokkeringsarsak; label: string }> = [
+  { value: "AKTIV", label: "Aktiv" },
+  { value: "VENTER_PA_VEDTAK", label: formaterBlokkeringsarsak("VENTER_PA_VEDTAK") },
+  {
+    value: "VENTER_PA_INFORMASJON",
+    label: formaterBlokkeringsarsak("VENTER_PA_INFORMASJON"),
+  },
+  { value: "I_BERO", label: formaterBlokkeringsarsak("I_BERO") },
+];
+
+export function EndreStatusModal({
+  sakId,
+  nåværendeStatus,
+  nåværendeBlokkering,
+  nåværendeHenleggelsesarsak,
+  åpen,
+  onClose,
+}: EndreStatusModalProps) {
   const fetcher = useFetcher();
   const erSubmitting = fetcher.state !== "idle";
+  const submitPågår = useRef(false);
+  const forrigeÅpen = useRef(false);
 
   const [form, fields] = useForm({
     id: "endre-status",
@@ -61,32 +98,69 @@ export function EndreStatusModal({ sakId, nåværendeStatus, åpen, onClose }: E
     shouldRevalidate: "onInput",
     onSubmit(event, { formData }) {
       event.preventDefault();
-      formData.set("handling", "endre_status");
+      formData.set("handling", "endre_status_dialog");
       const nyStatus = formData.get("status") as string;
-      sporHendelse("sak status endret", { fraStatus: nåværendeStatus, tilStatus: nyStatus });
+      sporHendelse("endre status lagre klikket", {
+        fraStatus: nåværendeStatus,
+        tilStatus: nyStatus,
+      });
+      const arbeidsstatus = formData.get("blokkert") as string;
+      if (nyStatus !== "AVSLUTTET") {
+        formData.set("blokkert", arbeidsstatus);
+      }
+      submitPågår.current = true;
       fetcher.submit(formData, {
         method: "post",
         action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),
       });
       form.reset();
-      setVisHenleggelse(false);
-      setVisAvsluttetAdvarsel(false);
       onClose();
     },
   });
 
-  const [visHenleggelse, setVisHenleggelse] = useState(fields.status.initialValue === "HENLAGT");
-  const [visAvsluttetAdvarsel, setVisAvsluttetAdvarsel] = useState(
-    fields.status.initialValue === "AVSLUTTET",
+  const statusControl = useInputControl(fields.status);
+  const blokkertControl = useInputControl(fields.blokkert);
+  const [valgtHenleggelsesarsak, setValgtHenleggelsesarsak] = useState(
+    nåværendeStatus === "HENLAGT" ? (nåværendeHenleggelsesarsak ?? "") : "",
   );
+  const valgtStatus = (statusControl.value as KontrollsakStatus | undefined) ?? nåværendeStatus;
+  const valgtBlokkering =
+    (blokkertControl.value as "AKTIV" | Blokkeringsarsak | undefined) ??
+    nåværendeBlokkering ??
+    "AKTIV";
+  const visHenleggelse = valgtStatus === "HENLAGT";
+  const visAvsluttetAdvarsel = valgtStatus === "AVSLUTTET";
 
   function handleLukk() {
     if (erSubmitting) return;
+    sporHendelse("endre status dialog avbrutt");
     form.reset();
-    setVisHenleggelse(false);
-    setVisAvsluttetAdvarsel(false);
+    setValgtHenleggelsesarsak("");
     onClose();
   }
+
+  useEffect(() => {
+    if (åpen && !forrigeÅpen.current) {
+      sporHendelse("endre status dialog åpnet");
+      setValgtHenleggelsesarsak(
+        nåværendeStatus === "HENLAGT" ? (nåværendeHenleggelsesarsak ?? "") : "",
+      );
+    }
+    forrigeÅpen.current = åpen;
+  }, [åpen, nåværendeHenleggelsesarsak, nåværendeStatus]);
+
+  useEffect(() => {
+    if (!submitPågår.current || fetcher.state !== "idle") {
+      return;
+    }
+
+    if (fetcher.data && "ok" in fetcher.data && fetcher.data.ok) {
+      sporHendelse("endre status lagret");
+    } else {
+      sporHendelse("endre status lagring feilet");
+    }
+    submitPågår.current = false;
+  }, [fetcher.data, fetcher.state]);
 
   return (
     <Modal
@@ -99,32 +173,46 @@ export function EndreStatusModal({ sakId, nåværendeStatus, åpen, onClose }: E
         <Modal.Body>
           <VStack gap="space-4">
             <VStack gap="space-8">
-              <Select
+              <input
                 key={fields.status.key}
                 name={fields.status.name}
-                id={fields.status.id}
-                defaultValue={fields.status.initialValue ?? ""}
-                label="Ny status"
-                onChange={(event) => {
-                  setVisHenleggelse(event.target.value === "HENLAGT");
-                  setVisAvsluttetAdvarsel(event.target.value === "AVSLUTTET");
+                defaultValue={nåværendeStatus}
+                hidden
+                tabIndex={-1}
+                onFocus={() => statusControl.focus()}
+              />
+              <RadioGroup
+                legend="Saksstatus"
+                value={valgtStatus}
+                onChange={(value) => {
+                  statusControl.change(value);
+                  sporHendelse("endre status saksstatus valgt", { status: value });
+                  if (value !== "HENLAGT") {
+                    setValgtHenleggelsesarsak("");
+                  }
                 }}
+                onBlur={statusControl.blur}
                 error={fields.status.errors?.[0]}
               >
-                <option value="">Velg status</option>
                 {valgbareStatuser.map((s) => (
-                  <option key={s} value={s} disabled={s === nåværendeStatus}>
+                  <Radio key={s} value={s}>
                     {formaterStatus(s)}
-                  </option>
+                  </Radio>
                 ))}
-              </Select>
+              </RadioGroup>
               {visHenleggelse ? (
                 <Select
                   key={fields.henleggelsesarsak.key}
                   name={fields.henleggelsesarsak.name}
                   id={fields.henleggelsesarsak.id}
-                  defaultValue={(fields.henleggelsesarsak.initialValue as string) ?? ""}
+                  value={valgtHenleggelsesarsak}
                   label="Henleggelsesårsak"
+                  onChange={(event) => {
+                    setValgtHenleggelsesarsak(event.target.value);
+                    sporHendelse("endre status henleggelsesårsak valgt", {
+                      henleggelsesarsak: event.target.value,
+                    });
+                  }}
                   error={fields.henleggelsesarsak.errors?.[0]}
                 >
                   <option value="">Velg årsak</option>
@@ -141,6 +229,34 @@ export function EndreStatusModal({ sakId, nåværendeStatus, åpen, onClose }: E
                     Avsluttet er en endelig status – du kan ikke endre tilbake
                   </InfoCard.Message>
                 </InfoCard>
+              ) : null}
+              <input
+                key={fields.blokkert.key}
+                name={fields.blokkert.name}
+                defaultValue={nåværendeBlokkering ?? "AKTIV"}
+                hidden
+                tabIndex={-1}
+                onFocus={() => blokkertControl.focus()}
+              />
+              {!visAvsluttetAdvarsel ? (
+                <>
+                  <RadioGroup
+                    legend="Arbeidsstatus"
+                    value={valgtBlokkering}
+                    onChange={(value) => {
+                      blokkertControl.change(value);
+                      sporHendelse("endre status arbeidsstatus valgt", { arbeidsstatus: value });
+                    }}
+                    onBlur={blokkertControl.blur}
+                    error={fields.blokkert.errors?.[0]}
+                  >
+                    {arbeidsstatusValg.map((valg) => (
+                      <Radio key={valg.value} value={valg.value}>
+                        {valg.label}
+                      </Radio>
+                    ))}
+                  </RadioGroup>
+                </>
               ) : null}
             </VStack>
             <Textarea
