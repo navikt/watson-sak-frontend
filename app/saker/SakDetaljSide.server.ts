@@ -406,7 +406,7 @@ async function backendAction(
         kilde: validert.kilde,
         misbruktype: validert.misbruktype,
         merking: validert.merking,
-        organisasjonsnummer: validert.organisasjonsnummer || null,
+        organisasjonsnummer: validert.organisasjonsnummer,
         ytelser: validert.ytelser.map((y) => ({
           type: y.type ?? "",
           periodeFra: y.fraDato ?? "",

@@ -89,6 +89,7 @@ export const dokumentNodeSchema = z.object({
 const kontrollobjektSchema = z.object({
   personIdent: z.string(),
   navn: z.string(),
+  organisasjonsnummer: z.string().nullable().default(null),
 });
 
 /**
@@ -129,7 +130,6 @@ export const kontrollsakResponseSchema = z
       kilde: kontrollsakKildeSchema,
       misbruktype: z.array(kontrollsakMisbrukstypeSchema),
       prioritet: kontrollsakPrioritetSchema,
-      organisasjonsnummer: z.string().nullable().default(null),
       ytelser: z.array(kontrollsakYtelseSchema),
       merking: z.array(z.string()).default([]),
       oppgaver: z.array(oppgaveKortSchema).default([]),
@@ -143,6 +143,7 @@ export const kontrollsakResponseSchema = z
     ...sak,
     personIdent: kontrollobjekt.personIdent,
     personNavn: kontrollobjekt.navn,
+    organisasjonsnummer: kontrollobjekt.organisasjonsnummer,
     henleggelsesarsak: sak.henleggelsesarsak ?? null,
   }));
 
