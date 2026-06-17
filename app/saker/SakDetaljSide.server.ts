@@ -575,7 +575,7 @@ async function mockAction(
         ønsketBlokkering !== sak.blokkert;
 
       if (!skalEndreStatus && !skalEndreBlokkering) {
-        break;
+        return { ok: true } satisfies ActionResult;
       }
 
       if (skalEndreStatus) {
