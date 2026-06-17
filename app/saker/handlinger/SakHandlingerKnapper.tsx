@@ -1,10 +1,4 @@
-import {
-  ArrowRightIcon,
-  ClockDashedIcon,
-  DocPencilIcon,
-  PencilIcon,
-  TasklistIcon,
-} from "@navikt/aksel-icons";
+import { ArrowRightIcon, DocPencilIcon, PencilIcon, TasklistIcon } from "@navikt/aksel-icons";
 import { Button, Heading, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import { useFetcher } from "react-router";
@@ -15,7 +9,6 @@ import type { KontrollsakResponse } from "~/saker/types.backend";
 import { EndreStatusModal } from "./EndreStatusModal";
 import { OpprettJournalpostModal } from "./OpprettJournalpostModal";
 import { OpprettOppgaveModal } from "./OpprettOppgaveModal";
-import { SettPaVentModal } from "./SettPaVentModal";
 import { hentTilgjengeligeSakshandlinger, type Sakshandling } from "./tilgjengeligeHandlinger";
 
 interface SakHandlingerKnapperProps {
@@ -37,11 +30,6 @@ const handlingsvisning: Record<
     label: "Endre status",
     variant: "primary",
     icon: <PencilIcon aria-hidden />,
-  },
-  "sett-pa-vent": {
-    label: "Sett på vent",
-    variant: "secondary",
-    icon: <ClockDashedIcon aria-hidden />,
   },
   gjenoppta: {
     label: "Gjenoppta",
@@ -143,12 +131,9 @@ export function SakHandlingerKnapper({ sak, erEier }: SakHandlingerKnapperProps)
       <EndreStatusModal
         sakId={String(sak.id)}
         nåværendeStatus={sak.status}
+        nåværendeBlokkering={sak.blokkert}
+        nåværendeHenleggelsesarsak={sak.henleggelsesarsak}
         åpen={åpenModal === "endre-status"}
-        onClose={() => setÅpenModal(null)}
-      />
-      <SettPaVentModal
-        sakId={String(sak.id)}
-        åpen={åpenModal === "sett-pa-vent"}
         onClose={() => setÅpenModal(null)}
       />
       <OpprettJournalpostModal

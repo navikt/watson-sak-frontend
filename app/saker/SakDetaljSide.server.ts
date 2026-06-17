@@ -80,6 +80,16 @@ function erGyldigBlokkeringsarsak(verdi: string): verdi is Blokkeringsarsak {
   return gyldigeBlokkeringsarsaker.has(verdi as Blokkeringsarsak);
 }
 
+function parseBlokkeringFraDialog(verdi: string | undefined): Blokkeringsarsak | null {
+  if (verdi === undefined || verdi === "" || verdi === "AKTIV") {
+    return null;
+  }
+  if (!erGyldigBlokkeringsarsak(verdi)) {
+    throw data("Ugyldig arbeidsstatus", { status: 400 });
+  }
+  return verdi;
+}
+
 function getHendelsestypeForBlokkering(blokkert: Blokkeringsarsak) {
   return blokkert === "I_BERO" ? "SAK_SATT_I_BERO" : "SAK_SATT_PA_VENT";
 }
@@ -213,13 +223,15 @@ async function backendAction(
   formData: FormData,
 ): Promise<ActionResult> {
   const token = await getBackendOboToken(request);
+  let sakFraTilgangskontroll: Route.ComponentProps["loaderData"]["sak"] | undefined;
 
   if (!erTildelingshandling(handling)) {
     const innlogget = await hentInnloggetBruker({ request });
-    const sak = await backendApi.hentKontrollsak(token, sakId);
-    if (sak.saksbehandlere.eier?.navIdent !== innlogget.navIdent) {
+    const nåværendeSak = await backendApi.hentKontrollsak(token, sakId);
+    if (nåværendeSak.saksbehandlere.eier?.navIdent !== innlogget.navIdent) {
       throw data("Du må være tildelt saken for å utføre denne handlingen", { status: 403 });
     }
+    sakFraTilgangskontroll = nåværendeSak;
   }
 
   switch (handling) {
@@ -232,13 +244,16 @@ async function backendAction(
       const sak = await backendApi.fristillKontrollsak(token, sakId);
       return { ok: true, sak };
     }
-    case "endre_status": {
+    case "endre_status":
+    case "endre_status_dialog": {
       const nyStatus = hentTekstfelt(formData, "status", "Ugyldig status");
       if (!erGyldigStatus(nyStatus)) {
         throw data("Ugyldig status", { status: 400 });
       }
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
       const råHenleggelsesarsak = hentValgfriTekst(formData, "henleggelsesarsak");
+      const råBlokkering = hentValgfriTekst(formData, "blokkert");
+      const ønsketBlokkering = parseBlokkeringFraDialog(råBlokkering);
       let henleggelsesarsak: Henleggelsesarsak | undefined;
       if (nyStatus === "HENLAGT") {
         const parsed = henleggelsesarsakSchema.safeParse(råHenleggelsesarsak);
@@ -247,13 +262,53 @@ async function backendAction(
         }
         henleggelsesarsak = parsed.data;
       }
-      const sak = await backendApi.endreStatus(
-        token,
-        sakId,
-        nyStatus,
-        beskrivelse ?? undefined,
-        henleggelsesarsak,
-      );
+
+      const nåværendeSak =
+        sakFraTilgangskontroll ?? (await backendApi.hentKontrollsak(token, sakId));
+      if (handling === "endre_status" && nyStatus === nåværendeSak.status) {
+        throw data("Status er uendret", { status: 400 });
+      }
+      const skalEndreStatus =
+        nyStatus !== nåværendeSak.status ||
+        (nyStatus === "HENLAGT" && henleggelsesarsak !== nåværendeSak.henleggelsesarsak);
+      const skalEndreBlokkering =
+        nyStatus !== "AVSLUTTET" &&
+        handling === "endre_status_dialog" &&
+        ønsketBlokkering !== nåværendeSak.blokkert;
+
+      if (!skalEndreStatus && !skalEndreBlokkering) {
+        return { ok: true, sak: nåværendeSak };
+      }
+
+      let sak = nåværendeSak;
+      if (skalEndreStatus) {
+        sak = await backendApi.endreStatus(
+          token,
+          sakId,
+          nyStatus,
+          beskrivelse ?? undefined,
+          henleggelsesarsak,
+        );
+      }
+
+      if (skalEndreBlokkering) {
+        const sakEtterStatus = sak;
+        const sakEtterBlokkering = await backendApi.endreBlokkering(
+          token,
+          sakId,
+          ønsketBlokkering,
+          !skalEndreStatus ? (beskrivelse ?? undefined) : undefined,
+        );
+        sak = skalEndreStatus
+          ? {
+              ...sakEtterBlokkering,
+              status: sakEtterStatus.status,
+              henleggelsesarsak:
+                sakEtterStatus.henleggelsesarsak ?? sakEtterBlokkering.henleggelsesarsak,
+            }
+          : sakEtterBlokkering;
+      }
+
       return { ok: true, sak };
     }
     case "endre_blokkering": {
@@ -466,7 +521,10 @@ async function mockAction(
 
   if (
     sak.status === "AVSLUTTET" &&
-    (handling === "endre_status" || handling === "endre_blokkering" || handling === "gjenoppta")
+    (handling === "endre_status" ||
+      handling === "endre_status_dialog" ||
+      handling === "endre_blokkering" ||
+      handling === "gjenoppta")
   ) {
     throw data("Kan ikke endre avsluttet sak", { status: 400 });
   }
@@ -491,38 +549,71 @@ async function mockAction(
       sak.saksbehandlere.eier = null;
       break;
     }
-    case "endre_status": {
+    case "endre_status":
+    case "endre_status_dialog": {
       const nyStatus = hentTekstfelt(formData, "status", "Ugyldig status");
 
       if (!erGyldigStatus(nyStatus)) {
         throw data("Ugyldig status", { status: 400 });
       }
 
-      if (nyStatus === sak.status) {
+      if (handling === "endre_status" && nyStatus === sak.status) {
         throw data("Status er uendret", { status: 400 });
       }
 
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
       const råHenleggelsesarsak = hentValgfriTekst(formData, "henleggelsesarsak");
+      const råBlokkering = hentValgfriTekst(formData, "blokkert");
+      const ønsketBlokkering = parseBlokkeringFraDialog(råBlokkering);
       const forrigeBlokkering = sak.blokkert;
+      const skalEndreStatus =
+        nyStatus !== sak.status ||
+        (nyStatus === "HENLAGT" && råHenleggelsesarsak !== sak.henleggelsesarsak);
+      const skalEndreBlokkering =
+        nyStatus !== "AVSLUTTET" &&
+        handling === "endre_status_dialog" &&
+        ønsketBlokkering !== sak.blokkert;
 
-      sak.status = nyStatus;
-      if (nyStatus === "HENLAGT") {
-        const parsed = henleggelsesarsakSchema.safeParse(råHenleggelsesarsak);
-        if (!parsed.success) {
-          throw data("Ugyldig henleggelsesårsak", { status: 400 });
+      if (!skalEndreStatus && !skalEndreBlokkering) {
+        return { ok: true } satisfies ActionResult;
+      }
+
+      if (skalEndreStatus) {
+        sak.status = nyStatus;
+        if (nyStatus === "HENLAGT") {
+          const parsed = henleggelsesarsakSchema.safeParse(råHenleggelsesarsak);
+          if (!parsed.success) {
+            throw data("Ugyldig henleggelsesårsak", { status: 400 });
+          }
+          sak.henleggelsesarsak = parsed.data;
+        } else {
+          sak.henleggelsesarsak = null;
         }
-        sak.henleggelsesarsak = parsed.data;
-      } else {
-        sak.henleggelsesarsak = null;
+        if (nyStatus === "AVSLUTTET") {
+          sak.blokkert = null;
+        }
+        leggTilHendelse(request, sak, getHendelsestypeForStatusendring(nyStatus), undefined, {
+          beskrivelse,
+          blokkert: nyStatus === "AVSLUTTET" ? forrigeBlokkering : sak.blokkert,
+        });
       }
-      if (nyStatus === "AVSLUTTET") {
-        sak.blokkert = null;
+
+      if (skalEndreBlokkering) {
+        const forrigeBlokkeringFraDialog = sak.blokkert;
+        sak.blokkert = ønsketBlokkering;
+        if (sak.blokkert === null) {
+          if (forrigeBlokkeringFraDialog !== null) {
+            leggTilHendelse(request, sak, "SAK_GJENOPPTATT", undefined, {
+              blokkert: forrigeBlokkeringFraDialog,
+              beskrivelse: !skalEndreStatus ? beskrivelse : undefined,
+            });
+          }
+        } else {
+          leggTilHendelse(request, sak, getHendelsestypeForBlokkering(sak.blokkert), undefined, {
+            beskrivelse: !skalEndreStatus ? beskrivelse : undefined,
+          });
+        }
       }
-      leggTilHendelse(request, sak, getHendelsestypeForStatusendring(nyStatus), undefined, {
-        beskrivelse,
-        blokkert: nyStatus === "AVSLUTTET" ? forrigeBlokkering : sak.blokkert,
-      });
       break;
     }
     case "endre_blokkering": {

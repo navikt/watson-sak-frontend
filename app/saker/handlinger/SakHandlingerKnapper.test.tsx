@@ -66,7 +66,7 @@ describe("SakHandlingerKnapper", () => {
     expect(screen.queryByRole("button")).toBeNull();
   });
 
-  it("viser Endre status og Sett på vent for aktiv ikke-blokkert sak med eier", () => {
+  it("viser Endre status for aktiv ikke-blokkert sak med eier", () => {
     renderMedRouter(
       <SakHandlingerKnapper
         erEier={true}
@@ -75,7 +75,6 @@ describe("SakHandlingerKnapper", () => {
     );
 
     expect(screen.getByRole("button", { name: "Endre status" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Sett på vent" })).toBeDefined();
     expect(screen.getByRole("separator")).toBeDefined();
     expect(screen.getByRole("button", { name: "Opprett journalpost" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Opprett oppgave" })).toBeDefined();

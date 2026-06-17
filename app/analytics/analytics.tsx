@@ -61,4 +61,12 @@ type Hendelse =
   | "varsler åpnet"
   | "varsel markert som lest"
   | "varsler markert som lest"
-  | "hurtigsøk aktivert";
+  | "hurtigsøk aktivert"
+  | "endre status dialog åpnet"
+  | "endre status saksstatus valgt"
+  | "endre status arbeidsstatus valgt"
+  | "endre status henleggelsesårsak valgt"
+  | "endre status lagre klikket"
+  | "endre status lagret"
+  | "endre status lagring feilet"
+  | "endre status dialog avbrutt";

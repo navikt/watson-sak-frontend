@@ -259,6 +259,52 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     ).rejects.toBeDefined();
   });
 
+  it("endre_status_dialog oppdaterer både status og blokkering", async () => {
+    const saker = hentAlleSaker(testRequest);
+    const sak = saker.find(
+      (s: KontrollsakResponse) => s.status === "UTREDES" && s.blokkert === null,
+    );
+    expect(sak).toBeDefined();
+    if (!sak) return;
+    settInnloggetSomEier(sak);
+
+    const { getSaksreferanse } = await import("./id");
+    const sakId = getSaksreferanse(sak.id);
+
+    const resultat = await utforAction(sakId, {
+      handling: "endre_status_dialog",
+      status: "ANMELDT",
+      blokkert: "VENTER_PA_INFORMASJON",
+      beskrivelse: "Oppdatert fra ny dialog",
+    });
+
+    expect(resultat).toEqual({ ok: true });
+    expect(sak.status).toBe("ANMELDT");
+    expect(sak.blokkert).toBe("VENTER_PA_INFORMASJON");
+  });
+
+  it("endre_status_dialog tillater no-op uten feil", async () => {
+    const saker = hentAlleSaker(testRequest);
+    const sak = saker.find((s: KontrollsakResponse) => s.status === "UTREDES");
+    expect(sak).toBeDefined();
+    if (!sak) return;
+    settInnloggetSomEier(sak);
+    sak.blokkert = "I_BERO";
+
+    const { getSaksreferanse } = await import("./id");
+    const sakId = getSaksreferanse(sak.id);
+
+    const resultat = await utforAction(sakId, {
+      handling: "endre_status_dialog",
+      status: "UTREDES",
+      blokkert: "I_BERO",
+    });
+
+    expect(resultat).toEqual({ ok: true });
+    expect(sak.status).toBe("UTREDES");
+    expect(sak.blokkert).toBe("I_BERO");
+  });
+
   it("endre_blokkering avviser ugyldig årsak", async () => {
     const saker = hentAlleSaker(testRequest);
     const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
