@@ -10,9 +10,7 @@ import {
   type YtelseRadVerdier,
 } from "~/registrer-sak/skjema-helpers";
 
-function normaliserArbeidsgiverFeil(
-  feil: Record<string, string[]>,
-): Record<string, string[]> {
+function normaliserArbeidsgiverFeil(feil: Record<string, string[]>): Record<string, string[]> {
   const resultat: Record<string, string[]> = {};
   for (const [nøkkel, meldinger] of Object.entries(feil)) {
     const overordnet = nøkkel.replace(/^(arbeidsgivere)\.\d+$/, "$1");
