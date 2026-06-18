@@ -212,7 +212,7 @@ describe("opprettSakSchema", () => {
   it("godtar organisasjonsnummer med 9 siffer", () => {
     const resultat = opprettSakSchema.safeParse({
       ...minimaltGyldigSkjema,
-      organisasjonsnummer: "123456789",
+      arbeidsgivere: ["123456789"],
     });
     expect(resultat.success).toBe(true);
   });
@@ -220,7 +220,7 @@ describe("opprettSakSchema", () => {
   it("avviser ugyldig organisasjonsnummer", () => {
     const resultat = opprettSakSchema.safeParse({
       ...minimaltGyldigSkjema,
-      organisasjonsnummer: "1234",
+      arbeidsgivere: ["1234"],
     });
     expect(resultat.success).toBe(false);
   });

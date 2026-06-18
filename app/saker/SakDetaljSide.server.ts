@@ -36,6 +36,15 @@ import { getSaksenhet } from "./selectors";
 import type { KontrollsakStatus } from "./visning";
 import type { Route } from "./+types/SakDetaljSide.route";
 
+function normaliserArbeidsgiverFeil(feil: Record<string, string[]>): Record<string, string[]> {
+  const resultat: Record<string, string[]> = {};
+  for (const [nøkkel, meldinger] of Object.entries(feil)) {
+    const overordnet = nøkkel.replace(/^(arbeidsgivere)\.\d+$/, "$1");
+    (resultat[overordnet] ??= []).push(...meldinger);
+  }
+  return resultat;
+}
+
 // --- Typer ---
 
 type Feltfeil = Record<string, string[]>;
@@ -45,7 +54,7 @@ type RedigerSaksinformasjonData = {
   kilde: string;
   misbruktype: string[];
   merking: string[];
-  organisasjonsnummer: string;
+  arbeidsgivere: string[];
   ytelser: YtelseRadVerdier[];
 };
 
@@ -367,7 +376,6 @@ async function backendAction(
     }
     case "rediger_saksinformasjon": {
       const ytelseRader = parseYtelseRader(formData);
-      const organisasjonsnummerRå = formData.get("organisasjonsnummer");
       const rådata = {
         kategori: formData.get("kategori") || undefined,
         kilde: formData.get("kilde") || undefined,
@@ -377,8 +385,9 @@ async function backendAction(
         merking: formData
           .getAll("merking")
           .filter((v): v is string => typeof v === "string" && v.length > 0),
-        organisasjonsnummer:
-          typeof organisasjonsnummerRå === "string" ? organisasjonsnummerRå : undefined,
+        arbeidsgivere: formData
+          .getAll("arbeidsgivere")
+          .filter((v): v is string => typeof v === "string" && v.length > 0),
         ytelser: ytelseRader,
       };
 
@@ -386,14 +395,13 @@ async function backendAction(
       if (!resultat.success) {
         return {
           ok: false,
-          feil: bygFeilkartFraIssues(resultat.error.issues),
+          feil: normaliserArbeidsgiverFeil(bygFeilkartFraIssues(resultat.error.issues)),
           verdier: {
             kategori: typeof rådata.kategori === "string" ? rådata.kategori : "",
             kilde: typeof rådata.kilde === "string" ? rådata.kilde : "",
             misbruktype: rådata.misbruktype,
             merking: rådata.merking,
-            organisasjonsnummer:
-              typeof rådata.organisasjonsnummer === "string" ? rådata.organisasjonsnummer : "",
+            arbeidsgivere: rådata.arbeidsgivere,
             ytelser: ytelseRader.length > 0 ? ytelseRader : [{}],
           },
         } satisfies ActionResult;
@@ -406,7 +414,7 @@ async function backendAction(
         kilde: validert.kilde,
         misbruktype: validert.misbruktype,
         merking: validert.merking,
-        organisasjonsnummer: validert.organisasjonsnummer || null,
+        arbeidsgivere: validert.arbeidsgivere.map((orgnr) => ({ organisasjonsnummer: orgnr })),
         ytelser: validert.ytelser.map((y) => ({
           type: y.type ?? "",
           periodeFra: y.fraDato ?? "",
@@ -712,7 +720,6 @@ async function mockAction(
       }
 
       const ytelseRader = parseYtelseRader(formData);
-      const organisasjonsnummerRå = formData.get("organisasjonsnummer");
       const rådata = {
         kategori: formData.get("kategori") || undefined,
         kilde: formData.get("kilde") || undefined,
@@ -722,8 +729,9 @@ async function mockAction(
         merking: formData
           .getAll("merking")
           .filter((v): v is string => typeof v === "string" && v.length > 0),
-        organisasjonsnummer:
-          typeof organisasjonsnummerRå === "string" ? organisasjonsnummerRå : undefined,
+        arbeidsgivere: formData
+          .getAll("arbeidsgivere")
+          .filter((v): v is string => typeof v === "string" && v.length > 0),
         ytelser: ytelseRader,
       };
 
@@ -732,8 +740,7 @@ async function mockAction(
         kilde: typeof rådata.kilde === "string" ? rådata.kilde : "",
         misbruktype: rådata.misbruktype,
         merking: rådata.merking,
-        organisasjonsnummer:
-          typeof rådata.organisasjonsnummer === "string" ? rådata.organisasjonsnummer : "",
+        arbeidsgivere: rådata.arbeidsgivere,
         ytelser: ytelseRader.length > 0 ? ytelseRader : [{}],
       };
 
@@ -742,7 +749,7 @@ async function mockAction(
       if (!resultat.success) {
         return {
           ok: false,
-          feil: bygFeilkartFraIssues(resultat.error.issues),
+          feil: normaliserArbeidsgiverFeil(bygFeilkartFraIssues(resultat.error.issues)),
           verdier,
         } satisfies ActionResult;
       }
@@ -752,7 +759,7 @@ async function mockAction(
       sak.misbruktype = [...validert.misbruktype];
       sak.merking = [...validert.merking];
       sak.kilde = validert.kilde;
-      sak.organisasjonsnummer = validert.organisasjonsnummer || null;
+      sak.arbeidsgivere = [...validert.arbeidsgivere];
       sak.ytelser = validert.ytelser.map((ytelse) => ({
         type: ytelse.type ?? "",
         periodeFra: ytelse.fraDato ?? "",

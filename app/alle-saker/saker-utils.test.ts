@@ -27,7 +27,7 @@ function lagSak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakRespon
     henleggelsesarsak: null,
     ytelser: [],
     merking: [],
-    organisasjonsnummer: null,
+    arbeidsgivere: [],
     opprettet: "2026-02-03T10:00:00Z",
     oppdatert: null,
     oppgaver: [],
@@ -97,7 +97,7 @@ describe("filtrerSaker", () => {
       kategori: "SAMLIV",
       misbruktype: ["SKJULT_SAMLIV"],
       merking: [],
-      organisasjonsnummer: null,
+      arbeidsgivere: [],
       saksbehandlere: {
         eier: { navIdent: "Z1", navn: "Anne", enhet: "4812" },
         deltMed: [],

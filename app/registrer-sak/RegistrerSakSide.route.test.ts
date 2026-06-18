@@ -313,7 +313,7 @@ describe("byggOpprettKontrollsakPayload", () => {
           misbruktype: ["SKJULT_SAMLIV"],
           merking: ["LIME"],
           enhet: "ØST",
-          organisasjonsnummer: "123456789",
+          arbeidsgivere: ["123456789"],
           ytelser: [
             {
               type: "DAGPENGER",
@@ -334,7 +334,7 @@ describe("byggOpprettKontrollsakPayload", () => {
       prioritet: "NORMAL",
       misbruktype: ["SKJULT_SAMLIV"],
       merking: ["LIME"],
-      organisasjonsnummer: "123456789",
+      arbeidsgivere: ["123456789"],
       ytelser: [
         {
           type: "DAGPENGER",

@@ -33,7 +33,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
       },
     ],
     merking: [],
-    organisasjonsnummer: null,
+    arbeidsgivere: [],
     opprettet: "2026-03-20T12:34:56Z",
     oppdatert: null,
     oppgaver: [],

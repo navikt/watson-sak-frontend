@@ -94,7 +94,7 @@ describe("SakDetaljSide render", () => {
     const { hentAlleSaker } = await import("~/testing/mock-store/alle-saker.server");
     const saker = hentAlleSaker(hentMockState(testRequest));
     const sak = saker.find((s) => s.id === Number(deltMedSakId));
-    if (sak) sak.organisasjonsnummer = "987654321";
+    if (sak) sak.arbeidsgivere = ["987654321"];
 
     renderDetaljside(deltMedSakId);
 
@@ -102,7 +102,7 @@ describe("SakDetaljSide render", () => {
     expect(screen.getByText("Organisasjonsnummer")).toBeDefined();
   }, 15000);
 
-  it("skjuler organisasjonsnummer-felt i read-only når det er null", async () => {
+  it("skjuler organisasjonsnummer-felt i read-only når ingen arbeidsgivere er satt", async () => {
     renderDetaljside();
 
     await screen.findByRole("heading", { level: 1 });
@@ -114,6 +114,6 @@ describe("SakDetaljSide render", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Rediger saksinformasjon" }));
 
-    expect(await screen.findByLabelText("Organisasjonsnummer (valgfritt)")).toBeDefined();
+    expect(await screen.findByText("Organisasjonsnummer (valgfritt)")).toBeDefined();
   }, 15000);
 });
