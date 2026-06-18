@@ -466,7 +466,7 @@ export default function SakDetaljSide() {
                         </Select>
                       </HGrid>
 
-                      <div id={ankerIdForFelt("arbeidsgivere")}>
+                      <div>
                         <UNSAFE_Combobox
                           id={ankerIdForFelt("arbeidsgivere")}
                           label="Organisasjonsnummer (valgfritt)"

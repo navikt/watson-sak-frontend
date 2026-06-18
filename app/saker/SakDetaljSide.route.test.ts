@@ -929,7 +929,7 @@ describe("SakDetaljSide rediger arbeidsgivere", () => {
     } as Route.ActionArgs);
 
     expect(resultat).toMatchObject({ ok: false });
-    expect((resultat as { feil: Record<string, string[]> }).feil["arbeidsgivere.0"]).toBeDefined();
+    expect((resultat as { feil: Record<string, string[]> }).feil["arbeidsgivere"]).toBeDefined();
   });
 
   it("bevarer eksisterende arbeidsgivere via loader", async () => {

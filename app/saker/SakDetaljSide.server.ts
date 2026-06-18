@@ -9,6 +9,17 @@ import {
   parseYtelseRader,
   type YtelseRadVerdier,
 } from "~/registrer-sak/skjema-helpers";
+
+function normaliserArbeidsgiverFeil(
+  feil: Record<string, string[]>,
+): Record<string, string[]> {
+  const resultat: Record<string, string[]> = {};
+  for (const [nøkkel, meldinger] of Object.entries(feil)) {
+    const overordnet = nøkkel.replace(/^(arbeidsgivere)\.\d+$/, "$1");
+    (resultat[overordnet] ??= []).push(...meldinger);
+  }
+  return resultat;
+}
 import * as backendApi from "~/saker/api.server";
 import { hentAlleSaker, medInnloggetEier } from "~/saker/mock-alle-saker.server";
 import { mockSaksbehandlere, mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
@@ -386,7 +397,7 @@ async function backendAction(
       if (!resultat.success) {
         return {
           ok: false,
-          feil: bygFeilkartFraIssues(resultat.error.issues),
+          feil: normaliserArbeidsgiverFeil(bygFeilkartFraIssues(resultat.error.issues)),
           verdier: {
             kategori: typeof rådata.kategori === "string" ? rådata.kategori : "",
             kilde: typeof rådata.kilde === "string" ? rådata.kilde : "",
@@ -740,7 +751,7 @@ async function mockAction(
       if (!resultat.success) {
         return {
           ok: false,
-          feil: bygFeilkartFraIssues(resultat.error.issues),
+          feil: normaliserArbeidsgiverFeil(bygFeilkartFraIssues(resultat.error.issues)),
           verdier,
         } satisfies ActionResult;
       }
