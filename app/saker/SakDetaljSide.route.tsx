@@ -12,7 +12,6 @@ import {
   Select,
   Table,
   Tag,
-  TextField,
   UNSAFE_Combobox,
   VStack,
 } from "@navikt/ds-react";

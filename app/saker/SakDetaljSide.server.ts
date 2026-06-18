@@ -9,15 +9,6 @@ import {
   parseYtelseRader,
   type YtelseRadVerdier,
 } from "~/registrer-sak/skjema-helpers";
-
-function normaliserArbeidsgiverFeil(feil: Record<string, string[]>): Record<string, string[]> {
-  const resultat: Record<string, string[]> = {};
-  for (const [nøkkel, meldinger] of Object.entries(feil)) {
-    const overordnet = nøkkel.replace(/^(arbeidsgivere)\.\d+$/, "$1");
-    (resultat[overordnet] ??= []).push(...meldinger);
-  }
-  return resultat;
-}
 import * as backendApi from "~/saker/api.server";
 import { hentAlleSaker, medInnloggetEier } from "~/saker/mock-alle-saker.server";
 import { mockSaksbehandlere, mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
@@ -44,6 +35,15 @@ import { finnSakMedReferanse } from "./id";
 import { getSaksenhet } from "./selectors";
 import type { KontrollsakStatus } from "./visning";
 import type { Route } from "./+types/SakDetaljSide.route";
+
+function normaliserArbeidsgiverFeil(feil: Record<string, string[]>): Record<string, string[]> {
+  const resultat: Record<string, string[]> = {};
+  for (const [nøkkel, meldinger] of Object.entries(feil)) {
+    const overordnet = nøkkel.replace(/^(arbeidsgivere)\.\d+$/, "$1");
+    (resultat[overordnet] ??= []).push(...meldinger);
+  }
+  return resultat;
+}
 
 // --- Typer ---
 
