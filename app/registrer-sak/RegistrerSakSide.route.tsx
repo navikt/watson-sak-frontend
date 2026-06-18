@@ -11,7 +11,6 @@ import {
   Loader,
   Search,
   Select,
-  TextField,
   UNSAFE_Combobox,
   VStack,
 } from "@navikt/ds-react";
@@ -81,6 +80,9 @@ export default function OpprettSakSide() {
   );
   const [valgteMerkinger, setValgteMerkinger] = useState<string[]>(
     (fields.merking.initialValue as string[]) ?? [],
+  );
+  const [valgteArbeidsgivere, setValgteArbeidsgivere] = useState<string[]>(
+    (fields.arbeidsgivere.initialValue as string[]) ?? [],
   );
   const [søkeFnr, setSøkeFnr] = useState("");
   const [ytelseRader, setYtelseRader] = useState<YtelseRadState[]>(() => {
@@ -406,17 +408,34 @@ export default function OpprettSakSide() {
                     ))}
                   </Select>
 
-                  <TextField
-                    id={fields.organisasjonsnummer.id}
-                    key={fields.organisasjonsnummer.key}
-                    name={fields.organisasjonsnummer.name}
-                    defaultValue={fields.organisasjonsnummer.initialValue}
-                    label="Organisasjonsnummer (valgfritt)"
-                    inputMode="numeric"
-                    htmlSize={14}
-                    error={fields.organisasjonsnummer.errors?.[0]}
-                    autoComplete="off"
-                  />
+                  <div>
+                    <UNSAFE_Combobox
+                      id={fields.arbeidsgivere.id}
+                      label="Organisasjonsnummer (valgfritt)"
+                      isMultiSelect
+                      allowNewValues
+                      options={[]}
+                      selectedOptions={valgteArbeidsgivere.map((orgnr) => ({
+                        label: orgnr,
+                        value: orgnr,
+                      }))}
+                      onToggleSelected={(option, isSelected) => {
+                        setValgteArbeidsgivere((prev) => {
+                          if (isSelected && !prev.includes(option)) {
+                            return [...prev, option];
+                          }
+                          if (!isSelected) {
+                            return prev.filter((v) => v !== option);
+                          }
+                          return prev;
+                        });
+                      }}
+                      error={fields.arbeidsgivere.errors?.[0]}
+                    />
+                    {valgteArbeidsgivere.map((orgnr) => (
+                      <input key={orgnr} type="hidden" name="arbeidsgivere" value={orgnr} />
+                    ))}
+                  </div>
 
                   <Select
                     name={fields.enhet.name}

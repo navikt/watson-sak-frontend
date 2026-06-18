@@ -840,27 +840,28 @@ describe("SakDetaljSide tilgangskontroll", () => {
   });
 });
 
-describe("SakDetaljSide rediger organisasjonsnummer", () => {
+describe("SakDetaljSide rediger arbeidsgivere", () => {
   beforeEach(() => {
     resetDefaultSession();
   });
 
-  function lagRedigerFormData(overrides: Record<string, string> = {}): FormData {
+  function lagRedigerFormData(overrides: Record<string, string | string[]> = {}): FormData {
     const formData = new FormData();
     formData.set("handling", "rediger_saksinformasjon");
     formData.set("kategori", "SAMLIV");
     formData.set("kilde", "ANNET");
     formData.append("misbruktype", "SKJULT_SAMLIV");
-    if (!("organisasjonsnummer" in overrides)) {
-      formData.set("organisasjonsnummer", "");
-    }
     for (const [key, value] of Object.entries(overrides)) {
-      formData.set(key, value);
+      if (Array.isArray(value)) {
+        for (const v of value) formData.append(key, v);
+      } else {
+        formData.set(key, value);
+      }
     }
     return formData;
   }
 
-  it("lagrer gyldig organisasjonsnummer", async () => {
+  it("lagrer gyldige organisasjonsnumre", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
     kontrollsak.saksbehandlere.eier = {
@@ -869,7 +870,7 @@ describe("SakDetaljSide rediger organisasjonsnummer", () => {
       enhet: "4812",
     };
 
-    const formData = lagRedigerFormData({ organisasjonsnummer: "123456789" });
+    const formData = lagRedigerFormData({ arbeidsgivere: ["123456789", "987654321"] });
 
     const resultat = await action({
       request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
@@ -880,10 +881,10 @@ describe("SakDetaljSide rediger organisasjonsnummer", () => {
     } as Route.ActionArgs);
 
     expect(resultat).toMatchObject({ ok: true });
-    expect(kontrollsak.organisasjonsnummer).toBe("123456789");
+    expect(kontrollsak.arbeidsgivere).toEqual(["123456789", "987654321"]);
   });
 
-  it("nullstiller organisasjonsnummer når tom streng sendes", async () => {
+  it("nullstiller arbeidsgivere når ingen sendes", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
     kontrollsak.saksbehandlere.eier = {
@@ -892,10 +893,9 @@ describe("SakDetaljSide rediger organisasjonsnummer", () => {
       enhet: "4812",
     };
 
-    // Sett en verdi først
-    kontrollsak.organisasjonsnummer = "987654321";
+    kontrollsak.arbeidsgivere = ["987654321"];
 
-    const formData = lagRedigerFormData({ organisasjonsnummer: "" });
+    const formData = lagRedigerFormData();
 
     const resultat = await action({
       request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
@@ -906,7 +906,7 @@ describe("SakDetaljSide rediger organisasjonsnummer", () => {
     } as Route.ActionArgs);
 
     expect(resultat).toMatchObject({ ok: true });
-    expect(kontrollsak.organisasjonsnummer).toBeNull();
+    expect(kontrollsak.arbeidsgivere).toEqual([]);
   });
 
   it("returnerer feil for ugyldig organisasjonsnummer", async () => {
@@ -918,7 +918,7 @@ describe("SakDetaljSide rediger organisasjonsnummer", () => {
       enhet: "4812",
     };
 
-    const formData = lagRedigerFormData({ organisasjonsnummer: "1234" });
+    const formData = lagRedigerFormData({ arbeidsgivere: ["1234"] });
 
     const resultat = await action({
       request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
@@ -929,12 +929,12 @@ describe("SakDetaljSide rediger organisasjonsnummer", () => {
     } as Route.ActionArgs);
 
     expect(resultat).toMatchObject({ ok: false });
-    expect((resultat as { feil: Record<string, string[]> }).feil.organisasjonsnummer).toBeDefined();
+    expect((resultat as { feil: Record<string, string[]> }).feil["arbeidsgivere.0"]).toBeDefined();
   });
 
-  it("bevarer eksisterende organisasjonsnummer via loader", async () => {
+  it("bevarer eksisterende arbeidsgivere via loader", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
-    kontrollsak.organisasjonsnummer = "987654321";
+    kontrollsak.arbeidsgivere = ["987654321"];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
 
     const resultat = await loader({
@@ -942,12 +942,12 @@ describe("SakDetaljSide rediger organisasjonsnummer", () => {
       params: { sakId: kontrollsakRef },
     } as Route.LoaderArgs);
 
-    expect(resultat.sak.organisasjonsnummer).toBe("987654321");
+    expect(resultat.sak.arbeidsgivere).toEqual(["987654321"]);
   });
 
-  it("loader returnerer null når organisasjonsnummer ikke er satt", async () => {
+  it("loader returnerer tom liste når ingen arbeidsgivere er satt", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
-    kontrollsak.organisasjonsnummer = null;
+    kontrollsak.arbeidsgivere = [];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
 
     const resultat = await loader({
@@ -955,6 +955,6 @@ describe("SakDetaljSide rediger organisasjonsnummer", () => {
       params: { sakId: kontrollsakRef },
     } as Route.LoaderArgs);
 
-    expect(resultat.sak.organisasjonsnummer).toBeNull();
+    expect(resultat.sak.arbeidsgivere).toEqual([]);
   });
 });

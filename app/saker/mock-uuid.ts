@@ -203,8 +203,10 @@ export function normaliserLegacyKontrollsak(sak: LegacyKontrollsak): Kontrollsak
       : typeof sak.merking === "string" && sak.merking.length > 0
         ? [sak.merking]
         : [],
-    organisasjonsnummer:
-      typeof sak.organisasjonsnummer === "string" ? sak.organisasjonsnummer : null,
+    arbeidsgivere:
+      typeof sak.organisasjonsnummer === "string" && sak.organisasjonsnummer.length > 0
+        ? [sak.organisasjonsnummer]
+        : [],
     oppgaver: [],
     kobledeSaker: [],
     dokumenter: [],

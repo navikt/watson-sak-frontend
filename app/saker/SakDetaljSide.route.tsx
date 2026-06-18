@@ -91,7 +91,7 @@ type RedigerSaksinformasjonData = {
   kilde: string;
   misbruktype: string[];
   merking: string[];
-  organisasjonsnummer: string;
+  arbeidsgivere: string[];
   ytelser: YtelseRadVerdier[];
 };
 
@@ -138,7 +138,7 @@ function lagRedigeringsdata(
     kilde: sak.kilde,
     misbruktype: [...sak.misbruktype],
     merking: [...sak.merking],
-    organisasjonsnummer: sak.organisasjonsnummer ?? "",
+    arbeidsgivere: [...(sak.arbeidsgivere ?? [])],
     ytelser: lagYtelseRaderFraSak(sak),
   };
 }
@@ -147,7 +147,7 @@ function erLikeRedigeringsdata(a: RedigerSaksinformasjonData, b: RedigerSaksinfo
   return (
     a.kategori === b.kategori &&
     a.kilde === b.kilde &&
-    a.organisasjonsnummer === b.organisasjonsnummer &&
+    erLikeStringArrays(a.arbeidsgivere, b.arbeidsgivere) &&
     erLikeStringArrays(a.misbruktype, b.misbruktype) &&
     erLikeStringArrays(a.merking, b.merking) &&
     erLikeYtelser(a.ytelser, b.ytelser)
@@ -466,21 +466,43 @@ export default function SakDetaljSide() {
                         </Select>
                       </HGrid>
 
-                      <TextField
-                        id={ankerIdForFelt("organisasjonsnummer")}
-                        name="organisasjonsnummer"
-                        label="Organisasjonsnummer (valgfritt)"
-                        size="small"
-                        value={lokaleVerdier.organisasjonsnummer}
-                        error={førsteFeilForFelt(feil, "organisasjonsnummer")}
-                        onChange={(event) =>
-                          oppdaterLokaleVerdier("organisasjonsnummer", event.target.value)
-                        }
-                        inputMode="numeric"
-                        htmlSize={14}
-                        maxLength={9}
-                        autoComplete="off"
-                      />
+                      <div id={ankerIdForFelt("arbeidsgivere")}>
+                        <UNSAFE_Combobox
+                          id={ankerIdForFelt("arbeidsgivere")}
+                          label="Organisasjonsnummer (valgfritt)"
+                          size="small"
+                          isMultiSelect
+                          allowNewValues
+                          options={[]}
+                          selectedOptions={lokaleVerdier.arbeidsgivere.map((orgnr) => ({
+                            label: formaterOrganisasjonsnummer(orgnr),
+                            value: orgnr,
+                          }))}
+                          onToggleSelected={(option, isSelected) => {
+                            setLokaleVerdier((gjeldende) => {
+                              if (isSelected && !gjeldende.arbeidsgivere.includes(option)) {
+                                return {
+                                  ...gjeldende,
+                                  arbeidsgivere: [...gjeldende.arbeidsgivere, option],
+                                };
+                              }
+                              if (!isSelected) {
+                                return {
+                                  ...gjeldende,
+                                  arbeidsgivere: gjeldende.arbeidsgivere.filter(
+                                    (v) => v !== option,
+                                  ),
+                                };
+                              }
+                              return gjeldende;
+                            });
+                          }}
+                          error={førsteFeilForFelt(feil, "arbeidsgivere")}
+                        />
+                        {lokaleVerdier.arbeidsgivere.map((orgnr) => (
+                          <input key={orgnr} type="hidden" name="arbeidsgivere" value={orgnr} />
+                        ))}
+                      </div>
 
                       <HGrid columns={{ xs: 1, md: 2 }} gap="space-4">
                         <div id={ankerIdForFelt("misbruktype")}>
@@ -676,9 +698,11 @@ export default function SakDetaljSide() {
 
                         <Felt label="Kilde">{kildeTekst}</Felt>
 
-                        {sak.organisasjonsnummer && (
+                        {sak.arbeidsgivere && sak.arbeidsgivere.length > 0 && (
                           <Felt label="Organisasjonsnummer">
-                            {formaterOrganisasjonsnummer(sak.organisasjonsnummer)}
+                            {sak.arbeidsgivere
+                              .map((orgnr) => formaterOrganisasjonsnummer(orgnr))
+                              .join(", ")}
                           </Felt>
                         )}
                       </VStack>

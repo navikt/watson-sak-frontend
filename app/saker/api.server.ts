@@ -271,7 +271,7 @@ export async function redigerKontrollsak(
     kilde?: string;
     misbruktype?: string[];
     merking?: string[];
-    organisasjonsnummer?: string | null;
+    arbeidsgivere?: { organisasjonsnummer: string }[];
     ytelser?: {
       type: string;
       periodeFra: string;

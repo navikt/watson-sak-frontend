@@ -502,7 +502,7 @@ type NyMockFordelingssak = {
   misbruktype: KontrollsakResponse["misbruktype"];
   prioritet: KontrollsakResponse["prioritet"];
   merking?: KontrollsakResponse["merking"];
-  organisasjonsnummer?: string | null;
+  arbeidsgivere?: string[];
   ytelser: Array<{
     type: string;
     periodeFra: string;
@@ -520,8 +520,13 @@ export function leggTilMockSakIFordeling(
 
   const kontrollsak = kontrollsakResponseSchema.parse({
     id: state.nesteFordelingssakId++,
-    personIdent: nySak.personIdent,
-    personNavn: nySak.personNavn,
+    kontrollobjekt: {
+      personIdent: nySak.personIdent,
+      navn: nySak.personNavn,
+      arbeidsgivere: (nySak.arbeidsgivere ?? []).map((orgnr) => ({
+        organisasjonsnummer: orgnr,
+      })),
+    },
     saksbehandlere: {
       eier: nySak.saksbehandlere?.eier
         ? {
@@ -557,7 +562,6 @@ export function leggTilMockSakIFordeling(
       endeligBelop: ytelse.endeligBelop ?? null,
     })),
     merking: nySak.merking ?? [],
-    organisasjonsnummer: nySak.organisasjonsnummer ?? null,
     oppgaver: [],
     kobledeSaker: [],
     opprettet,

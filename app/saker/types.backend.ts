@@ -89,7 +89,7 @@ export const dokumentNodeSchema = z.object({
 const kontrollobjektSchema = z.object({
   personIdent: z.string(),
   navn: z.string(),
-  organisasjonsnummer: z.string().nullable().default(null),
+  arbeidsgivere: z.array(z.object({ organisasjonsnummer: z.string() })).default([]),
 });
 
 /**
@@ -143,7 +143,7 @@ export const kontrollsakResponseSchema = z
     ...sak,
     personIdent: kontrollobjekt.personIdent,
     personNavn: kontrollobjekt.navn,
-    organisasjonsnummer: kontrollobjekt.organisasjonsnummer,
+    arbeidsgivere: kontrollobjekt.arbeidsgivere.map((a) => a.organisasjonsnummer),
     henleggelsesarsak: sak.henleggelsesarsak ?? null,
   }));
 

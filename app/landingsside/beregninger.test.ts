@@ -30,7 +30,7 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
       },
     ],
     merking: [],
-    organisasjonsnummer: null,
+    arbeidsgivere: [],
     opprettet: "2026-03-18T00:00:00Z",
     oppdatert: null,
     oppgaver: [],

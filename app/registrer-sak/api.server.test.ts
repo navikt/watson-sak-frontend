@@ -59,6 +59,7 @@ describe("opprettKontrollsak", () => {
         prioritet: "NORMAL",
         misbruktype: ["SKJULT_SAMLIV"],
         merking: [],
+        arbeidsgivere: [],
         ytelser: [
           {
             type: "DAGPENGER",
@@ -93,7 +94,7 @@ describe("opprettKontrollsak", () => {
           },
         ],
         merking: [],
-        organisasjonsnummer: null,
+        arbeidsgivere: [],
       }),
     });
   });
