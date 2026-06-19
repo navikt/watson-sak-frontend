@@ -12,7 +12,11 @@ export default function Root() {
   const { envs, initialPreferences } = useLoaderData<typeof rootLoader>();
   useFaro();
   return (
-    <HtmlRamme initialPreferences={initialPreferences} umamiSiteId={envs.umamiSiteId}>
+    <HtmlRamme
+      initialPreferences={initialPreferences}
+      umamiSiteId={envs.umamiSiteId}
+      sporingScriptUrl={envs.sporingScriptUrl}
+    >
       <BackendHelsesjekk aktiv={skalPolleBackendHelse(envs.miljø)} />
       <Versjonsvarsling gjeldendeVersjon={envs.appversjon} />
       <Outlet />

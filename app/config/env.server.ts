@@ -60,4 +60,10 @@ export const BACKEND_API_URL = hentBackendApiUrl(env.ENVIRONMENT, env.WATSON_ADM
 export const isProd = env.NODE_ENV === "production";
 export const isDev = env.NODE_ENV === "development";
 
+export const SPORING_SCRIPT_URL = env.ENVIRONMENT.startsWith("local")
+  ? null
+  : env.ENVIRONMENT === "prod"
+    ? "https://cdn.nav.no/team-researchops/sporing/sporing.js"
+    : "https://cdn.nav.no/team-researchops/sporing/sporing-dev.js";
+
 export const skalBrukeMockdata = skalBrukeMockdataForMiljø(env.ENVIRONMENT);
