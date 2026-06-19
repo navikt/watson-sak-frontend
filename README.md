@@ -11,7 +11,7 @@ TODO
 
 ## Teknisk stack
 
-- **Frontend**: React Router v7 Framework Mode med React 19
+- **Frontend**: React Router v8 Framework Mode med React 19
 - **Styling**: Tailwind CSS med Navs designsystem (Aksel)
 - **Autentisering**: Azure AD via Oasis
 - **Deployment**: NAIS på GCP
