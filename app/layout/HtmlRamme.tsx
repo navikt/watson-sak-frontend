@@ -9,12 +9,14 @@ type HtmlRammeProps = {
   children: React.ReactNode;
   initialPreferences?: Preferences;
   umamiSiteId: string;
+  sporingScriptUrl?: string | null;
 };
 
 export function HtmlRamme({
   children,
   initialPreferences = defaultPreferences,
   umamiSiteId,
+  sporingScriptUrl,
 }: HtmlRammeProps) {
   return (
     <html lang="nb-no">
@@ -24,7 +26,9 @@ export function HtmlRamme({
         <link rel="icon" href="/favicon.svg" />
         <Meta />
         <Links />
-        {umamiSiteId && <AnalyticsTags sporingId={umamiSiteId} />}
+        {umamiSiteId && sporingScriptUrl && (
+          <AnalyticsTags sporingScriptUrl={sporingScriptUrl} sporingId={umamiSiteId} />
+        )}
       </head>
       <body className="flex flex-col min-h-screen">
         <FaroErrorBoundary>
