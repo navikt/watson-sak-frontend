@@ -370,6 +370,11 @@ export default function SakDetaljSide() {
                     </Heading>
                   </VStack>
                   <HStack gap="space-4">
+                    {sak.adresseskjermet && (
+                      <Tag variant="strong" data-color="danger" size="medium">
+                        Diskresjon
+                      </Tag>
+                    )}
                     {sak.blokkert && (
                       <Tag variant="outline" data-color="warning" size="medium">
                         {formaterBlokkeringsarsak(sak.blokkert)}

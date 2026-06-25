@@ -67,6 +67,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     oppgaver: [],
     kobledeSaker: [],
     dokumenter: [],
+    adresseskjermet: false,
     ...overrides,
   };
 }

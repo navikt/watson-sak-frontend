@@ -139,6 +139,48 @@ describe("henleggelsesarsakSchema", () => {
   });
 });
 
+describe("adresseskjermet i kontrollobjekt", () => {
+  it("defaulter adresseskjermet til false når feltet mangler", () => {
+    const resultat = kontrollsakResponseSchema.safeParse({ ...basisSak, status: "UTREDES" });
+    expect(resultat.success).toBe(true);
+    if (resultat.success) {
+      expect(resultat.data.adresseskjermet).toBe(false);
+    }
+  });
+
+  it("parser adresseskjermet = true fra kontrollobjektet", () => {
+    const resultat = kontrollsakResponseSchema.safeParse({
+      ...basisSak,
+      status: "UTREDES",
+      kontrollobjekt: {
+        personIdent: "12345678901",
+        navn: "Ola Nordmann",
+        adresseskjermet: true,
+      },
+    });
+    expect(resultat.success).toBe(true);
+    if (resultat.success) {
+      expect(resultat.data.adresseskjermet).toBe(true);
+    }
+  });
+
+  it("parser adresseskjermet = false fra kontrollobjektet", () => {
+    const resultat = kontrollsakResponseSchema.safeParse({
+      ...basisSak,
+      status: "UTREDES",
+      kontrollobjekt: {
+        personIdent: "12345678901",
+        navn: "Ola Nordmann",
+        adresseskjermet: false,
+      },
+    });
+    expect(resultat.success).toBe(true);
+    if (resultat.success) {
+      expect(resultat.data.adresseskjermet).toBe(false);
+    }
+  });
+});
+
 describe("kontrollsakHendelseResponseSchema – historikkfelt", () => {
   const basisHendelse = {
     hendelseId: "00000000-0000-4000-8000-000000000099",

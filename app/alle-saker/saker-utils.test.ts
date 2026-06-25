@@ -33,6 +33,7 @@ function lagSak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakRespon
     oppgaver: [],
     kobledeSaker: [],
     dokumenter: [],
+    adresseskjermet: false,
     ...overrides,
   };
 }

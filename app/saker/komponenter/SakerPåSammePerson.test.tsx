@@ -40,6 +40,7 @@ function lagKontrollsak(
     oppgaver: [],
     kobledeSaker: [],
     dokumenter: [],
+    adresseskjermet: false,
     ...overrides,
   };
 }
