@@ -37,6 +37,21 @@ const RADER_PER_SIDE = 20;
 const STANDARD_KOLONNE: AlleSakerKolonne = "opprettet";
 const STANDARD_RETNING: Sorteringsretning = "desc";
 
+/** Mapping fra frontend-sorteringskolonne til backend API-feltnavn. */
+const BACKEND_SORT_FELT: Partial<Record<AlleSakerKolonne, string>> = {
+  saksid: "id",
+  opprettet: "opprettet",
+  oppdatert: "oppdatert",
+  status: "status",
+  kategori: "kategori",
+};
+
+function lagSorteringParam(kolonne: AlleSakerKolonne, retning: Sorteringsretning): string | undefined {
+  const felt = BACKEND_SORT_FELT[kolonne];
+  if (!felt) return undefined;
+  return `${felt},${retning.toUpperCase()}`;
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const side = Math.max(1, Number.parseInt(url.searchParams.get("side") ?? "1", 10) || 1);
@@ -72,14 +87,13 @@ export async function loader({ request }: Route.LoaderArgs) {
         misbruktype: filterMisbrukstype.length > 0 ? filterMisbrukstype : undefined,
         merking: filterMerking.length > 0 ? filterMerking : undefined,
         enhet: filterEnhet.length > 0 ? filterEnhet : undefined,
+        sortering: lagSorteringParam(sorterKolonne, sorterRetning),
       }),
       backendApi.hentSaksbehandlere(token),
     ]);
 
-    const sorterteSaker = sorterSaker(resultat.items, sorterKolonne, sorterRetning);
-
     return {
-      rader: sorterteSaker.map((sak) => mapKontrollsakTilSakslisteRad(sak)),
+      rader: resultat.items.map((sak) => mapKontrollsakTilSakslisteRad(sak)),
       aktivSide: resultat.page,
       totalSider: resultat.totalPages,
       totalAntall: resultat.totalItems,

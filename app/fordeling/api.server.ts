@@ -14,6 +14,7 @@ export type KontrollsakerFilter = {
   blokkert?: string[];
   enhet?: string[];
   utenAnsvarlig?: boolean;
+  sortering?: string;
 };
 
 type HentKontrollsakerArgs = {
@@ -33,6 +34,7 @@ function byggKontrollsakerParams(args: HentKontrollsakerArgs): URLSearchParams {
   for (const v of args.merking ?? []) params.append("merking", v);
   for (const v of args.blokkert ?? []) params.append("blokkert", v);
   for (const v of args.enhet ?? []) params.append("enhet", v);
+  if (args.sortering) params.set("sortering", args.sortering);
   return params;
 }
 
