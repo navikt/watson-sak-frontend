@@ -14,6 +14,7 @@ export type KontrollsakerFilter = {
   blokkert?: string[];
   enhet?: string[];
   utenAnsvarlig?: boolean;
+  utenBlokkering?: boolean;
   sortering?: string;
 };
 
@@ -27,6 +28,7 @@ function byggKontrollsakerParams(args: HentKontrollsakerArgs): URLSearchParams {
   const params = new URLSearchParams({ page: String(args.page), size: String(args.size) });
   if (args.ansvarligNavIdent) params.set("ansvarligNavIdent", args.ansvarligNavIdent);
   if (args.utenAnsvarlig != null) params.set("utenAnsvarlig", String(args.utenAnsvarlig));
+  if (args.utenBlokkering != null) params.set("utenBlokkering", String(args.utenBlokkering));
   for (const v of args.status ?? []) params.append("status", v);
   for (const v of args.kategori ?? []) params.append("kategori", v);
   for (const v of args.misbruktype ?? []) params.append("misbruktype", v);

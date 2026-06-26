@@ -6,7 +6,7 @@ import { hentKontrollsaker } from "~/fordeling/api.server";
 import { RouteConfig } from "~/routeConfig";
 import { hentMineSaker } from "~/saker/mock-alle-saker.server";
 import { formaterStatus } from "~/saker/visning";
-import type { KontrollsakResponse } from "~/saker/types.backend";
+import type { Blokkeringsarsak, KontrollsakResponse } from "~/saker/types.backend";
 import type { Route } from "./+types/MineSakerSide.route";
 import { MineSakerInnhold } from "./MineSakerInnhold";
 import {
@@ -14,6 +14,7 @@ import {
   ALLE_VENTESTATUSER,
   DEFAULT_STATUSER,
   DEFAULT_VENTESTATUSER,
+  filtrerMineSaker,
   formaterVentestatus,
   parseStatuser,
   parseVentestatuser,
@@ -33,7 +34,14 @@ export async function loader({ request }: Route.LoaderArgs) {
     ? parseVentestatuser(url.searchParams.getAll("ventestatus"))
     : DEFAULT_VENTESTATUSER;
 
-  let alleSaker: KontrollsakResponse[];
+  // Map ventestatus til backend-parametre:
+  // "INGEN" → utenBlokkering=true, faktiske blokkeringsårsaker → blokkert[]
+  const blokkerteVentestatus = ventestatusFilter.filter(
+    (v): v is Blokkeringsarsak => v !== "INGEN",
+  );
+  const harIngenVentestatus = ventestatusFilter.length > 0 && ventestatusFilter.includes("INGEN");
+
+  let saker: KontrollsakResponse[];
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
     const resultat = await hentKontrollsaker({
@@ -42,21 +50,17 @@ export async function loader({ request }: Route.LoaderArgs) {
       size: 200,
       ansvarligNavIdent: innloggetBruker.navIdent,
       status: statusFilter,
+      blokkert: blokkerteVentestatus.length > 0 ? blokkerteVentestatus : undefined,
+      utenBlokkering: harIngenVentestatus || undefined,
     });
-    alleSaker = resultat.items;
+    saker = resultat.items;
   } else {
-    alleSaker = hentMineSaker(request, innloggetBruker.navIdent, innloggetBruker.name);
+    const alleSaker = hentMineSaker(request, innloggetBruker.navIdent, innloggetBruker.name);
+    saker = filtrerMineSaker(alleSaker, statusFilter, ventestatusFilter);
   }
 
-  // Ventestatus (blokkering) filtreres lokalt — backend mangler støtte for "utenBlokkering"
-  const filtrerteSaker = alleSaker.filter((sak) => {
-    if (ventestatusFilter.length === 0) return true;
-    const sakVentestatus = sak.blokkert ?? "INGEN";
-    return ventestatusFilter.includes(sakVentestatus);
-  });
-
   return {
-    saker: filtrerteSaker,
+    saker,
     filterAlternativer: {
       status: ALLE_STATUSER.map((s) => ({ verdi: s, etikett: formaterStatus(s) })),
       ventestatus: ALLE_VENTESTATUSER.map((v) => ({ verdi: v, etikett: formaterVentestatus(v) })),
