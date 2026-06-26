@@ -521,7 +521,7 @@ export function leggTilMockSakIFordeling(
     id: state.nesteFordelingssakId++,
     kontrollobjekt: {
       personIdent: nySak.personIdent,
-      navn: hentMockPersonNavn(nySak.personIdent) ?? "Ukjent person",
+      navn: hentMockPersonNavn(nySak.personIdent) ?? "Ukjent navn",
       arbeidsgivere: (nySak.arbeidsgivere ?? []).map((orgnr) => ({
         organisasjonsnummer: orgnr,
       })),

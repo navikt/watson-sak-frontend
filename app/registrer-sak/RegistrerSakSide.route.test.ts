@@ -277,10 +277,6 @@ describe("OpprettSakSide action", () => {
 
     expect(getBackendOboTokenMock).toHaveBeenCalled();
   }, 15000);
-
-  it.skip("returnerer skjema-feil når personnavn ikke kan slås opp server-side", async () => {
-    // Denne testen er ikke lenger relevant etter at navn-henting ble flyttet til backend (RAILS-20-9)
-  });
 });
 
 describe("byggOpprettKontrollsakPayload", () => {
