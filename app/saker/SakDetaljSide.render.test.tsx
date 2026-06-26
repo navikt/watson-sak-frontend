@@ -116,4 +116,27 @@ describe("SakDetaljSide render", () => {
 
     expect(await screen.findByText("Organisasjonsnummer (valgfritt)")).toBeDefined();
   }, 15000);
+
+  it("viser Diskresjon-badge når saken har adresseskjermet=true", async () => {
+    const { hentMockState } = await import("~/testing/mock-store/session.server");
+    const { hentAlleSaker } = await import("~/testing/mock-store/alle-saker.server");
+    const sak = hentAlleSaker(hentMockState(testRequest)).find((s) => s.id === Number(testSakId));
+    if (sak) sak.adresseskjermet = true;
+
+    renderDetaljside();
+
+    expect(await screen.findByText("Diskresjon")).toBeDefined();
+  }, 15000);
+
+  it("skjuler Diskresjon-badge når saken har adresseskjermet=false", async () => {
+    const { hentMockState } = await import("~/testing/mock-store/session.server");
+    const { hentAlleSaker } = await import("~/testing/mock-store/alle-saker.server");
+    const sak = hentAlleSaker(hentMockState(testRequest)).find((s) => s.id === Number(testSakId));
+    if (sak) sak.adresseskjermet = false;
+
+    renderDetaljside();
+
+    await screen.findByRole("heading", { level: 1 });
+    expect(screen.queryByText("Diskresjon")).toBeNull();
+  }, 15000);
 });

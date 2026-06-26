@@ -1,7 +1,7 @@
 import { kontrollsakResponseSchema, type KontrollsakResponse } from "~/saker/types.backend";
 import { normaliserLegacyKontrollsak, oppdaterTilgjengeligeHandlinger } from "~/saker/mock-uuid";
 import { registrerTomtDokumentområdeForSak } from "~/testing/mock-store/dokumenter.server";
-import { berikLegacySakMedPerson } from "~/testing/mock-store/personer.server";
+import { berikLegacySakMedPerson, hentMockPersonNavn } from "~/testing/mock-store/personer.server";
 import type { MockState } from "~/testing/mock-store/session.server";
 
 const deltMedEksempel = [
@@ -484,7 +484,6 @@ export const lagInitialKontrollsaker = lagMockKontrollsaker;
 
 type NyMockFordelingssak = {
   personIdent: string;
-  personNavn: string;
   saksbehandlere?: {
     eier?: {
       navIdent: string;
@@ -522,7 +521,7 @@ export function leggTilMockSakIFordeling(
     id: state.nesteFordelingssakId++,
     kontrollobjekt: {
       personIdent: nySak.personIdent,
-      navn: nySak.personNavn,
+      navn: hentMockPersonNavn(nySak.personIdent) ?? "Ukjent navn",
       arbeidsgivere: (nySak.arbeidsgivere ?? []).map((orgnr) => ({
         organisasjonsnummer: orgnr,
       })),

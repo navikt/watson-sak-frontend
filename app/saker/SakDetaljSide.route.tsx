@@ -12,6 +12,7 @@ import {
   Select,
   Table,
   Tag,
+  Tooltip,
   UNSAFE_Combobox,
   VStack,
 } from "@navikt/ds-react";
@@ -370,6 +371,13 @@ export default function SakDetaljSide() {
                     </Heading>
                   </VStack>
                   <HStack gap="space-4">
+                    {sak.adresseskjermet && (
+                      <Tooltip content="Denne personen er skjermet">
+                        <Tag variant="strong" data-color="danger" size="medium">
+                          Diskresjon
+                        </Tag>
+                      </Tooltip>
+                    )}
                     {sak.blokkert && (
                       <Tag variant="outline" data-color="warning" size="medium">
                         {formaterBlokkeringsarsak(sak.blokkert)}

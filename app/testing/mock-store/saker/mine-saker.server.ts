@@ -440,6 +440,7 @@ const backendGenererteDemoSaker = [
   {
     id: 1001,
     personIdent: "12345678901",
+    adresseskjermet: true,
     saksbehandlere: {
       ansvarlig: innloggetEier,
       deltMed: [],

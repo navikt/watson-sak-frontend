@@ -49,7 +49,6 @@ describe("opprettKontrollsak", () => {
       token: "token-123",
       payload: {
         personIdent: "12345678901",
-        personNavn: "Ola Nordmann",
         saksbehandlere: {
           eier: null,
           deltMed: [],
@@ -80,7 +79,6 @@ describe("opprettKontrollsak", () => {
       },
       body: JSON.stringify({
         personIdent: "12345678901",
-        navn: "Ola Nordmann",
         kategori: "SAMLIV",
         kilde: "NAV_KONTROLL",
         misbruktype: ["SKJULT_SAMLIV"],
@@ -102,7 +100,6 @@ describe("opprettKontrollsak", () => {
   it("legger til ny mock-sak i fordeling slik at den blir søkbar og ownerløs", async () => {
     leggTilMockSakIFordeling(state(), {
       personIdent: "12345678901",
-      personNavn: "Ola Testesen",
       saksbehandlere: {
         eier: null,
         deltMed: [],
@@ -141,7 +138,6 @@ describe("opprettKontrollsak", () => {
       token: "token-123",
       payload: {
         personIdent: "12345678901",
-        personNavn: "Ola Nordmann",
         saksbehandlere: {
           eier: null,
           deltMed: [],
@@ -161,7 +157,6 @@ describe("opprettKontrollsak", () => {
   it("legger mock-sak med eier i Mine saker", async () => {
     const nySak = leggTilMockSakIFordeling(state(), {
       personIdent: "12345678901",
-      personNavn: "Ola Testesen",
       saksbehandlere: {
         eier: {
           navIdent: "Z999999",
@@ -196,7 +191,6 @@ describe("opprettKontrollsak", () => {
         token: "token-123",
         payload: {
           personIdent: "12345678901",
-          personNavn: "Ola Nordmann",
           saksbehandlere: {
             eier: null,
             deltMed: [],
@@ -225,7 +219,6 @@ describe("opprettKontrollsak", () => {
         token: "token-123",
         payload: {
           personIdent: "12345678901",
-          personNavn: "Ola Nordmann",
           saksbehandlere: {
             eier: null,
             deltMed: [],

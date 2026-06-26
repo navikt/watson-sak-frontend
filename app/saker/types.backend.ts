@@ -90,6 +90,7 @@ const kontrollobjektSchema = z.object({
   personIdent: z.string(),
   navn: z.string(),
   arbeidsgivere: z.array(z.object({ organisasjonsnummer: z.string() })).default([]),
+  adresseskjermet: z.boolean().default(false),
 });
 
 /**
@@ -110,6 +111,7 @@ function normaliserKontrollsakInput(input: unknown): unknown {
       kontrollobjekt: {
         personIdent: obj.personIdent,
         navn: obj.personNavn ?? obj.navn ?? "Ukjent navn",
+        adresseskjermet: obj.adresseskjermet,
       },
     };
   }
@@ -144,6 +146,7 @@ export const kontrollsakResponseSchema = z
     personIdent: kontrollobjekt.personIdent,
     personNavn: kontrollobjekt.navn,
     arbeidsgivere: kontrollobjekt.arbeidsgivere.map((a) => a.organisasjonsnummer),
+    adresseskjermet: kontrollobjekt.adresseskjermet,
     henleggelsesarsak: sak.henleggelsesarsak ?? null,
   }));
 

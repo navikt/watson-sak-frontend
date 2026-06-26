@@ -81,7 +81,6 @@ describe("OpprettSakSide action", () => {
         token: "demo",
         payload: expect.objectContaining({
           personIdent: "12345678901",
-          personNavn: "Ola Testesen",
           saksbehandlere: {
             eier: null,
             deltMed: [],
@@ -278,26 +277,6 @@ describe("OpprettSakSide action", () => {
 
     expect(getBackendOboTokenMock).toHaveBeenCalled();
   }, 15000);
-
-  it("returnerer skjema-feil når personnavn ikke kan slås opp server-side", async () => {
-    const { action } = await import("./RegistrerSakSide.server");
-
-    const formData = lagFormDataMedMinimum({ personIdent: "99999999999" });
-
-    const response = await action({
-      request: new Request("http://localhost/registrer-sak", {
-        method: "POST",
-        body: formData,
-      }),
-      params: {},
-      context: {},
-    } as Route.ActionArgs);
-
-    expect(response).toMatchObject({
-      status: "error",
-      error: { "": ["Fant ikke navn på personen som saken opprettes for"] },
-    });
-  }, 15000);
 });
 
 describe("byggOpprettKontrollsakPayload", () => {
@@ -323,11 +302,9 @@ describe("byggOpprettKontrollsakPayload", () => {
             },
           ],
         },
-        personNavn: "Ola Testesen",
       }),
     ).toEqual({
       personIdent: "12345678901",
-      personNavn: "Ola Testesen",
       saksbehandlere: { eier: null, deltMed: [] },
       kategori: "SAMLIV",
       kilde: "NAV_KONTROLL",

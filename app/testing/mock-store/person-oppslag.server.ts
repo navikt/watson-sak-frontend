@@ -16,6 +16,7 @@ type Person = {
   personnummer: string;
   aktørId: string;
   alder: number;
+  adresseskjermet: boolean;
 };
 
 type EksisterendeSak = {
@@ -49,6 +50,7 @@ function mapPerson(person: MockPerson): Person {
     personnummer: formaterMockPersonnummer(person.personIdent),
     aktørId: person.aktørId,
     alder: person.alder,
+    adresseskjermet: false,
   };
 }
 

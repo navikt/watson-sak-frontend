@@ -60,6 +60,7 @@ export async function action({ request }: { request: Request }) {
           personnummer: formaterFødselsnummer(resultat.person.personIdent),
           aktørId: "",
           alder: resultat.person.alder,
+          adresseskjermet: resultat.person.adresseskjermet,
         },
         eksisterendeSaker,
       });
