@@ -10,7 +10,6 @@ import { leggTilMockSakIFordeling } from "~/saker/mock-alle-saker.server";
 
 export type OpprettKontrollsakRequest = {
   personIdent: string;
-  personNavn: string;
   saksbehandlere?: {
     eier?: {
       navIdent: string;
@@ -93,7 +92,6 @@ export async function opprettKontrollsak({
 
     const kontrollsak = leggTilMockSakIFordeling(request, {
       personIdent: payload.personIdent,
-      personNavn: payload.personNavn,
       saksbehandlere: payload.saksbehandlere,
       kategori: payload.kategori,
       kilde: payload.kilde,
@@ -119,7 +117,6 @@ export async function opprettKontrollsak({
     },
     body: JSON.stringify({
       personIdent: payload.personIdent,
-      navn: payload.personNavn,
       kategori: payload.kategori,
       kilde: payload.kilde,
       misbruktype: payload.misbruktype,

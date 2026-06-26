@@ -4,9 +4,7 @@ import { getBackendOboToken } from "~/auth/access-token";
 import { skalBrukeMockdata } from "~/config/env.server";
 import { mockYtelser } from "~/fordeling/mock-data.server";
 import { RouteConfig } from "~/routeConfig";
-import * as backendApi from "~/saker/api.server";
 import { getSaksreferanse } from "~/saker/id";
-import { slaOppPerson } from "./person-oppslag.mock.server";
 import type { OpprettKontrollsakRequest } from "./api.server";
 import type { Route } from "./+types/RegistrerSakSide.route";
 import { opprettKontrollsak } from "./api.server";
@@ -24,16 +22,13 @@ type OpprettSakSaksbehandler = NonNullable<OpprettKontrollsakRequest["saksbehand
 
 export function byggOpprettKontrollsakPayload({
   skjema,
-  personNavn,
   eier = null,
 }: {
   skjema: OpprettSakSkjema;
-  personNavn: string;
   eier?: OpprettSakSaksbehandler;
 }): OpprettKontrollsakRequest {
   return {
     personIdent: skjema.personIdent,
-    personNavn,
     saksbehandlere: {
       eier,
       deltMed: [],
@@ -77,29 +72,10 @@ export async function action({ request }: Route.ActionArgs) {
   const data = submission.value;
   const token = skalBrukeMockdata ? "demo" : await getBackendOboToken(request);
 
-  let personNavn: string | undefined;
-  if (skalBrukeMockdata) {
-    personNavn = slaOppPerson(request, data.personIdent)?.person.navn;
-  } else {
-    const resultat = await backendApi.slåOppPerson(token, data.personIdent);
-    if (resultat.type === "success") {
-      personNavn = resultat.person.navn;
-    }
-  }
-
-  if (typeof personNavn !== "string" || personNavn.trim() === "") {
-    return submission.reply({
-      formErrors: ["Fant ikke navn på personen som saken opprettes for"],
-    });
-  }
-
   const opprettetSak = await opprettKontrollsak({
     request,
     token,
-    payload: byggOpprettKontrollsakPayload({
-      skjema: data,
-      personNavn,
-    }),
+    payload: byggOpprettKontrollsakPayload({ skjema: data }),
   });
 
   return redirect(RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(opprettetSak.id)));

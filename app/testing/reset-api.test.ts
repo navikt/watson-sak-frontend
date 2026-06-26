@@ -46,7 +46,6 @@ describe("reset-api", () => {
       slaOppPerson(testRequest, "12345678901")?.eksisterendeSaker.length ?? 0;
     leggTilMockSakIFordeling(state(), {
       personIdent: "12345678901",
-      personNavn: "Ola Testesen",
       kategori: "ARBEID",
       kilde: "NAV_KONTROLL",
       misbruktype: [],
