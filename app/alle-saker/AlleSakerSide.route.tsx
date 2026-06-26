@@ -77,7 +77,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
-    const [resultat, saksbehandlere] = await Promise.all([
+    const [resultat, saksbehandlere, merkinger] = await Promise.all([
       hentKontrollsaker({
         token,
         page: side,
@@ -90,7 +90,12 @@ export async function loader({ request }: Route.LoaderArgs) {
         sortering: lagSorteringParam(sorterKolonne, sorterRetning),
       }),
       backendApi.hentSaksbehandlere(token),
+      backendApi.hentMerkinger(token),
     ]);
+
+    const uniktEnheter = unikeVerdier(
+      saksbehandlere.map((sb) => sb.enhet).filter((e): e is string => !!e),
+    );
 
     return {
       rader: resultat.items.map((sak) => mapKontrollsakTilSakslisteRad(sak)),
@@ -100,11 +105,11 @@ export async function loader({ request }: Route.LoaderArgs) {
       sorteringskolonne: sorterKolonne,
       sorteringsretning: sorterRetning,
       filterAlternativer: {
-        enhet: [] as string[],
+        enhet: uniktEnheter,
         saksbehandler: saksbehandlere.map((sb) => ({ label: sb.navn, value: sb.navIdent })),
         kategori: kategoriAlternativer,
         misbrukstype: misbrukstypeAlternativer,
-        merking: [] as string[],
+        merking: merkinger,
       },
     };
   }

@@ -235,6 +235,22 @@ export async function hentSaksbehandlere(token: string): Promise<KontrollsakSaks
   return parseEllerKastFeil(saksbehandlerListeSchema, await respons.json(), "hentSaksbehandlere");
 }
 
+// --- Kodeverk ---
+
+const kodeverkResponseSchema = z.object({
+  merker: z.array(z.string()),
+});
+
+/** Henter alle tilgjengelige merke-verdier fra kodeverk-endepunktet. */
+export async function hentMerkinger(token: string): Promise<string[]> {
+  const respons = await fetch(apiUrl("/api/v1/kodeverk"), {
+    headers: authHeaders(token),
+  });
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke hente merkinger");
+  const data = parseEllerKastFeil(kodeverkResponseSchema, await respons.json(), "hentMerkinger");
+  return data.merker;
+}
+
 export async function overforAnsvarlig(
   token: string,
   sakId: string,
