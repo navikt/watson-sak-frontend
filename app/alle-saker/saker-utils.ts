@@ -102,7 +102,7 @@ export function filtrerSaker(
     if (filter.enhet.length > 0 && !filter.enhet.includes(getSaksenhet(sak))) return false;
     if (
       filter.saksbehandler.length > 0 &&
-      !filter.saksbehandler.includes(sak.saksbehandlere.eier?.navn ?? "")
+      !filter.saksbehandler.includes(sak.saksbehandlere.eier?.navIdent ?? "")
     )
       return false;
     if (filter.kategori.length > 0 && !filter.kategori.includes(getKategoriText(sak) ?? ""))

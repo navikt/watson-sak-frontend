@@ -142,10 +142,10 @@ describe("filtrerSaker", () => {
     expect(resultat[0].id).toBe(100);
   });
 
-  it("filtrerer på saksbehandler", () => {
+  it("filtrerer på saksbehandler (navIdent)", () => {
     const resultat = filtrerSaker(saker, {
       enhet: [],
-      saksbehandler: ["Bjørn"],
+      saksbehandler: ["Z2"],
       kategori: [],
       misbrukstype: [],
       merking: [],
@@ -157,7 +157,7 @@ describe("filtrerSaker", () => {
   it("kombinerte filtre gir AND-logikk", () => {
     const resultat = filtrerSaker(saker, {
       enhet: [],
-      saksbehandler: ["Anne"],
+      saksbehandler: ["Z1"],
       kategori: ["Arbeid"],
       misbrukstype: [],
       merking: [],

@@ -63,7 +63,13 @@ export async function action({ request }: Route.ActionArgs) {
 export async function loader({ request }: Route.LoaderArgs) {
   const kontrollsaker = await hentKontrollsakerForFordeling(request);
 
-  return kontrollsaker
-    ? kontrollsaker.items.filter(erEierlosKontrollsak).map(mapKontrollsakTilFordelingSak)
-    : hentFordelingssaker(request).filter(erEierlosKontrollsak).map(mapKontrollsakTilFordelingSak);
+  // Mock-sti: filtrer lokalt (backend-param ignoreres i mock)
+  if (!kontrollsaker) {
+    return hentFordelingssaker(request)
+      .filter(erEierlosKontrollsak)
+      .map(mapKontrollsakTilFordelingSak);
+  }
+
+  // Backend returnerer kun saker uten ansvarlig (utenAnsvarlig=true er sendt)
+  return kontrollsaker.items.map(mapKontrollsakTilFordelingSak);
 }

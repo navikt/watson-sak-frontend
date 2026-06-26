@@ -14,7 +14,6 @@ import {
   ALLE_VENTESTATUSER,
   DEFAULT_STATUSER,
   DEFAULT_VENTESTATUSER,
-  filtrerMineSaker,
   formaterVentestatus,
   parseStatuser,
   parseVentestatuser,
@@ -37,19 +36,24 @@ export async function loader({ request }: Route.LoaderArgs) {
   let alleSaker: KontrollsakResponse[];
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
-    // TODO: Implementer fullstendig backend-paginering. Nåværende løsning henter maks 500 saker.
     const resultat = await hentKontrollsaker({
       token,
       page: 1,
-      size: 500,
+      size: 200,
       ansvarligNavIdent: innloggetBruker.navIdent,
+      status: statusFilter,
     });
     alleSaker = resultat.items;
   } else {
     alleSaker = hentMineSaker(request, innloggetBruker.navIdent, innloggetBruker.name);
   }
 
-  const filtrerteSaker = filtrerMineSaker(alleSaker, statusFilter, ventestatusFilter);
+  // Ventestatus (blokkering) filtreres lokalt — backend mangler støtte for "utenBlokkering"
+  const filtrerteSaker = alleSaker.filter((sak) => {
+    if (ventestatusFilter.length === 0) return true;
+    const sakVentestatus = sak.blokkert ?? "INGEN";
+    return ventestatusFilter.includes(sakVentestatus);
+  });
 
   return {
     saker: filtrerteSaker,
