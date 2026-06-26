@@ -204,21 +204,34 @@ export default function OpprettSakSide() {
         {person && (
           <VStack gap="space-32">
             {/* PersonInfoBanner */}
-            <HStack
-              gap="space-4"
-              align="center"
-              className="rounded-lg bg-ax-bg-neutral-moderate px-4 py-3 max-w-2xl"
-              aria-label="Personinformasjon"
-            >
-              <PersonIcon aria-hidden fontSize="1.5rem" className="shrink-0 text-ax-icon-neutral" />
-              <BodyShort>
-                <strong>{person.navn}</strong>
-                <span className="mx-2 text-ax-text-neutral-subtle">·</span>
-                Personnummer: <strong>{person.personnummer}</strong>
-                <span className="mx-2 text-ax-text-neutral-subtle">·</span>
-                Alder: <strong>{person.alder}</strong>
-              </BodyShort>
-            </HStack>
+            <VStack gap="space-2">
+              <HStack
+                gap="space-4"
+                align="center"
+                className="rounded-lg bg-ax-bg-neutral-moderate px-4 py-3 max-w-2xl"
+                aria-label="Personinformasjon"
+              >
+                <PersonIcon
+                  aria-hidden
+                  fontSize="1.5rem"
+                  className="shrink-0 text-ax-icon-neutral"
+                />
+                <BodyShort>
+                  <strong>{person.navn}</strong>
+                  <span className="mx-2 text-ax-text-neutral-subtle">·</span>
+                  Personnummer: <strong>{person.personnummer}</strong>
+                  <span className="mx-2 text-ax-text-neutral-subtle">·</span>
+                  Alder: <strong>{person.alder}</strong>
+                </BodyShort>
+              </HStack>
+              {person.adresseskjermet && (
+                <LocalAlert status="warning" className="max-w-2xl">
+                  <LocalAlert.Content>
+                    Denne personen er registrert med diskresjon.
+                  </LocalAlert.Content>
+                </LocalAlert>
+              )}
+            </VStack>
 
             {/* Eksisterende sak-advarsel (info, ikke-blokkerende) */}
             {sisteSak && (

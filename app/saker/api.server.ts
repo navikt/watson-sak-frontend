@@ -403,6 +403,7 @@ const personOppslagResponseSchema = z.object({
   navn: z.string(),
   personIdent: z.string(),
   alder: z.number(),
+  adresseskjermet: z.boolean().default(false),
 });
 
 type PersonOppslagBackendResponse = z.infer<typeof personOppslagResponseSchema>;

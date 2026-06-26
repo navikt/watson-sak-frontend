@@ -372,7 +372,7 @@ export default function SakDetaljSide() {
                   </VStack>
                   <HStack gap="space-4">
                     {sak.adresseskjermet && (
-                      <Tooltip content="Denne personen har skjermet adresse">
+                      <Tooltip content="Denne personen er registrert med diskresjon">
                         <Tag variant="strong" data-color="danger" size="medium">
                           Diskresjon
                         </Tag>
