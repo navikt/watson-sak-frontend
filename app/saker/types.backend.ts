@@ -111,6 +111,7 @@ function normaliserKontrollsakInput(input: unknown): unknown {
       kontrollobjekt: {
         personIdent: obj.personIdent,
         navn: obj.personNavn ?? obj.navn ?? "Ukjent navn",
+        adresseskjermet: obj.adresseskjermet,
       },
     };
   }
