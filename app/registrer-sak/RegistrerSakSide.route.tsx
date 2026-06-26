@@ -204,7 +204,7 @@ export default function OpprettSakSide() {
         {person && (
           <VStack gap="space-32">
             {/* PersonInfoBanner */}
-            <VStack gap="space-2">
+            <VStack gap="space-4">
               <HStack
                 gap="space-4"
                 align="center"
@@ -225,10 +225,8 @@ export default function OpprettSakSide() {
                 </BodyShort>
               </HStack>
               {person.adresseskjermet && (
-                <LocalAlert status="warning" className="max-w-2xl">
-                  <LocalAlert.Content>
-                    Denne personen er registrert med diskresjon.
-                  </LocalAlert.Content>
+                <LocalAlert status="error" className="max-w-2xl">
+                  <LocalAlert.Content>Denne personen er skjermet.</LocalAlert.Content>
                 </LocalAlert>
               )}
             </VStack>
