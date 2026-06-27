@@ -1,4 +1,5 @@
 import { UNSAFE_Combobox } from "@navikt/ds-react";
+import { useSearchParams } from "react-router";
 import { ChipsFiltergruppe } from "~/filtre/ChipsFiltergruppe";
 import { Filterpanel } from "~/filtre/Filterpanel";
 import { useFilterParam } from "~/filtre/useFilterParam";
@@ -28,7 +29,21 @@ interface Props {
 const RESET_KEYS = ["side"];
 
 export function Filtre({ alternativer }: Props) {
-  const saksbehandlerFilter = useFilterParam("saksbehandler", { resetKeys: RESET_KEYS });
+  const [searchParams, setSearchParams] = useSearchParams();
+  const valgtSaksbehandler = searchParams.get("saksbehandler") ?? "";
+
+  function velgSaksbehandler(verdi: string, erValgt: boolean) {
+    setSearchParams((forrige) => {
+      const neste = new URLSearchParams(forrige);
+      neste.delete("side");
+      if (erValgt) {
+        neste.set("saksbehandler", verdi);
+      } else {
+        neste.delete("saksbehandler");
+      }
+      return neste;
+    });
+  }
 
   const harAlternativer =
     alternativer.saksbehandler.length > 0 ||
@@ -48,15 +63,9 @@ export function Filtre({ alternativer }: Props) {
             size="small"
             placeholder="Søk etter saksbehandler"
             options={alternativer.saksbehandler}
-            selectedOptions={saksbehandlerFilter.valgteVerdier}
+            selectedOptions={valgtSaksbehandler ? [valgtSaksbehandler] : []}
             isMultiSelect={false}
-            onToggleSelected={(verdi, erValgt) => {
-              if (erValgt) {
-                saksbehandlerFilter.toggle(verdi);
-              } else if (saksbehandlerFilter.valgteVerdier.includes(verdi)) {
-                saksbehandlerFilter.toggle(verdi);
-              }
-            }}
+            onToggleSelected={velgSaksbehandler}
           />
         </div>
       )}

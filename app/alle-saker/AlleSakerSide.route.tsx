@@ -221,7 +221,7 @@ export default function AlleSakerSide() {
                     kolonne: sorteringskolonne,
                     retning: sorteringsretning === "asc" ? "stigende" : "synkende",
                     onSort: (kolonne) => sorterPåKolonne(kolonne as AlleSakerKolonne),
-                    sorterbare: [...sorteringskolonner],
+                    sorterbare: Object.keys(BACKEND_SORT_FELT) as AlleSakerKolonne[],
                   }}
                   kolonneHeaderProps={{
                     saksid: { className: "min-w-[100px] !py-5" },
@@ -260,9 +260,12 @@ export default function AlleSakerSide() {
 // ─── Hjelpefunksjoner ───────────────────────────────────────────────────────
 
 function parseKolonne(verdi: string | null): AlleSakerKolonne {
-  return sorteringskolonner.includes(verdi as AlleSakerKolonne)
-    ? (verdi as AlleSakerKolonne)
-    : STANDARD_KOLONNE;
+  const kolonne = verdi as AlleSakerKolonne;
+  // Kun kolonner med backend-støtte er gyldige sorteringsvalg
+  if (sorteringskolonner.includes(kolonne) && kolonne in BACKEND_SORT_FELT) {
+    return kolonne;
+  }
+  return STANDARD_KOLONNE;
 }
 
 function parseRetning(verdi: string | null): Sorteringsretning {
