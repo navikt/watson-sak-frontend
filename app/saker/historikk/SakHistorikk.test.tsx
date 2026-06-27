@@ -21,8 +21,18 @@ vi.mock("@navikt/ds-react", async (importOriginal) => {
     ...actual,
     Textarea: ({
       label,
+      error: _error,
+      description: _description,
+      hideLabel: _hideLabel,
+      resize: _resize,
       ...props
-    }: React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: React.ReactNode }) => (
+    }: React.ComponentPropsWithoutRef<"textarea"> & {
+      label?: React.ReactNode;
+      error?: React.ReactNode;
+      description?: React.ReactNode;
+      hideLabel?: boolean;
+      resize?: boolean;
+    }) => (
       <label>
         {label}
         <textarea {...props} />

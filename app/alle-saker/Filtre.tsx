@@ -63,7 +63,9 @@ export function Filtre({ alternativer }: Props) {
             size="small"
             placeholder="Søk etter saksbehandler"
             options={alternativer.saksbehandler}
-            selectedOptions={valgtSaksbehandler ? [valgtSaksbehandler] : []}
+            selectedOptions={alternativer.saksbehandler.filter(
+              (sb) => sb.value === valgtSaksbehandler,
+            )}
             isMultiSelect={false}
             onToggleSelected={velgSaksbehandler}
           />
