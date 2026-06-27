@@ -4,7 +4,7 @@ import { logger } from "~/logging/logging";
 import { kontrollsakPageResponseSchema } from "~/saker/types.backend";
 import type { KontrollsakPageResponse } from "./types.backend";
 
-export type KontrollsakerFilter = {
+type KontrollsakerFilter = {
   ansvarligNavIdent?: string;
   status?: string[];
   kategori?: string[];
@@ -40,7 +40,9 @@ function byggKontrollsakerParams(args: HentKontrollsakerArgs): URLSearchParams {
   return params;
 }
 
-export async function hentKontrollsaker(args: HentKontrollsakerArgs): Promise<KontrollsakPageResponse> {
+export async function hentKontrollsaker(
+  args: HentKontrollsakerArgs,
+): Promise<KontrollsakPageResponse> {
   const { token } = args;
   if (!BACKEND_API_URL) {
     throw new Error("Mangler backend-url for henting av kontrollsaker.");

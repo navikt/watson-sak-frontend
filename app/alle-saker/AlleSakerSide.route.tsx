@@ -46,7 +46,10 @@ const BACKEND_SORT_FELT: Partial<Record<AlleSakerKolonne, string>> = {
   kategori: "kategori",
 };
 
-function lagSorteringParam(kolonne: AlleSakerKolonne, retning: Sorteringsretning): string | undefined {
+function lagSorteringParam(
+  kolonne: AlleSakerKolonne,
+  retning: Sorteringsretning,
+): string | undefined {
   const felt = BACKEND_SORT_FELT[kolonne];
   if (!felt) return undefined;
   return `${felt},${retning.toUpperCase()}`;
@@ -60,7 +63,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const filterEnhet = normaliserFilterVerdier(parseMultiValueParam(url.searchParams, "enhet"));
   const filterSaksbehandler = url.searchParams.get("saksbehandler") ?? undefined;
-  const filterKategori = normaliserFilterVerdier(parseMultiValueParam(url.searchParams, "kategori"));
+  const filterKategori = normaliserFilterVerdier(
+    parseMultiValueParam(url.searchParams, "kategori"),
+  );
   const filterMisbrukstype = normaliserFilterVerdier(
     parseMultiValueParam(url.searchParams, "misbrukstype"),
   );
@@ -153,14 +158,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export default function AlleSakerSide() {
-  const {
-    rader,
-    aktivSide,
-    totalSider,
-    sorteringskolonne,
-    sorteringsretning,
-    filterAlternativer,
-  } = useLoaderData<typeof loader>();
+  const { rader, aktivSide, totalSider, sorteringskolonne, sorteringsretning, filterAlternativer } =
+    useLoaderData<typeof loader>();
 
   const [, setSearchParams] = useSearchParams();
 

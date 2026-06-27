@@ -41,7 +41,13 @@ describe("hentMerkinger", () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
-      json: async () => ({ merker: [], kategorier: [], misbrukstyper: [], ytelseTyper: [], kilder: [] }),
+      json: async () => ({
+        merker: [],
+        kategorier: [],
+        misbrukstyper: [],
+        ytelseTyper: [],
+        kilder: [],
+      }),
     });
     vi.stubGlobal("fetch", fetchMock);
 
