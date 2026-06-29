@@ -6,7 +6,7 @@ import { hentKontrollsaker } from "~/fordeling/api.server";
 import { RouteConfig } from "~/routeConfig";
 import { hentMineSaker } from "~/saker/mock-alle-saker.server";
 import { formaterStatus } from "~/saker/visning";
-import type { KontrollsakResponse } from "~/saker/types.backend";
+import type { Blokkeringsarsak, KontrollsakResponse } from "~/saker/types.backend";
 import type { Route } from "./+types/MineSakerSide.route";
 import { MineSakerInnhold } from "./MineSakerInnhold";
 import {
@@ -34,25 +34,34 @@ export async function loader({ request }: Route.LoaderArgs) {
     ? parseVentestatuser(url.searchParams.getAll("ventestatus"))
     : DEFAULT_VENTESTATUSER;
 
-  let alleSaker: KontrollsakResponse[];
+  // Map ventestatus til backend-parametre:
+  // "INGEN" → utenBlokkering=true, faktiske blokkeringsårsaker → blokkert[]
+  const blokkerteVentestatus = ventestatusFilter.filter(
+    (v): v is Blokkeringsarsak => v !== "INGEN",
+  );
+  const harIngenVentestatus = ventestatusFilter.length > 0 && ventestatusFilter.includes("INGEN");
+
+  let saker: KontrollsakResponse[];
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
-    // TODO: Implementer fullstendig backend-paginering. Nåværende løsning henter maks 500 saker.
     const resultat = await hentKontrollsaker({
       token,
       page: 1,
-      size: 500,
+      // TODO: Legg til paginering (se RAILS-2-1). size=200 er en midlertidig øvre grense.
+      size: 200,
       ansvarligNavIdent: innloggetBruker.navIdent,
+      status: statusFilter,
+      blokkert: blokkerteVentestatus.length > 0 ? blokkerteVentestatus : undefined,
+      utenBlokkering: harIngenVentestatus ? true : undefined,
     });
-    alleSaker = resultat.items;
+    saker = resultat.items;
   } else {
-    alleSaker = hentMineSaker(request, innloggetBruker.navIdent, innloggetBruker.name);
+    const alleSaker = hentMineSaker(request, innloggetBruker.navIdent, innloggetBruker.name);
+    saker = filtrerMineSaker(alleSaker, statusFilter, ventestatusFilter);
   }
 
-  const filtrerteSaker = filtrerMineSaker(alleSaker, statusFilter, ventestatusFilter);
-
   return {
-    saker: filtrerteSaker,
+    saker,
     filterAlternativer: {
       status: ALLE_STATUSER.map((s) => ({ verdi: s, etikett: formaterStatus(s) })),
       ventestatus: ALLE_VENTESTATUSER.map((v) => ({ verdi: v, etikett: formaterVentestatus(v) })),

@@ -14,6 +14,33 @@ vi.mock("~/auth/innlogget-bruker", () => ({
   }),
 }));
 
+vi.mock("@navikt/ds-react", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@navikt/ds-react")>();
+
+  return {
+    ...actual,
+    Textarea: ({
+      label,
+      error: _error,
+      description: _description,
+      hideLabel: _hideLabel,
+      resize: _resize,
+      ...props
+    }: React.ComponentPropsWithoutRef<"textarea"> & {
+      label?: React.ReactNode;
+      error?: React.ReactNode;
+      description?: React.ReactNode;
+      hideLabel?: boolean;
+      resize?: boolean;
+    }) => (
+      <label>
+        {label}
+        <textarea {...props} />
+      </label>
+    ),
+  };
+});
+
 function lagBackendHendelse(overrides: Partial<SakHendelse> = {}): SakHendelse {
   return {
     hendelseId: "00000000-0000-4000-8000-000000000123",
@@ -215,7 +242,7 @@ describe("SakHistorikk", () => {
   });
 
   it("setter tidspunkt for nytt historikkinnslag når modalen åpnes", () => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-05-06T08:15:00"));
 
     renderMedRouter(

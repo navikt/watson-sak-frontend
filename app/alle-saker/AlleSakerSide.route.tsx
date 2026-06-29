@@ -1,7 +1,6 @@
-// Alle saker-siden viser en oversikt over samtlige saker i systemet.
-// Inneholder nøkkeltall, trakt-visualisering og en sorterbar, paginert saksliste.
+// Alle saker-siden viser en paginert, filtrerbar og sorterbar saksliste.
 
-import { Heading, HGrid, HStack, Pagination, VStack } from "@navikt/ds-react";
+import { Heading, HStack, Pagination, VStack } from "@navikt/ds-react";
 import { useLoaderData, useSearchParams } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { skalBrukeMockdata } from "~/config/env.server";
@@ -10,15 +9,21 @@ import { parseMultiValueParam } from "~/filtre/parseMultiValueParam";
 import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
 import { RouteConfig } from "~/routeConfig";
-import { getKategoriText, getMisbrukstyper, getSaksenhet } from "~/saker/selectors";
+import { getSaksenhet } from "~/saker/selectors";
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
 import { paginerElementer } from "~/utils/paginering";
+import {
+  kontrollsakKategoriEtiketter,
+  kontrollsakKategoriVerdier,
+  kontrollsakMisbrukstypeEtiketter,
+  kontrollsakMisbrukstypeVerdier,
+} from "~/saker/kategorier";
+import * as backendApi from "~/saker/api.server";
+import { mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import type { Route } from "./+types/AlleSakerSide.route";
 import {
   type AlleSakerKolonne,
-  beregnNokkeltall,
-  beregnTraktSteg,
   filtrerSaker,
   normaliserFilterVerdier,
   type Sorteringsretning,
@@ -27,12 +32,28 @@ import {
   unikeVerdier,
 } from "./saker-utils";
 import { Filtre } from "./Filtre";
-import { Nokkeltall } from "./Nokkeltall";
-import { Trakt } from "./Trakt";
 
 const RADER_PER_SIDE = 20;
 const STANDARD_KOLONNE: AlleSakerKolonne = "opprettet";
 const STANDARD_RETNING: Sorteringsretning = "desc";
+
+/** Mapping fra frontend-sorteringskolonne til backend API-feltnavn. */
+const BACKEND_SORT_FELT: Partial<Record<AlleSakerKolonne, string>> = {
+  saksid: "id",
+  opprettet: "opprettet",
+  oppdatert: "oppdatert",
+  status: "status",
+  kategori: "kategori",
+};
+
+function lagSorteringParam(
+  kolonne: AlleSakerKolonne,
+  retning: Sorteringsretning,
+): string | undefined {
+  const felt = BACKEND_SORT_FELT[kolonne];
+  if (!felt) return undefined;
+  return `${felt},${retning.toUpperCase()}`;
+}
 
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
@@ -41,9 +62,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const sorterRetning = parseRetning(url.searchParams.get("retning"));
 
   const filterEnhet = normaliserFilterVerdier(parseMultiValueParam(url.searchParams, "enhet"));
-  const filterSaksbehandler = normaliserFilterVerdier(
-    parseMultiValueParam(url.searchParams, "saksbehandler"),
-  );
+  const filterSaksbehandler = url.searchParams.get("saksbehandler") ?? undefined;
   const filterKategori = normaliserFilterVerdier(
     parseMultiValueParam(url.searchParams, "kategori"),
   );
@@ -52,34 +71,60 @@ export async function loader({ request }: Route.LoaderArgs) {
   );
   const filterMerking = normaliserFilterVerdier(parseMultiValueParam(url.searchParams, "merking"));
 
-  let alleSaker: KontrollsakResponse[];
+  const kategoriAlternativer = kontrollsakKategoriVerdier.map((v) => ({
+    label: kontrollsakKategoriEtiketter[v],
+    value: v,
+  }));
+  const misbrukstypeAlternativer = kontrollsakMisbrukstypeVerdier.map((v) => ({
+    label: kontrollsakMisbrukstypeEtiketter[v],
+    value: v,
+  }));
+
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
-    // TODO: Implementer fullstendig backend-paginering. Nåværende løsning henter maks 500 saker
-    // og paginerer lokalt, som gir ufullstendig visning ved >500 saker.
-    const resultat = await hentKontrollsaker({ token, page: 1, size: 500 });
-    alleSaker = resultat.items;
-  } else {
-    alleSaker = hentAlleSaker(request);
+    const [resultat, saksbehandlere, merkinger] = await Promise.all([
+      hentKontrollsaker({
+        token,
+        page: side,
+        size: RADER_PER_SIDE,
+        ansvarligNavIdent: filterSaksbehandler,
+        kategori: filterKategori.length > 0 ? filterKategori : undefined,
+        misbruktype: filterMisbrukstype.length > 0 ? filterMisbrukstype : undefined,
+        merking: filterMerking.length > 0 ? filterMerking : undefined,
+        enhet: filterEnhet.length > 0 ? filterEnhet : undefined,
+        sortering: lagSorteringParam(sorterKolonne, sorterRetning),
+      }),
+      backendApi.hentSaksbehandlere(token),
+      backendApi.hentMerkinger(token),
+    ]);
+
+    const uniktEnheter = unikeVerdier(
+      saksbehandlere.map((sb) => sb.enhet).filter((e): e is string => !!e),
+    );
+
+    return {
+      rader: resultat.items.map((sak) => mapKontrollsakTilSakslisteRad(sak)),
+      aktivSide: resultat.page,
+      totalSider: resultat.totalPages,
+      totalAntall: resultat.totalItems,
+      sorteringskolonne: sorterKolonne,
+      sorteringsretning: sorterRetning,
+      filterAlternativer: {
+        enhet: uniktEnheter,
+        saksbehandler: saksbehandlere.map((sb) => ({ label: sb.navn, value: sb.navIdent })),
+        kategori: kategoriAlternativer,
+        misbrukstype: misbrukstypeAlternativer,
+        merking: merkinger,
+      },
+    };
   }
 
-  // Tilgjengelige filterverdier beregnes fra alle saker (uavhengig av aktivt filter)
-  const filterAlternativer = {
-    enhet: unikeVerdier(alleSaker.map(getSaksenhet)),
-    saksbehandler: unikeVerdier(
-      alleSaker.map((s) => s.saksbehandlere.eier?.navn).filter((n): n is string => !!n),
-    ),
-    kategori: unikeVerdier(
-      alleSaker.map((s) => getKategoriText(s)).filter((k): k is string => !!k),
-    ),
-    misbrukstype: unikeVerdier(alleSaker.flatMap(getMisbrukstyper)),
-    merking: unikeVerdier(alleSaker.flatMap((s) => s.merking)),
-  };
+  // Mock-sti: lokal filtrering, sortering og paginering
+  const alleSaker: KontrollsakResponse[] = hentAlleSaker(request);
 
-  // Filtrering gjelder kun tabellen – nøkkeltall og trakt vises for alle saker
   const filtrerteSaker = filtrerSaker(alleSaker, {
     enhet: filterEnhet,
-    saksbehandler: filterSaksbehandler,
+    saksbehandler: filterSaksbehandler ? [filterSaksbehandler] : [],
     kategori: filterKategori,
     misbrukstype: filterMisbrukstype,
     merking: filterMerking,
@@ -99,25 +144,25 @@ export async function loader({ request }: Route.LoaderArgs) {
     totalAntall: filtrerteSaker.length,
     sorteringskolonne: sorterKolonne,
     sorteringsretning: sorterRetning,
-    nokkeltall: beregnNokkeltall(alleSaker),
-    traktSteg: beregnTraktSteg(alleSaker),
-    filterAlternativer,
+    filterAlternativer: {
+      enhet: unikeVerdier(alleSaker.map(getSaksenhet)),
+      saksbehandler: mockSaksbehandlerDetaljer.map((sb) => ({
+        label: sb.navn,
+        value: sb.navIdent,
+      })),
+      kategori: kategoriAlternativer,
+      misbrukstype: misbrukstypeAlternativer,
+      merking: unikeVerdier(alleSaker.flatMap((s) => s.merking)),
+    },
   };
 }
 
 export default function AlleSakerSide() {
-  const {
-    rader,
-    aktivSide,
-    totalSider,
-    sorteringskolonne,
-    sorteringsretning,
-    nokkeltall,
-    traktSteg,
-    filterAlternativer,
-  } = useLoaderData<typeof loader>();
+  const { rader, aktivSide, totalSider, sorteringskolonne, sorteringsretning, filterAlternativer } =
+    useLoaderData<typeof loader>();
 
   const [, setSearchParams] = useSearchParams();
+
   function gåTilSide(side: number) {
     setSearchParams((forrige) => {
       const neste = new URLSearchParams(forrige);
@@ -151,38 +196,12 @@ export default function AlleSakerSide() {
           Alle saker
         </Heading>
 
-        {/* Seksjon 1 + 2: Nøkkeltall og trakt side om side på md+ */}
-        <HGrid columns={{ xs: 1, md: 2 }} gap="space-6">
-          <section
-            aria-labelledby="nokkeltall-heading"
-            className="rounded-2xl border border-ax-border-neutral-subtle bg-ax-bg-default p-6"
-          >
-            <Heading level="2" size="medium" spacing id="nokkeltall-heading">
-              Nøkkeltall
-            </Heading>
-            <Nokkeltall {...nokkeltall} />
-          </section>
-
-          <section
-            aria-labelledby="trakt-heading"
-            className="rounded-2xl border border-ax-border-neutral-subtle bg-ax-bg-default p-6"
-          >
-            <Heading level="2" size="medium" spacing id="trakt-heading">
-              Saker per steg
-            </Heading>
-            <Trakt steg={traktSteg} />
-          </section>
-        </HGrid>
-
-        {/* Seksjon 3: Saksliste med filtre */}
         <section aria-labelledby="saksliste-heading">
           <Heading level="2" size="medium" spacing id="saksliste-heading">
             Saker
           </Heading>
 
-          {/* Responsiv layout: filtre over tabellen på small, til høyre på xl+ */}
           <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:gap-8">
-            {/* Tabell med paginering */}
             <div className="min-w-0 flex-1 xl:order-first">
               <div className="overflow-x-auto [&_table]:w-full">
                 <Saksliste
@@ -202,7 +221,7 @@ export default function AlleSakerSide() {
                     kolonne: sorteringskolonne,
                     retning: sorteringsretning === "asc" ? "stigende" : "synkende",
                     onSort: (kolonne) => sorterPåKolonne(kolonne as AlleSakerKolonne),
-                    sorterbare: [...sorteringskolonner],
+                    sorterbare: Object.keys(BACKEND_SORT_FELT) as AlleSakerKolonne[],
                   }}
                   kolonneHeaderProps={{
                     saksid: { className: "min-w-[100px] !py-5" },
@@ -228,7 +247,6 @@ export default function AlleSakerSide() {
               )}
             </div>
 
-            {/* Filterpanel: horisontalt wrapping over tabellen på small, vertikal kolonne til høyre på xl+ */}
             <aside aria-label="Filtrer saker" className="xl:order-last xl:w-56 xl:shrink-0">
               <Filtre alternativer={filterAlternativer} />
             </aside>
@@ -242,9 +260,12 @@ export default function AlleSakerSide() {
 // ─── Hjelpefunksjoner ───────────────────────────────────────────────────────
 
 function parseKolonne(verdi: string | null): AlleSakerKolonne {
-  return sorteringskolonner.includes(verdi as AlleSakerKolonne)
-    ? (verdi as AlleSakerKolonne)
-    : STANDARD_KOLONNE;
+  const kolonne = verdi as AlleSakerKolonne;
+  // Kun kolonner med backend-støtte er gyldige sorteringsvalg
+  if (sorteringskolonner.includes(kolonne) && kolonne in BACKEND_SORT_FELT) {
+    return kolonne;
+  }
+  return STANDARD_KOLONNE;
 }
 
 function parseRetning(verdi: string | null): Sorteringsretning {
