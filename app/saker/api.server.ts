@@ -256,8 +256,6 @@ const kodeverkResponseSchema = z.object({
   kilder: z.array(kodeverkInfoSchema),
 });
 
-export type KodeverkInfo = z.infer<typeof kodeverkInfoSchema>;
-export type MisbrukstypeInfo = z.infer<typeof misbrukstypeInfoSchema>;
 export type Kodeverk = z.infer<typeof kodeverkResponseSchema>;
 
 /** Henter alle statiske oppslagsverdier fra kodeverk-endepunktet. */

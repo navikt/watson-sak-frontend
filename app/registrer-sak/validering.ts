@@ -1,26 +1,16 @@
 import { z } from "zod";
 import {
   kontrollsakKategoriVerdier,
-  kontrollsakKildeEtiketter,
   kontrollsakKildeVerdier,
   kontrollsakMisbrukstypeVerdier,
   misbrukstyperPerKategori,
 } from "~/saker/kategorier";
 
-export const kildeAlternativer = kontrollsakKildeVerdier;
+const kildeAlternativer = kontrollsakKildeVerdier;
 
-export const kildeEtiketter = kontrollsakKildeEtiketter;
-
-export const kategoriAlternativer = kontrollsakKategoriVerdier;
-export { misbrukstyperPerKategori as misbrukstypePerKategori };
+const kategoriAlternativer = kontrollsakKategoriVerdier;
 
 export const merkingAlternativer = ["LIME", "REGMAN", "A_KRIM"] as const;
-
-export const merkingEtiketter: Record<(typeof merkingAlternativer)[number], string> = {
-  LIME: "Lime",
-  REGMAN: "Regman",
-  A_KRIM: "A-krim",
-};
 
 export const enhetAlternativer = ["ØST", "VEST", "NORD", "ANALYSE"] as const;
 

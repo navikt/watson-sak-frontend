@@ -1,7 +1,6 @@
 import { data } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
-import { mockYtelser } from "~/fordeling/mock-data.server";
 import { skalBrukeMockdata } from "~/config/env.server";
 import { enhetAlternativer, redigerSaksinformasjonSchema } from "~/registrer-sak/validering";
 import {
@@ -178,7 +177,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       saksbehandlere: saksbehandlerDetaljer.map((sb) => sb.navn),
       saksbehandlerDetaljer,
       seksjoner: mockSeksjoner,
-      ytelser: mockYtelser,
     };
   }
 
@@ -205,7 +203,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     saksbehandlere: mockSaksbehandlere,
     saksbehandlerDetaljer: mockSaksbehandlerDetaljer,
     seksjoner: mockSeksjoner,
-    ytelser: mockYtelser,
   };
 }
 

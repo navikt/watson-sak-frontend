@@ -1,5 +1,3 @@
-// Alle saker-siden viser en paginert, filtrerbar og sorterbar saksliste.
-
 import { Heading, HStack, Pagination, VStack } from "@navikt/ds-react";
 import { useLoaderData, useSearchParams } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
@@ -21,6 +19,7 @@ import {
 import * as backendApi from "~/saker/api.server";
 import { mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import type { KontrollsakResponse } from "~/saker/types.backend";
+import { useKodeverk } from "~/kodeverk/useKodeverk";
 import type { Route } from "./+types/AlleSakerSide.route";
 import {
   type AlleSakerKolonne,
@@ -82,7 +81,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
-    const [resultat, saksbehandlere, merkinger] = await Promise.all([
+    const [resultat, saksbehandlere] = await Promise.all([
       hentKontrollsaker({
         token,
         page: side,
@@ -95,7 +94,6 @@ export async function loader({ request }: Route.LoaderArgs) {
         sortering: lagSorteringParam(sorterKolonne, sorterRetning),
       }),
       backendApi.hentSaksbehandlere(token),
-      backendApi.hentMerkinger(token),
     ]);
 
     const uniktEnheter = unikeVerdier(
@@ -114,7 +112,6 @@ export async function loader({ request }: Route.LoaderArgs) {
         saksbehandler: saksbehandlere.map((sb) => ({ label: sb.navn, value: sb.navIdent })),
         kategori: kategoriAlternativer,
         misbrukstype: misbrukstypeAlternativer,
-        merking: merkinger,
       },
     };
   }
@@ -152,7 +149,6 @@ export async function loader({ request }: Route.LoaderArgs) {
       })),
       kategori: kategoriAlternativer,
       misbrukstype: misbrukstypeAlternativer,
-      merking: unikeVerdier(alleSaker.flatMap((s) => s.merking)),
     },
   };
 }
@@ -160,6 +156,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 export default function AlleSakerSide() {
   const { rader, aktivSide, totalSider, sorteringskolonne, sorteringsretning, filterAlternativer } =
     useLoaderData<typeof loader>();
+  const { merker } = useKodeverk();
 
   const [, setSearchParams] = useSearchParams();
 
@@ -248,7 +245,7 @@ export default function AlleSakerSide() {
             </div>
 
             <aside aria-label="Filtrer saker" className="xl:order-last xl:w-56 xl:shrink-0">
-              <Filtre alternativer={filterAlternativer} />
+              <Filtre alternativer={{ ...filterAlternativer, merking: merker }} />
             </aside>
           </div>
         </section>

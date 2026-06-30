@@ -1,4 +1,4 @@
-const kontrollsakYtelseTypeVerdier = [
+export const kontrollsakYtelseTypeVerdier = [
   "DAGPENGER",
   "SYKEPENGER",
   "BARNETRYGD",
