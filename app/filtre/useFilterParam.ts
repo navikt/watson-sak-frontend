@@ -4,8 +4,7 @@ import { parseMultiValueParam } from "./parseMultiValueParam";
 /**
  * Hook for å lese og toggle en multi-value URL search param.
  *
- * Støtter både repeated params (?k=A&k=B) og komma-separerte (?k=A,B) for bakoverkompatibilitet.
- * Skriver alltid repeated params tilbake.
+ * Støtter repeated params (?k=A&k=B). Skriver alltid repeated params tilbake.
  */
 export function useFilterParam(nøkkel: string, options: { resetKeys?: string[] } = {}) {
   const [searchParams, setSearchParams] = useSearchParams();

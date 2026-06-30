@@ -1,7 +1,4 @@
-/** Parser som håndterer både repeated params og komma-separerte verdier. */
+/** Parser repeated URL-params til liste. */
 export function parseMultiValueParam(params: URLSearchParams, key: string): string[] {
-  return params
-    .getAll(key)
-    .flatMap((v) => v.split(","))
-    .filter(Boolean);
+  return params.getAll(key).filter(Boolean);
 }
