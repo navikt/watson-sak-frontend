@@ -1,5 +1,5 @@
 import { MagnifyingGlassIcon } from "@navikt/aksel-icons";
-import { BodyShort, Button, Heading, Search, VStack } from "@navikt/ds-react";
+import { BodyShort, Box, Button, Heading, Search, VStack } from "@navikt/ds-react";
 import { useEffect, useRef } from "react";
 import { Form, useActionData, useNavigate } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
@@ -128,27 +128,36 @@ export default function SøkSide() {
             )}
 
             {resultater && resultater.length === 0 && (
-              <VStack gap="space-4" align="center" className="py-12">
-                <MagnifyingGlassIcon
-                  aria-hidden
-                  fontSize="3rem"
-                  className="text-ax-icon-neutral-subtle"
-                />
+              <>
                 {erFnrSøk ? (
-                  <>
-                    <BodyShort className="text-ax-text-neutral-subtle">
-                      Ingen saker funnet på dette fødselsnummeret.
-                    </BodyShort>
-                    <Button variant="primary" onClick={håndterOpprettSak}>
-                      Opprett sak for denne personen
-                    </Button>
-                  </>
+                  <Box
+                    background="info-soft"
+                    borderRadius="8"
+                    padding="space-16"
+                    className="max-w-xl"
+                  >
+                    <VStack gap="space-8">
+                      <BodyShort>Ingen saker funnet på dette fødselsnummeret.</BodyShort>
+                      <div>
+                        <Button variant="primary" onClick={håndterOpprettSak}>
+                          Opprett sak for denne personen
+                        </Button>
+                      </div>
+                    </VStack>
+                  </Box>
                 ) : (
-                  <BodyShort className="text-ax-text-neutral-subtle">
-                    Prøv å søke på saksnummer, fødselsnummer eller kategorier.
-                  </BodyShort>
+                  <VStack gap="space-4" align="center" className="py-12">
+                    <MagnifyingGlassIcon
+                      aria-hidden
+                      fontSize="3rem"
+                      className="text-ax-icon-neutral-subtle"
+                    />
+                    <BodyShort className="text-ax-text-neutral-subtle">
+                      Prøv å søke på saksnummer, fødselsnummer eller kategorier.
+                    </BodyShort>
+                  </VStack>
                 )}
-              </VStack>
+              </>
             )}
           </VStack>
         )}
