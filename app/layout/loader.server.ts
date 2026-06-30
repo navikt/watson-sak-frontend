@@ -11,10 +11,8 @@ import { parsePreferences, preferencesCookie } from "~/preferanser/PreferencesCo
 import { hentKodeverk, type Kodeverk } from "~/saker/api.server";
 import { mockKodeverk } from "~/testing/mock-store/kodeverk.server";
 
-async function hentKodeverkMedFallback(request: Request): Promise<Kodeverk> {
-  if (skalBrukeMockdata) return mockKodeverk;
+async function hentKodeverkMedFallback(token: string): Promise<Kodeverk> {
   try {
-    const token = await getBackendOboToken(request);
     return await hentKodeverk(token);
   } catch (feil) {
     const feilObjekt = feil instanceof Error ? feil : new Error(String(feil));
@@ -26,13 +24,14 @@ async function hentKodeverkMedFallback(request: Request): Promise<Kodeverk> {
 }
 
 export async function rootLoader({ request }: LoaderFunctionArgs) {
-  const user = await hentInnloggetBruker({ request });
+  const oboToken = skalBrukeMockdata ? null : await getBackendOboToken(request).catch(() => null);
+  const user = await hentInnloggetBruker({ request, oboToken });
   const cookieHeader = request.headers.get("Cookie");
   const [featureFlagg, statusmelding, preferencesCookieValue, kodeverk] = await Promise.all([
     hentAlleFeatureFlagg(user.navIdent),
     hentStatusmeldingFeatureFlagg(),
     preferencesCookie.parse(cookieHeader),
-    hentKodeverkMedFallback(request),
+    oboToken ? hentKodeverkMedFallback(oboToken) : Promise.resolve(mockKodeverk),
   ]);
   const initialPreferences = parsePreferences(preferencesCookieValue);
   return {
