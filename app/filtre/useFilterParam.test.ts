@@ -13,7 +13,10 @@ describe("parseMultiValueParam", () => {
   });
 
   it("filtrerer bort tomme verdier", () => {
-    const params = new URLSearchParams([["kategori", ""], ["kategori", "Arbeid"]]);
+    const params = new URLSearchParams([
+      ["kategori", ""],
+      ["kategori", "Arbeid"],
+    ]);
     expect(parseMultiValueParam(params, "kategori")).toEqual(["Arbeid"]);
   });
 
