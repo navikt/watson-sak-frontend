@@ -52,6 +52,35 @@ test.describe("Søk", () => {
       await expect(page.getByText(/Ingen treff for "finnesikke123"/)).toBeVisible();
     });
 
+    test("viser CTA for å opprette sak ved ingen treff på FNR", async ({ page }) => {
+      await page.getByLabel("Søk etter saker").fill("99999999999");
+      await page.getByLabel("Søk etter saker").press("Enter");
+
+      await expect(page.getByText(/Ingen treff for "99999999999"/)).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "Opprett sak for denne personen" }),
+      ).toBeVisible();
+    });
+
+    test("viser ikke CTA når ingen treff på fritekst", async ({ page }) => {
+      await page.getByLabel("Søk etter saker").fill("finnesikke123");
+      await page.getByLabel("Søk etter saker").press("Enter");
+
+      await expect(page.getByText(/Ingen treff for "finnesikke123"/)).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "Opprett sak for denne personen" }),
+      ).not.toBeVisible();
+    });
+
+    test("CTA navigerer til registrer-sak med FNR forhåndsutfylt", async ({ page }) => {
+      await page.getByLabel("Søk etter saker").fill("99999999999");
+      await page.getByLabel("Søk etter saker").press("Enter");
+
+      await page.getByRole("button", { name: "Opprett sak for denne personen" }).click();
+
+      await expect(page).toHaveURL(/\/registrer-sak\?fnr=99999999999/);
+    });
+
     test("kan navigere til sakdetalj fra søkeresultat", async ({ page }) => {
       await page.getByLabel("Søk etter saker").fill("1028");
       await page.getByLabel("Søk etter saker").press("Enter");

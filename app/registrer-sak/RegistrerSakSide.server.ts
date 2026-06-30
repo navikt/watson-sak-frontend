@@ -9,6 +9,8 @@ import type { Route } from "./+types/RegistrerSakSide.route";
 import { opprettKontrollsak } from "./api.server";
 import { enhetAlternativer, opprettSakSchema, type OpprettSakSkjema } from "./validering";
 
+const FNR_MØNSTER = /^\d{11}$/;
+
 type OpprettSakSaksbehandler = NonNullable<OpprettKontrollsakRequest["saksbehandlere"]>["eier"];
 
 export function byggOpprettKontrollsakPayload({
@@ -41,9 +43,14 @@ export function byggOpprettKontrollsakPayload({
   };
 }
 
-export function loader() {
+export function loader({ request }: Route.LoaderArgs) {
+  const url = new URL(request.url);
+  const fnrParam = url.searchParams.get("fnr");
+  const fnr = fnrParam && FNR_MØNSTER.test(fnrParam) ? fnrParam : null;
+
   return {
     enheter: enhetAlternativer,
+    fnr,
   };
 }
 

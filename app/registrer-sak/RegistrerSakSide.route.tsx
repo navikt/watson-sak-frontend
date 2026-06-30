@@ -15,7 +15,7 @@ import {
   VStack,
 } from "@navikt/ds-react";
 import { PersonIcon, PlusIcon } from "@navikt/aksel-icons";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Form, Link, useFetcher, useActionData, useLoaderData } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
@@ -39,7 +39,7 @@ function nyYtelseRad(defaults: YtelseRadVerdier = {}): YtelseRadState {
 }
 
 export default function OpprettSakSide() {
-  const { enheter } = useLoaderData<typeof loader>();
+  const { enheter, fnr: forhåndsutfyltFnr } = useLoaderData<typeof loader>();
   const kodeverk = useKodeverk();
   const lastResult = useActionData<typeof action>();
 
@@ -69,7 +69,7 @@ export default function OpprettSakSide() {
   const [valgteArbeidsgivere, setValgteArbeidsgivere] = useState<string[]>(
     (fields.arbeidsgivere.initialValue as string[]) ?? [],
   );
-  const [søkeFnr, setSøkeFnr] = useState("");
+  const [søkeFnr, setSøkeFnr] = useState(forhåndsutfyltFnr ?? "");
   const [ytelseRader, setYtelseRader] = useState<YtelseRadState[]>(() => {
     const initial = fields.ytelser.initialValue;
     if (Array.isArray(initial) && initial.length > 0) {
@@ -82,6 +82,17 @@ export default function OpprettSakSide() {
   const personFetcher = useFetcher<
     PersonOppslagResultat | { person: null; eksisterendeSaker: [] } | { feil: string }
   >();
+
+  useEffect(() => {
+    if (forhåndsutfyltFnr && personFetcher.state === "idle" && personFetcher.data === undefined) {
+      const formData = new FormData();
+      formData.set("fnr", forhåndsutfyltFnr);
+      personFetcher.submit(formData, {
+        method: "post",
+        action: RouteConfig.API.PERSON_OPPSLAG,
+      });
+    }
+  }, [forhåndsutfyltFnr]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const harSøkt = personFetcher.state === "idle" && personFetcher.data !== undefined;
   const lasterPerson = personFetcher.state !== "idle";

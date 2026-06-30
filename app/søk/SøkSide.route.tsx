@@ -1,13 +1,16 @@
 import { MagnifyingGlassIcon } from "@navikt/aksel-icons";
-import { BodyShort, Heading, Search, VStack } from "@navikt/ds-react";
+import { BodyShort, Button, Heading, Search, VStack } from "@navikt/ds-react";
 import { useEffect, useRef } from "react";
-import { Form, useActionData } from "react-router";
+import { Form, useActionData, useNavigate } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
+import { RouteConfig } from "~/routeConfig";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { hentValgfriTekst } from "~/utils/form-data";
 import { SøkResultatKort } from "./SøkResultatKort";
 import { søkSaker } from "./søk.server";
 import type { Route } from "./+types/SøkSide.route";
+
+const FNR_MØNSTER = /^\d{11}$/;
 
 type Søksak = KontrollsakResponse;
 
@@ -30,9 +33,16 @@ function hentResultatlenker(container: HTMLElement | null): HTMLAnchorElement[] 
 
 export default function SøkSide() {
   const actionData = useActionData<typeof action>();
+  const navigate = useNavigate();
   const søketekst = actionData?.søketekst ?? "";
   const resultater = actionData?.resultater;
   const harSøkt = actionData !== undefined;
+  const erFnrSøk = FNR_MØNSTER.test(søketekst);
+
+  function håndterOpprettSak() {
+    sporHendelse("søk opprett sak klikket", { kilde: "ingen-treff" });
+    navigate(`${RouteConfig.REGISTRER_SAK}?fnr=${søketekst}`);
+  }
 
   const skjemaRef = useRef<HTMLFormElement>(null);
   const resultatlisteRef = useRef<HTMLDivElement>(null);
@@ -128,6 +138,11 @@ export default function SøkSide() {
                 <BodyShort className="text-ax-text-neutral-subtle">
                   Prøv å søke på saksnummer, fødselsnummer eller kategorier.
                 </BodyShort>
+                {erFnrSøk && (
+                  <Button variant="primary" onClick={håndterOpprettSak}>
+                    Opprett sak for denne personen
+                  </Button>
+                )}
               </VStack>
             )}
           </VStack>
