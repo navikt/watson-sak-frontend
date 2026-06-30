@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-export const merkingAlternativer = ["LIME", "REGMAN", "A_KRIM"] as const;
-
 export const enhetAlternativer = ["ØST", "VEST", "NORD", "ANALYSE"] as const;
 
 export const enhetEtiketter: Record<(typeof enhetAlternativer)[number], string> = {

@@ -105,6 +105,11 @@ export default function OpprettSakSide() {
     return kodeverk.misbrukstyper.filter((m) => m.kategori === valgtKategori).map((m) => m.kode);
   }, [valgtKategori, kodeverk.misbrukstyper]);
 
+  const misbrukstypeBeskrivelseMap = useMemo(
+    () => new Map(kodeverk.misbrukstyper.map((m) => [m.kode, m.beskrivelse])),
+    [kodeverk.misbrukstyper],
+  );
+
   const feilElementer = useMemo(() => {
     const elementer: Array<{ id: string; melding: string }> = [];
     for (const [navn, feil] of Object.entries(form.allErrors)) {
@@ -323,16 +328,16 @@ export default function OpprettSakSide() {
                   <div id={fields.misbruktype.id} className="w-72">
                     <UNSAFE_Combobox
                       label="Misbruktype"
-                      options={tilgjengeligeMisbruktyper.map((kode) => {
-                        const info = kodeverk.misbrukstyper.find((m) => m.kode === kode);
-                        return { value: kode, label: info?.beskrivelse ?? kode };
-                      })}
+                      options={tilgjengeligeMisbruktyper.map((kode) => ({
+                        value: kode,
+                        label: misbrukstypeBeskrivelseMap.get(kode) ?? kode,
+                      }))}
                       isMultiSelect
                       disabled={tilgjengeligeMisbruktyper.length === 0}
-                      selectedOptions={valgteMisbruktyper.map((kode) => {
-                        const info = kodeverk.misbrukstyper.find((m) => m.kode === kode);
-                        return { value: kode, label: info?.beskrivelse ?? kode };
-                      })}
+                      selectedOptions={valgteMisbruktyper.map((kode) => ({
+                        value: kode,
+                        label: misbrukstypeBeskrivelseMap.get(kode) ?? kode,
+                      }))}
                       onToggleSelected={(option, isSelected) => {
                         setValgteMisbruktyper((prev) => {
                           if (isSelected) {

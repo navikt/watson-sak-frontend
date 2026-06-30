@@ -236,6 +236,10 @@ export default function SakDetaljSide() {
     lokaleVerdier.kategori,
     kodeverk.misbrukstyper,
   );
+  const misbrukstypeBeskrivelseMap = useMemo(
+    () => new Map(kodeverk.misbrukstyper.map((m) => [m.kode, m.beskrivelse])),
+    [kodeverk.misbrukstyper],
+  );
   const harUlagredeEndringer = redigerer && !erLikeRedigeringsdata(lokaleVerdier, utgangspunkt);
   const blocker = useBlocker(harUlagredeEndringer);
   const errorSummaryId = useId();
@@ -508,16 +512,16 @@ export default function SakDetaljSide() {
                           <UNSAFE_Combobox
                             label="Misbruktype"
                             size="small"
-                            options={misbrukstypeAlternativer.map((kode) => {
-                              const info = kodeverk.misbrukstyper.find((m) => m.kode === kode);
-                              return { value: kode, label: info?.beskrivelse ?? kode };
-                            })}
+                            options={misbrukstypeAlternativer.map((kode) => ({
+                              value: kode,
+                              label: misbrukstypeBeskrivelseMap.get(kode) ?? kode,
+                            }))}
                             isMultiSelect
                             disabled={misbrukstypeAlternativer.length === 0}
-                            selectedOptions={lokaleVerdier.misbruktype.map((kode) => {
-                              const info = kodeverk.misbrukstyper.find((m) => m.kode === kode);
-                              return { value: kode, label: info?.beskrivelse ?? kode };
-                            })}
+                            selectedOptions={lokaleVerdier.misbruktype.map((kode) => ({
+                              value: kode,
+                              label: misbrukstypeBeskrivelseMap.get(kode) ?? kode,
+                            }))}
                             onToggleSelected={(option, isSelected) => {
                               setLokaleVerdier((gjeldende) => {
                                 const har = gjeldende.misbruktype.includes(option);
