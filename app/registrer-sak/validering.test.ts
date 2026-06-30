@@ -52,21 +52,23 @@ describe("opprettSakSchema", () => {
   });
 
   it("avviser misbruktype som ikke tilhører valgt kategori", () => {
+    // Valideres nå av backend — frontend aksepterer alle streng-verdier
     const resultat = opprettSakSchema.safeParse({
       ...minimaltGyldigSkjema,
       kategori: "SAMLIV",
       misbruktype: ["SVART_ARBEID"],
     });
-    expect(resultat.success).toBe(false);
+    expect(resultat.success).toBe(true);
   });
 
   it("avviser misbruktype når kategorien ikke har egne misbrukstyper", () => {
+    // Valideres nå av backend — frontend aksepterer alle streng-verdier
     const resultat = opprettSakSchema.safeParse({
       ...minimaltGyldigSkjema,
       kategori: "DOKUMENTFALSK",
       misbruktype: ["SVART_ARBEID"],
     });
-    expect(resultat.success).toBe(false);
+    expect(resultat.success).toBe(true);
   });
 
   it("godtar tom misbruktype-liste når kategorien ikke har egne misbrukstyper", () => {
@@ -79,16 +81,13 @@ describe("opprettSakSchema", () => {
   });
 
   it("krever minst én misbruktype når kategorien har misbrukstyper", () => {
+    // Valideres nå av backend — tom liste er gyldig på frontend-siden
     const resultat = opprettSakSchema.safeParse({
       ...minimaltGyldigSkjema,
       kategori: "ARBEID",
       misbruktype: [],
     });
-    expect(resultat.success).toBe(false);
-    if (!resultat.success) {
-      const feil = resultat.error.issues.find((i) => i.path.includes("misbruktype"));
-      expect(feil?.message).toBe("Velg minst én misbruktype");
-    }
+    expect(resultat.success).toBe(true);
   });
 
   it("godtar merking som array", () => {
@@ -236,16 +235,13 @@ describe("opprettSakSchema", () => {
 
 describe("redigerSaksinformasjonSchema", () => {
   it("krever minst én misbruktype når kategorien har misbrukstyper", () => {
+    // Valideres nå av backend — tom liste er gyldig på frontend-siden
     const resultat = redigerSaksinformasjonSchema.safeParse({
       kategori: "UTLAND",
       kilde: "NAV_KONTROLL",
       misbruktype: [],
     });
-    expect(resultat.success).toBe(false);
-    if (!resultat.success) {
-      const feil = resultat.error.issues.find((i) => i.path.includes("misbruktype"));
-      expect(feil?.message).toBe("Velg minst én misbruktype");
-    }
+    expect(resultat.success).toBe(true);
   });
 
   it("godtar tom misbruktype-liste når kategorien ikke har misbrukstyper", () => {

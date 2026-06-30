@@ -27,14 +27,7 @@ import {
 } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { Kort } from "~/komponenter/Kort";
-import {
-  kategoriAlternativer,
-  kildeAlternativer,
-  kildeEtiketter,
-  merkingAlternativer,
-  merkingEtiketter,
-  misbrukstypePerKategori,
-} from "~/registrer-sak/validering";
+import { useKodeverk } from "~/kodeverk/useKodeverk";
 import {
   ankerIdForFelt,
   førsteFeilForFelt,
@@ -42,11 +35,7 @@ import {
   YtelseRadFelt,
 } from "~/registrer-sak/YtelseRadFelt";
 import type { YtelseRadVerdier } from "~/registrer-sak/skjema-helpers";
-import {
-  kontrollsakMisbrukstypeEtiketter,
-  kontrollsakMisbrukstypeVerdier,
-  kontrollsakYtelseTypeEtiketter,
-} from "~/saker/kategorier";
+import { merkingEtikett } from "~/saker/kategorier";
 import { formaterOrganisasjonsnummer } from "~/utils/string-utils";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import type { Route } from "./+types/SakDetaljSide.route";
@@ -173,11 +162,14 @@ function erLikeYtelser(a: YtelseRadVerdier[], b: YtelseRadVerdier[]): boolean {
   );
 }
 
-function hentMisbrukstypeAlternativer(kategori: string): readonly string[] {
+function hentMisbrukstypeAlternativer(
+  kategori: string,
+  misbrukstyper: { kode: string; kategori: string }[],
+): readonly string[] {
   if (!kategori) {
     return [];
   }
-  return (misbrukstypePerKategori as Partial<Record<string, readonly string[]>>)[kategori] ?? [];
+  return misbrukstyper.filter((m) => m.kategori === kategori).map((m) => m.kode);
 }
 
 function Felt({ label, children }: { label: string; children: React.ReactNode }) {
@@ -198,18 +190,12 @@ export default function SakDetaljSide() {
     dokumenter,
     andreSaker,
     saksbehandlerDetaljer,
-    ytelser,
   } = useLoaderData<typeof loader>();
+  const kodeverk = useKodeverk();
   const [sak, setSak] = useState(loaderSak);
   const ytelseAlternativer = useMemo(
-    () =>
-      ytelser.map((verdi) => ({
-        value: verdi,
-        label:
-          kontrollsakYtelseTypeEtiketter[verdi as keyof typeof kontrollsakYtelseTypeEtiketter] ??
-          verdi,
-      })),
-    [ytelser],
+    () => kodeverk.ytelseTyper.map((y) => ({ value: y.kode, label: y.beskrivelse })),
+    [kodeverk.ytelseTyper],
   );
   const navigate = useNavigate();
   const tilbake = useTilbakeLenke({ to: RouteConfig.MINE_SAKER, label: "Mine saker" });
@@ -246,7 +232,14 @@ export default function SakDetaljSide() {
   const utgangspunkt = useMemo(() => lagRedigeringsdata(sak), [sak]);
   const feil: Feltfeil | undefined =
     visFeil && fetcher.data && !fetcher.data.ok ? fetcher.data.feil : undefined;
-  const misbrukstypeAlternativer = hentMisbrukstypeAlternativer(lokaleVerdier.kategori);
+  const misbrukstypeAlternativer = hentMisbrukstypeAlternativer(
+    lokaleVerdier.kategori,
+    kodeverk.misbrukstyper,
+  );
+  const misbrukstypeBeskrivelseMap = useMemo(
+    () => new Map(kodeverk.misbrukstyper.map((m) => [m.kode, m.beskrivelse])),
+    [kodeverk.misbrukstyper],
+  );
   const harUlagredeEndringer = redigerer && !erLikeRedigeringsdata(lokaleVerdier, utgangspunkt);
   const blocker = useBlocker(harUlagredeEndringer);
   const errorSummaryId = useId();
@@ -437,7 +430,10 @@ export default function SakDetaljSide() {
                           error={førsteFeilForFelt(feil, "kategori")}
                           onChange={(event) => {
                             const kategori = event.target.value;
-                            const gyldige = hentMisbrukstypeAlternativer(kategori);
+                            const gyldige = hentMisbrukstypeAlternativer(
+                              kategori,
+                              kodeverk.misbrukstyper,
+                            );
                             setLokaleVerdier((gjeldende) => ({
                               ...gjeldende,
                               kategori,
@@ -448,9 +444,9 @@ export default function SakDetaljSide() {
                           }}
                         >
                           <option value="">Velg kategori</option>
-                          {kategoriAlternativer.map((kategori) => (
-                            <option key={kategori} value={kategori}>
-                              {getKategoriText({ ...sak, kategori }) ?? kategori}
+                          {kodeverk.kategorier.map((k) => (
+                            <option key={k.kode} value={k.kode}>
+                              {k.beskrivelse}
                             </option>
                           ))}
                         </Select>
@@ -465,9 +461,9 @@ export default function SakDetaljSide() {
                           onChange={(event) => oppdaterLokaleVerdier("kilde", event.target.value)}
                         >
                           <option value="">Velg kilde</option>
-                          {kildeAlternativer.map((kilde) => (
-                            <option key={kilde} value={kilde}>
-                              {kildeEtiketter[kilde] ?? kilde}
+                          {kodeverk.kilder.map((k) => (
+                            <option key={k.kode} value={k.kode}>
+                              {k.beskrivelse}
                             </option>
                           ))}
                         </Select>
@@ -516,21 +512,15 @@ export default function SakDetaljSide() {
                           <UNSAFE_Combobox
                             label="Misbruktype"
                             size="small"
-                            options={misbrukstypeAlternativer.map((type) => ({
-                              label:
-                                kontrollsakMisbrukstypeEtiketter[
-                                  type as (typeof kontrollsakMisbrukstypeVerdier)[number]
-                                ] ?? type,
-                              value: type,
+                            options={misbrukstypeAlternativer.map((kode) => ({
+                              value: kode,
+                              label: misbrukstypeBeskrivelseMap.get(kode) ?? kode,
                             }))}
                             isMultiSelect
                             disabled={misbrukstypeAlternativer.length === 0}
-                            selectedOptions={lokaleVerdier.misbruktype.map((type) => ({
-                              label:
-                                kontrollsakMisbrukstypeEtiketter[
-                                  type as (typeof kontrollsakMisbrukstypeVerdier)[number]
-                                ] ?? type,
-                              value: type,
+                            selectedOptions={lokaleVerdier.misbruktype.map((kode) => ({
+                              value: kode,
+                              label: misbrukstypeBeskrivelseMap.get(kode) ?? kode,
                             }))}
                             onToggleSelected={(option, isSelected) => {
                               setLokaleVerdier((gjeldende) => {
@@ -561,17 +551,15 @@ export default function SakDetaljSide() {
                           <UNSAFE_Combobox
                             label="Merking"
                             size="small"
-                            options={merkingAlternativer.map((merking) => ({
-                              label: merkingEtiketter[merking] ?? merking,
-                              value: merking,
+                            options={kodeverk.merker.map((merke) => ({
+                              label: merkingEtikett(merke),
+                              value: merke,
                             }))}
                             isMultiSelect
                             allowNewValues
-                            selectedOptions={lokaleVerdier.merking.map((merking) => ({
-                              label:
-                                merkingEtiketter[merking as (typeof merkingAlternativer)[number]] ??
-                                merking,
-                              value: merking,
+                            selectedOptions={lokaleVerdier.merking.map((merke) => ({
+                              label: merkingEtikett(merke),
+                              value: merke,
                             }))}
                             onToggleSelected={(option, isSelected) => {
                               setLokaleVerdier((gjeldende) => {
@@ -696,7 +684,7 @@ export default function SakDetaljSide() {
                             <HStack gap="space-2" wrap>
                               {tags.map((tag) => (
                                 <Tag key={tag} variant="outline" data-color="info" size="small">
-                                  {merkingEtiketter[tag as keyof typeof merkingEtiketter] ?? tag}
+                                  {merkingEtikett(tag)}
                                 </Tag>
                               ))}
                             </HStack>

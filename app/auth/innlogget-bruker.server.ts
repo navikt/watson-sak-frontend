@@ -14,12 +14,14 @@ interface InnloggetBruker {
 
 type HentInnloggetBrukerArgs = {
   request: Request;
+  oboToken?: string | null;
 };
 /**
  * Returnerer den innloggede brukeren, eller redirecter brukeren til innlogging
  */
 export async function hentInnloggetBruker({
   request,
+  oboToken,
 }: HentInnloggetBrukerArgs): Promise<InnloggetBruker> {
   if (env.ENVIRONMENT === "local-mock") {
     return {
@@ -46,9 +48,9 @@ export async function hentInnloggetBruker({
     };
   }
 
-  const oboToken = await getBackendOboToken(request);
+  const resolvedOboToken = oboToken ?? (await getBackendOboToken(request));
 
-  const saksbehandlerInfo = await hentSaksbehandlerInfo(oboToken);
+  const saksbehandlerInfo = await hentSaksbehandlerInfo(resolvedOboToken);
 
   return {
     preferredUsername: parseResult.preferred_username,

@@ -213,28 +213,20 @@ describe("opprettKontrollsak", () => {
   });
 
   it("avviser ugyldige kontraktverdier i mock-modus", async () => {
+    // Kun prioritet valideres i mock — kategori/kilde/misbrukstype aksepteres som streng
     await expect(
       opprettKontrollsak({
         request: testRequest,
         token: "token-123",
         payload: {
           personIdent: "12345678901",
-          saksbehandlere: {
-            eier: null,
-            deltMed: [],
-          },
+          saksbehandlere: { eier: null, deltMed: [] },
           kategori: "ARBEID",
           kilde: "UGYLDIG_KILDE",
-          prioritet: "NORMAL",
+          prioritet: "UGYLDIG_PRIORITET",
           misbruktype: ["UGYLDIG_MISBRUKSTYPE"],
           merking: [],
-          ytelser: [
-            {
-              type: "DAGPENGER",
-              periodeFra: "2026-01-01",
-              periodeTil: "2026-12-31",
-            },
-          ],
+          ytelser: [{ type: "DAGPENGER", periodeFra: "2026-01-01", periodeTil: "2026-12-31" }],
         },
       }),
     ).rejects.toThrow("Ugyldig mock-payload for opprettelse av kontrollsak.");

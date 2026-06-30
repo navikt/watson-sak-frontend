@@ -574,12 +574,3 @@ export function leggTilMockSakIFordeling(
 
   return kontrollsakMedHandlinger;
 }
-
-export const mockYtelser = [
-  "DAGPENGER",
-  "SYKEPENGER",
-  "BARNETRYGD",
-  "AAP",
-  "FORELDREPENGER",
-  "ANDRE",
-];

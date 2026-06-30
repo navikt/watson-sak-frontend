@@ -18,19 +18,10 @@ import { PersonIcon, PlusIcon } from "@navikt/aksel-icons";
 import { useMemo, useState } from "react";
 import { Form, Link, useFetcher, useActionData, useLoaderData } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
+import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { RouteConfig } from "~/routeConfig";
-import {
-  kildeEtiketter,
-  merkingEtiketter,
-  merkingAlternativer as alleMerkinger,
-  enhetEtiketter,
-  opprettSakSchema,
-} from "~/registrer-sak/validering";
-import {
-  kontrollsakKategoriEtiketter,
-  kontrollsakMisbrukstypeEtiketter,
-  kontrollsakYtelseTypeEtiketter,
-} from "~/saker/kategorier";
+import { enhetEtiketter, opprettSakSchema } from "~/registrer-sak/validering";
+import { merkingEtikett } from "~/saker/kategorier";
 import type { PersonOppslagResultat } from "./person-oppslag.mock.server";
 import { action, loader } from "./RegistrerSakSide.server";
 import type { YtelseRadVerdier } from "./skjema-helpers";
@@ -48,19 +39,13 @@ function nyYtelseRad(defaults: YtelseRadVerdier = {}): YtelseRadState {
 }
 
 export default function OpprettSakSide() {
-  const { ytelser, kategorier, misbrukstypePerKategori, enheter, kilder } =
-    useLoaderData<typeof loader>();
+  const { enheter } = useLoaderData<typeof loader>();
+  const kodeverk = useKodeverk();
   const lastResult = useActionData<typeof action>();
 
   const ytelseAlternativer = useMemo(
-    () =>
-      ytelser.map((verdi) => ({
-        value: verdi,
-        label:
-          kontrollsakYtelseTypeEtiketter[verdi as keyof typeof kontrollsakYtelseTypeEtiketter] ??
-          verdi,
-      })),
-    [ytelser],
+    () => kodeverk.ytelseTyper.map((y) => ({ value: y.kode, label: y.beskrivelse })),
+    [kodeverk.ytelseTyper],
   );
 
   const [form, fields] = useForm({
@@ -117,9 +102,13 @@ export default function OpprettSakSide() {
 
   const tilgjengeligeMisbruktyper = useMemo(() => {
     if (!valgtKategori) return [];
-    const filtrert = (misbrukstypePerKategori as Record<string, string[]>)[valgtKategori];
-    return filtrert && filtrert.length > 0 ? (filtrert as readonly string[]) : [];
-  }, [valgtKategori, misbrukstypePerKategori]);
+    return kodeverk.misbrukstyper.filter((m) => m.kategori === valgtKategori).map((m) => m.kode);
+  }, [valgtKategori, kodeverk.misbrukstyper]);
+
+  const misbrukstypeBeskrivelseMap = useMemo(
+    () => new Map(kodeverk.misbrukstyper.map((m) => [m.kode, m.beskrivelse])),
+    [kodeverk.misbrukstyper],
+  );
 
   const feilElementer = useMemo(() => {
     const elementer: Array<{ id: string; melding: string }> = [];
@@ -316,9 +305,9 @@ export default function OpprettSakSide() {
                     value={valgtKategori}
                     onChange={(e) => {
                       setValgtKategori(e.target.value);
-                      const nyligeGyldige = (misbrukstypePerKategori as Record<string, string[]>)[
-                        e.target.value
-                      ];
+                      const nyligeGyldige = kodeverk.misbrukstyper
+                        .filter((m) => m.kategori === e.target.value)
+                        .map((m) => m.kode);
                       if (nyligeGyldige && nyligeGyldige.length > 0) {
                         setValgteMisbruktyper((prev) =>
                           prev.filter((m) => nyligeGyldige.includes(m)),
@@ -329,11 +318,9 @@ export default function OpprettSakSide() {
                     }}
                   >
                     <option value="">Velg kategori</option>
-                    {kategorier.map((k) => (
-                      <option key={k} value={k}>
-                        {kontrollsakKategoriEtiketter[
-                          k as keyof typeof kontrollsakKategoriEtiketter
-                        ] ?? k}
+                    {kodeverk.kategorier.map((k) => (
+                      <option key={k.kode} value={k.kode}>
+                        {k.beskrivelse}
                       </option>
                     ))}
                   </Select>
@@ -341,21 +328,15 @@ export default function OpprettSakSide() {
                   <div id={fields.misbruktype.id} className="w-72">
                     <UNSAFE_Combobox
                       label="Misbruktype"
-                      options={tilgjengeligeMisbruktyper.map((verdi) => ({
-                        value: verdi,
-                        label:
-                          kontrollsakMisbrukstypeEtiketter[
-                            verdi as keyof typeof kontrollsakMisbrukstypeEtiketter
-                          ] ?? verdi,
+                      options={tilgjengeligeMisbruktyper.map((kode) => ({
+                        value: kode,
+                        label: misbrukstypeBeskrivelseMap.get(kode) ?? kode,
                       }))}
                       isMultiSelect
                       disabled={tilgjengeligeMisbruktyper.length === 0}
-                      selectedOptions={valgteMisbruktyper.map((verdi) => ({
-                        value: verdi,
-                        label:
-                          kontrollsakMisbrukstypeEtiketter[
-                            verdi as keyof typeof kontrollsakMisbrukstypeEtiketter
-                          ] ?? verdi,
+                      selectedOptions={valgteMisbruktyper.map((kode) => ({
+                        value: kode,
+                        label: misbrukstypeBeskrivelseMap.get(kode) ?? kode,
                       }))}
                       onToggleSelected={(option, isSelected) => {
                         setValgteMisbruktyper((prev) => {
@@ -375,15 +356,15 @@ export default function OpprettSakSide() {
                   <div id={fields.merking.id} className="w-72">
                     <UNSAFE_Combobox
                       label="Merking (valgfritt)"
-                      options={alleMerkinger.map((verdi) => ({
-                        value: verdi,
-                        label: merkingEtiketter[verdi] ?? verdi,
+                      options={kodeverk.merker.map((merke) => ({
+                        value: merke,
+                        label: merkingEtikett(merke),
                       }))}
                       isMultiSelect
                       allowNewValues
-                      selectedOptions={valgteMerkinger.map((verdi) => ({
-                        value: verdi,
-                        label: merkingEtiketter[verdi as keyof typeof merkingEtiketter] ?? verdi,
+                      selectedOptions={valgteMerkinger.map((merke) => ({
+                        value: merke,
+                        label: merkingEtikett(merke),
                       }))}
                       onToggleSelected={(option, isSelected) => {
                         setValgteMerkinger((prev) => {
@@ -412,9 +393,9 @@ export default function OpprettSakSide() {
                     defaultValue={fields.kilde.initialValue ?? ""}
                   >
                     <option value="">Velg kilde</option>
-                    {kilder.map((k) => (
-                      <option key={k} value={k}>
-                        {kildeEtiketter[k] ?? k}
+                    {kodeverk.kilder.map((k) => (
+                      <option key={k.kode} value={k.kode}>
+                        {k.beskrivelse}
                       </option>
                     ))}
                   </Select>

@@ -1,9 +1,4 @@
 import { z } from "zod";
-import {
-  kontrollsakKategoriVerdier,
-  kontrollsakKildeVerdier,
-  kontrollsakMisbrukstypeVerdier,
-} from "./kategorier";
 
 const kontrollsakStatusSchema = z.enum([
   "OPPRETTET",
@@ -28,9 +23,9 @@ export const henleggelsesarsakSchema = z.enum([
   "FORELDET",
 ]);
 
-const kontrollsakKategoriSchema = z.enum(kontrollsakKategoriVerdier);
-const kontrollsakKildeSchema = z.enum(kontrollsakKildeVerdier);
-const kontrollsakMisbrukstypeSchema = z.enum(kontrollsakMisbrukstypeVerdier);
+const kontrollsakKategoriSchema = z.string();
+const kontrollsakKildeSchema = z.string();
+const kontrollsakMisbrukstypeSchema = z.string();
 const kontrollsakPrioritetSchema = z.enum(["LAV", "NORMAL", "HOY"]);
 
 const saksbehandlerSchema = z.object({

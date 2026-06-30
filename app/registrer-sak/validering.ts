@@ -1,26 +1,4 @@
 import { z } from "zod";
-import {
-  kontrollsakKategoriVerdier,
-  kontrollsakKildeEtiketter,
-  kontrollsakKildeVerdier,
-  kontrollsakMisbrukstypeVerdier,
-  misbrukstyperPerKategori,
-} from "~/saker/kategorier";
-
-export const kildeAlternativer = kontrollsakKildeVerdier;
-
-export const kildeEtiketter = kontrollsakKildeEtiketter;
-
-export const kategoriAlternativer = kontrollsakKategoriVerdier;
-export { misbrukstyperPerKategori as misbrukstypePerKategori };
-
-export const merkingAlternativer = ["LIME", "REGMAN", "A_KRIM"] as const;
-
-export const merkingEtiketter: Record<(typeof merkingAlternativer)[number], string> = {
-  LIME: "Lime",
-  REGMAN: "Regman",
-  A_KRIM: "A-krim",
-};
 
 export const enhetAlternativer = ["ØST", "VEST", "NORD", "ANALYSE"] as const;
 
@@ -72,7 +50,6 @@ function lagValgfrittDatofelt() {
     );
 }
 
-const misbrukstypeSchema = z.enum(kontrollsakMisbrukstypeVerdier);
 const merkingSchema = z.string().trim().min(1, "Merking kan ikke være tom");
 
 const valgfrittBeløpSchema = z.preprocess((verdi) => {
@@ -124,9 +101,12 @@ export const opprettSakSchema = z
       .string()
       .min(1, "Fødselsnummer er påkrevd")
       .regex(/^\d{11}$/, "Fødselsnummer må bestå av 11 siffer"),
-    kategori: z.enum(kategoriAlternativer, { message: "Velg kategori" }),
-    kilde: z.enum(kildeAlternativer, { message: "Velg kilde" }),
-    misbruktype: z.array(misbrukstypeSchema).optional().default([]),
+    kategori: z.string().min(1, "Velg kategori"),
+    kilde: z.string().min(1, "Velg kilde"),
+    misbruktype: z
+      .array(z.string().trim().min(1, "Misbruktype kan ikke være tom"))
+      .optional()
+      .default([]),
     merking: z.array(merkingSchema).optional().default([]),
     enhet: z.preprocess(
       (val) => (val === "" ? undefined : val),
@@ -142,25 +122,16 @@ export const opprettSakSchema = z
   .transform((data) => ({
     ...data,
     ytelser: data.ytelser.filter(erUtfyltYtelseRad),
-  }))
-  .refine(
-    ({ kategori, misbruktype }) => {
-      const gyldige = misbrukstyperPerKategori[kategori as keyof typeof misbrukstyperPerKategori];
-      if (!gyldige || gyldige.length === 0) return misbruktype.length === 0;
-      if (misbruktype.length === 0) return false;
-      return misbruktype.every((type) => gyldige.includes(type as (typeof gyldige)[number]));
-    },
-    {
-      message: "Velg minst én misbruktype",
-      path: ["misbruktype"],
-    },
-  );
+  }));
 
 export const redigerSaksinformasjonSchema = z
   .object({
-    kategori: z.enum(kategoriAlternativer, { message: "Velg kategori" }),
-    kilde: z.enum(kildeAlternativer, { message: "Velg kilde" }),
-    misbruktype: z.array(misbrukstypeSchema).optional().default([]),
+    kategori: z.string().min(1, "Velg kategori"),
+    kilde: z.string().min(1, "Velg kilde"),
+    misbruktype: z
+      .array(z.string().trim().min(1, "Misbruktype kan ikke være tom"))
+      .optional()
+      .default([]),
     merking: z.array(merkingSchema).optional().default([]),
     arbeidsgivere: z
       .array(z.string().regex(/^\d{9}$/, "Organisasjonsnummer må bestå av 9 siffer"))
@@ -172,18 +143,6 @@ export const redigerSaksinformasjonSchema = z
   .transform((data) => ({
     ...data,
     ytelser: data.ytelser.filter(erUtfyltYtelseRad),
-  }))
-  .refine(
-    ({ kategori, misbruktype }) => {
-      const gyldige = misbrukstyperPerKategori[kategori as keyof typeof misbrukstyperPerKategori];
-      if (!gyldige || gyldige.length === 0) return misbruktype.length === 0;
-      if (misbruktype.length === 0) return false;
-      return misbruktype.every((type) => gyldige.includes(type as (typeof gyldige)[number]));
-    },
-    {
-      message: "Velg minst én misbruktype",
-      path: ["misbruktype"],
-    },
-  );
+  }));
 
 export type OpprettSakSkjema = z.infer<typeof opprettSakSchema>;

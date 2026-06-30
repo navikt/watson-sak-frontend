@@ -1,5 +1,3 @@
-// Alle saker-siden viser en paginert, filtrerbar og sorterbar saksliste.
-
 import { Heading, HStack, Pagination, VStack } from "@navikt/ds-react";
 import { useLoaderData, useSearchParams } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
@@ -12,15 +10,10 @@ import { RouteConfig } from "~/routeConfig";
 import { getSaksenhet } from "~/saker/selectors";
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
 import { paginerElementer } from "~/utils/paginering";
-import {
-  kontrollsakKategoriEtiketter,
-  kontrollsakKategoriVerdier,
-  kontrollsakMisbrukstypeEtiketter,
-  kontrollsakMisbrukstypeVerdier,
-} from "~/saker/kategorier";
 import * as backendApi from "~/saker/api.server";
 import { mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import type { KontrollsakResponse } from "~/saker/types.backend";
+import { useKodeverk } from "~/kodeverk/useKodeverk";
 import type { Route } from "./+types/AlleSakerSide.route";
 import {
   type AlleSakerKolonne,
@@ -71,18 +64,9 @@ export async function loader({ request }: Route.LoaderArgs) {
   );
   const filterMerking = normaliserFilterVerdier(parseMultiValueParam(url.searchParams, "merking"));
 
-  const kategoriAlternativer = kontrollsakKategoriVerdier.map((v) => ({
-    label: kontrollsakKategoriEtiketter[v],
-    value: v,
-  }));
-  const misbrukstypeAlternativer = kontrollsakMisbrukstypeVerdier.map((v) => ({
-    label: kontrollsakMisbrukstypeEtiketter[v],
-    value: v,
-  }));
-
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
-    const [resultat, saksbehandlere, merkinger] = await Promise.all([
+    const [resultat, saksbehandlere] = await Promise.all([
       hentKontrollsaker({
         token,
         page: side,
@@ -95,7 +79,6 @@ export async function loader({ request }: Route.LoaderArgs) {
         sortering: lagSorteringParam(sorterKolonne, sorterRetning),
       }),
       backendApi.hentSaksbehandlere(token),
-      backendApi.hentMerkinger(token),
     ]);
 
     const uniktEnheter = unikeVerdier(
@@ -112,9 +95,6 @@ export async function loader({ request }: Route.LoaderArgs) {
       filterAlternativer: {
         enhet: uniktEnheter,
         saksbehandler: saksbehandlere.map((sb) => ({ label: sb.navn, value: sb.navIdent })),
-        kategori: kategoriAlternativer,
-        misbrukstype: misbrukstypeAlternativer,
-        merking: merkinger,
       },
     };
   }
@@ -150,9 +130,6 @@ export async function loader({ request }: Route.LoaderArgs) {
         label: sb.navn,
         value: sb.navIdent,
       })),
-      kategori: kategoriAlternativer,
-      misbrukstype: misbrukstypeAlternativer,
-      merking: unikeVerdier(alleSaker.flatMap((s) => s.merking)),
     },
   };
 }
@@ -160,6 +137,13 @@ export async function loader({ request }: Route.LoaderArgs) {
 export default function AlleSakerSide() {
   const { rader, aktivSide, totalSider, sorteringskolonne, sorteringsretning, filterAlternativer } =
     useLoaderData<typeof loader>();
+  const { merker, kategorier, misbrukstyper } = useKodeverk();
+
+  const kategoriAlternativer = kategorier.map((k) => ({ label: k.beskrivelse, value: k.kode }));
+  const misbrukstypeAlternativer = misbrukstyper.map((m) => ({
+    label: m.beskrivelse,
+    value: m.kode,
+  }));
 
   const [, setSearchParams] = useSearchParams();
 
@@ -248,7 +232,14 @@ export default function AlleSakerSide() {
             </div>
 
             <aside aria-label="Filtrer saker" className="xl:order-last xl:w-56 xl:shrink-0">
-              <Filtre alternativer={filterAlternativer} />
+              <Filtre
+                alternativer={{
+                  ...filterAlternativer,
+                  kategori: kategoriAlternativer,
+                  misbrukstype: misbrukstypeAlternativer,
+                  merking: merker,
+                }}
+              />
             </aside>
           </div>
         </section>
