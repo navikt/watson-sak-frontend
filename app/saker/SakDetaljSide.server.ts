@@ -374,8 +374,8 @@ async function backendAction(
     case "rediger_saksinformasjon": {
       const ytelseRader = parseYtelseRader(formData);
       const rådata = {
-        kategori: formData.get("kategori") || undefined,
-        kilde: formData.get("kilde") || undefined,
+        kategori: formData.get("kategori") ?? undefined,
+        kilde: formData.get("kilde") ?? undefined,
         misbruktype: formData
           .getAll("misbruktype")
           .filter((v): v is string => typeof v === "string" && v.length > 0),
@@ -718,8 +718,8 @@ async function mockAction(
 
       const ytelseRader = parseYtelseRader(formData);
       const rådata = {
-        kategori: formData.get("kategori") || undefined,
-        kilde: formData.get("kilde") || undefined,
+        kategori: formData.get("kategori") ?? undefined,
+        kilde: formData.get("kilde") ?? undefined,
         misbruktype: formData
           .getAll("misbruktype")
           .filter((v): v is string => typeof v === "string" && v.length > 0),
