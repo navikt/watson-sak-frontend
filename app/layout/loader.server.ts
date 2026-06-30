@@ -17,7 +17,10 @@ async function hentKodeverkMedFallback(request: Request): Promise<Kodeverk> {
     const token = await getBackendOboToken(request);
     return await hentKodeverk(token);
   } catch (feil) {
-    logger.error("Kunne ikke hente kodeverk ved oppstart — bruker tom fallback", { feil });
+    const feilObjekt = feil instanceof Error ? feil : new Error(String(feil));
+    logger.error("Kunne ikke hente kodeverk ved oppstart — bruker tom fallback", {
+      feil: feilObjekt,
+    });
     return { merker: [], kategorier: [], misbrukstyper: [], ytelseTyper: [], kilder: [] };
   }
 }

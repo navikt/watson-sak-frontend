@@ -103,7 +103,10 @@ export const opprettSakSchema = z
       .regex(/^\d{11}$/, "Fødselsnummer må bestå av 11 siffer"),
     kategori: z.string().min(1, "Velg kategori"),
     kilde: z.string().min(1, "Velg kilde"),
-    misbruktype: z.array(z.string().trim().min(1)).optional().default([]),
+    misbruktype: z
+      .array(z.string().trim().min(1, "Misbruktype kan ikke være tom"))
+      .optional()
+      .default([]),
     merking: z.array(merkingSchema).optional().default([]),
     enhet: z.preprocess(
       (val) => (val === "" ? undefined : val),
@@ -125,7 +128,10 @@ export const redigerSaksinformasjonSchema = z
   .object({
     kategori: z.string().min(1, "Velg kategori"),
     kilde: z.string().min(1, "Velg kilde"),
-    misbruktype: z.array(z.string().trim().min(1)).optional().default([]),
+    misbruktype: z
+      .array(z.string().trim().min(1, "Misbruktype kan ikke være tom"))
+      .optional()
+      .default([]),
     merking: z.array(merkingSchema).optional().default([]),
     arbeidsgivere: z
       .array(z.string().regex(/^\d{9}$/, "Organisasjonsnummer må bestå av 9 siffer"))
