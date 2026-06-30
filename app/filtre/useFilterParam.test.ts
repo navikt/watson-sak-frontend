@@ -12,19 +12,11 @@ describe("parseMultiValueParam", () => {
     expect(parseMultiValueParam(params, "kategori")).toEqual(["Arbeid", "Samliv"]);
   });
 
-  it("parser komma-separerte verdier for bakoverkompatibilitet", () => {
-    const params = new URLSearchParams("kategori=Arbeid,Samliv");
-    expect(parseMultiValueParam(params, "kategori")).toEqual(["Arbeid", "Samliv"]);
-  });
-
-  it("håndterer blanding av repeated og komma-separerte", () => {
-    const params = new URLSearchParams("kategori=Arbeid,Samliv&kategori=Helse");
-    expect(parseMultiValueParam(params, "kategori")).toEqual(["Arbeid", "Samliv", "Helse"]);
-  });
-
-  it("filtrerer bort tomme verdier", () => {
-    const params = new URLSearchParams("kategori=Arbeid,,Samliv");
-    expect(parseMultiValueParam(params, "kategori")).toEqual(["Arbeid", "Samliv"]);
+  it("bevarer verdier som inneholder komma", () => {
+    const params = new URLSearchParams("enhet=Kontroll Medlemskap og avgift, avgift");
+    expect(parseMultiValueParam(params, "enhet")).toEqual([
+      "Kontroll Medlemskap og avgift, avgift",
+    ]);
   });
 
   it("berører ikke andre params", () => {
