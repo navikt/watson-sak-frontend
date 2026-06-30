@@ -1,39 +1,65 @@
 import type { Kodeverk } from "~/saker/api.server";
-import {
-  kontrollsakKategoriEtiketter,
-  kontrollsakKategoriVerdier,
-  kontrollsakKildeEtiketter,
-  kontrollsakKildeVerdier,
-  kontrollsakMisbrukstypeEtiketter,
-  kontrollsakMisbrukstypeVerdier,
-  kontrollsakYtelseTypeEtiketter,
-  kontrollsakYtelseTypeVerdier,
-  misbrukstyperPerKategori,
-} from "~/saker/kategorier";
-import { merkingAlternativer } from "~/registrer-sak/validering";
 
 export const mockKodeverk: Kodeverk = {
-  merker: [...merkingAlternativer],
-  kategorier: [...kontrollsakKategoriVerdier].map((kode) => ({
-    kode,
-    beskrivelse: kontrollsakKategoriEtiketter[kode],
-  })),
-  misbrukstyper: [...kontrollsakMisbrukstypeVerdier].map((kode) => {
-    const kategori = Object.entries(misbrukstyperPerKategori).find(([, typer]) =>
-      typer?.includes(kode as never),
-    )?.[0];
-    return {
-      kode,
-      kategori: kategori ?? "ANNET",
-      beskrivelse: kontrollsakMisbrukstypeEtiketter[kode],
-    };
-  }),
-  ytelseTyper: [...kontrollsakYtelseTypeVerdier].map((kode) => ({
-    kode,
-    beskrivelse: kontrollsakYtelseTypeEtiketter[kode],
-  })),
-  kilder: [...kontrollsakKildeVerdier].map((kode) => ({
-    kode,
-    beskrivelse: kontrollsakKildeEtiketter[kode],
-  })),
+  merker: ["LIME", "REGMAN", "A_KRIM"],
+  kategorier: [
+    { kode: "BEHANDLER", beskrivelse: "Behandler" },
+    { kode: "ARBEID", beskrivelse: "Arbeid" },
+    { kode: "SAMLIV", beskrivelse: "Samliv" },
+    { kode: "UTLAND", beskrivelse: "Utland" },
+    { kode: "IDENTITET", beskrivelse: "Identitet" },
+    { kode: "TILTAK", beskrivelse: "Tiltak" },
+    { kode: "DOKUMENTFALSK", beskrivelse: "Dokumentfalsk" },
+    { kode: "ANNET", beskrivelse: "Annet" },
+  ],
+  misbrukstyper: [
+    { kode: "BEHANDLER_25_7", kategori: "BEHANDLER", beskrivelse: "Behandler §25-7" },
+    { kode: "L_TAKSTER_BEHANDLER", kategori: "BEHANDLER", beskrivelse: "L-takster behandler" },
+    { kode: "L_TAKSTER_FORETAK", kategori: "BEHANDLER", beskrivelse: "L-takster foretak" },
+    { kode: "HVIT_INNTEKT", kategori: "ARBEID", beskrivelse: "Hvit inntekt" },
+    { kode: "FIKTIVT_ARBEIDSFORHOLD", kategori: "ARBEID", beskrivelse: "Fiktivt arbeidsforhold" },
+    { kode: "SVART_ARBEID", kategori: "ARBEID", beskrivelse: "Svart arbeid" },
+    { kode: "FEIL_INNTEKTSGRUNNLAG", kategori: "ARBEID", beskrivelse: "Feil inntektsgrunnlag" },
+    { kode: "SKJULT_AKTIVITET", kategori: "ARBEID", beskrivelse: "Skjult aktivitet" },
+    { kode: "SKJULT_SAMLIV", kategori: "SAMLIV", beskrivelse: "Skjult samliv" },
+    { kode: "ENDRET_SIVILSTATUS", kategori: "SAMLIV", beskrivelse: "Endret sivilstatus" },
+    { kode: "MEDLEMSKAP_BORTFALT", kategori: "UTLAND", beskrivelse: "Medlemskap bortfalt" },
+    { kode: "INNENFOR_EOS", kategori: "UTLAND", beskrivelse: "Innenfor EØS" },
+    { kode: "UTENFOR_EOS", kategori: "UTLAND", beskrivelse: "Utenfor EØS" },
+    { kode: "IDENTITETSMISBRUK", kategori: "IDENTITET", beskrivelse: "Identitetsmisbruk" },
+    {
+      kode: "OPPHOLD_PAA_FEIL_GRUNNLAG",
+      kategori: "IDENTITET",
+      beskrivelse: "Opphold på feil grunnlag",
+    },
+    {
+      kode: "MISBRUK_AV_TILTAKSPLASS",
+      kategori: "TILTAK",
+      beskrivelse: "Misbruk av tiltaksplass",
+    },
+    { kode: "AVBRUTT_TILTAK", kategori: "TILTAK", beskrivelse: "Avbrutt tiltak" },
+  ],
+  ytelseTyper: [
+    { kode: "DAGPENGER", beskrivelse: "Dagpenger" },
+    { kode: "SYKEPENGER", beskrivelse: "Sykepenger" },
+    { kode: "BARNETRYGD", beskrivelse: "Barnetrygd" },
+    { kode: "AAP", beskrivelse: "AAP" },
+    { kode: "FORELDREPENGER", beskrivelse: "Foreldrepenger" },
+    { kode: "ANDRE", beskrivelse: "Andre" },
+  ],
+  kilder: [
+    { kode: "PUBLIKUM", beskrivelse: "Publikum" },
+    { kode: "NAV_KONTROLL", beskrivelse: "Nav kontroll" },
+    { kode: "NAV_OVRIG", beskrivelse: "Nav øvrig" },
+    { kode: "REGISTERSAMKJORING", beskrivelse: "Registersamkjøring" },
+    { kode: "A_KRIMSAMARBEID", beskrivelse: "A-krimsamarbeid" },
+    { kode: "POLITIET", beskrivelse: "Politiet" },
+    { kode: "SKATTEETATEN", beskrivelse: "Skatteetaten" },
+    { kode: "UTLENDINGSMYNDIGHETEN", beskrivelse: "Utlendingsmyndighetene" },
+    { kode: "UTENRIKSTJENESTEN", beskrivelse: "Utenrikstjenesten" },
+    { kode: "STATENS_VEGVESEN", beskrivelse: "Statens vegvesen" },
+    { kode: "KOMMUNE", beskrivelse: "Kommune" },
+    { kode: "BANK_OG_FINANS", beskrivelse: "Bank og finans" },
+    { kode: "ANNET", beskrivelse: "Annet" },
+  ],
 };

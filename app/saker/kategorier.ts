@@ -1,15 +1,9 @@
-export const kontrollsakYtelseTypeVerdier = [
-  "DAGPENGER",
-  "SYKEPENGER",
-  "BARNETRYGD",
-  "AAP",
-  "FORELDREPENGER",
-  "ANDRE",
-] as const;
-
-type KontrollsakYtelseTypeVerdi = (typeof kontrollsakYtelseTypeVerdier)[number];
-
-export const kontrollsakYtelseTypeEtiketter: Record<KontrollsakYtelseTypeVerdi, string> = {
+/**
+ * Oppslagstabeller for visning av kodeverk-koder som menneskelige etiketter.
+ * Brukes som fallback der kodeverk-data fra backend ikke er tilgjengelig.
+ * Ukjente koder vises som de er.
+ */
+export const kontrollsakYtelseTypeEtiketter: Record<string, string> = {
   DAGPENGER: "Dagpenger",
   SYKEPENGER: "Sykepenger",
   BARNETRYGD: "Barnetrygd",
@@ -18,58 +12,18 @@ export const kontrollsakYtelseTypeEtiketter: Record<KontrollsakYtelseTypeVerdi, 
   ANDRE: "Andre",
 };
 
-export const kontrollsakKategoriVerdier = [
-  "BEHANDLER",
-  "ARBEID",
-  "SAMLIV",
-  "UTLAND",
-  "IDENTITET",
-  "TILTAK",
-  "DOKUMENTFALSK",
-  "ANNET",
-] as const;
+export const kontrollsakKategoriEtiketter: Record<string, string> = {
+  BEHANDLER: "Behandler",
+  ARBEID: "Arbeid",
+  SAMLIV: "Samliv",
+  UTLAND: "Utland",
+  IDENTITET: "Identitet",
+  TILTAK: "Tiltak",
+  DOKUMENTFALSK: "Dokumentfalsk",
+  ANNET: "Annet",
+};
 
-type KontrollsakKategoriVerdi = (typeof kontrollsakKategoriVerdier)[number];
-
-export const kontrollsakMisbrukstypeVerdier = [
-  "BEHANDLER_25_7",
-  "L_TAKSTER_BEHANDLER",
-  "L_TAKSTER_FORETAK",
-  "HVIT_INNTEKT",
-  "FIKTIVT_ARBEIDSFORHOLD",
-  "SVART_ARBEID",
-  "FEIL_INNTEKTSGRUNNLAG",
-  "SKJULT_AKTIVITET",
-  "SKJULT_SAMLIV",
-  "ENDRET_SIVILSTATUS",
-  "MEDLEMSKAP_BORTFALT",
-  "INNENFOR_EOS",
-  "UTENFOR_EOS",
-  "IDENTITETSMISBRUK",
-  "OPPHOLD_PAA_FEIL_GRUNNLAG",
-  "MISBRUK_AV_TILTAKSPLASS",
-  "AVBRUTT_TILTAK",
-] as const;
-
-export const kontrollsakKildeVerdier = [
-  "PUBLIKUM",
-  "NAV_KONTROLL",
-  "NAV_OVRIG",
-  "REGISTERSAMKJORING",
-  "A_KRIMSAMARBEID",
-  "POLITIET",
-  "SKATTEETATEN",
-  "UTLENDINGSMYNDIGHETEN",
-  "UTENRIKSTJENESTEN",
-  "STATENS_VEGVESEN",
-  "KOMMUNE",
-  "BANK_OG_FINANS",
-  "ANNET",
-] as const;
-
-type KontrollsakKildeVerdi = (typeof kontrollsakKildeVerdier)[number];
-
-export const kontrollsakKildeEtiketter: Record<KontrollsakKildeVerdi, string> = {
+export const kontrollsakKildeEtiketter: Record<string, string> = {
   PUBLIKUM: "Publikum",
   NAV_KONTROLL: "Nav kontroll",
   NAV_OVRIG: "Nav øvrig",
@@ -85,20 +39,7 @@ export const kontrollsakKildeEtiketter: Record<KontrollsakKildeVerdi, string> = 
   ANNET: "Annet",
 };
 
-type KontrollsakMisbrukstypeVerdi = (typeof kontrollsakMisbrukstypeVerdier)[number];
-
-export const kontrollsakKategoriEtiketter: Record<KontrollsakKategoriVerdi, string> = {
-  BEHANDLER: "Behandler",
-  ARBEID: "Arbeid",
-  SAMLIV: "Samliv",
-  UTLAND: "Utland",
-  IDENTITET: "Identitet",
-  TILTAK: "Tiltak",
-  DOKUMENTFALSK: "Dokumentfalsk",
-  ANNET: "Annet",
-};
-
-export const kontrollsakMisbrukstypeEtiketter: Record<KontrollsakMisbrukstypeVerdi, string> = {
+export const kontrollsakMisbrukstypeEtiketter: Record<string, string> = {
   BEHANDLER_25_7: "Behandler §25-7",
   L_TAKSTER_BEHANDLER: "L-takster behandler",
   L_TAKSTER_FORETAK: "L-takster foretak",
@@ -116,23 +57,6 @@ export const kontrollsakMisbrukstypeEtiketter: Record<KontrollsakMisbrukstypeVer
   OPPHOLD_PAA_FEIL_GRUNNLAG: "Opphold på feil grunnlag",
   MISBRUK_AV_TILTAKSPLASS: "Misbruk av tiltaksplass",
   AVBRUTT_TILTAK: "Avbrutt tiltak",
-};
-
-export const misbrukstyperPerKategori: Partial<
-  Record<KontrollsakKategoriVerdi, readonly KontrollsakMisbrukstypeVerdi[]>
-> = {
-  BEHANDLER: ["BEHANDLER_25_7", "L_TAKSTER_BEHANDLER", "L_TAKSTER_FORETAK"],
-  ARBEID: [
-    "HVIT_INNTEKT",
-    "FIKTIVT_ARBEIDSFORHOLD",
-    "SVART_ARBEID",
-    "FEIL_INNTEKTSGRUNNLAG",
-    "SKJULT_AKTIVITET",
-  ],
-  SAMLIV: ["SKJULT_SAMLIV", "ENDRET_SIVILSTATUS"],
-  UTLAND: ["MEDLEMSKAP_BORTFALT", "INNENFOR_EOS", "UTENFOR_EOS"],
-  IDENTITET: ["IDENTITETSMISBRUK", "OPPHOLD_PAA_FEIL_GRUNNLAG"],
-  TILTAK: ["MISBRUK_AV_TILTAKSPLASS", "AVBRUTT_TILTAK"],
 };
 
 /**

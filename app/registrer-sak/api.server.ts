@@ -1,11 +1,5 @@
 import { BACKEND_API_URL, skalBrukeMockdata } from "~/config/env.server";
 import { logger } from "~/logging/logging";
-import { kontrollsakKildeVerdier, kontrollsakMisbrukstypeVerdier } from "~/saker/kategorier";
-import type {
-  KontrollsakKategori,
-  KontrollsakKilde,
-  KontrollsakMisbrukstype,
-} from "~/saker/types.backend";
 import { leggTilMockSakIFordeling } from "~/saker/mock-alle-saker.server";
 
 export type OpprettKontrollsakRequest = {
@@ -48,31 +42,8 @@ type OpprettKontrollsakResultat = {
 
 type KontrollsakPrioritet = "LAV" | "NORMAL" | "HOY";
 
-function erGyldigKategori(verdi: string): verdi is KontrollsakKategori {
-  return [
-    "BEHANDLER",
-    "ARBEID",
-    "SAMLIV",
-    "UTLAND",
-    "IDENTITET",
-    "TILTAK",
-    "DOKUMENTFALSK",
-    "ANNET",
-  ].includes(verdi);
-}
-
-function erGyldigKilde(verdi: string): verdi is KontrollsakKilde {
-  return kontrollsakKildeVerdier.includes(verdi as KontrollsakKilde);
-}
-
 function erGyldigPrioritet(verdi: string): verdi is KontrollsakPrioritet {
   return ["LAV", "NORMAL", "HOY"].includes(verdi);
-}
-
-function erGyldigeMisbrukstyper(verdier: string[]): verdier is KontrollsakMisbrukstype[] {
-  return verdier.every((verdi) =>
-    kontrollsakMisbrukstypeVerdier.includes(verdi as KontrollsakMisbrukstype),
-  );
 }
 
 export async function opprettKontrollsak({
@@ -81,12 +52,7 @@ export async function opprettKontrollsak({
   payload,
 }: OpprettKontrollsakArgs): Promise<OpprettKontrollsakResultat> {
   if (skalBrukeMockdata) {
-    if (
-      !erGyldigKategori(payload.kategori) ||
-      !erGyldigKilde(payload.kilde) ||
-      !erGyldigPrioritet(payload.prioritet) ||
-      !erGyldigeMisbrukstyper(payload.misbruktype)
-    ) {
+    if (!erGyldigPrioritet(payload.prioritet)) {
       throw new Error("Ugyldig mock-payload for opprettelse av kontrollsak.");
     }
 
