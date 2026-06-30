@@ -57,7 +57,7 @@ test.describe("Søk", () => {
       await page.getByLabel("Søk etter saker").press("Enter");
 
       await expect(page.getByText(/Ingen treff for "99999999999"/)).toBeVisible();
-      await expect(page.getByText("Ingen saker funnet på dette fødselsnummeret.")).toBeVisible();
+      await expect(page.getByText(/Det er ingen saker registrert på/)).toBeVisible();
       await expect(
         page.getByRole("button", { name: "Opprett sak for denne personen" }),
       ).toBeVisible();

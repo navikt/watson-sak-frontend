@@ -5,7 +5,7 @@ import { Form, useActionData, useNavigate } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import type { KontrollsakResponse } from "~/saker/types.backend";
-import { erFnr } from "~/utils/string-utils";
+import { erFnr, formaterFødselsnummer } from "~/utils/string-utils";
 import { hentValgfriTekst } from "~/utils/form-data";
 import { SøkResultatKort } from "./SøkResultatKort";
 import { søkSaker } from "./søk.server";
@@ -136,8 +136,10 @@ export default function SøkSide() {
                     padding="space-16"
                     className="max-w-xl"
                   >
-                    <VStack gap="space-8">
-                      <BodyShort>Ingen saker funnet på dette fødselsnummeret.</BodyShort>
+                    <VStack gap="space-16">
+                      <BodyShort>
+                        Det er ingen saker registrert på {formaterFødselsnummer(søketekst)}.
+                      </BodyShort>
                       <div>
                         <Button variant="primary" onClick={håndterOpprettSak}>
                           Opprett sak for denne personen
