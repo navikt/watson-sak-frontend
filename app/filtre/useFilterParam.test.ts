@@ -12,8 +12,13 @@ describe("parseMultiValueParam", () => {
     expect(parseMultiValueParam(params, "kategori")).toEqual(["Arbeid", "Samliv"]);
   });
 
+  it("filtrerer bort tomme verdier", () => {
+    const params = new URLSearchParams([["kategori", ""], ["kategori", "Arbeid"]]);
+    expect(parseMultiValueParam(params, "kategori")).toEqual(["Arbeid"]);
+  });
+
   it("bevarer verdier som inneholder komma", () => {
-    const params = new URLSearchParams("enhet=Kontroll Medlemskap og avgift, avgift");
+    const params = new URLSearchParams([["enhet", "Kontroll Medlemskap og avgift, avgift"]]);
     expect(parseMultiValueParam(params, "enhet")).toEqual([
       "Kontroll Medlemskap og avgift, avgift",
     ]);
