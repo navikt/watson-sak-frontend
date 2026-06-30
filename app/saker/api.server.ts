@@ -267,12 +267,6 @@ export async function hentKodeverk(token: string): Promise<Kodeverk> {
   return parseEllerKastFeil(kodeverkResponseSchema, await respons.json(), "hentKodeverk");
 }
 
-/** @deprecated Bruk hentKodeverk() og les .merker fra resultatet */
-export async function hentMerkinger(token: string): Promise<string[]> {
-  const kodeverk = await hentKodeverk(token);
-  return kodeverk.merker;
-}
-
 export async function overforAnsvarlig(
   token: string,
   sakId: string,
