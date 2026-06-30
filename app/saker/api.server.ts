@@ -237,18 +237,42 @@ export async function hentSaksbehandlere(token: string): Promise<KontrollsakSaks
 
 // --- Kodeverk ---
 
-const kodeverkResponseSchema = z.object({
-  merker: z.array(z.string()),
+const kodeverkInfoSchema = z.object({
+  kode: z.string(),
+  beskrivelse: z.string(),
 });
 
-/** Henter alle tilgjengelige merke-verdier fra kodeverk-endepunktet. */
-export async function hentMerkinger(token: string): Promise<string[]> {
+const misbrukstypeInfoSchema = z.object({
+  kode: z.string(),
+  kategori: z.string(),
+  beskrivelse: z.string(),
+});
+
+const kodeverkResponseSchema = z.object({
+  merker: z.array(z.string()),
+  kategorier: z.array(kodeverkInfoSchema),
+  misbrukstyper: z.array(misbrukstypeInfoSchema),
+  ytelseTyper: z.array(kodeverkInfoSchema),
+  kilder: z.array(kodeverkInfoSchema),
+});
+
+export type KodeverkInfo = z.infer<typeof kodeverkInfoSchema>;
+export type MisbrukstypeInfo = z.infer<typeof misbrukstypeInfoSchema>;
+export type Kodeverk = z.infer<typeof kodeverkResponseSchema>;
+
+/** Henter alle statiske oppslagsverdier fra kodeverk-endepunktet. */
+export async function hentKodeverk(token: string): Promise<Kodeverk> {
   const respons = await fetch(apiUrl("/api/v1/kodeverk"), {
     headers: authHeaders(token),
   });
-  if (!respons.ok) await håndterFeil(respons, "Kunne ikke hente merkinger");
-  const data = parseEllerKastFeil(kodeverkResponseSchema, await respons.json(), "hentMerkinger");
-  return data.merker;
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke hente kodeverk");
+  return parseEllerKastFeil(kodeverkResponseSchema, await respons.json(), "hentKodeverk");
+}
+
+/** @deprecated Bruk hentKodeverk() og les .merker fra resultatet */
+export async function hentMerkinger(token: string): Promise<string[]> {
+  const kodeverk = await hentKodeverk(token);
+  return kodeverk.merker;
 }
 
 export async function overforAnsvarlig(
