@@ -35,6 +35,7 @@ import {
   YtelseRadFelt,
 } from "~/registrer-sak/YtelseRadFelt";
 import type { YtelseRadVerdier } from "~/registrer-sak/skjema-helpers";
+import { merkingEtikett } from "~/saker/kategorier";
 import { formaterOrganisasjonsnummer } from "~/utils/string-utils";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import type { Route } from "./+types/SakDetaljSide.route";
@@ -547,13 +548,13 @@ export default function SakDetaljSide() {
                             label="Merking"
                             size="small"
                             options={kodeverk.merker.map((merke) => ({
-                              label: merke,
+                              label: merkingEtikett(merke),
                               value: merke,
                             }))}
                             isMultiSelect
                             allowNewValues
                             selectedOptions={lokaleVerdier.merking.map((merke) => ({
-                              label: merke,
+                              label: merkingEtikett(merke),
                               value: merke,
                             }))}
                             onToggleSelected={(option, isSelected) => {
@@ -679,7 +680,7 @@ export default function SakDetaljSide() {
                             <HStack gap="space-2" wrap>
                               {tags.map((tag) => (
                                 <Tag key={tag} variant="outline" data-color="info" size="small">
-                                  {tag}
+                                  {merkingEtikett(tag)}
                                 </Tag>
                               ))}
                             </HStack>

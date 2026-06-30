@@ -134,3 +134,17 @@ export const misbrukstyperPerKategori: Partial<
   IDENTITET: ["IDENTITETSMISBRUK", "OPPHOLD_PAA_FEIL_GRUNNLAG"],
   TILTAK: ["MISBRUK_AV_TILTAKSPLASS", "AVBRUTT_TILTAK"],
 };
+
+/**
+ * Slår opp en menneskelig etikett for en merkingskode.
+ * Kjente koder har faste etiketter; ukjente koder vises som de er.
+ */
+const kjenteMerkingEtiketter: Record<string, string> = {
+  LIME: "Lime",
+  REGMAN: "Regman",
+  A_KRIM: "A-krim",
+};
+
+export function merkingEtikett(kode: string): string {
+  return kjenteMerkingEtiketter[kode] ?? kode;
+}

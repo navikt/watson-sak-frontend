@@ -21,6 +21,7 @@ import { sporHendelse } from "~/analytics/analytics";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { RouteConfig } from "~/routeConfig";
 import { enhetEtiketter, opprettSakSchema } from "~/registrer-sak/validering";
+import { merkingEtikett } from "~/saker/kategorier";
 import type { PersonOppslagResultat } from "./person-oppslag.mock.server";
 import { action, loader } from "./RegistrerSakSide.server";
 import type { YtelseRadVerdier } from "./skjema-helpers";
@@ -352,13 +353,13 @@ export default function OpprettSakSide() {
                       label="Merking (valgfritt)"
                       options={kodeverk.merker.map((merke) => ({
                         value: merke,
-                        label: merke,
+                        label: merkingEtikett(merke),
                       }))}
                       isMultiSelect
                       allowNewValues
                       selectedOptions={valgteMerkinger.map((merke) => ({
                         value: merke,
-                        label: merke,
+                        label: merkingEtikett(merke),
                       }))}
                       onToggleSelected={(option, isSelected) => {
                         setValgteMerkinger((prev) => {

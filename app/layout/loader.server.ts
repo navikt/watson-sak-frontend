@@ -6,9 +6,21 @@ import {
   hentAlleFeatureFlagg,
   hentStatusmeldingFeatureFlagg,
 } from "~/feature-toggling/utils.server";
+import { logger } from "~/logging/logging";
 import { parsePreferences, preferencesCookie } from "~/preferanser/PreferencesCookie";
-import { hentKodeverk } from "~/saker/api.server";
+import { hentKodeverk, type Kodeverk } from "~/saker/api.server";
 import { mockKodeverk } from "~/testing/mock-store/kodeverk.server";
+
+async function hentKodeverkMedFallback(request: Request): Promise<Kodeverk> {
+  if (skalBrukeMockdata) return mockKodeverk;
+  try {
+    const token = await getBackendOboToken(request);
+    return await hentKodeverk(token);
+  } catch (feil) {
+    logger.error("Kunne ikke hente kodeverk ved oppstart — bruker tom fallback", { feil });
+    return { merker: [], kategorier: [], misbrukstyper: [], ytelseTyper: [], kilder: [] };
+  }
+}
 
 export async function rootLoader({ request }: LoaderFunctionArgs) {
   const user = await hentInnloggetBruker({ request });
@@ -17,9 +29,7 @@ export async function rootLoader({ request }: LoaderFunctionArgs) {
     hentAlleFeatureFlagg(user.navIdent),
     hentStatusmeldingFeatureFlagg(),
     preferencesCookie.parse(cookieHeader),
-    skalBrukeMockdata
-      ? Promise.resolve(mockKodeverk)
-      : getBackendOboToken(request).then(hentKodeverk),
+    hentKodeverkMedFallback(request),
   ]);
   const initialPreferences = parsePreferences(preferencesCookieValue);
   return {
