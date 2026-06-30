@@ -6,6 +6,7 @@ import { getSaksreferanse } from "~/saker/id";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { getBeskrivelse, getPersonIdent, getYtelseTyper } from "~/saker/visning";
 import { getKategoriText } from "~/saker/selectors";
+import { erFnr } from "~/utils/string-utils";
 
 type Søksak = KontrollsakResponse;
 
@@ -15,8 +16,7 @@ export async function søkSaker(request: Request, søketekst: string): Promise<S
 
   if (!skalBrukeMockdata) {
     // Søk mot backend — personIdent-basert
-    const erPersonIdent = /^\d{11}$/.test(normalisert);
-    if (erPersonIdent) {
+    if (erFnr(normalisert)) {
       const token = await getBackendOboToken(request);
       return backendApi.søkKontrollsaker(token, normalisert);
     }

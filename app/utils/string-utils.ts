@@ -81,6 +81,13 @@ export function snakeCaseTilSetning(snakeCaseStr: string | null) {
 }
 
 /**
+ * Sjekker om en streng er et gyldig fødselsnummer eller d-nummer (11 siffer)
+ */
+export function erFnr(verdi: string): boolean {
+  return /^\d{11}$/.test(verdi);
+}
+
+/**
  * Formaterer fødselsnummer til å ha mellomrom mellom de seks første og de fem siste sifrene
  *
  * @param fødselsnummer - Fødselsnummer som skal formateres

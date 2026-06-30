@@ -5,12 +5,11 @@ import { Form, useActionData, useNavigate } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import type { KontrollsakResponse } from "~/saker/types.backend";
+import { erFnr } from "~/utils/string-utils";
 import { hentValgfriTekst } from "~/utils/form-data";
 import { SøkResultatKort } from "./SøkResultatKort";
 import { søkSaker } from "./søk.server";
 import type { Route } from "./+types/SøkSide.route";
-
-const FNR_MØNSTER = /^\d{11}$/;
 
 type Søksak = KontrollsakResponse;
 
@@ -37,7 +36,7 @@ export default function SøkSide() {
   const søketekst = actionData?.søketekst ?? "";
   const resultater = actionData?.resultater;
   const harSøkt = actionData !== undefined;
-  const erFnrSøk = FNR_MØNSTER.test(søketekst);
+  const erFnrSøk = erFnr(søketekst);
 
   function håndterOpprettSak() {
     sporHendelse("søk opprett sak klikket", { kilde: "ingen-treff" });
@@ -135,13 +134,19 @@ export default function SøkSide() {
                   fontSize="3rem"
                   className="text-ax-icon-neutral-subtle"
                 />
-                <BodyShort className="text-ax-text-neutral-subtle">
-                  Prøv å søke på saksnummer, fødselsnummer eller kategorier.
-                </BodyShort>
-                {erFnrSøk && (
-                  <Button variant="primary" onClick={håndterOpprettSak}>
-                    Opprett sak for denne personen
-                  </Button>
+                {erFnrSøk ? (
+                  <>
+                    <BodyShort className="text-ax-text-neutral-subtle">
+                      Ingen saker funnet på dette fødselsnummeret.
+                    </BodyShort>
+                    <Button variant="primary" onClick={håndterOpprettSak}>
+                      Opprett sak for denne personen
+                    </Button>
+                  </>
+                ) : (
+                  <BodyShort className="text-ax-text-neutral-subtle">
+                    Prøv å søke på saksnummer, fødselsnummer eller kategorier.
+                  </BodyShort>
                 )}
               </VStack>
             )}

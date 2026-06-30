@@ -4,12 +4,11 @@ import { getBackendOboToken } from "~/auth/access-token";
 import { skalBrukeMockdata } from "~/config/env.server";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
+import { erFnr } from "~/utils/string-utils";
 import type { OpprettKontrollsakRequest } from "./api.server";
 import type { Route } from "./+types/RegistrerSakSide.route";
 import { opprettKontrollsak } from "./api.server";
 import { enhetAlternativer, opprettSakSchema, type OpprettSakSkjema } from "./validering";
-
-const FNR_MØNSTER = /^\d{11}$/;
 
 type OpprettSakSaksbehandler = NonNullable<OpprettKontrollsakRequest["saksbehandlere"]>["eier"];
 
@@ -46,7 +45,7 @@ export function byggOpprettKontrollsakPayload({
 export function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const fnrParam = url.searchParams.get("fnr");
-  const fnr = fnrParam && FNR_MØNSTER.test(fnrParam) ? fnrParam : null;
+  const fnr = fnrParam && erFnr(fnrParam) ? fnrParam : null;
 
   return {
     enheter: enhetAlternativer,

@@ -84,15 +84,16 @@ export default function OpprettSakSide() {
   >();
 
   useEffect(() => {
-    if (forhåndsutfyltFnr && personFetcher.state === "idle" && personFetcher.data === undefined) {
-      const formData = new FormData();
-      formData.set("fnr", forhåndsutfyltFnr);
-      personFetcher.submit(formData, {
-        method: "post",
-        action: RouteConfig.API.PERSON_OPPSLAG,
-      });
-    }
-  }, [forhåndsutfyltFnr]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!forhåndsutfyltFnr) return;
+    const formData = new FormData();
+    formData.set("fnr", forhåndsutfyltFnr);
+    personFetcher.submit(formData, {
+      method: "post",
+      action: RouteConfig.API.PERSON_OPPSLAG,
+    });
+    // Kjøres kun én gang ved mount — forhåndsutfyltFnr er en server-rendert verdi
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const harSøkt = personFetcher.state === "idle" && personFetcher.data !== undefined;
   const lasterPerson = personFetcher.state !== "idle";
