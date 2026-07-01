@@ -24,6 +24,10 @@ const envSchema = z.object({
     .string()
     .optional()
     .describe("Base-URL for Watson Admin API. Optional outside dev deployments."),
+  WATSON_SOK_URL: z
+    .string()
+    .optional()
+    .describe("Base-URL for Watson Søk. Optional outside dev deployments."),
   UNLEASH_SERVER_API_ENV: z
     .enum(["development", "production"])
     .describe("The environment of the Unleash instance")

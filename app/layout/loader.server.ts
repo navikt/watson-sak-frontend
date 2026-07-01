@@ -45,6 +45,7 @@ export async function rootLoader({ request }: LoaderFunctionArgs) {
       sporingScriptUrl: SPORING_SCRIPT_URL,
       appversjon: env.APP_VERSION,
       miljø: env.ENVIRONMENT,
+      watsonSokUrl: env.WATSON_SOK_URL ?? null,
     },
     featureFlagg,
     statusmelding,

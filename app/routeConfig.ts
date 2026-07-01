@@ -26,6 +26,7 @@ export const RouteConfig = {
     PREFERENCES: "/api/preferences",
     RESET_MOCK_DATA: "/api/reset-mock-data",
     PERSON_OPPSLAG: "/api/registrer-sak/person-oppslag",
+    FORHÅNDSUTFYLL_REGISTRER_SAK: "/api/registrer-sak/forhåndsutfyll",
     SAK_DOKUMENTER: "/api/saker/:sakId/dokumenter",
     VARSLER_ULESTE: "/api/varsler/uleste",
     MARKER_VARSEL_LEST: "/api/varsler/lest",

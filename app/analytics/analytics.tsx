@@ -70,4 +70,6 @@ type Hendelse =
   | "endre status lagre klikket"
   | "endre status lagret"
   | "endre status lagring feilet"
-  | "endre status dialog avbrutt";
+  | "endre status dialog avbrutt"
+  | "søk opprett sak klikket"
+  | "søk watson søk klikket";

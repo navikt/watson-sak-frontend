@@ -1,9 +1,11 @@
 import { MagnifyingGlassIcon } from "@navikt/aksel-icons";
-import { BodyShort, Heading, Search, VStack } from "@navikt/ds-react";
+import { BodyShort, Box, Button, Heading, HStack, Search, VStack } from "@navikt/ds-react";
 import { useEffect, useRef } from "react";
-import { Form, useActionData } from "react-router";
+import { Form, unstable_useRoute, useActionData } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
+import { RouteConfig } from "~/routeConfig";
 import type { KontrollsakResponse } from "~/saker/types.backend";
+import { erFnr, formaterFødselsnummer } from "~/utils/string-utils";
 import { hentValgfriTekst } from "~/utils/form-data";
 import { SøkResultatKort } from "./SøkResultatKort";
 import { søkSaker } from "./søk.server";
@@ -30,9 +32,13 @@ function hentResultatlenker(container: HTMLElement | null): HTMLAnchorElement[] 
 
 export default function SøkSide() {
   const actionData = useActionData<typeof action>();
+  const { loaderData } = unstable_useRoute("root");
+  const watsonSokUrl = loaderData?.envs.watsonSokUrl ?? null;
+
   const søketekst = actionData?.søketekst ?? "";
   const resultater = actionData?.resultater;
   const harSøkt = actionData !== undefined;
+  const erFnrSøk = erFnr(søketekst);
 
   const skjemaRef = useRef<HTMLFormElement>(null);
   const resultatlisteRef = useRef<HTMLDivElement>(null);
@@ -119,22 +125,71 @@ export default function SøkSide() {
             )}
 
             {resultater && resultater.length === 0 && (
-              <VStack gap="space-4" align="center" className="py-12">
-                <MagnifyingGlassIcon
-                  aria-hidden
-                  fontSize="3rem"
-                  className="text-ax-icon-neutral-subtle"
-                />
-                <BodyShort className="text-ax-text-neutral-subtle">
-                  Prøv å søke på saksnummer, fødselsnummer eller kategorier.
-                </BodyShort>
-              </VStack>
+              <>
+                {erFnrSøk ? (
+                  <Box
+                    background="info-soft"
+                    borderRadius="8"
+                    padding="space-16"
+                    className="max-w-xl mt-6"
+                  >
+                    <VStack gap="space-16">
+                      <VStack gap="space-4">
+                        <Heading level="2" size="small">
+                          Ser du etter en person?
+                        </Heading>
+                        <BodyShort>
+                          {formaterFødselsnummer(søketekst)} ser ut som et fødselsnummer. Hvis du
+                          vil, kan du opprette en sak, eller slå opp personen i Watson Søk.
+                        </BodyShort>
+                      </VStack>
+                      <HStack gap="space-4">
+                        <Form
+                          method="post"
+                          action={RouteConfig.API.FORHÅNDSUTFYLL_REGISTRER_SAK}
+                          onSubmit={() => sporHendelse("søk opprett sak klikket")}
+                        >
+                          <input type="hidden" name="fnr" value={søketekst} />
+                          <Button type="submit" variant="secondary">
+                            Opprett sak
+                          </Button>
+                        </Form>
+                        {watsonSokUrl && (
+                          <form
+                            method="post"
+                            action={`${watsonSokUrl}/api/eksternt-søk`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onSubmit={() => sporHendelse("søk watson søk klikket")}
+                          >
+                            <input type="hidden" name="ident" value={søketekst} />
+                            <Button type="submit" variant="secondary">
+                              Slå opp i Watson Søk
+                            </Button>
+                          </form>
+                        )}
+                      </HStack>
+                    </VStack>
+                  </Box>
+                ) : (
+                  <HStack gap="space-4" align="center" className="py-12">
+                    <MagnifyingGlassIcon
+                      aria-hidden
+                      fontSize="3rem"
+                      className="text-ax-icon-neutral-subtle"
+                    />
+                    <BodyShort className="text-ax-text-neutral-subtle">
+                      Prøv å søke på saksnummer, fødselsnummer eller kategorier.
+                    </BodyShort>
+                  </HStack>
+                )}
+              </>
             )}
           </VStack>
         )}
 
         {!harSøkt && (
-          <VStack gap="space-4" align="center" className="py-12">
+          <HStack gap="space-4" align="center" className="py-12">
             <MagnifyingGlassIcon
               aria-hidden
               fontSize="3rem"
@@ -143,7 +198,7 @@ export default function SøkSide() {
             <BodyShort className="text-ax-text-neutral-subtle">
               Søk etter saker på saksnummer, fødselsnummer eller kategorier.
             </BodyShort>
-          </VStack>
+          </HStack>
         )}
       </VStack>
     </>

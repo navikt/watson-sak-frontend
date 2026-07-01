@@ -1,4 +1,8 @@
-export function sikkerhetHeaders() {
+export function sikkerhetHeaders({
+  ekstraFormActionUrls = [],
+}: { ekstraFormActionUrls?: string[] } = {}) {
+  const formAction = ["'self'", ...ekstraFormActionUrls].join(" ");
+
   return {
     "X-Frame-Options": "DENY",
     "X-Content-Type-Options": "nosniff",
@@ -15,7 +19,7 @@ export function sikkerhetHeaders() {
       "connect-src 'self' telemetry.nav.no telemetry.ekstern.dev.nav.no umami.nav.no reops-event-proxy.nav.no reops-event-proxy.ekstern.dev.nav.no;" +
       "frame-ancestors 'none'; " +
       "base-uri 'self'; " +
-      "form-action 'self'",
+      `form-action ${formAction}`,
     "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
   };
 }
