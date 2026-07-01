@@ -158,6 +158,8 @@ export default function SøkSide() {
                           <form
                             method="post"
                             action={`${watsonSokUrl}/api/søk-fra-watson-sak`}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             onSubmit={() => sporHendelse("søk watson søk klikket")}
                           >
                             <input type="hidden" name="ident" value={søketekst} />
