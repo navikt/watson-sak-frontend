@@ -59,7 +59,7 @@ test.describe("Søk", () => {
       await expect(page.getByText(/Ingen treff for "99999999999"/)).toBeVisible();
       await expect(page.getByRole("heading", { name: "Ser du etter en person?" })).toBeVisible();
       await expect(page.getByText(/ser ut som et fødselsnummer/)).toBeVisible();
-      await expect(page.getByRole("link", { name: "Opprett sak" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Opprett sak" })).toBeVisible();
     });
 
     test("viser ikke CTA når ingen treff på fritekst", async ({ page }) => {
@@ -76,9 +76,10 @@ test.describe("Søk", () => {
       await page.getByLabel("Søk etter saker").fill("99999999999");
       await page.getByLabel("Søk etter saker").press("Enter");
 
-      await page.getByRole("link", { name: "Opprett sak" }).click();
+      await page.getByRole("button", { name: "Opprett sak" }).click();
 
-      await expect(page).toHaveURL(/\/registrer-sak\?fnr=99999999999/);
+      await expect(page).toHaveURL(/\/registrer-sak/);
+      await expect(page).not.toHaveURL(/fnr=/);
     });
 
     test("kan navigere til sakdetalj fra søkeresultat", async ({ page }) => {

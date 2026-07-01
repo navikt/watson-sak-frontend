@@ -26,6 +26,7 @@ vi.mock("~/config/env.server", () => ({
   get skalBrukeMockdata() {
     return testState.skalBrukeMockdata;
   },
+  env: { IDENT_SESSION_SECRET: "test-secret" },
 }));
 
 vi.mock("./person-oppslag.mock.server", () => ({

@@ -1,5 +1,5 @@
 import { parseWithZod } from "@conform-to/zod/v4";
-import { redirect } from "react-router";
+import { data, redirect } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { skalBrukeMockdata } from "~/config/env.server";
 import { RouteConfig } from "~/routeConfig";
@@ -8,6 +8,7 @@ import { erFnr } from "~/utils/string-utils";
 import type { OpprettKontrollsakRequest } from "./api.server";
 import type { Route } from "./+types/RegistrerSakSide.route";
 import { opprettKontrollsak } from "./api.server";
+import { pendingFnrCookie } from "./pending-fnr.server";
 import { enhetAlternativer, opprettSakSchema, type OpprettSakSkjema } from "./validering";
 
 type OpprettSakSaksbehandler = NonNullable<OpprettKontrollsakRequest["saksbehandlere"]>["eier"];
@@ -42,15 +43,17 @@ export function byggOpprettKontrollsakPayload({
   };
 }
 
-export function loader({ request }: Route.LoaderArgs) {
-  const url = new URL(request.url);
-  const fnrParam = url.searchParams.get("fnr");
-  const fnr = fnrParam && erFnr(fnrParam) ? fnrParam : null;
+export async function loader({ request }: Route.LoaderArgs) {
+  const cookieHeader = request.headers.get("Cookie");
+  const pendingFnr = await pendingFnrCookie.parse(cookieHeader);
+  const fnr = pendingFnr && erFnr(pendingFnr) ? pendingFnr : null;
 
-  return {
-    enheter: enhetAlternativer,
-    fnr,
-  };
+  const headers = new Headers();
+  if (fnr) {
+    headers.set("Set-Cookie", await pendingFnrCookie.serialize("", { maxAge: 0 }));
+  }
+
+  return data({ enheter: enhetAlternativer, fnr }, { headers });
 }
 
 export async function action({ request }: Route.ActionArgs) {

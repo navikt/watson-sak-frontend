@@ -1,7 +1,7 @@
 import { MagnifyingGlassIcon } from "@navikt/aksel-icons";
 import { BodyShort, Box, Button, Heading, HStack, Search, VStack } from "@navikt/ds-react";
 import { useEffect, useRef } from "react";
-import { Form, unstable_useRoute, useActionData, useNavigate } from "react-router";
+import { Form, unstable_useRoute, useActionData } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import type { KontrollsakResponse } from "~/saker/types.backend";
@@ -32,7 +32,6 @@ function hentResultatlenker(container: HTMLElement | null): HTMLAnchorElement[] 
 
 export default function SøkSide() {
   const actionData = useActionData<typeof action>();
-  const navigate = useNavigate();
   const { loaderData } = unstable_useRoute("root");
   const watsonSokUrl = loaderData?.envs.watsonSokUrl ?? null;
 
@@ -40,11 +39,6 @@ export default function SøkSide() {
   const resultater = actionData?.resultater;
   const harSøkt = actionData !== undefined;
   const erFnrSøk = erFnr(søketekst);
-
-  function håndterOpprettSak() {
-    sporHendelse("søk opprett sak klikket", { kilde: "ingen-treff" });
-    navigate(`${RouteConfig.REGISTRER_SAK}?fnr=${søketekst}`);
-  }
 
   const skjemaRef = useRef<HTMLFormElement>(null);
   const resultatlisteRef = useRef<HTMLDivElement>(null);
@@ -150,9 +144,16 @@ export default function SøkSide() {
                         </BodyShort>
                       </VStack>
                       <HStack gap="space-4">
-                        <Button variant="secondary" onClick={håndterOpprettSak}>
-                          Opprett sak
-                        </Button>
+                        <Form
+                          method="post"
+                          action={RouteConfig.API.FORHÅNDSUTFYLL_REGISTRER_SAK}
+                          onSubmit={() => sporHendelse("søk opprett sak klikket")}
+                        >
+                          <input type="hidden" name="fnr" value={søketekst} />
+                          <Button type="submit" variant="secondary">
+                            Opprett sak
+                          </Button>
+                        </Form>
                         {watsonSokUrl && (
                           <Button
                             variant="secondary"
