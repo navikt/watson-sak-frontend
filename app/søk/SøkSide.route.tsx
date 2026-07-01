@@ -1,6 +1,6 @@
 import { MagnifyingGlassIcon } from "@navikt/aksel-icons";
-import { BodyShort, Box, Button, Heading, HStack, Search, VStack } from "@navikt/ds-react";
-import { useEffect, useRef } from "react";
+import { BodyShort, Box, Button, Heading, HStack, VStack } from "@navikt/ds-react";
+import { useRef } from "react";
 import { Form, unstable_useRoute, useActionData } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
@@ -40,27 +40,12 @@ export default function SøkSide() {
   const harSøkt = actionData !== undefined;
   const erFnrSøk = erFnr(søketekst);
 
-  const skjemaRef = useRef<HTMLFormElement>(null);
   const resultatlisteRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "k" && event.metaKey) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        skjemaRef.current?.querySelector("input")?.focus();
-      }
-    }
-    document.addEventListener("keydown", handleKeyDown, true);
-    return () => document.removeEventListener("keydown", handleKeyDown, true);
-  }, []);
-
-  function handleSøkefeltKeyDown(event: React.KeyboardEvent) {
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      const lenker = hentResultatlenker(resultatlisteRef.current);
-      if (lenker.length > 0) lenker[0].focus();
-    }
+  function fokuserHeaderSøkefelt() {
+    document
+      .querySelector<HTMLInputElement>('[aria-label="Hurtigsøk"] input')
+      ?.focus();
   }
 
   function handleResultatlisteKeyDown(event: React.KeyboardEvent) {
@@ -76,7 +61,7 @@ export default function SøkSide() {
       if (aktivIndex > 0) {
         lenker[aktivIndex - 1].focus();
       } else {
-        skjemaRef.current?.querySelector("input")?.focus();
+        fokuserHeaderSøkefelt();
       }
     }
   }
@@ -88,26 +73,6 @@ export default function SøkSide() {
         <Heading level="1" size="large">
           Søk i saker
         </Heading>
-        <VStack gap="space-4">
-          <Form
-            method="post"
-            role="search"
-            aria-label="Søk i saker"
-            className="max-w-xl"
-            ref={skjemaRef}
-            onSubmit={() => sporHendelse("søk utført", { kilde: "søkeside" })}
-          >
-            <Search
-              label="Søk etter saker"
-              name="søketekst"
-              defaultValue={søketekst}
-              variant="primary"
-              autoFocus
-              onKeyDown={handleSøkefeltKeyDown}
-            />
-          </Form>
-        </VStack>
-
         {harSøkt && (
           <VStack gap="space-4">
             <BodyShort>
@@ -196,7 +161,8 @@ export default function SøkSide() {
               className="text-ax-icon-neutral-subtle"
             />
             <BodyShort className="text-ax-text-neutral-subtle">
-              Søk etter saker på saksnummer, fødselsnummer eller kategorier.
+              Bruk søkefeltet øverst på siden for å søke etter saksnummer, fødselsnummer
+              eller kategorier.
             </BodyShort>
           </HStack>
         )}
