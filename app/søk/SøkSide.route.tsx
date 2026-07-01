@@ -1,4 +1,4 @@
-import { MagnifyingGlassIcon } from "@navikt/aksel-icons";
+import { FileXMarkIcon, MagnifyingGlassIcon } from "@navikt/aksel-icons";
 import { BodyShort, Box, Button, Heading, HStack, Tag, VStack } from "@navikt/ds-react";
 import { useRef } from "react";
 import { Form, Link, unstable_useRoute, useActionData } from "react-router";
@@ -9,6 +9,7 @@ import { erFnr, formaterFødselsnummer } from "~/utils/string-utils";
 import { hentValgfriTekst } from "~/utils/form-data";
 import { SøkResultatKort } from "./SøkResultatKort";
 import { søkSaker } from "./søk.server";
+import { HURTIGSØK_INPUT_SELECTOR } from "./sok-navigasjon";
 import type { Route } from "./+types/SøkSide.route";
 
 type Søksak = KontrollsakResponse;
@@ -31,23 +32,21 @@ function hentResultatlenker(container: HTMLElement | null): HTMLAnchorElement[] 
 }
 
 function TomStatusboks({
+  ikon,
   tittel,
   beskrivelse,
   children,
 }: {
+  ikon: React.ReactNode;
   tittel: string;
   beskrivelse: string;
   children?: React.ReactNode;
 }) {
   return (
-    <Box background="neutral-soft" borderRadius="12" padding="space-40" className="mt-4">
+    <Box background="neutral-soft" borderRadius="8" padding="space-40">
       <VStack gap="space-16" align="center">
         <Box background="neutral-moderate" borderRadius="full" padding="space-16">
-          <MagnifyingGlassIcon
-            aria-hidden
-            fontSize="2rem"
-            className="text-ax-icon-neutral-subtle"
-          />
+          {ikon}
         </Box>
         <VStack gap="space-4" align="center">
           <Heading level="2" size="small" align="center">
@@ -66,6 +65,9 @@ function TomStatusboks({
 function SøkeVeiledning() {
   return (
     <TomStatusboks
+      ikon={
+        <MagnifyingGlassIcon aria-hidden fontSize="2rem" className="text-ax-icon-neutral-subtle" />
+      }
       tittel="Finn en sak"
       beskrivelse="Bruk søkefeltet i toppmenyen for å søke etter saksnummer, fødselsnummer eller kategori."
     >
@@ -87,10 +89,17 @@ function SøkeVeiledning() {
 function IngenTreffPåFritekst({ søketekst }: { søketekst: string }) {
   return (
     <TomStatusboks
+      ikon={<FileXMarkIcon aria-hidden fontSize="2rem" className="text-ax-icon-neutral-subtle" />}
       tittel={`Ingen treff for «${søketekst}»`}
       beskrivelse="Prøv å sjekke stavemåten, bruk færre søkeord, eller søk direkte på saksnummer eller fødselsnummer."
     >
-      <Button as={Link} to={RouteConfig.ALLE_SAKER} variant="secondary" size="small">
+      <Button
+        as={Link}
+        to={RouteConfig.ALLE_SAKER}
+        variant="secondary"
+        size="small"
+        onClick={() => sporHendelse("søk se alle saker klikket")}
+      >
         Se alle saker
       </Button>
     </TomStatusboks>
@@ -110,7 +119,7 @@ export default function SøkSide() {
   const resultatlisteRef = useRef<HTMLDivElement>(null);
 
   function fokuserHeaderSøkefelt() {
-    document.querySelector<HTMLInputElement>('[aria-label="Hurtigsøk"] input')?.focus();
+    document.querySelector<HTMLInputElement>(HURTIGSØK_INPUT_SELECTOR)?.focus();
   }
 
   function handleResultatlisteKeyDown(event: React.KeyboardEvent) {
@@ -149,7 +158,12 @@ export default function SøkSide() {
             )}
 
             {resultater && resultater.length > 0 && (
-              <VStack gap="space-8" ref={resultatlisteRef} onKeyDown={handleResultatlisteKeyDown}>
+              <VStack
+                gap="space-8"
+                ref={resultatlisteRef}
+                onKeyDown={handleResultatlisteKeyDown}
+                data-søk-resultatliste
+              >
                 {resultater.map((sak) => (
                   <SøkResultatKort key={sak.id} sak={sak} />
                 ))}
@@ -161,7 +175,7 @@ export default function SøkSide() {
                 {erFnrSøk ? (
                   <Box
                     background="info-soft"
-                    borderRadius="12"
+                    borderRadius="8"
                     padding="space-24"
                     className="max-w-xl mt-4"
                   >

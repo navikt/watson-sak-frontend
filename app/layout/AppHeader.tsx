@@ -6,6 +6,7 @@ import { sporHendelse } from "~/analytics/analytics";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { useMiljø } from "~/miljø/useMiljø";
 import { RouteConfig } from "~/routeConfig";
+import { SØK_RESULTATLENKE_SELECTOR } from "~/søk/sok-navigasjon";
 import { VarselBjelle } from "~/varsler/VarselBjelle";
 
 export function AppHeader() {
@@ -28,7 +29,7 @@ export function AppHeader() {
   function handleSøkefeltKeyDown(event: React.KeyboardEvent) {
     if (event.key !== "ArrowDown" || location.pathname !== RouteConfig.SØK) return;
 
-    const førsteLenke = document.querySelector<HTMLAnchorElement>("article a");
+    const førsteLenke = document.querySelector<HTMLAnchorElement>(SØK_RESULTATLENKE_SELECTOR);
     if (førsteLenke) {
       event.preventDefault();
       førsteLenke.focus();
@@ -60,6 +61,7 @@ export function AppHeader() {
         aria-label="Hurtigsøk"
         className="flex items-center self-stretch"
         ref={skjemaRef}
+        data-hurtigsøk-skjema
         onSubmit={(event) => {
           const formData = new FormData(event.currentTarget);
           const søketekst = formData.get("søketekst")?.toString().trim();

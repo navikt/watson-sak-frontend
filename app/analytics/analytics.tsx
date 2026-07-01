@@ -72,4 +72,5 @@ type Hendelse =
   | "endre status lagring feilet"
   | "endre status dialog avbrutt"
   | "søk opprett sak klikket"
-  | "søk watson søk klikket";
+  | "søk watson søk klikket"
+  | "søk se alle saker klikket";

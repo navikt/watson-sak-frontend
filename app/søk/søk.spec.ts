@@ -175,5 +175,15 @@ test.describe("Søk", () => {
 
       await expect(page.getByLabel("Søk i saker")).toBeFocused();
     });
+
+    test("ArrowDown i header-feltet gjør ingenting utenfor søkesiden", async ({ page }) => {
+      await page.goto("/", { waitUntil: "networkidle" });
+
+      const headerSøk = page.getByRole("search", { name: "Hurtigsøk" }).getByRole("searchbox");
+      await headerSøk.fill("dagpenger");
+      await headerSøk.press("ArrowDown");
+
+      await expect(headerSøk).toBeFocused();
+    });
   });
 });
