@@ -9,5 +9,6 @@
   "UMAMI_SITE_ID": "6dd2ad0d-28d2-4934-93dc-b95448b37915",
   "ENVIRONMENT": "prod",
   "WATSON_ADMIN_API_URL": "",
+  "WATSON_SOK_URL": "https://watson-sok.intern.nav.no",
   "UNLEASH_ENVIRONMENT": "production"
 }

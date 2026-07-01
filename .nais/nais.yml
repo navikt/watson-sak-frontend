@@ -68,5 +68,7 @@ spec:
       value: {{ENVIRONMENT}}
     - name: WATSON_ADMIN_API_URL
       value: {{WATSON_ADMIN_API_URL}}
+    - name: WATSON_SOK_URL
+      value: {{WATSON_SOK_URL}}
     - name: APP_VERSION
       value: {{APP_VERSION}}

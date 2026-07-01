@@ -1,7 +1,7 @@
 import { MagnifyingGlassIcon } from "@navikt/aksel-icons";
-import { BodyShort, Box, Button, Heading, Search, VStack } from "@navikt/ds-react";
+import { BodyShort, Box, Button, Heading, HStack, Search, VStack } from "@navikt/ds-react";
 import { useEffect, useRef } from "react";
-import { Form, useActionData, useNavigate } from "react-router";
+import { Form, unstable_useRoute, useActionData, useNavigate } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import type { KontrollsakResponse } from "~/saker/types.backend";
@@ -33,6 +33,9 @@ function hentResultatlenker(container: HTMLElement | null): HTMLAnchorElement[] 
 export default function SøkSide() {
   const actionData = useActionData<typeof action>();
   const navigate = useNavigate();
+  const { loaderData } = unstable_useRoute("root");
+  const watsonSokUrl = loaderData?.envs.watsonSokUrl ?? null;
+
   const søketekst = actionData?.søketekst ?? "";
   const resultater = actionData?.resultater;
   const harSøkt = actionData !== undefined;
@@ -137,14 +140,32 @@ export default function SøkSide() {
                     className="max-w-xl"
                   >
                     <VStack gap="space-16">
-                      <BodyShort>
-                        Det er ingen saker registrert på {formaterFødselsnummer(søketekst)}.
-                      </BodyShort>
-                      <div>
-                        <Button variant="primary" onClick={håndterOpprettSak}>
-                          Opprett sak for denne personen
+                      <VStack gap="space-4">
+                        <Heading level="2" size="small">
+                          Ser du etter en person?
+                        </Heading>
+                        <BodyShort>
+                          {formaterFødselsnummer(søketekst)} ser ut som et fødselsnummer. Hvis du
+                          vil, kan du opprette en sak, eller slå opp personen i Watson Søk.
+                        </BodyShort>
+                      </VStack>
+                      <HStack gap="space-4">
+                        <Button variant="secondary" onClick={håndterOpprettSak}>
+                          Opprett sak
                         </Button>
-                      </div>
+                        {watsonSokUrl && (
+                          <Button
+                            variant="secondary"
+                            as="a"
+                            href={watsonSokUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => sporHendelse("søk watson søk klikket")}
+                          >
+                            Slå opp i Watson Søk
+                          </Button>
+                        )}
+                      </HStack>
                     </VStack>
                   </Box>
                 ) : (
