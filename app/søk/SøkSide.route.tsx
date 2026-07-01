@@ -157,7 +157,7 @@ export default function SøkSide() {
                         {watsonSokUrl && (
                           <form
                             method="post"
-                            action={`${watsonSokUrl}/api/søk-fra-watson-sak`}
+                            action={`${watsonSokUrl}/api/eksternt-søk`}
                             target="_blank"
                             rel="noopener noreferrer"
                             onSubmit={() => sporHendelse("søk watson søk klikket")}
