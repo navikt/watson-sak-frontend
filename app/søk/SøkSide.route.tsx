@@ -172,7 +172,7 @@ export default function SøkSide() {
                     </VStack>
                   </Box>
                 ) : (
-                  <VStack gap="space-4" align="center" className="py-12">
+                  <VStack gap="space-4" className="py-12">
                     <MagnifyingGlassIcon
                       aria-hidden
                       fontSize="3rem"
@@ -189,7 +189,7 @@ export default function SøkSide() {
         )}
 
         {!harSøkt && (
-          <VStack gap="space-4" align="center" className="py-12">
+          <VStack gap="space-4" className="py-12">
             <MagnifyingGlassIcon
               aria-hidden
               fontSize="3rem"
