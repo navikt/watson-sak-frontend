@@ -172,7 +172,7 @@ export default function SøkSide() {
                     </VStack>
                   </Box>
                 ) : (
-                  <VStack gap="space-4" className="py-12">
+                  <HStack gap="space-4" align="center" className="py-12">
                     <MagnifyingGlassIcon
                       aria-hidden
                       fontSize="3rem"
@@ -181,7 +181,7 @@ export default function SøkSide() {
                     <BodyShort className="text-ax-text-neutral-subtle">
                       Prøv å søke på saksnummer, fødselsnummer eller kategorier.
                     </BodyShort>
-                  </VStack>
+                  </HStack>
                 )}
               </>
             )}
@@ -189,7 +189,7 @@ export default function SøkSide() {
         )}
 
         {!harSøkt && (
-          <VStack gap="space-4" className="py-12">
+          <HStack gap="space-4" align="center" className="py-12">
             <MagnifyingGlassIcon
               aria-hidden
               fontSize="3rem"
@@ -198,7 +198,7 @@ export default function SøkSide() {
             <BodyShort className="text-ax-text-neutral-subtle">
               Søk etter saker på saksnummer, fødselsnummer eller kategorier.
             </BodyShort>
-          </VStack>
+          </HStack>
         )}
       </VStack>
     </>
