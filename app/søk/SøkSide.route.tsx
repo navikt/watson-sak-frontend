@@ -155,16 +155,16 @@ export default function SøkSide() {
                           </Button>
                         </Form>
                         {watsonSokUrl && (
-                          <Button
-                            variant="secondary"
-                            as="a"
-                            href={watsonSokUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={() => sporHendelse("søk watson søk klikket")}
+                          <form
+                            method="post"
+                            action={`${watsonSokUrl}/api/søk-fra-watson-sak`}
+                            onSubmit={() => sporHendelse("søk watson søk klikket")}
                           >
-                            Slå opp i Watson Søk
-                          </Button>
+                            <input type="hidden" name="ident" value={søketekst} />
+                            <Button type="submit" variant="secondary">
+                              Slå opp i Watson Søk
+                            </Button>
+                          </form>
                         )}
                       </HStack>
                     </VStack>
