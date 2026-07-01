@@ -12,9 +12,8 @@ test.describe("Søk", () => {
 
     test("viser overskrift og tomtilstand", async ({ page }) => {
       await expect(page.getByRole("heading", { name: "Søk i saker" })).toBeVisible();
-      await expect(
-        page.getByText(/Bruk søkefeltet øverst på siden for å søke/),
-      ).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Finn en sak" })).toBeVisible();
+      await expect(page.getByText(/Bruk søkefeltet i toppmenyen for å søke/)).toBeVisible();
     });
 
     test("kan søke på saksnummer og viser resultater", async ({ page }) => {
@@ -47,7 +46,8 @@ test.describe("Søk", () => {
       await page.getByLabel("Søk i saker").fill("finnesikke123");
       await page.getByLabel("Søk i saker").press("Enter");
 
-      await expect(page.getByText(/Ingen treff for "finnesikke123"/)).toBeVisible();
+      await expect(page.getByRole("heading", { name: /Ingen treff for/ })).toBeVisible();
+      await expect(page.getByRole("link", { name: "Se alle saker" })).toBeVisible();
     });
 
     test("viser CTA for å opprette sak ved ingen treff på FNR", async ({ page }) => {
@@ -64,7 +64,7 @@ test.describe("Søk", () => {
       await page.getByLabel("Søk i saker").fill("finnesikke123");
       await page.getByLabel("Søk i saker").press("Enter");
 
-      await expect(page.getByText(/Ingen treff for "finnesikke123"/)).toBeVisible();
+      await expect(page.getByRole("heading", { name: /Ingen treff for/ })).toBeVisible();
       await expect(
         page.getByRole("heading", { name: "Ser du etter en person?" }),
       ).not.toBeVisible();

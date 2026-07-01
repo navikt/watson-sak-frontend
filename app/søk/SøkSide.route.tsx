@@ -1,7 +1,7 @@
 import { MagnifyingGlassIcon } from "@navikt/aksel-icons";
-import { BodyShort, Box, Button, Heading, HStack, VStack } from "@navikt/ds-react";
+import { BodyShort, Box, Button, Heading, HStack, Tag, VStack } from "@navikt/ds-react";
 import { useRef } from "react";
-import { Form, unstable_useRoute, useActionData } from "react-router";
+import { Form, Link, unstable_useRoute, useActionData } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import type { KontrollsakResponse } from "~/saker/types.backend";
@@ -30,6 +30,73 @@ function hentResultatlenker(container: HTMLElement | null): HTMLAnchorElement[] 
   return Array.from(container.querySelectorAll<HTMLAnchorElement>("a"));
 }
 
+function TomStatusboks({
+  tittel,
+  beskrivelse,
+  children,
+}: {
+  tittel: string;
+  beskrivelse: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <Box background="neutral-soft" borderRadius="12" padding="space-40" className="mt-4">
+      <VStack gap="space-16" align="center">
+        <Box background="neutral-moderate" borderRadius="full" padding="space-16">
+          <MagnifyingGlassIcon
+            aria-hidden
+            fontSize="2rem"
+            className="text-ax-icon-neutral-subtle"
+          />
+        </Box>
+        <VStack gap="space-4" align="center">
+          <Heading level="2" size="small" align="center">
+            {tittel}
+          </Heading>
+          <BodyShort align="center" className="text-ax-text-neutral-subtle max-w-md">
+            {beskrivelse}
+          </BodyShort>
+        </VStack>
+        {children}
+      </VStack>
+    </Box>
+  );
+}
+
+function SøkeVeiledning() {
+  return (
+    <TomStatusboks
+      tittel="Finn en sak"
+      beskrivelse="Bruk søkefeltet i toppmenyen for å søke etter saksnummer, fødselsnummer eller kategori."
+    >
+      <HStack gap="space-8" justify="center" wrap>
+        <Tag variant="neutral" size="small">
+          Saksnummer
+        </Tag>
+        <Tag variant="neutral" size="small">
+          Fødselsnummer
+        </Tag>
+        <Tag variant="neutral" size="small">
+          Kategori
+        </Tag>
+      </HStack>
+    </TomStatusboks>
+  );
+}
+
+function IngenTreffPåFritekst({ søketekst }: { søketekst: string }) {
+  return (
+    <TomStatusboks
+      tittel={`Ingen treff for «${søketekst}»`}
+      beskrivelse="Prøv å sjekke stavemåten, bruk færre søkeord, eller søk direkte på saksnummer eller fødselsnummer."
+    >
+      <Button as={Link} to={RouteConfig.ALLE_SAKER} variant="secondary" size="small">
+        Se alle saker
+      </Button>
+    </TomStatusboks>
+  );
+}
+
 export default function SøkSide() {
   const actionData = useActionData<typeof action>();
   const { loaderData } = unstable_useRoute("root");
@@ -43,9 +110,7 @@ export default function SøkSide() {
   const resultatlisteRef = useRef<HTMLDivElement>(null);
 
   function fokuserHeaderSøkefelt() {
-    document
-      .querySelector<HTMLInputElement>('[aria-label="Hurtigsøk"] input')
-      ?.focus();
+    document.querySelector<HTMLInputElement>('[aria-label="Hurtigsøk"] input')?.focus();
   }
 
   function handleResultatlisteKeyDown(event: React.KeyboardEvent) {
@@ -75,11 +140,13 @@ export default function SøkSide() {
         </Heading>
         {harSøkt && (
           <VStack gap="space-4">
-            <BodyShort>
-              {resultater && resultater.length > 0
-                ? `${resultater.length} treff for "${søketekst}"`
-                : `Ingen treff for "${søketekst}"`}
-            </BodyShort>
+            {resultater && (resultater.length > 0 || erFnrSøk) && (
+              <BodyShort>
+                {resultater.length > 0
+                  ? `${resultater.length} treff for "${søketekst}"`
+                  : `Ingen treff for "${søketekst}"`}
+              </BodyShort>
+            )}
 
             {resultater && resultater.length > 0 && (
               <VStack gap="space-8" ref={resultatlisteRef} onKeyDown={handleResultatlisteKeyDown}>
@@ -94,9 +161,9 @@ export default function SøkSide() {
                 {erFnrSøk ? (
                   <Box
                     background="info-soft"
-                    borderRadius="8"
-                    padding="space-16"
-                    className="max-w-xl mt-6"
+                    borderRadius="12"
+                    padding="space-24"
+                    className="max-w-xl mt-4"
                   >
                     <VStack gap="space-16">
                       <VStack gap="space-4">
@@ -137,35 +204,14 @@ export default function SøkSide() {
                     </VStack>
                   </Box>
                 ) : (
-                  <HStack gap="space-4" align="center" className="py-12">
-                    <MagnifyingGlassIcon
-                      aria-hidden
-                      fontSize="3rem"
-                      className="text-ax-icon-neutral-subtle"
-                    />
-                    <BodyShort className="text-ax-text-neutral-subtle">
-                      Prøv å søke på saksnummer, fødselsnummer eller kategorier.
-                    </BodyShort>
-                  </HStack>
+                  <IngenTreffPåFritekst søketekst={søketekst} />
                 )}
               </>
             )}
           </VStack>
         )}
 
-        {!harSøkt && (
-          <HStack gap="space-4" align="center" className="py-12">
-            <MagnifyingGlassIcon
-              aria-hidden
-              fontSize="3rem"
-              className="text-ax-icon-neutral-subtle"
-            />
-            <BodyShort className="text-ax-text-neutral-subtle">
-              Bruk søkefeltet øverst på siden for å søke etter saksnummer, fødselsnummer
-              eller kategorier.
-            </BodyShort>
-          </HStack>
-        )}
+        {!harSøkt && <SøkeVeiledning />}
       </VStack>
     </>
   );
