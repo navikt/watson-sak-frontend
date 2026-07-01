@@ -131,7 +131,7 @@ export default function SøkSide() {
                     background="info-soft"
                     borderRadius="8"
                     padding="space-16"
-                    className="max-w-xl mt-12"
+                    className="max-w-xl mt-6"
                   >
                     <VStack gap="space-16">
                       <VStack gap="space-4">
