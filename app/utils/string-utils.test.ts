@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   camelCaseTilNorsk,
+  erFnr,
+  erOrganisasjonsnummer,
+  erSaksnummer,
   formaterFødselsnummer,
   formaterOrganisasjonsnummer,
   snakeCaseTilSetning,
@@ -161,5 +164,48 @@ describe("formaterFødselsnummer", () => {
 
   it("returnerer tom streng for tom streng", () => {
     expect(formaterFødselsnummer("")).toBe("");
+  });
+});
+
+describe("erFnr", () => {
+  it("gjenkjenner 11-sifrede strenger som fødselsnummer", () => {
+    expect(erFnr("12345678901")).toBe(true);
+  });
+
+  it("avviser andre lengder og ikke-tall", () => {
+    expect(erFnr("123456789")).toBe(false);
+    expect(erFnr("123456789012")).toBe(false);
+    expect(erFnr("1234567890a")).toBe(false);
+    expect(erFnr("")).toBe(false);
+  });
+});
+
+describe("erOrganisasjonsnummer", () => {
+  it("gjenkjenner 9-sifrede strenger som organisasjonsnummer", () => {
+    expect(erOrganisasjonsnummer("123456789")).toBe(true);
+  });
+
+  it("avviser andre lengder og ikke-tall", () => {
+    expect(erOrganisasjonsnummer("12345678")).toBe(false);
+    expect(erOrganisasjonsnummer("1234567890")).toBe(false);
+    expect(erOrganisasjonsnummer("12345678a")).toBe(false);
+    expect(erOrganisasjonsnummer("")).toBe(false);
+  });
+});
+
+describe("erSaksnummer", () => {
+  it("gjenkjenner rene tallstrenger som verken er fnr eller orgnr", () => {
+    expect(erSaksnummer("42")).toBe(true);
+    expect(erSaksnummer("123456")).toBe(true);
+  });
+
+  it("avviser fødselsnummer og organisasjonsnummer", () => {
+    expect(erSaksnummer("12345678901")).toBe(false);
+    expect(erSaksnummer("123456789")).toBe(false);
+  });
+
+  it("avviser ikke-numeriske strenger", () => {
+    expect(erSaksnummer("SAK-42")).toBe(false);
+    expect(erSaksnummer("")).toBe(false);
   });
 });

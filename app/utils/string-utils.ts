@@ -88,6 +88,22 @@ export function erFnr(verdi: string): boolean {
 }
 
 /**
+ * Sjekker om en streng er et gyldig organisasjonsnummer (9 siffer)
+ */
+export function erOrganisasjonsnummer(verdi: string): boolean {
+  return /^\d{9}$/.test(verdi);
+}
+
+/**
+ * Sjekker om en streng ser ut som et saksnummer — rent numerisk, men verken
+ * fødselsnummer (11 siffer) eller organisasjonsnummer (9 siffer). Saksnummer
+ * er i praksis korte auto-increment-IDer fra backend.
+ */
+export function erSaksnummer(verdi: string): boolean {
+  return /^\d+$/.test(verdi) && !erFnr(verdi) && !erOrganisasjonsnummer(verdi);
+}
+
+/**
  * Formaterer fødselsnummer til å ha mellomrom mellom de seks første og de fem siste sifrene
  *
  * @param fødselsnummer - Fødselsnummer som skal formateres

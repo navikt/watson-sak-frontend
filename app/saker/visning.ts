@@ -152,3 +152,13 @@ export function formaterBelop(belop: number): string {
 export function formaterMisbrukstype(misbrukstype: KontrollsakMisbrukstype): string {
   return kontrollsakMisbrukstypeEtiketter[misbrukstype] ?? misbrukstype;
 }
+
+const prioritetEtiketter: Record<KontrollsakResponse["prioritet"], string> = {
+  LAV: "Lav",
+  NORMAL: "Normal",
+  HOY: "Høy",
+};
+
+export function formaterPrioritet(prioritet: KontrollsakResponse["prioritet"]): string {
+  return prioritetEtiketter[prioritet] ?? prioritet;
+}

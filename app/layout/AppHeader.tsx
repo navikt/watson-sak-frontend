@@ -27,7 +27,10 @@ export function AppHeader() {
   }, []);
 
   function handleSøkefeltKeyDown(event: React.KeyboardEvent) {
-    if (event.key !== "ArrowDown" || location.pathname !== RouteConfig.SØK) return;
+    // location.pathname er URL-kodet (f.eks. "/s%C3%B8k"), mens RouteConfig.SØK
+    // er den rå strengen "/søk" — må dekodes før sammenligning.
+    if (event.key !== "ArrowDown" || decodeURIComponent(location.pathname) !== RouteConfig.SØK)
+      return;
 
     const førsteLenke = document.querySelector<HTMLAnchorElement>(SØK_RESULTATLENKE_SELECTOR);
     if (førsteLenke) {

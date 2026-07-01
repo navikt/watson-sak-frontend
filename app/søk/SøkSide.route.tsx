@@ -4,26 +4,24 @@ import { useRef } from "react";
 import { Form, Link, unstable_useRoute, useActionData } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
-import type { KontrollsakResponse } from "~/saker/types.backend";
-import { erFnr, formaterFødselsnummer } from "~/utils/string-utils";
+import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
+import { Saksliste } from "~/saker/saksliste/Saksliste";
+import { formaterFødselsnummer, formaterOrganisasjonsnummer } from "~/utils/string-utils";
 import { hentValgfriTekst } from "~/utils/form-data";
-import { SøkResultatKort } from "./SøkResultatKort";
-import { søkSaker } from "./søk.server";
+import { SøkSakOppsummering } from "./SøkSakOppsummering";
+import { søkSaker, type SøkeType } from "./søk.server";
 import { HURTIGSØK_INPUT_SELECTOR } from "./sok-navigasjon";
 import type { Route } from "./+types/SøkSide.route";
-
-type Søksak = KontrollsakResponse;
 
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
   const søketekst = hentValgfriTekst(formData, "søketekst") ?? "";
 
   if (!søketekst.trim()) {
-    return { søketekst: "", resultater: [] as Søksak[] };
+    return { søketekst: "", søketype: "ukjent" as SøkeType, resultater: [] };
   }
 
-  const resultater = await søkSaker(request, søketekst);
-  return { søketekst, resultater };
+  return søkSaker(request, søketekst);
 }
 
 function hentResultatlenker(container: HTMLElement | null): HTMLAnchorElement[] {
@@ -69,7 +67,7 @@ function SøkeVeiledning() {
         <MagnifyingGlassIcon aria-hidden fontSize="2rem" className="text-ax-icon-neutral-subtle" />
       }
       tittel="Finn en sak"
-      beskrivelse="Bruk søkefeltet i toppmenyen for å søke etter saksnummer, fødselsnummer eller kategori."
+      beskrivelse="Bruk søkefeltet i toppmenyen for å søke etter saksnummer, fødselsnummer eller organisasjonsnummer."
     >
       <HStack gap="space-8" justify="center" wrap>
         <Tag variant="neutral" size="small">
@@ -79,19 +77,25 @@ function SøkeVeiledning() {
           Fødselsnummer
         </Tag>
         <Tag variant="neutral" size="small">
-          Kategori
+          Organisasjonsnummer
         </Tag>
       </HStack>
     </TomStatusboks>
   );
 }
 
-function IngenTreffPåFritekst({ søketekst }: { søketekst: string }) {
+function IngenTreff({
+  tittel,
+  beskrivelse,
+}: {
+  tittel: string;
+  beskrivelse: string;
+}) {
   return (
     <TomStatusboks
       ikon={<FileXMarkIcon aria-hidden fontSize="2rem" className="text-ax-icon-neutral-subtle" />}
-      tittel={`Ingen treff for «${søketekst}»`}
-      beskrivelse="Prøv å sjekke stavemåten, bruk færre søkeord, eller søk direkte på saksnummer eller fødselsnummer."
+      tittel={tittel}
+      beskrivelse={beskrivelse}
     >
       <Button
         as={Link}
@@ -106,15 +110,41 @@ function IngenTreffPåFritekst({ søketekst }: { søketekst: string }) {
   );
 }
 
+function tomTreffTekst(søketype: SøkeType, søketekst: string): { tittel: string; beskrivelse: string } {
+  switch (søketype) {
+    case "saksnummer":
+      return {
+        tittel: `Fant ingen sak med saksnummer «${søketekst}»`,
+        beskrivelse: "Sjekk at saksnummeret er riktig, eller søk på fødselsnummer eller organisasjonsnummer.",
+      };
+    case "organisasjonsnummer":
+      return {
+        tittel: `Ingen treff for organisasjonsnummer «${formaterOrganisasjonsnummer(søketekst)}»`,
+        beskrivelse: "Fant ingen kontrollsaker knyttet til dette organisasjonsnummeret.",
+      };
+    case "personIdent":
+      return {
+        tittel: `Ingen treff for «${søketekst}»`,
+        beskrivelse: "Fant ingen kontrollsaker for dette fødselsnummeret.",
+      };
+    default:
+      return {
+        tittel: "Ugyldig søk",
+        beskrivelse:
+          "Søket må være et fødselsnummer (11 sifre), organisasjonsnummer (9 sifre) eller saksnummer.",
+      };
+  }
+}
+
 export default function SøkSide() {
   const actionData = useActionData<typeof action>();
   const { loaderData } = unstable_useRoute("root");
   const watsonSokUrl = loaderData?.envs.watsonSokUrl ?? null;
 
   const søketekst = actionData?.søketekst ?? "";
+  const søketype = actionData?.søketype ?? "ukjent";
   const resultater = actionData?.resultater;
   const harSøkt = actionData !== undefined;
-  const erFnrSøk = erFnr(søketekst);
 
   const resultatlisteRef = useRef<HTMLDivElement>(null);
 
@@ -140,6 +170,8 @@ export default function SøkSide() {
     }
   }
 
+  const antallTreff = resultater?.length ?? 0;
+
   return (
     <>
       <title>Søk – Watson Sak</title>
@@ -149,30 +181,39 @@ export default function SøkSide() {
         </Heading>
         {harSøkt && (
           <VStack gap="space-4">
-            {resultater && (resultater.length > 0 || erFnrSøk) && (
+            {resultater && (
               <BodyShort>
-                {resultater.length > 0
-                  ? `${resultater.length} treff for "${søketekst}"`
+                {antallTreff > 0
+                  ? `${antallTreff} treff for "${søketekst}"`
                   : `Ingen treff for "${søketekst}"`}
               </BodyShort>
             )}
 
-            {resultater && resultater.length > 0 && (
-              <VStack
-                gap="space-8"
+            {resultater && antallTreff > 0 && søketype === "saksnummer" && (
+              <div ref={resultatlisteRef} onKeyDown={handleResultatlisteKeyDown} data-søk-resultatliste>
+                <SøkSakOppsummering sak={resultater[0]} />
+              </div>
+            )}
+
+            {resultater && antallTreff > 0 && søketype !== "saksnummer" && (
+              <div
                 ref={resultatlisteRef}
                 onKeyDown={handleResultatlisteKeyDown}
                 data-søk-resultatliste
+                className="overflow-x-auto [&_table]:w-full"
               >
-                {resultater.map((sak) => (
-                  <SøkResultatKort key={sak.id} sak={sak} />
-                ))}
-              </VStack>
+                <Saksliste
+                  rader={resultater.map((sak) => mapKontrollsakTilSakslisteRad(sak))}
+                  kolonner={["saksid", "navn", "kategori", "misbrukstype", "status", "opprettet"]}
+                  tomTekst="Ingen saker funnet."
+                  tilbake={{ to: RouteConfig.SØK, label: "Søk" }}
+                />
+              </div>
             )}
 
-            {resultater && resultater.length === 0 && (
+            {resultater && antallTreff === 0 && (
               <>
-                {erFnrSøk ? (
+                {søketype === "personIdent" ? (
                   <Box
                     background="info-soft"
                     borderRadius="8"
@@ -218,7 +259,7 @@ export default function SøkSide() {
                     </VStack>
                   </Box>
                 ) : (
-                  <IngenTreffPåFritekst søketekst={søketekst} />
+                  <IngenTreff {...tomTreffTekst(søketype, søketekst)} />
                 )}
               </>
             )}
