@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Deerstalker (Sherlock-hatt) i profil, 32x32 for bruk som cursor -->
+
+  <!-- Bakre brem -->
+  <ellipse cx="5.5" cy="21" rx="5" ry="2.6" fill="#6b5335"/>
+  <!-- Fremre brem -->
+  <ellipse cx="26.5" cy="21" rx="5" ry="2.6" fill="#6b5335"/>
+
+  <!-- Kule (crown) -->
+  <path d="M 6 21
+           Q 6 8, 16 8
+           Q 26 8, 26 21
+           Z"
+        fill="#8b6f47"/>
+
+  <!-- Tweed-antydning: enkle krysstriper med lav opacity -->
+  <g stroke="#5e4a2e" stroke-width="0.7" opacity="0.35">
+    <path d="M 9 20 Q 9 11.5, 16 10" fill="none"/>
+    <path d="M 13 20.5 Q 13 10, 16 9.2" fill="none"/>
+    <path d="M 19 20.5 Q 19 10, 16 9.2" fill="none"/>
+    <path d="M 23 20 Q 23 11.5, 16 10" fill="none"/>
+    <path d="M 7.5 17 Q 16 14.5, 24.5 17" fill="none"/>
+    <path d="M 8.5 13.5 Q 16 11.5, 23.5 13.5" fill="none"/>
+  </g>
+
+  <!-- Øreklaff festet på toppen -->
+  <path d="M 11 9.6 Q 16 4.5, 21 9.6 Q 16 7.4, 11 9.6 Z" fill="#6b5335"/>
+
+  <!-- Sløyfe som holder øreklaffene -->
+  <circle cx="14.6" cy="7.6" r="1.15" fill="#4a3a24"/>
+  <circle cx="17.4" cy="7.6" r="1.15" fill="#4a3a24"/>
+  <circle cx="16" cy="7.6" r="0.7" fill="#8b6f47"/>
+
+  <!-- Hattebånd nederst -->
+  <path d="M 6 21 L 6 19.2 Q 16 16.8, 26 19.2 L 26 21 Q 16 18.6, 6 21 Z"
+        fill="#5e4a2e"/>
+</svg>
