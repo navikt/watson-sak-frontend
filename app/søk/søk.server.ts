@@ -1,6 +1,5 @@
 import { getBackendOboToken } from "~/auth/access-token";
 import { skalBrukeMockdata } from "~/config/env.server";
-import { logger } from "~/logging/logging";
 import * as backendApi from "~/saker/api.server";
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
 import type { KontrollsakResponse } from "~/saker/types.backend";
@@ -87,9 +86,8 @@ async function søkPåOrganisasjonsnummer(
   organisasjonsnummer: string,
 ): Promise<Søksak[]> {
   if (!skalBrukeMockdata) {
-    // Backend støtter foreløpig ikke søk på organisasjonsnummer.
-    logger.info("Søk på organisasjonsnummer er ikke støttet av backend ennå");
-    return [];
+    const token = await getBackendOboToken(request);
+    return backendApi.søkKontrollsakerOrganisasjon(token, organisasjonsnummer);
   }
 
   const alleSaker: Søksak[] = hentAlleSaker(request);

@@ -125,6 +125,24 @@ export async function søkKontrollsaker(
   );
 }
 
+export async function søkKontrollsakerOrganisasjon(
+  token: string,
+  organisasjonsnummer: string,
+): Promise<KontrollsakResponse[]> {
+  const respons = await fetch(apiUrl("/api/v1/kontrollsaker/sok/organisasjon"), {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify({ organisasjonsnummer }),
+  });
+  if (!respons.ok)
+    await håndterFeil(respons, "Kunne ikke søke etter kontrollsaker for organisasjon");
+  return parseEllerKastFeil(
+    z.array(kontrollsakResponseSchema),
+    await respons.json(),
+    "søkKontrollsakerOrganisasjon",
+  );
+}
+
 // --- Hendelser ---
 
 export async function hentHendelser(token: string, sakId: string) {
