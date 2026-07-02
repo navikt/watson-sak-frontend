@@ -142,8 +142,7 @@ export async function søkKontrollsakerOrganisasjon(
     headers: authHeaders(token),
     body: JSON.stringify({ organisasjonsnummer }),
   });
-  if (!respons.ok)
-    await håndterFeil(respons, "Kunne ikke søke etter kontrollsaker for organisasjon");
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke søke på organisasjonsnummer");
   return parseEllerKastFeil(
     kontrollsakPageResponseSchema,
     await respons.json(),
