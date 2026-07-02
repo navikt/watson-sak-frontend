@@ -124,7 +124,7 @@ export function VisAllHistorikkModal({
               {synligeHendelser.map((hendelse) => {
                 const beskrivelse = hendelseBeskrivelse(hendelse);
                 const erEgetManueltNotat =
-                  hendelse.hendelsesType === "MANUELL_NOTAT" &&
+                  hendelse.hendelsesType === "MANUELL_HENDELSE" &&
                   hendelse.opprettetAvNavIdent === innloggetBruker.navIdent;
 
                 return (

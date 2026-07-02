@@ -168,6 +168,7 @@ export const kontrollsakHendelseResponseSchema = z.object({
   blokkert: blokkeringsarsakSchema.nullable().optional(),
   henleggelsesarsak: henleggelsesarsakSchema.nullable().optional().catch(null),
   beskrivelse: z.string().nullable().optional(),
+  tittel: z.string().nullable().optional(),
   opprettetAvNavIdent: z.string().nullable().optional(),
 });
 
