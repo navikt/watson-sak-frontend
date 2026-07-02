@@ -57,7 +57,7 @@ export function RedigerHistorikkModal({
     shouldRevalidate: "onInput",
     defaultValue: {
       tittel: hendelse.tittel ?? "",
-      notat: hendelse.notat ?? "",
+      notat: hendelse.beskrivelse ?? "",
       dato: initialDato,
       tid: initialTid,
     },

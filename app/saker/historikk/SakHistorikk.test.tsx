@@ -229,9 +229,9 @@ describe("SakHistorikk", () => {
         sakId={1}
         hendelser={[
           lagBackendHendelse({
-            hendelsesType: "MANUELL_NOTAT",
+            hendelsesType: "MANUELL_HENDELSE",
             tittel: "Ringte bruker",
-            notat: "Avklarte dokumentasjon og neste steg.",
+            beskrivelse: "Avklarte dokumentasjon og neste steg.",
           }),
         ]}
       />,

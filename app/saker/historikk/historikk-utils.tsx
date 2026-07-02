@@ -24,7 +24,7 @@ import { NORSK_TIDSSONE } from "~/utils/date-utils";
 import type { SakHendelse } from "./typer";
 
 export function erManuellHendelse(hendelse: SakHendelse): boolean {
-  return hendelse.hendelsesType === "MANUELL_NOTAT";
+  return hendelse.hendelsesType === "MANUELL_HENDELSE";
 }
 
 export function formaterTidspunkt(isoString: string): string {
@@ -76,7 +76,7 @@ export function hendelseTittel(hendelse: SakHendelse): string {
       return "Sak satt i bero";
     case "SAK_GJENOPPTATT":
       return hendelse.blokkert === "I_BERO" ? "Sak tatt ut av bero" : "Sak gjenopptatt";
-    case "MANUELL_NOTAT":
+    case "MANUELL_HENDELSE":
       return hendelse.tittel ?? "Notat";
     case "NOTAT_SENDT":
       return "Notat opprettet i Gosys";
@@ -90,8 +90,8 @@ export function hendelseTittel(hendelse: SakHendelse): string {
 }
 
 export function hendelseBeskrivelse(hendelse: SakHendelse): string | null {
-  if (hendelse.hendelsesType === "MANUELL_NOTAT") {
-    return hendelse.notat ?? null;
+  if (hendelse.hendelsesType === "MANUELL_HENDELSE") {
+    return hendelse.beskrivelse ?? null;
   }
 
   if (hendelse.hendelsesType === "NOTAT_SENDT") {

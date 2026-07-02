@@ -63,9 +63,9 @@ describe("VisAllHistorikkModal", () => {
     const hendelser = [
       lagHendelse({
         hendelseId: "00000000-0000-4000-8000-000000000001",
-        hendelsesType: "MANUELL_NOTAT",
+        hendelsesType: "MANUELL_HENDELSE",
         tittel: "Mitt notat",
-        notat: "En beskrivelse",
+        beskrivelse: "En beskrivelse",
         opprettetAvNavIdent: "Z999999",
       }),
     ];
@@ -87,9 +87,9 @@ describe("VisAllHistorikkModal", () => {
     const hendelser = [
       lagHendelse({
         hendelseId: "00000000-0000-4000-8000-000000000001",
-        hendelsesType: "MANUELL_NOTAT",
+        hendelsesType: "MANUELL_HENDELSE",
         tittel: "Mitt notat",
-        notat: "En beskrivelse",
+        beskrivelse: "En beskrivelse",
         opprettetAvNavIdent: "Z999999",
       }),
     ];
@@ -111,9 +111,9 @@ describe("VisAllHistorikkModal", () => {
     const hendelser = [
       lagHendelse({
         hendelseId: "00000000-0000-4000-8000-000000000001",
-        hendelsesType: "MANUELL_NOTAT",
+        hendelsesType: "MANUELL_HENDELSE",
         tittel: "Andres notat",
-        notat: "En beskrivelse",
+        beskrivelse: "En beskrivelse",
         opprettetAvNavIdent: "Z111111",
       }),
     ];
@@ -135,9 +135,9 @@ describe("VisAllHistorikkModal", () => {
     const hendelser = [
       lagHendelse({
         hendelseId: "00000000-0000-4000-8000-000000000001",
-        hendelsesType: "MANUELL_NOTAT",
+        hendelsesType: "MANUELL_HENDELSE",
         tittel: "Andres notat",
-        notat: "En beskrivelse",
+        beskrivelse: "En beskrivelse",
         opprettetAvNavIdent: "Z111111",
       }),
     ];
@@ -194,9 +194,9 @@ describe("VisAllHistorikkModal", () => {
     const hendelser = [
       lagHendelse({
         hendelseId: "00000000-0000-4000-8000-000000000001",
-        hendelsesType: "MANUELL_NOTAT",
+        hendelsesType: "MANUELL_HENDELSE",
         tittel: "Mitt notat",
-        notat: "En beskrivelse",
+        beskrivelse: "En beskrivelse",
         opprettetAvNavIdent: "Z999999",
       }),
     ];
@@ -225,9 +225,9 @@ describe("VisAllHistorikkModal", () => {
       }),
       lagHendelse({
         hendelseId: "00000000-0000-4000-8000-000000000003",
-        hendelsesType: "MANUELL_NOTAT",
+        hendelsesType: "MANUELL_HENDELSE",
         tittel: "Mitt notat",
-        notat: "En beskrivelse",
+        beskrivelse: "En beskrivelse",
         opprettetAvNavIdent: "Z999999",
       }),
     ];
@@ -255,9 +255,9 @@ describe("VisAllHistorikkModal", () => {
       }),
       lagHendelse({
         hendelseId: "00000000-0000-4000-8000-000000000002",
-        hendelsesType: "MANUELL_NOTAT",
+        hendelsesType: "MANUELL_HENDELSE",
         tittel: "Mitt notat",
-        notat: "En beskrivelse",
+        beskrivelse: "En beskrivelse",
         opprettetAvNavIdent: "Z999999",
       }),
     ];
@@ -303,9 +303,9 @@ describe("VisAllHistorikkModal", () => {
     const hendelser = [
       lagHendelse({
         hendelseId: "00000000-0000-4000-8000-000000000001",
-        hendelsesType: "MANUELL_NOTAT",
+        hendelsesType: "MANUELL_HENDELSE",
         tittel: "Mitt notat",
-        notat: "En beskrivelse",
+        beskrivelse: "En beskrivelse",
         opprettetAvNavIdent: "Z999999",
       }),
     ];

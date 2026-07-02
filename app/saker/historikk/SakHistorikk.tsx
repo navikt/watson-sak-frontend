@@ -75,7 +75,7 @@ export function SakHistorikk({ sakId, hendelser, redigerbar }: SakHistorikkProps
             {synligeHendelser.map((hendelse, index) => {
               const beskrivelse = hendelseBeskrivelse(hendelse);
               const erEgetManueltNotat =
-                hendelse.hendelsesType === "MANUELL_NOTAT" &&
+                hendelse.hendelsesType === "MANUELL_HENDELSE" &&
                 hendelse.opprettetAvNavIdent === innloggetBruker.navIdent;
 
               return (
