@@ -1,14 +1,16 @@
-import { ClockIcon, PencilIcon, TrashIcon } from "@navikt/aksel-icons";
-import { BodyShort, Button, HStack, Modal, Process, VStack } from "@navikt/ds-react";
-import { useRef, useState } from "react";
+import { ClockIcon, PencilIcon, PlusCircleIcon, TrashIcon } from "@navikt/aksel-icons";
+import { BodyShort, Button, HStack, Modal, Process, ToggleGroup, VStack } from "@navikt/ds-react";
+import { useMemo, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { useDisclosure } from "~/utils/useDisclosure";
+import { LeggTilHistorikkModal } from "./LeggTilHistorikkModal";
 import { RedigerHistorikkModal } from "./RedigerHistorikkModal";
 import type { SakHendelse } from "./typer";
 import {
+  erManuellHendelse,
   formaterTidspunkt,
   hendelseBeskrivelse,
   hendelseTittel,
@@ -24,6 +26,12 @@ interface VisAllHistorikkModalProps {
   redigerbar: boolean;
 }
 
+type HistorikkFilter = "ALLE" | "AUTOMATISK" | "MANUELL";
+
+function erGyldigFilter(value: string): value is HistorikkFilter {
+  return value === "ALLE" || value === "AUTOMATISK" || value === "MANUELL";
+}
+
 export function VisAllHistorikkModal({
   sakId,
   hendelser,
@@ -35,7 +43,18 @@ export function VisAllHistorikkModal({
   const innloggetBruker = useInnloggetBruker();
   const fetcher = useFetcher();
   const { erÅpen: redigerÅpen, onÅpne: onÅpneRediger, onLukk: onLukkRediger } = useDisclosure();
+  const { erÅpen: leggTilÅpen, onÅpne: onÅpneLeggTil, onLukk: onLukkLeggTil } = useDisclosure();
   const [valgtHendelse, setValgtHendelse] = useState<SakHendelse | null>(null);
+  const [filter, setFilter] = useState<HistorikkFilter>("ALLE");
+
+  const antallManuelle = useMemo(() => hendelser.filter(erManuellHendelse).length, [hendelser]);
+  const antallAutomatiske = hendelser.length - antallManuelle;
+
+  const synligeHendelser = useMemo(() => {
+    if (filter === "MANUELL") return hendelser.filter(erManuellHendelse);
+    if (filter === "AUTOMATISK") return hendelser.filter((h) => !erManuellHendelse(h));
+    return hendelser;
+  }, [hendelser, filter]);
 
   function åpneRediger(hendelse: SakHendelse) {
     setValgtHendelse(hendelse);
@@ -62,11 +81,47 @@ export function VisAllHistorikkModal({
         width="48rem"
       >
         <Modal.Body>
+          <HStack justify="space-between" align="center" className="pb-4">
+            {hendelser.length > 0 ? (
+              <ToggleGroup
+                size="small"
+                value={filter}
+                onChange={(value) => {
+                  if (erGyldigFilter(value)) setFilter(value);
+                }}
+                label="Filtrer historikk"
+              >
+                <ToggleGroup.Item value="ALLE">Alle ({hendelser.length})</ToggleGroup.Item>
+                {/* @ts-expect-error - ds-react sin type for ToggleGroup.Item mangler `disabled`, selv om komponenten støtter det */}
+                <ToggleGroup.Item value="AUTOMATISK" disabled={antallAutomatiske === 0}>
+                  Automatiske ({antallAutomatiske})
+                </ToggleGroup.Item>
+                {/* @ts-expect-error - ds-react sin type for ToggleGroup.Item mangler `disabled`, selv om komponenten støtter det */}
+                <ToggleGroup.Item value="MANUELL" disabled={antallManuelle === 0}>
+                  Manuelle ({antallManuelle})
+                </ToggleGroup.Item>
+              </ToggleGroup>
+            ) : (
+              <div />
+            )}
+            {redigerbar && (
+              <Button
+                variant="tertiary"
+                size="small"
+                icon={<PlusCircleIcon aria-hidden />}
+                onClick={onÅpneLeggTil}
+              >
+                Legg til
+              </Button>
+            )}
+          </HStack>
           {hendelser.length === 0 ? (
             <BodyShort>Ingen historikk for denne saken.</BodyShort>
+          ) : synligeHendelser.length === 0 ? (
+            <BodyShort>Ingen hendelser matcher det valgte filteret.</BodyShort>
           ) : (
             <Process className="pt-1">
-              {hendelser.map((hendelse, index) => {
+              {synligeHendelser.map((hendelse) => {
                 const beskrivelse = hendelseBeskrivelse(hendelse);
                 const erEgetManueltNotat =
                   hendelse.hendelsesType === "MANUELL_NOTAT" &&
@@ -122,6 +177,9 @@ export function VisAllHistorikkModal({
           åpen={redigerÅpen}
           onClose={onLukkRediger}
         />
+      )}
+      {redigerbar && (
+        <LeggTilHistorikkModal sakId={sakId} åpen={leggTilÅpen} onClose={onLukkLeggTil} />
       )}
     </>
   );
