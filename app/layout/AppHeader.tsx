@@ -1,16 +1,18 @@
 import { BooksIcon, LeaveIcon, LightBulbIcon, MenuGridIcon, PersonIcon } from "@navikt/aksel-icons";
 import { ActionMenu, InternalHeader, Search, Spacer, Tag } from "@navikt/ds-react";
 import { useEffect, useRef } from "react";
-import { Form, Link } from "react-router";
+import { Form, Link, useLocation } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { useMiljø } from "~/miljø/useMiljø";
 import { RouteConfig } from "~/routeConfig";
+import { SØK_RESULTATLENKE_SELECTOR } from "~/søk/sok-navigasjon";
 import { VarselBjelle } from "~/varsler/VarselBjelle";
 
 export function AppHeader() {
   const innloggetBruker = useInnloggetBruker();
   const skjemaRef = useRef<HTMLFormElement>(null);
+  const location = useLocation();
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -23,6 +25,19 @@ export function AppHeader() {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  function handleSøkefeltKeyDown(event: React.KeyboardEvent) {
+    // location.pathname er URL-kodet (f.eks. "/s%C3%B8k"), mens RouteConfig.SØK
+    // er den rå strengen "/søk" — må dekodes før sammenligning.
+    if (event.key !== "ArrowDown" || decodeURIComponent(location.pathname) !== RouteConfig.SØK)
+      return;
+
+    const førsteLenke = document.querySelector<HTMLAnchorElement>(SØK_RESULTATLENKE_SELECTOR);
+    if (førsteLenke) {
+      event.preventDefault();
+      førsteLenke.focus();
+    }
+  }
 
   const miljø = useMiljø();
   const visMiljøtag = miljø !== "prod";
@@ -49,6 +64,7 @@ export function AppHeader() {
         aria-label="Hurtigsøk"
         className="flex items-center self-stretch"
         ref={skjemaRef}
+        data-hurtigsøk-skjema
         onSubmit={(event) => {
           const formData = new FormData(event.currentTarget);
           const søketekst = formData.get("søketekst")?.toString().trim();
@@ -64,6 +80,7 @@ export function AppHeader() {
           size="small"
           htmlSize={24}
           aria-keyshortcuts="Meta+K"
+          onKeyDown={handleSøkefeltKeyDown}
         />
       </Form>
       <Spacer />
