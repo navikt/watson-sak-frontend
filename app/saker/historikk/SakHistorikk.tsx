@@ -74,7 +74,7 @@ export function SakHistorikk({ sakId, hendelser, redigerbar }: SakHistorikkProps
           <Process>
             {synligeHendelser.map((hendelse, index) => {
               const beskrivelse = hendelseBeskrivelse(hendelse);
-              const erEgetManueltNotat =
+              const erEgenManuellHendelse =
                 hendelse.hendelsesType === "MANUELL_HENDELSE" &&
                 hendelse.opprettetAvNavIdent === innloggetBruker.navIdent;
 
@@ -88,7 +88,7 @@ export function SakHistorikk({ sakId, hendelser, redigerbar }: SakHistorikkProps
                 >
                   <VStack gap="space-2">
                     <HendelseInnhold hendelse={hendelse} beskrivelse={beskrivelse} />
-                    {redigerbar && erEgetManueltNotat && (
+                    {redigerbar && erEgenManuellHendelse && (
                       <HStack gap="space-2">
                         <Button
                           variant="tertiary"

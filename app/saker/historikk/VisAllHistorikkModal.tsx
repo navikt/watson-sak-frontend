@@ -123,7 +123,7 @@ export function VisAllHistorikkModal({
             <Process className="pt-1">
               {synligeHendelser.map((hendelse) => {
                 const beskrivelse = hendelseBeskrivelse(hendelse);
-                const erEgetManueltNotat =
+                const erEgenManuellHendelse =
                   hendelse.hendelsesType === "MANUELL_HENDELSE" &&
                   hendelse.opprettetAvNavIdent === innloggetBruker.navIdent;
 
@@ -137,7 +137,7 @@ export function VisAllHistorikkModal({
                   >
                     <VStack gap="space-2">
                       <HendelseInnhold hendelse={hendelse} beskrivelse={beskrivelse} />
-                      {redigerbar && erEgetManueltNotat && (
+                      {redigerbar && erEgenManuellHendelse && (
                         <HStack gap="space-2">
                           <Button
                             variant="tertiary"
