@@ -23,6 +23,10 @@ import {
 import { NORSK_TIDSSONE } from "~/utils/date-utils";
 import type { SakHendelse } from "./typer";
 
+export function erManuellHendelse(hendelse: SakHendelse): boolean {
+  return hendelse.hendelsesType === "MANUELL_NOTAT";
+}
+
 export function formaterTidspunkt(isoString: string): string {
   try {
     return new Intl.DateTimeFormat("nb-NO", {
