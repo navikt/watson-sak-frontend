@@ -24,7 +24,7 @@ test.describe("Søk", () => {
       await expect(page.getByText(/1 treff for "1028"/)).toBeVisible();
       await expect(page.getByRole("article")).toHaveCount(1);
       await expect(page.getByRole("heading", { name: "Sak 1028" })).toHaveCount(1);
-      await expect(page.getByText("Prioritet:")).toBeVisible();
+      await expect(page.getByText("Prioritet", { exact: true })).toBeVisible();
       await expect(page.getByRole("button", { name: "Åpne sak" })).toBeVisible();
     });
 
