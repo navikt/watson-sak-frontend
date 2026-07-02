@@ -101,7 +101,11 @@ export async function hentKontrollsakForSøk(
   });
   if (respons.status === 404) return null;
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke hente kontrollsak");
-  return parseEllerKastFeil(kontrollsakResponseSchema, await respons.json(), "hentKontrollsakForSøk");
+  return parseEllerKastFeil(
+    kontrollsakResponseSchema,
+    await respons.json(),
+    "hentKontrollsakForSøk",
+  );
 }
 
 export async function søkKontrollsaker(

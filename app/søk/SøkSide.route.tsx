@@ -84,13 +84,7 @@ function SøkeVeiledning() {
   );
 }
 
-function IngenTreff({
-  tittel,
-  beskrivelse,
-}: {
-  tittel: string;
-  beskrivelse: string;
-}) {
+function IngenTreff({ tittel, beskrivelse }: { tittel: string; beskrivelse: string }) {
   return (
     <TomStatusboks
       ikon={<FileXMarkIcon aria-hidden fontSize="2rem" className="text-ax-icon-neutral-subtle" />}
@@ -110,12 +104,16 @@ function IngenTreff({
   );
 }
 
-function tomTreffTekst(søketype: SøkeType, søketekst: string): { tittel: string; beskrivelse: string } {
+function tomTreffTekst(
+  søketype: SøkeType,
+  søketekst: string,
+): { tittel: string; beskrivelse: string } {
   switch (søketype) {
     case "saksnummer":
       return {
         tittel: `Fant ingen sak med saksnummer «${søketekst}»`,
-        beskrivelse: "Sjekk at saksnummeret er riktig, eller søk på fødselsnummer eller organisasjonsnummer.",
+        beskrivelse:
+          "Sjekk at saksnummeret er riktig, eller søk på fødselsnummer eller organisasjonsnummer.",
       };
     case "organisasjonsnummer":
       return {
@@ -190,7 +188,11 @@ export default function SøkSide() {
             )}
 
             {resultater && antallTreff > 0 && søketype === "saksnummer" && (
-              <div ref={resultatlisteRef} onKeyDown={handleResultatlisteKeyDown} data-søk-resultatliste>
+              <div
+                ref={resultatlisteRef}
+                onKeyDown={handleResultatlisteKeyDown}
+                data-søk-resultatliste
+              >
                 <SøkSakOppsummering sak={resultater[0]} />
               </div>
             )}
