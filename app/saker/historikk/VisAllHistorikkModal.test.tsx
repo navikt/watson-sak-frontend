@@ -299,6 +299,30 @@ describe("VisAllHistorikkModal", () => {
     expect(screen.getByRole("radio", { name: "Manuelle (0)" })).toHaveProperty("disabled", true);
   });
 
+  it("deaktiverer 'Automatiske'-filteret når det bare finnes manuelle hendelser", () => {
+    const hendelser = [
+      lagHendelse({
+        hendelseId: "00000000-0000-4000-8000-000000000001",
+        hendelsesType: "MANUELL_NOTAT",
+        tittel: "Mitt notat",
+        notat: "En beskrivelse",
+        opprettetAvNavIdent: "Z999999",
+      }),
+    ];
+
+    renderMedRouter(
+      <VisAllHistorikkModal
+        redigerbar={true}
+        sakId={1}
+        hendelser={hendelser}
+        åpen={true}
+        onClose={() => {}}
+      />,
+    );
+
+    expect(screen.getByRole("radio", { name: "Automatiske (0)" })).toHaveProperty("disabled", true);
+  });
+
   it("viser 'Legg til'-knapp øverst når redigerbar er true", () => {
     renderMedRouter(
       <VisAllHistorikkModal

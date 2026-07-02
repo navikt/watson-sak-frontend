@@ -28,6 +28,10 @@ interface VisAllHistorikkModalProps {
 
 type HistorikkFilter = "ALLE" | "AUTOMATISK" | "MANUELL";
 
+function erGyldigFilter(value: string): value is HistorikkFilter {
+  return value === "ALLE" || value === "AUTOMATISK" || value === "MANUELL";
+}
+
 export function VisAllHistorikkModal({
   sakId,
   hendelser,
@@ -82,7 +86,9 @@ export function VisAllHistorikkModal({
               <ToggleGroup
                 size="small"
                 value={filter}
-                onChange={(value) => setFilter(value as HistorikkFilter)}
+                onChange={(value) => {
+                  if (erGyldigFilter(value)) setFilter(value);
+                }}
                 label="Filtrer historikk"
               >
                 <ToggleGroup.Item value="ALLE">Alle ({hendelser.length})</ToggleGroup.Item>
@@ -172,7 +178,9 @@ export function VisAllHistorikkModal({
           onClose={onLukkRediger}
         />
       )}
-      <LeggTilHistorikkModal sakId={sakId} åpen={leggTilÅpen} onClose={onLukkLeggTil} />
+      {redigerbar && (
+        <LeggTilHistorikkModal sakId={sakId} åpen={leggTilÅpen} onClose={onLukkLeggTil} />
+      )}
     </>
   );
 }
