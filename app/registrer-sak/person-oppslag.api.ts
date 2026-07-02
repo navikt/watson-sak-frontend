@@ -41,7 +41,9 @@ export async function action({ request }: { request: Request }) {
       }> = [];
 
       try {
-        const saker = await backendApi.søkKontrollsaker(token, fnr);
+        // Henter kun første side (maks 100 saker) — brukes til en enkel oversikt over
+        // eksisterende saker, ikke en fullstendig paginert visning.
+        const { items: saker } = await backendApi.søkKontrollsaker(token, fnr, 1, 100);
         eksisterendeSaker = saker.map((sak) => ({
           sakId: getSaksreferanse(sak.id),
           opprettetDato: sak.opprettet.slice(0, 10),

@@ -6,9 +6,11 @@ import type { Dokument, DokumentInnhold, DokumentNode } from "~/saker/filer/type
 import {
   kontrollsakHendelseResponseSchema,
   dokumentNodeSchema,
+  kontrollsakPageResponseSchema,
   kontrollsakResponseSchema,
   type Blokkeringsarsak,
   type Henleggelsesarsak,
+  type KontrollsakPageResponse,
   type KontrollsakResponse,
   type KontrollsakSaksbehandler,
   type KontrollsakStatus,
@@ -111,15 +113,18 @@ export async function hentKontrollsakForSøk(
 export async function søkKontrollsaker(
   token: string,
   personIdent: string,
-): Promise<KontrollsakResponse[]> {
-  const respons = await fetch(apiUrl("/api/v1/kontrollsaker/sok"), {
+  page = 1,
+  size = 20,
+): Promise<KontrollsakPageResponse> {
+  const params = new URLSearchParams({ page: String(page), size: String(size) });
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/sok?${params}`), {
     method: "POST",
     headers: authHeaders(token),
     body: JSON.stringify({ personIdent }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke søke etter kontrollsaker");
   return parseEllerKastFeil(
-    z.array(kontrollsakResponseSchema),
+    kontrollsakPageResponseSchema,
     await respons.json(),
     "søkKontrollsaker",
   );
@@ -128,8 +133,11 @@ export async function søkKontrollsaker(
 export async function søkKontrollsakerOrganisasjon(
   token: string,
   organisasjonsnummer: string,
-): Promise<KontrollsakResponse[]> {
-  const respons = await fetch(apiUrl("/api/v1/kontrollsaker/sok/organisasjon"), {
+  page = 1,
+  size = 20,
+): Promise<KontrollsakPageResponse> {
+  const params = new URLSearchParams({ page: String(page), size: String(size) });
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/sok/organisasjon?${params}`), {
     method: "POST",
     headers: authHeaders(token),
     body: JSON.stringify({ organisasjonsnummer }),
@@ -137,7 +145,7 @@ export async function søkKontrollsakerOrganisasjon(
   if (!respons.ok)
     await håndterFeil(respons, "Kunne ikke søke etter kontrollsaker for organisasjon");
   return parseEllerKastFeil(
-    z.array(kontrollsakResponseSchema),
+    kontrollsakPageResponseSchema,
     await respons.json(),
     "søkKontrollsakerOrganisasjon",
   );
