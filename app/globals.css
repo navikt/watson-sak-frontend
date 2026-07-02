@@ -3,3 +3,97 @@
 @import "@navikt/ds-css" layer(components);
 
 @config '../tailwind.config.cjs';
+
+/*
+ * Glitch-effekt for easter eggs (se app/utils/useGlitch.ts). Klassene legges
+ * på body (RGB-forskyvning) og et fullskjerms overlay-element (revne
+ * scanlines), og fjernes igjen etter kort tid av hooken.
+ */
+@keyframes glitch-rgb-shift {
+  0%,
+  100% {
+    transform: translateX(0);
+    text-shadow: none;
+  }
+  10% {
+    transform: translateX(-3px);
+    text-shadow:
+      -2px 0 rgba(255, 0, 60, 0.6),
+      2px 0 rgba(0, 255, 255, 0.6);
+  }
+  30% {
+    transform: translateX(3px);
+    text-shadow:
+      2px 0 rgba(255, 0, 60, 0.6),
+      -2px 0 rgba(0, 255, 255, 0.6);
+  }
+  50% {
+    transform: translateX(-2px);
+    text-shadow:
+      -1px 0 rgba(255, 0, 60, 0.6),
+      1px 0 rgba(0, 255, 255, 0.6);
+  }
+  70% {
+    transform: translateX(2px);
+    text-shadow:
+      1px 0 rgba(255, 0, 60, 0.6),
+      -1px 0 rgba(0, 255, 255, 0.6);
+  }
+  90% {
+    transform: translateX(-1px);
+    text-shadow: none;
+  }
+}
+
+.glitch-rgb-shift {
+  animation: glitch-rgb-shift 400ms steps(2, jump-end);
+}
+
+@keyframes glitch-overlay-riving {
+  0% {
+    clip-path: inset(8% 0 84% 0);
+  }
+  15% {
+    clip-path: inset(42% 0 40% 0);
+  }
+  30% {
+    clip-path: inset(4% 0 72% 0);
+  }
+  45% {
+    clip-path: inset(63% 0 12% 0);
+  }
+  60% {
+    clip-path: inset(22% 0 58% 0);
+  }
+  75% {
+    clip-path: inset(74% 0 6% 0);
+  }
+  90% {
+    clip-path: inset(18% 0 66% 0);
+  }
+  100% {
+    clip-path: inset(0 0 100% 0);
+  }
+}
+
+.glitch-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.08) 0,
+    rgba(255, 255, 255, 0.08) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  animation: glitch-overlay-riving 400ms steps(6, jump-end);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glitch-rgb-shift,
+  .glitch-overlay {
+    animation: none !important;
+  }
+}

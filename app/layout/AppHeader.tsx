@@ -7,12 +7,19 @@ import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { useMiljø } from "~/miljø/useMiljø";
 import { RouteConfig } from "~/routeConfig";
 import { SØK_RESULTATLENKE_SELECTOR } from "~/søk/sok-navigasjon";
+import { useGlitch } from "~/utils/useGlitch";
 import { VarselBjelle } from "~/varsler/VarselBjelle";
+
+// Easter egg: søk på "Moriarty" trigger en kortvarig glitch-effekt før
+// søket gjennomføres helt normalt (Moriarty kan tross alt være et reelt
+// etternavn, så selve søket skal alltid utføres).
+const MORIARTY_EASTER_EGG = "moriarty";
 
 export function AppHeader() {
   const innloggetBruker = useInnloggetBruker();
   const skjemaRef = useRef<HTMLFormElement>(null);
   const location = useLocation();
+  const triggerGlitch = useGlitch();
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -70,6 +77,9 @@ export function AppHeader() {
           const søketekst = formData.get("søketekst")?.toString().trim();
           if (søketekst) {
             sporHendelse("søk utført", { kilde: "hurtigsøk" });
+          }
+          if (søketekst?.toLowerCase() === MORIARTY_EASTER_EGG) {
+            triggerGlitch();
           }
         }}
       >
