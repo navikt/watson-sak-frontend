@@ -8,6 +8,7 @@ import { useMiljø } from "~/miljø/useMiljø";
 import { RouteConfig } from "~/routeConfig";
 import { SØK_RESULTATLENKE_SELECTOR } from "~/søk/sok-navigasjon";
 import { useGlitch } from "~/utils/useGlitch";
+import { useSherlockCursor } from "~/utils/useSherlockCursor";
 import { VarselBjelle } from "~/varsler/VarselBjelle";
 
 // Easter egg: søk på "Moriarty" trigger en kortvarig glitch-effekt før
@@ -15,11 +16,16 @@ import { VarselBjelle } from "~/varsler/VarselBjelle";
 // etternavn, så selve søket skal alltid utføres).
 const MORIARTY_EASTER_EGG = "moriarty";
 
+// Easter egg: søk på "Sherlock" bytter musepekeren til en Sherlock-hatt i
+// 30 sekunder, eller til brukeren trykker Escape.
+const SHERLOCK_EASTER_EGG = "sherlock";
+
 export function AppHeader() {
   const innloggetBruker = useInnloggetBruker();
   const skjemaRef = useRef<HTMLFormElement>(null);
   const location = useLocation();
   const triggerGlitch = useGlitch();
+  const triggerSherlockCursor = useSherlockCursor();
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -80,6 +86,9 @@ export function AppHeader() {
           }
           if (søketekst?.toLowerCase() === MORIARTY_EASTER_EGG) {
             triggerGlitch();
+          }
+          if (søketekst?.toLowerCase() === SHERLOCK_EASTER_EGG) {
+            triggerSherlockCursor();
           }
         }}
       >

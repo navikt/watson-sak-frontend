@@ -179,3 +179,15 @@
     animation: none !important;
   }
 }
+
+/*
+ * Sherlock-hatt-pekeren for søket på "sherlock" (se
+ * app/utils/useSherlockCursor.ts). `!important` sikrer at hatten vises selv
+ * over elementer som setter egen `cursor` (knapper, lenker osv.).
+ */
+.sherlock-cursor,
+.sherlock-cursor * {
+  cursor:
+    url("/sherlock-hatt-cursor.svg") 16 21,
+    auto !important;
+}
