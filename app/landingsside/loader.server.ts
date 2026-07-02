@@ -58,7 +58,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   const mineSaker = [...aktiveMineSaker]
     .sort((a, b) => getOpprettetDato(b).localeCompare(getOpprettetDato(a)))
-    .slice(0, 5);
+    .slice(0, 10);
 
   const velkomstOppsummering = lagVelkomstOppsummering(sakerForVelkomstOppsummering);
 
