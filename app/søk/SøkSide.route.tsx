@@ -144,7 +144,10 @@ function tomTreffTekst(
 
 export default function SøkSide() {
   const actionData = useActionData<typeof action>();
-  const fetcher = useFetcher<typeof action>();
+  // Nøkkelen scoper fetcheren til gjeldende søketekst, slik at sidenavigering (paginering)
+  // ikke lekker gamle resultater inn i et helt nytt søk (f.eks. hvis brukeren søker på
+  // organisasjon A, blar til side 2, og deretter søker på personIdent B via hurtigsøket).
+  const fetcher = useFetcher<typeof action>({ key: `sok-side-${actionData?.søketekst ?? ""}` });
   const { loaderData } = unstable_useRoute("root");
   const watsonSokUrl = loaderData?.envs.watsonSokUrl ?? null;
 
