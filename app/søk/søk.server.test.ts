@@ -63,6 +63,31 @@ describe("søkSaker", () => {
     expect(resultater.map((sak) => sak.id)).toEqual([nySak.id]);
   });
 
+  it("pagineres til maks 20 treff per side og rapporterer riktig antall sider", async () => {
+    const organisasjonsnummer = "555555555";
+    for (let i = 0; i < 25; i++) {
+      leggTilMockSakIFordeling(state(), {
+        personIdent: `4000000${String(i).padStart(4, "0")}`,
+        kategori: "ARBEID",
+        kilde: "A_KRIMSAMARBEID",
+        misbruktype: ["SVART_ARBEID"],
+        prioritet: "NORMAL",
+        arbeidsgivere: [organisasjonsnummer],
+        ytelser: [],
+      });
+    }
+
+    const førsteSide = await søkSaker(testRequest, organisasjonsnummer, 1);
+    expect(førsteSide.resultater).toHaveLength(20);
+    expect(førsteSide.side).toBe(1);
+    expect(førsteSide.totalSider).toBe(2);
+    expect(førsteSide.totalAntall).toBe(25);
+
+    const andreSide = await søkSaker(testRequest, organisasjonsnummer, 2);
+    expect(andreSide.resultater).toHaveLength(5);
+    expect(andreSide.side).toBe(2);
+  });
+
   it("gir ingen treff for fritekst som verken er fnr, saksnummer eller orgnr", async () => {
     const { søketype, resultater } = await søkSaker(testRequest, "Arbeid");
 

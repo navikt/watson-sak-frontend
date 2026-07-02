@@ -162,8 +162,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       backendApi.hentSaksbehandlere(token),
     ]);
 
+    // Henter kun første side (maks 100 saker) — visningen på sakdetaljsiden er en enkel
+    // liste over "andre saker for personen", ikke en fullstendig paginert visning.
     const andreSaker = sak.personIdent
-      ? (await backendApi.søkKontrollsaker(token, sak.personIdent)).filter(
+      ? (await backendApi.søkKontrollsaker(token, sak.personIdent, 1, 100)).items.filter(
           (annenSak) => annenSak.id !== sak.id,
         )
       : [];

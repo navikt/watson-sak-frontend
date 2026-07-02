@@ -1,7 +1,7 @@
 import { FileXMarkIcon, MagnifyingGlassIcon } from "@navikt/aksel-icons";
-import { BodyShort, Box, Button, Heading, HStack, Tag, VStack } from "@navikt/ds-react";
+import { BodyShort, Box, Button, Heading, HStack, Pagination, Tag, VStack } from "@navikt/ds-react";
 import { useRef } from "react";
-import { Form, Link, unstable_useRoute, useActionData } from "react-router";
+import { Form, Link, unstable_useRoute, useActionData, useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
@@ -16,12 +16,20 @@ import type { Route } from "./+types/SøkSide.route";
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
   const søketekst = hentValgfriTekst(formData, "søketekst") ?? "";
+  const side = Number(formData.get("side") ?? "1") || 1;
 
   if (!søketekst.trim()) {
-    return { søketekst: "", søketype: "ukjent" as SøkeType, resultater: [] };
+    return {
+      søketekst: "",
+      søketype: "ukjent" as SøkeType,
+      resultater: [],
+      side: 1,
+      totalSider: 1,
+      totalAntall: 0,
+    };
   }
 
-  return søkSaker(request, søketekst);
+  return søkSaker(request, søketekst, side);
 }
 
 function hentResultatlenker(container: HTMLElement | null): HTMLAnchorElement[] {
@@ -136,18 +144,34 @@ function tomTreffTekst(
 
 export default function SøkSide() {
   const actionData = useActionData<typeof action>();
+  // Nøkkelen scoper fetcheren til gjeldende søketekst, slik at sidenavigering (paginering)
+  // ikke lekker gamle resultater inn i et helt nytt søk (f.eks. hvis brukeren søker på
+  // organisasjon A, blar til side 2, og deretter søker på personIdent B via hurtigsøket).
+  const fetcher = useFetcher<typeof action>({ key: `sok-side-${actionData?.søketekst ?? ""}` });
   const { loaderData } = unstable_useRoute("root");
   const watsonSokUrl = loaderData?.envs.watsonSokUrl ?? null;
 
-  const søketekst = actionData?.søketekst ?? "";
-  const søketype = actionData?.søketype ?? "ukjent";
-  const resultater = actionData?.resultater;
+  const visteData = fetcher.data ?? actionData;
+
+  const søketekst = visteData?.søketekst ?? "";
+  const søketype = visteData?.søketype ?? "ukjent";
+  const resultater = visteData?.resultater;
+  const side = visteData?.side ?? 1;
+  const totalSider = visteData?.totalSider ?? 1;
+  const totalAntall = visteData?.totalAntall ?? 0;
   const harSøkt = actionData !== undefined;
 
   const resultatlisteRef = useRef<HTMLDivElement>(null);
 
   function fokuserHeaderSøkefelt() {
     document.querySelector<HTMLInputElement>(HURTIGSØK_INPUT_SELECTOR)?.focus();
+  }
+
+  function gåTilSide(nySide: number) {
+    fetcher.submit(
+      { søketekst, side: String(nySide) },
+      { method: "post", action: RouteConfig.SØK },
+    );
   }
 
   function handleResultatlisteKeyDown(event: React.KeyboardEvent) {
@@ -168,8 +192,6 @@ export default function SøkSide() {
     }
   }
 
-  const antallTreff = resultater?.length ?? 0;
-
   return (
     <>
       <title>Søk – Watson Sak</title>
@@ -181,13 +203,13 @@ export default function SøkSide() {
           <VStack gap="space-4">
             {resultater && (
               <BodyShort>
-                {antallTreff > 0
-                  ? `${antallTreff} treff for "${søketekst}"`
+                {totalAntall > 0
+                  ? `${totalAntall} treff for "${søketekst}"`
                   : `Ingen treff for "${søketekst}"`}
               </BodyShort>
             )}
 
-            {resultater && antallTreff > 0 && søketype === "saksnummer" && (
+            {resultater && totalAntall > 0 && søketype === "saksnummer" && (
               <div
                 ref={resultatlisteRef}
                 onKeyDown={handleResultatlisteKeyDown}
@@ -197,23 +219,36 @@ export default function SøkSide() {
               </div>
             )}
 
-            {resultater && antallTreff > 0 && søketype !== "saksnummer" && (
-              <div
-                ref={resultatlisteRef}
-                onKeyDown={handleResultatlisteKeyDown}
-                data-søk-resultatliste
-                className="overflow-x-auto [&_table]:w-full"
-              >
-                <Saksliste
-                  rader={resultater.map((sak) => mapKontrollsakTilSakslisteRad(sak))}
-                  kolonner={["saksid", "navn", "kategori", "misbrukstype", "status", "opprettet"]}
-                  tomTekst="Ingen saker funnet."
-                  tilbake={{ to: RouteConfig.SØK, label: "Søk" }}
-                />
-              </div>
+            {resultater && totalAntall > 0 && søketype !== "saksnummer" && (
+              <>
+                <div
+                  ref={resultatlisteRef}
+                  onKeyDown={handleResultatlisteKeyDown}
+                  data-søk-resultatliste
+                  className="overflow-x-auto [&_table]:w-full"
+                >
+                  <Saksliste
+                    rader={resultater.map((sak) => mapKontrollsakTilSakslisteRad(sak))}
+                    kolonner={["saksid", "navn", "kategori", "misbrukstype", "status", "opprettet"]}
+                    tomTekst="Ingen saker funnet."
+                    tilbake={{ to: RouteConfig.SØK, label: "Søk" }}
+                  />
+                </div>
+
+                {totalSider > 1 && (
+                  <HStack justify="center" className="mt-6">
+                    <Pagination
+                      page={side}
+                      onPageChange={gåTilSide}
+                      count={totalSider}
+                      size="small"
+                    />
+                  </HStack>
+                )}
+              </>
             )}
 
-            {resultater && antallTreff === 0 && (
+            {resultater && totalAntall === 0 && (
               <>
                 {søketype === "personIdent" ? (
                   <Box
