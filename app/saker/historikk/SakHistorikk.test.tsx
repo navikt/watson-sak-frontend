@@ -281,6 +281,11 @@ describe("SakHistorikk", () => {
     // som må matche en unik id — duplikate id-er på <form>-elementene får
     // nettleseren til å koble skjemafelt til feil form ved innsending, som
     // ga «400 Ugyldig handling» i produksjon.
+    //
+    // Etter at LeggTilHistorikkModal/RedigerHistorikkModal ble løftet til én
+    // delt instans eid av SakHistorikk (i stedet for at både SakHistorikk og
+    // VisAllHistorikkModal monterte hver sin), er duplikate id-er strukturelt
+    // umulig — denne testen låser fortsatt invarianten som generell vaktpost.
     renderMedRouter(
       <SakHistorikk redigerbar={true} sakId={1} hendelser={[lagBackendHendelse()]} />,
     );
@@ -293,5 +298,31 @@ describe("SakHistorikk", () => {
     const duplikater = alleIder.filter((id, index) => alleIder.indexOf(id) !== index);
 
     expect(duplikater).toEqual([]);
+  });
+
+  it("åpner delt 'Legg til historikkinnslag'-modal fra 'Vis all historikk'", () => {
+    // Verifiserer selve brukerflyten som var brutt: å trykke "Legg til" inne
+    // i "Vis all historikk"-modalen skal åpne samme (eneste) instans av
+    // LeggTilHistorikkModal som SakHistorikk selv eier — ikke en egen kopi.
+    renderMedRouter(
+      <SakHistorikk redigerbar={true} sakId={1} hendelser={[lagBackendHendelse()]} />,
+    );
+
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: /Vis all historikk/ }));
+    });
+
+    const alleLeggTilKnapper = screen.getAllByRole("button", { name: "Legg til" });
+    // Kun én "Legg til"-knapp skal finnes inne i "Vis all historikk"-modalen
+    // (den kompakte visningens egen knapp er skjult bak modalen, men fortsatt
+    // i DOM-en — vi klikker eksplisitt på den siste, som er inni modalen).
+    act(() => {
+      fireEvent.click(alleLeggTilKnapper[alleLeggTilKnapper.length - 1]);
+    });
+
+    expect(screen.getByText("Legg til historikkinnslag")).toBeDefined();
+
+    // Kun én instans av skjemaet skal finnes i DOM-en.
+    expect(screen.getAllByText("Legg til historikkinnslag")).toHaveLength(1);
   });
 });
