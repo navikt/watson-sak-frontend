@@ -48,7 +48,6 @@ export function RedigerHistorikkModal({
   const initialDate = parseDato(initialDato) ?? new Date();
 
   const [form, fields] = useForm({
-    id: `rediger-historikk-${hendelse.hendelseId}`,
     lastResult: fetcher.state === "idle" ? fetcher.data : null,
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: historikkSkjema });

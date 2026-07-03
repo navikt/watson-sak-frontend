@@ -270,4 +270,28 @@ describe("SakHistorikk", () => {
 
     expect(screen.getByRole("button", { name: "Vis all historikk (3)" })).toBeDefined();
   });
+
+  it("har ingen duplikate DOM-id-er når 'Vis all historikk' åpnes", () => {
+    // Regresjonstest for bug: SakHistorikk monterer alltid sin egen
+    // LeggTilHistorikkModal, og VisAllHistorikkModal monterer også alltid sin
+    // egen instans når den åpnes. @navikt/ds-react sin Modal-komponent
+    // portalerer innholdet til document.body og render det uavhengig av
+    // åpen/lukket-state, så begge skjema-instansene havner i DOM-en samtidig.
+    // conform-to-react kobler skjemafelt til <form> via et "form"-attributt
+    // som må matche en unik id — duplikate id-er på <form>-elementene får
+    // nettleseren til å koble skjemafelt til feil form ved innsending, som
+    // ga «400 Ugyldig handling» i produksjon.
+    renderMedRouter(
+      <SakHistorikk redigerbar={true} sakId={1} hendelser={[lagBackendHendelse()]} />,
+    );
+
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: /Vis all historikk/ }));
+    });
+
+    const alleIder = Array.from(document.querySelectorAll("[id]")).map((el) => el.id);
+    const duplikater = alleIder.filter((id, index) => alleIder.indexOf(id) !== index);
+
+    expect(duplikater).toEqual([]);
+  });
 });

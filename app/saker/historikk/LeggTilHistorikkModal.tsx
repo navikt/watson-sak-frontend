@@ -24,7 +24,6 @@ export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorik
   const fetcher = useFetcher();
 
   const [form, fields] = useForm({
-    id: "legg-til-historikk",
     lastResult: fetcher.state === "idle" ? fetcher.data : null,
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: historikkSkjema });
