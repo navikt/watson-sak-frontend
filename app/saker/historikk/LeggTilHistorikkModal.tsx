@@ -1,7 +1,7 @@
 import { getFormProps, useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod/v4";
 import { PlusIcon } from "@navikt/aksel-icons";
-import { Button, Modal } from "@navikt/ds-react";
+import { Alert, Button, Modal } from "@navikt/ds-react";
 import { useEffect, useRef } from "react";
 import { useFetcher } from "react-router";
 import { RouteConfig } from "~/routeConfig";
@@ -22,6 +22,11 @@ interface LeggTilHistorikkModalProps {
 export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorikkModalProps) {
   const modalRef = useRef<HTMLDialogElement>(null);
   const fetcher = useFetcher();
+  const submitPågår = useRef(false);
+  const feilmelding =
+    fetcher.state === "idle" && fetcher.data && "ok" in fetcher.data && !fetcher.data.ok
+      ? fetcher.data.feil?.skjema?.[0]
+      : undefined;
 
   const [form, fields] = useForm({
     lastResult: fetcher.state === "idle" ? fetcher.data : null,
@@ -37,12 +42,11 @@ export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorik
     onSubmit(event, { formData }) {
       event.preventDefault();
       formData.set("handling", "legg_til_historikk");
+      submitPågår.current = true;
       fetcher.submit(formData, {
         method: "post",
         action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),
       });
-      form.reset();
-      onClose();
     },
   });
 
@@ -50,6 +54,20 @@ export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorik
     if (!åpen) return;
     form.reset();
   }, [åpen]);
+
+  // Lukk modalen kun når innsendingen faktisk lyktes — ikke optimistisk ved
+  // klikk på "Lagre". Ved feil (f.eks. 409 fordi hendelsen nylig ble
+  // opprettet og fortsatt ligger i BigQuerys streaming buffer) skal modalen
+  // forbli åpen og vise feilmeldingen, i stedet for å late som om alt gikk
+  // bra eller kræsje til en generisk feilside.
+  useEffect(() => {
+    if (!submitPågår.current || fetcher.state !== "idle") return;
+    submitPågår.current = false;
+    if (fetcher.data && "ok" in fetcher.data && fetcher.data.ok) {
+      form.reset();
+      onClose();
+    }
+  }, [fetcher.data, fetcher.state]);
 
   return (
     <Modal
@@ -61,6 +79,11 @@ export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorik
     >
       <fetcher.Form method="post" {...getFormProps(form)}>
         <Modal.Body>
+          {feilmelding && (
+            <Alert variant="error" className="mb-4">
+              {feilmelding}
+            </Alert>
+          )}
           <HistorikkSkjemaFelter
             fields={fields}
             defaultSelected={new Date()}
@@ -68,7 +91,7 @@ export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorik
           />
         </Modal.Body>
         <Modal.Footer>
-          <Button type="submit" variant="primary">
+          <Button type="submit" variant="primary" loading={fetcher.state !== "idle"}>
             Lagre
           </Button>
           <Button type="button" variant="secondary" onClick={onClose}>

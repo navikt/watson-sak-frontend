@@ -56,9 +56,43 @@ function authHeaders(token: string): HeadersInit {
   };
 }
 
+/**
+ * Feil fra et backend-kall som ga et ikke-OK HTTP-svar. Bærer den faktiske
+ * statuskoden, slik at kalleren kan skille forventede/forbigående feil
+ * (f.eks. 409 Conflict) fra uventede serverfeil.
+ */
+export class BackendFeilException extends Error {
+  constructor(
+    public readonly status: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = "BackendFeilException";
+  }
+}
+
 async function håndterFeil(respons: Response, beskrivelse: string): Promise<never> {
-  logger.error(`${beskrivelse} — status ${respons.status}`);
-  throw new Error(beskrivelse);
+  const detalj = await hentProblemDetail(respons);
+  logger.error(`${beskrivelse} — status ${respons.status}${detalj ? `: ${detalj}` : ""}`);
+  throw new BackendFeilException(respons.status, detalj ?? beskrivelse);
+}
+
+/**
+ * Leser `detail`-feltet fra et RFC 7807 ProblemDetail-svar (formatet
+ * watson-admin-api sin GlobalExceptionHandler returnerer ved feil), slik at
+ * brukervennlige feilmeldinger fra backend (f.eks. ved 409 Conflict) når
+ * frem til brukeren i stedet for en generisk melding.
+ */
+async function hentProblemDetail(respons: Response): Promise<string | null> {
+  try {
+    const body: unknown = await respons.clone().json();
+    if (body && typeof body === "object" && "detail" in body && typeof body.detail === "string") {
+      return body.detail;
+    }
+  } catch {
+    // Svaret var ikke gyldig JSON — bruk fallback-beskrivelsen i håndterFeil.
+  }
+  return null;
 }
 
 function kastHvisIkkeFunnet(respons: Response): void {

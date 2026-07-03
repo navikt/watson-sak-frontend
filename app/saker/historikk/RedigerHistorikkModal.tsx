@@ -1,7 +1,7 @@
 import { getFormProps, useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod/v4";
 import { PencilIcon } from "@navikt/aksel-icons";
-import { Button, Modal } from "@navikt/ds-react";
+import { Alert, Button, Modal } from "@navikt/ds-react";
 import { useEffect, useRef } from "react";
 import { useFetcher } from "react-router";
 import { RouteConfig } from "~/routeConfig";
@@ -43,6 +43,11 @@ export function RedigerHistorikkModal({
 }: RedigerHistorikkModalProps) {
   const modalRef = useRef<HTMLDialogElement>(null);
   const fetcher = useFetcher();
+  const submitPågår = useRef(false);
+  const feilmelding =
+    fetcher.state === "idle" && fetcher.data && "ok" in fetcher.data && !fetcher.data.ok
+      ? fetcher.data.feil?.skjema?.[0]
+      : undefined;
 
   const { dato: initialDato, tid: initialTid } = parseIsoTilLokalDatoOgTid(hendelse.tidspunkt);
   const initialDate = parseDato(initialDato) ?? new Date();
@@ -64,11 +69,11 @@ export function RedigerHistorikkModal({
       event.preventDefault();
       formData.set("handling", "rediger_historikk");
       formData.set("hendelseId", hendelse.hendelseId);
+      submitPågår.current = true;
       fetcher.submit(formData, {
         method: "post",
         action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),
       });
-      onClose();
     },
   });
 
@@ -76,6 +81,16 @@ export function RedigerHistorikkModal({
     if (!åpen) return;
     form.reset();
   }, [åpen, hendelse.hendelseId]);
+
+  // Lukk modalen kun når innsendingen faktisk lyktes, se tilsvarende
+  // resonnement i LeggTilHistorikkModal.
+  useEffect(() => {
+    if (!submitPågår.current || fetcher.state !== "idle") return;
+    submitPågår.current = false;
+    if (fetcher.data && "ok" in fetcher.data && fetcher.data.ok) {
+      onClose();
+    }
+  }, [fetcher.data, fetcher.state]);
 
   return (
     <Modal
@@ -87,6 +102,11 @@ export function RedigerHistorikkModal({
     >
       <fetcher.Form method="post" {...getFormProps(form)}>
         <Modal.Body>
+          {feilmelding && (
+            <Alert variant="error" className="mb-4">
+              {feilmelding}
+            </Alert>
+          )}
           <HistorikkSkjemaFelter
             fields={fields}
             defaultSelected={initialDate}
@@ -94,7 +114,7 @@ export function RedigerHistorikkModal({
           />
         </Modal.Body>
         <Modal.Footer>
-          <Button type="submit" variant="primary">
+          <Button type="submit" variant="primary" loading={fetcher.state !== "idle"}>
             Lagre endringer
           </Button>
           <Button type="button" variant="secondary" onClick={onClose}>

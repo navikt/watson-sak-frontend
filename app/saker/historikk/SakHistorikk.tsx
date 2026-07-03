@@ -1,5 +1,5 @@
 import { PlusCircleIcon } from "@navikt/aksel-icons";
-import { BodyShort, Box, Button, Heading, HStack } from "@navikt/ds-react";
+import { Alert, BodyShort, Box, Button, Heading, HStack } from "@navikt/ds-react";
 import { useState } from "react";
 import { useFetcher } from "react-router";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
@@ -28,6 +28,10 @@ export function SakHistorikk({ sakId, hendelser, redigerbar }: SakHistorikkProps
   const innloggetBruker = useInnloggetBruker();
   const fetcher = useFetcher();
   const synligeHendelser = hendelser.slice(0, MAKS_SYNLIGE_HENDELSER);
+  const slettFeilmelding =
+    fetcher.state === "idle" && fetcher.data && "ok" in fetcher.data && !fetcher.data.ok
+      ? fetcher.data.feil?.skjema?.[0]
+      : undefined;
 
   function åpneRediger(hendelse: SakHendelse) {
     setValgtHendelse(hendelse);
@@ -61,6 +65,11 @@ export function SakHistorikk({ sakId, hendelser, redigerbar }: SakHistorikkProps
           </Button>
         )}
       </HStack>
+      {slettFeilmelding && (
+        <Alert variant="error" size="small" className="mb-3">
+          {slettFeilmelding}
+        </Alert>
+      )}
       {hendelser.length === 0 ? (
         <BodyShort>Ingen historikk for denne saken.</BodyShort>
       ) : (
@@ -96,6 +105,7 @@ export function SakHistorikk({ sakId, hendelser, redigerbar }: SakHistorikkProps
           onLeggTil={onÅpneLeggTil}
           onRediger={åpneRediger}
           onSlett={slettHendelse}
+          slettFeilmelding={slettFeilmelding}
         />
       )}
     </Box>

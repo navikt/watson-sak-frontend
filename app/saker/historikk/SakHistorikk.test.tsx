@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { act } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -334,5 +334,98 @@ describe("SakHistorikk", () => {
 
     // Kun én instans av skjemaet skal finnes i DOM-en.
     expect(screen.getAllByText("Legg til historikkinnslag")).toHaveLength(1);
+  });
+});
+
+describe("SakHistorikk — feilhåndtering ved lagring", () => {
+  function renderMedAksjon(ui: React.ReactNode, actionResult: unknown) {
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/saker/:sakId",
+          element: ui,
+          action: () => actionResult,
+        },
+      ],
+      { initialEntries: ["/saker/1"] },
+    );
+    return render(<RouterProvider router={router} />);
+  }
+
+  const FEILMELDING_STREAMING_BUFFER =
+    "Nylig opprettede hendelser kan ikke redigeres eller slettes umiddelbart. " +
+    "Dette skyldes en midlertidig begrensning i BigQuery og kan ta opptil 30–90 minutter å løse seg. Prøv igjen senere.";
+
+  it("viser feilmelding og lar 'Legg til'-modalen forbli åpen når lagring feiler (f.eks. 409 fra backend)", async () => {
+    renderMedAksjon(<SakHistorikk redigerbar={true} sakId={1} hendelser={[]} />, {
+      ok: false,
+      feil: { skjema: [FEILMELDING_STREAMING_BUFFER] },
+    });
+
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "Legg til" }));
+    });
+    act(() => {
+      fireEvent.change(screen.getByLabelText("Tittel"), { target: { value: "Ringte bruker" } });
+    });
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(FEILMELDING_STREAMING_BUFFER)).toBeDefined();
+    });
+
+    // Modalen skal forbli åpen slik at brukeren ser feilmeldingen og kan
+    // prøve igjen — ikke lukkes optimistisk som om lagringen lyktes, og
+    // ikke kræsje til en generisk feilside.
+    const dialog = screen.getByText("Legg til historikkinnslag").closest("dialog");
+    expect(dialog?.open).toBe(true);
+  });
+
+  it("lukker 'Legg til'-modalen når lagring lykkes", async () => {
+    renderMedAksjon(<SakHistorikk redigerbar={true} sakId={1} hendelser={[]} />, { ok: true });
+
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "Legg til" }));
+    });
+    act(() => {
+      fireEvent.change(screen.getByLabelText("Tittel"), { target: { value: "Ringte bruker" } });
+    });
+
+    const dialog = screen.getByText("Legg til historikkinnslag").closest("dialog");
+    expect(dialog?.open).toBe(true);
+
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    });
+
+    // @navikt/ds-react sin Modal fjerner ikke innholdet fra DOM-en ved
+    // lukking (kun native dialog.close()) — sjekk derfor dialog.open
+    // fremfor fravær av tekst i DOM-en.
+    await waitFor(() => {
+      expect(dialog?.open).toBe(false);
+    });
+  });
+
+  it("viser feilmelding ved sletting av manuell hendelse i kompakt visning", async () => {
+    const hendelse = lagBackendHendelse({
+      hendelsesType: "MANUELL_HENDELSE",
+      tittel: "Mitt notat",
+      opprettetAvNavIdent: "Z999999",
+    });
+
+    renderMedAksjon(<SakHistorikk redigerbar={true} sakId={1} hendelser={[hendelse]} />, {
+      ok: false,
+      feil: { skjema: [FEILMELDING_STREAMING_BUFFER] },
+    });
+
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "Slett" }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(FEILMELDING_STREAMING_BUFFER)).toBeDefined();
+    });
   });
 });
