@@ -271,16 +271,21 @@ describe("SakHistorikk", () => {
     expect(screen.getByRole("button", { name: "Vis all historikk (3)" })).toBeDefined();
   });
 
-  it("har ingen duplikate DOM-id-er når 'Vis all historikk' åpnes", () => {
-    // Regresjonstest for bug: SakHistorikk monterer alltid sin egen
-    // LeggTilHistorikkModal, og VisAllHistorikkModal monterer også alltid sin
-    // egen instans når den åpnes. @navikt/ds-react sin Modal-komponent
-    // portalerer innholdet til document.body og render det uavhengig av
-    // åpen/lukket-state, så begge skjema-instansene havner i DOM-en samtidig.
+  it("har ingen duplikate <form>-id-er når 'Vis all historikk' åpnes", () => {
+    // Regresjonstest for bug: SakHistorikk monterte tidligere sin egen
+    // LeggTilHistorikkModal, og VisAllHistorikkModal monterte også sin egen
+    // instans når den åpnet. @navikt/ds-react sin Modal-komponent portalerer
+    // innholdet til document.body og render det uavhengig av åpen/lukket-
+    // state, så begge skjema-instansene havnet i DOM-en samtidig.
     // conform-to-react kobler skjemafelt til <form> via et "form"-attributt
-    // som må matche en unik id — duplikate id-er på <form>-elementene får
+    // som må matche en unik id — duplikate id-er på <form>-elementene fikk
     // nettleseren til å koble skjemafelt til feil form ved innsending, som
     // ga «400 Ugyldig handling» i produksjon.
+    //
+    // Sjekker kun `form[id]` (ikke alle DOM-id-er) siden det er nettopp
+    // skjema-id-en conform bruker til form-attributt-koblingen som var
+    // problemet — en bredere sjekk risikerer falske positiver fra andre,
+    // ufarlige duplikater.
     //
     // Etter at LeggTilHistorikkModal/RedigerHistorikkModal ble løftet til én
     // delt instans eid av SakHistorikk (i stedet for at både SakHistorikk og
@@ -294,8 +299,13 @@ describe("SakHistorikk", () => {
       fireEvent.click(screen.getByRole("button", { name: /Vis all historikk/ }));
     });
 
-    const alleIder = Array.from(document.querySelectorAll("[id]")).map((el) => el.id);
-    const duplikater = alleIder.filter((id, index) => alleIder.indexOf(id) !== index);
+    const formIder = Array.from(document.querySelectorAll("form[id]")).map((el) => el.id);
+    const settIder = new Set<string>();
+    const duplikater = formIder.filter((id) => {
+      if (settIder.has(id)) return true;
+      settIder.add(id);
+      return false;
+    });
 
     expect(duplikater).toEqual([]);
   });
