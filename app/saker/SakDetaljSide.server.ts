@@ -465,7 +465,13 @@ async function backendAction(
       const tid = hentTekstfelt(formData, "tid", "Tid er påkrevd");
       const tidspunkt = lagTidspunktFraSkjema(dato, tid);
       try {
-        await backendApi.opprettManuellHendelse(token, sakId, tittel, notat || undefined, tidspunkt);
+        await backendApi.opprettManuellHendelse(
+          token,
+          sakId,
+          tittel,
+          notat || undefined,
+          tidspunkt,
+        );
         return { ok: true };
       } catch (feil) {
         return { ok: false, feil: { skjema: [historikkFeilmelding(feil)] } } satisfies ActionResult;
