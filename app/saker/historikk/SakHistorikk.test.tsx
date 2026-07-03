@@ -291,6 +291,9 @@ describe("SakHistorikk", () => {
     // delt instans eid av SakHistorikk (i stedet for at både SakHistorikk og
     // VisAllHistorikkModal monterte hver sin), er duplikate id-er strukturelt
     // umulig — denne testen låser fortsatt invarianten som generell vaktpost.
+    // (Eksplisitte, stabile useForm-id-er ble senere reintrodusert i begge
+    // modaler for konsistens med resten av kodebasen — trygt nå som det kun
+    // finnes ett mount-punkt per sakId/hendelseId.)
     renderMedRouter(
       <SakHistorikk redigerbar={true} sakId={1} hendelser={[lagBackendHendelse()]} />,
     );

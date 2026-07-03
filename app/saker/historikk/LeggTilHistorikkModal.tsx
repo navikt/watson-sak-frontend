@@ -19,6 +19,13 @@ interface LeggTilHistorikkModalProps {
   onClose: () => void;
 }
 
+/**
+ * NB: Denne komponenten skal kun monteres ÉN gang per side (eid av
+ * `SakHistorikk`, som deler den med `VisAllHistorikkModal` via props).
+ * Den eksplisitte `useForm`-id-en under er trygg nettopp fordi det ikke
+ * lenger finnes flere samtidige instanser — se historikken til denne filen
+ * for en tidligere bug der to instanser med samme hardkodede id kolliderte.
+ */
 export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorikkModalProps) {
   const modalRef = useRef<HTMLDialogElement>(null);
   const fetcher = useFetcher();
@@ -29,6 +36,7 @@ export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorik
       : undefined;
 
   const [form, fields] = useForm({
+    id: `legg-til-historikk-${sakId}`,
     lastResult: fetcher.state === "idle" ? fetcher.data : null,
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: historikkSkjema });

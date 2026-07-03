@@ -35,6 +35,11 @@ interface RedigerHistorikkModalProps {
   onClose: () => void;
 }
 
+/**
+ * NB: Denne komponenten skal kun monteres ÉN gang per side (eid av
+ * `SakHistorikk`, som deler den med `VisAllHistorikkModal` via props).
+ * Se tilsvarende merknad i `LeggTilHistorikkModal`.
+ */
 export function RedigerHistorikkModal({
   sakId,
   hendelse,
@@ -53,6 +58,7 @@ export function RedigerHistorikkModal({
   const initialDate = parseDato(initialDato) ?? new Date();
 
   const [form, fields] = useForm({
+    id: `rediger-historikk-${hendelse.hendelseId}`,
     lastResult: fetcher.state === "idle" ? fetcher.data : null,
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: historikkSkjema });
