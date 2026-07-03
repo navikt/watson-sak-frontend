@@ -48,12 +48,14 @@ function normaliserArbeidsgiverFeil(feil: Record<string, string[]>): Record<stri
 /**
  * Oversetter en feil fra et manuelt historikk-kall (opprett/rediger/slett) til
  * en brukervennlig melding. Bruker backendens egen feilmelding når den finnes
- * (f.eks. "Nylig opprettede hendelser kan ikke redigeres..." ved 409 Conflict
- * fra BigQuerys streaming buffer), slik at forventede, forbigående feil vises
- * som en tydelig melding i UI-et i stedet for å kræsje til en generisk feilside.
+ * OG statuskoden indikerer en forventet, klientrettet feil (f.eks. 409
+ * Conflict ved BigQuerys streaming buffer, eller 400/403/404) — disse
+ * meldingene er skrevet for sluttbruker. Ved 5xx (interne serverfeil) brukes
+ * en generisk melding i stedet, siden slike feil kan inneholde tekniske
+ * detaljer som ikke bør vises til saksbehandleren.
  */
-function historikkFeilmelding(feil: unknown): string {
-  if (feil instanceof backendApi.BackendFeilException) {
+export function historikkFeilmelding(feil: unknown): string {
+  if (feil instanceof backendApi.BackendFeilException && feil.status < 500) {
     return feil.message;
   }
   logger.error("Uventet feil ved historikk-handling", { feil });

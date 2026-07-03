@@ -411,6 +411,41 @@ describe("SakHistorikk — feilhåndtering ved lagring", () => {
     });
   });
 
+  it("viser ikke en gammel feilmelding på nytt når 'Legg til'-modalen åpnes igjen uten nytt forsøk", async () => {
+    // Regresjonstest: komponenten forblir montert (eid av SakHistorikk) selv
+    // når modalen er lukket, så fetcher.data fra en tidligere feilet
+    // innsending kan i prinsippet henge igjen. Feilmeldingen skal derfor
+    // kun vises i visningen der den faktisk oppstod — ikke dukke opp igjen
+    // ved en senere åpning uten et nytt lagringsforsøk.
+    renderMedAksjon(<SakHistorikk redigerbar={true} sakId={1} hendelser={[]} />, {
+      ok: false,
+      feil: { skjema: [FEILMELDING_STREAMING_BUFFER] },
+    });
+
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "Legg til" }));
+    });
+    act(() => {
+      fireEvent.change(screen.getByLabelText("Tittel"), { target: { value: "Ringte bruker" } });
+    });
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(FEILMELDING_STREAMING_BUFFER)).toBeDefined();
+    });
+
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "Avbryt" }));
+    });
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "Legg til" }));
+    });
+
+    expect(screen.queryByText(FEILMELDING_STREAMING_BUFFER)).toBeNull();
+  });
+
   it("viser feilmelding ved sletting av manuell hendelse i kompakt visning", async () => {
     const hendelse = lagBackendHendelse({
       hendelsesType: "MANUELL_HENDELSE",

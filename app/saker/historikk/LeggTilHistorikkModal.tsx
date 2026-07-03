@@ -2,7 +2,7 @@ import { getFormProps, useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod/v4";
 import { PlusIcon } from "@navikt/aksel-icons";
 import { Alert, Button, Modal } from "@navikt/ds-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
@@ -30,8 +30,14 @@ export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorik
   const modalRef = useRef<HTMLDialogElement>(null);
   const fetcher = useFetcher();
   const submitPågår = useRef(false);
+  // Komponenten forblir montert selv når modalen er lukket (eies av
+  // SakHistorikk), så fetcher.data fra en tidligere innsending kan fortsatt
+  // ligge igjen neste gang modalen åpnes uten at noe nytt er sendt inn.
+  // visFeilmelding nullstilles derfor eksplisitt ved åpning, og settes kun
+  // når en feil faktisk oppstår i DENNE visningen av modalen.
+  const [visFeilmelding, setVisFeilmelding] = useState(false);
   const feilmelding =
-    fetcher.state === "idle" && fetcher.data && "ok" in fetcher.data && !fetcher.data.ok
+    visFeilmelding && fetcher.data && "ok" in fetcher.data && !fetcher.data.ok
       ? fetcher.data.feil?.skjema?.[0]
       : undefined;
 
@@ -61,6 +67,7 @@ export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorik
   useEffect(() => {
     if (!åpen) return;
     form.reset();
+    setVisFeilmelding(false);
   }, [åpen]);
 
   // Lukk modalen kun når innsendingen faktisk lyktes — ikke optimistisk ved
@@ -74,6 +81,8 @@ export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorik
     if (fetcher.data && "ok" in fetcher.data && fetcher.data.ok) {
       form.reset();
       onClose();
+    } else {
+      setVisFeilmelding(true);
     }
   }, [fetcher.data, fetcher.state]);
 
