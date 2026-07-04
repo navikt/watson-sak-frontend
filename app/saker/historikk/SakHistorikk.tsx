@@ -1,18 +1,12 @@
-import { PencilIcon, PlusCircleIcon, TrashIcon } from "@navikt/aksel-icons";
-import { BodyShort, Box, Button, Heading, HStack, Process, VStack } from "@navikt/ds-react";
+import { PlusCircleIcon } from "@navikt/aksel-icons";
+import { Alert, BodyShort, Box, Button, Heading, HStack } from "@navikt/ds-react";
 import { useState } from "react";
 import { useFetcher } from "react-router";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { useDisclosure } from "~/utils/useDisclosure";
-import {
-  formaterTidspunkt,
-  hendelseBeskrivelse,
-  hendelseTittel,
-  HendelseBullet,
-  HendelseInnhold,
-} from "./historikk-utils";
+import { HistorikkProsessListe } from "./HistorikkProsessListe";
 import { LeggTilHistorikkModal } from "./LeggTilHistorikkModal";
 import { RedigerHistorikkModal } from "./RedigerHistorikkModal";
 import { VisAllHistorikkModal } from "./VisAllHistorikkModal";
@@ -34,6 +28,10 @@ export function SakHistorikk({ sakId, hendelser, redigerbar }: SakHistorikkProps
   const innloggetBruker = useInnloggetBruker();
   const fetcher = useFetcher();
   const synligeHendelser = hendelser.slice(0, MAKS_SYNLIGE_HENDELSER);
+  const slettFeilmelding =
+    fetcher.state === "idle" && fetcher.data && "ok" in fetcher.data && !fetcher.data.ok
+      ? fetcher.data.feil?.skjema?.[0]
+      : undefined;
 
   function åpneRediger(hendelse: SakHendelse) {
     setValgtHendelse(hendelse);
@@ -67,52 +65,22 @@ export function SakHistorikk({ sakId, hendelser, redigerbar }: SakHistorikkProps
           </Button>
         )}
       </HStack>
+      {slettFeilmelding && (
+        <Alert variant="error" size="small" className="mb-3">
+          {slettFeilmelding}
+        </Alert>
+      )}
       {hendelser.length === 0 ? (
         <BodyShort>Ingen historikk for denne saken.</BodyShort>
       ) : (
         <>
-          <Process>
-            {synligeHendelser.map((hendelse, index) => {
-              const beskrivelse = hendelseBeskrivelse(hendelse);
-              const erEgetManueltNotat =
-                hendelse.hendelsesType === "MANUELL_NOTAT" &&
-                hendelse.opprettetAvNavIdent === innloggetBruker.navIdent;
-
-              return (
-                <Process.Event
-                  key={hendelse.hendelseId}
-                  title={hendelseTittel(hendelse)}
-                  timestamp={formaterTidspunkt(hendelse.tidspunkt)}
-                  status="completed"
-                  bullet={<HendelseBullet hendelse={hendelse} />}
-                >
-                  <VStack gap="space-2">
-                    <HendelseInnhold hendelse={hendelse} beskrivelse={beskrivelse} />
-                    {redigerbar && erEgetManueltNotat && (
-                      <HStack gap="space-2">
-                        <Button
-                          variant="tertiary"
-                          size="xsmall"
-                          icon={<PencilIcon aria-hidden />}
-                          onClick={() => åpneRediger(hendelse)}
-                        >
-                          Rediger
-                        </Button>
-                        <Button
-                          variant="tertiary-neutral"
-                          size="xsmall"
-                          icon={<TrashIcon aria-hidden />}
-                          onClick={() => slettHendelse(hendelse)}
-                        >
-                          Slett
-                        </Button>
-                      </HStack>
-                    )}
-                  </VStack>
-                </Process.Event>
-              );
-            })}
-          </Process>
+          <HistorikkProsessListe
+            hendelser={synligeHendelser}
+            redigerbar={redigerbar}
+            innloggetNavIdent={innloggetBruker.navIdent}
+            onRediger={åpneRediger}
+            onSlett={slettHendelse}
+          />
           <Button variant="tertiary" size="small" onClick={onÅpneVisAlle} className="mt-2">
             Vis all historikk ({hendelser.length})
           </Button>
@@ -129,11 +97,15 @@ export function SakHistorikk({ sakId, hendelser, redigerbar }: SakHistorikkProps
       )}
       {visAlleÅpen && (
         <VisAllHistorikkModal
-          sakId={sakId}
           hendelser={hendelser}
           åpen={visAlleÅpen}
           onClose={onLukkVisAlle}
           redigerbar={redigerbar}
+          innloggetNavIdent={innloggetBruker.navIdent}
+          onLeggTil={onÅpneLeggTil}
+          onRediger={åpneRediger}
+          onSlett={slettHendelse}
+          slettFeilmelding={slettFeilmelding}
         />
       )}
     </Box>

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { act } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -229,9 +229,9 @@ describe("SakHistorikk", () => {
         sakId={1}
         hendelser={[
           lagBackendHendelse({
-            hendelsesType: "MANUELL_NOTAT",
+            hendelsesType: "MANUELL_HENDELSE",
             tittel: "Ringte bruker",
-            notat: "Avklarte dokumentasjon og neste steg.",
+            beskrivelse: "Avklarte dokumentasjon og neste steg.",
           }),
         ]}
       />,
@@ -269,5 +269,201 @@ describe("SakHistorikk", () => {
     renderMedRouter(<SakHistorikk redigerbar={true} sakId={1} hendelser={hendelser} />);
 
     expect(screen.getByRole("button", { name: "Vis all historikk (3)" })).toBeDefined();
+  });
+
+  it("har ingen duplikate <form>-id-er når 'Vis all historikk' åpnes", () => {
+    // Regresjonstest for bug: SakHistorikk monterte tidligere sin egen
+    // LeggTilHistorikkModal, og VisAllHistorikkModal monterte også sin egen
+    // instans når den åpnet. @navikt/ds-react sin Modal-komponent portalerer
+    // innholdet til document.body og render det uavhengig av åpen/lukket-
+    // state, så begge skjema-instansene havnet i DOM-en samtidig.
+    // conform-to-react kobler skjemafelt til <form> via et "form"-attributt
+    // som må matche en unik id — duplikate id-er på <form>-elementene fikk
+    // nettleseren til å koble skjemafelt til feil form ved innsending, som
+    // ga «400 Ugyldig handling» i produksjon.
+    //
+    // Sjekker kun `form[id]` (ikke alle DOM-id-er) siden det er nettopp
+    // skjema-id-en conform bruker til form-attributt-koblingen som var
+    // problemet — en bredere sjekk risikerer falske positiver fra andre,
+    // ufarlige duplikater.
+    //
+    // Etter at LeggTilHistorikkModal/RedigerHistorikkModal ble løftet til én
+    // delt instans eid av SakHistorikk (i stedet for at både SakHistorikk og
+    // VisAllHistorikkModal monterte hver sin), er duplikate id-er strukturelt
+    // umulig — denne testen låser fortsatt invarianten som generell vaktpost.
+    // (Eksplisitte, stabile useForm-id-er ble senere reintrodusert i begge
+    // modaler for konsistens med resten av kodebasen — trygt nå som det kun
+    // finnes ett mount-punkt per sakId/hendelseId.)
+    renderMedRouter(
+      <SakHistorikk redigerbar={true} sakId={1} hendelser={[lagBackendHendelse()]} />,
+    );
+
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: /Vis all historikk/ }));
+    });
+
+    const formIder = Array.from(document.querySelectorAll("form[id]")).map((el) => el.id);
+    const settIder = new Set<string>();
+    const duplikater = formIder.filter((id) => {
+      if (settIder.has(id)) return true;
+      settIder.add(id);
+      return false;
+    });
+
+    expect(duplikater).toEqual([]);
+  });
+
+  it("åpner delt 'Legg til historikkinnslag'-modal fra 'Vis all historikk'", () => {
+    // Verifiserer selve brukerflyten som var brutt: å trykke "Legg til" inne
+    // i "Vis all historikk"-modalen skal åpne samme (eneste) instans av
+    // LeggTilHistorikkModal som SakHistorikk selv eier — ikke en egen kopi.
+    renderMedRouter(
+      <SakHistorikk redigerbar={true} sakId={1} hendelser={[lagBackendHendelse()]} />,
+    );
+
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: /Vis all historikk/ }));
+    });
+
+    const alleLeggTilKnapper = screen.getAllByRole("button", { name: "Legg til" });
+    // Kun én "Legg til"-knapp skal finnes inne i "Vis all historikk"-modalen
+    // (den kompakte visningens egen knapp er skjult bak modalen, men fortsatt
+    // i DOM-en — vi klikker eksplisitt på den siste, som er inni modalen).
+    act(() => {
+      fireEvent.click(alleLeggTilKnapper[alleLeggTilKnapper.length - 1]);
+    });
+
+    expect(screen.getByText("Legg til historikkinnslag")).toBeDefined();
+
+    // Kun én instans av skjemaet skal finnes i DOM-en.
+    expect(screen.getAllByText("Legg til historikkinnslag")).toHaveLength(1);
+  });
+});
+
+describe("SakHistorikk — feilhåndtering ved lagring", () => {
+  function renderMedAksjon(ui: React.ReactNode, actionResult: unknown) {
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/saker/:sakId",
+          element: ui,
+          action: () => actionResult,
+        },
+      ],
+      { initialEntries: ["/saker/1"] },
+    );
+    return render(<RouterProvider router={router} />);
+  }
+
+  const FEILMELDING_STREAMING_BUFFER =
+    "Nylig opprettede hendelser kan ikke redigeres eller slettes umiddelbart. " +
+    "Dette skyldes en midlertidig begrensning i BigQuery og kan ta opptil 30–90 minutter å løse seg. Prøv igjen senere.";
+
+  it("viser feilmelding og lar 'Legg til'-modalen forbli åpen når lagring feiler (f.eks. 409 fra backend)", async () => {
+    renderMedAksjon(<SakHistorikk redigerbar={true} sakId={1} hendelser={[]} />, {
+      ok: false,
+      feil: { skjema: [FEILMELDING_STREAMING_BUFFER] },
+    });
+
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "Legg til" }));
+    });
+    act(() => {
+      fireEvent.change(screen.getByLabelText("Tittel"), { target: { value: "Ringte bruker" } });
+    });
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(FEILMELDING_STREAMING_BUFFER)).toBeDefined();
+    });
+
+    // Modalen skal forbli åpen slik at brukeren ser feilmeldingen og kan
+    // prøve igjen — ikke lukkes optimistisk som om lagringen lyktes, og
+    // ikke kræsje til en generisk feilside.
+    const dialog = screen.getByText("Legg til historikkinnslag").closest("dialog");
+    expect(dialog?.open).toBe(true);
+  });
+
+  it("lukker 'Legg til'-modalen når lagring lykkes", async () => {
+    renderMedAksjon(<SakHistorikk redigerbar={true} sakId={1} hendelser={[]} />, { ok: true });
+
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "Legg til" }));
+    });
+    act(() => {
+      fireEvent.change(screen.getByLabelText("Tittel"), { target: { value: "Ringte bruker" } });
+    });
+
+    const dialog = screen.getByText("Legg til historikkinnslag").closest("dialog");
+    expect(dialog?.open).toBe(true);
+
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    });
+
+    // @navikt/ds-react sin Modal fjerner ikke innholdet fra DOM-en ved
+    // lukking (kun native dialog.close()) — sjekk derfor dialog.open
+    // fremfor fravær av tekst i DOM-en.
+    await waitFor(() => {
+      expect(dialog?.open).toBe(false);
+    });
+  });
+
+  it("viser ikke en gammel feilmelding på nytt når 'Legg til'-modalen åpnes igjen uten nytt forsøk", async () => {
+    // Regresjonstest: komponenten forblir montert (eid av SakHistorikk) selv
+    // når modalen er lukket, så fetcher.data fra en tidligere feilet
+    // innsending kan i prinsippet henge igjen. Feilmeldingen skal derfor
+    // kun vises i visningen der den faktisk oppstod — ikke dukke opp igjen
+    // ved en senere åpning uten et nytt lagringsforsøk.
+    renderMedAksjon(<SakHistorikk redigerbar={true} sakId={1} hendelser={[]} />, {
+      ok: false,
+      feil: { skjema: [FEILMELDING_STREAMING_BUFFER] },
+    });
+
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "Legg til" }));
+    });
+    act(() => {
+      fireEvent.change(screen.getByLabelText("Tittel"), { target: { value: "Ringte bruker" } });
+    });
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(FEILMELDING_STREAMING_BUFFER)).toBeDefined();
+    });
+
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "Avbryt" }));
+    });
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "Legg til" }));
+    });
+
+    expect(screen.queryByText(FEILMELDING_STREAMING_BUFFER)).toBeNull();
+  });
+
+  it("viser feilmelding ved sletting av manuell hendelse i kompakt visning", async () => {
+    const hendelse = lagBackendHendelse({
+      hendelsesType: "MANUELL_HENDELSE",
+      tittel: "Mitt notat",
+      opprettetAvNavIdent: "Z999999",
+    });
+
+    renderMedAksjon(<SakHistorikk redigerbar={true} sakId={1} hendelser={[hendelse]} />, {
+      ok: false,
+      feil: { skjema: [FEILMELDING_STREAMING_BUFFER] },
+    });
+
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "Slett" }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(FEILMELDING_STREAMING_BUFFER)).toBeDefined();
+    });
   });
 });

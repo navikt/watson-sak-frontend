@@ -1,8 +1,8 @@
 import { getFormProps, useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod/v4";
 import { PencilIcon } from "@navikt/aksel-icons";
-import { Button, Modal } from "@navikt/ds-react";
-import { useEffect, useRef } from "react";
+import { Alert, Button, Modal } from "@navikt/ds-react";
+import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
@@ -35,6 +35,11 @@ interface RedigerHistorikkModalProps {
   onClose: () => void;
 }
 
+/**
+ * NB: Denne komponenten skal kun monteres ÉN gang per side (eid av
+ * `SakHistorikk`, som deler den med `VisAllHistorikkModal` via props).
+ * Se tilsvarende merknad i `LeggTilHistorikkModal`.
+ */
 export function RedigerHistorikkModal({
   sakId,
   hendelse,
@@ -43,6 +48,17 @@ export function RedigerHistorikkModal({
 }: RedigerHistorikkModalProps) {
   const modalRef = useRef<HTMLDialogElement>(null);
   const fetcher = useFetcher();
+  const submitPågår = useRef(false);
+  // Komponenten forblir montert selv når modalen er lukket (eies av
+  // SakHistorikk), så fetcher.data fra en tidligere innsending kan fortsatt
+  // ligge igjen neste gang modalen åpnes for en (evt. annen) hendelse uten at
+  // noe nytt er sendt inn. visFeilmelding nullstilles derfor eksplisitt ved
+  // åpning, og settes kun når en feil faktisk oppstår i DENNE visningen.
+  const [visFeilmelding, setVisFeilmelding] = useState(false);
+  const feilmelding =
+    visFeilmelding && fetcher.data && "ok" in fetcher.data && !fetcher.data.ok
+      ? fetcher.data.feil?.skjema?.[0]
+      : undefined;
 
   const { dato: initialDato, tid: initialTid } = parseIsoTilLokalDatoOgTid(hendelse.tidspunkt);
   const initialDate = parseDato(initialDato) ?? new Date();
@@ -57,7 +73,7 @@ export function RedigerHistorikkModal({
     shouldRevalidate: "onInput",
     defaultValue: {
       tittel: hendelse.tittel ?? "",
-      notat: hendelse.notat ?? "",
+      notat: hendelse.beskrivelse ?? "",
       dato: initialDato,
       tid: initialTid,
     },
@@ -65,18 +81,31 @@ export function RedigerHistorikkModal({
       event.preventDefault();
       formData.set("handling", "rediger_historikk");
       formData.set("hendelseId", hendelse.hendelseId);
+      submitPågår.current = true;
       fetcher.submit(formData, {
         method: "post",
         action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),
       });
-      onClose();
     },
   });
 
   useEffect(() => {
     if (!åpen) return;
     form.reset();
+    setVisFeilmelding(false);
   }, [åpen, hendelse.hendelseId]);
+
+  // Lukk modalen kun når innsendingen faktisk lyktes, se tilsvarende
+  // resonnement i LeggTilHistorikkModal.
+  useEffect(() => {
+    if (!submitPågår.current || fetcher.state !== "idle") return;
+    submitPågår.current = false;
+    if (fetcher.data && "ok" in fetcher.data && fetcher.data.ok) {
+      onClose();
+    } else {
+      setVisFeilmelding(true);
+    }
+  }, [fetcher.data, fetcher.state]);
 
   return (
     <Modal
@@ -88,6 +117,11 @@ export function RedigerHistorikkModal({
     >
       <fetcher.Form method="post" {...getFormProps(form)}>
         <Modal.Body>
+          {feilmelding && (
+            <Alert variant="error" className="mb-4">
+              {feilmelding}
+            </Alert>
+          )}
           <HistorikkSkjemaFelter
             fields={fields}
             defaultSelected={initialDate}
@@ -95,7 +129,7 @@ export function RedigerHistorikkModal({
           />
         </Modal.Body>
         <Modal.Footer>
-          <Button type="submit" variant="primary">
+          <Button type="submit" variant="primary" loading={fetcher.state !== "idle"}>
             Lagre endringer
           </Button>
           <Button type="button" variant="secondary" onClick={onClose}>

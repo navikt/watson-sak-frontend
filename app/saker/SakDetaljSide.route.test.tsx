@@ -344,9 +344,9 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
     expect(resultat).toEqual({ ok: true });
 
     const historikk = hentHistorikk(testRequest, sak.id);
-    expect(historikk[0]?.hendelsesType).toBe("MANUELL_NOTAT");
+    expect(historikk[0]?.hendelsesType).toBe("MANUELL_HENDELSE");
     expect(historikk[0]?.tittel).toBe("Ringte bruker");
-    expect(historikk[0]?.notat).toBe("Avklarte dokumentasjon og neste steg.");
+    expect(historikk[0]?.beskrivelse).toBe("Avklarte dokumentasjon og neste steg.");
     expect(historikk[0]?.tidspunkt).toBe("2026-05-04T10:34:00.000Z");
   });
 

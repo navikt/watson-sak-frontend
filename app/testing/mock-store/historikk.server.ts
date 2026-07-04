@@ -19,7 +19,7 @@ type BackendHendelsestype =
   | "SAK_SATT_PA_VENT"
   | "SAK_SATT_I_BERO"
   | "SAK_GJENOPPTATT"
-  | "MANUELL_NOTAT"
+  | "MANUELL_HENDELSE"
   | "NOTAT_SENDT"
   | "JOURNALPOST_OPPRETTET"
   | "OPPGAVE_OPPRETTET";
@@ -81,7 +81,7 @@ function lagSnapshotFraKontrollsak(
 export function leggTilHendelse(
   state: MockState,
   sak: KontrollsakResponse,
-  type: Exclude<BackendHendelsestype, "SAK_OPPRETTET" | "AVKLARING_OPPRETTET" | "MANUELL_NOTAT">,
+  type: Exclude<BackendHendelsestype, "SAK_OPPRETTET" | "AVKLARING_OPPRETTET" | "MANUELL_HENDELSE">,
   tidspunkt?: string,
   metadata?: Pick<
     SakHendelse,
@@ -109,7 +109,7 @@ export function leggTilManuellHendelse(
   state: MockState,
   sak: KontrollsakResponse,
   tittel: string,
-  notat: string,
+  beskrivelse: string,
   tidspunkt: string,
   opprettetAvNavIdent?: string,
 ): SakHendelse {
@@ -117,10 +117,10 @@ export function leggTilManuellHendelse(
   const hendelse: SakHendelse = {
     hendelseId: lagId(state),
     tidspunkt,
-    hendelsesType: "MANUELL_NOTAT",
+    hendelsesType: "MANUELL_HENDELSE",
     sakId: sak.id,
     tittel,
-    notat,
+    beskrivelse,
     opprettetAvNavIdent,
     ...lagSnapshotFraKontrollsak(sak),
   };
@@ -137,18 +137,18 @@ export function redigerManuellHendelse(
   sakId: string,
   hendelseId: string,
   tittel: string,
-  notat: string,
+  beskrivelse: string,
   tidspunkt: string,
 ): SakHendelse | null {
   const hendelser = state.historikk.get(sakId) ?? [];
   const hendelse = hendelser.find(
-    (h) => h.hendelseId === hendelseId && h.hendelsesType === "MANUELL_NOTAT",
+    (h) => h.hendelseId === hendelseId && h.hendelsesType === "MANUELL_HENDELSE",
   );
 
   if (!hendelse) return null;
 
   hendelse.tittel = tittel;
-  hendelse.notat = notat;
+  hendelse.beskrivelse = beskrivelse;
   hendelse.tidspunkt = tidspunkt;
 
   return hendelse;
@@ -157,7 +157,7 @@ export function redigerManuellHendelse(
 export function slettManuellHendelse(state: MockState, sakId: string, hendelseId: string): boolean {
   const hendelser = state.historikk.get(sakId) ?? [];
   const index = hendelser.findIndex(
-    (h) => h.hendelseId === hendelseId && h.hendelsesType === "MANUELL_NOTAT",
+    (h) => h.hendelseId === hendelseId && h.hendelsesType === "MANUELL_HENDELSE",
   );
 
   if (index === -1) return false;

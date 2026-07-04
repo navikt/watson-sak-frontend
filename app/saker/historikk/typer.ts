@@ -2,8 +2,6 @@ import { z } from "zod";
 import { kontrollsakHendelseResponseSchema } from "~/saker/types.backend";
 
 const sakHendelseSchema = kontrollsakHendelseResponseSchema.extend({
-  tittel: z.string().optional(),
-  notat: z.string().optional(),
   berortSaksbehandlerNavn: z.string().optional(),
   berortSaksbehandlerNavIdent: z.string().optional(),
   berortSaksbehandlerEnhet: z.string().optional(),

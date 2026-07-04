@@ -1,8 +1,8 @@
 import { getFormProps, useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod/v4";
 import { PlusIcon } from "@navikt/aksel-icons";
-import { Button, Modal } from "@navikt/ds-react";
-import { useEffect, useRef } from "react";
+import { Alert, Button, Modal } from "@navikt/ds-react";
+import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
@@ -19,12 +19,30 @@ interface LeggTilHistorikkModalProps {
   onClose: () => void;
 }
 
+/**
+ * NB: Denne komponenten skal kun monteres ÉN gang per side (eid av
+ * `SakHistorikk`, som deler den med `VisAllHistorikkModal` via props).
+ * Den eksplisitte `useForm`-id-en under er trygg nettopp fordi det ikke
+ * lenger finnes flere samtidige instanser — se historikken til denne filen
+ * for en tidligere bug der to instanser med samme hardkodede id kolliderte.
+ */
 export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorikkModalProps) {
   const modalRef = useRef<HTMLDialogElement>(null);
   const fetcher = useFetcher();
+  const submitPågår = useRef(false);
+  // Komponenten forblir montert selv når modalen er lukket (eies av
+  // SakHistorikk), så fetcher.data fra en tidligere innsending kan fortsatt
+  // ligge igjen neste gang modalen åpnes uten at noe nytt er sendt inn.
+  // visFeilmelding nullstilles derfor eksplisitt ved åpning, og settes kun
+  // når en feil faktisk oppstår i DENNE visningen av modalen.
+  const [visFeilmelding, setVisFeilmelding] = useState(false);
+  const feilmelding =
+    visFeilmelding && fetcher.data && "ok" in fetcher.data && !fetcher.data.ok
+      ? fetcher.data.feil?.skjema?.[0]
+      : undefined;
 
   const [form, fields] = useForm({
-    id: "legg-til-historikk",
+    id: `legg-til-historikk-${sakId}`,
     lastResult: fetcher.state === "idle" ? fetcher.data : null,
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: historikkSkjema });
@@ -38,19 +56,35 @@ export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorik
     onSubmit(event, { formData }) {
       event.preventDefault();
       formData.set("handling", "legg_til_historikk");
+      submitPågår.current = true;
       fetcher.submit(formData, {
         method: "post",
         action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)),
       });
-      form.reset();
-      onClose();
     },
   });
 
   useEffect(() => {
     if (!åpen) return;
     form.reset();
+    setVisFeilmelding(false);
   }, [åpen]);
+
+  // Lukk modalen kun når innsendingen faktisk lyktes — ikke optimistisk ved
+  // klikk på "Lagre". Ved feil (f.eks. 409 fordi hendelsen nylig ble
+  // opprettet og fortsatt ligger i BigQuerys streaming buffer) skal modalen
+  // forbli åpen og vise feilmeldingen, i stedet for å late som om alt gikk
+  // bra eller kræsje til en generisk feilside.
+  useEffect(() => {
+    if (!submitPågår.current || fetcher.state !== "idle") return;
+    submitPågår.current = false;
+    if (fetcher.data && "ok" in fetcher.data && fetcher.data.ok) {
+      form.reset();
+      onClose();
+    } else {
+      setVisFeilmelding(true);
+    }
+  }, [fetcher.data, fetcher.state]);
 
   return (
     <Modal
@@ -62,6 +96,11 @@ export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorik
     >
       <fetcher.Form method="post" {...getFormProps(form)}>
         <Modal.Body>
+          {feilmelding && (
+            <Alert variant="error" className="mb-4">
+              {feilmelding}
+            </Alert>
+          )}
           <HistorikkSkjemaFelter
             fields={fields}
             defaultSelected={new Date()}
@@ -69,7 +108,7 @@ export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorik
           />
         </Modal.Body>
         <Modal.Footer>
-          <Button type="submit" variant="primary">
+          <Button type="submit" variant="primary" loading={fetcher.state !== "idle"}>
             Lagre
           </Button>
           <Button type="button" variant="secondary" onClick={onClose}>

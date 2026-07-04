@@ -3,7 +3,7 @@ import { ActionMenu, InternalHeader, Search, Spacer, Tag } from "@navikt/ds-reac
 import { useEffect, useRef } from "react";
 import { Form, Link, useLocation } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
-import { useInnloggetBruker } from "~/auth/innlogget-bruker";
+import { useInnloggetBrukerValgfri } from "~/auth/innlogget-bruker";
 import { useMiljø } from "~/miljø/useMiljø";
 import { RouteConfig } from "~/routeConfig";
 import { SØK_RESULTATLENKE_SELECTOR } from "~/søk/sok-navigasjon";
@@ -21,7 +21,7 @@ const MORIARTY_EASTER_EGG = "moriarty";
 const SHERLOCK_EASTER_EGG = "sherlock";
 
 export function AppHeader() {
-  const innloggetBruker = useInnloggetBruker();
+  const innloggetBruker = useInnloggetBrukerValgfri();
   const skjemaRef = useRef<HTMLFormElement>(null);
   const location = useLocation();
   const triggerGlitch = useGlitch();

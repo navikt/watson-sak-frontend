@@ -2,6 +2,7 @@ import { data } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
+import { logger } from "~/logging/logging";
 import { enhetAlternativer, redigerSaksinformasjonSchema } from "~/registrer-sak/validering";
 import {
   bygFeilkartFraIssues,
@@ -42,6 +43,23 @@ function normaliserArbeidsgiverFeil(feil: Record<string, string[]>): Record<stri
     (resultat[overordnet] ??= []).push(...meldinger);
   }
   return resultat;
+}
+
+/**
+ * Oversetter en feil fra et manuelt historikk-kall (opprett/rediger/slett) til
+ * en brukervennlig melding. Bruker backendens egen feilmelding når den finnes
+ * OG statuskoden indikerer en forventet, klientrettet feil (f.eks. 409
+ * Conflict ved BigQuerys streaming buffer, eller 400/403/404) — disse
+ * meldingene er skrevet for sluttbruker. Ved 5xx (interne serverfeil) brukes
+ * en generisk melding i stedet, siden slike feil kan inneholde tekniske
+ * detaljer som ikke bør vises til saksbehandleren.
+ */
+export function historikkFeilmelding(feil: unknown): string {
+  if (feil instanceof backendApi.BackendFeilException && feil.status < 500) {
+    return feil.message;
+  }
+  logger.error("Uventet feil ved historikk-handling", { feil });
+  return "Kunne ikke lagre historikkinnslaget. Prøv igjen.";
 }
 
 // --- Typer ---
@@ -448,8 +466,18 @@ async function backendAction(
       const dato = hentTekstfelt(formData, "dato", "Dato er påkrevd");
       const tid = hentTekstfelt(formData, "tid", "Tid er påkrevd");
       const tidspunkt = lagTidspunktFraSkjema(dato, tid);
-      await backendApi.opprettManuellHendelse(token, sakId, tittel, notat || undefined, tidspunkt);
-      return { ok: true };
+      try {
+        await backendApi.opprettManuellHendelse(
+          token,
+          sakId,
+          tittel,
+          notat || undefined,
+          tidspunkt,
+        );
+        return { ok: true };
+      } catch (feil) {
+        return { ok: false, feil: { skjema: [historikkFeilmelding(feil)] } } satisfies ActionResult;
+      }
     }
     case "rediger_historikk": {
       const hendelseId = hentTekstfelt(formData, "hendelseId", "Hendelse-ID er påkrevd");
@@ -458,20 +486,28 @@ async function backendAction(
       const dato = hentTekstfelt(formData, "dato", "Dato er påkrevd");
       const tid = hentTekstfelt(formData, "tid", "Tid er påkrevd");
       const tidspunkt = lagTidspunktFraSkjema(dato, tid);
-      await backendApi.redigerManuellHendelse(
-        token,
-        sakId,
-        hendelseId,
-        tittel,
-        notat || undefined,
-        tidspunkt,
-      );
-      return { ok: true };
+      try {
+        await backendApi.redigerManuellHendelse(
+          token,
+          sakId,
+          hendelseId,
+          tittel,
+          notat || undefined,
+          tidspunkt,
+        );
+        return { ok: true };
+      } catch (feil) {
+        return { ok: false, feil: { skjema: [historikkFeilmelding(feil)] } } satisfies ActionResult;
+      }
     }
     case "slett_historikk": {
       const hendelseId = hentTekstfelt(formData, "hendelseId", "Hendelse-ID er påkrevd");
-      await backendApi.slettManuellHendelse(token, sakId, hendelseId);
-      return { ok: true };
+      try {
+        await backendApi.slettManuellHendelse(token, sakId, hendelseId);
+        return { ok: true };
+      } catch (feil) {
+        return { ok: false, feil: { skjema: [historikkFeilmelding(feil)] } } satisfies ActionResult;
+      }
     }
     default: {
       throw data("Ugyldig handling", { status: 400 });

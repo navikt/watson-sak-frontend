@@ -32,7 +32,7 @@ export function redigerManuellHendelse(
   sakId: string,
   hendelseId: string,
   tittel: string,
-  notat: string,
+  beskrivelse: string,
   tidspunkt: string,
 ) {
   return _redigerManuellHendelse(
@@ -40,7 +40,7 @@ export function redigerManuellHendelse(
     sakId,
     hendelseId,
     tittel,
-    notat,
+    beskrivelse,
     tidspunkt,
   );
 }
