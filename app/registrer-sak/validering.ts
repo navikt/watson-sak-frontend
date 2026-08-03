@@ -52,17 +52,29 @@ function lagValgfrittDatofelt() {
 
 const merkingSchema = z.string().trim().min(1, "Merking kan ikke være tom");
 
-const valgfrittBeløpSchema = z.preprocess((verdi) => {
-  if (verdi === "" || verdi === null || verdi === undefined) return undefined;
-  const tall = Number(verdi);
-  return Number.isFinite(tall) ? tall : verdi;
-}, z.number({ message: "Antatt beløp må være et gyldig tall" }).positive("Antatt beløp må være et positivt tall").optional());
+const valgfrittBeløpSchema = z.preprocess(
+  (verdi) => {
+    if (verdi === "" || verdi === null || verdi === undefined) return undefined;
+    const tall = Number(verdi);
+    return Number.isFinite(tall) ? tall : verdi;
+  },
+  z
+    .number({ message: "Antatt beløp må være et gyldig tall" })
+    .positive("Antatt beløp må være et positivt tall")
+    .optional(),
+);
 
-const valgfrittEndeligBeløpSchema = z.preprocess((verdi) => {
-  if (verdi === "" || verdi === null || verdi === undefined) return undefined;
-  const tall = Number(verdi);
-  return Number.isFinite(tall) ? tall : verdi;
-}, z.number({ message: "Endelig beløp må være et gyldig tall" }).positive("Endelig beløp må være et positivt tall").optional());
+const valgfrittEndeligBeløpSchema = z.preprocess(
+  (verdi) => {
+    if (verdi === "" || verdi === null || verdi === undefined) return undefined;
+    const tall = Number(verdi);
+    return Number.isFinite(tall) ? tall : verdi;
+  },
+  z
+    .number({ message: "Endelig beløp må være et gyldig tall" })
+    .positive("Endelig beløp må være et positivt tall")
+    .optional(),
+);
 
 const ytelseRadSchema = z
   .object({
