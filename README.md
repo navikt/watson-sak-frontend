@@ -69,6 +69,7 @@ pnpm run dev
 - `pnpm run format:fix` - Fikser Oxfmt formatering
 - `pnpm run unused` - Sjekker om du har ubrukt kode eller avhengigheter
 - `pnpm run verify` – Kjører lint, typecheck, format og unused
+
 </details>
 
 <details>
