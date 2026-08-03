@@ -33,14 +33,11 @@ export default function FordelingSide() {
   const { saker, saksbehandlere, saksbehandlerDetaljer } = useLoaderData<typeof loader>();
 
   return (
-    <>
-      <title>Fordeling – Watson Sak</title>
-      <UfordelteSakerInnhold
-        saker={saker}
-        saksbehandlere={saksbehandlere}
-        saksbehandlerDetaljer={saksbehandlerDetaljer}
-        submitPath={RouteConfig.FORDELING}
-      />
-    </>
+    <UfordelteSakerInnhold
+      saker={saker}
+      saksbehandlere={saksbehandlere}
+      saksbehandlerDetaljer={saksbehandlerDetaljer}
+      submitPath={RouteConfig.FORDELING}
+    />
   );
 }
