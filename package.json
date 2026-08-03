@@ -13,7 +13,7 @@
     "lint:fix": "oxlint --fix .",
     "format": "oxfmt --check .",
     "format:fix": "oxfmt --write .",
-    "unused": "knip",
+    "unused": "react-router typegen && knip",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
