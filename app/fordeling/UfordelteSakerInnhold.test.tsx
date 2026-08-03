@@ -24,6 +24,38 @@ const lagSak = (overstyringer: Partial<FordelingSak> = {}): FordelingSak => ({
 });
 
 describe("UfordelteSakerInnhold", () => {
+  it("viser bare 'Ufordelte saker' som overskrift når ingen filtre er aktive", () => {
+    render(
+      <MemoryRouter>
+        <UfordelteSakerInnhold
+          saker={[lagSak()]}
+          saksbehandlere={["Kari Nordmann"]}
+          saksbehandlerDetaljer={mockSaksbehandlerDetaljer}
+          submitPath={RouteConfig.FORDELING}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Ufordelte saker");
+  });
+
+  it("viser aktive filtre i overskriften når filtre er valgt", () => {
+    render(
+      <MemoryRouter initialEntries={["/?ytelse=Dagpenger&ytelse=Barnetrygd"]}>
+        <UfordelteSakerInnhold
+          saker={[lagSak(), lagSak({ id: 302, ytelser: ["Barnetrygd"] })]}
+          saksbehandlere={["Kari Nordmann"]}
+          saksbehandlerDetaljer={mockSaksbehandlerDetaljer}
+          submitPath={RouteConfig.FORDELING}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(
+      "Ufordelte saker – Dagpenger, Barnetrygd",
+    );
+  });
+
   it("bruker ikke ekstra section-landmarks for oppsummeringskortene", () => {
     const { container } = render(
       <MemoryRouter>

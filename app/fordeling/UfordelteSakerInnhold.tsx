@@ -49,6 +49,9 @@ export function UfordelteSakerInnhold({
   const sorteringsretning = hentSorteringsretning(searchParams.get("retning"));
 
   const filtervalg = useMemo(() => hentUfordelteFiltervalg(saker), [saker]);
+  const aktiveFiltreVerdier = [...kategoriFilter.valgteVerdier, ...ytelseFilter.valgteVerdier];
+  const filterTekst = aktiveFiltreVerdier.length > 0 ? aktiveFiltreVerdier.join(", ") : null;
+  const overskrift = filterTekst ? `Ufordelte saker – ${filterTekst}` : "Ufordelte saker";
   const filtrerteSaker = useMemo(
     () =>
       filtrerUfordelteSaker(saker, {
@@ -104,9 +107,10 @@ export function UfordelteSakerInnhold({
 
   return (
     <section aria-labelledby="ufordelte-saker-overskrift" className="pb-12">
+      <title>{filterTekst ? `${overskrift} – Watson Sak` : "Ufordelte saker – Watson Sak"}</title>
       <VStack gap="space-12" className="mt-4 mb-8">
         <Heading id="ufordelte-saker-overskrift" level="1" size="large">
-          Ufordelte saker
+          {overskrift}
         </Heading>
 
         {harSaker && (
