@@ -78,6 +78,7 @@ describe("MineSakerInnhold", () => {
     renderMedRouter(
       <MineSakerInnhold
         saker={[lagKontrollsak()]}
+        deltMedSaker={[]}
         detaljSti="/saker"
         filterAlternativer={standardFilterAlternativer}
         aktivtFilter={standardAktivtFilter}
@@ -96,6 +97,7 @@ describe("MineSakerInnhold", () => {
     renderMedRouter(
       <MineSakerInnhold
         saker={[lagKontrollsak()]}
+        deltMedSaker={[]}
         detaljSti="/saker"
         filterAlternativer={standardFilterAlternativer}
         aktivtFilter={standardAktivtFilter}
@@ -111,6 +113,7 @@ describe("MineSakerInnhold", () => {
     renderMedRouter(
       <MineSakerInnhold
         saker={[lagKontrollsak()]}
+        deltMedSaker={[]}
         detaljSti="/saker"
         filterAlternativer={standardFilterAlternativer}
         aktivtFilter={standardAktivtFilter}
@@ -128,6 +131,7 @@ describe("MineSakerInnhold", () => {
     renderMedRouter(
       <MineSakerInnhold
         saker={[]}
+        deltMedSaker={[]}
         detaljSti="/saker"
         filterAlternativer={standardFilterAlternativer}
         aktivtFilter={standardAktivtFilter}
@@ -141,6 +145,7 @@ describe("MineSakerInnhold", () => {
     renderMedRouter(
       <MineSakerInnhold
         saker={[lagKontrollsak()]}
+        deltMedSaker={[]}
         detaljSti="/saker"
         filterAlternativer={standardFilterAlternativer}
         aktivtFilter={standardAktivtFilter}
@@ -152,5 +157,34 @@ describe("MineSakerInnhold", () => {
 
     const avsluttetChip = screen.getByRole("button", { name: "Avsluttet" });
     expect(avsluttetChip.getAttribute("aria-pressed")).toBe("false");
+  });
+
+  it("viser 'Delt med meg'-seksjon når det finnes delt-med-saker", () => {
+    const deltSak = lagKontrollsak({ id: 999 });
+    renderMedRouter(
+      <MineSakerInnhold
+        saker={[]}
+        deltMedSaker={[deltSak]}
+        detaljSti="/saker"
+        filterAlternativer={standardFilterAlternativer}
+        aktivtFilter={standardAktivtFilter}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Delt med meg" })).toBeDefined();
+  });
+
+  it("skjuler 'Delt med meg'-seksjon når ingen saker er delt", () => {
+    renderMedRouter(
+      <MineSakerInnhold
+        saker={[lagKontrollsak()]}
+        deltMedSaker={[]}
+        detaljSti="/saker"
+        filterAlternativer={standardFilterAlternativer}
+        aktivtFilter={standardAktivtFilter}
+      />,
+    );
+
+    expect(screen.queryByRole("heading", { name: "Delt med meg" })).toBeNull();
   });
 });
