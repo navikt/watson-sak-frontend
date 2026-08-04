@@ -104,3 +104,27 @@ export async function opprettKontrollsak({
 
   return { id: String(body.id) };
 }
+
+export async function lastOppFil(token: string, sakId: string, fil: File): Promise<void> {
+  if (!BACKEND_API_URL) {
+    logger.error("Mangler backend-url for filopplasting", { sakId, filnavn: fil.name });
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("fil", fil);
+
+  const respons = await fetch(`${BACKEND_API_URL}/api/v1/kontrollsaker/${sakId}/filer`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+
+  if (!respons.ok) {
+    logger.error("Kunne ikke laste opp fil til kontrollsak", {
+      sakId,
+      filnavn: fil.name,
+      status: respons.status,
+    });
+  }
+}
