@@ -62,7 +62,9 @@ function VerktøyKnapp({ etikett, aktiv, onClick, children }: VerktøyKnappProps
         variant={aktiv ? "secondary" : "tertiary"}
         aria-label={etikett}
         aria-pressed={aktiv}
-        onClick={() => {
+        onMouseDown={(e) => {
+          // Hindrer at fokus flyttes fra editoren til knappen
+          e.preventDefault();
           onFormater(etikett);
           onClick();
         }}
