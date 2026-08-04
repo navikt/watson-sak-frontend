@@ -16,7 +16,7 @@ import {
 } from "@navikt/ds-react";
 import { PersonIcon, PlusIcon } from "@navikt/aksel-icons";
 import { useMemo, useState, useEffect } from "react";
-import { Form, Link, useFetcher, useActionData, useLoaderData } from "react-router";
+import { Form, Link, useFetcher, useActionData, useLoaderData, useSubmit } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { RouteConfig } from "~/routeConfig";
@@ -42,6 +42,7 @@ export default function OpprettSakSide() {
   const { enheter, fnr: forhåndsutfyltFnr } = useLoaderData<typeof loader>();
   const kodeverk = useKodeverk();
   const lastResult = useActionData<typeof action>();
+  const submit = useSubmit();
 
   const ytelseAlternativer = useMemo(
     () => kodeverk.ytelseTyper.map((y) => ({ value: y.kode, label: y.beskrivelse })),
@@ -271,7 +272,11 @@ export default function OpprettSakSide() {
               onSubmit={(event) => {
                 form.onSubmit(event);
                 if (!event.defaultPrevented) {
+                  event.preventDefault();
                   sporHendelse("sak opprettet", { kategori: valgtKategori });
+                  const formData = new FormData(event.currentTarget);
+                  filer.forEach((fil) => formData.append("filer", fil));
+                  submit(formData, { method: "post", encType: "multipart/form-data" });
                 }
               }}
               noValidate
@@ -502,7 +507,7 @@ export default function OpprettSakSide() {
 
                 <hr className="border-ax-border-neutral-subtle max-w-2xl" />
 
-                {/* Filopplaster (kun UI inntil videre) */}
+                {/* Filopplasting */}
                 <VStack gap="space-12" className="max-w-2xl">
                   <FileUpload.Dropzone
                     label="Last opp dokumenter (valgfritt)"

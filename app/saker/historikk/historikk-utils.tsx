@@ -5,6 +5,7 @@ import {
   ClockDashedIcon,
   ClockIcon,
   DocPencilIcon,
+  FilesIcon,
   GavelIcon,
   PaperplaneIcon,
   PencilIcon,
@@ -84,6 +85,8 @@ export function hendelseTittel(hendelse: SakHendelse): string {
       return "Journalpost opprettet";
     case "OPPGAVE_OPPRETTET":
       return "Oppgave opprettet";
+    case "FIL_LASTET_OPP":
+      return "Fil lastet opp";
     default:
       return hendelse.hendelsesType;
   }
@@ -224,6 +227,8 @@ export function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
       return <DocPencilIcon {...iconProps} />;
     case "OPPGAVE_OPPRETTET":
       return <TasklistIcon {...iconProps} />;
+    case "FIL_LASTET_OPP":
+      return <FilesIcon {...iconProps} />;
     default:
       return <ClockIcon {...iconProps} />;
   }

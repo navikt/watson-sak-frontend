@@ -2,12 +2,13 @@ import { parseWithZod } from "@conform-to/zod/v4";
 import { data, redirect } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { skalBrukeMockdata } from "~/config/env.server";
+import { logger } from "~/logging/logging";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { erFnr } from "~/utils/string-utils";
 import type { OpprettKontrollsakRequest } from "./api.server";
 import type { Route } from "./+types/RegistrerSakSide.route";
-import { opprettKontrollsak } from "./api.server";
+import { lastOppFil, opprettKontrollsak } from "./api.server";
 import { pendingFnrCookie } from "./pending-fnr.server";
 import { enhetAlternativer, opprettSakSchema, type OpprettSakSkjema } from "./validering";
 
@@ -72,6 +73,19 @@ export async function action({ request }: Route.ActionArgs) {
     token,
     payload: byggOpprettKontrollsakPayload({ skjema: data }),
   });
+
+  if (!skalBrukeMockdata) {
+    const filer = formData
+      .getAll("filer")
+      .filter((f: FormDataEntryValue): f is File => f instanceof File && f.size > 0);
+    if (filer.length > 0) {
+      Promise.all(filer.map((fil: File) => lastOppFil(token, opprettetSak.id, fil))).catch(
+        (err) => {
+          logger.error("Uventet feil ved filopplasting etter sak-opprettelse", { err });
+        },
+      );
+    }
+  }
 
   return redirect(RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(opprettetSak.id)));
 }
