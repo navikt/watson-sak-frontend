@@ -2,6 +2,7 @@ import { parseWithZod } from "@conform-to/zod/v4";
 import { data, redirect } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { skalBrukeMockdata } from "~/config/env.server";
+import { logger } from "~/logging/logging";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { erFnr } from "~/utils/string-utils";
@@ -78,7 +79,9 @@ export async function action({ request }: Route.ActionArgs) {
       .getAll("filer")
       .filter((f): f is File => f instanceof File && f.size > 0);
     if (filer.length > 0) {
-      await Promise.all(filer.map((fil) => lastOppFil(token, opprettetSak.id, fil)));
+      Promise.all(filer.map((fil) => lastOppFil(token, opprettetSak.id, fil))).catch((err) => {
+        logger.error("Uventet feil ved filopplasting etter sak-opprettelse", { err });
+      });
     }
   }
 

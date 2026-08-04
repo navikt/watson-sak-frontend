@@ -114,17 +114,21 @@ export async function lastOppFil(token: string, sakId: string, fil: File): Promi
   const formData = new FormData();
   formData.append("fil", fil);
 
-  const respons = await fetch(`${BACKEND_API_URL}/api/v1/kontrollsaker/${sakId}/filer`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body: formData,
-  });
-
-  if (!respons.ok) {
-    logger.error("Kunne ikke laste opp fil til kontrollsak", {
-      sakId,
-      filnavn: fil.name,
-      status: respons.status,
+  try {
+    const respons = await fetch(`${BACKEND_API_URL}/api/v1/kontrollsaker/${sakId}/filer`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
     });
+
+    if (!respons.ok) {
+      logger.error("Kunne ikke laste opp fil til kontrollsak", {
+        sakId,
+        filnavn: fil.name,
+        status: respons.status,
+      });
+    }
+  } catch (err) {
+    logger.error("Nettverksfeil ved filopplasting", { sakId, filnavn: fil.name, err });
   }
 }
