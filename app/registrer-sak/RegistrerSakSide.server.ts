@@ -77,11 +77,13 @@ export async function action({ request }: Route.ActionArgs) {
   if (!skalBrukeMockdata) {
     const filer = formData
       .getAll("filer")
-      .filter((f): f is File => f instanceof File && f.size > 0);
+      .filter((f: FormDataEntryValue): f is File => f instanceof File && f.size > 0);
     if (filer.length > 0) {
-      Promise.all(filer.map((fil) => lastOppFil(token, opprettetSak.id, fil))).catch((err) => {
-        logger.error("Uventet feil ved filopplasting etter sak-opprettelse", { err });
-      });
+      Promise.all(filer.map((fil: File) => lastOppFil(token, opprettetSak.id, fil))).catch(
+        (err) => {
+          logger.error("Uventet feil ved filopplasting etter sak-opprettelse", { err });
+        },
+      );
     }
   }
 
