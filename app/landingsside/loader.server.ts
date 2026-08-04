@@ -37,7 +37,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       token,
       page: 1,
       size: 200,
-      ansvarligNavIdent: innloggetBruker.navIdent,
+      tilknyttetNavIdent: innloggetBruker.navIdent,
     });
     mineSakerHosInnloggetBruker = resultat.items;
   } else {

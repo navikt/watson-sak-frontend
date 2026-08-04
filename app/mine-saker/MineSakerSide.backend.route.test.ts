@@ -40,6 +40,28 @@ describe("MineSakerSide loader — backend-sti", () => {
     vi.clearAllMocks();
   });
 
+  it("sender tilknyttetNavIdent fra innlogget bruker istedenfor ansvarligNavIdent", async () => {
+    mockHentKontrollsaker.mockResolvedValue(tomSideResponse);
+    const { loader } = await import("./MineSakerSide.route");
+
+    await loader({
+      request: new Request("http://localhost/mine-saker"),
+      params: {},
+      context: {},
+    } as Parameters<typeof loader>[0]);
+
+    expect(mockHentKontrollsaker).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tilknyttetNavIdent: "Z999999",
+      }),
+    );
+    expect(mockHentKontrollsaker).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        ansvarligNavIdent: expect.any(String),
+      }),
+    );
+  }, 15000);
+
   it("sender INGEN ventestatus som utenBlokkering=true", async () => {
     mockHentKontrollsaker.mockResolvedValue(tomSideResponse);
     const { loader } = await import("./MineSakerSide.route");

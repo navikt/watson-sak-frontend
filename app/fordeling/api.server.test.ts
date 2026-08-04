@@ -55,6 +55,18 @@ describe("Fordeling api.server", () => {
     expect(url).toContain("ansvarligNavIdent=Z999999");
   }, 15000);
 
+  it("sender tilknyttetNavIdent som query-parameter", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(tomSideSvar);
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { hentKontrollsaker } = await import("./api.server");
+
+    await hentKontrollsaker({ token: "t", page: 1, size: 20, tilknyttetNavIdent: "Z999999" });
+
+    const url = fetchMock.mock.calls[0][0] as string;
+    expect(url).toContain("tilknyttetNavIdent=Z999999");
+  }, 15000);
+
   it("sender status som gjentatte query-parametre", async () => {
     const fetchMock = vi.fn().mockResolvedValue(tomSideSvar);
     vi.stubGlobal("fetch", fetchMock);

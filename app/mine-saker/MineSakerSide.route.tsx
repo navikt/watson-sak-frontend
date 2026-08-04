@@ -49,7 +49,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       page: 1,
       // TODO: Legg til paginering (se RAILS-2-1). size=200 er en midlertidig øvre grense.
       size: 200,
-      ansvarligNavIdent: innloggetBruker.navIdent,
+      tilknyttetNavIdent: innloggetBruker.navIdent,
       status: statusFilter,
       blokkert: blokkerteVentestatus.length > 0 ? blokkerteVentestatus : undefined,
       utenBlokkering: harIngenVentestatus ? true : undefined,
