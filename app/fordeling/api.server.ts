@@ -6,6 +6,7 @@ import type { KontrollsakPageResponse } from "./types.backend";
 
 type KontrollsakerFilter = {
   ansvarligNavIdent?: string;
+  tilknyttetNavIdent?: string;
   status?: string[];
   kategori?: string[];
   misbruktype?: string[];
@@ -27,6 +28,7 @@ type HentKontrollsakerArgs = {
 function byggKontrollsakerParams(args: HentKontrollsakerArgs): URLSearchParams {
   const params = new URLSearchParams({ page: String(args.page), size: String(args.size) });
   if (args.ansvarligNavIdent) params.set("ansvarligNavIdent", args.ansvarligNavIdent);
+  if (args.tilknyttetNavIdent) params.set("tilknyttetNavIdent", args.tilknyttetNavIdent);
   if (args.utenAnsvarlig != null) params.set("utenAnsvarlig", String(args.utenAnsvarlig));
   if (args.utenBlokkering != null) params.set("utenBlokkering", String(args.utenBlokkering));
   for (const v of args.status ?? []) params.append("status", v);

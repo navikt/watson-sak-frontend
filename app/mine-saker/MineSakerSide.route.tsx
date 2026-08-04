@@ -42,26 +42,35 @@ export async function loader({ request }: Route.LoaderArgs) {
   const harIngenVentestatus = ventestatusFilter.length > 0 && ventestatusFilter.includes("INGEN");
 
   let saker: KontrollsakResponse[];
+  let deltMedSaker: KontrollsakResponse[];
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
-    const resultat = await hentKontrollsaker({
+    const felles = {
       token,
       page: 1,
       // TODO: Legg til paginering (se RAILS-2-1). size=200 er en midlertidig øvre grense.
       size: 200,
-      ansvarligNavIdent: innloggetBruker.navIdent,
       status: statusFilter,
       blokkert: blokkerteVentestatus.length > 0 ? blokkerteVentestatus : undefined,
       utenBlokkering: harIngenVentestatus ? true : undefined,
-    });
-    saker = resultat.items;
+    };
+    const [mineSakerResultat, tilknyttedeSakerResultat] = await Promise.all([
+      hentKontrollsaker({ ...felles, ansvarligNavIdent: innloggetBruker.navIdent }),
+      hentKontrollsaker({ ...felles, tilknyttetNavIdent: innloggetBruker.navIdent }),
+    ]);
+    saker = mineSakerResultat.items;
+    deltMedSaker = tilknyttedeSakerResultat.items.filter(
+      (sak) => sak.saksbehandlere?.eier?.navIdent !== innloggetBruker.navIdent,
+    );
   } else {
     const alleSaker = hentMineSaker(request, innloggetBruker.navIdent, innloggetBruker.name);
     saker = filtrerMineSaker(alleSaker, statusFilter, ventestatusFilter);
+    deltMedSaker = [];
   }
 
   return {
     saker,
+    deltMedSaker,
     filterAlternativer: {
       status: ALLE_STATUSER.map((s) => ({ verdi: s, etikett: formaterStatus(s) })),
       ventestatus: ALLE_VENTESTATUSER.map((v) => ({ verdi: v, etikett: formaterVentestatus(v) })),
@@ -74,13 +83,14 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export default function MineSakerSide() {
-  const { saker, filterAlternativer, aktivtFilter } = useLoaderData<typeof loader>();
+  const { saker, deltMedSaker, filterAlternativer, aktivtFilter } = useLoaderData<typeof loader>();
 
   return (
     <>
       <title>Mine saker – Watson Sak</title>
       <MineSakerInnhold
         saker={saker}
+        deltMedSaker={deltMedSaker}
         detaljSti={RouteConfig.SAKER_DETALJ.replace("/:sakId", "")}
         filterAlternativer={filterAlternativer}
         aktivtFilter={aktivtFilter}

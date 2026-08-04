@@ -114,4 +114,51 @@ describe("MineSakerSide loader — backend-sti", () => {
       }),
     );
   }, 15000);
+
+  it("kaller backend parallelt med ansvarligNavIdent og tilknyttetNavIdent", async () => {
+    mockHentKontrollsaker.mockResolvedValue(tomSideResponse);
+    const { loader } = await import("./MineSakerSide.route");
+
+    await loader({
+      request: new Request("http://localhost/mine-saker"),
+      params: {},
+      context: {},
+    } as Parameters<typeof loader>[0]);
+
+    expect(mockHentKontrollsaker).toHaveBeenCalledTimes(2);
+    expect(mockHentKontrollsaker).toHaveBeenCalledWith(
+      expect.objectContaining({ ansvarligNavIdent: "Z999999" }),
+    );
+    expect(mockHentKontrollsaker).toHaveBeenCalledWith(
+      expect.objectContaining({ tilknyttetNavIdent: "Z999999" }),
+    );
+  }, 15000);
+
+  it("ekskluderer egne saker fra deltMedSaker", async () => {
+    const lagSakMedEier = (id: number, eierNavIdent: string) => ({
+      id,
+      saksbehandlere: {
+        eier: { navIdent: eierNavIdent, navn: "Test", enhet: "4812" },
+        deltMed: [],
+        opprettetAv: { navIdent: "Z000000", navn: "Test", enhet: "4812" },
+      },
+    });
+    const minSak = { ...tomSideResponse, items: [lagSakMedEier(1, "Z999999")] };
+    const tilknyttedeSaker = {
+      ...tomSideResponse,
+      items: [lagSakMedEier(1, "Z999999"), lagSakMedEier(2, "Z888888")],
+    };
+    mockHentKontrollsaker.mockResolvedValueOnce(minSak).mockResolvedValueOnce(tilknyttedeSaker);
+
+    const { loader } = await import("./MineSakerSide.route");
+
+    const result = await loader({
+      request: new Request("http://localhost/mine-saker"),
+      params: {},
+      context: {},
+    } as Parameters<typeof loader>[0]);
+
+    expect(result.deltMedSaker).toHaveLength(1);
+    expect(result.deltMedSaker[0].id).toBe(2);
+  }, 15000);
 });

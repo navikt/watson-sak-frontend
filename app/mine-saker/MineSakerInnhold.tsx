@@ -12,6 +12,7 @@ import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
 import { RouteConfig } from "~/routeConfig";
 import { DEFAULT_STATUSER, DEFAULT_VENTESTATUSER } from "./filtre";
+import { DeltMedMegSeksjon } from "./DeltMedMegSeksjon";
 
 type FilterAlternativ = {
   verdi: string;
@@ -20,6 +21,7 @@ type FilterAlternativ = {
 
 type Props = {
   saker: KontrollsakResponse[];
+  deltMedSaker: KontrollsakResponse[];
   detaljSti: string;
   filterAlternativer: {
     status: FilterAlternativ[];
@@ -31,7 +33,13 @@ type Props = {
   };
 };
 
-export function MineSakerInnhold({ saker, detaljSti, filterAlternativer, aktivtFilter }: Props) {
+export function MineSakerInnhold({
+  saker,
+  deltMedSaker,
+  detaljSti,
+  filterAlternativer,
+  aktivtFilter,
+}: Props) {
   const [, setSearchParams] = useSearchParams();
 
   // Mine saker har en spesiell default-initialiseringslogikk:
@@ -98,6 +106,7 @@ export function MineSakerInnhold({ saker, detaljSti, filterAlternativer, aktivtF
           </Filterpanel>
         </div>
       </div>
+      <DeltMedMegSeksjon saker={deltMedSaker} detaljSti={detaljSti} />
     </section>
   );
 }
