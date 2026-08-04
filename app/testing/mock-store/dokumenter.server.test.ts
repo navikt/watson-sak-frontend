@@ -46,7 +46,7 @@ describe("mock-store dokumenter", () => {
   it("henter et seedet dokument med innhold", () => {
     const dokument = hentDokument(state(), sakMedDokumenter, "1-1");
     expect(dokument?.tittel).toBe("Saksframlegg");
-    expect(dokument?.innhold.type).toBe("doc");
+    expect(Array.isArray(dokument?.innhold)).toBe(true);
   });
 
   it("oppretter et tomt dokument som kan hentes igjen", () => {
@@ -62,10 +62,7 @@ describe("mock-store dokumenter", () => {
 
   it("lagrer tittel og innhold på et dokument", () => {
     const { id } = opprettDokument(state(), sakUtenDokumenter, "Ola Nordmann");
-    const nyttInnhold = {
-      type: "doc",
-      content: [{ type: "paragraph", content: [{ type: "text", text: "Oppdatert" }] }],
-    };
+    const nyttInnhold = [{ type: "p", children: [{ text: "Oppdatert" }] }];
 
     const oppdatert = lagreDokument(state(), sakUtenDokumenter, id, {
       tittel: "Mitt notat",
@@ -84,7 +81,7 @@ describe("mock-store dokumenter", () => {
   it("returnerer undefined når man lagrer et ukjent dokument", () => {
     const resultat = lagreDokument(state(), sakMedDokumenter, "finnes-ikke", {
       tittel: "x",
-      innhold: { type: "doc" },
+      innhold: [{ type: "p", children: [{ text: "" }] }],
       endretAv: "Ola Nordmann",
     });
     expect(resultat).toBeUndefined();

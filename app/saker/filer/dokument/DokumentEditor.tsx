@@ -6,10 +6,32 @@ import {
   TableIcon,
 } from "@navikt/aksel-icons";
 import { Button, HStack, Tooltip } from "@navikt/ds-react";
-import { EditorContent, useEditor, type Editor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import { TableKit } from "@tiptap/extension-table";
-import { createContext, useContext, useEffect } from "react";
+import {
+  BlockquotePlugin,
+  BoldPlugin,
+  H2Plugin,
+  H3Plugin,
+  ItalicPlugin,
+} from "@platejs/basic-nodes/react";
+import { toggleBulletedList, toggleNumberedList } from "@platejs/list-classic";
+import { BulletedListPlugin, NumberedListPlugin } from "@platejs/list-classic/react";
+import {
+  deleteColumn,
+  deleteRow,
+  deleteTable,
+  insertTable,
+  insertTableColumn,
+  insertTableRow,
+} from "@platejs/table";
+import {
+  TableCellHeaderPlugin,
+  TableCellPlugin,
+  TablePlugin,
+  TableRowPlugin,
+} from "@platejs/table/react";
+import { createContext, useContext } from "react";
+import { Plate, PlateContent, PlateElement, useEditorState, usePlateEditor } from "platejs/react";
+import type { PlateElementProps } from "platejs/react";
 import { sporHendelse } from "~/analytics/analytics";
 import type { DokumentInnhold } from "~/saker/filer/typer";
 import {
@@ -51,13 +73,10 @@ function VerktøyKnapp({ etikett, aktiv, onClick, children }: VerktøyKnappProps
   );
 }
 
-function Verktøylinje({
-  editor,
-  onFormater,
-}: {
-  editor: Editor;
-  onFormater: (etikett: string) => void;
-}) {
+function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }) {
+  const editor = useEditorState();
+  const erITabell = !!editor.api.above({ match: { type: TablePlugin.key } });
+
   return (
     <FormaterContext.Provider value={onFormater}>
       {/* Den negative margen nuller ut den horisontale paddingen til dokumentkortet
@@ -75,97 +94,80 @@ function Verktøylinje({
         <HStack gap="space-2" align="center" wrap role="toolbar" aria-label="Formatering">
           <VerktøyKnapp
             etikett="Fet"
-            aktiv={editor.isActive("bold")}
-            onClick={() => editor.chain().focus().toggleBold().run()}
+            aktiv={!!editor.api.mark(BoldPlugin.key)}
+            onClick={() => editor.tf.toggleMark(BoldPlugin.key)}
           >
             <span className="font-bold">F</span>
           </VerktøyKnapp>
           <VerktøyKnapp
             etikett="Kursiv"
-            aktiv={editor.isActive("italic")}
-            onClick={() => editor.chain().focus().toggleItalic().run()}
+            aktiv={!!editor.api.mark(ItalicPlugin.key)}
+            onClick={() => editor.tf.toggleMark(ItalicPlugin.key)}
           >
             <span className="italic">K</span>
           </VerktøyKnapp>
           <VerktøyKnapp
             etikett="Overskrift 2"
-            aktiv={editor.isActive("heading", { level: 2 })}
-            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+            aktiv={editor.api.some({ match: { type: H2Plugin.key } })}
+            onClick={() => editor.tf.toggleBlock(H2Plugin.key)}
           >
             H2
           </VerktøyKnapp>
           <VerktøyKnapp
             etikett="Overskrift 3"
-            aktiv={editor.isActive("heading", { level: 3 })}
-            onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+            aktiv={editor.api.some({ match: { type: H3Plugin.key } })}
+            onClick={() => editor.tf.toggleBlock(H3Plugin.key)}
           >
             H3
           </VerktøyKnapp>
           <VerktøyKnapp
             etikett="Punktliste"
-            aktiv={editor.isActive("bulletList")}
-            onClick={() => editor.chain().focus().toggleBulletList().run()}
+            aktiv={editor.api.some({ match: { type: BulletedListPlugin.key } })}
+            onClick={() => toggleBulletedList(editor)}
           >
             <BulletListIcon aria-hidden />
           </VerktøyKnapp>
           <VerktøyKnapp
             etikett="Nummerert liste"
-            aktiv={editor.isActive("orderedList")}
-            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+            aktiv={editor.api.some({ match: { type: NumberedListPlugin.key } })}
+            onClick={() => toggleNumberedList(editor)}
           >
             <NumberListIcon aria-hidden />
           </VerktøyKnapp>
           <VerktøyKnapp
             etikett="Sitat"
-            aktiv={editor.isActive("blockquote")}
-            onClick={() => editor.chain().focus().toggleBlockquote().run()}
+            aktiv={editor.api.some({ match: { type: BlockquotePlugin.key } })}
+            onClick={() => editor.tf.toggleBlock(BlockquotePlugin.key)}
           >
             <span aria-hidden>&rdquo;</span>
           </VerktøyKnapp>
-          <VerktøyKnapp etikett="Angre" onClick={() => editor.chain().focus().undo().run()}>
+          <VerktøyKnapp etikett="Angre" onClick={() => editor.undo()}>
             <ArrowUndoIcon aria-hidden />
           </VerktøyKnapp>
-          <VerktøyKnapp etikett="Gjenta" onClick={() => editor.chain().focus().redo().run()}>
+          <VerktøyKnapp etikett="Gjenta" onClick={() => editor.redo()}>
             <ArrowRedoIcon aria-hidden />
           </VerktøyKnapp>
           <VerktøyKnapp
             etikett="Sett inn tabell"
-            onClick={() =>
-              editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
-            }
+            onClick={() => insertTable(editor, { rowCount: 3, colCount: 3, header: true })}
           >
             <TableIcon aria-hidden />
           </VerktøyKnapp>
-          {editor.isActive("table") && (
+          {erITabell && (
             <>
-              <VerktøyKnapp
-                etikett="Legg til kolonne"
-                onClick={() => editor.chain().focus().addColumnAfter().run()}
-              >
+              <VerktøyKnapp etikett="Legg til kolonne" onClick={() => insertTableColumn(editor)}>
                 <LeggTilKolonneIkon aria-hidden />
               </VerktøyKnapp>
-              <VerktøyKnapp
-                etikett="Slett kolonne"
-                onClick={() => editor.chain().focus().deleteColumn().run()}
-              >
+              <VerktøyKnapp etikett="Slett kolonne" onClick={() => deleteColumn(editor)}>
                 <SlettKolonneIkon aria-hidden />
               </VerktøyKnapp>
-              <VerktøyKnapp
-                etikett="Legg til rad"
-                onClick={() => editor.chain().focus().addRowAfter().run()}
-              >
+              <VerktøyKnapp etikett="Legg til rad" onClick={() => insertTableRow(editor)}>
                 <LeggTilRadIkon aria-hidden />
               </VerktøyKnapp>
-              <VerktøyKnapp
-                etikett="Slett rad"
-                onClick={() => editor.chain().focus().deleteRow().run()}
-              >
+              <VerktøyKnapp etikett="Slett rad" onClick={() => deleteRow(editor)}>
                 <SlettRadIkon aria-hidden />
               </VerktøyKnapp>
-              <VerktøyKnapp
-                etikett="Slett tabell"
-                onClick={() => editor.chain().focus().deleteTable().run()}
-              >
+              <VerktøyKnapp etikett="Slett tabell" onClick={() => deleteTable(editor)}>
                 <SlettTabellIkon aria-hidden />
               </VerktøyKnapp>
             </>
@@ -175,6 +177,36 @@ function Verktøylinje({
     </FormaterContext.Provider>
   );
 }
+
+const PLUGINS = [
+  BoldPlugin,
+  ItalicPlugin,
+  H2Plugin,
+  H3Plugin,
+  BlockquotePlugin,
+  BulletedListPlugin,
+  NumberedListPlugin,
+  TablePlugin.withComponent(({ children, ...props }: PlateElementProps) => (
+    <PlateElement as="table" {...props}>
+      {children}
+    </PlateElement>
+  )),
+  TableRowPlugin.withComponent(({ children, ...props }: PlateElementProps) => (
+    <PlateElement as="tr" {...props}>
+      {children}
+    </PlateElement>
+  )),
+  TableCellPlugin.withComponent(({ children, ...props }: PlateElementProps) => (
+    <PlateElement as="td" {...props}>
+      {children}
+    </PlateElement>
+  )),
+  TableCellHeaderPlugin.withComponent(({ children, ...props }: PlateElementProps) => (
+    <PlateElement as="th" {...props}>
+      {children}
+    </PlateElement>
+  )),
+];
 
 type DokumentEditorProps = {
   startInnhold: DokumentInnhold;
@@ -192,20 +224,27 @@ export function DokumentEditor({
   sakId,
   docId,
 }: DokumentEditorProps) {
-  const editor = useEditor({
-    extensions: [StarterKit, TableKit.configure({ table: { resizable: true } })],
-    content: startInnhold,
-    editable: redigerbar,
-    immediatelyRender: false,
-    // Re-render verktøylinjen på hver transaksjon, slik at aktiv-tilstand (fet, tabell osv.)
-    // og kontekstuelle tabell-knapper holder seg i synk med markøren.
-    shouldRerenderOnTransaction: true,
-    editorProps: {
-      attributes: {
-        role: "textbox",
-        "aria-multiline": "true",
-        "aria-label": "Dokumentinnhold",
-        class:
+  const editor = usePlateEditor({
+    plugins: PLUGINS,
+    value: startInnhold as never,
+  });
+
+  return (
+    <Plate
+      editor={editor}
+      readOnly={!redigerbar}
+      onChange={({ value }) => onEndring(value as DokumentInnhold)}
+    >
+      {redigerbar && (
+        <Verktøylinje
+          onFormater={(format) => sporHendelse("dokument formatert", { sakId, docId, format })}
+        />
+      )}
+      <PlateContent
+        role="textbox"
+        aria-multiline
+        aria-label="Dokumentinnhold"
+        className={
           "min-h-[60vh] focus:outline-none [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg " +
           "[&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
           "[&_blockquote]:border-l-4 [&_blockquote]:border-ax-border-neutral-subtle " +
@@ -213,32 +252,9 @@ export function DokumentEditor({
           "[&_table]:border-collapse [&_table]:my-3 [&_table]:w-full " +
           "[&_td]:border [&_td]:border-ax-border-neutral-subtle [&_td]:p-2 [&_td]:align-top " +
           "[&_th]:border [&_th]:border-ax-border-neutral-subtle [&_th]:p-2 [&_th]:align-top " +
-          "[&_th]:bg-ax-bg-neutral-soft [&_th]:text-left [&_th]:font-semibold",
-      },
-    },
-    onUpdate: ({ editor: gjeldende }) => {
-      onEndring(gjeldende.getJSON() as DokumentInnhold);
-    },
-  });
-
-  // Hold redigerbar-tilstanden i synk dersom tilgangen endres.
-  useEffect(() => {
-    editor?.setEditable(redigerbar);
-  }, [editor, redigerbar]);
-
-  if (!editor) {
-    return null;
-  }
-
-  return (
-    <div>
-      {redigerbar && (
-        <Verktøylinje
-          editor={editor}
-          onFormater={(format) => sporHendelse("dokument formatert", { sakId, docId, format })}
-        />
-      )}
-      <EditorContent editor={editor} />
-    </div>
+          "[&_th]:bg-ax-bg-neutral-soft [&_th]:text-left [&_th]:font-semibold"
+        }
+      />
+    </Plate>
   );
 }

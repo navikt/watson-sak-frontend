@@ -1,22 +1,18 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { DokumentInnhold } from "~/saker/filer/typer";
 import { DokumentEditor } from "./DokumentEditor";
 
-const innhold: DokumentInnhold = {
-  type: "doc",
-  content: [
-    {
-      type: "heading",
-      attrs: { level: 2 },
-      content: [{ type: "text", text: "Min overskrift" }],
-    },
-    {
-      type: "paragraph",
-      content: [{ type: "text", text: "Brødtekst her" }],
-    },
-  ],
-};
+const innhold: DokumentInnhold = [
+  {
+    type: "h2",
+    children: [{ text: "Min overskrift" }],
+  },
+  {
+    type: "p",
+    children: [{ text: "Brødtekst her" }],
+  },
+];
 
 describe("DokumentEditor", () => {
   it("viser verktøylinje og innhold når redigerbar", async () => {
@@ -54,8 +50,10 @@ describe("DokumentEditor", () => {
     const settInnTabell = await screen.findByLabelText("Sett inn tabell");
     fireEvent.click(settInnTabell);
 
-    // Editoren rendrer en faktisk <table>, og endringen propageres som Tiptap-JSON.
-    expect(document.querySelector("table")).not.toBeNull();
+    // Editoren rendrer en faktisk <table>, og endringen propageres som Plate/Slate-JSON.
+    await waitFor(() => {
+      expect(document.querySelector("table")).not.toBeNull();
+    });
     expect(onEndring).toHaveBeenCalled();
     // Tabell-kontekstuelle knapper dukker opp når markøren står i tabellen.
     expect(screen.getByLabelText("Legg til rad")).toBeDefined();

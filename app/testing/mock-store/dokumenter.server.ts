@@ -10,17 +10,11 @@ function iDag(): string {
 }
 
 function lagDummyInnhold(avsnitt: string[]): DokumentInnhold {
-  return {
-    type: "doc",
-    content: avsnitt.map((tekst) => ({
-      type: "paragraph",
-      content: [{ type: "text", text: tekst }],
-    })),
-  };
+  return avsnitt.map((tekst) => ({ type: "p", children: [{ text: tekst }] }));
 }
 
 function tomtInnhold(): DokumentInnhold {
-  return { type: "doc", content: [{ type: "paragraph" }] };
+  return [{ type: "p", children: [{ text: "" }] }];
 }
 
 type DokumentSeed = {

@@ -72,10 +72,8 @@ function normaliserTittel(verdi: unknown): string {
 }
 
 function erGyldigInnhold(verdi: unknown): verdi is DokumentInnhold {
-  // Tiptap forventer et dokument med «doc» som rot-node.
-  return (
-    typeof verdi === "object" && verdi !== null && (verdi as { type?: unknown }).type === "doc"
-  );
+  // Plate/Slate forventer et dokument som en liste av noder (arrays).
+  return Array.isArray(verdi) && verdi.length > 0;
 }
 
 export async function action({ request, params }: Route.ActionArgs) {

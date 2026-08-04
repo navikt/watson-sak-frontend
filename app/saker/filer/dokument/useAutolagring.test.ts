@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { DokumentInnhold } from "~/saker/filer/typer";
 import { useAutolagring } from "./useAutolagring";
 
-const innhold: DokumentInnhold = { type: "doc" };
+const innhold: DokumentInnhold = [{ type: "p", children: [{ text: "" }] }];
 
 beforeEach(() => {
   vi.useFakeTimers();

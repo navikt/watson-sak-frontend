@@ -22,7 +22,7 @@ vi.mock("~/analytics/analytics", () => ({
   sporHendelse: vi.fn(),
 }));
 
-const innhold: DokumentInnhold = { type: "doc", content: [{ type: "paragraph" }] };
+const innhold: DokumentInnhold = [{ type: "p", children: [{ text: "" }] }];
 
 const dokumenter: DokumentNode[] = [
   {
