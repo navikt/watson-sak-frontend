@@ -115,7 +115,7 @@ describe("MineSakerSide loader — backend-sti", () => {
     );
   }, 15000);
 
-  it("kaller backend parallelt med ansvarligNavIdent og tilknyttetNavIdent", async () => {
+  it("kaller backend med både ansvarligNavIdent og tilknyttetNavIdent", async () => { 
     mockHentKontrollsaker.mockResolvedValue(tomSideResponse);
     const { loader } = await import("./MineSakerSide.route");
 
