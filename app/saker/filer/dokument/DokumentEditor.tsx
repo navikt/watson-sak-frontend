@@ -118,16 +118,16 @@ function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }
   const editor = useEditorState();
   const erITabell = !!editor.api.above({ match: { type: TablePlugin.key } });
   const toolbarRef = useRef<HTMLDivElement>(null);
-  const [aktivEtikett, settAktivEtikett] = useState("Angre");
+  const [aktivEtikett, settAktivEtikett] = useState("Skrifttype");
 
   // Behold roveren innenfor gyldige knapper når verktøylinja endres (tabell-knapper vises/skjules)
   const oppdaterRoverVedEndring = useCallback(() => {
     const knapper = hentKnapper(toolbarRef.current);
-    const erGyldig = knapper.some((k) => k.getAttribute("aria-label") === aktivEtikett);
+    const erGyldig = knapper.some((k) => k.tabIndex === 0);
     if (!erGyldig && knapper.length > 0) {
       settAktivEtikett(knapper[0].getAttribute("aria-label") ?? "");
     }
-  }, [aktivEtikett]);
+  }, []);
 
   // Kjør etter render når erITabell endres
   const forrigeErITabell = useRef(erITabell);
@@ -198,6 +198,7 @@ function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }
               <Select
                 label="Skrifttype"
                 hideLabel
+                aria-label="Skrifttype"
                 size="small"
                 value={hentGjeldendeBloktype(editor)}
                 tabIndex={aktivEtikett === "Skrifttype" ? 0 : -1}
