@@ -87,6 +87,8 @@ export function hendelseTittel(hendelse: SakHendelse): string {
       return "Oppgave opprettet";
     case "FIL_LASTET_OPP":
       return "Fil lastet opp";
+    case "FIL_AVVIST_VIRUS":
+      return "Fil avvist – virus oppdaget";
     default:
       return hendelse.hendelsesType;
   }
@@ -186,6 +188,10 @@ export function hendelseBeskrivelse(hendelse: SakHendelse): string | null {
     return `Fjernet deling med: ${hendelse.berortSaksbehandlerNavn} (${hendelse.berortSaksbehandlerNavIdent}) · ${hendelse.berortSaksbehandlerEnhet}`;
   }
 
+  if (hendelse.hendelsesType === "FIL_LASTET_OPP") {
+    return hendelse.beskrivelse ?? null;
+  }
+
   return `Status: ${formaterStatus(hendelse.status)}`;
 }
 
@@ -229,6 +235,8 @@ export function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
       return <TasklistIcon {...iconProps} />;
     case "FIL_LASTET_OPP":
       return <FilesIcon {...iconProps} />;
+    case "FIL_AVVIST_VIRUS":
+      return <XMarkOctagonIcon {...iconProps} />;
     default:
       return <ClockIcon {...iconProps} />;
   }

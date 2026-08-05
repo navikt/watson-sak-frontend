@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { SakHendelse } from "./typer";
-import { hendelseBeskrivelse } from "./historikk-utils";
+import { hendelseBeskrivelse, hendelseTittel } from "./historikk-utils";
 
 function lagHendelse(overrides: Partial<SakHendelse>): SakHendelse {
   return {
@@ -54,5 +54,40 @@ describe("hendelseBeskrivelse", () => {
     expect(resultat).toContain("Saken er for gammel");
     expect(resultat).toContain("Status: Henlagt");
     expect(resultat).not.toContain("Årsak:");
+  });
+});
+
+describe("FIL_LASTET_OPP og FIL_AVVIST_VIRUS", () => {
+  it("viser virusskanning-beskrivelse for FIL_LASTET_OPP", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "FIL_LASTET_OPP",
+      status: null,
+      beskrivelse: "Virusskanning OK",
+    });
+
+    const resultat = hendelseBeskrivelse(hendelse);
+
+    expect(resultat).toBe("Virusskanning OK");
+  });
+
+  it("returnerer null for FIL_LASTET_OPP uten beskrivelse", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "FIL_LASTET_OPP",
+      status: null,
+      beskrivelse: null,
+    });
+
+    const resultat = hendelseBeskrivelse(hendelse);
+
+    expect(resultat).toBeNull();
+  });
+
+  it("viser riktig tittel for FIL_AVVIST_VIRUS", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "FIL_AVVIST_VIRUS",
+      status: null,
+    });
+
+    expect(hendelseTittel(hendelse)).toBe("Fil avvist – virus oppdaget");
   });
 });
