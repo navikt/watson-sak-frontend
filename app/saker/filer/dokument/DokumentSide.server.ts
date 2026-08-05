@@ -72,8 +72,11 @@ function normaliserTittel(verdi: unknown): string {
 }
 
 function erGyldigInnhold(verdi: unknown): verdi is DokumentInnhold {
-  // Plate/Slate forventer et dokument som en liste av noder (arrays).
-  return Array.isArray(verdi) && verdi.length > 0;
+  return (
+    Array.isArray(verdi) &&
+    verdi.length > 0 &&
+    verdi.every((node) => node !== null && typeof node === "object" && !Array.isArray(node))
+  );
 }
 
 export async function action({ request, params }: Route.ActionArgs) {

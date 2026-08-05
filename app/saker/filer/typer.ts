@@ -3,7 +3,7 @@
  * (Slate Value), der hver node har «type» og «children».
  * Vi holder typen løs slik at server-koden ikke trenger å importere editor-pakken.
  */
-export type DokumentInnhold = object[];
+export type DokumentInnhold = Record<string, unknown>[];
 
 /** Node i dokumentlisten for en sak. */
 export type DokumentNode = {
