@@ -251,16 +251,10 @@ function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }
               >
                 <span className="line-through">S</span>
               </VerktøyKnapp>
-              <VerktøyKnapp
-                etikett="Indenter"
-                onClick={() => indent(editor)}
-              >
+              <VerktøyKnapp etikett="Indenter" onClick={() => indent(editor)}>
                 <IndenterIkon aria-hidden />
               </VerktøyKnapp>
-              <VerktøyKnapp
-                etikett="Avindenter"
-                onClick={() => outdent(editor)}
-              >
+              <VerktøyKnapp etikett="Avindenter" onClick={() => outdent(editor)}>
                 <AvindenterIkon aria-hidden />
               </VerktøyKnapp>
               <VerktøyKnapp
