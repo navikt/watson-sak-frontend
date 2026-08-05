@@ -47,9 +47,8 @@ import {
   SlettKolonneIkon,
   SlettRadIkon,
   SlettTabellIkon,
-  IndenterIkon,
-  AvindenterIkon,
 } from "./tabell-ikoner";
+import { AvindenterIkon, IndenterIkon } from "./verktøylinje-ikoner";
 
 /** Sporer hvilken formateringsknapp som brukes, knyttet til riktig dokument. */
 const FormaterContext = createContext<(etikett: string) => void>(() => {});

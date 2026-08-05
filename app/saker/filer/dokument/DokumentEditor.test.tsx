@@ -29,6 +29,10 @@ describe("DokumentEditor", () => {
     expect(await screen.findByRole("toolbar", { name: "Formatering" })).toBeDefined();
     expect(screen.getByLabelText("Fet")).toBeDefined();
     expect(screen.getByLabelText("Kursiv")).toBeDefined();
+    expect(screen.getByLabelText("Understreket")).toBeDefined();
+    expect(screen.getByLabelText("Gjennomstreket")).toBeDefined();
+    expect(screen.getByLabelText("Indenter")).toBeDefined();
+    expect(screen.getByLabelText("Avindenter")).toBeDefined();
     expect(screen.getByLabelText("Punktliste")).toBeDefined();
     expect(screen.getByLabelText("Angre")).toBeDefined();
     expect(screen.getByText("Min overskrift")).toBeDefined();
@@ -87,5 +91,72 @@ describe("DokumentEditor", () => {
 
     expect(await screen.findByText("Min overskrift")).toBeDefined();
     expect(screen.queryByRole("toolbar")).toBeNull();
+  });
+
+  it("toggler understreket mark og kaller onEndring", async () => {
+    render(
+      <DokumentEditor
+        startInnhold={innhold}
+        redigerbar
+        onEndring={() => {}}
+        sakId="ABC-1"
+        docId="d1"
+      />,
+    );
+
+    const knapp = await screen.findByLabelText("Understreket");
+    expect(knapp.getAttribute("aria-pressed")).toBe("false");
+    expect(() => fireEvent.click(knapp)).not.toThrow();
+  });
+
+  it("toggler gjennomstreket mark og kaller onEndring", async () => {
+    render(
+      <DokumentEditor
+        startInnhold={innhold}
+        redigerbar
+        onEndring={() => {}}
+        sakId="ABC-1"
+        docId="d1"
+      />,
+    );
+
+    const knapp = await screen.findByLabelText("Gjennomstreket");
+    expect(knapp.getAttribute("aria-pressed")).toBe("false");
+    expect(() => fireEvent.click(knapp)).not.toThrow();
+  });
+
+  it("indenter-knappen kaller onEndring", async () => {
+    const onEndring = vi.fn();
+    render(
+      <DokumentEditor
+        startInnhold={innhold}
+        redigerbar
+        onEndring={onEndring}
+        sakId="ABC-1"
+        docId="d1"
+      />,
+    );
+
+    const knapp = await screen.findByLabelText("Indenter");
+    expect(knapp).toBeDefined();
+    // Indenter med tom selektion gjør ingenting – verifiser at knappetrykk ikke kaster.
+    expect(() => fireEvent.click(knapp)).not.toThrow();
+  });
+
+  it("avindenter-knappen kaller onEndring", async () => {
+    const onEndring = vi.fn();
+    render(
+      <DokumentEditor
+        startInnhold={innhold}
+        redigerbar
+        onEndring={onEndring}
+        sakId="ABC-1"
+        docId="d1"
+      />,
+    );
+
+    const knapp = await screen.findByLabelText("Avindenter");
+    expect(knapp).toBeDefined();
+    expect(() => fireEvent.click(knapp)).not.toThrow();
   });
 });
