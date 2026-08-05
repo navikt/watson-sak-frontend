@@ -118,7 +118,7 @@ function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }
   const editor = useEditorState();
   const erITabell = !!editor.api.above({ match: { type: TablePlugin.key } });
   const toolbarRef = useRef<HTMLDivElement>(null);
-  const [aktivEtikett, settAktivEtikett] = useState("Fet");
+  const [aktivEtikett, settAktivEtikett] = useState("Angre");
 
   // Behold roveren innenfor gyldige knapper når verktøylinja endres (tabell-knapper vises/skjules)
   const oppdaterRoverVedEndring = useCallback(() => {
@@ -160,115 +160,126 @@ function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }
     <FormaterContext.Provider value={onFormater}>
       <AktivEtikettContext.Provider value={aktivEtikett}>
         <SettAktivEtikettContext.Provider value={settAktivEtikett}>
-      {/* Den negative margen nuller ut den horisontale paddingen til dokumentkortet
+          {/* Den negative margen nuller ut den horisontale paddingen til dokumentkortet
           slik at den festede verktøylinja går helt ut til kantene, mens px-en
           justerer knappene tilbake på linje med teksten. Vi bruker de samme Aksel
           spacing-variablene som kortet (space-24 / space-64 ved md), så verdiene
           ikke drifter fra hverandre om spacing-skalaen endres. */}
-      <HStack
-        justify="space-between"
-        align="center"
-        gap="space-4"
-        wrap
-        className="sticky top-0 z-10 bg-ax-bg-raised border-b border-ax-border-neutral-subtle py-2 mb-2 mx-[calc(var(--ax-space-24)_*_-1)] px-[var(--ax-space-24)] md:mx-[calc(var(--ax-space-64)_*_-1)] md:px-[var(--ax-space-64)]"
-      >
-        <HStack
-          gap="space-2"
-          align="center"
-          wrap
-          role="toolbar"
-          aria-label="Formatering"
-          ref={toolbarRef}
-          onKeyDown={onKeyDown}
-        >
-          <VerktøyKnapp
-            etikett="Fet"
-            aktiv={!!editor.api.mark(BoldPlugin.key)}
-            onClick={() => editor.tf.toggleMark(BoldPlugin.key)}
+          <HStack
+            justify="space-between"
+            align="center"
+            gap="space-4"
+            wrap
+            className="sticky top-0 z-10 bg-ax-bg-raised border-b border-ax-border-neutral-subtle py-2 mb-2 mx-[calc(var(--ax-space-24)_*_-1)] px-[var(--ax-space-24)] md:mx-[calc(var(--ax-space-64)_*_-1)] md:px-[var(--ax-space-64)]"
           >
-            <span className="font-bold">F</span>
-          </VerktøyKnapp>
-          <VerktøyKnapp
-            etikett="Kursiv"
-            aktiv={!!editor.api.mark(ItalicPlugin.key)}
-            onClick={() => editor.tf.toggleMark(ItalicPlugin.key)}
-          >
-            <span className="italic">K</span>
-          </VerktøyKnapp>
-          <Select
-            label="Skrifttype"
-            hideLabel
-            size="small"
-            value={hentGjeldendeBloktype(editor)}
-            tabIndex={aktivEtikett === "Skrifttype" ? 0 : -1}
-            onFocus={() => settAktivEtikett("Skrifttype")}
-            onChange={(e) => {
-              const type = e.target.value;
-              const current = hentGjeldendeBloktype(editor);
-              // For normaltekst: toggle av gjeldende overskrift. For overskrifter: toggle på.
-              editor.tf.toggleBlock(type === "p" ? current : type);
-            }}
-          >
-            {BLOKTYPER.map(({ verdi, etikett }) => (
-              <option key={verdi} value={verdi}>
-                {etikett}
-              </option>
-            ))}
-          </Select>
-          <VerktøyKnapp
-            etikett="Punktliste"
-            aktiv={editor.api.some({ match: { type: BulletedListPlugin.key } })}
-            onClick={() => toggleBulletedList(editor)}
-          >
-            <BulletListIcon aria-hidden />
-          </VerktøyKnapp>
-          <VerktøyKnapp
-            etikett="Nummerert liste"
-            aktiv={editor.api.some({ match: { type: NumberedListPlugin.key } })}
-            onClick={() => toggleNumberedList(editor)}
-          >
-            <NumberListIcon aria-hidden />
-          </VerktøyKnapp>
-          <VerktøyKnapp
-            etikett="Sitat"
-            aktiv={editor.api.some({ match: { type: BlockquotePlugin.key } })}
-            onClick={() => editor.tf.toggleBlock(BlockquotePlugin.key)}
-          >
-            <span aria-hidden>&rdquo;</span>
-          </VerktøyKnapp>
-          <VerktøyKnapp etikett="Angre" disabled={editor.history.undos.length === 0} onClick={() => editor.undo()}>
-            <ArrowUndoIcon aria-hidden />
-          </VerktøyKnapp>
-          <VerktøyKnapp etikett="Gjenta" disabled={editor.history.redos.length === 0} onClick={() => editor.redo()}>
-            <ArrowRedoIcon aria-hidden />
-          </VerktøyKnapp>
-          <VerktøyKnapp
-            etikett="Sett inn tabell"
-            onClick={() => insertTable(editor, { rowCount: 3, colCount: 3, header: true })}
-          >
-            <TableIcon aria-hidden />
-          </VerktøyKnapp>
-          {erITabell && (
-            <>
-              <VerktøyKnapp etikett="Legg til kolonne" onClick={() => insertTableColumn(editor)}>
-                <LeggTilKolonneIkon aria-hidden />
+            <HStack
+              gap="space-2"
+              align="center"
+              wrap
+              role="toolbar"
+              aria-label="Formatering"
+              ref={toolbarRef}
+              onKeyDown={onKeyDown}
+            >
+              <VerktøyKnapp
+                etikett="Angre"
+                disabled={editor.history.undos.length === 0}
+                onClick={() => editor.undo()}
+              >
+                <ArrowUndoIcon aria-hidden />
               </VerktøyKnapp>
-              <VerktøyKnapp etikett="Slett kolonne" onClick={() => deleteColumn(editor)}>
-                <SlettKolonneIkon aria-hidden />
+              <VerktøyKnapp
+                etikett="Gjenta"
+                disabled={editor.history.redos.length === 0}
+                onClick={() => editor.redo()}
+              >
+                <ArrowRedoIcon aria-hidden />
               </VerktøyKnapp>
-              <VerktøyKnapp etikett="Legg til rad" onClick={() => insertTableRow(editor)}>
-                <LeggTilRadIkon aria-hidden />
+              <Select
+                label="Skrifttype"
+                hideLabel
+                size="small"
+                value={hentGjeldendeBloktype(editor)}
+                tabIndex={aktivEtikett === "Skrifttype" ? 0 : -1}
+                onFocus={() => settAktivEtikett("Skrifttype")}
+                onChange={(e) => {
+                  const type = e.target.value;
+                  const current = hentGjeldendeBloktype(editor);
+                  // For normaltekst: toggle av gjeldende overskrift. For overskrifter: toggle på.
+                  editor.tf.toggleBlock(type === "p" ? current : type);
+                }}
+              >
+                {BLOKTYPER.map(({ verdi, etikett }) => (
+                  <option key={verdi} value={verdi}>
+                    {etikett}
+                  </option>
+                ))}
+              </Select>
+              <VerktøyKnapp
+                etikett="Fet"
+                aktiv={!!editor.api.mark(BoldPlugin.key)}
+                onClick={() => editor.tf.toggleMark(BoldPlugin.key)}
+              >
+                <span className="font-bold">F</span>
               </VerktøyKnapp>
-              <VerktøyKnapp etikett="Slett rad" onClick={() => deleteRow(editor)}>
-                <SlettRadIkon aria-hidden />
+              <VerktøyKnapp
+                etikett="Kursiv"
+                aktiv={!!editor.api.mark(ItalicPlugin.key)}
+                onClick={() => editor.tf.toggleMark(ItalicPlugin.key)}
+              >
+                <span className="italic">K</span>
               </VerktøyKnapp>
-              <VerktøyKnapp etikett="Slett tabell" onClick={() => deleteTable(editor)}>
-                <SlettTabellIkon aria-hidden />
+              <VerktøyKnapp
+                etikett="Sitat"
+                aktiv={editor.api.some({ match: { type: BlockquotePlugin.key } })}
+                onClick={() => editor.tf.toggleBlock(BlockquotePlugin.key)}
+              >
+                <span aria-hidden>&rdquo;</span>
               </VerktøyKnapp>
-            </>
-          )}
-        </HStack>
-      </HStack>
+              <VerktøyKnapp
+                etikett="Punktliste"
+                aktiv={editor.api.some({ match: { type: BulletedListPlugin.key } })}
+                onClick={() => toggleBulletedList(editor)}
+              >
+                <BulletListIcon aria-hidden />
+              </VerktøyKnapp>
+              <VerktøyKnapp
+                etikett="Nummerert liste"
+                aktiv={editor.api.some({ match: { type: NumberedListPlugin.key } })}
+                onClick={() => toggleNumberedList(editor)}
+              >
+                <NumberListIcon aria-hidden />
+              </VerktøyKnapp>
+              <VerktøyKnapp
+                etikett="Sett inn tabell"
+                onClick={() => insertTable(editor, { rowCount: 3, colCount: 3, header: true })}
+              >
+                <TableIcon aria-hidden />
+              </VerktøyKnapp>
+              {erITabell && (
+                <>
+                  <VerktøyKnapp
+                    etikett="Legg til kolonne"
+                    onClick={() => insertTableColumn(editor)}
+                  >
+                    <LeggTilKolonneIkon aria-hidden />
+                  </VerktøyKnapp>
+                  <VerktøyKnapp etikett="Slett kolonne" onClick={() => deleteColumn(editor)}>
+                    <SlettKolonneIkon aria-hidden />
+                  </VerktøyKnapp>
+                  <VerktøyKnapp etikett="Legg til rad" onClick={() => insertTableRow(editor)}>
+                    <LeggTilRadIkon aria-hidden />
+                  </VerktøyKnapp>
+                  <VerktøyKnapp etikett="Slett rad" onClick={() => deleteRow(editor)}>
+                    <SlettRadIkon aria-hidden />
+                  </VerktøyKnapp>
+                  <VerktøyKnapp etikett="Slett tabell" onClick={() => deleteTable(editor)}>
+                    <SlettTabellIkon aria-hidden />
+                  </VerktøyKnapp>
+                </>
+              )}
+            </HStack>
+          </HStack>
         </SettAktivEtikettContext.Provider>
       </AktivEtikettContext.Provider>
     </FormaterContext.Provider>
