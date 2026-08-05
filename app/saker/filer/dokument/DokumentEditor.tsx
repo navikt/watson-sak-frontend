@@ -400,8 +400,7 @@ export function DokumentEditor({
           "[&_td]:border [&_td]:border-ax-border-neutral-subtle [&_td]:p-2 [&_td]:align-top " +
           "[&_th]:border [&_th]:border-ax-border-neutral-subtle [&_th]:p-2 [&_th]:align-top " +
           "[&_th]:bg-ax-bg-neutral-soft [&_th]:text-left [&_th]:font-semibold " +
-          "[&_u]:underline [&_s]:line-through " +
-          "[&_[style*='padding-left']]:block"
+          "[&_u]:underline [&_s]:line-through"
         }
       />
     </Plate>
