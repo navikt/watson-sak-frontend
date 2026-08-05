@@ -293,13 +293,19 @@ export async function delKontrollsak(
   return parseEllerKastFeil(kontrollsakResponseSchema, await respons.json(), "delKontrollsak");
 }
 
-export async function opprettNotat(token: string, sakId: string, tittel: string, tekst: string) {
-  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/notater`), {
+export async function opprettJournalpost(
+  token: string,
+  sakId: string,
+  journalposttype: string,
+  tittel: string,
+  tekst: string,
+) {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/journalposter`), {
     method: "POST",
     headers: authHeaders(token),
-    body: JSON.stringify({ tittel, tekst }),
+    body: JSON.stringify({ journalposttype, tittel, tekst }),
   });
-  if (!respons.ok) await håndterFeil(respons, "Kunne ikke opprette notat");
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke opprette journalpost");
   return respons.json();
 }
 

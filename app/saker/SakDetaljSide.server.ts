@@ -367,10 +367,27 @@ async function backendAction(
       }
       const malLabel = finnNotatMalLabel(formData.get("mal"));
       const tittel = malLabel ?? "Notat";
-      await backendApi.opprettNotat(token, sakId, tittel, notatRaw.trim());
+      await backendApi.opprettJournalpost(token, sakId, "NOTAT", tittel, notatRaw.trim());
       return { ok: true };
     }
-    case "opprett_journalpost":
+    case "opprett_journalpost": {
+      const journalposttype = hentTekstfelt(
+        formData,
+        "journalposttype",
+        "Journalposttype er påkrevd",
+      );
+      const tittel = hentTekstfelt(formData, "tittel", "Tittel er påkrevd");
+      const innhold = hentTekstfelt(formData, "innhold", "Innhold er påkrevd");
+
+      await backendApi.opprettJournalpost(
+        token,
+        sakId,
+        journalposttype,
+        tittel.trim(),
+        innhold.trim(),
+      );
+      return { ok: true };
+    }
     case "opprett_oppgave": {
       throw data("Handlingen er ikke støttet ennå", { status: 501 });
     }
