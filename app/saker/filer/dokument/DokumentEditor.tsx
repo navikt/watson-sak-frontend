@@ -13,6 +13,8 @@ import {
   H2Plugin,
   H3Plugin,
   ItalicPlugin,
+  StrikethroughPlugin,
+  UnderlinePlugin,
 } from "@platejs/basic-nodes/react";
 import { toggleBulletedList, toggleNumberedList } from "@platejs/list-classic";
 import { BulletedListPlugin, NumberedListPlugin } from "@platejs/list-classic/react";
@@ -24,6 +26,8 @@ import {
   insertTableColumn,
   insertTableRow,
 } from "@platejs/table";
+import { indent, outdent } from "@platejs/indent";
+import { IndentPlugin } from "@platejs/indent/react";
 import { TrailingBlockPlugin } from "platejs";
 import {
   TableCellHeaderPlugin,
@@ -44,6 +48,7 @@ import {
   SlettRadIkon,
   SlettTabellIkon,
 } from "./tabell-ikoner";
+import { AvindenterIkon, IndenterIkon } from "./verktøylinje-ikoner";
 
 /** Sporer hvilken formateringsknapp som brukes, knyttet til riktig dokument. */
 const FormaterContext = createContext<(etikett: string) => void>(() => {});
@@ -232,6 +237,26 @@ function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }
                 <span className="italic">K</span>
               </VerktøyKnapp>
               <VerktøyKnapp
+                etikett="Understreket"
+                aktiv={!!editor.api.mark(UnderlinePlugin.key)}
+                onClick={() => editor.tf.toggleMark(UnderlinePlugin.key)}
+              >
+                <span className="underline">U</span>
+              </VerktøyKnapp>
+              <VerktøyKnapp
+                etikett="Gjennomstreket"
+                aktiv={!!editor.api.mark(StrikethroughPlugin.key)}
+                onClick={() => editor.tf.toggleMark(StrikethroughPlugin.key)}
+              >
+                <span className="line-through">S</span>
+              </VerktøyKnapp>
+              <VerktøyKnapp etikett="Indenter" onClick={() => indent(editor)}>
+                <IndenterIkon aria-hidden />
+              </VerktøyKnapp>
+              <VerktøyKnapp etikett="Avindenter" onClick={() => outdent(editor)}>
+                <AvindenterIkon aria-hidden />
+              </VerktøyKnapp>
+              <VerktøyKnapp
                 etikett="Sitat"
                 aktiv={editor.api.some({ match: { type: BlockquotePlugin.key } })}
                 onClick={() => editor.tf.toggleBlock(BlockquotePlugin.key)}
@@ -291,6 +316,9 @@ function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }
 const PLUGINS = [
   BoldPlugin,
   ItalicPlugin,
+  UnderlinePlugin,
+  StrikethroughPlugin,
+  IndentPlugin,
   H1Plugin,
   H2Plugin,
   H3Plugin,
@@ -364,7 +392,8 @@ export function DokumentEditor({
           "[&_table]:border-collapse [&_table]:my-3 [&_table]:w-full " +
           "[&_td]:border [&_td]:border-ax-border-neutral-subtle [&_td]:p-2 [&_td]:align-top " +
           "[&_th]:border [&_th]:border-ax-border-neutral-subtle [&_th]:p-2 [&_th]:align-top " +
-          "[&_th]:bg-ax-bg-neutral-soft [&_th]:text-left [&_th]:font-semibold"
+          "[&_th]:bg-ax-bg-neutral-soft [&_th]:text-left [&_th]:font-semibold " +
+          "[&_u]:underline [&_s]:line-through"
         }
       />
     </Plate>
