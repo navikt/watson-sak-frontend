@@ -367,7 +367,7 @@ async function backendAction(
       }
       const malLabel = finnNotatMalLabel(formData.get("mal"));
       const tittel = malLabel ?? "Notat";
-      await backendApi.opprettNotat(token, sakId, tittel, notatRaw.trim());
+      await backendApi.opprettJournalpost(token, sakId, "NOTAT", tittel, notatRaw.trim());
       return { ok: true };
     }
     case "opprett_journalpost": {

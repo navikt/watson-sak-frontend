@@ -138,42 +138,6 @@ describe("søkKontrollsakerOrganisasjon", () => {
   });
 });
 
-describe("opprettNotat", () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-    vi.unstubAllGlobals();
-  });
-
-  it("kaller riktig URL og body", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 201,
-      json: async () => ({ journalpostId: "12345", journalpostferdigstilt: true, dokumenter: [] }),
-    });
-    vi.stubGlobal("fetch", fetchMock);
-
-    const { opprettNotat } = await import("./api.server");
-    await opprettNotat("token-123", "42", "Testtittel", "Testinnhold");
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      "https://backend.test/api/v1/kontrollsaker/42/notater",
-      expect.objectContaining({
-        method: "POST",
-        body: JSON.stringify({ tittel: "Testtittel", tekst: "Testinnhold" }),
-        headers: expect.objectContaining({ Authorization: "Bearer token-123" }),
-      }),
-    );
-  });
-
-  it("kaster feil ved ikke-ok HTTP-svar", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 500 });
-    vi.stubGlobal("fetch", fetchMock);
-
-    const { opprettNotat } = await import("./api.server");
-    await expect(opprettNotat("token", "42", "Tittel", "Tekst")).rejects.toThrow();
-  });
-});
-
 describe("opprettJournalpost", () => {
   afterEach(() => {
     vi.restoreAllMocks();
