@@ -48,7 +48,7 @@ describe("DokumentEditor", () => {
     );
 
     const settInnTabell = await screen.findByLabelText("Sett inn tabell");
-    fireEvent.mouseDown(settInnTabell);
+    fireEvent.click(settInnTabell);
 
     // Editoren rendrer en faktisk <table>, og endringen propageres som Plate/Slate-JSON.
     await waitFor(() => {

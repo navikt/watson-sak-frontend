@@ -29,7 +29,7 @@ import {
   TablePlugin,
   TableRowPlugin,
 } from "@platejs/table/react";
-import { createContext, useContext } from "react";
+import { createContext, useCallback, useContext, useRef, useState } from "react";
 import { Plate, PlateContent, PlateElement, useEditorState, usePlateEditor } from "platejs/react";
 import type { TElement } from "platejs";
 import type { PlateElementProps } from "platejs/react";
@@ -45,6 +45,10 @@ import {
 
 /** Sporer hvilken formateringsknapp som brukes, knyttet til riktig dokument. */
 const FormaterContext = createContext<(etikett: string) => void>(() => {});
+/** Etikett på den knappen som for øyeblikket er i tab-rekkefølgen (roving tabindex). */
+const AktivEtikettContext = createContext<string>("");
+/** Oppdaterer roving tabindex-roveren når en knapp får fokus. */
+const SettAktivEtikettContext = createContext<(etikett: string) => void>(() => {});
 
 type VerktøyKnappProps = {
   etikett: string;
@@ -55,6 +59,9 @@ type VerktøyKnappProps = {
 
 function VerktøyKnapp({ etikett, aktiv, onClick, children }: VerktøyKnappProps) {
   const onFormater = useContext(FormaterContext);
+  const aktivEtikett = useContext(AktivEtikettContext);
+  const settAktivEtikett = useContext(SettAktivEtikettContext);
+
   return (
     <Tooltip content={etikett}>
       <Button
@@ -63,9 +70,15 @@ function VerktøyKnapp({ etikett, aktiv, onClick, children }: VerktøyKnappProps
         variant={aktiv ? "secondary" : "tertiary"}
         aria-label={etikett}
         aria-pressed={aktiv}
+        tabIndex={aktivEtikett === etikett ? 0 : -1}
+        onFocus={() => settAktivEtikett(etikett)}
         onMouseDown={(e) => {
-          // Hindrer at fokus flyttes fra editoren til knappen
-          e.preventDefault();
+          // For museklikk (detail > 0): hindre at fokus flyttes fra editoren.
+          // For tastatur-syntetiske click-events (detail === 0): la nettleseren
+          // håndtere fokus normalt slik at skjermlesere fungerer riktig.
+          if (e.detail > 0) e.preventDefault();
+        }}
+        onClick={() => {
           onFormater(etikett);
           onClick();
         }}
@@ -76,12 +89,56 @@ function VerktøyKnapp({ etikett, aktiv, onClick, children }: VerktøyKnappProps
   );
 }
 
+function hentKnapper(container: HTMLElement | null): HTMLButtonElement[] {
+  return Array.from(container?.querySelectorAll<HTMLButtonElement>("button:not([disabled])") ?? []);
+}
+
 function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }) {
   const editor = useEditorState();
   const erITabell = !!editor.api.above({ match: { type: TablePlugin.key } });
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const [aktivEtikett, settAktivEtikett] = useState("Fet");
+
+  // Behold roveren innenfor gyldige knapper når verktøylinja endres (tabell-knapper vises/skjules)
+  const oppdaterRoverVedEndring = useCallback(() => {
+    const knapper = hentKnapper(toolbarRef.current);
+    const erGyldig = knapper.some((k) => k.getAttribute("aria-label") === aktivEtikett);
+    if (!erGyldig && knapper.length > 0) {
+      settAktivEtikett(knapper[0].getAttribute("aria-label") ?? "");
+    }
+  }, [aktivEtikett]);
+
+  // Kjør etter render når erITabell endres
+  const forrigeErITabell = useRef(erITabell);
+  if (forrigeErITabell.current !== erITabell) {
+    forrigeErITabell.current = erITabell;
+    oppdaterRoverVedEndring();
+  }
+
+  function onKeyDown(e: React.KeyboardEvent) {
+    const navigasjonstaster = ["ArrowLeft", "ArrowRight", "Home", "End"];
+    if (!navigasjonstaster.includes(e.key)) return;
+    e.preventDefault();
+
+    const knapper = hentKnapper(toolbarRef.current);
+    const gjeldende = knapper.findIndex((k) => k.getAttribute("aria-label") === aktivEtikett);
+    if (gjeldende === -1) return;
+
+    let neste: number;
+    if (e.key === "ArrowRight") neste = (gjeldende + 1) % knapper.length;
+    else if (e.key === "ArrowLeft") neste = (gjeldende - 1 + knapper.length) % knapper.length;
+    else if (e.key === "Home") neste = 0;
+    else neste = knapper.length - 1;
+
+    const nesteEtikett = knapper[neste].getAttribute("aria-label") ?? "";
+    settAktivEtikett(nesteEtikett);
+    knapper[neste].focus();
+  }
 
   return (
     <FormaterContext.Provider value={onFormater}>
+      <AktivEtikettContext.Provider value={aktivEtikett}>
+        <SettAktivEtikettContext.Provider value={settAktivEtikett}>
       {/* Den negative margen nuller ut den horisontale paddingen til dokumentkortet
           slik at den festede verktøylinja går helt ut til kantene, mens px-en
           justerer knappene tilbake på linje med teksten. Vi bruker de samme Aksel
@@ -94,7 +151,15 @@ function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }
         wrap
         className="sticky top-0 z-10 bg-ax-bg-raised border-b border-ax-border-neutral-subtle py-2 mb-2 mx-[calc(var(--ax-space-24)_*_-1)] px-[var(--ax-space-24)] md:mx-[calc(var(--ax-space-64)_*_-1)] md:px-[var(--ax-space-64)]"
       >
-        <HStack gap="space-2" align="center" wrap role="toolbar" aria-label="Formatering">
+        <HStack
+          gap="space-2"
+          align="center"
+          wrap
+          role="toolbar"
+          aria-label="Formatering"
+          ref={toolbarRef}
+          onKeyDown={onKeyDown}
+        >
           <VerktøyKnapp
             etikett="Fet"
             aktiv={!!editor.api.mark(BoldPlugin.key)}
@@ -177,6 +242,8 @@ function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }
           )}
         </HStack>
       </HStack>
+        </SettAktivEtikettContext.Provider>
+      </AktivEtikettContext.Provider>
     </FormaterContext.Provider>
   );
 }
