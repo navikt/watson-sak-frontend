@@ -30,13 +30,7 @@ import {
   TableRowPlugin,
 } from "@platejs/table/react";
 import { createContext, useContext } from "react";
-import {
-  Plate,
-  PlateContent,
-  PlateElement,
-  useEditorState,
-  usePlateEditor,
-} from "platejs/react";
+import { Plate, PlateContent, PlateElement, useEditorState, usePlateEditor } from "platejs/react";
 import type { TElement } from "platejs";
 import type { PlateElementProps } from "platejs/react";
 import { sporHendelse } from "~/analytics/analytics";
