@@ -5,10 +5,11 @@ import {
   NumberListIcon,
   TableIcon,
 } from "@navikt/aksel-icons";
-import { Button, HStack, Tooltip } from "@navikt/ds-react";
+import { Button, HStack, Select, Tooltip } from "@navikt/ds-react";
 import {
   BlockquotePlugin,
   BoldPlugin,
+  H1Plugin,
   H2Plugin,
   H3Plugin,
   ItalicPlugin,
@@ -91,8 +92,26 @@ function VerktøyKnapp({ etikett, aktiv, disabled, onClick, children }: Verktøy
   );
 }
 
-function hentKnapper(container: HTMLElement | null): HTMLButtonElement[] {
-  return Array.from(container?.querySelectorAll<HTMLButtonElement>("button:not([disabled])") ?? []);
+function hentKnapper(container: HTMLElement | null): (HTMLButtonElement | HTMLSelectElement)[] {
+  return Array.from(
+    container?.querySelectorAll<HTMLButtonElement | HTMLSelectElement>(
+      "button:not([disabled]), select:not([disabled])",
+    ) ?? [],
+  );
+}
+
+const BLOKTYPER = [
+  { verdi: "p", etikett: "Normaltekst" },
+  { verdi: H1Plugin.key, etikett: "Overskrift 1" },
+  { verdi: H2Plugin.key, etikett: "Overskrift 2" },
+  { verdi: H3Plugin.key, etikett: "Overskrift 3" },
+] as const;
+
+function hentGjeldendeBloktype(editor: ReturnType<typeof useEditorState>): string {
+  for (const { verdi } of BLOKTYPER) {
+    if (verdi !== "p" && editor.api.some({ match: { type: verdi } })) return verdi;
+  }
+  return "p";
 }
 
 function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }) {
@@ -176,20 +195,26 @@ function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }
           >
             <span className="italic">K</span>
           </VerktøyKnapp>
-          <VerktøyKnapp
-            etikett="Overskrift 2"
-            aktiv={editor.api.some({ match: { type: H2Plugin.key } })}
-            onClick={() => editor.tf.toggleBlock(H2Plugin.key)}
+          <Select
+            label="Skrifttype"
+            hideLabel
+            size="small"
+            value={hentGjeldendeBloktype(editor)}
+            tabIndex={aktivEtikett === "Skrifttype" ? 0 : -1}
+            onFocus={() => settAktivEtikett("Skrifttype")}
+            onChange={(e) => {
+              const type = e.target.value;
+              const current = hentGjeldendeBloktype(editor);
+              // For normaltekst: toggle av gjeldende overskrift. For overskrifter: toggle på.
+              editor.tf.toggleBlock(type === "p" ? current : type);
+            }}
           >
-            H2
-          </VerktøyKnapp>
-          <VerktøyKnapp
-            etikett="Overskrift 3"
-            aktiv={editor.api.some({ match: { type: H3Plugin.key } })}
-            onClick={() => editor.tf.toggleBlock(H3Plugin.key)}
-          >
-            H3
-          </VerktøyKnapp>
+            {BLOKTYPER.map(({ verdi, etikett }) => (
+              <option key={verdi} value={verdi}>
+                {etikett}
+              </option>
+            ))}
+          </Select>
           <VerktøyKnapp
             etikett="Punktliste"
             aktiv={editor.api.some({ match: { type: BulletedListPlugin.key } })}
@@ -253,6 +278,7 @@ function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }
 const PLUGINS = [
   BoldPlugin,
   ItalicPlugin,
+  H1Plugin,
   H2Plugin,
   H3Plugin,
   BlockquotePlugin,
@@ -317,7 +343,7 @@ export function DokumentEditor({
         aria-multiline
         aria-label="Dokumentinnhold"
         className={
-          "min-h-[60vh] focus:outline-none [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg " +
+          "min-h-[60vh] focus:outline-none [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg " +
           "[&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
           "[&_blockquote]:border-l-4 [&_blockquote]:border-ax-border-neutral-subtle " +
           "[&_blockquote]:pl-4 [&_blockquote]:italic [&_p]:my-2 " +
