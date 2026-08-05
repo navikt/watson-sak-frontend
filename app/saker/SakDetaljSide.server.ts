@@ -383,7 +383,7 @@ async function backendAction(
         throw data("Bare NOTAT-type er støttet ennå", { status: 501 });
       }
 
-      await backendApi.opprettNotat(token, sakId, tittel, innhold);
+      await backendApi.opprettNotat(token, sakId, tittel.trim(), innhold.trim());
       return { ok: true };
     }
     case "opprett_oppgave": {
