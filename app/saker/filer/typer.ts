@@ -1,12 +1,9 @@
 /**
- * Tiptap-dokument lagret som JSON (ProseMirror-node). Vi holder denne typen
- * løs og strukturell slik at server-koden ikke trenger å importere editor-pakken.
+ * Plate/Slate-dokument lagret som JSON. Formatet er en liste av noder
+ * (Slate Value), der hver node har «type» og «children».
+ * Vi holder typen løs slik at server-koden ikke trenger å importere editor-pakken.
  */
-export type DokumentInnhold = {
-  type: string;
-  content?: DokumentInnhold[];
-  [key: string]: unknown;
-};
+export type DokumentInnhold = Record<string, unknown>[];
 
 /** Node i dokumentlisten for en sak. */
 export type DokumentNode = {

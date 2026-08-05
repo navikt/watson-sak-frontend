@@ -31,11 +31,9 @@ const journalpostReferanseSchema = z.object({
   opprettet: z.string(),
 });
 
-const dokumentInnholdSchema: z.ZodType<DokumentInnhold> = z
-  .object({
-    type: z.string(),
-  })
-  .passthrough();
+const dokumentInnholdSchema: z.ZodType<DokumentInnhold> = z.array(
+  z.record(z.string(), z.unknown()),
+);
 
 const dokumentResponseSchema = dokumentNodeSchema.extend({
   innhold: dokumentInnholdSchema,

@@ -60,10 +60,7 @@ function putRequest(kropp: unknown) {
   });
 }
 
-const enkeltInnhold = {
-  type: "doc",
-  content: [{ type: "paragraph", content: [{ type: "text", text: "Hei" }] }],
-};
+const enkeltInnhold = [{ type: "p", children: [{ text: "Hei" }] }];
 
 describe("DokumentSide loader", () => {
   beforeEach(() => {

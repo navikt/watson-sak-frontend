@@ -72,9 +72,10 @@ function normaliserTittel(verdi: unknown): string {
 }
 
 function erGyldigInnhold(verdi: unknown): verdi is DokumentInnhold {
-  // Tiptap forventer et dokument med «doc» som rot-node.
   return (
-    typeof verdi === "object" && verdi !== null && (verdi as { type?: unknown }).type === "doc"
+    Array.isArray(verdi) &&
+    verdi.length > 0 &&
+    verdi.every((node) => node !== null && typeof node === "object" && !Array.isArray(node))
   );
 }
 
