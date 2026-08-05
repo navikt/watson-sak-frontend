@@ -379,11 +379,13 @@ async function backendAction(
       const tittel = hentTekstfelt(formData, "tittel", "Tittel er påkrevd");
       const innhold = hentTekstfelt(formData, "innhold", "Innhold er påkrevd");
 
-      if (journalposttype !== "NOTAT") {
-        throw data("Bare NOTAT-type er støttet ennå", { status: 501 });
-      }
-
-      await backendApi.opprettNotat(token, sakId, tittel.trim(), innhold.trim());
+      await backendApi.opprettJournalpost(
+        token,
+        sakId,
+        journalposttype,
+        tittel.trim(),
+        innhold.trim(),
+      );
       return { ok: true };
     }
     case "opprett_oppgave": {

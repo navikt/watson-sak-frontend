@@ -173,3 +173,46 @@ describe("opprettNotat", () => {
     await expect(opprettNotat("token", "42", "Tittel", "Tekst")).rejects.toThrow();
   });
 });
+
+describe("opprettJournalpost", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it.each(["NOTAT", "INNGAAENDE", "UTGAAENDE"])(
+    "kaller riktig URL og body for type %s",
+    async (journalposttype) => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 201,
+        json: async () => ({ journalpostId: "99", journalpostferdigstilt: true, dokumenter: [] }),
+      });
+      vi.stubGlobal("fetch", fetchMock);
+
+      const { opprettJournalpost } = await import("./api.server");
+      await opprettJournalpost("token-123", "42", journalposttype, "Testtittel", "Testinnhold");
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://backend.test/api/v1/kontrollsaker/42/journalposter",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            journalposttype,
+            tittel: "Testtittel",
+            tekst: "Testinnhold",
+          }),
+          headers: expect.objectContaining({ Authorization: "Bearer token-123" }),
+        }),
+      );
+    },
+  );
+
+  it("kaster feil ved ikke-ok HTTP-svar", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 500 });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { opprettJournalpost } = await import("./api.server");
+    await expect(opprettJournalpost("token", "42", "NOTAT", "Tittel", "Tekst")).rejects.toThrow();
+  });
+});
