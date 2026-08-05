@@ -370,7 +370,22 @@ async function backendAction(
       await backendApi.opprettNotat(token, sakId, tittel, notatRaw.trim());
       return { ok: true };
     }
-    case "opprett_journalpost":
+    case "opprett_journalpost": {
+      const journalposttype = hentTekstfelt(
+        formData,
+        "journalposttype",
+        "Journalposttype er påkrevd",
+      );
+      const tittel = hentTekstfelt(formData, "tittel", "Tittel er påkrevd");
+      const innhold = hentTekstfelt(formData, "innhold", "Innhold er påkrevd");
+
+      if (journalposttype !== "NOTAT") {
+        throw data("Bare NOTAT-type er støttet ennå", { status: 501 });
+      }
+
+      await backendApi.opprettNotat(token, sakId, tittel, innhold);
+      return { ok: true };
+    }
     case "opprett_oppgave": {
       throw data("Handlingen er ikke støttet ennå", { status: 501 });
     }
