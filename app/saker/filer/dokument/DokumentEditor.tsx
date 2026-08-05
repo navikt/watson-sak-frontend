@@ -24,6 +24,7 @@ import {
   insertTableColumn,
   insertTableRow,
 } from "@platejs/table";
+import { TrailingBlockPlugin } from "platejs";
 import {
   TableCellHeaderPlugin,
   TableCellPlugin,
@@ -296,6 +297,7 @@ const PLUGINS = [
   BlockquotePlugin,
   BulletedListPlugin,
   NumberedListPlugin,
+  TrailingBlockPlugin.configure({ options: { type: "p" } }),
   TablePlugin.withComponent(({ children, ...props }: PlateElementProps) => (
     <PlateElement as="table" {...props}>
       {children}
