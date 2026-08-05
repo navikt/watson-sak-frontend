@@ -53,11 +53,12 @@ const SettAktivEtikettContext = createContext<(etikett: string) => void>(() => {
 type VerktøyKnappProps = {
   etikett: string;
   aktiv?: boolean;
+  disabled?: boolean;
   onClick: () => void;
   children: React.ReactNode;
 };
 
-function VerktøyKnapp({ etikett, aktiv, onClick, children }: VerktøyKnappProps) {
+function VerktøyKnapp({ etikett, aktiv, disabled, onClick, children }: VerktøyKnappProps) {
   const onFormater = useContext(FormaterContext);
   const aktivEtikett = useContext(AktivEtikettContext);
   const settAktivEtikett = useContext(SettAktivEtikettContext);
@@ -70,6 +71,7 @@ function VerktøyKnapp({ etikett, aktiv, onClick, children }: VerktøyKnappProps
         variant={aktiv ? "secondary" : "tertiary"}
         aria-label={etikett}
         aria-pressed={aktiv}
+        disabled={disabled}
         tabIndex={aktivEtikett === etikett ? 0 : -1}
         onFocus={() => settAktivEtikett(etikett)}
         onMouseDown={(e) => {
@@ -209,10 +211,10 @@ function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }
           >
             <span aria-hidden>&rdquo;</span>
           </VerktøyKnapp>
-          <VerktøyKnapp etikett="Angre" onClick={() => editor.undo()}>
+          <VerktøyKnapp etikett="Angre" disabled={editor.history.undos.length === 0} onClick={() => editor.undo()}>
             <ArrowUndoIcon aria-hidden />
           </VerktøyKnapp>
-          <VerktøyKnapp etikett="Gjenta" onClick={() => editor.redo()}>
+          <VerktøyKnapp etikett="Gjenta" disabled={editor.history.redos.length === 0} onClick={() => editor.redo()}>
             <ArrowRedoIcon aria-hidden />
           </VerktøyKnapp>
           <VerktøyKnapp
