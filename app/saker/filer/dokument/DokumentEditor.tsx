@@ -461,7 +461,7 @@ export function DokumentEditor({
         {/* Grå flate med «arket» til venstre og sidepanelet som en egen seksjon til høyre.
         Raden går helt ut til kantene fordi ruta har bedt layouten om full bredde. */}
         <div className="flex min-h-0 flex-1 flex-col lg:flex-row lg:items-stretch">
-          <div className="flex min-w-0 flex-1 justify-center overflow-y-auto bg-ax-bg-neutral-moderate px-[var(--ax-space-16)] py-[var(--ax-space-32)] lg:px-[var(--ax-space-48)]">
+          <div className="ml-[var(--ax-space-16)] flex min-w-0 flex-1 justify-center overflow-y-auto rounded-lg bg-ax-bg-neutral-moderate px-[var(--ax-space-16)] py-[var(--ax-space-32)] lg:ml-[var(--ax-space-24)] lg:px-[var(--ax-space-48)]">
             <Kort
               padding={{ xs: "space-24", md: "space-64" }}
               className="h-fit w-full max-w-[210mm] shadow-[var(--ax-shadow-dialog)]"
