@@ -42,6 +42,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
+    // Sakseier-sjekk håndheves av backend — den returnerer 403 om brukeren ikke er eier.
     await backendApi.slettFil(token, sakId, filId);
     return { ok: true as const };
   }

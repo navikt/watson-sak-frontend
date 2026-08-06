@@ -33,7 +33,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
     try {
-      return await backendApi.lasteOppFil(token, sakReferanse, fil);
+      return await backendApi.lastOppFil(token, sakReferanse, fil);
     } catch (feil) {
       if (feil instanceof BackendFeilException) {
         return { message: feil.message };

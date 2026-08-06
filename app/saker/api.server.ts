@@ -537,7 +537,7 @@ export async function hentFiler(token: string, sakId: string): Promise<FilRespon
   return parseEllerKastFeil(z.array(filResponseSchema), await respons.json(), "hentFiler");
 }
 
-export async function lasteOppFil(token: string, sakId: string, fil: File): Promise<FilResponse> {
+export async function lastOppFil(token: string, sakId: string, fil: File): Promise<FilResponse> {
   const formData = new FormData();
   formData.append("fil", fil);
   const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/filer`), {
@@ -546,7 +546,7 @@ export async function lasteOppFil(token: string, sakId: string, fil: File): Prom
     body: formData,
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke laste opp fil");
-  return parseEllerKastFeil(filResponseSchema, await respons.json(), "lasteOppFil");
+  return parseEllerKastFeil(filResponseSchema, await respons.json(), "lastOppFil");
 }
 
 export async function slettFil(token: string, sakId: string, filId: string): Promise<void> {

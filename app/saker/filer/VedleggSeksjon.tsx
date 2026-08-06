@@ -66,7 +66,7 @@ function NedlastKnapp({ filId, filnavn, sakId }: NedlastKnappProps) {
   const url = RouteConfig.API.SAK_FIL.replace(":sakId", sakId).replace(":filId", filId);
 
   function håndterNedlasting() {
-    sporHendelse("vedlegg lastet ned", { sakId });
+    sporHendelse("vedlegg åpnet", { sakId });
     window.open(url, "_blank", "noopener,noreferrer");
   }
 

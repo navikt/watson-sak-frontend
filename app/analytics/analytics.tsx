@@ -52,6 +52,7 @@ type Hendelse =
   | "oppgave opprettet"
   | "fil lastet opp"
   | "vedlegg lastet opp"
+  | "vedlegg åpnet"
   | "vedlegg lastet ned"
   | "vedlegg slettet"
   | "dokument opprettet"
