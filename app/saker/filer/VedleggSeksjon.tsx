@@ -78,6 +78,7 @@ function SlettKnapp({ filId, filnavn, sakId, bruktIDokumenter }: SlettKnappProps
       <FilIBrukModal
         dokumenter={dokumenterIBruk}
         filnavn={filnavn}
+        sakId={sakId}
         onClose={() => settDokumenterIBruk(null)}
       />
     </>

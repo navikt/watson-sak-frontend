@@ -114,6 +114,7 @@ describe("VedleggSeksjon", () => {
     fireEvent.click(screen.getByLabelText("Slett screenshot.png"));
 
     expect(screen.getByText("Filen er i bruk")).toBeDefined();
-    expect(screen.getByText("Saksframlegg")).toBeDefined();
+    const lenke = screen.getByRole("link", { name: "Saksframlegg" });
+    expect(lenke.getAttribute("href")).toBe("/saker/SAK-1/dokumenter/dok-1");
   });
 });
