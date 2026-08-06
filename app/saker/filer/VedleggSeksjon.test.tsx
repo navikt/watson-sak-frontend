@@ -63,10 +63,10 @@ describe("VedleggSeksjon", () => {
     expect(screen.getByText("Kari Hansen")).toBeDefined();
   });
 
-  it("viser nedlastingsknapp for hver fil", () => {
+  it("viser åpne-knapp for hver fil", () => {
     renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: false, kanLasteOpp: false });
-    expect(screen.getByLabelText("Last ned anmeldelse.pdf")).toBeDefined();
-    expect(screen.getByLabelText("Last ned screenshot.png")).toBeDefined();
+    expect(screen.getByLabelText("Åpne anmeldelse.pdf")).toBeDefined();
+    expect(screen.getByLabelText("Åpne screenshot.png")).toBeDefined();
   });
 
   it("viser ikke slett-knapp når erSakseier er false", () => {

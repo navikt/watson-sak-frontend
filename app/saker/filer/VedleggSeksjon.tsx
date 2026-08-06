@@ -1,4 +1,4 @@
-import { DownloadIcon, TrashIcon, UploadIcon } from "@navikt/aksel-icons";
+import { EyeIcon, TrashIcon, UploadIcon } from "@navikt/aksel-icons";
 import {
   Alert,
   BodyShort,
@@ -75,8 +75,8 @@ function NedlastKnapp({ filId, filnavn, sakId }: NedlastKnappProps) {
       type="button"
       variant="tertiary-neutral"
       size="xsmall"
-      icon={<DownloadIcon aria-hidden />}
-      aria-label={`Last ned ${filnavn}`}
+      icon={<EyeIcon aria-hidden />}
+      aria-label={`Åpne ${filnavn}`}
       onClick={håndterNedlasting}
     />
   );
