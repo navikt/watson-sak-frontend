@@ -28,6 +28,8 @@ import {
 } from "@platejs/table";
 import { indent, outdent } from "@platejs/indent";
 import { IndentPlugin } from "@platejs/indent/react";
+import { DocxPlugin } from "@platejs/docx";
+import { JuicePlugin } from "@platejs/juice";
 import { TrailingBlockPlugin } from "platejs";
 import {
   TableCellHeaderPlugin,
@@ -383,6 +385,10 @@ const PLUGINS = [
   BlockquotePlugin,
   BulletedListPlugin,
   NumberedListPlugin,
+  // Håndterer lim inn fra Word: DocxPlugin konverterer DOCX-utklipp til Plate-format,
+  // JuicePlugin inliner CSS-stiler i utklippet så formateringen bevares ved konverteringen.
+  DocxPlugin,
+  JuicePlugin,
   TrailingBlockPlugin.configure({ options: { type: "p" } }),
   TablePlugin.withComponent(({ children, ...props }: PlateElementProps) => (
     <PlateElement as="table" {...props}>
