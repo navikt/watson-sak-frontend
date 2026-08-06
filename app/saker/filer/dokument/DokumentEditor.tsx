@@ -447,20 +447,20 @@ export function DokumentEditor({
       <div
         ref={flateRef}
         style={høyde ? { height: høyde } : undefined}
-        className="mt-[var(--ax-space-12)] flex flex-col gap-[var(--ax-space-12)] overflow-hidden"
+        className="flex flex-col gap-[var(--ax-space-12)] overflow-hidden"
       >
         {redigerbar && (
-          <Verktøylinje
-            onFormater={(format) => sporHendelse("dokument formatert", { sakId, docId, format })}
-            aktivtSidepanel={aktivtSidepanel}
-            onVelgSidepanel={settAktivtSidepanel}
-          />
+          <div className="px-[var(--ax-space-16)] lg:px-[var(--ax-space-24)]">
+            <Verktøylinje
+              onFormater={(format) => sporHendelse("dokument formatert", { sakId, docId, format })}
+              aktivtSidepanel={aktivtSidepanel}
+              onVelgSidepanel={settAktivtSidepanel}
+            />
+          </div>
         )}
-        {/* Full-bredde rad: grå flate med «arket» til venstre, sidepanelet som en egen
-        fullhøyde-seksjon til høyre, slik skissen viser. Den negative margen nuller ut
-        gutterne til PageBlock-en i AppLayout (space-16, space-48 fra lg), slik at raden
-        går helt ut til kantene av innholdsområdet. */}
-        <div className="mx-[calc(var(--ax-space-16)_*_-1)] flex min-h-0 flex-1 flex-col lg:mx-[calc(var(--ax-space-48)_*_-1)] lg:flex-row lg:items-stretch">
+        {/* Grå flate med «arket» til venstre og sidepanelet som en egen seksjon til høyre.
+        Raden går helt ut til kantene fordi ruta har bedt layouten om full bredde. */}
+        <div className="flex min-h-0 flex-1 flex-col lg:flex-row lg:items-stretch">
           <div className="flex min-w-0 flex-1 justify-center overflow-y-auto bg-ax-bg-neutral-moderate px-[var(--ax-space-16)] py-[var(--ax-space-32)] lg:px-[var(--ax-space-48)]">
             <Kort
               padding={{ xs: "space-24", md: "space-64" }}

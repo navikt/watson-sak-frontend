@@ -1,5 +1,5 @@
 import { PageBlock } from "@navikt/ds-react/Page";
-import { Outlet } from "react-router";
+import { Outlet, useMatches } from "react-router";
 import type { LoaderFunctionArgs, ShouldRevalidateFunctionArgs } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { skalBrukeMockdata } from "~/config/env.server";
@@ -38,7 +38,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 }
 
+/** Ruter kan sette dette som `handle` for å be layouten om å slippe bredde-begrensningen. */
+type Rutehandle = { fullbredde?: boolean } | undefined;
+
 export default function RootLayout() {
+  // Ruter kan be om å slippe bredde-begrensningen via `handle`, f.eks. dokumenteditoren
+  // som skal bruke hele flaten. De styrer da sine egne marger selv.
+  const fullbredde = useMatches().some((match) => (match.handle as Rutehandle)?.fullbredde);
+
   return (
     <div className="flex flex-col min-h-screen">
       <AppHeader />
@@ -46,9 +53,13 @@ export default function RootLayout() {
       <div className="flex flex-1">
         <AppSidebar />
         <main id="maincontent" className="min-w-0 flex-1">
-          <PageBlock width="2xl" gutters className="mx-0!">
+          {fullbredde ? (
             <Outlet />
-          </PageBlock>
+          ) : (
+            <PageBlock width="2xl" gutters className="mx-0!">
+              <Outlet />
+            </PageBlock>
+          )}
         </main>
       </div>
       <AppFooter />

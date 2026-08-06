@@ -17,6 +17,9 @@ import { useDokumentSletting } from "./useDokumentSletting";
 
 export { action, loader };
 
+/** Editoren skal bruke hele flaten, så layouten dropper bredde-begrensningen her. */
+export const handle = { fullbredde: true };
+
 function LagreStatusVisning({
   status,
   sistLagret,
@@ -126,7 +129,10 @@ function DokumentRedigering({
   return (
     <>
       <title>{`${tittel || "Uten tittel"} – Sak ${sakReferanse} – Watson Sak`}</title>
-      <VStack gap="space-8" className="mt-4 mb-4">
+      <VStack
+        gap="space-8"
+        className="mt-4 mb-4 px-[var(--ax-space-16)] lg:px-[var(--ax-space-24)]"
+      >
         <Brødsmulesti
           smuler={[
             { etikett: sakReferanse, til: sakUrl },
