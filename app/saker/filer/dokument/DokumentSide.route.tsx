@@ -1,5 +1,5 @@
-import { FilesIcon, PaperplaneIcon, TrashIcon } from "@navikt/aksel-icons";
-import { Button, Detail, Dialog, Heading, HStack, VStack } from "@navikt/ds-react";
+import { PaperplaneIcon, TrashIcon } from "@navikt/aksel-icons";
+import { Button, Detail, HStack, VStack } from "@navikt/ds-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { isRouteErrorResponse, useLoaderData, useParams } from "react-router";
 import { Brødsmulesti } from "~/komponenter/Brødsmulesti";
@@ -141,41 +141,6 @@ function DokumentRedigering({
           </div>
 
           <HStack gap="space-2" align="center" wrap>
-            <Dialog>
-              <Dialog.Trigger>
-                <Button
-                  type="button"
-                  variant="tertiary"
-                  size="small"
-                  icon={<FilesIcon aria-hidden />}
-                >
-                  Se andre dokumenter
-                </Button>
-              </Dialog.Trigger>
-              <Dialog.Popup position="right" width="medium">
-                <Dialog.Header>
-                  <Dialog.Title>
-                    <Heading level="2" size="small">
-                      Dokumenter
-                    </Heading>
-                  </Dialog.Title>
-                </Dialog.Header>
-                <Dialog.Body>
-                  {dokumenter.length > 0 ? (
-                    <DokumentTre
-                      noder={dokumenter}
-                      sakId={sakReferanse}
-                      redigerbar={kanRedigere}
-                      fremhevetId={dokument.id}
-                      redirectVedSletting={(docId) => (docId === dokument.id ? sakUrl : undefined)}
-                    />
-                  ) : (
-                    <Detail className="text-ax-text-neutral-subtle">Ingen andre dokumenter.</Detail>
-                  )}
-                </Dialog.Body>
-              </Dialog.Popup>
-            </Dialog>
-
             {/* Medunderskriving er ikke bygget ennå – knappen er med for å vise plasseringen
             fra skissen, og er deaktivert til flyten finnes. */}
             {kanRedigere && (
@@ -212,6 +177,20 @@ function DokumentRedigering({
         onEndring={håndterInnhold}
         sakId={sakReferanse}
         docId={dokument.id}
+        dokumentliste={
+          dokumenter.length > 0 ? (
+            <DokumentTre
+              noder={dokumenter}
+              sakId={sakReferanse}
+              redigerbar={kanRedigere}
+              fremhevetId={dokument.id}
+              kompakt
+              redirectVedSletting={(docId) => (docId === dokument.id ? sakUrl : undefined)}
+            />
+          ) : (
+            <Detail className="text-ax-text-neutral-subtle">Ingen andre dokumenter.</Detail>
+          )
+        }
       />
 
       <div className="sticky bottom-0 flex justify-end px-[var(--ax-space-24)] py-2 bg-ax-bg-raised border-t border-ax-border-neutral-subtle">

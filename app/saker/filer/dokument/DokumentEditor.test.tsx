@@ -23,6 +23,7 @@ describe("DokumentEditor", () => {
         onEndring={() => {}}
         sakId="ABC-1"
         docId="d1"
+        dokumentliste={<p>Dokumentliste</p>}
       />,
     );
 
@@ -48,6 +49,7 @@ describe("DokumentEditor", () => {
         onEndring={onEndring}
         sakId="ABC-1"
         docId="d1"
+        dokumentliste={<p>Dokumentliste</p>}
       />,
     );
 
@@ -72,6 +74,7 @@ describe("DokumentEditor", () => {
         onEndring={() => {}}
         sakId="ABC-1"
         docId="d1"
+        dokumentliste={<p>Dokumentliste</p>}
       />,
     );
 
@@ -86,6 +89,7 @@ describe("DokumentEditor", () => {
         onEndring={() => {}}
         sakId="ABC-1"
         docId="d1"
+        dokumentliste={<p>Dokumentliste</p>}
       />,
     );
 
@@ -101,6 +105,7 @@ describe("DokumentEditor", () => {
         onEndring={() => {}}
         sakId="ABC-1"
         docId="d1"
+        dokumentliste={<p>Dokumentliste</p>}
       />,
     );
 
@@ -117,6 +122,7 @@ describe("DokumentEditor", () => {
         onEndring={() => {}}
         sakId="ABC-1"
         docId="d1"
+        dokumentliste={<p>Dokumentliste</p>}
       />,
     );
 
@@ -134,6 +140,7 @@ describe("DokumentEditor", () => {
         onEndring={onEndring}
         sakId="ABC-1"
         docId="d1"
+        dokumentliste={<p>Dokumentliste</p>}
       />,
     );
 
@@ -152,6 +159,7 @@ describe("DokumentEditor", () => {
         onEndring={onEndring}
         sakId="ABC-1"
         docId="d1"
+        dokumentliste={<p>Dokumentliste</p>}
       />,
     );
 

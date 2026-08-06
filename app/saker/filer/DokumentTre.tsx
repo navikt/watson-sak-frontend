@@ -65,12 +65,14 @@ function DokumentRad({
   sakId,
   fremhevetId,
   redigerbar,
+  kompakt,
   onSlett,
 }: {
   node: DokumentNode;
   sakId: string;
   fremhevetId?: string;
   redigerbar: boolean;
+  kompakt: boolean;
   onSlett: (dokument: DokumentNode) => void;
 }) {
   const dokumentUrl = RouteConfig.SAKER_DOKUMENT.replace(":sakId", sakId).replace(
@@ -84,19 +86,27 @@ function DokumentRad({
       <Link
         to={dokumentUrl}
         aria-current={erFremhevet ? "page" : undefined}
-        className={`flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 no-underline transition-colors text-ax-text-default ${
+        className={`flex min-w-0 flex-1 rounded-md px-2 py-1.5 no-underline transition-colors text-ax-text-default ${
+          kompakt ? "flex-col items-start gap-0.5" : "items-center gap-2"
+        } ${
           erFremhevet ? "bg-ax-bg-neutral-moderate-hover" : "hover:bg-ax-bg-neutral-moderate-hover"
         }`}
       >
-        <DokumentIkon aria-hidden className="shrink-0 text-ax-icon-info" />
-        <BodyShort
-          size="small"
-          weight={erFremhevet ? "semibold" : "regular"}
-          className="truncate flex-1"
+        <span className="flex min-w-0 w-full items-center gap-2">
+          <DokumentIkon aria-hidden className="shrink-0 text-ax-icon-info" />
+          <BodyShort
+            size="small"
+            weight={erFremhevet ? "semibold" : "regular"}
+            className="truncate flex-1"
+          >
+            {node.tittel || "Uten tittel"}
+          </BodyShort>
+        </span>
+        <Detail
+          className={`truncate text-ax-text-neutral-subtle ${
+            kompakt ? "max-w-full pl-6" : "shrink-0 whitespace-nowrap"
+          }`}
         >
-          {node.tittel || "Uten tittel"}
-        </BodyShort>
-        <Detail className="shrink-0 whitespace-nowrap text-ax-text-neutral-subtle">
           {formaterDato(node.endretDato)} – {node.endretAv}
         </Detail>
       </Link>
@@ -117,12 +127,15 @@ export function DokumentTre({
   sakId,
   redigerbar = false,
   fremhevetId,
+  kompakt = false,
   redirectVedSletting,
 }: {
   noder: DokumentNode[];
   sakId: string;
   redigerbar?: boolean;
   fremhevetId?: string;
+  /** Stabler tittel og metadata under hverandre, for smale flater som sidepanelet. */
+  kompakt?: boolean;
   redirectVedSletting?: (docId: string) => string | undefined;
 }) {
   const sletting = useDokumentSletting({
@@ -141,6 +154,7 @@ export function DokumentTre({
             sakId={sakId}
             fremhevetId={fremhevetId}
             redigerbar={redigerbar}
+            kompakt={kompakt}
             onSlett={sletting.start}
           />
         ))}

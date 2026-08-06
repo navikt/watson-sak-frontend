@@ -36,6 +36,7 @@ import {
   TableRowPlugin,
 } from "@platejs/table/react";
 import { createContext, useCallback, useContext, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { Plate, PlateContent, PlateElement, useEditorState, usePlateEditor } from "platejs/react";
 import type { TElement } from "platejs";
 import type { PlateElementProps } from "platejs/react";
@@ -50,6 +51,12 @@ import {
   SlettTabellIkon,
 } from "./tabell-ikoner";
 import { AvindenterIkon, IndenterIkon } from "./verktøylinje-ikoner";
+import {
+  Sidepanel,
+  SidepanelMeny,
+  STANDARD_SIDEPANEL,
+  type SidepanelValg,
+} from "./DokumentSidepanel";
 
 /** Sporer hvilken formateringsknapp som brukes, knyttet til riktig dokument. */
 const FormaterContext = createContext<(etikett: string) => void>(() => {});
@@ -126,7 +133,15 @@ function hentGjeldendeBloktype(editor: ReturnType<typeof useEditorState>): strin
   return "p";
 }
 
-function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }) {
+function Verktøylinje({
+  onFormater,
+  aktivtSidepanel,
+  onVelgSidepanel,
+}: {
+  onFormater: (etikett: string) => void;
+  aktivtSidepanel: SidepanelValg;
+  onVelgSidepanel: (valg: SidepanelValg) => void;
+}) {
   const editor = useEditorState();
   const erITabell = !!editor.api.above({ match: { type: TablePlugin.key } });
   const toolbarRef = useRef<HTMLDivElement>(null);
@@ -315,6 +330,8 @@ function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }
                 </>
               )}
             </HStack>
+
+            <SidepanelMeny aktivt={aktivtSidepanel} onVelg={onVelgSidepanel} />
           </HStack>
         </SettAktivEtikettContext.Provider>
       </AktivEtikettContext.Provider>
@@ -364,6 +381,8 @@ type DokumentEditorProps = {
   /** Brukes til å knytte «dokument formatert»-analytics til riktig dokument. */
   sakId: string;
   docId: string;
+  /** Dokumenttreet som vises i sidepanelet. Eies av siden, ikke av editoren. */
+  dokumentliste: ReactNode;
 };
 
 export function DokumentEditor({
@@ -372,11 +391,13 @@ export function DokumentEditor({
   onEndring,
   sakId,
   docId,
+  dokumentliste,
 }: DokumentEditorProps) {
   const editor = usePlateEditor({
     plugins: PLUGINS,
     value: startInnhold as TElement[],
   });
+  const [aktivtSidepanel, settAktivtSidepanel] = useState<SidepanelValg>(STANDARD_SIDEPANEL);
 
   return (
     <Plate
@@ -387,33 +408,41 @@ export function DokumentEditor({
       {redigerbar && (
         <Verktøylinje
           onFormater={(format) => sporHendelse("dokument formatert", { sakId, docId, format })}
+          aktivtSidepanel={aktivtSidepanel}
+          onVelgSidepanel={settAktivtSidepanel}
         />
       )}
       {/* Grå flate bak «arket», slik skissen viser. Den negative margen nuller ut
       gutterne til PageBlock-en i AppLayout (space-16, space-48 fra lg), slik at flaten
       går helt ut til kantene av innholdsområdet, mens px-en legger paddingen tilbake. */}
       <div className="mt-[var(--ax-space-12)] bg-ax-bg-neutral-moderate py-[var(--ax-space-32)] mx-[calc(var(--ax-space-16)_*_-1)] px-[var(--ax-space-16)] lg:mx-[calc(var(--ax-space-48)_*_-1)] lg:px-[var(--ax-space-48)]">
-        <Kort
-          padding={{ xs: "space-24", md: "space-64" }}
-          className="mx-auto w-full max-w-[210mm] shadow-[var(--ax-shadow-dialog)]"
-        >
-          <PlateContent
-            role="textbox"
-            aria-multiline
-            aria-label="Dokumentinnhold"
-            className={
-              "min-h-[60vh] focus:outline-none [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg " +
-              "[&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
-              "[&_blockquote]:border-l-4 [&_blockquote]:border-ax-border-neutral-subtle " +
-              "[&_blockquote]:pl-4 [&_blockquote]:italic [&_p]:my-2 " +
-              "[&_table]:border-collapse [&_table]:my-3 [&_table]:w-full " +
-              "[&_td]:border [&_td]:border-ax-border-neutral-subtle [&_td]:p-2 [&_td]:align-top " +
-              "[&_th]:border [&_th]:border-ax-border-neutral-subtle [&_th]:p-2 [&_th]:align-top " +
-              "[&_th]:bg-ax-bg-neutral-soft [&_th]:text-left [&_th]:font-semibold " +
-              "[&_u]:underline [&_s]:line-through"
-            }
-          />
-        </Kort>
+        <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-[var(--ax-space-24)] lg:flex-row lg:items-start">
+          <div className="flex min-w-0 flex-1 justify-center">
+            <Kort
+              padding={{ xs: "space-24", md: "space-64" }}
+              className="w-full max-w-[210mm] shadow-[var(--ax-shadow-dialog)]"
+            >
+              <PlateContent
+                role="textbox"
+                aria-multiline
+                aria-label="Dokumentinnhold"
+                className={
+                  "min-h-[60vh] focus:outline-none [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg " +
+                  "[&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
+                  "[&_blockquote]:border-l-4 [&_blockquote]:border-ax-border-neutral-subtle " +
+                  "[&_blockquote]:pl-4 [&_blockquote]:italic [&_p]:my-2 " +
+                  "[&_table]:border-collapse [&_table]:my-3 [&_table]:w-full " +
+                  "[&_td]:border [&_td]:border-ax-border-neutral-subtle [&_td]:p-2 [&_td]:align-top " +
+                  "[&_th]:border [&_th]:border-ax-border-neutral-subtle [&_th]:p-2 [&_th]:align-top " +
+                  "[&_th]:bg-ax-bg-neutral-soft [&_th]:text-left [&_th]:font-semibold " +
+                  "[&_u]:underline [&_s]:line-through"
+                }
+              />
+            </Kort>
+          </div>
+
+          <Sidepanel aktivt={aktivtSidepanel} dokumentliste={dokumentliste} />
+        </div>
       </div>
     </Plate>
   );
