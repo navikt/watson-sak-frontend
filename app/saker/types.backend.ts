@@ -48,8 +48,8 @@ const saksbehandlereSchema = z
 
 const kontrollsakYtelseSchema = z.object({
   type: z.string(),
-  periodeFra: z.string(),
-  periodeTil: z.string(),
+  periodeFra: z.string().nullable(),
+  periodeTil: z.string().nullable(),
   belop: z.number().nullable(),
   endeligBelop: z.number().nullable(),
 });
