@@ -412,37 +412,36 @@ export function DokumentEditor({
           onVelgSidepanel={settAktivtSidepanel}
         />
       )}
-      {/* Grå flate bak «arket», slik skissen viser. Den negative margen nuller ut
-      gutterne til PageBlock-en i AppLayout (space-16, space-48 fra lg), slik at flaten
-      går helt ut til kantene av innholdsområdet, mens px-en legger paddingen tilbake. */}
-      <div className="mt-[var(--ax-space-12)] bg-ax-bg-neutral-moderate py-[var(--ax-space-32)] mx-[calc(var(--ax-space-16)_*_-1)] px-[var(--ax-space-16)] lg:mx-[calc(var(--ax-space-48)_*_-1)] lg:px-[var(--ax-space-48)]">
-        <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-[var(--ax-space-24)] lg:flex-row lg:items-start">
-          <div className="flex min-w-0 flex-1 justify-center">
-            <Kort
-              padding={{ xs: "space-24", md: "space-64" }}
-              className="w-full max-w-[210mm] shadow-[var(--ax-shadow-dialog)]"
-            >
-              <PlateContent
-                role="textbox"
-                aria-multiline
-                aria-label="Dokumentinnhold"
-                className={
-                  "min-h-[60vh] focus:outline-none [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg " +
-                  "[&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
-                  "[&_blockquote]:border-l-4 [&_blockquote]:border-ax-border-neutral-subtle " +
-                  "[&_blockquote]:pl-4 [&_blockquote]:italic [&_p]:my-2 " +
-                  "[&_table]:border-collapse [&_table]:my-3 [&_table]:w-full " +
-                  "[&_td]:border [&_td]:border-ax-border-neutral-subtle [&_td]:p-2 [&_td]:align-top " +
-                  "[&_th]:border [&_th]:border-ax-border-neutral-subtle [&_th]:p-2 [&_th]:align-top " +
-                  "[&_th]:bg-ax-bg-neutral-soft [&_th]:text-left [&_th]:font-semibold " +
-                  "[&_u]:underline [&_s]:line-through"
-                }
-              />
-            </Kort>
-          </div>
-
-          <Sidepanel aktivt={aktivtSidepanel} dokumentliste={dokumentliste} />
+      {/* Full-bredde rad: grå flate med «arket» til venstre, sidepanelet som en egen
+      fullhøyde-seksjon til høyre, slik skissen viser. Den negative margen nuller ut
+      gutterne til PageBlock-en i AppLayout (space-16, space-48 fra lg), slik at raden
+      går helt ut til kantene av innholdsområdet. */}
+      <div className="mt-[var(--ax-space-12)] mx-[calc(var(--ax-space-16)_*_-1)] flex flex-col lg:mx-[calc(var(--ax-space-48)_*_-1)] lg:flex-row lg:items-stretch">
+        <div className="flex min-w-0 flex-1 justify-center bg-ax-bg-neutral-moderate px-[var(--ax-space-16)] py-[var(--ax-space-32)] lg:px-[var(--ax-space-48)]">
+          <Kort
+            padding={{ xs: "space-24", md: "space-64" }}
+            className="w-full max-w-[210mm] shadow-[var(--ax-shadow-dialog)]"
+          >
+            <PlateContent
+              role="textbox"
+              aria-multiline
+              aria-label="Dokumentinnhold"
+              className={
+                "min-h-[60vh] focus:outline-none [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg " +
+                "[&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
+                "[&_blockquote]:border-l-4 [&_blockquote]:border-ax-border-neutral-subtle " +
+                "[&_blockquote]:pl-4 [&_blockquote]:italic [&_p]:my-2 " +
+                "[&_table]:border-collapse [&_table]:my-3 [&_table]:w-full " +
+                "[&_td]:border [&_td]:border-ax-border-neutral-subtle [&_td]:p-2 [&_td]:align-top " +
+                "[&_th]:border [&_th]:border-ax-border-neutral-subtle [&_th]:p-2 [&_th]:align-top " +
+                "[&_th]:bg-ax-bg-neutral-soft [&_th]:text-left [&_th]:font-semibold " +
+                "[&_u]:underline [&_s]:line-through"
+              }
+            />
+          </Kort>
         </div>
+
+        <Sidepanel aktivt={aktivtSidepanel} dokumentliste={dokumentliste} />
       </div>
     </Plate>
   );

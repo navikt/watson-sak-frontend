@@ -85,7 +85,7 @@ describe("DokumentSide", () => {
     renderSide(true);
 
     fireEvent.click(await screen.findByRole("button", { name: /Dokumenter/ }));
-    fireEvent.click(await screen.findByRole("menuitemradio", { name: "Historikk" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Historikk" }));
 
     const sidepanel = screen.getByRole("complementary");
     expect(within(sidepanel).getByText(/hvem som har endret dokumentet/)).toBeDefined();

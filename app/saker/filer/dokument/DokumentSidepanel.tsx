@@ -7,8 +7,6 @@ import {
 } from "@navikt/aksel-icons";
 import { ActionMenu, BodyShort, Button, Heading, HStack, VStack } from "@navikt/ds-react";
 import type { ComponentType, ReactNode } from "react";
-import { useState } from "react";
-import { Kort } from "~/komponenter/Kort";
 
 export type SidepanelValg = "dokumenter" | "variabler" | "historikk";
 
@@ -50,12 +48,9 @@ type SidepanelMenyProps = {
 /** Velger hva sidepanelet ved siden av dokumentet skal vise. */
 export function SidepanelMeny({ aktivt, onVelg }: SidepanelMenyProps) {
   const valgt = finnValg(aktivt);
-  // Radioelementer lukker ikke menyen av seg selv. Her velger man én ting og er ferdig,
-  // så vi styrer åpen-tilstanden og lukker etter valg – ellers dekker menyen panelet.
-  const [åpen, settÅpen] = useState(false);
 
   return (
-    <ActionMenu open={åpen} onOpenChange={settÅpen}>
+    <ActionMenu>
       <ActionMenu.Trigger>
         <Button
           type="button"
@@ -71,23 +66,13 @@ export function SidepanelMeny({ aktivt, onVelg }: SidepanelMenyProps) {
         </Button>
       </ActionMenu.Trigger>
       <ActionMenu.Content>
-        <ActionMenu.RadioGroup
-          label="Vis i sidepanelet"
-          value={aktivt}
-          onValueChange={(verdi) => {
-            onVelg(verdi as SidepanelValg);
-            settÅpen(false);
-          }}
-        >
+        <ActionMenu.Group label="Vis i sidepanelet">
           {SIDEPANELER.map(({ verdi, etikett, ikon: Ikon }) => (
-            <ActionMenu.RadioItem key={verdi} value={verdi}>
-              <HStack gap="space-8" align="center">
-                <Ikon aria-hidden />
-                {etikett}
-              </HStack>
-            </ActionMenu.RadioItem>
+            <ActionMenu.Item key={verdi} icon={<Ikon aria-hidden />} onSelect={() => onVelg(verdi)}>
+              {etikett}
+            </ActionMenu.Item>
           ))}
-        </ActionMenu.RadioGroup>
+        </ActionMenu.Group>
       </ActionMenu.Content>
     </ActionMenu>
   );
@@ -99,18 +84,14 @@ type SidepanelProps = {
   dokumentliste: ReactNode;
 };
 
-/** Sidepanelet til høyre for dokumentet. */
+/** Sidepanelet til høyre for dokumentet. Egen fullhøyde-seksjon, ikke et kort oppå det grå. */
 export function Sidepanel({ aktivt, dokumentliste }: SidepanelProps) {
   const valg = finnValg(aktivt);
 
   return (
-    <Kort
-      as="aside"
-      padding="space-16"
-      // Panelet følger med når man scroller. `top` klarerer den festede verktøylinja.
-      className="w-full shrink-0 shadow-[var(--ax-shadow-dialog)] lg:sticky lg:top-[70px] lg:w-[340px]"
-    >
-      <VStack gap="space-12">
+    <aside className="w-full shrink-0 border-t border-ax-border-neutral-subtle bg-ax-bg-default p-[var(--ax-space-16)] lg:w-[340px] lg:border-t-0 lg:border-l">
+      {/* Innholdet følger med når man scroller. `top` klarerer den festede verktøylinja. */}
+      <VStack gap="space-12" className="lg:sticky lg:top-[70px]">
         <Heading level="2" size="xsmall">
           {valg.etikett}
         </Heading>
@@ -122,6 +103,6 @@ export function Sidepanel({ aktivt, dokumentliste }: SidepanelProps) {
           dokumentliste
         )}
       </VStack>
-    </Kort>
+    </aside>
   );
 }
