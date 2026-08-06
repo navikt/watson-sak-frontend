@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import type { DokumentInnhold, DokumentNode } from "~/saker/filer/typer";
@@ -65,23 +65,46 @@ function renderSide(kanRedigere: boolean) {
 }
 
 describe("DokumentSide", () => {
-  it("viser tilbake- og «Se andre dokumenter»-knapp", async () => {
+  it("viser brødsmulesti", async () => {
     renderSide(true);
 
-    expect(await screen.findByRole("button", { name: "Tilbake til saken" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Se andre dokumenter" })).toBeDefined();
+    const sti = await screen.findByRole("navigation", { name: "Du er her" });
+    expect(within(sti).getByRole("link", { name: "ABC-123" })).toBeDefined();
+    expect(within(sti).getByText("Dokumenter")).toBeDefined();
+    expect(within(sti).getByText("Saksframlegg")).toBeDefined();
   });
 
-  it("viser slett-knapp når man kan redigere", async () => {
+  it("viser dokumenttreet i sidepanelet uten at man må åpne noe", async () => {
     renderSide(true);
 
-    expect(await screen.findByRole("button", { name: "Slett dokument" })).toBeDefined();
+    const sidepanel = await screen.findByRole("complementary");
+    expect(within(sidepanel).getByRole("link", { name: /Vedtak/ })).toBeDefined();
+  });
+
+  it("kan bytte hva sidepanelet viser via menyen i verktøylinja", async () => {
+    renderSide(true);
+
+    fireEvent.click(await screen.findByRole("button", { name: /Dokumenter/ }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Historikk" }));
+
+    const sidepanel = screen.getByRole("complementary");
+    expect(within(sidepanel).getByText(/hvem som har endret dokumentet/)).toBeDefined();
+    expect(within(sidepanel).queryByRole("link", { name: /Vedtak/ })).toBeNull();
+  });
+
+  it("viser slett-knapp og en deaktivert medunderskriver-knapp når man kan redigere", async () => {
+    renderSide(true);
+
+    expect(await screen.findByRole("button", { name: "Slett" })).toBeDefined();
+    const medunderskriver = screen.getByRole("button", { name: "Send til medunderskriver" });
+    expect(medunderskriver.hasAttribute("disabled")).toBe(true);
   });
 
   it("skjuler slett-knapp uten redigeringstilgang", async () => {
     renderSide(false);
 
-    expect(await screen.findByRole("button", { name: "Se andre dokumenter" })).toBeDefined();
-    expect(screen.queryByRole("button", { name: "Slett dokument" })).toBeNull();
+    expect(await screen.findByRole("complementary")).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Slett" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Send til medunderskriver" })).toBeNull();
   });
 });

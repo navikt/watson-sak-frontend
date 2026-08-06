@@ -1,9 +1,9 @@
-import { ArrowLeftIcon, FilesIcon, TrashIcon } from "@navikt/aksel-icons";
-import { Button, Detail, Dialog, Heading, HStack, VStack } from "@navikt/ds-react";
+import { PaperplaneIcon, TrashIcon } from "@navikt/aksel-icons";
+import { Button, Detail, HStack, VStack } from "@navikt/ds-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { isRouteErrorResponse, useLoaderData, useNavigate, useParams } from "react-router";
+import { isRouteErrorResponse, useLoaderData, useParams } from "react-router";
+import { Brødsmulesti } from "~/komponenter/Brødsmulesti";
 import { DokumentIkkeFunnet } from "~/feilhåndtering/DokumentIkkeFunnet";
-import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
 import { DokumentTre } from "~/saker/filer/DokumentTre";
 import type { DokumentInnhold } from "~/saker/filer/typer";
@@ -16,6 +16,9 @@ import { useAutolagring, type Autolagringsdata, type LagreStatus } from "./useAu
 import { useDokumentSletting } from "./useDokumentSletting";
 
 export { action, loader };
+
+/** Editoren skal bruke hele flaten, så layouten dropper bredde-begrensningen her. */
+export const handle = { fullbredde: true };
 
 function LagreStatusVisning({
   status,
@@ -70,7 +73,6 @@ function DokumentRedigering({
   const [tittel, setTittel] = useState(dokument.tittel);
   const tittelRef = useRef(dokument.tittel);
   const innholdRef = useRef<DokumentInnhold>(dokument.innhold);
-  const navigate = useNavigate();
 
   const sakUrl = RouteConfig.SAKER_DETALJ.replace(":sakId", sakReferanse);
   const sletting = useDokumentSletting({
@@ -127,53 +129,37 @@ function DokumentRedigering({
   return (
     <>
       <title>{`${tittel || "Uten tittel"} – Sak ${sakReferanse} – Watson Sak`}</title>
-      <VStack gap="space-12" className="mt-4 mb-8 mx-auto w-full max-w-[210mm]">
+      <VStack
+        gap="space-8"
+        className="mt-4 mb-4 px-[var(--ax-space-16)] lg:px-[var(--ax-space-24)]"
+      >
+        <Brødsmulesti
+          smuler={[
+            { etikett: sakReferanse, til: sakUrl },
+            { etikett: "Dokumenter" },
+            { etikett: tittel || "Uten tittel" },
+          ]}
+        />
+
         <HStack justify="space-between" align="center" gap="space-4" wrap>
-          <Button
-            type="button"
-            variant="tertiary"
-            size="small"
-            icon={<ArrowLeftIcon aria-hidden />}
-            onClick={() => navigate(sakUrl)}
-          >
-            Tilbake til saken
-          </Button>
+          <div className="min-w-0 flex-1">
+            <DokumentTittel tittel={tittel} redigerbar={kanRedigere} onEndre={håndterTittel} />
+          </div>
 
           <HStack gap="space-2" align="center" wrap>
-            <Dialog>
-              <Dialog.Trigger>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="small"
-                  icon={<FilesIcon aria-hidden />}
-                >
-                  Se andre dokumenter
-                </Button>
-              </Dialog.Trigger>
-              <Dialog.Popup position="right" width="medium">
-                <Dialog.Header>
-                  <Dialog.Title>
-                    <Heading level="2" size="small">
-                      Dokumenter
-                    </Heading>
-                  </Dialog.Title>
-                </Dialog.Header>
-                <Dialog.Body>
-                  {dokumenter.length > 0 ? (
-                    <DokumentTre
-                      noder={dokumenter}
-                      sakId={sakReferanse}
-                      redigerbar={kanRedigere}
-                      fremhevetId={dokument.id}
-                      redirectVedSletting={(docId) => (docId === dokument.id ? sakUrl : undefined)}
-                    />
-                  ) : (
-                    <Detail className="text-ax-text-neutral-subtle">Ingen andre dokumenter.</Detail>
-                  )}
-                </Dialog.Body>
-              </Dialog.Popup>
-            </Dialog>
+            {/* Medunderskriving er ikke bygget ennå – knappen er med for å vise plasseringen
+            fra skissen, og er deaktivert til flyten finnes. */}
+            {kanRedigere && (
+              <Button
+                type="button"
+                variant="secondary"
+                size="small"
+                disabled
+                icon={<PaperplaneIcon aria-hidden />}
+              >
+                Send til medunderskriver
+              </Button>
+            )}
 
             {kanRedigere && (
               <Button
@@ -184,33 +170,35 @@ function DokumentRedigering({
                 icon={<TrashIcon aria-hidden />}
                 onClick={() => sletting.start({ id: dokument.id, tittel })}
               >
-                Slett dokument
+                Slett
               </Button>
             )}
           </HStack>
         </HStack>
-
-        <Kort
-          padding={{ xs: "space-24", md: "space-64" }}
-          className="shadow-[var(--ax-shadow-dialog)]"
-        >
-          <VStack gap="space-16">
-            <DokumentTittel tittel={tittel} redigerbar={kanRedigere} onEndre={håndterTittel} />
-
-            <DokumentEditor
-              startInnhold={dokument.innhold}
-              redigerbar={kanRedigere}
-              onEndring={håndterInnhold}
-              sakId={sakReferanse}
-              docId={dokument.id}
-            />
-          </VStack>
-        </Kort>
       </VStack>
 
-      <div className="sticky bottom-0 flex justify-end px-[var(--ax-space-24)] py-2 bg-ax-bg-raised border-t border-ax-border-neutral-subtle">
-        <LagreStatusVisning status={status} sistLagret={sistLagret} />
-      </div>
+      <DokumentEditor
+        startInnhold={dokument.innhold}
+        redigerbar={kanRedigere}
+        onEndring={håndterInnhold}
+        sakId={sakReferanse}
+        docId={dokument.id}
+        dokumentliste={
+          dokumenter.length > 0 ? (
+            <DokumentTre
+              noder={dokumenter}
+              sakId={sakReferanse}
+              redigerbar={kanRedigere}
+              fremhevetId={dokument.id}
+              kompakt
+              redirectVedSletting={(docId) => (docId === dokument.id ? sakUrl : undefined)}
+            />
+          ) : (
+            <Detail className="text-ax-text-neutral-subtle">Ingen andre dokumenter.</Detail>
+          )
+        }
+        lagreStatus={<LagreStatusVisning status={status} sistLagret={sistLagret} />}
+      />
 
       <SlettDokumentModal
         kandidat={sletting.kandidat}

@@ -35,11 +35,13 @@ import {
   TablePlugin,
   TableRowPlugin,
 } from "@platejs/table/react";
-import { createContext, useCallback, useContext, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { Plate, PlateContent, PlateElement, useEditorState, usePlateEditor } from "platejs/react";
 import type { TElement } from "platejs";
 import type { PlateElementProps } from "platejs/react";
 import { sporHendelse } from "~/analytics/analytics";
+import { Kort } from "~/komponenter/Kort";
 import type { DokumentInnhold } from "~/saker/filer/typer";
 import {
   LeggTilKolonneIkon,
@@ -49,6 +51,12 @@ import {
   SlettTabellIkon,
 } from "./tabell-ikoner";
 import { AvindenterIkon, IndenterIkon } from "./verktøylinje-ikoner";
+import {
+  Sidepanel,
+  SidepanelMeny,
+  STANDARD_SIDEPANEL,
+  type SidepanelValg,
+} from "./DokumentSidepanel";
 
 /** Sporer hvilken formateringsknapp som brukes, knyttet til riktig dokument. */
 const FormaterContext = createContext<(etikett: string) => void>(() => {});
@@ -98,6 +106,11 @@ function VerktøyKnapp({ etikett, aktiv, disabled, onClick, children }: Verktøy
   );
 }
 
+/** Visuelt skille mellom grupper av verktøy. Rent dekorativt – skjult for skjermlesere. */
+function Skillelinje() {
+  return <div aria-hidden className="mx-1 h-[22px] w-px shrink-0 bg-ax-border-neutral-subtle" />;
+}
+
 function hentKnapper(container: HTMLElement | null): (HTMLButtonElement | HTMLSelectElement)[] {
   return Array.from(
     container?.querySelectorAll<HTMLButtonElement | HTMLSelectElement>(
@@ -120,7 +133,15 @@ function hentGjeldendeBloktype(editor: ReturnType<typeof useEditorState>): strin
   return "p";
 }
 
-function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }) {
+function Verktøylinje({
+  onFormater,
+  aktivtSidepanel,
+  onVelgSidepanel,
+}: {
+  onFormater: (etikett: string) => void;
+  aktivtSidepanel: SidepanelValg;
+  onVelgSidepanel: (valg: SidepanelValg) => void;
+}) {
   const editor = useEditorState();
   const erITabell = !!editor.api.above({ match: { type: TablePlugin.key } });
   const toolbarRef = useRef<HTMLDivElement>(null);
@@ -166,17 +187,14 @@ function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }
     <FormaterContext.Provider value={onFormater}>
       <AktivEtikettContext.Provider value={aktivEtikett}>
         <SettAktivEtikettContext.Provider value={settAktivEtikett}>
-          {/* Den negative margen nuller ut den horisontale paddingen til dokumentkortet
-          slik at den festede verktøylinja går helt ut til kantene, mens px-en
-          justerer knappene tilbake på linje med teksten. Vi bruker de samme Aksel
-          spacing-variablene som kortet (space-24 / space-64 ved md), så verdiene
-          ikke drifter fra hverandre om spacing-skalaen endres. */}
+          {/* Verktøylinja ligger over «arket» og er et eget kort, slik skissen viser.
+          Den står i ro fordi det er dokumentflaten under som scroller, ikke siden. */}
           <HStack
             justify="space-between"
             align="center"
             gap="space-4"
             wrap
-            className="sticky top-0 z-10 bg-ax-bg-raised border-b border-ax-border-neutral-subtle py-2 mb-2 mx-[calc(var(--ax-space-24)_*_-1)] px-[var(--ax-space-24)] md:mx-[calc(var(--ax-space-64)_*_-1)] md:px-[var(--ax-space-64)]"
+            className="shrink-0 rounded-lg border border-ax-border-neutral-subtle bg-ax-bg-raised px-[var(--ax-space-8)] py-[var(--ax-space-6)]"
           >
             <HStack
               gap="space-2"
@@ -201,6 +219,7 @@ function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }
               >
                 <ArrowRedoIcon aria-hidden />
               </VerktøyKnapp>
+              <Skillelinje />
               <Select
                 label="Skrifttype"
                 hideLabel
@@ -222,6 +241,7 @@ function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }
                   </option>
                 ))}
               </Select>
+              <Skillelinje />
               <VerktøyKnapp
                 etikett="Fet"
                 aktiv={!!editor.api.mark(BoldPlugin.key)}
@@ -250,12 +270,14 @@ function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }
               >
                 <span className="line-through">S</span>
               </VerktøyKnapp>
+              <Skillelinje />
               <VerktøyKnapp etikett="Indenter" onClick={() => indent(editor)}>
                 <IndenterIkon aria-hidden />
               </VerktøyKnapp>
               <VerktøyKnapp etikett="Avindenter" onClick={() => outdent(editor)}>
                 <AvindenterIkon aria-hidden />
               </VerktøyKnapp>
+              <Skillelinje />
               <VerktøyKnapp
                 etikett="Sitat"
                 aktiv={editor.api.some({ match: { type: BlockquotePlugin.key } })}
@@ -277,6 +299,7 @@ function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }
               >
                 <NumberListIcon aria-hidden />
               </VerktøyKnapp>
+              <Skillelinje />
               <VerktøyKnapp
                 etikett="Sett inn tabell"
                 onClick={() => insertTable(editor, { rowCount: 3, colCount: 3, header: true })}
@@ -306,11 +329,46 @@ function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }
                 </>
               )}
             </HStack>
+
+            <SidepanelMeny aktivt={aktivtSidepanel} onVelg={onVelgSidepanel} />
           </HStack>
         </SettAktivEtikettContext.Provider>
       </AktivEtikettContext.Provider>
     </FormaterContext.Provider>
   );
+}
+
+/** Under denne bredden bruker vi vanlig sidescroll – da stables flatene under hverandre. */
+const MINSTE_BREDDE_FOR_EGEN_SCROLL = 1024;
+
+/**
+ * Måler hvor høy editorflaten kan være for at siden akkurat fyller vinduet, uten å
+ * scrolle. Vi måler plassen over og under flaten – begge er uavhengige av flatens egen
+ * høyde, så målingen gir samme svar hver gang og kan trygt kjøres på nytt.
+ */
+function useTilgjengeligHøyde(ref: React.RefObject<HTMLDivElement | null>) {
+  const [høyde, settHøyde] = useState<number>();
+
+  useEffect(() => {
+    function mål() {
+      const el = ref.current;
+      if (!el || window.innerWidth < MINSTE_BREDDE_FOR_EGEN_SCROLL) {
+        settHøyde(undefined);
+        return;
+      }
+
+      const boks = el.getBoundingClientRect();
+      const over = boks.top + window.scrollY;
+      const under = document.documentElement.scrollHeight - (boks.bottom + window.scrollY);
+      settHøyde(Math.max(320, window.innerHeight - over - under));
+    }
+
+    mål();
+    window.addEventListener("resize", mål);
+    return () => window.removeEventListener("resize", mål);
+  }, [ref]);
+
+  return høyde;
 }
 
 const PLUGINS = [
@@ -355,6 +413,10 @@ type DokumentEditorProps = {
   /** Brukes til å knytte «dokument formatert»-analytics til riktig dokument. */
   sakId: string;
   docId: string;
+  /** Dokumenttreet som vises i sidepanelet. Eies av siden, ikke av editoren. */
+  dokumentliste: ReactNode;
+  /** Lagrestatusen som vises nederst i sidepanelet. Eies av siden som lagrer. */
+  lagreStatus?: ReactNode;
 };
 
 export function DokumentEditor({
@@ -363,11 +425,16 @@ export function DokumentEditor({
   onEndring,
   sakId,
   docId,
+  dokumentliste,
+  lagreStatus,
 }: DokumentEditorProps) {
   const editor = usePlateEditor({
     plugins: PLUGINS,
     value: startInnhold as TElement[],
   });
+  const [aktivtSidepanel, settAktivtSidepanel] = useState<SidepanelValg>(STANDARD_SIDEPANEL);
+  const flateRef = useRef<HTMLDivElement>(null);
+  const høyde = useTilgjengeligHøyde(flateRef);
 
   return (
     <Plate
@@ -375,27 +442,56 @@ export function DokumentEditor({
       readOnly={!redigerbar}
       onChange={({ value }) => onEndring(value as DokumentInnhold)}
     >
-      {redigerbar && (
-        <Verktøylinje
-          onFormater={(format) => sporHendelse("dokument formatert", { sakId, docId, format })}
-        />
-      )}
-      <PlateContent
-        role="textbox"
-        aria-multiline
-        aria-label="Dokumentinnhold"
-        className={
-          "min-h-[60vh] focus:outline-none [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg " +
-          "[&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
-          "[&_blockquote]:border-l-4 [&_blockquote]:border-ax-border-neutral-subtle " +
-          "[&_blockquote]:pl-4 [&_blockquote]:italic [&_p]:my-2 " +
-          "[&_table]:border-collapse [&_table]:my-3 [&_table]:w-full " +
-          "[&_td]:border [&_td]:border-ax-border-neutral-subtle [&_td]:p-2 [&_td]:align-top " +
-          "[&_th]:border [&_th]:border-ax-border-neutral-subtle [&_th]:p-2 [&_th]:align-top " +
-          "[&_th]:bg-ax-bg-neutral-soft [&_th]:text-left [&_th]:font-semibold " +
-          "[&_u]:underline [&_s]:line-through"
-        }
-      />
+      {/* Editorflaten fyller resten av vinduet og scroller selv, slik at verktøylinja og
+      sidepanelet står stille mens man jobber i et langt dokument. */}
+      <div
+        ref={flateRef}
+        style={høyde ? { height: høyde } : undefined}
+        className="flex flex-col gap-[var(--ax-space-12)] overflow-hidden"
+      >
+        {redigerbar && (
+          <div className="px-[var(--ax-space-16)] lg:px-[var(--ax-space-24)]">
+            <Verktøylinje
+              onFormater={(format) => sporHendelse("dokument formatert", { sakId, docId, format })}
+              aktivtSidepanel={aktivtSidepanel}
+              onVelgSidepanel={settAktivtSidepanel}
+            />
+          </div>
+        )}
+        {/* Grå flate med «arket» til venstre og sidepanelet som en egen seksjon til høyre.
+        Raden går helt ut til kantene fordi ruta har bedt layouten om full bredde. */}
+        <div className="flex min-h-0 flex-1 flex-col lg:flex-row lg:items-stretch">
+          <div className="ml-[var(--ax-space-16)] flex min-w-0 flex-1 justify-center overflow-y-auto rounded-lg bg-ax-bg-neutral-moderate px-[var(--ax-space-16)] py-[var(--ax-space-32)] lg:ml-[var(--ax-space-24)] lg:px-[var(--ax-space-48)]">
+            <Kort
+              padding={{ xs: "space-24", md: "space-64" }}
+              className="h-fit w-full max-w-[210mm] shadow-[var(--ax-shadow-dialog)]"
+            >
+              <PlateContent
+                role="textbox"
+                aria-multiline
+                aria-label="Dokumentinnhold"
+                className={
+                  "min-h-[60vh] focus:outline-none [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg " +
+                  "[&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
+                  "[&_blockquote]:border-l-4 [&_blockquote]:border-ax-border-neutral-subtle " +
+                  "[&_blockquote]:pl-4 [&_blockquote]:italic [&_p]:my-2 " +
+                  "[&_table]:border-collapse [&_table]:my-3 [&_table]:w-full " +
+                  "[&_td]:border [&_td]:border-ax-border-neutral-subtle [&_td]:p-2 [&_td]:align-top " +
+                  "[&_th]:border [&_th]:border-ax-border-neutral-subtle [&_th]:p-2 [&_th]:align-top " +
+                  "[&_th]:bg-ax-bg-neutral-soft [&_th]:text-left [&_th]:font-semibold " +
+                  "[&_u]:underline [&_s]:line-through"
+                }
+              />
+            </Kort>
+          </div>
+
+          <Sidepanel
+            aktivt={aktivtSidepanel}
+            dokumentliste={dokumentliste}
+            lagreStatus={lagreStatus}
+          />
+        </div>
+      </div>
     </Plate>
   );
 }
