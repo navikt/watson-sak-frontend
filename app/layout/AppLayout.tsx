@@ -38,13 +38,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 }
 
-/** Ruter kan sette dette som `handle` for å be layouten om å slippe bredde-begrensningen. */
-type Rutehandle = { fullbredde?: boolean } | undefined;
+/** Ruter kan sette dette som `handle` for å be layouten om å slippe bredde-begrensningen
+ * og/eller skjule footeren, f.eks. for arbeidsflater som dokumenteditoren. */
+type Rutehandle = { fullbredde?: boolean; skjulFooter?: boolean } | undefined;
 
 export default function RootLayout() {
   // Ruter kan be om å slippe bredde-begrensningen via `handle`, f.eks. dokumenteditoren
   // som skal bruke hele flaten. De styrer da sine egne marger selv.
-  const fullbredde = useMatches().some((match) => (match.handle as Rutehandle)?.fullbredde);
+  const matches = useMatches();
+  const fullbredde = matches.some((match) => (match.handle as Rutehandle)?.fullbredde);
+  const skjulFooter = matches.some((match) => (match.handle as Rutehandle)?.skjulFooter);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -62,7 +65,7 @@ export default function RootLayout() {
           )}
         </main>
       </div>
-      <AppFooter />
+      {!skjulFooter && <AppFooter />}
     </div>
   );
 }

@@ -17,8 +17,9 @@ import { useDokumentSletting } from "./useDokumentSletting";
 
 export { action, loader };
 
-/** Editoren skal bruke hele flaten, så layouten dropper bredde-begrensningen her. */
-export const handle = { fullbredde: true };
+/** Editoren skal bruke hele flaten og er en arbeidsflate uten behov for footer, så
+ * layouten dropper bredde-begrensningen og footeren her. */
+export const handle = { fullbredde: true, skjulFooter: true };
 
 function LagreStatusVisning({
   status,
