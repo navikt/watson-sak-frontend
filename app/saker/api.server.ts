@@ -2,7 +2,7 @@ import { data } from "react-router";
 import { z } from "zod";
 import { BACKEND_API_URL } from "~/config/env.server";
 import { logger } from "~/logging/logging";
-import type { Dokument, DokumentInnhold, DokumentNode } from "~/saker/filer/typer";
+import type { Dokument, DokumentInnhold, DokumentNode, FilResponse } from "~/saker/filer/typer";
 import {
   kontrollsakHendelseResponseSchema,
   dokumentNodeSchema,
@@ -511,6 +511,63 @@ export async function slettManuellHendelse(
     headers: authHeaders(token),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke slette manuell hendelse");
+}
+
+// --- Filer (vedlegg) ---
+
+const filResponseSchema = z.object({
+  id: z.string(),
+  filnavn: z.string(),
+  storrelse: z.number(),
+  contentType: z.string(),
+  opprettetAv: z.string(),
+  opprettet: z.string(),
+});
+
+const filNedlastingResponseSchema = z.object({
+  url: z.string(),
+  utloper: z.string(),
+});
+
+export async function hentFiler(token: string, sakId: string): Promise<FilResponse[]> {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/filer`), {
+    headers: authHeaders(token),
+  });
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke hente filer");
+  return parseEllerKastFeil(z.array(filResponseSchema), await respons.json(), "hentFiler");
+}
+
+export async function lastOppFil(token: string, sakId: string, fil: File): Promise<FilResponse> {
+  const formData = new FormData();
+  formData.append("fil", fil);
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/filer`), {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+    body: formData,
+  });
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke laste opp fil");
+  return parseEllerKastFeil(filResponseSchema, await respons.json(), "lastOppFil");
+}
+
+export async function slettFil(token: string, sakId: string, filId: string): Promise<void> {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/filer/${filId}`), {
+    method: "DELETE",
+    headers: authHeaders(token),
+  });
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke slette fil");
+}
+
+/**
+ * Henter filinnhold direkte fra backend og returnerer det rå HTTP-svaret.
+ * Svaret inneholder filbytes med Content-Disposition-header for nedlasting.
+ * Unngår bruk av signerte GCS-URLer som krever iam.serviceAccounts.signBlob.
+ */
+export async function lastNedFil(token: string, sakId: string, filId: string): Promise<Response> {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/filer/${filId}`), {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke laste ned fil");
+  return respons;
 }
 
 // --- Personoppslag ---

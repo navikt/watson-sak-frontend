@@ -5,6 +5,16 @@
  */
 export type DokumentInnhold = Record<string, unknown>[];
 
+/** Metadata for en opplastet fil tilknyttet en kontrollsak. */
+export type FilResponse = {
+  id: string;
+  filnavn: string;
+  storrelse: number;
+  contentType: string;
+  opprettetAv: string;
+  opprettet: string;
+};
+
 /** Node i dokumentlisten for en sak. */
 export type DokumentNode = {
   id: string;

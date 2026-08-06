@@ -179,6 +179,7 @@ export function genererHistorikkForSaker(
     tommeDokumentområder: new Set(),
     dokumenter: new Map(),
     dokumentInnhold: new Map(),
+    filer: new Map(),
     varsler: [],
     nesteFordelingssakId: 0,
     nesteHistorikkId: nesteId,

@@ -22,6 +22,7 @@ import { henleggelsesarsakSchema } from "~/saker/types.backend";
 import { lagIsoTidspunktFraNorskDatoTid } from "~/utils/date-utils";
 import { hentTekstfelt, hentValgfriTekst } from "~/utils/form-data";
 import { hentDokumenttreForSak } from "./filer/mock-data.server";
+import { hentFilerForSak } from "./filer/mock-data-filer.server";
 import { notatMalValg } from "./handlinger/notatValg";
 import { erAktivSakKontrollsak } from "./handlinger/tilgjengeligeHandlinger";
 import {
@@ -173,11 +174,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     const token = await getBackendOboToken(request);
     const sakId = params.sakId;
 
-    const [sak, historikk, journalposter, saksbehandlerDetaljer] = await Promise.all([
+    const [sak, historikk, journalposter, saksbehandlerDetaljer, filer] = await Promise.all([
       backendApi.hentKontrollsak(token, sakId),
       backendApi.hentHendelser(token, sakId),
       backendApi.hentJournalposter(token, sakId),
       backendApi.hentSaksbehandlere(token),
+      backendApi.hentFiler(token, sakId),
     ]);
 
     // Henter kun første side (maks 100 saker) — visningen på sakdetaljsiden er en enkel
@@ -193,6 +195,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       historikk,
       journalposter,
       dokumenter: sak.dokumenter,
+      filer,
       andreSaker,
       saksbehandlere: saksbehandlerDetaljer.map((sb) => sb.navn),
       saksbehandlerDetaljer,
@@ -211,6 +214,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const erEier = sak.saksbehandlere.eier?.navIdent === innlogget.navIdent;
   const harDeltTilgang = sak.saksbehandlere.deltMed.some((s) => s.navIdent === innlogget.navIdent);
   const dokumenter = erEier || harDeltTilgang ? hentDokumenttreForSak(request, String(sak.id)) : [];
+  const filer = erEier || harDeltTilgang ? hentFilerForSak(request, String(sak.id)) : [];
   const andreSaker = alleSaker.filter(
     (annenSak) => annenSak.personIdent === sak.personIdent && annenSak.id !== sak.id,
   );
@@ -219,6 +223,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     historikk,
     journalposter: [],
     dokumenter,
+    filer,
     andreSaker,
     saksbehandlere: mockSaksbehandlere,
     saksbehandlerDetaljer: mockSaksbehandlerDetaljer,

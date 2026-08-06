@@ -188,6 +188,7 @@ export default function SakDetaljSide() {
     sak: loaderSak,
     historikk,
     dokumenter,
+    filer,
     andreSaker,
     saksbehandlerDetaljer,
   } = useLoaderData<typeof loader>();
@@ -775,8 +776,10 @@ export default function SakDetaljSide() {
             {kanSeFilområde && (
               <SakFilområde
                 dokumenter={dokumenter}
+                filer={filer}
                 sakId={saksreferanse}
                 redigerbar={kanRedigereDokumenter}
+                erSakseier={erEier}
               />
             )}
 
