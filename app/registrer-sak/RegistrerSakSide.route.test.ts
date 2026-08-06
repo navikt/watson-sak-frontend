@@ -8,7 +8,9 @@ const testState = vi.hoisted(() => ({
 const getBackendOboTokenMock = vi.fn().mockResolvedValue("token-123");
 
 vi.mock("./api.server", () => ({
-  opprettKontrollsak: vi.fn().mockResolvedValue({ id: "00000000-0000-4000-8000-000000301000" }),
+  opprettKontrollsak: vi
+    .fn()
+    .mockResolvedValue({ ok: true, sak: { id: "00000000-0000-4000-8000-000000301000" } }),
 }));
 
 vi.mock("~/saker/api.server", () => ({

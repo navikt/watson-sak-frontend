@@ -40,6 +40,10 @@ type OpprettKontrollsakResultat = {
   id: string;
 };
 
+export type OpprettKontrollsakSvar =
+  | { ok: true; sak: OpprettKontrollsakResultat }
+  | { ok: false; status: number; melding: string };
+
 type KontrollsakPrioritet = "LAV" | "NORMAL" | "HOY";
 
 function erGyldigPrioritet(verdi: string): verdi is KontrollsakPrioritet {
@@ -50,7 +54,7 @@ export async function opprettKontrollsak({
   request,
   token,
   payload,
-}: OpprettKontrollsakArgs): Promise<OpprettKontrollsakResultat> {
+}: OpprettKontrollsakArgs): Promise<OpprettKontrollsakSvar> {
   if (skalBrukeMockdata) {
     if (!erGyldigPrioritet(payload.prioritet)) {
       throw new Error("Ugyldig mock-payload for opprettelse av kontrollsak.");
@@ -67,7 +71,7 @@ export async function opprettKontrollsak({
       arbeidsgivere: payload.arbeidsgivere ?? [],
       ytelser: payload.ytelser,
     });
-    return { id: String(kontrollsak.id) };
+    return { ok: true, sak: { id: String(kontrollsak.id) } };
   }
 
   if (!BACKEND_API_URL) {
@@ -97,12 +101,12 @@ export async function opprettKontrollsak({
     logger.error("Kunne ikke opprette kontrollsak i Watson Admin API", {
       status: response.status,
     });
-    throw new Error("Kunne ikke opprette kontrollsak.");
+    return { ok: false, status: response.status, melding: "Kunne ikke opprette kontrollsak." };
   }
 
   const body = (await response.json()) as { id: number };
 
-  return { id: String(body.id) };
+  return { ok: true, sak: { id: String(body.id) } };
 }
 
 export async function lastOppFil(token: string, sakId: string, fil: File): Promise<void> {

@@ -65,21 +65,33 @@ export async function action({ request }: Route.ActionArgs) {
     return submission.reply();
   }
 
-  const data = submission.value;
+  const skjemaData = submission.value;
   const token = skalBrukeMockdata ? "demo" : await getBackendOboToken(request);
 
-  const opprettetSak = await opprettKontrollsak({
+  const resultat = await opprettKontrollsak({
     request,
     token,
-    payload: byggOpprettKontrollsakPayload({ skjema: data }),
+    payload: byggOpprettKontrollsakPayload({ skjema: skjemaData }),
   });
+
+  if (!resultat.ok) {
+    if (resultat.status === 404) {
+      return submission.reply({
+        formErrors: [
+          "Personen ble ikke funnet. Søk på nytt for å bekrefte at personen eksisterer.",
+        ],
+      });
+    }
+    logger.error("Uventet feil ved opprettelse av kontrollsak", { status: resultat.status });
+    throw new Error(resultat.melding);
+  }
 
   if (!skalBrukeMockdata) {
     const filer = formData
       .getAll("filer")
       .filter((f: FormDataEntryValue): f is File => f instanceof File && f.size > 0);
     if (filer.length > 0) {
-      Promise.all(filer.map((fil: File) => lastOppFil(token, opprettetSak.id, fil))).catch(
+      Promise.all(filer.map((fil: File) => lastOppFil(token, resultat.sak.id, fil))).catch(
         (err) => {
           logger.error("Uventet feil ved filopplasting etter sak-opprettelse", { err });
         },
@@ -87,5 +99,5 @@ export async function action({ request }: Route.ActionArgs) {
     }
   }
 
-  return redirect(RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(opprettetSak.id)));
+  return redirect(RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(resultat.sak.id)));
 }
