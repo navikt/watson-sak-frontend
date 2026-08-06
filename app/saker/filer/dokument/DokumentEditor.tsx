@@ -2,10 +2,12 @@ import {
   ArrowRedoIcon,
   ArrowUndoIcon,
   BulletListIcon,
+  FileImageIcon,
+  ImageIcon,
   NumberListIcon,
   TableIcon,
 } from "@navikt/aksel-icons";
-import { Button, HStack, Select, Tooltip } from "@navikt/ds-react";
+import { Alert, Button, HStack, Loader, Select, Tooltip } from "@navikt/ds-react";
 import {
   BlockquotePlugin,
   BoldPlugin,
@@ -30,6 +32,7 @@ import { indent, outdent } from "@platejs/indent";
 import { IndentPlugin } from "@platejs/indent/react";
 import { DocxPlugin } from "@platejs/docx";
 import { JuicePlugin } from "@platejs/juice";
+import { ImagePlugin } from "@platejs/media/react";
 import { TrailingBlockPlugin } from "platejs";
 import {
   TableCellHeaderPlugin,
@@ -39,12 +42,22 @@ import {
 } from "@platejs/table/react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { useRevalidator } from "react-router";
 import { Plate, PlateContent, PlateElement, useEditorState, usePlateEditor } from "platejs/react";
 import type { TElement } from "platejs";
 import type { PlateElementProps } from "platejs/react";
 import { sporHendelse } from "~/analytics/analytics";
 import { Kort } from "~/komponenter/Kort";
-import type { DokumentInnhold } from "~/saker/filer/typer";
+import type { DokumentInnhold, FilResponse } from "~/saker/filer/typer";
+import { BildeElement } from "./BildeElement";
+import { VelgEksisterendeBildeModal } from "./VelgEksisterendeBildeModal";
+import {
+  BildeOpplastingFeil,
+  byggBildeUrl,
+  filtrerBildefiler,
+  lastOppBilde,
+  TILLATTE_BILDETYPER,
+} from "./bilde-opplasting";
 import {
   LeggTilKolonneIkon,
   LeggTilRadIkon,
@@ -139,15 +152,22 @@ function Verktøylinje({
   onFormater,
   aktivtSidepanel,
   onVelgSidepanel,
+  lasterOppBilde,
+  onVelgFiler,
+  onÅpneEksisterendeBilde,
 }: {
   onFormater: (etikett: string) => void;
   aktivtSidepanel: SidepanelValg;
   onVelgSidepanel: (valg: SidepanelValg) => void;
+  lasterOppBilde: boolean;
+  onVelgFiler: (filer: FileList) => void;
+  onÅpneEksisterendeBilde: () => void;
 }) {
   const editor = useEditorState();
   const erITabell = !!editor.api.above({ match: { type: TablePlugin.key } });
   const toolbarRef = useRef<HTMLDivElement>(null);
   const [aktivEtikett, settAktivEtikett] = useState("Skrifttype");
+  const bildeInputRef = useRef<HTMLInputElement>(null);
 
   // Behold roveren innenfor gyldige knapper når verktøylinja endres (tabell-knapper vises/skjules)
   const oppdaterRoverVedEndring = useCallback(() => {
@@ -330,6 +350,36 @@ function Verktøylinje({
                   </VerktøyKnapp>
                 </>
               )}
+              <Skillelinje />
+              <input
+                ref={bildeInputRef}
+                type="file"
+                accept={TILLATTE_BILDETYPER.join(",")}
+                multiple
+                className="sr-only"
+                aria-hidden
+                tabIndex={-1}
+                onChange={(e) => {
+                  if (e.target.files && e.target.files.length > 0) {
+                    onVelgFiler(e.target.files);
+                  }
+                  e.target.value = "";
+                }}
+              />
+              <VerktøyKnapp
+                etikett="Sett inn bilde"
+                disabled={lasterOppBilde}
+                onClick={() => bildeInputRef.current?.click()}
+              >
+                {lasterOppBilde ? <Loader size="xsmall" aria-hidden /> : <ImageIcon aria-hidden />}
+              </VerktøyKnapp>
+              <VerktøyKnapp
+                etikett="Sett inn eksisterende bilde"
+                disabled={lasterOppBilde}
+                onClick={onÅpneEksisterendeBilde}
+              >
+                <FileImageIcon aria-hidden />
+              </VerktøyKnapp>
             </HStack>
 
             <SidepanelMeny aktivt={aktivtSidepanel} onVelg={onVelgSidepanel} />
@@ -410,6 +460,7 @@ const PLUGINS = [
       {children}
     </PlateElement>
   )),
+  ImagePlugin.withComponent(BildeElement),
 ];
 
 type DokumentEditorProps = {
@@ -442,6 +493,77 @@ export function DokumentEditor({
   const flateRef = useRef<HTMLDivElement>(null);
   const høyde = useTilgjengeligHøyde(flateRef);
 
+  const [lasterOppBilde, settLasterOppBilde] = useState(false);
+  const [bildeFeil, settBildeFeil] = useState<string | null>(null);
+  const [eksisterendeBildeModalÅpen, settEksisterendeBildeModalÅpen] = useState(false);
+  const revalidator = useRevalidator();
+
+  const settInnBilde = useCallback(
+    (fil: FilResponse) => {
+      editor.tf.insertNodes(
+        {
+          type: ImagePlugin.key,
+          filId: fil.id,
+          url: byggBildeUrl(sakId, fil.id),
+          alt: fil.filnavn,
+          children: [{ text: "" }],
+        },
+        { nextBlock: true },
+      );
+      sporHendelse("dokument formatert", { sakId, docId, format: "Sett inn bilde" });
+    },
+    [editor, sakId, docId],
+  );
+
+  const håndterBildefiler = useCallback(
+    async (filer: FileList | File[]) => {
+      const bildefiler = filtrerBildefiler(filer);
+      if (bildefiler.length === 0) {
+        settBildeFeil("Bare PNG-, JPEG- og WebP-bilder kan settes inn i dokumentet.");
+        return;
+      }
+      settLasterOppBilde(true);
+      settBildeFeil(null);
+      try {
+        for (const fil of bildefiler) {
+          const opplastet = await lastOppBilde(sakId, fil);
+          settInnBilde(opplastet);
+        }
+        // Sørger for at f.eks. vedleggslisten på siden viser bildet uten manuell oppdatering.
+        void revalidator.revalidate();
+      } catch (feil) {
+        settBildeFeil(
+          feil instanceof BildeOpplastingFeil ? feil.message : "Kunne ikke laste opp bildet.",
+        );
+      } finally {
+        settLasterOppBilde(false);
+      }
+    },
+    [sakId, settInnBilde],
+  );
+
+  function håndterDrop(event: React.DragEvent<HTMLDivElement>) {
+    const filer = event.dataTransfer?.files;
+    if (!filer || filer.length === 0) return;
+    const bildefiler = filtrerBildefiler(filer);
+    if (bildefiler.length === 0) return;
+    event.preventDefault();
+    void håndterBildefiler(bildefiler);
+  }
+
+  function håndterDragOver(event: React.DragEvent<HTMLDivElement>) {
+    if (event.dataTransfer.types.includes("Files")) {
+      event.preventDefault();
+    }
+  }
+
+  function håndterPaste(event: React.ClipboardEvent<HTMLDivElement>) {
+    const bildefiler = filtrerBildefiler(event.clipboardData?.files ?? []);
+    if (bildefiler.length === 0) return;
+    event.preventDefault();
+    void håndterBildefiler(bildefiler);
+  }
+
   return (
     <Plate
       editor={editor}
@@ -461,7 +583,15 @@ export function DokumentEditor({
               onFormater={(format) => sporHendelse("dokument formatert", { sakId, docId, format })}
               aktivtSidepanel={aktivtSidepanel}
               onVelgSidepanel={settAktivtSidepanel}
+              lasterOppBilde={lasterOppBilde}
+              onVelgFiler={(filer) => void håndterBildefiler(filer)}
+              onÅpneEksisterendeBilde={() => settEksisterendeBildeModalÅpen(true)}
             />
+            {bildeFeil && (
+              <Alert variant="error" size="small" className="mt-[var(--ax-space-8)]">
+                {bildeFeil}
+              </Alert>
+            )}
           </div>
         )}
         {/* Grå flate med «arket» til venstre og sidepanelet som en egen seksjon til høyre.
@@ -476,6 +606,9 @@ export function DokumentEditor({
                 role="textbox"
                 aria-multiline
                 aria-label="Dokumentinnhold"
+                onDrop={redigerbar ? håndterDrop : undefined}
+                onDragOver={redigerbar ? håndterDragOver : undefined}
+                onPaste={redigerbar ? håndterPaste : undefined}
                 className={
                   "min-h-[60vh] focus:outline-none [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg " +
                   "[&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
@@ -498,6 +631,12 @@ export function DokumentEditor({
           />
         </div>
       </div>
+      <VelgEksisterendeBildeModal
+        åpen={eksisterendeBildeModalÅpen}
+        sakId={sakId}
+        onClose={() => settEksisterendeBildeModalÅpen(false)}
+        onVelg={settInnBilde}
+      />
     </Plate>
   );
 }
