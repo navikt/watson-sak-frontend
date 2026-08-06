@@ -40,6 +40,7 @@ import { Plate, PlateContent, PlateElement, useEditorState, usePlateEditor } fro
 import type { TElement } from "platejs";
 import type { PlateElementProps } from "platejs/react";
 import { sporHendelse } from "~/analytics/analytics";
+import { Kort } from "~/komponenter/Kort";
 import type { DokumentInnhold } from "~/saker/filer/typer";
 import {
   LeggTilKolonneIkon,
@@ -96,6 +97,11 @@ function VerktøyKnapp({ etikett, aktiv, disabled, onClick, children }: Verktøy
       </Button>
     </Tooltip>
   );
+}
+
+/** Visuelt skille mellom grupper av verktøy. Rent dekorativt – skjult for skjermlesere. */
+function Skillelinje() {
+  return <div aria-hidden className="mx-1 h-[22px] w-px shrink-0 bg-ax-border-neutral-subtle" />;
 }
 
 function hentKnapper(container: HTMLElement | null): (HTMLButtonElement | HTMLSelectElement)[] {
@@ -166,17 +172,15 @@ function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }
     <FormaterContext.Provider value={onFormater}>
       <AktivEtikettContext.Provider value={aktivEtikett}>
         <SettAktivEtikettContext.Provider value={settAktivEtikett}>
-          {/* Den negative margen nuller ut den horisontale paddingen til dokumentkortet
-          slik at den festede verktøylinja går helt ut til kantene, mens px-en
-          justerer knappene tilbake på linje med teksten. Vi bruker de samme Aksel
-          spacing-variablene som kortet (space-24 / space-64 ved md), så verdiene
-          ikke drifter fra hverandre om spacing-skalaen endres. */}
+          {/* Verktøylinja ligger nå over «arket» og er et eget kort, slik skissen viser.
+          Den er festet til toppen av visningsområdet så formateringen er tilgjengelig
+          også når man scroller nedover i et langt dokument. */}
           <HStack
             justify="space-between"
             align="center"
             gap="space-4"
             wrap
-            className="sticky top-0 z-10 bg-ax-bg-raised border-b border-ax-border-neutral-subtle py-2 mb-2 mx-[calc(var(--ax-space-24)_*_-1)] px-[var(--ax-space-24)] md:mx-[calc(var(--ax-space-64)_*_-1)] md:px-[var(--ax-space-64)]"
+            className="sticky top-0 z-10 rounded-lg border border-ax-border-neutral-subtle bg-ax-bg-raised px-[var(--ax-space-8)] py-[var(--ax-space-6)]"
           >
             <HStack
               gap="space-2"
@@ -201,6 +205,7 @@ function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }
               >
                 <ArrowRedoIcon aria-hidden />
               </VerktøyKnapp>
+              <Skillelinje />
               <Select
                 label="Skrifttype"
                 hideLabel
@@ -222,6 +227,7 @@ function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }
                   </option>
                 ))}
               </Select>
+              <Skillelinje />
               <VerktøyKnapp
                 etikett="Fet"
                 aktiv={!!editor.api.mark(BoldPlugin.key)}
@@ -250,12 +256,14 @@ function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }
               >
                 <span className="line-through">S</span>
               </VerktøyKnapp>
+              <Skillelinje />
               <VerktøyKnapp etikett="Indenter" onClick={() => indent(editor)}>
                 <IndenterIkon aria-hidden />
               </VerktøyKnapp>
               <VerktøyKnapp etikett="Avindenter" onClick={() => outdent(editor)}>
                 <AvindenterIkon aria-hidden />
               </VerktøyKnapp>
+              <Skillelinje />
               <VerktøyKnapp
                 etikett="Sitat"
                 aktiv={editor.api.some({ match: { type: BlockquotePlugin.key } })}
@@ -277,6 +285,7 @@ function Verktøylinje({ onFormater }: { onFormater: (etikett: string) => void }
               >
                 <NumberListIcon aria-hidden />
               </VerktøyKnapp>
+              <Skillelinje />
               <VerktøyKnapp
                 etikett="Sett inn tabell"
                 onClick={() => insertTable(editor, { rowCount: 3, colCount: 3, header: true })}
@@ -380,22 +389,32 @@ export function DokumentEditor({
           onFormater={(format) => sporHendelse("dokument formatert", { sakId, docId, format })}
         />
       )}
-      <PlateContent
-        role="textbox"
-        aria-multiline
-        aria-label="Dokumentinnhold"
-        className={
-          "min-h-[60vh] focus:outline-none [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg " +
-          "[&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
-          "[&_blockquote]:border-l-4 [&_blockquote]:border-ax-border-neutral-subtle " +
-          "[&_blockquote]:pl-4 [&_blockquote]:italic [&_p]:my-2 " +
-          "[&_table]:border-collapse [&_table]:my-3 [&_table]:w-full " +
-          "[&_td]:border [&_td]:border-ax-border-neutral-subtle [&_td]:p-2 [&_td]:align-top " +
-          "[&_th]:border [&_th]:border-ax-border-neutral-subtle [&_th]:p-2 [&_th]:align-top " +
-          "[&_th]:bg-ax-bg-neutral-soft [&_th]:text-left [&_th]:font-semibold " +
-          "[&_u]:underline [&_s]:line-through"
-        }
-      />
+      {/* Grå flate bak «arket», slik skissen viser. Den negative margen nuller ut
+      gutterne til PageBlock-en i AppLayout (space-16, space-48 fra lg), slik at flaten
+      går helt ut til kantene av innholdsområdet, mens px-en legger paddingen tilbake. */}
+      <div className="mt-[var(--ax-space-12)] bg-ax-bg-neutral-moderate py-[var(--ax-space-32)] mx-[calc(var(--ax-space-16)_*_-1)] px-[var(--ax-space-16)] lg:mx-[calc(var(--ax-space-48)_*_-1)] lg:px-[var(--ax-space-48)]">
+        <Kort
+          padding={{ xs: "space-24", md: "space-64" }}
+          className="mx-auto w-full max-w-[210mm] shadow-[var(--ax-shadow-dialog)]"
+        >
+          <PlateContent
+            role="textbox"
+            aria-multiline
+            aria-label="Dokumentinnhold"
+            className={
+              "min-h-[60vh] focus:outline-none [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg " +
+              "[&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
+              "[&_blockquote]:border-l-4 [&_blockquote]:border-ax-border-neutral-subtle " +
+              "[&_blockquote]:pl-4 [&_blockquote]:italic [&_p]:my-2 " +
+              "[&_table]:border-collapse [&_table]:my-3 [&_table]:w-full " +
+              "[&_td]:border [&_td]:border-ax-border-neutral-subtle [&_td]:p-2 [&_td]:align-top " +
+              "[&_th]:border [&_th]:border-ax-border-neutral-subtle [&_th]:p-2 [&_th]:align-top " +
+              "[&_th]:bg-ax-bg-neutral-soft [&_th]:text-left [&_th]:font-semibold " +
+              "[&_u]:underline [&_s]:line-through"
+            }
+          />
+        </Kort>
+      </div>
     </Plate>
   );
 }
