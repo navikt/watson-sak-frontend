@@ -101,8 +101,8 @@ function hentYtelseTyper(ytelser: KontrollsakYtelse[]): string[] {
   return ytelser.map((ytelse) => formaterYtelseType(ytelse.type));
 }
 
-function formaterPeriode(fra: string, til: string): string {
-  return `${fra} – ${til}`;
+function formaterPeriode(fra: string | null, til: string | null): string {
+  return `${fra ?? "ukjent"} – ${til ?? "ukjent"}`;
 }
 
 export function formaterPeriodeForYtelser(ytelser: KontrollsakYtelse[]): string | null {

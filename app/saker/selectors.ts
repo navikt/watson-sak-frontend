@@ -125,7 +125,8 @@ export function getMineSakerIkonType(
   }
 }
 
-function formaterTallDato(dato: string) {
+function formaterTallDato(dato: string | null) {
+  if (!dato) return "ukjent dato";
   return new Intl.DateTimeFormat("nb-NO", {
     day: "2-digit",
     month: "2-digit",
