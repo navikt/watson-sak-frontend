@@ -1,5 +1,5 @@
-import { DocPencilIcon, FilePlusIcon } from "@navikt/aksel-icons";
-import { BodyShort, Button, Heading, HStack, VStack } from "@navikt/ds-react";
+import { FilePlusIcon } from "@navikt/aksel-icons";
+import { Button, Heading, HStack, VStack } from "@navikt/ds-react";
 import { Form } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { Kort } from "~/komponenter/Kort";
@@ -33,27 +33,6 @@ function OpprettDokumentKnapp({
   );
 }
 
-function TomtDokumentområde({ sakId, redigerbar }: { sakId: string; redigerbar: boolean }) {
-  return (
-    <VStack gap="space-8" align="center" className="py-12 bg-ax-bg-neutral-soft rounded-lg">
-      <DocPencilIcon aria-hidden className="text-ax-icon-neutral-subtle" fontSize="3rem" />
-      <VStack gap="space-2" align="center">
-        <BodyShort weight="semibold">Ingen dokumenter ennå</BodyShort>
-        {redigerbar && (
-          <BodyShort size="small" className="text-ax-text-neutral-subtle">
-            Opprett et dokument for å komme i gang.
-          </BodyShort>
-        )}
-      </VStack>
-      {redigerbar && (
-        <HStack gap="space-4">
-          <OpprettDokumentKnapp sakId={sakId} size="small" />
-        </HStack>
-      )}
-    </VStack>
-  );
-}
-
 interface SakFilområdeProps {
   dokumenter: DokumentNode[];
   filer: FilResponse[];
@@ -72,8 +51,6 @@ export function SakFilområde({
   redigerbar = true,
   erSakseier = false,
 }: SakFilområdeProps) {
-  const harDokumenter = dokumenter.length > 0;
-
   return (
     <Kort>
       <VStack gap="space-8">
@@ -82,15 +59,9 @@ export function SakFilområde({
             <Heading level="2" size="small">
               Dokumenter
             </Heading>
-            {harDokumenter && redigerbar && (
-              <OpprettDokumentKnapp sakId={sakId} size="xsmall" variant="tertiary" />
-            )}
+            {redigerbar && <OpprettDokumentKnapp sakId={sakId} size="xsmall" variant="tertiary" />}
           </HStack>
-          {harDokumenter ? (
-            <DokumentTre noder={dokumenter} sakId={sakId} redigerbar={redigerbar} />
-          ) : (
-            <TomtDokumentområde sakId={sakId} redigerbar={redigerbar} />
-          )}
+          <DokumentTre noder={dokumenter} sakId={sakId} redigerbar={redigerbar} />
         </div>
 
         <div className="border-t border-ax-border-neutral-subtle pt-6">

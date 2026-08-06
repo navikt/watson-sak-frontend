@@ -34,14 +34,15 @@ function renderSeksjon(props: Parameters<typeof VedleggSeksjon>[0]) {
 }
 
 describe("VedleggSeksjon", () => {
-  it("viser 'Ingen vedlegg ennå' når listen er tom", () => {
-    renderSeksjon({ filer: [], sakId: "SAK-1", erSakseier: false, kanLasteOpp: false });
-    expect(screen.getByText("Ingen vedlegg ennå.")).toBeDefined();
-  });
-
   it("viser heading 'Vedlegg'", () => {
     renderSeksjon({ filer: [], sakId: "SAK-1", erSakseier: false, kanLasteOpp: false });
     expect(screen.getByText("Vedlegg")).toBeDefined();
+  });
+
+  it("viser tom tabell når det ikke er noen filer", () => {
+    renderSeksjon({ filer: [], sakId: "SAK-1", erSakseier: false, kanLasteOpp: false });
+    expect(screen.getByText("Filnavn")).toBeDefined();
+    expect(screen.queryAllByRole("row").length).toBe(1); // kun header-rad
   });
 
   it("viser filnavn for hver fil", () => {
@@ -79,13 +80,13 @@ describe("VedleggSeksjon", () => {
     expect(screen.getByLabelText("Slett screenshot.png")).toBeDefined();
   });
 
-  it("viser 'Last opp fil'-label i dropzone når kanLasteOpp er true", () => {
+  it("viser 'Last opp vedlegg'-knapp når kanLasteOpp er true", () => {
     renderSeksjon({ filer: [], sakId: "SAK-1", erSakseier: false, kanLasteOpp: true });
-    expect(screen.getByText("Last opp fil")).toBeDefined();
+    expect(screen.getByText("Last opp vedlegg")).toBeDefined();
   });
 
-  it("skjuler dropzone når kanLasteOpp er false", () => {
+  it("skjuler 'Last opp vedlegg'-knapp når kanLasteOpp er false", () => {
     renderSeksjon({ filer: [], sakId: "SAK-1", erSakseier: false, kanLasteOpp: false });
-    expect(screen.queryByText("Last opp fil")).toBeNull();
+    expect(screen.queryByText("Last opp vedlegg")).toBeNull();
   });
 });

@@ -1,18 +1,17 @@
-import { DownloadIcon, TrashIcon } from "@navikt/aksel-icons";
+import { DownloadIcon, TrashIcon, UploadIcon } from "@navikt/aksel-icons";
 import {
   Alert,
   BodyShort,
   Button,
   Detail,
-  FileUpload,
   Heading,
   HStack,
   Loader,
   Table,
   VStack,
 } from "@navikt/ds-react";
-import type { FileObject, FileRejectedPartitioned } from "@navikt/ds-react";
-import { useState } from "react";
+import type { FileObject, FilesPartitioned } from "@navikt/ds-react";
+import { useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
@@ -103,25 +102,24 @@ interface VedleggSeksjonProps {
 
 export function VedleggSeksjon({ filer, sakId, erSakseier, kanLasteOpp }: VedleggSeksjonProps) {
   const opplastingFetcher = useFetcher<FilResponse | { message: string }>();
-  const [dropzoneKey, setDropzoneKey] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
   const lasterOpp = opplastingFetcher.state !== "idle";
   const url = RouteConfig.API.SAK_FILER.replace(":sakId", sakId);
 
-  function håndterFilvalg(
-    _alleFiler: FileObject[],
-    partitioned: { accepted: File[]; rejected: FileRejectedPartitioned[] },
-  ) {
-    if (partitioned.accepted.length === 0) return;
+  function håndterFilvalg(event: React.ChangeEvent<HTMLInputElement>) {
+    const fil = event.target.files?.[0];
+    if (!fil) return;
 
     const formData = new FormData();
-    formData.append("fil", partitioned.accepted[0]);
+    formData.append("fil", fil);
     sporHendelse("vedlegg lastet opp", { sakId });
     opplastingFetcher.submit(formData, {
       method: "post",
       action: url,
       encType: "multipart/form-data",
     });
-    setDropzoneKey((k) => k + 1);
+    // Nullstill input slik at samme fil kan lastes opp igjen
+    event.target.value = "";
   }
 
   const feilFraServer =
@@ -133,20 +131,33 @@ export function VedleggSeksjon({ filer, sakId, erSakseier, kanLasteOpp }: Vedleg
 
   return (
     <VStack gap="space-4">
-      <Heading level="3" size="xsmall">
-        Vedlegg
-      </Heading>
-
-      {kanLasteOpp && (
-        <FileUpload.Dropzone
-          key={dropzoneKey}
-          label="Last opp fil"
-          description="Dra og slipp, eller klikk for å velge fil. Filen virusskrannes automatisk."
-          onSelect={håndterFilvalg}
-          multiple={false}
-          disabled={lasterOpp}
-        />
-      )}
+      <HStack justify="space-between" align="center">
+        <Heading level="3" size="xsmall">
+          Vedlegg
+        </Heading>
+        {kanLasteOpp && (
+          <>
+            <input
+              ref={inputRef}
+              type="file"
+              className="sr-only"
+              aria-hidden
+              tabIndex={-1}
+              onChange={håndterFilvalg}
+            />
+            <Button
+              type="button"
+              variant="tertiary"
+              size="xsmall"
+              icon={lasterOpp ? <Loader size="xsmall" aria-hidden /> : <UploadIcon aria-hidden />}
+              disabled={lasterOpp}
+              onClick={() => inputRef.current?.click()}
+            >
+              Last opp vedlegg
+            </Button>
+          </>
+        )}
+      </HStack>
 
       {feilFraServer && (
         <Alert variant="error" size="small">
@@ -154,60 +165,43 @@ export function VedleggSeksjon({ filer, sakId, erSakseier, kanLasteOpp }: Vedleg
         </Alert>
       )}
 
-      {lasterOpp && (
-        <HStack gap="space-2" align="center">
-          <Loader size="small" aria-hidden />
-          <BodyShort size="small" className="text-ax-text-neutral-subtle">
-            Laster opp…
-          </BodyShort>
-        </HStack>
-      )}
-
-      {filer.length === 0 ? (
-        <BodyShort size="small" className="text-ax-text-neutral-subtle">
-          Ingen vedlegg ennå.
-        </BodyShort>
-      ) : (
-        <Table size="small">
-          <Table.Header>
-            <Table.Row>
-              <Table.HeaderCell scope="col">Filnavn</Table.HeaderCell>
-              <Table.HeaderCell scope="col">Størrelse</Table.HeaderCell>
-              <Table.HeaderCell scope="col">Lastet opp</Table.HeaderCell>
-              <Table.HeaderCell scope="col">Av</Table.HeaderCell>
-              <Table.HeaderCell scope="col">
-                <span className="sr-only">Handlinger</span>
-              </Table.HeaderCell>
+      <Table size="small">
+        <Table.Header>
+          <Table.Row>
+            <Table.HeaderCell scope="col">Filnavn</Table.HeaderCell>
+            <Table.HeaderCell scope="col">Størrelse</Table.HeaderCell>
+            <Table.HeaderCell scope="col">Lastet opp</Table.HeaderCell>
+            <Table.HeaderCell scope="col">Av</Table.HeaderCell>
+            <Table.HeaderCell scope="col">
+              <span className="sr-only">Handlinger</span>
+            </Table.HeaderCell>
+          </Table.Row>
+        </Table.Header>
+        <Table.Body>
+          {filer.map((fil) => (
+            <Table.Row key={fil.id}>
+              <Table.DataCell>
+                <BodyShort size="small">{fil.filnavn}</BodyShort>
+              </Table.DataCell>
+              <Table.DataCell>
+                <Detail>{formaterStorrelse(fil.storrelse)}</Detail>
+              </Table.DataCell>
+              <Table.DataCell>
+                <Detail>{formaterDatoTid(fil.opprettet)}</Detail>
+              </Table.DataCell>
+              <Table.DataCell>
+                <Detail>{fil.opprettetAv}</Detail>
+              </Table.DataCell>
+              <Table.DataCell>
+                <HStack gap="space-1" align="center">
+                  <NedlastKnapp filId={fil.id} filnavn={fil.filnavn} sakId={sakId} />
+                  {erSakseier && <SlettKnapp filId={fil.id} filnavn={fil.filnavn} sakId={sakId} />}
+                </HStack>
+              </Table.DataCell>
             </Table.Row>
-          </Table.Header>
-          <Table.Body>
-            {filer.map((fil) => (
-              <Table.Row key={fil.id}>
-                <Table.DataCell>
-                  <BodyShort size="small">{fil.filnavn}</BodyShort>
-                </Table.DataCell>
-                <Table.DataCell>
-                  <Detail>{formaterStorrelse(fil.storrelse)}</Detail>
-                </Table.DataCell>
-                <Table.DataCell>
-                  <Detail>{formaterDatoTid(fil.opprettet)}</Detail>
-                </Table.DataCell>
-                <Table.DataCell>
-                  <Detail>{fil.opprettetAv}</Detail>
-                </Table.DataCell>
-                <Table.DataCell>
-                  <HStack gap="space-1" align="center">
-                    <NedlastKnapp filId={fil.id} filnavn={fil.filnavn} sakId={sakId} />
-                    {erSakseier && (
-                      <SlettKnapp filId={fil.id} filnavn={fil.filnavn} sakId={sakId} />
-                    )}
-                  </HStack>
-                </Table.DataCell>
-              </Table.Row>
-            ))}
-          </Table.Body>
-        </Table>
-      )}
+          ))}
+        </Table.Body>
+      </Table>
     </VStack>
   );
 }

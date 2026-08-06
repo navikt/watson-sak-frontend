@@ -54,11 +54,6 @@ function renderTre(props: Parameters<typeof DokumentTre>[0]) {
 }
 
 describe("SakFilområde", () => {
-  it("viser tomtilstand når det ikke er noen dokumenter", () => {
-    renderOmråde({ dokumenter: [], filer: [], sakId: "ABC-123" });
-    expect(screen.getByText("Ingen dokumenter ennå")).toBeDefined();
-  });
-
   it("viser heading 'Dokumenter' alltid", () => {
     renderOmråde({ dokumenter: [], filer: [], sakId: "ABC-123" });
     expect(screen.getByText("Dokumenter")).toBeDefined();
@@ -80,13 +75,8 @@ describe("SakFilområde", () => {
     expect(screen.getByText("rapport.pdf")).toBeDefined();
   });
 
-  it("viser 'Ingen vedlegg ennå' når det ikke er noen filer", () => {
+  it("viser 'Opprett dokument'-knapp når redigerbar er true", () => {
     renderOmråde({ dokumenter: [], filer: [], sakId: "ABC-123" });
-    expect(screen.getByText("Ingen vedlegg ennå.")).toBeDefined();
-  });
-
-  it("viser 'Opprett dokument'-knapp når det finnes dokumenter og man kan redigere", () => {
-    renderOmråde({ dokumenter: mockDokumenter, filer: [], sakId: "ABC-123" });
     expect(screen.getByText("Opprett dokument")).toBeDefined();
   });
 
