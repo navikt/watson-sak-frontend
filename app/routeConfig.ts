@@ -28,6 +28,8 @@ export const RouteConfig = {
     PERSON_OPPSLAG: "/api/registrer-sak/person-oppslag",
     FORHÅNDSUTFYLL_REGISTRER_SAK: "/api/registrer-sak/forhåndsutfyll",
     SAK_DOKUMENTER: "/api/saker/:sakId/dokumenter",
+    SAK_FILER: "/api/saker/:sakId/filer",
+    SAK_FIL: "/api/saker/:sakId/filer/:filId",
     VARSLER_ULESTE: "/api/varsler/uleste",
     MARKER_VARSEL_LEST: "/api/varsler/lest",
   },

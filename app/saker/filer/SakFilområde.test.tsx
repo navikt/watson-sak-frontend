@@ -3,7 +3,7 @@ import { createRoutesStub } from "react-router";
 import { describe, expect, it } from "vitest";
 import { DokumentTre } from "./DokumentTre";
 import { SakFilområde } from "./SakFilområde";
-import type { DokumentNode } from "./typer";
+import type { DokumentNode, FilResponse } from "./typer";
 
 const mockDokumenter: DokumentNode[] = [
   {
@@ -19,6 +19,17 @@ const mockDokumenter: DokumentNode[] = [
     endretAv: "Kari Hansen",
     endretDato: "2026-03-01",
     låsAv: null,
+  },
+];
+
+const mockFiler: FilResponse[] = [
+  {
+    id: "fil-1",
+    filnavn: "rapport.pdf",
+    storrelse: 204800,
+    contentType: "application/pdf",
+    opprettetAv: "Ola Nordmann",
+    opprettet: "2026-02-15T10:30:00Z",
   },
 ];
 
@@ -44,33 +55,44 @@ function renderTre(props: Parameters<typeof DokumentTre>[0]) {
 
 describe("SakFilområde", () => {
   it("viser tomtilstand når det ikke er noen dokumenter", () => {
-    renderOmråde({ dokumenter: [], sakId: "ABC-123" });
+    renderOmråde({ dokumenter: [], filer: [], sakId: "ABC-123" });
     expect(screen.getByText("Ingen dokumenter ennå")).toBeDefined();
-    expect(screen.getByText("Last opp fil")).toBeDefined();
-    expect(screen.getByText("Opprett dokument")).toBeDefined();
   });
 
   it("viser heading 'Dokumenter' alltid", () => {
-    renderOmråde({ dokumenter: [], sakId: "ABC-123" });
+    renderOmråde({ dokumenter: [], filer: [], sakId: "ABC-123" });
     expect(screen.getByText("Dokumenter")).toBeDefined();
   });
 
+  it("viser heading 'Vedlegg' alltid", () => {
+    renderOmråde({ dokumenter: [], filer: [], sakId: "ABC-123" });
+    expect(screen.getByText("Vedlegg")).toBeDefined();
+  });
+
   it("viser dokumenter i listen", () => {
-    renderOmråde({ dokumenter: mockDokumenter, sakId: "ABC-123" });
+    renderOmråde({ dokumenter: mockDokumenter, filer: [], sakId: "ABC-123" });
     expect(screen.getByText("Rapport")).toBeDefined();
     expect(screen.getByText("Notat")).toBeDefined();
   });
 
-  it("viser handlingsknapper når det finnes dokumenter og man kan redigere", () => {
-    renderOmråde({ dokumenter: mockDokumenter, sakId: "ABC-123" });
-    expect(screen.getByText("Opprett dokument")).toBeDefined();
-    expect(screen.getByText("Last opp fil")).toBeDefined();
+  it("viser opplastede filer", () => {
+    renderOmråde({ dokumenter: [], filer: mockFiler, sakId: "ABC-123" });
+    expect(screen.getByText("rapport.pdf")).toBeDefined();
   });
 
-  it("skjuler handlingsknapper når redigerbar er false", () => {
-    renderOmråde({ dokumenter: mockDokumenter, sakId: "ABC-123", redigerbar: false });
+  it("viser 'Ingen vedlegg ennå' når det ikke er noen filer", () => {
+    renderOmråde({ dokumenter: [], filer: [], sakId: "ABC-123" });
+    expect(screen.getByText("Ingen vedlegg ennå.")).toBeDefined();
+  });
+
+  it("viser 'Opprett dokument'-knapp når det finnes dokumenter og man kan redigere", () => {
+    renderOmråde({ dokumenter: mockDokumenter, filer: [], sakId: "ABC-123" });
+    expect(screen.getByText("Opprett dokument")).toBeDefined();
+  });
+
+  it("skjuler 'Opprett dokument'-knapp når redigerbar er false", () => {
+    renderOmråde({ dokumenter: mockDokumenter, filer: [], sakId: "ABC-123", redigerbar: false });
     expect(screen.queryByText("Opprett dokument")).toBeNull();
-    expect(screen.queryByText("Last opp fil")).toBeNull();
   });
 
   it("lenker dokumenter internt til editoren", () => {

@@ -5,6 +5,22 @@
  */
 export type DokumentInnhold = Record<string, unknown>[];
 
+/** Metadata for en opplastet fil tilknyttet en kontrollsak. */
+export type FilResponse = {
+  id: string;
+  filnavn: string;
+  storrelse: number;
+  contentType: string;
+  opprettetAv: string;
+  opprettet: string;
+};
+
+/** Signert nedlastings-URL for direkte nedlasting fra GCS. */
+export type FilNedlastingResponse = {
+  url: string;
+  utloper: string;
+};
+
 /** Node i dokumentlisten for en sak. */
 export type DokumentNode = {
   id: string;

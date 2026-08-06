@@ -1,6 +1,6 @@
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import type { SakHendelse } from "~/saker/historikk/typer";
-import type { DokumentInnhold, DokumentNode } from "~/saker/filer/typer";
+import type { DokumentInnhold, DokumentNode, FilResponse } from "~/saker/filer/typer";
 import type { Varsel } from "~/varsler/typer";
 import { lagInitialKontrollsaker } from "./saker/fordeling.server";
 import { lagInitialMineKontrollsaker } from "./saker/mine-saker.server";
@@ -14,6 +14,7 @@ export interface MockState {
   tommeDokumentområder: Set<string>;
   dokumenter: Map<string, DokumentNode[]>;
   dokumentInnhold: Map<string, DokumentInnhold>;
+  filer: Map<string, FilResponse[]>;
   varsler: Varsel[];
   nesteFordelingssakId: number;
   nesteHistorikkId: number;
@@ -36,6 +37,7 @@ function lagFreshState(): MockState {
     tommeDokumentområder: new Set(),
     dokumenter: new Map(),
     dokumentInnhold: new Map(),
+    filer: new Map(),
     varsler: lagInitialeVarsler(),
     nesteFordelingssakId: 10000,
     nesteHistorikkId,
