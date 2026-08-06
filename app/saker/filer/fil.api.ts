@@ -1,7 +1,9 @@
 import { data, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
+import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
 import * as backendApi from "~/saker/api.server";
+import { erSakseier } from "~/saker/handlinger/tilgjengeligeHandlinger";
 import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
 import {
   slettFil as slettFilMock,
@@ -49,6 +51,15 @@ export async function action({ request, params }: ActionFunctionArgs) {
     throw data("Sak ikke funnet", { status: 404 });
   }
 
-  slettFilMock(request, String(tilgang.sak.id), filId);
+  const innlogget = await hentInnloggetBruker({ request });
+  if (!erSakseier(tilgang.sak, innlogget.navIdent)) {
+    throw data("Kun sakseier kan slette vedlegg", { status: 403 });
+  }
+
+  const slettet = slettFilMock(request, String(tilgang.sak.id), filId);
+  if (!slettet) {
+    throw data("Fil ikke funnet", { status: 404 });
+  }
+
   return { ok: true as const };
 }

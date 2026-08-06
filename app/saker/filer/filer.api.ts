@@ -3,6 +3,7 @@ import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
 import * as backendApi from "~/saker/api.server";
+import { BackendFeilException } from "~/saker/api.server";
 import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
 import { leggTilFil } from "./mock-data-filer.server";
 
@@ -10,6 +11,8 @@ import { leggTilFil } from "./mock-data-filer.server";
  * Resource route for vedlegg (filer) på en sak.
  *
  * - POST: laster opp en fil til backend (GCS) og returnerer FilResponse.
+ *   Ved kjente brukerfeil (virus, ClamAV nede) returneres { message } slik at
+ *   VedleggSeksjon kan vise feilen inline uten å gå til error boundary.
  */
 export async function action({ request, params }: ActionFunctionArgs) {
   const sakReferanse = params.sakId;
@@ -29,7 +32,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
-    return await backendApi.lasteOppFil(token, sakReferanse, fil);
+    try {
+      return await backendApi.lasteOppFil(token, sakReferanse, fil);
+    } catch (feil) {
+      if (feil instanceof BackendFeilException) {
+        return { message: feil.message };
+      }
+      throw feil;
+    }
   }
 
   const tilgang = await hentSakstilgangFraMock(request, sakReferanse);
