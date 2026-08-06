@@ -500,24 +500,29 @@ export function DokumentEditor({
       }
       settLasterOppBilde(true);
       settBildeFeil(null);
-      try {
-        for (const fil of bildefiler) {
+      // Hver fil lastes opp for seg, slik at én ugyldig/mislykket fil (f.eks. for stor,
+      // eller feil format) ikke stopper opplasting av de andre gyldige bildene i samme drag.
+      let feilmelding: string | null = null;
+      let minstEnLyktes = false;
+      for (const fil of bildefiler) {
+        try {
           const opplastet = await lastOppBilde(sakId, fil);
           settInnBilde(opplastet);
+          minstEnLyktes = true;
+        } catch (feil) {
+          feilmelding =
+            feil instanceof BildeOpplastingFeil ? feil.message : "Kunne ikke laste opp bildet.";
         }
+      }
+      settLasterOppBilde(false);
+      if (feilmelding) settBildeFeil(feilmelding);
+      if (minstEnLyktes) {
         // Sørger for at f.eks. vedleggslisten på siden viser bildet uten manuell oppdatering.
         void revalidator.revalidate();
-        return true;
-      } catch (feil) {
-        settBildeFeil(
-          feil instanceof BildeOpplastingFeil ? feil.message : "Kunne ikke laste opp bildet.",
-        );
-        return false;
-      } finally {
-        settLasterOppBilde(false);
       }
+      return feilmelding === null;
     },
-    [sakId, settInnBilde],
+    [sakId, settInnBilde, revalidator],
   );
 
   // Finner hvilken topp-nivå-indeks et punkt i dokumentet tilsvarer, ved å sammenligne
@@ -538,7 +543,13 @@ export function DokumentEditor({
     if (event.dataTransfer.types.includes(BILDE_FLYTT_MIMETYPE)) {
       event.preventDefault();
       const rå = event.dataTransfer.getData(BILDE_FLYTT_MIMETYPE);
-      const kildesti = JSON.parse(rå) as number[];
+      let kildesti: number[];
+      try {
+        kildesti = JSON.parse(rå) as number[];
+      } catch {
+        // Ugyldig/uventet format på dra-dataen — avbryt rolig i stedet for å krasje editoren.
+        return;
+      }
       if (kildesti.length !== 1) return;
       const kildeindeks = kildesti[0];
       let målindeks = finnMålindeks(event.clientY);
@@ -550,9 +561,11 @@ export function DokumentEditor({
 
     const filer = event.dataTransfer?.files;
     if (!filer || filer.length === 0) return;
+    // Forhindre at nettleseren åpner/navigerer til filen så snart det slippes filer i det
+    // hele tatt — ikke bare når vi finner gyldige bildefiler blant dem.
+    event.preventDefault();
     const bildefiler = filtrerBildefiler(filer);
     if (bildefiler.length === 0) return;
-    event.preventDefault();
     void håndterBildefiler(bildefiler);
   }
 
@@ -568,6 +581,9 @@ export function DokumentEditor({
   function håndterPaste(event: React.ClipboardEvent<HTMLDivElement>) {
     const bildefiler = filtrerBildefiler(event.clipboardData?.files ?? []);
     if (bildefiler.length === 0) return;
+    // Lim inn tekst/HTML sammen med bilder (f.eks. fra Word) skal fortsatt limes inn som
+    // vanlig — bare hindre standard limeoppførsel når utklippstavlen ikke også har tekst.
+    if (event.clipboardData?.getData("text/plain")) return;
     event.preventDefault();
     void håndterBildefiler(bildefiler);
   }

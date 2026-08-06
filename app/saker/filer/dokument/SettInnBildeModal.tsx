@@ -124,6 +124,8 @@ export function SettInnBildeModal({
                 <img
                   src={byggBildeUrl(sakId, fil.id)}
                   alt=""
+                  loading="lazy"
+                  decoding="async"
                   className="h-24 w-full rounded object-cover"
                 />
                 <BodyShort size="small" className="truncate" title={fil.filnavn}>
