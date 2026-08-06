@@ -98,6 +98,10 @@ export async function opprettKontrollsak({
   });
 
   if (!response.ok) {
+    if (response.status === 404) {
+      logger.warn("Person ikke funnet ved opprettelse av kontrollsak", { status: 404 });
+      return { ok: false, status: 404, melding: "Person ikke funnet." };
+    }
     logger.error("Kunne ikke opprette kontrollsak i Watson Admin API", {
       status: response.status,
     });

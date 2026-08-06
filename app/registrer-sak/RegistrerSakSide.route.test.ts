@@ -280,6 +280,30 @@ describe("OpprettSakSide action", () => {
 
     expect(getBackendOboTokenMock).toHaveBeenCalled();
   }, 15000);
+  it("returnerer skjemafeil når backend svarer 404 (person ikke funnet)", async () => {
+    const { action } = await import("./RegistrerSakSide.server");
+    const { opprettKontrollsak } = await import("./api.server");
+
+    vi.mocked(opprettKontrollsak).mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      melding: "Person ikke funnet.",
+    });
+
+    const response = await action({
+      request: new Request("http://localhost/registrer-sak", {
+        method: "POST",
+        body: lagFormDataMedMinimum(),
+      }),
+      params: {},
+      context: {},
+    } as Route.ActionArgs);
+
+    expect(response).toMatchObject({
+      status: "error",
+      error: { "": expect.arrayContaining([expect.stringContaining("ikke funnet")]) },
+    });
+  }, 15000);
 });
 
 describe("byggOpprettKontrollsakPayload", () => {
