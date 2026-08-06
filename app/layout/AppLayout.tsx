@@ -1,4 +1,3 @@
-import { Page } from "@navikt/ds-react";
 import { PageBlock } from "@navikt/ds-react/Page";
 import { Outlet } from "react-router";
 import type { LoaderFunctionArgs, ShouldRevalidateFunctionArgs } from "react-router";
@@ -46,12 +45,10 @@ export default function RootLayout() {
       <InfoBanner />
       <div className="flex flex-1">
         <AppSidebar />
-        <main id="maincontent" className="flex-1 min-w-0">
-          <Page>
-            <PageBlock width="2xl" gutters className="mx-0!">
-              <Outlet />
-            </PageBlock>
-          </Page>
+        <main id="maincontent" className="min-w-0 flex-1">
+          <PageBlock width="2xl" gutters className="mx-0!">
+            <Outlet />
+          </PageBlock>
         </main>
       </div>
       <AppFooter />

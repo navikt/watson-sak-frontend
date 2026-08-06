@@ -35,7 +35,7 @@ import {
   TablePlugin,
   TableRowPlugin,
 } from "@platejs/table/react";
-import { createContext, useCallback, useContext, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Plate, PlateContent, PlateElement, useEditorState, usePlateEditor } from "platejs/react";
 import type { TElement } from "platejs";
@@ -187,15 +187,14 @@ function Verktøylinje({
     <FormaterContext.Provider value={onFormater}>
       <AktivEtikettContext.Provider value={aktivEtikett}>
         <SettAktivEtikettContext.Provider value={settAktivEtikett}>
-          {/* Verktøylinja ligger nå over «arket» og er et eget kort, slik skissen viser.
-          Den er festet til toppen av visningsområdet så formateringen er tilgjengelig
-          også når man scroller nedover i et langt dokument. */}
+          {/* Verktøylinja ligger over «arket» og er et eget kort, slik skissen viser.
+          Den står i ro fordi det er dokumentflaten under som scroller, ikke siden. */}
           <HStack
             justify="space-between"
             align="center"
             gap="space-4"
             wrap
-            className="sticky top-0 z-10 rounded-lg border border-ax-border-neutral-subtle bg-ax-bg-raised px-[var(--ax-space-8)] py-[var(--ax-space-6)]"
+            className="shrink-0 rounded-lg border border-ax-border-neutral-subtle bg-ax-bg-raised px-[var(--ax-space-8)] py-[var(--ax-space-6)]"
           >
             <HStack
               gap="space-2"
@@ -339,6 +338,39 @@ function Verktøylinje({
   );
 }
 
+/** Under denne bredden bruker vi vanlig sidescroll – da stables flatene under hverandre. */
+const MINSTE_BREDDE_FOR_EGEN_SCROLL = 1024;
+
+/**
+ * Måler hvor høy editorflaten kan være for at siden akkurat fyller vinduet, uten å
+ * scrolle. Vi måler plassen over og under flaten – begge er uavhengige av flatens egen
+ * høyde, så målingen gir samme svar hver gang og kan trygt kjøres på nytt.
+ */
+function useTilgjengeligHøyde(ref: React.RefObject<HTMLDivElement | null>) {
+  const [høyde, settHøyde] = useState<number>();
+
+  useEffect(() => {
+    function mål() {
+      const el = ref.current;
+      if (!el || window.innerWidth < MINSTE_BREDDE_FOR_EGEN_SCROLL) {
+        settHøyde(undefined);
+        return;
+      }
+
+      const boks = el.getBoundingClientRect();
+      const over = boks.top + window.scrollY;
+      const under = document.documentElement.scrollHeight - (boks.bottom + window.scrollY);
+      settHøyde(Math.max(320, window.innerHeight - over - under));
+    }
+
+    mål();
+    window.addEventListener("resize", mål);
+    return () => window.removeEventListener("resize", mål);
+  }, [ref]);
+
+  return høyde;
+}
+
 const PLUGINS = [
   BoldPlugin,
   ItalicPlugin,
@@ -401,6 +433,8 @@ export function DokumentEditor({
     value: startInnhold as TElement[],
   });
   const [aktivtSidepanel, settAktivtSidepanel] = useState<SidepanelValg>(STANDARD_SIDEPANEL);
+  const flateRef = useRef<HTMLDivElement>(null);
+  const høyde = useTilgjengeligHøyde(flateRef);
 
   return (
     <Plate
@@ -408,47 +442,55 @@ export function DokumentEditor({
       readOnly={!redigerbar}
       onChange={({ value }) => onEndring(value as DokumentInnhold)}
     >
-      {redigerbar && (
-        <Verktøylinje
-          onFormater={(format) => sporHendelse("dokument formatert", { sakId, docId, format })}
-          aktivtSidepanel={aktivtSidepanel}
-          onVelgSidepanel={settAktivtSidepanel}
-        />
-      )}
-      {/* Full-bredde rad: grå flate med «arket» til venstre, sidepanelet som en egen
-      fullhøyde-seksjon til høyre, slik skissen viser. Den negative margen nuller ut
-      gutterne til PageBlock-en i AppLayout (space-16, space-48 fra lg), slik at raden
-      går helt ut til kantene av innholdsområdet. */}
-      <div className="mt-[var(--ax-space-12)] mx-[calc(var(--ax-space-16)_*_-1)] flex flex-col lg:mx-[calc(var(--ax-space-48)_*_-1)] lg:flex-row lg:items-stretch">
-        <div className="flex min-w-0 flex-1 justify-center bg-ax-bg-neutral-moderate px-[var(--ax-space-16)] py-[var(--ax-space-32)] lg:px-[var(--ax-space-48)]">
-          <Kort
-            padding={{ xs: "space-24", md: "space-64" }}
-            className="w-full max-w-[210mm] shadow-[var(--ax-shadow-dialog)]"
-          >
-            <PlateContent
-              role="textbox"
-              aria-multiline
-              aria-label="Dokumentinnhold"
-              className={
-                "min-h-[60vh] focus:outline-none [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg " +
-                "[&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
-                "[&_blockquote]:border-l-4 [&_blockquote]:border-ax-border-neutral-subtle " +
-                "[&_blockquote]:pl-4 [&_blockquote]:italic [&_p]:my-2 " +
-                "[&_table]:border-collapse [&_table]:my-3 [&_table]:w-full " +
-                "[&_td]:border [&_td]:border-ax-border-neutral-subtle [&_td]:p-2 [&_td]:align-top " +
-                "[&_th]:border [&_th]:border-ax-border-neutral-subtle [&_th]:p-2 [&_th]:align-top " +
-                "[&_th]:bg-ax-bg-neutral-soft [&_th]:text-left [&_th]:font-semibold " +
-                "[&_u]:underline [&_s]:line-through"
-              }
-            />
-          </Kort>
-        </div>
+      {/* Editorflaten fyller resten av vinduet og scroller selv, slik at verktøylinja og
+      sidepanelet står stille mens man jobber i et langt dokument. */}
+      <div
+        ref={flateRef}
+        style={høyde ? { height: høyde } : undefined}
+        className="mt-[var(--ax-space-12)] flex flex-col gap-[var(--ax-space-12)] overflow-hidden"
+      >
+        {redigerbar && (
+          <Verktøylinje
+            onFormater={(format) => sporHendelse("dokument formatert", { sakId, docId, format })}
+            aktivtSidepanel={aktivtSidepanel}
+            onVelgSidepanel={settAktivtSidepanel}
+          />
+        )}
+        {/* Full-bredde rad: grå flate med «arket» til venstre, sidepanelet som en egen
+        fullhøyde-seksjon til høyre, slik skissen viser. Den negative margen nuller ut
+        gutterne til PageBlock-en i AppLayout (space-16, space-48 fra lg), slik at raden
+        går helt ut til kantene av innholdsområdet. */}
+        <div className="mx-[calc(var(--ax-space-16)_*_-1)] flex min-h-0 flex-1 flex-col lg:mx-[calc(var(--ax-space-48)_*_-1)] lg:flex-row lg:items-stretch">
+          <div className="flex min-w-0 flex-1 justify-center overflow-y-auto bg-ax-bg-neutral-moderate px-[var(--ax-space-16)] py-[var(--ax-space-32)] lg:px-[var(--ax-space-48)]">
+            <Kort
+              padding={{ xs: "space-24", md: "space-64" }}
+              className="h-fit w-full max-w-[210mm] shadow-[var(--ax-shadow-dialog)]"
+            >
+              <PlateContent
+                role="textbox"
+                aria-multiline
+                aria-label="Dokumentinnhold"
+                className={
+                  "min-h-[60vh] focus:outline-none [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg " +
+                  "[&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
+                  "[&_blockquote]:border-l-4 [&_blockquote]:border-ax-border-neutral-subtle " +
+                  "[&_blockquote]:pl-4 [&_blockquote]:italic [&_p]:my-2 " +
+                  "[&_table]:border-collapse [&_table]:my-3 [&_table]:w-full " +
+                  "[&_td]:border [&_td]:border-ax-border-neutral-subtle [&_td]:p-2 [&_td]:align-top " +
+                  "[&_th]:border [&_th]:border-ax-border-neutral-subtle [&_th]:p-2 [&_th]:align-top " +
+                  "[&_th]:bg-ax-bg-neutral-soft [&_th]:text-left [&_th]:font-semibold " +
+                  "[&_u]:underline [&_s]:line-through"
+                }
+              />
+            </Kort>
+          </div>
 
-        <Sidepanel
-          aktivt={aktivtSidepanel}
-          dokumentliste={dokumentliste}
-          lagreStatus={lagreStatus}
-        />
+          <Sidepanel
+            aktivt={aktivtSidepanel}
+            dokumentliste={dokumentliste}
+            lagreStatus={lagreStatus}
+          />
+        </div>
       </div>
     </Plate>
   );

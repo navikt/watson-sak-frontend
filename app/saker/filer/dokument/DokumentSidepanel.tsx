@@ -92,11 +92,10 @@ export function Sidepanel({ aktivt, dokumentliste, lagreStatus }: SidepanelProps
   const valg = finnValg(aktivt);
 
   return (
-    <aside className="flex w-full shrink-0 flex-col gap-[var(--ax-space-12)] border-t border-ax-border-neutral-subtle bg-ax-bg-default p-[var(--ax-space-16)] lg:w-[400px] lg:border-t-0">
-      {/* Panelet følger med når man scroller. `top` klarerer den festede verktøylinja. */}
+    <aside className="flex w-full shrink-0 flex-col gap-[var(--ax-space-12)] overflow-hidden border-t border-ax-border-neutral-subtle bg-ax-bg-default p-[var(--ax-space-16)] lg:w-[400px] lg:border-t-0">
       <VStack
         gap="space-12"
-        className="rounded-lg border border-ax-border-neutral-subtle bg-ax-bg-default p-[var(--ax-space-16)] lg:sticky lg:top-[70px] lg:max-h-[calc(100vh-var(--ax-space-96))] lg:overflow-y-auto"
+        className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-ax-border-neutral-subtle bg-ax-bg-default p-[var(--ax-space-16)]"
       >
         <Heading level="2" size="xsmall">
           {valg.etikett}
@@ -110,13 +109,7 @@ export function Sidepanel({ aktivt, dokumentliste, lagreStatus }: SidepanelProps
         )}
       </VStack>
 
-      {/* Lagrestatusen hører hjemme nederst i panelet, men skal være synlig hele veien –
-      derfor festes den til bunnen av visningsområdet til man scroller helt ned. */}
-      {lagreStatus && (
-        <div className="mt-auto shrink-0 lg:sticky lg:bottom-0 lg:pb-[var(--ax-space-4)]">
-          {lagreStatus}
-        </div>
-      )}
+      {lagreStatus && <div className="shrink-0">{lagreStatus}</div>}
     </aside>
   );
 }
