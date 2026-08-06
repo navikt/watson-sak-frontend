@@ -3,12 +3,15 @@ import { getBackendOboToken } from "~/auth/access-token";
 import { skalBrukeMockdata } from "~/config/env.server";
 import * as backendApi from "~/saker/api.server";
 import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
-import { slettFil as slettFilMock } from "./mock-data-filer.server";
+import {
+  slettFil as slettFilMock,
+  hentFilInnhold as hentFilInnholdMock,
+} from "./mock-data-filer.server";
 
 /**
  * Resource route for én enkelt fil på en sak.
  *
- * - GET: henter signert nedlastings-URL fra backend (GCS signed URL).
+ * - GET: streamer filinnhold direkte fra backend (ingen signert URL).
  * - DELETE: sletter filen (kun sakseier).
  */
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -19,14 +22,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
-    return await backendApi.hentFilNedlastingUrl(token, sakId, filId);
+    return await backendApi.lastNedFil(token, sakId, filId);
   }
 
-  // Mock: returner en dummy-URL siden vi ikke har GCS lokalt
-  return {
-    url: `/mock-nedlasting/${filId}`,
-    utloper: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-  };
+  return hentFilInnholdMock(request, sakId, filId);
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {

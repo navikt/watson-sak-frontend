@@ -15,12 +15,6 @@ export type FilResponse = {
   opprettet: string;
 };
 
-/** Signert nedlastings-URL for direkte nedlasting fra GCS. */
-export type FilNedlastingResponse = {
-  url: string;
-  utloper: string;
-};
-
 /** Node i dokumentlisten for en sak. */
 export type DokumentNode = {
   id: string;

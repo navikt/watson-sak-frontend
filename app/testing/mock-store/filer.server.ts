@@ -56,6 +56,19 @@ export function leggTilFil(
   return nyFil;
 }
 
+export function hentFilInnhold(state: MockState, sakId: string, filId: string): Response {
+  const liste = initialiserFilerForSak(state, sakId);
+  const fil = liste.find((f) => f.id === filId);
+  const filnavn = fil?.filnavn ?? `fil-${filId}`;
+  const contentType = fil?.contentType ?? "application/octet-stream";
+  return new Response(new Uint8Array([37, 80, 68, 70]), {
+    headers: {
+      "Content-Type": contentType,
+      "Content-Disposition": `attachment; filename="${filnavn}"`,
+    },
+  });
+}
+
 export function slettFil(state: MockState, sakId: string, filId: string): boolean {
   const liste = initialiserFilerForSak(state, sakId);
   const indeks = liste.findIndex((f) => f.id === filId);

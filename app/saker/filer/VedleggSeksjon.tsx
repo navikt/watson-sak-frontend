@@ -10,8 +10,7 @@ import {
   Table,
   VStack,
 } from "@navikt/ds-react";
-import type { FileObject, FilesPartitioned } from "@navikt/ds-react";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
@@ -64,20 +63,11 @@ interface NedlastKnappProps {
 }
 
 function NedlastKnapp({ filId, filnavn, sakId }: NedlastKnappProps) {
-  const [laster, setLaster] = useState(false);
   const url = RouteConfig.API.SAK_FIL.replace(":sakId", sakId).replace(":filId", filId);
 
-  async function håndterNedlasting() {
-    setLaster(true);
-    try {
-      const respons = await fetch(url);
-      if (!respons.ok) throw new Error("Kunne ikke hente nedlastings-URL");
-      const { url: signertUrl } = (await respons.json()) as { url: string };
-      sporHendelse("vedlegg lastet ned", { sakId });
-      window.open(signertUrl, "_blank", "noopener,noreferrer");
-    } finally {
-      setLaster(false);
-    }
+  function håndterNedlasting() {
+    sporHendelse("vedlegg lastet ned", { sakId });
+    window.open(url, "_blank", "noopener,noreferrer");
   }
 
   return (
@@ -85,8 +75,7 @@ function NedlastKnapp({ filId, filnavn, sakId }: NedlastKnappProps) {
       type="button"
       variant="tertiary-neutral"
       size="xsmall"
-      icon={laster ? <Loader size="xsmall" aria-hidden /> : <DownloadIcon aria-hidden />}
-      disabled={laster}
+      icon={<DownloadIcon aria-hidden />}
       aria-label={`Last ned ${filnavn}`}
       onClick={håndterNedlasting}
     />
