@@ -2,7 +2,13 @@ import { data } from "react-router";
 import { z } from "zod";
 import { BACKEND_API_URL } from "~/config/env.server";
 import { logger } from "~/logging/logging";
-import type { Dokument, DokumentInnhold, DokumentNode, FilNedlastingResponse, FilResponse } from "~/saker/filer/typer";
+import type {
+  Dokument,
+  DokumentInnhold,
+  DokumentNode,
+  FilNedlastingResponse,
+  FilResponse,
+} from "~/saker/filer/typer";
 import {
   kontrollsakHendelseResponseSchema,
   dokumentNodeSchema,
