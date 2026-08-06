@@ -43,7 +43,19 @@ export async function action({ request, params }: ActionFunctionArgs) {
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
     // Sakseier-sjekk håndheves av backend — den returnerer 403 om brukeren ikke er eier.
-    await backendApi.slettFil(token, sakId, filId);
+    try {
+      await backendApi.slettFil(token, sakId, filId);
+    } catch (feil) {
+      if (feil instanceof backendApi.FilIBrukFeilException) {
+        // Filen er satt inn som bilde i minst ett dokument — returner (ikke kast)
+        // slik at fetcher.data kan vise en forklarende dialog i stedet for en 500-side.
+        return data(
+          { ok: false as const, dokumenter: feil.dokumenter, melding: feil.message },
+          { status: 409 },
+        );
+      }
+      throw feil;
+    }
     return { ok: true as const };
   }
 

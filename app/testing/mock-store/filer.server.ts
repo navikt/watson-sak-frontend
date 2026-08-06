@@ -12,6 +12,7 @@ const filSeeds: { sakId: string; filer: FilResponse[] }[] = [
         contentType: "application/pdf",
         opprettetAv: "Ola Nordmann",
         opprettet: "2026-02-15T10:30:00Z",
+        bruktIDokumenter: [],
       },
       {
         id: "fil-1-2",
@@ -20,6 +21,7 @@ const filSeeds: { sakId: string; filer: FilResponse[] }[] = [
         contentType: "image/png",
         opprettetAv: "Kari Hansen",
         opprettet: "2026-03-01T14:15:00Z",
+        bruktIDokumenter: [],
       },
     ],
   },
@@ -51,6 +53,7 @@ export function leggTilFil(
     contentType: fil.type || "application/octet-stream",
     opprettetAv,
     opprettet: new Date().toISOString(),
+    bruktIDokumenter: [],
   };
   liste.unshift(nyFil);
   return nyFil;

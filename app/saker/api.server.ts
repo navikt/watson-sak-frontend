@@ -2,7 +2,13 @@ import { data } from "react-router";
 import { z } from "zod";
 import { BACKEND_API_URL } from "~/config/env.server";
 import { logger } from "~/logging/logging";
-import type { Dokument, DokumentInnhold, DokumentNode, FilResponse } from "~/saker/filer/typer";
+import type {
+  Dokument,
+  DokumentInnhold,
+  DokumentNode,
+  DokumentReferanse,
+  FilResponse,
+} from "~/saker/filer/typer";
 import {
   kontrollsakHendelseResponseSchema,
   dokumentNodeSchema,
@@ -73,6 +79,45 @@ async function håndterFeil(respons: Response, beskrivelse: string): Promise<nev
   const detalj = await hentProblemDetail(respons);
   logger.error(`${beskrivelse} — status ${respons.status}${detalj ? `: ${detalj}` : ""}`);
   throw new BackendFeilException(respons.status, detalj ?? beskrivelse);
+}
+
+const dokumentReferanseSchema = z.object({ id: z.string(), tittel: z.string() });
+
+/**
+ * Feil kastet når sletting av et vedlegg avvises av backend fordi filen er
+ * satt inn som bilde i ett eller flere dokumenter. Bærer med seg hvilke
+ * dokumenter det gjelder, slik at brukeren kan få en presis feilmelding.
+ */
+export class FilIBrukFeilException extends BackendFeilException {
+  constructor(
+    message: string,
+    public readonly dokumenter: DokumentReferanse[],
+  ) {
+    super(409, message);
+    this.name = "FilIBrukFeilException";
+  }
+}
+
+/**
+ * Som hentProblemDetail, men leser i tillegg det egendefinerte
+ * «dokumenter»-feltet som GlobalExceptionHandler legger på ProblemDetail-svaret
+ * ved 409 Conflict for filer som er i bruk.
+ */
+async function hentProblemDetailMedDokumenter(
+  respons: Response,
+): Promise<{ detalj: string | null; dokumenter: DokumentReferanse[] }> {
+  try {
+    const body: unknown = await respons.clone().json();
+    if (body && typeof body === "object") {
+      const detalj = "detail" in body && typeof body.detail === "string" ? body.detail : null;
+      const dokumenterRaw = "dokumenter" in body ? body.dokumenter : undefined;
+      const parsed = z.array(dokumentReferanseSchema).safeParse(dokumenterRaw);
+      return { detalj, dokumenter: parsed.success ? parsed.data : [] };
+    }
+  } catch {
+    // Svaret var ikke gyldig JSON.
+  }
+  return { detalj: null, dokumenter: [] };
 }
 
 /**
@@ -522,6 +567,7 @@ const filResponseSchema = z.object({
   contentType: z.string(),
   opprettetAv: z.string(),
   opprettet: z.string(),
+  bruktIDokumenter: z.array(dokumentReferanseSchema).default([]),
 });
 
 const filNedlastingResponseSchema = z.object({
@@ -554,7 +600,12 @@ export async function slettFil(token: string, sakId: string, filId: string): Pro
     method: "DELETE",
     headers: authHeaders(token),
   });
-  if (!respons.ok) await håndterFeil(respons, "Kunne ikke slette fil");
+  if (respons.ok) return;
+  if (respons.status === 409) {
+    const { detalj, dokumenter } = await hentProblemDetailMedDokumenter(respons);
+    throw new FilIBrukFeilException(detalj ?? "Filen er i bruk i et dokument", dokumenter);
+  }
+  await håndterFeil(respons, "Kunne ikke slette fil");
 }
 
 /**

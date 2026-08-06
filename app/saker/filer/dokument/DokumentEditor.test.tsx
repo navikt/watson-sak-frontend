@@ -130,6 +130,7 @@ describe("DokumentEditor", () => {
       contentType: "image/png",
       opprettetAv: "Ola Nordmann",
       opprettet: "2026-03-01T10:00:00Z",
+      bruktIDokumenter: [],
     };
 
     beforeEach(() => {
