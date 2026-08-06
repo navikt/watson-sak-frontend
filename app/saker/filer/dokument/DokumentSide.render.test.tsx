@@ -95,7 +95,7 @@ describe("DokumentSide", () => {
   it("viser slett-knapp og en deaktivert medunderskriver-knapp når man kan redigere", async () => {
     renderSide(true);
 
-    expect(await screen.findByRole("button", { name: "Slett dokument" })).toBeDefined();
+    expect(await screen.findByRole("button", { name: "Slett" })).toBeDefined();
     const medunderskriver = screen.getByRole("button", { name: "Send til medunderskriver" });
     expect(medunderskriver.hasAttribute("disabled")).toBe(true);
   });
@@ -104,7 +104,7 @@ describe("DokumentSide", () => {
     renderSide(false);
 
     expect(await screen.findByRole("complementary")).toBeDefined();
-    expect(screen.queryByRole("button", { name: "Slett dokument" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Slett" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Send til medunderskriver" })).toBeNull();
   });
 });

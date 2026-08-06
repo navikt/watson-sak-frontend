@@ -164,7 +164,7 @@ function DokumentRedigering({
                 icon={<TrashIcon aria-hidden />}
                 onClick={() => sletting.start({ id: dokument.id, tittel })}
               >
-                Slett dokument
+                Slett
               </Button>
             )}
           </HStack>
@@ -191,11 +191,8 @@ function DokumentRedigering({
             <Detail className="text-ax-text-neutral-subtle">Ingen andre dokumenter.</Detail>
           )
         }
+        lagreStatus={<LagreStatusVisning status={status} sistLagret={sistLagret} />}
       />
-
-      <div className="sticky bottom-0 flex justify-end px-[var(--ax-space-24)] py-2 bg-ax-bg-raised border-t border-ax-border-neutral-subtle">
-        <LagreStatusVisning status={status} sistLagret={sistLagret} />
-      </div>
 
       <SlettDokumentModal
         kandidat={sletting.kandidat}

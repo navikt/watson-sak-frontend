@@ -54,7 +54,8 @@ export function SidepanelMeny({ aktivt, onVelg }: SidepanelMenyProps) {
       <ActionMenu.Trigger>
         <Button
           type="button"
-          variant="tertiary"
+          variant="secondary"
+          data-color="accent"
           size="small"
           icon={<ChevronDownIcon aria-hidden />}
           iconPosition="right"
@@ -82,16 +83,21 @@ type SidepanelProps = {
   aktivt: SidepanelValg;
   /** Innholdet for «Dokumenter». Sendes inn fordi dokumenttreet eies av siden. */
   dokumentliste: ReactNode;
+  /** Lagrestatusen, som ligger nederst i panelet. Eies av siden som gjør lagringen. */
+  lagreStatus?: ReactNode;
 };
 
 /** Sidepanelet til høyre for dokumentet. Egen fullhøyde-seksjon, ikke et kort oppå det grå. */
-export function Sidepanel({ aktivt, dokumentliste }: SidepanelProps) {
+export function Sidepanel({ aktivt, dokumentliste, lagreStatus }: SidepanelProps) {
   const valg = finnValg(aktivt);
 
   return (
-    <aside className="w-full shrink-0 border-t border-ax-border-neutral-subtle bg-ax-bg-default p-[var(--ax-space-16)] lg:w-[340px] lg:border-t-0 lg:border-l">
-      {/* Innholdet følger med når man scroller. `top` klarerer den festede verktøylinja. */}
-      <VStack gap="space-12" className="lg:sticky lg:top-[70px]">
+    <aside className="flex w-full shrink-0 flex-col gap-[var(--ax-space-12)] border-t border-ax-border-neutral-subtle bg-ax-bg-default p-[var(--ax-space-16)] lg:w-[400px] lg:border-t-0">
+      {/* Panelet følger med når man scroller. `top` klarerer den festede verktøylinja. */}
+      <VStack
+        gap="space-12"
+        className="rounded-lg border border-ax-border-neutral-subtle bg-ax-bg-default p-[var(--ax-space-16)] lg:sticky lg:top-[70px] lg:max-h-[calc(100vh-var(--ax-space-96))] lg:overflow-y-auto"
+      >
         <Heading level="2" size="xsmall">
           {valg.etikett}
         </Heading>
@@ -103,6 +109,14 @@ export function Sidepanel({ aktivt, dokumentliste }: SidepanelProps) {
           dokumentliste
         )}
       </VStack>
+
+      {/* Lagrestatusen hører hjemme nederst i panelet, men skal være synlig hele veien –
+      derfor festes den til bunnen av visningsområdet til man scroller helt ned. */}
+      {lagreStatus && (
+        <div className="mt-auto shrink-0 lg:sticky lg:bottom-0 lg:pb-[var(--ax-space-4)]">
+          {lagreStatus}
+        </div>
+      )}
     </aside>
   );
 }

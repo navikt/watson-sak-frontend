@@ -383,6 +383,8 @@ type DokumentEditorProps = {
   docId: string;
   /** Dokumenttreet som vises i sidepanelet. Eies av siden, ikke av editoren. */
   dokumentliste: ReactNode;
+  /** Lagrestatusen som vises nederst i sidepanelet. Eies av siden som lagrer. */
+  lagreStatus?: ReactNode;
 };
 
 export function DokumentEditor({
@@ -392,6 +394,7 @@ export function DokumentEditor({
   sakId,
   docId,
   dokumentliste,
+  lagreStatus,
 }: DokumentEditorProps) {
   const editor = usePlateEditor({
     plugins: PLUGINS,
@@ -441,7 +444,11 @@ export function DokumentEditor({
           </Kort>
         </div>
 
-        <Sidepanel aktivt={aktivtSidepanel} dokumentliste={dokumentliste} />
+        <Sidepanel
+          aktivt={aktivtSidepanel}
+          dokumentliste={dokumentliste}
+          lagreStatus={lagreStatus}
+        />
       </div>
     </Plate>
   );
