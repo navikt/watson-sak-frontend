@@ -53,7 +53,6 @@ describe("DokumentEditor", () => {
     expect(screen.getByLabelText("Punktliste")).toBeDefined();
     expect(screen.getByLabelText("Angre")).toBeDefined();
     expect(screen.getByLabelText("Sett inn bilde")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Sett inn eksisterende bilde" })).toBeDefined();
     expect(screen.getByText("Min overskrift")).toBeDefined();
     expect(screen.getByText("Brødtekst her")).toBeDefined();
   });
@@ -149,11 +148,19 @@ describe("DokumentEditor", () => {
 
     it("laster opp og setter inn bilde valgt via filvelgeren", async () => {
       const onEndring = vi.fn();
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+          if (init?.method === "POST") {
+            return Promise.resolve({ ok: true, json: () => Promise.resolve(opplastetFil) });
+          }
+          return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
+        }),
+      );
       renderEditor({ onEndring });
 
-      const knapp = await screen.findByLabelText("Sett inn bilde");
-      const input = knapp.closest("div")?.parentElement?.querySelector("input[type=file]");
-      expect(input).toBeTruthy();
+      fireEvent.click(await screen.findByLabelText("Sett inn bilde"));
+      const input = await screen.findByTestId("bilde-fil-input");
 
       const fil = lagFil("skjermbilde.png", "image/png");
       fireEvent.change(input as HTMLInputElement, { target: { files: [fil] } });
@@ -171,15 +178,18 @@ describe("DokumentEditor", () => {
     it("viser feilmelding når filtypen ikke er tillatt", async () => {
       renderEditor();
 
-      const knapp = await screen.findByLabelText("Sett inn bilde");
-      const input = knapp.closest("div")?.parentElement?.querySelector("input[type=file]");
+      fireEvent.click(await screen.findByLabelText("Sett inn bilde"));
+      const input = await screen.findByTestId("bilde-fil-input");
       const fil = lagFil("dokument.pdf", "application/pdf");
       fireEvent.change(input as HTMLInputElement, { target: { files: [fil] } });
 
       expect(
         await screen.findByText("Bare PNG-, JPEG- og WebP-bilder kan settes inn i dokumentet."),
       ).toBeDefined();
-      expect(fetch).not.toHaveBeenCalled();
+      expect(fetch).not.toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ method: "POST" }),
+      );
     });
 
     // Slates egen paste-/drop-håndtering i slate-dom prøver alltid å slå opp en DOM-range
@@ -198,7 +208,7 @@ describe("DokumentEditor", () => {
       expect(dragOverEvent.defaultPrevented).toBe(true);
     });
 
-    it("åpner velger for eksisterende bilde og setter det inn", async () => {
+    it("åpner bildemodalen og setter inn et allerede opplastet bilde", async () => {
       vi.stubGlobal(
         "fetch",
         vi.fn().mockResolvedValue({
@@ -208,7 +218,7 @@ describe("DokumentEditor", () => {
       );
       renderEditor();
 
-      fireEvent.click(await screen.findByRole("button", { name: "Sett inn eksisterende bilde" }));
+      fireEvent.click(await screen.findByLabelText("Sett inn bilde"));
       expect(await screen.findByText("skjermbilde.png")).toBeDefined();
 
       fireEvent.click(screen.getByText("skjermbilde.png"));

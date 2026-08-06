@@ -7,6 +7,13 @@ export const TILLATTE_BILDETYPER = ["image/png", "image/jpeg", "image/webp"] as 
 /** Grense i frontend for å unngå at store filer henger opplastingen — backend tillater opp til 50 MB. */
 export const MAKS_BILDESTØRRELSE_BYTES = 10 * 1024 * 1024;
 
+/**
+ * Egen `dataTransfer`-MIME-type brukt til å skille «flytt et bilde som allerede står i
+ * dokumentet» fra vanlig fil-/bilde-drop (som skal lastes opp som nytt vedlegg). Verdien
+ * som sendes er JSON-serialisert Slate-path til bildenoden som dras.
+ */
+export const BILDE_FLYTT_MIMETYPE = "application/x-watson-bilde-path";
+
 /** Validerer at filen kan settes inn som bilde. Returnerer feilmelding, eller `null` om gyldig. */
 export function validerBildefil(fil: File): string | null {
   if (!TILLATTE_BILDETYPER.includes(fil.type as (typeof TILLATTE_BILDETYPER)[number])) {

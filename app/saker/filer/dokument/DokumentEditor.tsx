@@ -2,7 +2,6 @@ import {
   ArrowRedoIcon,
   ArrowUndoIcon,
   BulletListIcon,
-  FileImageIcon,
   ImageIcon,
   NumberListIcon,
   TableIcon,
@@ -50,13 +49,13 @@ import { sporHendelse } from "~/analytics/analytics";
 import { Kort } from "~/komponenter/Kort";
 import type { DokumentInnhold, FilResponse } from "~/saker/filer/typer";
 import { BildeElement } from "./BildeElement";
-import { VelgEksisterendeBildeModal } from "./VelgEksisterendeBildeModal";
+import { SettInnBildeModal } from "./SettInnBildeModal";
 import {
   BildeOpplastingFeil,
+  BILDE_FLYTT_MIMETYPE,
   byggBildeUrl,
   filtrerBildefiler,
   lastOppBilde,
-  TILLATTE_BILDETYPER,
 } from "./bilde-opplasting";
 import {
   LeggTilKolonneIkon,
@@ -153,21 +152,18 @@ function Verktøylinje({
   aktivtSidepanel,
   onVelgSidepanel,
   lasterOppBilde,
-  onVelgFiler,
-  onÅpneEksisterendeBilde,
+  onÅpneBildeModal,
 }: {
   onFormater: (etikett: string) => void;
   aktivtSidepanel: SidepanelValg;
   onVelgSidepanel: (valg: SidepanelValg) => void;
   lasterOppBilde: boolean;
-  onVelgFiler: (filer: FileList) => void;
-  onÅpneEksisterendeBilde: () => void;
+  onÅpneBildeModal: () => void;
 }) {
   const editor = useEditorState();
   const erITabell = !!editor.api.above({ match: { type: TablePlugin.key } });
   const toolbarRef = useRef<HTMLDivElement>(null);
   const [aktivEtikett, settAktivEtikett] = useState("Skrifttype");
-  const bildeInputRef = useRef<HTMLInputElement>(null);
 
   // Behold roveren innenfor gyldige knapper når verktøylinja endres (tabell-knapper vises/skjules)
   const oppdaterRoverVedEndring = useCallback(() => {
@@ -351,34 +347,12 @@ function Verktøylinje({
                 </>
               )}
               <Skillelinje />
-              <input
-                ref={bildeInputRef}
-                type="file"
-                accept={TILLATTE_BILDETYPER.join(",")}
-                multiple
-                className="sr-only"
-                aria-hidden
-                tabIndex={-1}
-                onChange={(e) => {
-                  if (e.target.files && e.target.files.length > 0) {
-                    onVelgFiler(e.target.files);
-                  }
-                  e.target.value = "";
-                }}
-              />
               <VerktøyKnapp
                 etikett="Sett inn bilde"
                 disabled={lasterOppBilde}
-                onClick={() => bildeInputRef.current?.click()}
+                onClick={onÅpneBildeModal}
               >
                 {lasterOppBilde ? <Loader size="xsmall" aria-hidden /> : <ImageIcon aria-hidden />}
-              </VerktøyKnapp>
-              <VerktøyKnapp
-                etikett="Sett inn eksisterende bilde"
-                disabled={lasterOppBilde}
-                onClick={onÅpneEksisterendeBilde}
-              >
-                <FileImageIcon aria-hidden />
               </VerktøyKnapp>
             </HStack>
 
@@ -495,7 +469,7 @@ export function DokumentEditor({
 
   const [lasterOppBilde, settLasterOppBilde] = useState(false);
   const [bildeFeil, settBildeFeil] = useState<string | null>(null);
-  const [eksisterendeBildeModalÅpen, settEksisterendeBildeModalÅpen] = useState(false);
+  const [bildeModalÅpen, settBildeModalÅpen] = useState(false);
   const revalidator = useRevalidator();
 
   const settInnBilde = useCallback(
@@ -515,12 +489,14 @@ export function DokumentEditor({
     [editor, sakId, docId],
   );
 
+  // Returnerer om opplastingen lyktes, slik at f.eks. modalen kan lukke seg selv ved
+  // suksess uten å måtte lese av feil-/laste-state (som ikke er oppdatert før neste render).
   const håndterBildefiler = useCallback(
-    async (filer: FileList | File[]) => {
+    async (filer: FileList | File[]): Promise<boolean> => {
       const bildefiler = filtrerBildefiler(filer);
       if (bildefiler.length === 0) {
         settBildeFeil("Bare PNG-, JPEG- og WebP-bilder kan settes inn i dokumentet.");
-        return;
+        return false;
       }
       settLasterOppBilde(true);
       settBildeFeil(null);
@@ -531,10 +507,12 @@ export function DokumentEditor({
         }
         // Sørger for at f.eks. vedleggslisten på siden viser bildet uten manuell oppdatering.
         void revalidator.revalidate();
+        return true;
       } catch (feil) {
         settBildeFeil(
           feil instanceof BildeOpplastingFeil ? feil.message : "Kunne ikke laste opp bildet.",
         );
+        return false;
       } finally {
         settLasterOppBilde(false);
       }
@@ -542,7 +520,34 @@ export function DokumentEditor({
     [sakId, settInnBilde],
   );
 
+  // Finner hvilken topp-nivå-indeks et punkt i dokumentet tilsvarer, ved å sammenligne
+  // Y-koordinaten mot midtpunktet til hver topp-nivå-nodes DOM-element. Brukes til å
+  // avgjøre hvor et bilde som dras skal slippes.
+  function finnMålindeks(clientY: number): number {
+    const barn = editor.children;
+    for (let i = 0; i < barn.length; i++) {
+      const dom = editor.api.toDOMNode(barn[i]);
+      if (!dom) continue;
+      const rect = dom.getBoundingClientRect();
+      if (clientY < rect.top + rect.height / 2) return i;
+    }
+    return barn.length;
+  }
+
   function håndterDrop(event: React.DragEvent<HTMLDivElement>) {
+    if (event.dataTransfer.types.includes(BILDE_FLYTT_MIMETYPE)) {
+      event.preventDefault();
+      const rå = event.dataTransfer.getData(BILDE_FLYTT_MIMETYPE);
+      const kildesti = JSON.parse(rå) as number[];
+      if (kildesti.length !== 1) return;
+      const kildeindeks = kildesti[0];
+      let målindeks = finnMålindeks(event.clientY);
+      if (kildeindeks < målindeks) målindeks -= 1;
+      if (målindeks === kildeindeks) return;
+      editor.tf.moveNodes({ at: kildesti, to: [målindeks] });
+      return;
+    }
+
     const filer = event.dataTransfer?.files;
     if (!filer || filer.length === 0) return;
     const bildefiler = filtrerBildefiler(filer);
@@ -552,7 +557,10 @@ export function DokumentEditor({
   }
 
   function håndterDragOver(event: React.DragEvent<HTMLDivElement>) {
-    if (event.dataTransfer.types.includes("Files")) {
+    if (
+      event.dataTransfer.types.includes("Files") ||
+      event.dataTransfer.types.includes(BILDE_FLYTT_MIMETYPE)
+    ) {
       event.preventDefault();
     }
   }
@@ -584,10 +592,9 @@ export function DokumentEditor({
               aktivtSidepanel={aktivtSidepanel}
               onVelgSidepanel={settAktivtSidepanel}
               lasterOppBilde={lasterOppBilde}
-              onVelgFiler={(filer) => void håndterBildefiler(filer)}
-              onÅpneEksisterendeBilde={() => settEksisterendeBildeModalÅpen(true)}
+              onÅpneBildeModal={() => settBildeModalÅpen(true)}
             />
-            {bildeFeil && (
+            {bildeFeil && !bildeModalÅpen && (
               <Alert variant="error" size="small" className="mt-[var(--ax-space-8)]">
                 {bildeFeil}
               </Alert>
@@ -631,11 +638,18 @@ export function DokumentEditor({
           />
         </div>
       </div>
-      <VelgEksisterendeBildeModal
-        åpen={eksisterendeBildeModalÅpen}
+      <SettInnBildeModal
+        åpen={bildeModalÅpen}
         sakId={sakId}
-        onClose={() => settEksisterendeBildeModalÅpen(false)}
+        lasterOpp={lasterOppBilde}
+        feil={bildeFeil}
+        onClose={() => settBildeModalÅpen(false)}
         onVelg={settInnBilde}
+        onLastOpp={(filer) => {
+          void håndterBildefiler(filer).then((ok) => {
+            if (ok) settBildeModalÅpen(false);
+          });
+        }}
       />
     </Plate>
   );

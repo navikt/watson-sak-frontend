@@ -1,10 +1,11 @@
-import { TrashIcon } from "@navikt/aksel-icons";
+import { DragVerticalIcon, TrashIcon } from "@navikt/aksel-icons";
 import { Button, Tooltip } from "@navikt/ds-react";
 import { Resizable, ResizableProvider, ResizeHandle } from "@platejs/resizable";
 import { PlateElement, useEditorReadOnly } from "platejs/react";
 import type { PlateElementProps } from "platejs/react";
 import type { TElement } from "platejs";
 import { useState } from "react";
+import { BILDE_FLYTT_MIMETYPE } from "./bilde-opplasting";
 
 /** Bildenode i dokumentinnholdet. `filId` peker til vedlegget bildet ble lastet opp som. */
 export type BildeElementType = TElement & {
@@ -61,11 +62,33 @@ export function BildeElement(props: PlateElementProps<BildeElementType>) {
           </Resizable>
         </ResizableProvider>
         {!readOnly && (
+          <div
+            className="absolute top-2 left-2 flex cursor-grab items-center justify-center rounded-md bg-ax-bg-neutral-strong/80 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 active:cursor-grabbing"
+            draggable
+            onDragStart={(e) => {
+              e.dataTransfer.effectAllowed = "move";
+              e.dataTransfer.setData(BILDE_FLYTT_MIMETYPE, JSON.stringify(path));
+            }}
+          >
+            <Tooltip content="Flytt bilde">
+              <Button
+                type="button"
+                variant="primary"
+                data-color="neutral"
+                size="small"
+                icon={<DragVerticalIcon aria-hidden />}
+                aria-label="Flytt bilde opp eller ned i dokumentet"
+                tabIndex={-1}
+              />
+            </Tooltip>
+          </div>
+        )}
+        {!readOnly && (
           <div className="absolute top-2 right-2 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
             <Tooltip content="Fjern bilde">
               <Button
                 type="button"
-                variant="secondary"
+                variant="primary"
                 size="small"
                 icon={<TrashIcon aria-hidden />}
                 aria-label="Fjern bilde fra dokumentet"
@@ -88,7 +111,8 @@ export function BildeElement(props: PlateElementProps<BildeElementType>) {
             <Button
               type="button"
               size="small"
-              variant="secondary"
+              variant="primary"
+              data-color="neutral"
               onClick={() => settVisSlettbekreftelse(false)}
             >
               Avbryt
