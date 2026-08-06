@@ -153,7 +153,8 @@ describe("opprettKontrollsak", () => {
       },
     });
 
-    expect(hentDokumenttreForSak(state(), opprettetSak.id)).toEqual([]);
+    if (!opprettetSak.ok) throw new Error("Forventet ok svar");
+    expect(hentDokumenttreForSak(state(), opprettetSak.sak.id)).toEqual([]);
   });
 
   it("legger mock-sak med eier i Mine saker", async () => {
@@ -211,7 +212,7 @@ describe("opprettKontrollsak", () => {
           ],
         },
       }),
-    ).resolves.toMatchObject({ id: expect.any(String) });
+    ).resolves.toMatchObject({ ok: true, sak: { id: expect.any(String) } });
   });
 
   it("avviser ugyldige kontraktverdier i mock-modus", async () => {

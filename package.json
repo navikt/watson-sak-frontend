@@ -19,7 +19,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
-    "verify": "concurrently -n test,lint,format,types,unused -c green,yellow,magenta,cyan,blue \"pnpm run test\" \"pnpm run lint\" \"pnpm run format\" \"pnpm run typecheck\" \"pnpm run unused\""
+    "verify": "react-router typegen && concurrently -n test,lint,format,types,unused -c green,yellow,magenta,cyan,blue \"pnpm run test\" \"pnpm run lint\" \"pnpm run format\" \"tsc --noEmit\" \"knip\""
   },
   "dependencies": {
     "@conform-to/react": "^1.20.2",
