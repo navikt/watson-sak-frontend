@@ -30,6 +30,7 @@ const mockFiler: FilResponse[] = [
     contentType: "application/pdf",
     opprettetAv: "Ola Nordmann",
     opprettet: "2026-02-15T10:30:00Z",
+    bruktIDokumenter: [],
   },
 ];
 

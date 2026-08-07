@@ -1,6 +1,7 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
-import type { DokumentInnhold } from "~/saker/filer/typer";
+import { createEvent, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { createRoutesStub } from "react-router";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { DokumentInnhold, FilResponse } from "~/saker/filer/typer";
 import { DokumentEditor } from "./DokumentEditor";
 
 const innhold: DokumentInnhold = [
@@ -14,18 +15,33 @@ const innhold: DokumentInnhold = [
   },
 ];
 
+function renderEditor(props: Partial<Parameters<typeof DokumentEditor>[0]> = {}) {
+  const Stub = createRoutesStub([
+    {
+      path: "/saker/:sakId",
+      Component: () => (
+        <DokumentEditor
+          startInnhold={innhold}
+          redigerbar
+          onEndring={() => {}}
+          sakId="ABC-1"
+          docId="d1"
+          dokumentliste={<p>Dokumentliste</p>}
+          {...props}
+        />
+      ),
+    },
+  ]);
+  return render(<Stub initialEntries={["/saker/ABC-1"]} />);
+}
+
+function lagFil(navn: string, type: string): File {
+  return new File(["data"], navn, { type });
+}
+
 describe("DokumentEditor", () => {
   it("viser verktøylinje og innhold når redigerbar", async () => {
-    render(
-      <DokumentEditor
-        startInnhold={innhold}
-        redigerbar
-        onEndring={() => {}}
-        sakId="ABC-1"
-        docId="d1"
-        dokumentliste={<p>Dokumentliste</p>}
-      />,
-    );
+    renderEditor();
 
     expect(await screen.findByRole("toolbar", { name: "Formatering" })).toBeDefined();
     expect(screen.getByLabelText("Fet")).toBeDefined();
@@ -36,22 +52,14 @@ describe("DokumentEditor", () => {
     expect(screen.getByLabelText("Avindenter")).toBeDefined();
     expect(screen.getByLabelText("Punktliste")).toBeDefined();
     expect(screen.getByLabelText("Angre")).toBeDefined();
+    expect(screen.getByLabelText("Sett inn bilde")).toBeDefined();
     expect(screen.getByText("Min overskrift")).toBeDefined();
     expect(screen.getByText("Brødtekst her")).toBeDefined();
   });
 
   it("kan sette inn en tabell via verktøylinjen", async () => {
     const onEndring = vi.fn();
-    render(
-      <DokumentEditor
-        startInnhold={innhold}
-        redigerbar
-        onEndring={onEndring}
-        sakId="ABC-1"
-        docId="d1"
-        dokumentliste={<p>Dokumentliste</p>}
-      />,
-    );
+    renderEditor({ onEndring });
 
     const settInnTabell = await screen.findByLabelText("Sett inn tabell");
     fireEvent.click(settInnTabell);
@@ -67,47 +75,20 @@ describe("DokumentEditor", () => {
   });
 
   it("har et tilgjengelig redigeringsfelt med aria-label", async () => {
-    render(
-      <DokumentEditor
-        startInnhold={innhold}
-        redigerbar
-        onEndring={() => {}}
-        sakId="ABC-1"
-        docId="d1"
-        dokumentliste={<p>Dokumentliste</p>}
-      />,
-    );
+    renderEditor();
 
     expect(await screen.findByLabelText("Dokumentinnhold")).toBeDefined();
   });
 
   it("skjuler verktøylinjen i lesemodus", async () => {
-    render(
-      <DokumentEditor
-        startInnhold={innhold}
-        redigerbar={false}
-        onEndring={() => {}}
-        sakId="ABC-1"
-        docId="d1"
-        dokumentliste={<p>Dokumentliste</p>}
-      />,
-    );
+    renderEditor({ redigerbar: false });
 
     expect(await screen.findByText("Min overskrift")).toBeDefined();
     expect(screen.queryByRole("toolbar")).toBeNull();
   });
 
   it("toggler understreket mark og kaller onEndring", async () => {
-    render(
-      <DokumentEditor
-        startInnhold={innhold}
-        redigerbar
-        onEndring={() => {}}
-        sakId="ABC-1"
-        docId="d1"
-        dokumentliste={<p>Dokumentliste</p>}
-      />,
-    );
+    renderEditor();
 
     const knapp = await screen.findByLabelText("Understreket");
     expect(knapp.getAttribute("aria-pressed")).toBe("false");
@@ -115,16 +96,7 @@ describe("DokumentEditor", () => {
   });
 
   it("toggler gjennomstreket mark og kaller onEndring", async () => {
-    render(
-      <DokumentEditor
-        startInnhold={innhold}
-        redigerbar
-        onEndring={() => {}}
-        sakId="ABC-1"
-        docId="d1"
-        dokumentliste={<p>Dokumentliste</p>}
-      />,
-    );
+    renderEditor();
 
     const knapp = await screen.findByLabelText("Gjennomstreket");
     expect(knapp.getAttribute("aria-pressed")).toBe("false");
@@ -133,16 +105,7 @@ describe("DokumentEditor", () => {
 
   it("indenter-knappen kaller onEndring", async () => {
     const onEndring = vi.fn();
-    render(
-      <DokumentEditor
-        startInnhold={innhold}
-        redigerbar
-        onEndring={onEndring}
-        sakId="ABC-1"
-        docId="d1"
-        dokumentliste={<p>Dokumentliste</p>}
-      />,
-    );
+    renderEditor({ onEndring });
 
     const knapp = await screen.findByLabelText("Indenter");
     expect(knapp).toBeDefined();
@@ -152,19 +115,118 @@ describe("DokumentEditor", () => {
 
   it("avindenter-knappen kaller onEndring", async () => {
     const onEndring = vi.fn();
-    render(
-      <DokumentEditor
-        startInnhold={innhold}
-        redigerbar
-        onEndring={onEndring}
-        sakId="ABC-1"
-        docId="d1"
-        dokumentliste={<p>Dokumentliste</p>}
-      />,
-    );
+    renderEditor({ onEndring });
 
     const knapp = await screen.findByLabelText("Avindenter");
     expect(knapp).toBeDefined();
     expect(() => fireEvent.click(knapp)).not.toThrow();
+  });
+
+  describe("bildeinnsetting", () => {
+    const opplastetFil: FilResponse = {
+      id: "fil-123",
+      filnavn: "skjermbilde.png",
+      storrelse: 1024,
+      contentType: "image/png",
+      opprettetAv: "Ola Nordmann",
+      opprettet: "2026-03-01T10:00:00Z",
+      bruktIDokumenter: [],
+    };
+
+    beforeEach(() => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve(opplastetFil),
+        }),
+      );
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it("laster opp og setter inn bilde valgt via filvelgeren", async () => {
+      const onEndring = vi.fn();
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+          if (init?.method === "POST") {
+            return Promise.resolve({ ok: true, json: () => Promise.resolve(opplastetFil) });
+          }
+          return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
+        }),
+      );
+      renderEditor({ onEndring });
+
+      fireEvent.click(await screen.findByLabelText("Sett inn bilde"));
+      const input = await screen.findByTestId("bilde-fil-input");
+
+      const fil = lagFil("skjermbilde.png", "image/png");
+      fireEvent.change(input as HTMLInputElement, { target: { files: [fil] } });
+
+      await waitFor(() => {
+        expect(document.querySelector("img")).not.toBeNull();
+      });
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/filer"),
+        expect.objectContaining({ method: "POST" }),
+      );
+      expect(onEndring).toHaveBeenCalled();
+    });
+
+    it("viser feilmelding når filtypen ikke er tillatt", async () => {
+      renderEditor();
+
+      fireEvent.click(await screen.findByLabelText("Sett inn bilde"));
+      const input = await screen.findByTestId("bilde-fil-input");
+      const fil = lagFil("dokument.pdf", "application/pdf");
+      fireEvent.change(input as HTMLInputElement, { target: { files: [fil] } });
+
+      expect(
+        await screen.findByText("Bare PNG-, JPEG- og WebP-bilder kan settes inn i dokumentet."),
+      ).toBeDefined();
+      expect(fetch).not.toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ method: "POST" }),
+      );
+    });
+
+    // Slates egen paste-/drop-håndtering i slate-dom prøver alltid å slå opp en DOM-range
+    // via document.caretRangeFromPoint/selection, som jsdom ikke støtter – å simulere
+    // ekte paste-/drop-hendelser her krasjer derfor uavhengig av vår kode. Selve
+    // filtrerings- og innsettingslogikken (håndterBildefiler/filtrerBildefiler) er testet
+    // over og i bilde-opplasting.test.ts; drag-og-slipp/lim inn er verifisert manuelt.
+    it("dra-over med filer hindrer nettleserens standard håndtering", async () => {
+      renderEditor();
+
+      const felt = await screen.findByLabelText("Dokumentinnhold");
+      const dragOverEvent = createEvent.dragOver(felt, {
+        dataTransfer: { types: ["Files"] },
+      });
+      fireEvent(felt, dragOverEvent);
+      expect(dragOverEvent.defaultPrevented).toBe(true);
+    });
+
+    it("åpner bildemodalen og setter inn et allerede opplastet bilde", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve([opplastetFil]),
+        }),
+      );
+      renderEditor();
+
+      fireEvent.click(await screen.findByLabelText("Sett inn bilde"));
+      expect(await screen.findByText("skjermbilde.png")).toBeDefined();
+
+      fireEvent.click(screen.getByText("skjermbilde.png"));
+
+      await waitFor(() => {
+        expect(document.querySelector("img")).not.toBeNull();
+      });
+    });
   });
 });

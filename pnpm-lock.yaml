@@ -52,6 +52,12 @@ importers:
       '@platejs/list-classic':
         specifier: ^53.0.0
         version: 53.0.0(platejs@53.3.3(@types/react@19.2.18)(immer@11.1.15)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.8)))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@platejs/media':
+        specifier: ^53.1.4
+        version: 53.1.4(platejs@53.3.3(@types/react@19.2.18)(immer@11.1.15)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.8)))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@platejs/resizable':
+        specifier: ^53.0.0
+        version: 53.0.0(platejs@53.3.3(@types/react@19.2.18)(immer@11.1.15)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.8)))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@platejs/table':
         specifier: ^53.0.9
         version: 53.0.9(platejs@53.3.3(@types/react@19.2.18)(immer@11.1.15)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.8)))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -1300,6 +1306,13 @@ packages:
 
   '@platejs/list-classic@53.0.0':
     resolution: {integrity: sha512-2L7QYfBswIZiqQKviiHl1vzNQPoyJr7rihXGgNKpXxt4sGtbNN6Av8FxvDRXmymU2sa12I+H+5Y3jFyYmEsciA==}
+    peerDependencies:
+      platejs: '>=53.0.0'
+      react: '>=18.0.0'
+      react-dom: '>=18.0.0'
+
+  '@platejs/media@53.1.4':
+    resolution: {integrity: sha512-KmiV68QM5YiO52BmqPaDGMvynTBIFrGn3k22FGmOk5hJLETO44weAuZRhSxbQiqQS07PveCAK8ZWJIzmM8yKSg==}
     peerDependencies:
       platejs: '>=53.0.0'
       react: '>=18.0.0'
@@ -4605,6 +4618,13 @@ snapshots:
   '@platejs/list-classic@53.0.0(platejs@53.3.3(@types/react@19.2.18)(immer@11.1.15)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.8)))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       lodash: 4.18.1
+      platejs: 53.3.3(@types/react@19.2.18)(immer@11.1.15)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.8))
+      react: 19.2.8
+      react-compiler-runtime: 1.0.0(react@19.2.8)
+      react-dom: 19.2.8(react@19.2.8)
+
+  '@platejs/media@53.1.4(platejs@53.3.3(@types/react@19.2.18)(immer@11.1.15)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.8)))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+    dependencies:
       platejs: 53.3.3(@types/react@19.2.18)(immer@11.1.15)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.8))
       react: 19.2.8
       react-compiler-runtime: 1.0.0(react@19.2.8)

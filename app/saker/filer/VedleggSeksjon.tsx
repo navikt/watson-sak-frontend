@@ -1,4 +1,4 @@
-import { EyeIcon, TrashIcon, UploadIcon } from "@navikt/aksel-icons";
+import { EyeIcon, LinkIcon, TrashIcon, UploadIcon } from "@navikt/aksel-icons";
 import {
   Alert,
   BodyShort,
@@ -8,14 +8,16 @@ import {
   HStack,
   Loader,
   Table,
+  Tooltip,
   VStack,
 } from "@navikt/ds-react";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { formaterStorrelse } from "~/utils/number-utils";
-import type { FilResponse } from "./typer";
+import { FilIBrukModal } from "./FilIBrukModal";
+import type { DokumentReferanse, FilResponse } from "./typer";
 
 function formaterDatoTid(isoString: string): string {
   return new Date(isoString).toLocaleDateString("nb-NO", {
@@ -29,25 +31,52 @@ interface SlettKnappProps {
   filId: string;
   filnavn: string;
   sakId: string;
+  bruktIDokumenter: DokumentReferanse[];
 }
 
-function SlettKnapp({ filId, filnavn, sakId }: SlettKnappProps) {
-  const fetcher = useFetcher();
+function SlettKnapp({ filId, filnavn, sakId, bruktIDokumenter }: SlettKnappProps) {
+  const fetcher = useFetcher<{ ok: boolean; dokumenter?: DokumentReferanse[] }>();
+  const [dokumenterIBruk, settDokumenterIBruk] = useState<DokumentReferanse[] | null>(null);
   const sletter = fetcher.state !== "idle";
   const url = RouteConfig.API.SAK_FIL.replace(":sakId", sakId).replace(":filId", filId);
 
+  // Backend kan avvise sletting (409) selv om filen ikke var kjent som «i bruk»
+  // ved sidelasting (f.eks. hvis den ble satt inn i et dokument like før forsøket).
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data?.ok === false && fetcher.data.dokumenter) {
+      settDokumenterIBruk(fetcher.data.dokumenter);
+    }
+  }, [fetcher.state, fetcher.data]);
+
+  function håndterKlikk(event: React.MouseEvent<HTMLButtonElement>) {
+    if (bruktIDokumenter.length > 0) {
+      event.preventDefault();
+      settDokumenterIBruk(bruktIDokumenter);
+      return;
+    }
+    sporHendelse("vedlegg slettet", { sakId });
+  }
+
   return (
-    <fetcher.Form method="delete" action={url}>
-      <Button
-        type="submit"
-        variant="tertiary-neutral"
-        size="xsmall"
-        icon={sletter ? <Loader size="xsmall" aria-hidden /> : <TrashIcon aria-hidden />}
-        disabled={sletter}
-        aria-label={`Slett ${filnavn}`}
-        onClick={() => sporHendelse("vedlegg slettet", { sakId })}
+    <>
+      <fetcher.Form method="delete" action={url}>
+        <Button
+          type="submit"
+          variant="tertiary-neutral"
+          size="xsmall"
+          icon={sletter ? <Loader size="xsmall" aria-hidden /> : <TrashIcon aria-hidden />}
+          disabled={sletter}
+          aria-label={`Slett ${filnavn}`}
+          onClick={håndterKlikk}
+        />
+      </fetcher.Form>
+      <FilIBrukModal
+        dokumenter={dokumenterIBruk}
+        filnavn={filnavn}
+        sakId={sakId}
+        onClose={() => settDokumenterIBruk(null)}
       />
-    </fetcher.Form>
+    </>
   );
 }
 
@@ -165,7 +194,19 @@ export function VedleggSeksjon({ filer, sakId, erSakseier, kanLasteOpp }: Vedleg
           {filer.map((fil) => (
             <Table.Row key={fil.id}>
               <Table.DataCell>
-                <BodyShort size="small">{fil.filnavn}</BodyShort>
+                <HStack gap="space-2" align="center">
+                  <BodyShort size="small">{fil.filnavn}</BodyShort>
+                  {fil.bruktIDokumenter.length > 0 && (
+                    <Tooltip
+                      content={`I bruk i: ${fil.bruktIDokumenter.map((d) => d.tittel || "Uten tittel").join(", ")}`}
+                    >
+                      <LinkIcon
+                        aria-label={`Filen er i bruk i ${fil.bruktIDokumenter.length} dokument(er)`}
+                        className="text-ax-text-neutral-subtle"
+                      />
+                    </Tooltip>
+                  )}
+                </HStack>
               </Table.DataCell>
               <Table.DataCell>
                 <Detail>{formaterStorrelse(fil.storrelse)}</Detail>
@@ -179,7 +220,14 @@ export function VedleggSeksjon({ filer, sakId, erSakseier, kanLasteOpp }: Vedleg
               <Table.DataCell>
                 <HStack gap="space-1" align="center">
                   <NedlastKnapp filId={fil.id} filnavn={fil.filnavn} sakId={sakId} />
-                  {erSakseier && <SlettKnapp filId={fil.id} filnavn={fil.filnavn} sakId={sakId} />}
+                  {erSakseier && (
+                    <SlettKnapp
+                      filId={fil.id}
+                      filnavn={fil.filnavn}
+                      sakId={sakId}
+                      bruktIDokumenter={fil.bruktIDokumenter}
+                    />
+                  )}
                 </HStack>
               </Table.DataCell>
             </Table.Row>
