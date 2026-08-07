@@ -998,6 +998,24 @@ async function mockAction(
         tittel: `${formaterJournalposttype(journalposttype)}: ${jpTittel}`,
         beskrivelse: deler.join("\n"),
       });
+
+      if (knyttTilOppgave) {
+        const oppgavetype = hentValgfriTekst(formData, "oppgavetype") ?? "";
+        const prioritet = hentValgfriTekst(formData, "prioritet") ?? "";
+        const fristVerdi = hentValgfriTekst(formData, "frist") ?? "";
+        const behandlendeEnhet = hentValgfriTekst(formData, "behandlendeEnhet") ?? "";
+        const beskrivelse = hentValgfriTekst(formData, "beskrivelse") ?? "";
+        const oppgaveDeler: string[] = [];
+        if (prioritet) oppgaveDeler.push(`Prioritet: ${formaterPrioritet(prioritet)}`);
+        if (fristVerdi) oppgaveDeler.push(`Frist: ${fristVerdi}`);
+        if (behandlendeEnhet) oppgaveDeler.push(`Enhet: ${behandlendeEnhet}`);
+        if (beskrivelse) oppgaveDeler.push(beskrivelse);
+        leggTilHendelse(request, sak, "OPPGAVE_OPPRETTET", undefined, {
+          tittel: oppgavetype || "Oppgave",
+          beskrivelse: oppgaveDeler.join("\n"),
+        });
+      }
+
       break;
     }
     case "opprett_oppgave": {

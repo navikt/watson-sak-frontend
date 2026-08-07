@@ -957,4 +957,39 @@ describe("SakDetaljSide rediger arbeidsgivere", () => {
 
     expect(resultat.sak.arbeidsgivere).toEqual([]);
   });
+
+  it("logger to historikk-hendelser når journalpost opprettes med knyttTilOppgave", async () => {
+    const kontrollsak = hentFordelingssaker(state())[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
+
+    const formData = new FormData();
+    formData.set("handling", "opprett_journalpost");
+    formData.set("journalposttype", "NOTAT");
+    formData.set("tittel", "Kontrollnotat");
+    formData.set("innhold", "Innhold i notatet");
+    formData.set("knyttTilOppgave", "true");
+    formData.set("oppgavetype", "VUR");
+    formData.set("prioritet", "NORMAL");
+    formData.set("frist", "2026-09-01");
+    formData.set("behandlendeEnhet", "4100");
+    formData.set("beskrivelse", "Oppgavebeskrivelse");
+
+    await action({
+      request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: kontrollsakRef },
+    } as Route.ActionArgs);
+
+    const historikk = hentHistorikk(testRequest, String(kontrollsak.id));
+    const hendelsestyper = historikk.map((h) => h.hendelsesType);
+    expect(hendelsestyper).toContain("JOURNALPOST_OPPRETTET");
+    expect(hendelsestyper).toContain("OPPGAVE_OPPRETTET");
+  });
 });

@@ -339,6 +339,10 @@ export async function delKontrollsak(
   return parseEllerKastFeil(kontrollsakResponseSchema, await respons.json(), "delKontrollsak");
 }
 
+const opprettJournalpostResponseSchema = z.object({
+  journalpostId: z.string(),
+});
+
 export async function opprettJournalpost(
   token: string,
   sakId: string,
@@ -353,7 +357,7 @@ export async function opprettJournalpost(
     body: JSON.stringify({ journalposttype, tittel, tekst, vedleggIds }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke opprette journalpost");
-  return respons.json();
+  return parseEllerKastFeil(opprettJournalpostResponseSchema, await respons.json(), "opprettJournalpost");
 }
 
 const oppgaveResponseSchema = oppgaveKortSchema
