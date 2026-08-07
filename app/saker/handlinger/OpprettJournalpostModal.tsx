@@ -5,7 +5,9 @@ import {
   Box,
   Button,
   Checkbox,
-  FileUpload,
+  CheckboxGroup,
+  BodyShort,
+  Detail,
   Modal,
   Radio,
   RadioGroup,
@@ -19,6 +21,7 @@ import { z } from "zod";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
+import type { FilResponse } from "~/saker/filer/typer";
 import { OppgaveSkjema } from "./OppgaveSkjema";
 
 const opprettJournalpostSkjema = z
@@ -61,12 +64,21 @@ interface OpprettJournalpostModalProps {
   sakId: string;
   åpen: boolean;
   onClose: () => void;
+  /** PDF-filer lastet opp på saken som kan velges som vedlegg. */
+  filer: FilResponse[];
 }
 
-export function OpprettJournalpostModal({ sakId, åpen, onClose }: OpprettJournalpostModalProps) {
+export function OpprettJournalpostModal({
+  sakId,
+  åpen,
+  onClose,
+  filer,
+}: OpprettJournalpostModalProps) {
   const fetcher = useFetcher();
   const [knyttTilOppgave, setKnyttTilOppgave] = useState(false);
-  const [filer, setFiler] = useState<File[]>([]);
+  const [valgteVedleggIds, setValgteVedleggIds] = useState<string[]>([]);
+
+  const pdfFiler = filer.filter((fil) => fil.contentType === "application/pdf");
 
   const [form, fields] = useForm({
     id: "opprett-journalpost",
@@ -79,6 +91,7 @@ export function OpprettJournalpostModal({ sakId, åpen, onClose }: OpprettJourna
     onSubmit(event, { formData }) {
       event.preventDefault();
       formData.set("handling", "opprett_journalpost");
+      valgteVedleggIds.forEach((id) => formData.append("vedleggId", id));
       sporHendelse("journalpost opprettet");
       fetcher.submit(formData, {
         method: "post",
@@ -86,7 +99,7 @@ export function OpprettJournalpostModal({ sakId, åpen, onClose }: OpprettJourna
       });
       form.reset();
       setKnyttTilOppgave(false);
-      setFiler([]);
+      setValgteVedleggIds([]);
       onClose();
     },
   });
@@ -94,7 +107,7 @@ export function OpprettJournalpostModal({ sakId, åpen, onClose }: OpprettJourna
   function handleLukk() {
     form.reset();
     setKnyttTilOppgave(false);
-    setFiler([]);
+    setValgteVedleggIds([]);
     onClose();
   }
 
@@ -139,35 +152,29 @@ export function OpprettJournalpostModal({ sakId, åpen, onClose }: OpprettJourna
               maxRows={10}
             />
 
-            <VStack gap="space-4">
-              <FileUpload.Dropzone
-                label="Last opp vedlegg (valgfritt)"
-                description="Maks 50 MB per fil."
-                accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx"
-                onSelect={(_, partitioned) => {
-                  if (partitioned.accepted.length > 0) {
-                    sporHendelse("fil lastet opp", { antall: partitioned.accepted.length });
-                  }
-                  setFiler((eksisterende) => [...eksisterende, ...partitioned.accepted]);
-                }}
-              />
-              {filer.length > 0 && (
-                <VStack gap="space-4" as="ul" aria-label="Opplastede filer">
-                  {filer.map((fil, indeks) => (
-                    <FileUpload.Item
-                      key={`${fil.name}-${indeks}`}
-                      as="li"
-                      file={fil}
-                      button={{
-                        action: "delete",
-                        onClick: () =>
-                          setFiler((eksisterende) => eksisterende.filter((_, i) => i !== indeks)),
-                      }}
-                    />
-                  ))}
-                </VStack>
-              )}
-            </VStack>
+            {pdfFiler.length > 0 ? (
+              <CheckboxGroup
+                legend="Vedlegg fra saken (valgfritt)"
+                description="Kun PDF-filer kan legges ved. Velg filer som skal arkiveres sammen med journalposten."
+                value={valgteVedleggIds}
+                onChange={setValgteVedleggIds}
+              >
+                {pdfFiler.map((fil) => (
+                  <Checkbox key={fil.id} value={fil.id}>
+                    <BodyShort size="small" as="span">
+                      {fil.filnavn}
+                    </BodyShort>
+                    <Detail as="span" className="ml-2 text-ax-text-neutral-subtle">
+                      ({formaterStorrelse(fil.storrelse)})
+                    </Detail>
+                  </Checkbox>
+                ))}
+              </CheckboxGroup>
+            ) : (
+              <Detail className="text-ax-text-neutral-subtle">
+                Ingen PDF-filer lastet opp på saken ennå.
+              </Detail>
+            )}
 
             <VStack gap="space-2">
               <input
@@ -215,4 +222,10 @@ export function OpprettJournalpostModal({ sakId, åpen, onClose }: OpprettJourna
       </Modal.Footer>
     </Modal>
   );
+}
+
+function formaterStorrelse(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }

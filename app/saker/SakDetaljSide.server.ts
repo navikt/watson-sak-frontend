@@ -383,6 +383,7 @@ async function backendAction(
       );
       const tittel = hentTekstfelt(formData, "tittel", "Tittel er påkrevd");
       const innhold = hentTekstfelt(formData, "innhold", "Innhold er påkrevd");
+      const vedleggIds = formData.getAll("vedleggId").map(String);
 
       await backendApi.opprettJournalpost(
         token,
@@ -390,6 +391,7 @@ async function backendAction(
         journalposttype,
         tittel.trim(),
         innhold.trim(),
+        vedleggIds,
       );
       return { ok: true };
     }

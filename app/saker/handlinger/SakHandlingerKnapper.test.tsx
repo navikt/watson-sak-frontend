@@ -61,7 +61,11 @@ function renderMedRouter(ui: React.ReactNode) {
 describe("SakHandlingerKnapper", () => {
   it("viser ingen handlinger for AVSLUTTET sak", () => {
     renderMedRouter(
-      <SakHandlingerKnapper erEier={true} sak={lagKontrollsak({ status: "AVSLUTTET" })} />,
+      <SakHandlingerKnapper
+        erEier={true}
+        sak={lagKontrollsak({ status: "AVSLUTTET" })}
+        filer={[]}
+      />,
     );
 
     expect(screen.queryByRole("button")).toBeNull();
@@ -72,6 +76,7 @@ describe("SakHandlingerKnapper", () => {
       <SakHandlingerKnapper
         erEier={true}
         sak={lagKontrollsak({ status: "UTREDES", blokkert: null })}
+        filer={[]}
       />,
     );
 
@@ -88,6 +93,7 @@ describe("SakHandlingerKnapper", () => {
       <SakHandlingerKnapper
         erEier={true}
         sak={lagKontrollsak({ status: "UTREDES", blokkert: "VENTER_PA_INFORMASJON" })}
+        filer={[]}
       />,
     );
 
@@ -103,6 +109,7 @@ describe("SakHandlingerKnapper", () => {
     renderMedRouter(
       <SakHandlingerKnapper
         erEier={false}
+        filer={[]}
         sak={lagKontrollsak({
           status: "OPPRETTET",
           saksbehandlere: {
@@ -121,6 +128,7 @@ describe("SakHandlingerKnapper", () => {
     renderMedRouter(
       <SakHandlingerKnapper
         erEier={false}
+        filer={[]}
         sak={lagKontrollsak({
           status: "OPPRETTET",
           blokkert: "I_BERO",
