@@ -396,7 +396,25 @@ async function backendAction(
       return { ok: true };
     }
     case "opprett_oppgave": {
-      throw data("Handlingen er ikke støttet ennå", { status: 501 });
+      const tildeltEnhetsnr = hentTekstfelt(
+        formData,
+        "behandlendeEnhet",
+        "Behandlende enhet er påkrevd",
+      );
+      const prioritet = hentTekstfelt(formData, "prioritet", "Prioritet er påkrevd");
+      const fristDato = hentTekstfelt(formData, "frist", "Frist er påkrevd");
+      const beskrivelse = hentTekstfelt(formData, "beskrivelse", "Beskrivelse er påkrevd");
+      const oppgavetype = hentValgfriTekst(formData, "oppgavetype");
+      await backendApi.opprettOppgave(
+        token,
+        sakId,
+        tildeltEnhetsnr,
+        prioritet,
+        fristDato,
+        beskrivelse,
+        oppgavetype ?? undefined,
+      );
+      return { ok: true };
     }
     case "overfor_ansvarlig": {
       const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");

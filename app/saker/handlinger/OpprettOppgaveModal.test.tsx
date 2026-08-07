@@ -52,7 +52,7 @@ describe("OpprettOppgaveModal", () => {
     renderMedRouter(<OpprettOppgaveModal {...defaultProps} />);
 
     fireEvent.change(screen.getByLabelText("Oppgavetype"), {
-      target: { value: "vurder_henvendelse" },
+      target: { value: "VURD_HENV" },
     });
     fireEvent.change(screen.getByLabelText("Prioritet"), {
       target: { value: "HOY" },
@@ -72,7 +72,7 @@ describe("OpprettOppgaveModal", () => {
     const [formData, options] = submitMock.mock.calls[0];
     expect(formData).toBeInstanceOf(FormData);
     expect(formData.get("handling")).toBe("opprett_oppgave");
-    expect(formData.get("oppgavetype")).toBe("vurder_henvendelse");
+    expect(formData.get("oppgavetype")).toBe("VURD_HENV");
     expect(formData.get("prioritet")).toBe("HOY");
     expect(formData.get("beskrivelse")).toBe("En beskrivelse");
     expect(options).toEqual(expect.objectContaining({ method: "post" }));

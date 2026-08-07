@@ -355,6 +355,38 @@ export async function opprettJournalpost(
   return respons.json();
 }
 
+const oppgaveResponseSchema = z.object({
+  oppgaveId: z.number(),
+  status: z.string(),
+  tildeltEnhetsnr: z.string().nullable(),
+  tilordnetRessurs: z.string().nullable(),
+  tema: z.string().nullable(),
+  oppgavetype: z.string().nullable(),
+  prioritet: z.string().nullable(),
+  aktivDato: z.string().nullable(),
+  fristDato: z.string().nullable(),
+});
+
+export type OppgaveResponse = z.infer<typeof oppgaveResponseSchema>;
+
+export async function opprettOppgave(
+  token: string,
+  sakId: string,
+  tildeltEnhetsnr: string,
+  prioritet: string,
+  fristDato: string,
+  beskrivelse: string,
+  oppgavetype?: string,
+): Promise<OppgaveResponse> {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/oppgave`), {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify({ tildeltEnhetsnr, prioritet, fristDato, beskrivelse, oppgavetype }),
+  });
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke opprette oppgave");
+  return parseEllerKastFeil(oppgaveResponseSchema, await respons.json(), "opprettOppgave");
+}
+
 // --- Saksbehandlere ---
 
 export async function hentSaksbehandlere(token: string): Promise<KontrollsakSaksbehandler[]> {

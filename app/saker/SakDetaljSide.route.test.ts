@@ -609,7 +609,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
 
     const formData = new FormData();
     formData.set("handling", "opprett_oppgave");
-    formData.set("oppgavetype", "vurder_dokument");
+    formData.set("oppgavetype", "VUR");
     formData.set("prioritet", "HOY");
     formData.set("frist", "2026-06-01");
     formData.set("behandlendeEnhet", "4100");
@@ -625,7 +625,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
 
     const historikk = hentHistorikk(testRequest, String(kontrollsak.id));
     expect(historikk[0]?.hendelsesType).toBe("OPPGAVE_OPPRETTET");
-    expect(historikk[0]?.tittel).toBe("vurder_dokument");
+    expect(historikk[0]?.tittel).toBe("VUR");
     expect(historikk[0]?.beskrivelse).toContain("Prioritet: høy");
     expect(historikk[0]?.beskrivelse).toContain("Frist: 2026-06-01");
     expect(historikk[0]?.beskrivelse).toContain("Sjekk dokumentasjon");
