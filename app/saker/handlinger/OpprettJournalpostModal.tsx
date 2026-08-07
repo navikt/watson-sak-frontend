@@ -188,7 +188,7 @@ export function OpprettJournalpostModal({
                 checked={knyttTilOppgave}
                 onChange={(e) => setKnyttTilOppgave(e.target.checked)}
               >
-                Knytt til oppgave
+                Opprett og knytt til oppgave
               </Checkbox>
 
               {knyttTilOppgave && (

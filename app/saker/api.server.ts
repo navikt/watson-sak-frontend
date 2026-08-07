@@ -346,7 +346,7 @@ export async function opprettJournalpost(
   tittel: string,
   tekst: string,
   vedleggIds: string[] = [],
-) {
+): Promise<{ journalpostId: string }> {
   const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/journalposter`), {
     method: "POST",
     headers: authHeaders(token),
@@ -370,11 +370,19 @@ export async function opprettOppgave(
   fristDato: string,
   beskrivelse: string,
   oppgavetype: string,
+  journalpostId?: string,
 ): Promise<OppgaveResponse> {
   const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/oppgave`), {
     method: "POST",
     headers: authHeaders(token),
-    body: JSON.stringify({ tildeltEnhetsnr, prioritet, fristDato, beskrivelse, oppgavetype }),
+    body: JSON.stringify({
+      tildeltEnhetsnr,
+      prioritet,
+      fristDato,
+      beskrivelse,
+      oppgavetype,
+      ...(journalpostId ? { journalpostId } : {}),
+    }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke opprette oppgave");
   return parseEllerKastFeil(oppgaveResponseSchema, await respons.json(), "opprettOppgave");

@@ -134,12 +134,12 @@ describe("OpprettJournalpostModal", () => {
     expect(formData.getAll("vedleggId")).toEqual([]);
   });
 
-  it("viser oppgaveskjema når 'Knytt til oppgave' er huket av", () => {
+  it("viser oppgaveskjema når 'Opprett og knytt til oppgave' er huket av", () => {
     renderMedRouter(<OpprettJournalpostModal {...defaultProps} />);
 
     expect(screen.queryByLabelText("Oppgavetype")).toBeNull();
 
-    fireEvent.click(screen.getByLabelText("Knytt til oppgave"));
+    fireEvent.click(screen.getByLabelText("Opprett og knytt til oppgave"));
 
     expect(screen.getByLabelText("Oppgavetype")).toBeDefined();
     expect(screen.getByLabelText("Prioritet")).toBeDefined();
@@ -147,7 +147,7 @@ describe("OpprettJournalpostModal", () => {
     expect(screen.getByLabelText("Beskrivelse")).toBeDefined();
   });
 
-  it("inkluderer oppgavedata i payload når 'Knytt til oppgave' er huket av", () => {
+  it("inkluderer oppgavedata i payload når 'Opprett og knytt til oppgave' er huket av", () => {
     renderMedRouter(<OpprettJournalpostModal {...defaultProps} />);
 
     fireEvent.click(screen.getByRole("radio", { name: "Notat" }));
@@ -157,7 +157,7 @@ describe("OpprettJournalpostModal", () => {
     fireEvent.change(screen.getByLabelText("Innhold"), {
       target: { value: "Innhold" },
     });
-    fireEvent.click(screen.getByLabelText("Knytt til oppgave"));
+    fireEvent.click(screen.getByLabelText("Opprett og knytt til oppgave"));
 
     fireEvent.change(screen.getByLabelText("Oppgavetype"), {
       target: { value: "VUR" },

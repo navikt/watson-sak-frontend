@@ -384,8 +384,9 @@ async function backendAction(
       const tittel = hentTekstfelt(formData, "tittel", "Tittel er påkrevd");
       const innhold = hentTekstfelt(formData, "innhold", "Innhold er påkrevd");
       const vedleggIds = formData.getAll("vedleggId").map(String);
+      const knyttTilOppgave = formData.get("knyttTilOppgave") === "true";
 
-      await backendApi.opprettJournalpost(
+      const journalpostRespons = await backendApi.opprettJournalpost(
         token,
         sakId,
         journalposttype,
@@ -393,6 +394,29 @@ async function backendAction(
         innhold.trim(),
         vedleggIds,
       );
+
+      if (knyttTilOppgave) {
+        const tildeltEnhetsnr = hentTekstfelt(
+          formData,
+          "behandlendeEnhet",
+          "Behandlende enhet er påkrevd",
+        );
+        const prioritet = hentTekstfelt(formData, "prioritet", "Prioritet er påkrevd");
+        const fristDato = hentTekstfelt(formData, "frist", "Frist er påkrevd");
+        const beskrivelse = hentTekstfelt(formData, "beskrivelse", "Beskrivelse er påkrevd");
+        const oppgavetype = hentTekstfelt(formData, "oppgavetype", "Oppgavetype er påkrevd");
+        await backendApi.opprettOppgave(
+          token,
+          sakId,
+          tildeltEnhetsnr,
+          prioritet,
+          fristDato,
+          beskrivelse,
+          oppgavetype,
+          journalpostRespons.journalpostId,
+        );
+      }
+
       return { ok: true };
     }
     case "opprett_oppgave": {
