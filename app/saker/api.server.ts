@@ -339,6 +339,10 @@ export async function delKontrollsak(
   return parseEllerKastFeil(kontrollsakResponseSchema, await respons.json(), "delKontrollsak");
 }
 
+const opprettJournalpostResponseSchema = z.object({
+  journalpostId: z.string(),
+});
+
 export async function opprettJournalpost(
   token: string,
   sakId: string,
@@ -346,14 +350,18 @@ export async function opprettJournalpost(
   tittel: string,
   tekst: string,
   vedleggIds: string[] = [],
-) {
+): Promise<{ journalpostId: string }> {
   const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/journalposter`), {
     method: "POST",
     headers: authHeaders(token),
     body: JSON.stringify({ journalposttype, tittel, tekst, vedleggIds }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke opprette journalpost");
-  return respons.json();
+  return parseEllerKastFeil(
+    opprettJournalpostResponseSchema,
+    await respons.json(),
+    "opprettJournalpost",
+  );
 }
 
 const oppgaveResponseSchema = oppgaveKortSchema
@@ -370,11 +378,19 @@ export async function opprettOppgave(
   fristDato: string,
   beskrivelse: string,
   oppgavetype: string,
+  journalpostId?: string,
 ): Promise<OppgaveResponse> {
   const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/oppgave`), {
     method: "POST",
     headers: authHeaders(token),
-    body: JSON.stringify({ tildeltEnhetsnr, prioritet, fristDato, beskrivelse, oppgavetype }),
+    body: JSON.stringify({
+      tildeltEnhetsnr,
+      prioritet,
+      fristDato,
+      beskrivelse,
+      oppgavetype,
+      ...(journalpostId ? { journalpostId } : {}),
+    }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke opprette oppgave");
   return parseEllerKastFeil(oppgaveResponseSchema, await respons.json(), "opprettOppgave");
