@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it } from "vitest";
 import type { FilResponse } from "./typer";
@@ -12,6 +12,7 @@ const mockFiler: FilResponse[] = [
     contentType: "application/pdf",
     opprettetAv: "Ola Nordmann",
     opprettet: "2026-02-15T10:30:00Z",
+    bruktIDokumenter: [],
   },
   {
     id: "fil-2",
@@ -20,6 +21,7 @@ const mockFiler: FilResponse[] = [
     contentType: "image/png",
     opprettetAv: "Kari Hansen",
     opprettet: "2026-03-01T14:00:00Z",
+    bruktIDokumenter: [],
   },
 ];
 
@@ -88,5 +90,31 @@ describe("VedleggSeksjon", () => {
   it("skjuler 'Last opp vedlegg'-knapp når kanLasteOpp er false", () => {
     renderSeksjon({ filer: [], sakId: "SAK-1", erSakseier: false, kanLasteOpp: false });
     expect(screen.queryByText("Last opp vedlegg")).toBeNull();
+  });
+
+  it("viser 'i bruk'-ikon når filen er satt inn i et dokument", () => {
+    const filerMedBruk: FilResponse[] = [
+      { ...mockFiler[1], bruktIDokumenter: [{ id: "dok-1", tittel: "Saksframlegg" }] },
+    ];
+    renderSeksjon({ filer: filerMedBruk, sakId: "SAK-1", erSakseier: false, kanLasteOpp: false });
+    expect(screen.getByLabelText("Filen er i bruk i 1 dokument(er)")).toBeDefined();
+  });
+
+  it("viser ikke 'i bruk'-ikon når filen ikke er i bruk", () => {
+    renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: false, kanLasteOpp: false });
+    expect(screen.queryByText(/er i bruk i/)).toBeNull();
+  });
+
+  it("viser forklarende dialog i stedet for å slette når filen er i bruk", () => {
+    const filerMedBruk: FilResponse[] = [
+      { ...mockFiler[1], bruktIDokumenter: [{ id: "dok-1", tittel: "Saksframlegg" }] },
+    ];
+    renderSeksjon({ filer: filerMedBruk, sakId: "SAK-1", erSakseier: true, kanLasteOpp: false });
+
+    fireEvent.click(screen.getByLabelText("Slett screenshot.png"));
+
+    expect(screen.getByText("Filen er i bruk")).toBeDefined();
+    const lenke = screen.getByRole("link", { name: "Saksframlegg" });
+    expect(lenke.getAttribute("href")).toBe("/saker/SAK-1/dokumenter/dok-1");
   });
 });

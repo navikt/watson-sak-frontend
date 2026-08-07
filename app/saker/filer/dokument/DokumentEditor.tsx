@@ -2,10 +2,11 @@ import {
   ArrowRedoIcon,
   ArrowUndoIcon,
   BulletListIcon,
+  ImageIcon,
   NumberListIcon,
   TableIcon,
 } from "@navikt/aksel-icons";
-import { Button, HStack, Select, Tooltip } from "@navikt/ds-react";
+import { Alert, Button, HStack, Loader, Select, Tooltip } from "@navikt/ds-react";
 import {
   BlockquotePlugin,
   BoldPlugin,
@@ -30,6 +31,7 @@ import { indent, outdent } from "@platejs/indent";
 import { IndentPlugin } from "@platejs/indent/react";
 import { DocxPlugin } from "@platejs/docx";
 import { JuicePlugin } from "@platejs/juice";
+import { ImagePlugin } from "@platejs/media/react";
 import { TrailingBlockPlugin } from "platejs";
 import {
   TableCellHeaderPlugin,
@@ -39,12 +41,22 @@ import {
 } from "@platejs/table/react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { useRevalidator } from "react-router";
 import { Plate, PlateContent, PlateElement, useEditorState, usePlateEditor } from "platejs/react";
 import type { TElement } from "platejs";
 import type { PlateElementProps } from "platejs/react";
 import { sporHendelse } from "~/analytics/analytics";
 import { Kort } from "~/komponenter/Kort";
-import type { DokumentInnhold } from "~/saker/filer/typer";
+import type { DokumentInnhold, FilResponse } from "~/saker/filer/typer";
+import { BildeElement } from "./BildeElement";
+import { SettInnBildeModal } from "./SettInnBildeModal";
+import {
+  BildeOpplastingFeil,
+  BILDE_FLYTT_MIMETYPE,
+  byggBildeUrl,
+  filtrerBildefiler,
+  lastOppBilde,
+} from "./bilde-opplasting";
 import {
   LeggTilKolonneIkon,
   LeggTilRadIkon,
@@ -139,10 +151,14 @@ function Verktøylinje({
   onFormater,
   aktivtSidepanel,
   onVelgSidepanel,
+  lasterOppBilde,
+  onÅpneBildeModal,
 }: {
   onFormater: (etikett: string) => void;
   aktivtSidepanel: SidepanelValg;
   onVelgSidepanel: (valg: SidepanelValg) => void;
+  lasterOppBilde: boolean;
+  onÅpneBildeModal: () => void;
 }) {
   const editor = useEditorState();
   const erITabell = !!editor.api.above({ match: { type: TablePlugin.key } });
@@ -330,6 +346,14 @@ function Verktøylinje({
                   </VerktøyKnapp>
                 </>
               )}
+              <Skillelinje />
+              <VerktøyKnapp
+                etikett="Sett inn bilde"
+                disabled={lasterOppBilde}
+                onClick={onÅpneBildeModal}
+              >
+                {lasterOppBilde ? <Loader size="xsmall" aria-hidden /> : <ImageIcon aria-hidden />}
+              </VerktøyKnapp>
             </HStack>
 
             <SidepanelMeny aktivt={aktivtSidepanel} onVelg={onVelgSidepanel} />
@@ -410,6 +434,7 @@ const PLUGINS = [
       {children}
     </PlateElement>
   )),
+  ImagePlugin.withComponent(BildeElement),
 ];
 
 type DokumentEditorProps = {
@@ -442,6 +467,127 @@ export function DokumentEditor({
   const flateRef = useRef<HTMLDivElement>(null);
   const høyde = useTilgjengeligHøyde(flateRef);
 
+  const [lasterOppBilde, settLasterOppBilde] = useState(false);
+  const [bildeFeil, settBildeFeil] = useState<string | null>(null);
+  const [bildeModalÅpen, settBildeModalÅpen] = useState(false);
+  const revalidator = useRevalidator();
+
+  const settInnBilde = useCallback(
+    (fil: FilResponse) => {
+      editor.tf.insertNodes(
+        {
+          type: ImagePlugin.key,
+          filId: fil.id,
+          url: byggBildeUrl(sakId, fil.id),
+          alt: fil.filnavn,
+          children: [{ text: "" }],
+        },
+        { nextBlock: true },
+      );
+      sporHendelse("dokument formatert", { sakId, docId, format: "Sett inn bilde" });
+    },
+    [editor, sakId, docId],
+  );
+
+  // Returnerer om opplastingen lyktes, slik at f.eks. modalen kan lukke seg selv ved
+  // suksess uten å måtte lese av feil-/laste-state (som ikke er oppdatert før neste render).
+  const håndterBildefiler = useCallback(
+    async (filer: FileList | File[]): Promise<boolean> => {
+      const bildefiler = filtrerBildefiler(filer);
+      if (bildefiler.length === 0) {
+        settBildeFeil("Bare PNG-, JPEG- og WebP-bilder kan settes inn i dokumentet.");
+        return false;
+      }
+      settLasterOppBilde(true);
+      settBildeFeil(null);
+      // Hver fil lastes opp for seg, slik at én ugyldig/mislykket fil (f.eks. for stor,
+      // eller feil format) ikke stopper opplasting av de andre gyldige bildene i samme drag.
+      let feilmelding: string | null = null;
+      let minstEnLyktes = false;
+      for (const fil of bildefiler) {
+        try {
+          const opplastet = await lastOppBilde(sakId, fil);
+          settInnBilde(opplastet);
+          minstEnLyktes = true;
+        } catch (feil) {
+          feilmelding =
+            feil instanceof BildeOpplastingFeil ? feil.message : "Kunne ikke laste opp bildet.";
+        }
+      }
+      settLasterOppBilde(false);
+      if (feilmelding) settBildeFeil(feilmelding);
+      if (minstEnLyktes) {
+        // Sørger for at f.eks. vedleggslisten på siden viser bildet uten manuell oppdatering.
+        void revalidator.revalidate();
+      }
+      return feilmelding === null;
+    },
+    [sakId, settInnBilde, revalidator],
+  );
+
+  // Finner hvilken topp-nivå-indeks et punkt i dokumentet tilsvarer, ved å sammenligne
+  // Y-koordinaten mot midtpunktet til hver topp-nivå-nodes DOM-element. Brukes til å
+  // avgjøre hvor et bilde som dras skal slippes.
+  function finnMålindeks(clientY: number): number {
+    const barn = editor.children;
+    for (let i = 0; i < barn.length; i++) {
+      const dom = editor.api.toDOMNode(barn[i]);
+      if (!dom) continue;
+      const rect = dom.getBoundingClientRect();
+      if (clientY < rect.top + rect.height / 2) return i;
+    }
+    return barn.length;
+  }
+
+  function håndterDrop(event: React.DragEvent<HTMLDivElement>) {
+    if (event.dataTransfer.types.includes(BILDE_FLYTT_MIMETYPE)) {
+      event.preventDefault();
+      const rå = event.dataTransfer.getData(BILDE_FLYTT_MIMETYPE);
+      let kildesti: number[];
+      try {
+        kildesti = JSON.parse(rå) as number[];
+      } catch {
+        // Ugyldig/uventet format på dra-dataen — avbryt rolig i stedet for å krasje editoren.
+        return;
+      }
+      if (kildesti.length !== 1) return;
+      const kildeindeks = kildesti[0];
+      let målindeks = finnMålindeks(event.clientY);
+      if (kildeindeks < målindeks) målindeks -= 1;
+      if (målindeks === kildeindeks) return;
+      editor.tf.moveNodes({ at: kildesti, to: [målindeks] });
+      return;
+    }
+
+    const filer = event.dataTransfer?.files;
+    if (!filer || filer.length === 0) return;
+    // Forhindre at nettleseren åpner/navigerer til filen så snart det slippes filer i det
+    // hele tatt — ikke bare når vi finner gyldige bildefiler blant dem.
+    event.preventDefault();
+    const bildefiler = filtrerBildefiler(filer);
+    if (bildefiler.length === 0) return;
+    void håndterBildefiler(bildefiler);
+  }
+
+  function håndterDragOver(event: React.DragEvent<HTMLDivElement>) {
+    if (
+      event.dataTransfer.types.includes("Files") ||
+      event.dataTransfer.types.includes(BILDE_FLYTT_MIMETYPE)
+    ) {
+      event.preventDefault();
+    }
+  }
+
+  function håndterPaste(event: React.ClipboardEvent<HTMLDivElement>) {
+    const bildefiler = filtrerBildefiler(event.clipboardData?.files ?? []);
+    if (bildefiler.length === 0) return;
+    // Lim inn tekst/HTML sammen med bilder (f.eks. fra Word) skal fortsatt limes inn som
+    // vanlig — bare hindre standard limeoppførsel når utklippstavlen ikke også har tekst.
+    if (event.clipboardData?.getData("text/plain")) return;
+    event.preventDefault();
+    void håndterBildefiler(bildefiler);
+  }
+
   return (
     <Plate
       editor={editor}
@@ -461,7 +607,14 @@ export function DokumentEditor({
               onFormater={(format) => sporHendelse("dokument formatert", { sakId, docId, format })}
               aktivtSidepanel={aktivtSidepanel}
               onVelgSidepanel={settAktivtSidepanel}
+              lasterOppBilde={lasterOppBilde}
+              onÅpneBildeModal={() => settBildeModalÅpen(true)}
             />
+            {bildeFeil && !bildeModalÅpen && (
+              <Alert variant="error" size="small" className="mt-[var(--ax-space-8)]">
+                {bildeFeil}
+              </Alert>
+            )}
           </div>
         )}
         {/* Grå flate med «arket» til venstre og sidepanelet som en egen seksjon til høyre.
@@ -476,6 +629,9 @@ export function DokumentEditor({
                 role="textbox"
                 aria-multiline
                 aria-label="Dokumentinnhold"
+                onDrop={redigerbar ? håndterDrop : undefined}
+                onDragOver={redigerbar ? håndterDragOver : undefined}
+                onPaste={redigerbar ? håndterPaste : undefined}
                 className={
                   "min-h-[60vh] focus:outline-none [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg " +
                   "[&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
@@ -498,6 +654,19 @@ export function DokumentEditor({
           />
         </div>
       </div>
+      <SettInnBildeModal
+        åpen={bildeModalÅpen}
+        sakId={sakId}
+        lasterOpp={lasterOppBilde}
+        feil={bildeFeil}
+        onClose={() => settBildeModalÅpen(false)}
+        onVelg={settInnBilde}
+        onLastOpp={(filer) => {
+          void håndterBildefiler(filer).then((ok) => {
+            if (ok) settBildeModalÅpen(false);
+          });
+        }}
+      />
     </Plate>
   );
 }

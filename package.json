@@ -35,6 +35,8 @@
     "@platejs/indent": "^53.0.0",
     "@platejs/juice": "^53.0.0",
     "@platejs/list-classic": "^53.0.0",
+    "@platejs/media": "^53.1.4",
+    "@platejs/resizable": "^53.0.0",
     "@platejs/table": "^53.0.9",
     "@react-router/node": "^8.3.0",
     "@react-router/serve": "^8.3.0",
