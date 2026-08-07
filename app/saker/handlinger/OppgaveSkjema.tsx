@@ -11,9 +11,9 @@ import {
 import { behandlendeEnheter } from "./behandlendeEnheter";
 
 const oppgavetypeValg = [
-  { verdi: "vurder_dokument", label: "Vurder dokument" },
-  { verdi: "vurder_henvendelse", label: "Vurder henvendelse" },
-  { verdi: "vurder_konsekvens", label: "Vurder konsekvens for ytelse" },
+  { verdi: "VUR", label: "Vurder dokument" },
+  { verdi: "VURD_HENV", label: "Vurder henvendelse" },
+  { verdi: "VUR_KONS_YTE", label: "Vurder konsekvens for ytelse" },
 ] as const;
 
 interface OppgaveSkjemaProps {

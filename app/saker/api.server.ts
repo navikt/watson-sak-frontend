@@ -14,6 +14,7 @@ import {
   dokumentNodeSchema,
   kontrollsakPageResponseSchema,
   kontrollsakResponseSchema,
+  oppgaveKortSchema,
   type Blokkeringsarsak,
   type Henleggelsesarsak,
   type KontrollsakPageResponse,
@@ -353,6 +354,30 @@ export async function opprettJournalpost(
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke opprette journalpost");
   return respons.json();
+}
+
+const oppgaveResponseSchema = oppgaveKortSchema
+  .omit({ sistEndret: true, opprettet: true })
+  .extend({ prioritet: z.string().nullable() });
+
+export type OppgaveResponse = z.infer<typeof oppgaveResponseSchema>;
+
+export async function opprettOppgave(
+  token: string,
+  sakId: string,
+  tildeltEnhetsnr: string,
+  prioritet: string,
+  fristDato: string,
+  beskrivelse: string,
+  oppgavetype: string,
+): Promise<OppgaveResponse> {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/oppgave`), {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify({ tildeltEnhetsnr, prioritet, fristDato, beskrivelse, oppgavetype }),
+  });
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke opprette oppgave");
+  return parseEllerKastFeil(oppgaveResponseSchema, await respons.json(), "opprettOppgave");
 }
 
 // --- Saksbehandlere ---

@@ -160,7 +160,7 @@ describe("OpprettJournalpostModal", () => {
     fireEvent.click(screen.getByLabelText("Knytt til oppgave"));
 
     fireEvent.change(screen.getByLabelText("Oppgavetype"), {
-      target: { value: "vurder_dokument" },
+      target: { value: "VUR" },
     });
     fireEvent.change(screen.getByLabelText("Prioritet"), {
       target: { value: "NORMAL" },
@@ -179,7 +179,7 @@ describe("OpprettJournalpostModal", () => {
     const [formData] = submitMock.mock.calls[0];
     expect(formData.get("handling")).toBe("opprett_journalpost");
     expect(formData.get("knyttTilOppgave")).toBe("true");
-    expect(formData.get("oppgavetype")).toBe("vurder_dokument");
+    expect(formData.get("oppgavetype")).toBe("VUR");
   });
 
   it("kaller onClose ved avbryt", () => {
