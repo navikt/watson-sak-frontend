@@ -65,6 +65,18 @@ export function formaterBeløp(tall: unknown, maximumFractionDigits = 2): unknow
   });
 }
 
+/**
+ * Formater filstørrelse i lesbart format (B, KB eller MB)
+ *
+ * @param bytes - Størrelse i bytes
+ * @returns Formatert størrelse
+ */
+export function formaterStorrelse(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export function konverterTilTall(verdi: unknown): number | null {
   if (verdi === null || verdi === undefined || verdi === "") {
     return null;

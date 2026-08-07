@@ -22,6 +22,7 @@ import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import type { FilResponse } from "~/saker/filer/typer";
+import { formaterStorrelse } from "~/utils/number-utils";
 import { OppgaveSkjema } from "./OppgaveSkjema";
 
 const opprettJournalpostSkjema = z
@@ -224,8 +225,3 @@ export function OpprettJournalpostModal({
   );
 }
 
-function formaterStorrelse(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}

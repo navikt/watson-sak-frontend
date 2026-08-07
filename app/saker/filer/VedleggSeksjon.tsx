@@ -14,13 +14,8 @@ import { useRef } from "react";
 import { useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
+import { formaterStorrelse } from "~/utils/number-utils";
 import type { FilResponse } from "./typer";
-
-function formaterStorrelse(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
 
 function formaterDatoTid(isoString: string): string {
   return new Date(isoString).toLocaleDateString("nb-NO", {
