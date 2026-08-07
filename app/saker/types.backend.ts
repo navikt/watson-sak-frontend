@@ -60,7 +60,7 @@ const kontrollsakSaksbehandlerSchema = z.object({
   enhet: z.string().nullable(),
 });
 
-const oppgaveKortSchema = z.object({
+export const oppgaveKortSchema = z.object({
   oppgaveId: z.number(),
   status: z.string(),
   tema: z.string().nullable(),

@@ -14,6 +14,7 @@ import {
   dokumentNodeSchema,
   kontrollsakPageResponseSchema,
   kontrollsakResponseSchema,
+  oppgaveKortSchema,
   type Blokkeringsarsak,
   type Henleggelsesarsak,
   type KontrollsakPageResponse,
@@ -355,17 +356,9 @@ export async function opprettJournalpost(
   return respons.json();
 }
 
-const oppgaveResponseSchema = z.object({
-  oppgaveId: z.number(),
-  status: z.string(),
-  tildeltEnhetsnr: z.string().nullable(),
-  tilordnetRessurs: z.string().nullable(),
-  tema: z.string().nullable(),
-  oppgavetype: z.string().nullable(),
-  prioritet: z.string().nullable(),
-  aktivDato: z.string().nullable(),
-  fristDato: z.string().nullable(),
-});
+const oppgaveResponseSchema = oppgaveKortSchema
+  .omit({ sistEndret: true, opprettet: true })
+  .extend({ prioritet: z.string().nullable() });
 
 export type OppgaveResponse = z.infer<typeof oppgaveResponseSchema>;
 
@@ -376,7 +369,7 @@ export async function opprettOppgave(
   prioritet: string,
   fristDato: string,
   beskrivelse: string,
-  oppgavetype?: string,
+  oppgavetype: string,
 ): Promise<OppgaveResponse> {
   const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/oppgave`), {
     method: "POST",

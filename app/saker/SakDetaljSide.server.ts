@@ -404,7 +404,7 @@ async function backendAction(
       const prioritet = hentTekstfelt(formData, "prioritet", "Prioritet er påkrevd");
       const fristDato = hentTekstfelt(formData, "frist", "Frist er påkrevd");
       const beskrivelse = hentTekstfelt(formData, "beskrivelse", "Beskrivelse er påkrevd");
-      const oppgavetype = hentValgfriTekst(formData, "oppgavetype");
+      const oppgavetype = hentTekstfelt(formData, "oppgavetype", "Oppgavetype er påkrevd");
       await backendApi.opprettOppgave(
         token,
         sakId,
@@ -412,7 +412,7 @@ async function backendAction(
         prioritet,
         fristDato,
         beskrivelse,
-        oppgavetype ?? undefined,
+        oppgavetype,
       );
       return { ok: true };
     }
