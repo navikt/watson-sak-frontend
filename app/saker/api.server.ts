@@ -357,7 +357,11 @@ export async function opprettJournalpost(
     body: JSON.stringify({ journalposttype, tittel, tekst, vedleggIds }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke opprette journalpost");
-  return parseEllerKastFeil(opprettJournalpostResponseSchema, await respons.json(), "opprettJournalpost");
+  return parseEllerKastFeil(
+    opprettJournalpostResponseSchema,
+    await respons.json(),
+    "opprettJournalpost",
+  );
 }
 
 const oppgaveResponseSchema = oppgaveKortSchema
