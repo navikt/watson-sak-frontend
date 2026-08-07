@@ -344,11 +344,12 @@ export async function opprettJournalpost(
   journalposttype: string,
   tittel: string,
   tekst: string,
+  vedleggIds: string[] = [],
 ) {
   const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/journalposter`), {
     method: "POST",
     headers: authHeaders(token),
-    body: JSON.stringify({ journalposttype, tittel, tekst }),
+    body: JSON.stringify({ journalposttype, tittel, tekst, vedleggIds }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke opprette journalpost");
   return respons.json();

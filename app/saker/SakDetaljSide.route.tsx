@@ -800,7 +800,7 @@ export default function SakDetaljSide() {
               erEier={erEier}
             />
 
-            <SakHandlingerKnapper sak={sak} erEier={erEier} />
+            <SakHandlingerKnapper sak={sak} erEier={erEier} filer={filer} />
 
             <SakHistorikk sakId={sak.id} hendelser={historikk} redigerbar={kanRedigere} />
           </VStack>
