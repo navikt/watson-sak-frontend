@@ -36,6 +36,7 @@ const pdfFil: FilResponse = {
   contentType: "application/pdf",
   opprettetAv: "Z123456",
   opprettet: "2026-01-01T10:00:00Z",
+  bruktIDokumenter: [],
 };
 
 const bildeFil: FilResponse = {
@@ -45,6 +46,7 @@ const bildeFil: FilResponse = {
   contentType: "image/png",
   opprettetAv: "Z123456",
   opprettet: "2026-01-01T10:00:00Z",
+  bruktIDokumenter: [],
 };
 
 const defaultProps = {
