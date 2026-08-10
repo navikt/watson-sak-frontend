@@ -3,6 +3,8 @@ import { BodyShort, Heading, TextField, Tooltip, VStack } from "@navikt/ds-react
 import { useMemo, useState } from "react";
 import { STANDARD_VARIABLER, type VariabelId } from "./variabel-typer";
 
+const MINSTE_ANTALL_FOR_SØK = 10;
+
 type VariabelListeProps = {
   onSettInn: (variabelId: VariabelId) => void;
   disabled?: boolean;
@@ -11,13 +13,15 @@ type VariabelListeProps = {
 /** Søkbart sidepanel med variablene som kan settes inn i dokumentet. */
 export function VariabelListe({ onSettInn, disabled }: VariabelListeProps) {
   const [søketekst, settSøketekst] = useState("");
+  const visSøkefelt = STANDARD_VARIABLER.length >= MINSTE_ANTALL_FOR_SØK;
   const variabler = useMemo(() => {
+    if (!visSøkefelt) return STANDARD_VARIABLER;
     const søk = søketekst.trim().toLocaleLowerCase("nb-NO");
     if (!søk) return STANDARD_VARIABLER;
     return STANDARD_VARIABLER.filter(({ etikett, beskrivelse }) =>
       `${etikett} ${beskrivelse}`.toLocaleLowerCase("nb-NO").includes(søk),
     );
-  }, [søketekst]);
+  }, [søketekst, visSøkefelt]);
 
   return (
     <>
@@ -29,15 +33,17 @@ export function VariabelListe({ onSettInn, disabled }: VariabelListeProps) {
           Klikk for å sette inn i dokumentet
         </BodyShort>
       </VStack>
-      <TextField
-        label="Søk i variabler"
-        hideLabel
-        size="small"
-        value={søketekst}
-        onChange={(event) => settSøketekst(event.target.value)}
-        placeholder="Søk i variabler …"
-        className="w-full"
-      />
+      {visSøkefelt && (
+        <TextField
+          label="Søk i variabler"
+          hideLabel
+          size="small"
+          value={søketekst}
+          onChange={(event) => settSøketekst(event.target.value)}
+          placeholder="Søk i variabler …"
+          className="w-full"
+        />
+      )}
       <div className="-mx-[var(--ax-space-16)] -mb-[var(--ax-space-16)]">
         {variabler.map(({ id, etikett, beskrivelse }) => (
           <button

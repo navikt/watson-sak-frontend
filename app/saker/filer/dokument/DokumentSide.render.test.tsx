@@ -99,7 +99,7 @@ describe("DokumentSide", () => {
     expect(within(sidepanel).queryByRole("link", { name: /Vedtak/ })).toBeNull();
   });
 
-  it("viser og filtrerer variabler i sidepanelet", async () => {
+  it("viser variabler uten søkefelt når listen er kort", async () => {
     renderSide(true);
 
     fireEvent.click(await screen.findByRole("button", { name: /Dokumenter/ }));
@@ -111,17 +111,7 @@ describe("DokumentSide", () => {
       within(sidepanel).getByRole("button", { name: "Sett inn variabelen Navn" }),
     ).toBeDefined();
     expect(within(sidepanel).getAllByLabelText("Sett inn i dokument").length).toBe(6);
-
-    fireEvent.change(within(sidepanel).getByLabelText("Søk i variabler"), {
-      target: { value: "fødsels" },
-    });
-
-    expect(
-      within(sidepanel).getByRole("button", { name: "Sett inn variabelen Fødselsnummer" }),
-    ).toBeDefined();
-    expect(
-      within(sidepanel).queryByRole("button", { name: "Sett inn variabelen Navn" }),
-    ).toBeNull();
+    expect(within(sidepanel).queryByLabelText("Søk i variabler")).toBeNull();
 
     fireEvent.click(
       within(sidepanel).getByRole("button", { name: "Sett inn variabelen Fødselsnummer" }),
