@@ -5,6 +5,7 @@ import {
   ClockDashedIcon,
   ClockIcon,
   DocPencilIcon,
+  DownloadIcon,
   FilesIcon,
   GavelIcon,
   PaperplaneIcon,
@@ -13,6 +14,7 @@ import {
   PersonIcon,
   PlusCircleIcon,
   TasklistIcon,
+  TrashIcon,
   XMarkOctagonIcon,
 } from "@navikt/aksel-icons";
 import { BodyShort, VStack } from "@navikt/ds-react";
@@ -87,6 +89,10 @@ export function hendelseTittel(hendelse: SakHendelse): string {
       return "Oppgave opprettet";
     case "FIL_LASTET_OPP":
       return "Fil lastet opp";
+    case "FIL_SLETTET":
+      return "Fil slettet";
+    case "FIL_ÅPNET":
+      return "Fil åpnet";
     default:
       return hendelse.hendelsesType;
   }
@@ -186,6 +192,14 @@ export function hendelseBeskrivelse(hendelse: SakHendelse): string | null {
     return `Fjernet deling med: ${hendelse.berortSaksbehandlerNavn} (${hendelse.berortSaksbehandlerNavIdent}) · ${hendelse.berortSaksbehandlerEnhet}`;
   }
 
+  if (
+    hendelse.hendelsesType === "FIL_LASTET_OPP" ||
+    hendelse.hendelsesType === "FIL_SLETTET" ||
+    hendelse.hendelsesType === "FIL_ÅPNET"
+  ) {
+    return hendelse.beskrivelse ?? null;
+  }
+
   return `Status: ${formaterStatus(hendelse.status)}`;
 }
 
@@ -229,6 +243,10 @@ export function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
       return <TasklistIcon {...iconProps} />;
     case "FIL_LASTET_OPP":
       return <FilesIcon {...iconProps} />;
+    case "FIL_SLETTET":
+      return <TrashIcon {...iconProps} />;
+    case "FIL_ÅPNET":
+      return <DownloadIcon {...iconProps} />;
     default:
       return <ClockIcon {...iconProps} />;
   }

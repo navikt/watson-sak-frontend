@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { SakHendelse } from "./typer";
-import { hendelseBeskrivelse } from "./historikk-utils";
+import { hendelseBeskrivelse, hendelseTittel } from "./historikk-utils";
 
 function lagHendelse(overrides: Partial<SakHendelse>): SakHendelse {
   return {
@@ -54,5 +54,41 @@ describe("hendelseBeskrivelse", () => {
     expect(resultat).toContain("Saken er for gammel");
     expect(resultat).toContain("Status: Henlagt");
     expect(resultat).not.toContain("Årsak:");
+  });
+});
+
+describe("filhendelser", () => {
+  it("hendelseTittel returnerer 'Fil slettet' for FIL_SLETTET", () => {
+    const hendelse = lagHendelse({ hendelsesType: "FIL_SLETTET", status: null });
+    expect(hendelseTittel(hendelse)).toBe("Fil slettet");
+  });
+
+  it("hendelseTittel returnerer 'Fil åpnet' for FIL_ÅPNET", () => {
+    const hendelse = lagHendelse({ hendelsesType: "FIL_ÅPNET", status: null });
+    expect(hendelseTittel(hendelse)).toBe("Fil åpnet");
+  });
+
+  it("hendelseBeskrivelse returnerer null for FIL_LASTET_OPP uten beskrivelse", () => {
+    const hendelse = lagHendelse({ hendelsesType: "FIL_LASTET_OPP", status: null });
+    expect(hendelseBeskrivelse(hendelse)).toBeNull();
+  });
+
+  it("hendelseBeskrivelse returnerer null for FIL_SLETTET", () => {
+    const hendelse = lagHendelse({ hendelsesType: "FIL_SLETTET", status: null });
+    expect(hendelseBeskrivelse(hendelse)).toBeNull();
+  });
+
+  it("hendelseBeskrivelse returnerer null for FIL_ÅPNET", () => {
+    const hendelse = lagHendelse({ hendelsesType: "FIL_ÅPNET", status: null });
+    expect(hendelseBeskrivelse(hendelse)).toBeNull();
+  });
+
+  it("hendelseBeskrivelse returnerer beskrivelse fra hendelsen for FIL_LASTET_OPP med beskrivelse", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "FIL_LASTET_OPP",
+      status: null,
+      beskrivelse: "Virusskanning OK",
+    });
+    expect(hendelseBeskrivelse(hendelse)).toBe("Virusskanning OK");
   });
 });
