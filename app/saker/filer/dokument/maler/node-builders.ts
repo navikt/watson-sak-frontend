@@ -63,18 +63,6 @@ export function stønadSammendragTabell(): Node {
   );
 }
 
-export function dokumentlisteTabell(): Node {
-  return tabell(
-    rad(topptekst("Vedlegg"), topptekst("Beskrivelse")),
-    rad(celle("1."), celle("Dokumentbeskrivelse")),
-    rad(celle("2."), celle("Kontoutdrag")),
-    rad(
-      celle("3."),
-      celle("Brev til bank (ev. banker) og svarbrevets (ev. svarbrevenes) førsteside"),
-    ),
-  );
-}
-
 export function mal(noder: (Node | Node[])[]): DokumentInnhold {
   return noder.flat() as DokumentInnhold;
 }
