@@ -2,9 +2,10 @@ import { TagIcon } from "@navikt/aksel-icons";
 import { Tooltip } from "@navikt/ds-react";
 import { createContext, useContext } from "react";
 import type { TElement } from "platejs";
-import { PlateElement } from "platejs/react";
+import { PlateElement, useEditorReadOnly } from "platejs/react";
 import type { PlateElementProps } from "platejs/react";
 import { finnVariabel, type VariabelId, type VariabelVerdier } from "./variabel-typer";
+import { VARIABEL_FLYTT_MIMETYPE } from "./VariabelPlugin";
 
 export type VariabelElementType = TElement & {
   variabelId: VariabelId;
@@ -53,6 +54,7 @@ function hentVerdi(variabelId: VariabelId, verdier: VariabelVerdier) {
 export function VariabelElement(props: PlateElementProps<VariabelElementType>) {
   const definisjon = finnVariabel(props.element.variabelId);
   const { verdier, erVariabelpanelÅpent } = useContext(VariabelVerdierContext);
+  const readOnly = useEditorReadOnly();
   const verdi = hentVerdi(props.element.variabelId, verdier);
   const tekst = verdi || `[${definisjon?.etikett ?? "Ukjent variabel"} mangler]`;
   const manglerVerdi = !verdi;
@@ -62,8 +64,14 @@ export function VariabelElement(props: PlateElementProps<VariabelElementType>) {
       <Tooltip content={definisjon?.etikett ?? "Ukjent variabel"}>
         <span
           contentEditable={false}
+          draggable={!readOnly}
+          onDragStart={(event) => {
+            event.dataTransfer.effectAllowed = "move";
+            event.dataTransfer.setData(VARIABEL_FLYTT_MIMETYPE, JSON.stringify(props.path));
+          }}
           className={
             "mx-0.5 inline-flex items-center gap-1 rounded border px-1.5 py-0.5 align-baseline text-sm font-semibold transition-colors " +
+            (!readOnly ? "cursor-grab active:cursor-grabbing " : "") +
             (manglerVerdi
               ? "border-ax-border-warning bg-ax-bg-warning-soft text-ax-text-warning"
               : erVariabelpanelÅpent

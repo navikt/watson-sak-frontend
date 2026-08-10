@@ -1,5 +1,5 @@
 import { PlusCircleIcon, TagIcon } from "@navikt/aksel-icons";
-import { BodyShort, Heading, TextField, VStack } from "@navikt/ds-react";
+import { BodyShort, Heading, TextField, Tooltip, VStack } from "@navikt/ds-react";
 import { useMemo, useState } from "react";
 import { STANDARD_VARIABLER, type VariabelId } from "./variabel-typer";
 
@@ -55,11 +55,15 @@ export function VariabelListe({ onSettInn, disabled }: VariabelListeProps) {
               </span>
               <span className="block text-sm text-ax-text-neutral-subtle">{beskrivelse}</span>
             </span>
-            <PlusCircleIcon
-              aria-hidden
-              className="shrink-0 text-ax-text-accent-subtle"
-              fontSize="1.375rem"
-            />
+            <Tooltip content="Sett inn i dokument">
+              <span>
+                <PlusCircleIcon
+                  aria-hidden
+                  className="shrink-0 text-ax-text-accent-subtle"
+                  fontSize="1.375rem"
+                />
+              </span>
+            </Tooltip>
           </button>
         ))}
         {variabler.length === 0 && (

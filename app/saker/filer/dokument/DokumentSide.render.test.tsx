@@ -110,6 +110,7 @@ describe("DokumentSide", () => {
     expect(
       within(sidepanel).getByRole("button", { name: "Sett inn variabelen Navn" }),
     ).toBeDefined();
+    expect(within(sidepanel).getAllByLabelText("Sett inn i dokument").length).toBe(6);
 
     fireEvent.change(within(sidepanel).getByLabelText("Søk i variabler"), {
       target: { value: "fødsels" },

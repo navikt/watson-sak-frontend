@@ -3,6 +3,7 @@ import { createRoutesStub } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { DokumentInnhold, FilResponse } from "~/saker/filer/typer";
 import { DokumentEditor } from "./DokumentEditor";
+import { VARIABEL_FLYTT_MIMETYPE } from "./variabler/VariabelPlugin";
 
 const innhold: DokumentInnhold = [
   {
@@ -94,7 +95,7 @@ describe("DokumentEditor", () => {
     });
     expect(onEndring).toHaveBeenCalled();
 
-    expect(screen.getByLabelText("Navn")).toBeDefined();
+    expect(screen.getByText("Ola Nordmann").getAttribute("draggable")).toBe("true");
   });
 
   it("har et tilgjengelig redigeringsfelt med aria-label", async () => {
@@ -227,6 +228,17 @@ describe("DokumentEditor", () => {
       const felt = await screen.findByLabelText("Dokumentinnhold");
       const dragOverEvent = createEvent.dragOver(felt, {
         dataTransfer: { types: ["Files"] },
+      });
+      fireEvent(felt, dragOverEvent);
+      expect(dragOverEvent.defaultPrevented).toBe(true);
+    });
+
+    it("dra-over med en variabel hindrer nettleserens standard håndtering", async () => {
+      renderEditor();
+
+      const felt = await screen.findByLabelText("Dokumentinnhold");
+      const dragOverEvent = createEvent.dragOver(felt, {
+        dataTransfer: { types: [VARIABEL_FLYTT_MIMETYPE] },
       });
       fireEvent(felt, dragOverEvent);
       expect(dragOverEvent.defaultPrevented).toBe(true);

@@ -81,7 +81,7 @@ import {
 } from "./DokumentSidepanel";
 import { VariabelElement, VariabelVerdierProvider } from "./variabler/VariabelElement";
 import { VariabelListe } from "./variabler/VariabelListe";
-import { VariabelPlugin } from "./variabler/VariabelPlugin";
+import { VARIABEL_FLYTT_MIMETYPE, VariabelPlugin } from "./variabler/VariabelPlugin";
 import {
   STANDARD_VARIABLER,
   type VariabelId,
@@ -624,6 +624,33 @@ export function DokumentEditor({
       return;
     }
 
+    if (event.dataTransfer.types.includes(VARIABEL_FLYTT_MIMETYPE)) {
+      event.preventDefault();
+      const rå = event.dataTransfer.getData(VARIABEL_FLYTT_MIMETYPE);
+      let kildesti: number[];
+      try {
+        kildesti = JSON.parse(rå) as number[];
+      } catch {
+        return;
+      }
+      const kilde = editor.api.node(kildesti);
+      if (!kilde || !("variabelId" in kilde[0])) return;
+
+      let slippområde: ReturnType<typeof editor.api.findEventRange>;
+      try {
+        slippområde = editor.api.findEventRange(event);
+      } catch {
+        return;
+      }
+      if (!slippområde) return;
+
+      const kildereferanse = editor.api.pathRef(kildesti);
+      editor.tf.insertNodes(kilde[0], { at: slippområde });
+      const oppdatertKildesti = kildereferanse.unref();
+      if (oppdatertKildesti) editor.tf.removeNodes({ at: oppdatertKildesti });
+      return;
+    }
+
     const filer = event.dataTransfer?.files;
     if (!filer || filer.length === 0) return;
     // Forhindre at nettleseren åpner/navigerer til filen så snart det slippes filer i det
@@ -637,7 +664,8 @@ export function DokumentEditor({
   function håndterDragOver(event: React.DragEvent<HTMLDivElement>) {
     if (
       event.dataTransfer.types.includes("Files") ||
-      event.dataTransfer.types.includes(BILDE_FLYTT_MIMETYPE)
+      event.dataTransfer.types.includes(BILDE_FLYTT_MIMETYPE) ||
+      event.dataTransfer.types.includes(VARIABEL_FLYTT_MIMETYPE)
     ) {
       event.preventDefault();
     }
