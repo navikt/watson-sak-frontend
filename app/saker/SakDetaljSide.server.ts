@@ -196,6 +196,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       journalposter,
       dokumenter: sak.dokumenter,
       filer,
+      // hentFiler kastet ingen feil → backend bekreftet at innlogget bruker har lese-tilgang
+      harFilTilgang: true,
       andreSaker,
       saksbehandlere: saksbehandlerDetaljer.map((sb) => sb.navn),
       saksbehandlerDetaljer,
@@ -213,8 +215,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const historikk = hentHistorikk(request, String(sak.id));
   const erEier = sak.saksbehandlere.eier?.navIdent === innlogget.navIdent;
   const harDeltTilgang = sak.saksbehandlere.deltMed.some((s) => s.navIdent === innlogget.navIdent);
-  const dokumenter = erEier || harDeltTilgang ? hentDokumenttreForSak(request, String(sak.id)) : [];
-  const filer = erEier || harDeltTilgang ? hentFilerForSak(request, String(sak.id)) : [];
+  const harTilgangViaKobling = sak.kobledeSaker.some(
+    (kobletId) =>
+      alleSaker.find((s) => s.id === kobletId)?.saksbehandlere.eier?.navIdent === innlogget.navIdent,
+  );
+  const harFilTilgang = erEier || harDeltTilgang || harTilgangViaKobling;
+  const dokumenter = harFilTilgang ? hentDokumenttreForSak(request, String(sak.id)) : [];
+  const filer = harFilTilgang ? hentFilerForSak(request, String(sak.id)) : [];
   const andreSaker = alleSaker.filter(
     (annenSak) => annenSak.personIdent === sak.personIdent && annenSak.id !== sak.id,
   );
@@ -224,6 +231,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     journalposter: [],
     dokumenter,
     filer,
+    harFilTilgang,
     andreSaker,
     saksbehandlere: mockSaksbehandlere,
     saksbehandlerDetaljer: mockSaksbehandlerDetaljer,
