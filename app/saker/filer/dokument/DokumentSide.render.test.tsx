@@ -95,7 +95,7 @@ describe("DokumentSide", () => {
     fireEvent.click(await screen.findByRole("menuitem", { name: "Historikk" }));
 
     const sidepanel = screen.getByRole("complementary");
-    expect(within(sidepanel).getByText(/hvem som har endret dokumentet/)).toBeDefined();
+    expect(within(sidepanel).getByText("Ingen historikk ennå.")).toBeDefined();
     expect(within(sidepanel).queryByRole("link", { name: /Vedtak/ })).toBeNull();
   });
 

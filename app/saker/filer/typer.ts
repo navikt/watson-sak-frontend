@@ -41,3 +41,23 @@ export type Dokument = {
   endretDato: string;
   låsAv: string | null;
 };
+
+/** Lett historikkpunkt. Innhold hentes først når saksbehandleren åpner forhåndsvisningen. */
+export type DokumentHistorikkNode = {
+  id: string;
+  tittel: string;
+  endretAv: string;
+  endretTidspunkt: string;
+};
+
+export type DokumentHistorikk = DokumentHistorikkNode & {
+  innhold: DokumentInnhold;
+};
+
+export type DokumentHistorikkSide = {
+  items: DokumentHistorikkNode[];
+  page: number;
+  size: number;
+  totalItems: number;
+  totalPages: number;
+};

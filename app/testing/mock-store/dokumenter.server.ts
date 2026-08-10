@@ -1,7 +1,17 @@
-import type { Dokument, DokumentInnhold, DokumentNode } from "~/saker/filer/typer";
+import type {
+  Dokument,
+  DokumentHistorikk,
+  DokumentHistorikkNode,
+  DokumentInnhold,
+  DokumentNode,
+} from "~/saker/filer/typer";
 import type { MockState } from "./session.server";
 
 function innholdsnøkkel(sakId: string, docId: string): string {
+  return `${sakId}:${docId}`;
+}
+
+function historikknøkkel(sakId: string, docId: string): string {
   return `${sakId}:${docId}`;
 }
 
@@ -176,6 +186,89 @@ export function lagreDokument(
     endretDato: node.endretDato,
     låsAv: node.låsAv,
   };
+}
+
+export function hentDokumentHistorikk(
+  state: MockState,
+  sakId: string,
+  docId: string,
+): DokumentHistorikkNode[] {
+  return state.dokumentHistorikk.get(historikknøkkel(sakId, docId)) ?? [];
+}
+
+export function hentDokumentHistorikkpunkt(
+  state: MockState,
+  sakId: string,
+  docId: string,
+  historikkId: string,
+): DokumentHistorikk | undefined {
+  return state.dokumentHistorikk
+    .get(historikknøkkel(sakId, docId))
+    ?.find((punkt) => punkt.id === historikkId);
+}
+
+export function opprettEllerOppdaterDokumentHistorikk(
+  state: MockState,
+  sakId: string,
+  docId: string,
+  dokument: Dokument,
+  endretAv: string,
+): void {
+  const nøkkel = historikknøkkel(sakId, docId);
+  const eksisterende = state.dokumentHistorikk.get(nøkkel) ?? [];
+  const sisteEgne = eksisterende.find((punkt) => punkt.endretAv === endretAv);
+  const nå = new Date().toISOString();
+  if (sisteEgne) {
+    sisteEgne.tittel = dokument.tittel;
+    sisteEgne.innhold = dokument.innhold;
+    sisteEgne.endretTidspunkt = nå;
+  } else {
+    eksisterende.unshift({
+      id: crypto.randomUUID(),
+      tittel: dokument.tittel,
+      innhold: dokument.innhold,
+      endretAv,
+      endretTidspunkt: nå,
+    });
+  }
+  state.dokumentHistorikk.set(nøkkel, eksisterende);
+}
+
+export function gjenopprettDokumentHistorikk(
+  state: MockState,
+  sakId: string,
+  docId: string,
+  historikkId: string,
+  endretAv: string,
+): Dokument | undefined {
+  const valgt = hentDokumentHistorikkpunkt(state, sakId, docId, historikkId);
+  const gjeldende = hentDokument(state, sakId, docId);
+  if (!valgt || !gjeldende) return undefined;
+
+  const historikk = state.dokumentHistorikk.get(historikknøkkel(sakId, docId)) ?? [];
+  historikk.unshift({
+    id: crypto.randomUUID(),
+    tittel: gjeldende.tittel,
+    innhold: gjeldende.innhold,
+    endretAv: gjeldende.endretAv,
+    endretTidspunkt: new Date().toISOString(),
+  });
+  const gjenopprettet = lagreDokument(state, sakId, docId, {
+    tittel: valgt.tittel,
+    innhold: valgt.innhold,
+    endretAv,
+  });
+  if (gjenopprettet) {
+    historikk.unshift({
+      id: crypto.randomUUID(),
+      tittel: gjenopprettet.tittel,
+      innhold: gjenopprettet.innhold,
+      endretAv,
+      endretTidspunkt: new Date().toISOString(),
+    });
+  }
+  state.dokumentHistorikk.set(historikknøkkel(sakId, docId), historikk);
+  return gjenopprettet;
 }
 
 export function registrerTomtDokumentområdeForSak(state: MockState, sakId: string) {

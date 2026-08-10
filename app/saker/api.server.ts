@@ -4,6 +4,8 @@ import { BACKEND_API_URL } from "~/config/env.server";
 import { logger } from "~/logging/logging";
 import type {
   Dokument,
+  DokumentHistorikk,
+  DokumentHistorikkSide,
   DokumentInnhold,
   DokumentNode,
   DokumentReferanse,
@@ -44,6 +46,25 @@ const dokumentInnholdSchema: z.ZodType<DokumentInnhold> = z.array(
 
 const dokumentResponseSchema = dokumentNodeSchema.extend({
   innhold: dokumentInnholdSchema,
+});
+
+const dokumentHistorikkNodeSchema = z.object({
+  id: z.string(),
+  tittel: z.string(),
+  endretAv: z.string(),
+  endretTidspunkt: z.string(),
+});
+
+const dokumentHistorikkResponseSchema = dokumentHistorikkNodeSchema.extend({
+  innhold: dokumentInnholdSchema,
+});
+
+const dokumentHistorikkSideSchema: z.ZodType<DokumentHistorikkSide> = z.object({
+  items: z.array(dokumentHistorikkNodeSchema),
+  page: z.number(),
+  size: z.number(),
+  totalItems: z.number(),
+  totalPages: z.number(),
 });
 
 function apiUrl(sti: string): string {
@@ -549,7 +570,7 @@ export async function lagreDokument(
   token: string,
   sakId: string,
   docId: string,
-  data: Pick<Dokument, "tittel" | "innhold">,
+  data: Pick<Dokument, "tittel" | "innhold"> & { opprettHistorikk?: boolean },
 ): Promise<Dokument> {
   const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/dokumenter/${docId}`), {
     method: "PUT",
@@ -559,6 +580,66 @@ export async function lagreDokument(
   kastHvisIkkeFunnet(respons);
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke lagre dokument");
   return parseEllerKastFeil(dokumentResponseSchema, await respons.json(), "lagreDokument");
+}
+
+export async function hentDokumentHistorikk(
+  token: string,
+  sakId: string,
+  docId: string,
+): Promise<DokumentHistorikkSide> {
+  const respons = await fetch(
+    apiUrl(`/api/v1/kontrollsaker/${sakId}/dokumenter/${docId}/historikk`),
+    {
+      headers: authHeaders(token),
+    },
+  );
+  kastHvisIkkeFunnet(respons);
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke hente dokumenthistorikk");
+  return parseEllerKastFeil(
+    dokumentHistorikkSideSchema,
+    await respons.json(),
+    "hentDokumentHistorikk",
+  );
+}
+
+export async function hentDokumentHistorikkpunkt(
+  token: string,
+  sakId: string,
+  docId: string,
+  historikkId: string,
+): Promise<DokumentHistorikk> {
+  const respons = await fetch(
+    apiUrl(`/api/v1/kontrollsaker/${sakId}/dokumenter/${docId}/historikk/${historikkId}`),
+    { headers: authHeaders(token) },
+  );
+  kastHvisIkkeFunnet(respons);
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke hente historikkpunkt");
+  return parseEllerKastFeil(
+    dokumentHistorikkResponseSchema,
+    await respons.json(),
+    "hentDokumentHistorikkpunkt",
+  );
+}
+
+export async function gjenopprettDokumentHistorikk(
+  token: string,
+  sakId: string,
+  docId: string,
+  historikkId: string,
+): Promise<Dokument> {
+  const respons = await fetch(
+    apiUrl(
+      `/api/v1/kontrollsaker/${sakId}/dokumenter/${docId}/historikk/${historikkId}/gjenopprett`,
+    ),
+    { method: "POST", headers: authHeaders(token) },
+  );
+  kastHvisIkkeFunnet(respons);
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke gjenopprette historikkpunkt");
+  return parseEllerKastFeil(
+    dokumentResponseSchema,
+    await respons.json(),
+    "gjenopprettDokumentHistorikk",
+  );
 }
 
 export async function slettDokument(token: string, sakId: string, docId: string): Promise<void> {

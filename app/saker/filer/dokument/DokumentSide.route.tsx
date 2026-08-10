@@ -1,14 +1,15 @@
 import { PaperplaneIcon, TrashIcon } from "@navikt/aksel-icons";
 import { Button, Detail, HStack, VStack } from "@navikt/ds-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { isRouteErrorResponse, useLoaderData, useParams } from "react-router";
+import { isRouteErrorResponse, useLoaderData, useParams, useRevalidator } from "react-router";
 import { Brødsmulesti } from "~/komponenter/Brødsmulesti";
 import { DokumentIkkeFunnet } from "~/feilhåndtering/DokumentIkkeFunnet";
 import { RouteConfig } from "~/routeConfig";
 import { DokumentTre } from "~/saker/filer/DokumentTre";
-import type { DokumentInnhold } from "~/saker/filer/typer";
+import type { Dokument, DokumentHistorikk, DokumentInnhold } from "~/saker/filer/typer";
 import { formaterRelativTid } from "~/utils/date-utils";
 import { DokumentEditor } from "./DokumentEditor";
+import { DokumentHistorikkPanel } from "./DokumentHistorikkPanel";
 import { DokumentTittel } from "./DokumentTittel";
 import { action, loader } from "./DokumentSide.server";
 import { SlettDokumentModal } from "./SlettDokumentModal";
@@ -63,12 +64,14 @@ type LoaderData = Awaited<ReturnType<typeof loader>>;
 function DokumentRedigering({
   dokument,
   dokumenter,
+  dokumentHistorikk = [],
   sakReferanse,
   kanRedigere,
   variabelVerdier,
 }: {
   dokument: LoaderData["dokument"];
   dokumenter: LoaderData["dokumenter"];
+  dokumentHistorikk: LoaderData["dokumentHistorikk"];
   sakReferanse: string;
   kanRedigere: boolean;
   variabelVerdier: LoaderData["variabelVerdier"];
@@ -76,6 +79,10 @@ function DokumentRedigering({
   const [tittel, setTittel] = useState(dokument.tittel);
   const tittelRef = useRef(dokument.tittel);
   const innholdRef = useRef<DokumentInnhold>(dokument.innhold);
+  const historikkTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [editorVersjon, settEditorVersjon] = useState(0);
+  const [historikkFeil, settHistorikkFeil] = useState<string | null>(null);
+  const revalidator = useRevalidator();
 
   const sakUrl = RouteConfig.SAKER_DETALJ.replace(":sakId", sakReferanse);
   const sletting = useDokumentSletting({
@@ -112,21 +119,80 @@ function DokumentRedigering({
 
   const { status, sistLagret, registrerEndring } = useAutolagring({ lagre });
 
+  const registrerHistorikk = useCallback(
+    (data: Autolagringsdata) => {
+      if (historikkTimer.current) clearTimeout(historikkTimer.current);
+      historikkTimer.current = setTimeout(() => {
+        void (async () => {
+          try {
+            const respons = await fetch(lagreUrl, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ...data, opprettHistorikk: true }),
+            });
+            if (!respons.ok) {
+              settHistorikkFeil("Kunne ikke opprette historikkpunkt.");
+              return;
+            }
+            settHistorikkFeil(null);
+            revalidator.revalidate();
+          } catch {
+            settHistorikkFeil("Kunne ikke opprette historikkpunkt.");
+          }
+        })();
+      }, 30_000);
+    },
+    [lagreUrl, revalidator],
+  );
+
+  useEffect(
+    () => () => {
+      if (historikkTimer.current) clearTimeout(historikkTimer.current);
+    },
+    [],
+  );
+
   const håndterTittel = useCallback(
     (nyTittel: string) => {
       setTittel(nyTittel);
       tittelRef.current = nyTittel;
       registrerEndring({ tittel: nyTittel, innhold: innholdRef.current });
+      registrerHistorikk({ tittel: nyTittel, innhold: innholdRef.current });
     },
-    [registrerEndring],
+    [registrerEndring, registrerHistorikk],
   );
 
   const håndterInnhold = useCallback(
     (innhold: DokumentInnhold) => {
       innholdRef.current = innhold;
       registrerEndring({ tittel: tittelRef.current, innhold });
+      registrerHistorikk({ tittel: tittelRef.current, innhold });
     },
-    [registrerEndring],
+    [registrerEndring, registrerHistorikk],
+  );
+
+  const historikkKall = useCallback(
+    async (handling: "hent_historikkpunkt" | "gjenopprett_historikkpunkt", historikkId: string) => {
+      const respons = await fetch(lagreUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ handling, historikkId }),
+      });
+      if (!respons.ok) throw new Error("Historikkallet feilet");
+      return (await respons.json()) as { historikkpunkt?: DokumentHistorikk; dokument?: Dokument };
+    },
+    [lagreUrl],
+  );
+
+  const håndterGjenopprettet = useCallback(
+    (gjenopprettet: Dokument) => {
+      setTittel(gjenopprettet.tittel);
+      tittelRef.current = gjenopprettet.tittel;
+      innholdRef.current = gjenopprettet.innhold;
+      settEditorVersjon((versjon) => versjon + 1);
+      revalidator.revalidate();
+    },
+    [revalidator],
   );
 
   return (
@@ -181,7 +247,8 @@ function DokumentRedigering({
       </VStack>
 
       <DokumentEditor
-        startInnhold={dokument.innhold}
+        key={editorVersjon}
+        startInnhold={innholdRef.current}
         redigerbar={kanRedigere}
         onEndring={håndterInnhold}
         sakId={sakReferanse}
@@ -201,6 +268,26 @@ function DokumentRedigering({
             <Detail className="text-ax-text-neutral-subtle">Ingen andre dokumenter.</Detail>
           )
         }
+        historikkInnhold={
+          <>
+            <DokumentHistorikkPanel
+              historikk={dokumentHistorikk}
+              kanGjenopprette={kanRedigere}
+              hentHistorikkpunkt={async (historikkId) => {
+                const resultat = await historikkKall("hent_historikkpunkt", historikkId);
+                if (!resultat.historikkpunkt) throw new Error("Historikkpunkt mangler i svaret");
+                return resultat.historikkpunkt;
+              }}
+              gjenopprett={async (historikkId) => {
+                const resultat = await historikkKall("gjenopprett_historikkpunkt", historikkId);
+                if (!resultat.dokument) throw new Error("Dokument mangler i svaret");
+                return resultat.dokument;
+              }}
+              onGjenopprettet={håndterGjenopprettet}
+            />
+            {historikkFeil && <Detail className="text-ax-text-danger">{historikkFeil}</Detail>}
+          </>
+        }
         lagreStatus={<LagreStatusVisning status={status} sistLagret={sistLagret} />}
       />
 
@@ -215,7 +302,7 @@ function DokumentRedigering({
 }
 
 export default function DokumentSide() {
-  const { dokument, dokumenter, sakReferanse, kanRedigere, variabelVerdier } =
+  const { dokument, dokumenter, dokumentHistorikk, sakReferanse, kanRedigere, variabelVerdier } =
     useLoaderData<typeof loader>();
 
   // `key` på dokument-id sørger for at all lokal redigeringstilstand (tittel, innhold,
@@ -226,6 +313,7 @@ export default function DokumentSide() {
       key={dokument.id}
       dokument={dokument}
       dokumenter={dokumenter}
+      dokumentHistorikk={dokumentHistorikk}
       sakReferanse={sakReferanse}
       kanRedigere={kanRedigere}
       variabelVerdier={variabelVerdier}
