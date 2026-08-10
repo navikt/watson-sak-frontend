@@ -103,7 +103,7 @@ export function Sidepanel({ aktivt, dokumentliste, variabelInnhold, lagreStatus 
     );
 
   return (
-    <aside className="flex w-full shrink-0 flex-col gap-[var(--ax-space-12)] overflow-hidden border-t border-ax-border-neutral-subtle bg-ax-bg-default p-[var(--ax-space-16)] lg:w-[400px] lg:border-t-0">
+    <aside className="flex w-full shrink-0 flex-col gap-[var(--ax-space-12)] overflow-hidden border-t border-ax-border-neutral-subtle bg-ax-bg-default px-[var(--ax-space-16)] pt-0 pb-[var(--ax-space-16)] lg:w-[400px] lg:border-t-0">
       <VStack
         gap="space-12"
         className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-ax-border-neutral-subtle bg-ax-bg-default p-[var(--ax-space-16)]"
