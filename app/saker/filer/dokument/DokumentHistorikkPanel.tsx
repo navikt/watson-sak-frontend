@@ -1,5 +1,14 @@
 import { ArrowUndoIcon, ClockIcon } from "@navikt/aksel-icons";
-import { BodyLong, BodyShort, Button, Detail, HStack, Modal, VStack } from "@navikt/ds-react";
+import {
+  Alert,
+  BodyLong,
+  BodyShort,
+  Button,
+  Detail,
+  Loader,
+  Modal,
+  VStack,
+} from "@navikt/ds-react";
 import { useState } from "react";
 import type { Dokument, DokumentHistorikk, DokumentHistorikkNode } from "~/saker/filer/typer";
 
@@ -34,11 +43,14 @@ export function DokumentHistorikkPanel({
   onGjenopprettet,
 }: DokumentHistorikkPanelProps) {
   const [valgt, settValgt] = useState<DokumentHistorikk | null>(null);
+  const [valgtId, settValgtId] = useState<string | null>(null);
   const [feil, settFeil] = useState<string | null>(null);
   const [laster, settLaster] = useState(false);
   const [gjenoppretter, settGjenoppretter] = useState(false);
 
   async function visForhåndsvisning(id: string) {
+    settValgtId(id);
+    settValgt(null);
     settLaster(true);
     settFeil(null);
     try {
@@ -69,9 +81,17 @@ export function DokumentHistorikkPanel({
     return <BodyShort size="small">Ingen historikk ennå.</BodyShort>;
   }
 
+  const valgtPunkt = historikk.find((punkt) => punkt.id === valgtId);
+
   return (
     <>
       <VStack gap="space-8">
+        {historikk.length === 1 && (
+          <BodyShort size="small">
+            Dette er det første historikkpunktet. Vi oppdaterer det etter 30 sekunder uten endringer
+            og oppretter et nytt punkt etter tre timer.
+          </BodyShort>
+        )}
         {historikk.map((punkt) => (
           <Button
             key={punkt.id}
@@ -79,7 +99,7 @@ export function DokumentHistorikkPanel({
             variant="tertiary"
             size="small"
             className="justify-start text-left"
-            loading={laster}
+            loading={laster && valgtId === punkt.id}
             onClick={() => void visForhåndsvisning(punkt.id)}
           >
             <VStack as="span" gap="space-0">
@@ -90,32 +110,51 @@ export function DokumentHistorikkPanel({
             </VStack>
           </Button>
         ))}
-        {feil && <BodyShort className="text-ax-text-danger">{feil}</BodyShort>}
       </VStack>
 
       <Modal
-        open={valgt !== null}
+        open={valgtId !== null}
         onClose={() => {
-          if (!gjenoppretter) settValgt(null);
+          if (!gjenoppretter) {
+            settValgt(null);
+            settValgtId(null);
+            settFeil(null);
+          }
         }}
         header={{ heading: "Forhåndsvis historikkpunkt", icon: <ClockIcon aria-hidden /> }}
         width="medium"
       >
         <Modal.Body>
-          <VStack gap="space-16">
-            <VStack gap="space-2">
-              <BodyShort weight="semibold">{valgt?.tittel}</BodyShort>
-              <Detail className="text-ax-text-neutral-subtle">
-                {valgt && `${valgt.endretAv} · ${formaterTidspunkt(valgt.endretTidspunkt)}`}
-              </Detail>
+          {laster ? (
+            <Loader title="Henter historikkpunkt" />
+          ) : feil ? (
+            <Alert variant="error" size="small">
+              <BodyShort weight="semibold">Kunne ikke åpne denne versjonen</BodyShort>
+              <BodyShort>
+                Prøv igjen. Hvis feilen fortsetter, lukk dialogen og prøv på nytt senere.
+              </BodyShort>
+            </Alert>
+          ) : (
+            <VStack gap="space-16">
+              <VStack gap="space-2">
+                <BodyShort weight="semibold">{valgt?.tittel}</BodyShort>
+                <Detail className="text-ax-text-neutral-subtle">
+                  {valgt && `${valgt.endretAv} · ${formaterTidspunkt(valgt.endretTidspunkt)}`}
+                </Detail>
+              </VStack>
+              <BodyLong className="whitespace-pre-wrap">
+                {valgt ? hentTekst(valgt.innhold) : ""}
+              </BodyLong>
             </VStack>
-            <BodyLong className="whitespace-pre-wrap">
-              {valgt ? hentTekst(valgt.innhold) : ""}
-            </BodyLong>
-          </VStack>
+          )}
         </Modal.Body>
         <Modal.Footer>
-          {kanGjenopprette && (
+          {feil && valgtPunkt && (
+            <Button variant="primary" onClick={() => void visForhåndsvisning(valgtPunkt.id)}>
+              Prøv igjen
+            </Button>
+          )}
+          {valgt && kanGjenopprette && (
             <Button
               variant="primary"
               icon={<ArrowUndoIcon aria-hidden />}
@@ -125,7 +164,15 @@ export function DokumentHistorikkPanel({
               Gjenopprett denne versjonen
             </Button>
           )}
-          <Button variant="secondary" disabled={gjenoppretter} onClick={() => settValgt(null)}>
+          <Button
+            variant="secondary"
+            disabled={gjenoppretter}
+            onClick={() => {
+              settValgt(null);
+              settValgtId(null);
+              settFeil(null);
+            }}
+          >
             Lukk
           </Button>
         </Modal.Footer>

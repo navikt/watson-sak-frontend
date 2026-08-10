@@ -61,4 +61,29 @@ describe("DokumentHistorikkPanel", () => {
       expect(onGjenopprettet).toHaveBeenCalledTimes(1);
     });
   });
+
+  it("forklarer tidsregelen og lar saksbehandleren prøve igjen ved feil", async () => {
+    const hentHistorikkpunkt = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("feil"))
+      .mockResolvedValue(historikkpunkt);
+
+    render(
+      <DokumentHistorikkPanel
+        historikk={[historikkpunkt]}
+        kanGjenopprette
+        hentHistorikkpunkt={hentHistorikkpunkt}
+        gjenopprett={vi.fn()}
+        onGjenopprettet={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(/Dette er det første historikkpunktet/)).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: /Tidligere tittel/ }));
+    expect(await screen.findByText("Kunne ikke åpne denne versjonen")).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: "Prøv igjen" }));
+    expect(await screen.findByText("Tidligere innhold")).toBeDefined();
+  });
 });
