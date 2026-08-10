@@ -24,7 +24,7 @@ export function utlandRapportmal({ erStraffesak }: { erStraffesak: boolean }): D
     p("Vi har kontrollert perioden fra [dato] til [dato]."),
     erStraffesak
       ? p(
-          "Kontrollen viser at [stønadsmottaker] har oppholdt seg utlandet i flere perioder / deler av perioden.",
+          "Kontrollen viser at [stønadsmottaker] har oppholdt seg i utlandet i flere perioder / deler av perioden.",
         )
       : p(
           "Kontrollen viser at det er mest sannsynlig at [stønadsmottaker] har oppholdt seg i utlandet i flere perioder / deler av perioden.",

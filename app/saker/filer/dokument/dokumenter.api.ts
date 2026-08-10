@@ -10,7 +10,7 @@ import { byggMalInnhold, MAL_NAVN, type MalId } from "./maler";
 
 function lesValgtMal(formData: FormData): { malId: MalId; erStraffesak: boolean } | null {
   const malId = formData.get("malId");
-  if (typeof malId !== "string" || !(malId in MAL_NAVN)) {
+  if (typeof malId !== "string" || !Object.hasOwn(MAL_NAVN, malId)) {
     return null;
   }
   return { malId: malId as MalId, erStraffesak: formData.get("erStraffesak") === "true" };
