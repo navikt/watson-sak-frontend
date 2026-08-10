@@ -42,7 +42,14 @@ import {
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { useRevalidator } from "react-router";
-import { Plate, PlateContent, PlateElement, useEditorState, usePlateEditor } from "platejs/react";
+import {
+  ParagraphPlugin,
+  Plate,
+  PlateContent,
+  PlateElement,
+  useEditorState,
+  usePlateEditor,
+} from "platejs/react";
 import type { TElement } from "platejs";
 import type { PlateElementProps } from "platejs/react";
 import { sporHendelse } from "~/analytics/analytics";
@@ -403,6 +410,13 @@ const PLUGINS = [
   UnderlinePlugin,
   StrikethroughPlugin,
   IndentPlugin,
+  // ParagraphPlugin mangler egen render.as-konfigurasjon (i motsetning til
+  // heading-pluginene), så vi må selv be den rendre som ekte <p>-tag.
+  ParagraphPlugin.withComponent(({ children, ...props }: PlateElementProps) => (
+    <PlateElement as="p" {...props}>
+      {children}
+    </PlateElement>
+  )),
   H1Plugin,
   H2Plugin,
   H3Plugin,
@@ -633,10 +647,12 @@ export function DokumentEditor({
                 onDragOver={redigerbar ? håndterDragOver : undefined}
                 onPaste={redigerbar ? håndterPaste : undefined}
                 className={
-                  "min-h-[60vh] focus:outline-none [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg " +
-                  "[&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
+                  "min-h-[60vh] focus:outline-none [&_h1]:mt-8 [&_h1]:mb-4 [&_h1]:text-2xl [&_h1]:font-bold " +
+                  "[&_h2]:mt-6 [&_h2]:mb-3 [&_h2]:text-xl [&_h2]:font-bold " +
+                  "[&_h3]:mt-4 [&_h3]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold " +
+                  "[&>*:first-child]:mt-0 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
                   "[&_blockquote]:border-l-4 [&_blockquote]:border-ax-border-neutral-subtle " +
-                  "[&_blockquote]:pl-4 [&_blockquote]:italic [&_p]:my-2 " +
+                  "[&_blockquote]:pl-4 [&_blockquote]:italic [&_p]:mb-4 [&_p:last-child]:mb-0 " +
                   "[&_table]:border-collapse [&_table]:my-3 [&_table]:w-full " +
                   "[&_td]:border [&_td]:border-ax-border-neutral-subtle [&_td]:p-2 [&_td]:align-top " +
                   "[&_th]:border [&_th]:border-ax-border-neutral-subtle [&_th]:p-2 [&_th]:align-top " +
