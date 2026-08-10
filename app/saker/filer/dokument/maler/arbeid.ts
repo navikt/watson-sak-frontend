@@ -1,17 +1,19 @@
 import type { DokumentInnhold } from "~/saker/filer/typer";
 import {
+  celle,
   h1,
   h2,
   h3,
   mal,
   metadataTabell,
   p,
+  pMedVariabler,
+  rad,
   stønadSammendragTabell,
+  tabell,
   topptekst,
   ul,
-  rad,
-  celle,
-  tabell,
+  variabel,
 } from "./node-builders";
 
 export function arbeidRapportmal({ erStraffesak }: { erStraffesak: boolean }): DokumentInnhold {
@@ -183,10 +185,10 @@ export function arbeidRapportmal({ erStraffesak }: { erStraffesak: boolean }): D
           "Når saken er ferdig behandlet, og klagefristen er utløpt, må dere sende saken tilbake til Nav Kontroll. Vi vil da vurdere om det er grunnlag for anmeldelse.",
         ),
     p("Vi bistår gjerne hvis dere har spørsmål i saken."),
-    p("Kontaktperson: [saksbehandlers navn]"),
+    pMedVariabler("Kontaktperson: ", variabel("saksbehandler")),
     p("Vennlig hilsen"),
-    p("Nav kontroll [enhet]"),
-    p("[navn]"),
+    pMedVariabler("Nav kontroll ", variabel("avdeling")),
+    pMedVariabler(variabel("saksbehandler")),
     p("fagansvarlig rådgiver/seniorrådgiver"),
 
     h1("Vedlegg"),

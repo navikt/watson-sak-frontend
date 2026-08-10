@@ -7,11 +7,13 @@ import {
   mal,
   metadataTabell,
   p,
+  pMedVariabler,
   rad,
   stønadSammendragTabell,
   tabell,
   topptekst,
   ul,
+  variabel,
 } from "./node-builders";
 
 export function ensligForsørgerRapportmal({
@@ -177,10 +179,10 @@ export function ensligForsørgerRapportmal({
         )
       : p("Vi vil da vurdere om det er grunnlag for anmeldelse."),
     p("Vi bistår gjerne hvis dere har spørsmål i saken."),
-    p("Kontaktperson: [saksbehandlers navn]"),
+    pMedVariabler("Kontaktperson: ", variabel("saksbehandler")),
     p("Vennlig hilsen"),
-    p("NAV Kontroll vest"),
-    p("[navn]"),
+    pMedVariabler("NAV Kontroll ", variabel("avdeling")),
+    pMedVariabler(variabel("saksbehandler")),
     p("Fagansvarlig rådgiver"),
 
     h1("Vedlegg"),
