@@ -159,4 +159,32 @@ describe("SakFilområde", () => {
 
     expect(screen.getByRole("button", { name: "Handlinger for Notat" })).toBeDefined();
   });
+
+  describe("tilgang via koblet sak (kun les)", () => {
+    it("viser filer", () => {
+      renderOmråde({ dokumenter: [], filer: mockFiler, sakId: "ABC-123", redigerbar: false });
+      expect(screen.getByText("rapport.pdf")).toBeDefined();
+    });
+
+    it("skjuler 'Opprett dokument'-knapp", () => {
+      renderOmråde({ dokumenter: [], filer: mockFiler, sakId: "ABC-123", redigerbar: false });
+      expect(screen.queryByText("Opprett dokument")).toBeNull();
+    });
+
+    it("skjuler 'Last opp vedlegg'-knapp", () => {
+      renderOmråde({ dokumenter: [], filer: mockFiler, sakId: "ABC-123", redigerbar: false });
+      expect(screen.queryByText("Last opp vedlegg")).toBeNull();
+    });
+
+    it("skjuler slett-knapp per fil", () => {
+      renderOmråde({
+        dokumenter: [],
+        filer: mockFiler,
+        sakId: "ABC-123",
+        redigerbar: false,
+        erSakseier: false,
+      });
+      expect(screen.queryByRole("button", { name: `Slett ${mockFiler[0].filnavn}` })).toBeNull();
+    });
+  });
 });

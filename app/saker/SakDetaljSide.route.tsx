@@ -189,6 +189,7 @@ export default function SakDetaljSide() {
     historikk,
     dokumenter,
     filer,
+    harFilTilgang,
     andreSaker,
     saksbehandlerDetaljer,
   } = useLoaderData<typeof loader>();
@@ -219,11 +220,12 @@ export default function SakDetaljSide() {
   const innloggetBruker = useInnloggetBruker();
   const erEier = erSakseier(sak, innloggetBruker.navIdent);
   const harDeltTilgang = delteSaksbehandlere.some((s) => s.navIdent === innloggetBruker.navIdent);
-  const kanSeFilområde = erEier || harDeltTilgang;
+  const harDirekteTilgang = erEier || harDeltTilgang;
+  const kanSeFilområde = harDirekteTilgang || harFilTilgang;
   const kanRedigere = erEier && erAktiv;
   // Dokumenter kan redigeres av eier ELLER delt-med, så lenge saken er aktiv.
-  // (Skiller seg fra `kanRedigere` som styrer redigering av selve saksinformasjonen.)
-  const kanRedigereDokumenter = kanSeFilområde && erAktiv;
+  // Ansvarlig på koblet sak har kun les-tilgang — ikke skrivetilgang.
+  const kanRedigereDokumenter = harDirekteTilgang && erAktiv;
   const [redigerer, setRedigerer] = useState(false);
   const [redigeringsøkt, setRedigeringsøkt] = useState(0);
   const [visFeil, setVisFeil] = useState(false);
