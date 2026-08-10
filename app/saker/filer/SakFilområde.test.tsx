@@ -1,6 +1,7 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it } from "vitest";
+import { RouteConfig } from "~/routeConfig";
 import { DokumentTre } from "./DokumentTre";
 import { SakFilområde } from "./SakFilområde";
 import type { DokumentNode, FilResponse } from "./typer";
@@ -39,6 +40,24 @@ function renderOmråde(props: Parameters<typeof SakFilområde>[0]) {
     {
       path: "/saker/:sakId",
       Component: () => <SakFilområde {...props} />,
+    },
+  ]);
+  return render(<Stub initialEntries={["/saker/ABC-123"]} />);
+}
+
+/** Rendrer med en fungerende action-route, slik at vi kan verifisere hva skjemaet faktisk sender inn. */
+function renderOmrådeMedAction(
+  props: Parameters<typeof SakFilområde>[0],
+  action: (formData: FormData) => unknown,
+) {
+  const Stub = createRoutesStub([
+    {
+      path: "/saker/:sakId",
+      Component: () => <SakFilområde {...props} />,
+    },
+    {
+      path: RouteConfig.API.SAK_DOKUMENTER,
+      action: async ({ request }) => action(await request.formData()),
     },
   ]);
   return render(<Stub initialEntries={["/saker/ABC-123"]} />);
@@ -84,6 +103,47 @@ describe("SakFilområde", () => {
   it("skjuler 'Opprett dokument'-knapp når redigerbar er false", () => {
     renderOmråde({ dokumenter: mockDokumenter, filer: [], sakId: "ABC-123", redigerbar: false });
     expect(screen.queryByText("Opprett dokument")).toBeNull();
+  });
+
+  it("viser 'Tomt dokument' og alle maler i handlingsmenyen", async () => {
+    renderOmråde({ dokumenter: [], filer: [], sakId: "ABC-123" });
+
+    fireEvent.click(screen.getByText("Opprett dokument"));
+
+    expect(await screen.findByText("Tomt dokument")).toBeDefined();
+    expect(screen.getByText("Arbeid")).toBeDefined();
+    expect(screen.getByText("Enslig forsørger")).toBeDefined();
+    expect(screen.getByText("Utland")).toBeDefined();
+  });
+
+  it("sender ingen malId når 'Tomt dokument' velges", async () => {
+    const mottatt: FormData[] = [];
+    renderOmrådeMedAction({ dokumenter: [], filer: [], sakId: "ABC-123" }, (formData) => {
+      mottatt.push(formData);
+      return null;
+    });
+
+    fireEvent.click(screen.getByText("Opprett dokument"));
+    fireEvent.click(await screen.findByText("Tomt dokument"));
+
+    await waitFor(() => expect(mottatt).toHaveLength(1));
+    expect(mottatt[0].get("malId")).toBeNull();
+  });
+
+  it("sender malId og erStraffesak når en mal velges", async () => {
+    const mottatt: FormData[] = [];
+    renderOmrådeMedAction({ dokumenter: [], filer: [], sakId: "ABC-123" }, (formData) => {
+      mottatt.push(formData);
+      return null;
+    });
+
+    fireEvent.click(screen.getByText("Opprett dokument"));
+    fireEvent.click(await screen.findByText("Arbeid"));
+    fireEvent.click(await screen.findByText("Straffesak"));
+
+    await waitFor(() => expect(mottatt).toHaveLength(1));
+    expect(mottatt[0].get("malId")).toBe("arbeid");
+    expect(mottatt[0].get("erStraffesak")).toBe("true");
   });
 
   it("lenker dokumenter internt til editoren", () => {
