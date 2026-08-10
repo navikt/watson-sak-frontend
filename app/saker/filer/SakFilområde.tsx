@@ -1,12 +1,15 @@
-import { FilePlusIcon } from "@navikt/aksel-icons";
-import { Button, Heading, HStack, VStack } from "@navikt/ds-react";
-import { Form } from "react-router";
+import { FilePlusIcon, FileTextIcon } from "@navikt/aksel-icons";
+import { ActionMenu, Button, Heading, HStack, VStack } from "@navikt/ds-react";
+import { useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { Kort } from "~/komponenter/Kort";
+import { MAL_NAVN, type MalId } from "~/saker/filer/dokument/maler";
 import { RouteConfig } from "~/routeConfig";
 import { DokumentTre } from "./DokumentTre";
 import type { DokumentNode, FilResponse } from "./typer";
 import { VedleggSeksjon } from "./VedleggSeksjon";
+
+const MAL_IDER = Object.keys(MAL_NAVN) as MalId[];
 
 function OpprettDokumentKnapp({
   sakId,
@@ -18,18 +21,49 @@ function OpprettDokumentKnapp({
   variant?: "secondary" | "tertiary";
 }) {
   const action = RouteConfig.API.SAK_DOKUMENTER.replace(":sakId", sakId);
+  const fetcher = useFetcher();
+
+  function opprett(valg?: { malId: MalId; erStraffesak: boolean }) {
+    sporHendelse("dokument opprettet", { sakId, malId: valg?.malId ?? "tom" });
+    const formData = new FormData();
+    if (valg) {
+      formData.set("malId", valg.malId);
+      formData.set("erStraffesak", String(valg.erStraffesak));
+    }
+    fetcher.submit(formData, { method: "post", action });
+  }
+
   return (
-    <Form method="post" action={action}>
-      <Button
-        type="submit"
-        size={size}
-        variant={variant}
-        icon={<FilePlusIcon aria-hidden />}
-        onClick={() => sporHendelse("dokument opprettet", { sakId })}
-      >
-        Opprett dokument
-      </Button>
-    </Form>
+    <ActionMenu>
+      <ActionMenu.Trigger>
+        <Button size={size} variant={variant} icon={<FilePlusIcon aria-hidden />}>
+          Opprett dokument
+        </Button>
+      </ActionMenu.Trigger>
+      <ActionMenu.Content>
+        <ActionMenu.Item icon={<FilePlusIcon aria-hidden />} onSelect={() => opprett()}>
+          Tomt dokument
+        </ActionMenu.Item>
+        <ActionMenu.Divider />
+        <ActionMenu.Group label="Fra mal">
+          {MAL_IDER.map((malId) => (
+            <ActionMenu.Sub key={malId}>
+              <ActionMenu.SubTrigger icon={<FileTextIcon aria-hidden />}>
+                {MAL_NAVN[malId]}
+              </ActionMenu.SubTrigger>
+              <ActionMenu.SubContent>
+                <ActionMenu.Item onSelect={() => opprett({ malId, erStraffesak: false })}>
+                  Ikke straffesak
+                </ActionMenu.Item>
+                <ActionMenu.Item onSelect={() => opprett({ malId, erStraffesak: true })}>
+                  Straffesak
+                </ActionMenu.Item>
+              </ActionMenu.SubContent>
+            </ActionMenu.Sub>
+          ))}
+        </ActionMenu.Group>
+      </ActionMenu.Content>
+    </ActionMenu>
   );
 }
 
