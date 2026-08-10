@@ -217,7 +217,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const harDeltTilgang = sak.saksbehandlere.deltMed.some((s) => s.navIdent === innlogget.navIdent);
   const harTilgangViaKobling = sak.kobledeSaker.some(
     (kobletId) =>
-      alleSaker.find((s) => s.id === kobletId)?.saksbehandlere.eier?.navIdent === innlogget.navIdent,
+      alleSaker.find((s) => s.id === kobletId)?.saksbehandlere.eier?.navIdent ===
+      innlogget.navIdent,
   );
   const harFilTilgang = erEier || harDeltTilgang || harTilgangViaKobling;
   const dokumenter = harFilTilgang ? hentDokumenttreForSak(request, String(sak.id)) : [];
