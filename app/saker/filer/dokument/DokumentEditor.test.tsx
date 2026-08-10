@@ -27,6 +27,13 @@ function renderEditor(props: Partial<Parameters<typeof DokumentEditor>[0]> = {})
           sakId="ABC-1"
           docId="d1"
           dokumentliste={<p>Dokumentliste</p>}
+          variabelVerdier={{
+            navn: "Ola Nordmann",
+            fødselsnummer: "01010112345",
+            saksnummer: "Sak 105",
+            saksbehandler: "Kari Nordmann",
+            avdeling: "Nav Kontroll",
+          }}
           {...props}
         />
       ),
@@ -53,6 +60,7 @@ describe("DokumentEditor", () => {
     expect(screen.getByLabelText("Punktliste")).toBeDefined();
     expect(screen.getByLabelText("Angre")).toBeDefined();
     expect(screen.getByLabelText("Sett inn bilde")).toBeDefined();
+    expect(screen.getByLabelText("Sett inn variabel")).toBeDefined();
     expect(screen.getByText("Min overskrift")).toBeDefined();
     expect(screen.getByText("Brødtekst her")).toBeDefined();
   });
@@ -72,6 +80,19 @@ describe("DokumentEditor", () => {
     // Tabell-kontekstuelle knapper dukker opp når markøren står i tabellen.
     expect(screen.getByLabelText("Legg til rad")).toBeDefined();
     expect(screen.getByLabelText("Slett tabell")).toBeDefined();
+  });
+
+  it("kan sette inn en levende variabel via verktøylinjen", async () => {
+    const onEndring = vi.fn();
+    renderEditor({ onEndring });
+
+    fireEvent.click(await screen.findByLabelText("Sett inn variabel"));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Navn" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Ola Nordmann")).toBeDefined();
+    });
+    expect(onEndring).toHaveBeenCalled();
   });
 
   it("har et tilgjengelig redigeringsfelt med aria-label", async () => {

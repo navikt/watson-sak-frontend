@@ -68,7 +68,7 @@ describe("DokumentSide loader", () => {
   });
 
   it("gir eier på aktiv sak full redigeringstilgang", async () => {
-    const { ref, docId } = settOppSak({ eier: eierMeg, deltMed: [], status: "UTREDES" });
+    const { sak, ref, docId } = settOppSak({ eier: eierMeg, deltMed: [], status: "UTREDES" });
 
     const resultat = await loader({
       request: testRequest,
@@ -79,6 +79,13 @@ describe("DokumentSide loader", () => {
     expect(resultat.kanRedigere).toBe(true);
     // Dokumentlista følger med slik at «Se andre dokumenter»-skuffen kan gjenbruke treet.
     expect(resultat.dokumenter.some((node) => node.id === docId)).toBe(true);
+    expect(resultat.variabelVerdier).toEqual({
+      navn: sak.personNavn,
+      fødselsnummer: sak.personIdent,
+      saksnummer: `Sak ${sak.id}`,
+      saksbehandler: "Test Saksbehandler",
+      avdeling: "4812",
+    });
   });
 
   it("gir delt-med skrivetilgang på aktiv sak", async () => {

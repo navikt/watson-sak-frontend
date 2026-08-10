@@ -5,8 +5,9 @@ import {
   ImageIcon,
   NumberListIcon,
   TableIcon,
+  TagIcon,
 } from "@navikt/aksel-icons";
-import { Alert, Button, HStack, Loader, Select, Tooltip } from "@navikt/ds-react";
+import { ActionMenu, Alert, Button, HStack, Loader, Select, Tooltip } from "@navikt/ds-react";
 import {
   BlockquotePlugin,
   BoldPlugin,
@@ -78,6 +79,14 @@ import {
   STANDARD_SIDEPANEL,
   type SidepanelValg,
 } from "./DokumentSidepanel";
+import { VariabelElement, VariabelVerdierProvider } from "./variabler/VariabelElement";
+import { VariabelListe } from "./variabler/VariabelListe";
+import { VariabelPlugin } from "./variabler/VariabelPlugin";
+import {
+  STANDARD_VARIABLER,
+  type VariabelId,
+  type VariabelVerdier,
+} from "./variabler/variabel-typer";
 
 /** Sporer hvilken formateringsknapp som brukes, knyttet til riktig dokument. */
 const FormaterContext = createContext<(etikett: string) => void>(() => {});
@@ -160,12 +169,14 @@ function Verktøylinje({
   onVelgSidepanel,
   lasterOppBilde,
   onÅpneBildeModal,
+  onSettInnVariabel,
 }: {
   onFormater: (etikett: string) => void;
   aktivtSidepanel: SidepanelValg;
   onVelgSidepanel: (valg: SidepanelValg) => void;
   lasterOppBilde: boolean;
   onÅpneBildeModal: () => void;
+  onSettInnVariabel: (variabelId: VariabelId) => void;
 }) {
   const editor = useEditorState();
   const erITabell = !!editor.api.above({ match: { type: TablePlugin.key } });
@@ -361,6 +372,30 @@ function Verktøylinje({
               >
                 {lasterOppBilde ? <Loader size="xsmall" aria-hidden /> : <ImageIcon aria-hidden />}
               </VerktøyKnapp>
+              <ActionMenu>
+                <ActionMenu.Trigger>
+                  <Button
+                    type="button"
+                    size="small"
+                    variant="tertiary"
+                    aria-label="Sett inn variabel"
+                    icon={<TagIcon aria-hidden />}
+                  />
+                </ActionMenu.Trigger>
+                <ActionMenu.Content>
+                  <ActionMenu.Group label="Sett inn variabel">
+                    {STANDARD_VARIABLER.map(({ id, etikett }) => (
+                      <ActionMenu.Item
+                        key={id}
+                        icon={<TagIcon aria-hidden />}
+                        onSelect={() => onSettInnVariabel(id)}
+                      >
+                        {etikett}
+                      </ActionMenu.Item>
+                    ))}
+                  </ActionMenu.Group>
+                </ActionMenu.Content>
+              </ActionMenu>
             </HStack>
 
             <SidepanelMeny aktivt={aktivtSidepanel} onVelg={onVelgSidepanel} />
@@ -449,6 +484,7 @@ const PLUGINS = [
     </PlateElement>
   )),
   ImagePlugin.withComponent(BildeElement),
+  VariabelPlugin.withComponent(VariabelElement),
 ];
 
 type DokumentEditorProps = {
@@ -462,6 +498,8 @@ type DokumentEditorProps = {
   dokumentliste: ReactNode;
   /** Lagrestatusen som vises nederst i sidepanelet. Eies av siden som lagrer. */
   lagreStatus?: ReactNode;
+  /** Verdier fra saken og innlogget bruker som levende variabler løses mot. */
+  variabelVerdier: VariabelVerdier;
 };
 
 export function DokumentEditor({
@@ -472,6 +510,7 @@ export function DokumentEditor({
   docId,
   dokumentliste,
   lagreStatus,
+  variabelVerdier,
 }: DokumentEditorProps) {
   const editor = usePlateEditor({
     plugins: PLUGINS,
@@ -485,6 +524,18 @@ export function DokumentEditor({
   const [bildeFeil, settBildeFeil] = useState<string | null>(null);
   const [bildeModalÅpen, settBildeModalÅpen] = useState(false);
   const revalidator = useRevalidator();
+  const settInnVariabel = useCallback(
+    (variabelId: VariabelId) => {
+      editor.tf.insertNodes({
+        type: VariabelPlugin.key,
+        variabelId,
+        children: [{ text: "" }],
+      });
+      const etikett = STANDARD_VARIABLER.find((variabel) => variabel.id === variabelId)?.etikett;
+      sporHendelse("dokument formatert", { sakId, docId, format: `Sett inn variabel: ${etikett}` });
+    },
+    [docId, editor, sakId],
+  );
 
   const settInnBilde = useCallback(
     (fil: FilResponse) => {
@@ -603,86 +654,92 @@ export function DokumentEditor({
   }
 
   return (
-    <Plate
-      editor={editor}
-      readOnly={!redigerbar}
-      onChange={({ value }) => onEndring(value as DokumentInnhold)}
-    >
-      {/* Editorflaten fyller resten av vinduet og scroller selv, slik at verktøylinja og
-      sidepanelet står stille mens man jobber i et langt dokument. */}
-      <div
-        ref={flateRef}
-        style={høyde ? { height: høyde } : undefined}
-        className="flex flex-col gap-[var(--ax-space-12)] overflow-hidden"
+    <VariabelVerdierProvider verdier={variabelVerdier}>
+      <Plate
+        editor={editor}
+        readOnly={!redigerbar}
+        onChange={({ value }) => onEndring(value as DokumentInnhold)}
       >
-        {redigerbar && (
-          <div className="px-[var(--ax-space-16)] lg:px-[var(--ax-space-24)]">
-            <Verktøylinje
-              onFormater={(format) => sporHendelse("dokument formatert", { sakId, docId, format })}
-              aktivtSidepanel={aktivtSidepanel}
-              onVelgSidepanel={settAktivtSidepanel}
-              lasterOppBilde={lasterOppBilde}
-              onÅpneBildeModal={() => settBildeModalÅpen(true)}
-            />
-            {bildeFeil && !bildeModalÅpen && (
-              <Alert variant="error" size="small" className="mt-[var(--ax-space-8)]">
-                {bildeFeil}
-              </Alert>
-            )}
-          </div>
-        )}
-        {/* Grå flate med «arket» til venstre og sidepanelet som en egen seksjon til høyre.
-        Raden går helt ut til kantene fordi ruta har bedt layouten om full bredde. */}
-        <div className="flex min-h-0 flex-1 flex-col lg:flex-row lg:items-stretch">
-          <div className="ml-[var(--ax-space-16)] flex min-w-0 flex-1 justify-center overflow-y-auto rounded-lg bg-ax-bg-neutral-moderate px-[var(--ax-space-16)] py-[var(--ax-space-32)] lg:ml-[var(--ax-space-24)] lg:px-[var(--ax-space-48)]">
-            <Kort
-              padding={{ xs: "space-24", md: "space-64" }}
-              className="h-fit w-full max-w-[210mm] shadow-[var(--ax-shadow-dialog)]"
-            >
-              <PlateContent
-                role="textbox"
-                aria-multiline
-                aria-label="Dokumentinnhold"
-                onDrop={redigerbar ? håndterDrop : undefined}
-                onDragOver={redigerbar ? håndterDragOver : undefined}
-                onPaste={redigerbar ? håndterPaste : undefined}
-                className={
-                  "min-h-[60vh] focus:outline-none [&_h1]:mt-8 [&_h1]:mb-4 [&_h1]:text-2xl [&_h1]:font-bold " +
-                  "[&_h2]:mt-6 [&_h2]:mb-3 [&_h2]:text-xl [&_h2]:font-bold " +
-                  "[&_h3]:mt-4 [&_h3]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold " +
-                  "[&>*:first-child]:mt-0 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
-                  "[&_blockquote]:border-l-4 [&_blockquote]:border-ax-border-neutral-subtle " +
-                  "[&_blockquote]:pl-4 [&_blockquote]:italic [&_p]:mb-4 [&_p:last-child]:mb-0 " +
-                  "[&_table]:border-collapse [&_table]:my-3 [&_table]:w-full " +
-                  "[&_td]:border [&_td]:border-ax-border-neutral-subtle [&_td]:p-2 [&_td]:align-top " +
-                  "[&_th]:border [&_th]:border-ax-border-neutral-subtle [&_th]:p-2 [&_th]:align-top " +
-                  "[&_th]:bg-ax-bg-neutral-soft [&_th]:text-left [&_th]:font-semibold " +
-                  "[&_u]:underline [&_s]:line-through"
+        {/* Editorflaten fyller resten av vinduet og scroller selv, slik at verktøylinja og
+      sidepanelet står stille mens man jobber i et langt dokument. */}
+        <div
+          ref={flateRef}
+          style={høyde ? { height: høyde } : undefined}
+          className="flex flex-col gap-[var(--ax-space-12)] overflow-hidden"
+        >
+          {redigerbar && (
+            <div className="px-[var(--ax-space-16)] lg:px-[var(--ax-space-24)]">
+              <Verktøylinje
+                onFormater={(format) =>
+                  sporHendelse("dokument formatert", { sakId, docId, format })
                 }
+                aktivtSidepanel={aktivtSidepanel}
+                onVelgSidepanel={settAktivtSidepanel}
+                lasterOppBilde={lasterOppBilde}
+                onÅpneBildeModal={() => settBildeModalÅpen(true)}
+                onSettInnVariabel={settInnVariabel}
               />
-            </Kort>
-          </div>
+              {bildeFeil && !bildeModalÅpen && (
+                <Alert variant="error" size="small" className="mt-[var(--ax-space-8)]">
+                  {bildeFeil}
+                </Alert>
+              )}
+            </div>
+          )}
+          {/* Grå flate med «arket» til venstre og sidepanelet som en egen seksjon til høyre.
+        Raden går helt ut til kantene fordi ruta har bedt layouten om full bredde. */}
+          <div className="flex min-h-0 flex-1 flex-col lg:flex-row lg:items-stretch">
+            <div className="ml-[var(--ax-space-16)] flex min-w-0 flex-1 justify-center overflow-y-auto rounded-lg bg-ax-bg-neutral-moderate px-[var(--ax-space-16)] py-[var(--ax-space-32)] lg:ml-[var(--ax-space-24)] lg:px-[var(--ax-space-48)]">
+              <Kort
+                padding={{ xs: "space-24", md: "space-64" }}
+                className="h-fit w-full max-w-[210mm] shadow-[var(--ax-shadow-dialog)]"
+              >
+                <PlateContent
+                  role="textbox"
+                  aria-multiline
+                  aria-label="Dokumentinnhold"
+                  onDrop={redigerbar ? håndterDrop : undefined}
+                  onDragOver={redigerbar ? håndterDragOver : undefined}
+                  onPaste={redigerbar ? håndterPaste : undefined}
+                  className={
+                    "min-h-[60vh] focus:outline-none [&_h1]:mt-8 [&_h1]:mb-4 [&_h1]:text-2xl [&_h1]:font-bold " +
+                    "[&_h2]:mt-6 [&_h2]:mb-3 [&_h2]:text-xl [&_h2]:font-bold " +
+                    "[&_h3]:mt-4 [&_h3]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold " +
+                    "[&>*:first-child]:mt-0 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
+                    "[&_blockquote]:border-l-4 [&_blockquote]:border-ax-border-neutral-subtle " +
+                    "[&_blockquote]:pl-4 [&_blockquote]:italic [&_p]:mb-4 [&_p:last-child]:mb-0 " +
+                    "[&_table]:border-collapse [&_table]:my-3 [&_table]:w-full " +
+                    "[&_td]:border [&_td]:border-ax-border-neutral-subtle [&_td]:p-2 [&_td]:align-top " +
+                    "[&_th]:border [&_th]:border-ax-border-neutral-subtle [&_th]:p-2 [&_th]:align-top " +
+                    "[&_th]:bg-ax-bg-neutral-soft [&_th]:text-left [&_th]:font-semibold " +
+                    "[&_u]:underline [&_s]:line-through"
+                  }
+                />
+              </Kort>
+            </div>
 
-          <Sidepanel
-            aktivt={aktivtSidepanel}
-            dokumentliste={dokumentliste}
-            lagreStatus={lagreStatus}
-          />
+            <Sidepanel
+              aktivt={aktivtSidepanel}
+              dokumentliste={dokumentliste}
+              variabelInnhold={<VariabelListe onSettInn={settInnVariabel} disabled={!redigerbar} />}
+              lagreStatus={lagreStatus}
+            />
+          </div>
         </div>
-      </div>
-      <SettInnBildeModal
-        åpen={bildeModalÅpen}
-        sakId={sakId}
-        lasterOpp={lasterOppBilde}
-        feil={bildeFeil}
-        onClose={() => settBildeModalÅpen(false)}
-        onVelg={settInnBilde}
-        onLastOpp={(filer) => {
-          void håndterBildefiler(filer).then((ok) => {
-            if (ok) settBildeModalÅpen(false);
-          });
-        }}
-      />
-    </Plate>
+        <SettInnBildeModal
+          åpen={bildeModalÅpen}
+          sakId={sakId}
+          lasterOpp={lasterOppBilde}
+          feil={bildeFeil}
+          onClose={() => settBildeModalÅpen(false)}
+          onVelg={settInnBilde}
+          onLastOpp={(filer) => {
+            void håndterBildefiler(filer).then((ok) => {
+              if (ok) settBildeModalÅpen(false);
+            });
+          }}
+        />
+      </Plate>
+    </VariabelVerdierProvider>
   );
 }
