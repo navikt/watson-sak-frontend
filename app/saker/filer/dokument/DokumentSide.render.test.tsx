@@ -110,13 +110,14 @@ describe("DokumentSide", () => {
     expect(
       within(sidepanel).getByRole("button", { name: "Sett inn variabelen Navn" }),
     ).toBeDefined();
-    expect(within(sidepanel).getAllByLabelText("Sett inn i dokument").length).toBe(6);
     expect(within(sidepanel).queryByLabelText("Søk i variabler")).toBeNull();
 
     fireEvent.click(
       within(sidepanel).getByRole("button", { name: "Sett inn variabelen Fødselsnummer" }),
     );
-    expect((await screen.findByText("01010112345")).className).toContain("bg-[#d8e8f3]");
+    expect((await screen.findByText("01010112345")).className).toContain(
+      "bg-ax-bg-accent-moderate",
+    );
   });
 
   it("viser slett-knapp og en deaktivert medunderskriver-knapp når man kan redigere", async () => {

@@ -55,7 +55,7 @@ export function VariabelListe({ onSettInn, disabled }: VariabelListeProps) {
             aria-label={`Sett inn variabelen ${etikett}`}
           >
             <span className="min-w-0">
-              <span className="inline-flex items-center gap-1 rounded border border-[#c0d6e4] bg-[#eaf2fa] px-1.5 py-0.5 text-sm font-semibold text-ax-text-accent-subtle">
+              <span className="inline-flex items-center gap-1 rounded border border-ax-border-accent bg-ax-bg-accent-soft px-1.5 py-0.5 text-sm font-semibold text-ax-text-accent">
                 <TagIcon aria-hidden fontSize="1rem" />
                 {etikett}
               </span>

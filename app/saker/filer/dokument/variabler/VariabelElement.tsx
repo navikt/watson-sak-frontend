@@ -79,8 +79,8 @@ export function VariabelElement(props: PlateElementProps<VariabelElementType>) {
             (manglerVerdi
               ? "border-ax-border-warning bg-ax-bg-warning-soft text-ax-text-warning"
               : erVariabelpanelÅpent
-                ? "border-[#c0d6e4] bg-[#d8e8f3] text-ax-text-accent-subtle"
-                : "border-[#c0d6e4] bg-[#eaf2fa] text-ax-text-accent-subtle")
+                ? "border-ax-border-accent bg-ax-bg-accent-moderate text-ax-text-accent"
+                : "border-ax-border-accent bg-ax-bg-accent-soft text-ax-text-accent")
           }
         >
           <TagIcon aria-hidden fontSize="1rem" />

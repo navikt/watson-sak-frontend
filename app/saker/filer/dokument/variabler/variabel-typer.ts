@@ -24,6 +24,6 @@ export const STANDARD_VARIABLER: VariabelDefinisjon[] = [
 
 export type VariabelVerdier = Partial<Record<VariabelId, string>>;
 
-export function finnVariabel(id: string): VariabelDefinisjon | undefined {
+export function finnVariabel(id: VariabelId): VariabelDefinisjon | undefined {
   return STANDARD_VARIABLER.find((variabel) => variabel.id === id);
 }
