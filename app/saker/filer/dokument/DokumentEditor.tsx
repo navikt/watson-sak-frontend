@@ -630,6 +630,7 @@ export function DokumentEditor({
 
     if (event.dataTransfer.types.includes(VARIABEL_FLYTT_MIMETYPE)) {
       event.preventDefault();
+      event.stopPropagation();
       const rå = event.dataTransfer.getData(VARIABEL_FLYTT_MIMETYPE);
       let kildesti: number[];
       try {
@@ -639,6 +640,8 @@ export function DokumentEditor({
       }
       const kilde = editor.api.node(kildesti);
       if (!kilde || !("variabelId" in kilde[0])) return;
+      const kildeElement = editor.api.toDOMNode(kilde[0]);
+      if (event.target instanceof Node && kildeElement?.contains(event.target)) return;
       const målElement =
         event.target instanceof Element
           ? event.target.closest<HTMLElement>("[data-variabel-sti]")

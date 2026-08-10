@@ -67,6 +67,9 @@ export function VariabelElement(props: PlateElementProps<VariabelElementType>) {
           data-variabel-sti={props.path.join(".")}
           draggable={!readOnly}
           onDragStart={(event) => {
+            // Variabler har egen flyttelogikk i DokumentEditor. Ikke la Plate tolke
+            // dette som et ordinært Slate-drag, som ellers kan kopiere noden ved drop.
+            event.stopPropagation();
             event.dataTransfer.effectAllowed = "move";
             event.dataTransfer.setData(VARIABEL_FLYTT_MIMETYPE, JSON.stringify(props.path));
           }}
