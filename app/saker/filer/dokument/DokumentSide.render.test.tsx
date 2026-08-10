@@ -125,7 +125,7 @@ describe("DokumentSide", () => {
     fireEvent.click(
       within(sidepanel).getByRole("button", { name: "Sett inn variabelen Fødselsnummer" }),
     );
-    expect(await screen.findByText("01010112345")).toBeDefined();
+    expect((await screen.findByText("01010112345")).className).toContain("bg-[#d8e8f3]");
   });
 
   it("viser slett-knapp og en deaktivert medunderskriver-knapp når man kan redigere", async () => {

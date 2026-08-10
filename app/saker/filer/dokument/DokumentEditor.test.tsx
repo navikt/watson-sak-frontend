@@ -93,6 +93,8 @@ describe("DokumentEditor", () => {
       expect(screen.getByText("Ola Nordmann")).toBeDefined();
     });
     expect(onEndring).toHaveBeenCalled();
+
+    expect(screen.getByLabelText("Navn")).toBeDefined();
   });
 
   it("har et tilgjengelig redigeringsfelt med aria-label", async () => {

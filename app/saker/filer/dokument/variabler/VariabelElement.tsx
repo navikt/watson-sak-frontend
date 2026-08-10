@@ -1,4 +1,5 @@
 import { TagIcon } from "@navikt/aksel-icons";
+import { Tooltip } from "@navikt/ds-react";
 import { createContext, useContext } from "react";
 import type { TElement } from "platejs";
 import { PlateElement } from "platejs/react";
@@ -9,17 +10,29 @@ export type VariabelElementType = TElement & {
   variabelId: VariabelId;
 };
 
-const VariabelVerdierContext = createContext<VariabelVerdier>({});
+type VariabelKontekst = {
+  verdier: VariabelVerdier;
+  erVariabelpanelÅpent: boolean;
+};
+
+const VariabelVerdierContext = createContext<VariabelKontekst>({
+  verdier: {},
+  erVariabelpanelÅpent: false,
+});
 
 export function VariabelVerdierProvider({
   verdier,
+  erVariabelpanelÅpent,
   children,
 }: {
   verdier: VariabelVerdier;
+  erVariabelpanelÅpent: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <VariabelVerdierContext.Provider value={verdier}>{children}</VariabelVerdierContext.Provider>
+    <VariabelVerdierContext.Provider value={{ verdier, erVariabelpanelÅpent }}>
+      {children}
+    </VariabelVerdierContext.Provider>
   );
 }
 
@@ -39,24 +52,29 @@ function hentVerdi(variabelId: VariabelId, verdier: VariabelVerdier) {
 /** Rendrer en levende, ikke-redigerbar inline-variabel i dokumentteksten. */
 export function VariabelElement(props: PlateElementProps<VariabelElementType>) {
   const definisjon = finnVariabel(props.element.variabelId);
-  const verdi = hentVerdi(props.element.variabelId, useContext(VariabelVerdierContext));
+  const { verdier, erVariabelpanelÅpent } = useContext(VariabelVerdierContext);
+  const verdi = hentVerdi(props.element.variabelId, verdier);
   const tekst = verdi || `[${definisjon?.etikett ?? "Ukjent variabel"} mangler]`;
   const manglerVerdi = !verdi;
 
   return (
     <PlateElement as="span" {...props} className="inline">
-      <span
-        contentEditable={false}
-        className={
-          "mx-0.5 inline-flex items-center gap-1 rounded border px-1.5 py-0.5 align-baseline text-sm font-semibold " +
-          (manglerVerdi
-            ? "border-ax-border-warning bg-ax-bg-warning-soft text-ax-text-warning"
-            : "border-[#c0d6e4] bg-[#eaf2fa] text-ax-text-accent-subtle")
-        }
-      >
-        <TagIcon aria-hidden fontSize="1rem" />
-        {tekst}
-      </span>
+      <Tooltip content={definisjon?.etikett ?? "Ukjent variabel"}>
+        <span
+          contentEditable={false}
+          className={
+            "mx-0.5 inline-flex items-center gap-1 rounded border px-1.5 py-0.5 align-baseline text-sm font-semibold transition-colors " +
+            (manglerVerdi
+              ? "border-ax-border-warning bg-ax-bg-warning-soft text-ax-text-warning"
+              : erVariabelpanelÅpent
+                ? "border-[#c0d6e4] bg-[#d8e8f3] text-ax-text-accent-subtle"
+                : "border-[#c0d6e4] bg-[#eaf2fa] text-ax-text-accent-subtle")
+          }
+        >
+          <TagIcon aria-hidden fontSize="1rem" />
+          {tekst}
+        </span>
+      </Tooltip>
       {props.children}
     </PlateElement>
   );

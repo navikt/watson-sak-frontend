@@ -654,7 +654,10 @@ export function DokumentEditor({
   }
 
   return (
-    <VariabelVerdierProvider verdier={variabelVerdier}>
+    <VariabelVerdierProvider
+      verdier={variabelVerdier}
+      erVariabelpanelÅpent={aktivtSidepanel === "variabler"}
+    >
       <Plate
         editor={editor}
         readOnly={!redigerbar}
