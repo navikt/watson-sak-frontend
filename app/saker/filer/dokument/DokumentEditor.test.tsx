@@ -3,6 +3,7 @@ import { createRoutesStub } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { DokumentInnhold, FilResponse } from "~/saker/filer/typer";
 import { DokumentEditor } from "./DokumentEditor";
+import { VARIABEL_FLYTT_MIMETYPE } from "./variabler/VariabelPlugin";
 
 const innhold: DokumentInnhold = [
   {
@@ -27,6 +28,13 @@ function renderEditor(props: Partial<Parameters<typeof DokumentEditor>[0]> = {})
           sakId="ABC-1"
           docId="d1"
           dokumentliste={<p>Dokumentliste</p>}
+          variabelVerdier={{
+            navn: "Ola Nordmann",
+            fødselsnummer: "01010112345",
+            saksnummer: "Sak 105",
+            saksbehandler: "Kari Nordmann",
+            avdeling: "Nav Kontroll",
+          }}
           {...props}
         />
       ),
@@ -53,6 +61,7 @@ describe("DokumentEditor", () => {
     expect(screen.getByLabelText("Punktliste")).toBeDefined();
     expect(screen.getByLabelText("Angre")).toBeDefined();
     expect(screen.getByLabelText("Sett inn bilde")).toBeDefined();
+    expect(screen.getByLabelText("Sett inn variabel")).toBeDefined();
     expect(screen.getByText("Min overskrift")).toBeDefined();
     expect(screen.getByText("Brødtekst her")).toBeDefined();
   });
@@ -72,6 +81,22 @@ describe("DokumentEditor", () => {
     // Tabell-kontekstuelle knapper dukker opp når markøren står i tabellen.
     expect(screen.getByLabelText("Legg til rad")).toBeDefined();
     expect(screen.getByLabelText("Slett tabell")).toBeDefined();
+  });
+
+  it("kan sette inn en levende variabel via verktøylinjen", async () => {
+    const onEndring = vi.fn();
+    renderEditor({ onEndring });
+
+    fireEvent.click(await screen.findByLabelText("Sett inn variabel"));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Navn" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Ola Nordmann")).toBeDefined();
+    });
+    expect(onEndring).toHaveBeenCalled();
+
+    expect(screen.getByText("Ola Nordmann").getAttribute("draggable")).toBe("true");
+    expect(screen.getByText("Ola Nordmann").closest("[data-variabel-sti]")).not.toBeNull();
   });
 
   it("har et tilgjengelig redigeringsfelt med aria-label", async () => {
@@ -204,6 +229,17 @@ describe("DokumentEditor", () => {
       const felt = await screen.findByLabelText("Dokumentinnhold");
       const dragOverEvent = createEvent.dragOver(felt, {
         dataTransfer: { types: ["Files"] },
+      });
+      fireEvent(felt, dragOverEvent);
+      expect(dragOverEvent.defaultPrevented).toBe(true);
+    });
+
+    it("dra-over med en variabel hindrer nettleserens standard håndtering", async () => {
+      renderEditor();
+
+      const felt = await screen.findByLabelText("Dokumentinnhold");
+      const dragOverEvent = createEvent.dragOver(felt, {
+        dataTransfer: { types: [VARIABEL_FLYTT_MIMETYPE] },
       });
       fireEvent(felt, dragOverEvent);
       expect(dragOverEvent.defaultPrevented).toBe(true);

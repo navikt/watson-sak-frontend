@@ -5,8 +5,9 @@ import {
   ImageIcon,
   NumberListIcon,
   TableIcon,
+  TagIcon,
 } from "@navikt/aksel-icons";
-import { Alert, Button, HStack, Loader, Select, Tooltip } from "@navikt/ds-react";
+import { ActionMenu, Alert, Button, HStack, Loader, Select, Tooltip } from "@navikt/ds-react";
 import {
   BlockquotePlugin,
   BoldPlugin,
@@ -78,6 +79,14 @@ import {
   STANDARD_SIDEPANEL,
   type SidepanelValg,
 } from "./DokumentSidepanel";
+import { VariabelElement, VariabelVerdierProvider } from "./variabler/VariabelElement";
+import { VariabelListe } from "./variabler/VariabelListe";
+import { VARIABEL_FLYTT_MIMETYPE, VariabelPlugin } from "./variabler/VariabelPlugin";
+import {
+  STANDARD_VARIABLER,
+  type VariabelId,
+  type VariabelVerdier,
+} from "./variabler/variabel-typer";
 
 /** Sporer hvilken formateringsknapp som brukes, knyttet til riktig dokument. */
 const FormaterContext = createContext<(etikett: string) => void>(() => {});
@@ -160,12 +169,14 @@ function Verktøylinje({
   onVelgSidepanel,
   lasterOppBilde,
   onÅpneBildeModal,
+  onSettInnVariabel,
 }: {
   onFormater: (etikett: string) => void;
   aktivtSidepanel: SidepanelValg;
   onVelgSidepanel: (valg: SidepanelValg) => void;
   lasterOppBilde: boolean;
   onÅpneBildeModal: () => void;
+  onSettInnVariabel: (variabelId: VariabelId) => void;
 }) {
   const editor = useEditorState();
   const erITabell = !!editor.api.above({ match: { type: TablePlugin.key } });
@@ -361,6 +372,30 @@ function Verktøylinje({
               >
                 {lasterOppBilde ? <Loader size="xsmall" aria-hidden /> : <ImageIcon aria-hidden />}
               </VerktøyKnapp>
+              <ActionMenu>
+                <ActionMenu.Trigger>
+                  <Button
+                    type="button"
+                    size="small"
+                    variant="tertiary"
+                    aria-label="Sett inn variabel"
+                    icon={<TagIcon aria-hidden />}
+                  />
+                </ActionMenu.Trigger>
+                <ActionMenu.Content>
+                  <ActionMenu.Group label="Sett inn variabel">
+                    {STANDARD_VARIABLER.map(({ id, etikett }) => (
+                      <ActionMenu.Item
+                        key={id}
+                        icon={<TagIcon aria-hidden />}
+                        onSelect={() => onSettInnVariabel(id)}
+                      >
+                        {etikett}
+                      </ActionMenu.Item>
+                    ))}
+                  </ActionMenu.Group>
+                </ActionMenu.Content>
+              </ActionMenu>
             </HStack>
 
             <SidepanelMeny aktivt={aktivtSidepanel} onVelg={onVelgSidepanel} />
@@ -373,6 +408,10 @@ function Verktøylinje({
 
 /** Under denne bredden bruker vi vanlig sidescroll – da stables flatene under hverandre. */
 const MINSTE_BREDDE_FOR_EGEN_SCROLL = 1024;
+
+function erOrdtegn(tegn: string | undefined) {
+  return !!tegn && /[\p{L}\p{N}]/u.test(tegn);
+}
 
 /**
  * Måler hvor høy editorflaten kan være for at siden akkurat fyller vinduet, uten å
@@ -449,6 +488,7 @@ const PLUGINS = [
     </PlateElement>
   )),
   ImagePlugin.withComponent(BildeElement),
+  VariabelPlugin.withComponent(VariabelElement),
 ];
 
 type DokumentEditorProps = {
@@ -462,6 +502,8 @@ type DokumentEditorProps = {
   dokumentliste: ReactNode;
   /** Lagrestatusen som vises nederst i sidepanelet. Eies av siden som lagrer. */
   lagreStatus?: ReactNode;
+  /** Verdier fra saken og innlogget bruker som levende variabler løses mot. */
+  variabelVerdier: VariabelVerdier;
 };
 
 export function DokumentEditor({
@@ -472,6 +514,7 @@ export function DokumentEditor({
   docId,
   dokumentliste,
   lagreStatus,
+  variabelVerdier,
 }: DokumentEditorProps) {
   const editor = usePlateEditor({
     plugins: PLUGINS,
@@ -485,6 +528,18 @@ export function DokumentEditor({
   const [bildeFeil, settBildeFeil] = useState<string | null>(null);
   const [bildeModalÅpen, settBildeModalÅpen] = useState(false);
   const revalidator = useRevalidator();
+  const settInnVariabel = useCallback(
+    (variabelId: VariabelId) => {
+      editor.tf.insertNodes({
+        type: VariabelPlugin.key,
+        variabelId,
+        children: [{ text: "" }],
+      });
+      const etikett = STANDARD_VARIABLER.find((variabel) => variabel.id === variabelId)?.etikett;
+      sporHendelse("dokument formatert", { sakId, docId, format: `Sett inn variabel: ${etikett}` });
+    },
+    [docId, editor, sakId],
+  );
 
   const settInnBilde = useCallback(
     (fil: FilResponse) => {
@@ -573,6 +628,69 @@ export function DokumentEditor({
       return;
     }
 
+    if (event.dataTransfer.types.includes(VARIABEL_FLYTT_MIMETYPE)) {
+      event.preventDefault();
+      event.stopPropagation();
+      const rå = event.dataTransfer.getData(VARIABEL_FLYTT_MIMETYPE);
+      let kildesti: number[];
+      try {
+        kildesti = JSON.parse(rå) as number[];
+      } catch {
+        return;
+      }
+      const kilde = editor.api.node(kildesti);
+      if (!kilde || !("variabelId" in kilde[0])) return;
+      const kildeElement = editor.api.toDOMNode(kilde[0]);
+      if (event.target instanceof Node && kildeElement?.contains(event.target)) return;
+      const målElement =
+        event.target instanceof Element
+          ? event.target.closest<HTMLElement>("[data-variabel-sti]")
+          : null;
+      if (målElement?.dataset.variabelSti === kildesti.join(".")) return;
+
+      let slippområde: ReturnType<typeof editor.api.findEventRange>;
+      try {
+        slippområde = editor.api.findEventRange(event);
+      } catch {
+        return;
+      }
+      if (!slippområde) return;
+
+      const slipptekst = editor.api.node(slippområde.anchor)?.[0];
+      const tekst =
+        slipptekst && "text" in slipptekst && typeof slipptekst.text === "string"
+          ? slipptekst.text
+          : undefined;
+      let offset = slippområde.anchor.offset;
+      if (tekst && erOrdtegn(tekst[offset - 1]) && erOrdtegn(tekst[offset])) {
+        let start = offset;
+        let slutt = offset;
+        while (erOrdtegn(tekst[start - 1])) start--;
+        while (erOrdtegn(tekst[slutt])) slutt++;
+        offset = offset - start < slutt - offset ? start : slutt;
+      }
+      const slippunkt = { ...slippområde.anchor, offset };
+      const trengerMellomromFør = tekst ? erOrdtegn(tekst[offset - 1]) : false;
+      const trengerMellomromEtter = tekst ? erOrdtegn(tekst[offset]) : false;
+
+      // En point-ref følger slipppunktet mens originalnoden fjernes, så flyttingen
+      // aldri kan ende opp med to kopier av samme inline-variabel.
+      const slippunktReferanse = editor.api.pointRef(slippunkt);
+      const flyttetVariabel = structuredClone(kilde[0]);
+      editor.tf.removeNodes({ at: kildesti });
+      const oppdatertSlippunkt = slippunktReferanse.unref();
+      if (!oppdatertSlippunkt) return;
+      editor.tf.insertNodes(
+        [
+          ...(trengerMellomromFør ? [{ text: " " }] : []),
+          flyttetVariabel,
+          ...(trengerMellomromEtter ? [{ text: " " }] : []),
+        ],
+        { at: oppdatertSlippunkt },
+      );
+      return;
+    }
+
     const filer = event.dataTransfer?.files;
     if (!filer || filer.length === 0) return;
     // Forhindre at nettleseren åpner/navigerer til filen så snart det slippes filer i det
@@ -586,7 +704,8 @@ export function DokumentEditor({
   function håndterDragOver(event: React.DragEvent<HTMLDivElement>) {
     if (
       event.dataTransfer.types.includes("Files") ||
-      event.dataTransfer.types.includes(BILDE_FLYTT_MIMETYPE)
+      event.dataTransfer.types.includes(BILDE_FLYTT_MIMETYPE) ||
+      event.dataTransfer.types.includes(VARIABEL_FLYTT_MIMETYPE)
     ) {
       event.preventDefault();
     }
@@ -603,86 +722,95 @@ export function DokumentEditor({
   }
 
   return (
-    <Plate
-      editor={editor}
-      readOnly={!redigerbar}
-      onChange={({ value }) => onEndring(value as DokumentInnhold)}
+    <VariabelVerdierProvider
+      verdier={variabelVerdier}
+      erVariabelpanelÅpent={aktivtSidepanel === "variabler"}
     >
-      {/* Editorflaten fyller resten av vinduet og scroller selv, slik at verktøylinja og
-      sidepanelet står stille mens man jobber i et langt dokument. */}
-      <div
-        ref={flateRef}
-        style={høyde ? { height: høyde } : undefined}
-        className="flex flex-col gap-[var(--ax-space-12)] overflow-hidden"
+      <Plate
+        editor={editor}
+        readOnly={!redigerbar}
+        onChange={({ value }) => onEndring(value as DokumentInnhold)}
       >
-        {redigerbar && (
-          <div className="px-[var(--ax-space-16)] lg:px-[var(--ax-space-24)]">
-            <Verktøylinje
-              onFormater={(format) => sporHendelse("dokument formatert", { sakId, docId, format })}
-              aktivtSidepanel={aktivtSidepanel}
-              onVelgSidepanel={settAktivtSidepanel}
-              lasterOppBilde={lasterOppBilde}
-              onÅpneBildeModal={() => settBildeModalÅpen(true)}
-            />
-            {bildeFeil && !bildeModalÅpen && (
-              <Alert variant="error" size="small" className="mt-[var(--ax-space-8)]">
-                {bildeFeil}
-              </Alert>
-            )}
-          </div>
-        )}
-        {/* Grå flate med «arket» til venstre og sidepanelet som en egen seksjon til høyre.
-        Raden går helt ut til kantene fordi ruta har bedt layouten om full bredde. */}
-        <div className="flex min-h-0 flex-1 flex-col lg:flex-row lg:items-stretch">
-          <div className="ml-[var(--ax-space-16)] flex min-w-0 flex-1 justify-center overflow-y-auto rounded-lg bg-ax-bg-neutral-moderate px-[var(--ax-space-16)] py-[var(--ax-space-32)] lg:ml-[var(--ax-space-24)] lg:px-[var(--ax-space-48)]">
-            <Kort
-              padding={{ xs: "space-24", md: "space-64" }}
-              className="h-fit w-full max-w-[210mm] shadow-[var(--ax-shadow-dialog)]"
-            >
-              <PlateContent
-                role="textbox"
-                aria-multiline
-                aria-label="Dokumentinnhold"
-                onDrop={redigerbar ? håndterDrop : undefined}
-                onDragOver={redigerbar ? håndterDragOver : undefined}
-                onPaste={redigerbar ? håndterPaste : undefined}
-                className={
-                  "min-h-[60vh] focus:outline-none [&_h1]:mt-8 [&_h1]:mb-4 [&_h1]:text-2xl [&_h1]:font-bold " +
-                  "[&_h2]:mt-6 [&_h2]:mb-3 [&_h2]:text-xl [&_h2]:font-bold " +
-                  "[&_h3]:mt-4 [&_h3]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold " +
-                  "[&>*:first-child]:mt-0 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
-                  "[&_blockquote]:border-l-4 [&_blockquote]:border-ax-border-neutral-subtle " +
-                  "[&_blockquote]:pl-4 [&_blockquote]:italic [&_p]:mb-4 [&_p:last-child]:mb-0 " +
-                  "[&_table]:border-collapse [&_table]:my-3 [&_table]:w-full " +
-                  "[&_td]:border [&_td]:border-ax-border-neutral-subtle [&_td]:p-2 [&_td]:align-top " +
-                  "[&_th]:border [&_th]:border-ax-border-neutral-subtle [&_th]:p-2 [&_th]:align-top " +
-                  "[&_th]:bg-ax-bg-neutral-soft [&_th]:text-left [&_th]:font-semibold " +
-                  "[&_u]:underline [&_s]:line-through"
+        {/* Editorflaten fyller resten av vinduet og scroller selv, slik at verktøylinja og
+      sidepanelet står stille mens man jobber i et langt dokument. */}
+        <div
+          ref={flateRef}
+          style={høyde ? { height: høyde } : undefined}
+          className="flex flex-col gap-[var(--ax-space-12)] overflow-hidden"
+        >
+          {redigerbar && (
+            <div className="px-[var(--ax-space-16)] lg:px-[var(--ax-space-24)]">
+              <Verktøylinje
+                onFormater={(format) =>
+                  sporHendelse("dokument formatert", { sakId, docId, format })
                 }
+                aktivtSidepanel={aktivtSidepanel}
+                onVelgSidepanel={settAktivtSidepanel}
+                lasterOppBilde={lasterOppBilde}
+                onÅpneBildeModal={() => settBildeModalÅpen(true)}
+                onSettInnVariabel={settInnVariabel}
               />
-            </Kort>
-          </div>
+              {bildeFeil && !bildeModalÅpen && (
+                <Alert variant="error" size="small" className="mt-[var(--ax-space-8)]">
+                  {bildeFeil}
+                </Alert>
+              )}
+            </div>
+          )}
+          {/* Grå flate med «arket» til venstre og sidepanelet som en egen seksjon til høyre.
+        Raden går helt ut til kantene fordi ruta har bedt layouten om full bredde. */}
+          <div className="flex min-h-0 flex-1 flex-col lg:flex-row lg:items-stretch">
+            <div className="ml-[var(--ax-space-16)] flex min-w-0 flex-1 justify-center overflow-y-auto rounded-lg bg-ax-bg-neutral-moderate px-[var(--ax-space-16)] py-[var(--ax-space-32)] lg:ml-[var(--ax-space-24)] lg:px-[var(--ax-space-48)]">
+              <Kort
+                padding={{ xs: "space-24", md: "space-64" }}
+                className="h-fit w-full max-w-[210mm] shadow-[var(--ax-shadow-dialog)]"
+              >
+                <PlateContent
+                  role="textbox"
+                  aria-multiline
+                  aria-label="Dokumentinnhold"
+                  onDrop={redigerbar ? håndterDrop : undefined}
+                  onDragOver={redigerbar ? håndterDragOver : undefined}
+                  onPaste={redigerbar ? håndterPaste : undefined}
+                  className={
+                    "min-h-[60vh] focus:outline-none [&_h1]:mt-8 [&_h1]:mb-4 [&_h1]:text-2xl [&_h1]:font-bold " +
+                    "[&_h2]:mt-6 [&_h2]:mb-3 [&_h2]:text-xl [&_h2]:font-bold " +
+                    "[&_h3]:mt-4 [&_h3]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold " +
+                    "[&>*:first-child]:mt-0 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
+                    "[&_blockquote]:border-l-4 [&_blockquote]:border-ax-border-neutral-subtle " +
+                    "[&_blockquote]:pl-4 [&_blockquote]:italic [&_p]:mb-4 [&_p:last-child]:mb-0 " +
+                    "[&_table]:border-collapse [&_table]:my-3 [&_table]:w-full " +
+                    "[&_td]:border [&_td]:border-ax-border-neutral-subtle [&_td]:p-2 [&_td]:align-top " +
+                    "[&_th]:border [&_th]:border-ax-border-neutral-subtle [&_th]:p-2 [&_th]:align-top " +
+                    "[&_th]:bg-ax-bg-neutral-soft [&_th]:text-left [&_th]:font-semibold " +
+                    "[&_u]:underline [&_s]:line-through"
+                  }
+                />
+              </Kort>
+            </div>
 
-          <Sidepanel
-            aktivt={aktivtSidepanel}
-            dokumentliste={dokumentliste}
-            lagreStatus={lagreStatus}
-          />
+            <Sidepanel
+              aktivt={aktivtSidepanel}
+              dokumentliste={dokumentliste}
+              variabelInnhold={<VariabelListe onSettInn={settInnVariabel} disabled={!redigerbar} />}
+              lagreStatus={lagreStatus}
+            />
+          </div>
         </div>
-      </div>
-      <SettInnBildeModal
-        åpen={bildeModalÅpen}
-        sakId={sakId}
-        lasterOpp={lasterOppBilde}
-        feil={bildeFeil}
-        onClose={() => settBildeModalÅpen(false)}
-        onVelg={settInnBilde}
-        onLastOpp={(filer) => {
-          void håndterBildefiler(filer).then((ok) => {
-            if (ok) settBildeModalÅpen(false);
-          });
-        }}
-      />
-    </Plate>
+        <SettInnBildeModal
+          åpen={bildeModalÅpen}
+          sakId={sakId}
+          lasterOpp={lasterOppBilde}
+          feil={bildeFeil}
+          onClose={() => settBildeModalÅpen(false)}
+          onVelg={settInnBilde}
+          onLastOpp={(filer) => {
+            void håndterBildefiler(filer).then((ok) => {
+              if (ok) settBildeModalÅpen(false);
+            });
+          }}
+        />
+      </Plate>
+    </VariabelVerdierProvider>
   );
 }

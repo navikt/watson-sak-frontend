@@ -1,8 +1,17 @@
 import { describe, expect, it } from "vitest";
+import type { DokumentInnhold } from "~/saker/filer/typer";
 import { arbeidRapportmal } from "./arbeid";
 import { ensligForsørgerRapportmal } from "./enslig-forsørger";
 import { byggMalInnhold, type MalId } from "./index";
 import { utlandRapportmal } from "./utland";
+
+function variabelIder(innhold: DokumentInnhold): string[] {
+  return (
+    JSON.stringify(innhold)
+      .match(/"variabelId":"([^"]+)"/g)
+      ?.map((treff) => treff.replace(/"variabelId":"|"/g, "")) ?? []
+  );
+}
 
 const MALER: { id: MalId; bygger: typeof arbeidRapportmal }[] = [
   { id: "arbeid", bygger: arbeidRapportmal },
@@ -36,6 +45,14 @@ describe("rapportmaler", () => {
     const ikkeStraffesak = bygger({ erStraffesak: false });
 
     expect(JSON.stringify(straffesak)).not.toBe(JSON.stringify(ikkeStraffesak));
+  });
+
+  it.each(MALER)("$id: setter inn relevante standardvariabler", ({ bygger }) => {
+    const variabler = variabelIder(bygger({ erStraffesak: false }));
+
+    expect(variabler).toEqual(
+      expect.arrayContaining(["navn", "fødselsnummer", "dagens-dato", "saksbehandler", "avdeling"]),
+    );
   });
 
   it("byggMalInnhold delegerer til riktig mal basert på malId", () => {

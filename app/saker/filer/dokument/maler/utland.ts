@@ -7,10 +7,12 @@ import {
   mal,
   metadataTabell,
   p,
+  pMedVariabler,
   rad,
   tabell,
   topptekst,
   ul,
+  variabel,
 } from "./node-builders";
 
 export function utlandRapportmal({ erStraffesak }: { erStraffesak: boolean }): DokumentInnhold {
@@ -215,10 +217,10 @@ export function utlandRapportmal({ erStraffesak }: { erStraffesak: boolean }): D
           ),
         ]),
     p("Vi bistår gjerne hvis dere har spørsmål i saken."),
-    p("Kontaktperson: [saksbehandlers navn]"),
+    pMedVariabler("Kontaktperson: ", variabel("saksbehandler")),
     p("Vennlig hilsen"),
-    p("Nav kontroll [enhet]"),
-    p("[navn]"),
+    pMedVariabler("Nav kontroll ", variabel("avdeling")),
+    pMedVariabler(variabel("saksbehandler")),
     p("fagansvarlig rådgiver"),
 
     h1("Vedlegg"),

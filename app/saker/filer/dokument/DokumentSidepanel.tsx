@@ -26,7 +26,6 @@ const SIDEPANELER: Sidepanelvalg[] = [
     verdi: "variabler",
     etikett: "Variabler",
     ikon: TagIcon,
-    kommerSnart: "Her kan du snart sette inn variabler som fylles ut automatisk i dokumentet.",
   },
   {
     verdi: "historikk",
@@ -83,30 +82,38 @@ type SidepanelProps = {
   aktivt: SidepanelValg;
   /** Innholdet for «Dokumenter». Sendes inn fordi dokumenttreet eies av siden. */
   dokumentliste: ReactNode;
+  /** Innholdet for «Variabler». Sendes inn fordi innsetting eies av editoren. */
+  variabelInnhold: ReactNode;
   /** Lagrestatusen, som ligger nederst i panelet. Eies av siden som gjør lagringen. */
   lagreStatus?: ReactNode;
 };
 
 /** Sidepanelet til høyre for dokumentet. Egen fullhøyde-seksjon, ikke et kort oppå det grå. */
-export function Sidepanel({ aktivt, dokumentliste, lagreStatus }: SidepanelProps) {
+export function Sidepanel({ aktivt, dokumentliste, variabelInnhold, lagreStatus }: SidepanelProps) {
   const valg = finnValg(aktivt);
+  const innhold =
+    aktivt === "dokumenter" ? (
+      dokumentliste
+    ) : aktivt === "variabler" ? (
+      variabelInnhold
+    ) : (
+      <BodyShort size="small" className="text-ax-text-neutral-subtle">
+        {valg.kommerSnart}
+      </BodyShort>
+    );
 
   return (
-    <aside className="flex w-full shrink-0 flex-col gap-[var(--ax-space-12)] overflow-hidden border-t border-ax-border-neutral-subtle bg-ax-bg-default p-[var(--ax-space-16)] lg:w-[400px] lg:border-t-0">
+    <aside className="flex w-full shrink-0 flex-col gap-[var(--ax-space-12)] overflow-hidden border-t border-ax-border-neutral-subtle bg-ax-bg-default px-[var(--ax-space-16)] pt-0 pb-[var(--ax-space-16)] lg:w-[400px] lg:border-t-0">
       <VStack
         gap="space-12"
         className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-ax-border-neutral-subtle bg-ax-bg-default p-[var(--ax-space-16)]"
       >
-        <Heading level="2" size="xsmall">
-          {valg.etikett}
-        </Heading>
-        {valg.kommerSnart ? (
-          <BodyShort size="small" className="text-ax-text-neutral-subtle">
-            {valg.kommerSnart}
-          </BodyShort>
-        ) : (
-          dokumentliste
+        {aktivt !== "variabler" && (
+          <Heading level="2" size="xsmall">
+            {valg.etikett}
+          </Heading>
         )}
+        {innhold}
       </VStack>
 
       {lagreStatus && <div className="shrink-0">{lagreStatus}</div>}

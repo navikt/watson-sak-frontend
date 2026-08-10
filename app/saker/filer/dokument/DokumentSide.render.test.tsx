@@ -58,6 +58,13 @@ function renderSide(kanRedigere: boolean) {
         dokumenter,
         sakReferanse: "ABC-123",
         kanRedigere,
+        variabelVerdier: {
+          navn: "Ola Nordmann",
+          fødselsnummer: "01010112345",
+          saksnummer: "Sak 105",
+          saksbehandler: "Test Saksbehandler",
+          avdeling: "4812",
+        },
       }),
     },
   ]);
@@ -90,6 +97,27 @@ describe("DokumentSide", () => {
     const sidepanel = screen.getByRole("complementary");
     expect(within(sidepanel).getByText(/hvem som har endret dokumentet/)).toBeDefined();
     expect(within(sidepanel).queryByRole("link", { name: /Vedtak/ })).toBeNull();
+  });
+
+  it("viser variabler uten søkefelt når listen er kort", async () => {
+    renderSide(true);
+
+    fireEvent.click(await screen.findByRole("button", { name: /Dokumenter/ }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Variabler" }));
+
+    const sidepanel = screen.getByRole("complementary");
+    expect(within(sidepanel).getByText("Klikk for å sette inn i dokumentet")).toBeDefined();
+    expect(
+      within(sidepanel).getByRole("button", { name: "Sett inn variabelen Navn" }),
+    ).toBeDefined();
+    expect(within(sidepanel).queryByLabelText("Søk i variabler")).toBeNull();
+
+    fireEvent.click(
+      within(sidepanel).getByRole("button", { name: "Sett inn variabelen Fødselsnummer" }),
+    );
+    expect((await screen.findByText("01010112345")).className).toContain(
+      "bg-ax-bg-accent-moderate",
+    );
   });
 
   it("viser slett-knapp og en deaktivert medunderskriver-knapp når man kan redigere", async () => {

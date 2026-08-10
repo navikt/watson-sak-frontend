@@ -8,6 +8,21 @@ import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
 import { hentDokument, hentDokumenttreForSak, lagreDokument } from "../mock-data.server";
 import { erAktivSakKontrollsak } from "../../handlinger/tilgjengeligeHandlinger";
 import type { Route } from "./+types/DokumentSide.route";
+import type { KontrollsakResponse } from "~/saker/types.backend";
+import type { VariabelVerdier } from "./variabler/variabel-typer";
+
+function byggVariabelVerdier(
+  sak: KontrollsakResponse,
+  innlogget: Awaited<ReturnType<typeof hentInnloggetBruker>>,
+): VariabelVerdier {
+  return {
+    navn: sak.personNavn,
+    fødselsnummer: sak.personIdent,
+    saksnummer: `Sak ${sak.id}`,
+    saksbehandler: innlogget.name,
+    avdeling: innlogget.enhet,
+  };
+}
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   if (!skalBrukeMockdata) {
@@ -39,6 +54,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       dokumenter: sak.dokumenter ?? [],
       sakReferanse,
       kanRedigere: kanSe && erAktivSakKontrollsak(sak.status),
+      variabelVerdier: byggVariabelVerdier(sak, innlogget),
     };
   }
 
@@ -50,7 +66,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     throw data("Ingen tilgang til denne saken", { status: 403 });
   }
 
-  const dokument = hentDokument(request, String(tilgang.sak.id), params.docId);
+  const [dokument, innlogget] = await Promise.all([
+    hentDokument(request, String(tilgang.sak.id), params.docId),
+    hentInnloggetBruker({ request }),
+  ]);
   if (!dokument) {
     throw data("Dokument ikke funnet", { status: 404 });
   }
@@ -60,6 +79,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     dokumenter: hentDokumenttreForSak(request, String(tilgang.sak.id)),
     sakReferanse: params.sakId,
     kanRedigere: tilgang.kanRedigereDokumenter,
+    variabelVerdier: byggVariabelVerdier(tilgang.sak, innlogget),
   };
 }
 

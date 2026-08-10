@@ -65,11 +65,13 @@ function DokumentRedigering({
   dokumenter,
   sakReferanse,
   kanRedigere,
+  variabelVerdier,
 }: {
   dokument: LoaderData["dokument"];
   dokumenter: LoaderData["dokumenter"];
   sakReferanse: string;
   kanRedigere: boolean;
+  variabelVerdier: LoaderData["variabelVerdier"];
 }) {
   const [tittel, setTittel] = useState(dokument.tittel);
   const tittelRef = useRef(dokument.tittel);
@@ -184,6 +186,7 @@ function DokumentRedigering({
         onEndring={håndterInnhold}
         sakId={sakReferanse}
         docId={dokument.id}
+        variabelVerdier={variabelVerdier}
         dokumentliste={
           dokumenter.length > 0 ? (
             <DokumentTre
@@ -212,7 +215,8 @@ function DokumentRedigering({
 }
 
 export default function DokumentSide() {
-  const { dokument, dokumenter, sakReferanse, kanRedigere } = useLoaderData<typeof loader>();
+  const { dokument, dokumenter, sakReferanse, kanRedigere, variabelVerdier } =
+    useLoaderData<typeof loader>();
 
   // `key` på dokument-id sørger for at all lokal redigeringstilstand (tittel, innhold,
   // editor-instans og autolagring) nullstilles når man navigerer til et annet dokument
@@ -224,6 +228,7 @@ export default function DokumentSide() {
       dokumenter={dokumenter}
       sakReferanse={sakReferanse}
       kanRedigere={kanRedigere}
+      variabelVerdier={variabelVerdier}
     />
   );
 }
