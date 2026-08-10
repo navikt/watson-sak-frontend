@@ -64,6 +64,7 @@ export function VariabelElement(props: PlateElementProps<VariabelElementType>) {
       <Tooltip content={definisjon?.etikett ?? "Ukjent variabel"}>
         <span
           contentEditable={false}
+          data-variabel-sti={props.path.join(".")}
           draggable={!readOnly}
           onDragStart={(event) => {
             event.dataTransfer.effectAllowed = "move";

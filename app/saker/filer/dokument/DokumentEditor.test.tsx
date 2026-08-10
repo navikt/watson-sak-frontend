@@ -96,6 +96,7 @@ describe("DokumentEditor", () => {
     expect(onEndring).toHaveBeenCalled();
 
     expect(screen.getByText("Ola Nordmann").getAttribute("draggable")).toBe("true");
+    expect(screen.getByText("Ola Nordmann").closest("[data-variabel-sti]")).not.toBeNull();
   });
 
   it("har et tilgjengelig redigeringsfelt med aria-label", async () => {

@@ -409,6 +409,10 @@ function Verktøylinje({
 /** Under denne bredden bruker vi vanlig sidescroll – da stables flatene under hverandre. */
 const MINSTE_BREDDE_FOR_EGEN_SCROLL = 1024;
 
+function erOrdtegn(tegn: string | undefined) {
+  return !!tegn && /[\p{L}\p{N}]/u.test(tegn);
+}
+
 /**
  * Måler hvor høy editorflaten kan være for at siden akkurat fyller vinduet, uten å
  * scrolle. Vi måler plassen over og under flaten – begge er uavhengige av flatens egen
@@ -635,6 +639,11 @@ export function DokumentEditor({
       }
       const kilde = editor.api.node(kildesti);
       if (!kilde || !("variabelId" in kilde[0])) return;
+      const målElement =
+        event.target instanceof Element
+          ? event.target.closest<HTMLElement>("[data-variabel-sti]")
+          : null;
+      if (målElement?.dataset.variabelSti === kildesti.join(".")) return;
 
       let slippområde: ReturnType<typeof editor.api.findEventRange>;
       try {
@@ -644,10 +653,38 @@ export function DokumentEditor({
       }
       if (!slippområde) return;
 
-      const kildereferanse = editor.api.pathRef(kildesti);
-      editor.tf.insertNodes(kilde[0], { at: slippområde });
-      const oppdatertKildesti = kildereferanse.unref();
-      if (oppdatertKildesti) editor.tf.removeNodes({ at: oppdatertKildesti });
+      const slipptekst = editor.api.node(slippområde.anchor)?.[0];
+      const tekst =
+        slipptekst && "text" in slipptekst && typeof slipptekst.text === "string"
+          ? slipptekst.text
+          : undefined;
+      let offset = slippområde.anchor.offset;
+      if (tekst && erOrdtegn(tekst[offset - 1]) && erOrdtegn(tekst[offset])) {
+        let start = offset;
+        let slutt = offset;
+        while (erOrdtegn(tekst[start - 1])) start--;
+        while (erOrdtegn(tekst[slutt])) slutt++;
+        offset = offset - start < slutt - offset ? start : slutt;
+      }
+      const slippunkt = { ...slippområde.anchor, offset };
+      const trengerMellomromFør = tekst ? erOrdtegn(tekst[offset - 1]) : false;
+      const trengerMellomromEtter = tekst ? erOrdtegn(tekst[offset]) : false;
+
+      // En point-ref følger slipppunktet mens originalnoden fjernes, så flyttingen
+      // aldri kan ende opp med to kopier av samme inline-variabel.
+      const slippunktReferanse = editor.api.pointRef(slippunkt);
+      const flyttetVariabel = structuredClone(kilde[0]);
+      editor.tf.removeNodes({ at: kildesti });
+      const oppdatertSlippunkt = slippunktReferanse.unref();
+      if (!oppdatertSlippunkt) return;
+      editor.tf.insertNodes(
+        [
+          ...(trengerMellomromFør ? [{ text: " " }] : []),
+          flyttetVariabel,
+          ...(trengerMellomromEtter ? [{ text: " " }] : []),
+        ],
+        { at: oppdatertSlippunkt },
+      );
       return;
     }
 
