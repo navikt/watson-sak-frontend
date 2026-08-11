@@ -8,6 +8,7 @@ import {
   VStack,
   useDatepicker,
 } from "@navikt/ds-react";
+import { formaterTilIsoDato } from "~/utils/date-utils";
 import { behandlendeEnheter } from "./behandlendeEnheter";
 
 const oppgavetypeValg = [
@@ -33,7 +34,7 @@ export function OppgaveSkjema({ fields }: OppgaveSkjemaProps) {
   const { datepickerProps, inputProps } = useDatepicker({
     fromDate: new Date(),
     onDateChange: (date) => {
-      frist.change(date ? date.toISOString().split("T")[0] : "");
+      frist.change(date ? formaterTilIsoDato(date) : "");
     },
   });
 
