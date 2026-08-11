@@ -51,7 +51,8 @@ const dokumentResponseSchema = dokumentNodeSchema.extend({
 const dokumentHistorikkNodeSchema = z.object({
   id: z.string(),
   tittel: z.string(),
-  endretAv: z.string(),
+  endretAvIdent: z.string(),
+  endretAvNavn: z.string(),
   endretTidspunkt: z.string(),
 });
 

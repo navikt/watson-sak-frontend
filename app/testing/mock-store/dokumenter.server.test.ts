@@ -62,7 +62,11 @@ describe("mock-store dokumenter", () => {
 
     const historikk = hentDokumentHistorikk(state(), sakUtenDokumenter, id);
     expect(historikk).toHaveLength(1);
-    expect(historikk[0]).toMatchObject({ tittel: "Uten tittel", endretAv: "Ola Nordmann" });
+    expect(historikk[0]).toMatchObject({
+      tittel: "Uten tittel",
+      endretAvIdent: "mock-ola-nordmann",
+      endretAvNavn: "Ola Nordmann",
+    });
   });
 
   it("lagrer tittel og innhold på et dokument", () => {

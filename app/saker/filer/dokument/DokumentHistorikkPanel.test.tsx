@@ -7,7 +7,8 @@ const historikkpunkt: DokumentHistorikk = {
   id: "historikk-1",
   tittel: "Tidligere tittel",
   innhold: [{ type: "p", children: [{ text: "Tidligere innhold" }] }],
-  endretAv: "Kari Nordmann",
+  endretAvIdent: "Z123456",
+  endretAvNavn: "Kari Nordmann",
   endretTidspunkt: "2026-08-10T10:00:00Z",
 };
 
@@ -85,5 +86,27 @@ describe("DokumentHistorikkPanel", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Prøv igjen" }));
     expect(await screen.findByText("Tidligere innhold")).toBeDefined();
+  });
+
+  it("grupperer ikke historikkpunkter fra ulike saksbehandlere med samme navn", () => {
+    render(
+      <DokumentHistorikkPanel
+        historikk={[
+          historikkpunkt,
+          {
+            ...historikkpunkt,
+            id: "historikk-2",
+            endretAvIdent: "Z654321",
+            endretTidspunkt: "2026-08-10T09:00:00Z",
+          },
+        ]}
+        kanGjenopprette
+        hentHistorikkpunkt={vi.fn()}
+        gjenopprett={vi.fn()}
+        onGjenopprettet={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText(/Redigeringsøkt/)).toBeNull();
   });
 });

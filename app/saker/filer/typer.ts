@@ -46,7 +46,8 @@ export type Dokument = {
 export type DokumentHistorikkNode = {
   id: string;
   tittel: string;
-  endretAv: string;
+  endretAvIdent: string;
+  endretAvNavn: string;
   endretTidspunkt: string;
 };
 

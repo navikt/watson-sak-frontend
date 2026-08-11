@@ -27,6 +27,10 @@ function tomtInnhold(): DokumentInnhold {
   return [{ type: "p", children: [{ text: "" }] }];
 }
 
+function mockIdentFraNavn(navn: string): string {
+  return `mock-${navn.toLowerCase().replaceAll(" ", "-")}`;
+}
+
 type DokumentSeed = {
   id: string;
   tittel: string;
@@ -162,7 +166,8 @@ export function opprettDokument(
       id: crypto.randomUUID(),
       tittel: "Uten tittel",
       innhold: tomtInnhold(),
-      endretAv: opprettetAv,
+      endretAvIdent: mockIdentFraNavn(opprettetAv),
+      endretAvNavn: opprettetAv,
       endretTidspunkt: new Date().toISOString(),
     },
   ]);
@@ -227,9 +232,10 @@ export function opprettEllerOppdaterDokumentHistorikk(
   const eksisterende = state.dokumentHistorikk.get(nøkkel) ?? [];
   const nyeste = eksisterende[0];
   const nå = new Date();
+  const endretAvIdent = mockIdentFraNavn(endretAv);
   if (
     nyeste &&
-    nyeste.endretAv === endretAv &&
+    nyeste.endretAvIdent === endretAvIdent &&
     nå.getTime() - new Date(nyeste.endretTidspunkt).getTime() < 5 * 60 * 1000
   ) {
     nyeste.tittel = dokument.tittel;
@@ -240,7 +246,8 @@ export function opprettEllerOppdaterDokumentHistorikk(
       id: crypto.randomUUID(),
       tittel: dokument.tittel,
       innhold: dokument.innhold,
-      endretAv,
+      endretAvIdent,
+      endretAvNavn: endretAv,
       endretTidspunkt: nå.toISOString(),
     });
   }
@@ -263,7 +270,8 @@ export function gjenopprettDokumentHistorikk(
     id: crypto.randomUUID(),
     tittel: gjeldende.tittel,
     innhold: gjeldende.innhold,
-    endretAv: gjeldende.endretAv,
+    endretAvIdent: mockIdentFraNavn(gjeldende.endretAv),
+    endretAvNavn: gjeldende.endretAv,
     endretTidspunkt: new Date().toISOString(),
   });
   const gjenopprettet = lagreDokument(state, sakId, docId, {
@@ -276,7 +284,8 @@ export function gjenopprettDokumentHistorikk(
       id: crypto.randomUUID(),
       tittel: gjenopprettet.tittel,
       innhold: gjenopprettet.innhold,
-      endretAv,
+      endretAvIdent: mockIdentFraNavn(endretAv),
+      endretAvNavn: endretAv,
       endretTidspunkt: new Date().toISOString(),
     });
   }

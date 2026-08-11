@@ -36,7 +36,8 @@ function hentTekst(verdi: unknown): string {
 }
 
 type Historikkgruppe = {
-  endretAv: string;
+  endretAvIdent: string;
+  endretAvNavn: string;
   punkter: DokumentHistorikkNode[];
 };
 
@@ -45,7 +46,7 @@ function grupperHistorikk(historikk: DokumentHistorikkNode[]): Historikkgruppe[]
     const forrigeGruppe = grupper.at(-1);
     const sistePunkt = forrigeGruppe?.punkter.at(-1);
     const erSammeØkt =
-      forrigeGruppe?.endretAv === punkt.endretAv &&
+      forrigeGruppe?.endretAvIdent === punkt.endretAvIdent &&
       sistePunkt !== undefined &&
       Math.abs(
         new Date(sistePunkt.endretTidspunkt).getTime() - new Date(punkt.endretTidspunkt).getTime(),
@@ -54,7 +55,11 @@ function grupperHistorikk(historikk: DokumentHistorikkNode[]): Historikkgruppe[]
     if (erSammeØkt && forrigeGruppe) {
       forrigeGruppe.punkter.push(punkt);
     } else {
-      grupper.push({ endretAv: punkt.endretAv, punkter: [punkt] });
+      grupper.push({
+        endretAvIdent: punkt.endretAvIdent,
+        endretAvNavn: punkt.endretAvNavn,
+        punkter: [punkt],
+      });
     }
     return grupper;
   }, []);
@@ -119,10 +124,10 @@ export function DokumentHistorikkPanel({
           </BodyShort>
         )}
         {grupper.map((gruppe) => (
-          <VStack key={`${gruppe.endretAv}-${gruppe.punkter[0].id}`} gap="space-2">
+          <VStack key={`${gruppe.endretAvIdent}-${gruppe.punkter[0].id}`} gap="space-2">
             {gruppe.punkter.length > 1 && (
               <Detail className="text-ax-text-neutral-subtle">
-                Redigeringsøkt · {gruppe.endretAv}
+                Redigeringsøkt · {gruppe.endretAvNavn}
               </Detail>
             )}
             {gruppe.punkter.map((punkt) => (
@@ -138,7 +143,7 @@ export function DokumentHistorikkPanel({
                 <VStack as="span" gap="space-0">
                   <span>{punkt.tittel}</span>
                   <Detail as="span" className="text-ax-text-neutral-subtle">
-                    {punkt.endretAv} · {formaterTidspunkt(punkt.endretTidspunkt)}
+                    {punkt.endretAvNavn} · {formaterTidspunkt(punkt.endretTidspunkt)}
                   </Detail>
                 </VStack>
               </Button>
@@ -174,7 +179,7 @@ export function DokumentHistorikkPanel({
               <VStack gap="space-2">
                 <BodyShort weight="semibold">{valgt?.tittel}</BodyShort>
                 <Detail className="text-ax-text-neutral-subtle">
-                  {valgt && `${valgt.endretAv} · ${formaterTidspunkt(valgt.endretTidspunkt)}`}
+                  {valgt && `${valgt.endretAvNavn} · ${formaterTidspunkt(valgt.endretTidspunkt)}`}
                 </Detail>
               </VStack>
               <BodyLong className="whitespace-pre-wrap">
