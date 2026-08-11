@@ -28,6 +28,8 @@ export type OpprettKontrollsakRequest = {
     periodeTil: string;
     belop?: number;
   }>;
+  enhetId?: string;
+  underenhetId?: string;
 };
 
 type OpprettKontrollsakArgs = {
@@ -94,6 +96,8 @@ export async function opprettKontrollsak({
       ytelser: payload.ytelser,
       merking: payload.merking,
       arbeidsgivere: (payload.arbeidsgivere ?? []).map((orgnr) => ({ organisasjonsnummer: orgnr })),
+      enhetId: payload.enhetId ?? undefined,
+      underenhetId: payload.underenhetId ?? undefined,
     }),
   });
 

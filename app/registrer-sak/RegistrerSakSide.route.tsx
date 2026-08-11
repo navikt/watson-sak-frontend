@@ -20,7 +20,7 @@ import { Form, Link, useFetcher, useActionData, useLoaderData, useSubmit } from 
 import { sporHendelse } from "~/analytics/analytics";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { RouteConfig } from "~/routeConfig";
-import { enhetEtiketter, opprettSakSchema } from "~/registrer-sak/validering";
+import { opprettSakSchema } from "~/registrer-sak/validering";
 import { merkingEtikett } from "~/saker/kategorier";
 import type { PersonOppslagResultat } from "./person-oppslag.mock.server";
 import { action, loader } from "./RegistrerSakSide.server";
@@ -39,7 +39,7 @@ function nyYtelseRad(defaults: YtelseRadVerdier = {}): YtelseRadState {
 }
 
 export default function OpprettSakSide() {
-  const { enheter, fnr: forhåndsutfyltFnr } = useLoaderData<typeof loader>();
+  const { fnr: forhåndsutfyltFnr } = useLoaderData<typeof loader>();
   const kodeverk = useKodeverk();
   const lastResult = useActionData<typeof action>();
   const submit = useSubmit();
@@ -60,6 +60,9 @@ export default function OpprettSakSide() {
   });
 
   const [valgtKategori, setValgtKategori] = useState(fields.kategori.initialValue ?? "");
+  const [valgtEnhetId, setValgtEnhetId] = useState(
+    (fields.enhet.initialValue as string | undefined) ?? "",
+  );
 
   const [valgteMisbruktyper, setValgteMisbruktyper] = useState<string[]>(
     (fields.misbruktype.initialValue as string[]) ?? [],
@@ -446,21 +449,48 @@ export default function OpprettSakSide() {
                     ))}
                   </div>
 
-                  <Select
-                    name={fields.enhet.name}
-                    id={fields.enhet.id}
-                    label="Enhet (valgfritt)"
-                    error={fields.enhet.errors?.[0]}
-                    className="w-44"
-                    defaultValue={(fields.enhet.initialValue ?? "") as string}
-                  >
-                    <option value="">Velg enhet</option>
-                    {enheter.map((e) => (
-                      <option key={e} value={e}>
-                        {enhetEtiketter[e] ?? e}
-                      </option>
-                    ))}
-                  </Select>
+                  <VStack gap="space-8">
+                    <Select
+                      name={fields.enhet.name}
+                      id={fields.enhet.id}
+                      label="Enhet (valgfritt)"
+                      error={fields.enhet.errors?.[0]}
+                      className="w-44"
+                      value={valgtEnhetId}
+                      onChange={(e) => {
+                        setValgtEnhetId(e.target.value);
+                      }}
+                    >
+                      <option value="">Velg enhet</option>
+                      {kodeverk.enheter.map((e) => (
+                        <option key={e.id} value={e.id}>
+                          {e.navn}
+                        </option>
+                      ))}
+                    </Select>
+
+                    {(() => {
+                      const valgtEnhet = kodeverk.enheter.find((e) => e.id === valgtEnhetId);
+                      if (!valgtEnhet || valgtEnhet.underenheter.length === 0) return null;
+                      return (
+                        <Select
+                          name={fields.underenhet.name}
+                          id={fields.underenhet.id}
+                          label="Underenhet"
+                          error={fields.underenhet.errors?.[0]}
+                          className="w-44"
+                          defaultValue={(fields.underenhet.initialValue ?? "") as string}
+                        >
+                          <option value="">Velg underenhet</option>
+                          {valgtEnhet.underenheter.map((u) => (
+                            <option key={u.id} value={u.id}>
+                              {u.navn}
+                            </option>
+                          ))}
+                        </Select>
+                      );
+                    })()}
+                  </VStack>
                 </HStack>
 
                 <hr className="border-ax-border-neutral-subtle max-w-2xl" />

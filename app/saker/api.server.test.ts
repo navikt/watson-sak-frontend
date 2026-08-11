@@ -18,6 +18,7 @@ describe("hentKodeverk", () => {
       misbrukstyper: [{ kode: "SVART_ARBEID", kategori: "ARBEID", beskrivelse: "Svart arbeid" }],
       ytelseTyper: [{ kode: "DAGPENGER", beskrivelse: "Dagpenger" }],
       kilder: [{ kode: "PUBLIKUM", beskrivelse: "Publikum" }],
+      enheter: [{ id: "ky153k", navn: "Øst", underenheter: [] }],
     };
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,

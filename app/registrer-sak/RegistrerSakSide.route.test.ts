@@ -318,7 +318,7 @@ describe("byggOpprettKontrollsakPayload", () => {
           kilde: "NAV_KONTROLL",
           misbruktype: ["SKJULT_SAMLIV"],
           merking: ["LIME"],
-          enhet: "ØST",
+          enhet: "ky153k",
           arbeidsgivere: ["123456789"],
           ytelser: [
             {
@@ -347,6 +347,8 @@ describe("byggOpprettKontrollsakPayload", () => {
           belop: 300000,
         },
       ],
+      enhetId: "ky153k",
+      underenhetId: undefined,
     });
   });
 });

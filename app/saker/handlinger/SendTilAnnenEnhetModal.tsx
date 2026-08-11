@@ -5,9 +5,17 @@ import { BodyShort, Button, Modal, Select, VStack } from "@navikt/ds-react";
 import { useEffect } from "react";
 import { useFetcher, useNavigate } from "react-router";
 import { z } from "zod";
-import { enhetAlternativer, enhetEtiketter } from "~/registrer-sak/validering";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
+
+// TODO RAILS-9-9: Enheter vil bli hentet fra kodeverk og mappes til IDs når
+// SendTilAnnenEnhet-oppgaven tas. Foreløpig brukes de hardkodede NOM-enhetsverdiene.
+const enheterForModal = [
+  { verdi: "ØST", etikett: "Øst" },
+  { verdi: "VEST", etikett: "Vest" },
+  { verdi: "NORD", etikett: "Nord" },
+  { verdi: "ANALYSE", etikett: "Analyse" },
+];
 
 interface SendTilAnnenEnhetModalProps {
   sakId: string;
@@ -84,9 +92,13 @@ export function SendTilAnnenEnhetModal({
               error={fields.seksjon.errors?.[0]}
             >
               <option value="">Velg enhet</option>
-              {enhetAlternativer.map((enhet) => (
-                <option key={enhet} value={enhet} disabled={enhet === nåværendeEnhet}>
-                  {enhetEtiketter[enhet]}
+              {enheterForModal.map((enhet) => (
+                <option
+                  key={enhet.verdi}
+                  value={enhet.verdi}
+                  disabled={enhet.verdi === nåværendeEnhet}
+                >
+                  {enhet.etikett}
                 </option>
               ))}
             </Select>

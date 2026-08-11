@@ -419,15 +419,29 @@ const misbrukstypeInfoSchema = z.object({
   beskrivelse: z.string(),
 });
 
+const underenhetInfoSchema = z.object({
+  id: z.string(),
+  navn: z.string(),
+});
+
+const enhetInfoSchema = z.object({
+  id: z.string(),
+  navn: z.string(),
+  underenheter: z.array(underenhetInfoSchema).default([]),
+});
+
 const kodeverkResponseSchema = z.object({
   merker: z.array(z.string()),
   kategorier: z.array(kodeverkInfoSchema),
   misbrukstyper: z.array(misbrukstypeInfoSchema),
   ytelseTyper: z.array(kodeverkInfoSchema),
   kilder: z.array(kodeverkInfoSchema),
+  enheter: z.array(enhetInfoSchema).default([]),
 });
 
 export type Kodeverk = z.infer<typeof kodeverkResponseSchema>;
+export type EnhetInfo = z.infer<typeof enhetInfoSchema>;
+export type UnderenhetInfo = z.infer<typeof underenhetInfoSchema>;
 
 /** Henter alle statiske oppslagsverdier fra kodeverk-endepunktet. */
 export async function hentKodeverk(token: string): Promise<Kodeverk> {

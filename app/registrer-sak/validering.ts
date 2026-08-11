@@ -1,14 +1,5 @@
 import { z } from "zod";
 
-export const enhetAlternativer = ["ØST", "VEST", "NORD", "ANALYSE"] as const;
-
-export const enhetEtiketter: Record<(typeof enhetAlternativer)[number], string> = {
-  ØST: "Øst",
-  VEST: "Vest",
-  NORD: "Nord",
-  ANALYSE: "Analyse",
-};
-
 function normaliserDato(dato: string) {
   if (/^\d{2}\.\d{2}\.\d{4}$/.test(dato)) {
     const [dag, måned, år] = dato.split(".");
@@ -120,10 +111,8 @@ export const opprettSakSchema = z
       .optional()
       .default([]),
     merking: z.array(merkingSchema).optional().default([]),
-    enhet: z.preprocess(
-      (val) => (val === "" ? undefined : val),
-      z.enum(enhetAlternativer).optional(),
-    ),
+    enhet: z.preprocess((val) => (val === "" ? undefined : val), z.string().optional()),
+    underenhet: z.preprocess((val) => (val === "" ? undefined : val), z.string().optional()),
     arbeidsgivere: z
       .array(z.string().regex(/^\d{9}$/, "Organisasjonsnummer må bestå av 9 siffer"))
       .max(10, "Maks 10 arbeidsgivere")

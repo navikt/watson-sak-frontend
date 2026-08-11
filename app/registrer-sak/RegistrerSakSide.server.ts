@@ -10,7 +10,7 @@ import type { OpprettKontrollsakRequest } from "./api.server";
 import type { Route } from "./+types/RegistrerSakSide.route";
 import { lastOppFil, opprettKontrollsak } from "./api.server";
 import { pendingFnrCookie } from "./pending-fnr.server";
-import { enhetAlternativer, opprettSakSchema, type OpprettSakSkjema } from "./validering";
+import { opprettSakSchema, type OpprettSakSkjema } from "./validering";
 
 type OpprettSakSaksbehandler = NonNullable<OpprettKontrollsakRequest["saksbehandlere"]>["eier"];
 
@@ -41,6 +41,8 @@ export function byggOpprettKontrollsakPayload({
         periodeTil: rad.tilDato ?? "",
         belop: rad.beløp,
       })),
+    enhetId: skjema.enhet ?? undefined,
+    underenhetId: skjema.underenhet ?? undefined,
   };
 }
 
@@ -54,7 +56,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     headers.set("Set-Cookie", await pendingFnrCookie.serialize("", { maxAge: 0 }));
   }
 
-  return data({ enheter: enhetAlternativer, fnr }, { headers });
+  return data({ fnr }, { headers });
 }
 
 export async function action({ request }: Route.ActionArgs) {
