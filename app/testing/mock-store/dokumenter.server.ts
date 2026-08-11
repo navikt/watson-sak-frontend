@@ -216,19 +216,23 @@ export function opprettEllerOppdaterDokumentHistorikk(
 ): void {
   const nøkkel = historikknøkkel(sakId, docId);
   const eksisterende = state.dokumentHistorikk.get(nøkkel) ?? [];
-  const sisteEgne = eksisterende.find((punkt) => punkt.endretAv === endretAv);
-  const nå = new Date().toISOString();
-  if (sisteEgne) {
-    sisteEgne.tittel = dokument.tittel;
-    sisteEgne.innhold = dokument.innhold;
-    sisteEgne.endretTidspunkt = nå;
+  const nyeste = eksisterende[0];
+  const nå = new Date();
+  if (
+    nyeste &&
+    nyeste.endretAv === endretAv &&
+    nå.getTime() - new Date(nyeste.endretTidspunkt).getTime() < 5 * 60 * 1000
+  ) {
+    nyeste.tittel = dokument.tittel;
+    nyeste.innhold = dokument.innhold;
+    nyeste.endretTidspunkt = nå.toISOString();
   } else {
     eksisterende.unshift({
       id: crypto.randomUUID(),
       tittel: dokument.tittel,
       innhold: dokument.innhold,
       endretAv,
-      endretTidspunkt: nå,
+      endretTidspunkt: nå.toISOString(),
     });
   }
   state.dokumentHistorikk.set(nøkkel, eksisterende);

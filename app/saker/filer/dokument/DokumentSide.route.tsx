@@ -80,9 +80,16 @@ function DokumentRedigering({
   const tittelRef = useRef(dokument.tittel);
   const innholdRef = useRef<DokumentInnhold>(dokument.innhold);
   const historikkTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const maksHistorikkTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const historikkData = useRef<Autolagringsdata | null>(null);
   const [editorVersjon, settEditorVersjon] = useState(0);
   const [historikkFeil, settHistorikkFeil] = useState<string | null>(null);
   const revalidator = useRevalidator();
+  const revalidatorRef = useRef(revalidator);
+
+  useEffect(() => {
+    revalidatorRef.current = revalidator;
+  }, [revalidator]);
 
   const sakUrl = RouteConfig.SAKER_DETALJ.replace(":sakId", sakReferanse);
   const sletting = useDokumentSletting({
@@ -119,38 +126,68 @@ function DokumentRedigering({
 
   const { status, sistLagret, registrerEndring } = useAutolagring({ lagre });
 
+  const lagreHistorikkpunkt = useCallback(
+    async (forlater = false) => {
+      const data = historikkData.current;
+      if (!data) return;
+      if (historikkTimer.current) clearTimeout(historikkTimer.current);
+      if (maksHistorikkTimer.current) clearTimeout(maksHistorikkTimer.current);
+      historikkTimer.current = null;
+      maksHistorikkTimer.current = null;
+      historikkData.current = null;
+
+      try {
+        const respons = await fetch(lagreUrl, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...data, opprettHistorikk: true }),
+          keepalive: forlater,
+        });
+        if (!respons.ok) {
+          if (!forlater) settHistorikkFeil("Kunne ikke opprette historikkpunkt.");
+          return;
+        }
+        if (!forlater) {
+          settHistorikkFeil(null);
+          revalidatorRef.current.revalidate();
+        }
+      } catch {
+        if (!forlater) settHistorikkFeil("Kunne ikke opprette historikkpunkt.");
+      }
+    },
+    [lagreUrl],
+  );
+
   const registrerHistorikk = useCallback(
     (data: Autolagringsdata) => {
+      historikkData.current = data;
       if (historikkTimer.current) clearTimeout(historikkTimer.current);
       historikkTimer.current = setTimeout(() => {
-        void (async () => {
-          try {
-            const respons = await fetch(lagreUrl, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ ...data, opprettHistorikk: true }),
-            });
-            if (!respons.ok) {
-              settHistorikkFeil("Kunne ikke opprette historikkpunkt.");
-              return;
-            }
-            settHistorikkFeil(null);
-            revalidator.revalidate();
-          } catch {
-            settHistorikkFeil("Kunne ikke opprette historikkpunkt.");
-          }
-        })();
+        void lagreHistorikkpunkt();
       }, 30_000);
+      if (!maksHistorikkTimer.current) {
+        maksHistorikkTimer.current = setTimeout(() => {
+          void lagreHistorikkpunkt();
+        }, 15 * 60_000);
+      }
     },
-    [lagreUrl, revalidator],
+    [lagreHistorikkpunkt],
   );
 
   useEffect(
     () => () => {
-      if (historikkTimer.current) clearTimeout(historikkTimer.current);
+      void lagreHistorikkpunkt(true);
     },
-    [],
+    [lagreHistorikkpunkt],
   );
+
+  useEffect(() => {
+    function håndterLukking() {
+      void lagreHistorikkpunkt(true);
+    }
+    window.addEventListener("beforeunload", håndterLukking);
+    return () => window.removeEventListener("beforeunload", håndterLukking);
+  }, [lagreHistorikkpunkt]);
 
   const håndterTittel = useCallback(
     (nyTittel: string) => {

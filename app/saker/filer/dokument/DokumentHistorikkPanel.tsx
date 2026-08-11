@@ -35,6 +35,31 @@ function hentTekst(verdi: unknown): string {
   return "";
 }
 
+type Historikkgruppe = {
+  endretAv: string;
+  punkter: DokumentHistorikkNode[];
+};
+
+function grupperHistorikk(historikk: DokumentHistorikkNode[]): Historikkgruppe[] {
+  return historikk.reduce<Historikkgruppe[]>((grupper, punkt) => {
+    const forrigeGruppe = grupper.at(-1);
+    const sistePunkt = forrigeGruppe?.punkter.at(-1);
+    const erSammeØkt =
+      forrigeGruppe?.endretAv === punkt.endretAv &&
+      sistePunkt !== undefined &&
+      Math.abs(
+        new Date(sistePunkt.endretTidspunkt).getTime() - new Date(punkt.endretTidspunkt).getTime(),
+      ) <
+        3 * 60 * 60 * 1000;
+    if (erSammeØkt && forrigeGruppe) {
+      forrigeGruppe.punkter.push(punkt);
+    } else {
+      grupper.push({ endretAv: punkt.endretAv, punkter: [punkt] });
+    }
+    return grupper;
+  }, []);
+}
+
 export function DokumentHistorikkPanel({
   historikk,
   kanGjenopprette,
@@ -82,6 +107,7 @@ export function DokumentHistorikkPanel({
   }
 
   const valgtPunkt = historikk.find((punkt) => punkt.id === valgtId);
+  const grupper = grupperHistorikk(historikk);
 
   return (
     <>
@@ -89,26 +115,35 @@ export function DokumentHistorikkPanel({
         {historikk.length === 1 && (
           <BodyShort size="small">
             Dette er det første historikkpunktet. Vi oppdaterer det etter 30 sekunder uten endringer
-            og oppretter et nytt punkt etter tre timer.
+            og oppretter minst ett punkt hvert kvarter mens du redigerer.
           </BodyShort>
         )}
-        {historikk.map((punkt) => (
-          <Button
-            key={punkt.id}
-            type="button"
-            variant="tertiary"
-            size="small"
-            className="justify-start text-left"
-            loading={laster && valgtId === punkt.id}
-            onClick={() => void visForhåndsvisning(punkt.id)}
-          >
-            <VStack as="span" gap="space-0">
-              <span>{punkt.tittel}</span>
-              <Detail as="span" className="text-ax-text-neutral-subtle">
-                {punkt.endretAv} · {formaterTidspunkt(punkt.endretTidspunkt)}
+        {grupper.map((gruppe) => (
+          <VStack key={`${gruppe.endretAv}-${gruppe.punkter[0].id}`} gap="space-2">
+            {gruppe.punkter.length > 1 && (
+              <Detail className="text-ax-text-neutral-subtle">
+                Redigeringsøkt · {gruppe.endretAv}
               </Detail>
-            </VStack>
-          </Button>
+            )}
+            {gruppe.punkter.map((punkt) => (
+              <Button
+                key={punkt.id}
+                type="button"
+                variant="tertiary"
+                size="small"
+                className="justify-start text-left"
+                loading={laster && valgtId === punkt.id}
+                onClick={() => void visForhåndsvisning(punkt.id)}
+              >
+                <VStack as="span" gap="space-0">
+                  <span>{punkt.tittel}</span>
+                  <Detail as="span" className="text-ax-text-neutral-subtle">
+                    {punkt.endretAv} · {formaterTidspunkt(punkt.endretTidspunkt)}
+                  </Detail>
+                </VStack>
+              </Button>
+            ))}
+          </VStack>
         ))}
       </VStack>
 
