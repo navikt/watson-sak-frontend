@@ -111,7 +111,7 @@ function DokumentRedigering({
 
   const lagre = useCallback(
     async (data: Autolagringsdata, { forlater }: { forlater: boolean }) => {
-      const respons = await fetch(historikkUrl, {
+      const respons = await fetch(lagreUrl, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -125,7 +125,7 @@ function DokumentRedigering({
         throw new Error("Lagring feilet");
       }
     },
-    [historikkUrl],
+    [lagreUrl],
   );
 
   const { status, sistLagret, registrerEndring } = useAutolagring({ lagre });
@@ -214,7 +214,7 @@ function DokumentRedigering({
 
   const historikkKall = useCallback(
     async (handling: "hent_historikkpunkt" | "gjenopprett_historikkpunkt", historikkId: string) => {
-      const respons = await fetch(lagreUrl, {
+      const respons = await fetch(historikkUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ handling, historikkId }),
@@ -222,7 +222,7 @@ function DokumentRedigering({
       if (!respons.ok) throw new Error("Historikkallet feilet");
       return (await respons.json()) as { historikkpunkt?: DokumentHistorikk; dokument?: Dokument };
     },
-    [lagreUrl],
+    [historikkUrl],
   );
 
   const håndterGjenopprettet = useCallback(
