@@ -187,8 +187,11 @@ describe("SakDetaljSide action", () => {
     );
   });
 
-  it("returnerer lokal feilmelding når koble sak ikke er tilgjengelig ennå", async () => {
+  it("kobler og fjerner kobling mellom saker på samme person i mockdata", async () => {
     const kontrollsak = hentAlleSaker(testRequest).find((sak) => sak.id === utredningSakId)!;
+    const kobletSak = hentAlleSaker(testRequest).find(
+      (sak) => sak.id !== kontrollsak.id && sak.personIdent === kontrollsak.personIdent,
+    )!;
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z999999",
       navn: "Test Saksbehandler",
@@ -197,9 +200,9 @@ describe("SakDetaljSide action", () => {
 
     const formData = new FormData();
     formData.set("handling", "koble_sak");
-    formData.set("relatertSakId", "114");
+    formData.set("relatertSakId", String(kobletSak.id));
 
-    const resultat = await action({
+    await action({
       request: new Request(`http://localhost/saker/${utredningSakRef}`, {
         method: "POST",
         body: formData,
@@ -207,10 +210,23 @@ describe("SakDetaljSide action", () => {
       params: { sakId: utredningSakRef },
     } as Route.ActionArgs);
 
-    expect(resultat).toEqual({
-      ok: false,
-      feil: { skjema: ["Denne funksjonen er ikke tilgjengelig ennå."] },
-    });
+    expect(kontrollsak.kobledeSaker).toContain(kobletSak.id);
+    expect(kobletSak.kobledeSaker).toContain(kontrollsak.id);
+
+    const fjernFormData = new FormData();
+    fjernFormData.set("handling", "fjern_kobling");
+    fjernFormData.set("relatertSakId", String(kobletSak.id));
+
+    await action({
+      request: new Request(`http://localhost/saker/${utredningSakRef}`, {
+        method: "POST",
+        body: fjernFormData,
+      }),
+      params: { sakId: utredningSakRef },
+    } as Route.ActionArgs);
+
+    expect(kontrollsak.kobledeSaker).not.toContain(kobletSak.id);
+    expect(kobletSak.kobledeSaker).not.toContain(kontrollsak.id);
   });
 });
 
