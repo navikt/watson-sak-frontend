@@ -6,10 +6,8 @@ import * as backendApi from "~/saker/api.server";
 import type { DokumentInnhold } from "~/saker/filer/typer";
 import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
 import {
-  gjenopprettDokumentHistorikk,
   hentDokument,
   hentDokumentHistorikk,
-  hentDokumentHistorikkpunkt,
   hentDokumenttreForSak,
   lagreDokument,
   opprettEllerOppdaterDokumentHistorikk,
@@ -115,69 +113,6 @@ export async function action({ request, params }: Route.ActionArgs) {
   const docId = params.docId;
   if (!sakReferanse || !docId) {
     throw data("Mangler sak eller dokument", { status: 400 });
-  }
-
-  if (request.method === "POST") {
-    let kropp: { handling?: unknown; historikkId?: unknown };
-    try {
-      kropp = (await request.json()) as { handling?: unknown; historikkId?: unknown };
-    } catch {
-      throw data("Ugyldig JSON i forespørselen", { status: 400 });
-    }
-    if (
-      (kropp.handling !== "hent_historikkpunkt" &&
-        kropp.handling !== "gjenopprett_historikkpunkt") ||
-      typeof kropp.historikkId !== "string"
-    ) {
-      throw data("Ugyldig historikkhandling", { status: 400 });
-    }
-
-    if (!skalBrukeMockdata) {
-      const token = await getBackendOboToken(request);
-      if (kropp.handling === "hent_historikkpunkt") {
-        const historikkpunkt = await backendApi.hentDokumentHistorikkpunkt(
-          token,
-          sakReferanse,
-          docId,
-          kropp.historikkId,
-        );
-        return { ok: true as const, historikkpunkt };
-      }
-      const dokument = await backendApi.gjenopprettDokumentHistorikk(
-        token,
-        sakReferanse,
-        docId,
-        kropp.historikkId,
-      );
-      return { ok: true as const, dokument };
-    }
-
-    const tilgang = await hentSakstilgangFraMock(request, sakReferanse);
-    if (!tilgang) throw data("Sak ikke funnet", { status: 404 });
-    if (!tilgang.kanSe) throw data("Ingen tilgang til denne saken", { status: 403 });
-    if (kropp.handling === "hent_historikkpunkt") {
-      const historikkpunkt = hentDokumentHistorikkpunkt(
-        request,
-        String(tilgang.sak.id),
-        docId,
-        kropp.historikkId,
-      );
-      if (!historikkpunkt) throw data("Historikkpunkt ikke funnet", { status: 404 });
-      return { ok: true as const, historikkpunkt };
-    }
-    if (!tilgang.kanRedigereDokumenter) {
-      throw data("Ingen tilgang til å gjenopprette dokumentet", { status: 403 });
-    }
-    const innlogget = await hentInnloggetBruker({ request });
-    const dokument = gjenopprettDokumentHistorikk(
-      request,
-      String(tilgang.sak.id),
-      docId,
-      kropp.historikkId,
-      innlogget.name,
-    );
-    if (!dokument) throw data("Historikkpunkt ikke funnet", { status: 404 });
-    return { ok: true as const, dokument };
   }
 
   if (!skalBrukeMockdata) {

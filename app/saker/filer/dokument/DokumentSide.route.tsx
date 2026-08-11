@@ -104,10 +104,14 @@ function DokumentRedigering({
     ":docId",
     dokument.id,
   );
+  const historikkUrl = RouteConfig.API.SAK_DOKUMENT_HISTORIKK.replace(
+    ":sakId",
+    sakReferanse,
+  ).replace(":docId", dokument.id);
 
   const lagre = useCallback(
     async (data: Autolagringsdata, { forlater }: { forlater: boolean }) => {
-      const respons = await fetch(lagreUrl, {
+      const respons = await fetch(historikkUrl, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -121,7 +125,7 @@ function DokumentRedigering({
         throw new Error("Lagring feilet");
       }
     },
-    [lagreUrl],
+    [historikkUrl],
   );
 
   const { status, sistLagret, registrerEndring } = useAutolagring({ lagre });
