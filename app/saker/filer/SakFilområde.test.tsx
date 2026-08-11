@@ -111,9 +111,9 @@ describe("SakFilområde", () => {
     fireEvent.click(screen.getByText("Opprett dokument"));
 
     expect(await screen.findByText("Tomt dokument")).toBeDefined();
-    expect(screen.getByText("Arbeid")).toBeDefined();
-    expect(screen.getByText("Enslig forsørger")).toBeDefined();
-    expect(screen.getByText("Utland")).toBeDefined();
+    expect(screen.getByText("Kontrollrapport - Arbeid")).toBeDefined();
+    expect(screen.getByText("Kontrollrapport - Enslig forsørger")).toBeDefined();
+    expect(screen.getByText("Kontrollrapport - Utland")).toBeDefined();
   });
 
   it("sender ingen malId når 'Tomt dokument' velges", async () => {
@@ -138,7 +138,7 @@ describe("SakFilområde", () => {
     });
 
     fireEvent.click(screen.getByText("Opprett dokument"));
-    fireEvent.click(await screen.findByText("Arbeid"));
+    fireEvent.click(await screen.findByText("Kontrollrapport - Arbeid"));
     fireEvent.click(await screen.findByText("Straffesak"));
 
     await waitFor(() => expect(mottatt).toHaveLength(1));
