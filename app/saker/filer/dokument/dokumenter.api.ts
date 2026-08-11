@@ -5,7 +5,12 @@ import { skalBrukeMockdata } from "~/config/env.server";
 import { RouteConfig } from "~/routeConfig";
 import * as backendApi from "~/saker/api.server";
 import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
-import { lagreDokument, opprettDokument, slettDokument } from "../mock-data.server";
+import {
+  lagreDokument,
+  opprettDokument,
+  opprettEllerOppdaterDokumentHistorikk,
+  slettDokument,
+} from "../mock-data.server";
 import { byggMalInnhold, MAL_NAVN, type MalId } from "./maler";
 
 function lesValgtMal(formData: FormData): { malId: MalId; erStraffesak: boolean } | null {
@@ -82,6 +87,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
       await backendApi.lagreDokument(token, sakReferanse, opprettet.id, {
         tittel: MAL_NAVN[valgtMal.malId],
         innhold: byggMalInnhold(valgtMal),
+        opprettHistorikk: true,
       });
     }
     return redirect(byggDokumentUrl(sakReferanse, opprettet.id));
@@ -131,6 +137,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
       innhold: byggMalInnhold(valgtMal),
       endretAv: innlogget.name,
     });
+    opprettEllerOppdaterDokumentHistorikk(request, String(tilgang.sak.id), id, innlogget.name);
   }
 
   return redirect(byggDokumentUrl(sakReferanse, id));

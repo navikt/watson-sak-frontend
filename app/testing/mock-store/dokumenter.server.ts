@@ -1,7 +1,17 @@
-import type { Dokument, DokumentInnhold, DokumentNode } from "~/saker/filer/typer";
+import type {
+  Dokument,
+  DokumentHistorikk,
+  DokumentHistorikkNode,
+  DokumentInnhold,
+  DokumentNode,
+} from "~/saker/filer/typer";
 import type { MockState } from "./session.server";
 
 function innholdsnøkkel(sakId: string, docId: string): string {
+  return `${sakId}:${docId}`;
+}
+
+function historikknøkkel(sakId: string, docId: string): string {
   return `${sakId}:${docId}`;
 }
 
@@ -15,6 +25,10 @@ function lagDummyInnhold(avsnitt: string[]): DokumentInnhold {
 
 function tomtInnhold(): DokumentInnhold {
   return [{ type: "p", children: [{ text: "" }] }];
+}
+
+function mockIdentFraNavn(navn: string): string {
+  return `mock-${navn.toLowerCase().replaceAll(" ", "-")}`;
 }
 
 type DokumentSeed = {
@@ -147,6 +161,16 @@ export function opprettDokument(
     låsAv: null,
   });
   state.dokumentInnhold.set(innholdsnøkkel(sakId, id), tomtInnhold());
+  state.dokumentHistorikk.set(historikknøkkel(sakId, id), [
+    {
+      id: crypto.randomUUID(),
+      tittel: "Uten tittel",
+      innhold: tomtInnhold(),
+      endretAvIdent: mockIdentFraNavn(opprettetAv),
+      endretAvNavn: opprettetAv,
+      endretTidspunkt: new Date().toISOString(),
+    },
+  ]);
   state.tommeDokumentområder.delete(sakId);
 
   return { id };
@@ -178,6 +202,97 @@ export function lagreDokument(
   };
 }
 
+export function hentDokumentHistorikk(
+  state: MockState,
+  sakId: string,
+  docId: string,
+): DokumentHistorikkNode[] {
+  return state.dokumentHistorikk.get(historikknøkkel(sakId, docId)) ?? [];
+}
+
+export function hentDokumentHistorikkpunkt(
+  state: MockState,
+  sakId: string,
+  docId: string,
+  historikkId: string,
+): DokumentHistorikk | undefined {
+  return state.dokumentHistorikk
+    .get(historikknøkkel(sakId, docId))
+    ?.find((punkt) => punkt.id === historikkId);
+}
+
+export function opprettEllerOppdaterDokumentHistorikk(
+  state: MockState,
+  sakId: string,
+  docId: string,
+  dokument: Dokument,
+  endretAv: string,
+): void {
+  const nøkkel = historikknøkkel(sakId, docId);
+  const eksisterende = state.dokumentHistorikk.get(nøkkel) ?? [];
+  const nyeste = eksisterende[0];
+  const nå = new Date();
+  const endretAvIdent = mockIdentFraNavn(endretAv);
+  if (
+    nyeste &&
+    nyeste.endretAvIdent === endretAvIdent &&
+    nå.getTime() - new Date(nyeste.endretTidspunkt).getTime() < 5 * 60 * 1000
+  ) {
+    nyeste.tittel = dokument.tittel;
+    nyeste.innhold = dokument.innhold;
+    nyeste.endretTidspunkt = nå.toISOString();
+  } else {
+    eksisterende.unshift({
+      id: crypto.randomUUID(),
+      tittel: dokument.tittel,
+      innhold: dokument.innhold,
+      endretAvIdent,
+      endretAvNavn: endretAv,
+      endretTidspunkt: nå.toISOString(),
+    });
+  }
+  state.dokumentHistorikk.set(nøkkel, eksisterende);
+}
+
+export function gjenopprettDokumentHistorikk(
+  state: MockState,
+  sakId: string,
+  docId: string,
+  historikkId: string,
+  endretAv: string,
+): Dokument | undefined {
+  const valgt = hentDokumentHistorikkpunkt(state, sakId, docId, historikkId);
+  const gjeldende = hentDokument(state, sakId, docId);
+  if (!valgt || !gjeldende) return undefined;
+
+  const historikk = state.dokumentHistorikk.get(historikknøkkel(sakId, docId)) ?? [];
+  historikk.unshift({
+    id: crypto.randomUUID(),
+    tittel: gjeldende.tittel,
+    innhold: gjeldende.innhold,
+    endretAvIdent: mockIdentFraNavn(gjeldende.endretAv),
+    endretAvNavn: gjeldende.endretAv,
+    endretTidspunkt: new Date().toISOString(),
+  });
+  const gjenopprettet = lagreDokument(state, sakId, docId, {
+    tittel: valgt.tittel,
+    innhold: valgt.innhold,
+    endretAv,
+  });
+  if (gjenopprettet) {
+    historikk.unshift({
+      id: crypto.randomUUID(),
+      tittel: gjenopprettet.tittel,
+      innhold: gjenopprettet.innhold,
+      endretAvIdent: mockIdentFraNavn(endretAv),
+      endretAvNavn: endretAv,
+      endretTidspunkt: new Date().toISOString(),
+    });
+  }
+  state.dokumentHistorikk.set(historikknøkkel(sakId, docId), historikk);
+  return gjenopprettet;
+}
+
 export function registrerTomtDokumentområdeForSak(state: MockState, sakId: string) {
   state.tommeDokumentområder.add(sakId);
   state.dokumenter.set(sakId, []);
@@ -192,5 +307,6 @@ export function slettDokument(state: MockState, sakId: string, docId: string): b
 
   dokumenter.splice(indeks, 1);
   state.dokumentInnhold.delete(innholdsnøkkel(sakId, docId));
+  state.dokumentHistorikk.delete(historikknøkkel(sakId, docId));
   return true;
 }

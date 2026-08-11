@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   hentDokument,
+  hentDokumentHistorikk,
   hentDokumenttreForSak,
   lagreDokument,
   opprettDokument,
@@ -58,6 +59,14 @@ describe("mock-store dokumenter", () => {
 
     const tre = hentDokumenttreForSak(state(), sakUtenDokumenter);
     expect(tre.some((node) => node.id === id)).toBe(true);
+
+    const historikk = hentDokumentHistorikk(state(), sakUtenDokumenter, id);
+    expect(historikk).toHaveLength(1);
+    expect(historikk[0]).toMatchObject({
+      tittel: "Uten tittel",
+      endretAvIdent: "mock-ola-nordmann",
+      endretAvNavn: "Ola Nordmann",
+    });
   });
 
   it("lagrer tittel og innhold på et dokument", () => {
@@ -96,6 +105,7 @@ describe("mock-store dokumenter", () => {
     expect(slettet).toBe(true);
     expect(hentDokument(state(), sakUtenDokumenter, id)).toBeUndefined();
     expect(hentDokumenttreForSak(state(), sakUtenDokumenter).some((n) => n.id === id)).toBe(false);
+    expect(hentDokumentHistorikk(state(), sakUtenDokumenter, id)).toEqual([]);
   });
 
   it("sletter et seedet dokument på rot", () => {

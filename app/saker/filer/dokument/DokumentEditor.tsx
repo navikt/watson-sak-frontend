@@ -502,6 +502,8 @@ type DokumentEditorProps = {
   dokumentliste: ReactNode;
   /** Lagrestatusen som vises nederst i sidepanelet. Eies av siden som lagrer. */
   lagreStatus?: ReactNode;
+  /** Historikkinnholdet eies av siden som henter og gjenoppretter dokumentet. */
+  historikkInnhold?: ReactNode;
   /** Verdier fra saken og innlogget bruker som levende variabler løses mot. */
   variabelVerdier: VariabelVerdier;
 };
@@ -514,6 +516,7 @@ export function DokumentEditor({
   docId,
   dokumentliste,
   lagreStatus,
+  historikkInnhold,
   variabelVerdier,
 }: DokumentEditorProps) {
   const editor = usePlateEditor({
@@ -793,6 +796,7 @@ export function DokumentEditor({
               aktivt={aktivtSidepanel}
               dokumentliste={dokumentliste}
               variabelInnhold={<VariabelListe onSettInn={settInnVariabel} disabled={!redigerbar} />}
+              historikkInnhold={historikkInnhold ?? null}
               lagreStatus={lagreStatus}
             />
           </div>

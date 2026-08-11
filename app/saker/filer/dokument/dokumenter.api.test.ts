@@ -4,6 +4,7 @@ import type { KontrollsakSaksbehandler, KontrollsakStatus } from "~/saker/types.
 import { hentFordelingssaker } from "~/testing/mock-store/alle-saker.server";
 import {
   hentDokument,
+  hentDokumentHistorikk,
   hentDokumenttreForSak,
   opprettDokument,
 } from "~/testing/mock-store/dokumenter.server";
@@ -89,6 +90,32 @@ describe("dokumenter.api POST", () => {
 
     const nyId = location.split("/").at(-1) as string;
     expect(hentDokument(state(), String(sak.id), nyId)?.tittel).toBe("Uten tittel");
+  });
+
+  it("lagrer den urørte malen som første historikkpunkt", async () => {
+    const sak = hentFordelingssaker(state())[0];
+    sak.saksbehandlere.eier = eierMeg;
+    sak.saksbehandlere.deltMed = [];
+    sak.status = "UTREDES";
+    const ref = getSaksreferanse(sak.id);
+    const formData = new FormData();
+    formData.set("malId", "arbeid");
+    formData.set("erStraffesak", "false");
+
+    const respons = (await action({
+      request: new Request("http://localhost", { method: "POST", body: formData }),
+      params: { sakId: ref },
+    } as Route.ActionArgs)) as Response;
+    const docId = respons.headers.get("Location")?.split("/").at(-1);
+    if (!docId) throw new Error("Mangler dokument-id i redirect");
+
+    const dokument = hentDokument(state(), String(sak.id), docId);
+    const historikk = hentDokumentHistorikk(state(), String(sak.id), docId);
+    expect(historikk).toHaveLength(1);
+    expect(historikk[0]).toMatchObject({
+      tittel: "Arbeid",
+      innhold: dokument?.innhold,
+    });
   });
 
   it("avviser opprettelse uten redigeringstilgang med 403", async () => {
