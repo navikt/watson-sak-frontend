@@ -67,7 +67,12 @@ function koblingsFeilmelding(feil: unknown): string {
   if (feil instanceof backendApi.BackendFeilException && feil.status < 500) {
     return feil.message;
   }
-  logger.error("Uventet feil ved endring av sakskobling");
+  const feiltype = feil instanceof Error ? feil.name : typeof feil;
+  const status = feil instanceof backendApi.BackendFeilException ? feil.status : undefined;
+  logger.error("Uventet feil ved endring av sakskobling, feiltype={}, status={}", {
+    feiltype,
+    status,
+  });
   return "Kunne ikke endre koblingen. Prøv igjen.";
 }
 
@@ -533,7 +538,7 @@ async function backendAction(
         } satisfies ActionResult;
       }
       const kobletSakId = Number(kobletSakIdRaw);
-      if (Number.isNaN(kobletSakId)) {
+      if (!Number.isSafeInteger(kobletSakId) || kobletSakId <= 0) {
         return {
           ok: false,
           feil: { skjema: ["Ugyldig sak-ID"] },
@@ -903,7 +908,7 @@ async function mockAction(
     case "fjern_kobling": {
       const kobletSakIdRaw = formData.get("relatertSakId");
       const kobletSakId = Number(kobletSakIdRaw);
-      if (!Number.isInteger(kobletSakId)) {
+      if (!Number.isSafeInteger(kobletSakId) || kobletSakId <= 0) {
         return {
           ok: false,
           feil: { skjema: ["Ugyldig sak-ID"] },

@@ -228,6 +228,32 @@ describe("SakDetaljSide action", () => {
     expect(kontrollsak.kobledeSaker).not.toContain(kobletSak.id);
     expect(kobletSak.kobledeSaker).not.toContain(kontrollsak.id);
   });
+
+  it("avviser desimal som ID på koblet sak", async () => {
+    const kontrollsak = hentAlleSaker(testRequest).find((sak) => sak.id === utredningSakId)!;
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
+
+    const formData = new FormData();
+    formData.set("handling", "koble_sak");
+    formData.set("relatertSakId", "114.5");
+
+    const resultat = await action({
+      request: new Request(`http://localhost/saker/${utredningSakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: utredningSakRef },
+    } as Route.ActionArgs);
+
+    expect(resultat).toEqual({
+      ok: false,
+      feil: { skjema: ["Ugyldig sak-ID"] },
+    });
+  });
 });
 
 describe("SakDetaljSide helper-integrasjon", () => {
