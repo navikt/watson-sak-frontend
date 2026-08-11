@@ -157,6 +157,15 @@ export function opprettDokument(
     låsAv: null,
   });
   state.dokumentInnhold.set(innholdsnøkkel(sakId, id), tomtInnhold());
+  state.dokumentHistorikk.set(historikknøkkel(sakId, id), [
+    {
+      id: crypto.randomUUID(),
+      tittel: "Uten tittel",
+      innhold: tomtInnhold(),
+      endretAv: opprettetAv,
+      endretTidspunkt: new Date().toISOString(),
+    },
+  ]);
   state.tommeDokumentområder.delete(sakId);
 
   return { id };
@@ -289,5 +298,6 @@ export function slettDokument(state: MockState, sakId: string, docId: string): b
 
   dokumenter.splice(indeks, 1);
   state.dokumentInnhold.delete(innholdsnøkkel(sakId, docId));
+  state.dokumentHistorikk.delete(historikknøkkel(sakId, docId));
   return true;
 }
