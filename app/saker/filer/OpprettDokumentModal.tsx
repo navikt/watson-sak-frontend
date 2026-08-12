@@ -1,4 +1,4 @@
-import { ChevronRightIcon, FileIcon, GavelIcon } from "@navikt/aksel-icons";
+import { ChevronRightIcon, FileTextIcon, GavelIcon } from "@navikt/aksel-icons";
 import { BodyShort, Button, HGrid, Modal, VStack } from "@navikt/ds-react";
 import { MAL_NAVN, type MalId } from "./dokument/maler";
 
@@ -19,21 +19,27 @@ function MalValg({
   erStraffesak: boolean;
   onVelg: (valg: { malId: MalId; erStraffesak: boolean }) => void;
 }) {
-  const Ikon = erStraffesak ? GavelIcon : FileIcon;
-  const navn = `${erStraffesak ? "Straffesak" : "Ikke straffesak"} - ${MAL_NAVN[malId]}`;
+  const Ikon = erStraffesak ? GavelIcon : FileTextIcon;
+  const sakstype = erStraffesak ? "Straffesak" : "Ikke straffesak";
 
   return (
     <Button
       type="button"
       variant="secondary"
       onClick={() => onVelg({ malId, erStraffesak })}
+      aria-label={`${sakstype} ${MAL_NAVN[malId]}`}
       className="relative h-[72px] w-full px-[var(--ax-space-16)] text-left"
     >
       <span className="flex min-w-0 items-center gap-[var(--ax-space-12)]">
-        <Ikon aria-hidden className="shrink-0" />
-        <BodyShort as="span" size="small" weight="semibold">
-          {navn}
-        </BodyShort>
+        <Ikon aria-hidden className="h-7 w-7 shrink-0" />
+        <span>
+          <BodyShort as="span" size="small" weight="semibold" className="block">
+            {sakstype}
+          </BodyShort>
+          <BodyShort as="span" size="small" weight="semibold" className="block">
+            {MAL_NAVN[malId]}
+          </BodyShort>
+        </span>
       </span>
       <ChevronRightIcon
         aria-hidden
@@ -78,7 +84,7 @@ export function OpprettDokumentModal({ åpen, onClose, onVelg }: OpprettDokument
             className="relative h-[64px] w-full px-[var(--ax-space-16)] text-left"
           >
             <span className="flex min-w-0 items-center gap-[var(--ax-space-12)]">
-              <FileIcon aria-hidden className="shrink-0" />
+              <FileTextIcon aria-hidden className="h-7 w-7 shrink-0" />
               <span>
                 <BodyShort as="span" size="small" weight="semibold" className="block">
                   Blankt dokument
