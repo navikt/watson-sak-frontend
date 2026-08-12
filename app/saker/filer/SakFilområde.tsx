@@ -1,15 +1,15 @@
-import { FilePlusIcon, FileTextIcon } from "@navikt/aksel-icons";
-import { ActionMenu, Button, Heading, HStack, VStack } from "@navikt/ds-react";
+import { FilePlusIcon } from "@navikt/aksel-icons";
+import { Button, Heading, HStack, VStack } from "@navikt/ds-react";
+import { useState } from "react";
 import { useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { Kort } from "~/komponenter/Kort";
-import { MAL_NAVN, type MalId } from "~/saker/filer/dokument/maler";
+import type { MalId } from "~/saker/filer/dokument/maler";
 import { RouteConfig } from "~/routeConfig";
 import { DokumentTre } from "./DokumentTre";
+import { OpprettDokumentModal } from "./OpprettDokumentModal";
 import type { DokumentNode, FilResponse } from "./typer";
 import { VedleggSeksjon } from "./VedleggSeksjon";
-
-const MAL_IDER = Object.keys(MAL_NAVN) as MalId[];
 
 function OpprettDokumentKnapp({
   sakId,
@@ -22,6 +22,7 @@ function OpprettDokumentKnapp({
 }) {
   const action = RouteConfig.API.SAK_DOKUMENTER.replace(":sakId", sakId);
   const fetcher = useFetcher();
+  const [åpen, settÅpen] = useState(false);
 
   function opprett(valg?: { malId: MalId; erStraffesak: boolean }) {
     sporHendelse("dokument opprettet", { sakId, malId: valg?.malId ?? "tom" });
@@ -34,36 +35,24 @@ function OpprettDokumentKnapp({
   }
 
   return (
-    <ActionMenu>
-      <ActionMenu.Trigger>
-        <Button size={size} variant={variant} icon={<FilePlusIcon aria-hidden />}>
-          Opprett dokument
-        </Button>
-      </ActionMenu.Trigger>
-      <ActionMenu.Content>
-        <ActionMenu.Item icon={<FilePlusIcon aria-hidden />} onSelect={() => opprett()}>
-          Tomt dokument
-        </ActionMenu.Item>
-        <ActionMenu.Divider />
-        <ActionMenu.Group label="Fra mal">
-          {MAL_IDER.map((malId) => (
-            <ActionMenu.Sub key={malId}>
-              <ActionMenu.SubTrigger icon={<FileTextIcon aria-hidden />}>
-                {MAL_NAVN[malId]}
-              </ActionMenu.SubTrigger>
-              <ActionMenu.SubContent>
-                <ActionMenu.Item onSelect={() => opprett({ malId, erStraffesak: false })}>
-                  Ikke straffesak
-                </ActionMenu.Item>
-                <ActionMenu.Item onSelect={() => opprett({ malId, erStraffesak: true })}>
-                  Straffesak
-                </ActionMenu.Item>
-              </ActionMenu.SubContent>
-            </ActionMenu.Sub>
-          ))}
-        </ActionMenu.Group>
-      </ActionMenu.Content>
-    </ActionMenu>
+    <>
+      <Button
+        size={size}
+        variant={variant}
+        icon={<FilePlusIcon aria-hidden />}
+        onClick={() => settÅpen(true)}
+      >
+        Opprett dokument
+      </Button>
+      {åpen && (
+        <OpprettDokumentModal
+          åpen
+          oppretter={fetcher.state !== "idle"}
+          onClose={() => settÅpen(false)}
+          onVelg={opprett}
+        />
+      )}
+    </>
   );
 }
 

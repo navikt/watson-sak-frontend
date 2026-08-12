@@ -105,18 +105,36 @@ describe("SakFilområde", () => {
     expect(screen.queryByText("Opprett dokument")).toBeNull();
   });
 
-  it("viser 'Tomt dokument' og alle maler i handlingsmenyen", async () => {
+  it("viser modal med tomt dokument og alle malvalg", async () => {
     renderOmråde({ dokumenter: [], filer: [], sakId: "ABC-123" });
 
     fireEvent.click(screen.getByText("Opprett dokument"));
 
-    expect(await screen.findByText("Tomt dokument")).toBeDefined();
-    expect(screen.getByText("Kontrollrapport - Arbeid")).toBeDefined();
-    expect(screen.getByText("Kontrollrapport - Enslig forsørger")).toBeDefined();
-    expect(screen.getByText("Kontrollrapport - Utland")).toBeDefined();
+    expect(await screen.findByRole("heading", { name: "Opprett dokument" })).toBeDefined();
+    expect(screen.getByText("Blankt dokument")).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Kontrollrapport – Arbeid Ikke straffesak" }),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Kontrollrapport – Arbeid Straffesak" }),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("button", {
+        name: "Kontrollrapport – Enslig forsørger Ikke straffesak",
+      }),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Kontrollrapport – Enslig forsørger Straffesak" }),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Kontrollrapport – Utland Ikke straffesak" }),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Kontrollrapport – Utland Straffesak" }),
+    ).toBeDefined();
   });
 
-  it("sender ingen malId når 'Tomt dokument' velges", async () => {
+  it("sender ingen malId når 'Blankt dokument' velges", async () => {
     const mottatt: FormData[] = [];
     renderOmrådeMedAction({ dokumenter: [], filer: [], sakId: "ABC-123" }, (formData) => {
       mottatt.push(formData);
@@ -124,7 +142,7 @@ describe("SakFilområde", () => {
     });
 
     fireEvent.click(screen.getByText("Opprett dokument"));
-    fireEvent.click(await screen.findByText("Tomt dokument"));
+    fireEvent.click(await screen.findByText("Blankt dokument"));
 
     await waitFor(() => expect(mottatt).toHaveLength(1));
     expect(mottatt[0].get("malId")).toBeNull();
@@ -138,12 +156,32 @@ describe("SakFilområde", () => {
     });
 
     fireEvent.click(screen.getByText("Opprett dokument"));
-    fireEvent.click(await screen.findByText("Kontrollrapport - Arbeid"));
-    fireEvent.click(await screen.findByText("Straffesak"));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Kontrollrapport – Arbeid Straffesak" }),
+    );
 
     await waitFor(() => expect(mottatt).toHaveLength(1));
     expect(mottatt[0].get("malId")).toBe("arbeid");
     expect(mottatt[0].get("erStraffesak")).toBe("true");
+  });
+
+  it("viser spinner og deaktiverer avbryt mens dokumentet opprettes", async () => {
+    let fullførOpprettelse!: () => void;
+    const opprettelse = new Promise<void>((resolve) => {
+      fullførOpprettelse = resolve;
+    });
+
+    renderOmrådeMedAction({ dokumenter: [], filer: [], sakId: "ABC-123" }, async () => opprettelse);
+
+    fireEvent.click(screen.getByText("Opprett dokument"));
+    fireEvent.click(await screen.findByText("Blankt dokument"));
+
+    expect(await screen.findByTitle("Oppretter dokument")).toBeDefined();
+    expect((screen.getByRole("button", { name: "Avbryt" }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+
+    fullførOpprettelse();
   });
 
   it("lenker dokumenter internt til editoren", () => {
