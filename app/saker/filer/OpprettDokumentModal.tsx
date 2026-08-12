@@ -1,4 +1,4 @@
-import { ChevronRightIcon, FileTextIcon, GavelIcon } from "@navikt/aksel-icons";
+import { ChevronRightIcon, FileIcon, FileTextIcon, GavelIcon } from "@navikt/aksel-icons";
 import { BodyShort, Button, HGrid, Modal, VStack } from "@navikt/ds-react";
 import { MAL_NAVN, type MalId } from "./dokument/maler";
 
@@ -28,7 +28,7 @@ function MalValg({
       variant="secondary"
       onClick={() => onVelg({ malId, erStraffesak })}
       aria-label={`${sakstype} ${MAL_NAVN[malId]}`}
-      className="relative h-[72px] w-full px-[var(--ax-space-16)] text-left"
+      className="relative h-[72px] w-full justify-start px-[var(--ax-space-16)] text-left"
     >
       <span className="flex min-w-0 items-center gap-[var(--ax-space-12)]">
         <Ikon aria-hidden className="h-7 w-7 shrink-0" />
@@ -81,10 +81,10 @@ export function OpprettDokumentModal({ åpen, onClose, onVelg }: OpprettDokument
             type="button"
             variant="secondary"
             onClick={() => onVelg()}
-            className="relative h-[64px] w-full px-[var(--ax-space-16)] text-left"
+            className="relative h-[64px] w-full justify-start px-[var(--ax-space-16)] text-left"
           >
             <span className="flex min-w-0 items-center gap-[var(--ax-space-12)]">
-              <FileTextIcon aria-hidden className="h-7 w-7 shrink-0" />
+              <FileIcon aria-hidden className="h-7 w-7 shrink-0" />
               <span>
                 <BodyShort as="span" size="small" weight="semibold" className="block">
                   Blankt dokument
