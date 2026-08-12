@@ -785,7 +785,7 @@ export default function SakDetaljSide() {
               />
             )}
 
-            <SakerPåSammePerson saker={andreSaker} gjeldendeSakId={sak.id} />
+            <SakerPåSammePerson saker={andreSaker} gjeldendeSak={sak} />
           </VStack>
 
           <VStack gap="space-6" className="md:sticky md:top-4 md:self-start">

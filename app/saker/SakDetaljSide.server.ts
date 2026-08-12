@@ -63,6 +63,19 @@ export function historikkFeilmelding(feil: unknown): string {
   return "Kunne ikke lagre historikkinnslaget. Prøv igjen.";
 }
 
+function koblingsFeilmelding(feil: unknown): string {
+  if (feil instanceof backendApi.BackendFeilException && feil.status < 500) {
+    return feil.message;
+  }
+  const feiltype = feil instanceof Error ? feil.name : typeof feil;
+  const status = feil instanceof backendApi.BackendFeilException ? feil.status : undefined;
+  logger.error("Uventet feil ved endring av sakskobling, feiltype={}, status={}", {
+    feiltype,
+    status,
+  });
+  return "Kunne ikke endre koblingen. Prøv igjen.";
+}
+
 // --- Typer ---
 
 type Feltfeil = Record<string, string[]>;
@@ -81,8 +94,6 @@ type ActionResult =
   | { ok: false; feil: Feltfeil; verdier?: RedigerSaksinformasjonData };
 
 // --- Hjelpefunksjoner ---
-
-const unsupportedKobleSakFeil = "Denne funksjonen er ikke tilgjengelig ennå.";
 
 const gyldigeStatuser = new Set<KontrollsakStatus>([
   "OPPRETTET",
@@ -517,7 +528,8 @@ async function backendAction(
       });
       return { ok: true };
     }
-    case "koble_sak": {
+    case "koble_sak":
+    case "fjern_kobling": {
       const kobletSakIdRaw = formData.get("relatertSakId");
       if (typeof kobletSakIdRaw !== "string" || !kobletSakIdRaw.trim()) {
         return {
@@ -526,14 +538,26 @@ async function backendAction(
         } satisfies ActionResult;
       }
       const kobletSakId = Number(kobletSakIdRaw);
-      if (Number.isNaN(kobletSakId)) {
+      if (!Number.isSafeInteger(kobletSakId) || kobletSakId <= 0) {
         return {
           ok: false,
           feil: { skjema: ["Ugyldig sak-ID"] },
         } satisfies ActionResult;
       }
-      await backendApi.kobleSak(token, sakId, kobletSakId, "KOBLE");
-      return { ok: true };
+      try {
+        await backendApi.kobleSak(
+          token,
+          sakId,
+          kobletSakId,
+          handling === "koble_sak" ? "KOBLE" : "FJERN",
+        );
+        return { ok: true };
+      } catch (feil) {
+        return {
+          ok: false,
+          feil: { skjema: [koblingsFeilmelding(feil)] },
+        } satisfies ActionResult;
+      }
     }
     case "legg_til_historikk": {
       const tittel = hentTekstfelt(formData, "tittel", "Tittel er påkrevd");
@@ -876,11 +900,47 @@ async function mockAction(
       leggTilHendelse(request, sak, "SAKSINFORMASJON_ENDRET");
       return { ok: true, sak } satisfies ActionResult;
     }
-    case "koble_sak": {
-      return {
-        ok: false,
-        feil: { skjema: [unsupportedKobleSakFeil] },
-      } satisfies ActionResult;
+    case "koble_sak":
+    case "fjern_kobling": {
+      const kobletSakIdRaw = formData.get("relatertSakId");
+      const kobletSakId = Number(kobletSakIdRaw);
+      if (!Number.isSafeInteger(kobletSakId) || kobletSakId <= 0) {
+        return {
+          ok: false,
+          feil: { skjema: ["Ugyldig sak-ID"] },
+        } satisfies ActionResult;
+      }
+
+      const kobletSak = hentAlleSaker(request).find((annenSak) => annenSak.id === kobletSakId);
+      if (!kobletSak || kobletSak.personIdent !== sak.personIdent || kobletSak.id === sak.id) {
+        return {
+          ok: false,
+          feil: { skjema: ["Kan ikke endre kobling til denne saken"] },
+        } satisfies ActionResult;
+      }
+
+      const erKoblet = sak.kobledeSaker.includes(kobletSak.id);
+      if (handling === "koble_sak") {
+        if (erKoblet) {
+          return {
+            ok: false,
+            feil: { skjema: ["Sakene er allerede koblet"] },
+          } satisfies ActionResult;
+        }
+        sak.kobledeSaker.push(kobletSak.id);
+        kobletSak.kobledeSaker.push(sak.id);
+      } else {
+        if (!erKoblet) {
+          return {
+            ok: false,
+            feil: { skjema: ["Sakene er ikke koblet"] },
+          } satisfies ActionResult;
+        }
+        sak.kobledeSaker = sak.kobledeSaker.filter((id) => id !== kobletSak.id);
+        kobletSak.kobledeSaker = kobletSak.kobledeSaker.filter((id) => id !== sak.id);
+      }
+
+      return { ok: true } satisfies ActionResult;
     }
     case "del_tilgang": {
       const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
