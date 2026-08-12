@@ -38,7 +38,7 @@ function MalValg({
           <BodyShort as="span" size="small" weight="semibold" className="block">
             {MAL_NAVN[malId]}
           </BodyShort>
-          <BodyShort as="span" size="small" weight="semibold" className="block">
+          <BodyShort as="span" size="small" weight="semibold" textColor="subtle" className="block">
             {sakstype}
           </BodyShort>
         </span>
