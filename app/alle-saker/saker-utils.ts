@@ -71,11 +71,10 @@ export function filtrerSaker(
       !filter.saksbehandler.includes(sak.saksbehandlere.eier?.navIdent ?? "")
     )
       return false;
-    if (filter.kategori.length > 0 && !filter.kategori.includes(getKategoriText(sak) ?? ""))
-      return false;
+    if (filter.kategori.length > 0 && !filter.kategori.includes(sak.kategori)) return false;
     if (
       filter.misbrukstype.length > 0 &&
-      !getMisbrukstyper(sak).some((m) => filter.misbrukstype.includes(m))
+      !sak.misbruktype.some((m) => filter.misbrukstype.includes(m))
     )
       return false;
     if (filter.merking.length > 0 && !sak.merking.some((m) => filter.merking.includes(m)))
