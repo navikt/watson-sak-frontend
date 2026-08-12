@@ -32,7 +32,6 @@ function OpprettDokumentKnapp({
       formData.set("erStraffesak", String(valg.erStraffesak));
     }
     fetcher.submit(formData, { method: "post", action });
-    settÅpen(false);
   }
 
   return (
@@ -45,7 +44,14 @@ function OpprettDokumentKnapp({
       >
         Opprett dokument
       </Button>
-      {åpen && <OpprettDokumentModal åpen onClose={() => settÅpen(false)} onVelg={opprett} />}
+      {åpen && (
+        <OpprettDokumentModal
+          åpen
+          oppretter={fetcher.state !== "idle"}
+          onClose={() => settÅpen(false)}
+          onVelg={opprett}
+        />
+      )}
     </>
   );
 }

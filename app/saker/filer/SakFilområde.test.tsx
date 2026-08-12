@@ -149,6 +149,25 @@ describe("SakFilområde", () => {
     expect(mottatt[0].get("erStraffesak")).toBe("true");
   });
 
+  it("viser spinner og deaktiverer avbryt mens dokumentet opprettes", async () => {
+    let fullførOpprettelse!: () => void;
+    const opprettelse = new Promise<void>((resolve) => {
+      fullførOpprettelse = resolve;
+    });
+
+    renderOmrådeMedAction({ dokumenter: [], filer: [], sakId: "ABC-123" }, async () => opprettelse);
+
+    fireEvent.click(screen.getByText("Opprett dokument"));
+    fireEvent.click(await screen.findByText("Blankt dokument"));
+
+    expect(await screen.findByTitle("Oppretter dokument")).toBeDefined();
+    expect((screen.getByRole("button", { name: "Avbryt" }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+
+    fullførOpprettelse();
+  });
+
   it("lenker dokumenter internt til editoren", () => {
     renderTre({ noder: mockDokumenter, sakId: "ABC-123", fremhevetId: "2" });
     const lenke = screen.getByText("Notat").closest("a") as HTMLAnchorElement;
