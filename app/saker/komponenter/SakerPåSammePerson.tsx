@@ -15,7 +15,8 @@ import {
   VStack,
 } from "@navikt/ds-react";
 import { useEffect, useRef, useState } from "react";
-import { useFetcher } from "react-router";
+import { Link, useFetcher } from "react-router";
+import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import {
   getBelop,
@@ -200,7 +201,15 @@ function SakKort({ sak, erKoblet, onEndreKobling }: SakKortProps) {
                   </VStack>
                 </HGrid>
 
-                <HStack justify="end">
+                <HStack justify="end" gap="space-8" wrap>
+                  <Button
+                    as={Link}
+                    to={RouteConfig.SAKER_DETALJ.replace(":sakId", saksreferanse)}
+                    variant="primary"
+                    size="small"
+                  >
+                    Gå til sak
+                  </Button>
                   <Button
                     type="button"
                     variant={erKoblet ? "tertiary-neutral" : "secondary"}
