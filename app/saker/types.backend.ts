@@ -82,7 +82,7 @@ export const dokumentNodeSchema = z.object({
 });
 
 const historiskIdentSchema = z.object({
-  identifikasjonsnummer: z.string(),
+  personIdent: z.string(),
   type: z.string(),
   historisk: z.boolean(),
 });

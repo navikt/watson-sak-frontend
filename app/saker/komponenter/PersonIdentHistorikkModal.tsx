@@ -37,8 +37,8 @@ export function PersonIdentHistorikkModal({
             </Table.Header>
             <Table.Body>
               {sak.historiskeIdenter.map((ident) => (
-                <Table.Row key={ident.identifikasjonsnummer}>
-                  <Table.DataCell>{ident.identifikasjonsnummer}</Table.DataCell>
+                <Table.Row key={ident.personIdent}>
+                  <Table.DataCell>{ident.personIdent}</Table.DataCell>
                   <Table.DataCell>
                     {ident.type === "FOEDSELSNUMMER" ? "Fødselsnummer" : "D-nummer"}
                   </Table.DataCell>
