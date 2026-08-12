@@ -15,11 +15,12 @@ type KodeAlternativ = {
 };
 
 type FilterAlternativer = {
-  enhet: string[];
+  enhet: KodeAlternativ[];
   saksbehandler: SaksbehandlerAlternativ[];
   kategori: KodeAlternativ[];
   misbrukstype: KodeAlternativ[];
   merking: string[];
+  aKrimsenter: KodeAlternativ[];
 };
 
 interface Props {
@@ -50,7 +51,8 @@ export function Filtre({ alternativer }: Props) {
     alternativer.enhet.length > 0 ||
     alternativer.kategori.length > 0 ||
     alternativer.misbrukstype.length > 0 ||
-    alternativer.merking.length > 0;
+    alternativer.merking.length > 0 ||
+    alternativer.aKrimsenter.length > 0;
 
   if (!harAlternativer) return null;
 
@@ -73,10 +75,18 @@ export function Filtre({ alternativer }: Props) {
       )}
 
       {alternativer.enhet.length > 0 && (
-        <ChipsFiltergruppeForParam
+        <ChipsFiltergruppeForKodeAlternativ
           tittel="Enhet"
           paramKey="enhet"
           alternativer={alternativer.enhet}
+        />
+      )}
+
+      {alternativer.aKrimsenter.length > 0 && (
+        <ChipsFiltergruppeForKodeAlternativ
+          tittel="A-krimsenter"
+          paramKey="aKrimsenter"
+          alternativer={alternativer.aKrimsenter}
         />
       )}
 

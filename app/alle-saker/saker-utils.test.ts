@@ -126,6 +126,7 @@ describe("filtrerSaker", () => {
         kategori: [],
         misbrukstype: [],
         merking: [],
+        aKrimsenter: [],
       }),
     ).toHaveLength(2);
   });
@@ -134,9 +135,10 @@ describe("filtrerSaker", () => {
     const resultat = filtrerSaker(saker, {
       enhet: [],
       saksbehandler: [],
-      kategori: ["Samliv"],
+      kategori: ["SAMLIV"],
       misbrukstype: [],
       merking: [],
+      aKrimsenter: [],
     });
     expect(resultat).toHaveLength(1);
     expect(resultat[0].id).toBe(100);
@@ -149,6 +151,7 @@ describe("filtrerSaker", () => {
       kategori: [],
       misbrukstype: [],
       merking: [],
+      aKrimsenter: [],
     });
     expect(resultat).toHaveLength(1);
     expect(resultat[0].id).toBe(200);
@@ -158,11 +161,29 @@ describe("filtrerSaker", () => {
     const resultat = filtrerSaker(saker, {
       enhet: [],
       saksbehandler: ["Z1"],
-      kategori: ["Arbeid"],
+      kategori: ["ARBEID"],
       misbrukstype: [],
       merking: [],
+      aKrimsenter: [],
     });
     expect(resultat).toHaveLength(0);
+  });
+
+  it("filtrerer på aKrimsenter", () => {
+    const sakerMedAKrimsenter = [
+      { ...saker[0], aKrimsenter: "OSLO" },
+      { ...saker[1], aKrimsenter: "STAVANGER" },
+    ];
+    const resultat = filtrerSaker(sakerMedAKrimsenter, {
+      enhet: [],
+      saksbehandler: [],
+      kategori: [],
+      misbrukstype: [],
+      merking: [],
+      aKrimsenter: ["OSLO"],
+    });
+    expect(resultat).toHaveLength(1);
+    expect(resultat[0].id).toBe(100);
   });
 });
 
