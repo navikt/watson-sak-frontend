@@ -113,24 +113,24 @@ describe("SakFilområde", () => {
     expect(await screen.findByRole("heading", { name: "Opprett dokument" })).toBeDefined();
     expect(screen.getByText("Blankt dokument")).toBeDefined();
     expect(
-      screen.getByRole("button", { name: "Ikke straffesak Kontrollrapport – Arbeid" }),
+      screen.getByRole("button", { name: "Kontrollrapport – Arbeid Ikke straffesak" }),
     ).toBeDefined();
     expect(
-      screen.getByRole("button", { name: "Straffesak Kontrollrapport – Arbeid" }),
+      screen.getByRole("button", { name: "Kontrollrapport – Arbeid Straffesak" }),
     ).toBeDefined();
     expect(
       screen.getByRole("button", {
-        name: "Ikke straffesak Kontrollrapport – Enslig forsørger",
+        name: "Kontrollrapport – Enslig forsørger Ikke straffesak",
       }),
     ).toBeDefined();
     expect(
-      screen.getByRole("button", { name: "Straffesak Kontrollrapport – Enslig forsørger" }),
+      screen.getByRole("button", { name: "Kontrollrapport – Enslig forsørger Straffesak" }),
     ).toBeDefined();
     expect(
-      screen.getByRole("button", { name: "Ikke straffesak Kontrollrapport – Utland" }),
+      screen.getByRole("button", { name: "Kontrollrapport – Utland Ikke straffesak" }),
     ).toBeDefined();
     expect(
-      screen.getByRole("button", { name: "Straffesak Kontrollrapport – Utland" }),
+      screen.getByRole("button", { name: "Kontrollrapport – Utland Straffesak" }),
     ).toBeDefined();
   });
 
@@ -157,7 +157,7 @@ describe("SakFilområde", () => {
 
     fireEvent.click(screen.getByText("Opprett dokument"));
     fireEvent.click(
-      await screen.findByRole("button", { name: "Straffesak Kontrollrapport – Arbeid" }),
+      await screen.findByRole("button", { name: "Kontrollrapport – Arbeid Straffesak" }),
     );
 
     await waitFor(() => expect(mottatt).toHaveLength(1));
