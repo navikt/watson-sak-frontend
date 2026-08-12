@@ -7,7 +7,6 @@ import { parseMultiValueParam } from "~/filtre/parseMultiValueParam";
 import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
 import { RouteConfig } from "~/routeConfig";
-import { getSaksenhet } from "~/saker/selectors";
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
 import { paginerElementer } from "~/utils/paginering";
 import * as backendApi from "~/saker/api.server";
@@ -22,7 +21,6 @@ import {
   type Sorteringsretning,
   sorteringskolonner,
   sorterSaker,
-  unikeVerdier,
 } from "./saker-utils";
 import { Filtre } from "./Filtre";
 
@@ -63,6 +61,9 @@ export async function loader({ request }: Route.LoaderArgs) {
     parseMultiValueParam(url.searchParams, "misbrukstype"),
   );
   const filterMerking = normaliserFilterVerdier(parseMultiValueParam(url.searchParams, "merking"));
+  const filterAKrimsenter = normaliserFilterVerdier(
+    parseMultiValueParam(url.searchParams, "aKrimsenter"),
+  );
 
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
@@ -76,14 +77,11 @@ export async function loader({ request }: Route.LoaderArgs) {
         misbruktype: filterMisbrukstype.length > 0 ? filterMisbrukstype : undefined,
         merking: filterMerking.length > 0 ? filterMerking : undefined,
         enhet: filterEnhet.length > 0 ? filterEnhet : undefined,
+        aKrimsenter: filterAKrimsenter.length > 0 ? filterAKrimsenter : undefined,
         sortering: lagSorteringParam(sorterKolonne, sorterRetning),
       }),
       backendApi.hentSaksbehandlere(token),
     ]);
-
-    const uniktEnheter = unikeVerdier(
-      saksbehandlere.map((sb) => sb.enhet).filter((e): e is string => !!e),
-    );
 
     return {
       rader: resultat.items.map((sak) => mapKontrollsakTilSakslisteRad(sak)),
@@ -93,7 +91,6 @@ export async function loader({ request }: Route.LoaderArgs) {
       sorteringskolonne: sorterKolonne,
       sorteringsretning: sorterRetning,
       filterAlternativer: {
-        enhet: uniktEnheter,
         saksbehandler: saksbehandlere.map((sb) => ({ label: sb.navn, value: sb.navIdent })),
       },
     };
@@ -108,6 +105,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     kategori: filterKategori,
     misbrukstype: filterMisbrukstype,
     merking: filterMerking,
+    aKrimsenter: filterAKrimsenter,
   });
 
   const sorterteSaker = sorterSaker(filtrerteSaker, sorterKolonne, sorterRetning);
@@ -125,7 +123,6 @@ export async function loader({ request }: Route.LoaderArgs) {
     sorteringskolonne: sorterKolonne,
     sorteringsretning: sorterRetning,
     filterAlternativer: {
-      enhet: unikeVerdier(alleSaker.map(getSaksenhet)),
       saksbehandler: mockSaksbehandlerDetaljer.map((sb) => ({
         label: sb.navn,
         value: sb.navIdent,
@@ -137,8 +134,10 @@ export async function loader({ request }: Route.LoaderArgs) {
 export default function AlleSakerSide() {
   const { rader, aktivSide, totalSider, sorteringskolonne, sorteringsretning, filterAlternativer } =
     useLoaderData<typeof loader>();
-  const { merker, kategorier, misbrukstyper } = useKodeverk();
+  const { merker, kategorier, misbrukstyper, enheter, aKrimsentre } = useKodeverk();
 
+  const enhetAlternativer = enheter.map((e) => ({ label: e.beskrivelse, value: e.kode }));
+  const aKrimsenterAlternativer = aKrimsentre.map((a) => ({ label: a.beskrivelse, value: a.kode }));
   const kategoriAlternativer = kategorier.map((k) => ({ label: k.beskrivelse, value: k.kode }));
   const misbrukstypeAlternativer = misbrukstyper.map((m) => ({
     label: m.beskrivelse,
@@ -235,6 +234,8 @@ export default function AlleSakerSide() {
               <Filtre
                 alternativer={{
                   ...filterAlternativer,
+                  enhet: enhetAlternativer,
+                  aKrimsenter: aKrimsenterAlternativer,
                   kategori: kategoriAlternativer,
                   misbrukstype: misbrukstypeAlternativer,
                   merking: merker,

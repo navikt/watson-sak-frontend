@@ -3,7 +3,6 @@ import {
   getMisbrukstyper,
   getOppdatertDato,
   getOpprettetDato,
-  getSaksenhet,
 } from "~/saker/selectors";
 import type { KontrollsakResponse, KontrollsakStatus } from "~/saker/types.backend";
 import { formaterStatus, getStatus } from "~/saker/visning";
@@ -28,6 +27,7 @@ type FilterState = {
   kategori: string[];
   misbrukstype: string[];
   merking: string[];
+  aKrimsenter: string[];
 };
 
 const TRAKT_STATUS_REKKEFOLGE: KontrollsakStatus[] = [
@@ -65,7 +65,7 @@ export function filtrerSaker(
   filter: FilterState,
 ): KontrollsakResponse[] {
   return saker.filter((sak) => {
-    if (filter.enhet.length > 0 && !filter.enhet.includes(getSaksenhet(sak))) return false;
+    if (filter.enhet.length > 0 && !filter.enhet.includes(sak.enhet ?? "")) return false;
     if (
       filter.saksbehandler.length > 0 &&
       !filter.saksbehandler.includes(sak.saksbehandlere.eier?.navIdent ?? "")
@@ -79,6 +79,8 @@ export function filtrerSaker(
     )
       return false;
     if (filter.merking.length > 0 && !sak.merking.some((m) => filter.merking.includes(m)))
+      return false;
+    if (filter.aKrimsenter.length > 0 && !filter.aKrimsenter.includes(sak.aKrimsenter ?? ""))
       return false;
     return true;
   });

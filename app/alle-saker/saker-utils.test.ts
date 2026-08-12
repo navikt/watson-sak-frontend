@@ -126,6 +126,7 @@ describe("filtrerSaker", () => {
         kategori: [],
         misbrukstype: [],
         merking: [],
+        aKrimsenter: [],
       }),
     ).toHaveLength(2);
   });
@@ -137,6 +138,7 @@ describe("filtrerSaker", () => {
       kategori: ["Samliv"],
       misbrukstype: [],
       merking: [],
+      aKrimsenter: [],
     });
     expect(resultat).toHaveLength(1);
     expect(resultat[0].id).toBe(100);
@@ -149,6 +151,7 @@ describe("filtrerSaker", () => {
       kategori: [],
       misbrukstype: [],
       merking: [],
+      aKrimsenter: [],
     });
     expect(resultat).toHaveLength(1);
     expect(resultat[0].id).toBe(200);
@@ -161,6 +164,7 @@ describe("filtrerSaker", () => {
       kategori: ["Arbeid"],
       misbrukstype: [],
       merking: [],
+      aKrimsenter: [],
     });
     expect(resultat).toHaveLength(0);
   });

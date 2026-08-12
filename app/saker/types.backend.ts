@@ -134,6 +134,8 @@ export const kontrollsakResponseSchema = z
       dokumenter: z.array(dokumentNodeSchema).default([]),
       opprettet: z.string(),
       oppdatert: z.string().nullable(),
+      enhet: z.string().nullable().optional(),
+      aKrimsenter: z.string().nullable().optional(),
     }),
   )
   .transform(({ kontrollobjekt, ...sak }) => ({
