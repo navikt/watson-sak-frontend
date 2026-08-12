@@ -105,18 +105,22 @@ describe("SakFilområde", () => {
     expect(screen.queryByText("Opprett dokument")).toBeNull();
   });
 
-  it("viser 'Tomt dokument' og alle maler i handlingsmenyen", async () => {
+  it("viser modal med tomt dokument og alle malvalg", async () => {
     renderOmråde({ dokumenter: [], filer: [], sakId: "ABC-123" });
 
     fireEvent.click(screen.getByText("Opprett dokument"));
 
-    expect(await screen.findByText("Tomt dokument")).toBeDefined();
-    expect(screen.getByText("Kontrollrapport - Arbeid")).toBeDefined();
-    expect(screen.getByText("Kontrollrapport - Enslig forsørger")).toBeDefined();
-    expect(screen.getByText("Kontrollrapport - Utland")).toBeDefined();
+    expect(await screen.findByRole("heading", { name: "Opprett dokument" })).toBeDefined();
+    expect(screen.getByText("Blankt dokument")).toBeDefined();
+    expect(screen.getByText("Ikke straffesak - Arbeid")).toBeDefined();
+    expect(screen.getByText("Straffesak - Arbeid")).toBeDefined();
+    expect(screen.getByText("Ikke straffesak - Enslig forsørger")).toBeDefined();
+    expect(screen.getByText("Straffesak - Enslig forsørger")).toBeDefined();
+    expect(screen.getByText("Ikke straffesak - Utland")).toBeDefined();
+    expect(screen.getByText("Straffesak - Utland")).toBeDefined();
   });
 
-  it("sender ingen malId når 'Tomt dokument' velges", async () => {
+  it("sender ingen malId når 'Blankt dokument' velges", async () => {
     const mottatt: FormData[] = [];
     renderOmrådeMedAction({ dokumenter: [], filer: [], sakId: "ABC-123" }, (formData) => {
       mottatt.push(formData);
@@ -124,7 +128,7 @@ describe("SakFilområde", () => {
     });
 
     fireEvent.click(screen.getByText("Opprett dokument"));
-    fireEvent.click(await screen.findByText("Tomt dokument"));
+    fireEvent.click(await screen.findByText("Blankt dokument"));
 
     await waitFor(() => expect(mottatt).toHaveLength(1));
     expect(mottatt[0].get("malId")).toBeNull();
@@ -138,8 +142,7 @@ describe("SakFilområde", () => {
     });
 
     fireEvent.click(screen.getByText("Opprett dokument"));
-    fireEvent.click(await screen.findByText("Kontrollrapport - Arbeid"));
-    fireEvent.click(await screen.findByText("Straffesak"));
+    fireEvent.click(await screen.findByText("Straffesak - Arbeid"));
 
     await waitFor(() => expect(mottatt).toHaveLength(1));
     expect(mottatt[0].get("malId")).toBe("arbeid");

@@ -13,9 +13,9 @@ export type MalValg = {
 
 /** Menneskelesbare navn på malene, til bruk i velgere i UI. */
 export const MAL_NAVN: Record<MalId, string> = {
-  arbeid: "Kontrollrapport - Arbeid",
-  "enslig-forsørger": "Kontrollrapport - Enslig forsørger",
-  utland: "Kontrollrapport - Utland",
+  arbeid: "Arbeid",
+  "enslig-forsørger": "Enslig forsørger",
+  utland: "Utland",
 };
 
 const MAL_BYGGERE: Record<MalId, (valg: { erStraffesak: boolean }) => DokumentInnhold> = {
