@@ -27,7 +27,7 @@ function MalValg({
       type="button"
       variant="secondary"
       onClick={() => onVelg({ malId, erStraffesak })}
-      className="h-[72px] w-full justify-between px-[var(--ax-space-16)] text-left"
+      className="relative h-[72px] w-full px-[var(--ax-space-16)] text-left"
     >
       <span className="flex min-w-0 items-center gap-[var(--ax-space-12)]">
         <Ikon aria-hidden className="shrink-0" />
@@ -35,7 +35,10 @@ function MalValg({
           {navn}
         </BodyShort>
       </span>
-      <ChevronRightIcon aria-hidden className="shrink-0" />
+      <ChevronRightIcon
+        aria-hidden
+        className="absolute right-[var(--ax-space-16)] top-1/2 -translate-y-1/2"
+      />
     </Button>
   );
 }
@@ -72,7 +75,7 @@ export function OpprettDokumentModal({ åpen, onClose, onVelg }: OpprettDokument
             type="button"
             variant="secondary"
             onClick={() => onVelg()}
-            className="h-[64px] w-full justify-between px-[var(--ax-space-16)] text-left"
+            className="relative h-[64px] w-full px-[var(--ax-space-16)] text-left"
           >
             <span className="flex min-w-0 items-center gap-[var(--ax-space-12)]">
               <FileIcon aria-hidden className="shrink-0" />
@@ -85,7 +88,10 @@ export function OpprettDokumentModal({ åpen, onClose, onVelg }: OpprettDokument
                 </BodyShort>
               </span>
             </span>
-            <ChevronRightIcon aria-hidden className="shrink-0" />
+            <ChevronRightIcon
+              aria-hidden
+              className="absolute right-[var(--ax-space-16)] top-1/2 -translate-y-1/2"
+            />
           </Button>
         </VStack>
       </Modal.Body>
