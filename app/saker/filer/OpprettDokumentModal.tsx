@@ -29,7 +29,7 @@ function MalValg({
       data-color="neutral"
       onClick={() => onVelg({ malId, erStraffesak })}
       aria-label={`${sakstype} ${MAL_NAVN[malId]}`}
-      className="relative h-[72px] w-full justify-start px-[var(--ax-space-16)] text-left"
+      className="relative h-[72px] w-full justify-start px-[var(--ax-space-16)] text-left !shadow-[inset_0_0_0_1px_var(--ax-border-neutral-subtle)] hover:!bg-ax-bg-neutral-soft hover:!shadow-[inset_0_0_0_1px_var(--ax-border-neutral-subtle)]"
     >
       <span className="flex min-w-0 items-center gap-[var(--ax-space-12)]">
         <Ikon aria-hidden className="h-7 w-7 shrink-0" />
@@ -83,7 +83,7 @@ export function OpprettDokumentModal({ åpen, onClose, onVelg }: OpprettDokument
             variant="secondary"
             data-color="neutral"
             onClick={() => onVelg()}
-            className="relative h-[64px] w-full justify-start px-[var(--ax-space-16)] text-left"
+            className="relative h-[64px] w-full justify-start px-[var(--ax-space-16)] text-left !shadow-[inset_0_0_0_1px_var(--ax-border-neutral-subtle)] hover:!bg-ax-bg-neutral-soft hover:!shadow-[inset_0_0_0_1px_var(--ax-border-neutral-subtle)]"
           >
             <span className="flex min-w-0 items-center gap-[var(--ax-space-12)]">
               <FileIcon aria-hidden className="h-7 w-7 shrink-0" />
