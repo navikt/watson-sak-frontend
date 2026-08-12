@@ -785,7 +785,11 @@ export default function SakDetaljSide() {
               />
             )}
 
-            <SakerPåSammePerson saker={andreSaker} gjeldendeSak={sak} />
+            <SakerPåSammePerson
+              saker={andreSaker}
+              gjeldendeSak={sak}
+              innloggetNavIdent={innloggetBruker.navIdent}
+            />
           </VStack>
 
           <VStack gap="space-6" className="md:sticky md:top-4 md:self-start">

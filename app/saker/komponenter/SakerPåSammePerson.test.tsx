@@ -67,7 +67,11 @@ function renderMedRouter(ui: React.ReactNode) {
 describe("SakerPåSammePerson", () => {
   it("rendrer ingenting når lista er tom", () => {
     const { container } = renderMedRouter(
-      <SakerPåSammePerson saker={[]} gjeldendeSak={lagKontrollsak("105")} />,
+      <SakerPåSammePerson
+        saker={[]}
+        gjeldendeSak={lagKontrollsak("105")}
+        innloggetNavIdent="Z999999"
+      />,
     );
     expect(container.firstChild).toBeNull();
   });
@@ -75,14 +79,22 @@ describe("SakerPåSammePerson", () => {
   it("rendrer ingenting når alle saker er gjeldende sak", () => {
     const gjeldendeSak = lagKontrollsak("105");
     const { container } = renderMedRouter(
-      <SakerPåSammePerson saker={[gjeldendeSak]} gjeldendeSak={gjeldendeSak} />,
+      <SakerPåSammePerson
+        saker={[gjeldendeSak]}
+        gjeldendeSak={gjeldendeSak}
+        innloggetNavIdent="Z999999"
+      />,
     );
     expect(container.firstChild).toBeNull();
   });
 
   it("viser seksjonsoverskrift og kompakt rad for annen sak", () => {
     renderMedRouter(
-      <SakerPåSammePerson saker={[lagKontrollsak("203")]} gjeldendeSak={lagKontrollsak("105")} />,
+      <SakerPåSammePerson
+        saker={[lagKontrollsak("203")]}
+        gjeldendeSak={lagKontrollsak("105")}
+        innloggetNavIdent="Z999999"
+      />,
     );
 
     expect(screen.getByRole("heading", { name: "Saker på samme person" })).toBeDefined();
@@ -91,7 +103,11 @@ describe("SakerPåSammePerson", () => {
 
   it("åpner koblingsmodalen fra en ekspandert sak", () => {
     renderMedRouter(
-      <SakerPåSammePerson saker={[lagKontrollsak("203")]} gjeldendeSak={lagKontrollsak("105")} />,
+      <SakerPåSammePerson
+        saker={[lagKontrollsak("203")]}
+        gjeldendeSak={lagKontrollsak("105")}
+        innloggetNavIdent="Z999999"
+      />,
     );
 
     const ekspanderKnapp = screen.getByRole("button", { name: "Vis detaljer" });
@@ -106,7 +122,11 @@ describe("SakerPåSammePerson", () => {
 
   it("lenker til den utvidede saken", () => {
     renderMedRouter(
-      <SakerPåSammePerson saker={[lagKontrollsak("203")]} gjeldendeSak={lagKontrollsak("105")} />,
+      <SakerPåSammePerson
+        saker={[lagKontrollsak("203")]}
+        gjeldendeSak={lagKontrollsak("105")}
+        innloggetNavIdent="Z999999"
+      />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Vis detaljer" }));
@@ -118,7 +138,11 @@ describe("SakerPåSammePerson", () => {
 
   it("viser feil i koblingsmodalen når innsendingen feiler", async () => {
     renderMedRouter(
-      <SakerPåSammePerson saker={[lagKontrollsak("203")]} gjeldendeSak={lagKontrollsak("105")} />,
+      <SakerPåSammePerson
+        saker={[lagKontrollsak("203")]}
+        gjeldendeSak={lagKontrollsak("105")}
+        innloggetNavIdent="Z999999"
+      />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Vis detaljer" }));
@@ -133,6 +157,7 @@ describe("SakerPåSammePerson", () => {
       <SakerPåSammePerson
         saker={[lagKontrollsak("203")]}
         gjeldendeSak={lagKontrollsak("105", { kobledeSaker: [203] })}
+        innloggetNavIdent="Z999999"
       />,
     );
 
@@ -141,5 +166,35 @@ describe("SakerPåSammePerson", () => {
 
     expect(screen.getByRole("heading", { name: "Fjern kobling" })).toBeDefined();
     expect(screen.getByText(/mister tilgangen til hverandres saker/)).toBeDefined();
+  });
+
+  it("skjuler koblingshandlingen når innlogget bruker ikke er saksbehandler på noen av sakene", () => {
+    const gjeldendeSak = lagKontrollsak("105", {
+      saksbehandlere: {
+        eier: { navIdent: "Z111111", navn: "Annen Saksbehandler", enhet: "Øst" },
+        deltMed: [],
+        opprettetAv: { navIdent: "Z111111", navn: "Annen Saksbehandler", enhet: "Øst" },
+      },
+    });
+    const annenSak = lagKontrollsak("203", {
+      saksbehandlere: {
+        eier: { navIdent: "Z222222", navn: "Enda en Saksbehandler", enhet: "Øst" },
+        deltMed: [],
+        opprettetAv: { navIdent: "Z222222", navn: "Enda en Saksbehandler", enhet: "Øst" },
+      },
+    });
+
+    renderMedRouter(
+      <SakerPåSammePerson
+        saker={[annenSak]}
+        gjeldendeSak={gjeldendeSak}
+        innloggetNavIdent="Z999999"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Vis detaljer" }));
+
+    expect(screen.queryByRole("button", { name: "Koble til sak" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Gå til sak" })).toBeDefined();
   });
 });

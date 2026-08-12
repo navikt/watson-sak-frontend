@@ -229,6 +229,90 @@ describe("SakDetaljSide action", () => {
     expect(kobletSak.kobledeSaker).not.toContain(kontrollsak.id);
   });
 
+  it("kobler når innlogget bruker er delt med på målsaken", async () => {
+    const kontrollsak = hentAlleSaker(testRequest).find((sak) => sak.id === utredningSakId)!;
+    const kobletSak = hentAlleSaker(testRequest).find(
+      (sak) => sak.id !== kontrollsak.id && sak.personIdent === kontrollsak.personIdent,
+    )!;
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z111111",
+      navn: "Annen Saksbehandler",
+      enhet: "4812",
+    };
+    kontrollsak.saksbehandlere.deltMed = [];
+    kobletSak.saksbehandlere.eier = {
+      navIdent: "Z222222",
+      navn: "Enda en Saksbehandler",
+      enhet: "4812",
+    };
+    kobletSak.saksbehandlere.deltMed = [
+      { navIdent: "Z999999", navn: "Test Saksbehandler", enhet: "4812" },
+    ];
+
+    const formData = new FormData();
+    formData.set("handling", "koble_sak");
+    formData.set("relatertSakId", String(kobletSak.id));
+
+    await action({
+      request: new Request(`http://localhost/saker/${utredningSakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: utredningSakRef },
+    } as Route.ActionArgs);
+
+    expect(kontrollsak.kobledeSaker).toContain(kobletSak.id);
+    expect(kobletSak.kobledeSaker).toContain(kontrollsak.id);
+
+    const fjernFormData = new FormData();
+    fjernFormData.set("handling", "fjern_kobling");
+    fjernFormData.set("relatertSakId", String(kobletSak.id));
+
+    await action({
+      request: new Request(`http://localhost/saker/${utredningSakRef}`, {
+        method: "POST",
+        body: fjernFormData,
+      }),
+      params: { sakId: utredningSakRef },
+    } as Route.ActionArgs);
+
+    expect(kontrollsak.kobledeSaker).not.toContain(kobletSak.id);
+    expect(kobletSak.kobledeSaker).not.toContain(kontrollsak.id);
+  });
+
+  it("avviser kobling når innlogget bruker ikke er saksbehandler på noen av sakene", async () => {
+    const kontrollsak = hentAlleSaker(testRequest).find((sak) => sak.id === utredningSakId)!;
+    const kobletSak = hentAlleSaker(testRequest).find(
+      (sak) => sak.id !== kontrollsak.id && sak.personIdent === kontrollsak.personIdent,
+    )!;
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z111111",
+      navn: "Annen Saksbehandler",
+      enhet: "4812",
+    };
+    kontrollsak.saksbehandlere.deltMed = [];
+    kobletSak.saksbehandlere.eier = {
+      navIdent: "Z222222",
+      navn: "Enda en Saksbehandler",
+      enhet: "4812",
+    };
+    kobletSak.saksbehandlere.deltMed = [];
+
+    const formData = new FormData();
+    formData.set("handling", "koble_sak");
+    formData.set("relatertSakId", String(kobletSak.id));
+
+    await expect(
+      action({
+        request: new Request(`http://localhost/saker/${utredningSakRef}`, {
+          method: "POST",
+          body: formData,
+        }),
+        params: { sakId: utredningSakRef },
+      } as Route.ActionArgs),
+    ).rejects.toMatchObject({ init: { status: 403 } });
+  });
+
   it("avviser desimal som ID på koblet sak", async () => {
     const kontrollsak = hentAlleSaker(testRequest).find((sak) => sak.id === utredningSakId)!;
     kontrollsak.saksbehandlere.eier = {
@@ -252,6 +336,35 @@ describe("SakDetaljSide action", () => {
     expect(resultat).toEqual({
       ok: false,
       feil: { skjema: ["Ugyldig sak-ID"] },
+    });
+  });
+
+  it("avviser kobling til sak på en annen person", async () => {
+    const kontrollsak = hentAlleSaker(testRequest).find((sak) => sak.id === utredningSakId)!;
+    const annenPersonSak = hentAlleSaker(testRequest).find(
+      (sak) => sak.personIdent !== kontrollsak.personIdent,
+    )!;
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
+
+    const formData = new FormData();
+    formData.set("handling", "koble_sak");
+    formData.set("relatertSakId", String(annenPersonSak.id));
+
+    const resultat = await action({
+      request: new Request(`http://localhost/saker/${utredningSakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: utredningSakRef },
+    } as Route.ActionArgs);
+
+    expect(resultat).toEqual({
+      ok: false,
+      feil: { skjema: ["Kan ikke endre kobling til denne saken"] },
     });
   });
 });
