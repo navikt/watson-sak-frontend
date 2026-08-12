@@ -62,4 +62,20 @@ export const mockKodeverk: Kodeverk = {
     { kode: "BANK_OG_FINANS", beskrivelse: "Bank og finans" },
     { kode: "ANNET", beskrivelse: "Annet" },
   ],
+  enheter: [
+    { kode: "OST", beskrivelse: "Øst" },
+    { kode: "VEST", beskrivelse: "Vest" },
+    { kode: "NORD", beskrivelse: "Nord" },
+    { kode: "ANALYSE", beskrivelse: "Analyse" },
+  ],
+  aKrimsentre: [
+    { kode: "OSLO", beskrivelse: "Oslo" },
+    { kode: "TONSBERG", beskrivelse: "Tønsberg" },
+    { kode: "TRONDELAG", beskrivelse: "Trøndelag" },
+    { kode: "NORDLAND", beskrivelse: "Nordland" },
+    { kode: "TROMS_OG_FINNMARK", beskrivelse: "Troms og Finnmark" },
+    { kode: "STAVANGER", beskrivelse: "Stavanger" },
+    { kode: "VESTLAND", beskrivelse: "Vestland" },
+    { kode: "AGDER", beskrivelse: "Agder" },
+  ],
 };

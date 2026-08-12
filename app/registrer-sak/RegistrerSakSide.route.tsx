@@ -20,7 +20,7 @@ import { Form, Link, useFetcher, useActionData, useLoaderData, useSubmit } from 
 import { sporHendelse } from "~/analytics/analytics";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { RouteConfig } from "~/routeConfig";
-import { enhetEtiketter, opprettSakSchema } from "~/registrer-sak/validering";
+import { opprettSakSchema } from "~/registrer-sak/validering";
 import { merkingEtikett } from "~/saker/kategorier";
 import type { PersonOppslagResultat } from "./person-oppslag.mock.server";
 import { action, loader } from "./RegistrerSakSide.server";
@@ -39,7 +39,7 @@ function nyYtelseRad(defaults: YtelseRadVerdier = {}): YtelseRadState {
 }
 
 export default function OpprettSakSide() {
-  const { enheter, fnr: forhåndsutfyltFnr } = useLoaderData<typeof loader>();
+  const { fnr: forhåndsutfyltFnr } = useLoaderData<typeof loader>();
   const kodeverk = useKodeverk();
   const lastResult = useActionData<typeof action>();
   const submit = useSubmit();
@@ -455,9 +455,25 @@ export default function OpprettSakSide() {
                     defaultValue={(fields.enhet.initialValue ?? "") as string}
                   >
                     <option value="">Velg enhet</option>
-                    {enheter.map((e) => (
-                      <option key={e} value={e}>
-                        {enhetEtiketter[e] ?? e}
+                    {kodeverk.enheter.map((e) => (
+                      <option key={e.kode} value={e.kode}>
+                        {e.beskrivelse}
+                      </option>
+                    ))}
+                  </Select>
+
+                  <Select
+                    name={fields.aKrimsenter.name}
+                    id={fields.aKrimsenter.id}
+                    label="A-krimsenter (valgfritt)"
+                    error={fields.aKrimsenter.errors?.[0]}
+                    className="w-52"
+                    defaultValue={(fields.aKrimsenter.initialValue ?? "") as string}
+                  >
+                    <option value="">Velg A-krimsenter</option>
+                    {kodeverk.aKrimsentre.map((a) => (
+                      <option key={a.kode} value={a.kode}>
+                        {a.beskrivelse}
                       </option>
                     ))}
                   </Select>

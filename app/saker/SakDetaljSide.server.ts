@@ -3,7 +3,7 @@ import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
 import { logger } from "~/logging/logging";
-import { enhetAlternativer, redigerSaksinformasjonSchema } from "~/registrer-sak/validering";
+import { redigerSaksinformasjonSchema } from "~/registrer-sak/validering";
 import {
   bygFeilkartFraIssues,
   parseYtelseRader,
@@ -804,10 +804,6 @@ async function mockAction(
     }
     case "send_til_annen_enhet": {
       const nySeksjon = hentTekstfelt(formData, "seksjon", "Ugyldig enhet");
-
-      if (!enhetAlternativer.includes(nySeksjon as (typeof enhetAlternativer)[number])) {
-        throw data("Ugyldig enhet", { status: 400 });
-      }
 
       if (nySeksjon === getSaksenhet(sak)) {
         throw data("Velg en annen enhet", { status: 400 });

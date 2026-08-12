@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { mockKodeverk } from "~/testing/mock-store/kodeverk.server";
 import type { KontrollsakResponse, KontrollsakSaksbehandler } from "~/saker/types.backend";
 import { SaksbehandlereKort } from "./SaksbehandlereKort";
 
@@ -29,6 +30,10 @@ vi.mock("~/auth/innlogget-bruker", () => ({
     name: "Test Saksbehandler",
     enhet: "4812",
   }),
+}));
+
+vi.mock("~/kodeverk/useKodeverk", () => ({
+  useKodeverk: () => mockKodeverk,
 }));
 
 function lagSaksbehandler(
@@ -148,13 +153,13 @@ describe("SaksbehandlereKort", () => {
         erEier={true}
         sak={lagKontrollsak({
           saksbehandlere: {
-            eier: lagSaksbehandler({ enhet: "ØST" }),
+            eier: lagSaksbehandler({ enhet: "OST" }),
             deltMed: [],
-            opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "ØST" },
+            opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "OST" },
           },
         })}
-        saksbehandlerDetaljer={[lagSaksbehandler({ enhet: "ØST" })]}
-        ansvarligSaksbehandler={lagSaksbehandler({ enhet: "ØST" })}
+        saksbehandlerDetaljer={[lagSaksbehandler({ enhet: "OST" })]}
+        ansvarligSaksbehandler={lagSaksbehandler({ enhet: "OST" })}
       />,
     );
 
