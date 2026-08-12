@@ -563,6 +563,15 @@ async function backendAction(
         backendApi.hentKontrollsak(token, String(kobletSakId)),
       ]);
       if (
+        kobletSak.id === nåværendeSak.id ||
+        (handling === "koble_sak" && kobletSak.personIdent !== nåværendeSak.personIdent)
+      ) {
+        return {
+          ok: false,
+          feil: { skjema: ["Kan ikke endre kobling til denne saken"] },
+        } satisfies ActionResult;
+      }
+      if (
         !erSaksbehandlerPåSak(nåværendeSak, innlogget.navIdent) &&
         !erSaksbehandlerPåSak(kobletSak, innlogget.navIdent)
       ) {
@@ -938,7 +947,11 @@ async function mockAction(
       }
 
       const kobletSak = hentAlleSaker(request).find((annenSak) => annenSak.id === kobletSakId);
-      if (!kobletSak || kobletSak.personIdent !== sak.personIdent || kobletSak.id === sak.id) {
+      if (
+        !kobletSak ||
+        kobletSak.id === sak.id ||
+        (handling === "koble_sak" && kobletSak.personIdent !== sak.personIdent)
+      ) {
         return {
           ok: false,
           feil: { skjema: ["Kan ikke endre kobling til denne saken"] },
