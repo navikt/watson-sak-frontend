@@ -229,6 +229,74 @@ describe("SakDetaljSide action", () => {
     expect(kobletSak.kobledeSaker).not.toContain(kontrollsak.id);
   });
 
+  it("kobler når innlogget bruker er delt med på målsaken", async () => {
+    const kontrollsak = hentAlleSaker(testRequest).find((sak) => sak.id === utredningSakId)!;
+    const kobletSak = hentAlleSaker(testRequest).find(
+      (sak) => sak.id !== kontrollsak.id && sak.personIdent === kontrollsak.personIdent,
+    )!;
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z111111",
+      navn: "Annen Saksbehandler",
+      enhet: "4812",
+    };
+    kontrollsak.saksbehandlere.deltMed = [];
+    kobletSak.saksbehandlere.eier = {
+      navIdent: "Z222222",
+      navn: "Enda en Saksbehandler",
+      enhet: "4812",
+    };
+    kobletSak.saksbehandlere.deltMed = [
+      { navIdent: "Z999999", navn: "Test Saksbehandler", enhet: "4812" },
+    ];
+
+    const formData = new FormData();
+    formData.set("handling", "koble_sak");
+    formData.set("relatertSakId", String(kobletSak.id));
+
+    await action({
+      request: new Request(`http://localhost/saker/${utredningSakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: utredningSakRef },
+    } as Route.ActionArgs);
+
+    expect(kontrollsak.kobledeSaker).toContain(kobletSak.id);
+  });
+
+  it("avviser kobling når innlogget bruker ikke er saksbehandler på noen av sakene", async () => {
+    const kontrollsak = hentAlleSaker(testRequest).find((sak) => sak.id === utredningSakId)!;
+    const kobletSak = hentAlleSaker(testRequest).find(
+      (sak) => sak.id !== kontrollsak.id && sak.personIdent === kontrollsak.personIdent,
+    )!;
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z111111",
+      navn: "Annen Saksbehandler",
+      enhet: "4812",
+    };
+    kontrollsak.saksbehandlere.deltMed = [];
+    kobletSak.saksbehandlere.eier = {
+      navIdent: "Z222222",
+      navn: "Enda en Saksbehandler",
+      enhet: "4812",
+    };
+    kobletSak.saksbehandlere.deltMed = [];
+
+    const formData = new FormData();
+    formData.set("handling", "koble_sak");
+    formData.set("relatertSakId", String(kobletSak.id));
+
+    await expect(
+      action({
+        request: new Request(`http://localhost/saker/${utredningSakRef}`, {
+          method: "POST",
+          body: formData,
+        }),
+        params: { sakId: utredningSakRef },
+      } as Route.ActionArgs),
+    ).rejects.toMatchObject({ init: { status: 403 } });
+  });
+
   it("avviser desimal som ID på koblet sak", async () => {
     const kontrollsak = hentAlleSaker(testRequest).find((sak) => sak.id === utredningSakId)!;
     kontrollsak.saksbehandlere.eier = {

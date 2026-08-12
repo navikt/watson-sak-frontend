@@ -16,6 +16,7 @@ import { mockSeksjoner } from "~/saker/mock-seksjoner.server";
 import type {
   Blokkeringsarsak,
   Henleggelsesarsak,
+  KontrollsakResponse,
   KontrollsakSaksbehandler,
 } from "~/saker/types.backend";
 import { henleggelsesarsakSchema } from "~/saker/types.backend";
@@ -173,9 +174,21 @@ const tildelingshandlinger = new Set([
   "send_til_annen_enhet",
   "videresend_seksjon",
 ]);
+const koblingshandlinger = new Set(["koble_sak", "fjern_kobling"]);
 
 function erTildelingshandling(handling: string): boolean {
   return tildelingshandlinger.has(handling);
+}
+
+function erKoblingshandling(handling: string): boolean {
+  return koblingshandlinger.has(handling);
+}
+
+function erSaksbehandlerPåSak(sak: KontrollsakResponse, navIdent: string): boolean {
+  return (
+    sak.saksbehandlere.eier?.navIdent === navIdent ||
+    sak.saksbehandlere.deltMed.some((saksbehandler) => saksbehandler.navIdent === navIdent)
+  );
 }
 
 // --- Loader ---
@@ -276,7 +289,7 @@ async function backendAction(
   const token = await getBackendOboToken(request);
   let sakFraTilgangskontroll: Route.ComponentProps["loaderData"]["sak"] | undefined;
 
-  if (!erTildelingshandling(handling)) {
+  if (!erTildelingshandling(handling) && !erKoblingshandling(handling)) {
     const innlogget = await hentInnloggetBruker({ request });
     const nåværendeSak = await backendApi.hentKontrollsak(token, sakId);
     if (nåværendeSak.saksbehandlere.eier?.navIdent !== innlogget.navIdent) {
@@ -544,6 +557,19 @@ async function backendAction(
           feil: { skjema: ["Ugyldig sak-ID"] },
         } satisfies ActionResult;
       }
+      const innlogget = await hentInnloggetBruker({ request });
+      const [nåværendeSak, kobletSak] = await Promise.all([
+        backendApi.hentKontrollsak(token, sakId),
+        backendApi.hentKontrollsak(token, String(kobletSakId)),
+      ]);
+      if (
+        !erSaksbehandlerPåSak(nåværendeSak, innlogget.navIdent) &&
+        !erSaksbehandlerPåSak(kobletSak, innlogget.navIdent)
+      ) {
+        throw data("Du må være saksbehandler på minst én av sakene for å endre koblingen", {
+          status: 403,
+        });
+      }
       try {
         await backendApi.kobleSak(
           token,
@@ -653,7 +679,7 @@ async function mockAction(
     throw data("Sak ikke funnet", { status: 404 });
   }
 
-  if (!erTildelingshandling(handling)) {
+  if (!erTildelingshandling(handling) && !erKoblingshandling(handling)) {
     const innlogget = await hentInnloggetBruker({ request });
     const sakMedEier = medInnloggetEier(sak, innlogget.navIdent, innlogget.name);
     if (sakMedEier.saksbehandlere.eier?.navIdent !== innlogget.navIdent) {
@@ -917,6 +943,15 @@ async function mockAction(
           ok: false,
           feil: { skjema: ["Kan ikke endre kobling til denne saken"] },
         } satisfies ActionResult;
+      }
+      const innlogget = await hentInnloggetBruker({ request });
+      if (
+        !erSaksbehandlerPåSak(sak, innlogget.navIdent) &&
+        !erSaksbehandlerPåSak(kobletSak, innlogget.navIdent)
+      ) {
+        throw data("Du må være saksbehandler på minst én av sakene for å endre koblingen", {
+          status: 403,
+        });
       }
 
       const erKoblet = sak.kobledeSaker.includes(kobletSak.id);
