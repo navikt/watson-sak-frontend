@@ -41,10 +41,10 @@ describe("VedleggSeksjon", () => {
     expect(screen.getByText("Vedlegg")).toBeDefined();
   });
 
-  it("viser tom tabell når det ikke er noen filer", () => {
+  it("viser tomtilstand når det ikke er noen filer", () => {
     renderSeksjon({ filer: [], sakId: "SAK-1", erSakseier: false, kanLasteOpp: false });
-    expect(screen.getByText("Filnavn")).toBeDefined();
-    expect(screen.queryAllByRole("row").length).toBe(1); // kun header-rad
+    expect(screen.getByText("Ingen vedlegg ennå")).toBeDefined();
+    expect(screen.queryByText("Filnavn")).toBeNull();
   });
 
   it("viser filnavn for hver fil", () => {
@@ -84,7 +84,7 @@ describe("VedleggSeksjon", () => {
 
   it("viser 'Last opp vedlegg'-knapp når kanLasteOpp er true", () => {
     renderSeksjon({ filer: [], sakId: "SAK-1", erSakseier: false, kanLasteOpp: true });
-    expect(screen.getByText("Last opp vedlegg")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Last opp vedlegg" })).toBeDefined();
   });
 
   it("skjuler 'Last opp vedlegg'-knapp når kanLasteOpp er false", () => {
