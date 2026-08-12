@@ -100,6 +100,20 @@ describe("SakFilområde", () => {
     expect(screen.getByText("Opprett dokument")).toBeDefined();
   });
 
+  it("viser tomtilstand for dokumenter med opprett-knapp når brukeren kan redigere", () => {
+    renderOmråde({ dokumenter: [], filer: [], sakId: "ABC-123" });
+
+    expect(screen.getByText("Ingen dokumenter ennå")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Opprett dokument" })).toBeDefined();
+  });
+
+  it("skjuler opprett-knapp i tomtilstanden når brukeren ikke kan redigere", () => {
+    renderOmråde({ dokumenter: [], filer: [], sakId: "ABC-123", redigerbar: false });
+
+    expect(screen.getByText("Ingen dokumenter ennå")).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Opprett dokument" })).toBeNull();
+  });
+
   it("skjuler 'Opprett dokument'-knapp når redigerbar er false", () => {
     renderOmråde({ dokumenter: mockDokumenter, filer: [], sakId: "ABC-123", redigerbar: false });
     expect(screen.queryByText("Opprett dokument")).toBeNull();

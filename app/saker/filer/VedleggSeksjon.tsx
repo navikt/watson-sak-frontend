@@ -2,6 +2,7 @@ import { EyeIcon, LinkIcon, TrashIcon, UploadIcon } from "@navikt/aksel-icons";
 import {
   Alert,
   BodyShort,
+  Box,
   Button,
   Detail,
   Heading,
@@ -148,7 +149,7 @@ export function VedleggSeksjon({ filer, sakId, erSakseier, kanLasteOpp }: Vedleg
         <Heading level="3" size="xsmall">
           Vedlegg
         </Heading>
-        {kanLasteOpp && (
+        {kanLasteOpp && filer.length > 0 && (
           <>
             <input
               ref={inputRef}
@@ -178,62 +179,99 @@ export function VedleggSeksjon({ filer, sakId, erSakseier, kanLasteOpp }: Vedleg
         </Alert>
       )}
 
-      <Table size="small">
-        <Table.Header>
-          <Table.Row>
-            <Table.HeaderCell scope="col">Filnavn</Table.HeaderCell>
-            <Table.HeaderCell scope="col">Størrelse</Table.HeaderCell>
-            <Table.HeaderCell scope="col">Lastet opp</Table.HeaderCell>
-            <Table.HeaderCell scope="col">Av</Table.HeaderCell>
-            <Table.HeaderCell scope="col">
-              <span className="sr-only">Handlinger</span>
-            </Table.HeaderCell>
-          </Table.Row>
-        </Table.Header>
-        <Table.Body>
-          {filer.map((fil) => (
-            <Table.Row key={fil.id}>
-              <Table.DataCell>
-                <HStack gap="space-2" align="center">
-                  <BodyShort size="small">{fil.filnavn}</BodyShort>
-                  {fil.bruktIDokumenter.length > 0 && (
-                    <Tooltip
-                      content={`I bruk i: ${fil.bruktIDokumenter.map((d) => d.tittel || "Uten tittel").join(", ")}`}
-                    >
-                      <LinkIcon
-                        aria-label={`Filen er i bruk i ${fil.bruktIDokumenter.length} dokument(er)`}
-                        className="text-ax-text-neutral-subtle"
-                      />
-                    </Tooltip>
-                  )}
-                </HStack>
-              </Table.DataCell>
-              <Table.DataCell>
-                <Detail>{formaterStorrelse(fil.storrelse)}</Detail>
-              </Table.DataCell>
-              <Table.DataCell>
-                <Detail>{formaterDatoTid(fil.opprettet)}</Detail>
-              </Table.DataCell>
-              <Table.DataCell>
-                <Detail>{fil.opprettetAv}</Detail>
-              </Table.DataCell>
-              <Table.DataCell>
-                <HStack gap="space-1" align="center">
-                  <NedlastKnapp filId={fil.id} filnavn={fil.filnavn} sakId={sakId} />
-                  {erSakseier && (
-                    <SlettKnapp
-                      filId={fil.id}
-                      filnavn={fil.filnavn}
-                      sakId={sakId}
-                      bruktIDokumenter={fil.bruktIDokumenter}
-                    />
-                  )}
-                </HStack>
-              </Table.DataCell>
+      {filer.length === 0 ? (
+        <Box background="neutral-soft" borderRadius="8" padding="space-16">
+          <HStack gap="space-12" align="start">
+            <UploadIcon aria-hidden fontSize="1.5rem" />
+            <VStack gap="space-12">
+              <VStack gap="space-4">
+                <BodyShort weight="semibold">Ingen vedlegg ennå</BodyShort>
+                <BodyShort size="small">Last opp filer som hører til saken.</BodyShort>
+              </VStack>
+              {kanLasteOpp && (
+                <>
+                  <input
+                    ref={inputRef}
+                    type="file"
+                    className="sr-only"
+                    aria-hidden
+                    tabIndex={-1}
+                    onChange={håndterFilvalg}
+                  />
+                  <Button
+                    type="button"
+                    size="small"
+                    icon={
+                      lasterOpp ? <Loader size="xsmall" aria-hidden /> : <UploadIcon aria-hidden />
+                    }
+                    disabled={lasterOpp}
+                    onClick={() => inputRef.current?.click()}
+                  >
+                    Last opp vedlegg
+                  </Button>
+                </>
+              )}
+            </VStack>
+          </HStack>
+        </Box>
+      ) : (
+        <Table size="small">
+          <Table.Header>
+            <Table.Row>
+              <Table.HeaderCell scope="col">Filnavn</Table.HeaderCell>
+              <Table.HeaderCell scope="col">Størrelse</Table.HeaderCell>
+              <Table.HeaderCell scope="col">Lastet opp</Table.HeaderCell>
+              <Table.HeaderCell scope="col">Av</Table.HeaderCell>
+              <Table.HeaderCell scope="col">
+                <span className="sr-only">Handlinger</span>
+              </Table.HeaderCell>
             </Table.Row>
-          ))}
-        </Table.Body>
-      </Table>
+          </Table.Header>
+          <Table.Body>
+            {filer.map((fil) => (
+              <Table.Row key={fil.id}>
+                <Table.DataCell>
+                  <HStack gap="space-2" align="center">
+                    <BodyShort size="small">{fil.filnavn}</BodyShort>
+                    {fil.bruktIDokumenter.length > 0 && (
+                      <Tooltip
+                        content={`I bruk i: ${fil.bruktIDokumenter.map((d) => d.tittel || "Uten tittel").join(", ")}`}
+                      >
+                        <LinkIcon
+                          aria-label={`Filen er i bruk i ${fil.bruktIDokumenter.length} dokument(er)`}
+                          className="text-ax-text-neutral-subtle"
+                        />
+                      </Tooltip>
+                    )}
+                  </HStack>
+                </Table.DataCell>
+                <Table.DataCell>
+                  <Detail>{formaterStorrelse(fil.storrelse)}</Detail>
+                </Table.DataCell>
+                <Table.DataCell>
+                  <Detail>{formaterDatoTid(fil.opprettet)}</Detail>
+                </Table.DataCell>
+                <Table.DataCell>
+                  <Detail>{fil.opprettetAv}</Detail>
+                </Table.DataCell>
+                <Table.DataCell>
+                  <HStack gap="space-1" align="center">
+                    <NedlastKnapp filId={fil.id} filnavn={fil.filnavn} sakId={sakId} />
+                    {erSakseier && (
+                      <SlettKnapp
+                        filId={fil.id}
+                        filnavn={fil.filnavn}
+                        sakId={sakId}
+                        bruktIDokumenter={fil.bruktIDokumenter}
+                      />
+                    )}
+                  </HStack>
+                </Table.DataCell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table>
+      )}
     </VStack>
   );
 }

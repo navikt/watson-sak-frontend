@@ -1,5 +1,5 @@
 import { FilePlusIcon } from "@navikt/aksel-icons";
-import { Button, Heading, HStack, VStack } from "@navikt/ds-react";
+import { BodyShort, Box, Button, Heading, HStack, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import { useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
@@ -18,7 +18,7 @@ function OpprettDokumentKnapp({
 }: {
   sakId: string;
   size: "small" | "xsmall";
-  variant?: "secondary" | "tertiary";
+  variant?: "primary" | "secondary" | "tertiary";
 }) {
   const action = RouteConfig.API.SAK_DOKUMENTER.replace(":sakId", sakId);
   const fetcher = useFetcher();
@@ -82,9 +82,30 @@ export function SakFilområde({
             <Heading level="2" size="small">
               Dokumenter
             </Heading>
-            {redigerbar && <OpprettDokumentKnapp sakId={sakId} size="xsmall" variant="tertiary" />}
+            {redigerbar && dokumenter.length > 0 && (
+              <OpprettDokumentKnapp sakId={sakId} size="xsmall" variant="tertiary" />
+            )}
           </HStack>
-          <DokumentTre noder={dokumenter} sakId={sakId} redigerbar={redigerbar} />
+          {dokumenter.length === 0 ? (
+            <Box background="neutral-soft" borderRadius="8" padding="space-16">
+              <HStack gap="space-12" align="start">
+                <FilePlusIcon aria-hidden fontSize="1.5rem" />
+                <VStack gap="space-12">
+                  <VStack gap="space-4">
+                    <BodyShort weight="semibold">Ingen dokumenter ennå</BodyShort>
+                    <BodyShort size="small">
+                      Opprett et dokument for å samle informasjon og vurderinger i saken.
+                    </BodyShort>
+                  </VStack>
+                  {redigerbar && (
+                    <OpprettDokumentKnapp sakId={sakId} size="small" variant="primary" />
+                  )}
+                </VStack>
+              </HStack>
+            </Box>
+          ) : (
+            <DokumentTre noder={dokumenter} sakId={sakId} redigerbar={redigerbar} />
+          )}
         </div>
 
         <div className="border-t border-ax-border-neutral-subtle pt-6">
