@@ -112,12 +112,26 @@ describe("SakFilområde", () => {
 
     expect(await screen.findByRole("heading", { name: "Opprett dokument" })).toBeDefined();
     expect(screen.getByText("Blankt dokument")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Ikke straffesak Arbeid" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Straffesak Arbeid" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Ikke straffesak Enslig forsørger" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Straffesak Enslig forsørger" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Ikke straffesak Utland" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Straffesak Utland" })).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Ikke straffesak Kontrollrapport – Arbeid" }),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Straffesak Kontrollrapport – Arbeid" }),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("button", {
+        name: "Ikke straffesak Kontrollrapport – Enslig forsørger",
+      }),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Straffesak Kontrollrapport – Enslig forsørger" }),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Ikke straffesak Kontrollrapport – Utland" }),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Straffesak Kontrollrapport – Utland" }),
+    ).toBeDefined();
   });
 
   it("sender ingen malId når 'Blankt dokument' velges", async () => {
@@ -142,7 +156,9 @@ describe("SakFilområde", () => {
     });
 
     fireEvent.click(screen.getByText("Opprett dokument"));
-    fireEvent.click(await screen.findByRole("button", { name: "Straffesak Arbeid" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Straffesak Kontrollrapport – Arbeid" }),
+    );
 
     await waitFor(() => expect(mottatt).toHaveLength(1));
     expect(mottatt[0].get("malId")).toBe("arbeid");
