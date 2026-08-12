@@ -113,7 +113,7 @@ describe("dokumenter.api POST", () => {
     const historikk = hentDokumentHistorikk(state(), String(sak.id), docId);
     expect(historikk).toHaveLength(1);
     expect(historikk[0]).toMatchObject({
-      tittel: "Kontrollrapport - Arbeid",
+      tittel: "Kontrollrapport – Arbeid",
       innhold: dokument?.innhold,
     });
   });
