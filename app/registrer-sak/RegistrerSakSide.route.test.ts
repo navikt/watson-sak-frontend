@@ -318,7 +318,8 @@ describe("byggOpprettKontrollsakPayload", () => {
           kilde: "NAV_KONTROLL",
           misbruktype: ["SKJULT_SAMLIV"],
           merking: ["LIME"],
-          enhet: "ØST",
+          enhet: "OST",
+          aKrimsenter: "OSLO",
           arbeidsgivere: ["123456789"],
           ytelser: [
             {
@@ -338,6 +339,8 @@ describe("byggOpprettKontrollsakPayload", () => {
       prioritet: "NORMAL",
       misbruktype: ["SKJULT_SAMLIV"],
       merking: ["LIME"],
+      enhet: "OST",
+      aKrimsenter: "OSLO",
       arbeidsgivere: ["123456789"],
       ytelser: [
         {

@@ -5,7 +5,7 @@ import { BodyShort, Button, Modal, Select, VStack } from "@navikt/ds-react";
 import { useEffect } from "react";
 import { useFetcher, useNavigate } from "react-router";
 import { z } from "zod";
-import { enhetAlternativer, enhetEtiketter } from "~/registrer-sak/validering";
+import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 
@@ -28,6 +28,7 @@ export function SendTilAnnenEnhetModal({
 }: SendTilAnnenEnhetModalProps) {
   const fetcher = useFetcher<{ ok: boolean }>();
   const navigate = useNavigate();
+  const kodeverk = useKodeverk();
   const saksreferanse = getSaksreferanse(sakId);
   const erSubmitting = fetcher.state !== "idle";
 
@@ -84,9 +85,13 @@ export function SendTilAnnenEnhetModal({
               error={fields.seksjon.errors?.[0]}
             >
               <option value="">Velg enhet</option>
-              {enhetAlternativer.map((enhet) => (
-                <option key={enhet} value={enhet} disabled={enhet === nåværendeEnhet}>
-                  {enhetEtiketter[enhet]}
+              {kodeverk.enheter.map((enhet) => (
+                <option
+                  key={enhet.kode}
+                  value={enhet.kode}
+                  disabled={enhet.kode === nåværendeEnhet}
+                >
+                  {enhet.beskrivelse}
                 </option>
               ))}
             </Select>
