@@ -104,6 +104,18 @@ describe("SakerPåSammePerson", () => {
     expect(screen.getByRole("button", { name: "Skjul" })).toBeDefined();
   });
 
+  it("lenker til den utvidede saken", () => {
+    renderMedRouter(
+      <SakerPåSammePerson saker={[lagKontrollsak("203")]} gjeldendeSak={lagKontrollsak("105")} />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Vis detaljer" }));
+
+    expect(screen.getByRole("button", { name: "Gå til sak" }).getAttribute("href")).toBe(
+      "/saker/203",
+    );
+  });
+
   it("viser feil i koblingsmodalen når innsendingen feiler", async () => {
     renderMedRouter(
       <SakerPåSammePerson saker={[lagKontrollsak("203")]} gjeldendeSak={lagKontrollsak("105")} />,
