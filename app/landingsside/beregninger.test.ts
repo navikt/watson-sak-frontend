@@ -37,6 +37,8 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
     kobledeSaker: [],
     dokumenter: [],
     adresseskjermet: false,
+    gjeldendePersonIdent: null,
+    historiskeIdenter: [],
     ...overstyringer,
   };
 }

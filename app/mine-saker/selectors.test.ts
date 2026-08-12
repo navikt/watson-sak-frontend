@@ -34,6 +34,8 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     kobledeSaker: [],
     dokumenter: [],
     adresseskjermet: false,
+    gjeldendePersonIdent: null,
+    historiskeIdenter: [],
     ...overrides,
   };
 }
