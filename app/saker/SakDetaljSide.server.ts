@@ -805,10 +805,6 @@ async function mockAction(
     case "send_til_annen_enhet": {
       const nySeksjon = hentTekstfelt(formData, "seksjon", "Ugyldig enhet");
 
-      if (!nySeksjon) {
-        throw data("Ugyldig enhet", { status: 400 });
-      }
-
       if (nySeksjon === getSaksenhet(sak)) {
         throw data("Velg en annen enhet", { status: 400 });
       }

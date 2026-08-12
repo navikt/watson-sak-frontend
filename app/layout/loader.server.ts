@@ -19,7 +19,15 @@ async function hentKodeverkMedFallback(token: string): Promise<Kodeverk> {
     logger.error("Kunne ikke hente kodeverk ved oppstart — bruker tom fallback", {
       feil: feilObjekt,
     });
-    return { merker: [], kategorier: [], misbrukstyper: [], ytelseTyper: [], kilder: [] };
+    return {
+      merker: [],
+      kategorier: [],
+      misbrukstyper: [],
+      ytelseTyper: [],
+      kilder: [],
+      enheter: [],
+      aKrimsentre: [],
+    };
   }
 }
 

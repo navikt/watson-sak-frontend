@@ -447,8 +447,8 @@ const kodeverkResponseSchema = z.object({
   misbrukstyper: z.array(misbrukstypeInfoSchema),
   ytelseTyper: z.array(kodeverkInfoSchema),
   kilder: z.array(kodeverkInfoSchema),
-  enheter: z.array(kodeverkInfoSchema),
-  aKrimsentre: z.array(kodeverkInfoSchema),
+  enheter: z.array(kodeverkInfoSchema).default([]),
+  aKrimsentre: z.array(kodeverkInfoSchema).default([]),
 });
 
 export type Kodeverk = z.infer<typeof kodeverkResponseSchema>;
