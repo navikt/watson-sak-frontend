@@ -26,6 +26,7 @@ function MalValg({
     <Button
       type="button"
       variant="secondary"
+      data-color="neutral"
       onClick={() => onVelg({ malId, erStraffesak })}
       aria-label={`${sakstype} ${MAL_NAVN[malId]}`}
       className="relative h-[72px] w-full justify-start px-[var(--ax-space-16)] text-left"
@@ -80,6 +81,7 @@ export function OpprettDokumentModal({ åpen, onClose, onVelg }: OpprettDokument
           <Button
             type="button"
             variant="secondary"
+            data-color="neutral"
             onClick={() => onVelg()}
             className="relative h-[64px] w-full justify-start px-[var(--ax-space-16)] text-left"
           >
