@@ -181,38 +181,37 @@ export function VedleggSeksjon({ filer, sakId, erSakseier, kanLasteOpp }: Vedleg
 
       {filer.length === 0 ? (
         <Box background="neutral-soft" borderRadius="8" padding="space-16">
-          <HStack gap="space-12" align="start">
+          <VStack gap="space-12" align="center" className="text-center">
             <UploadIcon aria-hidden fontSize="1.5rem" />
-            <VStack gap="space-12">
-              <VStack gap="space-4">
-                <BodyShort weight="semibold">Ingen vedlegg ennå</BodyShort>
-                <BodyShort size="small">Last opp filer som hører til saken.</BodyShort>
-              </VStack>
-              {kanLasteOpp && (
-                <>
-                  <input
-                    ref={inputRef}
-                    type="file"
-                    className="sr-only"
-                    aria-hidden
-                    tabIndex={-1}
-                    onChange={håndterFilvalg}
-                  />
-                  <Button
-                    type="button"
-                    size="small"
-                    icon={
-                      lasterOpp ? <Loader size="xsmall" aria-hidden /> : <UploadIcon aria-hidden />
-                    }
-                    disabled={lasterOpp}
-                    onClick={() => inputRef.current?.click()}
-                  >
-                    Last opp vedlegg
-                  </Button>
-                </>
-              )}
+            <VStack gap="space-4" align="center">
+              <BodyShort weight="semibold">Ingen vedlegg ennå</BodyShort>
+              <BodyShort size="small">Last opp filer som hører til saken.</BodyShort>
             </VStack>
-          </HStack>
+            {kanLasteOpp && (
+              <>
+                <input
+                  ref={inputRef}
+                  type="file"
+                  className="sr-only"
+                  aria-hidden
+                  tabIndex={-1}
+                  onChange={håndterFilvalg}
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="small"
+                  icon={
+                    lasterOpp ? <Loader size="xsmall" aria-hidden /> : <UploadIcon aria-hidden />
+                  }
+                  disabled={lasterOpp}
+                  onClick={() => inputRef.current?.click()}
+                >
+                  Last opp vedlegg
+                </Button>
+              </>
+            )}
+          </VStack>
         </Box>
       ) : (
         <Table size="small">

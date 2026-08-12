@@ -88,20 +88,18 @@ export function SakFilområde({
           </HStack>
           {dokumenter.length === 0 ? (
             <Box background="neutral-soft" borderRadius="8" padding="space-16">
-              <HStack gap="space-12" align="start">
+              <VStack gap="space-12" align="center" className="text-center">
                 <FilePlusIcon aria-hidden fontSize="1.5rem" />
-                <VStack gap="space-12">
-                  <VStack gap="space-4">
-                    <BodyShort weight="semibold">Ingen dokumenter ennå</BodyShort>
-                    <BodyShort size="small">
-                      Opprett et dokument for å samle informasjon og vurderinger i saken.
-                    </BodyShort>
-                  </VStack>
-                  {redigerbar && (
-                    <OpprettDokumentKnapp sakId={sakId} size="small" variant="primary" />
-                  )}
+                <VStack gap="space-4" align="center">
+                  <BodyShort weight="semibold">Ingen dokumenter ennå</BodyShort>
+                  <BodyShort size="small">
+                    Opprett et dokument for å samle informasjon og vurderinger i saken.
+                  </BodyShort>
                 </VStack>
-              </HStack>
+                {redigerbar && (
+                  <OpprettDokumentKnapp sakId={sakId} size="small" variant="secondary" />
+                )}
+              </VStack>
             </Box>
           ) : (
             <DokumentTre noder={dokumenter} sakId={sakId} redigerbar={redigerbar} />
