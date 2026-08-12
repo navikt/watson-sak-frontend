@@ -38,11 +38,13 @@ import {
 interface SakerPåSammePersonProps {
   saker: KontrollsakResponse[];
   gjeldendeSak: KontrollsakResponse;
+  innloggetNavIdent: string;
 }
 
 interface SakKortProps {
   sak: KontrollsakResponse;
   erKoblet: boolean;
+  kanEndreKobling: boolean;
   onEndreKobling: (sak: KontrollsakResponse, handling: Koblingshandling) => void;
 }
 
@@ -60,7 +62,7 @@ function SakFelt({ label, children }: { label: string; children: React.ReactNode
   );
 }
 
-function SakKort({ sak, erKoblet, onEndreKobling }: SakKortProps) {
+function SakKort({ sak, erKoblet, kanEndreKobling, onEndreKobling }: SakKortProps) {
   const [åpen, setÅpen] = useState(false);
   const saksreferanse = getSaksreferanse(sak.id);
   const personIdent = getPersonIdent(sak);
@@ -210,16 +212,18 @@ function SakKort({ sak, erKoblet, onEndreKobling }: SakKortProps) {
                   >
                     Gå til sak
                   </Button>
-                  <Button
-                    type="button"
-                    variant={erKoblet ? "tertiary-neutral" : "secondary"}
-                    size="small"
-                    icon={erKoblet ? <LinkBrokenIcon aria-hidden /> : <LinkIcon aria-hidden />}
-                    iconPosition="right"
-                    onClick={() => onEndreKobling(sak, erKoblet ? "fjerne" : "koble")}
-                  >
-                    {erKoblet ? "Fjern kobling" : "Koble til sak"}
-                  </Button>
+                  {kanEndreKobling && (
+                    <Button
+                      type="button"
+                      variant={erKoblet ? "tertiary-neutral" : "secondary"}
+                      size="small"
+                      icon={erKoblet ? <LinkBrokenIcon aria-hidden /> : <LinkIcon aria-hidden />}
+                      iconPosition="right"
+                      onClick={() => onEndreKobling(sak, erKoblet ? "fjerne" : "koble")}
+                    >
+                      {erKoblet ? "Fjern kobling" : "Koble til sak"}
+                    </Button>
+                  )}
                 </HStack>
               </VStack>
             </Box>
@@ -230,7 +234,11 @@ function SakKort({ sak, erKoblet, onEndreKobling }: SakKortProps) {
   );
 }
 
-export function SakerPåSammePerson({ saker, gjeldendeSak }: SakerPåSammePersonProps) {
+export function SakerPåSammePerson({
+  saker,
+  gjeldendeSak,
+  innloggetNavIdent,
+}: SakerPåSammePersonProps) {
   const [valgtSak, setValgtSak] = useState<KontrollsakResponse | null>(null);
   const [handling, setHandling] = useState<Koblingshandling>("koble");
   const [feilmelding, setFeilmelding] = useState<string>();
@@ -290,6 +298,10 @@ export function SakerPåSammePerson({ saker, gjeldendeSak }: SakerPåSammePerson
                 key={sak.id}
                 sak={sak}
                 erKoblet={gjeldendeSak.kobledeSaker.includes(sak.id)}
+                kanEndreKobling={
+                  erSaksbehandlerPåSak(gjeldendeSak, innloggetNavIdent) ||
+                  erSaksbehandlerPåSak(sak, innloggetNavIdent)
+                }
                 onEndreKobling={åpneKoblingsmodal}
               />
             ))}
@@ -353,5 +365,12 @@ export function SakerPåSammePerson({ saker, gjeldendeSak }: SakerPåSammePerson
         </fetcher.Form>
       </Modal>
     </>
+  );
+}
+
+function erSaksbehandlerPåSak(sak: KontrollsakResponse, navIdent: string): boolean {
+  return (
+    sak.saksbehandlere.eier?.navIdent === navIdent ||
+    sak.saksbehandlere.deltMed.some((saksbehandler) => saksbehandler.navIdent === navIdent)
   );
 }
