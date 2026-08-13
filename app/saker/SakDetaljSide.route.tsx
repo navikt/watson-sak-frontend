@@ -425,6 +425,7 @@ export default function SakDetaljSide() {
                         <HStack gap="space-1" align="center">
                           {harHistoriskIdent ? (
                             <Button
+                              type="button"
                               variant="tertiary-neutral"
                               size="xsmall"
                               onClick={identHistorikkModal.onÅpne}
@@ -436,11 +437,12 @@ export default function SakDetaljSide() {
                           )}
                           <CopyButton size="xsmall" copyText={visPersonIdent} />
                         </HStack>
-                        {sak.gjeldendePersonIdent && (
-                          <Detail className="text-ax-text-neutral-subtle">
-                            Saken ble opprettet under {personIdent}
-                          </Detail>
-                        )}
+                        {sak.gjeldendePersonIdent &&
+                          sak.gjeldendePersonIdent !== sak.personIdent && (
+                            <Detail className="text-ax-text-neutral-subtle">
+                              Saken ble opprettet under {personIdent}
+                            </Detail>
+                          )}
                       </VStack>
 
                       <HGrid columns={{ xs: 1, md: 2 }} gap="space-4">
@@ -668,6 +670,7 @@ export default function SakDetaljSide() {
                           <HStack gap="space-1" align="center">
                             {harHistoriskIdent ? (
                               <Button
+                                type="button"
                                 variant="tertiary-neutral"
                                 size="xsmall"
                                 onClick={identHistorikkModal.onÅpne}
@@ -679,11 +682,12 @@ export default function SakDetaljSide() {
                             )}
                             <CopyButton size="xsmall" copyText={visPersonIdent} />
                           </HStack>
-                          {sak.gjeldendePersonIdent && (
-                            <Detail className="text-ax-text-neutral-subtle">
-                              Saken ble opprettet under {personIdent}
-                            </Detail>
-                          )}
+                          {sak.gjeldendePersonIdent &&
+                            sak.gjeldendePersonIdent !== sak.personIdent && (
+                              <Detail className="text-ax-text-neutral-subtle">
+                                Saken ble opprettet under {personIdent}
+                              </Detail>
+                            )}
                         </VStack>
 
                         {kategoriText && (

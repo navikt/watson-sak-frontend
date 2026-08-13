@@ -8,11 +8,7 @@ interface PersonIdentHistorikkModalProps {
   onClose: () => void;
 }
 
-export function PersonIdentHistorikkModal({
-  sak,
-  åpen,
-  onClose,
-}: PersonIdentHistorikkModalProps) {
+export function PersonIdentHistorikkModal({ sak, åpen, onClose }: PersonIdentHistorikkModalProps) {
   const modalRef = useRef<HTMLDialogElement>(null);
 
   return (
@@ -40,7 +36,12 @@ export function PersonIdentHistorikkModal({
                 <Table.Row key={ident.personIdent}>
                   <Table.DataCell>{ident.personIdent}</Table.DataCell>
                   <Table.DataCell>
-                    {ident.type === "FOEDSELSNUMMER" ? "Fødselsnummer" : "D-nummer"}
+                    {{
+                      FOEDSELSNUMMER: "Fødselsnummer",
+                      DNR: "D-nummer",
+                      FH_NUMMER: "FH-nummer",
+                      NPID: "NPID",
+                    }[ident.type] ?? ident.type}
                   </Table.DataCell>
                   <Table.DataCell>
                     {ident.historisk ? (
