@@ -44,6 +44,7 @@ import { SakHandlingerKnapper } from "./handlinger/SakHandlingerKnapper";
 import { erAktivSakKontrollsak, erSakseier } from "./handlinger/tilgjengeligeHandlinger";
 import { SakHistorikk } from "./historikk/SakHistorikk";
 import { getSaksreferanse } from "./id";
+import { PersonIdentHistorikkModal } from "./komponenter/PersonIdentHistorikkModal";
 import { SakerPåSammePerson } from "./komponenter/SakerPåSammePerson";
 import { SaksbehandlereKort } from "./komponenter/SaksbehandlereKort";
 import { getAlder, getKategoriText, getMisbrukstyper, getNavn, getTags } from "./selectors";
@@ -59,6 +60,7 @@ import { action, loader } from "./SakDetaljSide.server";
 import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
 import { RouteConfig } from "~/routeConfig";
 import { useTilbakeLenke } from "./tilbake";
+import { useDisclosure } from "~/utils/useDisclosure";
 
 export { action, loader };
 
@@ -204,6 +206,9 @@ export default function SakDetaljSide() {
   const fetcher = useFetcher<typeof action>();
   const revalidator = useRevalidator();
   const personIdent = getPersonIdent(sak);
+  const visPersonIdent = sak.gjeldendePersonIdent ?? personIdent;
+  const harHistoriskIdent = sak.historiskeIdenter.some((i) => i.historisk);
+  const identHistorikkModal = useDisclosure();
   const statusTekst = formaterStatus(sak.status);
   const kildeTekst = getKildeText(sak);
   const erAktiv = erAktivSakKontrollsak(sak.status);
@@ -418,9 +423,26 @@ export default function SakDetaljSide() {
                           Personnummer
                         </Detail>
                         <HStack gap="space-1" align="center">
-                          <BodyShort>{personIdent}</BodyShort>
-                          <CopyButton size="xsmall" copyText={personIdent} />
+                          {harHistoriskIdent ? (
+                            <Button
+                              type="button"
+                              variant="tertiary-neutral"
+                              size="xsmall"
+                              onClick={identHistorikkModal.onÅpne}
+                            >
+                              {visPersonIdent}
+                            </Button>
+                          ) : (
+                            <BodyShort>{visPersonIdent}</BodyShort>
+                          )}
+                          <CopyButton size="xsmall" copyText={visPersonIdent} />
                         </HStack>
+                        {sak.gjeldendePersonIdent &&
+                          sak.gjeldendePersonIdent !== sak.personIdent && (
+                            <Detail className="text-ax-text-neutral-subtle">
+                              Saken ble opprettet under {personIdent}
+                            </Detail>
+                          )}
                       </VStack>
 
                       <HGrid columns={{ xs: 1, md: 2 }} gap="space-4">
@@ -646,9 +668,26 @@ export default function SakDetaljSide() {
                             Personnummer
                           </Detail>
                           <HStack gap="space-1" align="center">
-                            <BodyShort>{personIdent}</BodyShort>
-                            <CopyButton size="xsmall" copyText={personIdent} />
+                            {harHistoriskIdent ? (
+                              <Button
+                                type="button"
+                                variant="tertiary-neutral"
+                                size="xsmall"
+                                onClick={identHistorikkModal.onÅpne}
+                              >
+                                {visPersonIdent}
+                              </Button>
+                            ) : (
+                              <BodyShort>{visPersonIdent}</BodyShort>
+                            )}
+                            <CopyButton size="xsmall" copyText={visPersonIdent} />
                           </HStack>
+                          {sak.gjeldendePersonIdent &&
+                            sak.gjeldendePersonIdent !== sak.personIdent && (
+                              <Detail className="text-ax-text-neutral-subtle">
+                                Saken ble opprettet under {personIdent}
+                              </Detail>
+                            )}
                         </VStack>
 
                         {kategoriText && (
@@ -812,6 +851,11 @@ export default function SakDetaljSide() {
           </VStack>
         </HGrid>
       </VStack>
+      <PersonIdentHistorikkModal
+        sak={sak}
+        åpen={identHistorikkModal.erÅpen}
+        onClose={identHistorikkModal.onLukk}
+      />
     </>
   );
 }

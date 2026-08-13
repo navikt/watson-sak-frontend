@@ -41,6 +41,8 @@ function lagKontrollsak(
     kobledeSaker: [],
     dokumenter: [],
     adresseskjermet: false,
+    gjeldendePersonIdent: null,
+    historiskeIdenter: [],
     ...overrides,
   };
 }

@@ -81,9 +81,17 @@ export const dokumentNodeSchema = z.object({
   låsAv: z.string().nullable(),
 });
 
+const historiskIdentSchema = z.object({
+  personIdent: z.string(),
+  type: z.string(),
+  historisk: z.boolean(),
+});
+
 const kontrollobjektSchema = z.object({
   personIdent: z.string(),
+  gjeldendePersonIdent: z.string().nullable().default(null),
   navn: z.string(),
+  historiskeIdenter: z.array(historiskIdentSchema).default([]),
   arbeidsgivere: z.array(z.object({ organisasjonsnummer: z.string() })).default([]),
   adresseskjermet: z.boolean().default(false),
 });
@@ -141,6 +149,8 @@ export const kontrollsakResponseSchema = z
   .transform(({ kontrollobjekt, ...sak }) => ({
     ...sak,
     personIdent: kontrollobjekt.personIdent,
+    gjeldendePersonIdent: kontrollobjekt.gjeldendePersonIdent,
+    historiskeIdenter: kontrollobjekt.historiskeIdenter,
     personNavn: kontrollobjekt.navn,
     arbeidsgivere: kontrollobjekt.arbeidsgivere.map((a) => a.organisasjonsnummer),
     adresseskjermet: kontrollobjekt.adresseskjermet,
