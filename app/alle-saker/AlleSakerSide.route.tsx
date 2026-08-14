@@ -142,6 +142,7 @@ export default function AlleSakerSide() {
   const misbrukstypeAlternativer = misbrukstyper.map((m) => ({
     label: m.beskrivelse,
     value: m.kode,
+    kategori: m.kategori,
   }));
 
   const [, setSearchParams] = useSearchParams();
