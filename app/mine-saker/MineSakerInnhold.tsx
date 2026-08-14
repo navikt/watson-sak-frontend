@@ -1,4 +1,5 @@
 import { Heading, VStack } from "@navikt/ds-react";
+import { useMemo } from "react";
 import { useSearchParams } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { ChipsFiltergruppe } from "~/filtre/ChipsFiltergruppe";
@@ -11,8 +12,17 @@ import type {
 import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
 import { RouteConfig } from "~/routeConfig";
+import {
+  type AlleSakerKolonne,
+  type Sorteringsretning,
+  sorterSaker,
+  sorteringskolonner,
+} from "~/alle-saker/saker-utils";
 import { DEFAULT_STATUSER, DEFAULT_VENTESTATUSER } from "./filtre";
 import { DeltMedMegSeksjon } from "./DeltMedMegSeksjon";
+
+const STANDARD_KOLONNE: AlleSakerKolonne = "opprettet";
+const STANDARD_RETNING: Sorteringsretning = "desc";
 
 type FilterAlternativ = {
   verdi: string;
@@ -40,7 +50,15 @@ export function MineSakerInnhold({
   filterAlternativer,
   aktivtFilter,
 }: Props) {
-  const [, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const sorteringskolonne = parseKolonne(searchParams.get("sorter"));
+  const sorteringsretning = parseRetning(searchParams.get("retning"));
+
+  const sorterteSaker = useMemo(
+    () => sorterSaker(saker, sorteringskolonne, sorteringsretning),
+    [saker, sorteringskolonne, sorteringsretning],
+  );
 
   // Mine saker har en spesiell default-initialiseringslogikk:
   // Første toggle seeder begge filtergrupper med standardverdier.
@@ -70,43 +88,82 @@ export function MineSakerInnhold({
     });
   }
 
+  function sorterPåKolonne(kolonne: AlleSakerKolonne) {
+    setSearchParams((forrige) => {
+      const neste = new URLSearchParams(forrige);
+      const nesteRetning: Sorteringsretning =
+        sorteringskolonne === kolonne
+          ? sorteringsretning === "asc"
+            ? "desc"
+            : "asc"
+          : standardRetningForKolonne(kolonne);
+      neste.set("sorter", kolonne);
+      neste.set("retning", nesteRetning);
+      return neste;
+    });
+  }
+
   return (
     <section aria-labelledby="mine-saker-overskrift" className="pb-12">
       <VStack gap="space-12" className="mt-4 mb-8">
         <Heading id="mine-saker-overskrift" level="1" size="large">
           Mine saker
         </Heading>
+
+        <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:gap-8">
+          <div className="min-w-0 flex-1 xl:order-first">
+            <Saksliste
+              rader={sorterteSaker.map((sak) => mapKontrollsakTilSakslisteRad(sak, detaljSti))}
+              tomTekst="Ingen saker matcher valgte filtre."
+              tilbake={{ to: RouteConfig.MINE_SAKER, label: "Mine saker" }}
+              sortering={{
+                kolonne: sorteringskolonne,
+                retning: sorteringsretning === "asc" ? "stigende" : "synkende",
+                onSort: (kolonne) => sorterPåKolonne(kolonne as AlleSakerKolonne),
+                sorterbare: [...sorteringskolonner],
+              }}
+            />
+          </div>
+
+          <div
+            role="group"
+            aria-label="Filtrer saker"
+            className="xl:order-last xl:w-56 xl:shrink-0"
+          >
+            <Filterpanel>
+              <ChipsFiltergruppe
+                tittel="Status"
+                alternativer={filterAlternativer.status}
+                valgteVerdier={aktivtFilter.status}
+                onToggle={(verdi) => toggleFilter("status", verdi)}
+                size="small"
+              />
+              <ChipsFiltergruppe
+                tittel="Ventestatus"
+                alternativer={filterAlternativer.ventestatus}
+                valgteVerdier={aktivtFilter.ventestatus}
+                onToggle={(verdi) => toggleFilter("ventestatus", verdi)}
+                size="small"
+              />
+            </Filterpanel>
+          </div>
+        </div>
       </VStack>
-
-      <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:gap-8">
-        <div className="min-w-0 flex-1 xl:order-first">
-          <Saksliste
-            rader={saker.map((sak) => mapKontrollsakTilSakslisteRad(sak, detaljSti))}
-            tomTekst="Ingen saker matcher valgte filtre."
-            tilbake={{ to: RouteConfig.MINE_SAKER, label: "Mine saker" }}
-          />
-        </div>
-
-        <div role="group" aria-label="Filtrer saker" className="xl:order-last xl:w-56 xl:shrink-0">
-          <Filterpanel>
-            <ChipsFiltergruppe
-              tittel="Status"
-              alternativer={filterAlternativer.status}
-              valgteVerdier={aktivtFilter.status}
-              onToggle={(verdi) => toggleFilter("status", verdi)}
-              size="small"
-            />
-            <ChipsFiltergruppe
-              tittel="Ventestatus"
-              alternativer={filterAlternativer.ventestatus}
-              valgteVerdier={aktivtFilter.ventestatus}
-              onToggle={(verdi) => toggleFilter("ventestatus", verdi)}
-              size="small"
-            />
-          </Filterpanel>
-        </div>
-      </div>
       <DeltMedMegSeksjon saker={deltMedSaker} detaljSti={detaljSti} />
     </section>
   );
+}
+
+function parseKolonne(verdi: string | null): AlleSakerKolonne {
+  return sorteringskolonner.includes(verdi as AlleSakerKolonne)
+    ? (verdi as AlleSakerKolonne)
+    : STANDARD_KOLONNE;
+}
+
+function parseRetning(verdi: string | null): Sorteringsretning {
+  return verdi === "asc" || verdi === "desc" ? verdi : STANDARD_RETNING;
+}
+
+function standardRetningForKolonne(kolonne: AlleSakerKolonne): Sorteringsretning {
+  return kolonne === "opprettet" || kolonne === "oppdatert" ? "desc" : "asc";
 }
