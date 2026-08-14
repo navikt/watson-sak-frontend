@@ -41,7 +41,7 @@ export function Filtre({ alternativer }: Props) {
   const valgtSaksbehandler = searchParams.get("saksbehandler") ?? "";
   const valgteKategorier = parseMultiValueParam(searchParams, "kategori");
 
-  const filtreerteMisbrukstyper =
+  const filtrerteMisbrukstyper =
     valgteKategorier.length === 0
       ? alternativer.misbrukstype
       : alternativer.misbrukstype.filter((m) => valgteKategorier.includes(m.kategori));
@@ -71,21 +71,20 @@ export function Filtre({ alternativer }: Props) {
       neste.delete("kategori");
       for (const k of oppdaterteKategorier) neste.append("kategori", k);
 
-      // Fjern misbrukstyper som ikke lenger tilhører noen valgt kategori
-      if (oppdaterteKategorier.length > 0) {
-        const gyldige = new Set(
-          alternativer.misbrukstype
-            .filter((m) => oppdaterteKategorier.includes(m.kategori))
-            .map((m) => m.value),
-        );
-        const gjeldendeMisbrukstyper = parseMultiValueParam(forrige, "misbrukstype");
-        neste.delete("misbrukstype");
-        for (const m of gjeldendeMisbrukstyper.filter((m) => gyldige.has(m))) {
-          neste.append("misbrukstype", m);
-        }
+      // Fjern misbrukstyper som ikke lenger tilhører noen valgt kategori.
+      // Når ingen kategorier er valgt, fjernes alle misbrukstype-filtre.
+      const gyldige = new Set(
+        alternativer.misbrukstype
+          .filter((m) => oppdaterteKategorier.includes(m.kategori))
+          .map((m) => m.value),
+      );
+      const gjeldendeMisbrukstyper = parseMultiValueParam(forrige, "misbrukstype");
+      neste.delete("misbrukstype");
+      for (const m of gjeldendeMisbrukstyper.filter((m) => gyldige.has(m))) {
+        neste.append("misbrukstype", m);
       }
 
-      neste.delete("side");
+      for (const key of RESET_KEYS) neste.delete(key);
       return neste;
     });
   }
@@ -147,11 +146,11 @@ export function Filtre({ alternativer }: Props) {
         />
       )}
 
-      {filtreerteMisbrukstyper.length > 0 && (
+      {filtrerteMisbrukstyper.length > 0 && (
         <ChipsFiltergruppeForKodeAlternativ
           tittel="Misbrukstype"
           paramKey="misbrukstype"
-          alternativer={filtreerteMisbrukstyper}
+          alternativer={filtrerteMisbrukstyper}
         />
       )}
 

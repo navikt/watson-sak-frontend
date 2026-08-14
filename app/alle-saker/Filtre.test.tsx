@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router";
+import { useLocation } from "react-router";
 import { Filtre } from "./Filtre";
 
 const ALTERNATIVER = {
@@ -71,5 +72,27 @@ describe("Filtre – koblet kategori/misbrukstype", () => {
       </MemoryRouter>,
     );
     expect(screen.getByRole("button", { name: "Skjult samliv" })).toBeDefined();
+  });
+
+  it("fjerner misbrukstyper fra URL når tilhørende kategori deselekteres", () => {
+    function LocationSearch() {
+      const loc = useLocation();
+      return <div data-testid="search">{loc.search}</div>;
+    }
+
+    render(
+      <MemoryRouter initialEntries={["/?kategori=ARBEID&misbrukstype=FIKTIVT_ARBEIDSFORHOLD"]}>
+        <Filtre alternativer={ALTERNATIVER} />
+        <LocationSearch />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByTestId("search").textContent).toContain("FIKTIVT_ARBEIDSFORHOLD");
+
+    fireEvent.click(screen.getByRole("button", { name: "Arbeid" }));
+
+    const search = screen.getByTestId("search").textContent ?? "";
+    expect(search).not.toContain("ARBEID");
+    expect(search).not.toContain("FIKTIVT_ARBEIDSFORHOLD");
   });
 });
