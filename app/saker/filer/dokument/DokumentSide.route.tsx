@@ -9,6 +9,7 @@ import { DokumentTre } from "~/saker/filer/DokumentTre";
 import type { Dokument, DokumentHistorikk, DokumentInnhold } from "~/saker/filer/typer";
 import { formaterRelativTid } from "~/utils/date-utils";
 import { DokumentEditor } from "./DokumentEditor";
+import { PdfForhåndsvisning } from "./PdfForhåndsvisning";
 import { DokumentHistorikkPanel } from "./DokumentHistorikkPanel";
 import { DokumentTittel } from "./DokumentTittel";
 import { action, loader } from "./DokumentSide.server";
@@ -105,6 +106,10 @@ function DokumentRedigering({
     dokument.id,
   );
   const historikkUrl = RouteConfig.API.SAK_DOKUMENT_HISTORIKK.replace(
+    ":sakId",
+    sakReferanse,
+  ).replace(":docId", dokument.id);
+  const pdfForhåndsvisningUrl = RouteConfig.API.PDF_FORHÅNDSVISNING.replace(
     ":sakId",
     sakReferanse,
   ).replace(":docId", dokument.id);
@@ -331,6 +336,10 @@ function DokumentRedigering({
         }
         lagreStatus={<LagreStatusVisning status={status} sistLagret={sistLagret} />}
       />
+
+      <div className="px-[var(--ax-space-16)] lg:px-[var(--ax-space-24)]">
+        <PdfForhåndsvisning url={pdfForhåndsvisningUrl} tittel={tittel} />
+      </div>
 
       <SlettDokumentModal
         kandidat={sletting.kandidat}
