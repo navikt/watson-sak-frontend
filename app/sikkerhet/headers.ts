@@ -17,6 +17,7 @@ export function sikkerhetHeaders({
       "img-src 'self' data: https:; " +
       "font-src 'self' data: cdn.nav.no; " +
       "connect-src 'self' telemetry.nav.no telemetry.ekstern.dev.nav.no umami.nav.no reops-event-proxy.nav.no reops-event-proxy.ekstern.dev.nav.no;" +
+      "frame-src 'self' blob:; " +
       "frame-ancestors 'none'; " +
       "base-uri 'self'; " +
       `form-action ${formAction}`,

@@ -27,6 +27,7 @@ export default [
   route(RouteConfig.API.FORHÅNDSUTFYLL_REGISTRER_SAK, "registrer-sak/forhåndsutfyll.api.ts"),
   route(RouteConfig.API.SAK_DOKUMENTER, "saker/filer/dokument/dokumenter.api.ts"),
   route(RouteConfig.API.SAK_DOKUMENT_HISTORIKK, "saker/filer/dokument/dokumenthistorikk.api.ts"),
+  route(RouteConfig.API.PDF_FORHÅNDSVISNING, "saker/filer/dokument/pdf-forhandsvisning.api.ts"),
   route(RouteConfig.API.SAK_FILER, "saker/filer/filer.api.ts"),
   route(RouteConfig.API.SAK_FIL, "saker/filer/fil.api.ts"),
   route(RouteConfig.API.VARSLER_ULESTE, "varsler/uleste.api.ts"),

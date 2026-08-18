@@ -10,6 +10,12 @@ describe("sikkerhetHeaders", () => {
     );
   });
 
+  it("tillater lokale PDF-blobber i iframes", () => {
+    const csp = sikkerhetHeaders()["Content-Security-Policy"];
+
+    expect(csp).toContain("frame-src 'self' blob:;");
+  });
+
   it("inkluderer kun 'self' i form-action som standard", () => {
     const csp = sikkerhetHeaders()["Content-Security-Policy"];
     expect(csp).toContain("form-action 'self'");
