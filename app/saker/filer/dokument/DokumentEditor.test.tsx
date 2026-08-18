@@ -3,6 +3,7 @@ import { createRoutesStub } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { DokumentInnhold, FilResponse } from "~/saker/filer/typer";
 import { DokumentEditor } from "./DokumentEditor";
+import { byggMalInnhold } from "./maler";
 import { VARIABEL_FLYTT_MIMETYPE } from "./variabler/VariabelPlugin";
 
 const innhold: DokumentInnhold = [
@@ -58,6 +59,10 @@ describe("DokumentEditor", () => {
     expect(screen.getByLabelText("Gjennomstreket")).toBeDefined();
     expect(screen.getByLabelText("Indenter")).toBeDefined();
     expect(screen.getByLabelText("Avindenter")).toBeDefined();
+    expect(screen.getByRole("group", { name: "Horisontal justering" })).toBeDefined();
+    expect(screen.getByLabelText("Venstrejuster")).toBeDefined();
+    expect(screen.getByLabelText("Sentrer")).toBeDefined();
+    expect(screen.getByLabelText("Høyrejuster")).toBeDefined();
     expect(screen.getByLabelText("Punktliste")).toBeDefined();
     expect(screen.getByLabelText("Angre")).toBeDefined();
     expect(screen.getByLabelText("Sett inn bilde")).toBeDefined();
@@ -110,6 +115,34 @@ describe("DokumentEditor", () => {
 
     expect(await screen.findByText("Min overskrift")).toBeDefined();
     expect(screen.queryByRole("toolbar")).toBeNull();
+  });
+
+  it("viser standardheaderen med statisk NAV-logo uten å laste opp et vedlegg", async () => {
+    renderEditor({
+      startInnhold: byggMalInnhold({ malId: "arbeid", erStraffesak: false }),
+    });
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Kontrollrapport" })).toBeDefined();
+    expect(screen.getByRole("img", { name: "NAV" }).getAttribute("src")).toBe("/nav-logo.svg");
+    expect(screen.getByText(/Unntatt offentlighet/).closest("p")?.style.whiteSpace).toBe(
+      "pre-line",
+    );
+  });
+
+  it("rendrer høyrejustert tekstblokk", async () => {
+    renderEditor({
+      startInnhold: [
+        {
+          type: "h2",
+          justering: "right",
+          children: [{ text: "Høyrejustert overskrift" }],
+        },
+      ],
+    });
+
+    expect(
+      (await screen.findByText("Høyrejustert overskrift")).closest("h2")?.style.textAlign,
+    ).toBe("right");
   });
 
   it("toggler understreket mark og kaller onEndring", async () => {

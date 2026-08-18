@@ -55,6 +55,50 @@ describe("rapportmaler", () => {
     );
   });
 
+  it.each(MALER)("$id: starter med standardisert kontrollrapport-header", ({ bygger }) => {
+    const innhold = bygger({ erStraffesak: false });
+
+    expect(innhold.slice(0, 2)).toEqual([
+      {
+        type: "table",
+        children: [
+          {
+            type: "tr",
+            children: [
+              {
+                type: "td",
+                children: [
+                  {
+                    type: "img",
+                    url: "/nav-logo.svg",
+                    alt: "NAV",
+                    erStatisk: true,
+                    children: [{ text: "" }],
+                  },
+                ],
+              },
+              {
+                type: "td",
+                children: [
+                  {
+                    type: "p",
+                    justering: "right",
+                    bevarLinjeskift: true,
+                    children: [
+                      { text: "Unntatt offentlighet.\n" },
+                      { text: "jf. Lov om off. § 13 jf. NAV-loven § 7", italic: true },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      { type: "h1", children: [{ text: "Kontrollrapport" }] },
+    ]);
+  });
+
   it("byggMalInnhold delegerer til riktig mal basert på malId", () => {
     const arbeid = byggMalInnhold({ malId: "arbeid", erStraffesak: false });
     const utland = byggMalInnhold({ malId: "utland", erStraffesak: false });

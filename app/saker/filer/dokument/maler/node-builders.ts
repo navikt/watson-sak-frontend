@@ -61,9 +61,11 @@ export function rad(...celler: Node[]): Node {
   return { type: "tr", children: celler };
 }
 
-export function celle(innhold: string | Node): Node {
-  const child = typeof innhold === "string" ? p(innhold) : innhold;
-  return { type: "td", children: [child] };
+export function celle(...innhold: (string | Node)[]): Node {
+  return {
+    type: "td",
+    children: innhold.map((del) => (typeof del === "string" ? p(del) : del)),
+  };
 }
 
 export function topptekst(innhold: string | Node): Node {
@@ -79,6 +81,32 @@ export function metadataTabell(): Node {
     rad(celle("PID:"), celle(pMedVariabler(variabel("fødselsnummer")))),
     rad(celle("Gjelder:"), celle(pMedVariabler(variabel("navn"), ", ", variabel("fødselsnummer")))),
   );
+}
+
+export function kontrollrapportHeader(): Node[] {
+  return [
+    tabell(
+      rad(
+        celle({
+          type: "img",
+          url: "/nav-logo.svg",
+          alt: "NAV",
+          erStatisk: true,
+          children: [{ text: "" }],
+        }),
+        celle({
+          type: "p",
+          justering: "right",
+          bevarLinjeskift: true,
+          children: [
+            { text: "Unntatt offentlighet.\n" },
+            { text: "jf. Lov om off. § 13 jf. NAV-loven § 7", italic: true },
+          ],
+        }),
+      ),
+    ),
+    h1("Kontrollrapport"),
+  ];
 }
 
 export function stønadSammendragTabell(): Node {

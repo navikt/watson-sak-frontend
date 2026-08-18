@@ -7,12 +7,13 @@ import type { TElement } from "platejs";
 import { useState } from "react";
 import { BILDE_FLYTT_MIMETYPE } from "./bilde-opplasting";
 
-/** Bildenode i dokumentinnholdet. `filId` peker til vedlegget bildet ble lastet opp som. */
+/** Bildenode i dokumentinnholdet. Opplastede bilder har `filId` til vedlegget; statiske assets har ikke det. */
 export type BildeElementType = TElement & {
-  filId: string;
+  filId?: string;
   url: string;
   alt?: string;
   width?: number;
+  erStatisk?: boolean;
 };
 
 const MINSTE_BREDDE = 80;
@@ -41,6 +42,23 @@ export function BildeElement(props: PlateElementProps<BildeElementType>) {
   const { editor, element, path } = props;
   const [visSlettbekreftelse, settVisSlettbekreftelse] = useState(false);
   const readOnly = useEditorReadOnly();
+
+  if (element.erStatisk) {
+    return (
+      <PlateElement {...props}>
+        <img
+          src={element.url}
+          alt={element.alt ?? ""}
+          width={100}
+          height={63}
+          className="h-auto max-w-full"
+          contentEditable={false}
+          draggable={false}
+        />
+        {props.children}
+      </PlateElement>
+    );
+  }
 
   return (
     <PlateElement {...props} className="my-2">

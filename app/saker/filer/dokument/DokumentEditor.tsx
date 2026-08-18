@@ -1,4 +1,7 @@
 import {
+  AlignCenterIcon,
+  AlignLeftIcon,
+  AlignRightIcon,
   ArrowRedoIcon,
   ArrowUndoIcon,
   BulletListIcon,
@@ -102,6 +105,59 @@ type VerktøyKnappProps = {
   onClick: () => void;
   children: React.ReactNode;
 };
+
+type HorisontalJustering = "left" | "center" | "right";
+type JusterbartElement = TElement & {
+  justering?: HorisontalJustering;
+  bevarLinjeskift?: boolean;
+};
+
+function justeringsstil(element: JusterbartElement) {
+  return {
+    textAlign: element.justering,
+    whiteSpace: element.bevarLinjeskift ? "pre-line" : undefined,
+  };
+}
+
+function JustertAvsnitt({ children, element, ...props }: PlateElementProps<JusterbartElement>) {
+  return (
+    <PlateElement as="p" {...props} element={element} style={justeringsstil(element)}>
+      {children}
+    </PlateElement>
+  );
+}
+
+function JustertOverskrift1({ children, element, ...props }: PlateElementProps<JusterbartElement>) {
+  return (
+    <PlateElement as="h1" {...props} element={element} style={justeringsstil(element)}>
+      {children}
+    </PlateElement>
+  );
+}
+
+function JustertOverskrift2({ children, element, ...props }: PlateElementProps<JusterbartElement>) {
+  return (
+    <PlateElement as="h2" {...props} element={element} style={justeringsstil(element)}>
+      {children}
+    </PlateElement>
+  );
+}
+
+function JustertOverskrift3({ children, element, ...props }: PlateElementProps<JusterbartElement>) {
+  return (
+    <PlateElement as="h3" {...props} element={element} style={justeringsstil(element)}>
+      {children}
+    </PlateElement>
+  );
+}
+
+function JustertSitat({ children, element, ...props }: PlateElementProps<JusterbartElement>) {
+  return (
+    <PlateElement as="blockquote" {...props} element={element} style={justeringsstil(element)}>
+      {children}
+    </PlateElement>
+  );
+}
 
 function VerktøyKnapp({ etikett, aktiv, disabled, onClick, children }: VerktøyKnappProps) {
   const onFormater = useContext(FormaterContext);
@@ -314,6 +370,30 @@ function Verktøylinje({
                 <AvindenterIkon aria-hidden />
               </VerktøyKnapp>
               <Skillelinje />
+              <HStack gap="space-2" role="group" aria-label="Horisontal justering">
+                <VerktøyKnapp
+                  etikett="Venstrejuster"
+                  aktiv={editor.api.some({ match: { justering: "left" } })}
+                  onClick={() => editor.tf.setNodes({ justering: "left" })}
+                >
+                  <AlignLeftIcon aria-hidden />
+                </VerktøyKnapp>
+                <VerktøyKnapp
+                  etikett="Sentrer"
+                  aktiv={editor.api.some({ match: { justering: "center" } })}
+                  onClick={() => editor.tf.setNodes({ justering: "center" })}
+                >
+                  <AlignCenterIcon aria-hidden />
+                </VerktøyKnapp>
+                <VerktøyKnapp
+                  etikett="Høyrejuster"
+                  aktiv={editor.api.some({ match: { justering: "right" } })}
+                  onClick={() => editor.tf.setNodes({ justering: "right" })}
+                >
+                  <AlignRightIcon aria-hidden />
+                </VerktøyKnapp>
+              </HStack>
+              <Skillelinje />
               <VerktøyKnapp
                 etikett="Sitat"
                 aktiv={editor.api.some({ match: { type: BlockquotePlugin.key } })}
@@ -451,15 +531,11 @@ const PLUGINS = [
   IndentPlugin,
   // ParagraphPlugin mangler egen render.as-konfigurasjon (i motsetning til
   // heading-pluginene), så vi må selv be den rendre som ekte <p>-tag.
-  ParagraphPlugin.withComponent(({ children, ...props }: PlateElementProps) => (
-    <PlateElement as="p" {...props}>
-      {children}
-    </PlateElement>
-  )),
-  H1Plugin,
-  H2Plugin,
-  H3Plugin,
-  BlockquotePlugin,
+  ParagraphPlugin.withComponent(JustertAvsnitt),
+  H1Plugin.withComponent(JustertOverskrift1),
+  H2Plugin.withComponent(JustertOverskrift2),
+  H3Plugin.withComponent(JustertOverskrift3),
+  BlockquotePlugin.withComponent(JustertSitat),
   BulletedListPlugin,
   NumberedListPlugin,
   // Håndterer lim inn fra Word: DocxPlugin konverterer DOCX-utklipp til Plate-format,
