@@ -99,4 +99,4 @@ export const mockSaksbehandlere = mockSaksbehandlerDetaljer.map(
   (saksbehandler) => saksbehandler.navn,
 );
 
-export const mockSeksjoner = ["Nord", "Øst", "Vest", "Analyse"];
+export const mockSeksjoner = ["ky153k", "gu301n", "hu424t", "by295h"];

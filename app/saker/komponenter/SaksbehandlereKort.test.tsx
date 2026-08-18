@@ -154,23 +154,24 @@ describe("SaksbehandlereKort", () => {
       <SaksbehandlereKort
         erEier={true}
         sak={lagKontrollsak({
+          enhet: "ky153k",
           saksbehandlere: {
-            eier: lagSaksbehandler({ enhet: "OST" }),
+            eier: lagSaksbehandler({ enhet: "NAV Kontroll Øst" }),
             deltMed: [],
-            opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "OST" },
+            opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "NAV Kontroll Øst" },
           },
         })}
-        saksbehandlerDetaljer={[lagSaksbehandler({ enhet: "OST" })]}
-        ansvarligSaksbehandler={lagSaksbehandler({ enhet: "OST" })}
+        saksbehandlerDetaljer={[lagSaksbehandler({ enhet: "NAV Kontroll Øst" })]}
+        ansvarligSaksbehandler={lagSaksbehandler({ enhet: "NAV Kontroll Øst" })}
       />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Send til annen enhet" }));
 
-    const nåværendeEnhet = screen.getByRole("option", { name: "Øst" });
+    const nåværendeEnhet = screen.getByRole("option", { name: "Kontroll Øst" });
     expect((nåværendeEnhet as HTMLOptionElement).disabled).toBe(true);
-    expect(screen.getByRole("option", { name: "Nord" })).toBeDefined();
-    fireEvent.change(screen.getByLabelText("Ny enhet"), { target: { value: "NORD" } });
+    expect(screen.getByRole("option", { name: "Kontroll Nord" })).toBeDefined();
+    fireEvent.change(screen.getByLabelText("Ny enhet"), { target: { value: "hu424t" } });
     const sendKnapper = screen.getAllByRole("button", { name: "Send til annen enhet" });
     const sendKnapp = sendKnapper.at(-1);
     if (!sendKnapp) {
@@ -182,7 +183,7 @@ describe("SaksbehandlereKort", () => {
     const [formData, options] = submitMock.mock.calls[0];
     expect(formData).toBeInstanceOf(FormData);
     expect(formData.get("handling")).toBe("send_til_annen_enhet");
-    expect(formData.get("seksjon")).toBe("NORD");
+    expect(formData.get("seksjon")).toBe("hu424t");
     expect(options).toEqual(expect.objectContaining({ method: "post" }));
   });
 

@@ -43,7 +43,7 @@ export function getStatusVariantForSak(sak: KontrollsakResponse) {
 }
 
 export function getSaksenhet(sak: KontrollsakResponse): string {
-  return sak.saksbehandlere.eier?.enhet ?? sak.saksbehandlere.opprettetAv.enhet ?? "";
+  return sak.enhet ?? "";
 }
 
 export function getAvdeling(_sak: KontrollsakResponse): string | null {

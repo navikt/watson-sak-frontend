@@ -97,10 +97,10 @@ describe("saker-selectors", () => {
     expect(getStatusVariantForSak(sak)).toBe("warning");
   });
 
-  it("bruker enhet fra saksbehandler som saksenhet og skjuler legacy-only metadata for kontrollsak", () => {
-    const sak = lagKontrollsak();
+  it("bruker sak.enhet som saksenhet og skjuler legacy-only metadata for kontrollsak", () => {
+    const sak = lagKontrollsak({ enhet: "ky153k" });
 
-    expect(getSaksenhet(sak)).toBe("4812");
+    expect(getSaksenhet(sak)).toBe("ky153k");
     expect(getAvdeling(sak)).toBeNull();
     expect(getTags(sak)).toEqual([]);
   });
