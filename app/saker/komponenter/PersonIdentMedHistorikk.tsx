@@ -28,7 +28,7 @@ export function PersonIdentMedHistorikk({
         />
       ) : (
         <Tooltip content="Denne identifikatoren har ingen historikk">
-          <span>
+          <span className="inline-flex items-center">
             <Button
               type="button"
               variant="tertiary-neutral"
