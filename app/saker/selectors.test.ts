@@ -112,7 +112,10 @@ describe("saker-selectors", () => {
   });
 
   it("returnerer tom streng når hverken sak.enhet eller saksbehandler er satt", () => {
-    const sak = lagKontrollsak({ enhet: null, saksbehandlere: { ...lagKontrollsak().saksbehandlere, eier: null } });
+    const sak = lagKontrollsak({
+      enhet: null,
+      saksbehandlere: { ...lagKontrollsak().saksbehandlere, eier: null },
+    });
 
     expect(getSaksenhet(sak)).toBe("");
   });
