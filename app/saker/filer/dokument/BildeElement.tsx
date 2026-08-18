@@ -7,7 +7,7 @@ import type { TElement } from "platejs";
 import { useState } from "react";
 import { BILDE_FLYTT_MIMETYPE } from "./bilde-opplasting";
 
-/** Bildenode i dokumentinnholdet. `filId` peker til vedlegget bildet ble lastet opp som. */
+/** Bildenode i dokumentinnholdet. Opplastede bilder har `filId` til vedlegget; statiske assets har ikke det. */
 export type BildeElementType = TElement & {
   filId?: string;
   url: string;
