@@ -953,7 +953,7 @@ export function DokumentEditor({
                       event.currentTarget.releasePointerCapture(event.pointerId)
                     }
                   />
-                  <div className="min-w-0 flex-1 border-t border-ax-border-neutral-subtle lg:border-t-0 lg:border-l">
+                  <div className="flex min-w-0 flex-1 flex-col border-t border-ax-border-neutral-subtle lg:border-t-0 lg:border-l">
                     {mellomInnhold}
                   </div>
                 </>
