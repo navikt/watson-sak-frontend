@@ -4,7 +4,6 @@ import {
   BodyShort,
   Box,
   Button,
-  CopyButton,
   Detail,
   Heading,
   HGrid,
@@ -26,6 +25,8 @@ import {
   getTags,
 } from "~/saker/selectors";
 import type { KontrollsakResponse } from "~/saker/types.backend";
+import { PersonIdentHistorikkModal } from "./PersonIdentHistorikkModal";
+import { PersonIdentMedHistorikk } from "./PersonIdentMedHistorikk";
 import {
   formaterBelop,
   formaterBlokkeringsarsak,
@@ -46,6 +47,7 @@ interface SakKortProps {
   erKoblet: boolean;
   kanEndreKobling: boolean;
   onEndreKobling: (sak: KontrollsakResponse, handling: Koblingshandling) => void;
+  onVisIdentHistorikk: (sak: KontrollsakResponse) => void;
 }
 
 type Koblingshandling = "koble" | "fjerne";
@@ -62,10 +64,17 @@ function SakFelt({ label, children }: { label: string; children: React.ReactNode
   );
 }
 
-function SakKort({ sak, erKoblet, kanEndreKobling, onEndreKobling }: SakKortProps) {
+function SakKort({
+  sak,
+  erKoblet,
+  kanEndreKobling,
+  onEndreKobling,
+  onVisIdentHistorikk,
+}: SakKortProps) {
   const [åpen, setÅpen] = useState(false);
   const saksreferanse = getSaksreferanse(sak.id);
   const personIdent = getPersonIdent(sak);
+  const harHistoriskIdent = sak.historiskeIdenter.some((ident) => ident.historisk);
   const statusTekst = getStatus(sak);
   const periodeText = getPeriodeText(sak);
   const kategoriText = getKategoriText(sak);
@@ -129,10 +138,11 @@ function SakKort({ sak, erKoblet, kanEndreKobling, onEndreKobling }: SakKortProp
                       <Detail className="text-ax-text-neutral-subtle" uppercase>
                         Personnummer
                       </Detail>
-                      <HStack gap="space-4" align="center">
-                        <BodyShort size="small">{personIdent}</BodyShort>
-                        <CopyButton size="xsmall" copyText={personIdent} />
-                      </HStack>
+                      <PersonIdentMedHistorikk
+                        personIdent={personIdent}
+                        harHistorikk={harHistoriskIdent}
+                        onVisHistorikk={() => onVisIdentHistorikk(sak)}
+                      />
                     </VStack>
 
                     {kategoriText && (
@@ -240,6 +250,9 @@ export function SakerPåSammePerson({
   innloggetNavIdent,
 }: SakerPåSammePersonProps) {
   const [valgtSak, setValgtSak] = useState<KontrollsakResponse | null>(null);
+  const [sakMedIdentHistorikk, setSakMedIdentHistorikk] = useState<KontrollsakResponse | null>(
+    null,
+  );
   const [handling, setHandling] = useState<Koblingshandling>("koble");
   const [feilmelding, setFeilmelding] = useState<string>();
   const harSendt = useRef(false);
@@ -303,6 +316,7 @@ export function SakerPåSammePerson({
                   erSaksbehandlerPåSak(sak, innloggetNavIdent)
                 }
                 onEndreKobling={åpneKoblingsmodal}
+                onVisIdentHistorikk={setSakMedIdentHistorikk}
               />
             ))}
           </VStack>
@@ -364,6 +378,13 @@ export function SakerPåSammePerson({
           </Modal.Footer>
         </fetcher.Form>
       </Modal>
+      {sakMedIdentHistorikk && (
+        <PersonIdentHistorikkModal
+          sak={sakMedIdentHistorikk}
+          åpen={true}
+          onClose={() => setSakMedIdentHistorikk(null)}
+        />
+      )}
     </>
   );
 }

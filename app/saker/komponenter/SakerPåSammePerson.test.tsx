@@ -138,6 +138,28 @@ describe("SakerPåSammePerson", () => {
     );
   });
 
+  it("viser identifikatorhistorikk for den utvidede saken", () => {
+    const annenSak = lagKontrollsak("203", {
+      historiskeIdenter: [
+        { personIdent: "12345678901", type: "FOEDSELSNUMMER", historisk: false },
+        { personIdent: "09876543210", type: "FOEDSELSNUMMER", historisk: true },
+      ],
+    });
+    renderMedRouter(
+      <SakerPåSammePerson
+        saker={[annenSak]}
+        gjeldendeSak={lagKontrollsak("105")}
+        innloggetNavIdent="Z999999"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Vis detaljer" }));
+    fireEvent.click(screen.getByRole("button", { name: "Vis identifikatorhistorikk" }));
+
+    expect(screen.getByRole("heading", { name: "Identifikatorhistorikk" })).toBeDefined();
+    expect(screen.getByText("09876543210")).toBeDefined();
+  });
+
   it("viser feil i koblingsmodalen når innsendingen feiler", async () => {
     renderMedRouter(
       <SakerPåSammePerson
