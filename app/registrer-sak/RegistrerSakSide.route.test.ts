@@ -319,7 +319,6 @@ describe("byggOpprettKontrollsakPayload", () => {
           misbruktype: ["SKJULT_SAMLIV"],
           merking: ["LIME"],
           enhet: "OST",
-          aKrimsenter: "OSLO",
           arbeidsgivere: ["123456789"],
           ytelser: [
             {
@@ -340,7 +339,6 @@ describe("byggOpprettKontrollsakPayload", () => {
       misbruktype: ["SKJULT_SAMLIV"],
       merking: ["LIME"],
       enhet: "OST",
-      aKrimsenter: "OSLO",
       arbeidsgivere: ["123456789"],
       ytelser: [
         {

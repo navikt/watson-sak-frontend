@@ -61,9 +61,6 @@ export async function loader({ request }: Route.LoaderArgs) {
     parseMultiValueParam(url.searchParams, "misbrukstype"),
   );
   const filterMerking = normaliserFilterVerdier(parseMultiValueParam(url.searchParams, "merking"));
-  const filterAKrimsenter = normaliserFilterVerdier(
-    parseMultiValueParam(url.searchParams, "aKrimsenter"),
-  );
 
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
@@ -77,7 +74,6 @@ export async function loader({ request }: Route.LoaderArgs) {
         misbruktype: filterMisbrukstype.length > 0 ? filterMisbrukstype : undefined,
         merking: filterMerking.length > 0 ? filterMerking : undefined,
         enhet: filterEnhet.length > 0 ? filterEnhet : undefined,
-        aKrimsenter: filterAKrimsenter.length > 0 ? filterAKrimsenter : undefined,
         sortering: lagSorteringParam(sorterKolonne, sorterRetning),
       }),
       backendApi.hentSaksbehandlere(token),
@@ -105,7 +101,6 @@ export async function loader({ request }: Route.LoaderArgs) {
     kategori: filterKategori,
     misbrukstype: filterMisbrukstype,
     merking: filterMerking,
-    aKrimsenter: filterAKrimsenter,
   });
 
   const sorterteSaker = sorterSaker(filtrerteSaker, sorterKolonne, sorterRetning);
@@ -134,10 +129,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 export default function AlleSakerSide() {
   const { rader, aktivSide, totalSider, sorteringskolonne, sorteringsretning, filterAlternativer } =
     useLoaderData<typeof loader>();
-  const { merker, kategorier, misbrukstyper, enheter, aKrimsentre } = useKodeverk();
+  const { merker, kategorier, misbrukstyper, enheter } = useKodeverk();
 
   const enhetAlternativer = enheter.map((e) => ({ label: e.beskrivelse, value: e.kode }));
-  const aKrimsenterAlternativer = aKrimsentre.map((a) => ({ label: a.beskrivelse, value: a.kode }));
   const kategoriAlternativer = kategorier.map((k) => ({ label: k.beskrivelse, value: k.kode }));
   const misbrukstypeAlternativer = misbrukstyper.map((m) => ({
     label: m.beskrivelse,
@@ -232,7 +226,6 @@ export default function AlleSakerSide() {
                 alternativer={{
                   ...filterAlternativer,
                   enhet: enhetAlternativer,
-                  aKrimsenter: aKrimsenterAlternativer,
                   kategori: kategoriAlternativer,
                   misbrukstype: misbrukstypeAlternativer,
                   merking: merker,

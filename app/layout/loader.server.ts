@@ -26,7 +26,6 @@ async function hentKodeverkMedFallback(token: string): Promise<Kodeverk> {
       ytelseTyper: [],
       kilder: [],
       enheter: [],
-      aKrimsentre: [],
     };
   }
 }

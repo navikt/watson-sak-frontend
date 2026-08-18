@@ -7,7 +7,6 @@ import { Filtre } from "./Filtre";
 const ALTERNATIVER = {
   saksbehandler: [],
   enhet: [],
-  aKrimsenter: [],
   merking: [],
   kategori: [
     { label: "Arbeid", value: "ARBEID" },
