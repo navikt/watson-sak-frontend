@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 export function PdfForhåndsvisning({
   url,
   tittel,
+  sistLagret,
 }: {
   url: string;
   tittel: string;
+  sistLagret: Date | null;
 }) {
   const [pdfUrl, settPdfUrl] = useState<string>();
   const [feil, settFeil] = useState<string>();
@@ -39,11 +41,14 @@ export function PdfForhåndsvisning({
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [tittel, url]);
+  }, [tittel, url, sistLagret]);
 
-  useEffect(() => () => {
-    if (pdfUrl) URL.revokeObjectURL(pdfUrl);
-  }, [pdfUrl]);
+  useEffect(
+    () => () => {
+      if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+    },
+    [pdfUrl],
+  );
 
   return (
     <section aria-labelledby="pdf-forhåndsvisning-tittel">

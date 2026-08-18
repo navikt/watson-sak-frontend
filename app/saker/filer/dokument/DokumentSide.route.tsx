@@ -338,7 +338,7 @@ function DokumentRedigering({
       />
 
       <div className="px-[var(--ax-space-16)] lg:px-[var(--ax-space-24)]">
-        <PdfForhåndsvisning url={pdfForhåndsvisningUrl} tittel={tittel} />
+        <PdfForhåndsvisning url={pdfForhåndsvisningUrl} tittel={tittel} sistLagret={sistLagret} />
       </div>
 
       <SlettDokumentModal
