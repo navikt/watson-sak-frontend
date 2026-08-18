@@ -23,8 +23,16 @@ function kombinerteTekstBarn(...deler: (string | Node)[]): Node[] {
   return deler.flatMap((del) => (typeof del === "string" ? tekstBarn(del) : [del]));
 }
 
+function kursivTekstBarn(tekst: string): Node[] {
+  return [{ text: tekst, italic: true }];
+}
+
 export function p(text: string): Node {
   return { type: "p", children: tekstBarn(text) };
+}
+
+export function pIKursiv(text: string): Node {
+  return { type: "p", children: kursivTekstBarn(text) };
 }
 
 export function pMedVariabler(...deler: (string | Node)[]): Node {
@@ -61,9 +69,11 @@ export function rad(...celler: Node[]): Node {
   return { type: "tr", children: celler };
 }
 
-export function celle(innhold: string | Node): Node {
-  const child = typeof innhold === "string" ? p(innhold) : innhold;
-  return { type: "td", children: [child] };
+export function celle(...innhold: (string | Node)[]): Node {
+  return {
+    type: "td",
+    children: innhold.map((del) => (typeof del === "string" ? p(del) : del)),
+  };
 }
 
 export function topptekst(innhold: string | Node): Node {
@@ -79,6 +89,27 @@ export function metadataTabell(): Node {
     rad(celle("PID:"), celle(pMedVariabler(variabel("fødselsnummer")))),
     rad(celle("Gjelder:"), celle(pMedVariabler(variabel("navn"), ", ", variabel("fødselsnummer")))),
   );
+}
+
+export function kontrollrapportHeader(): Node[] {
+  return [
+    tabell(
+      rad(
+        celle({
+          type: "img",
+          url: "/nav-logo.svg",
+          alt: "NAV",
+          erStatisk: true,
+          children: [{ text: "" }],
+        }),
+        celle(
+          { ...p("Unntatt offentlighet."), justering: "right" },
+          { ...pIKursiv("jf. Lov om off. § 13 jf. NAV-loven § 7"), justering: "right" },
+        ),
+      ),
+    ),
+    h1("Kontrollrapport"),
+  ];
 }
 
 export function stønadSammendragTabell(): Node {

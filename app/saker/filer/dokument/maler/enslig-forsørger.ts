@@ -4,6 +4,7 @@ import {
   h1,
   h2,
   h3,
+  kontrollrapportHeader,
   mal,
   metadataTabell,
   p,
@@ -22,9 +23,7 @@ export function ensligForsørgerRapportmal({
   erStraffesak: boolean;
 }): DokumentInnhold {
   return mal([
-    p("Kontrollrapport"),
-    p("Unntatt offentlighet"),
-    p("jf. Lov om off. § 13, jf. NAV-loven § 7"),
+    kontrollrapportHeader(),
     metadataTabell(),
 
     h1("Rapport om stønad som enslig mor eller far"),
