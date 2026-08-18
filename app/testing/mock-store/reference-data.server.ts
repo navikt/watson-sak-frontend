@@ -64,7 +64,7 @@ const saksbehandlerNavn = [
   "Wenche Brekken",
 ] as const;
 
-const saksbehandlerEnheter = ["Nord", "Øst", "Vest", "Analyse"] as const;
+const saksbehandlerEnheter = ["hu424t", "ky153k", "gu301n", "by295h"] as const;
 
 const saksbehandlerOverstyringer: Partial<
   Record<(typeof saksbehandlerNavn)[number], KontrollsakSaksbehandler>
@@ -72,17 +72,17 @@ const saksbehandlerOverstyringer: Partial<
   "Kari Nordmann": {
     navn: "Kari Nordmann",
     navIdent: "Z123456",
-    enhet: "Nord",
+    enhet: "hu424t",
   },
   "Ada Larsen": {
     navn: "Ada Larsen",
     navIdent: "Z234567",
-    enhet: "Øst",
+    enhet: "ky153k",
   },
   "Saks Behandlersen": {
     navn: "Saks Behandlersen",
     navIdent: "Z999999",
-    enhet: "Nord",
+    enhet: "hu424t",
   },
 };
 
@@ -99,4 +99,4 @@ export const mockSaksbehandlere = mockSaksbehandlerDetaljer.map(
   (saksbehandler) => saksbehandler.navn,
 );
 
-export const mockSeksjoner = ["Nord", "Øst", "Vest", "Analyse"];
+export const mockSeksjoner = ["ky153k", "gu301n", "hu424t", "by295h"];

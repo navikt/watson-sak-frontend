@@ -97,12 +97,40 @@ describe("saker-selectors", () => {
     expect(getStatusVariantForSak(sak)).toBe("warning");
   });
 
-  it("bruker enhet fra saksbehandler som saksenhet og skjuler legacy-only metadata for kontrollsak", () => {
-    const sak = lagKontrollsak();
+  it("bruker sak.enhet som saksenhet og skjuler legacy-only metadata for kontrollsak", () => {
+    const sak = lagKontrollsak({ enhet: "ky153k" });
 
-    expect(getSaksenhet(sak)).toBe("4812");
+    expect(getSaksenhet(sak)).toBe("ky153k");
     expect(getAvdeling(sak)).toBeNull();
     expect(getTags(sak)).toEqual([]);
+  });
+
+  it("faller tilbake til saksbehandlerens enhet når sak.enhet mangler", () => {
+    const sak = lagKontrollsak({ enhet: null });
+
+    expect(getSaksenhet(sak)).toBe("4812");
+  });
+
+  it("faller tilbake til opprettetAvs enhet når sak.enhet og eier mangler", () => {
+    const sak = lagKontrollsak({
+      enhet: null,
+      saksbehandlere: { ...lagKontrollsak().saksbehandlere, eier: null },
+    });
+
+    expect(getSaksenhet(sak)).toBe("4801");
+  });
+
+  it("returnerer tom streng når hverken sak.enhet, eier eller opprettetAv.enhet er satt", () => {
+    const sak = lagKontrollsak({
+      enhet: null,
+      saksbehandlere: {
+        ...lagKontrollsak().saksbehandlere,
+        eier: null,
+        opprettetAv: { navIdent: "Z654321", navn: "Oppretter", enhet: null },
+      },
+    });
+
+    expect(getSaksenhet(sak)).toBe("");
   });
 
   it("returnerer merking fra sak når feltet er satt", () => {

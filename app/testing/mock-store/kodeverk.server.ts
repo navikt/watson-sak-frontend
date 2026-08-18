@@ -63,9 +63,9 @@ export const mockKodeverk: Kodeverk = {
     { kode: "ANNET", beskrivelse: "Annet" },
   ],
   enheter: [
-    { kode: "OST", beskrivelse: "Øst" },
-    { kode: "VEST", beskrivelse: "Vest" },
-    { kode: "NORD", beskrivelse: "Nord" },
-    { kode: "ANALYSE", beskrivelse: "Analyse" },
+    { kode: "ky153k", beskrivelse: "Øst" },
+    { kode: "gu301n", beskrivelse: "Vest" },
+    { kode: "hu424t", beskrivelse: "Nord" },
+    { kode: "by295h", beskrivelse: "Analyse" },
   ],
 };

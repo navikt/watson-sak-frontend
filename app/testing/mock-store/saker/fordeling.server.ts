@@ -7,12 +7,12 @@ import type { MockState } from "~/testing/mock-store/session.server";
 const deltMedEksempel = [
   {
     navn: "Kari Nordmann",
-    enhet: "Nord",
+    enhet: "hu424t",
     navIdent: "Z123456",
   },
   {
     navn: "Ada Larsen",
-    enhet: "Øst",
+    enhet: "ky153k",
     navIdent: "Z234567",
   },
 ];
