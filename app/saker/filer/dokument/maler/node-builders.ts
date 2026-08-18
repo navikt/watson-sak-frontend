@@ -31,7 +31,7 @@ export function p(text: string): Node {
   return { type: "p", children: tekstBarn(text) };
 }
 
-export function pIKursiv(text: string): Node {
+function pIKursiv(text: string): Node {
   return { type: "p", children: kursivTekstBarn(text) };
 }
 
