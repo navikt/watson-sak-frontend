@@ -461,22 +461,6 @@ export default function OpprettSakSide() {
                       </option>
                     ))}
                   </Select>
-
-                  <Select
-                    name={fields.aKrimsenter.name}
-                    id={fields.aKrimsenter.id}
-                    label="A-krimsenter (valgfritt)"
-                    error={fields.aKrimsenter.errors?.[0]}
-                    className="w-52"
-                    defaultValue={(fields.aKrimsenter.initialValue ?? "") as string}
-                  >
-                    <option value="">Velg A-krimsenter</option>
-                    {kodeverk.aKrimsentre.map((a) => (
-                      <option key={a.kode} value={a.kode}>
-                        {a.beskrivelse}
-                      </option>
-                    ))}
-                  </Select>
                 </HStack>
 
                 <hr className="border-ax-border-neutral-subtle max-w-2xl" />

@@ -21,7 +21,6 @@ export type OpprettKontrollsakRequest = {
   misbruktype: string[];
   prioritet: string;
   enhet?: string;
-  aKrimsenter?: string;
   merking: string[];
   arbeidsgivere?: string[];
   ytelser: Array<{
@@ -94,7 +93,6 @@ export async function opprettKontrollsak({
       misbruktype: payload.misbruktype,
       prioritet: payload.prioritet,
       enhet: payload.enhet,
-      aKrimsenter: payload.aKrimsenter,
       ytelser: payload.ytelser,
       merking: payload.merking,
       arbeidsgivere: (payload.arbeidsgivere ?? []).map((orgnr) => ({ organisasjonsnummer: orgnr })),

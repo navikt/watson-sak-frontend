@@ -313,22 +313,21 @@ describe("byggOpprettKontrollsakPayload", () => {
     expect(
       byggOpprettKontrollsakPayload({
         skjema: {
-          personIdent: "12345678901",
-          kategori: "SAMLIV",
-          kilde: "NAV_KONTROLL",
-          misbruktype: ["SKJULT_SAMLIV"],
-          merking: ["LIME"],
-          enhet: "OST",
-          aKrimsenter: "OSLO",
-          arbeidsgivere: ["123456789"],
-          ytelser: [
-            {
-              type: "DAGPENGER",
-              fraDato: "2024-01-01",
-              tilDato: "2024-12-31",
-              beløp: 300000,
-            },
-          ],
+        personIdent: "12345678901",
+        kategori: "SAMLIV",
+        kilde: "NAV_KONTROLL",
+        misbruktype: ["SKJULT_SAMLIV"],
+        merking: ["LIME"],
+        enhet: "OST",
+        arbeidsgivere: ["123456789"],
+        ytelser: [
+          {
+            type: "DAGPENGER",
+            fraDato: "2024-01-01",
+            tilDato: "2024-12-31",
+            beløp: 300000,
+          },
+        ],
         },
       }),
     ).toEqual({
@@ -340,14 +339,13 @@ describe("byggOpprettKontrollsakPayload", () => {
       misbruktype: ["SKJULT_SAMLIV"],
       merking: ["LIME"],
       enhet: "OST",
-      aKrimsenter: "OSLO",
       arbeidsgivere: ["123456789"],
       ytelser: [
         {
-          type: "DAGPENGER",
-          periodeFra: "2024-01-01",
-          periodeTil: "2024-12-31",
-          belop: 300000,
+        type: "DAGPENGER",
+        periodeFra: "2024-01-01",
+        periodeTil: "2024-12-31",
+        belop: 300000,
         },
       ],
     });

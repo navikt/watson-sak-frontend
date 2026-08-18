@@ -33,7 +33,6 @@ export function byggOpprettKontrollsakPayload({
     misbruktype: skjema.misbruktype,
     merking: skjema.merking,
     enhet: skjema.enhet,
-    aKrimsenter: skjema.aKrimsenter,
     arbeidsgivere: skjema.arbeidsgivere ?? [],
     ytelser: skjema.ytelser
       .filter((rad) => rad.type !== undefined)

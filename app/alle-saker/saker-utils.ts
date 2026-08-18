@@ -27,7 +27,6 @@ type FilterState = {
   kategori: string[];
   misbrukstype: string[];
   merking: string[];
-  aKrimsenter: string[];
 };
 
 const TRAKT_STATUS_REKKEFOLGE: KontrollsakStatus[] = [
@@ -78,8 +77,6 @@ export function filtrerSaker(
     )
       return false;
     if (filter.merking.length > 0 && !sak.merking.some((m) => filter.merking.includes(m)))
-      return false;
-    if (filter.aKrimsenter.length > 0 && !filter.aKrimsenter.includes(sak.aKrimsenter ?? ""))
       return false;
     return true;
   });

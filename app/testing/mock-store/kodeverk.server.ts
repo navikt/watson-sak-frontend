@@ -68,14 +68,4 @@ export const mockKodeverk: Kodeverk = {
     { kode: "NORD", beskrivelse: "Nord" },
     { kode: "ANALYSE", beskrivelse: "Analyse" },
   ],
-  aKrimsentre: [
-    { kode: "OSLO", beskrivelse: "Oslo" },
-    { kode: "TONSBERG", beskrivelse: "Tønsberg" },
-    { kode: "TRONDELAG", beskrivelse: "Trøndelag" },
-    { kode: "NORDLAND", beskrivelse: "Nordland" },
-    { kode: "TROMS_OG_FINNMARK", beskrivelse: "Troms og Finnmark" },
-    { kode: "STAVANGER", beskrivelse: "Stavanger" },
-    { kode: "VESTLAND", beskrivelse: "Vestland" },
-    { kode: "AGDER", beskrivelse: "Agder" },
-  ],
 };

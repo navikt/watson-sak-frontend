@@ -448,7 +448,6 @@ const kodeverkResponseSchema = z.object({
   ytelseTyper: z.array(kodeverkInfoSchema),
   kilder: z.array(kodeverkInfoSchema),
   enheter: z.array(kodeverkInfoSchema).default([]),
-  aKrimsentre: z.array(kodeverkInfoSchema).default([]),
 });
 
 export type Kodeverk = z.infer<typeof kodeverkResponseSchema>;

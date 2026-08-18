@@ -112,7 +112,6 @@ export const opprettSakSchema = z
       .default([]),
     merking: z.array(merkingSchema).optional().default([]),
     enhet: z.preprocess((val) => (val === "" ? undefined : val), z.string().optional()),
-    aKrimsenter: z.preprocess((val) => (val === "" ? undefined : val), z.string().optional()),
     arbeidsgivere: z
       .array(z.string().regex(/^\d{9}$/, "Organisasjonsnummer må bestå av 9 siffer"))
       .max(10, "Maks 10 arbeidsgivere")
