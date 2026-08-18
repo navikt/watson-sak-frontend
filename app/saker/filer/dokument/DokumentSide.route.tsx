@@ -1,6 +1,7 @@
 import { PaperplaneIcon, TrashIcon } from "@navikt/aksel-icons";
 import { Button, Detail, HStack, VStack } from "@navikt/ds-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { CSSProperties, KeyboardEvent, PointerEvent } from "react";
 import { isRouteErrorResponse, useLoaderData, useParams, useRevalidator } from "react-router";
 import { Brødsmulesti } from "~/komponenter/Brødsmulesti";
 import { DokumentIkkeFunnet } from "~/feilhåndtering/DokumentIkkeFunnet";
@@ -62,6 +63,10 @@ function LagreStatusVisning({
 
 type LoaderData = Awaited<ReturnType<typeof loader>>;
 
+const MINSTE_EDITORBREDDE = 25;
+const STØRSTE_EDITORBREDDE = 75;
+const STANDARD_EDITORBREDDE = 50;
+
 function DokumentRedigering({
   dokument,
   dokumenter,
@@ -85,6 +90,9 @@ function DokumentRedigering({
   const historikkData = useRef<Autolagringsdata | null>(null);
   const [editorVersjon, settEditorVersjon] = useState(0);
   const [historikkFeil, settHistorikkFeil] = useState<string | null>(null);
+  const [visForhåndsvisning, settVisForhåndsvisning] = useState(false);
+  const [editorBredde, settEditorBredde] = useState(STANDARD_EDITORBREDDE);
+  const arbeidsflateRef = useRef<HTMLDivElement>(null);
   const revalidator = useRevalidator();
   const revalidatorRef = useRef(revalidator);
 
@@ -241,6 +249,51 @@ function DokumentRedigering({
     [revalidator],
   );
 
+  const oppdaterEditorbredde = useCallback((clientX: number) => {
+    const arbeidsflate = arbeidsflateRef.current;
+    if (!arbeidsflate) return;
+
+    const { left, width } = arbeidsflate.getBoundingClientRect();
+    const bredde = Math.round(((clientX - left) / width) * 100);
+    settEditorBredde(Math.min(STØRSTE_EDITORBREDDE, Math.max(MINSTE_EDITORBREDDE, bredde)));
+  }, []);
+
+  const håndterSkillelinjeTastatur = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      const endringer: Record<string, number> = {
+        ArrowLeft: -5,
+        ArrowRight: 5,
+        Home: MINSTE_EDITORBREDDE - editorBredde,
+        End: STØRSTE_EDITORBREDDE - editorBredde,
+      };
+      const endring = endringer[event.key];
+      if (endring === undefined) return;
+
+      event.preventDefault();
+      settEditorBredde((bredde) =>
+        Math.min(STØRSTE_EDITORBREDDE, Math.max(MINSTE_EDITORBREDDE, bredde + endring)),
+      );
+    },
+    [editorBredde],
+  );
+
+  const håndterSkillelinjePekerNed = useCallback(
+    (event: PointerEvent<HTMLDivElement>) => {
+      event.currentTarget.setPointerCapture(event.pointerId);
+      oppdaterEditorbredde(event.clientX);
+    },
+    [oppdaterEditorbredde],
+  );
+
+  const håndterSkillelinjePekerFlytt = useCallback(
+    (event: PointerEvent<HTMLDivElement>) => {
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        oppdaterEditorbredde(event.clientX);
+      }
+    },
+    [oppdaterEditorbredde],
+  );
+
   return (
     <>
       <title>{`${tittel || "Uten tittel"} – Sak ${sakReferanse} – Watson Sak`}</title>
@@ -276,6 +329,16 @@ function DokumentRedigering({
               </Button>
             )}
 
+            <Button
+              type="button"
+              variant="secondary"
+              size="small"
+              aria-expanded={visForhåndsvisning}
+              onClick={() => settVisForhåndsvisning((vises) => !vises)}
+            >
+              {visForhåndsvisning ? "Skjul forhåndsvisning" : "Forhåndsvis"}
+            </Button>
+
             {kanRedigere && (
               <Button
                 type="button"
@@ -292,53 +355,85 @@ function DokumentRedigering({
         </HStack>
       </VStack>
 
-      <DokumentEditor
-        key={editorVersjon}
-        startInnhold={innholdRef.current}
-        redigerbar={kanRedigere}
-        onEndring={håndterInnhold}
-        sakId={sakReferanse}
-        docId={dokument.id}
-        variabelVerdier={variabelVerdier}
-        dokumentliste={
-          dokumenter.length > 0 ? (
-            <DokumentTre
-              noder={dokumenter}
-              sakId={sakReferanse}
-              redigerbar={kanRedigere}
-              fremhevetId={dokument.id}
-              kompakt
-              redirectVedSletting={(docId) => (docId === dokument.id ? sakUrl : undefined)}
-            />
-          ) : (
-            <Detail className="text-ax-text-neutral-subtle">Ingen andre dokumenter.</Detail>
-          )
-        }
-        historikkInnhold={
-          <>
-            <DokumentHistorikkPanel
-              historikk={dokumentHistorikk}
-              kanGjenopprette={kanRedigere}
-              hentHistorikkpunkt={async (historikkId) => {
-                const resultat = await historikkKall("hent_historikkpunkt", historikkId);
-                if (!resultat.historikkpunkt) throw new Error("Historikkpunkt mangler i svaret");
-                return resultat.historikkpunkt;
-              }}
-              gjenopprett={async (historikkId) => {
-                const resultat = await historikkKall("gjenopprett_historikkpunkt", historikkId);
-                if (!resultat.dokument) throw new Error("Dokument mangler i svaret");
-                return resultat.dokument;
-              }}
-              onGjenopprettet={håndterGjenopprettet}
-            />
-            {historikkFeil && <Detail className="text-ax-text-danger">{historikkFeil}</Detail>}
-          </>
-        }
-        lagreStatus={<LagreStatusVisning status={status} sistLagret={sistLagret} />}
-      />
+      <div
+        ref={arbeidsflateRef}
+        className="flex flex-col lg:flex-row"
+        style={{ "--editor-bredde": `${editorBredde}%` } as CSSProperties}
+      >
+        <div className="min-w-0 lg:shrink-0 lg:basis-[var(--editor-bredde)]">
+          <DokumentEditor
+            key={editorVersjon}
+            startInnhold={innholdRef.current}
+            redigerbar={kanRedigere}
+            onEndring={håndterInnhold}
+            sakId={sakReferanse}
+            docId={dokument.id}
+            variabelVerdier={variabelVerdier}
+            dokumentliste={
+              dokumenter.length > 0 ? (
+                <DokumentTre
+                  noder={dokumenter}
+                  sakId={sakReferanse}
+                  redigerbar={kanRedigere}
+                  fremhevetId={dokument.id}
+                  kompakt
+                  redirectVedSletting={(docId) => (docId === dokument.id ? sakUrl : undefined)}
+                />
+              ) : (
+                <Detail className="text-ax-text-neutral-subtle">Ingen andre dokumenter.</Detail>
+              )
+            }
+            historikkInnhold={
+              <>
+                <DokumentHistorikkPanel
+                  historikk={dokumentHistorikk}
+                  kanGjenopprette={kanRedigere}
+                  hentHistorikkpunkt={async (historikkId) => {
+                    const resultat = await historikkKall("hent_historikkpunkt", historikkId);
+                    if (!resultat.historikkpunkt)
+                      throw new Error("Historikkpunkt mangler i svaret");
+                    return resultat.historikkpunkt;
+                  }}
+                  gjenopprett={async (historikkId) => {
+                    const resultat = await historikkKall("gjenopprett_historikkpunkt", historikkId);
+                    if (!resultat.dokument) throw new Error("Dokument mangler i svaret");
+                    return resultat.dokument;
+                  }}
+                  onGjenopprettet={håndterGjenopprettet}
+                />
+                {historikkFeil && <Detail className="text-ax-text-danger">{historikkFeil}</Detail>}
+              </>
+            }
+            lagreStatus={<LagreStatusVisning status={status} sistLagret={sistLagret} />}
+          />
+        </div>
 
-      <div className="px-[var(--ax-space-16)] lg:px-[var(--ax-space-24)]">
-        <PdfForhåndsvisning url={pdfForhåndsvisningUrl} tittel={tittel} sistLagret={sistLagret} />
+        {visForhåndsvisning && (
+          <>
+            <div
+              role="separator"
+              aria-label="Endre bredde mellom editor og forhåndsvisning"
+              aria-orientation="vertical"
+              aria-valuemin={MINSTE_EDITORBREDDE}
+              aria-valuemax={STØRSTE_EDITORBREDDE}
+              aria-valuenow={editorBredde}
+              aria-valuetext={`Editoren bruker ${editorBredde} prosent av arbeidsflaten`}
+              tabIndex={0}
+              className="hidden w-3 shrink-0 cursor-col-resize touch-none bg-ax-border-neutral-subtle hover:bg-ax-border-accent-strong focus:bg-ax-border-accent-strong focus:outline-none lg:block"
+              onKeyDown={håndterSkillelinjeTastatur}
+              onPointerDown={håndterSkillelinjePekerNed}
+              onPointerMove={håndterSkillelinjePekerFlytt}
+              onPointerUp={(event) => event.currentTarget.releasePointerCapture(event.pointerId)}
+            />
+            <div className="min-w-0 flex-1 border-t border-ax-border-neutral-subtle lg:border-t-0 lg:border-l">
+              <PdfForhåndsvisning
+                url={pdfForhåndsvisningUrl}
+                tittel={tittel}
+                sistLagret={sistLagret}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       <SlettDokumentModal

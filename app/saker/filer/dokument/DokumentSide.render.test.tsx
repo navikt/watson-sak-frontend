@@ -128,6 +128,21 @@ describe("DokumentSide", () => {
     expect(medunderskriver.hasAttribute("disabled")).toBe(true);
   });
 
+  it("åpner forhåndsvisning fra knappen ved siden av sletting", async () => {
+    renderSide(true);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Forhåndsvis" }));
+
+    expect(screen.getByRole("button", { name: "Skjul forhåndsvisning" })).toBeDefined();
+    const skillelinje = screen.getByRole("separator", {
+      name: "Endre bredde mellom editor og forhåndsvisning",
+    });
+    expect(skillelinje).toBeDefined();
+
+    fireEvent.keyDown(skillelinje, { key: "ArrowRight" });
+    expect(skillelinje.getAttribute("aria-valuenow")).toBe("55");
+  });
+
   it("skjuler slett-knapp uten redigeringstilgang", async () => {
     renderSide(false);
 
