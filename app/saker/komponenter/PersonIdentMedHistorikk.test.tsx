@@ -40,12 +40,11 @@ describe("PersonIdentMedHistorikk", () => {
       />,
     );
 
-    const historikkKnapp = screen.getByRole("button", { name: "Vis identifikatorhistorikk" });
-    expect(historikkKnapp).toBeInstanceOf(HTMLButtonElement);
-    if (!(historikkKnapp instanceof HTMLButtonElement)) {
-      throw new Error("Historikk-knappen er ikke en knapp");
-    }
+    const historikkKnapp = screen.getByRole("button", {
+      name: "Vis identifikatorhistorikk",
+    }) as HTMLButtonElement;
 
     expect(historikkKnapp.disabled).toBe(true);
+    expect(screen.getByLabelText("Denne identifikatoren har ingen historikk")).toBeDefined();
   });
 });
