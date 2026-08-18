@@ -156,21 +156,21 @@ describe("SaksbehandlereKort", () => {
         sak={lagKontrollsak({
           enhet: "ky153k",
           saksbehandlere: {
-            eier: lagSaksbehandler({ enhet: "NAV Kontroll Øst" }),
+            eier: lagSaksbehandler({ enhet: "NAV Øst" }),
             deltMed: [],
-            opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "NAV Kontroll Øst" },
+            opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "NAV Øst" },
           },
         })}
-        saksbehandlerDetaljer={[lagSaksbehandler({ enhet: "NAV Kontroll Øst" })]}
-        ansvarligSaksbehandler={lagSaksbehandler({ enhet: "NAV Kontroll Øst" })}
+        saksbehandlerDetaljer={[lagSaksbehandler({ enhet: "NAV Øst" })]}
+        ansvarligSaksbehandler={lagSaksbehandler({ enhet: "NAV Øst" })}
       />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Send til annen enhet" }));
 
-    const nåværendeEnhet = screen.getByRole("option", { name: "Kontroll Øst" });
+    const nåværendeEnhet = screen.getByRole("option", { name: "Øst" });
     expect((nåværendeEnhet as HTMLOptionElement).disabled).toBe(true);
-    expect(screen.getByRole("option", { name: "Kontroll Nord" })).toBeDefined();
+    expect(screen.getByRole("option", { name: "Nord" })).toBeDefined();
     fireEvent.change(screen.getByLabelText("Ny enhet"), { target: { value: "hu424t" } });
     const sendKnapper = screen.getAllByRole("button", { name: "Send til annen enhet" });
     const sendKnapp = sendKnapper.at(-1);

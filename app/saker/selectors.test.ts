@@ -111,10 +111,23 @@ describe("saker-selectors", () => {
     expect(getSaksenhet(sak)).toBe("4812");
   });
 
-  it("returnerer tom streng når hverken sak.enhet eller saksbehandler er satt", () => {
+  it("faller tilbake til opprettetAvs enhet når sak.enhet og eier mangler", () => {
     const sak = lagKontrollsak({
       enhet: null,
       saksbehandlere: { ...lagKontrollsak().saksbehandlere, eier: null },
+    });
+
+    expect(getSaksenhet(sak)).toBe("4801");
+  });
+
+  it("returnerer tom streng når hverken sak.enhet, eier eller opprettetAv.enhet er satt", () => {
+    const sak = lagKontrollsak({
+      enhet: null,
+      saksbehandlere: {
+        ...lagKontrollsak().saksbehandlere,
+        eier: null,
+        opprettetAv: { navIdent: "Z654321", navn: "Oppretter", enhet: null },
+      },
     });
 
     expect(getSaksenhet(sak)).toBe("");
