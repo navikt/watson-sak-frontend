@@ -166,6 +166,42 @@ describe("filtrerSaker", () => {
     });
     expect(resultat).toHaveLength(0);
   });
+
+  it("filtrerer på misbrukstype alene", () => {
+    const resultat = filtrerSaker(saker, {
+      enhet: [],
+      saksbehandler: [],
+      kategori: [],
+      misbrukstype: ["SKJULT_SAMLIV"],
+      merking: [],
+    });
+    expect(resultat).toHaveLength(1);
+    expect(resultat[0].id).toBe(100);
+  });
+
+  it("kombinerer kategori og misbrukstype med AND-logikk", () => {
+    const resultat = filtrerSaker(saker, {
+      enhet: [],
+      saksbehandler: [],
+      kategori: ["ARBEID"],
+      misbrukstype: ["FIKTIVT_ARBEIDSFORHOLD"],
+      merking: [],
+    });
+    expect(resultat).toHaveLength(1);
+    expect(resultat[0].id).toBe(200);
+  });
+
+  it("returnerer ingen saker når kategori og misbrukstype ikke matcher samme sak", () => {
+    // SKJULT_SAMLIV tilhører SAMLIV, ikke ARBEID
+    const resultat = filtrerSaker(saker, {
+      enhet: [],
+      saksbehandler: [],
+      kategori: ["ARBEID"],
+      misbrukstype: ["SKJULT_SAMLIV"],
+      merking: [],
+    });
+    expect(resultat).toHaveLength(0);
+  });
 });
 
 describe("sorterSaker", () => {

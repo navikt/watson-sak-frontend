@@ -1,5 +1,5 @@
 import { startUnleash, type Unleash } from "unleash-client";
-import { env, isProd } from "~/config/env.server";
+import { env } from "~/config/env.server";
 import { logger } from "~/logging/logging";
 import { FeatureFlagg } from "./featureflagg";
 
@@ -32,9 +32,9 @@ function initialiserUnleash(): Promise<Unleash> {
 export async function hentAlleFeatureFlagg(
   navIdent: string,
 ): Promise<Record<FeatureFlagg, boolean>> {
-  if (!isProd) {
+  if (env.ENVIRONMENT.startsWith("local")) {
     logger.info("Returnerer alle feature flaggene som påskrudd");
-    // Hvis vi kjører lokalt eller tester, returnerer vi alle feature flaggene som påskrudd
+    // Lokale miljøer får alle feature-flagg påskrudd for enkel utvikling
     return Promise.resolve(
       Object.values(FeatureFlagg).reduce(
         (acc, key) => {
@@ -65,7 +65,7 @@ type Statusmelding = {
   beskrivelse?: string;
 };
 export async function hentStatusmeldingFeatureFlagg(): Promise<Statusmelding | false> {
-  if (!isProd) {
+  if (env.ENVIRONMENT.startsWith("local")) {
     return false;
   }
   const unleash = await initialiserUnleash();

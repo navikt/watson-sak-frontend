@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router";
 import { ChipsFiltergruppe } from "~/filtre/ChipsFiltergruppe";
 import { Filterpanel } from "~/filtre/Filterpanel";
 import { useFilterParam } from "~/filtre/useFilterParam";
+import { parseMultiValueParam } from "~/filtre/parseMultiValueParam";
 
 type SaksbehandlerAlternativ = {
   label: string;
@@ -14,11 +15,17 @@ type KodeAlternativ = {
   value: string;
 };
 
+type MisbrukstypeAlternativ = {
+  label: string;
+  value: string;
+  kategori: string;
+};
+
 type FilterAlternativer = {
   enhet: KodeAlternativ[];
   saksbehandler: SaksbehandlerAlternativ[];
   kategori: KodeAlternativ[];
-  misbrukstype: KodeAlternativ[];
+  misbrukstype: MisbrukstypeAlternativ[];
   merking: string[];
 };
 
@@ -31,6 +38,12 @@ const RESET_KEYS = ["side"];
 export function Filtre({ alternativer }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
   const valgtSaksbehandler = searchParams.get("saksbehandler") ?? "";
+  const valgteKategorier = parseMultiValueParam(searchParams, "kategori");
+
+  const filtrerteMisbrukstyper =
+    valgteKategorier.length === 0
+      ? alternativer.misbrukstype
+      : alternativer.misbrukstype.filter((m) => valgteKategorier.includes(m.kategori));
 
   function velgSaksbehandler(verdi: string, erValgt: boolean) {
     setSearchParams((forrige) => {
@@ -41,6 +54,36 @@ export function Filtre({ alternativer }: Props) {
       } else {
         neste.delete("saksbehandler");
       }
+      return neste;
+    });
+  }
+
+  function toggleKategori(verdi: string) {
+    setSearchParams((forrige) => {
+      const neste = new URLSearchParams(forrige);
+      const gjeldende = parseMultiValueParam(forrige, "kategori");
+
+      const oppdaterteKategorier = gjeldende.includes(verdi)
+        ? gjeldende.filter((v) => v !== verdi)
+        : [...gjeldende, verdi];
+
+      neste.delete("kategori");
+      for (const k of oppdaterteKategorier) neste.append("kategori", k);
+
+      // Fjern misbrukstyper som ikke lenger tilhører noen valgt kategori.
+      // Når ingen kategorier er valgt, fjernes alle misbrukstype-filtre.
+      const gyldige = new Set(
+        alternativer.misbrukstype
+          .filter((m) => oppdaterteKategorier.includes(m.kategori))
+          .map((m) => m.value),
+      );
+      const gjeldendeMisbrukstyper = parseMultiValueParam(forrige, "misbrukstype");
+      neste.delete("misbrukstype");
+      for (const m of gjeldendeMisbrukstyper.filter((m) => gyldige.has(m))) {
+        neste.append("misbrukstype", m);
+      }
+
+      for (const key of RESET_KEYS) neste.delete(key);
       return neste;
     });
   }
@@ -81,18 +124,23 @@ export function Filtre({ alternativer }: Props) {
       )}
 
       {alternativer.kategori.length > 0 && (
-        <ChipsFiltergruppeForKodeAlternativ
+        <ChipsFiltergruppe
           tittel="Kategori"
-          paramKey="kategori"
-          alternativer={alternativer.kategori}
+          alternativer={alternativer.kategori.map((alt) => ({
+            verdi: alt.value,
+            etikett: alt.label,
+          }))}
+          valgteVerdier={valgteKategorier}
+          onToggle={toggleKategori}
+          size="small"
         />
       )}
 
-      {alternativer.misbrukstype.length > 0 && (
+      {filtrerteMisbrukstyper.length > 0 && (
         <ChipsFiltergruppeForKodeAlternativ
           tittel="Misbrukstype"
           paramKey="misbrukstype"
-          alternativer={alternativer.misbrukstype}
+          alternativer={filtrerteMisbrukstyper}
         />
       )}
 

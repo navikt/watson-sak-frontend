@@ -136,6 +136,7 @@ export default function AlleSakerSide() {
   const misbrukstypeAlternativer = misbrukstyper.map((m) => ({
     label: m.beskrivelse,
     value: m.kode,
+    kategori: m.kategori,
   }));
 
   const [, setSearchParams] = useSearchParams();
@@ -173,11 +174,7 @@ export default function AlleSakerSide() {
           Alle saker
         </Heading>
 
-        <section aria-labelledby="saksliste-heading">
-          <Heading level="2" size="medium" spacing id="saksliste-heading">
-            Saker
-          </Heading>
-
+        <section aria-label="Saker">
           <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:gap-8">
             <div className="min-w-0 flex-1 xl:order-first">
               <div className="overflow-x-auto [&_table]:w-full">
@@ -201,13 +198,13 @@ export default function AlleSakerSide() {
                     sorterbare: Object.keys(BACKEND_SORT_FELT) as AlleSakerKolonne[],
                   }}
                   kolonneHeaderProps={{
-                    saksid: { className: "min-w-[100px] !py-5" },
-                    kategori: { className: "min-w-[165px] !py-5" },
-                    misbrukstype: { className: "min-w-[210px] !py-5" },
-                    status: { className: "min-w-[200px] !py-5" },
-                    opprettet: { className: "min-w-[140px] !py-5" },
-                    oppdatert: { className: "min-w-[140px] !py-5" },
-                    saksbehandler: { className: "min-w-[165px] !py-5" },
+                    saksid: { className: "min-w-[100px]" },
+                    kategori: { className: "min-w-[165px]" },
+                    misbrukstype: { className: "min-w-[210px]" },
+                    status: { className: "min-w-[200px]" },
+                    opprettet: { className: "min-w-[140px]" },
+                    oppdatert: { className: "min-w-[140px]" },
+                    saksbehandler: { className: "min-w-[165px]" },
                   }}
                 />
               </div>
