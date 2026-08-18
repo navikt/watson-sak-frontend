@@ -105,6 +105,18 @@ describe("saker-selectors", () => {
     expect(getTags(sak)).toEqual([]);
   });
 
+  it("faller tilbake til saksbehandlerens enhet når sak.enhet mangler", () => {
+    const sak = lagKontrollsak({ enhet: null });
+
+    expect(getSaksenhet(sak)).toBe("4812");
+  });
+
+  it("returnerer tom streng når hverken sak.enhet eller saksbehandler er satt", () => {
+    const sak = lagKontrollsak({ enhet: null, saksbehandlere: { ...lagKontrollsak().saksbehandlere, eier: null } });
+
+    expect(getSaksenhet(sak)).toBe("");
+  });
+
   it("returnerer merking fra sak når feltet er satt", () => {
     const sak = lagKontrollsak({ merking: ["LIME"] });
     expect(getTags(sak)).toEqual(["LIME"]);

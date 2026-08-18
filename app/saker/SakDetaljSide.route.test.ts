@@ -68,7 +68,7 @@ describe("SakDetaljSide action", () => {
     expect(kontrollsak.saksbehandlere?.deltMed).toEqual([
       {
         navn: "Kari Nordmann",
-        enhet: "Nord",
+        enhet: "hu424t",
         navIdent: "Z123456",
       },
     ]);
@@ -90,12 +90,12 @@ describe("SakDetaljSide action", () => {
     expect(kontrollsak.saksbehandlere?.deltMed).toEqual([
       {
         navn: "Kari Nordmann",
-        enhet: "Nord",
+        enhet: "hu424t",
         navIdent: "Z123456",
       },
       {
         navn: "Ada Larsen",
-        enhet: "Øst",
+        enhet: "ky153k",
         navIdent: "Z234567",
       },
     ]);
@@ -115,7 +115,7 @@ describe("SakDetaljSide action", () => {
     expect(kontrollsak.saksbehandlere?.deltMed).toEqual([
       {
         navn: "Ada Larsen",
-        enhet: "Øst",
+        enhet: "ky153k",
         navIdent: "Z234567",
       },
     ]);
@@ -145,7 +145,7 @@ describe("SakDetaljSide action", () => {
     expect(kontrollsak.saksbehandlere?.deltMed).toEqual([
       {
         navn: "Ada Larsen",
-        enhet: "Øst",
+        enhet: "ky153k",
         navIdent: "Z234567",
       },
     ]);
@@ -500,7 +500,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(kontrollsak.saksbehandlere.eier).toEqual({
       navn: "Kari Nordmann",
       navIdent: "Z123456",
-      enhet: "Nord",
+      enhet: "hu424t",
     });
   });
 
@@ -526,7 +526,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(kontrollsak.saksbehandlere.eier).toEqual({
       navn: "Saks Behandlersen",
       navIdent: "Z999999",
-      enhet: "Nord",
+      enhet: "hu424t",
     });
   });
 
