@@ -83,12 +83,11 @@ describe("rapportmaler", () => {
                   {
                     type: "p",
                     justering: "right",
-                    children: [{ text: "Unntatt offentlighet." }],
-                  },
-                  {
-                    type: "p",
-                    justering: "right",
-                    children: [{ text: "jf. Lov om off. § 13 jf. NAV-loven § 7", italic: true }],
+                    bevarLinjeskift: true,
+                    children: [
+                      { text: "Unntatt offentlighet.\n" },
+                      { text: "jf. Lov om off. § 13 jf. NAV-loven § 7", italic: true },
+                    ],
                   },
                 ],
               },

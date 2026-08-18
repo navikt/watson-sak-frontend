@@ -23,16 +23,8 @@ function kombinerteTekstBarn(...deler: (string | Node)[]): Node[] {
   return deler.flatMap((del) => (typeof del === "string" ? tekstBarn(del) : [del]));
 }
 
-function kursivTekstBarn(tekst: string): Node[] {
-  return [{ text: tekst, italic: true }];
-}
-
 export function p(text: string): Node {
   return { type: "p", children: tekstBarn(text) };
-}
-
-function pIKursiv(text: string): Node {
-  return { type: "p", children: kursivTekstBarn(text) };
 }
 
 export function pMedVariabler(...deler: (string | Node)[]): Node {
@@ -102,10 +94,15 @@ export function kontrollrapportHeader(): Node[] {
           erStatisk: true,
           children: [{ text: "" }],
         }),
-        celle(
-          { ...p("Unntatt offentlighet."), justering: "right" },
-          { ...pIKursiv("jf. Lov om off. § 13 jf. NAV-loven § 7"), justering: "right" },
-        ),
+        celle({
+          type: "p",
+          justering: "right",
+          bevarLinjeskift: true,
+          children: [
+            { text: "Unntatt offentlighet.\n" },
+            { text: "jf. Lov om off. § 13 jf. NAV-loven § 7", italic: true },
+          ],
+        }),
       ),
     ),
     h1("Kontrollrapport"),

@@ -124,6 +124,9 @@ describe("DokumentEditor", () => {
 
     expect(await screen.findByRole("heading", { level: 1, name: "Kontrollrapport" })).toBeDefined();
     expect(screen.getByRole("img", { name: "NAV" }).getAttribute("src")).toBe("/nav-logo.svg");
+    expect(screen.getByText(/Unntatt offentlighet/).closest("p")?.style.whiteSpace).toBe(
+      "pre-line",
+    );
   });
 
   it("rendrer høyrejustert tekstblokk", async () => {

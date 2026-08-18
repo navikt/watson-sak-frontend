@@ -107,10 +107,16 @@ type VerktøyKnappProps = {
 };
 
 type HorisontalJustering = "left" | "center" | "right";
-type JusterbartElement = TElement & { justering?: HorisontalJustering };
+type JusterbartElement = TElement & {
+  justering?: HorisontalJustering;
+  bevarLinjeskift?: boolean;
+};
 
 function justeringsstil(element: JusterbartElement) {
-  return element.justering ? { textAlign: element.justering } : undefined;
+  return {
+    textAlign: element.justering,
+    whiteSpace: element.bevarLinjeskift ? "pre-line" : undefined,
+  };
 }
 
 function JustertAvsnitt({ children, element, ...props }: PlateElementProps<JusterbartElement>) {
