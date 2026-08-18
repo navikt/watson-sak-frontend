@@ -51,7 +51,7 @@ export function PdfForhåndsvisning({
   );
 
   return (
-    <section aria-labelledby="pdf-forhåndsvisning-tittel">
+    <section aria-labelledby="pdf-forhåndsvisning-tittel" className="flex h-full min-h-0 flex-col">
       <h2 id="pdf-forhåndsvisning-tittel" className="sr-only">
         PDF-forhåndsvisning
       </h2>
@@ -60,7 +60,11 @@ export function PdfForhåndsvisning({
           {feil}
         </Alert>
       ) : pdfUrl ? (
-        <iframe title="PDF-forhåndsvisning" src={pdfUrl} className="h-[480px] w-full border-0" />
+        <iframe
+          title="PDF-forhåndsvisning"
+          src={pdfUrl}
+          className="min-h-0 w-full flex-1 border-0"
+        />
       ) : (
         <Loader title="Laster PDF-forhåndsvisning" size="small" />
       )}

@@ -85,6 +85,7 @@ function DokumentRedigering({
   const historikkData = useRef<Autolagringsdata | null>(null);
   const [editorVersjon, settEditorVersjon] = useState(0);
   const [historikkFeil, settHistorikkFeil] = useState<string | null>(null);
+  const [visForhåndsvisning, settVisForhåndsvisning] = useState(false);
   const revalidator = useRevalidator();
   const revalidatorRef = useRef(revalidator);
 
@@ -276,6 +277,16 @@ function DokumentRedigering({
               </Button>
             )}
 
+            <Button
+              type="button"
+              variant="secondary"
+              size="small"
+              aria-expanded={visForhåndsvisning}
+              onClick={() => settVisForhåndsvisning((vises) => !vises)}
+            >
+              {visForhåndsvisning ? "Skjul forhåndsvisning" : "Forhåndsvis"}
+            </Button>
+
             {kanRedigere && (
               <Button
                 type="button"
@@ -335,11 +346,16 @@ function DokumentRedigering({
           </>
         }
         lagreStatus={<LagreStatusVisning status={status} sistLagret={sistLagret} />}
+        mellomInnhold={
+          visForhåndsvisning ? (
+            <PdfForhåndsvisning
+              url={pdfForhåndsvisningUrl}
+              tittel={tittel}
+              sistLagret={sistLagret}
+            />
+          ) : undefined
+        }
       />
-
-      <div className="px-[var(--ax-space-16)] lg:px-[var(--ax-space-24)]">
-        <PdfForhåndsvisning url={pdfForhåndsvisningUrl} tittel={tittel} sistLagret={sistLagret} />
-      </div>
 
       <SlettDokumentModal
         kandidat={sletting.kandidat}
