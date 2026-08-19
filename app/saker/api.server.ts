@@ -98,9 +98,24 @@ export class BackendFeilException extends Error {
   }
 }
 
-async function håndterFeil(respons: Response, beskrivelse: string): Promise<never> {
+/**
+ * @param forventedeStatuser Statuskoder som representerer en kjent, håndtert
+ * tilstand for dette kallet (f.eks. 403 ved manglende fil-tilgang) i stedet
+ * for en uventet feil. Disse logges med `logger.warn` fremfor `logger.error`
+ * for å unngå unødvendig feilstøy i logger ved normal bruk.
+ */
+async function håndterFeil(
+  respons: Response,
+  beskrivelse: string,
+  opts?: { forventedeStatuser?: number[] },
+): Promise<never> {
   const detalj = await hentProblemDetail(respons);
-  logger.error(`${beskrivelse} — status ${respons.status}${detalj ? `: ${detalj}` : ""}`);
+  const melding = `${beskrivelse} — status ${respons.status}${detalj ? `: ${detalj}` : ""}`;
+  if (opts?.forventedeStatuser?.includes(respons.status)) {
+    logger.warn(melding);
+  } else {
+    logger.error(melding);
+  }
   throw new BackendFeilException(respons.status, detalj ?? beskrivelse);
 }
 
@@ -704,7 +719,10 @@ export async function hentFiler(token: string, sakId: string): Promise<FilRespon
   const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/filer`), {
     headers: authHeaders(token),
   });
-  if (!respons.ok) await håndterFeil(respons, "Kunne ikke hente filer");
+  // 403 er en forventet tilstand her — saksbehandleren mangler fil-tilgang på
+  // saken, se hentFilerMedTilgangskontroll i SakDetaljSide.server.ts.
+  if (!respons.ok)
+    await håndterFeil(respons, "Kunne ikke hente filer", { forventedeStatuser: [403] });
   return parseEllerKastFeil(z.array(filResponseSchema), await respons.json(), "hentFiler");
 }
 

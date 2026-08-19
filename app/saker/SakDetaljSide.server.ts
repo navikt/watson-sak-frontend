@@ -19,6 +19,7 @@ import type {
   KontrollsakResponse,
   KontrollsakSaksbehandler,
 } from "~/saker/types.backend";
+import type { FilResponse } from "~/saker/filer/typer";
 import { henleggelsesarsakSchema } from "~/saker/types.backend";
 import { lagIsoTidspunktFraNorskDatoTid } from "~/utils/date-utils";
 import { hentTekstfelt, hentValgfriTekst } from "~/utils/form-data";
@@ -193,18 +194,57 @@ function erSaksbehandlerPåSak(sak: KontrollsakResponse, navIdent: string): bool
 
 // --- Loader ---
 
+/**
+ * Henter filer for saken, men behandler manglende fil-tilgang (HTTP 403) som en
+ * gyldig tilstand i stedet for en feil.
+ *
+ * Backend (`FilTilgangService`) gir kun fil-tilgang til den som er ansvarlig
+ * for saken, saken er delt med (`deltMed`), som opprettet den (`opprettetAv`),
+ * eller som er ansvarlig for en sak den er koblet til — en saksbehandler uten
+ * noen av disse rollene skal likevel kunne åpne resten av sakssiden, bare
+ * filområdet skjules stille (se `kanSeFilområde` i `SakDetaljSide.route.tsx`).
+ *
+ * Kalles fra `Promise.all` i loaderen — dersom `hentFiler` hadde kastet uhåndtert
+ * herfra, ville hele loaderen (og dermed hele sakssiden) feilet for enhver
+ * saksbehandler uten fil-tilgang, se opprinnelig bug.
+ *
+ * Andre feil enn 403 (5xx, nettverksfeil o.l.) kastes videre som reelle feil.
+ */
+async function hentFilerMedTilgangskontroll(
+  token: string,
+  sakId: string,
+): Promise<{ filer: FilResponse[]; harFilTilgang: boolean }> {
+  try {
+    const filer = await backendApi.hentFiler(token, sakId);
+    return { filer, harFilTilgang: true };
+  } catch (feil) {
+    if (feil instanceof backendApi.BackendFeilException && feil.status === 403) {
+      return { filer: [], harFilTilgang: false };
+    }
+    throw feil;
+  }
+}
+
 export async function loader({ request, params }: Route.LoaderArgs) {
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
     const sakId = params.sakId;
 
-    const [sak, historikk, journalposter, saksbehandlerDetaljer, filer] = await Promise.all([
-      backendApi.hentKontrollsak(token, sakId),
-      backendApi.hentHendelser(token, sakId),
-      backendApi.hentJournalposter(token, sakId),
-      backendApi.hentSaksbehandlere(token),
-      backendApi.hentFiler(token, sakId),
-    ]);
+    const [sak, historikk, journalposter, saksbehandlerDetaljer, filerResultat] = await Promise.all(
+      [
+        backendApi.hentKontrollsak(token, sakId),
+        // TODO: hentHendelser og hentJournalposter kaster på populasjonstilgang
+        // (TilgangService.krevTilgang — skjermet person, geografisk osv.), en annen
+        // mekanisme enn fil-tilgang. De har samme strukturelle svakhet som hentFiler
+        // hadde: et 403 herfra vil forkaste hele Promise.all og feile hele loaderen
+        // i stedet for å degradere pent. Ikke rettet nå — utenfor omfanget av
+        // denne feilrettelsen.
+        backendApi.hentHendelser(token, sakId),
+        backendApi.hentJournalposter(token, sakId),
+        backendApi.hentSaksbehandlere(token),
+        hentFilerMedTilgangskontroll(token, sakId),
+      ],
+    );
 
     // Henter kun første side (maks 100 saker) — visningen på sakdetaljsiden er en enkel
     // liste over "andre saker for personen", ikke en fullstendig paginert visning.
@@ -219,9 +259,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       historikk,
       journalposter,
       dokumenter: sak.dokumenter,
-      filer,
-      // hentFiler kastet ingen feil → backend bekreftet at innlogget bruker har lese-tilgang
-      harFilTilgang: true,
+      filer: filerResultat.filer,
+      harFilTilgang: filerResultat.harFilTilgang,
       andreSaker,
       saksbehandlere: saksbehandlerDetaljer.map((sb) => sb.navn),
       saksbehandlerDetaljer,
