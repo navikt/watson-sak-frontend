@@ -198,10 +198,11 @@ function erSaksbehandlerPåSak(sak: KontrollsakResponse, navIdent: string): bool
  * Henter filer for saken, men behandler manglende fil-tilgang (HTTP 403) som en
  * gyldig tilstand i stedet for en feil.
  *
- * Backend (`FilTilgangService`) gir kun fil-tilgang til `ansvarlig`, `deltMed`,
- * `opprettetAv` eller ansvarlig på en koblet sak — en saksbehandler uten denne
- * tilgangen skal likevel kunne åpne resten av sakssiden, bare filområdet skjules
- * stille (se `kanSeFilområde` i `SakDetaljSide.route.tsx`).
+ * Backend (`FilTilgangService`) gir kun fil-tilgang til den som er ansvarlig
+ * for saken, saken er delt med (`deltMed`), som opprettet den (`opprettetAv`),
+ * eller som er ansvarlig for en sak den er koblet til — en saksbehandler uten
+ * noen av disse rollene skal likevel kunne åpne resten av sakssiden, bare
+ * filområdet skjules stille (se `kanSeFilområde` i `SakDetaljSide.route.tsx`).
  *
  * Kalles fra `Promise.all` i loaderen — dersom `hentFiler` hadde kastet uhåndtert
  * herfra, ville hele loaderen (og dermed hele sakssiden) feilet for enhver
@@ -236,8 +237,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
         // (TilgangService.krevTilgang — skjermet person, geografisk osv.), en annen
         // mekanisme enn fil-tilgang. De har samme strukturelle svakhet som hentFiler
         // hadde: et 403 herfra vil forkaste hele Promise.all og feile hele loaderen
-        // i stedet for å degradere gracefully. Ikke rettet nå — utenfor omfanget av
-        // denne bugfixen.
+        // i stedet for å degradere pent. Ikke rettet nå — utenfor omfanget av
+        // denne feilrettelsen.
         backendApi.hentHendelser(token, sakId),
         backendApi.hentJournalposter(token, sakId),
         backendApi.hentSaksbehandlere(token),
