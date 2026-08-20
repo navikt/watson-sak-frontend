@@ -117,6 +117,42 @@ export function formaterPeriodeForYtelser(ytelser: KontrollsakYtelse[]): string 
   return perioder.join(", ");
 }
 
+/**
+ * Formaterer en ISO-datostreng (YYYY-MM-DD) til norsk kort format (dd.mm.yyyy)
+ *
+ * @example
+ * formaterIsoTilNorskDato("2023-01-05") // "05.01.2023"
+ */
+export function formaterIsoTilNorskDato(iso: string | undefined | null): string {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso ?? "";
+  const dag = `${date.getDate()}`.padStart(2, "0");
+  const måned = `${date.getMonth() + 1}`.padStart(2, "0");
+  const år = date.getFullYear();
+  return `${dag}.${måned}.${år}`;
+}
+
+/**
+ * Formaterer periode for en enkelt ytelse til norsk kort format, med bindestrek
+ * som fallback for manglende fra-/til-dato.
+ *
+ * @example
+ * formaterYtelsePeriode("2023-01-05", "2023-06-01") // "05.01.2023 – 01.06.2023"
+ * formaterYtelsePeriode("2023-01-05", null) // "05.01.2023 –"
+ */
+export function formaterYtelsePeriode(
+  fra: string | null | undefined,
+  til: string | null | undefined,
+): string {
+  const fraTekst = formaterIsoTilNorskDato(fra);
+  const tilTekst = formaterIsoTilNorskDato(til);
+  if (fraTekst && tilTekst) return `${fraTekst} – ${tilTekst}`;
+  if (fraTekst) return `${fraTekst} –`;
+  if (tilTekst) return `– ${tilTekst}`;
+  return "–";
+}
+
 export function getPersonIdent(sak: KontrollsakResponse): string {
   return sak.personIdent;
 }

@@ -1,7 +1,6 @@
 import { ArrowLeftIcon, PencilIcon, PlusIcon } from "@navikt/aksel-icons";
 import {
   Alert,
-  BodyShort,
   Button,
   Detail,
   ErrorSummary,
@@ -9,7 +8,6 @@ import {
   HGrid,
   HStack,
   Select,
-  Table,
   Tag,
   Tooltip,
   UNSAFE_Combobox,
@@ -45,15 +43,14 @@ import { SakHistorikk } from "./historikk/SakHistorikk";
 import { getSaksreferanse } from "./id";
 import { PersonIdentHistorikkModal } from "./komponenter/PersonIdentHistorikkModal";
 import { PersonIdentMedHistorikk } from "./komponenter/PersonIdentMedHistorikk";
+import { SakDetaljerFelter } from "./komponenter/SakDetaljerFelter";
 import { SakerPåSammePerson } from "./komponenter/SakerPåSammePerson";
 import { SaksbehandlereKort } from "./komponenter/SaksbehandlereKort";
-import { getAlder, getKategoriText, getMisbrukstyper, getNavn, getTags } from "./selectors";
+import { getAlder, getNavn } from "./selectors";
 import {
-  formaterBelop,
   formaterBlokkeringsarsak,
+  formaterIsoTilNorskDato,
   formaterStatus,
-  formaterYtelseType,
-  getKildeText,
   getPersonIdent,
 } from "./visning";
 import { action, loader } from "./SakDetaljSide.server";
@@ -85,25 +82,6 @@ type RedigerSaksinformasjonData = {
   arbeidsgivere: string[];
   ytelser: YtelseRadVerdier[];
 };
-
-function formaterIsoTilNorskDato(iso: string | undefined | null): string {
-  if (!iso) return "";
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso ?? "";
-  const dag = `${date.getDate()}`.padStart(2, "0");
-  const måned = `${date.getMonth() + 1}`.padStart(2, "0");
-  const år = date.getFullYear();
-  return `${dag}.${måned}.${år}`;
-}
-
-function formaterPeriode(fra: string | null | undefined, til: string | null | undefined): string {
-  const fraTekst = formaterIsoTilNorskDato(fra);
-  const tilTekst = formaterIsoTilNorskDato(til);
-  if (fraTekst && tilTekst) return `${fraTekst} – ${tilTekst}`;
-  if (fraTekst) return `${fraTekst} –`;
-  if (tilTekst) return `– ${tilTekst}`;
-  return "–";
-}
 
 function lagYtelseRaderFraSak(sak: Route.ComponentProps["loaderData"]["sak"]): YtelseRadVerdier[] {
   if (sak.ytelser.length === 0) {
@@ -174,17 +152,6 @@ function hentMisbrukstypeAlternativer(
   return misbrukstyper.filter((m) => m.kategori === kategori).map((m) => m.kode);
 }
 
-function Felt({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <VStack gap="space-1">
-      <Detail className="text-ax-text-neutral-subtle" uppercase>
-        {label}
-      </Detail>
-      <BodyShort>{children}</BodyShort>
-    </VStack>
-  );
-}
-
 export default function SakDetaljSide() {
   const {
     sak: loaderSak,
@@ -210,14 +177,10 @@ export default function SakDetaljSide() {
   const harHistoriskIdent = sak.historiskeIdenter.some((i) => i.historisk);
   const identHistorikkModal = useDisclosure();
   const statusTekst = formaterStatus(sak.status);
-  const kildeTekst = getKildeText(sak);
   const erAktiv = erAktivSakKontrollsak(sak.status);
   const saksreferanse = getSaksreferanse(sak.id);
   const navn = getNavn(sak);
   const alder = getAlder(sak);
-  const kategoriText = getKategoriText(sak);
-  const misbrukstyper = getMisbrukstyper(sak);
-  const tags = getTags(sak);
   const ansvarligSaksbehandler = sak.saksbehandlere.eier
     ? finnSaksbehandlerDetalj(saksbehandlerDetaljer, sak.saksbehandlere.eier.navIdent)
     : null;
@@ -651,129 +614,7 @@ export default function SakDetaljSide() {
                   </fetcher.Form>
                 ) : (
                   <VStack gap="space-4">
-                    <HGrid columns={{ xs: 1, md: 2 }} gap="space-6">
-                      <VStack gap="space-4">
-                        <VStack gap="space-1">
-                          <Detail className="text-ax-text-neutral-subtle" uppercase>
-                            Personnummer
-                          </Detail>
-                          <PersonIdentMedHistorikk
-                            personIdent={visPersonIdent}
-                            harHistorikk={harHistoriskIdent}
-                            onVisHistorikk={identHistorikkModal.onÅpne}
-                          />
-                          {sak.gjeldendePersonIdent &&
-                            sak.gjeldendePersonIdent !== sak.personIdent && (
-                              <Detail className="text-ax-text-neutral-subtle">
-                                Saken ble opprettet under {personIdent}
-                              </Detail>
-                            )}
-                        </VStack>
-
-                        {kategoriText && (
-                          <VStack gap="space-1">
-                            <Detail className="text-ax-text-neutral-subtle" uppercase>
-                              Kategori
-                            </Detail>
-                            <div>
-                              <Tag variant="outline" data-color="info" size="small">
-                                {kategoriText}
-                              </Tag>
-                            </div>
-                          </VStack>
-                        )}
-
-                        {misbrukstyper.length > 0 && (
-                          <VStack gap="space-1">
-                            <Detail className="text-ax-text-neutral-subtle" uppercase>
-                              Misbrukstype
-                            </Detail>
-                            <HStack gap="space-2" wrap>
-                              {misbrukstyper.map((type) => (
-                                <Tag key={type} variant="outline" data-color="info" size="small">
-                                  {type}
-                                </Tag>
-                              ))}
-                            </HStack>
-                          </VStack>
-                        )}
-
-                        {tags.length > 0 && (
-                          <VStack gap="space-1">
-                            <Detail className="text-ax-text-neutral-subtle" uppercase>
-                              Merking
-                            </Detail>
-                            <HStack gap="space-2" wrap>
-                              {tags.map((tag) => (
-                                <Tag key={tag} variant="outline" data-color="info" size="small">
-                                  {merkingEtikett(tag)}
-                                </Tag>
-                              ))}
-                            </HStack>
-                          </VStack>
-                        )}
-
-                        <Felt label="Kilde">{kildeTekst}</Felt>
-
-                        {sak.arbeidsgivere && sak.arbeidsgivere.length > 0 && (
-                          <Felt label="Organisasjonsnummer">
-                            {sak.arbeidsgivere
-                              .map((orgnr) => formaterOrganisasjonsnummer(orgnr))
-                              .join(", ")}
-                          </Felt>
-                        )}
-                      </VStack>
-
-                      <VStack gap="space-1">
-                        {sak.ytelser.length === 0 ? (
-                          <BodyShort>–</BodyShort>
-                        ) : (
-                          <Table size="small" className="[&_td]:py-1 [&_th]:py-1 text-sm">
-                            <Table.Header>
-                              <Table.Row>
-                                <Table.HeaderCell scope="col" className="text-sm">
-                                  Ytelse
-                                </Table.HeaderCell>
-                                <Table.HeaderCell scope="col" className="text-sm">
-                                  Periode
-                                </Table.HeaderCell>
-                                <Table.HeaderCell scope="col" className="text-sm whitespace-nowrap">
-                                  Antatt beløp
-                                </Table.HeaderCell>
-                                <Table.HeaderCell scope="col" className="text-sm whitespace-nowrap">
-                                  Endelig beløp
-                                </Table.HeaderCell>
-                              </Table.Row>
-                            </Table.Header>
-                            <Table.Body>
-                              {sak.ytelser.map((ytelse, indeks) => (
-                                <Table.Row key={`${ytelse.type}-${ytelse.periodeFra}-${indeks}`}>
-                                  <Table.DataCell>
-                                    <Tag variant="outline" data-color="brand-beige" size="small">
-                                      {formaterYtelseType(ytelse.type)}
-                                    </Tag>
-                                  </Table.DataCell>
-                                  <Table.DataCell className="text-sm">
-                                    {formaterPeriode(ytelse.periodeFra, ytelse.periodeTil)}
-                                  </Table.DataCell>
-                                  <Table.DataCell className="text-sm">
-                                    {ytelse.belop !== null && ytelse.belop !== undefined
-                                      ? formaterBelop(ytelse.belop)
-                                      : "–"}
-                                  </Table.DataCell>
-                                  <Table.DataCell className="text-sm">
-                                    {ytelse.endeligBelop !== null &&
-                                    ytelse.endeligBelop !== undefined
-                                      ? formaterBelop(ytelse.endeligBelop)
-                                      : "–"}
-                                  </Table.DataCell>
-                                </Table.Row>
-                              ))}
-                            </Table.Body>
-                          </Table>
-                        )}
-                      </VStack>
-                    </HGrid>
+                    <SakDetaljerFelter sak={sak} onVisIdentHistorikk={identHistorikkModal.onÅpne} />
 
                     {kanRedigere && (
                       <HStack justify="end">

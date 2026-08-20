@@ -1,5 +1,5 @@
 import { ClockIcon } from "@navikt/aksel-icons";
-import { Button, CopyButton, HStack, Tooltip } from "@navikt/ds-react";
+import { BodyShort, Button, CopyButton, HStack, Tooltip } from "@navikt/ds-react";
 import { formaterFødselsnummer } from "~/utils/string-utils";
 
 interface PersonIdentMedHistorikkProps {
@@ -15,7 +15,9 @@ export function PersonIdentMedHistorikk({
 }: PersonIdentMedHistorikkProps) {
   return (
     <HStack gap="space-1" align="center">
-      <span>{formaterFødselsnummer(personIdent)}</span>
+      <BodyShort size="small" as="span">
+        {formaterFødselsnummer(personIdent)}
+      </BodyShort>
       <CopyButton size="xsmall" copyText={personIdent} />
       {harHistorikk ? (
         <Button
