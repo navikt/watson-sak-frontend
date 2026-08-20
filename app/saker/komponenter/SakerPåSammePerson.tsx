@@ -4,9 +4,7 @@ import {
   BodyShort,
   Box,
   Button,
-  Detail,
   Heading,
-  HGrid,
   HStack,
   LocalAlert,
   Modal,
@@ -17,24 +15,11 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useFetcher } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
-import {
-  getBelop,
-  getKategoriText,
-  getMisbrukstyper,
-  getPeriodeText,
-  getTags,
-} from "~/saker/selectors";
+import { getKategoriText } from "~/saker/selectors";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { PersonIdentHistorikkModal } from "./PersonIdentHistorikkModal";
-import { PersonIdentMedHistorikk } from "./PersonIdentMedHistorikk";
-import {
-  formaterBelop,
-  formaterBlokkeringsarsak,
-  getKildeText,
-  getPersonIdent,
-  getStatus,
-  getYtelseTyper,
-} from "~/saker/visning";
+import { SakDetaljerFelter } from "./SakDetaljerFelter";
+import { formaterBlokkeringsarsak, getPersonIdent, getStatus } from "~/saker/visning";
 
 interface SakerPåSammePersonProps {
   saker: KontrollsakResponse[];
@@ -53,17 +38,6 @@ interface SakKortProps {
 type Koblingshandling = "koble" | "fjerne";
 type KobleSakActionResult = { ok: true } | { ok: false; feil: { skjema?: string[] } };
 
-function SakFelt({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <VStack gap="space-4">
-      <Detail className="text-ax-text-neutral-subtle" uppercase>
-        {label}
-      </Detail>
-      <BodyShort size="small">{children}</BodyShort>
-    </VStack>
-  );
-}
-
 function SakKort({
   sak,
   erKoblet,
@@ -74,15 +48,7 @@ function SakKort({
   const [åpen, setÅpen] = useState(false);
   const saksreferanse = getSaksreferanse(sak.id);
   const personIdent = getPersonIdent(sak);
-  const harHistoriskIdent = sak.historiskeIdenter.some((ident) => ident.historisk);
   const statusTekst = getStatus(sak);
-  const periodeText = getPeriodeText(sak);
-  const kategoriText = getKategoriText(sak);
-  const misbrukstyper = getMisbrukstyper(sak);
-  const belop = getBelop(sak);
-  const ytelseTyper = getYtelseTyper(sak);
-  const tags = getTags(sak);
-  const kildeTekst = getKildeText(sak);
   const enhet = sak.saksbehandlere.eier?.enhet ?? sak.saksbehandlere.opprettetAv.enhet ?? "Ukjent";
   const saksbehandler = sak.saksbehandlere.eier?.navn ?? sak.saksbehandlere.opprettetAv.navn;
 
@@ -132,86 +98,7 @@ function SakKort({
             <Box borderWidth="0 0 1 0" borderColor="neutral-subtle" />
             <Box padding="space-16">
               <VStack gap="space-24">
-                <HGrid columns={{ xs: 1, sm: 2 }} gap="space-24">
-                  <VStack gap="space-16">
-                    <VStack gap="space-4">
-                      <Detail className="text-ax-text-neutral-subtle" uppercase>
-                        Personnummer
-                      </Detail>
-                      <PersonIdentMedHistorikk
-                        personIdent={personIdent}
-                        harHistorikk={harHistoriskIdent}
-                        onVisHistorikk={() => onVisIdentHistorikk(sak)}
-                      />
-                    </VStack>
-
-                    {kategoriText && (
-                      <SakFelt label="Kategori">
-                        <Tag variant="outline" data-color="info" size="small">
-                          {kategoriText}
-                        </Tag>
-                      </SakFelt>
-                    )}
-
-                    {misbrukstyper.length > 0 && (
-                      <VStack gap="space-4">
-                        <Detail className="text-ax-text-neutral-subtle" uppercase>
-                          Misbrukstype
-                        </Detail>
-                        <HStack gap="space-4" wrap>
-                          {misbrukstyper.map((type) => (
-                            <Tag key={type} variant="outline" data-color="info" size="small">
-                              {type}
-                            </Tag>
-                          ))}
-                        </HStack>
-                      </VStack>
-                    )}
-
-                    {tags.length > 0 && (
-                      <VStack gap="space-4">
-                        <Detail className="text-ax-text-neutral-subtle" uppercase>
-                          Merking
-                        </Detail>
-                        <HStack gap="space-4" wrap>
-                          {tags.map((tag) => (
-                            <Tag key={tag} variant="outline" data-color="info" size="small">
-                              {tag}
-                            </Tag>
-                          ))}
-                        </HStack>
-                      </VStack>
-                    )}
-
-                    <SakFelt label="Kilde">{kildeTekst}</SakFelt>
-                  </VStack>
-
-                  <VStack gap="space-16">
-                    {periodeText && <SakFelt label="Periode">{periodeText}</SakFelt>}
-
-                    {belop !== null && <SakFelt label="Ca. beløp">{formaterBelop(belop)}</SakFelt>}
-
-                    {ytelseTyper.length > 0 && (
-                      <VStack gap="space-4">
-                        <Detail className="text-ax-text-neutral-subtle" uppercase>
-                          Ytelse
-                        </Detail>
-                        <HStack gap="space-4" wrap>
-                          {ytelseTyper.map((ytelse) => (
-                            <Tag
-                              key={ytelse}
-                              variant="outline"
-                              data-color="brand-beige"
-                              size="small"
-                            >
-                              {ytelse}
-                            </Tag>
-                          ))}
-                        </HStack>
-                      </VStack>
-                    )}
-                  </VStack>
-                </HGrid>
+                <SakDetaljerFelter sak={sak} onVisIdentHistorikk={() => onVisIdentHistorikk(sak)} />
 
                 <HStack justify="end" gap="space-8" wrap>
                   <Button
