@@ -62,6 +62,18 @@ describe("PdfForhåndsvisning", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it("viser en sentrert spinner med statustekst mens forhåndsvisningen genereres", () => {
+    vi.stubGlobal("fetch", vi.fn());
+
+    render(<PdfForhåndsvisning url="/api/forhandsvisning" sistLagret={null} />);
+
+    const status = screen.getByRole("status");
+    expect(status.textContent).toContain("Genererer forhåndsvisning…");
+    // Aksel-spinneren rendrer alltid en fallback-<title> ("Venter…"). Den må være
+    // skjult for skjermlesere, ellers annonseres to konkurrerende lastemeldinger.
+    expect(status.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+  });
+
   it("viser feilmelding når kallet feiler", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
 

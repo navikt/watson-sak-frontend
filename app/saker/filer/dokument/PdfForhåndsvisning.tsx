@@ -1,4 +1,4 @@
-import { Alert, Loader } from "@navikt/ds-react";
+import { Alert, BodyShort, Loader, VStack } from "@navikt/ds-react";
 import { useEffect, useState } from "react";
 
 /**
@@ -68,7 +68,19 @@ export function PdfForhåndsvisning({ url, sistLagret }: { url: string; sistLagr
           className="min-h-0 w-full flex-1 border-0"
         />
       ) : (
-        <Loader title="Laster PDF-forhåndsvisning" size="small" />
+        <VStack
+          role="status"
+          align="center"
+          justify="center"
+          gap="space-12"
+          className="min-h-0 flex-1"
+        >
+          {/* Spinneren skjules for skjermlesere — teksten under er den tilgjengelige meldingen. */}
+          <Loader aria-hidden size="xlarge" />
+          <BodyShort size="small" textColor="subtle">
+            Genererer forhåndsvisning…
+          </BodyShort>
+        </VStack>
       )}
     </section>
   );
