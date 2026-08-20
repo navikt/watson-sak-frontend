@@ -2,6 +2,12 @@ import { Alert, Loader } from "@navikt/ds-react";
 import { useEffect, useState } from "react";
 
 /**
+ * Hvor lenge vi venter etter siste endring før en ny forhåndsvisning hentes. Holder
+ * antallet PDF-genereringer nede når editoren autolagrer flere ganger etter hverandre.
+ */
+export const FORHÅNDSVISNING_DEBOUNCE_MS = 300;
+
+/**
  * Viser en PDF-forhåndsvisning av dokumentet. Innholdet hentes fra databasen på
  * backend-siden (dokumentets sist autolagrede innhold) — komponenten trenger derfor
  * ikke sende med tittel/innhold selv. `sistLagret` brukes kun til å vite når en ny
@@ -31,7 +37,7 @@ export function PdfForhåndsvisning({ url, sistLagret }: { url: string; sistLagr
           settFeil("Kunne ikke oppdatere PDF-forhåndsvisningen.");
         }
       }
-    }, 1_000);
+    }, FORHÅNDSVISNING_DEBOUNCE_MS);
 
     return () => {
       controller.abort();

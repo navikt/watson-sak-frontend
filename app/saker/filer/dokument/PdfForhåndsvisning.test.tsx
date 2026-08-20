@@ -1,6 +1,6 @@
 import { act, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PdfForhåndsvisning } from "./PdfForhåndsvisning";
+import { FORHÅNDSVISNING_DEBOUNCE_MS, PdfForhåndsvisning } from "./PdfForhåndsvisning";
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -22,7 +22,7 @@ describe("PdfForhåndsvisning", () => {
     render(<PdfForhåndsvisning url="/api/forhandsvisning" sistLagret={null} />);
 
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(1_000);
+      await vi.advanceTimersByTimeAsync(FORHÅNDSVISNING_DEBOUNCE_MS);
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
@@ -45,7 +45,7 @@ describe("PdfForhåndsvisning", () => {
     );
 
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(1_000);
+      await vi.advanceTimersByTimeAsync(FORHÅNDSVISNING_DEBOUNCE_MS);
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
@@ -57,7 +57,7 @@ describe("PdfForhåndsvisning", () => {
     );
 
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(1_000);
+      await vi.advanceTimersByTimeAsync(FORHÅNDSVISNING_DEBOUNCE_MS);
     });
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
@@ -68,7 +68,7 @@ describe("PdfForhåndsvisning", () => {
     render(<PdfForhåndsvisning url="/api/forhandsvisning" sistLagret={null} />);
 
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(1_000);
+      await vi.advanceTimersByTimeAsync(FORHÅNDSVISNING_DEBOUNCE_MS);
     });
 
     expect(screen.getByText("Kunne ikke oppdatere PDF-forhåndsvisningen.")).toBeTruthy();
