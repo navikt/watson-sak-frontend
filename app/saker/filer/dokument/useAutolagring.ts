@@ -15,7 +15,15 @@ type UseAutolagringArgs = {
    * `keepalive` så det rekker ut selv om siden rives ned.
    */
   lagre: (data: Autolagringsdata, opts: { forlater: boolean }) => Promise<void>;
-  /** Hvor lenge vi venter etter siste endring før vi lagrer. Standard 800 ms. */
+  /**
+   * Hvor lenge vi venter etter siste endring før vi lagrer. Standard 300 ms.
+   *
+   * Verdien er bevisst lav fordi PDF-forhåndsvisningen først oppdateres etter en
+   * fullført lagring — autolagringen er derfor det som styrer hvor raskt brukeren
+   * ser endringene sine. Flush-løkken i `flush` gjør at et kort intervall er trygt:
+   * den samler opp endringer som kommer inn mens et lagrekall er underveis, i stedet
+   * for å sende overlappende kall.
+   */
   forsinkelseMs?: number;
 };
 
@@ -26,7 +34,7 @@ export type Autolagring = {
   registrerEndring: (data: Autolagringsdata) => void;
 };
 
-export function useAutolagring({ lagre, forsinkelseMs = 800 }: UseAutolagringArgs): Autolagring {
+export function useAutolagring({ lagre, forsinkelseMs = 300 }: UseAutolagringArgs): Autolagring {
   const [status, setStatus] = useState<LagreStatus>("lagret");
   const [sistLagret, setSistLagret] = useState<Date | null>(null);
 
