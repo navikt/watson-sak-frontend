@@ -19,6 +19,7 @@ import { useMemo, useState, useEffect } from "react";
 import { Form, Link, useFetcher, useActionData, useLoaderData, useSubmit } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
+import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { RouteConfig } from "~/routeConfig";
 import { opprettSakSchema } from "~/registrer-sak/validering";
 import { merkingEtikett } from "~/saker/kategorier";
@@ -146,7 +147,7 @@ export default function OpprettSakSide() {
 
   return (
     <>
-      <title>Opprett sak – Watson Sak</title>
+      <MiljøtilpassetTittel>Opprett sak – Watson Sak</MiljøtilpassetTittel>
       <VStack gap="space-12" className="mt-4 mb-8">
         <Heading level="1" size="large">
           Opprett sak

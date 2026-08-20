@@ -8,6 +8,7 @@ import {
 } from "@navikt/aksel-icons";
 import { useLoaderData } from "react-router";
 import { skalBrukeMockdata } from "~/config/env.server";
+import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { hentAlleSaker, hentAvslutningsdatoer } from "~/saker/mock-alle-saker.server";
 import { formaterStatus, type KontrollsakStatus } from "~/saker/visning";
 import {
@@ -49,7 +50,7 @@ export default function StatistikkSide() {
   if (data.ikkeImplementert) {
     return (
       <>
-        <title>Statistikk – Watson Sak</title>
+        <MiljøtilpassetTittel>Statistikk – Watson Sak</MiljøtilpassetTittel>
         <VStack gap="space-12" className="mt-4 mb-8">
           <Heading level="1" size="large">
             Statistikk
@@ -79,7 +80,7 @@ export default function StatistikkSide() {
 
   return (
     <>
-      <title>Statistikk – Watson Sak</title>
+      <MiljøtilpassetTittel>Statistikk – Watson Sak</MiljøtilpassetTittel>
       <VStack gap="space-12" className="mt-4 mb-8">
         <Heading level="1" size="large">
           Statistikk

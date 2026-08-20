@@ -3,6 +3,7 @@ import { BodyShort, Button, Heading, HStack, InfoCard, Tag, VStack } from "@navi
 import { useEffect, useState } from "react";
 import { Form, useFetcher, useLoaderData, useNavigate } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
+import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import type { Varsel } from "./typer";
@@ -38,7 +39,7 @@ export default function VarslerSide() {
 
   return (
     <>
-      <title>Varsler – Watson Sak</title>
+      <MiljøtilpassetTittel>Varsler – Watson Sak</MiljøtilpassetTittel>
       <VStack gap="space-8" className="mt-4 mb-8">
         <HStack gap="space-4" align="center" justify="space-between">
           <HStack gap="space-4" align="center">

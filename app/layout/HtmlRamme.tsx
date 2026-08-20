@@ -1,6 +1,7 @@
 import { FaroErrorBoundary } from "@grafana/faro-react";
 import { Links, Meta, Scripts, ScrollRestoration } from "react-router";
 import { AnalyticsTags } from "~/analytics/analytics";
+import { MiljøProvider } from "~/layout/MiljøtilpassetTittel";
 import { PreferencesProvider } from "~/preferanser/PreferencesContext";
 import { defaultPreferences, type Preferences } from "~/preferanser/PreferencesCookie";
 import { ThemeProvider } from "~/tema/ThemeContext";
@@ -10,6 +11,7 @@ type HtmlRammeProps = {
   initialPreferences?: Preferences;
   umamiSiteId: string;
   sporingScriptUrl?: string | null;
+  miljø?: string;
 };
 
 export function HtmlRamme({
@@ -17,6 +19,7 @@ export function HtmlRamme({
   initialPreferences = defaultPreferences,
   umamiSiteId,
   sporingScriptUrl,
+  miljø = "prod",
 }: HtmlRammeProps) {
   return (
     <html lang="nb-no">
@@ -31,11 +34,13 @@ export function HtmlRamme({
         )}
       </head>
       <body className="flex flex-col min-h-screen">
-        <FaroErrorBoundary>
-          <PreferencesProvider defaultPreferences={initialPreferences}>
-            <ThemeProvider>{children}</ThemeProvider>
-          </PreferencesProvider>
-        </FaroErrorBoundary>
+        <MiljøProvider miljø={miljø}>
+          <FaroErrorBoundary>
+            <PreferencesProvider defaultPreferences={initialPreferences}>
+              <ThemeProvider>{children}</ThemeProvider>
+            </PreferencesProvider>
+          </FaroErrorBoundary>
+        </MiljøProvider>
         <ScrollRestoration />
         <Scripts />
       </body>

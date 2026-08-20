@@ -1,12 +1,11 @@
 import { BodyLong, Box, Heading, Link, List, VStack } from "@navikt/ds-react";
 import { ListItem } from "@navikt/ds-react/List";
-import { useMiljø } from "~/miljø/useMiljø";
+import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 
 export default function PersonvernSide() {
-  const miljø = useMiljø();
   return (
     <>
-      <title>{`Personvern – Watson Sak ${miljø !== "prod" ? `(${miljø})` : ""}`}</title>
+      <MiljøtilpassetTittel>Personvern – Watson Sak</MiljøtilpassetTittel>
       <VStack gap="space-12" className="mt-4 mb-8">
         <Heading level="1" size="large">
           Personvern

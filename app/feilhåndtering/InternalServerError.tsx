@@ -2,11 +2,12 @@ import { BodyShort, Box, HGrid, Heading, Link, List, Page, VStack } from "@navik
 import { ListItem } from "@navikt/ds-react/List";
 import { AppFooter } from "~/layout/AppFooter";
 import { AppHeader } from "~/layout/AppHeader";
+import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 
 export function InternalServerError() {
   return (
     <Page footer={<AppFooter />}>
-      <title>Feil – Watson Sak</title>
+      <MiljøtilpassetTittel>Feil – Watson Sak</MiljøtilpassetTittel>
       <AppHeader />
       <Page.Block as="main" width="xl" gutters>
         <Box paddingBlock="space-80 space-32">
