@@ -51,7 +51,7 @@ export function SakDetaljerFelter({ sak, onVisIdentHistorikk }: SakDetaljerFelte
   const kildeTekst = getKildeText(sak);
 
   return (
-    <HGrid columns={{ xs: 1, md: 2 }} gap="space-6">
+    <HGrid columns={{ xs: 1, lg: 2 }} gap="space-6">
       <VStack gap="space-6">
         <VStack gap="space-2">
           <Detail className="text-ax-text-neutral-subtle" uppercase>
@@ -125,48 +125,50 @@ export function SakDetaljerFelter({ sak, onVisIdentHistorikk }: SakDetaljerFelte
         {sak.ytelser.length === 0 ? (
           <BodyShort size="small">–</BodyShort>
         ) : (
-          <Table size="small" className="[&_td]:py-1 [&_th]:py-1 text-sm">
-            <Table.Header>
-              <Table.Row>
-                <Table.HeaderCell scope="col" className="text-sm">
-                  Ytelse
-                </Table.HeaderCell>
-                <Table.HeaderCell scope="col" className="text-sm">
-                  Periode
-                </Table.HeaderCell>
-                <Table.HeaderCell scope="col" className="text-sm whitespace-nowrap">
-                  Antatt beløp
-                </Table.HeaderCell>
-                <Table.HeaderCell scope="col" className="text-sm whitespace-nowrap">
-                  Endelig beløp
-                </Table.HeaderCell>
-              </Table.Row>
-            </Table.Header>
-            <Table.Body>
-              {sak.ytelser.map((ytelse, indeks) => (
-                <Table.Row key={`${ytelse.type}-${ytelse.periodeFra}-${indeks}`}>
-                  <Table.DataCell>
-                    <Tag variant="outline" data-color="brand-beige" size="small">
-                      {formaterYtelseType(ytelse.type)}
-                    </Tag>
-                  </Table.DataCell>
-                  <Table.DataCell className="text-sm">
-                    {formaterPeriode(ytelse.periodeFra, ytelse.periodeTil)}
-                  </Table.DataCell>
-                  <Table.DataCell className="text-sm">
-                    {ytelse.belop !== null && ytelse.belop !== undefined
-                      ? formaterBelop(ytelse.belop)
-                      : "–"}
-                  </Table.DataCell>
-                  <Table.DataCell className="text-sm">
-                    {ytelse.endeligBelop !== null && ytelse.endeligBelop !== undefined
-                      ? formaterBelop(ytelse.endeligBelop)
-                      : "–"}
-                  </Table.DataCell>
+          <div className="overflow-x-auto">
+            <Table size="small" className="[&_td]:py-1 [&_th]:py-1 text-sm">
+              <Table.Header>
+                <Table.Row>
+                  <Table.HeaderCell scope="col" className="text-sm">
+                    Ytelse
+                  </Table.HeaderCell>
+                  <Table.HeaderCell scope="col" className="text-sm">
+                    Periode
+                  </Table.HeaderCell>
+                  <Table.HeaderCell scope="col" className="text-sm whitespace-nowrap">
+                    Antatt beløp
+                  </Table.HeaderCell>
+                  <Table.HeaderCell scope="col" className="text-sm whitespace-nowrap">
+                    Endelig beløp
+                  </Table.HeaderCell>
                 </Table.Row>
-              ))}
-            </Table.Body>
-          </Table>
+              </Table.Header>
+              <Table.Body>
+                {sak.ytelser.map((ytelse, indeks) => (
+                  <Table.Row key={`${ytelse.type}-${ytelse.periodeFra}-${indeks}`}>
+                    <Table.DataCell>
+                      <Tag variant="outline" data-color="brand-beige" size="small">
+                        {formaterYtelseType(ytelse.type)}
+                      </Tag>
+                    </Table.DataCell>
+                    <Table.DataCell className="text-sm">
+                      {formaterPeriode(ytelse.periodeFra, ytelse.periodeTil)}
+                    </Table.DataCell>
+                    <Table.DataCell className="text-sm">
+                      {ytelse.belop !== null && ytelse.belop !== undefined
+                        ? formaterBelop(ytelse.belop)
+                        : "–"}
+                    </Table.DataCell>
+                    <Table.DataCell className="text-sm">
+                      {ytelse.endeligBelop !== null && ytelse.endeligBelop !== undefined
+                        ? formaterBelop(ytelse.endeligBelop)
+                        : "–"}
+                    </Table.DataCell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+          </div>
         )}
       </VStack>
     </HGrid>
