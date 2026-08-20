@@ -25,6 +25,7 @@ import {
 import { sporHendelse } from "~/analytics/analytics";
 import { Kort } from "~/komponenter/Kort";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
+import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import {
   ankerIdForFelt,
   førsteFeilForFelt,
@@ -310,7 +311,7 @@ export default function SakDetaljSide() {
 
   return (
     <>
-      <title>{`Sak ${saksreferanse} – Watson Sak`}</title>
+      <MiljøtilpassetTittel>{`Sak ${saksreferanse} – Watson Sak`}</MiljøtilpassetTittel>
       <VStack gap="space-12" className="mt-4 mb-8">
         <div>
           <Button

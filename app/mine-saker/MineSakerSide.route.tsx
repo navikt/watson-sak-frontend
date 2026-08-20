@@ -3,6 +3,7 @@ import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
 import { hentKontrollsaker } from "~/fordeling/api.server";
+import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { RouteConfig } from "~/routeConfig";
 import { hentMineSaker } from "~/saker/mock-alle-saker.server";
 import { formaterStatus } from "~/saker/visning";
@@ -87,7 +88,7 @@ export default function MineSakerSide() {
 
   return (
     <>
-      <title>Mine saker – Watson Sak</title>
+      <MiljøtilpassetTittel>Mine saker – Watson Sak</MiljøtilpassetTittel>
       <MineSakerInnhold
         saker={saker}
         deltMedSaker={deltMedSaker}

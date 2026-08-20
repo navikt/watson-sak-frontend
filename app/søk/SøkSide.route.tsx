@@ -3,6 +3,7 @@ import { BodyShort, Box, Button, Heading, HStack, Pagination, Tag, VStack } from
 import { useRef } from "react";
 import { Form, Link, unstable_useRoute, useActionData, useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
+import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { RouteConfig } from "~/routeConfig";
 import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
@@ -194,7 +195,7 @@ export default function SøkSide() {
 
   return (
     <>
-      <title>Søk – Watson Sak</title>
+      <MiljøtilpassetTittel>Søk – Watson Sak</MiljøtilpassetTittel>
       <VStack gap="space-12" className="mt-4 mb-8">
         <Heading level="1" size="large">
           Søk i saker

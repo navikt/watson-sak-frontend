@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { isRouteErrorResponse, useLoaderData, useParams, useRevalidator } from "react-router";
 import { Brødsmulesti } from "~/komponenter/Brødsmulesti";
 import { DokumentIkkeFunnet } from "~/feilhåndtering/DokumentIkkeFunnet";
+import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { RouteConfig } from "~/routeConfig";
 import { DokumentTre } from "~/saker/filer/DokumentTre";
 import type { Dokument, DokumentHistorikk, DokumentInnhold } from "~/saker/filer/typer";
@@ -244,7 +245,9 @@ function DokumentRedigering({
 
   return (
     <>
-      <title>{`${tittel || "Uten tittel"} – Sak ${sakReferanse} – Watson Sak`}</title>
+      <MiljøtilpassetTittel>
+        {`${tittel || "Uten tittel"} – Sak ${sakReferanse} – Watson Sak`}
+      </MiljøtilpassetTittel>
       <VStack
         gap="space-8"
         className="mt-4 mb-4 px-[var(--ax-space-16)] lg:px-[var(--ax-space-24)]"

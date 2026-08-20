@@ -4,6 +4,7 @@ import { getBackendOboToken } from "~/auth/access-token";
 import { skalBrukeMockdata } from "~/config/env.server";
 import { hentKontrollsaker } from "~/fordeling/api.server";
 import { parseMultiValueParam } from "~/filtre/parseMultiValueParam";
+import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
 import { RouteConfig } from "~/routeConfig";
@@ -168,7 +169,7 @@ export default function AlleSakerSide() {
 
   return (
     <>
-      <title>Alle saker – Watson Sak</title>
+      <MiljøtilpassetTittel>Alle saker – Watson Sak</MiljøtilpassetTittel>
       <VStack gap="space-12" className="mt-4 mb-8">
         <Heading level="1" size="large">
           Alle saker

@@ -6,15 +6,14 @@ import { PageBlock } from "@navikt/ds-react/Page";
 import { Link } from "react-router";
 import { AppFooter } from "~/layout/AppFooter";
 import { AppHeader } from "~/layout/AppHeader";
-import { useMiljø } from "~/miljø/useMiljø";
+import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { RouteConfig } from "~/routeConfig";
 
 export function PageNotFound() {
-  const miljø = useMiljø();
   return (
     <Page footer={<AppFooter />}>
       <AppHeader />
-      <title>{`Fant ikke side – Watson Sak ${miljø !== "prod" ? `(${miljø})` : ""}`}</title>
+      <MiljøtilpassetTittel>Fant ikke side – Watson Sak</MiljøtilpassetTittel>
       <PageBlock as="main" width="xl" gutters>
         <Box paddingBlock="space-80 space-64" data-aksel-template="404-v2">
           <VStack gap="space-16">

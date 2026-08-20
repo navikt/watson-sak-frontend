@@ -14,6 +14,7 @@ export default function Root() {
   return (
     <HtmlRamme
       initialPreferences={initialPreferences}
+      miljø={envs.miljø}
       umamiSiteId={envs.umamiSiteId}
       sporingScriptUrl={envs.sporingScriptUrl}
     >

@@ -5,6 +5,7 @@ import { sporHendelse } from "~/analytics/analytics";
 import { ChipsFiltergruppe } from "~/filtre/ChipsFiltergruppe";
 import { Filterpanel } from "~/filtre/Filterpanel";
 import { useFilterParam } from "~/filtre/useFilterParam";
+import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { RouteConfig } from "~/routeConfig";
 import { TildelSaksbehandlerModal } from "~/saker/handlinger/TildelSaksbehandlerModal";
 import { mapFordelingSakTilSakslisteRad } from "~/saker/saksliste/adaptere";
@@ -107,7 +108,9 @@ export function UfordelteSakerInnhold({
 
   return (
     <section aria-labelledby="ufordelte-saker-overskrift" className="pb-12">
-      <title>{filterTekst ? `${overskrift} – Watson Sak` : "Ufordelte saker – Watson Sak"}</title>
+      <MiljøtilpassetTittel>
+        {filterTekst ? `${overskrift} – Watson Sak` : "Ufordelte saker – Watson Sak"}
+      </MiljøtilpassetTittel>
       <VStack gap="space-12" className="mt-4 mb-8">
         <Heading id="ufordelte-saker-overskrift" level="1" size="large">
           {overskrift}

@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useFetcher, useLoaderData } from "react-router";
 import { Trakt } from "~/alle-saker/Trakt";
 import { Kort } from "~/komponenter/Kort";
+import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { usePreferences } from "~/preferanser/PreferencesContext";
 import { RouteConfig } from "~/routeConfig";
 import { useVarsler, useRefreshVarsler } from "~/varsler/bruk-varsler";
@@ -34,7 +35,7 @@ export default function LandingSide() {
 
   return (
     <>
-      <title>Dashboard – Watson Sak</title>
+      <MiljøtilpassetTittel>Dashboard – Watson Sak</MiljøtilpassetTittel>
       <VStack gap="space-12" className="mt-4 mb-8">
         {preferences.visVelkomstmelding ? (
           <Velkomst oppsummering={loaderData.velkomstOppsummering} />
