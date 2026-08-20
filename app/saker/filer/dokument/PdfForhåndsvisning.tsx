@@ -1,18 +1,13 @@
 import { Alert, Loader } from "@navikt/ds-react";
 import { useEffect, useState } from "react";
-import type { DokumentInnhold } from "~/saker/filer/typer";
 
-export function PdfForhåndsvisning({
-  url,
-  tittel,
-  innhold,
-  sistLagret,
-}: {
-  url: string;
-  tittel: string;
-  innhold: DokumentInnhold;
-  sistLagret: Date | null;
-}) {
+/**
+ * Viser en PDF-forhåndsvisning av dokumentet. Innholdet hentes fra databasen på
+ * backend-siden (dokumentets sist autolagrede innhold) — komponenten trenger derfor
+ * ikke sende med tittel/innhold selv. `sistLagret` brukes kun til å vite når en ny
+ * forhåndsvisning bør hentes (dvs. etter at editoren har autolagret en endring).
+ */
+export function PdfForhåndsvisning({ url, sistLagret }: { url: string; sistLagret: Date | null }) {
   const [pdfUrl, settPdfUrl] = useState<string>();
   const [feil, settFeil] = useState<string>();
 
@@ -23,8 +18,6 @@ export function PdfForhåndsvisning({
         settFeil(undefined);
         const respons = await fetch(url, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tittel: tittel || "Uten tittel", innhold }),
           signal: controller.signal,
         });
         if (!respons.ok) throw new Error();
@@ -44,7 +37,7 @@ export function PdfForhåndsvisning({
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [tittel, innhold, url, sistLagret]);
+  }, [url, sistLagret]);
 
   useEffect(
     () => () => {

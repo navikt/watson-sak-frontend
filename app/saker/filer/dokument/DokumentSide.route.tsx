@@ -348,12 +348,7 @@ function DokumentRedigering({
         lagreStatus={<LagreStatusVisning status={status} sistLagret={sistLagret} />}
         mellomInnhold={
           visForhåndsvisning ? (
-            <PdfForhåndsvisning
-              url={pdfForhåndsvisningUrl}
-              tittel={tittel}
-              innhold={innholdRef.current}
-              sistLagret={sistLagret}
-            />
+            <PdfForhåndsvisning url={pdfForhåndsvisningUrl} sistLagret={sistLagret} />
           ) : undefined
         }
       />
