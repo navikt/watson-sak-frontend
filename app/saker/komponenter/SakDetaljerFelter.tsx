@@ -52,7 +52,7 @@ export function SakDetaljerFelter({ sak, onVisIdentHistorikk }: SakDetaljerFelte
 
   return (
     <HGrid columns={{ xs: 1, md: 2 }} gap="space-6">
-      <VStack gap="space-4">
+      <VStack gap="space-6">
         <VStack gap="space-2">
           <Detail className="text-ax-text-neutral-subtle" uppercase>
             Personnummer
