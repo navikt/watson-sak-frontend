@@ -1,13 +1,16 @@
 import { Alert, Loader } from "@navikt/ds-react";
 import { useEffect, useState } from "react";
+import type { DokumentInnhold } from "~/saker/filer/typer";
 
 export function PdfForhåndsvisning({
   url,
   tittel,
+  innhold,
   sistLagret,
 }: {
   url: string;
   tittel: string;
+  innhold: DokumentInnhold;
   sistLagret: Date | null;
 }) {
   const [pdfUrl, settPdfUrl] = useState<string>();
@@ -21,7 +24,7 @@ export function PdfForhåndsvisning({
         const respons = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tittel: tittel || "Uten tittel" }),
+          body: JSON.stringify({ tittel: tittel || "Uten tittel", innhold }),
           signal: controller.signal,
         });
         if (!respons.ok) throw new Error();
@@ -41,7 +44,7 @@ export function PdfForhåndsvisning({
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [tittel, url, sistLagret]);
+  }, [tittel, innhold, url, sistLagret]);
 
   useEffect(
     () => () => {

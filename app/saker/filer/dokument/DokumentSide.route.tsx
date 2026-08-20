@@ -351,6 +351,7 @@ function DokumentRedigering({
             <PdfForhåndsvisning
               url={pdfForhåndsvisningUrl}
               tittel={tittel}
+              innhold={innholdRef.current}
               sistLagret={sistLagret}
             />
           ) : undefined

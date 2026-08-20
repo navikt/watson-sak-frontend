@@ -6,7 +6,10 @@ vi.mock("~/auth/access-token", () => ({
 }));
 
 const params = { sakId: "42", docId: "dok-1" };
-const gyldigBody = JSON.stringify({ tittel: "Test" });
+const gyldigBody = JSON.stringify({
+  tittel: "Test",
+  innhold: [{ type: "p", children: [{ text: "Hei" }] }],
+});
 
 function lagRequest(init?: RequestInit) {
   return new Request("http://localhost/api/saker/42/dokumenter/dok-1/forhandsvisning", {
