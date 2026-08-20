@@ -49,7 +49,7 @@ describe("innlogget-bruker-api", () => {
     hentInnloggetBrukerMock.mockResolvedValue({
       preferredUsername: "test@nav.no",
       name: "Test Saksbehandler",
-      navIdent: "Z994531",
+      navIdent: "S162301",
       enhet: "4812",
     });
     getBackendOboTokenMock.mockResolvedValue("obo-token");
@@ -64,7 +64,7 @@ describe("innlogget-bruker-api", () => {
     expect(result).toEqual({
       preferredUsername: "test@nav.no",
       name: "Test Saksbehandler",
-      navIdent: "Z994531",
+      navIdent: "S162301",
       enhet: "4812",
       token: "obo-token",
     });
@@ -81,7 +81,7 @@ describe("innlogget-bruker-api", () => {
     expect(result).toEqual({
       preferredUsername: "test@nav.no",
       name: "Test Saksbehandler",
-      navIdent: "Z994531",
+      navIdent: "S162301",
       enhet: "4812",
     });
   });
