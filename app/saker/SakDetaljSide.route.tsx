@@ -47,7 +47,12 @@ import { SakDetaljerFelter } from "./komponenter/SakDetaljerFelter";
 import { SakerPåSammePerson } from "./komponenter/SakerPåSammePerson";
 import { SaksbehandlereKort } from "./komponenter/SaksbehandlereKort";
 import { getAlder, getNavn } from "./selectors";
-import { formaterBlokkeringsarsak, formaterStatus, getPersonIdent } from "./visning";
+import {
+  formaterBlokkeringsarsak,
+  formaterIsoTilNorskDato,
+  formaterStatus,
+  getPersonIdent,
+} from "./visning";
 import { action, loader } from "./SakDetaljSide.server";
 import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
 import { RouteConfig } from "~/routeConfig";
@@ -77,16 +82,6 @@ type RedigerSaksinformasjonData = {
   arbeidsgivere: string[];
   ytelser: YtelseRadVerdier[];
 };
-
-function formaterIsoTilNorskDato(iso: string | undefined | null): string {
-  if (!iso) return "";
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso ?? "";
-  const dag = `${date.getDate()}`.padStart(2, "0");
-  const måned = `${date.getMonth() + 1}`.padStart(2, "0");
-  const år = date.getFullYear();
-  return `${dag}.${måned}.${år}`;
-}
 
 function lagYtelseRaderFraSak(sak: Route.ComponentProps["loaderData"]["sak"]): YtelseRadVerdier[] {
   if (sak.ytelser.length === 0) {

@@ -2,7 +2,13 @@ import { BodyShort, Detail, HGrid, HStack, Table, Tag, VStack } from "@navikt/ds
 import { merkingEtikett } from "~/saker/kategorier";
 import { getKategoriText, getMisbrukstyper, getTags } from "~/saker/selectors";
 import type { KontrollsakResponse } from "~/saker/types.backend";
-import { formaterBelop, formaterYtelseType, getKildeText, getPersonIdent } from "~/saker/visning";
+import {
+  formaterBelop,
+  formaterYtelsePeriode,
+  formaterYtelseType,
+  getKildeText,
+  getPersonIdent,
+} from "~/saker/visning";
 import { formaterOrganisasjonsnummer } from "~/utils/string-utils";
 import { PersonIdentMedHistorikk } from "./PersonIdentMedHistorikk";
 
@@ -20,25 +26,6 @@ function Felt({ label, children }: { label: string; children: React.ReactNode })
       <BodyShort size="small">{children}</BodyShort>
     </VStack>
   );
-}
-
-function formaterIsoTilNorskDato(iso: string | undefined | null): string {
-  if (!iso) return "";
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso ?? "";
-  const dag = `${date.getDate()}`.padStart(2, "0");
-  const måned = `${date.getMonth() + 1}`.padStart(2, "0");
-  const år = date.getFullYear();
-  return `${dag}.${måned}.${år}`;
-}
-
-function formaterPeriode(fra: string | null | undefined, til: string | null | undefined): string {
-  const fraTekst = formaterIsoTilNorskDato(fra);
-  const tilTekst = formaterIsoTilNorskDato(til);
-  if (fraTekst && tilTekst) return `${fraTekst} – ${tilTekst}`;
-  if (fraTekst) return `${fraTekst} –`;
-  if (tilTekst) return `– ${tilTekst}`;
-  return "–";
 }
 
 export function SakDetaljerFelter({ sak, onVisIdentHistorikk }: SakDetaljerFelterProps) {
@@ -125,7 +112,7 @@ export function SakDetaljerFelter({ sak, onVisIdentHistorikk }: SakDetaljerFelte
         {sak.ytelser.length === 0 ? (
           <BodyShort size="small">–</BodyShort>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Ytelser">
             <Table size="small" className="[&_td]:py-1 [&_th]:py-1 text-sm">
               <Table.Header>
                 <Table.Row>
@@ -152,7 +139,7 @@ export function SakDetaljerFelter({ sak, onVisIdentHistorikk }: SakDetaljerFelte
                       </Tag>
                     </Table.DataCell>
                     <Table.DataCell className="text-sm">
-                      {formaterPeriode(ytelse.periodeFra, ytelse.periodeTil)}
+                      {formaterYtelsePeriode(ytelse.periodeFra, ytelse.periodeTil)}
                     </Table.DataCell>
                     <Table.DataCell className="text-sm">
                       {ytelse.belop !== null && ytelse.belop !== undefined

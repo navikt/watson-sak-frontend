@@ -15,7 +15,9 @@ export function PersonIdentMedHistorikk({
 }: PersonIdentMedHistorikkProps) {
   return (
     <HStack gap="space-1" align="center">
-      <BodyShort size="small">{formaterFødselsnummer(personIdent)}</BodyShort>
+      <BodyShort size="small" as="span">
+        {formaterFødselsnummer(personIdent)}
+      </BodyShort>
       <CopyButton size="xsmall" copyText={personIdent} />
       {harHistorikk ? (
         <Button
