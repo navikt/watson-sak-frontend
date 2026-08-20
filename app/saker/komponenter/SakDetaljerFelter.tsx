@@ -17,7 +17,7 @@ function Felt({ label, children }: { label: string; children: React.ReactNode })
       <Detail className="text-ax-text-neutral-subtle" uppercase>
         {label}
       </Detail>
-      <BodyShort>{children}</BodyShort>
+      <BodyShort size="small">{children}</BodyShort>
     </VStack>
   );
 }
@@ -123,7 +123,7 @@ export function SakDetaljerFelter({ sak, onVisIdentHistorikk }: SakDetaljerFelte
 
       <VStack gap="space-2">
         {sak.ytelser.length === 0 ? (
-          <BodyShort>–</BodyShort>
+          <BodyShort size="small">–</BodyShort>
         ) : (
           <Table size="small" className="[&_td]:py-1 [&_th]:py-1 text-sm">
             <Table.Header>
