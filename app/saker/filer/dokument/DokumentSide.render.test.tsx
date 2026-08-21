@@ -28,6 +28,8 @@ const dokumenter: DokumentNode[] = [
   {
     id: "1",
     tittel: "Saksframlegg",
+    opprettetAv: "Ola",
+    opprettetDato: "2026-02-10",
     endretAv: "Ola",
     endretDato: "2026-02-15",
     låsAv: null,
@@ -35,6 +37,8 @@ const dokumenter: DokumentNode[] = [
   {
     id: "2",
     tittel: "Vedtak",
+    opprettetAv: "Kari",
+    opprettetDato: "2026-02-18",
     endretAv: "Kari",
     endretDato: "2026-02-20",
     låsAv: null,
@@ -50,6 +54,8 @@ function renderSide(kanRedigere: boolean) {
         dokument: {
           id: "1",
           tittel: "Saksframlegg",
+          opprettetAv: "Ola",
+          opprettetDato: "2026-02-10",
           innhold,
           endretAv: "Ola",
           endretDato: "2026-02-15",
@@ -76,7 +82,7 @@ describe("DokumentSide", () => {
     renderSide(true);
 
     const sti = await screen.findByRole("navigation", { name: "Du er her" });
-    expect(within(sti).getByRole("link", { name: "ABC-123" })).toBeDefined();
+    expect(within(sti).getByRole("link", { name: "Sak #ABC-123" })).toBeDefined();
     expect(within(sti).getByText("Dokumenter")).toBeDefined();
     expect(within(sti).getByText("Saksframlegg")).toBeDefined();
   });

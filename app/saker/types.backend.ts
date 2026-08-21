@@ -76,6 +76,8 @@ export const oppgaveKortSchema = z.object({
 export const dokumentNodeSchema = z.object({
   id: z.string(),
   tittel: z.string(),
+  opprettetAv: z.string(),
+  opprettetDato: z.string(),
   endretAv: z.string(),
   endretDato: z.string(),
   låsAv: z.string().nullable(),

@@ -17,6 +17,7 @@ import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { getKategoriText } from "~/saker/selectors";
 import type { KontrollsakResponse } from "~/saker/types.backend";
+import { storFørsteBokstavPerOrd } from "~/utils/string-utils";
 import { PersonIdentHistorikkModal } from "./PersonIdentHistorikkModal";
 import { SakDetaljerFelter } from "./SakDetaljerFelter";
 import { formaterBlokkeringsarsak, getPersonIdent, getStatus } from "~/saker/visning";
@@ -62,13 +63,13 @@ function SakKort({
                 Personnummer: <strong>{personIdent}</strong>
               </BodyShort>
               <BodyShort size="small">
-                Saksid: <strong>{saksreferanse}</strong>
+                Saksid: <strong>#{saksreferanse}</strong>
               </BodyShort>
               <BodyShort size="small">
                 Enhet: <strong>{enhet}</strong>
               </BodyShort>
               <BodyShort size="small">
-                Saksbehandler: <strong>{saksbehandler}</strong>
+                Saksbehandler: <strong>{storFørsteBokstavPerOrd(saksbehandler)}</strong>
               </BodyShort>
               {sak.blokkert ? (
                 <Tag variant="outline" data-color="warning" size="small">

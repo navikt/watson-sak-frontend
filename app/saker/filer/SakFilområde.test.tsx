@@ -10,6 +10,8 @@ const mockDokumenter: DokumentNode[] = [
   {
     id: "1",
     tittel: "Rapport",
+    opprettetAv: "Ola Nordmann",
+    opprettetDato: "2026-02-10",
     endretAv: "Ola Nordmann",
     endretDato: "2026-02-15",
     låsAv: null,
@@ -17,6 +19,8 @@ const mockDokumenter: DokumentNode[] = [
   {
     id: "2",
     tittel: "Notat",
+    opprettetAv: "Kari Hansen",
+    opprettetDato: "2026-02-25",
     endretAv: "Kari Hansen",
     endretDato: "2026-03-01",
     låsAv: null,

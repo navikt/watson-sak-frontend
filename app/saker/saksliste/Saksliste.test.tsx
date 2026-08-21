@@ -38,7 +38,7 @@ describe("Saksliste", () => {
     expect(screen.getByRole("columnheader", { name: "Status" })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Opprettet" })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Oppdatert" })).toBeDefined();
-    expect(screen.getByRole("link", { name: "201" }).getAttribute("href")).toBe("/saker/201");
+    expect(screen.getByRole("link", { name: "#201" }).getAttribute("href")).toBe("/saker/201");
   });
 
   it("kan skjule navn og vise handlingskolonne", () => {

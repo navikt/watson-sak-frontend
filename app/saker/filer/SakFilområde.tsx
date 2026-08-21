@@ -6,7 +6,7 @@ import { sporHendelse } from "~/analytics/analytics";
 import { Kort } from "~/komponenter/Kort";
 import type { MalId } from "~/saker/filer/dokument/maler";
 import { RouteConfig } from "~/routeConfig";
-import { DokumentTre } from "./DokumentTre";
+import { DokumentTabell } from "./DokumentTabell";
 import { OpprettDokumentModal } from "./OpprettDokumentModal";
 import type { DokumentNode, FilResponse } from "./typer";
 import { VedleggSeksjon } from "./VedleggSeksjon";
@@ -77,8 +77,8 @@ export function SakFilområde({
   return (
     <Kort>
       <VStack gap="space-8">
-        <div>
-          <HStack justify="space-between" align="center" className="mb-4">
+        <VStack gap="space-4">
+          <HStack justify="space-between" align="center">
             <Heading level="2" size="small">
               Dokumenter
             </Heading>
@@ -102,11 +102,11 @@ export function SakFilområde({
               </VStack>
             </Box>
           ) : (
-            <DokumentTre noder={dokumenter} sakId={sakId} redigerbar={redigerbar} />
+            <DokumentTabell dokumenter={dokumenter} sakId={sakId} redigerbar={redigerbar} />
           )}
-        </div>
+        </VStack>
 
-        <div className="border-t border-ax-border-neutral-subtle pt-6">
+        <div>
           <VedleggSeksjon
             filer={filer}
             sakId={sakId}

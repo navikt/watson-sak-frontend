@@ -117,4 +117,22 @@ describe("VedleggSeksjon", () => {
     const lenke = screen.getByRole("link", { name: "Saksframlegg" });
     expect(lenke.getAttribute("href")).toBe("/saker/SAK-1/dokumenter/dok-1");
   });
+
+  it("viser bekreftelsesdialog før en fil slettes", () => {
+    renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: true, kanLasteOpp: false });
+
+    fireEvent.click(screen.getByLabelText("Slett screenshot.png"));
+
+    expect(screen.getByText("Slette vedlegg?")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Slett vedlegg" })).toBeDefined();
+  });
+
+  it("lukker bekreftelsesdialogen uten å slette", () => {
+    renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: true, kanLasteOpp: false });
+
+    fireEvent.click(screen.getByLabelText("Slett screenshot.png"));
+    fireEvent.click(screen.getByRole("button", { name: "Avbryt" }));
+
+    expect(screen.queryByText("Slette vedlegg?")).toBeNull();
+  });
 });

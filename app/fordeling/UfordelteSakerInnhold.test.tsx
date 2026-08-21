@@ -90,7 +90,7 @@ describe("UfordelteSakerInnhold", () => {
     expect(screen.getByRole("columnheader", { name: /Status/ })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: /Opprettet/ })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Oppdatert" })).toBeDefined();
-    expect(screen.getByRole("link", { name: "301" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "#301" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Tildel" })).toBeDefined();
   });
 });
