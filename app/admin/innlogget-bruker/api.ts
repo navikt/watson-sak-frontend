@@ -9,6 +9,9 @@ const brukereSomHarTilgang = {
   snorri: "E176931",
   sturle: "H139079",
   espen: "E170973",
+  // Testbrukere vi bruker i dev
+  devTestbruker: "Z994531",
+  devTestbrukerUtvidet: "Z993399",
 };
 
 export async function loader({ request }: LoaderFunctionArgs) {
