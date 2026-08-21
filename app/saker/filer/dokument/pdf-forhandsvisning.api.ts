@@ -11,13 +11,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
   }
   if (!BACKEND_API_URL) throw new Error("Mangler backend-URL for PDF-forhåndsvisning");
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    throw data("Ugyldig forespørsel", { status: 400 });
-  }
-
   const token = await getBackendOboToken(request);
   const respons = await fetch(
     `${BACKEND_API_URL}/api/v1/kontrollsaker/${sakId}/dokumenter/${docId}/forhandsvisning`,
@@ -25,10 +18,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
         Accept: "application/pdf",
       },
-      body: JSON.stringify(body),
     },
   );
   if (!respons.ok)

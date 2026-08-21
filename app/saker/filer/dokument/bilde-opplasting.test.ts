@@ -18,9 +18,15 @@ describe("validerBildefil", () => {
     }
   });
 
-  it("avviser filtyper som ikke er PNG, JPEG eller WebP", () => {
+  it("avviser filtyper som ikke er PNG eller JPEG", () => {
     expect(validerBildefil(lagFil("dokument.pdf", "application/pdf"))).toBe(
-      "Bare PNG-, JPEG- og WebP-bilder kan settes inn i dokumentet.",
+      "Bare PNG- og JPEG-bilder kan settes inn i dokumentet.",
+    );
+  });
+
+  it("avviser WebP, som PDF-generatoren ikke kan rendre", () => {
+    expect(validerBildefil(lagFil("bilde.webp", "image/webp"))).toBe(
+      "Bare PNG- og JPEG-bilder kan settes inn i dokumentet.",
     );
   });
 

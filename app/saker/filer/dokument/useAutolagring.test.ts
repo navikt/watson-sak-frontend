@@ -14,6 +14,23 @@ afterEach(() => {
 });
 
 describe("useAutolagring", () => {
+  it("bruker 300 ms som standardforsinkelse når ingen er oppgitt", async () => {
+    const lagre = vi.fn().mockResolvedValue(undefined);
+    const { result } = renderHook(() => useAutolagring({ lagre }));
+
+    act(() => result.current.registrerEndring({ tittel: "A", innhold }));
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(299);
+    });
+    expect(lagre).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1);
+    });
+    expect(lagre).toHaveBeenCalledTimes(1);
+  });
+
   it("lagrer etter debounce-forsinkelsen", async () => {
     const lagre = vi.fn().mockResolvedValue(undefined);
     const { result } = renderHook(() => useAutolagring({ lagre, forsinkelseMs: 800 }));

@@ -1,15 +1,19 @@
-import { Alert, Loader } from "@navikt/ds-react";
+import { Alert, BodyShort, Loader, VStack } from "@navikt/ds-react";
 import { useEffect, useState } from "react";
 
-export function PdfForhåndsvisning({
-  url,
-  tittel,
-  sistLagret,
-}: {
-  url: string;
-  tittel: string;
-  sistLagret: Date | null;
-}) {
+/**
+ * Hvor lenge vi venter etter siste endring før en ny forhåndsvisning hentes. Holder
+ * antallet PDF-genereringer nede når editoren autolagrer flere ganger etter hverandre.
+ */
+export const FORHÅNDSVISNING_DEBOUNCE_MS = 300;
+
+/**
+ * Viser en PDF-forhåndsvisning av dokumentet. Innholdet hentes fra databasen på
+ * backend-siden (dokumentets sist autolagrede innhold) — komponenten trenger derfor
+ * ikke sende med tittel/innhold selv. `sistLagret` brukes kun til å vite når en ny
+ * forhåndsvisning bør hentes (dvs. etter at editoren har autolagret en endring).
+ */
+export function PdfForhåndsvisning({ url, sistLagret }: { url: string; sistLagret: Date | null }) {
   const [pdfUrl, settPdfUrl] = useState<string>();
   const [feil, settFeil] = useState<string>();
 
@@ -20,8 +24,6 @@ export function PdfForhåndsvisning({
         settFeil(undefined);
         const respons = await fetch(url, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tittel: tittel || "Uten tittel" }),
           signal: controller.signal,
         });
         if (!respons.ok) throw new Error();
@@ -35,13 +37,13 @@ export function PdfForhåndsvisning({
           settFeil("Kunne ikke oppdatere PDF-forhåndsvisningen.");
         }
       }
-    }, 1_000);
+    }, FORHÅNDSVISNING_DEBOUNCE_MS);
 
     return () => {
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [tittel, url, sistLagret]);
+  }, [url, sistLagret]);
 
   useEffect(
     () => () => {
@@ -66,7 +68,19 @@ export function PdfForhåndsvisning({
           className="min-h-0 w-full flex-1 border-0"
         />
       ) : (
-        <Loader title="Laster PDF-forhåndsvisning" size="small" />
+        <VStack
+          role="status"
+          align="center"
+          justify="center"
+          gap="space-12"
+          className="min-h-0 flex-1"
+        >
+          {/* Spinneren skjules for skjermlesere — teksten under er den tilgjengelige meldingen. */}
+          <Loader aria-hidden size="xlarge" />
+          <BodyShort size="small" textColor="subtle">
+            Genererer forhåndsvisning…
+          </BodyShort>
+        </VStack>
       )}
     </section>
   );

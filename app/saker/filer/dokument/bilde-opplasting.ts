@@ -1,8 +1,14 @@
 import { RouteConfig } from "~/routeConfig";
 import type { FilResponse } from "~/saker/filer/typer";
 
-/** Kun disse bildeformatene kan settes inn i et dokument. */
-export const TILLATTE_BILDETYPER = ["image/png", "image/jpeg", "image/webp"] as const;
+/**
+ * Kun disse bildeformatene kan settes inn i et dokument.
+ *
+ * WebP er bevisst utelatt: PDF-generatoren rendrer ikke WebP, og utelater bildet uten å si
+ * fra. Da er det bedre å avvise formatet ved opplasting enn å la saksbehandleren oppdage et
+ * manglende bilde først når dokumentet er ferdig.
+ */
+export const TILLATTE_BILDETYPER = ["image/png", "image/jpeg"] as const;
 
 /** Grense i frontend for å unngå at store filer henger opplastingen — backend tillater opp til 50 MB. */
 export const MAKS_BILDESTØRRELSE_BYTES = 10 * 1024 * 1024;
@@ -17,7 +23,7 @@ export const BILDE_FLYTT_MIMETYPE = "application/x-watson-bilde-path";
 /** Validerer at filen kan settes inn som bilde. Returnerer feilmelding, eller `null` om gyldig. */
 export function validerBildefil(fil: File): string | null {
   if (!TILLATTE_BILDETYPER.includes(fil.type as (typeof TILLATTE_BILDETYPER)[number])) {
-    return "Bare PNG-, JPEG- og WebP-bilder kan settes inn i dokumentet.";
+    return "Bare PNG- og JPEG-bilder kan settes inn i dokumentet.";
   }
   if (fil.size > MAKS_BILDESTØRRELSE_BYTES) {
     return "Bildet er for stort. Maks størrelse er 10 MB.";

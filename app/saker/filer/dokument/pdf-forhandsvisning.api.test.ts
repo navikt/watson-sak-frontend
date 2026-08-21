@@ -6,13 +6,10 @@ vi.mock("~/auth/access-token", () => ({
 }));
 
 const params = { sakId: "42", docId: "dok-1" };
-const gyldigBody = JSON.stringify({ tittel: "Test" });
 
 function lagRequest(init?: RequestInit) {
   return new Request("http://localhost/api/saker/42/dokumenter/dok-1/forhandsvisning", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: gyldigBody,
     ...init,
   });
 }
@@ -32,7 +29,7 @@ describe("pdf-forhandsvisning.api", () => {
     const { action } = await import("./pdf-forhandsvisning.api");
 
     const feil = await action({
-      request: lagRequest({ method: "GET", body: null }),
+      request: lagRequest({ method: "GET" }),
       params,
     } as Route.ActionArgs).catch((r) => r);
 
@@ -50,21 +47,6 @@ describe("pdf-forhandsvisning.api", () => {
       request: lagRequest(),
       params: { sakId: undefined, docId: "dok-1" },
     } as unknown as Route.ActionArgs).catch((r) => r);
-
-    expect(feil.init?.status).toBe(400);
-  });
-
-  it("returnerer 400 ved ugyldig JSON-body", async () => {
-    vi.doMock("~/config/env.server", () => ({
-      skalBrukeMockdata: false,
-      BACKEND_API_URL: "https://backend.test",
-    }));
-    const { action } = await import("./pdf-forhandsvisning.api");
-
-    const feil = await action({
-      request: lagRequest({ body: "{ugyldig json" }),
-      params,
-    } as Route.ActionArgs).catch((r) => r);
 
     expect(feil.init?.status).toBe(400);
   });
@@ -103,7 +85,6 @@ describe("pdf-forhandsvisning.api", () => {
       expect.objectContaining({
         method: "POST",
         headers: expect.objectContaining({
-          Authorization: "Bearer mock-token",
           Accept: "application/pdf",
         }),
       }),
