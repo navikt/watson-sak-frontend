@@ -128,19 +128,34 @@ describe("DokumentSide", () => {
     expect(medunderskriver.hasAttribute("disabled")).toBe(true);
   });
 
-  it("åpner forhåndsvisning fra knappen ved siden av sletting", async () => {
+  it("åpner forhåndsvisning fra sidepanelmenyen", async () => {
     renderSide(true);
 
-    fireEvent.click(await screen.findByRole("button", { name: "Forhåndsvis" }));
+    fireEvent.click(await screen.findByRole("button", { name: /Dokumenter/ }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Forhåndsvisning" }));
 
-    expect(screen.getByRole("button", { name: "Skjul forhåndsvisning" })).toBeDefined();
+    const sidepanel = screen.getByRole("complementary");
+    expect(within(sidepanel).getByText("Genererer forhåndsvisning…")).toBeDefined();
+
     const skillelinje = screen.getByRole("separator", {
-      name: "Endre bredde mellom editor og forhåndsvisning",
+      name: "Endre bredde mellom editor og sidepanel",
     });
     expect(skillelinje).toBeDefined();
 
     fireEvent.keyDown(skillelinje, { key: "ArrowRight" });
     expect(skillelinje.getAttribute("aria-valuenow")).toBe("55");
+  });
+
+  it("kan endre bredden på sidepanelet uansett hvilken fane som er valgt", async () => {
+    renderSide(true);
+
+    const skillelinje = await screen.findByRole("separator", {
+      name: "Endre bredde mellom editor og sidepanel",
+    });
+    expect(skillelinje.getAttribute("aria-valuenow")).toBe("75");
+
+    fireEvent.keyDown(skillelinje, { key: "ArrowLeft" });
+    expect(skillelinje.getAttribute("aria-valuenow")).toBe("70");
   });
 
   it("skjuler slett-knapp uten redigeringstilgang", async () => {
