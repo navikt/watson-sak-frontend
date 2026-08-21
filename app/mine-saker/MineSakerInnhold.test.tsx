@@ -107,7 +107,7 @@ describe("MineSakerInnhold", () => {
     );
 
     const sakId = 201;
-    const lenke = screen.getByRole("link", { name: String(sakId) });
+    const lenke = screen.getByRole("link", { name: `#${sakId}` });
     expect(lenke.getAttribute("href")).toBe(`/saker/${getSaksreferanse(sakId)}`);
   });
 

@@ -18,6 +18,7 @@ import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { formaterStorrelse } from "~/utils/number-utils";
 import { FilIBrukModal } from "./FilIBrukModal";
+import { SlettFilModal } from "./SlettFilModal";
 import type { DokumentReferanse, FilResponse } from "./typer";
 
 function formaterDatoTid(isoString: string): string {
@@ -38,6 +39,7 @@ interface SlettKnappProps {
 function SlettKnapp({ filId, filnavn, sakId, bruktIDokumenter }: SlettKnappProps) {
   const fetcher = useFetcher<{ ok: boolean; dokumenter?: DokumentReferanse[] }>();
   const [dokumenterIBruk, settDokumenterIBruk] = useState<DokumentReferanse[] | null>(null);
+  const [slettekandidat, settSlettekandidat] = useState<string | null>(null);
   const sletter = fetcher.state !== "idle";
   const url = RouteConfig.API.SAK_FIL.replace(":sakId", sakId).replace(":filId", filId);
 
@@ -50,12 +52,18 @@ function SlettKnapp({ filId, filnavn, sakId, bruktIDokumenter }: SlettKnappProps
   }, [fetcher.state, fetcher.data]);
 
   function håndterKlikk(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
     if (bruktIDokumenter.length > 0) {
-      event.preventDefault();
       settDokumenterIBruk(bruktIDokumenter);
       return;
     }
+    settSlettekandidat(filnavn);
+  }
+
+  function bekreftSletting() {
+    settSlettekandidat(null);
     sporHendelse("vedlegg slettet", { sakId });
+    fetcher.submit(null, { method: "delete", action: url });
   }
 
   return (
@@ -77,6 +85,14 @@ function SlettKnapp({ filId, filnavn, sakId, bruktIDokumenter }: SlettKnappProps
         sakId={sakId}
         onClose={() => settDokumenterIBruk(null)}
       />
+      {slettekandidat !== null && (
+        <SlettFilModal
+          kandidat={slettekandidat}
+          sletter={sletter}
+          onBekreft={bekreftSletting}
+          onAvbryt={() => settSlettekandidat(null)}
+        />
+      )}
     </>
   );
 }
@@ -146,7 +162,7 @@ export function VedleggSeksjon({ filer, sakId, erSakseier, kanLasteOpp }: Vedleg
   return (
     <VStack gap="space-4">
       <HStack justify="space-between" align="center">
-        <Heading level="3" size="xsmall">
+        <Heading level="2" size="small">
           Vedlegg
         </Heading>
         {kanLasteOpp && filer.length > 0 && (

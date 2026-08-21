@@ -4,6 +4,7 @@ import { Link as RouterLink, useNavigate } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import type { Tilbakemål } from "~/saker/tilbake";
 import { formaterDato } from "~/utils/date-utils";
+import { storFørsteBokstavPerOrd } from "~/utils/string-utils";
 import { KolonneHeading, type Sorteringsretning } from "./KolonneHeading";
 import { TagOverflow } from "./TagOverflow";
 
@@ -151,15 +152,15 @@ function renderCelle(
     case "saksid":
       return rad.detaljHref ? (
         <Link as={RouterLink} to={rad.detaljHref} state={lenkeState}>
-          {rad.saksreferanse}
+          #{rad.saksreferanse}
         </Link>
       ) : (
-        <BodyShort size="small">{rad.saksreferanse}</BodyShort>
+        <BodyShort size="small">#{rad.saksreferanse}</BodyShort>
       );
     case "navn":
       return (
         <BodyShort size="small" truncate className="max-w-48">
-          {rad.navn ?? "–"}
+          {rad.navn ? storFørsteBokstavPerOrd(rad.navn) : "–"}
         </BodyShort>
       );
     case "kategori":
@@ -191,7 +192,11 @@ function renderCelle(
     case "oppdatert":
       return <BodyShort size="small">{formaterDato(rad.oppdatert ?? rad.opprettet)}</BodyShort>;
     case "saksbehandler":
-      return <BodyShort size="small">{rad.saksbehandler ?? "–"}</BodyShort>;
+      return (
+        <BodyShort size="small">
+          {rad.saksbehandler ? storFørsteBokstavPerOrd(rad.saksbehandler) : "–"}
+        </BodyShort>
+      );
   }
 }
 

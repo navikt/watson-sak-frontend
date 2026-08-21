@@ -27,6 +27,8 @@ export type FilResponse = {
 export type DokumentNode = {
   id: string;
   tittel: string;
+  opprettetAv: string;
+  opprettetDato: string;
   endretAv: string;
   endretDato: string;
   låsAv: string | null;
@@ -37,6 +39,8 @@ export type Dokument = {
   id: string;
   tittel: string;
   innhold: DokumentInnhold;
+  opprettetAv: string;
+  opprettetDato: string;
   endretAv: string;
   endretDato: string;
   låsAv: string | null;

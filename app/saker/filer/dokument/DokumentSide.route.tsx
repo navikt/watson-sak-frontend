@@ -253,7 +253,7 @@ function DokumentRedigering({
       >
         <Brødsmulesti
           smuler={[
-            { etikett: sakReferanse, til: sakUrl },
+            { etikett: `Sak #${sakReferanse}`, til: sakUrl },
             { etikett: "Dokumenter" },
             { etikett: tittel || "Uten tittel" },
           ]}

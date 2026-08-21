@@ -34,6 +34,8 @@ function mockIdentFraNavn(navn: string): string {
 type DokumentSeed = {
   id: string;
   tittel: string;
+  opprettetAv: string;
+  opprettetDato: string;
   endretAv: string;
   endretDato: string;
   avsnitt: string[];
@@ -43,6 +45,8 @@ const dokumentSeeds: DokumentSeed[] = [
   {
     id: "1-1",
     tittel: "Saksframlegg",
+    opprettetAv: "Ola Nordmann",
+    opprettetDato: "2026-02-10",
     endretAv: "Ola Nordmann",
     endretDato: "2026-02-15",
     avsnitt: [
@@ -53,6 +57,8 @@ const dokumentSeeds: DokumentSeed[] = [
   {
     id: "1-2",
     tittel: "Vedtak",
+    opprettetAv: "Kari Hansen",
+    opprettetDato: "2026-02-18",
     endretAv: "Kari Hansen",
     endretDato: "2026-02-20",
     avsnitt: ["Foreløpig vurdering og konklusjon. Eksempeltekst uten reelle opplysninger."],
@@ -60,6 +66,8 @@ const dokumentSeeds: DokumentSeed[] = [
   {
     id: "1-3",
     tittel: "Notat fra møte",
+    opprettetAv: "Per Olsen",
+    opprettetDato: "2026-02-25",
     endretAv: "Per Olsen",
     endretDato: "2026-03-01",
     avsnitt: ["Oppsummering fra et internt møte. Dette er dummytekst."],
@@ -67,6 +75,8 @@ const dokumentSeeds: DokumentSeed[] = [
   {
     id: "2-1",
     tittel: "Oversikt ytelser",
+    opprettetAv: "Ola Nordmann",
+    opprettetDato: "2026-01-05",
     endretAv: "Ola Nordmann",
     endretDato: "2026-01-10",
     avsnitt: ["Beskrivelse av relevante ytelser. Eksempeltekst for lokal utvikling."],
@@ -74,6 +84,8 @@ const dokumentSeeds: DokumentSeed[] = [
   {
     id: "3",
     tittel: "Presentasjon til ledelsen",
+    opprettetAv: "Per Olsen",
+    opprettetDato: "2026-03-01",
     endretAv: "Per Olsen",
     endretDato: "2026-03-05",
     avsnitt: ["Punkter til en presentasjon. Dette er dummyinnhold."],
@@ -81,6 +93,8 @@ const dokumentSeeds: DokumentSeed[] = [
   {
     id: "4",
     tittel: "Sammendrag",
+    opprettetAv: "Ola Nordmann",
+    opprettetDato: "2026-03-06",
     endretAv: "Ola Nordmann",
     endretDato: "2026-03-10",
     avsnitt: ["Kort sammendrag av saken. Eksempeltekst uten personopplysninger."],
@@ -93,6 +107,8 @@ function seedDokumenter(state: MockState, sakId: string): DokumentNode[] {
     return {
       id: seed.id,
       tittel: seed.tittel,
+      opprettetAv: seed.opprettetAv,
+      opprettetDato: seed.opprettetDato,
       endretAv: seed.endretAv,
       endretDato: seed.endretDato,
       låsAv: null,
@@ -138,6 +154,8 @@ export function hentDokument(state: MockState, sakId: string, docId: string): Do
   return {
     id: node.id,
     tittel: node.tittel,
+    opprettetAv: node.opprettetAv,
+    opprettetDato: node.opprettetDato,
     innhold,
     endretAv: node.endretAv,
     endretDato: node.endretDato,
@@ -156,6 +174,8 @@ export function opprettDokument(
   dokumenter.push({
     id,
     tittel: "Uten tittel",
+    opprettetAv,
+    opprettetDato: iDag(),
     endretAv: opprettetAv,
     endretDato: iDag(),
     låsAv: null,
@@ -195,6 +215,8 @@ export function lagreDokument(
   return {
     id: node.id,
     tittel: node.tittel,
+    opprettetAv: node.opprettetAv,
+    opprettetDato: node.opprettetDato,
     innhold: endringer.innhold,
     endretAv: node.endretAv,
     endretDato: node.endretDato,

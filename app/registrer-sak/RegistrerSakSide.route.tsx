@@ -14,7 +14,7 @@ import {
   UNSAFE_Combobox,
   VStack,
 } from "@navikt/ds-react";
-import { PersonIcon, PlusIcon } from "@navikt/aksel-icons";
+import { MagnifyingGlassIcon, PersonIcon, PlusIcon } from "@navikt/aksel-icons";
 import { useMemo, useState, useEffect } from "react";
 import { Form, Link, useFetcher, useActionData, useLoaderData, useSubmit } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
@@ -173,13 +173,21 @@ export default function OpprettSakSide() {
             inputMode="numeric"
             disabled={lasterPerson}
           >
-            <Search.Button
+            <Button
               type="submit"
+              variant="primary"
+              size="medium"
               disabled={lasterPerson}
               aria-label={lasterPerson ? "Søker..." : "Søk"}
-            >
-              {lasterPerson && <Loader size="xsmall" title="Søker..." />}
-            </Search.Button>
+              icon={
+                lasterPerson ? (
+                  <Loader size="xsmall" title="Søker..." />
+                ) : (
+                  <MagnifyingGlassIcon aria-hidden />
+                )
+              }
+              className="aksel-search__button-search"
+            />
           </Search>
         </personFetcher.Form>
 
