@@ -962,7 +962,7 @@ export function DokumentEditor({
               aria-valuenow={editorBredde}
               aria-valuetext={`Editoren bruker ${editorBredde} prosent av arbeidsflaten`}
               tabIndex={0}
-              className="group hidden w-1.5 shrink-0 cursor-col-resize touch-none items-center justify-center bg-ax-bg-default focus:outline-none lg:flex"
+              className="group hidden shrink-0 cursor-col-resize touch-none items-center justify-center px-1 bg-ax-bg-default focus:outline-none lg:flex"
               onKeyDown={håndterSkillelinjeTastatur}
               onPointerDown={håndterSkillelinjePekerNed}
               onPointerMove={håndterSkillelinjePekerFlytt}
