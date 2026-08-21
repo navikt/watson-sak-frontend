@@ -952,12 +952,10 @@ export function DokumentEditor({
               onPointerUp={(event) => event.currentTarget.releasePointerCapture(event.pointerId)}
             >
               {/* Vertikalt dratthåndtak – tre punkter, slik man kjenner igjen fra
-              resizable paneler. Skjøvet litt mot høyre for å se sentrert ut mellom
-              editorens grå flate og sidepanelets hvite innramming. Rent dekorativt;
-              selve interaksjonen er på forelderen. */}
+              resizable paneler. Rent dekorativt; selve interaksjonen er på forelderen. */}
               <span
                 aria-hidden
-                className="flex translate-x-1 flex-col gap-[3px] rounded-full bg-ax-bg-neutral-moderate px-[3px] py-[6px] group-hover:bg-ax-bg-accent-moderate group-focus:bg-ax-bg-accent-moderate"
+                className="flex flex-col gap-[3px] rounded-full bg-ax-bg-neutral-moderate px-[3px] py-[6px] group-hover:bg-ax-bg-accent-moderate group-focus:bg-ax-bg-accent-moderate"
               >
                 <span className="h-1 w-1 rounded-full bg-ax-icon-neutral group-hover:bg-ax-icon-accent group-focus:bg-ax-icon-accent" />
                 <span className="h-1 w-1 rounded-full bg-ax-icon-neutral group-hover:bg-ax-icon-accent group-focus:bg-ax-icon-accent" />
