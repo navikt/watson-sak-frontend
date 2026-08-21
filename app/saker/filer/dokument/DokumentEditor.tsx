@@ -952,12 +952,23 @@ export function DokumentEditor({
                 aria-valuenow={editorBredde}
                 aria-valuetext={`Editoren bruker ${editorBredde} prosent av arbeidsflaten`}
                 tabIndex={0}
-                className="hidden w-3 shrink-0 cursor-col-resize touch-none bg-ax-border-neutral-subtle hover:bg-ax-border-accent-strong focus:bg-ax-border-accent-strong focus:outline-none lg:block"
+                className="group hidden w-3 shrink-0 cursor-col-resize touch-none items-center justify-center bg-ax-bg-default focus:outline-none lg:flex"
                 onKeyDown={håndterSkillelinjeTastatur}
                 onPointerDown={håndterSkillelinjePekerNed}
                 onPointerMove={håndterSkillelinjePekerFlytt}
                 onPointerUp={(event) => event.currentTarget.releasePointerCapture(event.pointerId)}
-              />
+              >
+                {/* Vertikalt dratthåndtak – tre punkter, slik man kjenner igjen fra
+                resizable paneler. Rent dekorativt; selve interaksjonen er på forelderen. */}
+                <span
+                  aria-hidden
+                  className="flex flex-col gap-[3px] rounded-full bg-ax-bg-neutral-moderate px-[3px] py-[6px] group-hover:bg-ax-bg-accent-moderate group-focus:bg-ax-bg-accent-moderate"
+                >
+                  <span className="h-1 w-1 rounded-full bg-ax-icon-neutral group-hover:bg-ax-icon-accent group-focus:bg-ax-icon-accent" />
+                  <span className="h-1 w-1 rounded-full bg-ax-icon-neutral group-hover:bg-ax-icon-accent group-focus:bg-ax-icon-accent" />
+                  <span className="h-1 w-1 rounded-full bg-ax-icon-neutral group-hover:bg-ax-icon-accent group-focus:bg-ax-icon-accent" />
+                </span>
+              </div>
             )}
 
             <Sidepanel
