@@ -152,10 +152,10 @@ describe("DokumentSide", () => {
     const skillelinje = await screen.findByRole("separator", {
       name: "Endre bredde mellom editor og sidepanel",
     });
-    expect(skillelinje.getAttribute("aria-valuenow")).toBe("50");
+    expect(skillelinje.getAttribute("aria-valuenow")).toBe("75");
 
-    fireEvent.keyDown(skillelinje, { key: "ArrowRight" });
-    expect(skillelinje.getAttribute("aria-valuenow")).toBe("55");
+    fireEvent.keyDown(skillelinje, { key: "ArrowLeft" });
+    expect(skillelinje.getAttribute("aria-valuenow")).toBe("70");
   });
 
   it("skjuler slett-knapp uten redigeringstilgang", async () => {

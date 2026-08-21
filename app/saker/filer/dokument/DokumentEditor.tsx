@@ -590,7 +590,11 @@ type DokumentEditorProps = {
 
 const MINSTE_EDITORBREDDE = 25;
 const STØRSTE_EDITORBREDDE = 75;
-const STANDARD_EDITORBREDDE = 50;
+// Forhåndsvisning skal se ut som editoren, altså 50/50. De andre fanene
+// (dokumenter/variabler/historikk) er tekstlister som ikke trenger like mye plass,
+// så sidepanelet starter smalere (25 %) for dem.
+const STANDARD_EDITORBREDDE_FORHÅNDSVISNING = 50;
+const STANDARD_EDITORBREDDE_ANNET = 75;
 
 export function DokumentEditor({
   startInnhold,
@@ -613,7 +617,17 @@ export function DokumentEditor({
   const flateRef = useRef<HTMLDivElement>(null);
   const delingsflateRef = useRef<HTMLDivElement>(null);
   const høyde = useTilgjengeligHøyde(flateRef);
-  const [editorBredde, settEditorBredde] = useState(STANDARD_EDITORBREDDE);
+  // Egne breddevalg for forhåndsvisning og de andre fanene, slik at man kan resize
+  // hver av dem uavhengig av hverandre og fortsatt få riktig standardbredde når man
+  // bytter fane.
+  const [editorBreddeForhåndsvisning, settEditorBreddeForhåndsvisning] = useState(
+    STANDARD_EDITORBREDDE_FORHÅNDSVISNING,
+  );
+  const [editorBreddeAnnet, settEditorBreddeAnnet] = useState(STANDARD_EDITORBREDDE_ANNET);
+  const editorBredde = erForhåndsvisningAktiv ? editorBreddeForhåndsvisning : editorBreddeAnnet;
+  const settEditorBredde = erForhåndsvisningAktiv
+    ? settEditorBreddeForhåndsvisning
+    : settEditorBreddeAnnet;
 
   const [lasterOppBilde, settLasterOppBilde] = useState(false);
   const [bildeFeil, settBildeFeil] = useState<string | null>(null);
@@ -812,14 +826,17 @@ export function DokumentEditor({
     void håndterBildefiler(bildefiler);
   }
 
-  const oppdaterEditorbredde = useCallback((clientX: number) => {
-    const delingsflate = delingsflateRef.current;
-    if (!delingsflate) return;
+  const oppdaterEditorbredde = useCallback(
+    (clientX: number) => {
+      const delingsflate = delingsflateRef.current;
+      if (!delingsflate) return;
 
-    const { left, width } = delingsflate.getBoundingClientRect();
-    const bredde = Math.round(((clientX - left) / width) * 100);
-    settEditorBredde(Math.min(STØRSTE_EDITORBREDDE, Math.max(MINSTE_EDITORBREDDE, bredde)));
-  }, []);
+      const { left, width } = delingsflate.getBoundingClientRect();
+      const bredde = Math.round(((clientX - left) / width) * 100);
+      settEditorBredde(Math.min(STØRSTE_EDITORBREDDE, Math.max(MINSTE_EDITORBREDDE, bredde)));
+    },
+    [settEditorBredde],
+  );
 
   const håndterSkillelinjeTastatur = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {
@@ -837,7 +854,7 @@ export function DokumentEditor({
         Math.min(STØRSTE_EDITORBREDDE, Math.max(MINSTE_EDITORBREDDE, bredde + endring)),
       );
     },
-    [editorBredde],
+    [editorBredde, settEditorBredde],
   );
 
   const håndterSkillelinjePekerNed = useCallback(
@@ -945,7 +962,7 @@ export function DokumentEditor({
               aria-valuenow={editorBredde}
               aria-valuetext={`Editoren bruker ${editorBredde} prosent av arbeidsflaten`}
               tabIndex={0}
-              className="group hidden w-3 shrink-0 cursor-col-resize touch-none items-center justify-center bg-ax-bg-default focus:outline-none lg:flex"
+              className="group hidden w-1.5 shrink-0 cursor-col-resize touch-none items-center justify-center bg-ax-bg-default focus:outline-none lg:flex"
               onKeyDown={håndterSkillelinjeTastatur}
               onPointerDown={håndterSkillelinjePekerNed}
               onPointerMove={håndterSkillelinjePekerFlytt}
@@ -955,7 +972,7 @@ export function DokumentEditor({
               resizable paneler. Rent dekorativt; selve interaksjonen er på forelderen. */}
               <span
                 aria-hidden
-                className="flex flex-col gap-[3px] rounded-full bg-ax-bg-neutral-moderate px-[3px] py-[6px] group-hover:bg-ax-bg-accent-moderate group-focus:bg-ax-bg-accent-moderate"
+                className="flex flex-col gap-[3px] rounded-full bg-ax-bg-neutral-moderate px-[1px] py-[6px] group-hover:bg-ax-bg-accent-moderate group-focus:bg-ax-bg-accent-moderate"
               >
                 <span className="h-1 w-1 rounded-full bg-ax-icon-neutral group-hover:bg-ax-icon-accent group-focus:bg-ax-icon-accent" />
                 <span className="h-1 w-1 rounded-full bg-ax-icon-neutral group-hover:bg-ax-icon-accent group-focus:bg-ax-icon-accent" />
