@@ -105,9 +105,7 @@ export function SettInnBildeModal({
           </div>
         )}
         {bilder && bilder.length === 0 && (
-          <BodyShort>
-            Fant ingen tidligere opplastede bilder (PNG, JPEG eller WebP) på saken.
-          </BodyShort>
+          <BodyShort>Fant ingen tidligere opplastede bilder (PNG eller JPEG) på saken.</BodyShort>
         )}
         {bilder && bilder.length > 0 && (
           <div className="grid grid-cols-3 gap-[var(--ax-space-12)]">
