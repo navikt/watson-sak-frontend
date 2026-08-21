@@ -138,9 +138,21 @@ describe("DokumentSide", () => {
     expect(within(sidepanel).getByText("Genererer forhåndsvisning…")).toBeDefined();
 
     const skillelinje = screen.getByRole("separator", {
-      name: "Endre bredde mellom editor og forhåndsvisning",
+      name: "Endre bredde mellom editor og sidepanel",
     });
     expect(skillelinje).toBeDefined();
+
+    fireEvent.keyDown(skillelinje, { key: "ArrowRight" });
+    expect(skillelinje.getAttribute("aria-valuenow")).toBe("55");
+  });
+
+  it("kan endre bredden på sidepanelet uansett hvilken fane som er valgt", async () => {
+    renderSide(true);
+
+    const skillelinje = await screen.findByRole("separator", {
+      name: "Endre bredde mellom editor og sidepanel",
+    });
+    expect(skillelinje.getAttribute("aria-valuenow")).toBe("50");
 
     fireEvent.keyDown(skillelinje, { key: "ArrowRight" });
     expect(skillelinje.getAttribute("aria-valuenow")).toBe("55");

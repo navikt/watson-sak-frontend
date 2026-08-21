@@ -898,20 +898,14 @@ export function DokumentEditor({
           <div
             ref={delingsflateRef}
             className="flex min-h-0 flex-1 flex-col lg:flex-row lg:items-stretch"
-            style={
-              erForhåndsvisningAktiv
-                ? ({ "--editor-bredde": `${editorBredde}%` } as CSSProperties)
-                : undefined
-            }
+            style={{ "--editor-bredde": `${editorBredde}%` } as CSSProperties}
           >
             <div
               className={
                 "ml-[var(--ax-space-16)] flex min-w-0 flex-1 justify-center overflow-y-auto rounded-lg " +
                 "bg-ax-bg-neutral-moderate px-[var(--ax-space-16)] py-[var(--ax-space-32)] " +
                 "lg:ml-[var(--ax-space-24)] lg:px-[var(--ax-space-48)] " +
-                (erForhåndsvisningAktiv
-                  ? "lg:shrink-0 lg:flex-none lg:basis-[var(--editor-bredde)]"
-                  : "")
+                "lg:shrink-0 lg:flex-none lg:basis-[var(--editor-bredde)]"
               }
             >
               <Kort
@@ -942,34 +936,34 @@ export function DokumentEditor({
               </Kort>
             </div>
 
-            {erForhåndsvisningAktiv && (
-              <div
-                role="separator"
-                aria-label="Endre bredde mellom editor og forhåndsvisning"
-                aria-orientation="vertical"
-                aria-valuemin={MINSTE_EDITORBREDDE}
-                aria-valuemax={STØRSTE_EDITORBREDDE}
-                aria-valuenow={editorBredde}
-                aria-valuetext={`Editoren bruker ${editorBredde} prosent av arbeidsflaten`}
-                tabIndex={0}
-                className="group hidden w-3 shrink-0 cursor-col-resize touch-none items-center justify-center bg-ax-bg-default focus:outline-none lg:flex"
-                onKeyDown={håndterSkillelinjeTastatur}
-                onPointerDown={håndterSkillelinjePekerNed}
-                onPointerMove={håndterSkillelinjePekerFlytt}
-                onPointerUp={(event) => event.currentTarget.releasePointerCapture(event.pointerId)}
+            <div
+              role="separator"
+              aria-label="Endre bredde mellom editor og sidepanel"
+              aria-orientation="vertical"
+              aria-valuemin={MINSTE_EDITORBREDDE}
+              aria-valuemax={STØRSTE_EDITORBREDDE}
+              aria-valuenow={editorBredde}
+              aria-valuetext={`Editoren bruker ${editorBredde} prosent av arbeidsflaten`}
+              tabIndex={0}
+              className="group hidden w-3 shrink-0 cursor-col-resize touch-none items-center justify-center bg-ax-bg-default focus:outline-none lg:flex"
+              onKeyDown={håndterSkillelinjeTastatur}
+              onPointerDown={håndterSkillelinjePekerNed}
+              onPointerMove={håndterSkillelinjePekerFlytt}
+              onPointerUp={(event) => event.currentTarget.releasePointerCapture(event.pointerId)}
+            >
+              {/* Vertikalt dratthåndtak – tre punkter, slik man kjenner igjen fra
+              resizable paneler. Skjøvet litt mot høyre for å se sentrert ut mellom
+              editorens grå flate og sidepanelets hvite innramming. Rent dekorativt;
+              selve interaksjonen er på forelderen. */}
+              <span
+                aria-hidden
+                className="flex translate-x-1 flex-col gap-[3px] rounded-full bg-ax-bg-neutral-moderate px-[3px] py-[6px] group-hover:bg-ax-bg-accent-moderate group-focus:bg-ax-bg-accent-moderate"
               >
-                {/* Vertikalt dratthåndtak – tre punkter, slik man kjenner igjen fra
-                resizable paneler. Rent dekorativt; selve interaksjonen er på forelderen. */}
-                <span
-                  aria-hidden
-                  className="flex flex-col gap-[3px] rounded-full bg-ax-bg-neutral-moderate px-[3px] py-[6px] group-hover:bg-ax-bg-accent-moderate group-focus:bg-ax-bg-accent-moderate"
-                >
-                  <span className="h-1 w-1 rounded-full bg-ax-icon-neutral group-hover:bg-ax-icon-accent group-focus:bg-ax-icon-accent" />
-                  <span className="h-1 w-1 rounded-full bg-ax-icon-neutral group-hover:bg-ax-icon-accent group-focus:bg-ax-icon-accent" />
-                  <span className="h-1 w-1 rounded-full bg-ax-icon-neutral group-hover:bg-ax-icon-accent group-focus:bg-ax-icon-accent" />
-                </span>
-              </div>
-            )}
+                <span className="h-1 w-1 rounded-full bg-ax-icon-neutral group-hover:bg-ax-icon-accent group-focus:bg-ax-icon-accent" />
+                <span className="h-1 w-1 rounded-full bg-ax-icon-neutral group-hover:bg-ax-icon-accent group-focus:bg-ax-icon-accent" />
+                <span className="h-1 w-1 rounded-full bg-ax-icon-neutral group-hover:bg-ax-icon-accent group-focus:bg-ax-icon-accent" />
+              </span>
+            </div>
 
             <Sidepanel
               aktivt={aktivtSidepanel}
@@ -980,7 +974,6 @@ export function DokumentEditor({
                 erForhåndsvisningAktiv ? renderForhåndsvisning?.() : undefined
               }
               lagreStatus={lagreStatus}
-              resizable={erForhåndsvisningAktiv}
             />
           </div>
         </div>

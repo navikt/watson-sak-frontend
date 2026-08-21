@@ -93,12 +93,10 @@ type SidepanelProps = {
   forhåndsvisningInnhold?: ReactNode;
   /** Lagrestatusen, som ligger nederst i panelet. Eies av siden som gjør lagringen. */
   lagreStatus?: ReactNode;
-  /** Sant når panelet skal ta imot resten av bredden (delt med editoren via
-   * skillelinjen), fremfor sin faste standardbredde. Brukes kun for forhåndsvisning. */
-  resizable?: boolean;
 };
 
-/** Sidepanelet til høyre for dokumentet. Egen fullhøyde-seksjon, ikke et kort oppå det grå. */
+/** Sidepanelet til høyre for dokumentet. Egen fullhøyde-seksjon, resizable via
+ * skillelinjen mellom editoren og panelet – ikke et kort oppå det grå. */
 export function Sidepanel({
   aktivt,
   dokumentliste,
@@ -106,7 +104,6 @@ export function Sidepanel({
   historikkInnhold,
   forhåndsvisningInnhold,
   lagreStatus,
-  resizable = false,
 }: SidepanelProps) {
   const valg = finnValg(aktivt);
   const innhold =
@@ -119,12 +116,7 @@ export function Sidepanel({
           : forhåndsvisningInnhold;
 
   return (
-    <aside
-      className={
-        "flex w-full shrink-0 flex-col gap-[var(--ax-space-12)] overflow-hidden border-t border-ax-border-neutral-subtle bg-ax-bg-default px-[var(--ax-space-16)] pt-0 pb-[var(--ax-space-16)] lg:border-t-0 " +
-        (resizable ? "lg:min-w-0 lg:flex-1" : "lg:w-[400px]")
-      }
-    >
+    <aside className="flex w-full shrink-0 flex-col gap-[var(--ax-space-12)] overflow-hidden border-t border-ax-border-neutral-subtle bg-ax-bg-default px-[var(--ax-space-16)] pt-0 pb-[var(--ax-space-16)] lg:min-w-0 lg:flex-1 lg:border-t-0">
       <VStack
         gap="space-12"
         className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-ax-border-neutral-subtle bg-ax-bg-default p-[var(--ax-space-16)]"
