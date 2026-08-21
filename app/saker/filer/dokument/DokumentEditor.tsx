@@ -582,8 +582,10 @@ type DokumentEditorProps = {
   historikkInnhold?: ReactNode;
   /** Verdier fra saken og innlogget bruker som levende variabler løses mot. */
   variabelVerdier: VariabelVerdier;
-  /** Innhold som vises mellom editorflaten og sidepanelet. */
-  mellomInnhold?: ReactNode;
+  /** Renderer innholdet for «Forhåndsvisning» i sidepanelet. Sendes inn som en funksjon
+   * (ikke ferdig innhold) slik at f.eks. PDF-genereringen bare kjører mens fanen er
+   * valgt, ikke ved hver render av siden. */
+  renderForhåndsvisning?: () => ReactNode;
 };
 
 const MINSTE_EDITORBREDDE = 25;
@@ -600,13 +602,14 @@ export function DokumentEditor({
   lagreStatus,
   historikkInnhold,
   variabelVerdier,
-  mellomInnhold,
+  renderForhåndsvisning,
 }: DokumentEditorProps) {
   const editor = usePlateEditor({
     plugins: PLUGINS,
     value: startInnhold as TElement[],
   });
   const [aktivtSidepanel, settAktivtSidepanel] = useState<SidepanelValg>(STANDARD_SIDEPANEL);
+  const erForhåndsvisningAktiv = aktivtSidepanel === "forhåndsvisning";
   const flateRef = useRef<HTMLDivElement>(null);
   const delingsflateRef = useRef<HTMLDivElement>(null);
   const høyde = useTilgjengeligHøyde(flateRef);
@@ -892,80 +895,81 @@ export function DokumentEditor({
           )}
           {/* Grå flate med «arket» til venstre og sidepanelet som en egen seksjon til høyre.
         Raden går helt ut til kantene fordi ruta har bedt layouten om full bredde. */}
-          <div className="flex min-h-0 flex-1 flex-col lg:flex-row lg:items-stretch">
+          <div
+            ref={delingsflateRef}
+            className="flex min-h-0 flex-1 flex-col lg:flex-row lg:items-stretch"
+            style={
+              erForhåndsvisningAktiv
+                ? ({ "--editor-bredde": `${editorBredde}%` } as CSSProperties)
+                : undefined
+            }
+          >
             <div
-              ref={delingsflateRef}
-              className="flex min-w-0 flex-1 flex-col lg:flex-row"
-              style={{ "--editor-bredde": `${editorBredde}%` } as CSSProperties}
+              className={
+                "ml-[var(--ax-space-16)] flex min-w-0 flex-1 justify-center overflow-y-auto rounded-lg " +
+                "bg-ax-bg-neutral-moderate px-[var(--ax-space-16)] py-[var(--ax-space-32)] " +
+                "lg:ml-[var(--ax-space-24)] lg:px-[var(--ax-space-48)] " +
+                (erForhåndsvisningAktiv
+                  ? "lg:shrink-0 lg:flex-none lg:basis-[var(--editor-bredde)]"
+                  : "")
+              }
             >
-              <div
-                className={
-                  "ml-[var(--ax-space-16)] flex min-w-0 flex-1 justify-center overflow-y-auto rounded-lg " +
-                  "bg-ax-bg-neutral-moderate px-[var(--ax-space-16)] py-[var(--ax-space-32)] " +
-                  "lg:ml-[var(--ax-space-24)] lg:px-[var(--ax-space-48)] " +
-                  (mellomInnhold ? "lg:shrink-0 lg:flex-none lg:basis-[var(--editor-bredde)]" : "")
-                }
+              <Kort
+                padding={{ xs: "space-24", md: "space-64" }}
+                className="h-fit w-full max-w-[210mm] shadow-[var(--ax-shadow-dialog)]"
               >
-                <Kort
-                  padding={{ xs: "space-24", md: "space-64" }}
-                  className="h-fit w-full max-w-[210mm] shadow-[var(--ax-shadow-dialog)]"
-                >
-                  <PlateContent
-                    role="textbox"
-                    aria-multiline
-                    aria-label="Dokumentinnhold"
-                    onDrop={redigerbar ? håndterDrop : undefined}
-                    onDragOver={redigerbar ? håndterDragOver : undefined}
-                    onPaste={redigerbar ? håndterPaste : undefined}
-                    className={
-                      "min-h-[60vh] focus:outline-none [&_h1]:mt-8 [&_h1]:mb-4 [&_h1]:text-2xl [&_h1]:font-bold " +
-                      "[&_h2]:mt-6 [&_h2]:mb-3 [&_h2]:text-xl [&_h2]:font-bold " +
-                      "[&_h3]:mt-4 [&_h3]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold " +
-                      "[&>*:first-child]:mt-0 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
-                      "[&_blockquote]:border-l-4 [&_blockquote]:border-ax-border-neutral-subtle " +
-                      "[&_blockquote]:pl-4 [&_blockquote]:italic [&_p]:mb-4 [&_p:last-child]:mb-0 " +
-                      "[&_table]:border-collapse [&_table]:my-3 [&_table]:w-full " +
-                      "[&_td]:border [&_td]:border-ax-border-neutral-subtle [&_td]:p-2 [&_td]:align-top " +
-                      "[&_th]:border [&_th]:border-ax-border-neutral-subtle [&_th]:p-2 [&_th]:align-top " +
-                      "[&_th]:bg-ax-bg-neutral-soft [&_th]:text-left [&_th]:font-semibold " +
-                      "[&_u]:underline [&_s]:line-through"
-                    }
-                  />
-                </Kort>
-              </div>
-
-              {mellomInnhold && (
-                <>
-                  <div
-                    role="separator"
-                    aria-label="Endre bredde mellom editor og forhåndsvisning"
-                    aria-orientation="vertical"
-                    aria-valuemin={MINSTE_EDITORBREDDE}
-                    aria-valuemax={STØRSTE_EDITORBREDDE}
-                    aria-valuenow={editorBredde}
-                    aria-valuetext={`Editoren bruker ${editorBredde} prosent av arbeidsflaten`}
-                    tabIndex={0}
-                    className="hidden w-3 shrink-0 cursor-col-resize touch-none bg-ax-border-neutral-subtle hover:bg-ax-border-accent-strong focus:bg-ax-border-accent-strong focus:outline-none lg:block"
-                    onKeyDown={håndterSkillelinjeTastatur}
-                    onPointerDown={håndterSkillelinjePekerNed}
-                    onPointerMove={håndterSkillelinjePekerFlytt}
-                    onPointerUp={(event) =>
-                      event.currentTarget.releasePointerCapture(event.pointerId)
-                    }
-                  />
-                  <div className="flex min-w-0 flex-1 flex-col border-t border-ax-border-neutral-subtle lg:border-t-0 lg:border-l">
-                    {mellomInnhold}
-                  </div>
-                </>
-              )}
+                <PlateContent
+                  role="textbox"
+                  aria-multiline
+                  aria-label="Dokumentinnhold"
+                  onDrop={redigerbar ? håndterDrop : undefined}
+                  onDragOver={redigerbar ? håndterDragOver : undefined}
+                  onPaste={redigerbar ? håndterPaste : undefined}
+                  className={
+                    "min-h-[60vh] focus:outline-none [&_h1]:mt-8 [&_h1]:mb-4 [&_h1]:text-2xl [&_h1]:font-bold " +
+                    "[&_h2]:mt-6 [&_h2]:mb-3 [&_h2]:text-xl [&_h2]:font-bold " +
+                    "[&_h3]:mt-4 [&_h3]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold " +
+                    "[&>*:first-child]:mt-0 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
+                    "[&_blockquote]:border-l-4 [&_blockquote]:border-ax-border-neutral-subtle " +
+                    "[&_blockquote]:pl-4 [&_blockquote]:italic [&_p]:mb-4 [&_p:last-child]:mb-0 " +
+                    "[&_table]:border-collapse [&_table]:my-3 [&_table]:w-full " +
+                    "[&_td]:border [&_td]:border-ax-border-neutral-subtle [&_td]:p-2 [&_td]:align-top " +
+                    "[&_th]:border [&_th]:border-ax-border-neutral-subtle [&_th]:p-2 [&_th]:align-top " +
+                    "[&_th]:bg-ax-bg-neutral-soft [&_th]:text-left [&_th]:font-semibold " +
+                    "[&_u]:underline [&_s]:line-through"
+                  }
+                />
+              </Kort>
             </div>
+
+            {erForhåndsvisningAktiv && (
+              <div
+                role="separator"
+                aria-label="Endre bredde mellom editor og forhåndsvisning"
+                aria-orientation="vertical"
+                aria-valuemin={MINSTE_EDITORBREDDE}
+                aria-valuemax={STØRSTE_EDITORBREDDE}
+                aria-valuenow={editorBredde}
+                aria-valuetext={`Editoren bruker ${editorBredde} prosent av arbeidsflaten`}
+                tabIndex={0}
+                className="hidden w-3 shrink-0 cursor-col-resize touch-none bg-ax-border-neutral-subtle hover:bg-ax-border-accent-strong focus:bg-ax-border-accent-strong focus:outline-none lg:block"
+                onKeyDown={håndterSkillelinjeTastatur}
+                onPointerDown={håndterSkillelinjePekerNed}
+                onPointerMove={håndterSkillelinjePekerFlytt}
+                onPointerUp={(event) => event.currentTarget.releasePointerCapture(event.pointerId)}
+              />
+            )}
 
             <Sidepanel
               aktivt={aktivtSidepanel}
               dokumentliste={dokumentliste}
               variabelInnhold={<VariabelListe onSettInn={settInnVariabel} disabled={!redigerbar} />}
               historikkInnhold={historikkInnhold ?? null}
+              forhåndsvisningInnhold={
+                erForhåndsvisningAktiv ? renderForhåndsvisning?.() : undefined
+              }
               lagreStatus={lagreStatus}
+              resizable={erForhåndsvisningAktiv}
             />
           </div>
         </div>

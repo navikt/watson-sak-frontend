@@ -128,12 +128,15 @@ describe("DokumentSide", () => {
     expect(medunderskriver.hasAttribute("disabled")).toBe(true);
   });
 
-  it("åpner forhåndsvisning fra knappen ved siden av sletting", async () => {
+  it("åpner forhåndsvisning fra sidepanelmenyen", async () => {
     renderSide(true);
 
-    fireEvent.click(await screen.findByRole("button", { name: "Forhåndsvis" }));
+    fireEvent.click(await screen.findByRole("button", { name: /Dokumenter/ }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Forhåndsvisning" }));
 
-    expect(screen.getByRole("button", { name: "Skjul forhåndsvisning" })).toBeDefined();
+    const sidepanel = screen.getByRole("complementary");
+    expect(within(sidepanel).getByText("Genererer forhåndsvisning…")).toBeDefined();
+
     const skillelinje = screen.getByRole("separator", {
       name: "Endre bredde mellom editor og forhåndsvisning",
     });
