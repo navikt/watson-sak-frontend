@@ -14,7 +14,7 @@ import {
 export type PersonOppslagResultat = {
   person: Person;
   eksisterendeSaker: EksisterendeSak[];
-  /** true dersom det ble søkt med en historisk ident som ble resolvet til personens gjeldende ident. */
+  /** true dersom det ble søkt med en historisk ident som ble løst opp til personens gjeldende ident. */
   søktMedHistoriskIdent: boolean;
 };
 

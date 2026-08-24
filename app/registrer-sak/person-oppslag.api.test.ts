@@ -92,6 +92,22 @@ describe("person-oppslag action", () => {
       // Personen som vises/opprettes saken på skal likevel være gjeldende ident.
       expect(json.person.personnummer.replace(/\s/g, "")).toBe("12345678901");
     });
+
+    it("søker etter eksisterende saker på gjeldende ident, ikke søkestrengen", async () => {
+      slåOppPersonMock.mockResolvedValue({
+        type: "success",
+        person: {
+          navn: "Ola Testesen",
+          personIdent: "12345678901",
+          alder: 30,
+          adresseskjermet: false,
+        },
+      });
+
+      await runAction("10987654321");
+
+      expect(søkKontrollsakerMock).toHaveBeenCalledWith("token-123", "12345678901", 1, 100);
+    });
   });
 
   describe("mot mockdata", () => {

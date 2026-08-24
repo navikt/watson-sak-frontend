@@ -42,8 +42,15 @@ export async function action({ request }: { request: Request }) {
 
       try {
         // Henter kun første side (maks 100 saker) — brukes til en enkel oversikt over
-        // eksisterende saker, ikke en fullstendig paginert visning.
-        const { items: saker } = await backendApi.søkKontrollsaker(token, fnr, 1, 100);
+        // eksisterende saker, ikke en fullstendig paginert visning. Bruker gjeldende
+        // ident (ikke søkestrengen `fnr`) slik at søket også finner saker registrert
+        // under gjeldende ident selv om det ble søkt med en historisk ident.
+        const { items: saker } = await backendApi.søkKontrollsaker(
+          token,
+          resultat.person.personIdent,
+          1,
+          100,
+        );
         eksisterendeSaker = saker.map((sak) => ({
           sakId: getSaksreferanse(sak.id),
           opprettetDato: sak.opprettet.slice(0, 10),
@@ -65,7 +72,7 @@ export async function action({ request }: { request: Request }) {
           adresseskjermet: resultat.person.adresseskjermet,
         },
         eksisterendeSaker,
-        // Backend resolver alltid historiske identer til gjeldende ident (personIdent i
+        // Backend løser alltid opp historiske identer til gjeldende ident (personIdent i
         // responsen) — avviker den fra søket, ble det søkt med en historisk ident.
         søktMedHistoriskIdent: resultat.person.personIdent !== fnr,
       });
