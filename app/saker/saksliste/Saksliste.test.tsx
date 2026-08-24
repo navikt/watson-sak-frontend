@@ -81,4 +81,29 @@ describe("Saksliste", () => {
 
     expect(screen.getByText("Sakdetaljer")).toBeDefined();
   });
+
+  it("navigerer ikke når Enter trykkes på en knapp inni raden", () => {
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/",
+          element: (
+            <Saksliste
+              rader={rader}
+              tomTekst="Ingen saker."
+              renderRadHandling={() => <button type="button">Tildel</button>}
+            />
+          ),
+        },
+        { path: "/saker/:sakId", element: <p>Sakdetaljer</p> },
+      ],
+      { initialEntries: ["/"] },
+    );
+    render(<RouterProvider router={router} />);
+
+    const tildelKnapp = screen.getByRole("button", { name: "Tildel" });
+    fireEvent.keyDown(tildelKnapp, { key: "Enter" });
+
+    expect(screen.queryByText("Sakdetaljer")).toBeNull();
+  });
 });

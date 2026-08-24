@@ -209,6 +209,22 @@ describe("filtrerSaker", () => {
     });
     expect(resultat).toHaveLength(0);
   });
+
+  it("filtrerer på status", () => {
+    const sakerMedUlikStatus = [...saker, lagSak({ id: 300, status: "UTREDES" })];
+
+    const resultat = filtrerSaker(sakerMedUlikStatus, {
+      enhet: [],
+      saksbehandler: [],
+      kategori: [],
+      misbrukstype: [],
+      merking: [],
+      status: ["UTREDES"],
+    });
+
+    expect(resultat).toHaveLength(1);
+    expect(resultat[0].id).toBe(300);
+  });
 });
 
 describe("sorterSaker", () => {
