@@ -259,15 +259,18 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     // for saksbehandlere med direkte tilgang (eier/delt-med) — se `kanSeFilområde` i
     // SakDetaljSide.route.tsx, som styrer UI-visningen. Uten denne sperren ville
     // metadata om dokumenter/filer likevel bli sendt til klienten i SSR-payloaden
-    // selv om komponenten ikke rendrer dem.
+    // selv om komponenten ikke rendrer dem. Sperren må gjelde både det dedikerte
+    // `dokumenter`-feltet og `sak.dokumenter` (samme metadata nøstet i sak-objektet),
+    // ellers lekker dokumentmetadata likevel via `sak` i loader-responsen.
     const erEier = erSakseier(sak, innlogget.navIdent);
     const harDeltTilgang = sak.saksbehandlere.deltMed.some(
       (s) => s.navIdent === innlogget.navIdent,
     );
     const harDirekteTilgang = erEier || harDeltTilgang;
+    const sakForRespons = harDirekteTilgang ? sak : { ...sak, dokumenter: [] };
 
     return {
-      sak,
+      sak: sakForRespons,
       historikk,
       journalposter,
       dokumenter: harDirekteTilgang ? sak.dokumenter : [],

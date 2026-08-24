@@ -145,6 +145,8 @@ describe("SakDetaljSide loader — backend-sti", () => {
     expect(resultat.harFilTilgang).toBe(true);
     expect(resultat.dokumenter).toEqual([]);
     expect(resultat.filer).toEqual([]);
+    // Regresjonssjekk: dokumentmetadata skal heller ikke lekke nøstet i sak-objektet.
+    expect(resultat.sak.dokumenter).toEqual([]);
   });
 
   it("eksponerer dokumenter/filer i loader-responsen når bruker har delt tilgang", async () => {
@@ -167,5 +169,6 @@ describe("SakDetaljSide loader — backend-sti", () => {
 
     expect(resultat.dokumenter.length).toBe(1);
     expect(resultat.filer).toEqual(filer);
+    expect(resultat.sak.dokumenter.length).toBe(1);
   });
 });
