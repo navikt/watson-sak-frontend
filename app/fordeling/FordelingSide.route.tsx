@@ -9,6 +9,10 @@ import { UfordelteSakerInnhold } from "./UfordelteSakerInnhold";
 
 export { action };
 
+/** Tabellen med ufordelte saker er bred, så siden ber layouten om å slippe
+ * maks-bredden for å unngå unødvendig horisontal scroll på brede skjermer. */
+export const handle = { bredPageBlock: true };
+
 export async function loader(args: Parameters<typeof lastSakerForFordeling>[0]) {
   const saker = await lastSakerForFordeling(args);
 

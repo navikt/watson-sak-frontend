@@ -30,6 +30,10 @@ const RADER_PER_SIDE = 20;
 const STANDARD_KOLONNE: AlleSakerKolonne = "opprettet";
 const STANDARD_RETNING: Sorteringsretning = "desc";
 
+/** Tabellen med saker er bred, så siden ber layouten om å slippe maks-bredden
+ * for å unngå unødvendig horisontal scroll på brede skjermer. */
+export const handle = { bredPageBlock: true };
+
 /** Mapping fra frontend-sorteringskolonne til backend API-feltnavn. */
 const BACKEND_SORT_FELT: Partial<Record<AlleSakerKolonne, string>> = {
   saksid: "id",

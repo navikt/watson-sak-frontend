@@ -21,6 +21,10 @@ import {
   parseVentestatuser,
 } from "./filtre";
 
+/** Tabellen med saker er bred, så siden ber layouten om å slippe maks-bredden
+ * for å unngå unødvendig horisontal scroll på brede skjermer. */
+export const handle = { bredPageBlock: true };
+
 export async function loader({ request }: Route.LoaderArgs) {
   const innloggetBruker = await hentInnloggetBruker({ request });
 
