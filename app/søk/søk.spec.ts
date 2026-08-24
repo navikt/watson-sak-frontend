@@ -98,7 +98,7 @@ test.describe("Søk", () => {
       await page.getByLabel("Søk i saker").press("Enter");
 
       const førsteLenke = page.locator(SØK_RESULTATLENKE_SELECTOR).first();
-      const saksreferanse = await førsteLenke.textContent();
+      const saksreferanse = (await førsteLenke.textContent())?.replace("#", "");
       await førsteLenke.click();
 
       await expect(page).toHaveURL(new RegExp(`/saker/${saksreferanse}`));
