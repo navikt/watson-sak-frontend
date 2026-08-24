@@ -5,6 +5,12 @@ vi.mock("~/config/env.server", () => ({
   skalBrukeMockdata: false,
 }));
 
+const getBackendOboTokenMock = vi.hoisted(() => vi.fn().mockResolvedValue("obo-token"));
+
+vi.mock("~/auth/access-token", () => ({
+  getBackendOboToken: getBackendOboTokenMock,
+}));
+
 const tomSideSvar = {
   ok: true,
   status: 200,
@@ -124,6 +130,24 @@ describe("Fordeling api.server", () => {
 
     const url = fetchMock.mock.calls[0][0] as string;
     expect(url).toContain("sortering=opprettet%2CDESC");
+  }, 15000);
+
+  it("henter fordelingssaker med fast grunnavgrensning: ufordelt og innlogget enhet", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(tomSideSvar);
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { hentKontrollsakerForFordeling } = await import("./api.server");
+
+    await hentKontrollsakerForFordeling(
+      new Request("http://localhost/fordeling?enhet=9999&utenAnsvarlig=false"),
+      "4812",
+    );
+
+    const url = fetchMock.mock.calls[0][0] as string;
+    expect(url).toContain("utenAnsvarlig=true");
+    expect(url).toContain("enhet=4812");
+    expect(url).not.toContain("enhet=9999");
+    expect(url).not.toContain("utenAnsvarlig=false");
   }, 15000);
 
   it("sender tildeling til backend med saksbehandler", async () => {

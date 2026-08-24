@@ -1,6 +1,7 @@
 import { data } from "react-router";
 import { oppdaterTilgjengeligeHandlinger } from "~/saker/mock-uuid";
 import { getBackendOboToken } from "~/auth/access-token";
+import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
 import { mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import { hentFordelingssaker } from "~/saker/mock-alle-saker.server";
@@ -61,15 +62,19 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const kontrollsaker = await hentKontrollsakerForFordeling(request);
-
-  // Mock-sti: filtrer lokalt (backend-param ignoreres i mock)
-  if (!kontrollsaker) {
+  if (skalBrukeMockdata) {
     return hentFordelingssaker(request)
       .filter(erEierlosKontrollsak)
       .map(mapKontrollsakTilFordelingSak);
   }
 
-  // Backend returnerer kun saker uten ansvarlig (utenAnsvarlig=true er sendt)
+  const innloggetBruker = await hentInnloggetBruker({ request });
+  const kontrollsaker = await hentKontrollsakerForFordeling(request, innloggetBruker.enhet);
+  if (!kontrollsaker) {
+    throw new Error("Forventet kontrollsaker i backend-modus for fordeling.");
+  }
+
+  // Backend returnerer kun saker uten ansvarlig i saksbehandlerens enhet
+  // (utenAnsvarlig=true og enhet=<innlogget enhet> er sendt).
   return kontrollsaker.items.map(mapKontrollsakTilFordelingSak);
 }

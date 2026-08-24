@@ -78,13 +78,13 @@ export async function hentKontrollsaker(
   return parsed.data;
 }
 
-export async function hentKontrollsakerForFordeling(request: Request) {
+export async function hentKontrollsakerForFordeling(request: Request, enhet: string) {
   if (skalBrukeMockdata) {
     return null;
   }
 
   const token = await getBackendOboToken(request);
-  return hentKontrollsaker({ token, page: 1, size: 100, utenAnsvarlig: true });
+  return hentKontrollsaker({ token, page: 1, size: 100, utenAnsvarlig: true, enhet: [enhet] });
 }
 
 type TildelKontrollsakArgs = {
