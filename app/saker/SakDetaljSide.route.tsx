@@ -37,6 +37,7 @@ import { merkingEtikett } from "~/saker/kategorier";
 import { formaterOrganisasjonsnummer } from "~/utils/string-utils";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import type { Route } from "./+types/SakDetaljSide.route";
+import { IngenFiltilgangKort } from "./filer/IngenFiltilgangKort";
 import { SakFilområde } from "./filer/SakFilområde";
 import { SakHandlingerKnapper } from "./handlinger/SakHandlingerKnapper";
 import { erAktivSakKontrollsak, erSakseier } from "./handlinger/tilgjengeligeHandlinger";
@@ -159,7 +160,6 @@ export default function SakDetaljSide() {
     historikk,
     dokumenter,
     filer,
-    harFilTilgang,
     andreSaker,
     saksbehandlerDetaljer,
   } = useLoaderData<typeof loader>();
@@ -190,10 +190,12 @@ export default function SakDetaljSide() {
   const erEier = erSakseier(sak, innloggetBruker.navIdent);
   const harDeltTilgang = delteSaksbehandlere.some((s) => s.navIdent === innloggetBruker.navIdent);
   const harDirekteTilgang = erEier || harDeltTilgang;
-  const kanSeFilområde = harDirekteTilgang || harFilTilgang;
+  // Filområdet (dokumenter og vedlegg) vises kun for eier eller delt-med — andre
+  // roller (f.eks. ansvarlig på en koblet sak) kan ikke åpne enkeltdokumenter,
+  // så blokken skjules helt i stedet for å vise innhold man ikke får tilgang til.
+  const kanSeFilområde = harDirekteTilgang;
   const kanRedigere = erEier && erAktiv;
   // Dokumenter kan redigeres av eier ELLER delt-med, så lenge saken er aktiv.
-  // Ansvarlig på koblet sak har kun les-tilgang — ikke skrivetilgang.
   const kanRedigereDokumenter = harDirekteTilgang && erAktiv;
   const [redigerer, setRedigerer] = useState(false);
   const [redigeringsøkt, setRedigeringsøkt] = useState(0);
@@ -636,7 +638,7 @@ export default function SakDetaljSide() {
               </VStack>
             </Kort>
 
-            {kanSeFilområde && (
+            {kanSeFilområde ? (
               <SakFilområde
                 dokumenter={dokumenter}
                 filer={filer}
@@ -644,6 +646,8 @@ export default function SakDetaljSide() {
                 redigerbar={kanRedigereDokumenter}
                 erSakseier={erEier}
               />
+            ) : (
+              <IngenFiltilgangKort />
             )}
 
             <SakerPåSammePerson

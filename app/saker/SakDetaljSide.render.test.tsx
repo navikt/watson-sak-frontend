@@ -114,6 +114,41 @@ describe("SakDetaljSide render", () => {
     expect(screen.queryByText("Organisasjonsnummer")).toBeNull();
   }, 15000);
 
+  it("viser Dokumenter-blokken for sak man er eier av", async () => {
+    renderDetaljside();
+
+    expect(await screen.findByRole("heading", { name: "Dokumenter" })).toBeDefined();
+    expect(
+      screen.queryByText("Du må få delt tilgang til saken for å kunne se dokumenter og vedlegg."),
+    ).toBeNull();
+  }, 15000);
+
+  it("skjuler Dokumenter-blokken og viser tilgangsmelding for koblet sak uten direkte tilgang", async () => {
+    const { hentMockState } = await import("~/testing/mock-store/session.server");
+    const { hentAlleSaker } = await import("~/testing/mock-store/alle-saker.server");
+    const koblingSakId = "102";
+    const koblingSak = hentAlleSaker(hentMockState(testRequest)).find(
+      (s) => s.id === Number(koblingSakId),
+    );
+    if (!koblingSak) {
+      throw new Error("Fant ikke testdata for koblingssak");
+    }
+    // Sak 102 har verken eier eller delt-med som er innlogget bruker (Z999999) fra
+    // før, men kobles her til sak 201 (som Z999999 eier) for å simulere
+    // "ansvarlig på koblet sak" — en rolle som får fil-tilgang i backend, men som
+    // ikke skal kunne se filområdet på sakssiden (se IngenFiltilgangKort).
+    koblingSak.kobledeSaker = [Number(testSakId)];
+
+    renderDetaljside(koblingSakId);
+
+    expect(
+      await screen.findByText(
+        "Du må få delt tilgang til saken for å kunne se dokumenter og vedlegg.",
+      ),
+    ).toBeDefined();
+    expect(screen.queryByRole("heading", { name: "Dokumenter" })).toBeNull();
+  }, 15000);
+
   it("viser organisasjonsnummer-felt i redigeringsmodus", async () => {
     renderDetaljside();
 

@@ -198,11 +198,12 @@ function erSaksbehandlerPåSak(sak: KontrollsakResponse, navIdent: string): bool
  * Henter filer for saken, men behandler manglende fil-tilgang (HTTP 403) som en
  * gyldig tilstand i stedet for en feil.
  *
- * Backend (`FilTilgangService`) gir kun fil-tilgang til den som er ansvarlig
- * for saken, saken er delt med (`deltMed`), som opprettet den (`opprettetAv`),
- * eller som er ansvarlig for en sak den er koblet til — en saksbehandler uten
- * noen av disse rollene skal likevel kunne åpne resten av sakssiden, bare
- * filområdet skjules stille (se `kanSeFilområde` i `SakDetaljSide.route.tsx`).
+ * Backend (`FilTilgangService`) kan gi fil-tilgang til flere roller enn eier og
+ * delt-med (bl.a. den som opprettet saken eller er ansvarlig på en koblet sak),
+ * men enkeltdokumenter kan likevel ikke åpnes av disse rollene. Sakssiden viser
+ * derfor filområdet kun for eier/delt-med (se `kanSeFilområde` i
+ * `SakDetaljSide.route.tsx`) uavhengig av `harFilTilgang` — feltet brukes her
+ * kun til å behandle 403 fra `hentFiler` som en gyldig tilstand, ikke som feil.
  *
  * Kalles fra `Promise.all` i loaderen — dersom `hentFiler` hadde kastet uhåndtert
  * herfra, ville hele loaderen (og dermed hele sakssiden) feilet for enhver
