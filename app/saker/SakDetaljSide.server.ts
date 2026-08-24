@@ -26,7 +26,7 @@ import { hentTekstfelt, hentValgfriTekst } from "~/utils/form-data";
 import { hentDokumenttreForSak } from "./filer/mock-data.server";
 import { hentFilerForSak } from "./filer/mock-data-filer.server";
 import { notatMalValg } from "./handlinger/notatValg";
-import { erAktivSakKontrollsak } from "./handlinger/tilgjengeligeHandlinger";
+import { erAktivSakKontrollsak, erSakseier } from "./handlinger/tilgjengeligeHandlinger";
 import {
   hentHistorikk,
   leggTilHendelse,
@@ -231,8 +231,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     const token = await getBackendOboToken(request);
     const sakId = params.sakId;
 
-    const [sak, historikk, journalposter, saksbehandlerDetaljer, filerResultat] = await Promise.all(
-      [
+    const [sak, historikk, journalposter, saksbehandlerDetaljer, filerResultat, innlogget] =
+      await Promise.all([
         backendApi.hentKontrollsak(token, sakId),
         // TODO: hentHendelser og hentJournalposter kaster på populasjonstilgang
         // (TilgangService.krevTilgang — skjermet person, geografisk osv.), en annen
@@ -244,8 +244,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
         backendApi.hentJournalposter(token, sakId),
         backendApi.hentSaksbehandlere(token),
         hentFilerMedTilgangskontroll(token, sakId),
-      ],
-    );
+        hentInnloggetBruker({ request }),
+      ]);
 
     // Henter kun første side (maks 100 saker) — visningen på sakdetaljsiden er en enkel
     // liste over "andre saker for personen", ikke en fullstendig paginert visning.
@@ -255,12 +255,23 @@ export async function loader({ request, params }: Route.LoaderArgs) {
         )
       : [];
 
+    // Dokumenter/filer skal kun eksponeres i loader-responsen (og dermed nås av klienten)
+    // for saksbehandlere med direkte tilgang (eier/delt-med) — se `kanSeFilområde` i
+    // SakDetaljSide.route.tsx, som styrer UI-visningen. Uten denne sperren ville
+    // metadata om dokumenter/filer likevel bli sendt til klienten i SSR-payloaden
+    // selv om komponenten ikke rendrer dem.
+    const erEier = erSakseier(sak, innlogget.navIdent);
+    const harDeltTilgang = sak.saksbehandlere.deltMed.some(
+      (s) => s.navIdent === innlogget.navIdent,
+    );
+    const harDirekteTilgang = erEier || harDeltTilgang;
+
     return {
       sak,
       historikk,
       journalposter,
-      dokumenter: sak.dokumenter,
-      filer: filerResultat.filer,
+      dokumenter: harDirekteTilgang ? sak.dokumenter : [],
+      filer: harDirekteTilgang ? filerResultat.filer : [],
       harFilTilgang: filerResultat.harFilTilgang,
       andreSaker,
       saksbehandlere: saksbehandlerDetaljer.map((sb) => sb.navn),

@@ -307,6 +307,21 @@ function normaliserPersonIdent(personIdent: string): string {
   return personIdent.replace(/\s/g, "");
 }
 
+/**
+ * Mapping historisk ident → gjeldende ident, for å teste at oppslag på en historisk
+ * ident (f.eks. etter kjønnsskifte eller feilregistrering) løses opp til personens
+ * gjeldende fødselsnummer/D-nummer — slik ekte backend gjør via nav-persondata-api.
+ */
+const historiskeIdentMappinger: Record<string, string> = {
+  "10987654321": "12345678901", // historisk ident for Ola Testesen
+};
+
+/** Løser opp en (eventuelt historisk) ident til gjeldende ident. Uendret hvis ikke historisk. */
+export function løsOppGjeldendeIdent(personIdent: string): string {
+  const normalisert = normaliserPersonIdent(personIdent);
+  return historiskeIdentMappinger[normalisert] ?? normalisert;
+}
+
 export function hentMockPerson(personIdent: string): MockPerson | null {
   return personerByIdent.get(normaliserPersonIdent(personIdent)) ?? null;
 }

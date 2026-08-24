@@ -29,6 +29,17 @@ vi.mock("~/config/env.server", () => ({
   skalBrukeMockdata: false,
 }));
 
+const mockHentInnloggetBruker = vi.fn().mockResolvedValue({
+  preferredUsername: "z999999",
+  name: "Saks Behandlersen",
+  navIdent: "Z999999",
+  enhet: "4812",
+});
+
+vi.mock("~/auth/innlogget-bruker.server", () => ({
+  hentInnloggetBruker: mockHentInnloggetBruker,
+}));
+
 vi.mock("~/auth/access-token", () => ({
   getBackendOboToken: vi.fn().mockResolvedValue("mock-token"),
 }));
@@ -54,7 +65,12 @@ function lagLoaderArgs(sakId = "1") {
 const grunnleggendeSak = {
   id: 1,
   personIdent: null,
-  dokumenter: [],
+  dokumenter: [{ id: "doc-1", tittel: "Et dokument" }],
+  saksbehandlere: {
+    eier: { navIdent: "Z999999", navn: "Saks Behandlersen", enhet: "4812" },
+    deltMed: [],
+    opprettetAv: { navIdent: "Z999999", navn: "Saks Behandlersen", enhet: "4812" },
+  },
 };
 
 describe("SakDetaljSide loader — backend-sti", () => {
@@ -103,5 +119,53 @@ describe("SakDetaljSide loader — backend-sti", () => {
     const { loader } = await import("./SakDetaljSide.server");
 
     await expect(loader(lagLoaderArgs())).rejects.toThrow("Intern feil");
+  });
+
+  it("skjuler dokumenter/filer i loader-responsen når bruker verken er eier eller delt med, selv om backend gir filtilgang", async () => {
+    const filer = [{ id: "f1", filnavn: "vedlegg.pdf" }];
+    mockHentKontrollsak.mockResolvedValue({
+      ...grunnleggendeSak,
+      saksbehandlere: {
+        eier: { navIdent: "Z111111", navn: "Annen Saksbehandler", enhet: "4812" },
+        deltMed: [],
+        opprettetAv: { navIdent: "Z111111", navn: "Annen Saksbehandler", enhet: "4812" },
+      },
+    });
+    mockHentHendelser.mockResolvedValue([]);
+    mockHentJournalposter.mockResolvedValue([]);
+    mockHentSaksbehandlere.mockResolvedValue([]);
+    // Backend kan gi filtilgang til flere roller enn eier/delt-med (se
+    // hentFilerMedTilgangskontroll), men loaderen skal likevel ikke sende
+    // dokument-/filmetadata til klienten uten direkte tilgang.
+    mockHentFiler.mockResolvedValue(filer);
+
+    const { loader } = await import("./SakDetaljSide.server");
+    const resultat = await loader(lagLoaderArgs());
+
+    expect(resultat.harFilTilgang).toBe(true);
+    expect(resultat.dokumenter).toEqual([]);
+    expect(resultat.filer).toEqual([]);
+  });
+
+  it("eksponerer dokumenter/filer i loader-responsen når bruker har delt tilgang", async () => {
+    const filer = [{ id: "f1", filnavn: "vedlegg.pdf" }];
+    mockHentKontrollsak.mockResolvedValue({
+      ...grunnleggendeSak,
+      saksbehandlere: {
+        eier: { navIdent: "Z111111", navn: "Annen Saksbehandler", enhet: "4812" },
+        deltMed: [{ navIdent: "Z999999", navn: "Saks Behandlersen", enhet: "4812" }],
+        opprettetAv: { navIdent: "Z111111", navn: "Annen Saksbehandler", enhet: "4812" },
+      },
+    });
+    mockHentHendelser.mockResolvedValue([]);
+    mockHentJournalposter.mockResolvedValue([]);
+    mockHentSaksbehandlere.mockResolvedValue([]);
+    mockHentFiler.mockResolvedValue(filer);
+
+    const { loader } = await import("./SakDetaljSide.server");
+    const resultat = await loader(lagLoaderArgs());
+
+    expect(resultat.dokumenter.length).toBe(1);
+    expect(resultat.filer).toEqual(filer);
   });
 });

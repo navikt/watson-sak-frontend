@@ -134,7 +134,17 @@ export function Saksliste({
             return (
               <Table.Row
                 key={rad.id}
-                onClick={gåTilRad}
+                onClick={
+                  gåTilRad
+                    ? (event) => {
+                        if (event.target !== event.currentTarget) {
+                          return;
+                        }
+
+                        gåTilRad();
+                      }
+                    : undefined
+                }
                 onKeyDown={
                   gåTilRad
                     ? (event) => {
