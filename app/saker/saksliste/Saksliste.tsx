@@ -99,7 +99,7 @@ export function Saksliste({
   }
 
   return (
-    <Table size={size}>
+    <Table size={size} stickyHeader>
       <Table.Header>
         <Table.Row>
           {kolonner.map((kolonne) => (
