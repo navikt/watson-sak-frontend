@@ -4,11 +4,18 @@ import type { KontrollsakResponse } from "~/saker/types.backend";
 import { getStatus } from "~/saker/visning";
 import { hentAlleSaker } from "./alle-saker.server";
 import { hentMockState } from "./session.server";
-import { formaterMockPersonnummer, hentMockPerson, type MockPerson } from "./personer.server";
+import {
+  formaterMockPersonnummer,
+  hentMockPerson,
+  løsOppGjeldendeIdent,
+  type MockPerson,
+} from "./personer.server";
 
 export type PersonOppslagResultat = {
   person: Person;
   eksisterendeSaker: EksisterendeSak[];
+  /** true dersom det ble søkt med en historisk ident som ble resolvet til personens gjeldende ident. */
+  søktMedHistoriskIdent: boolean;
 };
 
 type Person = {
@@ -78,8 +85,9 @@ function hentEksisterendeSaker(request: Request, personIdent: string): Eksistere
 }
 
 export function slaOppPerson(request: Request, fnr: string): PersonOppslagResultat | null {
-  const personIdent = normaliserPersonIdent(fnr);
-  const person = hentMockPerson(personIdent);
+  const søktIdent = normaliserPersonIdent(fnr);
+  const gjeldendeIdent = løsOppGjeldendeIdent(søktIdent);
+  const person = hentMockPerson(gjeldendeIdent);
 
   if (!person) {
     return null;
@@ -87,6 +95,7 @@ export function slaOppPerson(request: Request, fnr: string): PersonOppslagResult
 
   return {
     person: mapPerson(person),
-    eksisterendeSaker: hentEksisterendeSaker(request, personIdent),
+    eksisterendeSaker: hentEksisterendeSaker(request, gjeldendeIdent),
+    søktMedHistoriskIdent: gjeldendeIdent !== søktIdent,
   };
 }

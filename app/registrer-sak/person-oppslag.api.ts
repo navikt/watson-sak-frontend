@@ -65,6 +65,9 @@ export async function action({ request }: { request: Request }) {
           adresseskjermet: resultat.person.adresseskjermet,
         },
         eksisterendeSaker,
+        // Backend resolver alltid historiske identer til gjeldende ident (personIdent i
+        // responsen) — avviker den fra søket, ble det søkt med en historisk ident.
+        søktMedHistoriskIdent: resultat.person.personIdent !== fnr,
       });
     }
 

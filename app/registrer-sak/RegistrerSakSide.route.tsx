@@ -107,6 +107,10 @@ export default function OpprettSakSide() {
     personFetcher.data && "eksisterendeSaker" in personFetcher.data
       ? personFetcher.data.eksisterendeSaker
       : [];
+  const søktMedHistoriskIdent =
+    personFetcher.data && "søktMedHistoriskIdent" in personFetcher.data
+      ? personFetcher.data.søktMedHistoriskIdent
+      : false;
 
   const åpneSaker = useMemo(
     () => eksisterendeSaker.filter((sak) => !erLukketStatus(sak.status)),
@@ -190,6 +194,21 @@ export default function OpprettSakSide() {
             />
           </Search>
         </personFetcher.Form>
+
+        {/* Historisk ident brukt i søket — saken opprettes likevel på gjeldende ident */}
+        {harSøkt && person && søktMedHistoriskIdent && (
+          <LocalAlert status="announcement" className="max-w-xl">
+            <LocalAlert.Header>
+              <LocalAlert.Title as="h2">
+                Personnummeret/D-nummeret er ikke lenger gjeldende
+              </LocalAlert.Title>
+            </LocalAlert.Header>
+            <LocalAlert.Content>
+              Personnummeret eller D-nummeret du søkte med er ikke lenger gjeldende. Saken opprettes
+              på personens nåværende identifikator: <strong>{person.personnummer}</strong>.
+            </LocalAlert.Content>
+          </LocalAlert>
+        )}
 
         {/* Feil fra personoppslag */}
         {harSøkt && oppslagFeil && (
