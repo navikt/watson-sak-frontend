@@ -10,6 +10,7 @@ import type {
   KontrollsakStatus,
 } from "~/saker/types.backend";
 import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
+import { AntallTreffEtikett } from "~/saker/saksliste/AntallTreffEtikett";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
 import { RouteConfig } from "~/routeConfig";
 import {
@@ -112,6 +113,7 @@ export function MineSakerInnhold({
 
         <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:gap-8">
           <div className="min-w-0 flex-1 xl:order-first">
+            <AntallTreffEtikett antall={sorterteSaker.length} />
             <Saksliste
               rader={sorterteSaker.map((sak) => mapKontrollsakTilSakslisteRad(sak, detaljSti))}
               tomTekst="Ingen saker matcher valgte filtre."

@@ -9,6 +9,7 @@ import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { RouteConfig } from "~/routeConfig";
 import { TildelSaksbehandlerModal } from "~/saker/handlinger/TildelSaksbehandlerModal";
 import { mapFordelingSakTilSakslisteRad } from "~/saker/saksliste/adaptere";
+import { AntallTreffEtikett } from "~/saker/saksliste/AntallTreffEtikett";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
 import {
   filtrerUfordelteSaker,
@@ -138,6 +139,7 @@ export function UfordelteSakerInnhold({
             <div className="min-w-0">
               {harFiltrerteSaker ? (
                 <div className="overflow-x-auto">
+                  <AntallTreffEtikett antall={filtrerteSaker.length} />
                   <Saksliste
                     rader={sakslisteRader}
                     kolonner={[

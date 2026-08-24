@@ -6,6 +6,7 @@ import { hentKontrollsaker } from "~/fordeling/api.server";
 import { parseMultiValueParam } from "~/filtre/parseMultiValueParam";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
+import { AntallTreffEtikett } from "~/saker/saksliste/AntallTreffEtikett";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
 import { RouteConfig } from "~/routeConfig";
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
@@ -128,8 +129,15 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export default function AlleSakerSide() {
-  const { rader, aktivSide, totalSider, sorteringskolonne, sorteringsretning, filterAlternativer } =
-    useLoaderData<typeof loader>();
+  const {
+    rader,
+    aktivSide,
+    totalSider,
+    totalAntall,
+    sorteringskolonne,
+    sorteringsretning,
+    filterAlternativer,
+  } = useLoaderData<typeof loader>();
   const { merker, kategorier, misbrukstyper, enheter } = useKodeverk();
 
   const enhetAlternativer = enheter.map((e) => ({ label: e.beskrivelse, value: e.kode }));
@@ -178,6 +186,7 @@ export default function AlleSakerSide() {
         <section aria-label="Saker">
           <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:gap-8">
             <div className="min-w-0 flex-1 xl:order-first">
+              <AntallTreffEtikett antall={totalAntall} />
               <div className="overflow-x-auto [&_table]:w-full">
                 <Saksliste
                   rader={rader}
