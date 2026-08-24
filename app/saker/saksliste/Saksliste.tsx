@@ -79,6 +79,21 @@ const standardTitler: Record<SakslisteKolonne, string> = {
   saksbehandler: "Saksbehandler",
 };
 
+/**
+ * Sjekker om en klikk-/tastatur-hendelse på raden stammer fra et interaktivt
+ * element inni raden (lenke, knapp o.l.), slik at rad-navigasjonen ikke også
+ * trigges i tillegg til elementets egen handling (f.eks. «Tildel»-knappen).
+ *
+ * Merk: bruker IKKE `event.target !== event.currentTarget`, siden museklikk på
+ * en hvilken som helst celle (f.eks. en `<td>` eller tekst inni den) også ville
+ * gitt et target ulikt raden selv — det ville i praksis slått av all
+ * klikk-navigasjon i raden, ikke bare for interaktive elementer.
+ */
+function kommerFraInteraktivtElement(event: { target: EventTarget }): boolean {
+  const target = event.target as HTMLElement;
+  return target.closest("a, button, input, select, textarea, [role='button']") !== null;
+}
+
 export function Saksliste({
   rader,
   kolonner = standardKolonner,
@@ -137,7 +152,7 @@ export function Saksliste({
                 onClick={
                   gåTilRad
                     ? (event) => {
-                        if (event.target !== event.currentTarget) {
+                        if (kommerFraInteraktivtElement(event)) {
                           return;
                         }
 
@@ -148,7 +163,7 @@ export function Saksliste({
                 onKeyDown={
                   gåTilRad
                     ? (event) => {
-                        if (event.target !== event.currentTarget) {
+                        if (kommerFraInteraktivtElement(event)) {
                           return;
                         }
 

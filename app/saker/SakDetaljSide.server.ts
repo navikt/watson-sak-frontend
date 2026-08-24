@@ -296,8 +296,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       innlogget.navIdent,
   );
   const harFilTilgang = erEier || harDeltTilgang || harTilgangViaKobling;
-  const dokumenter = harFilTilgang ? hentDokumenttreForSak(request, String(sak.id)) : [];
-  const filer = harFilTilgang ? hentFilerForSak(request, String(sak.id)) : [];
+  // Kun direkte tilgang (eier/delt-med) gir rett til å se dokumenter/filer i UI-en
+  // (se `kanSeFilområde` i SakDetaljSide.route.tsx). `harFilTilgang` er bredere
+  // (inkluderer tilgang via koblet sak) og brukes ikke til å avgjøre om
+  // dokument-/filmetadata skal eksponeres i loader-responsen.
+  const harDirekteTilgang = erEier || harDeltTilgang;
+  const dokumenter = harDirekteTilgang ? hentDokumenttreForSak(request, String(sak.id)) : [];
+  const filer = harDirekteTilgang ? hentFilerForSak(request, String(sak.id)) : [];
   const andreSaker = alleSaker.filter(
     (annenSak) => annenSak.personIdent === sak.personIdent && annenSak.id !== sak.id,
   );

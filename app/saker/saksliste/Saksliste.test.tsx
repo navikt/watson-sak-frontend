@@ -131,4 +131,21 @@ describe("Saksliste", () => {
 
     expect(screen.queryByText("Sakdetaljer")).toBeNull();
   });
+
+  it("navigerer når man klikker på en celle i raden (ikke bare på selve raden)", () => {
+    const router = createMemoryRouter(
+      [
+        { path: "/", element: <Saksliste rader={rader} tomTekst="Ingen saker." /> },
+        { path: "/saker/:sakId", element: <p>Sakdetaljer</p> },
+      ],
+      { initialEntries: ["/"] },
+    );
+    render(<RouterProvider router={router} />);
+
+    // Klikker på navn-teksten (ikke lenka i saksid-cellen, og ikke raden selv) —
+    // skal likevel navigere, siden hele raden er klikkbar.
+    fireEvent.click(screen.getByText("Ola Nordmann"));
+
+    expect(screen.getByText("Sakdetaljer")).toBeDefined();
+  });
 });
