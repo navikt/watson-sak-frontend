@@ -61,7 +61,9 @@ function lagFordelingSak(overrides: Partial<FordelingSak> = {}): FordelingSak {
     kategori: "Arbeid",
     misbrukstyper: ["Skjult samliv"],
     ytelser: ["Dagpenger"],
+    merking: [],
     status: "Opprettet",
+    statusKode: "OPPRETTET",
     ventestatus: null,
     ...overrides,
   };

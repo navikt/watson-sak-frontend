@@ -112,7 +112,7 @@ describe("MineSakerInnhold", () => {
     expect(lenke.getAttribute("href")).toBe(`/saker/${getSaksreferanse(sakId)}`);
   });
 
-  it("viser Chips-filtre for status og ventestatus", () => {
+  it("viser Chips-filtre for status og arbeidsstatus", () => {
     renderMedRouter(
       <MineSakerInnhold
         saker={[lagKontrollsak()]}
@@ -123,7 +123,7 @@ describe("MineSakerInnhold", () => {
       />,
     );
 
-    expect(screen.getByText("Ventestatus")).toBeDefined();
+    expect(screen.getByText("Arbeidsstatus")).toBeDefined();
     expect(screen.getByRole("button", { name: "Opprettet" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Utredes" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Ingen" })).toBeDefined();

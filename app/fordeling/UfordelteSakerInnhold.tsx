@@ -22,6 +22,8 @@ import {
   type UfordeltSorteringsretning,
 } from "./ufordelte-saker";
 import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
+import { ALLE_STATUSER, parseStatuser } from "~/saker/status";
+import { formaterStatus } from "~/saker/visning";
 import type { FordelingSak } from "./typer";
 
 const antallPerSide = 6;
@@ -44,23 +46,38 @@ export function UfordelteSakerInnhold({
   const [sakSomTildeles, setSakSomTildeles] = useState<FordelingSak | null>(null);
 
   const kategoriFilter = useFilterParam("kategori", { resetKeys: RESET_KEYS });
-  const ytelseFilter = useFilterParam("ytelse", { resetKeys: RESET_KEYS });
+  const misbrukstypeFilter = useFilterParam("misbrukstype", { resetKeys: RESET_KEYS });
+  const merkingFilter = useFilterParam("merking", { resetKeys: RESET_KEYS });
+  const statusFilter = useFilterParam("status", { resetKeys: RESET_KEYS });
 
   const valgtSide = Number.parseInt(searchParams.get("side") ?? "1", 10) || 1;
   const sorteringskolonne = hentSorteringskolonne(searchParams.get("sorter"));
   const sorteringsretning = hentSorteringsretning(searchParams.get("retning"));
 
   const filtervalg = useMemo(() => hentUfordelteFiltervalg(saker), [saker]);
-  const aktiveFiltreVerdier = [...kategoriFilter.valgteVerdier, ...ytelseFilter.valgteVerdier];
+  const aktiveFiltreVerdier = [
+    ...kategoriFilter.valgteVerdier,
+    ...misbrukstypeFilter.valgteVerdier,
+    ...merkingFilter.valgteVerdier,
+    ...statusFilter.valgteVerdier,
+  ];
   const filterTekst = aktiveFiltreVerdier.length > 0 ? aktiveFiltreVerdier.join(", ") : null;
   const overskrift = filterTekst ? `Ufordelte saker – ${filterTekst}` : "Ufordelte saker";
   const filtrerteSaker = useMemo(
     () =>
       filtrerUfordelteSaker(saker, {
         kategorier: kategoriFilter.valgteVerdier,
-        ytelser: ytelseFilter.valgteVerdier,
+        misbrukstyper: misbrukstypeFilter.valgteVerdier,
+        merkinger: merkingFilter.valgteVerdier,
+        statuser: parseStatuser(statusFilter.valgteVerdier),
       }),
-    [saker, kategoriFilter.valgteVerdier, ytelseFilter.valgteVerdier],
+    [
+      saker,
+      kategoriFilter.valgteVerdier,
+      misbrukstypeFilter.valgteVerdier,
+      merkingFilter.valgteVerdier,
+      statusFilter.valgteVerdier,
+    ],
   );
   const sorterteSaker = useMemo(() => {
     if (!sorteringskolonne || !sorteringsretning) {
@@ -201,14 +218,39 @@ export function UfordelteSakerInnhold({
                   size="small"
                 />
               )}
-              {filtervalg.ytelser.length > 0 && (
+              {filtervalg.misbrukstyper.length > 0 && (
                 <ChipsFiltergruppe
-                  tittel="Ytelse"
-                  alternativer={filtervalg.ytelser.map((v) => ({ verdi: v, etikett: v }))}
-                  valgteVerdier={ytelseFilter.valgteVerdier}
+                  tittel="Misbrukstype"
+                  alternativer={filtervalg.misbrukstyper.map((v) => ({ verdi: v, etikett: v }))}
+                  valgteVerdier={misbrukstypeFilter.valgteVerdier}
                   onToggle={(verdi) => {
-                    sporHendelse("filter brukt", { filtergruppe: "ytelse", side: "fordeling" });
-                    ytelseFilter.toggle(verdi);
+                    sporHendelse("filter brukt", {
+                      filtergruppe: "misbrukstype",
+                      side: "fordeling",
+                    });
+                    misbrukstypeFilter.toggle(verdi);
+                  }}
+                  size="small"
+                />
+              )}
+              <ChipsFiltergruppe
+                tittel="Status"
+                alternativer={ALLE_STATUSER.map((s) => ({ verdi: s, etikett: formaterStatus(s) }))}
+                valgteVerdier={statusFilter.valgteVerdier}
+                onToggle={(verdi) => {
+                  sporHendelse("filter brukt", { filtergruppe: "status", side: "fordeling" });
+                  statusFilter.toggle(verdi);
+                }}
+                size="small"
+              />
+              {filtervalg.merkinger.length > 0 && (
+                <ChipsFiltergruppe
+                  tittel="Merking"
+                  alternativer={filtervalg.merkinger.map((v) => ({ verdi: v, etikett: v }))}
+                  valgteVerdier={merkingFilter.valgteVerdier}
+                  onToggle={(verdi) => {
+                    sporHendelse("filter brukt", { filtergruppe: "merking", side: "fordeling" });
+                    merkingFilter.toggle(verdi);
                   }}
                   size="small"
                 />

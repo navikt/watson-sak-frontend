@@ -15,6 +15,8 @@ import * as backendApi from "~/saker/api.server";
 import { mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
+import { ALLE_STATUSER } from "~/saker/status";
+import { formaterStatus } from "~/saker/visning";
 import type { Route } from "./+types/AlleSakerSide.route";
 import {
   type AlleSakerKolonne,
@@ -67,6 +69,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     parseMultiValueParam(url.searchParams, "misbrukstype"),
   );
   const filterMerking = normaliserFilterVerdier(parseMultiValueParam(url.searchParams, "merking"));
+  const filterStatus = normaliserFilterVerdier(parseMultiValueParam(url.searchParams, "status"));
 
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
@@ -80,6 +83,7 @@ export async function loader({ request }: Route.LoaderArgs) {
         misbruktype: filterMisbrukstype.length > 0 ? filterMisbrukstype : undefined,
         merking: filterMerking.length > 0 ? filterMerking : undefined,
         enhet: filterEnhet.length > 0 ? filterEnhet : undefined,
+        status: filterStatus.length > 0 ? filterStatus : undefined,
         sortering: lagSorteringParam(sorterKolonne, sorterRetning),
       }),
       backendApi.hentSaksbehandlere(token),
@@ -107,6 +111,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     kategori: filterKategori,
     misbrukstype: filterMisbrukstype,
     merking: filterMerking,
+    status: filterStatus,
   });
 
   const sorterteSaker = sorterSaker(filtrerteSaker, sorterKolonne, sorterRetning);
@@ -156,9 +161,14 @@ export default function AlleSakerSide() {
 
   // Ingen av disse filterparametrene er satt i utgangspunktet — dukker en av dem
   // opp, er det brukeren som har filtrert ned utvalget.
-  const harAktiveFiltre = ["enhet", "saksbehandler", "kategori", "misbrukstype", "merking"].some(
-    (nøkkel) => searchParams.getAll(nøkkel).some((verdi) => verdi.trim() !== ""),
-  );
+  const harAktiveFiltre = [
+    "enhet",
+    "saksbehandler",
+    "kategori",
+    "misbrukstype",
+    "merking",
+    "status",
+  ].some((nøkkel) => searchParams.getAll(nøkkel).some((verdi) => verdi.trim() !== ""));
   const tomTekst = harAktiveFiltre ? "Endre filtrering for å finne saker" : "Ingen saker funnet.";
 
   function gåTilSide(side: number) {
@@ -250,6 +260,7 @@ export default function AlleSakerSide() {
                   kategori: kategoriAlternativer,
                   misbrukstype: misbrukstypeAlternativer,
                   merking: merker,
+                  status: ALLE_STATUSER.map((s) => ({ label: formaterStatus(s), value: s })),
                 }}
               />
             </aside>

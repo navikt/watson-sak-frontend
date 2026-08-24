@@ -4,15 +4,9 @@ import type {
   KontrollsakStatus,
 } from "~/saker/types.backend";
 import { formaterBlokkeringsarsak } from "~/saker/visning";
+import { ALLE_STATUSER, parseStatuser } from "~/saker/status";
 
-export const ALLE_STATUSER: KontrollsakStatus[] = [
-  "OPPRETTET",
-  "UTREDES",
-  "STRAFFERETTSLIG_VURDERING",
-  "ANMELDT",
-  "HENLAGT",
-  "AVSLUTTET",
-];
+export { ALLE_STATUSER, parseStatuser };
 
 export const ALLE_VENTESTATUSER: (Blokkeringsarsak | "INGEN")[] = [
   "INGEN",
@@ -49,12 +43,6 @@ export function filtrerMineSaker(
     }
     return true;
   });
-}
-
-export function parseStatuser(verdier: string[]): KontrollsakStatus[] {
-  return verdier.filter((v): v is KontrollsakStatus =>
-    ALLE_STATUSER.includes(v as KontrollsakStatus),
-  );
 }
 
 export function parseVentestatuser(verdier: string[]): (Blokkeringsarsak | "INGEN")[] {

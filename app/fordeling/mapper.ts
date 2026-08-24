@@ -21,7 +21,9 @@ export function mapKontrollsakTilFordelingSak(kontrollsak: KontrollsakResponse):
     kategori: kategoriEtikett(kontrollsak.kategori),
     misbrukstyper: kontrollsak.misbruktype.map(formaterMisbrukstype),
     ytelser: kontrollsak.ytelser.map((ytelse) => formaterYtelseType(ytelse.type)),
+    merking: kontrollsak.merking,
     status: getStatus(kontrollsak),
+    statusKode: kontrollsak.status,
     ventestatus: kontrollsak.blokkert ? formaterBlokkeringsarsak(kontrollsak.blokkert) : null,
   };
 }

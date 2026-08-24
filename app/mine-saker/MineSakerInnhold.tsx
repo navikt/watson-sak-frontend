@@ -71,7 +71,8 @@ export function MineSakerInnhold({
   // Mine saker har en spesiell default-initialiseringslogikk:
   // Første toggle seeder begge filtergrupper med standardverdier.
   function toggleFilter(key: "status" | "ventestatus", verdi: string) {
-    sporHendelse("filter brukt", { filtergruppe: key, side: "mine-saker" });
+    const filtergruppe = key === "ventestatus" ? "arbeidsstatus" : key;
+    sporHendelse("filter brukt", { filtergruppe, side: "mine-saker" });
     setSearchParams((forrige) => {
       const neste = new URLSearchParams(forrige);
 
@@ -148,7 +149,7 @@ export function MineSakerInnhold({
                 size="small"
               />
               <ChipsFiltergruppe
-                tittel="Ventestatus"
+                tittel="Arbeidsstatus"
                 alternativer={filterAlternativer.ventestatus}
                 valgteVerdier={aktivtFilter.ventestatus}
                 onToggle={(verdi) => toggleFilter("ventestatus", verdi)}
