@@ -19,7 +19,6 @@ import {
   sorterSaker,
   sorteringskolonner,
 } from "~/alle-saker/saker-utils";
-import { DEFAULT_STATUSER, DEFAULT_VENTESTATUSER } from "./filtre";
 import { DeltMedMegSeksjon } from "./DeltMedMegSeksjon";
 
 const STANDARD_KOLONNE: AlleSakerKolonne = "opprettet";
@@ -61,25 +60,14 @@ export function MineSakerInnhold({
     [saker, sorteringskolonne, sorteringsretning],
   );
 
-  // Ingen filter aktivt vil si at alle status- og ventestatusalternativene er valgt —
-  // avviker vi fra det, er det brukeren som har filtrert ned utvalget.
-  const harAktiveFiltre =
-    aktivtFilter.status.length < filterAlternativer.status.length ||
-    aktivtFilter.ventestatus.length < filterAlternativer.ventestatus.length;
+  const harAktiveFiltre = aktivtFilter.status.length > 0 || aktivtFilter.ventestatus.length > 0;
   const tomTekst = harAktiveFiltre ? "Endre filtrering for å finne saker" : "Du har ingen saker.";
 
-  // Mine saker har en spesiell default-initialiseringslogikk:
-  // Første toggle seeder begge filtergrupper med standardverdier.
   function toggleFilter(key: "status" | "ventestatus", verdi: string) {
     const filtergruppe = key === "ventestatus" ? "arbeidsstatus" : key;
     sporHendelse("filter brukt", { filtergruppe, side: "mine-saker" });
     setSearchParams((forrige) => {
       const neste = new URLSearchParams(forrige);
-
-      if (!forrige.has("status") && !forrige.has("ventestatus")) {
-        for (const s of DEFAULT_STATUSER) neste.append("status", s);
-        for (const v of DEFAULT_VENTESTATUSER) neste.append("ventestatus", v);
-      }
 
       const gjeldende = neste.getAll(key);
       neste.delete(key);

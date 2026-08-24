@@ -3,7 +3,6 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
 import { getSaksreferanse } from "~/saker/id";
 import type { KontrollsakResponse } from "~/saker/types.backend";
-import { ALLE_STATUSER, ALLE_VENTESTATUSER } from "./filtre";
 import { MineSakerInnhold } from "./MineSakerInnhold";
 
 function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
@@ -144,7 +143,7 @@ describe("MineSakerInnhold", () => {
     expect(screen.getByText("Endre filtrering for å finne saker")).toBeDefined();
   });
 
-  it("viser tilpasset tomtekst når alle filtre er valgt og ingen saker finnes", () => {
+  it("viser tilpasset tomtekst når ingen filtre er valgt og ingen saker finnes", () => {
     renderMedRouter(
       <MineSakerInnhold
         saker={[]}
@@ -152,8 +151,8 @@ describe("MineSakerInnhold", () => {
         detaljSti="/saker"
         filterAlternativer={standardFilterAlternativer}
         aktivtFilter={{
-          status: ALLE_STATUSER,
-          ventestatus: ALLE_VENTESTATUSER,
+          status: [],
+          ventestatus: [],
         }}
       />,
     );

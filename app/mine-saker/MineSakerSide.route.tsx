@@ -13,8 +13,6 @@ import { MineSakerInnhold } from "./MineSakerInnhold";
 import {
   ALLE_STATUSER,
   ALLE_VENTESTATUSER,
-  DEFAULT_STATUSER,
-  DEFAULT_VENTESTATUSER,
   filtrerMineSaker,
   formaterVentestatus,
   parseStatuser,
@@ -31,13 +29,11 @@ export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const harFilterParams = url.searchParams.has("status") || url.searchParams.has("ventestatus");
 
-  const statusFilter = harFilterParams
-    ? parseStatuser(url.searchParams.getAll("status"))
-    : DEFAULT_STATUSER;
+  const statusFilter = harFilterParams ? parseStatuser(url.searchParams.getAll("status")) : [];
 
   const ventestatusFilter = harFilterParams
     ? parseVentestatuser(url.searchParams.getAll("ventestatus"))
-    : DEFAULT_VENTESTATUSER;
+    : [];
 
   // Map ventestatus til backend-parametre:
   // "INGEN" → utenBlokkering=true, faktiske blokkeringsårsaker → blokkert[]
@@ -55,7 +51,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       page: 1,
       // TODO: Legg til paginering (se RAILS-2-1). size=200 er en midlertidig øvre grense.
       size: 200,
-      status: statusFilter,
+      status: statusFilter.length > 0 ? statusFilter : undefined,
       blokkert: blokkerteVentestatus.length > 0 ? blokkerteVentestatus : undefined,
       utenBlokkering: harIngenVentestatus ? true : undefined,
     };

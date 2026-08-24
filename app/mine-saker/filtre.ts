@@ -15,17 +15,6 @@ export const ALLE_VENTESTATUSER: (Blokkeringsarsak | "INGEN")[] = [
   "I_BERO",
 ];
 
-export const DEFAULT_STATUSER: KontrollsakStatus[] = [
-  "OPPRETTET",
-  "UTREDES",
-  "STRAFFERETTSLIG_VURDERING",
-];
-
-export const DEFAULT_VENTESTATUSER: (Blokkeringsarsak | "INGEN")[] = [
-  "INGEN",
-  "VENTER_PA_INFORMASJON",
-];
-
 export function formaterVentestatus(verdi: Blokkeringsarsak | "INGEN"): string {
   return verdi === "INGEN" ? "Ingen" : formaterBlokkeringsarsak(verdi);
 }
