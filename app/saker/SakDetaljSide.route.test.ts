@@ -590,7 +590,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(kontrollsak.saksbehandlere.eier).toBeNull();
     expect(kontrollsak.saksbehandlere.opprettetAv.enhet).toBe("NORD");
     expect(hentHistorikk(testRequest, String(kontrollsak.id))[0]?.hendelsesType).toBe(
-      "MOTTAKSENHET_ENDRET",
+      "ENHET_ENDRET",
     );
   });
 

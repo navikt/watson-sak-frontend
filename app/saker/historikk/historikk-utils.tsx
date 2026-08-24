@@ -57,7 +57,7 @@ export function hendelseTittel(hendelse: SakHendelse): string {
       return `Sak ${formaterStatus(hendelse.status).toLocaleLowerCase("nb-NO")}`;
     case "SAKSINFORMASJON_ENDRET":
       return "Saksinformasjon endret";
-    case "MOTTAKSENHET_ENDRET":
+    case "ENHET_ENDRET":
       return "Mottaksenhet endret";
     case "VIDERESENDT_TIL_NAY_NFP":
       return "Videresendt til NAY/NFP";
@@ -214,7 +214,7 @@ export function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
       return <PersonIcon {...iconProps} />;
     case "SAKSINFORMASJON_ENDRET":
       return <PencilIcon {...iconProps} />;
-    case "MOTTAKSENHET_ENDRET":
+    case "ENHET_ENDRET":
       return <ArrowRightIcon {...iconProps} />;
     case "SAK_HENLAGT":
       return <XMarkOctagonIcon {...iconProps} />;

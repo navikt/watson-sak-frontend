@@ -897,7 +897,7 @@ async function mockAction(
           enhet: nySeksjon,
         };
       }
-      leggTilHendelse(request, sak, "MOTTAKSENHET_ENDRET");
+      leggTilHendelse(request, sak, "ENHET_ENDRET");
       break;
     }
     case "send_til_annen_enhet": {
@@ -912,7 +912,7 @@ async function mockAction(
         enhet: nySeksjon,
       };
       sak.saksbehandlere.eier = null;
-      leggTilHendelse(request, sak, "MOTTAKSENHET_ENDRET");
+      leggTilHendelse(request, sak, "ENHET_ENDRET");
       break;
     }
     case "rediger_saksinformasjon": {
