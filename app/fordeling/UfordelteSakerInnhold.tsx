@@ -105,7 +105,6 @@ export function UfordelteSakerInnhold({
   }
 
   const harSaker = saker.length > 0;
-  const harFiltrerteSaker = filtrerteSaker.length > 0;
 
   return (
     <section aria-labelledby="ufordelte-saker-overskrift" className="pb-12">
@@ -137,58 +136,45 @@ export function UfordelteSakerInnhold({
         ) : (
           <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start">
             <div className="min-w-0">
-              {harFiltrerteSaker ? (
-                <div className="overflow-x-auto">
-                  <AntallTreffEtikett antall={filtrerteSaker.length} />
-                  <Saksliste
-                    rader={sakslisteRader}
-                    kolonner={[
-                      "saksid",
-                      "kategori",
-                      "misbrukstype",
-                      "status",
-                      "opprettet",
-                      "oppdatert",
-                    ]}
-                    tomTekst="Ingen ufordelte saker matcher filtrene."
-                    tilbake={{ to: RouteConfig.FORDELING, label: "Fordeling" }}
-                    handlingKolonneTittel={<span className="sr-only">Handling</span>}
-                    sortering={{
-                      kolonne: sorteringskolonne,
-                      retning: sorteringsretning,
-                      onSort: (kolonne) => sorterPåKolonne(kolonne as UfordeltSorteringskolonne),
-                      sorterbare: [...ufordelteSorteringskolonner],
-                    }}
-                    renderRadHandling={(rad) => (
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          const valgtSak = paginerteSaker.elementer.find(
-                            (sak) => sak.id === rad.id,
-                          );
+              <div className="overflow-x-auto">
+                <AntallTreffEtikett antall={filtrerteSaker.length} />
+                <Saksliste
+                  rader={sakslisteRader}
+                  kolonner={[
+                    "saksid",
+                    "kategori",
+                    "misbrukstype",
+                    "status",
+                    "opprettet",
+                    "oppdatert",
+                  ]}
+                  tomTekst="Endre filtrering for å finne saker"
+                  tilbake={{ to: RouteConfig.FORDELING, label: "Fordeling" }}
+                  handlingKolonneTittel={<span className="sr-only">Handling</span>}
+                  sortering={{
+                    kolonne: sorteringskolonne,
+                    retning: sorteringsretning,
+                    onSort: (kolonne) => sorterPåKolonne(kolonne as UfordeltSorteringskolonne),
+                    sorterbare: [...ufordelteSorteringskolonner],
+                  }}
+                  renderRadHandling={(rad) => (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        const valgtSak = paginerteSaker.elementer.find((sak) => sak.id === rad.id);
 
-                          if (valgtSak) {
-                            setSakSomTildeles(valgtSak);
-                          }
-                        }}
-                        className="cursor-pointer border-none bg-transparent p-0 text-sm font-semibold text-ax-text-accent underline-offset-2 hover:underline focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
-                      >
-                        Tildel
-                      </button>
-                    )}
-                  />
-                </div>
-              ) : (
-                <LocalAlert status="announcement">
-                  <LocalAlert.Header>
-                    <LocalAlert.Title as="h2">Ingen treff</LocalAlert.Title>
-                  </LocalAlert.Header>
-                  <LocalAlert.Content>
-                    Ingen ufordelte saker matcher de valgte filtrene. Prøv å fjerne noen filtre.
-                  </LocalAlert.Content>
-                </LocalAlert>
-              )}
+                        if (valgtSak) {
+                          setSakSomTildeles(valgtSak);
+                        }
+                      }}
+                      className="cursor-pointer border-none bg-transparent p-0 text-sm font-semibold text-ax-text-accent underline-offset-2 hover:underline focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
+                    >
+                      Tildel
+                    </button>
+                  )}
+                />
+              </div>
 
               {paginerteSaker.totalSider > 1 && (
                 <HStack justify="center" className="mt-6">

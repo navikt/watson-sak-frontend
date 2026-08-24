@@ -56,10 +56,11 @@ describe("Saksliste", () => {
     expect(screen.getByRole("button", { name: "Tildel" })).toBeDefined();
   });
 
-  it("viser tomtekst uten tabell når listen er tom", () => {
+  it("viser tomtekst inni tabellen med headere synlige når listen er tom", () => {
     renderMedRouter(<Saksliste rader={[]} tomTekst="Ingen saker akkurat nå." />);
 
     expect(screen.getByText("Ingen saker akkurat nå.")).toBeDefined();
-    expect(screen.queryByRole("table")).toBeNull();
+    expect(screen.getByRole("table")).toBeDefined();
+    expect(screen.getByRole("columnheader", { name: "Saksid" })).toBeDefined();
   });
 });

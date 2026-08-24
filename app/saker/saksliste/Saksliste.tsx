@@ -93,10 +93,7 @@ export function Saksliste({
 }: SakslisteProps) {
   const navigate = useNavigate();
   const lenkeState = tilbake ? { tilbake } : undefined;
-
-  if (rader.length === 0) {
-    return <BodyShort className="text-ax-text-neutral-subtle">{tomTekst}</BodyShort>;
-  }
+  const antallKolonner = kolonner.length + (renderRadHandling ? 1 : 0);
 
   return (
     <Table size={size} stickyHeader>
@@ -119,25 +116,35 @@ export function Saksliste({
         </Table.Row>
       </Table.Header>
       <Table.Body>
-        {rader.map((rad) => (
-          <Table.Row
-            key={rad.id}
-            onClick={
-              rad.detaljHref
-                ? () => {
-                    sporHendelse("sak åpnet");
-                    navigate(rad.detaljHref ?? "", { state: lenkeState });
-                  }
-                : undefined
-            }
-            className={rad.detaljHref ? "cursor-pointer" : undefined}
-          >
-            {kolonner.map((kolonne) => (
-              <Table.DataCell key={kolonne}>{renderCelle(rad, kolonne, lenkeState)}</Table.DataCell>
-            ))}
-            {renderRadHandling ? <Table.DataCell>{renderRadHandling(rad)}</Table.DataCell> : null}
+        {rader.length === 0 ? (
+          <Table.Row>
+            <Table.DataCell colSpan={antallKolonner}>
+              <BodyShort className="text-ax-text-neutral-subtle">{tomTekst}</BodyShort>
+            </Table.DataCell>
           </Table.Row>
-        ))}
+        ) : (
+          rader.map((rad) => (
+            <Table.Row
+              key={rad.id}
+              onClick={
+                rad.detaljHref
+                  ? () => {
+                      sporHendelse("sak åpnet");
+                      navigate(rad.detaljHref ?? "", { state: lenkeState });
+                    }
+                  : undefined
+              }
+              className={rad.detaljHref ? "cursor-pointer" : undefined}
+            >
+              {kolonner.map((kolonne) => (
+                <Table.DataCell key={kolonne}>
+                  {renderCelle(rad, kolonne, lenkeState)}
+                </Table.DataCell>
+              ))}
+              {renderRadHandling ? <Table.DataCell>{renderRadHandling(rad)}</Table.DataCell> : null}
+            </Table.Row>
+          ))
+        )}
       </Table.Body>
     </Table>
   );

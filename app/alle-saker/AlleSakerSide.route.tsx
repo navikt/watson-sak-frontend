@@ -152,7 +152,14 @@ export default function AlleSakerSide() {
     kategori: m.kategori,
   }));
 
-  const [, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Ingen av disse filterparametrene er satt i utgangspunktet — dukker en av dem
+  // opp, er det brukeren som har filtrert ned utvalget.
+  const harAktiveFiltre = ["enhet", "saksbehandler", "kategori", "misbrukstype", "merking"].some(
+    (nøkkel) => searchParams.getAll(nøkkel).some((verdi) => verdi.trim() !== ""),
+  );
+  const tomTekst = harAktiveFiltre ? "Endre filtrering for å finne saker" : "Ingen saker funnet.";
 
   function gåTilSide(side: number) {
     setSearchParams((forrige) => {
@@ -203,7 +210,7 @@ export default function AlleSakerSide() {
                     "oppdatert",
                     "saksbehandler",
                   ]}
-                  tomTekst="Ingen saker funnet."
+                  tomTekst={tomTekst}
                   tilbake={{ to: RouteConfig.ALLE_SAKER, label: "Alle saker" }}
                   sortering={{
                     kolonne: sorteringskolonne,

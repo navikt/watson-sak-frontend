@@ -61,6 +61,13 @@ export function MineSakerInnhold({
     [saker, sorteringskolonne, sorteringsretning],
   );
 
+  // Ingen filter aktivt vil si at alle status- og ventestatusalternativene er valgt —
+  // avviker vi fra det, er det brukeren som har filtrert ned utvalget.
+  const harAktiveFiltre =
+    aktivtFilter.status.length < filterAlternativer.status.length ||
+    aktivtFilter.ventestatus.length < filterAlternativer.ventestatus.length;
+  const tomTekst = harAktiveFiltre ? "Endre filtrering for å finne saker" : "Du har ingen saker.";
+
   // Mine saker har en spesiell default-initialiseringslogikk:
   // Første toggle seeder begge filtergrupper med standardverdier.
   function toggleFilter(key: "status" | "ventestatus", verdi: string) {
@@ -116,7 +123,7 @@ export function MineSakerInnhold({
             <AntallTreffEtikett antall={sorterteSaker.length} />
             <Saksliste
               rader={sorterteSaker.map((sak) => mapKontrollsakTilSakslisteRad(sak, detaljSti))}
-              tomTekst="Ingen saker matcher valgte filtre."
+              tomTekst={tomTekst}
               tilbake={{ to: RouteConfig.MINE_SAKER, label: "Mine saker" }}
               sortering={{
                 kolonne: sorteringskolonne,
