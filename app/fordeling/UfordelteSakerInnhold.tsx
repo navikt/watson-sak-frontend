@@ -118,7 +118,7 @@ export function UfordelteSakerInnhold({
         </Heading>
 
         {harSaker && (
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid max-w-4xl gap-4 md:grid-cols-3">
             <Oppsummeringskort tittel="Antall">{oppsummering.antallTekst}</Oppsummeringskort>
             <Oppsummeringskort tittel="Liggetid">{oppsummering.eldsteTekst}</Oppsummeringskort>
             <Oppsummeringskort tittel="Ytelser">{oppsummering.ytelserTekst}</Oppsummeringskort>
