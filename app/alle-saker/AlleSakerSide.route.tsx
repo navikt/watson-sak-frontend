@@ -15,7 +15,7 @@ import * as backendApi from "~/saker/api.server";
 import { mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
-import { ALLE_STATUSER } from "~/saker/status";
+import { ALLE_STATUSER, parseStatuser } from "~/saker/status";
 import { formaterStatus } from "~/saker/visning";
 import type { Route } from "./+types/AlleSakerSide.route";
 import {
@@ -69,7 +69,9 @@ export async function loader({ request }: Route.LoaderArgs) {
     parseMultiValueParam(url.searchParams, "misbrukstype"),
   );
   const filterMerking = normaliserFilterVerdier(parseMultiValueParam(url.searchParams, "merking"));
-  const filterStatus = normaliserFilterVerdier(parseMultiValueParam(url.searchParams, "status"));
+  const filterStatus = parseStatuser(
+    normaliserFilterVerdier(parseMultiValueParam(url.searchParams, "status")),
+  );
 
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);

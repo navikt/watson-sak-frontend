@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
 import { Saksliste, type SakslisteRad } from "./Saksliste";
@@ -62,5 +62,23 @@ describe("Saksliste", () => {
     expect(screen.getByText("Ingen saker akkurat nå.")).toBeDefined();
     expect(screen.getByRole("table")).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Saksid" })).toBeDefined();
+  });
+
+  it("gjør raden fokuserbar og navigerer med Enter-tasten", () => {
+    const router = createMemoryRouter(
+      [
+        { path: "/", element: <Saksliste rader={rader} tomTekst="Ingen saker." /> },
+        { path: "/saker/:sakId", element: <p>Sakdetaljer</p> },
+      ],
+      { initialEntries: ["/"] },
+    );
+    render(<RouterProvider router={router} />);
+
+    const rad = screen.getByRole("row", { name: /#201/ });
+    expect(rad.getAttribute("tabindex")).toBe("0");
+
+    fireEvent.keyDown(rad, { key: "Enter" });
+
+    expect(screen.getByText("Sakdetaljer")).toBeDefined();
   });
 });

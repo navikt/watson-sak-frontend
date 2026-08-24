@@ -55,11 +55,15 @@ export function UfordelteSakerInnhold({
   const sorteringsretning = hentSorteringsretning(searchParams.get("retning"));
 
   const filtervalg = useMemo(() => hentUfordelteFiltervalg(saker), [saker]);
+  const gyldigeStatuser = useMemo(
+    () => parseStatuser(statusFilter.valgteVerdier),
+    [statusFilter.valgteVerdier],
+  );
   const aktiveFiltreVerdier = [
     ...kategoriFilter.valgteVerdier,
     ...misbrukstypeFilter.valgteVerdier,
     ...merkingFilter.valgteVerdier,
-    ...statusFilter.valgteVerdier,
+    ...gyldigeStatuser.map((status) => formaterStatus(status)),
   ];
   const filterTekst = aktiveFiltreVerdier.length > 0 ? aktiveFiltreVerdier.join(", ") : null;
   const overskrift = filterTekst ? `Ufordelte saker – ${filterTekst}` : "Ufordelte saker";
@@ -69,14 +73,14 @@ export function UfordelteSakerInnhold({
         kategorier: kategoriFilter.valgteVerdier,
         misbrukstyper: misbrukstypeFilter.valgteVerdier,
         merkinger: merkingFilter.valgteVerdier,
-        statuser: parseStatuser(statusFilter.valgteVerdier),
+        statuser: gyldigeStatuser,
       }),
     [
       saker,
       kategoriFilter.valgteVerdier,
       misbrukstypeFilter.valgteVerdier,
       merkingFilter.valgteVerdier,
-      statusFilter.valgteVerdier,
+      gyldigeStatuser,
     ],
   );
   const sorterteSaker = useMemo(() => {
