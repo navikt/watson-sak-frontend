@@ -16,9 +16,21 @@ const testState = vi.hoisted(() => ({
 
 const getBackendOboTokenMock = vi.hoisted(() => vi.fn().mockResolvedValue("token-123"));
 const tildelKontrollsakMock = vi.hoisted(() => vi.fn());
+const hentInnloggetBrukerMock = vi.hoisted(() =>
+  vi.fn().mockResolvedValue({
+    preferredUsername: "test",
+    name: "Saks Behandlersen",
+    navIdent: "Z999999",
+    enhet: "4812",
+  }),
+);
 
 vi.mock("~/auth/access-token", () => ({
   getBackendOboToken: getBackendOboTokenMock,
+}));
+
+vi.mock("~/auth/innlogget-bruker.server", () => ({
+  hentInnloggetBruker: hentInnloggetBrukerMock,
 }));
 
 vi.mock("~/config/env.server", () => ({
@@ -200,5 +212,26 @@ describe("FordelingSide loader", () => {
       misbrukstyper: mockKontrollsaker[0].misbruktype.map(formaterMisbrukstype),
       ytelser: mockKontrollsaker[0].ytelser.map((ytelse) => formaterYtelseType(ytelse.type)),
     });
+  });
+
+  it("beholder grunnavgrensning i backend-modus ved å sende innlogget enhet til fordeling-kall", async () => {
+    testState.skalBrukeMockdata = false;
+    const { hentKontrollsakerForFordeling } = await import("./api.server");
+    vi.mocked(hentKontrollsakerForFordeling).mockResolvedValue({
+      items: [],
+      page: 1,
+      size: 100,
+      totalItems: 0,
+      totalPages: 0,
+    });
+
+    const { loader } = await import("./FordelingSide.server");
+    await loader({
+      request: new Request("http://localhost/fordeling?enhet=9999&utenAnsvarlig=false"),
+      params: {},
+      context: {},
+    } as Route.LoaderArgs);
+
+    expect(hentKontrollsakerForFordeling).toHaveBeenCalledWith(expect.any(Request), "4812");
   });
 });

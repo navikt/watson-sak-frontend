@@ -27,6 +27,7 @@ type FilterAlternativer = {
   kategori: KodeAlternativ[];
   misbrukstype: MisbrukstypeAlternativ[];
   merking: string[];
+  status: KodeAlternativ[];
 };
 
 interface Props {
@@ -93,7 +94,8 @@ export function Filtre({ alternativer }: Props) {
     alternativer.enhet.length > 0 ||
     alternativer.kategori.length > 0 ||
     alternativer.misbrukstype.length > 0 ||
-    alternativer.merking.length > 0;
+    alternativer.merking.length > 0 ||
+    alternativer.status.length > 0;
 
   if (!harAlternativer) return null;
 
@@ -149,6 +151,14 @@ export function Filtre({ alternativer }: Props) {
           tittel="Merking"
           paramKey="merking"
           alternativer={alternativer.merking}
+        />
+      )}
+
+      {alternativer.status.length > 0 && (
+        <ChipsFiltergruppeForKodeAlternativ
+          tittel="Status"
+          paramKey="status"
+          alternativer={alternativer.status}
         />
       )}
     </Filterpanel>

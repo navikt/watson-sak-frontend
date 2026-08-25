@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
 import { Saksliste, type SakslisteRad } from "./Saksliste";
@@ -56,10 +56,96 @@ describe("Saksliste", () => {
     expect(screen.getByRole("button", { name: "Tildel" })).toBeDefined();
   });
 
-  it("viser tomtekst uten tabell når listen er tom", () => {
+  it("viser tomtekst inni tabellen med headere synlige når listen er tom", () => {
     renderMedRouter(<Saksliste rader={[]} tomTekst="Ingen saker akkurat nå." />);
 
     expect(screen.getByText("Ingen saker akkurat nå.")).toBeDefined();
-    expect(screen.queryByRole("table")).toBeNull();
+    expect(screen.getByRole("table")).toBeDefined();
+    expect(screen.getByRole("columnheader", { name: "Saksid" })).toBeDefined();
+  });
+
+  it("gjør raden fokuserbar og navigerer med Enter-tasten", () => {
+    const router = createMemoryRouter(
+      [
+        { path: "/", element: <Saksliste rader={rader} tomTekst="Ingen saker." /> },
+        { path: "/saker/:sakId", element: <p>Sakdetaljer</p> },
+      ],
+      { initialEntries: ["/"] },
+    );
+    render(<RouterProvider router={router} />);
+
+    const rad = screen.getByRole("row", { name: /#201/ });
+    expect(rad.getAttribute("tabindex")).toBe("0");
+
+    fireEvent.keyDown(rad, { key: "Enter" });
+
+    expect(screen.getByText("Sakdetaljer")).toBeDefined();
+  });
+
+  it("navigerer ikke når Enter trykkes på en knapp inni raden", () => {
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/",
+          element: (
+            <Saksliste
+              rader={rader}
+              tomTekst="Ingen saker."
+              renderRadHandling={() => <button type="button">Tildel</button>}
+            />
+          ),
+        },
+        { path: "/saker/:sakId", element: <p>Sakdetaljer</p> },
+      ],
+      { initialEntries: ["/"] },
+    );
+    render(<RouterProvider router={router} />);
+
+    const tildelKnapp = screen.getByRole("button", { name: "Tildel" });
+    fireEvent.keyDown(tildelKnapp, { key: "Enter" });
+
+    expect(screen.queryByText("Sakdetaljer")).toBeNull();
+  });
+
+  it("navigerer ikke når man klikker på en knapp inni raden", () => {
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/",
+          element: (
+            <Saksliste
+              rader={rader}
+              tomTekst="Ingen saker."
+              renderRadHandling={() => <button type="button">Tildel</button>}
+            />
+          ),
+        },
+        { path: "/saker/:sakId", element: <p>Sakdetaljer</p> },
+      ],
+      { initialEntries: ["/"] },
+    );
+    render(<RouterProvider router={router} />);
+
+    const tildelKnapp = screen.getByRole("button", { name: "Tildel" });
+    fireEvent.click(tildelKnapp);
+
+    expect(screen.queryByText("Sakdetaljer")).toBeNull();
+  });
+
+  it("navigerer når man klikker på en celle i raden (ikke bare på selve raden)", () => {
+    const router = createMemoryRouter(
+      [
+        { path: "/", element: <Saksliste rader={rader} tomTekst="Ingen saker." /> },
+        { path: "/saker/:sakId", element: <p>Sakdetaljer</p> },
+      ],
+      { initialEntries: ["/"] },
+    );
+    render(<RouterProvider router={router} />);
+
+    // Klikker på navn-teksten (ikke lenka i saksid-cellen, og ikke raden selv) —
+    // skal likevel navigere, siden hele raden er klikkbar.
+    fireEvent.click(screen.getByText("Ola Nordmann"));
+
+    expect(screen.getByText("Sakdetaljer")).toBeDefined();
   });
 });

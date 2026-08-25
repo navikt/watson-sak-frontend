@@ -26,7 +26,7 @@ import { hentTekstfelt, hentValgfriTekst } from "~/utils/form-data";
 import { hentDokumenttreForSak } from "./filer/mock-data.server";
 import { hentFilerForSak } from "./filer/mock-data-filer.server";
 import { notatMalValg } from "./handlinger/notatValg";
-import { erAktivSakKontrollsak } from "./handlinger/tilgjengeligeHandlinger";
+import { erAktivSakKontrollsak, erSakseier } from "./handlinger/tilgjengeligeHandlinger";
 import {
   hentHistorikk,
   leggTilHendelse,
@@ -198,11 +198,12 @@ function erSaksbehandlerPåSak(sak: KontrollsakResponse, navIdent: string): bool
  * Henter filer for saken, men behandler manglende fil-tilgang (HTTP 403) som en
  * gyldig tilstand i stedet for en feil.
  *
- * Backend (`FilTilgangService`) gir kun fil-tilgang til den som er ansvarlig
- * for saken, saken er delt med (`deltMed`), som opprettet den (`opprettetAv`),
- * eller som er ansvarlig for en sak den er koblet til — en saksbehandler uten
- * noen av disse rollene skal likevel kunne åpne resten av sakssiden, bare
- * filområdet skjules stille (se `kanSeFilområde` i `SakDetaljSide.route.tsx`).
+ * Backend (`FilTilgangService`) kan gi fil-tilgang til flere roller enn eier og
+ * delt-med (bl.a. den som opprettet saken eller er ansvarlig på en koblet sak),
+ * men enkeltdokumenter kan likevel ikke åpnes av disse rollene. Sakssiden viser
+ * derfor filområdet kun for eier/delt-med (se `kanSeFilområde` i
+ * `SakDetaljSide.route.tsx`) uavhengig av `harFilTilgang` — feltet brukes her
+ * kun til å behandle 403 fra `hentFiler` som en gyldig tilstand, ikke som feil.
  *
  * Kalles fra `Promise.all` i loaderen — dersom `hentFiler` hadde kastet uhåndtert
  * herfra, ville hele loaderen (og dermed hele sakssiden) feilet for enhver
@@ -230,8 +231,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     const token = await getBackendOboToken(request);
     const sakId = params.sakId;
 
-    const [sak, historikk, journalposter, saksbehandlerDetaljer, filerResultat] = await Promise.all(
-      [
+    const [sak, historikk, journalposter, saksbehandlerDetaljer, filerResultat, innlogget] =
+      await Promise.all([
         backendApi.hentKontrollsak(token, sakId),
         // TODO: hentHendelser og hentJournalposter kaster på populasjonstilgang
         // (TilgangService.krevTilgang — skjermet person, geografisk osv.), en annen
@@ -243,8 +244,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
         backendApi.hentJournalposter(token, sakId),
         backendApi.hentSaksbehandlere(token),
         hentFilerMedTilgangskontroll(token, sakId),
-      ],
-    );
+        hentInnloggetBruker({ request }),
+      ]);
 
     // Henter kun første side (maks 100 saker) — visningen på sakdetaljsiden er en enkel
     // liste over "andre saker for personen", ikke en fullstendig paginert visning.
@@ -254,12 +255,26 @@ export async function loader({ request, params }: Route.LoaderArgs) {
         )
       : [];
 
+    // Dokumenter/filer skal kun eksponeres i loader-responsen (og dermed nås av klienten)
+    // for saksbehandlere med direkte tilgang (eier/delt-med) — se `kanSeFilområde` i
+    // SakDetaljSide.route.tsx, som styrer UI-visningen. Uten denne sperren ville
+    // metadata om dokumenter/filer likevel bli sendt til klienten i SSR-payloaden
+    // selv om komponenten ikke rendrer dem. Sperren må gjelde både det dedikerte
+    // `dokumenter`-feltet og `sak.dokumenter` (samme metadata nøstet i sak-objektet),
+    // ellers lekker dokumentmetadata likevel via `sak` i loader-responsen.
+    const erEier = erSakseier(sak, innlogget.navIdent);
+    const harDeltTilgang = sak.saksbehandlere.deltMed.some(
+      (s) => s.navIdent === innlogget.navIdent,
+    );
+    const harDirekteTilgang = erEier || harDeltTilgang;
+    const sakForRespons = harDirekteTilgang ? sak : { ...sak, dokumenter: [] };
+
     return {
-      sak,
+      sak: sakForRespons,
       historikk,
       journalposter,
-      dokumenter: sak.dokumenter,
-      filer: filerResultat.filer,
+      dokumenter: harDirekteTilgang ? sak.dokumenter : [],
+      filer: harDirekteTilgang ? filerResultat.filer : [],
       harFilTilgang: filerResultat.harFilTilgang,
       andreSaker,
       saksbehandlere: saksbehandlerDetaljer.map((sb) => sb.navn),
@@ -284,8 +299,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       innlogget.navIdent,
   );
   const harFilTilgang = erEier || harDeltTilgang || harTilgangViaKobling;
-  const dokumenter = harFilTilgang ? hentDokumenttreForSak(request, String(sak.id)) : [];
-  const filer = harFilTilgang ? hentFilerForSak(request, String(sak.id)) : [];
+  // Kun direkte tilgang (eier/delt-med) gir rett til å se dokumenter/filer i UI-en
+  // (se `kanSeFilområde` i SakDetaljSide.route.tsx). `harFilTilgang` er bredere
+  // (inkluderer tilgang via koblet sak) og brukes ikke til å avgjøre om
+  // dokument-/filmetadata skal eksponeres i loader-responsen.
+  const harDirekteTilgang = erEier || harDeltTilgang;
+  const dokumenter = harDirekteTilgang ? hentDokumenttreForSak(request, String(sak.id)) : [];
+  const filer = harDirekteTilgang ? hentFilerForSak(request, String(sak.id)) : [];
   const andreSaker = alleSaker.filter(
     (annenSak) => annenSak.personIdent === sak.personIdent && annenSak.id !== sak.id,
   );

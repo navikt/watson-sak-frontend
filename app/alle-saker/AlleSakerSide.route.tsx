@@ -6,6 +6,7 @@ import { hentKontrollsaker } from "~/fordeling/api.server";
 import { parseMultiValueParam } from "~/filtre/parseMultiValueParam";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
+import { AntallTreffEtikett } from "~/saker/saksliste/AntallTreffEtikett";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
 import { RouteConfig } from "~/routeConfig";
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
@@ -14,6 +15,8 @@ import * as backendApi from "~/saker/api.server";
 import { mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
+import { ALLE_STATUSER, parseStatuser } from "~/saker/status";
+import { formaterStatus } from "~/saker/visning";
 import type { Route } from "./+types/AlleSakerSide.route";
 import {
   type AlleSakerKolonne,
@@ -28,6 +31,10 @@ import { Filtre } from "./Filtre";
 const RADER_PER_SIDE = 20;
 const STANDARD_KOLONNE: AlleSakerKolonne = "opprettet";
 const STANDARD_RETNING: Sorteringsretning = "desc";
+
+/** Tabellen med saker er bred, så siden ber layouten om å slippe maks-bredden
+ * for å unngå unødvendig horisontal scroll på brede skjermer. */
+export const handle = { bredPageBlock: true };
 
 /** Mapping fra frontend-sorteringskolonne til backend API-feltnavn. */
 const BACKEND_SORT_FELT: Partial<Record<AlleSakerKolonne, string>> = {
@@ -62,6 +69,9 @@ export async function loader({ request }: Route.LoaderArgs) {
     parseMultiValueParam(url.searchParams, "misbrukstype"),
   );
   const filterMerking = normaliserFilterVerdier(parseMultiValueParam(url.searchParams, "merking"));
+  const filterStatus = parseStatuser(
+    normaliserFilterVerdier(parseMultiValueParam(url.searchParams, "status")),
+  );
 
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
@@ -75,6 +85,7 @@ export async function loader({ request }: Route.LoaderArgs) {
         misbruktype: filterMisbrukstype.length > 0 ? filterMisbrukstype : undefined,
         merking: filterMerking.length > 0 ? filterMerking : undefined,
         enhet: filterEnhet.length > 0 ? filterEnhet : undefined,
+        status: filterStatus.length > 0 ? filterStatus : undefined,
         sortering: lagSorteringParam(sorterKolonne, sorterRetning),
       }),
       backendApi.hentSaksbehandlere(token),
@@ -102,6 +113,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     kategori: filterKategori,
     misbrukstype: filterMisbrukstype,
     merking: filterMerking,
+    status: filterStatus,
   });
 
   const sorterteSaker = sorterSaker(filtrerteSaker, sorterKolonne, sorterRetning);
@@ -128,8 +140,15 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export default function AlleSakerSide() {
-  const { rader, aktivSide, totalSider, sorteringskolonne, sorteringsretning, filterAlternativer } =
-    useLoaderData<typeof loader>();
+  const {
+    rader,
+    aktivSide,
+    totalSider,
+    totalAntall,
+    sorteringskolonne,
+    sorteringsretning,
+    filterAlternativer,
+  } = useLoaderData<typeof loader>();
   const { merker, kategorier, misbrukstyper, enheter } = useKodeverk();
 
   const enhetAlternativer = enheter.map((e) => ({ label: e.beskrivelse, value: e.kode }));
@@ -140,7 +159,19 @@ export default function AlleSakerSide() {
     kategori: m.kategori,
   }));
 
-  const [, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Ingen av disse filterparametrene er satt i utgangspunktet — dukker en av dem
+  // opp, er det brukeren som har filtrert ned utvalget.
+  const harAktiveFiltre = [
+    "enhet",
+    "saksbehandler",
+    "kategori",
+    "misbrukstype",
+    "merking",
+    "status",
+  ].some((nøkkel) => searchParams.getAll(nøkkel).some((verdi) => verdi.trim() !== ""));
+  const tomTekst = harAktiveFiltre ? "Endre filtrering for å finne saker" : "Ingen saker funnet.";
 
   function gåTilSide(side: number) {
     setSearchParams((forrige) => {
@@ -178,6 +209,7 @@ export default function AlleSakerSide() {
         <section aria-label="Saker">
           <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:gap-8">
             <div className="min-w-0 flex-1 xl:order-first">
+              <AntallTreffEtikett antall={totalAntall} />
               <div className="overflow-x-auto [&_table]:w-full">
                 <Saksliste
                   rader={rader}
@@ -190,7 +222,7 @@ export default function AlleSakerSide() {
                     "oppdatert",
                     "saksbehandler",
                   ]}
-                  tomTekst="Ingen saker funnet."
+                  tomTekst={tomTekst}
                   tilbake={{ to: RouteConfig.ALLE_SAKER, label: "Alle saker" }}
                   sortering={{
                     kolonne: sorteringskolonne,
@@ -230,6 +262,7 @@ export default function AlleSakerSide() {
                   kategori: kategoriAlternativer,
                   misbrukstype: misbrukstypeAlternativer,
                   merking: merker,
+                  status: ALLE_STATUSER.map((s) => ({ label: formaterStatus(s), value: s })),
                 }}
               />
             </aside>

@@ -18,7 +18,9 @@ const lagSak = (overstyringer: Partial<FordelingSak> = {}): FordelingSak => ({
   kategori: "Arbeid",
   misbrukstyper: ["Skjult samliv"],
   ytelser: ["Dagpenger"],
+  merking: [],
   status: "Opprettet",
+  statusKode: "OPPRETTET",
   ventestatus: null,
   ...overstyringer,
 });
@@ -41,9 +43,12 @@ describe("UfordelteSakerInnhold", () => {
 
   it("viser aktive filtre i overskriften når filtre er valgt", () => {
     render(
-      <MemoryRouter initialEntries={["/?ytelse=Dagpenger&ytelse=Barnetrygd"]}>
+      <MemoryRouter initialEntries={["/?misbrukstype=Skjult+samliv&merking=Prioritert"]}>
         <UfordelteSakerInnhold
-          saker={[lagSak(), lagSak({ id: 302, ytelser: ["Barnetrygd"] })]}
+          saker={[
+            lagSak(),
+            lagSak({ id: 302, misbrukstyper: ["Skjult samliv"], merking: ["Prioritert"] }),
+          ]}
           saksbehandlere={["Kari Nordmann"]}
           saksbehandlerDetaljer={mockSaksbehandlerDetaljer}
           submitPath={RouteConfig.FORDELING}
@@ -52,7 +57,7 @@ describe("UfordelteSakerInnhold", () => {
     );
 
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(
-      "Ufordelte saker – Dagpenger, Barnetrygd",
+      "Ufordelte saker – Skjult samliv, Prioritert",
     );
   });
 

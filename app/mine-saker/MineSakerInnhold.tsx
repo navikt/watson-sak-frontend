@@ -10,6 +10,7 @@ import type {
   KontrollsakStatus,
 } from "~/saker/types.backend";
 import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
+import { AntallTreffEtikett } from "~/saker/saksliste/AntallTreffEtikett";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
 import { RouteConfig } from "~/routeConfig";
 import {
@@ -18,7 +19,6 @@ import {
   sorterSaker,
   sorteringskolonner,
 } from "~/alle-saker/saker-utils";
-import { DEFAULT_STATUSER, DEFAULT_VENTESTATUSER } from "./filtre";
 import { DeltMedMegSeksjon } from "./DeltMedMegSeksjon";
 
 const STANDARD_KOLONNE: AlleSakerKolonne = "opprettet";
@@ -60,17 +60,14 @@ export function MineSakerInnhold({
     [saker, sorteringskolonne, sorteringsretning],
   );
 
-  // Mine saker har en spesiell default-initialiseringslogikk:
-  // Første toggle seeder begge filtergrupper med standardverdier.
+  const harAktiveFiltre = aktivtFilter.status.length > 0 || aktivtFilter.ventestatus.length > 0;
+  const tomTekst = harAktiveFiltre ? "Endre filtrering for å finne saker" : "Du har ingen saker.";
+
   function toggleFilter(key: "status" | "ventestatus", verdi: string) {
-    sporHendelse("filter brukt", { filtergruppe: key, side: "mine-saker" });
+    const filtergruppe = key === "ventestatus" ? "arbeidsstatus" : key;
+    sporHendelse("filter brukt", { filtergruppe, side: "mine-saker" });
     setSearchParams((forrige) => {
       const neste = new URLSearchParams(forrige);
-
-      if (!forrige.has("status") && !forrige.has("ventestatus")) {
-        for (const s of DEFAULT_STATUSER) neste.append("status", s);
-        for (const v of DEFAULT_VENTESTATUSER) neste.append("ventestatus", v);
-      }
 
       const gjeldende = neste.getAll(key);
       neste.delete(key);
@@ -112,9 +109,10 @@ export function MineSakerInnhold({
 
         <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:gap-8">
           <div className="min-w-0 flex-1 xl:order-first">
+            <AntallTreffEtikett antall={sorterteSaker.length} />
             <Saksliste
               rader={sorterteSaker.map((sak) => mapKontrollsakTilSakslisteRad(sak, detaljSti))}
-              tomTekst="Ingen saker matcher valgte filtre."
+              tomTekst={tomTekst}
               tilbake={{ to: RouteConfig.MINE_SAKER, label: "Mine saker" }}
               sortering={{
                 kolonne: sorteringskolonne,
@@ -139,7 +137,7 @@ export function MineSakerInnhold({
                 size="small"
               />
               <ChipsFiltergruppe
-                tittel="Ventestatus"
+                tittel="Arbeidsstatus"
                 alternativer={filterAlternativer.ventestatus}
                 valgteVerdier={aktivtFilter.ventestatus}
                 onToggle={(verdi) => toggleFilter("ventestatus", verdi)}

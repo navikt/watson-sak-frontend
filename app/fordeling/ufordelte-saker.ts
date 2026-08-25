@@ -2,6 +2,7 @@ import { forskjellIDager } from "~/utils/date-utils";
 import { getSaksreferanse } from "~/saker/id";
 export { paginerElementer } from "~/utils/paginering";
 import type { FordelingSak } from "./typer";
+import type { KontrollsakStatus } from "~/saker/types.backend";
 
 export const ufordelteSorteringskolonner = [
   "saksid",
@@ -16,7 +17,9 @@ export type UfordeltSorteringsretning = "stigende" | "synkende";
 
 interface UfordelteFiltre {
   kategorier: string[];
-  ytelser: string[];
+  misbrukstyper: string[];
+  merkinger: string[];
+  statuser: KontrollsakStatus[];
 }
 
 export function hentUfordelteFiltervalg(saker: FordelingSak[]) {
@@ -24,7 +27,8 @@ export function hentUfordelteFiltervalg(saker: FordelingSak[]) {
     kategorier: hentSorterteUnikeVerdier(
       saker.flatMap((sak) => (sak.kategori ? [sak.kategori] : [])),
     ),
-    ytelser: hentSorterteUnikeVerdier(saker.flatMap((sak) => sak.ytelser)),
+    misbrukstyper: hentSorterteUnikeVerdier(saker.flatMap((sak) => sak.misbrukstyper)),
+    merkinger: hentSorterteUnikeVerdier(saker.flatMap((sak) => sak.merking)),
   };
 }
 
@@ -36,10 +40,15 @@ export function filtrerUfordelteSaker(
     const matcherKategori =
       filtre.kategorier.length === 0 ||
       (sak.kategori ? filtre.kategorier.includes(sak.kategori) : false);
-    const matcherYtelse =
-      filtre.ytelser.length === 0 || sak.ytelser.some((ytelse) => filtre.ytelser.includes(ytelse));
+    const matcherMisbrukstype =
+      filtre.misbrukstyper.length === 0 ||
+      sak.misbrukstyper.some((type) => filtre.misbrukstyper.includes(type));
+    const matcherMerking =
+      filtre.merkinger.length === 0 ||
+      sak.merking.some((merking) => filtre.merkinger.includes(merking));
+    const matcherStatus = filtre.statuser.length === 0 || filtre.statuser.includes(sak.statusKode);
 
-    return matcherKategori && matcherYtelse;
+    return matcherKategori && matcherMisbrukstype && matcherMerking && matcherStatus;
   });
 }
 

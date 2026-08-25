@@ -128,6 +128,7 @@ describe("filtrerSaker", () => {
         kategori: [],
         misbrukstype: [],
         merking: [],
+        status: [],
       }),
     ).toHaveLength(2);
   });
@@ -139,6 +140,7 @@ describe("filtrerSaker", () => {
       kategori: ["SAMLIV"],
       misbrukstype: [],
       merking: [],
+      status: [],
     });
     expect(resultat).toHaveLength(1);
     expect(resultat[0].id).toBe(100);
@@ -151,6 +153,7 @@ describe("filtrerSaker", () => {
       kategori: [],
       misbrukstype: [],
       merking: [],
+      status: [],
     });
     expect(resultat).toHaveLength(1);
     expect(resultat[0].id).toBe(200);
@@ -163,6 +166,7 @@ describe("filtrerSaker", () => {
       kategori: ["ARBEID"],
       misbrukstype: [],
       merking: [],
+      status: [],
     });
     expect(resultat).toHaveLength(0);
   });
@@ -174,6 +178,7 @@ describe("filtrerSaker", () => {
       kategori: [],
       misbrukstype: ["SKJULT_SAMLIV"],
       merking: [],
+      status: [],
     });
     expect(resultat).toHaveLength(1);
     expect(resultat[0].id).toBe(100);
@@ -186,6 +191,7 @@ describe("filtrerSaker", () => {
       kategori: ["ARBEID"],
       misbrukstype: ["FIKTIVT_ARBEIDSFORHOLD"],
       merking: [],
+      status: [],
     });
     expect(resultat).toHaveLength(1);
     expect(resultat[0].id).toBe(200);
@@ -199,8 +205,25 @@ describe("filtrerSaker", () => {
       kategori: ["ARBEID"],
       misbrukstype: ["SKJULT_SAMLIV"],
       merking: [],
+      status: [],
     });
     expect(resultat).toHaveLength(0);
+  });
+
+  it("filtrerer på status", () => {
+    const sakerMedUlikStatus = [...saker, lagSak({ id: 300, status: "UTREDES" })];
+
+    const resultat = filtrerSaker(sakerMedUlikStatus, {
+      enhet: [],
+      saksbehandler: [],
+      kategori: [],
+      misbrukstype: [],
+      merking: [],
+      status: ["UTREDES"],
+    });
+
+    expect(resultat).toHaveLength(1);
+    expect(resultat[0].id).toBe(300);
   });
 });
 

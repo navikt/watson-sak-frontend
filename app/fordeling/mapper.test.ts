@@ -78,7 +78,9 @@ describe("Fordeling mapper", () => {
       kategori: "Arbeid",
       misbrukstyper: [],
       ytelser: ["Dagpenger"],
+      merking: [],
       status: "Opprettet",
+      statusKode: "OPPRETTET",
       ventestatus: null,
     });
   });
@@ -96,7 +98,9 @@ describe("Fordeling mapper", () => {
       kategori: "Ukjent kategori",
       misbrukstyper: [],
       ytelser: ["Dagpenger"],
+      merking: [],
       status: "Opprettet",
+      statusKode: "OPPRETTET",
       ventestatus: null,
     });
   });

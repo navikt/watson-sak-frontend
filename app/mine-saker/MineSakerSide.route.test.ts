@@ -77,15 +77,11 @@ describe("MineSakerSide loader", () => {
     expect(resultat.filterAlternativer.ventestatus.length).toBe(4);
   });
 
-  it("bruker default-filter når ingen URL-parametere er satt", async () => {
+  it("har ingen aktive filtre når ingen URL-parametere er satt", async () => {
     const resultat = await loader(loaderArgs);
 
-    expect(resultat.aktivtFilter.status).toEqual([
-      "OPPRETTET",
-      "UTREDES",
-      "STRAFFERETTSLIG_VURDERING",
-    ]);
-    expect(resultat.aktivtFilter.ventestatus).toEqual(["INGEN", "VENTER_PA_INFORMASJON"]);
+    expect(resultat.aktivtFilter.status).toEqual([]);
+    expect(resultat.aktivtFilter.ventestatus).toEqual([]);
   });
 
   it("bruker URL-parametere for filtrering når de er satt", async () => {

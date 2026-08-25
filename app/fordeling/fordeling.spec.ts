@@ -37,17 +37,17 @@ test.describe("Ufordelte saker", () => {
     await expect(tiltakRad).toHaveCount(1);
     await expect(tiltakRad).toContainText("Misbruk av tiltaksplass");
 
-    const samlivKnapp = page.getByRole("button", { name: "Samliv" });
-    await samlivKnapp.click();
-    await expect(samlivKnapp).toHaveAttribute("aria-pressed", "true");
+    const arbeidKnapp = page.getByRole("button", { name: "Arbeid", exact: true });
+    await arbeidKnapp.click();
+    await expect(arbeidKnapp).toHaveAttribute("aria-pressed", "true");
 
-    await page.getByRole("button", { name: "Barnetrygd" }).click();
+    await page.getByRole("button", { name: "Feil inntektsgrunnlag" }).click();
 
     const sakSomSkalTildeles = page
       .locator("tbody tr")
-      .filter({ hasText: "101" })
-      .filter({ hasText: "Endret sivilstatus" })
-      .filter({ hasText: "Samliv" });
+      .filter({ hasText: "109" })
+      .filter({ hasText: "Feil inntektsgrunnlag" })
+      .filter({ hasText: "Arbeid" });
 
     await expect(sakSomSkalTildeles).toHaveCount(1);
     await sakSomSkalTildeles.getByRole("button", { name: "Tildel" }).click();

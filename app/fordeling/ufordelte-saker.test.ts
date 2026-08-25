@@ -16,7 +16,9 @@ const lagSak = (overstyringer: Partial<FordelingSak>): FordelingSak => ({
   kategori: "Arbeid",
   misbrukstyper: [],
   ytelser: ["Dagpenger"],
+  merking: [],
   status: "Opprettet",
+  statusKode: "OPPRETTET",
   ventestatus: null,
   ...overstyringer,
 });
@@ -24,30 +26,33 @@ const lagSak = (overstyringer: Partial<FordelingSak>): FordelingSak => ({
 describe("ufordelte-saker", () => {
   it("utleder alfabetisk sorterte filtervalg fra de ufordelte sakene", () => {
     const saker = [
-      lagSak({ id: 1, kategori: "Tiltak", ytelser: ["Sykepenger"] }),
-      lagSak({ id: 2, kategori: "Samliv", ytelser: ["Barnetrygd"] }),
-      lagSak({ id: 3, kategori: "Arbeid", ytelser: ["Dagpenger"] }),
-      lagSak({ id: 4, kategori: "Arbeid", ytelser: ["Barnetrygd"] }),
+      lagSak({ id: 1, kategori: "Tiltak", misbrukstyper: ["Skjult samliv"] }),
+      lagSak({ id: 2, kategori: "Samliv", misbrukstyper: ["Falsk identitet"] }),
+      lagSak({ id: 3, kategori: "Arbeid", misbrukstyper: ["Svart arbeid"], merking: ["Hastesak"] }),
+      lagSak({ id: 4, kategori: "Arbeid", misbrukstyper: ["Svart arbeid"] }),
     ];
 
     expect(hentUfordelteFiltervalg(saker)).toEqual({
       kategorier: ["Arbeid", "Samliv", "Tiltak"],
-      ytelser: ["Barnetrygd", "Dagpenger", "Sykepenger"],
+      misbrukstyper: ["Falsk identitet", "Skjult samliv", "Svart arbeid"],
+      merkinger: ["Hastesak"],
     });
   });
 
-  it("filtrerer med kategori og ytelse og justerer ugyldig side ved paginering", () => {
+  it("filtrerer med kategori, misbrukstype, merking og status og justerer ugyldig side ved paginering", () => {
     const saker = [
-      lagSak({ id: 1, kategori: "Arbeid", ytelser: ["Dagpenger"] }),
-      lagSak({ id: 2, kategori: "Arbeid", ytelser: ["AAP"] }),
-      lagSak({ id: 3, kategori: "Arbeid", ytelser: ["Dagpenger"] }),
-      lagSak({ id: 4, kategori: "Tiltak", ytelser: ["Dagpenger"] }),
-      lagSak({ id: 5, kategori: "Samliv", ytelser: ["Dagpenger"] }),
+      lagSak({ id: 1, kategori: "Arbeid", misbrukstyper: ["Svart arbeid"] }),
+      lagSak({ id: 2, kategori: "Arbeid", misbrukstyper: ["Falsk identitet"] }),
+      lagSak({ id: 3, kategori: "Arbeid", misbrukstyper: ["Svart arbeid"] }),
+      lagSak({ id: 4, kategori: "Tiltak", misbrukstyper: ["Svart arbeid"] }),
+      lagSak({ id: 5, kategori: "Samliv", misbrukstyper: ["Svart arbeid"] }),
     ];
 
     const filtrerteSaker = filtrerUfordelteSaker(saker, {
       kategorier: ["Arbeid"],
-      ytelser: ["Dagpenger"],
+      misbrukstyper: ["Svart arbeid"],
+      merkinger: [],
+      statuser: [],
     });
 
     expect(filtrerteSaker.map((sak) => sak.id)).toEqual([1, 3]);
@@ -57,6 +62,22 @@ describe("ufordelte-saker", () => {
       totalSider: 2,
       elementer: [filtrerteSaker[1]],
     });
+  });
+
+  it("filtrerer på statuskode", () => {
+    const saker = [
+      lagSak({ id: 1, statusKode: "OPPRETTET" }),
+      lagSak({ id: 2, statusKode: "UTREDES" }),
+    ];
+
+    expect(
+      filtrerUfordelteSaker(saker, {
+        kategorier: [],
+        misbrukstyper: [],
+        merkinger: [],
+        statuser: ["UTREDES"],
+      }).map((sak) => sak.id),
+    ).toEqual([2]);
   });
 
   it("lager oppsummering med antall saker, eldste liggetid og relevante ytelser", () => {

@@ -9,6 +9,7 @@ import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { RouteConfig } from "~/routeConfig";
 import { TildelSaksbehandlerModal } from "~/saker/handlinger/TildelSaksbehandlerModal";
 import { mapFordelingSakTilSakslisteRad } from "~/saker/saksliste/adaptere";
+import { AntallTreffEtikett } from "~/saker/saksliste/AntallTreffEtikett";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
 import {
   filtrerUfordelteSaker,
@@ -21,6 +22,8 @@ import {
   type UfordeltSorteringsretning,
 } from "./ufordelte-saker";
 import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
+import { ALLE_STATUSER, parseStatuser } from "~/saker/status";
+import { formaterStatus } from "~/saker/visning";
 import type { FordelingSak } from "./typer";
 
 const antallPerSide = 6;
@@ -43,23 +46,42 @@ export function UfordelteSakerInnhold({
   const [sakSomTildeles, setSakSomTildeles] = useState<FordelingSak | null>(null);
 
   const kategoriFilter = useFilterParam("kategori", { resetKeys: RESET_KEYS });
-  const ytelseFilter = useFilterParam("ytelse", { resetKeys: RESET_KEYS });
+  const misbrukstypeFilter = useFilterParam("misbrukstype", { resetKeys: RESET_KEYS });
+  const merkingFilter = useFilterParam("merking", { resetKeys: RESET_KEYS });
+  const statusFilter = useFilterParam("status", { resetKeys: RESET_KEYS });
 
   const valgtSide = Number.parseInt(searchParams.get("side") ?? "1", 10) || 1;
   const sorteringskolonne = hentSorteringskolonne(searchParams.get("sorter"));
   const sorteringsretning = hentSorteringsretning(searchParams.get("retning"));
 
   const filtervalg = useMemo(() => hentUfordelteFiltervalg(saker), [saker]);
-  const aktiveFiltreVerdier = [...kategoriFilter.valgteVerdier, ...ytelseFilter.valgteVerdier];
+  const gyldigeStatuser = useMemo(
+    () => parseStatuser(statusFilter.valgteVerdier),
+    [statusFilter.valgteVerdier],
+  );
+  const aktiveFiltreVerdier = [
+    ...kategoriFilter.valgteVerdier,
+    ...misbrukstypeFilter.valgteVerdier,
+    ...merkingFilter.valgteVerdier,
+    ...gyldigeStatuser.map((status) => formaterStatus(status)),
+  ];
   const filterTekst = aktiveFiltreVerdier.length > 0 ? aktiveFiltreVerdier.join(", ") : null;
   const overskrift = filterTekst ? `Ufordelte saker – ${filterTekst}` : "Ufordelte saker";
   const filtrerteSaker = useMemo(
     () =>
       filtrerUfordelteSaker(saker, {
         kategorier: kategoriFilter.valgteVerdier,
-        ytelser: ytelseFilter.valgteVerdier,
+        misbrukstyper: misbrukstypeFilter.valgteVerdier,
+        merkinger: merkingFilter.valgteVerdier,
+        statuser: gyldigeStatuser,
       }),
-    [saker, kategoriFilter.valgteVerdier, ytelseFilter.valgteVerdier],
+    [
+      saker,
+      kategoriFilter.valgteVerdier,
+      misbrukstypeFilter.valgteVerdier,
+      merkingFilter.valgteVerdier,
+      gyldigeStatuser,
+    ],
   );
   const sorterteSaker = useMemo(() => {
     if (!sorteringskolonne || !sorteringsretning) {
@@ -104,7 +126,6 @@ export function UfordelteSakerInnhold({
   }
 
   const harSaker = saker.length > 0;
-  const harFiltrerteSaker = filtrerteSaker.length > 0;
 
   return (
     <section aria-labelledby="ufordelte-saker-overskrift" className="pb-12">
@@ -117,7 +138,7 @@ export function UfordelteSakerInnhold({
         </Heading>
 
         {harSaker && (
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid max-w-4xl gap-4 md:grid-cols-3">
             <Oppsummeringskort tittel="Antall">{oppsummering.antallTekst}</Oppsummeringskort>
             <Oppsummeringskort tittel="Liggetid">{oppsummering.eldsteTekst}</Oppsummeringskort>
             <Oppsummeringskort tittel="Ytelser">{oppsummering.ytelserTekst}</Oppsummeringskort>
@@ -136,57 +157,45 @@ export function UfordelteSakerInnhold({
         ) : (
           <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start">
             <div className="min-w-0">
-              {harFiltrerteSaker ? (
-                <div className="overflow-x-auto">
-                  <Saksliste
-                    rader={sakslisteRader}
-                    kolonner={[
-                      "saksid",
-                      "kategori",
-                      "misbrukstype",
-                      "status",
-                      "opprettet",
-                      "oppdatert",
-                    ]}
-                    tomTekst="Ingen ufordelte saker matcher filtrene."
-                    tilbake={{ to: RouteConfig.FORDELING, label: "Fordeling" }}
-                    handlingKolonneTittel={<span className="sr-only">Handling</span>}
-                    sortering={{
-                      kolonne: sorteringskolonne,
-                      retning: sorteringsretning,
-                      onSort: (kolonne) => sorterPåKolonne(kolonne as UfordeltSorteringskolonne),
-                      sorterbare: [...ufordelteSorteringskolonner],
-                    }}
-                    renderRadHandling={(rad) => (
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          const valgtSak = paginerteSaker.elementer.find(
-                            (sak) => sak.id === rad.id,
-                          );
+              <div className="overflow-x-auto">
+                <AntallTreffEtikett antall={filtrerteSaker.length} />
+                <Saksliste
+                  rader={sakslisteRader}
+                  kolonner={[
+                    "saksid",
+                    "kategori",
+                    "misbrukstype",
+                    "status",
+                    "opprettet",
+                    "oppdatert",
+                  ]}
+                  tomTekst="Endre filtrering for å finne saker"
+                  tilbake={{ to: RouteConfig.FORDELING, label: "Fordeling" }}
+                  handlingKolonneTittel={<span className="sr-only">Handling</span>}
+                  sortering={{
+                    kolonne: sorteringskolonne,
+                    retning: sorteringsretning,
+                    onSort: (kolonne) => sorterPåKolonne(kolonne as UfordeltSorteringskolonne),
+                    sorterbare: [...ufordelteSorteringskolonner],
+                  }}
+                  renderRadHandling={(rad) => (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        const valgtSak = paginerteSaker.elementer.find((sak) => sak.id === rad.id);
 
-                          if (valgtSak) {
-                            setSakSomTildeles(valgtSak);
-                          }
-                        }}
-                        className="cursor-pointer border-none bg-transparent p-0 text-sm font-semibold text-ax-text-accent underline-offset-2 hover:underline focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
-                      >
-                        Tildel
-                      </button>
-                    )}
-                  />
-                </div>
-              ) : (
-                <LocalAlert status="announcement">
-                  <LocalAlert.Header>
-                    <LocalAlert.Title as="h2">Ingen treff</LocalAlert.Title>
-                  </LocalAlert.Header>
-                  <LocalAlert.Content>
-                    Ingen ufordelte saker matcher de valgte filtrene. Prøv å fjerne noen filtre.
-                  </LocalAlert.Content>
-                </LocalAlert>
-              )}
+                        if (valgtSak) {
+                          setSakSomTildeles(valgtSak);
+                        }
+                      }}
+                      className="cursor-pointer border-none bg-transparent p-0 text-sm font-semibold text-ax-text-accent underline-offset-2 hover:underline focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
+                    >
+                      Tildel
+                    </button>
+                  )}
+                />
+              </div>
 
               {paginerteSaker.totalSider > 1 && (
                 <HStack justify="center" className="mt-6">
@@ -213,14 +222,39 @@ export function UfordelteSakerInnhold({
                   size="small"
                 />
               )}
-              {filtervalg.ytelser.length > 0 && (
+              {filtervalg.misbrukstyper.length > 0 && (
                 <ChipsFiltergruppe
-                  tittel="Ytelse"
-                  alternativer={filtervalg.ytelser.map((v) => ({ verdi: v, etikett: v }))}
-                  valgteVerdier={ytelseFilter.valgteVerdier}
+                  tittel="Misbrukstype"
+                  alternativer={filtervalg.misbrukstyper.map((v) => ({ verdi: v, etikett: v }))}
+                  valgteVerdier={misbrukstypeFilter.valgteVerdier}
                   onToggle={(verdi) => {
-                    sporHendelse("filter brukt", { filtergruppe: "ytelse", side: "fordeling" });
-                    ytelseFilter.toggle(verdi);
+                    sporHendelse("filter brukt", {
+                      filtergruppe: "misbrukstype",
+                      side: "fordeling",
+                    });
+                    misbrukstypeFilter.toggle(verdi);
+                  }}
+                  size="small"
+                />
+              )}
+              <ChipsFiltergruppe
+                tittel="Status"
+                alternativer={ALLE_STATUSER.map((s) => ({ verdi: s, etikett: formaterStatus(s) }))}
+                valgteVerdier={statusFilter.valgteVerdier}
+                onToggle={(verdi) => {
+                  sporHendelse("filter brukt", { filtergruppe: "status", side: "fordeling" });
+                  statusFilter.toggle(verdi);
+                }}
+                size="small"
+              />
+              {filtervalg.merkinger.length > 0 && (
+                <ChipsFiltergruppe
+                  tittel="Merking"
+                  alternativer={filtervalg.merkinger.map((v) => ({ verdi: v, etikett: v }))}
+                  valgteVerdier={merkingFilter.valgteVerdier}
+                  onToggle={(verdi) => {
+                    sporHendelse("filter brukt", { filtergruppe: "merking", side: "fordeling" });
+                    merkingFilter.toggle(verdi);
                   }}
                   size="small"
                 />
