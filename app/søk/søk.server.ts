@@ -107,13 +107,11 @@ export async function søkSaker(
 async function søkPåSaksnummer(request: Request, saksnummer: string): Promise<Søksak[]> {
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
-    const sak = await backendApi.hentKontrollsakForSøk(token, saksnummer);
-    return sak ? [sak] : [];
+    return backendApi.søkKontrollsakerPåSaksnummer(token, saksnummer);
   }
 
   const alleSaker: Søksak[] = hentAlleSaker(request);
-  const sak = alleSaker.find((s) => String(s.id) === saksnummer);
-  return sak ? [sak] : [];
+  return alleSaker.filter((sak) => String(sak.id) === saksnummer || sak.legacyPid === saksnummer);
 }
 
 type PaginertSøkeresultat = { resultater: Søksak[]; totalSider: number; totalAntall: number };
