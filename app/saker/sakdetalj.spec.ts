@@ -154,7 +154,7 @@ test.describe("Sakdetalj", () => {
       await dialog.dismiss();
     });
 
-    await page.getByRole("link", { name: "Dashboard" }).click();
+    await page.getByRole("link", { name: "Oversikt" }).click();
     await expect(page).toHaveURL(/\/saker\/101$/);
   });
 

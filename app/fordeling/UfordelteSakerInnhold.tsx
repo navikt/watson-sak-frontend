@@ -170,7 +170,7 @@ export function UfordelteSakerInnhold({
                     "oppdatert",
                   ]}
                   tomTekst="Endre filtrering for å finne saker"
-                  tilbake={{ to: RouteConfig.FORDELING, label: "Fordeling" }}
+                  tilbake={{ to: RouteConfig.FORDELING, label: "Ufordelte saker" }}
                   handlingKolonneTittel={<span className="sr-only">Handling</span>}
                   sortering={{
                     kolonne: sorteringskolonne,
