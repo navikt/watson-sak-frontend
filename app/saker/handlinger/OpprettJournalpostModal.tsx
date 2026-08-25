@@ -21,9 +21,17 @@ import { z } from "zod";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
-import type { FilResponse } from "~/saker/filer/typer";
+import type { DokumentNode, FilResponse } from "~/saker/filer/typer";
 import { formaterStorrelse } from "~/utils/number-utils";
 import { OppgaveSkjema } from "./OppgaveSkjema";
+
+/** Kombinert grense for antall filer og dokumenter som til sammen kan velges for arkivering. */
+const MAKS_ANTALL_VALGTE_ELEMENTER = 10;
+
+/** Ett valgbart element i journalpost-modalen — enten en opplastet fil eller et Watson Sak-dokument. */
+type ValgbartElement =
+  | { nøkkel: string; type: "fil"; id: string; navn: string; storrelse: number }
+  | { nøkkel: string; type: "dokument"; id: string; navn: string };
 
 const opprettJournalpostSkjema = z
   .object({
@@ -67,6 +75,8 @@ interface OpprettJournalpostModalProps {
   onClose: () => void;
   /** PDF-filer lastet opp på saken som kan velges som vedlegg. */
   filer: FilResponse[];
+  /** Dokumenter opprettet i Watson Sak som kan velges for arkivering (konverteres til PDF). */
+  dokumenter: DokumentNode[];
 }
 
 export function OpprettJournalpostModal({
@@ -74,12 +84,35 @@ export function OpprettJournalpostModal({
   åpen,
   onClose,
   filer,
+  dokumenter,
 }: OpprettJournalpostModalProps) {
   const fetcher = useFetcher();
   const [knyttTilOppgave, setKnyttTilOppgave] = useState(false);
-  const [valgteVedleggIds, setValgteVedleggIds] = useState<string[]>([]);
+  const [valgteNøkler, setValgteNøkler] = useState<string[]>([]);
 
-  const pdfFiler = filer.filter((fil) => fil.contentType === "application/pdf");
+  const valgbareElementer: ValgbartElement[] = [
+    ...filer
+      .filter((fil) => fil.contentType === "application/pdf" && !fil.arkivert)
+      .map(
+        (fil): ValgbartElement => ({
+          nøkkel: `fil:${fil.id}`,
+          type: "fil",
+          id: fil.id,
+          navn: fil.filnavn,
+          storrelse: fil.storrelse,
+        }),
+      ),
+    ...dokumenter
+      .filter((dokument) => !dokument.arkivert)
+      .map(
+        (dokument): ValgbartElement => ({
+          nøkkel: `dokument:${dokument.id}`,
+          type: "dokument",
+          id: dokument.id,
+          navn: dokument.tittel,
+        }),
+      ),
+  ];
 
   const [form, fields] = useForm({
     id: "opprett-journalpost",
@@ -92,7 +125,10 @@ export function OpprettJournalpostModal({
     onSubmit(event, { formData }) {
       event.preventDefault();
       formData.set("handling", "opprett_journalpost");
-      valgteVedleggIds.forEach((id) => formData.append("vedleggId", id));
+      valgteNøkler.forEach((nøkkel) => {
+        const [type, id] = nøkkel.split(":");
+        formData.append(type === "fil" ? "vedleggId" : "dokumentId", id);
+      });
       sporHendelse("journalpost opprettet");
       fetcher.submit(formData, {
         method: "post",
@@ -100,7 +136,7 @@ export function OpprettJournalpostModal({
       });
       form.reset();
       setKnyttTilOppgave(false);
-      setValgteVedleggIds([]);
+      setValgteNøkler([]);
       onClose();
     },
   });
@@ -108,7 +144,7 @@ export function OpprettJournalpostModal({
   function handleLukk() {
     form.reset();
     setKnyttTilOppgave(false);
-    setValgteVedleggIds([]);
+    setValgteNøkler([]);
     onClose();
   }
 
@@ -153,27 +189,34 @@ export function OpprettJournalpostModal({
               maxRows={10}
             />
 
-            {pdfFiler.length > 0 ? (
+            {valgbareElementer.length > 0 ? (
               <CheckboxGroup
-                legend="Vedlegg fra saken (valgfritt)"
-                description="Kun PDF-filer kan legges ved. Velg filer som skal arkiveres sammen med journalposten."
-                value={valgteVedleggIds}
-                onChange={setValgteVedleggIds}
+                legend="Filer og dokumenter fra saken (valgfritt)"
+                description={`Velg filer og dokumenter som skal arkiveres sammen med journalposten. Maks ${MAKS_ANTALL_VALGTE_ELEMENTER} totalt.`}
+                value={valgteNøkler}
+                onChange={setValgteNøkler}
               >
-                {pdfFiler.map((fil) => (
-                  <Checkbox key={fil.id} value={fil.id}>
-                    <BodyShort size="small" as="span">
-                      {fil.filnavn}
-                    </BodyShort>
-                    <Detail as="span" className="ml-2 text-ax-text-neutral-subtle">
-                      ({formaterStorrelse(fil.storrelse)})
-                    </Detail>
-                  </Checkbox>
-                ))}
+                {valgbareElementer.map((element) => {
+                  const kanVelges =
+                    valgteNøkler.includes(element.nøkkel) ||
+                    valgteNøkler.length < MAKS_ANTALL_VALGTE_ELEMENTER;
+                  return (
+                    <Checkbox key={element.nøkkel} value={element.nøkkel} disabled={!kanVelges}>
+                      <BodyShort size="small" as="span">
+                        {element.navn}
+                      </BodyShort>
+                      {element.type === "fil" && (
+                        <Detail as="span" className="ml-2 text-ax-text-neutral-subtle">
+                          ({formaterStorrelse(element.storrelse)})
+                        </Detail>
+                      )}
+                    </Checkbox>
+                  );
+                })}
               </CheckboxGroup>
             ) : (
               <Detail className="text-ax-text-neutral-subtle">
-                Ingen PDF-filer lastet opp på saken ennå.
+                Ingen filer eller dokumenter å velge blant.
               </Detail>
             )}
 

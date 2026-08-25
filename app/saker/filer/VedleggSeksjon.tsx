@@ -1,4 +1,4 @@
-import { EyeIcon, LinkIcon, TrashIcon, UploadIcon } from "@navikt/aksel-icons";
+import { LinkIcon, TrashIcon, UploadIcon } from "@navikt/aksel-icons";
 import {
   Alert,
   BodyShort,
@@ -18,16 +18,9 @@ import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { formaterStorrelse } from "~/utils/number-utils";
 import { FilIBrukModal } from "./FilIBrukModal";
+import { ÅpneFilKnapp, formaterDato } from "./fil-visning-utils";
 import { SlettFilModal } from "./SlettFilModal";
 import type { DokumentReferanse, FilResponse } from "./typer";
-
-function formaterDatoTid(isoString: string): string {
-  return new Date(isoString).toLocaleDateString("nb-NO", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 interface SlettKnappProps {
   filId: string;
@@ -94,32 +87,6 @@ function SlettKnapp({ filId, filnavn, sakId, bruktIDokumenter }: SlettKnappProps
         />
       )}
     </>
-  );
-}
-
-interface NedlastKnappProps {
-  filId: string;
-  filnavn: string;
-  sakId: string;
-}
-
-function NedlastKnapp({ filId, filnavn, sakId }: NedlastKnappProps) {
-  const url = RouteConfig.API.SAK_FIL.replace(":sakId", sakId).replace(":filId", filId);
-
-  function håndterNedlasting() {
-    sporHendelse("vedlegg åpnet", { sakId });
-    window.open(url, "_blank", "noopener,noreferrer");
-  }
-
-  return (
-    <Button
-      type="button"
-      variant="tertiary-neutral"
-      size="xsmall"
-      icon={<EyeIcon aria-hidden />}
-      aria-label={`Åpne ${filnavn}`}
-      onClick={håndterNedlasting}
-    />
   );
 }
 
@@ -264,14 +231,14 @@ export function VedleggSeksjon({ filer, sakId, erSakseier, kanLasteOpp }: Vedleg
                   <Detail>{formaterStorrelse(fil.storrelse)}</Detail>
                 </Table.DataCell>
                 <Table.DataCell>
-                  <Detail>{formaterDatoTid(fil.opprettet)}</Detail>
+                  <Detail>{formaterDato(fil.opprettet)}</Detail>
                 </Table.DataCell>
                 <Table.DataCell>
                   <Detail>{fil.opprettetAv}</Detail>
                 </Table.DataCell>
                 <Table.DataCell>
                   <HStack gap="space-1" align="center">
-                    <NedlastKnapp filId={fil.id} filnavn={fil.filnavn} sakId={sakId} />
+                    <ÅpneFilKnapp filId={fil.id} filnavn={fil.filnavn} sakId={sakId} />
                     {erSakseier && (
                       <SlettKnapp
                         filId={fil.id}

@@ -168,6 +168,7 @@ describe("opprettJournalpost", () => {
             tittel: "Testtittel",
             tekst: "Testinnhold",
             vedleggIds: [],
+            dokumentIds: [],
           }),
           headers: expect.objectContaining({ Authorization: "Bearer token-123" }),
         }),

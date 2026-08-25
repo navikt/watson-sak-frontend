@@ -387,11 +387,12 @@ export async function opprettJournalpost(
   tittel: string,
   tekst: string,
   vedleggIds: string[] = [],
+  dokumentIds: string[] = [],
 ): Promise<{ journalpostId: string }> {
   const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/journalposter`), {
     method: "POST",
     headers: authHeaders(token),
-    body: JSON.stringify({ journalposttype, tittel, tekst, vedleggIds }),
+    body: JSON.stringify({ journalposttype, tittel, tekst, vedleggIds, dokumentIds }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke opprette journalpost");
   return parseEllerKastFeil(
@@ -708,6 +709,10 @@ const filResponseSchema = z.object({
   opprettetAv: z.string(),
   opprettet: z.string(),
   bruktIDokumenter: z.array(dokumentReferanseSchema).default([]),
+  arkivert: z.string().nullish(),
+  arkivertAv: z.string().nullish(),
+  arkivertJournalpostId: z.string().nullish(),
+  arkivertFraDokumentId: z.string().nullish(),
 });
 
 const filNedlastingResponseSchema = z.object({
