@@ -6,9 +6,27 @@ export const miljøVerdier = [
   "dev",
   "prod",
 ] as const;
-type Miljø = (typeof miljøVerdier)[number];
+export type Miljø = (typeof miljøVerdier)[number];
 
 const WATSON_ADMIN_API_DEV_URL = "https://watson-admin-api.intern.dev.nav.no";
+const WATSON_SOK_LOCAL_URL = "http://localhost:5173";
+const WATSON_SAK_LOCAL_URL = "http://localhost:5174";
+const WATSON_SOK_URLER: Record<
+  Exclude<Miljø, "local-backend" | "local-dev" | "local-mock">,
+  string
+> = {
+  demo: "https://watson-sok-demo.ekstern.dev.nav.no",
+  dev: "https://watson-sok.intern.dev.nav.no",
+  prod: "https://watson-sok.intern.nav.no",
+};
+const WATSON_SAK_URLER: Record<
+  Exclude<Miljø, "local-backend" | "local-dev" | "local-mock">,
+  string
+> = {
+  demo: "https://watson-sak-demo.ekstern.dev.nav.no",
+  dev: "https://watson-sak.intern.dev.nav.no",
+  prod: "https://watson-sak.intern.nav.no",
+};
 
 export function skalBrukeMockdataForMiljø(miljø: Miljø) {
   return miljø === "local-mock" || miljø === "demo";
@@ -24,6 +42,22 @@ export function hentBackendApiUrl(miljø: Miljø, watsonAdminApiUrl?: string) {
   }
 
   return watsonAdminApiUrl || undefined;
+}
+
+export function hentWatsonSokUrl(miljø?: Miljø) {
+  if (!miljø) return undefined;
+  if (miljø === "local-backend" || miljø === "local-dev" || miljø === "local-mock") {
+    return WATSON_SOK_LOCAL_URL;
+  }
+  return WATSON_SOK_URLER[miljø];
+}
+
+export function hentWatsonSakUrl(miljø?: Miljø) {
+  if (!miljø) return undefined;
+  if (miljø === "local-backend" || miljø === "local-dev" || miljø === "local-mock") {
+    return WATSON_SAK_LOCAL_URL;
+  }
+  return WATSON_SAK_URLER[miljø];
 }
 
 export function skalPolleBackendHelse(miljø: Miljø) {

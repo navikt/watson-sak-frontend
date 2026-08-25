@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { Form, Link, useLocation } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { useInnloggetBrukerValgfri } from "~/auth/innlogget-bruker";
+import { hentWatsonSakUrl, hentWatsonSokUrl } from "~/config/backend-config";
 import { useMiljø } from "~/miljø/useMiljø";
 import { RouteConfig } from "~/routeConfig";
 import { SØK_RESULTATLENKE_SELECTOR } from "~/søk/sok-navigasjon";
@@ -53,6 +54,8 @@ export function AppHeader() {
   }
 
   const miljø = useMiljø();
+  const watsonSokUrl = hentWatsonSokUrl(miljø);
+  const watsonSakUrl = hentWatsonSakUrl(miljø);
   const visMiljøtag = miljø !== "prod";
   const miljøtagVariant = miljø === "demo" ? "alt2" : miljø === "dev" ? "alt1" : "alt3";
 
@@ -113,10 +116,10 @@ export function AppHeader() {
 
         <ActionMenu.Content>
           <ActionMenu.Group label="Interne flater">
-            <ActionMenu.Item as="a" href="https://watson-sok.intern.nav.no" icon={<PersonIcon />}>
+            <ActionMenu.Item as="a" href={watsonSokUrl} icon={<PersonIcon />}>
               Watson Søk
             </ActionMenu.Item>
-            <ActionMenu.Item as="a" href="https://watson-sak.intern.nav.no" icon={<PersonIcon />}>
+            <ActionMenu.Item as="a" href={watsonSakUrl} icon={<PersonIcon />}>
               Watson Sak
             </ActionMenu.Item>
           </ActionMenu.Group>
