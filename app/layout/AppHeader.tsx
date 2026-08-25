@@ -133,7 +133,7 @@ export function AppHeader() {
           </ActionMenu.Item>
           <ActionMenu.Item
             as="a"
-            href="https://watson-sak.ideas.aha.io"
+            href="https://watsonsak.ideas.aha.io"
             target="_blank"
             rel="noopener noreferrer"
             icon={<LightBulbIcon />}

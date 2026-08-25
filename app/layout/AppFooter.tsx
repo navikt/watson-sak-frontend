@@ -23,7 +23,7 @@ export function AppFooter() {
           <li className="flex items-center gap-2">
             <LightBulbIcon aria-hidden="true" />
             <NavLink
-              href="https://watson-sak.ideas.aha.io"
+              href="https://watsonsak.ideas.aha.io"
               target="_blank"
               rel="noopener noreferrer"
             >
