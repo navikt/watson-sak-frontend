@@ -1,6 +1,6 @@
 import { ArchiveIcon } from "@navikt/aksel-icons";
 import { BodyShort, Detail, Heading, HStack, Table, Tag, VStack } from "@navikt/ds-react";
-import { NedlastKnapp, formaterDatoTid } from "./VedleggSeksjon";
+import { ÅpneFilKnapp, formaterDato } from "./fil-visning-utils";
 import type { FilResponse } from "./typer";
 
 interface ArkivertSeksjonProps {
@@ -52,13 +52,13 @@ export function ArkivertSeksjon({ filer, sakId }: ArkivertSeksjonProps) {
                 </HStack>
               </Table.DataCell>
               <Table.DataCell>
-                <Detail>{fil.arkivert ? formaterDatoTid(fil.arkivert) : ""}</Detail>
+                <Detail>{fil.arkivert ? formaterDato(fil.arkivert) : ""}</Detail>
               </Table.DataCell>
               <Table.DataCell>
                 <Detail>{fil.arkivertAv}</Detail>
               </Table.DataCell>
               <Table.DataCell>
-                <NedlastKnapp filId={fil.id} filnavn={fil.filnavn} sakId={sakId} />
+                <ÅpneFilKnapp filId={fil.id} filnavn={fil.filnavn} sakId={sakId} />
               </Table.DataCell>
             </Table.Row>
           ))}

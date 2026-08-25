@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it } from "vitest";
 import { RouteConfig } from "~/routeConfig";
@@ -228,8 +228,16 @@ describe("SakFilområde", () => {
     renderOmråde({ dokumenter: [], filer: [...mockFiler, arkivertFil], sakId: "ABC-123" });
 
     expect(screen.getByRole("heading", { name: "Arkivert" })).toBeDefined();
-    expect(screen.getByText("rapport.pdf")).toBeDefined();
-    expect(screen.getByText("arkivert.pdf")).toBeDefined();
+
+    // Med tomme dokumenter (empty-state uten tabell) er de eneste to tabellene i DOM-et
+    // Vedlegg-tabellen (først i markup) og Arkivert-tabellen (sist).
+    const [vedleggTabell, arkivertTabell] = screen.getAllByRole("table");
+
+    expect(within(vedleggTabell).getByText("rapport.pdf")).toBeDefined();
+    expect(within(vedleggTabell).queryByText("arkivert.pdf")).toBeNull();
+
+    expect(within(arkivertTabell).getByText("arkivert.pdf")).toBeDefined();
+    expect(within(arkivertTabell).queryByText("rapport.pdf")).toBeNull();
   });
 
   it("viser ikke Arkivert-seksjonen når ingen filer er arkivert", () => {
