@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   hentBackendApiUrl,
+  hentWatsonSakUrl,
+  hentWatsonSokUrl,
   skalBrukeMockdataForMiljø,
   skalPolleBackendHelse,
 } from "./backend-config";
@@ -25,6 +27,20 @@ describe("backend-config", () => {
     expect(hentBackendApiUrl("dev", "https://annen-backend.dev.nav.no")).toBe(
       "https://annen-backend.dev.nav.no",
     );
+  });
+
+  it("bruker lokale adresser for Watson Søk og Watson Sak", () => {
+    expect(hentWatsonSokUrl("local-backend")).toBe("http://localhost:5173");
+    expect(hentWatsonSakUrl("local-backend")).toBe("http://localhost:5174");
+  });
+
+  it("bruker riktig adresse for Watson Søk og Watson Sak i hvert deploymiljø", () => {
+    expect(hentWatsonSokUrl("demo")).toBe("https://watson-sok-demo.ekstern.dev.nav.no");
+    expect(hentWatsonSakUrl("demo")).toBe("https://watson-sak-demo.ekstern.dev.nav.no");
+    expect(hentWatsonSokUrl("dev")).toBe("https://watson-sok.intern.dev.nav.no");
+    expect(hentWatsonSakUrl("dev")).toBe("https://watson-sak.intern.dev.nav.no");
+    expect(hentWatsonSokUrl("prod")).toBe("https://watson-sok.intern.nav.no");
+    expect(hentWatsonSakUrl("prod")).toBe("https://watson-sak.intern.nav.no");
   });
 
   it("pollet kun backend-helsen i deployet dev", () => {
