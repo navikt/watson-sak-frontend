@@ -1,13 +1,13 @@
 import {
+  ArrowRightLeftIcon,
   BarChartIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   CogIcon,
-  FolderFileIcon,
-  FolderIcon,
+  FilesIcon,
   HouseIcon,
+  PersonIcon,
   PlusCircleIcon,
-  TasklistIcon,
 } from "@navikt/aksel-icons";
 import { Tooltip } from "@navikt/ds-react";
 import { useState, type ComponentType } from "react";
@@ -23,10 +23,10 @@ type Lenke = {
 };
 
 const lenker: Lenke[] = [
-  { to: RouteConfig.INDEX, label: "Dashboard", icon: HouseIcon },
-  { to: RouteConfig.MINE_SAKER, label: "Mine saker", icon: FolderIcon },
-  { to: RouteConfig.FORDELING, label: "Fordeling", icon: TasklistIcon },
-  { to: RouteConfig.ALLE_SAKER, label: "Alle saker", icon: FolderFileIcon },
+  { to: RouteConfig.INDEX, label: "Oversikt", icon: HouseIcon },
+  { to: RouteConfig.MINE_SAKER, label: "Mine saker", icon: PersonIcon },
+  { to: RouteConfig.FORDELING, label: "Ufordelte saker", icon: ArrowRightLeftIcon },
+  { to: RouteConfig.ALLE_SAKER, label: "Alle saker", icon: FilesIcon },
   {
     to: RouteConfig.REGISTRER_SAK,
     label: "Opprett sak",

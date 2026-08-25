@@ -2,12 +2,12 @@ import { expect, test } from "@playwright/test";
 
 const sider = [
   {
-    lenketekst: "Dashboard",
+    lenketekst: "Oversikt",
     sti: "/",
     overskrift: /God (morgen|dag|ettermiddag|kveld|natt), Saks/,
   },
   { lenketekst: "Mine saker", sti: "/mine-saker", overskrift: "Mine saker" },
-  { lenketekst: "Fordeling", sti: "/fordeling", overskrift: "Ufordelte saker" },
+  { lenketekst: "Ufordelte saker", sti: "/fordeling", overskrift: "Ufordelte saker" },
   { lenketekst: "Alle saker", sti: "/alle-saker", overskrift: "Alle saker" },
   { lenketekst: "Opprett sak", sti: "/registrer-sak", overskrift: "Opprett sak" },
   { lenketekst: "Statistikk", sti: "/statistikk", overskrift: "Statistikk" },

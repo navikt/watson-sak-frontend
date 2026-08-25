@@ -35,7 +35,7 @@ export default function LandingSide() {
 
   return (
     <>
-      <MiljøtilpassetTittel>Dashboard – Watson Sak</MiljøtilpassetTittel>
+      <MiljøtilpassetTittel>Oversikt – Watson Sak</MiljøtilpassetTittel>
       <VStack gap="space-12" className="mt-4 mb-8">
         {preferences.visVelkomstmelding ? (
           <Velkomst oppsummering={loaderData.velkomstOppsummering} />
