@@ -61,7 +61,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       dokumenter: sak.dokumenter ?? [],
       dokumentHistorikk: dokumentHistorikk.items,
       sakReferanse,
-      kanRedigere: kanSe && erAktivSakKontrollsak(sak.status),
+      kanRedigere: kanSe && erAktivSakKontrollsak(sak.status) && !dokument.arkivert,
       variabelVerdier: byggVariabelVerdier(sak, innlogget),
     };
   }
@@ -87,7 +87,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     dokumenter: hentDokumenttreForSak(request, String(tilgang.sak.id)),
     dokumentHistorikk: hentDokumentHistorikk(request, String(tilgang.sak.id), params.docId),
     sakReferanse: params.sakId,
-    kanRedigere: tilgang.kanRedigereDokumenter,
+    kanRedigere: tilgang.kanRedigereDokumenter && !dokument.arkivert,
     variabelVerdier: byggVariabelVerdier(tilgang.sak, innlogget),
   };
 }

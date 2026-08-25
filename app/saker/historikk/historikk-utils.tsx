@@ -1,4 +1,5 @@
 import {
+  ArchiveIcon,
   CheckmarkCircleIcon,
   ArrowRightIcon,
   ArrowUndoIcon,
@@ -93,6 +94,8 @@ export function hendelseTittel(hendelse: SakHendelse): string {
       return "Fil slettet";
     case "FIL_ÅPNET":
       return "Fil åpnet";
+    case "FIL_ARKIVERT":
+      return "Fil arkivert";
     default:
       return hendelse.hendelsesType;
   }
@@ -195,7 +198,8 @@ export function hendelseBeskrivelse(hendelse: SakHendelse): string | null {
   if (
     hendelse.hendelsesType === "FIL_LASTET_OPP" ||
     hendelse.hendelsesType === "FIL_SLETTET" ||
-    hendelse.hendelsesType === "FIL_ÅPNET"
+    hendelse.hendelsesType === "FIL_ÅPNET" ||
+    hendelse.hendelsesType === "FIL_ARKIVERT"
   ) {
     return hendelse.beskrivelse ?? null;
   }
@@ -247,6 +251,8 @@ export function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
       return <TrashIcon {...iconProps} />;
     case "FIL_ÅPNET":
       return <DownloadIcon {...iconProps} />;
+    case "FIL_ARKIVERT":
+      return <ArchiveIcon {...iconProps} />;
     default:
       return <ClockIcon {...iconProps} />;
   }

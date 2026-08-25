@@ -6,6 +6,7 @@ import { sporHendelse } from "~/analytics/analytics";
 import { Kort } from "~/komponenter/Kort";
 import type { MalId } from "~/saker/filer/dokument/maler";
 import { RouteConfig } from "~/routeConfig";
+import { ArkivertSeksjon } from "./ArkivertSeksjon";
 import { DokumentTabell } from "./DokumentTabell";
 import { OpprettDokumentModal } from "./OpprettDokumentModal";
 import type { DokumentNode, FilResponse } from "./typer";
@@ -74,6 +75,9 @@ export function SakFilområde({
   redigerbar = true,
   erSakseier = false,
 }: SakFilområdeProps) {
+  const aktiveFiler = filer.filter((fil) => !fil.arkivert);
+  const arkiverteFiler = filer.filter((fil) => fil.arkivert);
+
   return (
     <Kort>
       <VStack gap="space-8">
@@ -108,12 +112,18 @@ export function SakFilområde({
 
         <div>
           <VedleggSeksjon
-            filer={filer}
+            filer={aktiveFiler}
             sakId={sakId}
             erSakseier={erSakseier}
             kanLasteOpp={redigerbar}
           />
         </div>
+
+        {arkiverteFiler.length > 0 && (
+          <div>
+            <ArkivertSeksjon filer={arkiverteFiler} sakId={sakId} />
+          </div>
+        )}
       </VStack>
     </Kort>
   );

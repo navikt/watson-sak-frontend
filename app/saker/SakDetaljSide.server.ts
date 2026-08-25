@@ -476,6 +476,7 @@ async function backendAction(
       const tittel = hentTekstfelt(formData, "tittel", "Tittel er påkrevd");
       const innhold = hentTekstfelt(formData, "innhold", "Innhold er påkrevd");
       const vedleggIds = formData.getAll("vedleggId").map(String);
+      const dokumentIds = formData.getAll("dokumentId").map(String);
       const knyttTilOppgave = formData.get("knyttTilOppgave") === "true";
 
       const journalpostRespons = await backendApi.opprettJournalpost(
@@ -485,6 +486,7 @@ async function backendAction(
         tittel.trim(),
         innhold.trim(),
         vedleggIds,
+        dokumentIds,
       );
 
       if (knyttTilOppgave) {

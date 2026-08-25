@@ -67,6 +67,7 @@ describe("SakHandlingerKnapper", () => {
         erEier={true}
         sak={lagKontrollsak({ status: "AVSLUTTET" })}
         filer={[]}
+        dokumenter={[]}
       />,
     );
 
@@ -79,6 +80,7 @@ describe("SakHandlingerKnapper", () => {
         erEier={true}
         sak={lagKontrollsak({ status: "UTREDES", blokkert: null })}
         filer={[]}
+        dokumenter={[]}
       />,
     );
 
@@ -96,6 +98,7 @@ describe("SakHandlingerKnapper", () => {
         erEier={true}
         sak={lagKontrollsak({ status: "UTREDES", blokkert: "VENTER_PA_INFORMASJON" })}
         filer={[]}
+        dokumenter={[]}
       />,
     );
 
@@ -112,6 +115,7 @@ describe("SakHandlingerKnapper", () => {
       <SakHandlingerKnapper
         erEier={false}
         filer={[]}
+        dokumenter={[]}
         sak={lagKontrollsak({
           status: "OPPRETTET",
           saksbehandlere: {
@@ -131,6 +135,7 @@ describe("SakHandlingerKnapper", () => {
       <SakHandlingerKnapper
         erEier={false}
         filer={[]}
+        dokumenter={[]}
         sak={lagKontrollsak({
           status: "OPPRETTET",
           blokkert: "I_BERO",

@@ -21,6 +21,13 @@ export type FilResponse = {
   opprettet: string;
   /** Dokumentene (om noen) der filen er satt inn som bilde. Tom liste betyr at filen ikke er i bruk. */
   bruktIDokumenter: DokumentReferanse[];
+  /** Tidspunkt filen ble arkivert (inkludert i en journalpost). Undefined/null betyr at filen ikke er arkivert. */
+  arkivert?: string | null;
+  arkivertAv?: string | null;
+  /** Journalpost-IDen (fra Dokarkiv) filen ble arkivert på. */
+  arkivertJournalpostId?: string | null;
+  /** Satt hvis filen er en PDF generert fra et dokument ved arkivering — id til kildedokumentet. */
+  arkivertFraDokumentId?: string | null;
 };
 
 /** Node i dokumentlisten for en sak. */
@@ -32,6 +39,9 @@ export type DokumentNode = {
   endretAv: string;
   endretDato: string;
   låsAv: string | null;
+  arkivert?: string | null;
+  arkivertAv?: string | null;
+  arkivertJournalpostId?: string | null;
 };
 
 /** Et fullstendig dokument inkludert innhold, hentet for editoren. */
@@ -44,6 +54,9 @@ export type Dokument = {
   endretAv: string;
   endretDato: string;
   låsAv: string | null;
+  arkivert?: string | null;
+  arkivertAv?: string | null;
+  arkivertJournalpostId?: string | null;
 };
 
 /** Lett historikkpunkt. Innhold hentes først når saksbehandleren åpner forhåndsvisningen. */

@@ -1,5 +1,5 @@
 import { EyeIcon, TrashIcon } from "@navikt/aksel-icons";
-import { BodyShort, Button, Detail, HStack, Link, Loader, Table } from "@navikt/ds-react";
+import { BodyShort, Button, Detail, HStack, Link, Loader, Table, Tag } from "@navikt/ds-react";
 import { useState } from "react";
 import { Link as RouterLink } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
@@ -87,9 +87,16 @@ export function DokumentTabell({
               <Table.Row key={dokument.id}>
                 <Table.DataCell>
                   <BodyShort size="small">
-                    <Link as={RouterLink} to={dokumentUrl}>
-                      {dokument.tittel || "Uten tittel"}
-                    </Link>
+                    <HStack gap="space-2" align="center" as="span">
+                      <Link as={RouterLink} to={dokumentUrl}>
+                        {dokument.tittel || "Uten tittel"}
+                      </Link>
+                      {dokument.arkivert && (
+                        <Tag variant="neutral" size="xsmall">
+                          Arkivert
+                        </Tag>
+                      )}
+                    </HStack>
                   </BodyShort>
                 </Table.DataCell>
                 <Table.DataCell>
@@ -104,7 +111,7 @@ export function DokumentTabell({
                 <Table.DataCell>
                   <HStack gap="space-1" align="center">
                     <DokumentPdfKnapp dokument={dokument} sakId={sakId} />
-                    {redigerbar && (
+                    {redigerbar && !dokument.arkivert && (
                       <Button
                         type="button"
                         variant="tertiary-neutral"

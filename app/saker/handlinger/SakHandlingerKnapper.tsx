@@ -5,7 +5,7 @@ import { useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
-import type { FilResponse } from "~/saker/filer/typer";
+import type { DokumentNode, FilResponse } from "~/saker/filer/typer";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { EndreStatusModal } from "./EndreStatusModal";
 import { OpprettJournalpostModal } from "./OpprettJournalpostModal";
@@ -16,6 +16,7 @@ interface SakHandlingerKnapperProps {
   sak: KontrollsakResponse;
   erEier: boolean;
   filer: FilResponse[];
+  dokumenter: DokumentNode[];
 }
 
 type ModalHandling = Exclude<Sakshandling, "gjenoppta">;
@@ -52,7 +53,12 @@ const handlingsvisning: Record<
 
 const sekundærhandlinger: Sakshandling[] = ["opprett-journalpost", "opprett-oppgave"];
 
-export function SakHandlingerKnapper({ sak, erEier, filer }: SakHandlingerKnapperProps) {
+export function SakHandlingerKnapper({
+  sak,
+  erEier,
+  filer,
+  dokumenter,
+}: SakHandlingerKnapperProps) {
   const gjenopptaFetcher = useFetcher();
   const [åpenModal, setÅpenModal] = useState<ModalHandling | null>(null);
   const handlinger = hentTilgjengeligeSakshandlinger(sak);
@@ -143,6 +149,7 @@ export function SakHandlingerKnapper({ sak, erEier, filer }: SakHandlingerKnappe
         åpen={åpenModal === "opprett-journalpost"}
         onClose={() => setÅpenModal(null)}
         filer={filer}
+        dokumenter={dokumenter}
       />
       <OpprettOppgaveModal
         sakId={String(sak.id)}

@@ -1,5 +1,5 @@
 import { FilePdfIcon, MenuElipsisVerticalIcon, TrashIcon } from "@navikt/aksel-icons";
-import { ActionMenu, BodyShort, Button, Detail } from "@navikt/ds-react";
+import { ActionMenu, BodyShort, Button, Detail, Tag } from "@navikt/ds-react";
 import { Link } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
@@ -43,7 +43,7 @@ function DokumentHandlinger({
         >
           Last ned som PDF
         </ActionMenu.Item>
-        {redigerbar && (
+        {redigerbar && !dokument.arkivert && (
           <>
             <ActionMenu.Divider />
             <ActionMenu.Item
@@ -101,6 +101,11 @@ function DokumentRad({
           >
             {node.tittel || "Uten tittel"}
           </BodyShort>
+          {node.arkivert && (
+            <Tag variant="neutral" size="xsmall" className="shrink-0">
+              Arkivert
+            </Tag>
+          )}
         </span>
         <Detail
           className={`truncate text-ax-text-neutral-subtle ${

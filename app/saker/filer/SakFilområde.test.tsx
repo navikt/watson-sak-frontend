@@ -216,6 +216,47 @@ describe("SakFilområde", () => {
     expect(screen.getByRole("button", { name: "Handlinger for Notat" })).toBeDefined();
   });
 
+  it("flytter arkiverte filer til Arkivert-seksjonen, ikke Vedlegg-listen", () => {
+    const arkivertFil: FilResponse = {
+      ...mockFiler[0],
+      id: "fil-arkivert",
+      filnavn: "arkivert.pdf",
+      arkivert: "2026-03-01T10:00:00Z",
+      arkivertAv: "Z999999",
+    };
+
+    renderOmråde({ dokumenter: [], filer: [...mockFiler, arkivertFil], sakId: "ABC-123" });
+
+    expect(screen.getByRole("heading", { name: "Arkivert" })).toBeDefined();
+    expect(screen.getByText("rapport.pdf")).toBeDefined();
+    expect(screen.getByText("arkivert.pdf")).toBeDefined();
+  });
+
+  it("viser ikke Arkivert-seksjonen når ingen filer er arkivert", () => {
+    renderOmråde({ dokumenter: [], filer: mockFiler, sakId: "ABC-123" });
+    expect(screen.queryByRole("heading", { name: "Arkivert" })).toBeNull();
+  });
+
+  it("viser 'Arkivert'-merke og skjuler slett-knapp for arkiverte dokumenter", () => {
+    const arkivertDokument: DokumentNode = {
+      ...mockDokumenter[0],
+      id: "3",
+      tittel: "Arkivert dokument",
+      arkivert: "2026-03-01T10:00:00Z",
+      arkivertAv: "Z999999",
+    };
+
+    renderOmråde({
+      dokumenter: [...mockDokumenter, arkivertDokument],
+      filer: [],
+      sakId: "ABC-123",
+    });
+
+    expect(screen.getByText("Arkivert dokument")).toBeDefined();
+    expect(screen.getAllByText("Arkivert").length).toBeGreaterThan(0);
+    expect(screen.queryByRole("button", { name: "Slett Arkivert dokument" })).toBeNull();
+  });
+
   describe("tilgang via koblet sak (kun les)", () => {
     it("viser filer", () => {
       renderOmråde({ dokumenter: [], filer: mockFiler, sakId: "ABC-123", redigerbar: false });

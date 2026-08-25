@@ -21,7 +21,7 @@ import { FilIBrukModal } from "./FilIBrukModal";
 import { SlettFilModal } from "./SlettFilModal";
 import type { DokumentReferanse, FilResponse } from "./typer";
 
-function formaterDatoTid(isoString: string): string {
+export function formaterDatoTid(isoString: string): string {
   return new Date(isoString).toLocaleDateString("nb-NO", {
     day: "2-digit",
     month: "short",
@@ -103,7 +103,7 @@ interface NedlastKnappProps {
   sakId: string;
 }
 
-function NedlastKnapp({ filId, filnavn, sakId }: NedlastKnappProps) {
+export function NedlastKnapp({ filId, filnavn, sakId }: NedlastKnappProps) {
   const url = RouteConfig.API.SAK_FIL.replace(":sakId", sakId).replace(":filId", filId);
 
   function håndterNedlasting() {

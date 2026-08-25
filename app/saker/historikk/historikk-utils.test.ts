@@ -68,6 +68,20 @@ describe("filhendelser", () => {
     expect(hendelseTittel(hendelse)).toBe("Fil åpnet");
   });
 
+  it("hendelseTittel returnerer 'Fil arkivert' for FIL_ARKIVERT", () => {
+    const hendelse = lagHendelse({ hendelsesType: "FIL_ARKIVERT", status: null });
+    expect(hendelseTittel(hendelse)).toBe("Fil arkivert");
+  });
+
+  it("hendelseBeskrivelse returnerer beskrivelse fra hendelsen for FIL_ARKIVERT", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "FIL_ARKIVERT",
+      status: null,
+      beskrivelse: "Arkivert på journalpost 12345",
+    });
+    expect(hendelseBeskrivelse(hendelse)).toBe("Arkivert på journalpost 12345");
+  });
+
   it("hendelseBeskrivelse returnerer null for FIL_LASTET_OPP uten beskrivelse", () => {
     const hendelse = lagHendelse({ hendelsesType: "FIL_LASTET_OPP", status: null });
     expect(hendelseBeskrivelse(hendelse)).toBeNull();

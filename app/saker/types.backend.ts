@@ -81,6 +81,9 @@ export const dokumentNodeSchema = z.object({
   endretAv: z.string(),
   endretDato: z.string(),
   låsAv: z.string().nullable(),
+  arkivert: z.string().nullish(),
+  arkivertAv: z.string().nullish(),
+  arkivertJournalpostId: z.string().nullish(),
 });
 
 const historiskIdentSchema = z.object({
