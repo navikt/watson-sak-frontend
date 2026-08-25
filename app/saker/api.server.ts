@@ -215,6 +215,7 @@ export async function søkKontrollsakerPåSaksnummer(
       headers: authHeaders(token),
     },
   );
+  if (respons.status === 404) return [];
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke søke etter kontrollsaker på saksnummer");
   return parseEllerKastFeil(
     z.array(kontrollsakResponseSchema),
