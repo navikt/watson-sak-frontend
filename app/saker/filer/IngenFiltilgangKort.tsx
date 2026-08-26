@@ -1,10 +1,9 @@
 import { PadlockLockedIcon } from "@navikt/aksel-icons";
 import { BodyShort, Heading, VStack } from "@navikt/ds-react";
 import { Kort } from "~/komponenter/Kort";
-import type { KontrollsakResponse } from "~/saker/types.backend";
 
 type Props = {
-  sak: KontrollsakResponse;
+  adresseskjermet: boolean;
 };
 
 /**
@@ -14,8 +13,8 @@ type Props = {
  * - Bruker er verken eier eller delt-med på saken (basic eller utvidet tilgang)
  * - Saken gjelder en skjermet person og bruker mangler utvidet tilgang
  */
-export function IngenFiltilgangKort({ sak }: Props) {
-  const melding = sak.adresseskjermet
+export function IngenFiltilgangKort({ adresseskjermet }: Props) {
+  const melding = adresseskjermet
     ? "Du må ha utvidet tilgang for å se dokumenter og vedlegg på skjermede saker."
     : "Du må få delt tilgang til saken for å kunne se dokumenter og vedlegg.";
 

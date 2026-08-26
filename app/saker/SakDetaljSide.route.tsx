@@ -649,7 +649,7 @@ export default function SakDetaljSide() {
                 erSakseier={erEier}
               />
             ) : (
-              <IngenFiltilgangKort sak={sak} />
+              <IngenFiltilgangKort adresseskjermet={sak.adresseskjermet} />
             )}
 
             <SakerPåSammePerson
@@ -675,7 +675,7 @@ export default function SakDetaljSide() {
 
             <SakHandlingerKnapper sak={sak} erEier={erEier} filer={filer} dokumenter={dokumenter} />
 
-            <SakHistorikk sakId={sak.id} sak={sak} hendelser={historikk} redigerbar={kanRedigere} />
+            <SakHistorikk sakId={sak.id} adresseskjermet={sak.adresseskjermet} hendelser={historikk} redigerbar={kanRedigere} />
           </VStack>
         </HGrid>
       </VStack>
