@@ -78,13 +78,11 @@ function renderSide(kanRedigere: boolean) {
 }
 
 describe("DokumentSide", () => {
-  it("viser brødsmulesti", async () => {
+  it("viser tilbakeknapp til saken", async () => {
     renderSide(true);
 
-    const sti = await screen.findByRole("navigation", { name: "Du er her" });
-    expect(within(sti).getByRole("link", { name: "Sak #ABC-123" })).toBeDefined();
-    expect(within(sti).getByText("Dokumenter")).toBeDefined();
-    expect(within(sti).getByText("Saksframlegg")).toBeDefined();
+    const tilbake = await screen.findByRole("link", { name: "Tilbake til sak #ABC-123" });
+    expect(tilbake.getAttribute("href")).toBe("/saker/ABC-123");
   });
 
   it("viser dokumenttreet i sidepanelet uten at man må åpne noe", async () => {
@@ -126,12 +124,10 @@ describe("DokumentSide", () => {
     );
   });
 
-  it("viser slett-knapp og en deaktivert medunderskriver-knapp når man kan redigere", async () => {
+  it("viser slett-knapp når man kan redigere", async () => {
     renderSide(true);
 
     expect(await screen.findByRole("button", { name: "Slett" })).toBeDefined();
-    const medunderskriver = screen.getByRole("button", { name: "Send til medunderskriver" });
-    expect(medunderskriver.hasAttribute("disabled")).toBe(true);
   });
 
   it("åpner forhåndsvisning fra sidepanelmenyen", async () => {
@@ -169,6 +165,5 @@ describe("DokumentSide", () => {
 
     expect(await screen.findByRole("complementary")).toBeDefined();
     expect(screen.queryByRole("button", { name: "Slett" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Send til medunderskriver" })).toBeNull();
   });
 });

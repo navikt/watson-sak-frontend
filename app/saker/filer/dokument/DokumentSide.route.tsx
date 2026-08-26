@@ -1,8 +1,13 @@
-import { PaperplaneIcon, TrashIcon } from "@navikt/aksel-icons";
+import { ArrowLeftIcon, TrashIcon } from "@navikt/aksel-icons";
 import { Button, Detail, HStack, VStack } from "@navikt/ds-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { isRouteErrorResponse, useLoaderData, useParams, useRevalidator } from "react-router";
-import { Brødsmulesti } from "~/komponenter/Brødsmulesti";
+import {
+  isRouteErrorResponse,
+  Link as RouterLink,
+  useLoaderData,
+  useParams,
+  useRevalidator,
+} from "react-router";
 import { DokumentIkkeFunnet } from "~/feilhåndtering/DokumentIkkeFunnet";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { RouteConfig } from "~/routeConfig";
@@ -251,13 +256,17 @@ function DokumentRedigering({
         gap="space-8"
         className="mt-4 mb-4 px-[var(--ax-space-16)] lg:px-[var(--ax-space-24)]"
       >
-        <Brødsmulesti
-          smuler={[
-            { etikett: `Sak #${sakReferanse}`, til: sakUrl },
-            { etikett: "Dokumenter" },
-            { etikett: tittel || "Uten tittel" },
-          ]}
-        />
+        <Button
+          as={RouterLink}
+          to={sakUrl}
+          role="link"
+          variant="tertiary"
+          size="small"
+          icon={<ArrowLeftIcon aria-hidden />}
+          className="self-start"
+        >
+          Tilbake til sak #{sakReferanse}
+        </Button>
 
         <HStack justify="space-between" align="center" gap="space-4" wrap>
           <div className="min-w-0 flex-1">
@@ -265,20 +274,6 @@ function DokumentRedigering({
           </div>
 
           <HStack gap="space-2" align="center" wrap>
-            {/* Medunderskriving er ikke bygget ennå – knappen er med for å vise plasseringen
-            fra skissen, og er deaktivert til flyten finnes. */}
-            {kanRedigere && (
-              <Button
-                type="button"
-                variant="secondary"
-                size="small"
-                disabled
-                icon={<PaperplaneIcon aria-hidden />}
-              >
-                Send til medunderskriver
-              </Button>
-            )}
-
             {kanRedigere && (
               <Button
                 type="button"
