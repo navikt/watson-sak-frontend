@@ -1,23 +1,13 @@
-import { LinkIcon, TrashIcon, UploadIcon } from "@navikt/aksel-icons";
-import {
-  Alert,
-  BodyShort,
-  Box,
-  Button,
-  Detail,
-  Heading,
-  HStack,
-  Loader,
-  Table,
-  Tooltip,
-  VStack,
-} from "@navikt/ds-react";
-import { useEffect, useRef, useState } from "react";
+import { LinkIcon, TrashIcon } from "@navikt/aksel-icons";
+import { Alert, BodyShort, Button, Loader, Tooltip } from "@navikt/ds-react";
+import { useEffect, useState } from "react";
 import { useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { formaterStorrelse } from "~/utils/number-utils";
 import { FilIBrukModal } from "./FilIBrukModal";
+import { filTypeIkon, filTypeTekst } from "./fil-type-utils";
+import { FilerRad, FilerSeksjonCaption } from "./FilerRad";
 import { ÅpneFilKnapp, formaterDato } from "./fil-visning-utils";
 import { SlettFilModal } from "./SlettFilModal";
 import type { DokumentReferanse, FilResponse } from "./typer";
@@ -94,67 +84,29 @@ interface VedleggSeksjonProps {
   filer: FilResponse[];
   sakId: string;
   erSakseier: boolean;
-  kanLasteOpp: boolean;
+  /** Om en opplasting pågår (styrt av `SakFilområde`, som eier «Last opp fil»-knappen). */
+  lasterOpp?: boolean;
+  /** Feilmelding fra en mislykket opplasting (styrt av `SakFilområde`). */
+  feilFraServer?: string | null;
 }
 
-export function VedleggSeksjon({ filer, sakId, erSakseier, kanLasteOpp }: VedleggSeksjonProps) {
-  const opplastingFetcher = useFetcher<FilResponse | { message: string }>();
-  const inputRef = useRef<HTMLInputElement>(null);
-  const lasterOpp = opplastingFetcher.state !== "idle";
-  const url = RouteConfig.API.SAK_FILER.replace(":sakId", sakId);
-
-  function håndterFilvalg(event: React.ChangeEvent<HTMLInputElement>) {
-    const fil = event.target.files?.[0];
-    if (!fil) return;
-
-    const formData = new FormData();
-    formData.append("fil", fil);
-    sporHendelse("vedlegg lastet opp", { sakId });
-    opplastingFetcher.submit(formData, {
-      method: "post",
-      action: url,
-      encType: "multipart/form-data",
-    });
-    // Nullstill input slik at samme fil kan lastes opp igjen
-    event.target.value = "";
-  }
-
-  const feilFraServer =
-    opplastingFetcher.state === "idle" &&
-    opplastingFetcher.data &&
-    "message" in opplastingFetcher.data
-      ? opplastingFetcher.data.message
-      : null;
-
+/** Viser filer lastet opp utenfra saken. Forventer at `filer` allerede er filtrert til
+ * ikke-arkiverte filer av kalleren (`SakFilområde`) — arkiverte filer vises kun i
+ * Arkivert-seksjonen. Selve opplastingen (knapp og filvelger) eies av `SakFilområde`s felles
+ * header for «Filer». */
+export function VedleggSeksjon({
+  filer,
+  sakId,
+  erSakseier,
+  lasterOpp = false,
+  feilFraServer = null,
+}: VedleggSeksjonProps) {
   return (
-    <VStack gap="space-4">
-      <HStack justify="space-between" align="center">
-        <Heading level="2" size="small">
-          Vedlegg
-        </Heading>
-        {kanLasteOpp && filer.length > 0 && (
-          <>
-            <input
-              ref={inputRef}
-              type="file"
-              className="sr-only"
-              aria-hidden
-              tabIndex={-1}
-              onChange={håndterFilvalg}
-            />
-            <Button
-              type="button"
-              variant="tertiary"
-              size="xsmall"
-              icon={lasterOpp ? <Loader size="xsmall" aria-hidden /> : <UploadIcon aria-hidden />}
-              disabled={lasterOpp}
-              onClick={() => inputRef.current?.click()}
-            >
-              Last opp vedlegg
-            </Button>
-          </>
-        )}
-      </HStack>
+    <div>
+      <FilerSeksjonCaption
+        tittel="Opplastede filer"
+        undertekst="Lastet opp utenfra – kan ikke redigeres"
+      />
 
       {feilFraServer && (
         <Alert variant="error" size="small">
@@ -162,98 +114,54 @@ export function VedleggSeksjon({ filer, sakId, erSakseier, kanLasteOpp }: Vedleg
         </Alert>
       )}
 
-      {filer.length === 0 ? (
-        <Box background="neutral-soft" borderRadius="8" padding="space-16">
-          <VStack gap="space-12" align="center" className="text-center">
-            <UploadIcon aria-hidden fontSize="1.5rem" />
-            <VStack gap="space-4" align="center">
-              <BodyShort weight="semibold">Ingen vedlegg ennå</BodyShort>
-              <BodyShort size="small">Last opp filer som hører til saken.</BodyShort>
-            </VStack>
-            {kanLasteOpp && (
-              <>
-                <input
-                  ref={inputRef}
-                  type="file"
-                  className="sr-only"
-                  aria-hidden
-                  tabIndex={-1}
-                  onChange={håndterFilvalg}
-                />
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="small"
-                  icon={
-                    lasterOpp ? <Loader size="xsmall" aria-hidden /> : <UploadIcon aria-hidden />
-                  }
-                  disabled={lasterOpp}
-                  onClick={() => inputRef.current?.click()}
-                >
-                  Last opp vedlegg
-                </Button>
-              </>
-            )}
-          </VStack>
-        </Box>
+      {filer.length === 0 && !lasterOpp ? (
+        <BodyShort size="small" className="py-2 text-ax-text-neutral-subtle">
+          Ingen opplastede filer ennå
+        </BodyShort>
       ) : (
-        <Table size="small">
-          <Table.Header>
-            <Table.Row>
-              <Table.HeaderCell scope="col">Filnavn</Table.HeaderCell>
-              <Table.HeaderCell scope="col">Størrelse</Table.HeaderCell>
-              <Table.HeaderCell scope="col">Lastet opp</Table.HeaderCell>
-              <Table.HeaderCell scope="col">Av</Table.HeaderCell>
-              <Table.HeaderCell scope="col">
-                <span className="sr-only">Handlinger</span>
-              </Table.HeaderCell>
-            </Table.Row>
-          </Table.Header>
-          <Table.Body>
-            {filer.map((fil) => (
-              <Table.Row key={fil.id}>
-                <Table.DataCell>
-                  <HStack gap="space-2" align="center">
-                    <BodyShort size="small">{fil.filnavn}</BodyShort>
-                    {fil.bruktIDokumenter.length > 0 && (
-                      <Tooltip
-                        content={`I bruk i: ${fil.bruktIDokumenter.map((d) => d.tittel || "Uten tittel").join(", ")}`}
-                      >
-                        <LinkIcon
-                          aria-label={`Filen er i bruk i ${fil.bruktIDokumenter.length} dokument(er)`}
-                          className="text-ax-text-neutral-subtle"
-                        />
-                      </Tooltip>
-                    )}
-                  </HStack>
-                </Table.DataCell>
-                <Table.DataCell>
-                  <Detail>{formaterStorrelse(fil.storrelse)}</Detail>
-                </Table.DataCell>
-                <Table.DataCell>
-                  <Detail>{formaterDato(fil.opprettet)}</Detail>
-                </Table.DataCell>
-                <Table.DataCell>
-                  <Detail>{fil.opprettetAv}</Detail>
-                </Table.DataCell>
-                <Table.DataCell>
-                  <HStack gap="space-1" align="center">
-                    <ÅpneFilKnapp filId={fil.id} filnavn={fil.filnavn} sakId={sakId} />
-                    {erSakseier && (
-                      <SlettKnapp
-                        filId={fil.id}
-                        filnavn={fil.filnavn}
-                        sakId={sakId}
-                        bruktIDokumenter={fil.bruktIDokumenter}
-                      />
-                    )}
-                  </HStack>
-                </Table.DataCell>
-              </Table.Row>
-            ))}
-          </Table.Body>
-        </Table>
+        <ul className="flex flex-col" aria-label="Opplastede filer">
+          {filer.map((fil) => (
+            <FilerRad
+              key={fil.id}
+              type="fil"
+              ikon={filTypeIkon(fil.contentType)}
+              tittel={fil.filnavn}
+              tag={
+                fil.bruktIDokumenter.length > 0 && (
+                  <Tooltip
+                    content={`I bruk i: ${fil.bruktIDokumenter.map((d) => d.tittel || "Uten tittel").join(", ")}`}
+                  >
+                    <LinkIcon
+                      aria-label={`Filen er i bruk i ${fil.bruktIDokumenter.length} dokument(er)`}
+                      className="text-ax-text-neutral-subtle"
+                    />
+                  </Tooltip>
+                )
+              }
+              metadata={`${filTypeTekst(fil.contentType)} · ${formaterStorrelse(fil.storrelse)} · Lastet opp ${formaterDato(fil.opprettet)} · ${fil.opprettetAv}`}
+              handlinger={
+                <>
+                  <ÅpneFilKnapp filId={fil.id} filnavn={fil.filnavn} sakId={sakId} />
+                  {erSakseier && (
+                    <SlettKnapp
+                      filId={fil.id}
+                      filnavn={fil.filnavn}
+                      sakId={sakId}
+                      bruktIDokumenter={fil.bruktIDokumenter}
+                    />
+                  )}
+                </>
+              }
+            />
+          ))}
+        </ul>
       )}
-    </VStack>
+      {lasterOpp && (
+        <div className="flex items-center gap-2 pt-2 text-ax-text-neutral-subtle">
+          <Loader size="xsmall" aria-hidden />
+          <span>Laster opp …</span>
+        </div>
+      )}
+    </div>
   );
 }

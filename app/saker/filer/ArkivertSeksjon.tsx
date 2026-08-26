@@ -1,69 +1,96 @@
 import { ArchiveIcon } from "@navikt/aksel-icons";
-import { BodyShort, Detail, Heading, HStack, Table, Tag, VStack } from "@navikt/ds-react";
+import { Link } from "@navikt/ds-react";
+import { Link as RouterLink } from "react-router";
+import { RouteConfig } from "~/routeConfig";
+import { formaterStorrelse } from "~/utils/number-utils";
+import { FilerRad, FilerSeksjonCaption } from "./FilerRad";
 import { ÅpneFilKnapp, formaterDato } from "./fil-visning-utils";
-import type { FilResponse } from "./typer";
+import type { DokumentNode, FilResponse } from "./typer";
 
 interface ArkivertSeksjonProps {
   /** Filer (opplastede vedlegg og PDF-snapshots generert fra dokumenter) som er arkivert. */
   filer: FilResponse[];
+  /** Dokumenter som er arkivert, men som ikke (ennå) har fått en tilhørende arkivert PDF-fil i
+   * `filer` — vises likevel her, med lenke til dokumentet, slik at de ikke forsvinner fra visningen. */
+  dokumenterUtenFil: DokumentNode[];
   sakId: string;
 }
 
+type ArkivertOppføring =
+  | { kind: "fil"; dato: string; fil: FilResponse }
+  | { kind: "dokument"; dato: string; dokument: DokumentNode };
+
 /**
- * Viser filer (vedlegg og dokument-genererte PDF-er) som er arkivert i en journalpost.
- * Arkiverte filer kan kun åpnes/lastes ned — de kan ikke redigeres eller slettes.
+ * Viser filer (vedlegg og dokument-genererte PDF-er) og dokumenter som er arkivert i en
+ * journalpost. Arkiverte elementer kan kun åpnes/lastes ned eller ses — de kan ikke redigeres
+ * eller slettes, og vises kun her (ikke i sine opprinnelige lister).
  */
-export function ArkivertSeksjon({ filer, sakId }: ArkivertSeksjonProps) {
-  if (filer.length === 0) {
+export function ArkivertSeksjon({ filer, dokumenterUtenFil, sakId }: ArkivertSeksjonProps) {
+  const oppføringer: ArkivertOppføring[] = [
+    ...filer.map((fil): ArkivertOppføring => ({ kind: "fil", dato: fil.arkivert ?? "", fil })),
+    ...dokumenterUtenFil.map(
+      (dokument): ArkivertOppføring => ({
+        kind: "dokument",
+        dato: dokument.arkivert ?? "",
+        dokument,
+      }),
+    ),
+  ];
+
+  if (oppføringer.length === 0) {
     return null;
   }
 
-  const sortert = [...filer].sort((a, b) => (b.arkivert ?? "").localeCompare(a.arkivert ?? ""));
+  const sortert = [...oppføringer].sort((a, b) => b.dato.localeCompare(a.dato));
 
   return (
-    <VStack gap="space-4">
-      <HStack gap="space-2" align="center">
-        <ArchiveIcon aria-hidden />
-        <Heading level="2" size="small">
-          Arkivert
-        </Heading>
-      </HStack>
-
-      <Table size="small">
-        <Table.Header>
-          <Table.Row>
-            <Table.HeaderCell scope="col">Filnavn</Table.HeaderCell>
-            <Table.HeaderCell scope="col">Arkivert</Table.HeaderCell>
-            <Table.HeaderCell scope="col">Av</Table.HeaderCell>
-            <Table.HeaderCell scope="col">
-              <span className="sr-only">Handlinger</span>
-            </Table.HeaderCell>
-          </Table.Row>
-        </Table.Header>
-        <Table.Body>
-          {sortert.map((fil) => (
-            <Table.Row key={fil.id}>
-              <Table.DataCell>
-                <HStack gap="space-2" align="center">
-                  <BodyShort size="small">{fil.filnavn}</BodyShort>
-                  <Tag variant="neutral" size="xsmall">
-                    Arkivert
-                  </Tag>
-                </HStack>
-              </Table.DataCell>
-              <Table.DataCell>
-                <Detail>{fil.arkivert ? formaterDato(fil.arkivert) : ""}</Detail>
-              </Table.DataCell>
-              <Table.DataCell>
-                <Detail>{fil.arkivertAv}</Detail>
-              </Table.DataCell>
-              <Table.DataCell>
-                <ÅpneFilKnapp filId={fil.id} filnavn={fil.filnavn} sakId={sakId} />
-              </Table.DataCell>
-            </Table.Row>
-          ))}
-        </Table.Body>
-      </Table>
-    </VStack>
+    <div>
+      <FilerSeksjonCaption
+        tittel="Arkivert"
+        undertekst="Lastet opp i dokumentarkiv – kan ikke endres"
+      />
+      <ul className="flex flex-col" aria-label="Arkivert">
+        {sortert.map((oppføring) =>
+          oppføring.kind === "fil" ? (
+            <FilerRad
+              key={`fil-${oppføring.fil.id}`}
+              type="arkivert"
+              ikon={ArchiveIcon}
+              tittel={oppføring.fil.filnavn}
+              metadata={`${formaterStorrelse(oppføring.fil.storrelse)} · Arkivert ${formaterDato(
+                oppføring.fil.arkivert ?? "",
+              )} · ${oppføring.fil.arkivertAv ?? ""}`}
+              handlinger={
+                <ÅpneFilKnapp
+                  filId={oppføring.fil.id}
+                  filnavn={oppføring.fil.filnavn}
+                  sakId={sakId}
+                />
+              }
+            />
+          ) : (
+            <FilerRad
+              key={`dokument-${oppføring.dokument.id}`}
+              type="arkivert"
+              ikon={ArchiveIcon}
+              tittel={
+                <Link
+                  as={RouterLink}
+                  to={RouteConfig.SAKER_DOKUMENT.replace(":sakId", sakId).replace(
+                    ":docId",
+                    oppføring.dokument.id,
+                  )}
+                >
+                  {oppføring.dokument.tittel || "Uten tittel"}
+                </Link>
+              }
+              metadata={`Arkivert ${formaterDato(oppføring.dokument.arkivert ?? "")} · ${
+                oppføring.dokument.arkivertAv ?? ""
+              }`}
+            />
+          ),
+        )}
+      </ul>
+    </div>
   );
 }

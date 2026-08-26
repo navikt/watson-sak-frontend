@@ -36,72 +36,76 @@ function renderSeksjon(props: Parameters<typeof VedleggSeksjon>[0]) {
 }
 
 describe("VedleggSeksjon", () => {
-  it("viser heading 'Vedlegg'", () => {
-    renderSeksjon({ filer: [], sakId: "SAK-1", erSakseier: false, kanLasteOpp: false });
-    expect(screen.getByText("Vedlegg")).toBeDefined();
+  it("viser caption 'Opplastede filer'", () => {
+    renderSeksjon({ filer: [], sakId: "SAK-1", erSakseier: false });
+    expect(screen.getByRole("heading", { name: "Opplastede filer" })).toBeDefined();
   });
 
   it("viser tomtilstand når det ikke er noen filer", () => {
-    renderSeksjon({ filer: [], sakId: "SAK-1", erSakseier: false, kanLasteOpp: false });
-    expect(screen.getByText("Ingen vedlegg ennå")).toBeDefined();
-    expect(screen.queryByText("Filnavn")).toBeNull();
+    renderSeksjon({ filer: [], sakId: "SAK-1", erSakseier: false });
+    expect(screen.getByText("Ingen opplastede filer ennå")).toBeDefined();
   });
 
   it("viser filnavn for hver fil", () => {
-    renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: false, kanLasteOpp: false });
+    renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: false });
     expect(screen.getByText("anmeldelse.pdf")).toBeDefined();
     expect(screen.getByText("screenshot.png")).toBeDefined();
   });
 
-  it("viser størrelse i KB", () => {
-    renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: false, kanLasteOpp: false });
-    expect(screen.getByText("200 KB")).toBeDefined();
-    expect(screen.getByText("50 KB")).toBeDefined();
+  it("viser størrelse og type i metadatalinjen", () => {
+    renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: false });
+    expect(screen.getByText(/PDF · 200 KB/)).toBeDefined();
+    expect(screen.getByText(/Bilde · 50 KB/)).toBeDefined();
   });
 
   it("viser hvem som lastet opp", () => {
-    renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: false, kanLasteOpp: false });
-    expect(screen.getByText("Ola Nordmann")).toBeDefined();
-    expect(screen.getByText("Kari Hansen")).toBeDefined();
+    renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: false });
+    expect(screen.getByText(/Ola Nordmann/)).toBeDefined();
+    expect(screen.getByText(/Kari Hansen/)).toBeDefined();
   });
 
   it("viser åpne-knapp for hver fil", () => {
-    renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: false, kanLasteOpp: false });
+    renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: false });
     expect(screen.getByLabelText("Åpne anmeldelse.pdf")).toBeDefined();
     expect(screen.getByLabelText("Åpne screenshot.png")).toBeDefined();
   });
 
   it("viser ikke slett-knapp når erSakseier er false", () => {
-    renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: false, kanLasteOpp: false });
+    renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: false });
     expect(screen.queryByLabelText("Slett anmeldelse.pdf")).toBeNull();
   });
 
   it("viser slett-knapp kun når erSakseier er true", () => {
-    renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: true, kanLasteOpp: false });
+    renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: true });
     expect(screen.getByLabelText("Slett anmeldelse.pdf")).toBeDefined();
     expect(screen.getByLabelText("Slett screenshot.png")).toBeDefined();
   });
 
-  it("viser 'Last opp vedlegg'-knapp når kanLasteOpp er true", () => {
-    renderSeksjon({ filer: [], sakId: "SAK-1", erSakseier: false, kanLasteOpp: true });
-    expect(screen.getByRole("button", { name: "Last opp vedlegg" })).toBeDefined();
+  it("viser lastespinner når en opplasting pågår", () => {
+    renderSeksjon({ filer: [], sakId: "SAK-1", erSakseier: false, lasterOpp: true });
+    expect(screen.getByText("Laster opp …")).toBeDefined();
   });
 
-  it("skjuler 'Last opp vedlegg'-knapp når kanLasteOpp er false", () => {
-    renderSeksjon({ filer: [], sakId: "SAK-1", erSakseier: false, kanLasteOpp: false });
-    expect(screen.queryByText("Last opp vedlegg")).toBeNull();
+  it("viser feilmelding fra serveren", () => {
+    renderSeksjon({
+      filer: [],
+      sakId: "SAK-1",
+      erSakseier: false,
+      feilFraServer: "Filen er for stor",
+    });
+    expect(screen.getByText("Filen er for stor")).toBeDefined();
   });
 
   it("viser 'i bruk'-ikon når filen er satt inn i et dokument", () => {
     const filerMedBruk: FilResponse[] = [
       { ...mockFiler[1], bruktIDokumenter: [{ id: "dok-1", tittel: "Saksframlegg" }] },
     ];
-    renderSeksjon({ filer: filerMedBruk, sakId: "SAK-1", erSakseier: false, kanLasteOpp: false });
+    renderSeksjon({ filer: filerMedBruk, sakId: "SAK-1", erSakseier: false });
     expect(screen.getByLabelText("Filen er i bruk i 1 dokument(er)")).toBeDefined();
   });
 
   it("viser ikke 'i bruk'-ikon når filen ikke er i bruk", () => {
-    renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: false, kanLasteOpp: false });
+    renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: false });
     expect(screen.queryByText(/er i bruk i/)).toBeNull();
   });
 
@@ -109,7 +113,7 @@ describe("VedleggSeksjon", () => {
     const filerMedBruk: FilResponse[] = [
       { ...mockFiler[1], bruktIDokumenter: [{ id: "dok-1", tittel: "Saksframlegg" }] },
     ];
-    renderSeksjon({ filer: filerMedBruk, sakId: "SAK-1", erSakseier: true, kanLasteOpp: false });
+    renderSeksjon({ filer: filerMedBruk, sakId: "SAK-1", erSakseier: true });
 
     fireEvent.click(screen.getByLabelText("Slett screenshot.png"));
 
@@ -119,7 +123,7 @@ describe("VedleggSeksjon", () => {
   });
 
   it("viser bekreftelsesdialog før en fil slettes", () => {
-    renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: true, kanLasteOpp: false });
+    renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: true });
 
     fireEvent.click(screen.getByLabelText("Slett screenshot.png"));
 
@@ -128,7 +132,7 @@ describe("VedleggSeksjon", () => {
   });
 
   it("lukker bekreftelsesdialogen uten å slette", () => {
-    renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: true, kanLasteOpp: false });
+    renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: true });
 
     fireEvent.click(screen.getByLabelText("Slett screenshot.png"));
     fireEvent.click(screen.getByRole("button", { name: "Avbryt" }));
