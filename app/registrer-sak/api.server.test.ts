@@ -124,9 +124,7 @@ describe("opprettKontrollsak", () => {
         misbruktype: ["SKJULT_SAMLIV"],
         merking: [],
         arbeidsgivere: [],
-        ytelser: [
-          { type: "DAGPENGER", periodeFra: "2026-01-01", periodeTil: "2026-12-31" },
-        ],
+        ytelser: [{ type: "DAGPENGER", periodeFra: "2026-01-01", periodeTil: "2026-12-31" }],
       },
     });
 
