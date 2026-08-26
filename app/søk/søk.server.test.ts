@@ -39,6 +39,13 @@ describe("søkSaker", () => {
     expect(resultater).toEqual([]);
   });
 
+  it("finner sak på legacyPid og bevarer ledende nuller", async () => {
+    const { søketype, resultater } = await søkSaker(testRequest, "01027");
+
+    expect(søketype).toBe("saksnummer");
+    expect(resultater.map((sak) => sak.id)).toEqual([1027]);
+  });
+
   it("gjenkjenner organisasjonsnummer som egen søketype", async () => {
     const { søketype, resultater } = await søkSaker(testRequest, "123456789");
 

@@ -184,3 +184,28 @@ describe("opprettJournalpost", () => {
     await expect(opprettJournalpost("token", "42", "NOTAT", "Tittel", "Tekst")).rejects.toThrow();
   });
 });
+
+describe("søkKontrollsakerPåSaksnummer", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it("returnerer tom liste ved 404 slik at søk viser «ingen treff»", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 404 });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { søkKontrollsakerPåSaksnummer } = await import("./api.server");
+
+    await expect(søkKontrollsakerPåSaksnummer("token", "01027")).resolves.toEqual([]);
+  });
+
+  it("kaster feil ved andre ikke-ok HTTP-svar", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 500 });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { søkKontrollsakerPåSaksnummer } = await import("./api.server");
+
+    await expect(søkKontrollsakerPåSaksnummer("token", "01027")).rejects.toThrow();
+  });
+});

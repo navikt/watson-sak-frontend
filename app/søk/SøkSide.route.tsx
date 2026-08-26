@@ -76,11 +76,14 @@ function SøkeVeiledning() {
         <MagnifyingGlassIcon aria-hidden fontSize="2rem" className="text-ax-icon-neutral-subtle" />
       }
       tittel="Finn en sak"
-      beskrivelse="Bruk søkefeltet i toppmenyen for å søke etter saksnummer, fødselsnummer eller organisasjonsnummer."
+      beskrivelse="Bruk søkefeltet i toppmenyen for å søke etter saksnummer, PID, fødselsnummer eller organisasjonsnummer."
     >
       <HStack gap="space-8" justify="center" wrap>
         <Tag variant="neutral" size="small">
           Saksnummer
+        </Tag>
+        <Tag variant="neutral" size="small">
+          PID
         </Tag>
         <Tag variant="neutral" size="small">
           Fødselsnummer
@@ -120,9 +123,9 @@ function tomTreffTekst(
   switch (søketype) {
     case "saksnummer":
       return {
-        tittel: `Fant ingen sak med saksnummer «${søketekst}»`,
+        tittel: `Fant ingen sak med saksnummer eller PID «${søketekst}»`,
         beskrivelse:
-          "Sjekk at saksnummeret er riktig, eller søk på fødselsnummer eller organisasjonsnummer.",
+          "Sjekk at saksnummeret eller PID-en er riktig, eller søk på fødselsnummer eller organisasjonsnummer.",
       };
     case "organisasjonsnummer":
       return {
@@ -138,7 +141,7 @@ function tomTreffTekst(
       return {
         tittel: "Ugyldig søk",
         beskrivelse:
-          "Søket må være et fødselsnummer (11 sifre), organisasjonsnummer (9 sifre) eller saksnummer.",
+          "Søket må være et fødselsnummer (11 sifre), organisasjonsnummer (9 sifre), saksnummer eller PID.",
       };
   }
 }
@@ -161,6 +164,7 @@ export default function SøkSide() {
   const totalSider = visteData?.totalSider ?? 1;
   const totalAntall = visteData?.totalAntall ?? 0;
   const harSøkt = actionData !== undefined;
+  const harEttSaksnummerTreff = søketype === "saksnummer" && resultater?.length === 1;
 
   const resultatlisteRef = useRef<HTMLDivElement>(null);
 
@@ -210,7 +214,7 @@ export default function SøkSide() {
               </BodyShort>
             )}
 
-            {resultater && totalAntall > 0 && søketype === "saksnummer" && (
+            {resultater && totalAntall > 0 && harEttSaksnummerTreff && (
               <div
                 ref={resultatlisteRef}
                 onKeyDown={handleResultatlisteKeyDown}
@@ -220,7 +224,7 @@ export default function SøkSide() {
               </div>
             )}
 
-            {resultater && totalAntall > 0 && søketype !== "saksnummer" && (
+            {resultater && totalAntall > 0 && !harEttSaksnummerTreff && (
               <>
                 <div
                   ref={resultatlisteRef}

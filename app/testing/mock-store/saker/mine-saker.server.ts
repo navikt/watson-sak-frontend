@@ -1248,6 +1248,7 @@ const backendGenererteDemoSaker = [
   },
   {
     id: 1027,
+    legacyPid: "01027",
     personIdent: "12345678927",
     saksbehandlere: {
       ansvarlig: innloggetEier,

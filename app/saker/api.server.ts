@@ -204,24 +204,23 @@ export async function hentKontrollsak(token: string, sakId: string): Promise<Kon
   return parseEllerKastFeil(kontrollsakResponseSchema, await respons.json(), "hentKontrollsak");
 }
 
-/**
- * Henter en kontrollsak på saksnummer for bruk i søk, uten å kaste ved 404.
- * Returnerer `null` når saken ikke finnes, slik at søket kan vise «ingen treff»
- * fremfor en feilside.
- */
-export async function hentKontrollsakForSøk(
+/** Søker på internt saksnummer eller saksnummeret fra det gamle systemet. */
+export async function søkKontrollsakerPåSaksnummer(
   token: string,
-  sakId: string,
-): Promise<KontrollsakResponse | null> {
-  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}`), {
-    headers: authHeaders(token),
-  });
-  if (respons.status === 404) return null;
-  if (!respons.ok) await håndterFeil(respons, "Kunne ikke hente kontrollsak");
+  saksnummer: string,
+): Promise<KontrollsakResponse[]> {
+  const respons = await fetch(
+    apiUrl(`/api/v1/kontrollsaker/sok/saksnummer/${encodeURIComponent(saksnummer)}`),
+    {
+      headers: authHeaders(token),
+    },
+  );
+  if (respons.status === 404) return [];
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke søke etter kontrollsaker på saksnummer");
   return parseEllerKastFeil(
-    kontrollsakResponseSchema,
+    z.array(kontrollsakResponseSchema),
     await respons.json(),
-    "hentKontrollsakForSøk",
+    "søkKontrollsakerPåSaksnummer",
   );
 }
 
