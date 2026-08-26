@@ -260,10 +260,7 @@ export default function OpprettSakSide() {
               </HStack>
               {person.adresseskjermet && (
                 <LocalAlert status="error" className="max-w-2xl">
-                  <LocalAlert.Content>
-                    Denne personen er skjermet.
-                    {skjemaSperret && ` ${INGEN_TILGANG_TIL_Å_OPPRETTE_SAK_MELDING}.`}
-                  </LocalAlert.Content>
+                  <LocalAlert.Content>Denne personen er skjermet.</LocalAlert.Content>
                 </LocalAlert>
               )}
             </VStack>
