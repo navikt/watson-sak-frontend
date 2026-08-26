@@ -179,4 +179,7 @@ describe("SakDetaljSide render", () => {
     await screen.findByRole("heading", { level: 1 });
     expect(screen.queryByText("Diskresjon")).toBeNull();
   }, 15000);
+
+  // TODO: Legg til tester for IngenFiltilgangKort og historikk-meldinger
+  // Se DELIVERABLES.md for beskrivelse av hva som skal testes
 });

@@ -5,6 +5,7 @@ import { useFetcher } from "react-router";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
+import type { KontrollsakResponse } from "~/saker/types.backend";
 import { useDisclosure } from "~/utils/useDisclosure";
 import { HistorikkProsessListe } from "./HistorikkProsessListe";
 import { LeggTilHistorikkModal } from "./LeggTilHistorikkModal";
@@ -14,13 +15,14 @@ import type { SakHendelse } from "./typer";
 
 interface SakHistorikkProps {
   sakId: number;
+  sak: KontrollsakResponse;
   hendelser: SakHendelse[];
   redigerbar: boolean;
 }
 
 const MAKS_SYNLIGE_HENDELSER = 5;
 
-export function SakHistorikk({ sakId, hendelser, redigerbar }: SakHistorikkProps) {
+export function SakHistorikk({ sakId, sak, hendelser, redigerbar }: SakHistorikkProps) {
   const { erÅpen: leggTilÅpen, onÅpne: onÅpneLeggTil, onLukk: onLukkLeggTil } = useDisclosure();
   const { erÅpen: visAlleÅpen, onÅpne: onÅpneVisAlle, onLukk: onLukkVisAlle } = useDisclosure();
   const { erÅpen: redigerÅpen, onÅpne: onÅpneRediger, onLukk: onLukkRediger } = useDisclosure();
@@ -32,6 +34,10 @@ export function SakHistorikk({ sakId, hendelser, redigerbar }: SakHistorikkProps
     fetcher.state === "idle" && fetcher.data && "ok" in fetcher.data && !fetcher.data.ok
       ? fetcher.data.feil?.skjema?.[0]
       : undefined;
+
+  const tomHistorikkMelding = sak?.adresseskjermet
+    ? "Du må ha utvidet tilgang for å se historikk på skjermede saker."
+    : "Ingen historikk for denne saken.";
 
   function åpneRediger(hendelse: SakHendelse) {
     setValgtHendelse(hendelse);
@@ -71,7 +77,7 @@ export function SakHistorikk({ sakId, hendelser, redigerbar }: SakHistorikkProps
         </Alert>
       )}
       {hendelser.length === 0 ? (
-        <BodyShort>Ingen historikk for denne saken.</BodyShort>
+        <BodyShort>{tomHistorikkMelding}</BodyShort>
       ) : (
         <>
           <HistorikkProsessListe
