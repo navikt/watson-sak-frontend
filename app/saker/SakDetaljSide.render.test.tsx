@@ -114,16 +114,16 @@ describe("SakDetaljSide render", () => {
     expect(screen.queryByText("Organisasjonsnummer")).toBeNull();
   }, 15000);
 
-  it("viser Dokumenter-blokken for sak man er eier av", async () => {
+  it("viser Filer-blokken for sak man er eier av", async () => {
     renderDetaljside();
 
-    expect(await screen.findByRole("heading", { name: "Dokumenter" })).toBeDefined();
+    expect(await screen.findByRole("heading", { name: "Filer" })).toBeDefined();
     expect(
       screen.queryByText("Du må få delt tilgang til saken for å kunne se dokumenter og vedlegg."),
     ).toBeNull();
   }, 15000);
 
-  it("skjuler Dokumenter-blokken og viser tilgangsmelding for koblet sak uten direkte tilgang", async () => {
+  it("skjuler Filer-blokken og viser tilgangsmelding for koblet sak uten direkte tilgang", async () => {
     const { hentMockState } = await import("~/testing/mock-store/session.server");
     const { hentAlleSaker } = await import("~/testing/mock-store/alle-saker.server");
     const koblingSakId = "102";
@@ -146,7 +146,7 @@ describe("SakDetaljSide render", () => {
         "Du må få delt tilgang til saken for å kunne se dokumenter og vedlegg.",
       ),
     ).toBeDefined();
-    expect(screen.queryByRole("heading", { name: "Dokumenter" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Filer" })).toBeNull();
   }, 15000);
 
   it("viser organisasjonsnummer-felt i redigeringsmodus", async () => {

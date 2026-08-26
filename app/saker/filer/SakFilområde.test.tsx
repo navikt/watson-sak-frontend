@@ -78,14 +78,15 @@ function renderTre(props: Parameters<typeof DokumentTre>[0]) {
 }
 
 describe("SakFilområde", () => {
-  it("viser heading 'Dokumenter' alltid", () => {
+  it("viser heading 'Filer' alltid", () => {
     renderOmråde({ dokumenter: [], filer: [], sakId: "ABC-123" });
-    expect(screen.getByText("Dokumenter")).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Filer" })).toBeDefined();
   });
 
-  it("viser heading 'Vedlegg' alltid", () => {
+  it("viser caption for 'Redigerbare dokumenter' og 'Opplastede filer'", () => {
     renderOmråde({ dokumenter: [], filer: [], sakId: "ABC-123" });
-    expect(screen.getByText("Vedlegg")).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Redigerbare dokumenter" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Opplastede filer" })).toBeDefined();
   });
 
   it("viser dokumenter i listen", () => {
@@ -104,23 +105,20 @@ describe("SakFilområde", () => {
     expect(screen.getByText("Opprett dokument")).toBeDefined();
   });
 
-  it("viser tomtilstand for dokumenter med opprett-knapp når brukeren kan redigere", () => {
+  it("viser 'Last opp fil'-knapp når redigerbar er true", () => {
     renderOmråde({ dokumenter: [], filer: [], sakId: "ABC-123" });
-
-    expect(screen.getByText("Ingen dokumenter ennå")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Opprett dokument" })).toBeDefined();
+    expect(screen.getByText("Last opp fil")).toBeDefined();
   });
 
-  it("skjuler opprett-knapp i tomtilstanden når brukeren ikke kan redigere", () => {
-    renderOmråde({ dokumenter: [], filer: [], sakId: "ABC-123", redigerbar: false });
-
-    expect(screen.getByText("Ingen dokumenter ennå")).toBeDefined();
-    expect(screen.queryByRole("button", { name: "Opprett dokument" })).toBeNull();
+  it("viser tomtilstand for redigerbare dokumenter når det ikke er noen", () => {
+    renderOmråde({ dokumenter: [], filer: [], sakId: "ABC-123" });
+    expect(screen.getByText("Ingen redigerbare dokumenter ennå")).toBeDefined();
   });
 
-  it("skjuler 'Opprett dokument'-knapp når redigerbar er false", () => {
+  it("skjuler 'Opprett dokument'- og 'Last opp fil'-knapp når redigerbar er false", () => {
     renderOmråde({ dokumenter: mockDokumenter, filer: [], sakId: "ABC-123", redigerbar: false });
     expect(screen.queryByText("Opprett dokument")).toBeNull();
+    expect(screen.queryByText("Last opp fil")).toBeNull();
   });
 
   it("viser modal med tomt dokument og alle malvalg", async () => {
@@ -216,7 +214,7 @@ describe("SakFilområde", () => {
     expect(screen.getByRole("button", { name: "Handlinger for Notat" })).toBeDefined();
   });
 
-  it("flytter arkiverte filer til Arkivert-seksjonen, ikke Vedlegg-listen", () => {
+  it("flytter arkiverte filer til Arkivert-seksjonen, ikke Opplastede filer-listen", () => {
     const arkivertFil: FilResponse = {
       ...mockFiler[0],
       id: "fil-arkivert",
@@ -229,23 +227,22 @@ describe("SakFilområde", () => {
 
     expect(screen.getByRole("heading", { name: "Arkivert" })).toBeDefined();
 
-    // Med tomme dokumenter (empty-state uten tabell) er de eneste to tabellene i DOM-et
-    // Vedlegg-tabellen (først i markup) og Arkivert-tabellen (sist).
-    const [vedleggTabell, arkivertTabell] = screen.getAllByRole("table");
+    const opplastedeFiler = screen.getByRole("list", { name: "Opplastede filer" });
+    const arkivertListe = screen.getByRole("list", { name: "Arkivert" });
 
-    expect(within(vedleggTabell).getByText("rapport.pdf")).toBeDefined();
-    expect(within(vedleggTabell).queryByText("arkivert.pdf")).toBeNull();
+    expect(within(opplastedeFiler).getByText("rapport.pdf")).toBeDefined();
+    expect(within(opplastedeFiler).queryByText("arkivert.pdf")).toBeNull();
 
-    expect(within(arkivertTabell).getByText("arkivert.pdf")).toBeDefined();
-    expect(within(arkivertTabell).queryByText("rapport.pdf")).toBeNull();
+    expect(within(arkivertListe).getByText("arkivert.pdf")).toBeDefined();
+    expect(within(arkivertListe).queryByText("rapport.pdf")).toBeNull();
   });
 
-  it("viser ikke Arkivert-seksjonen når ingen filer er arkivert", () => {
+  it("viser ikke Arkivert-seksjonen når ingen filer eller dokumenter er arkivert", () => {
     renderOmråde({ dokumenter: [], filer: mockFiler, sakId: "ABC-123" });
     expect(screen.queryByRole("heading", { name: "Arkivert" })).toBeNull();
   });
 
-  it("viser 'Arkivert'-merke og skjuler slett-knapp for arkiverte dokumenter", () => {
+  it("viser arkiverte dokumenter kun i Arkivert-seksjonen, ikke i Redigerbare dokumenter", () => {
     const arkivertDokument: DokumentNode = {
       ...mockDokumenter[0],
       id: "3",
@@ -260,9 +257,42 @@ describe("SakFilområde", () => {
       sakId: "ABC-123",
     });
 
-    expect(screen.getByText("Arkivert dokument")).toBeDefined();
-    expect(screen.getAllByText("Arkivert").length).toBeGreaterThan(0);
+    const redigerbareDokumenter = screen.getByRole("list", { name: "Redigerbare dokumenter" });
+    const arkivertListe = screen.getByRole("list", { name: "Arkivert" });
+
+    expect(within(redigerbareDokumenter).queryByText("Arkivert dokument")).toBeNull();
+    expect(within(arkivertListe).getByText("Arkivert dokument")).toBeDefined();
     expect(screen.queryByRole("button", { name: "Slett Arkivert dokument" })).toBeNull();
+  });
+
+  it("skjuler et arkivert dokument fra Arkivert-seksjonen når det allerede har en arkivert fil", () => {
+    const arkivertDokument: DokumentNode = {
+      ...mockDokumenter[0],
+      id: "3",
+      tittel: "Arkivert dokument",
+      arkivert: "2026-03-01T10:00:00Z",
+      arkivertAv: "Z999999",
+    };
+    const arkivertFilFraDokument: FilResponse = {
+      ...mockFiler[0],
+      id: "fil-fra-dokument",
+      filnavn: "Arkivert dokument.pdf",
+      arkivert: "2026-03-01T10:00:00Z",
+      arkivertAv: "Z999999",
+      arkivertFraDokumentId: "3",
+    };
+
+    renderOmråde({
+      dokumenter: [...mockDokumenter, arkivertDokument],
+      filer: [arkivertFilFraDokument],
+      sakId: "ABC-123",
+    });
+
+    const arkivertListe = screen.getByRole("list", { name: "Arkivert" });
+
+    // Bare PDF-en (filen) skal vises, ikke også en duplikatrad for kildedokumentet
+    expect(within(arkivertListe).getByText("Arkivert dokument.pdf")).toBeDefined();
+    expect(within(arkivertListe).queryByText("Arkivert dokument")).toBeNull();
   });
 
   describe("tilgang via koblet sak (kun les)", () => {
@@ -276,9 +306,9 @@ describe("SakFilområde", () => {
       expect(screen.queryByText("Opprett dokument")).toBeNull();
     });
 
-    it("skjuler 'Last opp vedlegg'-knapp", () => {
+    it("skjuler 'Last opp fil'-knapp", () => {
       renderOmråde({ dokumenter: [], filer: mockFiler, sakId: "ABC-123", redigerbar: false });
-      expect(screen.queryByText("Last opp vedlegg")).toBeNull();
+      expect(screen.queryByText("Last opp fil")).toBeNull();
     });
 
     it("skjuler slett-knapp per fil", () => {
