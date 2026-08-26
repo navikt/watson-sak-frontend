@@ -14,7 +14,7 @@ export async function hentSaksbehandlerInfo(token: string): Promise<Saksbehandle
       logger.warn("Mottok feil fra innlogget-bruker-API", {
         status: response.status,
       });
-      return { navIdent: "", navn: "Ukjent", enhet: null };
+      return { navIdent: "", navn: "Ukjent", enhet: null, erLeder: false };
     }
 
     const json = await response.json();
@@ -24,11 +24,11 @@ export async function hentSaksbehandlerInfo(token: string): Promise<Saksbehandle
         parsingError: parsedData.error,
         data: json,
       });
-      return { navIdent: "", navn: "Ukjent", enhet: null };
+      return { navIdent: "", navn: "Ukjent", enhet: null, erLeder: false };
     }
     return parsedData.data;
   } catch (error) {
     logger.error("Kunne ikke hente informasjon om saksbehandler", { error });
-    return { navIdent: "", navn: "Ukjent", enhet: null };
+    return { navIdent: "", navn: "Ukjent", enhet: null, erLeder: false };
   }
 }
