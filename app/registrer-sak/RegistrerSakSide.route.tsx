@@ -23,6 +23,7 @@ import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { RouteConfig } from "~/routeConfig";
 import { opprettSakSchema } from "~/registrer-sak/validering";
 import { merkingEtikett } from "~/saker/kategorier";
+import { INGEN_TILGANG_TIL_Å_OPPRETTE_SAK_MELDING } from "./feilmeldinger";
 import type { PersonOppslagResultat } from "./person-oppslag.mock.server";
 import { action, loader } from "./RegistrerSakSide.server";
 import type { YtelseRadVerdier } from "./skjema-helpers";
@@ -111,6 +112,9 @@ export default function OpprettSakSide() {
     personFetcher.data && "søktMedHistoriskIdent" in personFetcher.data
       ? personFetcher.data.søktMedHistoriskIdent
       : false;
+  // Skjermet person der saksbehandler mangler Utvidet tilgang: sperr skjemaet proaktivt
+  // i stedet for å la saksbehandler fylle det ut og først få avvist ved innsending.
+  const skjemaSperret = Boolean(person?.adresseskjermet) && person?.kanOppretteSak === false;
 
   const åpneSaker = useMemo(
     () => eksisterendeSaker.filter((sak) => !erLukketStatus(sak.status)),
@@ -261,6 +265,22 @@ export default function OpprettSakSide() {
               )}
             </VStack>
 
+            {/* Skjema sperret: saksbehandler mangler Utvidet tilgang til skjermet person.
+                Skjemaet rendres bevisst ikke i det hele tatt — se RAILS-9. */}
+            {skjemaSperret && (
+              <LocalAlert status="warning" className="max-w-2xl">
+                <LocalAlert.Header>
+                  <LocalAlert.Title as="h2">
+                    Du kan ikke opprette sak på denne personen
+                  </LocalAlert.Title>
+                </LocalAlert.Header>
+                <LocalAlert.Content>
+                  {INGEN_TILGANG_TIL_Å_OPPRETTE_SAK_MELDING}. Ta kontakt dersom du mener dette er
+                  feil.
+                </LocalAlert.Content>
+              </LocalAlert>
+            )}
+
             {/* Eksisterende sak-advarsel (info, ikke-blokkerende) */}
             {sisteSak && (
               <LocalAlert status="announcement" className="max-w-2xl">
@@ -292,290 +312,294 @@ export default function OpprettSakSide() {
               </LocalAlert>
             )}
 
-            {/* Skjema */}
-            <Form
-              method="post"
-              aria-label="Grunnleggende saksinformasjon"
-              id={form.id}
-              onSubmit={(event) => {
-                form.onSubmit(event);
-                if (!event.defaultPrevented) {
-                  event.preventDefault();
-                  sporHendelse("sak opprettet", { kategori: valgtKategori });
-                  const formData = new FormData(event.currentTarget);
-                  filer.forEach((fil) => formData.append("filer", fil));
-                  submit(formData, { method: "post", encType: "multipart/form-data" });
-                }
-              }}
-              noValidate
-            >
-              <input
-                type="hidden"
-                name="personIdent"
-                value={person.personnummer.replace(/\s/g, "")}
-              />
-              <VStack gap="space-32">
-                {/* ErrorSummary */}
-                {feilElementer.length > 0 && (
-                  <ErrorSummary
-                    heading="Du må rette disse feilene før du kan gå videre"
-                    className="max-w-2xl"
-                  >
-                    {feilElementer.map((f) => (
-                      <ErrorSummary.Item key={f.id} href={`#${f.id}`}>
-                        {f.melding}
-                      </ErrorSummary.Item>
-                    ))}
-                  </ErrorSummary>
-                )}
-
-                {form.errors && form.errors.length > 0 && (
-                  <LocalAlert status="error" className="max-w-2xl">
-                    <LocalAlert.Content>{form.errors[0]}</LocalAlert.Content>
-                  </LocalAlert>
-                )}
-
-                <Heading level="2" size="medium">
-                  Grunnleggende saksinformasjon
-                </Heading>
-
-                {/* Rad 1: Kategori, Misbruktype, Merking */}
-                <HStack gap="space-24" align="start" wrap>
-                  <Select
-                    name={fields.kategori.name}
-                    id={fields.kategori.id}
-                    label="Kategori"
-                    error={fields.kategori.errors?.[0]}
-                    className="w-52"
-                    value={valgtKategori}
-                    onChange={(e) => {
-                      setValgtKategori(e.target.value);
-                      const nyligeGyldige = kodeverk.misbrukstyper
-                        .filter((m) => m.kategori === e.target.value)
-                        .map((m) => m.kode);
-                      if (nyligeGyldige && nyligeGyldige.length > 0) {
-                        setValgteMisbruktyper((prev) =>
-                          prev.filter((m) => nyligeGyldige.includes(m)),
-                        );
-                      } else {
-                        setValgteMisbruktyper([]);
-                      }
-                    }}
-                  >
-                    <option value="">Velg kategori</option>
-                    {kodeverk.kategorier.map((k) => (
-                      <option key={k.kode} value={k.kode}>
-                        {k.beskrivelse}
-                      </option>
-                    ))}
-                  </Select>
-
-                  <div id={fields.misbruktype.id} className="w-72">
-                    <UNSAFE_Combobox
-                      label="Misbruktype"
-                      options={tilgjengeligeMisbruktyper.map((kode) => ({
-                        value: kode,
-                        label: misbrukstypeBeskrivelseMap.get(kode) ?? kode,
-                      }))}
-                      isMultiSelect
-                      disabled={tilgjengeligeMisbruktyper.length === 0}
-                      selectedOptions={valgteMisbruktyper.map((kode) => ({
-                        value: kode,
-                        label: misbrukstypeBeskrivelseMap.get(kode) ?? kode,
-                      }))}
-                      onToggleSelected={(option, isSelected) => {
-                        setValgteMisbruktyper((prev) => {
-                          if (isSelected) {
-                            return prev.includes(option) ? prev : [...prev, option];
-                          }
-                          return prev.filter((m) => m !== option);
-                        });
-                      }}
-                      error={fields.misbruktype.errors?.[0]}
-                    />
-                    {valgteMisbruktyper.map((m) => (
-                      <input key={m} type="hidden" name="misbruktype" value={m} />
-                    ))}
-                  </div>
-
-                  <div id={fields.merking.id} className="w-72">
-                    <UNSAFE_Combobox
-                      label="Merking (valgfritt)"
-                      options={kodeverk.merker.map((merke) => ({
-                        value: merke,
-                        label: merkingEtikett(merke),
-                      }))}
-                      isMultiSelect
-                      allowNewValues
-                      selectedOptions={valgteMerkinger.map((merke) => ({
-                        value: merke,
-                        label: merkingEtikett(merke),
-                      }))}
-                      onToggleSelected={(option, isSelected) => {
-                        setValgteMerkinger((prev) => {
-                          if (isSelected) {
-                            return prev.includes(option) ? prev : [...prev, option];
-                          }
-                          return prev.filter((m) => m !== option);
-                        });
-                      }}
-                      error={fields.merking.errors?.[0]}
-                    />
-                    {valgteMerkinger.map((m) => (
-                      <input key={m} type="hidden" name="merking" value={m} />
-                    ))}
-                  </div>
-                </HStack>
-
-                {/* Rad 2: Kilde, Organisasjonsnummer, Enhet */}
-                <HStack gap="space-24" align="start" wrap>
-                  <Select
-                    name={fields.kilde.name}
-                    id={fields.kilde.id}
-                    label="Kilde"
-                    error={fields.kilde.errors?.[0]}
-                    className="w-52"
-                    defaultValue={fields.kilde.initialValue ?? ""}
-                  >
-                    <option value="">Velg kilde</option>
-                    {kodeverk.kilder.map((k) => (
-                      <option key={k.kode} value={k.kode}>
-                        {k.beskrivelse}
-                      </option>
-                    ))}
-                  </Select>
-
-                  <div>
-                    <UNSAFE_Combobox
-                      id={fields.arbeidsgivere.id}
-                      label="Organisasjonsnummer (valgfritt)"
-                      isMultiSelect
-                      allowNewValues
-                      options={[]}
-                      selectedOptions={valgteArbeidsgivere.map((orgnr) => ({
-                        label: orgnr,
-                        value: orgnr,
-                      }))}
-                      onToggleSelected={(option, isSelected) => {
-                        setValgteArbeidsgivere((prev) => {
-                          if (isSelected && !prev.includes(option)) {
-                            return [...prev, option];
-                          }
-                          if (!isSelected) {
-                            return prev.filter((v) => v !== option);
-                          }
-                          return prev;
-                        });
-                      }}
-                      error={fields.arbeidsgivere.errors?.[0]}
-                    />
-                    {valgteArbeidsgivere.map((orgnr) => (
-                      <input key={orgnr} type="hidden" name="arbeidsgivere" value={orgnr} />
-                    ))}
-                  </div>
-
-                  <Select
-                    name={fields.enhet.name}
-                    id={fields.enhet.id}
-                    label="Enhet (valgfritt)"
-                    error={fields.enhet.errors?.[0]}
-                    className="w-44"
-                    defaultValue={(fields.enhet.initialValue ?? "") as string}
-                  >
-                    <option value="">Velg enhet</option>
-                    {kodeverk.enheter.map((e) => (
-                      <option key={e.kode} value={e.kode}>
-                        {e.beskrivelse}
-                      </option>
-                    ))}
-                  </Select>
-                </HStack>
-
-                <hr className="border-ax-border-neutral-subtle max-w-2xl" />
-
-                {/* Ytelser */}
-                <VStack gap="space-16">
-                  <VStack gap="space-4">
-                    <Heading level="2" size="medium">
-                      Ytelser med mulig misbruk
-                    </Heading>
-                    <BodyShort textColor="subtle">
-                      Legg til én eller flere ytelser med tilhørende periode og beløp. Alle feltene
-                      er valgfrie.
-                    </BodyShort>
-                  </VStack>
-
-                  <VStack gap="space-16">
-                    {ytelseRader.map((rad, indeks) => (
-                      <YtelseRadFelt
-                        key={rad.id}
-                        indeks={indeks}
-                        ytelser={ytelseAlternativer}
-                        kanFjernes={ytelseRader.length > 1}
-                        onFjern={() => fjernYtelseRad(rad.id)}
-                        defaults={rad.defaults}
-                        feil={form.allErrors}
-                        visEndeligBeløp={false}
-                      />
-                    ))}
-                  </VStack>
-
-                  <HStack>
-                    <Button
-                      type="button"
-                      variant="tertiary"
-                      size="small"
-                      icon={<PlusIcon aria-hidden />}
-                      onClick={leggTilYtelseRad}
+            {/* Skjema — rendres kun når saksbehandler har rett til å opprette sak.
+                For skjermet person uten Utvidet tilgang sperres skjemaet proaktivt
+                ved at det ikke rendres i det hele tatt, se RAILS-9. */}
+            {!skjemaSperret && (
+              <Form
+                method="post"
+                aria-label="Grunnleggende saksinformasjon"
+                id={form.id}
+                onSubmit={(event) => {
+                  form.onSubmit(event);
+                  if (!event.defaultPrevented) {
+                    event.preventDefault();
+                    sporHendelse("sak opprettet", { kategori: valgtKategori });
+                    const formData = new FormData(event.currentTarget);
+                    filer.forEach((fil) => formData.append("filer", fil));
+                    submit(formData, { method: "post", encType: "multipart/form-data" });
+                  }
+                }}
+                noValidate
+              >
+                <input
+                  type="hidden"
+                  name="personIdent"
+                  value={person.personnummer.replace(/\s/g, "")}
+                />
+                <VStack gap="space-32">
+                  {/* ErrorSummary */}
+                  {feilElementer.length > 0 && (
+                    <ErrorSummary
+                      heading="Du må rette disse feilene før du kan gå videre"
+                      className="max-w-2xl"
                     >
-                      Legg til ytelse
-                    </Button>
+                      {feilElementer.map((f) => (
+                        <ErrorSummary.Item key={f.id} href={`#${f.id}`}>
+                          {f.melding}
+                        </ErrorSummary.Item>
+                      ))}
+                    </ErrorSummary>
+                  )}
+
+                  {form.errors && form.errors.length > 0 && (
+                    <LocalAlert status="error" className="max-w-2xl">
+                      <LocalAlert.Content>{form.errors[0]}</LocalAlert.Content>
+                    </LocalAlert>
+                  )}
+
+                  <Heading level="2" size="medium">
+                    Grunnleggende saksinformasjon
+                  </Heading>
+
+                  {/* Rad 1: Kategori, Misbruktype, Merking */}
+                  <HStack gap="space-24" align="start" wrap>
+                    <Select
+                      name={fields.kategori.name}
+                      id={fields.kategori.id}
+                      label="Kategori"
+                      error={fields.kategori.errors?.[0]}
+                      className="w-52"
+                      value={valgtKategori}
+                      onChange={(e) => {
+                        setValgtKategori(e.target.value);
+                        const nyligeGyldige = kodeverk.misbrukstyper
+                          .filter((m) => m.kategori === e.target.value)
+                          .map((m) => m.kode);
+                        if (nyligeGyldige && nyligeGyldige.length > 0) {
+                          setValgteMisbruktyper((prev) =>
+                            prev.filter((m) => nyligeGyldige.includes(m)),
+                          );
+                        } else {
+                          setValgteMisbruktyper([]);
+                        }
+                      }}
+                    >
+                      <option value="">Velg kategori</option>
+                      {kodeverk.kategorier.map((k) => (
+                        <option key={k.kode} value={k.kode}>
+                          {k.beskrivelse}
+                        </option>
+                      ))}
+                    </Select>
+
+                    <div id={fields.misbruktype.id} className="w-72">
+                      <UNSAFE_Combobox
+                        label="Misbruktype"
+                        options={tilgjengeligeMisbruktyper.map((kode) => ({
+                          value: kode,
+                          label: misbrukstypeBeskrivelseMap.get(kode) ?? kode,
+                        }))}
+                        isMultiSelect
+                        disabled={tilgjengeligeMisbruktyper.length === 0}
+                        selectedOptions={valgteMisbruktyper.map((kode) => ({
+                          value: kode,
+                          label: misbrukstypeBeskrivelseMap.get(kode) ?? kode,
+                        }))}
+                        onToggleSelected={(option, isSelected) => {
+                          setValgteMisbruktyper((prev) => {
+                            if (isSelected) {
+                              return prev.includes(option) ? prev : [...prev, option];
+                            }
+                            return prev.filter((m) => m !== option);
+                          });
+                        }}
+                        error={fields.misbruktype.errors?.[0]}
+                      />
+                      {valgteMisbruktyper.map((m) => (
+                        <input key={m} type="hidden" name="misbruktype" value={m} />
+                      ))}
+                    </div>
+
+                    <div id={fields.merking.id} className="w-72">
+                      <UNSAFE_Combobox
+                        label="Merking (valgfritt)"
+                        options={kodeverk.merker.map((merke) => ({
+                          value: merke,
+                          label: merkingEtikett(merke),
+                        }))}
+                        isMultiSelect
+                        allowNewValues
+                        selectedOptions={valgteMerkinger.map((merke) => ({
+                          value: merke,
+                          label: merkingEtikett(merke),
+                        }))}
+                        onToggleSelected={(option, isSelected) => {
+                          setValgteMerkinger((prev) => {
+                            if (isSelected) {
+                              return prev.includes(option) ? prev : [...prev, option];
+                            }
+                            return prev.filter((m) => m !== option);
+                          });
+                        }}
+                        error={fields.merking.errors?.[0]}
+                      />
+                      {valgteMerkinger.map((m) => (
+                        <input key={m} type="hidden" name="merking" value={m} />
+                      ))}
+                    </div>
                   </HStack>
-                </VStack>
 
-                <hr className="border-ax-border-neutral-subtle max-w-2xl" />
+                  {/* Rad 2: Kilde, Organisasjonsnummer, Enhet */}
+                  <HStack gap="space-24" align="start" wrap>
+                    <Select
+                      name={fields.kilde.name}
+                      id={fields.kilde.id}
+                      label="Kilde"
+                      error={fields.kilde.errors?.[0]}
+                      className="w-52"
+                      defaultValue={fields.kilde.initialValue ?? ""}
+                    >
+                      <option value="">Velg kilde</option>
+                      {kodeverk.kilder.map((k) => (
+                        <option key={k.kode} value={k.kode}>
+                          {k.beskrivelse}
+                        </option>
+                      ))}
+                    </Select>
 
-                {/* Filopplasting */}
-                <VStack gap="space-12" className="max-w-2xl">
-                  <FileUpload.Dropzone
-                    label="Last opp dokumenter (valgfritt)"
-                    description="Legg ved filer som dokumenterer saken. Maks 50 MB per fil."
-                    accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx"
-                    onSelect={(_, partitioned) =>
-                      setFiler((eksisterende) => [...eksisterende, ...partitioned.accepted])
-                    }
-                  />
-                  {filer.length > 0 && (
-                    <VStack gap="space-4" as="ul" aria-label="Opplastede filer">
-                      {filer.map((fil, indeks) => (
-                        <FileUpload.Item
-                          key={`${fil.name}-${indeks}`}
-                          as="li"
-                          file={fil}
-                          button={{
-                            action: "delete",
-                            onClick: () =>
-                              setFiler((eksisterende) =>
-                                eksisterende.filter((_, i) => i !== indeks),
-                              ),
-                          }}
+                    <div>
+                      <UNSAFE_Combobox
+                        id={fields.arbeidsgivere.id}
+                        label="Organisasjonsnummer (valgfritt)"
+                        isMultiSelect
+                        allowNewValues
+                        options={[]}
+                        selectedOptions={valgteArbeidsgivere.map((orgnr) => ({
+                          label: orgnr,
+                          value: orgnr,
+                        }))}
+                        onToggleSelected={(option, isSelected) => {
+                          setValgteArbeidsgivere((prev) => {
+                            if (isSelected && !prev.includes(option)) {
+                              return [...prev, option];
+                            }
+                            if (!isSelected) {
+                              return prev.filter((v) => v !== option);
+                            }
+                            return prev;
+                          });
+                        }}
+                        error={fields.arbeidsgivere.errors?.[0]}
+                      />
+                      {valgteArbeidsgivere.map((orgnr) => (
+                        <input key={orgnr} type="hidden" name="arbeidsgivere" value={orgnr} />
+                      ))}
+                    </div>
+
+                    <Select
+                      name={fields.enhet.name}
+                      id={fields.enhet.id}
+                      label="Enhet (valgfritt)"
+                      error={fields.enhet.errors?.[0]}
+                      className="w-44"
+                      defaultValue={(fields.enhet.initialValue ?? "") as string}
+                    >
+                      <option value="">Velg enhet</option>
+                      {kodeverk.enheter.map((e) => (
+                        <option key={e.kode} value={e.kode}>
+                          {e.beskrivelse}
+                        </option>
+                      ))}
+                    </Select>
+                  </HStack>
+
+                  <hr className="border-ax-border-neutral-subtle max-w-2xl" />
+
+                  {/* Ytelser */}
+                  <VStack gap="space-16">
+                    <VStack gap="space-4">
+                      <Heading level="2" size="medium">
+                        Ytelser med mulig misbruk
+                      </Heading>
+                      <BodyShort textColor="subtle">
+                        Legg til én eller flere ytelser med tilhørende periode og beløp. Alle
+                        feltene er valgfrie.
+                      </BodyShort>
+                    </VStack>
+
+                    <VStack gap="space-16">
+                      {ytelseRader.map((rad, indeks) => (
+                        <YtelseRadFelt
+                          key={rad.id}
+                          indeks={indeks}
+                          ytelser={ytelseAlternativer}
+                          kanFjernes={ytelseRader.length > 1}
+                          onFjern={() => fjernYtelseRad(rad.id)}
+                          defaults={rad.defaults}
+                          feil={form.allErrors}
+                          visEndeligBeløp={false}
                         />
                       ))}
                     </VStack>
-                  )}
-                </VStack>
 
-                {/* Submit-rad */}
-                <HStack gap="space-12" justify="end">
-                  <Button as={Link} to={RouteConfig.INDEX} variant="tertiary">
-                    Avbryt
-                  </Button>
-                  <Button type="submit" variant="primary">
-                    Opprett sak
-                  </Button>
-                </HStack>
-              </VStack>
-            </Form>
+                    <HStack>
+                      <Button
+                        type="button"
+                        variant="tertiary"
+                        size="small"
+                        icon={<PlusIcon aria-hidden />}
+                        onClick={leggTilYtelseRad}
+                      >
+                        Legg til ytelse
+                      </Button>
+                    </HStack>
+                  </VStack>
+
+                  <hr className="border-ax-border-neutral-subtle max-w-2xl" />
+
+                  {/* Filopplasting */}
+                  <VStack gap="space-12" className="max-w-2xl">
+                    <FileUpload.Dropzone
+                      label="Last opp dokumenter (valgfritt)"
+                      description="Legg ved filer som dokumenterer saken. Maks 50 MB per fil."
+                      accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx"
+                      onSelect={(_, partitioned) =>
+                        setFiler((eksisterende) => [...eksisterende, ...partitioned.accepted])
+                      }
+                    />
+                    {filer.length > 0 && (
+                      <VStack gap="space-4" as="ul" aria-label="Opplastede filer">
+                        {filer.map((fil, indeks) => (
+                          <FileUpload.Item
+                            key={`${fil.name}-${indeks}`}
+                            as="li"
+                            file={fil}
+                            button={{
+                              action: "delete",
+                              onClick: () =>
+                                setFiler((eksisterende) =>
+                                  eksisterende.filter((_, i) => i !== indeks),
+                                ),
+                            }}
+                          />
+                        ))}
+                      </VStack>
+                    )}
+                  </VStack>
+
+                  {/* Submit-rad */}
+                  <HStack gap="space-12" justify="end">
+                    <Button as={Link} to={RouteConfig.INDEX} variant="tertiary">
+                      Avbryt
+                    </Button>
+                    <Button type="submit" variant="primary">
+                      Opprett sak
+                    </Button>
+                  </HStack>
+                </VStack>
+              </Form>
+            )}
           </VStack>
         )}
       </VStack>

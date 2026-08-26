@@ -52,6 +52,24 @@ test.describe("Opprett sak", () => {
     await expect(page.getByRole("button", { name: "Se sak" })).toHaveCount(0);
   });
 
+  test("sperrer skjemaet for skjermet person uten tilgang til å opprette sak", async ({ page }) => {
+    await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("44556677001");
+    await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
+
+    await expect(
+      page.getByLabel("Personinformasjon").getByText("Skjermet Testesen", { exact: true }),
+    ).toBeVisible();
+    await expect(page.getByText("Denne personen er skjermet.")).toBeVisible();
+    await expect(page.getByText("Du kan ikke opprette sak på denne personen")).toBeVisible();
+
+    // Skjemaet skal ikke rendres i det hele tatt — saksbehandler skal ikke kunne fylle
+    // ut eller sende inn skjemaet, se RAILS-9.
+    await expect(page.getByRole("heading", { name: "Grunnleggende saksinformasjon" })).toHaveCount(
+      0,
+    );
+    await expect(page.getByRole("button", { name: "Opprett sak" })).toHaveCount(0);
+  });
+
   test("viser ErrorSummary når påkrevde felter mangler", async ({ page }) => {
     await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("12345678901");
     await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();

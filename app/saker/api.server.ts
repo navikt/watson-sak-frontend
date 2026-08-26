@@ -775,6 +775,10 @@ const personOppslagResponseSchema = z.object({
   personIdent: z.string(),
   alder: z.number(),
   adresseskjermet: z.boolean().default(false),
+  // Angir om saksbehandler har (Utvidet) tilgang til å opprette sak på personen.
+  // false kun når personen er skjermet og saksbehandler mangler Utvidet tilgang —
+  // brukes til å sperre skjemaet proaktivt i UI, se RAILS-9.
+  kanOppretteSak: z.boolean().default(true),
 });
 
 type PersonOppslagBackendResponse = z.infer<typeof personOppslagResponseSchema>;

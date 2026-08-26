@@ -5,6 +5,13 @@ export type MockPerson = {
   navn: string;
   aktørId: string;
   alder: number;
+  /**
+   * true for en skjermet person i mockdata — brukes til å teste at frontend sperrer
+   * skjemaet for sak-opprettelse proaktivt (RAILS-9). Mockdata skiller ikke mellom
+   * Basic/Utvidet tilgang, så en skjermet mock-person representerer alltid scenariet
+   * der saksbehandler mangler tilgang til å opprette sak.
+   */
+  skjermet?: boolean;
 };
 
 const opprinneligeMockPersoner: MockPerson[] = [
@@ -296,6 +303,13 @@ const opprinneligeMockPersoner: MockPerson[] = [
     navn: "Line Fossum",
     aktørId: "30000000000028",
     alder: 40,
+  },
+  {
+    personIdent: "44556677001",
+    navn: "Skjermet Testesen",
+    aktørId: "40000000000001",
+    alder: 45,
+    skjermet: true,
   },
 ];
 
