@@ -10,6 +10,7 @@ interface InnloggetBruker {
   name: string;
   navIdent: string;
   enhet: string;
+  erLeder: boolean;
 }
 
 type HentInnloggetBrukerArgs = {
@@ -29,6 +30,7 @@ export async function hentInnloggetBruker({
       name: "Saks Behandlersen",
       navIdent: "Z999999",
       enhet: "4812",
+      erLeder: false,
     };
   }
   const token = await getValidToken(request);
@@ -45,6 +47,7 @@ export async function hentInnloggetBruker({
       name: parseResult.name,
       navIdent: parseResult.NAVident,
       enhet: "Ukjent",
+      erLeder: false,
     };
   }
 
@@ -57,5 +60,6 @@ export async function hentInnloggetBruker({
     name: parseResult.name,
     navIdent: parseResult.NAVident,
     enhet: saksbehandlerInfo.enhet ?? "Ukjent",
+    erLeder: saksbehandlerInfo.erLeder,
   };
 }

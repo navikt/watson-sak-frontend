@@ -52,6 +52,7 @@ describe("hentInnloggetBruker", () => {
       navIdent: "Z123456",
       navn: "Test Saksbehandler",
       enhet: "4812",
+      erLeder: true,
     });
   });
 
@@ -67,6 +68,7 @@ describe("hentInnloggetBruker", () => {
     expect(bruker.preferredUsername).toBe("test@nav.no");
     expect(bruker.name).toBe("Test Saksbehandler");
     expect(bruker.navIdent).toBe("Z123456");
+    expect(bruker.erLeder).toBe(false);
     expect(bruker).not.toHaveProperty("token");
   });
 
@@ -81,6 +83,19 @@ describe("hentInnloggetBruker", () => {
     expect(hentSaksbehandlerInfoMock).not.toHaveBeenCalled();
     expect(bruker).not.toHaveProperty("token");
     expect(bruker.enhet).toBe("Ukjent");
+  });
+
+  it("eksponerer lederstatus fra backend utenfor demo", async () => {
+    testState.environment = "dev";
+    const { hentInnloggetBruker } = await import("./innlogget-bruker.server");
+
+    const bruker = await hentInnloggetBruker({
+      request: new Request("http://localhost"),
+      oboToken: "obo-token",
+    });
+
+    expect(hentSaksbehandlerInfoMock).toHaveBeenCalledWith("obo-token");
+    expect(bruker.erLeder).toBe(true);
   });
 
   it("beholder mockbruker i local-mock", async () => {
@@ -98,6 +113,7 @@ describe("hentInnloggetBruker", () => {
       name: "Saks Behandlersen",
       navIdent: "Z999999",
       enhet: "4812",
+      erLeder: false,
     });
   });
 });
