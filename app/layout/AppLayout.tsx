@@ -41,9 +41,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
 /** Ruter kan sette dette som `handle` for å be layouten om å slippe bredde-begrensningen
  * og/eller skjule footeren, f.eks. for arbeidsflater som dokumenteditoren.
  * `bredPageBlock` fjerner kun maks-bredden (beholder gutters) — brukes av
- * listevisninger med brede tabeller som ellers får unødvendig horisontal scroll. */
+ * listevisninger med brede tabeller som ellers får unødvendig horisontal scroll.
+ * `editorGutters` bruker samme innvendige sidemarger som dokumenteditoren. */
 type Rutehandle =
-  | { fullbredde?: boolean; skjulFooter?: boolean; bredPageBlock?: boolean }
+  | {
+      fullbredde?: boolean;
+      skjulFooter?: boolean;
+      bredPageBlock?: boolean;
+      editorGutters?: boolean;
+    }
   | undefined;
 
 export default function RootLayout() {
@@ -53,6 +59,7 @@ export default function RootLayout() {
   const fullbredde = matches.some((match) => (match.handle as Rutehandle)?.fullbredde);
   const skjulFooter = matches.some((match) => (match.handle as Rutehandle)?.skjulFooter);
   const bredPageBlock = matches.some((match) => (match.handle as Rutehandle)?.bredPageBlock);
+  const editorGutters = matches.some((match) => (match.handle as Rutehandle)?.editorGutters);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -64,7 +71,13 @@ export default function RootLayout() {
           {fullbredde ? (
             <Outlet />
           ) : (
-            <PageBlock width={bredPageBlock ? undefined : "2xl"} gutters className="mx-0!">
+            <PageBlock
+              width={bredPageBlock ? undefined : "2xl"}
+              gutters
+              className={`mx-0! ${
+                editorGutters ? "px-[var(--ax-space-16)]! lg:px-[var(--ax-space-24)]!" : ""
+              }`}
+            >
               <Outlet />
             </PageBlock>
           )}

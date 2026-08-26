@@ -63,6 +63,8 @@ import { useDisclosure } from "~/utils/useDisclosure";
 
 export { action, loader };
 
+export const handle = { editorGutters: true };
+
 function finnSaksbehandlerDetalj(
   saksbehandlerDetaljer: KontrollsakSaksbehandler[],
   navIdent: string,
