@@ -9,6 +9,7 @@ import { erFnr } from "~/utils/string-utils";
 import type { OpprettKontrollsakRequest } from "./api.server";
 import type { Route } from "./+types/RegistrerSakSide.route";
 import { lastOppFil, opprettKontrollsak } from "./api.server";
+import { INGEN_TILGANG_TIL_Å_OPPRETTE_SAK_MELDING } from "./feilmeldinger";
 import { pendingFnrCookie } from "./pending-fnr.server";
 import { opprettSakSchema, type OpprettSakSkjema } from "./validering";
 
@@ -81,6 +82,14 @@ export async function action({ request }: Route.ActionArgs) {
         formErrors: [
           "Personen ble ikke funnet. Søk på nytt for å bekrefte at personen eksisterer.",
         ],
+      });
+    }
+    if (resultat.status === 403) {
+      // Forsvar i dybden: personoppslaget nekter i praksis allerede saksbehandlere
+      // uten nødvendig tilgang, men tilgang kan i teorien endre seg mellom oppslag
+      // og innsending av skjemaet.
+      return submission.reply({
+        formErrors: [INGEN_TILGANG_TIL_Å_OPPRETTE_SAK_MELDING],
       });
     }
     logger.error("Uventet feil ved opprettelse av kontrollsak", { status: resultat.status });

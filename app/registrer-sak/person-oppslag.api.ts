@@ -7,6 +7,7 @@ import { getSaksenhet } from "~/saker/selectors";
 import { getStatus } from "~/saker/visning";
 import { hentValgfriTekst } from "~/utils/form-data";
 import { formaterFødselsnummer } from "~/utils/string-utils";
+import { INGEN_TILGANG_TIL_Å_OPPRETTE_SAK_MELDING } from "./feilmeldinger";
 import { slaOppPerson } from "./person-oppslag.mock.server";
 
 export async function action({ request }: { request: Request }) {
@@ -82,10 +83,7 @@ export async function action({ request }: { request: Request }) {
       return Response.json({ person: null, eksisterendeSaker: [] });
 
     case "ingen-tilgang":
-      return Response.json(
-        { feil: "Du har ikke tilgang til å slå opp denne personen" },
-        { status: 403 },
-      );
+      return Response.json({ feil: INGEN_TILGANG_TIL_Å_OPPRETTE_SAK_MELDING }, { status: 403 });
 
     case "feil":
       return Response.json({ feil: resultat.melding }, { status: 502 });
