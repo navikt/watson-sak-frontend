@@ -2,6 +2,7 @@ import { PersonGroupIcon } from "@navikt/aksel-icons";
 import { BodyShort, Button, Modal, UNSAFE_Combobox, VStack } from "@navikt/ds-react";
 import { useRef, useState } from "react";
 import { useFetcher } from "react-router";
+import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
@@ -22,13 +23,17 @@ export function DelTilgangModal({
   const [valgtSaksbehandler, setValgtSaksbehandler] = useState<string | undefined>(undefined);
   const modalRef = useRef<HTMLDialogElement>(null);
   const fetcher = useFetcher();
+  const innloggetBruker = useInnloggetBruker();
   const saksreferanse = getSaksreferanse(sakId);
-  const alternativer = saksbehandlerDetaljer.map(
+  const valgbareSaksbehandlere = saksbehandlerDetaljer.filter(
+    (saksbehandler) => saksbehandler.navIdent !== innloggetBruker.navIdent,
+  );
+  const alternativer = valgbareSaksbehandlere.map(
     (saksbehandler) => `${saksbehandler.navn} (${saksbehandler.navIdent})`,
   );
 
   function finnNavIdentFraValg(valg: string) {
-    return saksbehandlerDetaljer.find(
+    return valgbareSaksbehandlere.find(
       (saksbehandler) => `${saksbehandler.navn} (${saksbehandler.navIdent})` === valg,
     )?.navIdent;
   }
