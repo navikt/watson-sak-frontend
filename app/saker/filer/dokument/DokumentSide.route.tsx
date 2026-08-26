@@ -259,7 +259,7 @@ function DokumentRedigering({
         <Button
           as={RouterLink}
           to={sakUrl}
-          type="button"
+          role="link"
           variant="tertiary"
           size="small"
           icon={<ArrowLeftIcon aria-hidden />}

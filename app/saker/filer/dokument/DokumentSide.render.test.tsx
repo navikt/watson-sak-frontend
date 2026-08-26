@@ -81,7 +81,7 @@ describe("DokumentSide", () => {
   it("viser tilbakeknapp til saken", async () => {
     renderSide(true);
 
-    const tilbake = await screen.findByRole("button", { name: "Tilbake til sak #ABC-123" });
+    const tilbake = await screen.findByRole("link", { name: "Tilbake til sak #ABC-123" });
     expect(tilbake.getAttribute("href")).toBe("/saker/ABC-123");
   });
 
