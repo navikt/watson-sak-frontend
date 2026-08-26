@@ -14,6 +14,13 @@ vi.mock("~/config/env.server", () => ({
   skalBrukeMockdata: true,
 }));
 
+vi.mock("~/logging/logging", () => ({
+  logger: {
+    warn: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
 const testRequest = new Request("http://localhost");
 function state() {
   return hentMockState(testRequest);
@@ -97,7 +104,7 @@ describe("opprettKontrollsak", () => {
     });
   });
 
-  it("returnerer status 403 og norsk feilmelding når backend nekter tilgang", async () => {
+  it("returnerer status 403, norsk feilmelding og logger med warn (ikke error) når backend nekter tilgang", async () => {
     vi.resetModules();
     vi.doMock("~/config/env.server", () => ({
       BACKEND_API_URL: "https://backend.test",
@@ -111,6 +118,7 @@ describe("opprettKontrollsak", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const { opprettKontrollsak: opprettKontrollsakBackend } = await import("./api.server");
+    const { logger } = await import("~/logging/logging");
 
     const resultat = await opprettKontrollsakBackend({
       request: testRequest,
@@ -128,7 +136,17 @@ describe("opprettKontrollsak", () => {
       },
     });
 
-    expect(resultat).toMatchObject({ ok: false, status: 403 });
+    expect(resultat).toMatchObject({
+      ok: false,
+      status: 403,
+      melding: "Ingen tilgang til å opprette kontrollsak.",
+    });
+    // Tilgang avvist er en forventet, håndtert tilstand — skal ikke logges som error
+    // (unngår unødvendig feilstøy i logger ved normal bruk, jf. mønster for 404).
+    expect(logger.warn).toHaveBeenCalledWith("Tilgang avvist ved opprettelse av kontrollsak", {
+      status: 403,
+    });
+    expect(logger.error).not.toHaveBeenCalled();
   });
 
   it("legger til ny mock-sak i fordeling slik at den blir søkbar og ownerløs", async () => {

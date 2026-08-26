@@ -9,6 +9,7 @@ import { erFnr } from "~/utils/string-utils";
 import type { OpprettKontrollsakRequest } from "./api.server";
 import type { Route } from "./+types/RegistrerSakSide.route";
 import { lastOppFil, opprettKontrollsak } from "./api.server";
+import { INGEN_TILGANG_TIL_Å_OPPRETTE_SAK_MELDING } from "./feilmeldinger";
 import { pendingFnrCookie } from "./pending-fnr.server";
 import { opprettSakSchema, type OpprettSakSkjema } from "./validering";
 
@@ -88,7 +89,7 @@ export async function action({ request }: Route.ActionArgs) {
       // uten nødvendig tilgang, men tilgang kan i teorien endre seg mellom oppslag
       // og innsending av skjemaet.
       return submission.reply({
-        formErrors: ["Du har ikke tilgang til å opprette sak på denne personen"],
+        formErrors: [INGEN_TILGANG_TIL_Å_OPPRETTE_SAK_MELDING],
       });
     }
     logger.error("Uventet feil ved opprettelse av kontrollsak", { status: resultat.status });
