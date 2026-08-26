@@ -24,6 +24,7 @@ type Person = {
   aktørId: string;
   alder: number;
   adresseskjermet: boolean;
+  kanOppretteSak: boolean;
 };
 
 type EksisterendeSak = {
@@ -52,12 +53,17 @@ function normaliserPersonIdent(fnr: string): string {
 }
 
 function mapPerson(person: MockPerson): Person {
+  const adresseskjermet = person.skjermet ?? false;
   return {
     navn: person.navn,
     personnummer: formaterMockPersonnummer(person.personIdent),
     aktørId: person.aktørId,
     alder: person.alder,
-    adresseskjermet: false,
+    adresseskjermet,
+    // Mockdata skiller ikke mellom Basic/Utvidet tilgang — en skjermet mock-person
+    // representerer derfor alltid scenariet der saksbehandler mangler tilgang til å
+    // opprette sak (kanOppretteSak=false), se RAILS-9.
+    kanOppretteSak: !adresseskjermet,
   };
 }
 

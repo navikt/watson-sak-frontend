@@ -71,6 +71,7 @@ export async function action({ request }: { request: Request }) {
           aktørId: "",
           alder: resultat.person.alder,
           adresseskjermet: resultat.person.adresseskjermet,
+          kanOppretteSak: resultat.person.kanOppretteSak,
         },
         eksisterendeSaker,
         // Backend løser alltid opp historiske identer til gjeldende ident (personIdent i
