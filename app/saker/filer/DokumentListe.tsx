@@ -55,10 +55,11 @@ function DokumentPdfKnapp({ dokument, sakId }: { dokument: DokumentNode; sakId: 
 }
 
 /**
- * Viser redigerbare dokumenter opprettet i Watson Sak. Arkiverte dokumenter filtreres bort her —
- * de vises kun i Arkivert-seksjonen (se `SakFilområde`).
+ * Viser redigerbare dokumenter opprettet i Watson Sak. Forventer at `dokumenter` allerede er
+ * filtrert til ikke-arkiverte dokumenter av kalleren (`SakFilområde`) — arkiverte dokumenter
+ * vises kun i Arkivert-seksjonen.
  */
-export function DokumentTabell({
+export function DokumentListe({
   dokumenter,
   sakId,
   redigerbar,
@@ -68,12 +69,11 @@ export function DokumentTabell({
   redigerbar: boolean;
 }) {
   const sletting = useDokumentSletting({ sakId, kilde: "dokumentliste" });
-  const aktiveDokumenter = dokumenter.filter((dokument) => !dokument.arkivert);
 
   return (
     <>
       <ul className="flex flex-col" aria-label="Redigerbare dokumenter">
-        {aktiveDokumenter.map((dokument) => {
+        {dokumenter.map((dokument) => {
           const dokumentUrl = RouteConfig.SAKER_DOKUMENT.replace(":sakId", sakId).replace(
             ":docId",
             dokument.id,

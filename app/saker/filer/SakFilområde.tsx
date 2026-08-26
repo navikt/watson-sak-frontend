@@ -7,7 +7,7 @@ import { Kort } from "~/komponenter/Kort";
 import type { MalId } from "~/saker/filer/dokument/maler";
 import { RouteConfig } from "~/routeConfig";
 import { ArkivertSeksjon } from "./ArkivertSeksjon";
-import { DokumentTabell } from "./DokumentTabell";
+import { DokumentListe } from "./DokumentListe";
 import { FilerSeksjonCaption } from "./FilerRad";
 import { OpprettDokumentModal } from "./OpprettDokumentModal";
 import type { DokumentNode, FilResponse } from "./typer";
@@ -148,7 +148,7 @@ export function SakFilområde({
               Ingen redigerbare dokumenter ennå
             </BodyShort>
           ) : (
-            <DokumentTabell
+            <DokumentListe
               dokumenter={redigerbareDokumenter}
               sakId={sakId}
               redigerbar={redigerbar}

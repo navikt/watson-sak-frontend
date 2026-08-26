@@ -90,9 +90,10 @@ interface VedleggSeksjonProps {
   feilFraServer?: string | null;
 }
 
-/** Viser filer lastet opp utenfra saken. Arkiverte filer filtreres bort her — de vises kun i
- * Arkivert-seksjonen (se `SakFilområde`). Selve opplastingen (knapp og filvelger) eies av
- * `SakFilområde`s felles header for «Filer». */
+/** Viser filer lastet opp utenfra saken. Forventer at `filer` allerede er filtrert til
+ * ikke-arkiverte filer av kalleren (`SakFilområde`) — arkiverte filer vises kun i
+ * Arkivert-seksjonen. Selve opplastingen (knapp og filvelger) eies av `SakFilområde`s felles
+ * header for «Filer». */
 export function VedleggSeksjon({
   filer,
   sakId,

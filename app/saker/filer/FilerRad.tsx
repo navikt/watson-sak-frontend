@@ -25,7 +25,7 @@ interface FilerRadProps {
 
 /**
  * Kompakt rad for et dokument eller en fil i «Filer»-seksjonen på saksdetaljer: en farget
- * aksentstrek, et typeikon, tittel/tag og en grå metadatalinje. Brukes av `DokumentTabell`,
+ * aksentstrek, et typeikon, tittel/tag og en grå metadatalinje. Brukes av `DokumentListe`,
  * `VedleggSeksjon` og `ArkivertSeksjon` for et konsistent utseende på tvers av underseksjonene.
  */
 export function FilerRad({ type, ikon: Ikon, tittel, tag, metadata, handlinger }: FilerRadProps) {
