@@ -83,7 +83,7 @@ export async function action({ request }: { request: Request }) {
 
     case "ingen-tilgang":
       return Response.json(
-        { feil: "Du har ikke tilgang til å slå opp denne personen" },
+        { feil: "Du har ikke tilgang til å opprette sak på denne personen" },
         { status: 403 },
       );
 

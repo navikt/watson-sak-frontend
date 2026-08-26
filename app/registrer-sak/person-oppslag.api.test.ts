@@ -108,6 +108,16 @@ describe("person-oppslag action", () => {
 
       expect(søkKontrollsakerMock).toHaveBeenCalledWith("token-123", "12345678901", 1, 100);
     });
+
+    it("returnerer 403 og beskjed om manglende tilgang til å opprette sak når backend nekter tilgang", async () => {
+      slåOppPersonMock.mockResolvedValue({ type: "ingen-tilgang" });
+
+      const response = await runAction("12345678901");
+      const json = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(json.feil).toBe("Du har ikke tilgang til å opprette sak på denne personen");
+    });
   });
 
   describe("mot mockdata", () => {

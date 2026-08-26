@@ -97,6 +97,42 @@ describe("opprettKontrollsak", () => {
     });
   });
 
+  it("returnerer status 403 og norsk feilmelding når backend nekter tilgang", async () => {
+    vi.resetModules();
+    vi.doMock("~/config/env.server", () => ({
+      BACKEND_API_URL: "https://backend.test",
+      skalBrukeMockdata: false,
+    }));
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 403,
+      json: async () => ({}),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { opprettKontrollsak: opprettKontrollsakBackend } = await import("./api.server");
+
+    const resultat = await opprettKontrollsakBackend({
+      request: testRequest,
+      token: "token-123",
+      payload: {
+        personIdent: "12345678901",
+        saksbehandlere: { eier: null, deltMed: [] },
+        kategori: "SAMLIV",
+        kilde: "NAV_KONTROLL",
+        prioritet: "NORMAL",
+        misbruktype: ["SKJULT_SAMLIV"],
+        merking: [],
+        arbeidsgivere: [],
+        ytelser: [
+          { type: "DAGPENGER", periodeFra: "2026-01-01", periodeTil: "2026-12-31" },
+        ],
+      },
+    });
+
+    expect(resultat).toMatchObject({ ok: false, status: 403 });
+  });
+
   it("legger til ny mock-sak i fordeling slik at den blir søkbar og ownerløs", async () => {
     leggTilMockSakIFordeling(state(), {
       personIdent: "12345678901",

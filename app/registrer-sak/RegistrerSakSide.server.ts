@@ -83,6 +83,14 @@ export async function action({ request }: Route.ActionArgs) {
         ],
       });
     }
+    if (resultat.status === 403) {
+      // Forsvar i dybden: personoppslaget nekter i praksis allerede saksbehandlere
+      // uten nødvendig tilgang, men tilgang kan i teorien endre seg mellom oppslag
+      // og innsending av skjemaet.
+      return submission.reply({
+        formErrors: ["Du har ikke tilgang til å opprette sak på denne personen"],
+      });
+    }
     logger.error("Uventet feil ved opprettelse av kontrollsak", { status: resultat.status });
     throw new Error(resultat.melding);
   }

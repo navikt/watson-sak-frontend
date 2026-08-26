@@ -304,6 +304,35 @@ describe("OpprettSakSide action", () => {
       error: { "": expect.arrayContaining([expect.stringContaining("ikke funnet")]) },
     });
   }, 15000);
+
+  it("returnerer skjemafeil når backend svarer 403 (ingen tilgang til å opprette sak)", async () => {
+    const { action } = await import("./RegistrerSakSide.server");
+    const { opprettKontrollsak } = await import("./api.server");
+
+    vi.mocked(opprettKontrollsak).mockResolvedValueOnce({
+      ok: false,
+      status: 403,
+      melding: "Ingen tilgang til å opprette kontrollsak.",
+    });
+
+    const response = await action({
+      request: new Request("http://localhost/registrer-sak", {
+        method: "POST",
+        body: lagFormDataMedMinimum(),
+      }),
+      params: {},
+      context: {},
+    } as Route.ActionArgs);
+
+    expect(response).toMatchObject({
+      status: "error",
+      error: {
+        "": expect.arrayContaining([
+          expect.stringContaining("Du har ikke tilgang til å opprette sak på denne personen"),
+        ]),
+      },
+    });
+  }, 15000);
 });
 
 describe("byggOpprettKontrollsakPayload", () => {
