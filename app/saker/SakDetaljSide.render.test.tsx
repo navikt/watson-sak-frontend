@@ -97,21 +97,25 @@ describe("SakDetaljSide render", () => {
   it("skjuler historikk og Tildel meg for skjermet sak som krever utvidet tilgang", async () => {
     const { hentMockState } = await import("~/testing/mock-store/session.server");
     const { hentAlleSaker } = await import("~/testing/mock-store/alle-saker.server");
-    const sak = hentAlleSaker(hentMockState(testRequest)).find((s) => s.id === Number(deltMedSakId));
+    const sak = hentAlleSaker(hentMockState(testRequest)).find(
+      (s) => s.id === Number(deltMedSakId),
+    );
     if (!sak) {
       throw new Error("Fant ikke testdata for sak");
     }
 
     sak.adresseskjermet = true;
     sak.saksbehandlere.eier = null;
-    (sak as unknown as {
-      tilgang?: {
-        kreverUtvidetTilgang: boolean;
-        kanSeHistorikk: boolean;
-        kanSeRelaterteSaker: boolean;
-        kanTildeleSak: boolean;
-      };
-    }).tilgang = {
+    (
+      sak as unknown as {
+        tilgang?: {
+          kreverUtvidetTilgang: boolean;
+          kanSeHistorikk: boolean;
+          kanSeRelaterteSaker: boolean;
+          kanTildeleSak: boolean;
+        };
+      }
+    ).tilgang = {
       kreverUtvidetTilgang: true,
       kanSeHistorikk: false,
       kanSeRelaterteSaker: false,

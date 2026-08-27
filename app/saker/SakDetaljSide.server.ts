@@ -226,6 +226,34 @@ async function hentFilerMedTilgangskontroll(
   }
 }
 
+async function hentHistorikkMedTilgangskontroll(
+  token: string,
+  sakId: string,
+): Promise<Awaited<ReturnType<typeof backendApi.hentHendelser>>> {
+  try {
+    return await backendApi.hentHendelser(token, sakId);
+  } catch (feil) {
+    if (feil instanceof backendApi.BackendFeilException && feil.status === 403) {
+      return [];
+    }
+    throw feil;
+  }
+}
+
+async function hentJournalposterMedTilgangskontroll(
+  token: string,
+  sakId: string,
+): Promise<Awaited<ReturnType<typeof backendApi.hentJournalposter>>> {
+  try {
+    return await backendApi.hentJournalposter(token, sakId);
+  } catch (feil) {
+    if (feil instanceof backendApi.BackendFeilException && feil.status === 403) {
+      return [];
+    }
+    throw feil;
+  }
+}
+
 async function hentAndreSakerMedTilgangskontroll(
   token: string,
   sak: KontrollsakResponse,
@@ -239,7 +267,7 @@ async function hentAndreSakerMedTilgangskontroll(
     return søkeresultat.items.filter((annenSak) => annenSak.id !== sak.id);
   } catch (feil) {
     if (feil instanceof backendApi.BackendFeilException && feil.status === 403) {
-      logger.warn("Mangler tilgang til å hente relaterte saker for sakId={}", { sakId: sak.id });
+      logger.warn("Mangler tilgang til å hente relaterte saker", { sakId: sak.id });
       return [];
     }
     throw feil;
@@ -254,14 +282,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     const [sak, historikk, journalposter, saksbehandlerDetaljer, filerResultat, innlogget] =
       await Promise.all([
         backendApi.hentKontrollsak(token, sakId),
-        // TODO: hentHendelser og hentJournalposter kaster på populasjonstilgang
-        // (TilgangService.krevTilgang — skjermet person, geografisk osv.), en annen
-        // mekanisme enn fil-tilgang. De har samme strukturelle svakhet som hentFiler
-        // hadde: et 403 herfra vil forkaste hele Promise.all og feile hele loaderen
-        // i stedet for å degradere pent. Ikke rettet nå — utenfor omfanget av
-        // denne feilrettelsen.
-        backendApi.hentHendelser(token, sakId),
-        backendApi.hentJournalposter(token, sakId),
+        hentHistorikkMedTilgangskontroll(token, sakId),
+        hentJournalposterMedTilgangskontroll(token, sakId),
         backendApi.hentSaksbehandlere(token),
         hentFilerMedTilgangskontroll(token, sakId),
         hentInnloggetBruker({ request }),
