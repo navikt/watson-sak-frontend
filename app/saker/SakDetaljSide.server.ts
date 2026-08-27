@@ -226,6 +226,54 @@ async function hentFilerMedTilgangskontroll(
   }
 }
 
+async function hentHistorikkMedTilgangskontroll(
+  token: string,
+  sakId: string,
+): Promise<Awaited<ReturnType<typeof backendApi.hentHendelser>>> {
+  try {
+    return await backendApi.hentHendelser(token, sakId);
+  } catch (feil) {
+    if (feil instanceof backendApi.BackendFeilException && feil.status === 403) {
+      return [];
+    }
+    throw feil;
+  }
+}
+
+async function hentJournalposterMedTilgangskontroll(
+  token: string,
+  sakId: string,
+): Promise<Awaited<ReturnType<typeof backendApi.hentJournalposter>>> {
+  try {
+    return await backendApi.hentJournalposter(token, sakId);
+  } catch (feil) {
+    if (feil instanceof backendApi.BackendFeilException && feil.status === 403) {
+      return [];
+    }
+    throw feil;
+  }
+}
+
+async function hentAndreSakerMedTilgangskontroll(
+  token: string,
+  sak: KontrollsakResponse,
+): Promise<KontrollsakResponse[]> {
+  if (!sak.personIdent || sak.tilgang?.kanSeRelaterteSaker === false) {
+    return [];
+  }
+
+  try {
+    const søkeresultat = await backendApi.søkKontrollsaker(token, sak.personIdent, 1, 100);
+    return søkeresultat.items.filter((annenSak) => annenSak.id !== sak.id);
+  } catch (feil) {
+    if (feil instanceof backendApi.BackendFeilException && feil.status === 403) {
+      logger.warn("Mangler tilgang til å hente relaterte saker", { sakId: sak.id });
+      return [];
+    }
+    throw feil;
+  }
+}
+
 export async function loader({ request, params }: Route.LoaderArgs) {
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
@@ -234,14 +282,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     const [sak, historikk, journalposter, saksbehandlerDetaljer, filerResultat, innlogget] =
       await Promise.all([
         backendApi.hentKontrollsak(token, sakId),
-        // TODO: hentHendelser og hentJournalposter kaster på populasjonstilgang
-        // (TilgangService.krevTilgang — skjermet person, geografisk osv.), en annen
-        // mekanisme enn fil-tilgang. De har samme strukturelle svakhet som hentFiler
-        // hadde: et 403 herfra vil forkaste hele Promise.all og feile hele loaderen
-        // i stedet for å degradere pent. Ikke rettet nå — utenfor omfanget av
-        // denne feilrettelsen.
-        backendApi.hentHendelser(token, sakId),
-        backendApi.hentJournalposter(token, sakId),
+        hentHistorikkMedTilgangskontroll(token, sakId),
+        hentJournalposterMedTilgangskontroll(token, sakId),
         backendApi.hentSaksbehandlere(token),
         hentFilerMedTilgangskontroll(token, sakId),
         hentInnloggetBruker({ request }),
@@ -249,11 +291,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
     // Henter kun første side (maks 100 saker) — visningen på sakdetaljsiden er en enkel
     // liste over "andre saker for personen", ikke en fullstendig paginert visning.
-    const andreSaker = sak.personIdent
-      ? (await backendApi.søkKontrollsaker(token, sak.personIdent, 1, 100)).items.filter(
-          (annenSak) => annenSak.id !== sak.id,
-        )
-      : [];
+    const andreSaker = await hentAndreSakerMedTilgangskontroll(token, sak);
 
     // Dokumenter/filer skal kun eksponeres i loader-responsen (og dermed nås av klienten)
     // for saksbehandlere med direkte tilgang (eier/delt-med) — se `kanSeFilområde` i

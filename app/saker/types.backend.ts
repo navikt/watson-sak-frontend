@@ -101,6 +101,13 @@ const kontrollobjektSchema = z.object({
   adresseskjermet: z.boolean().default(false),
 });
 
+const kontrollsakTilgangSchema = z.object({
+  kreverUtvidetTilgang: z.boolean().default(false),
+  kanSeHistorikk: z.boolean().default(true),
+  kanSeRelaterteSaker: z.boolean().default(true),
+  kanTildeleSak: z.boolean().default(true),
+});
+
 /**
  * Normaliserer input til ny backend-kontrakt med kontrollobjekt.
  * Støtter også det gamle flate formatet (personIdent/personNavn på rotnivå)
@@ -145,6 +152,7 @@ export const kontrollsakResponseSchema = z
       oppgaver: z.array(oppgaveKortSchema).default([]),
       kobledeSaker: z.array(z.number()).default([]),
       dokumenter: z.array(dokumentNodeSchema).default([]),
+      tilgang: kontrollsakTilgangSchema.optional(),
       opprettet: z.string(),
       oppdatert: z.string().nullable(),
       legacyPid: z.string().nullable().optional(),
@@ -160,6 +168,7 @@ export const kontrollsakResponseSchema = z
     arbeidsgivere: kontrollobjekt.arbeidsgivere.map((a) => a.organisasjonsnummer),
     adresseskjermet: kontrollobjekt.adresseskjermet,
     henleggelsesarsak: sak.henleggelsesarsak ?? null,
+    ...(sak.tilgang ? { tilgang: sak.tilgang } : {}),
   }));
 
 export type KontrollsakResponse = z.infer<typeof kontrollsakResponseSchema>;

@@ -121,6 +121,32 @@ describe("SakDetaljSide loader — backend-sti", () => {
     await expect(loader(lagLoaderArgs())).rejects.toThrow("Intern feil");
   });
 
+  it("degraderer historikk stille når hentHendelser gir 403", async () => {
+    mockHentKontrollsak.mockResolvedValue(grunnleggendeSak);
+    mockHentHendelser.mockRejectedValue(new MockBackendFeilException(403, "Ingen tilgang"));
+    mockHentJournalposter.mockResolvedValue([]);
+    mockHentSaksbehandlere.mockResolvedValue([]);
+    mockHentFiler.mockResolvedValue([]);
+
+    const { loader } = await import("./SakDetaljSide.server");
+    const resultat = await loader(lagLoaderArgs());
+
+    expect(resultat.historikk).toEqual([]);
+  });
+
+  it("degraderer journalposter stille når hentJournalposter gir 403", async () => {
+    mockHentKontrollsak.mockResolvedValue(grunnleggendeSak);
+    mockHentHendelser.mockResolvedValue([]);
+    mockHentJournalposter.mockRejectedValue(new MockBackendFeilException(403, "Ingen tilgang"));
+    mockHentSaksbehandlere.mockResolvedValue([]);
+    mockHentFiler.mockResolvedValue([]);
+
+    const { loader } = await import("./SakDetaljSide.server");
+    const resultat = await loader(lagLoaderArgs());
+
+    expect(resultat.journalposter).toEqual([]);
+  });
+
   it("skjuler dokumenter/filer i loader-responsen når bruker verken er eier eller delt med, selv om backend gir filtilgang", async () => {
     const filer = [{ id: "f1", filnavn: "vedlegg.pdf" }];
     mockHentKontrollsak.mockResolvedValue({
@@ -170,5 +196,53 @@ describe("SakDetaljSide loader — backend-sti", () => {
     expect(resultat.dokumenter.length).toBe(1);
     expect(resultat.filer).toEqual(filer);
     expect(resultat.sak.dokumenter.length).toBe(1);
+  });
+
+  it("hopper over søk etter relaterte saker når kapabiliteten kanSeRelaterteSaker er false", async () => {
+    mockHentKontrollsak.mockResolvedValue({
+      ...grunnleggendeSak,
+      personIdent: "12345678901",
+      tilgang: {
+        kreverUtvidetTilgang: true,
+        kanSeHistorikk: false,
+        kanSeRelaterteSaker: false,
+        kanTildeleSak: false,
+      },
+    });
+    mockHentHendelser.mockResolvedValue([]);
+    mockHentJournalposter.mockResolvedValue([]);
+    mockHentSaksbehandlere.mockResolvedValue([]);
+    mockHentFiler.mockResolvedValue([]);
+
+    const { loader } = await import("./SakDetaljSide.server");
+    const resultat = await loader(lagLoaderArgs());
+
+    expect(mockSøkKontrollsaker).not.toHaveBeenCalled();
+    expect(resultat.andreSaker).toEqual([]);
+  });
+
+  it("degraderer stille når søk etter relaterte saker gir 403", async () => {
+    mockHentKontrollsak.mockResolvedValue({
+      ...grunnleggendeSak,
+      personIdent: "12345678901",
+      tilgang: {
+        kreverUtvidetTilgang: true,
+        kanSeHistorikk: false,
+        kanSeRelaterteSaker: true,
+        kanTildeleSak: false,
+      },
+    });
+    mockHentHendelser.mockResolvedValue([]);
+    mockHentJournalposter.mockResolvedValue([]);
+    mockHentSaksbehandlere.mockResolvedValue([]);
+    mockHentFiler.mockResolvedValue([]);
+    mockSøkKontrollsaker.mockRejectedValue(
+      new MockBackendFeilException(403, "Ingen tilgang til å hente relaterte saker"),
+    );
+
+    const { loader } = await import("./SakDetaljSide.server");
+    const resultat = await loader(lagLoaderArgs());
+
+    expect(resultat.andreSaker).toEqual([]);
   });
 });
