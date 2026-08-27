@@ -19,6 +19,7 @@ interface SaksbehandlereKortProps {
   saksbehandlerDetaljer: KontrollsakSaksbehandler[];
   ansvarligSaksbehandler: KontrollsakSaksbehandler | null;
   erEier: boolean;
+  kanTildeleSak?: boolean;
 }
 
 function hentInitialer(navn: string) {
@@ -55,6 +56,7 @@ export function SaksbehandlereKort({
   saksbehandlerDetaljer,
   ansvarligSaksbehandler: ansvarligFraProps,
   erEier,
+  kanTildeleSak = true,
 }: SaksbehandlereKortProps) {
   const [visOverforModal, setVisOverforModal] = useState(false);
   const [visDelTilgangModal, setVisDelTilgangModal] = useState(false);
@@ -114,16 +116,18 @@ export function SaksbehandlereKort({
               </BodyShort>
               {kanEndreTilgang && (
                 <VStack gap="space-2">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="small"
-                    icon={<PersonPlusIcon aria-hidden />}
-                    onClick={handleTildelMeg}
-                    loading={tildelMegFetcher.state !== "idle"}
-                  >
-                    Tildel meg
-                  </Button>
+                  {kanTildeleSak ? (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="small"
+                      icon={<PersonPlusIcon aria-hidden />}
+                      onClick={handleTildelMeg}
+                      loading={tildelMegFetcher.state !== "idle"}
+                    >
+                      Tildel meg
+                    </Button>
+                  ) : null}
                   <Button
                     type="button"
                     variant="secondary"

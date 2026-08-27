@@ -94,6 +94,37 @@ describe("SakDetaljSide render", () => {
     expect(screen.queryByRole("button", { name: "Fjern deling med Kari Nordmann" })).toBeNull();
   }, 15000);
 
+  it("skjuler historikk og Tildel meg for skjermet sak som krever utvidet tilgang", async () => {
+    const { hentMockState } = await import("~/testing/mock-store/session.server");
+    const { hentAlleSaker } = await import("~/testing/mock-store/alle-saker.server");
+    const sak = hentAlleSaker(hentMockState(testRequest)).find((s) => s.id === Number(deltMedSakId));
+    if (!sak) {
+      throw new Error("Fant ikke testdata for sak");
+    }
+
+    sak.adresseskjermet = true;
+    sak.saksbehandlere.eier = null;
+    (sak as unknown as {
+      tilgang?: {
+        kreverUtvidetTilgang: boolean;
+        kanSeHistorikk: boolean;
+        kanSeRelaterteSaker: boolean;
+        kanTildeleSak: boolean;
+      };
+    }).tilgang = {
+      kreverUtvidetTilgang: true,
+      kanSeHistorikk: false,
+      kanSeRelaterteSaker: false,
+      kanTildeleSak: false,
+    };
+
+    renderDetaljside(deltMedSakId);
+
+    await screen.findByRole("heading", { level: 1, name: /^Sak / });
+    expect(screen.queryByRole("heading", { name: "Historikk" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Tildel meg" })).toBeNull();
+  }, 15000);
+
   it("viser organisasjonsnummer i read-only-visning når det er satt", async () => {
     const { hentMockState } = await import("~/testing/mock-store/session.server");
     const { hentAlleSaker } = await import("~/testing/mock-store/alle-saker.server");

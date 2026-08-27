@@ -201,4 +201,25 @@ describe("SaksbehandlereKort", () => {
 
     expect(navigateMock).toHaveBeenCalledWith("/");
   });
+
+  it("skjuler Tildel meg når kanTildeleSak er false", () => {
+    renderMedRouter(
+      <SaksbehandlereKort
+        erEier={false}
+        sak={lagKontrollsak({
+          saksbehandlere: {
+            eier: null,
+            deltMed: [],
+            opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
+          },
+        })}
+        saksbehandlerDetaljer={[lagSaksbehandler()]}
+        ansvarligSaksbehandler={null}
+        kanTildeleSak={false}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Tildel meg" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Tildel saksbehandler" })).toBeDefined();
+  });
 });

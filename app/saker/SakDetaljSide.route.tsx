@@ -197,6 +197,8 @@ export default function SakDetaljSide() {
   // så blokken skjules helt i stedet for å vise innhold man ikke får tilgang til.
   const kanSeFilområde = harDirekteTilgang;
   const kanRedigere = erEier && erAktiv;
+  const kanSeHistorikk = sak.tilgang?.kanSeHistorikk ?? true;
+  const kanTildeleSak = sak.tilgang?.kanTildeleSak ?? true;
   // Dokumenter kan redigeres av eier ELLER delt-med, så lenge saken er aktiv.
   const kanRedigereDokumenter = harDirekteTilgang && erAktiv;
   const [redigerer, setRedigerer] = useState(false);
@@ -671,11 +673,14 @@ export default function SakDetaljSide() {
               saksbehandlerDetaljer={saksbehandlerDetaljer}
               ansvarligSaksbehandler={ansvarligSaksbehandler}
               erEier={erEier}
+              kanTildeleSak={kanTildeleSak}
             />
 
             <SakHandlingerKnapper sak={sak} erEier={erEier} filer={filer} dokumenter={dokumenter} />
 
-            <SakHistorikk sakId={sak.id} hendelser={historikk} redigerbar={kanRedigere} />
+            {kanSeHistorikk ? (
+              <SakHistorikk sakId={sak.id} hendelser={historikk} redigerbar={kanRedigere} />
+            ) : null}
           </VStack>
         </HGrid>
       </VStack>

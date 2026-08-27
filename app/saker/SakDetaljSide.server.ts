@@ -226,6 +226,26 @@ async function hentFilerMedTilgangskontroll(
   }
 }
 
+async function hentAndreSakerMedTilgangskontroll(
+  token: string,
+  sak: KontrollsakResponse,
+): Promise<KontrollsakResponse[]> {
+  if (!sak.personIdent || sak.tilgang?.kanSeRelaterteSaker === false) {
+    return [];
+  }
+
+  try {
+    const søkeresultat = await backendApi.søkKontrollsaker(token, sak.personIdent, 1, 100);
+    return søkeresultat.items.filter((annenSak) => annenSak.id !== sak.id);
+  } catch (feil) {
+    if (feil instanceof backendApi.BackendFeilException && feil.status === 403) {
+      logger.warn("Mangler tilgang til å hente relaterte saker for sakId={}", { sakId: sak.id });
+      return [];
+    }
+    throw feil;
+  }
+}
+
 export async function loader({ request, params }: Route.LoaderArgs) {
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
@@ -249,11 +269,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
     // Henter kun første side (maks 100 saker) — visningen på sakdetaljsiden er en enkel
     // liste over "andre saker for personen", ikke en fullstendig paginert visning.
-    const andreSaker = sak.personIdent
-      ? (await backendApi.søkKontrollsaker(token, sak.personIdent, 1, 100)).items.filter(
-          (annenSak) => annenSak.id !== sak.id,
-        )
-      : [];
+    const andreSaker = await hentAndreSakerMedTilgangskontroll(token, sak);
 
     // Dokumenter/filer skal kun eksponeres i loader-responsen (og dermed nås av klienten)
     // for saksbehandlere med direkte tilgang (eier/delt-med) — se `kanSeFilområde` i
