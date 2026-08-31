@@ -98,7 +98,7 @@ export function SaksbehandlereKort({
               Enhet
             </Label>
 
-            <BodyShort weight="semibold">{enhetsnavn || "Ingen"}</BodyShort>
+            <BodyShort>{enhetsnavn || "Ingen"}</BodyShort>
 
             {kanEndreTilgang && (
               <Button
