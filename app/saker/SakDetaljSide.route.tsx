@@ -405,95 +405,61 @@ export default function SakDetaljSide() {
                           )}
                       </VStack>
 
-                      <HGrid columns={{ xs: 1, md: 2 }} gap="space-4">
-                        <Select
-                          id={ankerIdForFelt("kategori")}
-                          name="kategori"
-                          label="Kategori"
-                          size="small"
-                          value={lokaleVerdier.kategori}
-                          error={førsteFeilForFelt(feil, "kategori")}
-                          onChange={(event) => {
-                            const kategori = event.target.value;
-                            const gyldige = hentMisbrukstypeAlternativer(
-                              kategori,
-                              kodeverk.misbrukstyper,
-                            );
-                            setLokaleVerdier((gjeldende) => ({
-                              ...gjeldende,
-                              kategori,
-                              misbruktype: gjeldende.misbruktype.filter((type) =>
-                                gyldige.includes(type),
-                              ),
-                            }));
-                          }}
-                        >
-                          <option value="">Velg kategori</option>
-                          {kodeverk.kategorier.map((k) => (
-                            <option key={k.kode} value={k.kode}>
-                              {k.beskrivelse}
-                            </option>
-                          ))}
-                        </Select>
+                      <HGrid columns={{ xs: 1, md: 2, xl: 3 }} gap="space-4">
+                        <div className="w-fit">
+                          <Select
+                            id={ankerIdForFelt("kategori")}
+                            name="kategori"
+                            label="Kategori"
+                            size="small"
+                            value={lokaleVerdier.kategori}
+                            error={førsteFeilForFelt(feil, "kategori")}
+                            onChange={(event) => {
+                              const kategori = event.target.value;
+                              const gyldige = hentMisbrukstypeAlternativer(
+                                kategori,
+                                kodeverk.misbrukstyper,
+                              );
+                              setLokaleVerdier((gjeldende) => ({
+                                ...gjeldende,
+                                kategori,
+                                misbruktype: gjeldende.misbruktype.filter((type) =>
+                                  gyldige.includes(type),
+                                ),
+                              }));
+                            }}
+                          >
+                            <option value="">Velg kategori</option>
+                            {kodeverk.kategorier.map((k) => (
+                              <option key={k.kode} value={k.kode}>
+                                {k.beskrivelse}
+                              </option>
+                            ))}
+                          </Select>
+                        </div>
 
-                        <Select
-                          id={ankerIdForFelt("kilde")}
-                          name="kilde"
-                          label="Kilde"
-                          size="small"
-                          value={lokaleVerdier.kilde}
-                          error={førsteFeilForFelt(feil, "kilde")}
-                          onChange={(event) => oppdaterLokaleVerdier("kilde", event.target.value)}
-                        >
-                          <option value="">Velg kilde</option>
-                          {kodeverk.kilder.map((k) => (
-                            <option key={k.kode} value={k.kode}>
-                              {k.beskrivelse}
-                            </option>
-                          ))}
-                        </Select>
-                      </HGrid>
+                        <div className="w-fit">
+                          <Select
+                            id={ankerIdForFelt("kilde")}
+                            name="kilde"
+                            label="Kilde"
+                            size="small"
+                            value={lokaleVerdier.kilde}
+                            error={førsteFeilForFelt(feil, "kilde")}
+                            onChange={(event) => oppdaterLokaleVerdier("kilde", event.target.value)}
+                          >
+                            <option value="">Velg kilde</option>
+                            {kodeverk.kilder.map((k) => (
+                              <option key={k.kode} value={k.kode}>
+                                {k.beskrivelse}
+                              </option>
+                            ))}
+                          </Select>
+                        </div>
 
-                      <div>
-                        <UNSAFE_Combobox
-                          id={ankerIdForFelt("arbeidsgivere")}
-                          label="Organisasjonsnummer (valgfritt)"
-                          size="small"
-                          isMultiSelect
-                          allowNewValues
-                          options={[]}
-                          selectedOptions={lokaleVerdier.arbeidsgivere.map((orgnr) => ({
-                            label: formaterOrganisasjonsnummer(orgnr),
-                            value: orgnr,
-                          }))}
-                          onToggleSelected={(option, isSelected) => {
-                            setLokaleVerdier((gjeldende) => {
-                              if (isSelected && !gjeldende.arbeidsgivere.includes(option)) {
-                                return {
-                                  ...gjeldende,
-                                  arbeidsgivere: [...gjeldende.arbeidsgivere, option],
-                                };
-                              }
-                              if (!isSelected) {
-                                return {
-                                  ...gjeldende,
-                                  arbeidsgivere: gjeldende.arbeidsgivere.filter(
-                                    (v) => v !== option,
-                                  ),
-                                };
-                              }
-                              return gjeldende;
-                            });
-                          }}
-                          error={førsteFeilForFelt(feil, "arbeidsgivere")}
-                        />
-                        {lokaleVerdier.arbeidsgivere.map((orgnr) => (
-                          <input key={orgnr} type="hidden" name="arbeidsgivere" value={orgnr} />
-                        ))}
-                      </div>
+                        <div aria-hidden className="hidden xl:block" />
 
-                      <HGrid columns={{ xs: 1, md: 2 }} gap="space-4">
-                        <div id={ankerIdForFelt("misbruktype")}>
+                        <div id={ankerIdForFelt("misbruktype")} className="w-fit">
                           <UNSAFE_Combobox
                             label="Misbruktype"
                             size="small"
@@ -532,7 +498,47 @@ export default function SakDetaljSide() {
                           ))}
                         </div>
 
-                        <div id={ankerIdForFelt("merking")}>
+                        <div className="w-fit">
+                          <UNSAFE_Combobox
+                            id={ankerIdForFelt("arbeidsgivere")}
+                            label="Organisasjonsnummer (valgfritt)"
+                            size="small"
+                            isMultiSelect
+                            allowNewValues
+                            options={[]}
+                            selectedOptions={lokaleVerdier.arbeidsgivere.map((orgnr) => ({
+                              label: formaterOrganisasjonsnummer(orgnr),
+                              value: orgnr,
+                            }))}
+                            onToggleSelected={(option, isSelected) => {
+                              setLokaleVerdier((gjeldende) => {
+                                if (isSelected && !gjeldende.arbeidsgivere.includes(option)) {
+                                  return {
+                                    ...gjeldende,
+                                    arbeidsgivere: [...gjeldende.arbeidsgivere, option],
+                                  };
+                                }
+                                if (!isSelected) {
+                                  return {
+                                    ...gjeldende,
+                                    arbeidsgivere: gjeldende.arbeidsgivere.filter(
+                                      (v) => v !== option,
+                                    ),
+                                  };
+                                }
+                                return gjeldende;
+                              });
+                            }}
+                            error={førsteFeilForFelt(feil, "arbeidsgivere")}
+                          />
+                          {lokaleVerdier.arbeidsgivere.map((orgnr) => (
+                            <input key={orgnr} type="hidden" name="arbeidsgivere" value={orgnr} />
+                          ))}
+                        </div>
+
+                        <div aria-hidden className="hidden xl:block" />
+
+                        <div id={ankerIdForFelt("merking")} className="w-fit">
                           <UNSAFE_Combobox
                             label="Merking"
                             size="small"
