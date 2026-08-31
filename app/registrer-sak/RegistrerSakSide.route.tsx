@@ -262,7 +262,7 @@ export default function OpprettSakSide() {
               <HStack
                 align="center"
                 aria-label="Personinformasjon"
-                className="max-w-[472px] rounded-lg border-l-4 border-[#005299] bg-[#f1f7ff] px-6 py-3.5"
+                className="max-w-[472px] rounded-lg border-l-4 border-[#005299] bg-ax-bg-info-soft px-6 py-3.5"
                 gap="space-16"
               >
                 <PersonkortIkon />
