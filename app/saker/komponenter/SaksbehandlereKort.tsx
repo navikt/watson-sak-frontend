@@ -3,6 +3,7 @@ import { BodyShort, Button, HStack, Label, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import { useFetcher } from "react-router";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
+import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
@@ -63,12 +64,16 @@ export function SaksbehandlereKort({
   const [visTildelModal, setVisTildelModal] = useState(false);
   const [visSendTilAnnenEnhetModal, setVisSendTilAnnenEnhetModal] = useState(false);
   const innloggetBruker = useInnloggetBruker();
+  const kodeverk = useKodeverk();
   const fetcher = useFetcher();
   const tildelMegFetcher = useFetcher();
   const erAktiv = erAktivSakKontrollsak(sak.status);
   const kanEndreTilgang = erAktiv && sak.blokkert === null;
   const ansvarligSaksbehandler = ansvarligFraProps ?? sak.saksbehandlere.eier;
   const sakPath = RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id));
+  const enhetskode = getSaksenhet(sak);
+  const enhetsnavn =
+    kodeverk.enheter.find((enhet) => enhet.kode === enhetskode)?.beskrivelse ?? enhetskode;
 
   function fjernDeltTilgang(navIdent: string) {
     fetcher.submit(
@@ -88,8 +93,30 @@ export function SaksbehandlereKort({
     <>
       <Kort padding="space-6">
         <VStack gap="space-4">
+          <VStack gap="space-4">
+            <Label as="h2" size="small">
+              Enhet
+            </Label>
+
+            <BodyShort>{enhetsnavn || "Ingen"}</BodyShort>
+
+            {kanEndreTilgang && (
+              <Button
+                type="button"
+                variant="secondary"
+                size="small"
+                icon={<ArrowForwardIcon aria-hidden />}
+                onClick={() => setVisSendTilAnnenEnhetModal(true)}
+              >
+                Send til annen enhet
+              </Button>
+            )}
+          </VStack>
+
+          <hr className="my-4 border-ax-border-neutral-subtle" />
+
           <Label as="h2" size="small">
-            Saksbehandlere
+            Saksbehandler
           </Label>
 
           {ansvarligSaksbehandler ? (
@@ -181,18 +208,6 @@ export function SaksbehandlereKort({
               onClick={() => setVisDelTilgangModal(true)}
             >
               Del tilgang
-            </Button>
-          )}
-
-          {kanEndreTilgang && (
-            <Button
-              type="button"
-              variant="secondary"
-              size="small"
-              icon={<ArrowForwardIcon aria-hidden />}
-              onClick={() => setVisSendTilAnnenEnhetModal(true)}
-            >
-              Send til annen enhet
             </Button>
           )}
         </VStack>

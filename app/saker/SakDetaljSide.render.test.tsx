@@ -79,10 +79,10 @@ describe("SakDetaljSide render", () => {
     expect(await screen.findByLabelText("Misbruktype")).toBeDefined();
   }, 15000);
 
-  it("viser saksbehandlere med delte brukere, men skjuler handlinger og fjern-knapper for ikke-eier", async () => {
+  it("viser saksbehandler med delte brukere, men skjuler handlinger og fjern-knapper for ikke-eier", async () => {
     renderDetaljside(deltMedSakId);
 
-    const saksbehandlereHeading = await screen.findByRole("heading", { name: "Saksbehandlere" });
+    const saksbehandlereHeading = await screen.findByRole("heading", { name: "Saksbehandler" });
 
     expect(saksbehandlereHeading).toBeDefined();
     expect(screen.queryByRole("heading", { name: "Handlinger" })).toBeNull();

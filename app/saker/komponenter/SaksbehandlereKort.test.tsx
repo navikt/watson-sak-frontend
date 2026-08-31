@@ -107,7 +107,7 @@ describe("SaksbehandlereKort", () => {
     expect(screen.getByRole("button", { name: "Del tilgang" })).toBeDefined();
   });
 
-  it("viser Send til annen enhet nederst for aktiv sak", () => {
+  it("viser Send til annen enhet i enhetsseksjonen øverst for aktiv sak", () => {
     renderMedRouter(
       <SaksbehandlereKort
         erEier={true}
@@ -118,7 +118,42 @@ describe("SaksbehandlereKort", () => {
     );
 
     const knapper = screen.getAllByRole("button").map((knapp) => knapp.textContent);
-    expect(knapper.at(-1)).toBe("Send til annen enhet");
+    expect(knapper.at(0)).toBe("Send til annen enhet");
+  });
+
+  it("viser enhetsseksjonen over saksbehandlerseksjonen", () => {
+    renderMedRouter(
+      <SaksbehandlereKort
+        erEier={true}
+        sak={lagKontrollsak({ enhet: "ky153k" })}
+        saksbehandlerDetaljer={[lagSaksbehandler()]}
+        ansvarligSaksbehandler={lagSaksbehandler()}
+      />,
+    );
+
+    const overskrifter = screen.getAllByRole("heading").map((overskrift) => overskrift.textContent);
+    expect(overskrifter.slice(0, 2)).toEqual(["Enhet", "Saksbehandler"]);
+    expect(screen.getAllByText("Øst").some((element) => element.tagName === "P")).toBe(true);
+  });
+
+  it("viser Ingen når saken mangler enhet", () => {
+    renderMedRouter(
+      <SaksbehandlereKort
+        erEier={true}
+        sak={lagKontrollsak({
+          enhet: null,
+          saksbehandlere: {
+            eier: lagSaksbehandler({ enhet: "" }),
+            deltMed: [],
+            opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "" },
+          },
+        })}
+        saksbehandlerDetaljer={[lagSaksbehandler()]}
+        ansvarligSaksbehandler={lagSaksbehandler({ enhet: "" })}
+      />,
+    );
+
+    expect(screen.getByText("Ingen")).toBeDefined();
   });
 
   it("viser ikke Del tilgang for avsluttet sak", () => {
