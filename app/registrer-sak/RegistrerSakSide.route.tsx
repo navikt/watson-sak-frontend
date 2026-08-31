@@ -220,21 +220,6 @@ export default function OpprettSakSide() {
           </Search>
         </personFetcher.Form>
 
-        {/* Historisk ident brukt i søket — saken opprettes likevel på gjeldende ident */}
-        {harSøkt && person && søktMedHistoriskIdent && (
-          <LocalAlert status="announcement" className="max-w-xl">
-            <LocalAlert.Header>
-              <LocalAlert.Title as="h2">
-                Personnummeret/D-nummeret er ikke lenger gjeldende
-              </LocalAlert.Title>
-            </LocalAlert.Header>
-            <LocalAlert.Content>
-              Personnummeret eller D-nummeret du søkte med er ikke lenger gjeldende. Saken opprettes
-              på personens nåværende identifikator: <strong>{person.personnummer}</strong>.
-            </LocalAlert.Content>
-          </LocalAlert>
-        )}
-
         {/* Feil fra personoppslag */}
         {harSøkt && oppslagFeil && (
           <LocalAlert status="announcement" className="max-w-xl">
@@ -258,13 +243,12 @@ export default function OpprettSakSide() {
         {/* Person funnet */}
         {person && (
           <VStack gap="space-32">
-            <VStack gap="space-4">
-              <HStack
-                align="center"
-                aria-label="Personinformasjon"
-                className="max-w-[472px] rounded-lg border-l-4 border-[#005299] bg-ax-bg-info-soft px-6 py-3.5"
-                gap="space-16"
-              >
+            <VStack
+              aria-label="Personinformasjon"
+              className="max-w-[472px] rounded-lg border-l-4 border-[#005299] bg-ax-bg-info-soft px-6 py-3.5"
+              gap="space-12"
+            >
+              <HStack align="center" gap="space-16">
                 <PersonkortIkon />
                 <VStack gap="space-0">
                   <span className="text-[11px] font-semibold tracking-[0.6px] text-[#476b8c]">
@@ -278,6 +262,14 @@ export default function OpprettSakSide() {
                   </BodyShort>
                 </VStack>
               </HStack>
+              {søktMedHistoriskIdent && (
+                <LocalAlert status="warning">
+                  <LocalAlert.Content>
+                    Fødsels- eller d-nummeret du søkte med er historisk. Saken opprettes på
+                    gjeldende identifikator: <strong>{person.personnummer}</strong>.
+                  </LocalAlert.Content>
+                </LocalAlert>
+              )}
               {person.adresseskjermet && (
                 <LocalAlert status="error" className="max-w-2xl">
                   <LocalAlert.Content>Denne personen er skjermet.</LocalAlert.Content>

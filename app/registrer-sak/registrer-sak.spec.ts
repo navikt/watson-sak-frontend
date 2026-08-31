@@ -28,12 +28,16 @@ test.describe("Opprett sak", () => {
     ).toBeVisible();
   });
 
-  test("viser alert om historisk ident og oppretter saken på gjeldende ident", async ({ page }) => {
+  test("viser advarsel i personkortet om historisk ident og oppretter saken på gjeldende ident", async ({
+    page,
+  }) => {
     await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("10987654321");
     await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
 
     await expect(
-      page.getByText("Personnummeret/D-nummeret er ikke lenger gjeldende"),
+      page
+        .getByLabel("Personinformasjon")
+        .getByText("Fødsels- eller d-nummeret du søkte med er historisk."),
     ).toBeVisible();
     await expect(
       page.getByLabel("Personinformasjon").getByText("Ola Testesen", { exact: true }),
