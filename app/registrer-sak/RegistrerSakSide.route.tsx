@@ -51,10 +51,10 @@ function PersonkortIkon() {
       viewBox="0 0 24 24"
       width="24"
     >
-      <circle cx="12" cy="12" fill="#3386e0" r="12" />
+      <circle cx="12" cy="12" className="fill-ax-bg-info-strong" r="12" />
       <path
         d="M4.06152 3.30859L4.96387 3.31543C6.21626 3.38517 7.57007 4.3105 7.57031 5.58008C7.56956 5.63708 7.56934 5.81577 7.56934 5.84277V9.89258C7.56909 10.219 7.27804 10.4824 6.91895 10.4824C6.55964 10.4822 6.2688 10.2189 6.26855 9.89258V6.53516C6.26835 6.38308 6.14468 6.25977 5.99219 6.25977C5.84643 6.25983 5.72992 6.37347 5.71973 6.5166C5.71785 6.52373 5.71191 6.52863 5.71191 6.53613V17.2109C5.71191 17.668 5.34247 18.0381 4.88574 18.0381C4.42899 18.0381 4.05762 17.6677 4.05762 17.2109V10.4434C4.05759 10.2935 3.93605 10.1715 3.78516 10.1709C3.63367 10.1709 3.51175 10.2934 3.51172 10.4434V17.2109C3.51157 17.6679 3.14063 18.0381 2.68359 18.0381C2.22698 18.038 1.85757 17.6675 1.85742 17.2109V6.53516C1.85722 6.52796 1.85118 6.52311 1.84961 6.5166C1.83949 6.37338 1.72299 6.25883 1.57715 6.25879C1.4249 6.25879 1.30079 6.38253 1.30078 6.53516V9.8916C1.30078 10.2181 1.00987 10.4823 0.650391 10.4824C0.290766 10.4824 0 10.2182 0 9.8916V5.58008C0.000238766 4.3105 1.35368 3.38555 2.60645 3.31543L3.50879 3.30859V3.30566L3.78516 3.30762L4.06152 3.30566V3.30859ZM3.78418 0C4.58617 0 5.23806 0.649835 5.23828 1.45215C5.23828 2.25465 4.58593 2.90527 3.78418 2.90527C2.98212 2.9052 2.33203 2.25423 2.33203 1.45215C2.33225 0.650255 2.98225 7.3021e-05 3.78418 0Z"
-        fill="white"
+        className="fill-ax-text-info-contrast"
         transform="translate(8.215 2.981)"
       />
     </svg>
@@ -245,19 +245,19 @@ export default function OpprettSakSide() {
           <VStack gap="space-32">
             <VStack
               aria-label="Personinformasjon"
-              className="max-w-[472px] rounded-lg border-l-4 border-[#005299] bg-ax-bg-info-soft px-6 py-3.5"
+              className="max-w-[472px] rounded-lg border-l-4 border-ax-border-info bg-ax-bg-info-soft px-6 py-3.5"
               gap="space-12"
             >
               <HStack align="center" gap="space-16">
                 <PersonkortIkon />
                 <VStack gap="space-0">
-                  <span className="text-[11px] font-semibold tracking-[0.6px] text-[#476b8c]">
+                  <span className="text-[11px] font-semibold tracking-[0.6px] text-ax-text-info-subtle">
                     SAKEN OPPRETTES PÅ
                   </span>
                   <BodyShort size="medium" className="font-bold">
                     {person.navn}
                   </BodyShort>
-                  <BodyShort size="small" className="text-[#5c5c5c]">
+                  <BodyShort size="small" className="text-ax-text-neutral-subtle">
                     Personnummer: {person.personnummer} · {person.alder} år
                   </BodyShort>
                 </VStack>
