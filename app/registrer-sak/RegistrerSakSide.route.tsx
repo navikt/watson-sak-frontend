@@ -271,7 +271,7 @@ export default function OpprettSakSide() {
                 </LocalAlert>
               )}
               {person.adresseskjermet && (
-                <LocalAlert status="error" className="max-w-2xl">
+                <LocalAlert status="warning">
                   <LocalAlert.Content>Denne personen er skjermet.</LocalAlert.Content>
                 </LocalAlert>
               )}
