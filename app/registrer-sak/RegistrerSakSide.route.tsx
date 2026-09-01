@@ -379,12 +379,13 @@ export default function OpprettSakSide() {
                   {/* Rad 1: Kategori, Misbruktype, Merking */}
                   <HStack gap="space-24" align="start" wrap>
                     <Select
+                      key={fields.kategori.key}
                       name={fields.kategori.name}
                       id={fields.kategori.id}
                       label="Kategori"
                       error={fields.kategori.errors?.[0]}
                       className="w-52"
-                      value={valgtKategori}
+                      defaultValue={fields.kategori.initialValue ?? ""}
                       onChange={(e) => {
                         setValgtKategori(e.target.value);
                         const nyligeGyldige = kodeverk.misbrukstyper

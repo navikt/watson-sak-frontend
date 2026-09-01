@@ -89,6 +89,22 @@ test.describe("Opprett sak", () => {
     await expect(page.getByText("Du må rette disse feilene før du kan gå videre")).toBeVisible();
   });
 
+  test("kan endre kategori etter valideringsfeil på kategori og kilde", async ({ page }) => {
+    await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("12345678901");
+    await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
+
+    await page.getByRole("button", { name: "Opprett sak" }).click();
+    await expect(page.getByRole("link", { name: "Velg kategori" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Velg kilde" })).toBeVisible();
+
+    const kategori = page.getByLabel("Kategori");
+    await kategori.selectOption({ index: 1 });
+
+    await expect(kategori).not.toHaveValue("");
+    await expect(page.getByRole("link", { name: "Velg kategori" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Velg kilde" })).toBeVisible();
+  });
+
   test("kan legge til og fjerne ytelse-rader", async ({ page }) => {
     await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("12345678901");
     await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
