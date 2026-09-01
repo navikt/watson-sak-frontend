@@ -6,6 +6,7 @@ const minimaltGyldigSkjema = {
   personIdent: "12345678901",
   kategori: "DOKUMENTFALSK",
   kilde: "NAV_KONTROLL",
+  enhet: "OST",
 };
 
 describe("opprettSakSchema", () => {
@@ -231,12 +232,15 @@ describe("opprettSakSchema", () => {
     expect(resultat.success).toBe(false);
   });
 
-  it("godtar skjema uten enhet", () => {
+  it("krever enhet", () => {
     const resultat = opprettSakSchema.safeParse({
       ...minimaltGyldigSkjema,
       enhet: undefined,
     });
-    expect(resultat.success).toBe(true);
+    expect(resultat.success).toBe(false);
+    if (!resultat.success) {
+      expect(resultat.error.issues[0].message).toBe("Velg enhet");
+    }
   });
 });
 

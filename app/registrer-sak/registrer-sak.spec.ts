@@ -49,11 +49,13 @@ test.describe("Opprett sak", () => {
   });
 
   test("viser advarsel om eksisterende sak", async ({ page }) => {
-    await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("03117845975");
+    await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("12345678901");
     await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
 
     await expect(page.getByText("Det er allerede registrert en sak på personen")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Se sak" })).toHaveCount(0);
+    const seSakKnapp = page.getByRole("button", { name: "Se sak (åpnes i ny fane)" });
+    await expect(seSakKnapp).toHaveAttribute("target", "_blank");
+    await expect(seSakKnapp).toHaveAttribute("rel", "noopener noreferrer");
   });
 
   test("sperrer skjemaet for skjermet person uten tilgang til å opprette sak", async ({ page }) => {
@@ -85,6 +87,23 @@ test.describe("Opprett sak", () => {
     await page.getByRole("button", { name: "Opprett sak" }).click();
 
     await expect(page.getByText("Du må rette disse feilene før du kan gå videre")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Velg enhet" })).toBeVisible();
+  });
+
+  test("kan endre kategori etter valideringsfeil på kategori og kilde", async ({ page }) => {
+    await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("12345678901");
+    await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
+
+    await page.getByRole("button", { name: "Opprett sak" }).click();
+    await expect(page.getByRole("link", { name: "Velg kategori" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Velg kilde" })).toBeVisible();
+
+    const kategori = page.getByLabel("Kategori");
+    await kategori.selectOption({ index: 1 });
+
+    await expect(kategori).not.toHaveValue("");
+    await expect(page.getByRole("link", { name: "Velg kategori" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Velg kilde" })).toBeVisible();
   });
 
   test("kan legge til og fjerne ytelse-rader", async ({ page }) => {

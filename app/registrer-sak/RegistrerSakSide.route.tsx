@@ -271,7 +271,7 @@ export default function OpprettSakSide() {
                 </LocalAlert>
               )}
               {person.adresseskjermet && (
-                <LocalAlert status="error" className="max-w-2xl">
+                <LocalAlert status="warning">
                   <LocalAlert.Content>Denne personen er skjermet.</LocalAlert.Content>
                 </LocalAlert>
               )}
@@ -312,10 +312,12 @@ export default function OpprettSakSide() {
                         <Button
                           as={Link}
                           to={RouteConfig.SAKER_DETALJ.replace(":sakId", sisteSak.sakId)}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           variant="secondary"
                           size="small"
                         >
-                          Se sak
+                          Se sak <span className="sr-only">(åpnes i ny fane)</span>
                         </Button>
                       </HStack>
                     ) : null}
@@ -377,12 +379,13 @@ export default function OpprettSakSide() {
                   {/* Rad 1: Kategori, Misbruktype, Merking */}
                   <HStack gap="space-24" align="start" wrap>
                     <Select
+                      key={fields.kategori.key}
                       name={fields.kategori.name}
                       id={fields.kategori.id}
                       label="Kategori"
                       error={fields.kategori.errors?.[0]}
                       className="w-52"
-                      value={valgtKategori}
+                      defaultValue={fields.kategori.initialValue ?? ""}
                       onChange={(e) => {
                         setValgtKategori(e.target.value);
                         const nyligeGyldige = kodeverk.misbrukstyper
@@ -512,7 +515,7 @@ export default function OpprettSakSide() {
                     <Select
                       name={fields.enhet.name}
                       id={fields.enhet.id}
-                      label="Enhet (valgfritt)"
+                      label="Enhet"
                       error={fields.enhet.errors?.[0]}
                       className="w-44"
                       defaultValue={(fields.enhet.initialValue ?? "") as string}

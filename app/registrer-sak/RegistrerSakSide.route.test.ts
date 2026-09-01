@@ -51,6 +51,7 @@ function lagFormDataMedMinimum(overrides: Partial<Record<string, string>> = {}) 
   formData.set("personIdent", "12345678901");
   formData.set("kategori", "DOKUMENTFALSK");
   formData.set("kilde", "NAV_KONTROLL");
+  formData.set("enhet", "OST");
   for (const [nøkkel, verdi] of Object.entries(overrides)) {
     if (verdi !== undefined) formData.set(nøkkel, verdi);
   }
@@ -64,7 +65,7 @@ describe("OpprettSakSide action", () => {
     getBackendOboTokenMock.mockResolvedValue("token-123");
   });
 
-  it("godtar minimal payload med kun kategori og kilde, og redirecter til ny sak", async () => {
+  it("godtar minimal payload med påkrevde felter og redirecter til ny sak", async () => {
     const { action } = await import("./RegistrerSakSide.server");
     const { opprettKontrollsak } = await import("./api.server");
 
@@ -90,6 +91,7 @@ describe("OpprettSakSide action", () => {
           },
           kategori: "DOKUMENTFALSK",
           kilde: "NAV_KONTROLL",
+          enhet: "OST",
           prioritet: "NORMAL",
           misbruktype: [],
           ytelser: [],
@@ -239,6 +241,27 @@ describe("OpprettSakSide action", () => {
     expect(response).toMatchObject({
       status: "error",
       error: { kategori: expect.any(Array) },
+    });
+  }, 15000);
+
+  it("returnerer feltfeil når enhet mangler", async () => {
+    const { action } = await import("./RegistrerSakSide.server");
+
+    const formData = lagFormDataMedMinimum();
+    formData.delete("enhet");
+
+    const response = await action({
+      request: new Request("http://localhost/registrer-sak", {
+        method: "POST",
+        body: formData,
+      }),
+      params: {},
+      context: {},
+    } as Route.ActionArgs);
+
+    expect(response).toMatchObject({
+      status: "error",
+      error: { enhet: ["Velg enhet"] },
     });
   }, 15000);
 
