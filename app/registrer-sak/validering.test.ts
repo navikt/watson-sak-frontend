@@ -1,3 +1,4 @@
+import { parseWithZod } from "@conform-to/zod/v4";
 import { describe, expect, it } from "vitest";
 import { opprettSakSchema, redigerSaksinformasjonSchema } from "./validering";
 
@@ -29,6 +30,9 @@ describe("opprettSakSchema", () => {
       kategori: undefined,
     });
     expect(resultat.success).toBe(false);
+    if (!resultat.success) {
+      expect(resultat.error.issues[0].message).toBe("Velg kategori");
+    }
   });
 
   it("krever kilde", () => {
@@ -37,6 +41,9 @@ describe("opprettSakSchema", () => {
       kilde: undefined,
     });
     expect(resultat.success).toBe(false);
+    if (!resultat.success) {
+      expect(resultat.error.issues[0].message).toBe("Velg kilde");
+    }
   });
 
   it("godtar misbruktype som array", () => {
@@ -251,5 +258,60 @@ describe("redigerSaksinformasjonSchema", () => {
       misbruktype: [],
     });
     expect(resultat.success).toBe(true);
+  });
+});
+
+// Regresjonstester for at manglende obligatoriske felter alltid gir en
+// forståelig feilmelding — ikke Zods tekniske "Invalid input: expected
+// string, received undefined". Bruker parseWithZod + FormData for å
+// reprodusere det virkelige skjemaet: et <select> uten valgt verdi sendes som
+// tom streng, som conform normaliserer til `undefined` før Zod validerer.
+describe("feilmeldinger ved manglende obligatoriske felter (via ekte skjemainnsending)", () => {
+  it("viser 'Velg kilde' når kilde ikke er valgt i opprett-sak-skjemaet", () => {
+    const formData = new FormData();
+    formData.set("personIdent", "12345678901");
+    formData.set("kategori", "DOKUMENTFALSK");
+    formData.set("kilde", "");
+    const submission = parseWithZod(formData, { schema: opprettSakSchema });
+    expect(submission.status).toBe("error");
+    if (submission.status === "error") {
+      expect(submission.error?.kilde).toEqual(["Velg kilde"]);
+    }
+  });
+
+  it("viser 'Velg kategori' når kategori ikke er valgt i opprett-sak-skjemaet", () => {
+    const formData = new FormData();
+    formData.set("personIdent", "12345678901");
+    formData.set("kategori", "");
+    formData.set("kilde", "NAV_KONTROLL");
+    const submission = parseWithZod(formData, { schema: opprettSakSchema });
+    expect(submission.status).toBe("error");
+    if (submission.status === "error") {
+      expect(submission.error?.kategori).toEqual(["Velg kategori"]);
+    }
+  });
+
+  it("viser 'Fødselsnummer er påkrevd' når personIdent mangler i opprett-sak-skjemaet", () => {
+    const formData = new FormData();
+    formData.set("personIdent", "");
+    formData.set("kategori", "DOKUMENTFALSK");
+    formData.set("kilde", "NAV_KONTROLL");
+    const submission = parseWithZod(formData, { schema: opprettSakSchema });
+    expect(submission.status).toBe("error");
+    if (submission.status === "error") {
+      expect(submission.error?.personIdent).toEqual(["Fødselsnummer er påkrevd"]);
+    }
+  });
+
+  it("viser 'Velg kilde' og 'Velg kategori' i rediger-saksinformasjon-skjemaet", () => {
+    const formData = new FormData();
+    formData.set("kategori", "");
+    formData.set("kilde", "");
+    const submission = parseWithZod(formData, { schema: redigerSaksinformasjonSchema });
+    expect(submission.status).toBe("error");
+    if (submission.status === "error") {
+      expect(submission.error?.kategori).toEqual(["Velg kategori"]);
+      expect(submission.error?.kilde).toEqual(["Velg kilde"]);
+    }
   });
 });
