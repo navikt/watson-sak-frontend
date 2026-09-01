@@ -13,14 +13,14 @@ export type OpprettKontrollsakRequest = {
     deltMed?: Array<{
       navIdent: string;
       navn: string;
-      enhet: string;
+      enhet?: string;
     }>;
   };
   kategori: string;
   kilde: string;
   misbruktype: string[];
   prioritet: string;
-  enhet?: string;
+  enhet: string;
   merking: string[];
   arbeidsgivere?: string[];
   ytelser: Array<{
