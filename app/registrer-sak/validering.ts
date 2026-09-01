@@ -1,5 +1,23 @@
 import { z } from "zod";
 
+/**
+ * conform sin parseWithZod normaliserer tomme skjemafelt (f.eks. et <select>
+ * uten valgt verdi) til `undefined` før Zod validerer. For påkrevde
+ * strengfelt uten `.optional()` treffer dette Zods innebygde
+ * "invalid_type"-feil ("Invalid input: expected string, received undefined")
+ * FØR vår egen `.min(1, "...")`-melding rekker å kjøre, og saksbehandler ser en
+ * teknisk Zod-melding i stedet for en forståelig feilmelding.
+ *
+ * Løsningen — samme mønster som ellers i appen (se f.eks. OpprettOppgaveModal,
+ * EndreStatusModal) — er å sette meldingen via `error`-opsjonen på selve
+ * `z.string()`-skjemaet. Da dekker den både "feil type" (mangler verdi) og
+ * `.min(1, ...)` (tom streng), slik at meldingen alltid blir den samme uansett
+ * hvordan det tomme feltet kommer inn.
+ */
+function påkrevdTekst(melding: string) {
+  return z.string({ error: melding }).min(1, melding);
+}
+
 function normaliserDato(dato: string) {
   if (/^\d{2}\.\d{2}\.\d{4}$/.test(dato)) {
     const [dag, måned, år] = dato.split(".");
@@ -100,12 +118,12 @@ function erUtfyltYtelseRad(rad: {
 
 export const opprettSakSchema = z
   .object({
-    personIdent: z
-      .string()
-      .min(1, "Fødselsnummer er påkrevd")
-      .regex(/^\d{11}$/, "Fødselsnummer må bestå av 11 siffer"),
-    kategori: z.string().min(1, "Velg kategori"),
-    kilde: z.string().min(1, "Velg kilde"),
+    personIdent: påkrevdTekst("Fødselsnummer er påkrevd").regex(
+      /^\d{11}$/,
+      "Fødselsnummer må bestå av 11 siffer",
+    ),
+    kategori: påkrevdTekst("Velg kategori"),
+    kilde: påkrevdTekst("Velg kilde"),
     misbruktype: z
       .array(z.string().trim().min(1, "Misbruktype kan ikke være tom"))
       .optional()
@@ -126,8 +144,8 @@ export const opprettSakSchema = z
 
 export const redigerSaksinformasjonSchema = z
   .object({
-    kategori: z.string().min(1, "Velg kategori"),
-    kilde: z.string().min(1, "Velg kilde"),
+    kategori: påkrevdTekst("Velg kategori"),
+    kilde: påkrevdTekst("Velg kilde"),
     misbruktype: z
       .array(z.string().trim().min(1, "Misbruktype kan ikke være tom"))
       .optional()
