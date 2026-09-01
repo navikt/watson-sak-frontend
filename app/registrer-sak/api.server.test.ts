@@ -63,6 +63,7 @@ describe("opprettKontrollsak", () => {
         kategori: "SAMLIV",
         kilde: "NAV_KONTROLL",
         prioritet: "NORMAL",
+        enhet: "ky153k",
         misbruktype: ["SKJULT_SAMLIV"],
         merking: [],
         arbeidsgivere: [],
@@ -90,6 +91,7 @@ describe("opprettKontrollsak", () => {
         kilde: "NAV_KONTROLL",
         misbruktype: ["SKJULT_SAMLIV"],
         prioritet: "NORMAL",
+        enhet: "ky153k",
         ytelser: [
           {
             type: "DAGPENGER",
@@ -129,6 +131,7 @@ describe("opprettKontrollsak", () => {
         kategori: "SAMLIV",
         kilde: "NAV_KONTROLL",
         prioritet: "NORMAL",
+        enhet: "ky153k",
         misbruktype: ["SKJULT_SAMLIV"],
         merking: [],
         arbeidsgivere: [],
@@ -159,6 +162,7 @@ describe("opprettKontrollsak", () => {
       kategori: "SAMLIV",
       kilde: "NAV_KONTROLL",
       prioritet: "NORMAL",
+      enhet: "ky153k",
       misbruktype: ["SKJULT_SAMLIV"],
       merking: [],
       ytelser: [
@@ -199,6 +203,7 @@ describe("opprettKontrollsak", () => {
         kategori: "SAMLIV",
         kilde: "NAV_KONTROLL",
         prioritet: "NORMAL",
+        enhet: "ky153k",
         misbruktype: ["SKJULT_SAMLIV"],
         merking: [],
         ytelser: [],
@@ -253,6 +258,7 @@ describe("opprettKontrollsak", () => {
           kategori: "ARBEID",
           kilde: "SKATTEETATEN",
           prioritet: "NORMAL",
+          enhet: "ky153k",
           misbruktype: ["FEIL_INNTEKTSGRUNNLAG", "SKJULT_AKTIVITET"],
           merking: [],
           ytelser: [
@@ -279,6 +285,7 @@ describe("opprettKontrollsak", () => {
           kategori: "ARBEID",
           kilde: "UGYLDIG_KILDE",
           prioritet: "UGYLDIG_PRIORITET",
+          enhet: "ky153k",
           misbruktype: ["UGYLDIG_MISBRUKSTYPE"],
           merking: [],
           ytelser: [{ type: "DAGPENGER", periodeFra: "2026-01-01", periodeTil: "2026-12-31" }],
