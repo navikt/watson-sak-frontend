@@ -312,10 +312,12 @@ export default function OpprettSakSide() {
                         <Button
                           as={Link}
                           to={RouteConfig.SAKER_DETALJ.replace(":sakId", sisteSak.sakId)}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           variant="secondary"
                           size="small"
                         >
-                          Se sak
+                          Se sak <span className="sr-only">(åpnes i ny fane)</span>
                         </Button>
                       </HStack>
                     ) : null}
