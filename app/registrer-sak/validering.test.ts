@@ -6,7 +6,7 @@ const minimaltGyldigSkjema = {
   personIdent: "12345678901",
   kategori: "DOKUMENTFALSK",
   kilde: "NAV_KONTROLL",
-  enhet: "OST",
+  enhet: "ky153k",
 };
 
 describe("opprettSakSchema", () => {

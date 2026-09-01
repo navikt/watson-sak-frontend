@@ -51,7 +51,7 @@ function lagFormDataMedMinimum(overrides: Partial<Record<string, string>> = {}) 
   formData.set("personIdent", "12345678901");
   formData.set("kategori", "DOKUMENTFALSK");
   formData.set("kilde", "NAV_KONTROLL");
-  formData.set("enhet", "OST");
+  formData.set("enhet", "ky153k");
   for (const [nøkkel, verdi] of Object.entries(overrides)) {
     if (verdi !== undefined) formData.set(nøkkel, verdi);
   }
@@ -91,7 +91,7 @@ describe("OpprettSakSide action", () => {
           },
           kategori: "DOKUMENTFALSK",
           kilde: "NAV_KONTROLL",
-          enhet: "OST",
+          enhet: "ky153k",
           prioritet: "NORMAL",
           misbruktype: [],
           ytelser: [],
@@ -370,7 +370,7 @@ describe("byggOpprettKontrollsakPayload", () => {
           kilde: "NAV_KONTROLL",
           misbruktype: ["SKJULT_SAMLIV"],
           merking: ["LIME"],
-          enhet: "OST",
+          enhet: "ky153k",
           arbeidsgivere: ["123456789"],
           ytelser: [
             {
@@ -390,7 +390,7 @@ describe("byggOpprettKontrollsakPayload", () => {
       prioritet: "NORMAL",
       misbruktype: ["SKJULT_SAMLIV"],
       merking: ["LIME"],
-      enhet: "OST",
+      enhet: "ky153k",
       arbeidsgivere: ["123456789"],
       ytelser: [
         {
