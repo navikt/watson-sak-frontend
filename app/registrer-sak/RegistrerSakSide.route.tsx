@@ -515,7 +515,7 @@ export default function OpprettSakSide() {
                     <Select
                       name={fields.enhet.name}
                       id={fields.enhet.id}
-                      label="Enhet (valgfritt)"
+                      label="Enhet"
                       error={fields.enhet.errors?.[0]}
                       className="w-44"
                       defaultValue={(fields.enhet.initialValue ?? "") as string}

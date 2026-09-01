@@ -500,6 +500,7 @@ type NyMockFordelingssak = {
   kilde: KontrollsakResponse["kilde"];
   misbruktype: KontrollsakResponse["misbruktype"];
   prioritet: KontrollsakResponse["prioritet"];
+  enhet?: string;
   merking?: KontrollsakResponse["merking"];
   arbeidsgivere?: string[];
   ytelser: Array<{
@@ -552,6 +553,7 @@ export function leggTilMockSakIFordeling(
     kilde: nySak.kilde,
     misbruktype: nySak.misbruktype,
     prioritet: nySak.prioritet,
+    enhet: nySak.enhet ?? null,
     ytelser: nySak.ytelser.map((ytelse) => ({
       id: crypto.randomUUID(),
       type: ytelse.type,

@@ -13,7 +13,7 @@ export type OpprettKontrollsakRequest = {
     deltMed?: Array<{
       navIdent: string;
       navn: string;
-      enhet?: string;
+      enhet: string;
     }>;
   };
   kategori: string;
@@ -68,6 +68,7 @@ export async function opprettKontrollsak({
       kilde: payload.kilde,
       prioritet: payload.prioritet,
       misbruktype: payload.misbruktype,
+      enhet: payload.enhet,
       merking: payload.merking,
       arbeidsgivere: payload.arbeidsgivere ?? [],
       ytelser: payload.ytelser,

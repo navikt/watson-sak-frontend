@@ -17,6 +17,7 @@ test.describe("Oppretting og tildeling av sak", () => {
 
     await page.getByLabel("Kategori").selectOption("DOKUMENTFALSK");
     await page.getByLabel("Kilde").selectOption("NAV_KONTROLL");
+    await page.getByLabel("Enhet").selectOption("ky153k");
     await page.getByRole("button", { name: "Opprett sak" }).click();
 
     await expect(page).toHaveURL(/\/saker\/10000$/);

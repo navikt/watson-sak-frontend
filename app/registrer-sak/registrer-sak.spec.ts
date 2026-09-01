@@ -87,6 +87,7 @@ test.describe("Opprett sak", () => {
     await page.getByRole("button", { name: "Opprett sak" }).click();
 
     await expect(page.getByText("Du må rette disse feilene før du kan gå videre")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Velg enhet" })).toBeVisible();
   });
 
   test("kan endre kategori etter valideringsfeil på kategori og kilde", async ({ page }) => {
