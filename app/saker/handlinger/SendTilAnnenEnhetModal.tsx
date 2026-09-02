@@ -73,8 +73,8 @@ export function SendTilAnnenEnhetModal({
       <fetcher.Form method="post" {...getFormProps(form)}>
         <Modal.Body>
           <VStack gap="space-4">
+            <BodyShort>Velg enhet saken skal sendes til.</BodyShort>
             <BodyShort>
-              Velg enhet saken skal sendes til.{" "}
               <strong>
                 Du fjernes da fra saken og mister tilgang til dokumentasjonen i saken.
               </strong>
