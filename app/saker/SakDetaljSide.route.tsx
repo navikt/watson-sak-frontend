@@ -41,6 +41,7 @@ import { IngenFiltilgangKort } from "./filer/IngenFiltilgangKort";
 import { SakFilområde } from "./filer/SakFilområde";
 import { SakHandlingerKnapper } from "./handlinger/SakHandlingerKnapper";
 import { erAktivSakKontrollsak, erSakseier } from "./handlinger/tilgjengeligeHandlinger";
+import { IngenHistorikktilgangKort } from "./historikk/IngenHistorikktilgangKort";
 import { SakHistorikk } from "./historikk/SakHistorikk";
 import { getSaksreferanse } from "./id";
 import { PersonIdentHistorikkModal } from "./komponenter/PersonIdentHistorikkModal";
@@ -197,7 +198,15 @@ export default function SakDetaljSide() {
   // så blokken skjules helt i stedet for å vise innhold man ikke får tilgang til.
   const kanSeFilområde = harDirekteTilgang;
   const kanRedigere = erEier && erAktiv;
-  const kanSeHistorikk = sak.tilgang?.kanSeHistorikk ?? true;
+  // Historikk vises kun for eier eller delt-med (samme regel som filområdet). I tillegg kan
+  // backend skjule historikk helt for adresseskjermede saker som krever utvidet tilgang
+  // (sak.tilgang.kanSeHistorikk). Begge tilfellene vises som informasjonskort i stedet for å
+  // skjule blokken helt, etter mønsteret fra IngenFiltilgangKort.
+  const historikkTilstand: "vis" | "ikke-delt" | "skjermet" = !harDirekteTilgang
+    ? "ikke-delt"
+    : (sak.tilgang?.kanSeHistorikk ?? true)
+      ? "vis"
+      : "skjermet";
   const kanTildeleSak = sak.tilgang?.kanTildeleSak ?? true;
   // Dokumenter kan redigeres av eier ELLER delt-med, så lenge saken er aktiv.
   const kanRedigereDokumenter = harDirekteTilgang && erAktiv;
@@ -684,9 +693,11 @@ export default function SakDetaljSide() {
 
             <SakHandlingerKnapper sak={sak} erEier={erEier} filer={filer} dokumenter={dokumenter} />
 
-            {kanSeHistorikk ? (
+            {historikkTilstand === "vis" ? (
               <SakHistorikk sakId={sak.id} hendelser={historikk} redigerbar={kanRedigere} />
-            ) : null}
+            ) : (
+              <IngenHistorikktilgangKort årsak={historikkTilstand} />
+            )}
           </VStack>
         </HGrid>
       </VStack>

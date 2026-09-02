@@ -94,7 +94,7 @@ describe("SakDetaljSide render", () => {
     expect(screen.queryByRole("button", { name: "Fjern deling med Kari Nordmann" })).toBeNull();
   }, 15000);
 
-  it("skjuler historikk og Tildel meg for skjermet sak som krever utvidet tilgang", async () => {
+  it("viser tilgangsmelding for historikk (og skjuler Tildel meg) for skjermet sak som krever utvidet tilgang", async () => {
     const { hentMockState } = await import("~/testing/mock-store/session.server");
     const { hentAlleSaker } = await import("~/testing/mock-store/alle-saker.server");
     const sak = hentAlleSaker(hentMockState(testRequest)).find(
@@ -106,6 +106,11 @@ describe("SakDetaljSide render", () => {
 
     sak.adresseskjermet = true;
     sak.saksbehandlere.eier = null;
+    // Gi innlogget bruker (Z999999) direkte tilgang (delt-med) slik at vi isolerer
+    // skjermet-sak-effekten (sak.tilgang.kanSeHistorikk) fra harDirekteTilgang-sjekken.
+    sak.saksbehandlere.deltMed = [
+      { navIdent: "Z999999", navn: "Test Saksbehandler", enhet: "4812" },
+    ];
     (
       sak as unknown as {
         tilgang?: {
@@ -125,8 +130,33 @@ describe("SakDetaljSide render", () => {
     renderDetaljside(deltMedSakId);
 
     await screen.findByRole("heading", { level: 1, name: /^Sak / });
-    expect(screen.queryByRole("heading", { name: "Historikk" })).toBeNull();
+    expect(
+      await screen.findByText(
+        "Denne saken er skjermet. Du må ha utvidet tilgang for å se historikk.",
+      ),
+    ).toBeDefined();
     expect(screen.queryByRole("button", { name: "Tildel meg" })).toBeNull();
+  }, 15000);
+
+  it("viser tilgangsmelding for historikk når innlogget bruker verken er eier eller delt-med", async () => {
+    const { hentMockState } = await import("~/testing/mock-store/session.server");
+    const { hentAlleSaker } = await import("~/testing/mock-store/alle-saker.server");
+    const koblingSakId = "102";
+    const koblingSak = hentAlleSaker(hentMockState(testRequest)).find(
+      (s) => s.id === Number(koblingSakId),
+    );
+    if (!koblingSak) {
+      throw new Error("Fant ikke testdata for koblingssak");
+    }
+    // Se tilsvarende Filer-test lenger ned for forklaring av oppsettet: sak 102 har
+    // verken eier eller delt-med som er innlogget bruker (Z999999) fra før.
+    koblingSak.kobledeSaker = [Number(testSakId)];
+
+    renderDetaljside(koblingSakId);
+
+    expect(
+      await screen.findByText("Du må få delt tilgang til saken for å kunne se historikk."),
+    ).toBeDefined();
   }, 15000);
 
   it("viser organisasjonsnummer i read-only-visning når det er satt", async () => {
