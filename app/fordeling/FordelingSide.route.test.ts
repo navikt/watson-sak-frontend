@@ -21,7 +21,8 @@ const hentInnloggetBrukerMock = vi.hoisted(() =>
     preferredUsername: "test",
     name: "Saks Behandlersen",
     navIdent: "Z999999",
-    enhet: "4812",
+    enhet: "NAV Kontroll Øst",
+    enhetId: "4812",
   }),
 );
 
@@ -214,7 +215,7 @@ describe("FordelingSide loader", () => {
     });
   });
 
-  it("beholder grunnavgrensning i backend-modus ved å sende innlogget enhet til fordeling-kall", async () => {
+  it("beholder grunnavgrensning i backend-modus ved å sende innlogget enhets-ID til fordeling-kall", async () => {
     testState.skalBrukeMockdata = false;
     const { hentKontrollsakerForFordeling } = await import("./api.server");
     vi.mocked(hentKontrollsakerForFordeling).mockResolvedValue({
@@ -233,5 +234,26 @@ describe("FordelingSide loader", () => {
     } as Route.LoaderArgs);
 
     expect(hentKontrollsakerForFordeling).toHaveBeenCalledWith(expect.any(Request), "4812");
+  });
+
+  it("feiler tydelig når innlogget bruker ikke kan knyttes til en konfigurert enhet", async () => {
+    testState.skalBrukeMockdata = false;
+    hentInnloggetBrukerMock.mockResolvedValueOnce({
+      preferredUsername: "test",
+      name: "Saks Behandlersen",
+      navIdent: "Z999999",
+      enhet: "Ukjent enhet",
+      enhetId: null,
+    });
+
+    const { loader } = await import("./FordelingSide.server");
+
+    await expect(
+      loader({
+        request: new Request("http://localhost/fordeling"),
+        params: {},
+        context: {},
+      } as Route.LoaderArgs),
+    ).rejects.toThrow("Fant ikke konfigurert enhet for innlogget bruker.");
   });
 });

@@ -10,6 +10,7 @@ interface InnloggetBruker {
   name: string;
   navIdent: string;
   enhet: string;
+  enhetId: string | null;
   erLeder: boolean;
 }
 
@@ -30,6 +31,7 @@ export async function hentInnloggetBruker({
       name: "Saks Behandlersen",
       navIdent: "Z999999",
       enhet: "4812",
+      enhetId: "4812",
       erLeder: false,
     };
   }
@@ -47,6 +49,7 @@ export async function hentInnloggetBruker({
       name: parseResult.name,
       navIdent: parseResult.NAVident,
       enhet: "Ukjent",
+      enhetId: null,
       erLeder: false,
     };
   }
@@ -60,6 +63,7 @@ export async function hentInnloggetBruker({
     name: parseResult.name,
     navIdent: parseResult.NAVident,
     enhet: saksbehandlerInfo.enhet ?? "Ukjent",
+    enhetId: saksbehandlerInfo.enhetId,
     erLeder: saksbehandlerInfo.erLeder,
   };
 }
