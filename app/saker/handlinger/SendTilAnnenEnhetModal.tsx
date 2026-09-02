@@ -8,10 +8,13 @@ import { z } from "zod";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
+import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
 
 interface SendTilAnnenEnhetModalProps {
   sakId: string;
   nåværendeEnhet: string;
+  ansvarligSaksbehandler: KontrollsakSaksbehandler | null;
+  innloggetNavIdent: string;
   åpen: boolean;
   onClose: () => void;
 }
@@ -23,6 +26,8 @@ const sendTilAnnenEnhetSkjema = z.object({
 export function SendTilAnnenEnhetModal({
   sakId,
   nåværendeEnhet,
+  ansvarligSaksbehandler,
+  innloggetNavIdent,
   åpen,
   onClose,
 }: SendTilAnnenEnhetModalProps) {
@@ -31,6 +36,11 @@ export function SendTilAnnenEnhetModal({
   const kodeverk = useKodeverk();
   const saksreferanse = getSaksreferanse(sakId);
   const erSubmitting = fetcher.state !== "idle";
+  const tilgangsvarsel = ansvarligSaksbehandler
+    ? ansvarligSaksbehandler.navIdent === innloggetNavIdent
+      ? "Du fjernes da fra saken og mister tilgang til dokumentasjonen i saken."
+      : `${ansvarligSaksbehandler.navn} fjernes da fra saken og mister tilgang til dokumentasjonen i saken.`
+    : null;
 
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data?.ok) {
@@ -73,9 +83,12 @@ export function SendTilAnnenEnhetModal({
       <fetcher.Form method="post" {...getFormProps(form)}>
         <Modal.Body>
           <VStack gap="space-4">
-            <BodyShort>
-              Velg enhet saken skal sendes til. Ansvarlig saksbehandler fristilles fra saken.
-            </BodyShort>
+            <BodyShort>Velg enhet saken skal sendes til.</BodyShort>
+            {tilgangsvarsel && (
+              <BodyShort>
+                <strong>{tilgangsvarsel}</strong>
+              </BodyShort>
+            )}
             <Select
               key={fields.seksjon.key}
               name={fields.seksjon.name}

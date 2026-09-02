@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mockKodeverk } from "~/testing/mock-store/kodeverk.server";
@@ -220,6 +220,75 @@ describe("SaksbehandlereKort", () => {
     expect(formData.get("handling")).toBe("send_til_annen_enhet");
     expect(formData.get("seksjon")).toBe("hu424t");
     expect(options).toEqual(expect.objectContaining({ method: "post" }));
+  });
+
+  it("viser ikke tilgangsvarsel i enhetsmodalen når saken mangler ansvarlig saksbehandler", async () => {
+    renderMedRouter(
+      <SaksbehandlereKort
+        erEier={true}
+        sak={lagKontrollsak({
+          saksbehandlere: {
+            eier: null,
+            deltMed: [],
+            opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
+          },
+        })}
+        saksbehandlerDetaljer={[lagSaksbehandler()]}
+        ansvarligSaksbehandler={null}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Send til annen enhet" }));
+    });
+
+    expect(screen.queryByText(/mister tilgang til dokumentasjonen/)).toBeNull();
+  });
+
+  it("viser at innlogget saksbehandler selv mister tilgang i enhetsmodalen", async () => {
+    renderMedRouter(
+      <SaksbehandlereKort
+        erEier={true}
+        sak={lagKontrollsak()}
+        saksbehandlerDetaljer={[lagSaksbehandler()]}
+        ansvarligSaksbehandler={lagSaksbehandler({
+          navIdent: "Z999999",
+          navn: "Test Saksbehandler",
+        })}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Send til annen enhet" }));
+    });
+
+    expect(
+      screen.getByText("Du fjernes da fra saken og mister tilgang til dokumentasjonen i saken."),
+    ).toBeDefined();
+  });
+
+  it("viser navnet på en annen ansvarlig saksbehandler som mister tilgang i enhetsmodalen", async () => {
+    renderMedRouter(
+      <SaksbehandlereKort
+        erEier={true}
+        sak={lagKontrollsak()}
+        saksbehandlerDetaljer={[lagSaksbehandler()]}
+        ansvarligSaksbehandler={lagSaksbehandler({
+          navIdent: "Z123456",
+          navn: "Ola Saksbehandler",
+        })}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Send til annen enhet" }));
+    });
+
+    expect(
+      screen.getByText(
+        "Ola Saksbehandler fjernes da fra saken og mister tilgang til dokumentasjonen i saken.",
+      ),
+    ).toBeDefined();
   });
 
   it("sender brukeren til dashboardet når saken er sendt til annen enhet", () => {
