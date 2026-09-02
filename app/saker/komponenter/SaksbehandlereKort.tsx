@@ -235,6 +235,8 @@ export function SaksbehandlereKort({
       <SendTilAnnenEnhetModal
         sakId={String(sak.id)}
         nåværendeEnhet={getSaksenhet(sak)}
+        ansvarligSaksbehandler={ansvarligSaksbehandler}
+        innloggetNavIdent={innloggetBruker.navIdent}
         åpen={visSendTilAnnenEnhetModal}
         onClose={() => setVisSendTilAnnenEnhetModal(false)}
       />
