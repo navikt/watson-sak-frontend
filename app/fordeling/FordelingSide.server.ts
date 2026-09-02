@@ -69,7 +69,10 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   const innloggetBruker = await hentInnloggetBruker({ request });
-  const kontrollsaker = await hentKontrollsakerForFordeling(request, innloggetBruker.enhet);
+  if (!innloggetBruker.enhetId) {
+    throw new Error("Fant ikke konfigurert enhet for innlogget bruker.");
+  }
+  const kontrollsaker = await hentKontrollsakerForFordeling(request, innloggetBruker.enhetId);
   if (!kontrollsaker) {
     throw new Error("Forventet kontrollsaker i backend-modus for fordeling.");
   }

@@ -51,7 +51,8 @@ describe("hentInnloggetBruker", () => {
     hentSaksbehandlerInfoMock.mockResolvedValue({
       navIdent: "Z123456",
       navn: "Test Saksbehandler",
-      enhet: "4812",
+      enhet: "NAV Kontroll Øst",
+      enhetId: "4812",
       erLeder: true,
     });
   });
@@ -113,6 +114,7 @@ describe("hentInnloggetBruker", () => {
       name: "Saks Behandlersen",
       navIdent: "Z999999",
       enhet: "4812",
+      enhetId: "4812",
       erLeder: false,
     });
   });
