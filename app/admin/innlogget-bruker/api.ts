@@ -4,18 +4,18 @@ import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { env } from "~/config/env.server";
 
 const brukereSomHarTilgang = {
-  hansJacob: "M118946",
   kristofer: "S162301",
   snorri: "E176931",
-  sturle: "H139079",
   espen: "E170973",
-  // Testbruker vi bruker i dev
-  devTestbruker: "Z990474",
+  alem: "B126228",
 };
+
+const testbrukereSomHarTilgang = ["Z993376", "Z993741", "Z993471", "Z990474"];
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const innloggetBruker = await hentInnloggetBruker({ request });
-  if (Object.values(brukereSomHarTilgang).includes(innloggetBruker.navIdent)) {
+  const tillatteNavIdenter = [...Object.values(brukereSomHarTilgang), ...testbrukereSomHarTilgang];
+  if (tillatteNavIdenter.includes(innloggetBruker.navIdent)) {
     if (env.ENVIRONMENT !== "local-mock") {
       return {
         ...innloggetBruker,

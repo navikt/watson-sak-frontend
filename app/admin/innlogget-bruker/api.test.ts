@@ -86,6 +86,43 @@ describe("innlogget-bruker-api", () => {
     });
   });
 
+  it.each(["Z993376", "Z993741", "Z993471", "Z990474", "B126228"])(
+    "gir tilgang til %s",
+    async (navIdent) => {
+      hentInnloggetBrukerMock.mockResolvedValue({
+        preferredUsername: "test@nav.no",
+        name: "Test Saksbehandler",
+        navIdent,
+        enhet: "4812",
+      });
+
+      const { loader } = await import("./api");
+
+      const result = await loader(lagLoaderArgs());
+
+      expect(result).toMatchObject({ navIdent, token: "obo-token" });
+    },
+  );
+
+  it.each(["M118946", "H139079"])("avviser tidligere godkjent bruker %s", async (navIdent) => {
+    hentInnloggetBrukerMock.mockResolvedValue({
+      preferredUsername: "tidligere@nav.no",
+      name: "Tidligere godkjent bruker",
+      navIdent,
+      enhet: "4812",
+    });
+
+    const { loader } = await import("./api");
+
+    const result = await loader(lagLoaderArgs());
+
+    if (!(result instanceof Response)) {
+      throw new Error("Forventet Response ved manglende tilgang");
+    }
+
+    expect(result.status).toBe(403);
+  });
+
   it("avviser brukere som ikke har tilgang", async () => {
     hentInnloggetBrukerMock.mockResolvedValue({
       preferredUsername: "annen@nav.no",
