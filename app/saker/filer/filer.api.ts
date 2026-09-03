@@ -1,19 +1,40 @@
-import { data, type ActionFunctionArgs } from "react-router";
+import { data, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
 import * as backendApi from "~/saker/api.server";
 import { BackendFeilException } from "~/saker/api.server";
 import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
-import { leggTilFil } from "./mock-data-filer.server";
+import { hentFilerForSak, leggTilFil } from "./mock-data-filer.server";
 
 /**
  * Resource route for vedlegg (filer) på en sak.
  *
+ * - GET: lister alle vedlegg på saken. Brukes bl.a. av «sett inn bilde»-velgeren i
+ *   dokumenteditoren for å finne tidligere opplastede bilder.
  * - POST: laster opp en fil til backend (GCS) og returnerer FilResponse.
  *   Ved kjente brukerfeil (virus, ClamAV nede) returneres { message } slik at
  *   VedleggSeksjon kan vise feilen inline uten å gå til error boundary.
  */
+export async function loader({ request, params }: LoaderFunctionArgs) {
+  const sakReferanse = params.sakId;
+  if (!sakReferanse) {
+    throw data("Mangler sak", { status: 400 });
+  }
+
+  if (!skalBrukeMockdata) {
+    const token = await getBackendOboToken(request);
+    return await backendApi.hentFiler(token, sakReferanse);
+  }
+
+  const tilgang = await hentSakstilgangFraMock(request, sakReferanse);
+  if (!tilgang) {
+    throw data("Sak ikke funnet", { status: 404 });
+  }
+
+  return hentFilerForSak(request, String(tilgang.sak.id));
+}
+
 export async function action({ request, params }: ActionFunctionArgs) {
   const sakReferanse = params.sakId;
   if (!sakReferanse) {
