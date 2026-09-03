@@ -24,12 +24,23 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
-    return await backendApi.hentFiler(token, sakReferanse);
+    try {
+      return await backendApi.hentFiler(token, sakReferanse);
+    } catch (feil) {
+      if (feil instanceof BackendFeilException) {
+        const melding = feil.status < 500 ? feil.message : "Kunne ikke hente filer.";
+        throw data(melding, { status: feil.status });
+      }
+      throw feil;
+    }
   }
 
   const tilgang = await hentSakstilgangFraMock(request, sakReferanse);
   if (!tilgang) {
     throw data("Sak ikke funnet", { status: 404 });
+  }
+  if (!tilgang.kanSe) {
+    throw data("Ingen tilgang til denne saken", { status: 403 });
   }
 
   return hentFilerForSak(request, String(tilgang.sak.id));
