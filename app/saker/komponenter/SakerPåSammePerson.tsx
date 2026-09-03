@@ -6,7 +6,6 @@ import {
   Button,
   Heading,
   HStack,
-  LocalAlert,
   Modal,
   Tag,
   VStack,
@@ -223,24 +222,13 @@ export function SakerPåSammePerson({
               {erFrakobling ? (
                 <BodyShort>
                   Vil du fjerne koblingen mellom sak {gjeldendeSaksreferanse} og sak{" "}
-                  {valgtSaksreferanse}? Saksbehandlerne mister tilgangen til hverandres saker.
+                  {valgtSaksreferanse}?
                 </BodyShort>
               ) : (
-                <>
-                  <LocalAlert status="announcement">
-                    <LocalAlert.Header>
-                      <LocalAlert.Title as="h2">Lurt å vite før du kobler</LocalAlert.Title>
-                    </LocalAlert.Header>
-                    <LocalAlert.Content>
-                      Når du kobler sakene, får saksbehandlerne på begge sakene tilgang til
-                      hverandres saker - praktisk for å samarbeide bedre.
-                    </LocalAlert.Content>
-                  </LocalAlert>
-                  <BodyShort>
-                    Vil du koble sak {gjeldendeSaksreferanse} til sak {valgtSaksreferanse}
-                    {valgtKategori ? ` ${valgtKategori}` : ""}?
-                  </BodyShort>
-                </>
+                <BodyShort>
+                  Vil du koble sak {gjeldendeSaksreferanse} til sak {valgtSaksreferanse}
+                  {valgtKategori ? ` ${valgtKategori}` : ""}?
+                </BodyShort>
               )}
 
               {feilmelding && <Alert variant="error">{feilmelding}</Alert>}

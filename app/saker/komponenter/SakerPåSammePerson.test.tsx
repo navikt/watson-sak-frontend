@@ -118,7 +118,6 @@ describe("SakerPåSammePerson", () => {
     fireEvent.click(screen.getByRole("button", { name: "Koble til sak" }));
 
     expect(screen.getByRole("heading", { name: "Koble til sak" })).toBeDefined();
-    expect(screen.getByText("Lurt å vite før du kobler")).toBeDefined();
     expect(screen.getByRole("button", { name: "Skjul" })).toBeDefined();
   });
 
@@ -189,7 +188,7 @@ describe("SakerPåSammePerson", () => {
     fireEvent.click(screen.getByRole("button", { name: "Fjern kobling" }));
 
     expect(screen.getByRole("heading", { name: "Fjern kobling" })).toBeDefined();
-    expect(screen.getByText(/mister tilgangen til hverandres saker/)).toBeDefined();
+    expect(screen.getByText(/Vil du fjerne koblingen mellom sak.*og sak/)).toBeDefined();
   });
 
   it("skjuler koblingshandlingen når innlogget bruker ikke er saksbehandler på noen av sakene", () => {
