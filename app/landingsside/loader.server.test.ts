@@ -21,16 +21,6 @@ describe("landingsside-loader", () => {
     context: {},
   } as Parameters<typeof loader>[0];
 
-  it("returnerer traktSteg for brukerens saker siste 30 dager", async () => {
-    const data = await loader(loaderArgs);
-
-    expect(data.traktSteg).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ label: expect.any(String), antall: expect.any(Number) }),
-      ]),
-    );
-  });
-
   it("returnerer kun aktive saker (ikke avsluttede)", async () => {
     const data = await loader(loaderArgs);
 

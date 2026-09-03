@@ -72,7 +72,7 @@ test.describe("Landingsside", () => {
   });
 
   test("viser mine saker-oversikt", async ({ page }) => {
-    await expect(page.getByRole("heading", { name: "Mine saker" }).first()).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Sist aktive saker" }).first()).toBeVisible();
     await expect(page.getByRole("link", { name: "Se alle" })).toBeVisible();
   });
 
@@ -99,36 +99,25 @@ test.describe("Landingsside", () => {
     await expect(page.getByRole("button", { name: "Vis flere" })).not.toBeVisible();
   });
 
-  test("viser seksjonen for dine saker siste 30 dager ved siden av varslinger på brede skjermer", async ({
-    page,
-  }) => {
-    await page.setViewportSize({ width: 1400, height: 1200 });
-    await page.reload({ waitUntil: "networkidle" });
-
-    const traktSeksjon = page
-      .getByRole("heading", { name: "Dine saker siste 30 dager" })
-      .locator("xpath=ancestor::section[1]");
+  test("viser seksjonene i riktig rekkefølge: varsler før sist aktive saker", async ({ page }) => {
     const varslerSeksjon = page
       .getByRole("heading", { name: "Siste varsler" })
       .locator("xpath=ancestor::section[1]");
+    const sisteSakerSeksjon = page
+      .getByRole("heading", { name: "Sist aktive saker" })
+      .locator("xpath=ancestor::section[1]");
 
-    await expect(
-      traktSeksjon.getByRole("heading", { name: "Dine saker siste 30 dager" }),
-    ).toBeVisible();
-
-    const traktBoks = await traktSeksjon.boundingBox();
     const varslerBoks = await varslerSeksjon.boundingBox();
+    const sisteSakerBoks = await sisteSakerSeksjon.boundingBox();
 
-    expect(traktBoks).not.toBeNull();
     expect(varslerBoks).not.toBeNull();
+    expect(sisteSakerBoks).not.toBeNull();
 
-    if (!traktBoks || !varslerBoks) {
+    if (!varslerBoks || !sisteSakerBoks) {
       throw new Error("Fant ikke seksjonsboksene som forventet");
     }
 
-    expect(Math.abs(traktBoks.y - varslerBoks.y)).toBeLessThan(10);
-    expect(varslerBoks.x).toBeLessThan(traktBoks.x);
-    expect(Math.abs(varslerBoks.width - traktBoks.width)).toBeLessThan(20);
+    expect(varslerBoks.y).toBeLessThan(sisteSakerBoks.y);
   });
 
   test("er UU-compliant", async ({ page }) => {
