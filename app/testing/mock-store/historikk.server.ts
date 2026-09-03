@@ -22,7 +22,9 @@ type BackendHendelsestype =
   | "MANUELL_HENDELSE"
   | "NOTAT_SENDT"
   | "JOURNALPOST_OPPRETTET"
-  | "OPPGAVE_OPPRETTET";
+  | "OPPGAVE_OPPRETTET"
+  | "FIL_LASTET_OPP"
+  | "FIL_SLETTET";
 
 function lagId(state: MockState): string {
   return `00000000-0000-4000-8000-${String(state.nesteHistorikkId++).padStart(12, "0")}`;

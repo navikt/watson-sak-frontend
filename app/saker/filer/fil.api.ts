@@ -4,6 +4,7 @@ import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
 import * as backendApi from "~/saker/api.server";
 import { erSakseier } from "~/saker/handlinger/tilgjengeligeHandlinger";
+import { leggTilHendelse } from "~/saker/historikk/mock-data.server";
 import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
 import {
   slettFil as slettFilMock,
@@ -73,6 +74,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
   if (!slettet) {
     throw data("Fil ikke funnet", { status: 404 });
   }
+
+  leggTilHendelse(request, tilgang.sak, "FIL_SLETTET", undefined, {
+    beskrivelse: slettet.filnavn,
+  });
 
   return { ok: true as const };
 }
