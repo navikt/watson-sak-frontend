@@ -25,6 +25,8 @@ import { lagIsoTidspunktFraNorskDatoTid } from "~/utils/date-utils";
 import { hentTekstfelt, hentValgfriTekst } from "~/utils/form-data";
 import { hentDokumenttreForSak } from "./filer/mock-data.server";
 import { hentFilerForSak } from "./filer/mock-data-filer.server";
+import { arkiverDokument } from "~/testing/mock-store/dokumenter.server";
+import { hentMockState } from "~/testing/mock-store/session.server";
 import { notatMalValg } from "./handlinger/notatValg";
 import { erAktivSakKontrollsak, erSakseier } from "./handlinger/tilgjengeligeHandlinger";
 import {
@@ -1193,7 +1195,14 @@ async function mockAction(
       const journalposttype = hentValgfriTekst(formData, "journalposttype") ?? "NOTAT";
       const jpTittel = hentValgfriTekst(formData, "tittel") ?? "Journalpost";
       const innhold = hentValgfriTekst(formData, "innhold") ?? "";
+      const dokumentIds = formData.getAll("dokumentId").map(String);
       const knyttTilOppgave = formData.get("knyttTilOppgave") === "true";
+      const { navIdent } = await hentInnloggetBruker({ request });
+      const journalpostId = `demo-${crypto.randomUUID()}`;
+
+      for (const dokumentId of dokumentIds) {
+        arkiverDokument(hentMockState(request), sakId, dokumentId, navIdent, journalpostId);
+      }
 
       const deler = [innhold];
       if (knyttTilOppgave) {
