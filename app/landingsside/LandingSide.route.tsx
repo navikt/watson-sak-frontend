@@ -8,7 +8,7 @@ import { useVarsler, useRefreshVarsler } from "~/varsler/bruk-varsler";
 import type { loader } from "./loader.server";
 import { SisteVarsler } from "./komponenter/SisteVarsler";
 import { Velkomst } from "./komponenter/Velkomst";
-import { MineSakerOversikt } from "./komponenter/MineSakerOversikt";
+import { SistAktiveSakerOversikt } from "./komponenter/SistAktiveSakerOversikt";
 
 export { action } from "./action.server";
 export { loader } from "./loader.server";
@@ -48,7 +48,7 @@ export default function LandingSide() {
           }}
         />
 
-        <MineSakerOversikt saker={loaderData.mineSaker} />
+        <SistAktiveSakerOversikt saker={loaderData.mineSaker} />
       </VStack>
     </>
   );

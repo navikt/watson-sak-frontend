@@ -7,7 +7,7 @@ import { Kort } from "~/komponenter/Kort";
 import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
 
-export function MineSakerOversikt({ saker }: { saker: KontrollsakResponse[] }) {
+export function SistAktiveSakerOversikt({ saker }: { saker: KontrollsakResponse[] }) {
   const rader = saker.map((sak) => mapKontrollsakTilSakslisteRad(sak));
 
   return (
@@ -21,7 +21,7 @@ export function MineSakerOversikt({ saker }: { saker: KontrollsakResponse[] }) {
             </Heading>
           </HStack>
           <Link as={RouterLink} to={RouteConfig.MINE_SAKER}>
-            Se alle <ArrowRightIcon aria-hidden fontSize="1rem" />
+            Se alle saker <ArrowRightIcon aria-hidden fontSize="1rem" />
           </Link>
         </HStack>
 

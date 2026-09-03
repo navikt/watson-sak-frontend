@@ -21,10 +21,16 @@ describe("landingsside-loader", () => {
     context: {},
   } as Parameters<typeof loader>[0];
 
-  it("returnerer kun aktive saker (ikke avsluttede)", async () => {
+  it("returnerer bare aktive saker (ikke ANMELDT, HENLAGT eller AVSLUTTET)", async () => {
     const data = await loader(loaderArgs);
 
-    expect(data.mineSaker.every((sak) => sak.status !== "AVSLUTTET")).toBe(true);
+    const ikkeAktiveStatuser: Array<(typeof data.mineSaker)[number]["status"]> = [
+      "ANMELDT",
+      "HENLAGT",
+      "AVSLUTTET",
+    ];
+
+    expect(data.mineSaker.every((sak) => !ikkeAktiveStatuser.includes(sak.status))).toBe(true);
   });
 
   it("returnerer bare saker eid av innlogget bruker i dashboardets mine saker-liste", async () => {

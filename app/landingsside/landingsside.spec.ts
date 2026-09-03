@@ -73,7 +73,7 @@ test.describe("Landingsside", () => {
 
   test("viser mine saker-oversikt", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "Sist aktive saker" }).first()).toBeVisible();
-    await expect(page.getByRole("link", { name: "Se alle" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Se alle saker" })).toBeVisible();
   });
 
   test("kan markere et varsel som lest", async ({ page }) => {
@@ -118,17 +118,27 @@ test.describe("Landingsside", () => {
       .getByRole("heading", { name: "Sist aktive saker" })
       .locator("xpath=ancestor::section[1]");
 
-    const varslerBoks = await varslerSeksjon.boundingBox();
-    const sisteSakerBoks = await sisteSakerSeksjon.boundingBox();
+    const [varslerHandle, sisteSakerHandle] = await Promise.all([
+      varslerSeksjon.elementHandle(),
+      sisteSakerSeksjon.elementHandle(),
+    ]);
 
-    expect(varslerBoks).not.toBeNull();
-    expect(sisteSakerBoks).not.toBeNull();
+    expect(varslerHandle).not.toBeNull();
+    expect(sisteSakerHandle).not.toBeNull();
 
-    if (!varslerBoks || !sisteSakerBoks) {
-      throw new Error("Fant ikke seksjonsboksene som forventet");
+    if (!varslerHandle || !sisteSakerHandle) {
+      throw new Error("Fant ikke seksjonene som forventet");
     }
 
-    expect(varslerBoks.y).toBeLessThan(sisteSakerBoks.y);
+    const varslerKommerFørst = await page.evaluate(
+      ([varslerNode, sisteSakerNode]) =>
+        Boolean(
+          varslerNode.compareDocumentPosition(sisteSakerNode) & Node.DOCUMENT_POSITION_FOLLOWING,
+        ),
+      [varslerHandle, sisteSakerHandle] as const,
+    );
+
+    expect(varslerKommerFørst).toBe(true);
   });
 
   test("er UU-compliant", async ({ page }) => {
