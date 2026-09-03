@@ -1,7 +1,7 @@
 import { data } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
-import { skalBrukeMockdata } from "~/config/env.server";
+import { env, skalBrukeMockdata } from "~/config/env.server";
 import * as backendApi from "~/saker/api.server";
 import type { DokumentInnhold } from "~/saker/filer/typer";
 import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
@@ -63,6 +63,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       sakReferanse,
       kanRedigere: kanSe && erAktivSakKontrollsak(sak.status) && !dokument.arkivert,
       variabelVerdier: byggVariabelVerdier(sak, innlogget),
+      miljø: env.ENVIRONMENT,
     };
   }
 
@@ -89,6 +90,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     sakReferanse: params.sakId,
     kanRedigere: tilgang.kanRedigereDokumenter && !dokument.arkivert,
     variabelVerdier: byggVariabelVerdier(tilgang.sak, innlogget),
+    miljø: env.ENVIRONMENT,
   };
 }
 
