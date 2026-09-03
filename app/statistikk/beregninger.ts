@@ -1,3 +1,4 @@
+import { getSaksenhet } from "~/saker/selectors";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import type { KontrollsakStatus } from "~/saker/visning";
 import { formaterYtelseType } from "~/saker/visning";
@@ -14,8 +15,10 @@ function getOpprettet(sak: Statistikksak): string {
   return sak.opprettet;
 }
 
+// Bruker samme selector som resten av appen, slik at saker med enhet satt direkte på
+// saken (ikke bare via eier/opprettetAv) også havner i riktig gruppe fremfor "Ukjent".
 function getMottakEnhet(sak: Statistikksak): string {
-  return sak.saksbehandlere.eier?.enhet ?? sak.saksbehandlere.opprettetAv.enhet ?? "Ukjent";
+  return getSaksenhet(sak) || "Ukjent";
 }
 
 function getYtelseTyper(sak: Statistikksak): string[] {

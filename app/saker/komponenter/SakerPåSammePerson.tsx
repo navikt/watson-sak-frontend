@@ -14,7 +14,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useFetcher } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
-import { getKategoriText } from "~/saker/selectors";
+import { getKategoriText, getSaksenhet } from "~/saker/selectors";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { storFørsteBokstavPerOrd } from "~/utils/string-utils";
 import { PersonIdentHistorikkModal } from "./PersonIdentHistorikkModal";
@@ -49,7 +49,7 @@ function SakKort({
   const saksreferanse = getSaksreferanse(sak.id);
   const personIdent = getPersonIdent(sak);
   const statusTekst = getStatus(sak);
-  const enhet = sak.saksbehandlere.eier?.enhet ?? sak.saksbehandlere.opprettetAv.enhet ?? "Ukjent";
+  const enhet = getSaksenhet(sak) || "Ukjent";
   const saksbehandler = sak.saksbehandlere.eier?.navn ?? sak.saksbehandlere.opprettetAv.navn;
 
   return (

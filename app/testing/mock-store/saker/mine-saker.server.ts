@@ -414,6 +414,9 @@ function lagMockMineKontrollsaker() {
     kontrollsakResponseSchema.parse({
       ...sak,
       personNavn: hentMockPersonNavn(sak.personIdent),
+      // Alle saker skal ha en enhet. Disse testdataene setter den bare via
+      // saksbehandlerens enhet, så bruk den som fallback for sakens egen enhet.
+      enhet: sak.saksbehandlere.ansvarlig?.enhet ?? null,
     }),
   );
 
