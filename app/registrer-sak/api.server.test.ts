@@ -15,6 +15,10 @@ vi.mock("~/config/env.server", () => ({
   skalBrukeMockdata: true,
 }));
 
+vi.mock("~/auth/innlogget-bruker.server", () => ({
+  hentInnloggetBruker: vi.fn(async () => ({ name: "Saks Behandlersen" })),
+}));
+
 vi.mock("~/logging/logging", () => ({
   logger: {
     warn: vi.fn(),
@@ -258,6 +262,7 @@ describe("opprettKontrollsak", () => {
     vi.doMock("~/config/env.server", () => ({
       BACKEND_API_URL: "",
       skalBrukeMockdata: true,
+      env: { ENVIRONMENT: "demo" },
     }));
     vi.doMock("~/auth/innlogget-bruker.server", () => ({
       hentInnloggetBruker: vi.fn().mockResolvedValue({ name: "Demo Bruker" }),

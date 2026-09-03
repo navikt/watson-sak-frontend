@@ -134,6 +134,9 @@ export async function lastOppFil(
       leggTilFil(request, sakId, fil, innlogget.name || "Saks Behandlersen");
       return;
     } catch (error) {
+      if (error instanceof Response) {
+        throw error;
+      }
       logger.warn("Kunne ikke hente innlogget bruker ved mock-lagring av fil", {
         sakId,
         filnavn: fil.name,
