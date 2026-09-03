@@ -12,6 +12,23 @@ afterEach(() => {
 });
 
 describe("PdfForhåndsvisning", () => {
+  it("viser en lokal placeholder-PDF i demo uten å kalle backend", () => {
+    const createObjectURLMock = vi.fn().mockReturnValue("blob:placeholder-pdf");
+    vi.stubGlobal("fetch", vi.fn());
+    vi.stubGlobal("URL", {
+      createObjectURL: createObjectURLMock,
+      revokeObjectURL: vi.fn(),
+    });
+
+    render(<PdfForhåndsvisning url="/api/forhandsvisning" sistLagret={null} erDemo />);
+
+    expect(createObjectURLMock).toHaveBeenCalledOnce();
+    expect(fetch).not.toHaveBeenCalled();
+    expect(screen.getByTitle("PDF-forhåndsvisning").getAttribute("src")).toBe(
+      "blob:placeholder-pdf",
+    );
+  });
+
   it("henter forhåndsvisning uten body — innholdet hentes fra databasen på backend", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
