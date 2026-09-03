@@ -8,6 +8,7 @@ import {
   hentMineSaker,
   hentSakMedReferanse,
 } from "./alle-saker.server";
+import { hentHistorikk } from "./historikk.server";
 import { hentMockState, resetDefaultSession } from "./session.server";
 
 const testRequest = new Request("http://localhost");
@@ -79,6 +80,21 @@ describe("mock-store konsistens", () => {
         const sak = hentSakMedReferanse(state(), eksisterendeSak.sakId);
 
         expect(sak?.personIdent).toBe(person.personIdent);
+      }
+    }
+  });
+
+  it("gir saker med fremdrift en kronologisk historikk som ender i sakens status", () => {
+    for (const sak of hentAlleSaker(state())) {
+      const historikk = hentHistorikk(state(), String(sak.id));
+      const opprettelseshendelse = historikk.at(-1);
+
+      expect(opprettelseshendelse?.hendelsesType).toBe("SAK_OPPRETTET");
+      expect(opprettelseshendelse?.status).toBe("OPPRETTET");
+
+      if (sak.status !== "OPPRETTET") {
+        expect(historikk.length).toBeGreaterThan(1);
+        expect(historikk[0]?.status).toBe(sak.status);
       }
     }
   });
