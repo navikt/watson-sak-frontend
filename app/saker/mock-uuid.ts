@@ -150,6 +150,9 @@ export function normaliserLegacyKontrollsak(sak: LegacyKontrollsak): Kontrollsak
     id: numericId,
     personIdent: String(sak.personIdent ?? ""),
     personNavn,
+    // Alle saker skal ha en enhet. Legacy-testdata setter den bare via mottakEnhet,
+    // så fall tilbake til eiers enhet dersom mottakEnhet mangler.
+    enhet: saksbehandlerEnhet ?? eier?.enhet ?? null,
     saksbehandlere: {
       eier,
       deltMed: legacyDelteSaksbehandlere
