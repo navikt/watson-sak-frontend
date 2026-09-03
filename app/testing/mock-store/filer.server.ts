@@ -76,10 +76,10 @@ function sanitiserFilnavn(filnavn: string): string {
   return filnavn.replace(/["\\]/g, "_").replace(/[\r\n]/g, "");
 }
 
-export function slettFil(state: MockState, sakId: string, filId: string): boolean {
+export function slettFil(state: MockState, sakId: string, filId: string): FilResponse | null {
   const liste = initialiserFilerForSak(state, sakId);
   const indeks = liste.findIndex((f) => f.id === filId);
-  if (indeks === -1) return false;
-  liste.splice(indeks, 1);
-  return true;
+  if (indeks === -1) return null;
+  const [slettetFil] = liste.splice(indeks, 1);
+  return slettetFil;
 }

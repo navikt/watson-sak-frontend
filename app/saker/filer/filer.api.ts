@@ -4,6 +4,7 @@ import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
 import * as backendApi from "~/saker/api.server";
 import { BackendFeilException } from "~/saker/api.server";
+import { leggTilHendelse } from "~/saker/historikk/mock-data.server";
 import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
 import { hentFilerForSak, leggTilFil } from "./mock-data-filer.server";
 
@@ -83,5 +84,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
   }
 
   const innlogget = await hentInnloggetBruker({ request });
-  return leggTilFil(request, String(tilgang.sak.id), fil, innlogget.name);
+  const nyFil = leggTilFil(request, String(tilgang.sak.id), fil, innlogget.name);
+  leggTilHendelse(request, tilgang.sak, "FIL_LASTET_OPP", undefined, {
+    beskrivelse: nyFil.filnavn,
+  });
+  return nyFil;
 }

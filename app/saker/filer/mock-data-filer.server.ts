@@ -24,6 +24,6 @@ export function leggTilFil(
   return _leggTilFil(hentMockState(request), sakId, fil, opprettetAv);
 }
 
-export function slettFil(request: Request, sakId: string, filId: string): boolean {
+export function slettFil(request: Request, sakId: string, filId: string): FilResponse | null {
   return _slettFil(hentMockState(request), sakId, filId);
 }
