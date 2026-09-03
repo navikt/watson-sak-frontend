@@ -253,6 +253,29 @@ describe("opprettKontrollsak", () => {
     );
   });
 
+  it("lagrer filer i mock-modus med innlogget brukers navn", async () => {
+    vi.resetModules();
+    vi.doMock("~/config/env.server", () => ({
+      BACKEND_API_URL: "",
+      skalBrukeMockdata: true,
+    }));
+    vi.doMock("~/auth/innlogget-bruker.server", () => ({
+      hentInnloggetBruker: vi.fn().mockResolvedValue({ name: "Demo Bruker" }),
+    }));
+
+    const { lastOppFil } = await import("./api.server");
+    const fil = new File(["filinnhold"], "demo.pdf", { type: "application/pdf" });
+
+    await lastOppFil(testRequest, "demo-token", "sak-123", fil);
+
+    expect(
+      (await import("~/saker/filer/mock-data-filer.server")).hentFilerForSak(
+        testRequest,
+        "sak-123",
+      ),
+    ).toMatchObject([{ filnavn: "demo.pdf", opprettetAv: "Demo Bruker" }]);
+  });
+
   it("legger mock-sak med eier i Mine saker", async () => {
     const nySak = leggTilMockSakIFordeling(state(), {
       personIdent: "12345678901",
