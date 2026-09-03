@@ -140,6 +140,24 @@ function finnDokument(dokumenter: DokumentNode[], docId: string): DokumentNode |
   return dokumenter.find((dokument) => dokument.id === docId);
 }
 
+export function arkiverDokument(
+  state: MockState,
+  sakId: string,
+  docId: string,
+  arkivertAv: string,
+  arkivertJournalpostId: string,
+): boolean {
+  const dokument = finnDokument(hentEllerSeed(state, sakId), docId);
+  if (!dokument) {
+    return false;
+  }
+
+  dokument.arkivert = new Date().toISOString();
+  dokument.arkivertAv = arkivertAv;
+  dokument.arkivertJournalpostId = arkivertJournalpostId;
+  return true;
+}
+
 export function hentDokumenttreForSak(state: MockState, sakId: string): DokumentNode[] {
   return hentEllerSeed(state, sakId);
 }
@@ -160,6 +178,9 @@ export function hentDokument(state: MockState, sakId: string, docId: string): Do
     endretAv: node.endretAv,
     endretDato: node.endretDato,
     låsAv: node.låsAv,
+    arkivert: node.arkivert,
+    arkivertAv: node.arkivertAv,
+    arkivertJournalpostId: node.arkivertJournalpostId,
   };
 }
 
