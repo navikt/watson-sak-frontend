@@ -1,5 +1,7 @@
+import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { BACKEND_API_URL, skalBrukeMockdata } from "~/config/env.server";
 import { logger } from "~/logging/logging";
+import { leggTilFil } from "~/saker/filer/mock-data-filer.server";
 import { leggTilMockSakIFordeling } from "~/saker/mock-alle-saker.server";
 
 export type OpprettKontrollsakRequest = {
@@ -120,7 +122,31 @@ export async function opprettKontrollsak({
   return { ok: true, sak: { id: String(body.id) } };
 }
 
-export async function lastOppFil(token: string, sakId: string, fil: File): Promise<void> {
+export async function lastOppFil(
+  request: Request,
+  token: string,
+  sakId: string,
+  fil: File,
+): Promise<void> {
+  if (skalBrukeMockdata) {
+    try {
+      const innlogget = await hentInnloggetBruker({ request, oboToken: token });
+      leggTilFil(request, sakId, fil, innlogget.name || "Saks Behandlersen");
+      return;
+    } catch (error) {
+      if (error instanceof Response) {
+        throw error;
+      }
+      logger.warn("Kunne ikke hente innlogget bruker ved mock-lagring av fil", {
+        sakId,
+        filnavn: fil.name,
+        error,
+      });
+      leggTilFil(request, sakId, fil, "Saks Behandlersen");
+      return;
+    }
+  }
+
   if (!BACKEND_API_URL) {
     logger.error("Mangler backend-url for filopplasting", { sakId, filnavn: fil.name });
     return;

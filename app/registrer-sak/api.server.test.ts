@@ -6,12 +6,17 @@ import {
   leggTilMockSakIFordeling,
 } from "~/testing/mock-store/alle-saker.server";
 import { hentDokumenttreForSak } from "~/testing/mock-store/dokumenter.server";
+import { hentFilerForSak } from "~/testing/mock-store/filer.server";
 import { søkSaker } from "~/søk/søk.server";
-import { opprettKontrollsak } from "./api.server";
+import { lastOppFil, opprettKontrollsak } from "./api.server";
 
 vi.mock("~/config/env.server", () => ({
   BACKEND_API_URL: "https://backend.test",
   skalBrukeMockdata: true,
+}));
+
+vi.mock("~/auth/innlogget-bruker.server", () => ({
+  hentInnloggetBruker: vi.fn(async () => ({ name: "Saks Behandlersen" })),
 }));
 
 vi.mock("~/logging/logging", () => ({
@@ -212,6 +217,68 @@ describe("opprettKontrollsak", () => {
 
     if (!opprettetSak.ok) throw new Error("Forventet ok svar");
     expect(hentDokumenttreForSak(state(), opprettetSak.sak.id)).toEqual([]);
+  });
+
+  it("legger filer til mock-saken", async () => {
+    const opprettetSak = await opprettKontrollsak({
+      request: testRequest,
+      token: "token-123",
+      payload: {
+        personIdent: "12345678901",
+        saksbehandlere: { eier: null, deltMed: [] },
+        kategori: "SAMLIV",
+        kilde: "NAV_KONTROLL",
+        prioritet: "NORMAL",
+        enhet: "ky153k",
+        misbruktype: ["SKJULT_SAMLIV"],
+        merking: [],
+        ytelser: [],
+      },
+    });
+
+    if (!opprettetSak.ok) throw new Error("Forventet ok svar");
+    await lastOppFil(
+      testRequest,
+      "token-123",
+      opprettetSak.sak.id,
+      new File(["innhold"], "vedlegg.pdf", {
+        type: "application/pdf",
+      }),
+    );
+
+    expect(hentFilerForSak(state(), opprettetSak.sak.id)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          filnavn: "vedlegg.pdf",
+          storrelse: 7,
+          contentType: "application/pdf",
+        }),
+      ]),
+    );
+  });
+
+  it("lagrer filer i mock-modus med innlogget brukers navn", async () => {
+    vi.resetModules();
+    vi.doMock("~/config/env.server", () => ({
+      BACKEND_API_URL: "",
+      skalBrukeMockdata: true,
+      env: { ENVIRONMENT: "demo" },
+    }));
+    vi.doMock("~/auth/innlogget-bruker.server", () => ({
+      hentInnloggetBruker: vi.fn().mockResolvedValue({ name: "Demo Bruker" }),
+    }));
+
+    const { lastOppFil } = await import("./api.server");
+    const fil = new File(["filinnhold"], "demo.pdf", { type: "application/pdf" });
+
+    await lastOppFil(testRequest, "demo-token", "sak-123", fil);
+
+    expect(
+      (await import("~/saker/filer/mock-data-filer.server")).hentFilerForSak(
+        testRequest,
+        "sak-123",
+      ),
+    ).toMatchObject([{ filnavn: "demo.pdf", opprettetAv: "Demo Bruker" }]);
   });
 
   it("legger mock-sak med eier i Mine saker", async () => {
