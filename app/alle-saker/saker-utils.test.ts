@@ -1,12 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { KontrollsakResponse } from "~/saker/types.backend";
-import {
-  beregnTraktSteg,
-  filtrerSaker,
-  normaliserFilterVerdier,
-  sorterSaker,
-  unikeVerdier,
-} from "./saker-utils";
+import { filtrerSaker, normaliserFilterVerdier, sorterSaker, unikeVerdier } from "./saker-utils";
 
 function lagSak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
   return {
@@ -61,35 +55,6 @@ describe("unikeVerdier", () => {
 
   it("filtrerer bort tomme strenger", () => {
     expect(unikeVerdier(["a", "", "b"])).toEqual(["a", "b"]);
-  });
-});
-
-describe("beregnTraktSteg", () => {
-  it("returnerer steg i prosesskjede-rekkefølge", () => {
-    const saker = [
-      lagSak({ status: "UTREDES" }),
-      lagSak({ status: "OPPRETTET" }),
-      lagSak({ status: "OPPRETTET" }),
-    ];
-
-    const steg = beregnTraktSteg(saker);
-
-    expect(steg.map((s) => s.antall)).toEqual([2, 1]);
-    expect(steg[0].label).toBe("Tildelt");
-    expect(steg[1].label).toBe("Utredes");
-  });
-
-  it("utelater statuser med 0 saker", () => {
-    const saker = [lagSak({ status: "AVSLUTTET" })];
-
-    const steg = beregnTraktSteg(saker);
-
-    expect(steg).toHaveLength(1);
-    expect(steg[0].label).toBe("Avsluttet");
-  });
-
-  it("returnerer tom liste for tom saksliste", () => {
-    expect(beregnTraktSteg([])).toEqual([]);
   });
 });
 
