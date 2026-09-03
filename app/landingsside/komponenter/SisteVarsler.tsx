@@ -1,5 +1,4 @@
-import { BodyShort, Button, Heading, HStack, InfoCard, VStack } from "@navikt/ds-react";
-import { useState } from "react";
+import { BodyShort, Button, Heading, HGrid, HStack, InfoCard, VStack } from "@navikt/ds-react";
 import { Link as RouterLink } from "react-router";
 import { BellIcon, InformationSquareIcon } from "@navikt/aksel-icons";
 import { sporHendelse } from "~/analytics/analytics";
@@ -14,18 +13,14 @@ interface SisteVarslerProps {
   erSubmitting?: boolean;
 }
 
-const ANTALL_SYNLIGE_VARSLER_INITIELT = 3;
-const ANTALL_VARSLER_PER_STEG = 5;
+const ANTALL_SYNLIGE_VARSLER = 2;
 
 export function SisteVarsler({
   varsler,
   onMarkerSomLest,
   erSubmitting = false,
 }: SisteVarslerProps) {
-  const [antallSynligeVarsler, setAntallSynligeVarsler] = useState(ANTALL_SYNLIGE_VARSLER_INITIELT);
-
-  const synligeVarsler = varsler.slice(0, antallSynligeVarsler);
-  const harFlereVarsler = varsler.length > synligeVarsler.length;
+  const synligeVarsler = varsler.slice(0, ANTALL_SYNLIGE_VARSLER);
 
   return (
     <Kort as="section">
@@ -42,71 +37,52 @@ export function SisteVarsler({
             Du har ingen uleste varsler.
           </BodyShort>
         ) : (
-          <>
-            <VStack gap="space-4">
-              {synligeVarsler.map((varsel) => (
-                <InfoCard key={varsel.id} size="small" data-color="info">
-                  <InfoCard.Header icon={<InformationSquareIcon aria-hidden />}>
-                    <InfoCard.Title as="h3">{varsel.tittel}</InfoCard.Title>
-                  </InfoCard.Header>
-                  <InfoCard.Content>
-                    <VStack gap="space-4">
-                      <BodyShort>{varsel.tekst}</BodyShort>
-                      <HStack gap="space-4" justify="end">
-                        <Button
-                          as={RouterLink}
-                          to={RouteConfig.SAKER_DETALJ.replace(
-                            ":sakId",
-                            getSaksreferanse(varsel.sakId),
-                          )}
-                          size="small"
-                          data-color="accent"
-                          onClick={() =>
-                            sporHendelse("navigere", {
-                              kilde: "dashboard",
-                              destinasjon: `/saker/${getSaksreferanse(varsel.sakId)}`,
-                            })
-                          }
-                        >
-                          Gå til sak
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="small"
-                          data-color="accent"
-                          disabled={erSubmitting}
-                          onClick={() => {
-                            sporHendelse("varsel markert som lest", { kilde: "dashboard" });
-                            onMarkerSomLest(varsel.id);
-                          }}
-                        >
-                          Marker som lest
-                        </Button>
-                      </HStack>
-                    </VStack>
-                  </InfoCard.Content>
-                </InfoCard>
-              ))}
-            </VStack>
-
-            {harFlereVarsler ? (
-              <HStack justify="end">
-                <Button
-                  type="button"
-                  variant="tertiary"
-                  size="small"
-                  onClick={() => {
-                    setAntallSynligeVarsler(
-                      (nåværendeAntall) => nåværendeAntall + ANTALL_VARSLER_PER_STEG,
-                    );
-                  }}
-                >
-                  Vis flere
-                </Button>
-              </HStack>
-            ) : null}
-          </>
+          <HGrid columns={{ xs: 1, md: 2 }} gap="space-4">
+            {synligeVarsler.map((varsel) => (
+              <InfoCard key={varsel.id} size="small" data-color="info">
+                <InfoCard.Header icon={<InformationSquareIcon aria-hidden />}>
+                  <InfoCard.Title as="h3">{varsel.tittel}</InfoCard.Title>
+                </InfoCard.Header>
+                <InfoCard.Content>
+                  <VStack gap="space-4">
+                    <BodyShort>{varsel.tekst}</BodyShort>
+                    <HStack gap="space-4" justify="end">
+                      <Button
+                        as={RouterLink}
+                        to={RouteConfig.SAKER_DETALJ.replace(
+                          ":sakId",
+                          getSaksreferanse(varsel.sakId),
+                        )}
+                        size="small"
+                        data-color="accent"
+                        onClick={() =>
+                          sporHendelse("navigere", {
+                            kilde: "dashboard",
+                            destinasjon: `/saker/${getSaksreferanse(varsel.sakId)}`,
+                          })
+                        }
+                      >
+                        Gå til sak
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="small"
+                        data-color="accent"
+                        disabled={erSubmitting}
+                        onClick={() => {
+                          sporHendelse("varsel markert som lest", { kilde: "dashboard" });
+                          onMarkerSomLest(varsel.id);
+                        }}
+                      >
+                        Marker som lest
+                      </Button>
+                    </HStack>
+                  </VStack>
+                </InfoCard.Content>
+              </InfoCard>
+            ))}
+          </HGrid>
         )}
       </VStack>
     </Kort>

@@ -88,15 +88,26 @@ test.describe("Landingsside", () => {
     await expect(page.getByRole("heading", { name: "Sak #102 har ny hendelse" })).toBeVisible();
   });
 
-  test("viser siste varsler og kan vise flere uleste varsler", async ({ page }) => {
+  test("viser maks to siste varsler side ved side fra md-bredde", async ({ page }) => {
+    await page.setViewportSize({ width: 1400, height: 1200 });
+    await page.reload({ waitUntil: "networkidle" });
+
     await expect(page.getByRole("heading", { name: "Siste varsler" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Marker som lest" })).toHaveCount(3);
-    await expect(page.getByRole("button", { name: "Vis flere" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Marker som lest" })).toHaveCount(2);
 
-    await page.getByRole("button", { name: "Vis flere" }).click();
+    const varsler = page.getByRole("heading", { name: /Sak #\d+/ });
+    const førsteBoks = await varsler.nth(0).boundingBox();
+    const andreBoks = await varsler.nth(1).boundingBox();
 
-    await expect(page.getByRole("button", { name: "Marker som lest" })).toHaveCount(7);
-    await expect(page.getByRole("button", { name: "Vis flere" })).not.toBeVisible();
+    expect(førsteBoks).not.toBeNull();
+    expect(andreBoks).not.toBeNull();
+
+    if (!førsteBoks || !andreBoks) {
+      throw new Error("Fant ikke varselboksene som forventet");
+    }
+
+    expect(Math.abs(førsteBoks.y - andreBoks.y)).toBeLessThan(10);
+    expect(førsteBoks.x).toBeLessThan(andreBoks.x);
   });
 
   test("viser seksjonene i riktig rekkefølge: varsler før sist aktive saker", async ({ page }) => {
