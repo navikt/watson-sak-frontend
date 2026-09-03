@@ -3,6 +3,7 @@ import { hentMockState, resetDefaultSession } from "~/testing/mock-store/session
 import { hentFordelingssaker } from "~/testing/mock-store/alle-saker.server";
 import { hentAlleSaker } from "./mock-alle-saker.server";
 import { hentHistorikk } from "./historikk/mock-data.server";
+import { hentDokumenttreForSak } from "./filer/mock-data.server";
 import { getSaksreferanse } from "~/saker/id";
 import { getBeskrivelse, getKildeText, getPersonIdent, getYtelseTyper } from "~/saker/visning";
 import type { Route } from "./+types/SakDetaljSide.route";
@@ -751,6 +752,44 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(historikk[0]?.hendelsesType).toBe("JOURNALPOST_OPPRETTET");
     expect(historikk[0]?.tittel).toBe("Inngående: Dokumentasjon mottatt");
     expect(historikk[0]?.beskrivelse).toContain("Vedlagt kopi av arbeidsavtale");
+  });
+
+  it("arkiverer valgte redigerbare dokumenter ved opprettelse av journalpost", async () => {
+    const kontrollsak = hentAlleSaker(testRequest).find((sak) => sak.id === 102)!;
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
+
+    const formData = new FormData();
+    formData.set("handling", "opprett_journalpost");
+    formData.set("journalposttype", "NOTAT");
+    formData.set("tittel", "Arkivert dokument");
+    formData.set("innhold", "Dokumentinnhold");
+    formData.set("dokumentId", "1-1");
+
+    await action({
+      request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: kontrollsakRef },
+    } as Route.ActionArgs);
+
+    expect(hentDokumenttreForSak(testRequest, String(kontrollsak.id))).toEqual([
+      expect.objectContaining({
+        id: "1-1",
+        arkivertAv: "Z999999",
+        arkivertJournalpostId: expect.stringMatching(/^demo-/),
+      }),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+    ]);
   });
 
   it("opprett_oppgave logger hendelse med oppgavetype og beskrivelse", async () => {

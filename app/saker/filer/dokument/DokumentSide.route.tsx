@@ -75,6 +75,7 @@ function DokumentRedigering({
   sakReferanse,
   kanRedigere,
   variabelVerdier,
+  erDemo,
 }: {
   dokument: LoaderData["dokument"];
   dokumenter: LoaderData["dokumenter"];
@@ -82,6 +83,7 @@ function DokumentRedigering({
   sakReferanse: string;
   kanRedigere: boolean;
   variabelVerdier: LoaderData["variabelVerdier"];
+  erDemo: boolean;
 }) {
   const [tittel, setTittel] = useState(dokument.tittel);
   const tittelRef = useRef(dokument.tittel);
@@ -334,7 +336,7 @@ function DokumentRedigering({
         }
         lagreStatus={<LagreStatusVisning status={status} sistLagret={sistLagret} />}
         renderForhåndsvisning={() => (
-          <PdfForhåndsvisning url={pdfForhåndsvisningUrl} sistLagret={sistLagret} />
+          <PdfForhåndsvisning url={pdfForhåndsvisningUrl} sistLagret={sistLagret} erDemo={erDemo} />
         )}
       />
 
@@ -349,8 +351,15 @@ function DokumentRedigering({
 }
 
 export default function DokumentSide() {
-  const { dokument, dokumenter, dokumentHistorikk, sakReferanse, kanRedigere, variabelVerdier } =
-    useLoaderData<typeof loader>();
+  const {
+    dokument,
+    dokumenter,
+    dokumentHistorikk,
+    sakReferanse,
+    kanRedigere,
+    variabelVerdier,
+    miljø,
+  } = useLoaderData<typeof loader>();
 
   // `key` på dokument-id sørger for at all lokal redigeringstilstand (tittel, innhold,
   // editor-instans og autolagring) nullstilles når man navigerer til et annet dokument
@@ -364,6 +373,7 @@ export default function DokumentSide() {
       sakReferanse={sakReferanse}
       kanRedigere={kanRedigere}
       variabelVerdier={variabelVerdier}
+      erDemo={miljø === "demo"}
     />
   );
 }

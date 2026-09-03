@@ -1,7 +1,15 @@
-import { BodyShort, Button, Heading, HStack, InfoCard, VStack } from "@navikt/ds-react";
-import { useState } from "react";
+import {
+  BodyShort,
+  Button,
+  Heading,
+  HGrid,
+  HStack,
+  InfoCard,
+  Link,
+  VStack,
+} from "@navikt/ds-react";
 import { Link as RouterLink } from "react-router";
-import { BellIcon, InformationSquareIcon } from "@navikt/aksel-icons";
+import { ArrowRightIcon, BellIcon, InformationSquareIcon } from "@navikt/aksel-icons";
 import { sporHendelse } from "~/analytics/analytics";
 import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
@@ -14,27 +22,30 @@ interface SisteVarslerProps {
   erSubmitting?: boolean;
 }
 
-const ANTALL_SYNLIGE_VARSLER_INITIELT = 3;
-const ANTALL_VARSLER_PER_STEG = 5;
+const ANTALL_SYNLIGE_VARSLER = 2;
 
 export function SisteVarsler({
   varsler,
   onMarkerSomLest,
   erSubmitting = false,
 }: SisteVarslerProps) {
-  const [antallSynligeVarsler, setAntallSynligeVarsler] = useState(ANTALL_SYNLIGE_VARSLER_INITIELT);
-
-  const synligeVarsler = varsler.slice(0, antallSynligeVarsler);
-  const harFlereVarsler = varsler.length > synligeVarsler.length;
+  const synligeVarsler = varsler.slice(0, ANTALL_SYNLIGE_VARSLER);
 
   return (
     <Kort as="section">
       <VStack gap="space-4">
-        <HStack gap="space-4" align="center">
-          <BellIcon aria-hidden fontSize="1.25rem" />
-          <Heading level="2" size="medium">
-            Siste varsler
-          </Heading>
+        <HStack justify="space-between" align="center">
+          <HStack gap="space-4" align="center">
+            <BellIcon aria-hidden fontSize="1.25rem" />
+            <Heading level="2" size="medium">
+              Siste varsler
+            </Heading>
+          </HStack>
+          {varsler.length > ANTALL_SYNLIGE_VARSLER && (
+            <Link as={RouterLink} to={RouteConfig.VARSLER}>
+              Se alle varsler <ArrowRightIcon aria-hidden fontSize="1rem" />
+            </Link>
+          )}
         </HStack>
 
         {synligeVarsler.length === 0 ? (
@@ -42,71 +53,52 @@ export function SisteVarsler({
             Du har ingen uleste varsler.
           </BodyShort>
         ) : (
-          <>
-            <VStack gap="space-4">
-              {synligeVarsler.map((varsel) => (
-                <InfoCard key={varsel.id} size="small" data-color="info">
-                  <InfoCard.Header icon={<InformationSquareIcon aria-hidden />}>
-                    <InfoCard.Title as="h3">{varsel.tittel}</InfoCard.Title>
-                  </InfoCard.Header>
-                  <InfoCard.Content>
-                    <VStack gap="space-4">
-                      <BodyShort>{varsel.tekst}</BodyShort>
-                      <HStack gap="space-4" justify="end">
-                        <Button
-                          as={RouterLink}
-                          to={RouteConfig.SAKER_DETALJ.replace(
-                            ":sakId",
-                            getSaksreferanse(varsel.sakId),
-                          )}
-                          size="small"
-                          data-color="accent"
-                          onClick={() =>
-                            sporHendelse("navigere", {
-                              kilde: "dashboard",
-                              destinasjon: `/saker/${getSaksreferanse(varsel.sakId)}`,
-                            })
-                          }
-                        >
-                          Gå til sak
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="small"
-                          data-color="accent"
-                          disabled={erSubmitting}
-                          onClick={() => {
-                            sporHendelse("varsel markert som lest", { kilde: "dashboard" });
-                            onMarkerSomLest(varsel.id);
-                          }}
-                        >
-                          Marker som lest
-                        </Button>
-                      </HStack>
-                    </VStack>
-                  </InfoCard.Content>
-                </InfoCard>
-              ))}
-            </VStack>
-
-            {harFlereVarsler ? (
-              <HStack justify="end">
-                <Button
-                  type="button"
-                  variant="tertiary"
-                  size="small"
-                  onClick={() => {
-                    setAntallSynligeVarsler(
-                      (nåværendeAntall) => nåværendeAntall + ANTALL_VARSLER_PER_STEG,
-                    );
-                  }}
-                >
-                  Vis flere
-                </Button>
-              </HStack>
-            ) : null}
-          </>
+          <HGrid columns={{ xs: 1, md: 2 }} gap="space-4">
+            {synligeVarsler.map((varsel) => (
+              <InfoCard key={varsel.id} size="small" data-color="info">
+                <InfoCard.Header icon={<InformationSquareIcon aria-hidden />}>
+                  <InfoCard.Title as="h3">{varsel.tittel}</InfoCard.Title>
+                </InfoCard.Header>
+                <InfoCard.Content>
+                  <VStack gap="space-4">
+                    <BodyShort>{varsel.tekst}</BodyShort>
+                    <HStack gap="space-4" justify="end">
+                      <Button
+                        as={RouterLink}
+                        to={RouteConfig.SAKER_DETALJ.replace(
+                          ":sakId",
+                          getSaksreferanse(varsel.sakId),
+                        )}
+                        size="small"
+                        data-color="accent"
+                        onClick={() =>
+                          sporHendelse("navigere", {
+                            kilde: "dashboard",
+                            destinasjon: `/saker/${getSaksreferanse(varsel.sakId)}`,
+                          })
+                        }
+                      >
+                        Gå til sak
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="small"
+                        data-color="accent"
+                        disabled={erSubmitting}
+                        onClick={() => {
+                          sporHendelse("varsel markert som lest", { kilde: "dashboard" });
+                          onMarkerSomLest(varsel.id);
+                        }}
+                      >
+                        Marker som lest
+                      </Button>
+                    </HStack>
+                  </VStack>
+                </InfoCard.Content>
+              </InfoCard>
+            ))}
+          </HGrid>
         )}
       </VStack>
     </Kort>

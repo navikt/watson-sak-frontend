@@ -72,8 +72,8 @@ test.describe("Landingsside", () => {
   });
 
   test("viser mine saker-oversikt", async ({ page }) => {
-    await expect(page.getByRole("heading", { name: "Mine saker" }).first()).toBeVisible();
-    await expect(page.getByRole("link", { name: "Se alle" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Sist aktive saker" }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: "Se alle saker" })).toBeVisible();
   });
 
   test("kan markere et varsel som lest", async ({ page }) => {
@@ -88,47 +88,62 @@ test.describe("Landingsside", () => {
     await expect(page.getByRole("heading", { name: "Sak #102 har ny hendelse" })).toBeVisible();
   });
 
-  test("viser siste varsler og kan vise flere uleste varsler", async ({ page }) => {
-    await expect(page.getByRole("heading", { name: "Siste varsler" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Marker som lest" })).toHaveCount(3);
-    await expect(page.getByRole("button", { name: "Vis flere" })).toBeVisible();
-
-    await page.getByRole("button", { name: "Vis flere" }).click();
-
-    await expect(page.getByRole("button", { name: "Marker som lest" })).toHaveCount(7);
-    await expect(page.getByRole("button", { name: "Vis flere" })).not.toBeVisible();
-  });
-
-  test("viser seksjonen for dine saker siste 30 dager ved siden av varslinger på brede skjermer", async ({
-    page,
-  }) => {
+  test("viser maks to siste varsler side ved side fra md-bredde", async ({ page }) => {
     await page.setViewportSize({ width: 1400, height: 1200 });
     await page.reload({ waitUntil: "networkidle" });
 
-    const traktSeksjon = page
-      .getByRole("heading", { name: "Dine saker siste 30 dager" })
-      .locator("xpath=ancestor::section[1]");
     const varslerSeksjon = page
       .getByRole("heading", { name: "Siste varsler" })
       .locator("xpath=ancestor::section[1]");
 
-    await expect(
-      traktSeksjon.getByRole("heading", { name: "Dine saker siste 30 dager" }),
-    ).toBeVisible();
+    await expect(varslerSeksjon).toBeVisible();
+    await expect(varslerSeksjon.getByRole("button", { name: "Marker som lest" })).toHaveCount(2);
+    await expect(varslerSeksjon.getByRole("link", { name: "Se alle varsler" })).toBeVisible();
 
-    const traktBoks = await traktSeksjon.boundingBox();
-    const varslerBoks = await varslerSeksjon.boundingBox();
+    const varsler = varslerSeksjon.getByRole("heading", { name: /Sak #\d+/ });
+    const førsteBoks = await varsler.nth(0).boundingBox();
+    const andreBoks = await varsler.nth(1).boundingBox();
 
-    expect(traktBoks).not.toBeNull();
-    expect(varslerBoks).not.toBeNull();
+    expect(førsteBoks).not.toBeNull();
+    expect(andreBoks).not.toBeNull();
 
-    if (!traktBoks || !varslerBoks) {
-      throw new Error("Fant ikke seksjonsboksene som forventet");
+    if (!førsteBoks || !andreBoks) {
+      throw new Error("Fant ikke varselboksene som forventet");
     }
 
-    expect(Math.abs(traktBoks.y - varslerBoks.y)).toBeLessThan(10);
-    expect(varslerBoks.x).toBeLessThan(traktBoks.x);
-    expect(Math.abs(varslerBoks.width - traktBoks.width)).toBeLessThan(20);
+    expect(Math.abs(førsteBoks.y - andreBoks.y)).toBeLessThan(10);
+    expect(førsteBoks.x).toBeLessThan(andreBoks.x);
+  });
+
+  test("viser seksjonene i riktig rekkefølge: varsler før sist aktive saker", async ({ page }) => {
+    const varslerSeksjon = page
+      .getByRole("heading", { name: "Siste varsler" })
+      .locator("xpath=ancestor::section[1]");
+    const sisteSakerSeksjon = page
+      .getByRole("heading", { name: "Sist aktive saker" })
+      .locator("xpath=ancestor::section[1]");
+
+    const [varslerHandle, sisteSakerHandle] = await Promise.all([
+      varslerSeksjon.elementHandle(),
+      sisteSakerSeksjon.elementHandle(),
+    ]);
+
+    expect(varslerHandle).not.toBeNull();
+    expect(sisteSakerHandle).not.toBeNull();
+
+    if (!varslerHandle || !sisteSakerHandle) {
+      throw new Error("Fant ikke seksjonene som forventet");
+    }
+
+    const varslerKommerFørst = await page.evaluate(
+      ([varslerNode, sisteSakerNode]) =>
+        Boolean(
+          varslerNode.compareDocumentPosition(sisteSakerNode) & Node.DOCUMENT_POSITION_FOLLOWING,
+        ),
+      [varslerHandle, sisteSakerHandle] as const,
+    );
+
+    expect(varslerKommerFørst).toBe(true);
   });
 
   test("er UU-compliant", async ({ page }) => {

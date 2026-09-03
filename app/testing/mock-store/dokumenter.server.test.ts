@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  arkiverDokument,
   hentDokument,
   hentDokumentHistorikk,
   hentDokumenttreForSak,
@@ -48,6 +49,16 @@ describe("mock-store dokumenter", () => {
     const dokument = hentDokument(state(), sakMedDokumenter, "1-1");
     expect(dokument?.tittel).toBe("Saksframlegg");
     expect(Array.isArray(dokument?.innhold)).toBe(true);
+  });
+
+  it("arkiverer et dokument med journalpost og saksbehandler", () => {
+    const arkivert = arkiverDokument(state(), sakMedDokumenter, "1-1", "Z999999", "demo-123");
+
+    expect(arkivert).toBe(true);
+    expect(hentDokument(state(), sakMedDokumenter, "1-1")).toMatchObject({
+      arkivertAv: "Z999999",
+      arkivertJournalpostId: "demo-123",
+    });
   });
 
   it("oppretter et tomt dokument som kan hentes igjen", () => {

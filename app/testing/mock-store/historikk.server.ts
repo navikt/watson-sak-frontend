@@ -1,4 +1,4 @@
-import type { KontrollsakResponse } from "~/saker/types.backend";
+import type { KontrollsakResponse, KontrollsakStatus } from "~/saker/types.backend";
 import type { SakHendelse } from "~/saker/historikk/typer";
 import type { MockState } from "./session.server";
 
@@ -69,6 +69,9 @@ export function hentHistorikk(state: MockState, sakId: string): SakHendelse[] {
 
 function lagSnapshotFraKontrollsak(
   sak: KontrollsakResponse,
+  overstyringer: Partial<
+    Pick<SakHendelse, "status" | "blokkert" | "henleggelsesarsak" | "beskrivelse">
+  > = {},
 ): Omit<SakHendelse, "hendelseId" | "tidspunkt" | "hendelsesType" | "sakId"> {
   return {
     kategori: sak.kategori,
@@ -77,6 +80,7 @@ function lagSnapshotFraKontrollsak(
     blokkert: sak.blokkert,
     henleggelsesarsak: sak.henleggelsesarsak,
     ytelseTyper: sak.ytelser.map((ytelse) => ytelse.type),
+    ...overstyringer,
   };
 }
 
@@ -189,14 +193,141 @@ export function genererHistorikkForSaker(
   };
 
   for (const sak of saker) {
+    const opprettetSnapshot: Partial<
+      Pick<SakHendelse, "status" | "blokkert" | "henleggelsesarsak">
+    > = {
+      status: "OPPRETTET",
+      blokkert: null,
+      henleggelsesarsak: null,
+    };
+
     leggTilBackendHendelse(
       tempState,
       String(sak.id),
       "SAK_OPPRETTET",
-      lagSnapshotFraKontrollsak(sak),
+      lagSnapshotFraKontrollsak(sak, opprettetSnapshot),
       sak.opprettet,
     );
+
+    const tidspunkt = lagTidspunkter(sak);
+
+    if (sak.saksbehandlere.eier) {
+      leggTilBackendHendelse(
+        tempState,
+        String(sak.id),
+        "SAK_TILDELT",
+        lagSnapshotFraKontrollsak(sak, opprettetSnapshot),
+        tidspunkt.tildelt,
+      );
+    }
+
+    for (const saksbehandler of sak.saksbehandlere.deltMed) {
+      leggTilBackendHendelse(
+        tempState,
+        String(sak.id),
+        "TILGANG_DELT",
+        {
+          ...lagSnapshotFraKontrollsak(sak, opprettetSnapshot),
+          berortSaksbehandlerNavn: saksbehandler.navn,
+          berortSaksbehandlerNavIdent: saksbehandler.navIdent,
+          berortSaksbehandlerEnhet: saksbehandler.enhet ?? undefined,
+        },
+        tidspunkt.delt,
+      );
+    }
+
+    leggTilStatushistorikk(tempState, sak, tidspunkt);
   }
 
   return tempState.nesteHistorikkId;
+}
+
+function lagTidspunkter(sak: KontrollsakResponse) {
+  const opprettet = new Date(sak.opprettet).getTime();
+  const oppdatert = sak.oppdatert ? new Date(sak.oppdatert).getTime() : Number.NaN;
+  const slutt =
+    Number.isFinite(oppdatert) && oppdatert > opprettet
+      ? oppdatert
+      : opprettet + 4 * 60 * 60 * 1000;
+  const tidspunktVed = (andel: number) =>
+    new Date(opprettet + (slutt - opprettet) * andel).toISOString();
+
+  return {
+    tildelt: tidspunktVed(0.15),
+    delt: tidspunktVed(0.25),
+    utredes: tidspunktVed(0.5),
+    avsluttet: tidspunktVed(1),
+  };
+}
+
+function leggTilStatushistorikk(
+  state: MockState,
+  sak: KontrollsakResponse,
+  tidspunkt: ReturnType<typeof lagTidspunkter>,
+) {
+  const sakId = String(sak.id);
+  const leggTil = (
+    type: BackendHendelsestype,
+    status: KontrollsakStatus,
+    hendelseTidspunkt: string,
+    beskrivelse?: string,
+  ) =>
+    leggTilBackendHendelse(
+      state,
+      sakId,
+      type,
+      lagSnapshotFraKontrollsak(sak, {
+        status,
+        blokkert: type === "SAK_SATT_PA_VENT" || type === "SAK_SATT_I_BERO" ? sak.blokkert : null,
+        henleggelsesarsak: type === "SAK_HENLAGT" ? sak.henleggelsesarsak : null,
+        beskrivelse,
+      }),
+      hendelseTidspunkt,
+    );
+
+  if (sak.status === "OPPRETTET") {
+    return;
+  }
+
+  leggTil("STATUS_ENDRET", "UTREDES", tidspunkt.utredes, "Saken er satt under utredning.");
+
+  switch (sak.status) {
+    case "UTREDES":
+      if (sak.blokkert) {
+        leggTil(
+          sak.blokkert === "I_BERO" ? "SAK_SATT_I_BERO" : "SAK_SATT_PA_VENT",
+          "UTREDES",
+          tidspunkt.avsluttet,
+          "Avventer nødvendig avklaring før arbeidet kan fortsette.",
+        );
+      }
+      return;
+    case "STRAFFERETTSLIG_VURDERING":
+      leggTil(
+        "STATUS_ENDRET",
+        "STRAFFERETTSLIG_VURDERING",
+        tidspunkt.avsluttet,
+        "Saken er sendt til strafferettslig vurdering.",
+      );
+      return;
+    case "ANMELDT":
+      leggTil(
+        "POLITIANMELDT",
+        "ANMELDT",
+        tidspunkt.avsluttet,
+        "Forholdet er anmeldt til politiet.",
+      );
+      return;
+    case "HENLAGT":
+      leggTil("SAK_HENLAGT", "HENLAGT", tidspunkt.avsluttet, "Saken er henlagt etter vurdering.");
+      return;
+    case "AVSLUTTET":
+      leggTil(
+        "STATUS_ENDRET",
+        "AVSLUTTET",
+        tidspunkt.avsluttet,
+        "Saken er ferdigbehandlet og avsluttet.",
+      );
+      return;
+  }
 }

@@ -4,8 +4,8 @@ import {
   getOppdatertDato,
   getOpprettetDato,
 } from "~/saker/selectors";
-import type { KontrollsakResponse, KontrollsakStatus } from "~/saker/types.backend";
-import { formaterStatus, getStatus } from "~/saker/visning";
+import type { KontrollsakResponse } from "~/saker/types.backend";
+import { getStatus } from "~/saker/visning";
 import { getSaksreferanse } from "~/saker/id";
 
 export const sorteringskolonner = [
@@ -30,34 +30,12 @@ type FilterState = {
   status: string[];
 };
 
-const TRAKT_STATUS_REKKEFOLGE: KontrollsakStatus[] = [
-  "OPPRETTET",
-  "UTREDES",
-  "HENLAGT",
-  "STRAFFERETTSLIG_VURDERING",
-  "ANMELDT",
-  "AVSLUTTET",
-];
-
 export function normaliserFilterVerdier(verdier: string[]): string[] {
   return [...new Set(verdier.filter((v) => v.trim() !== ""))];
 }
 
 export function unikeVerdier(verdier: string[]): string[] {
   return [...new Set(verdier.filter(Boolean))].sort((a, b) => a.localeCompare(b, "nb"));
-}
-
-export function beregnTraktSteg(saker: KontrollsakResponse[]) {
-  const teller = new Map<KontrollsakStatus, number>();
-  for (const sak of saker) {
-    teller.set(sak.status, (teller.get(sak.status) ?? 0) + 1);
-  }
-  return TRAKT_STATUS_REKKEFOLGE.filter((status) => (teller.get(status) ?? 0) > 0).map(
-    (status) => ({
-      label: status === "OPPRETTET" ? "Tildelt" : formaterStatus(status),
-      antall: teller.get(status) ?? 0,
-    }),
-  );
 }
 
 export function filtrerSaker(

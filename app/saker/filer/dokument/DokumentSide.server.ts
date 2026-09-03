@@ -1,7 +1,7 @@
 import { data } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
-import { skalBrukeMockdata } from "~/config/env.server";
+import { env, skalBrukeMockdata } from "~/config/env.server";
 import * as backendApi from "~/saker/api.server";
 import type { DokumentInnhold } from "~/saker/filer/typer";
 import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
@@ -13,6 +13,7 @@ import {
   opprettEllerOppdaterDokumentHistorikk,
 } from "../mock-data.server";
 import { erAktivSakKontrollsak } from "../../handlinger/tilgjengeligeHandlinger";
+import { getSaksenhet } from "~/saker/selectors";
 import type { Route } from "./+types/DokumentSide.route";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import type { VariabelVerdier } from "./variabler/variabel-typer";
@@ -26,7 +27,9 @@ function byggVariabelVerdier(
     fødselsnummer: sak.personIdent,
     saksnummer: `Sak ${sak.id}`,
     saksbehandler: innlogget.name,
-    avdeling: innlogget.enhet,
+    // "Avdeling" er enheten registrert på saken, ikke saksbehandlerens egen enhet —
+    // de er ofte like, men saken kan være overført til/fra en annen enhet.
+    avdeling: getSaksenhet(sak) || undefined,
   };
 }
 
@@ -63,6 +66,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       sakReferanse,
       kanRedigere: kanSe && erAktivSakKontrollsak(sak.status) && !dokument.arkivert,
       variabelVerdier: byggVariabelVerdier(sak, innlogget),
+      miljø: env.ENVIRONMENT,
     };
   }
 
@@ -89,6 +93,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     sakReferanse: params.sakId,
     kanRedigere: tilgang.kanRedigereDokumenter && !dokument.arkivert,
     variabelVerdier: byggVariabelVerdier(tilgang.sak, innlogget),
+    miljø: env.ENVIRONMENT,
   };
 }
 

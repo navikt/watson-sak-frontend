@@ -18,7 +18,7 @@ export const STANDARD_VARIABLER: VariabelDefinisjon[] = [
   { id: "fødselsnummer", etikett: "Fødselsnummer", beskrivelse: "11 siffer" },
   { id: "saksnummer", etikett: "Saksnummer", beskrivelse: "Kontrollsakens nummer" },
   { id: "saksbehandler", etikett: "Saksbehandler", beskrivelse: "Innlogget behandler" },
-  { id: "avdeling", etikett: "Avdeling", beskrivelse: "Saksbehandlers enhet" },
+  { id: "avdeling", etikett: "Avdeling", beskrivelse: "Enheten registrert på saken" },
   { id: "dagens-dato", etikett: "Dagens dato", beskrivelse: "dd.mm.åååå" },
 ];
 
