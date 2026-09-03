@@ -88,6 +88,19 @@ describe("DokumentSide loader", () => {
     });
   });
 
+  it("bruker enheten registrert på saken, ikke saksbehandlerens egen enhet, som «avdeling»", async () => {
+    const { sak, ref, docId } = settOppSak({ eier: eierMeg, deltMed: [], status: "UTREDES" });
+    // Saken er overført til en annen enhet enn saksbehandlerens (4812).
+    sak.enhet = "0400";
+
+    const resultat = await loader({
+      request: testRequest,
+      params: { sakId: ref, docId },
+    } as Route.LoaderArgs);
+
+    expect(resultat.variabelVerdier.avdeling).toBe("0400");
+  });
+
   it("gir delt-med skrivetilgang på aktiv sak", async () => {
     const { ref, docId } = settOppSak({
       eier: annenSaksbehandler,

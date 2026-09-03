@@ -13,6 +13,7 @@ import {
   opprettEllerOppdaterDokumentHistorikk,
 } from "../mock-data.server";
 import { erAktivSakKontrollsak } from "../../handlinger/tilgjengeligeHandlinger";
+import { getSaksenhet } from "~/saker/selectors";
 import type { Route } from "./+types/DokumentSide.route";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import type { VariabelVerdier } from "./variabler/variabel-typer";
@@ -26,7 +27,9 @@ function byggVariabelVerdier(
     fødselsnummer: sak.personIdent,
     saksnummer: `Sak ${sak.id}`,
     saksbehandler: innlogget.name,
-    avdeling: innlogget.enhet,
+    // "Avdeling" er enheten registrert på saken, ikke saksbehandlerens egen enhet —
+    // de er ofte like, men saken kan være overført til/fra en annen enhet.
+    avdeling: getSaksenhet(sak) || undefined,
   };
 }
 
