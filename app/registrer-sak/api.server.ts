@@ -1,6 +1,7 @@
 import { BACKEND_API_URL, skalBrukeMockdata } from "~/config/env.server";
 import { logger } from "~/logging/logging";
 import { leggTilMockSakIFordeling } from "~/saker/mock-alle-saker.server";
+import { leggTilFil } from "~/saker/filer/mock-data-filer.server";
 
 export type OpprettKontrollsakRequest = {
   personIdent: string;
@@ -120,7 +121,17 @@ export async function opprettKontrollsak({
   return { ok: true, sak: { id: String(body.id) } };
 }
 
-export async function lastOppFil(token: string, sakId: string, fil: File): Promise<void> {
+export async function lastOppFil(
+  request: Request,
+  token: string,
+  sakId: string,
+  fil: File,
+): Promise<void> {
+  if (skalBrukeMockdata) {
+    leggTilFil(request, sakId, fil, "Saks Behandlersen");
+    return;
+  }
+
   if (!BACKEND_API_URL) {
     logger.error("Mangler backend-url for filopplasting", { sakId, filnavn: fil.name });
     return;

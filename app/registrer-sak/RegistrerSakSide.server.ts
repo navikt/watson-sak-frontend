@@ -96,17 +96,15 @@ export async function action({ request }: Route.ActionArgs) {
     throw new Error(resultat.melding);
   }
 
-  if (!skalBrukeMockdata) {
-    const filer = formData
-      .getAll("filer")
-      .filter((f: FormDataEntryValue): f is File => f instanceof File && f.size > 0);
-    if (filer.length > 0) {
-      Promise.all(filer.map((fil: File) => lastOppFil(token, resultat.sak.id, fil))).catch(
-        (err) => {
-          logger.error("Uventet feil ved filopplasting etter sak-opprettelse", { err });
-        },
-      );
-    }
+  const filer = formData
+    .getAll("filer")
+    .filter((f: FormDataEntryValue): f is File => f instanceof File && f.size > 0);
+  if (filer.length > 0) {
+    Promise.all(filer.map((fil: File) => lastOppFil(request, token, resultat.sak.id, fil))).catch(
+      (err) => {
+        logger.error("Uventet feil ved filopplasting etter sak-opprettelse", { err });
+      },
+    );
   }
 
   return redirect(RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(resultat.sak.id)));

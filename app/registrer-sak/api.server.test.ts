@@ -6,8 +6,9 @@ import {
   leggTilMockSakIFordeling,
 } from "~/testing/mock-store/alle-saker.server";
 import { hentDokumenttreForSak } from "~/testing/mock-store/dokumenter.server";
+import { hentFilerForSak } from "~/testing/mock-store/filer.server";
 import { søkSaker } from "~/søk/søk.server";
-import { opprettKontrollsak } from "./api.server";
+import { lastOppFil, opprettKontrollsak } from "./api.server";
 
 vi.mock("~/config/env.server", () => ({
   BACKEND_API_URL: "https://backend.test",
@@ -212,6 +213,44 @@ describe("opprettKontrollsak", () => {
 
     if (!opprettetSak.ok) throw new Error("Forventet ok svar");
     expect(hentDokumenttreForSak(state(), opprettetSak.sak.id)).toEqual([]);
+  });
+
+  it("legger filer til mock-saken", async () => {
+    const opprettetSak = await opprettKontrollsak({
+      request: testRequest,
+      token: "token-123",
+      payload: {
+        personIdent: "12345678901",
+        saksbehandlere: { eier: null, deltMed: [] },
+        kategori: "SAMLIV",
+        kilde: "NAV_KONTROLL",
+        prioritet: "NORMAL",
+        enhet: "ky153k",
+        misbruktype: ["SKJULT_SAMLIV"],
+        merking: [],
+        ytelser: [],
+      },
+    });
+
+    if (!opprettetSak.ok) throw new Error("Forventet ok svar");
+    await lastOppFil(
+      testRequest,
+      "token-123",
+      opprettetSak.sak.id,
+      new File(["innhold"], "vedlegg.pdf", {
+        type: "application/pdf",
+      }),
+    );
+
+    expect(hentFilerForSak(state(), opprettetSak.sak.id)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          filnavn: "vedlegg.pdf",
+          storrelse: 7,
+          contentType: "application/pdf",
+        }),
+      ]),
+    );
   });
 
   it("legger mock-sak med eier i Mine saker", async () => {
