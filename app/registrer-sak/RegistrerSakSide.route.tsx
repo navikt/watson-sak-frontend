@@ -376,7 +376,7 @@ export default function OpprettSakSide() {
                     Grunnleggende saksinformasjon
                   </Heading>
 
-                  {/* Rad 1: Kategori, Misbruktype, Merking */}
+                  {/* Rad 1 (påkrevd): Kategori, Misbruktype */}
                   <HStack gap="space-24" align="start" wrap>
                     <Select
                       key={fields.kategori.key}
@@ -435,7 +435,45 @@ export default function OpprettSakSide() {
                         <input key={m} type="hidden" name="misbruktype" value={m} />
                       ))}
                     </div>
+                  </HStack>
 
+                  {/* Rad 2 (påkrevd): Kilde, Enhet */}
+                  <HStack gap="space-24" align="start" wrap>
+                    <Select
+                      name={fields.kilde.name}
+                      id={fields.kilde.id}
+                      label="Kilde"
+                      error={fields.kilde.errors?.[0]}
+                      className="w-52"
+                      defaultValue={fields.kilde.initialValue ?? ""}
+                    >
+                      <option value="">Velg kilde</option>
+                      {kodeverk.kilder.map((k) => (
+                        <option key={k.kode} value={k.kode}>
+                          {k.beskrivelse}
+                        </option>
+                      ))}
+                    </Select>
+
+                    <Select
+                      name={fields.enhet.name}
+                      id={fields.enhet.id}
+                      label="Enhet"
+                      error={fields.enhet.errors?.[0]}
+                      className="w-44"
+                      defaultValue={(fields.enhet.initialValue ?? "") as string}
+                    >
+                      <option value="">Velg enhet</option>
+                      {kodeverk.enheter.map((e) => (
+                        <option key={e.kode} value={e.kode}>
+                          {e.beskrivelse}
+                        </option>
+                      ))}
+                    </Select>
+                  </HStack>
+
+                  {/* Rad 3 (valgfritt): Merking, Organisasjonsnummer */}
+                  <HStack gap="space-24" align="start" wrap>
                     <div id={fields.merking.id} className="w-72">
                       <UNSAFE_Combobox
                         label="Merking (valgfritt)"
@@ -463,25 +501,6 @@ export default function OpprettSakSide() {
                         <input key={m} type="hidden" name="merking" value={m} />
                       ))}
                     </div>
-                  </HStack>
-
-                  {/* Rad 2: Kilde, Organisasjonsnummer, Enhet */}
-                  <HStack gap="space-24" align="start" wrap>
-                    <Select
-                      name={fields.kilde.name}
-                      id={fields.kilde.id}
-                      label="Kilde"
-                      error={fields.kilde.errors?.[0]}
-                      className="w-52"
-                      defaultValue={fields.kilde.initialValue ?? ""}
-                    >
-                      <option value="">Velg kilde</option>
-                      {kodeverk.kilder.map((k) => (
-                        <option key={k.kode} value={k.kode}>
-                          {k.beskrivelse}
-                        </option>
-                      ))}
-                    </Select>
 
                     <div>
                       <UNSAFE_Combobox
@@ -511,22 +530,6 @@ export default function OpprettSakSide() {
                         <input key={orgnr} type="hidden" name="arbeidsgivere" value={orgnr} />
                       ))}
                     </div>
-
-                    <Select
-                      name={fields.enhet.name}
-                      id={fields.enhet.id}
-                      label="Enhet"
-                      error={fields.enhet.errors?.[0]}
-                      className="w-44"
-                      defaultValue={(fields.enhet.initialValue ?? "") as string}
-                    >
-                      <option value="">Velg enhet</option>
-                      {kodeverk.enheter.map((e) => (
-                        <option key={e.kode} value={e.kode}>
-                          {e.beskrivelse}
-                        </option>
-                      ))}
-                    </Select>
                   </HStack>
 
                   <hr className="border-ax-border-neutral-subtle max-w-2xl" />
