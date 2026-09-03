@@ -83,7 +83,8 @@ describe("hentInnloggetBruker", () => {
     expect(getBackendOboTokenMock).not.toHaveBeenCalled();
     expect(hentSaksbehandlerInfoMock).not.toHaveBeenCalled();
     expect(bruker).not.toHaveProperty("token");
-    expect(bruker.enhet).toBe("Ukjent");
+    expect(bruker.enhet).toBe("4812");
+    expect(bruker.enhetId).toBe("4812");
   });
 
   it("eksponerer lederstatus fra backend utenfor demo", async () => {
