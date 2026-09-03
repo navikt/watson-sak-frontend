@@ -92,10 +92,15 @@ test.describe("Landingsside", () => {
     await page.setViewportSize({ width: 1400, height: 1200 });
     await page.reload({ waitUntil: "networkidle" });
 
-    await expect(page.getByRole("heading", { name: "Siste varsler" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Marker som lest" })).toHaveCount(2);
+    const varslerSeksjon = page
+      .getByRole("heading", { name: "Siste varsler" })
+      .locator("xpath=ancestor::section[1]");
 
-    const varsler = page.getByRole("heading", { name: /Sak #\d+/ });
+    await expect(varslerSeksjon).toBeVisible();
+    await expect(varslerSeksjon.getByRole("button", { name: "Marker som lest" })).toHaveCount(2);
+    await expect(varslerSeksjon.getByRole("link", { name: "Se alle varsler" })).toBeVisible();
+
+    const varsler = varslerSeksjon.getByRole("heading", { name: /Sak #\d+/ });
     const førsteBoks = await varsler.nth(0).boundingBox();
     const andreBoks = await varsler.nth(1).boundingBox();
 

@@ -1,6 +1,15 @@
-import { BodyShort, Button, Heading, HGrid, HStack, InfoCard, VStack } from "@navikt/ds-react";
+import {
+  BodyShort,
+  Button,
+  Heading,
+  HGrid,
+  HStack,
+  InfoCard,
+  Link,
+  VStack,
+} from "@navikt/ds-react";
 import { Link as RouterLink } from "react-router";
-import { BellIcon, InformationSquareIcon } from "@navikt/aksel-icons";
+import { ArrowRightIcon, BellIcon, InformationSquareIcon } from "@navikt/aksel-icons";
 import { sporHendelse } from "~/analytics/analytics";
 import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
@@ -25,11 +34,18 @@ export function SisteVarsler({
   return (
     <Kort as="section">
       <VStack gap="space-4">
-        <HStack gap="space-4" align="center">
-          <BellIcon aria-hidden fontSize="1.25rem" />
-          <Heading level="2" size="medium">
-            Siste varsler
-          </Heading>
+        <HStack justify="space-between" align="center">
+          <HStack gap="space-4" align="center">
+            <BellIcon aria-hidden fontSize="1.25rem" />
+            <Heading level="2" size="medium">
+              Siste varsler
+            </Heading>
+          </HStack>
+          {varsler.length > ANTALL_SYNLIGE_VARSLER && (
+            <Link as={RouterLink} to={RouteConfig.VARSLER}>
+              Se alle varsler <ArrowRightIcon aria-hidden fontSize="1rem" />
+            </Link>
+          )}
         </HStack>
 
         {synligeVarsler.length === 0 ? (
