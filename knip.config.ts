@@ -1,7 +1,7 @@
 import type { KnipConfig } from "knip";
 
 const config: KnipConfig = {
-  ignore: ["app/feature-toggling/useFeatureFlagg.tsx", "playwright.backend.mock.cjs"],
+  ignore: ["app/feature-toggling/useFeatureFlagg.tsx"],
   ignoreDependencies: [
     "react-error-boundary",
     // Brukes via CSS @import i globals.css — ikke TypeScript-importer:
@@ -10,7 +10,7 @@ const config: KnipConfig = {
   ],
   // react-router genererer typer via rootDirs i tsconfig, men knip forstår ikke rootDirs.
   // Inkluder de genererte typene eksplisitt slik at knip kan løse +types/-importer.
-  project: ["**/*.{ts,tsx}", ".react-router/types/**/*.ts"],
+  project: ["**/*.{ts,tsx}"],
 };
 
 export default config;

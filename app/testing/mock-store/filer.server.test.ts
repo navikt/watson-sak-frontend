@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { required } from "~/testing/required";
 import {
   arkiverFil,
   hentFilerForSak,
@@ -105,7 +106,9 @@ describe("mock-store filer", () => {
   });
 
   it("gir en placeholder for seedede bilder uten innhold", async () => {
-    const seedetBilde = hentFilerForSak(state(), sakId).find((f) => f.contentType === "image/png")!;
+    const seedetBilde = required(
+      hentFilerForSak(state(), sakId).find((f) => f.contentType === "image/png"),
+    );
 
     const respons = await hentFilInnhold(state(), sakId, seedetBilde.id);
 

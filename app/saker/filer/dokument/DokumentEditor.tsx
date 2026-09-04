@@ -545,7 +545,7 @@ const PLUGINS = [
   TrailingBlockPlugin.configure({ options: { type: "p" } }),
   TablePlugin.withComponent(({ children, ...props }: PlateElementProps) => (
     <PlateElement as="table" {...props}>
-      {children}
+      <tbody>{children}</tbody>
     </PlateElement>
   )),
   TableRowPlugin.withComponent(({ children, ...props }: PlateElementProps) => (

@@ -43,6 +43,7 @@ function renderDetaljside(sakId = testSakId) {
         loader: ({ params }) =>
           loader({ request: testRequest, params: { sakId: params.sakId ?? sakId } } as never),
         Component: SakDetaljSide,
+        HydrateFallback: () => null,
       },
     ],
     {
