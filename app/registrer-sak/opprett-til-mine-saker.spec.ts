@@ -20,6 +20,13 @@ test.describe("Oppretting og tildeling av sak", () => {
     await page.getByLabel("Enhet").selectOption("ky153k");
     await page.getByRole("button", { name: "Opprett sak" }).click();
 
+    const bekreftelseDialog = page.getByRole("dialog", { name: "Opprett sak" });
+    await expect(bekreftelseDialog).toBeVisible();
+    await bekreftelseDialog.getByRole("button", { name: "Opprett sak" }).click();
+
+    await expect(page.getByRole("button", { name: "Gå til saken" })).toBeVisible();
+    await page.getByRole("button", { name: "Gå til saken" }).click();
+
     await expect(page).toHaveURL(/\/saker\/10000$/);
     await expect(page.getByRole("heading", { name: /^Sak 10000/ })).toBeVisible();
 

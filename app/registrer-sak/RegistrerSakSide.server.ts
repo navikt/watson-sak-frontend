@@ -1,9 +1,8 @@
 import { parseWithZod } from "@conform-to/zod/v4";
-import { data, redirect } from "react-router";
+import { data } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { skalBrukeMockdata } from "~/config/env.server";
 import { logger } from "~/logging/logging";
-import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { erFnr } from "~/utils/string-utils";
 import type { OpprettKontrollsakRequest } from "./api.server";
@@ -111,5 +110,8 @@ export async function action({ request }: Route.ActionArgs) {
     }
   }
 
-  return redirect(RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(resultat.sak.id)));
+  return data({
+    ok: true as const,
+    sakId: getSaksreferanse(resultat.sak.id),
+  });
 }
