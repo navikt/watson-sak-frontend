@@ -53,8 +53,16 @@ const SAKSINFORMASJON_FELTNAVN = {
   ytelser: "ytelser",
 } as const;
 
-function erLikeLister(a: readonly string[], b: readonly string[]): boolean {
-  return a.length === b.length && a.every((verdi, indeks) => verdi === b[indeks]);
+/**
+ * Misbrukstype, merking og organisasjonsnummer er mengder — rekkefølgen har
+ * ingen betydning for saksbehandleren, så en omstokking skal ikke gi
+ * historikkinnslag.
+ */
+function erLikeMengder(a: readonly string[], b: readonly string[]): boolean {
+  if (a.length !== b.length) return false;
+  const sortertA = [...a].sort();
+  const sortertB = [...b].sort();
+  return sortertA.every((verdi, indeks) => verdi === sortertB[indeks]);
 }
 
 /** Finner hvilke saksinformasjonsfelter som faktisk endrer verdi, i visningsrekkefølge. */
@@ -68,16 +76,16 @@ function finnEndredeSaksinformasjonsfelter(
   if (sak.kategori !== validert.kategori) {
     endrede.push(SAKSINFORMASJON_FELTNAVN.kategori);
   }
-  if (!erLikeLister(sak.misbruktype ?? [], validert.misbruktype)) {
+  if (!erLikeMengder(sak.misbruktype ?? [], validert.misbruktype)) {
     endrede.push(SAKSINFORMASJON_FELTNAVN.misbrukstype);
   }
-  if (!erLikeLister(sak.merking ?? [], validert.merking)) {
+  if (!erLikeMengder(sak.merking ?? [], validert.merking)) {
     endrede.push(SAKSINFORMASJON_FELTNAVN.merking);
   }
   if (sak.kilde !== validert.kilde) {
     endrede.push(SAKSINFORMASJON_FELTNAVN.kilde);
   }
-  if (!erLikeLister(sak.arbeidsgivere ?? [], validert.arbeidsgivere)) {
+  if (!erLikeMengder(sak.arbeidsgivere ?? [], validert.arbeidsgivere)) {
     endrede.push(SAKSINFORMASJON_FELTNAVN.organisasjonsnummer);
   }
   if (JSON.stringify(sak.ytelser) !== JSON.stringify(nyeYtelser)) {
