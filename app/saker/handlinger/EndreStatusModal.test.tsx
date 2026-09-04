@@ -388,4 +388,58 @@ describe("EndreStatusModal", () => {
       ),
     ).toBeDefined();
   });
+
+  it("viser feilmelding og blir i bekreftelsessteget når innsending feiler", () => {
+    mockInnsendingsResultat = { ok: false };
+
+    renderMedRouter(
+      <EndreStatusModal
+        sakId="00000000-0000-4000-8000-000000000001"
+        nåværendeStatus="UTREDES"
+        nåværendeBlokkering={null}
+        nåværendeHenleggelsesarsak={null}
+        åpen={true}
+        onClose={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("radio", { name: "Anmeldt" }));
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    fireEvent.click(screen.getByRole("button", { name: "Endre status" }));
+
+    expect(submitMock).toHaveBeenCalledOnce();
+    expect(screen.getByText("Kunne ikke endre status. Prøv igjen.")).toBeDefined();
+    expect(screen.getByText("Du endrer nå status på saken:")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Endre status" })).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: "Endre status" }));
+
+    expect(submitMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("trimmer beskrivelse før innsending, slik at sammendraget matcher det som sendes", () => {
+    renderMedRouter(
+      <EndreStatusModal
+        sakId="00000000-0000-4000-8000-000000000001"
+        nåværendeStatus="UTREDES"
+        nåværendeBlokkering={null}
+        nåværendeHenleggelsesarsak={null}
+        åpen={true}
+        onClose={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("radio", { name: "Anmeldt" }));
+    fireEvent.change(screen.getByLabelText("Beskrivelse (valgfritt)"), {
+      target: { value: "  Saken er anmeldt  " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+
+    expect(screen.getByText("Saken er anmeldt")).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: "Endre status" }));
+
+    const formData = submitMock.mock.calls[0][0] as FormData;
+    expect(formData.get("beskrivelse")).toBe("Saken er anmeldt");
+  });
 });

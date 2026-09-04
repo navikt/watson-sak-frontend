@@ -161,6 +161,8 @@ export function EndreStatusModal({
       if (nyStatus === "HENLAGT") {
         formData.set("henleggelsesarsak", valgtHenleggelsesarsak);
       }
+      const beskrivelse = (formData.get("beskrivelse") as string | null) ?? "";
+      formData.set("beskrivelse", beskrivelse.trim());
       sporHendelse("endre status bekreftelse vist", {
         fraStatus: nåværendeStatus,
         tilStatus: nyStatus,
@@ -256,6 +258,10 @@ export function EndreStatusModal({
       setBekreftetResultat(null);
     }
     forrigeÅpen.current = åpen;
+    // statusControl/blokkertControl/beskrivelseControl er bevisst utelatt: useInputControl
+    // returnerer nye objektreferanser ved hver render, så å inkludere dem ville trigget
+    // effekten på nytt hele tiden. Vi trenger kun de nyeste `.change`-funksjonene når
+    // modalen faktisk åpnes (styrt av åpen/forrigeÅpen.current), ikke ved hver render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [åpen, nåværendeBlokkering, nåværendeHenleggelsesarsak, nåværendeStatus]);
 
@@ -285,6 +291,7 @@ export function EndreStatusModal({
           ? undefined
           : { heading: "Endre status", icon: <PencilIcon aria-hidden /> }
       }
+      aria-label={steg === "suksess" ? "Status endret" : "Endre status"}
       width={steg === "skjema" ? "medium" : "small"}
     >
       {steg === "suksess" && <Modal.Header />}
