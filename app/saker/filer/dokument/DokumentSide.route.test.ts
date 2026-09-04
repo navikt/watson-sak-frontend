@@ -69,6 +69,8 @@ describe("DokumentSide loader", () => {
 
   it("gir eier på aktiv sak full redigeringstilgang", async () => {
     const { sak, ref, docId } = settOppSak({ eier: eierMeg, deltMed: [], status: "UTREDES" });
+    // Enheten settes eksplisitt så testen ikke avhenger av enheten i mockdataene.
+    sak.enhet = "4812";
 
     const resultat = await loader({
       request: testRequest,

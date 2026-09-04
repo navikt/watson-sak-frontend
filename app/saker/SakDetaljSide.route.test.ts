@@ -651,6 +651,8 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
 
     const historikk = hentHistorikk(testRequest, String(kontrollsak.id));
     expect(historikk[0]?.hendelsesType).toBe("SAKSINFORMASJON_ENDRET");
+    expect(historikk[0]?.beskrivelse).toMatch(/^Endret /);
+    expect(historikk[0]?.beskrivelse).toContain("ytelser");
   });
 
   it("oppdaterer kilde når sak får oppdatert kilde", async () => {
@@ -686,6 +688,50 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     }
 
     expect(oppdatertSak.kilde).toBe("PUBLIKUM");
+  });
+
+  it("regner ikke omstokket misbruktype og merking som endring i historikken", async () => {
+    const kontrollsak = hentFordelingssaker(state())[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
+    kontrollsak.misbruktype = ["SVART_ARBEID", "ENDRET_SIVILSTATUS"];
+    kontrollsak.merking = ["LIME", "HASTER"];
+    kontrollsak.arbeidsgivere = ["123456789", "987654321"];
+
+    const formData = new FormData();
+    formData.set("handling", "rediger_saksinformasjon");
+    formData.set("kategori", kontrollsak.kategori);
+    formData.set("kilde", kontrollsak.kilde);
+    // Samme verdier, motsatt rekkefølge.
+    formData.append("misbruktype", "ENDRET_SIVILSTATUS");
+    formData.append("misbruktype", "SVART_ARBEID");
+    formData.append("merking", "HASTER");
+    formData.append("merking", "LIME");
+    formData.append("arbeidsgivere", "987654321");
+    formData.append("arbeidsgivere", "123456789");
+    for (const [indeks, ytelse] of kontrollsak.ytelser.entries()) {
+      formData.set(`ytelser[${indeks}].type`, ytelse.type);
+      formData.set(`ytelser[${indeks}].fraDato`, ytelse.periodeFra ?? "");
+      formData.set(`ytelser[${indeks}].tilDato`, ytelse.periodeTil ?? "");
+    }
+
+    await action({
+      request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: kontrollsakRef },
+    } as Route.ActionArgs);
+
+    const historikk = hentHistorikk(testRequest, String(kontrollsak.id));
+    expect(historikk[0]?.hendelsesType).toBe("SAKSINFORMASJON_ENDRET");
+    expect(historikk[0]?.beskrivelse).not.toContain("misbrukstype");
+    expect(historikk[0]?.beskrivelse).not.toContain("merking");
+    expect(historikk[0]?.beskrivelse).not.toContain("organisasjonsnummer");
   });
 
   it("avviser redigering når saken er inaktiv selv om payloaden er gyldig", async () => {

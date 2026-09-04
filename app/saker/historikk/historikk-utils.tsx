@@ -117,6 +117,10 @@ export function hendelseBeskrivelse(hendelse: SakHendelse): string | null {
     return hendelse.beskrivelse ?? null;
   }
 
+  if (hendelse.hendelsesType === "SAKSINFORMASJON_ENDRET") {
+    return hendelse.beskrivelse ?? `Status: ${formaterStatus(hendelse.status)}`;
+  }
+
   if (hendelse.hendelsesType === "STATUS_ENDRET") {
     const deler: string[] = [];
 

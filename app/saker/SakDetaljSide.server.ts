@@ -41,6 +41,74 @@ import { getSaksenhet } from "./selectors";
 import type { KontrollsakStatus } from "./visning";
 import type { Route } from "./+types/SakDetaljSide.route";
 
+type RedigerteSaksinformasjonsverdier = ReturnType<typeof redigerSaksinformasjonSchema.parse>;
+
+/** Feltnavn slik de vises for saksbehandler i historikken. */
+const SAKSINFORMASJON_FELTNAVN = {
+  kategori: "kategori",
+  misbrukstype: "misbrukstype",
+  merking: "merking",
+  kilde: "kilde",
+  organisasjonsnummer: "organisasjonsnummer",
+  ytelser: "ytelser",
+} as const;
+
+/**
+ * Misbrukstype, merking og organisasjonsnummer er mengder — rekkefølgen har
+ * ingen betydning for saksbehandleren, så en omstokking skal ikke gi
+ * historikkinnslag.
+ */
+function erLikeMengder(a: readonly string[], b: readonly string[]): boolean {
+  if (a.length !== b.length) return false;
+  const sortertA = [...a].sort();
+  const sortertB = [...b].sort();
+  return sortertA.every((verdi, indeks) => verdi === sortertB[indeks]);
+}
+
+/** Finner hvilke saksinformasjonsfelter som faktisk endrer verdi, i visningsrekkefølge. */
+function finnEndredeSaksinformasjonsfelter(
+  sak: KontrollsakResponse,
+  validert: RedigerteSaksinformasjonsverdier,
+  nyeYtelser: KontrollsakResponse["ytelser"],
+): string[] {
+  const endrede: string[] = [];
+
+  if (sak.kategori !== validert.kategori) {
+    endrede.push(SAKSINFORMASJON_FELTNAVN.kategori);
+  }
+  if (!erLikeMengder(sak.misbruktype ?? [], validert.misbruktype)) {
+    endrede.push(SAKSINFORMASJON_FELTNAVN.misbrukstype);
+  }
+  if (!erLikeMengder(sak.merking ?? [], validert.merking)) {
+    endrede.push(SAKSINFORMASJON_FELTNAVN.merking);
+  }
+  if (sak.kilde !== validert.kilde) {
+    endrede.push(SAKSINFORMASJON_FELTNAVN.kilde);
+  }
+  if (!erLikeMengder(sak.arbeidsgivere ?? [], validert.arbeidsgivere)) {
+    endrede.push(SAKSINFORMASJON_FELTNAVN.organisasjonsnummer);
+  }
+  if (JSON.stringify(sak.ytelser) !== JSON.stringify(nyeYtelser)) {
+    endrede.push(SAKSINFORMASJON_FELTNAVN.ytelser);
+  }
+
+  return endrede;
+}
+
+/** Lager historikkbeskrivelsen «Endret kategori, kilde og ytelser». */
+function beskrivEndredeFelter(felter: string[]): string {
+  if (felter.length === 0) {
+    return "Saksinformasjonen ble lagret uten endringer.";
+  }
+
+  if (felter.length === 1) {
+    return `Endret ${felter[0]}.`;
+  }
+
+  const alleUnntattSiste = felter.slice(0, -1).join(", ");
+  return `Endret ${alleUnntattSiste} og ${felter[felter.length - 1]}.`;
+}
+
 function normaliserArbeidsgiverFeil(feil: Record<string, string[]>): Record<string, string[]> {
   const resultat: Record<string, string[]> = {};
   for (const [nøkkel, meldinger] of Object.entries(feil)) {
@@ -1021,19 +1089,24 @@ async function mockAction(
       }
 
       const validert = resultat.data;
-      sak.kategori = validert.kategori;
-      sak.misbruktype = [...validert.misbruktype];
-      sak.merking = [...validert.merking];
-      sak.kilde = validert.kilde;
-      sak.arbeidsgivere = [...validert.arbeidsgivere];
-      sak.ytelser = validert.ytelser.map((ytelse) => ({
+      const nyeYtelser = validert.ytelser.map((ytelse) => ({
         type: ytelse.type ?? "",
         periodeFra: ytelse.fraDato ?? "",
         periodeTil: ytelse.tilDato ?? "",
         belop: ytelse.beløp ?? null,
         endeligBelop: ytelse.endeligBeløp ?? null,
       }));
-      leggTilHendelse(request, sak, "SAKSINFORMASJON_ENDRET");
+      const endredeFelter = finnEndredeSaksinformasjonsfelter(sak, validert, nyeYtelser);
+
+      sak.kategori = validert.kategori;
+      sak.misbruktype = [...validert.misbruktype];
+      sak.merking = [...validert.merking];
+      sak.kilde = validert.kilde;
+      sak.arbeidsgivere = [...validert.arbeidsgivere];
+      sak.ytelser = nyeYtelser;
+      leggTilHendelse(request, sak, "SAKSINFORMASJON_ENDRET", undefined, {
+        beskrivelse: beskrivEndredeFelter(endredeFelter),
+      });
       return { ok: true, sak } satisfies ActionResult;
     }
     case "koble_sak":
