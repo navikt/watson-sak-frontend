@@ -14,6 +14,11 @@ import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { formaterDato } from "~/utils/date-utils";
 import { OppgaveSkjema } from "./OppgaveSkjema";
+import {
+  formaterOppgavePrioritet,
+  formaterOppgavetype,
+  SammendragRad,
+} from "./opprett-formatering";
 
 const opprettOppgaveSkjema = z.object({
   oppgavetype: z.string({ error: "Velg oppgavetype" }).min(1, "Velg oppgavetype"),
@@ -24,35 +29,6 @@ const opprettOppgaveSkjema = z.object({
 });
 
 type Steg = "skjema" | "bekreft" | "suksess";
-
-function SammendragRad({ label, verdi }: { label: string; verdi: React.ReactNode }) {
-  return (
-    <>
-      <BodyShort size="small" textColor="subtle">
-        {label}
-      </BodyShort>
-      <BodyShort size="small">{verdi}</BodyShort>
-    </>
-  );
-}
-
-function formaterOppgavetype(type: string): string {
-  const etiketter: Record<string, string> = {
-    VUR: "Vurder dokument",
-    VURD_HENV: "Vurder henvendelse",
-    VUR_KONS_YTE: "Vurder konsekvens for ytelse",
-  };
-  return etiketter[type] ?? type;
-}
-
-function formaterOppgavePrioritet(prioritet: string): string {
-  const etiketter: Record<string, string> = {
-    LAV: "Lav",
-    NORMAL: "Normal",
-    HOY: "Høy",
-  };
-  return etiketter[prioritet] ?? prioritet;
-}
 
 interface OpprettOppgaveModalProps {
   sakId: string;
@@ -237,13 +213,14 @@ export function OpprettOppgaveModal({ sakId, åpen, onClose }: OpprettOppgaveMod
                 onClick={handleBekreft}
                 loading={fetcher.state !== "idle"}
                 disabled={fetcher.state !== "idle"}
+                autoFocus
               >
                 Opprett
               </Button>
             </>
           )}
           {steg === "suksess" && (
-            <Button type="button" variant="primary" onClick={handleLukk}>
+            <Button type="button" variant="primary" onClick={handleLukk} autoFocus>
               Lukk
             </Button>
           )}

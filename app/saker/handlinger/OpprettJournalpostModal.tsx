@@ -31,48 +31,16 @@ import type { DokumentNode, FilResponse } from "~/saker/filer/typer";
 import { formaterStorrelse } from "~/utils/number-utils";
 import { formaterDato } from "~/utils/date-utils";
 import { OppgaveSkjema } from "./OppgaveSkjema";
+import {
+  formaterJournalposttype,
+  formaterOppgavePrioritet,
+  formaterOppgavetype,
+  SammendragRad,
+} from "./opprett-formatering";
 
 /** Kombinert grense for antall filer og dokumenter som til sammen kan velges for arkivering. */
 const MAKS_ANTALL_VALGTE_ELEMENTER = 10;
 type Steg = "skjema" | "bekreft" | "suksess";
-
-function SammendragRad({ label, verdi }: { label: string; verdi: React.ReactNode }) {
-  return (
-    <>
-      <BodyShort size="small" textColor="subtle">
-        {label}
-      </BodyShort>
-      <BodyShort size="small">{verdi}</BodyShort>
-    </>
-  );
-}
-
-function formaterJournalposttype(type: string): string {
-  const etiketter: Record<string, string> = {
-    INNGAAENDE: "Inngående",
-    UTGAAENDE: "Utgående",
-    NOTAT: "Notat",
-  };
-  return etiketter[type] ?? type;
-}
-
-function formaterOppgavetype(type: string): string {
-  const etiketter: Record<string, string> = {
-    VUR: "Vurder dokument",
-    VURD_HENV: "Vurder henvendelse",
-    VUR_KONS_YTE: "Vurder konsekvens for ytelse",
-  };
-  return etiketter[type] ?? type;
-}
-
-function formaterOppgavePrioritet(prioritet: string): string {
-  const etiketter: Record<string, string> = {
-    LAV: "Lav",
-    NORMAL: "Normal",
-    HOY: "Høy",
-  };
-  return etiketter[prioritet] ?? prioritet;
-}
 
 /** Ett valgbart element i journalpost-modalen — enten en opplastet fil eller et Watson Sak-dokument. */
 type ValgbartElement =
@@ -468,13 +436,14 @@ export function OpprettJournalpostModal({
                 onClick={handleBekreft}
                 loading={fetcher.state !== "idle"}
                 disabled={fetcher.state !== "idle"}
+                autoFocus
               >
                 Opprett
               </Button>
             </>
           )}
           {steg === "suksess" && (
-            <Button type="button" variant="primary" onClick={handleLukk}>
+            <Button type="button" variant="primary" onClick={handleLukk} autoFocus>
               Lukk
             </Button>
           )}
