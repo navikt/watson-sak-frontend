@@ -5,6 +5,28 @@ import { FeatureFlagg } from "./featureflagg";
 
 let unleashPromise: Promise<Unleash> | undefined;
 
+// startUnleash() venter på synkroniseringseventet fra klienten uten egen timeout.
+// Hvis Unleash-serveren av en eller annen grunn ikke er nåbar, henger kallet for
+// alltid — og siden dette kalles fra rootLoader på hver sidevisning, henger da
+// hele responsen. Denne timeouten sikrer at vi i stedet feiler synlig.
+const UNLEASH_TIMEOUT_MS = 5000;
+
+function medTimeout<T>(promise: Promise<T>, timeoutMs: number, feilmelding: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const tidsavbrudd = setTimeout(() => reject(new Error(feilmelding)), timeoutMs);
+    promise.then(
+      (verdi) => {
+        clearTimeout(tidsavbrudd);
+        resolve(verdi);
+      },
+      (feil) => {
+        clearTimeout(tidsavbrudd);
+        reject(feil);
+      },
+    );
+  });
+}
+
 /** Initialiserer Unleash-singletonen (trådsikker via cached promise) */
 function initialiserUnleash(): Promise<Unleash> {
   if (unleashPromise) {
@@ -13,15 +35,19 @@ function initialiserUnleash(): Promise<Unleash> {
   if (!env.UNLEASH_SERVER_API_TOKEN) {
     throw new Error("UNLEASH_SERVER_API_TOKEN er ikke satt som miljøvariabel.");
   }
-  unleashPromise = startUnleash({
-    url: `${env.UNLEASH_SERVER_API_URL}/api`,
-    appName: "watson-sak",
-    environment: env.ENVIRONMENT === "prod" ? "production" : "development",
-    projectName: env.UNLEASH_SERVER_API_PROJECTS,
-    customHeaders: {
-      Authorization: env.UNLEASH_SERVER_API_TOKEN,
-    },
-  }).catch((error) => {
+  unleashPromise = medTimeout(
+    startUnleash({
+      url: `${env.UNLEASH_SERVER_API_URL}/api`,
+      appName: "watson-sak",
+      environment: env.ENVIRONMENT === "prod" ? "production" : "development",
+      projectName: env.UNLEASH_SERVER_API_PROJECTS,
+      customHeaders: {
+        Authorization: env.UNLEASH_SERVER_API_TOKEN,
+      },
+    }),
+    UNLEASH_TIMEOUT_MS,
+    `Unleash synkroniserte ikke innen ${UNLEASH_TIMEOUT_MS}ms`,
+  ).catch((error) => {
     unleashPromise = undefined;
     throw error;
   });
