@@ -427,9 +427,6 @@ export function OpprettJournalpostModal({
           )}
           {steg === "bekreft" && (
             <>
-              <Button type="button" variant="secondary" onClick={handleAvbrytBekreftelse}>
-                Avbryt
-              </Button>
               <Button
                 type="button"
                 variant="primary"
@@ -439,6 +436,9 @@ export function OpprettJournalpostModal({
                 autoFocus
               >
                 Opprett
+              </Button>
+              <Button type="button" variant="secondary" onClick={handleAvbrytBekreftelse}>
+                Avbryt
               </Button>
             </>
           )}

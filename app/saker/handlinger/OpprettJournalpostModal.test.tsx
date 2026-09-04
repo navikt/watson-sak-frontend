@@ -128,6 +128,25 @@ describe("OpprettJournalpostModal", () => {
     expect(options).toEqual(expect.objectContaining({ method: "post" }));
   });
 
+  it("plasserer primærhandlingen før Avbryt i bekreftelsesmodalen", () => {
+    renderMedRouter(<OpprettJournalpostModal {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole("radio", { name: "Inngående" }));
+    fireEvent.change(screen.getByLabelText("Tittel"), {
+      target: { value: "Min journalpost" },
+    });
+    fireEvent.change(screen.getByLabelText("Innhold"), {
+      target: { value: "Innholdet i journalposten" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+
+    expect(
+      screen
+        .getByRole("button", { name: "Opprett" })
+        .compareDocumentPosition(screen.getByRole("button", { name: "Avbryt" })),
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
   it("viser melding om ingen filer eller dokumenter når begge er tomme", () => {
     renderMedRouter(<OpprettJournalpostModal {...defaultProps} filer={ingenFiler} />);
 

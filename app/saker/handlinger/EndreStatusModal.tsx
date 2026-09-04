@@ -479,9 +479,6 @@ export function EndreStatusModal({
           )}
           {steg === "bekreft" && (
             <>
-              <Button variant="secondary" onClick={handleAvbrytBekreftelse} disabled={erSubmitting}>
-                Avbryt
-              </Button>
               <Button
                 type="button"
                 variant="primary"
@@ -490,6 +487,9 @@ export function EndreStatusModal({
                 disabled={erSubmitting}
               >
                 Endre status
+              </Button>
+              <Button variant="secondary" onClick={handleAvbrytBekreftelse} disabled={erSubmitting}>
+                Avbryt
               </Button>
             </>
           )}

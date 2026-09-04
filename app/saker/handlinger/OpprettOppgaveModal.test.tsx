@@ -80,6 +80,33 @@ describe("OpprettOppgaveModal", () => {
     expect(options).toEqual(expect.objectContaining({ method: "post" }));
   });
 
+  it("plasserer primærhandlingen før Avbryt i bekreftelsesmodalen", () => {
+    renderMedRouter(<OpprettOppgaveModal {...defaultProps} />);
+
+    fireEvent.change(screen.getByLabelText("Oppgavetype"), {
+      target: { value: "VURD_HENV" },
+    });
+    fireEvent.change(screen.getByLabelText("Prioritet"), {
+      target: { value: "HOY" },
+    });
+    fireEvent.change(document.querySelector('input[name="frist"]') as HTMLInputElement, {
+      target: { value: "2026-06-01" },
+    });
+    fireEvent.change(document.querySelector('input[name="behandlendeEnhet"]') as HTMLInputElement, {
+      target: { value: "4100" },
+    });
+    fireEvent.change(screen.getByLabelText("Beskrivelse"), {
+      target: { value: "En beskrivelse" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+
+    expect(
+      screen
+        .getByRole("button", { name: "Opprett" })
+        .compareDocumentPosition(screen.getByRole("button", { name: "Avbryt" })),
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
   it("kaller onClose ved avbryt", () => {
     renderMedRouter(<OpprettOppgaveModal {...defaultProps} />);
 

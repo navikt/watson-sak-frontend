@@ -249,9 +249,6 @@ export function SendTilAnnenEnhetModal({
           )}
           {steg === "bekreft" && (
             <>
-              <Button variant="secondary" onClick={handleAvbrytBekreftelse} disabled={erSubmitting}>
-                Avbryt
-              </Button>
               <Button
                 type="button"
                 onClick={handleBekreft}
@@ -259,6 +256,9 @@ export function SendTilAnnenEnhetModal({
                 disabled={erSubmitting}
               >
                 Send til annen enhet
+              </Button>
+              <Button variant="secondary" onClick={handleAvbrytBekreftelse} disabled={erSubmitting}>
+                Avbryt
               </Button>
             </>
           )}
