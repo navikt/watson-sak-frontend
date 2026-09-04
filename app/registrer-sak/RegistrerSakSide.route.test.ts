@@ -65,7 +65,7 @@ describe("OpprettSakSide action", () => {
     getBackendOboTokenMock.mockResolvedValue("token-123");
   });
 
-  it("godtar minimal payload med påkrevde felter og redirecter til ny sak", async () => {
+  it("godtar minimal payload med påkrevde felter og returnerer saksnummer", async () => {
     const { action } = await import("./RegistrerSakSide.server");
     const { opprettKontrollsak } = await import("./api.server");
 
@@ -99,8 +99,9 @@ describe("OpprettSakSide action", () => {
       }),
     );
 
-    expect(response).toBeInstanceOf(Response);
-    expect((response as Response).status).toBe(302);
+    expect(response).toMatchObject({
+      data: { ok: true, sakId: "00000000-0000-4000-8000-000000301000" },
+    });
   }, 15000);
 
   it("parser flere ytelse-rader fra indekserte felt", async () => {

@@ -15,8 +15,16 @@ import {
   VStack,
 } from "@navikt/ds-react";
 import { MagnifyingGlassIcon, PersonIcon, PlusIcon } from "@navikt/aksel-icons";
-import { useMemo, useState, useEffect } from "react";
-import { Form, Link, useFetcher, useActionData, useLoaderData, useSubmit } from "react-router";
+import { useMemo, useRef, useState, useEffect } from "react";
+import {
+  Form,
+  Link,
+  useFetcher,
+  useActionData,
+  useLoaderData,
+  useNavigation,
+  useSubmit,
+} from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
@@ -24,6 +32,11 @@ import { RouteConfig } from "~/routeConfig";
 import { opprettSakSchema } from "~/registrer-sak/validering";
 import { merkingEtikett } from "~/saker/kategorier";
 import { INGEN_TILGANG_TIL_Å_OPPRETTE_SAK_MELDING } from "./feilmeldinger";
+import {
+  byggOpprettSakSammendrag,
+  OpprettSakBekreftelseModal,
+  type OpprettSakSammendrag,
+} from "./OpprettSakBekreftelseModal";
 import type { PersonOppslagResultat } from "./person-oppslag.mock.server";
 import { action, loader } from "./RegistrerSakSide.server";
 import type { YtelseRadVerdier } from "./skjema-helpers";
@@ -66,11 +79,21 @@ export default function OpprettSakSide() {
   const kodeverk = useKodeverk();
   const lastResult = useActionData<typeof action>();
   const submit = useSubmit();
+  const navigation = useNavigation();
 
   const ytelseAlternativer = useMemo(
     () => kodeverk.ytelseTyper.map((y) => ({ value: y.kode, label: y.beskrivelse })),
     [kodeverk.ytelseTyper],
   );
+
+  // Bekreftelsesmodal for "Opprett sak": vises etter klientvalidering har
+  // passert, før skjemaet faktisk sendes til serveren.
+  const [modalSteg, setModalSteg] = useState<"lukket" | "bekreft" | "suksess">("lukket");
+  const [pendingFormData, setPendingFormData] = useState<FormData | null>(null);
+  const [sammendrag, setSammendrag] = useState<OpprettSakSammendrag | null>(null);
+  const innsendingPågår = useRef(false);
+  const forrigeNavigasjonstilstand = useRef(navigation.state);
+  const senderInn = navigation.state !== "idle" && innsendingPågår.current;
 
   const [form, fields] = useForm({
     id: "opprett-sak",
@@ -153,6 +176,32 @@ export default function OpprettSakSide() {
     [kodeverk.misbrukstyper],
   );
 
+  const ytelseLabelMap = useMemo(
+    () => new Map(ytelseAlternativer.map((y) => [y.value, y.label])),
+    [ytelseAlternativer],
+  );
+
+  const suksessSakId = lastResult && "ok" in lastResult && lastResult.ok ? lastResult.sakId : null;
+
+  // Følger overgangen fra innsending (navigation.state !== "idle") til ferdig,
+  // slik at bekreftelsesmodalen kan bytte til suksess-steget — eller lukkes
+  // igjen dersom serveren avviste innsendingen.
+  useEffect(() => {
+    const varUnderveis = forrigeNavigasjonstilstand.current !== "idle";
+    const erFerdigNå = navigation.state === "idle";
+    if (varUnderveis && erFerdigNå && innsendingPågår.current) {
+      innsendingPågår.current = false;
+      if (lastResult && "ok" in lastResult && lastResult.ok) {
+        setModalSteg("suksess");
+        sporHendelse("sak opprettet", { kategori: valgtKategori });
+      } else {
+        setModalSteg("lukket");
+        setPendingFormData(null);
+      }
+    }
+    forrigeNavigasjonstilstand.current = navigation.state;
+  }, [navigation.state, lastResult, valgtKategori]);
+
   const feilElementer = useMemo(() => {
     const elementer: Array<{ id: string; melding: string }> = [];
     for (const [navn, feil] of Object.entries(form.allErrors)) {
@@ -172,6 +221,28 @@ export default function OpprettSakSide() {
     setYtelseRader((rader) =>
       rader.length === 1 ? [nyYtelseRad()] : rader.filter((rad) => rad.id !== id),
     );
+  }
+
+  function håndterBekreftOpprettelse() {
+    if (!pendingFormData) return;
+    sporHendelse("opprett sak bekreftet", { kategori: valgtKategori });
+    innsendingPågår.current = true;
+    submit(pendingFormData, { method: "post", encType: "multipart/form-data" });
+  }
+
+  function håndterLukkBekreftelsesmodal() {
+    if (modalSteg === "bekreft") {
+      sporHendelse("opprett sak avbrutt i bekreftelse");
+    }
+    setModalSteg("lukket");
+    setPendingFormData(null);
+  }
+
+  function håndterOpprettNySak() {
+    sporHendelse("opprett sak skjema nullstilt");
+    // Full sidenavigasjon nullstiller all klientstate (personsøk, skjemafelt,
+    // opplastede filer osv.) på en enkel og robust måte.
+    window.location.assign(RouteConfig.REGISTRER_SAK);
   }
 
   return (
@@ -338,10 +409,19 @@ export default function OpprettSakSide() {
                   form.onSubmit(event);
                   if (!event.defaultPrevented) {
                     event.preventDefault();
-                    sporHendelse("sak opprettet", { kategori: valgtKategori });
                     const formData = new FormData(event.currentTarget);
                     filer.forEach((fil) => formData.append("filer", fil));
-                    submit(formData, { method: "post", encType: "multipart/form-data" });
+                    setPendingFormData(formData);
+                    setSammendrag(
+                      byggOpprettSakSammendrag(
+                        formData,
+                        kodeverk,
+                        ytelseLabelMap,
+                        misbrukstypeBeskrivelseMap,
+                      ),
+                    );
+                    setModalSteg("bekreft");
+                    sporHendelse("opprett sak bekreftelse vist");
                   }
                 }}
                 noValidate
@@ -621,6 +701,23 @@ export default function OpprettSakSide() {
           </VStack>
         )}
       </VStack>
+
+      {person && (
+        <OpprettSakBekreftelseModal
+          steg={modalSteg === "suksess" ? "suksess" : "bekreft"}
+          åpen={modalSteg !== "lukket"}
+          onClose={håndterLukkBekreftelsesmodal}
+          personNavn={person.navn}
+          personnummer={person.personnummer}
+          alder={person.alder}
+          sammendrag={sammendrag}
+          senderInn={senderInn}
+          onBekreft={håndterBekreftOpprettelse}
+          onAvbryt={håndterLukkBekreftelsesmodal}
+          sakId={suksessSakId}
+          onOpprettNySak={håndterOpprettNySak}
+        />
+      )}
     </>
   );
 }
