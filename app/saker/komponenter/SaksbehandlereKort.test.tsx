@@ -207,10 +207,11 @@ describe("SaksbehandlereKort", () => {
     expect((nåværendeEnhet as HTMLOptionElement).disabled).toBe(true);
     expect(screen.getByRole("option", { name: "Nord" })).toBeDefined();
     fireEvent.change(screen.getByLabelText("Ny enhet"), { target: { value: "hu424t" } });
+    fireEvent.click(screen.getByRole("button", { name: "Fortsett" }));
     const sendKnapper = screen.getAllByRole("button", { name: "Send til annen enhet" });
     const sendKnapp = sendKnapper.at(-1);
     if (!sendKnapp) {
-      throw new Error("Fant ikke send-knapp i modal");
+      throw new Error("Fant ikke send-knapp i bekreftelsessteget");
     }
     fireEvent.click(sendKnapp);
 
@@ -258,8 +259,12 @@ describe("SaksbehandlereKort", () => {
       />,
     );
 
+    fireEvent.click(screen.getByRole("button", { name: "Send til annen enhet" }));
+    expect(screen.queryByText(/mister tilgang til dokumentasjonen/)).toBeNull();
+
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Send til annen enhet" }));
+      fireEvent.change(screen.getByLabelText("Ny enhet"), { target: { value: "hu424t" } });
+      fireEvent.click(screen.getByRole("button", { name: "Fortsett" }));
     });
 
     expect(
@@ -282,6 +287,8 @@ describe("SaksbehandlereKort", () => {
 
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Send til annen enhet" }));
+      fireEvent.change(screen.getByLabelText("Ny enhet"), { target: { value: "hu424t" } });
+      fireEvent.click(screen.getByRole("button", { name: "Fortsett" }));
     });
 
     expect(
@@ -291,7 +298,7 @@ describe("SaksbehandlereKort", () => {
     ).toBeDefined();
   });
 
-  it("sender brukeren til dashboardet når saken er sendt til annen enhet", () => {
+  it("venter med å sende brukeren til dashboardet til suksesssteget er lukket", () => {
     fetcherData = { ok: true };
 
     renderMedRouter(
@@ -303,7 +310,7 @@ describe("SaksbehandlereKort", () => {
       />,
     );
 
-    expect(navigateMock).toHaveBeenCalledWith("/");
+    expect(navigateMock).not.toHaveBeenCalled();
   });
 
   it("skjuler Tildel meg når kanTildeleSak er false", () => {
