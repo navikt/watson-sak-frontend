@@ -59,6 +59,61 @@ export function leggTilFil(
   return nyFil;
 }
 
+/**
+ * Markerer en opplastet fil som arkivert i en journalpost. Speiler backend, der filen flagges
+ * som arkivert etter at journalposten er opprettet — den forsvinner da fra «Opplastede filer»
+ * og vises i «Arkivert» i stedet.
+ *
+ * Returnerer `null` hvis filen ikke finnes eller allerede er arkivert (backend svarer 409).
+ */
+export function arkiverFil(
+  state: MockState,
+  sakId: string,
+  filId: string,
+  arkivertAv: string,
+  journalpostId: string,
+): FilResponse | null {
+  const liste = initialiserFilerForSak(state, sakId);
+  const fil = liste.find((f) => f.id === filId);
+  if (!fil || fil.arkivert) return null;
+
+  fil.arkivert = new Date().toISOString();
+  fil.arkivertAv = arkivertAv;
+  fil.arkivertJournalpostId = journalpostId;
+  return fil;
+}
+
+/**
+ * Speiler backend sin konvertering av et Watson Sak-dokument til en arkivert PDF-fil.
+ * Backend laster den genererte PDF-en opp som en egen fil med `arkivertFraDokumentId` satt,
+ * slik at det arkiverte dokumentet vises som en nedlastbar fil i «Arkivert»-seksjonen.
+ */
+export function opprettArkivertFilFraDokument(
+  state: MockState,
+  sakId: string,
+  dokument: { id: string; tittel: string },
+  arkivertAv: string,
+  journalpostId: string,
+): FilResponse {
+  const liste = initialiserFilerForSak(state, sakId);
+  const nå = new Date().toISOString();
+  const nyFil: FilResponse = {
+    id: crypto.randomUUID(),
+    filnavn: `${dokument.tittel || "Uten tittel"}.pdf`,
+    storrelse: 48000,
+    contentType: "application/pdf",
+    opprettetAv: arkivertAv,
+    opprettet: nå,
+    bruktIDokumenter: [],
+    arkivert: nå,
+    arkivertAv,
+    arkivertJournalpostId: journalpostId,
+    arkivertFraDokumentId: dokument.id,
+  };
+  liste.unshift(nyFil);
+  return nyFil;
+}
+
 export function hentFilInnhold(state: MockState, sakId: string, filId: string): Response {
   const liste = initialiserFilerForSak(state, sakId);
   const fil = liste.find((f) => f.id === filId);

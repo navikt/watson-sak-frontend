@@ -4,6 +4,7 @@ import { hentFordelingssaker } from "~/testing/mock-store/alle-saker.server";
 import { hentAlleSaker } from "./mock-alle-saker.server";
 import { hentHistorikk } from "./historikk/mock-data.server";
 import { hentDokumenttreForSak } from "./filer/mock-data.server";
+import { hentFilerForSak, leggTilFil } from "./filer/mock-data-filer.server";
 import { getSaksreferanse } from "~/saker/id";
 import { getBeskrivelse, getKildeText, getPersonIdent, getYtelseTyper } from "~/saker/visning";
 import type { Route } from "./+types/SakDetaljSide.route";
@@ -836,6 +837,83 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
       expect.anything(),
       expect.anything(),
     ]);
+  });
+
+  it("arkiverer valgte vedlegg ved opprettelse av journalpost", async () => {
+    const kontrollsak = hentAlleSaker(testRequest).find((sak) => sak.id === 102)!;
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
+    const vedlegg = leggTilFil(
+      testRequest,
+      String(kontrollsak.id),
+      new File(["%PDF"], "anmeldelse.pdf", { type: "application/pdf" }),
+      "Test Saksbehandler",
+    );
+
+    const formData = new FormData();
+    formData.set("handling", "opprett_journalpost");
+    formData.set("journalposttype", "NOTAT");
+    formData.set("tittel", "Arkivert vedlegg");
+    formData.set("innhold", "Innhold");
+    formData.set("vedleggId", vedlegg.id);
+
+    await action({
+      request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: kontrollsakRef },
+    } as Route.ActionArgs);
+
+    const arkivert = hentFilerForSak(testRequest, String(kontrollsak.id)).find(
+      (fil) => fil.id === vedlegg.id,
+    );
+    expect(arkivert).toMatchObject({
+      arkivertAv: "Z999999",
+      arkivertJournalpostId: expect.stringMatching(/^demo-/),
+    });
+    expect(arkivert?.arkivert).toEqual(expect.any(String));
+
+    const historikk = hentHistorikk(testRequest, String(kontrollsak.id));
+    expect(historikk.some((h) => h.hendelsesType === "FIL_ARKIVERT")).toBe(true);
+  });
+
+  it("lager en arkivert PDF-fil når et dokument arkiveres i en journalpost", async () => {
+    const kontrollsak = hentAlleSaker(testRequest).find((sak) => sak.id === 102)!;
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
+
+    const formData = new FormData();
+    formData.set("handling", "opprett_journalpost");
+    formData.set("journalposttype", "NOTAT");
+    formData.set("tittel", "Arkivert dokument");
+    formData.set("innhold", "Dokumentinnhold");
+    formData.set("dokumentId", "1-1");
+
+    await action({
+      request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: kontrollsakRef },
+    } as Route.ActionArgs);
+
+    const generert = hentFilerForSak(testRequest, String(kontrollsak.id)).find(
+      (fil) => fil.arkivertFraDokumentId === "1-1",
+    );
+    expect(generert).toMatchObject({
+      filnavn: "Saksframlegg.pdf",
+      contentType: "application/pdf",
+      arkivertAv: "Z999999",
+    });
   });
 
   it("opprett_oppgave logger hendelse med oppgavetype og beskrivelse", async () => {

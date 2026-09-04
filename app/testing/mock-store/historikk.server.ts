@@ -24,6 +24,7 @@ type BackendHendelsestype =
   | "JOURNALPOST_OPPRETTET"
   | "OPPGAVE_OPPRETTET"
   | "FIL_LASTET_OPP"
+  | "FIL_ARKIVERT"
   | "FIL_SLETTET";
 
 function lagId(state: MockState): string {
