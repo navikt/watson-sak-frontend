@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mockKodeverk } from "~/testing/mock-store/kodeverk.server";
@@ -79,12 +79,14 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
   };
 }
 
-function renderMedRouter(ui: React.ReactNode) {
+async function renderMedRouter(ui: React.ReactNode) {
   const router = createMemoryRouter([{ path: "/", element: ui }], {
     initialEntries: ["/"],
   });
 
-  return render(<RouterProvider router={router} />);
+  const resultat = render(<RouterProvider router={router} />);
+  await waitFor(() => {});
+  return resultat;
 }
 
 describe("SaksbehandlereKort", () => {
@@ -94,8 +96,8 @@ describe("SaksbehandlereKort", () => {
     fetcherData = undefined;
   });
 
-  it("viser Del tilgang i saksbehandler-boksen for aktiv sak med ansvarlig saksbehandler", () => {
-    renderMedRouter(
+  it("viser Del tilgang i saksbehandler-boksen for aktiv sak med ansvarlig saksbehandler", async () => {
+    await renderMedRouter(
       <SaksbehandlereKort
         erEier={true}
         sak={lagKontrollsak()}
@@ -107,8 +109,8 @@ describe("SaksbehandlereKort", () => {
     expect(screen.getByRole("button", { name: "Del tilgang" })).toBeDefined();
   });
 
-  it("viser Send til annen enhet i enhetsseksjonen øverst for aktiv sak", () => {
-    renderMedRouter(
+  it("viser Send til annen enhet i enhetsseksjonen øverst for aktiv sak", async () => {
+    await renderMedRouter(
       <SaksbehandlereKort
         erEier={true}
         sak={lagKontrollsak()}
@@ -121,8 +123,8 @@ describe("SaksbehandlereKort", () => {
     expect(knapper.at(0)).toBe("Send til annen enhet");
   });
 
-  it("viser enhetsseksjonen over saksbehandlerseksjonen", () => {
-    renderMedRouter(
+  it("viser enhetsseksjonen over saksbehandlerseksjonen", async () => {
+    await renderMedRouter(
       <SaksbehandlereKort
         erEier={true}
         sak={lagKontrollsak({ enhet: "ky153k" })}
@@ -136,8 +138,8 @@ describe("SaksbehandlereKort", () => {
     expect(screen.getAllByText("Øst").some((element) => element.tagName === "P")).toBe(true);
   });
 
-  it("viser Ingen når saken mangler enhet", () => {
-    renderMedRouter(
+  it("viser Ingen når saken mangler enhet", async () => {
+    await renderMedRouter(
       <SaksbehandlereKort
         erEier={true}
         sak={lagKontrollsak({
@@ -156,8 +158,8 @@ describe("SaksbehandlereKort", () => {
     expect(screen.getByText("Ingen")).toBeDefined();
   });
 
-  it("viser ikke Del tilgang for avsluttet sak", () => {
-    renderMedRouter(
+  it("viser ikke Del tilgang for avsluttet sak", async () => {
+    await renderMedRouter(
       <SaksbehandlereKort
         erEier={true}
         sak={lagKontrollsak({ status: "AVSLUTTET" })}
@@ -170,8 +172,8 @@ describe("SaksbehandlereKort", () => {
     expect(screen.queryByRole("button", { name: "Send til annen enhet" })).toBeNull();
   });
 
-  it("viser ikke Del tilgang for blokkert sak", () => {
-    renderMedRouter(
+  it("viser ikke Del tilgang for blokkert sak", async () => {
+    await renderMedRouter(
       <SaksbehandlereKort
         erEier={true}
         sak={lagKontrollsak({ blokkert: "VENTER_PA_VEDTAK" })}
@@ -185,7 +187,7 @@ describe("SaksbehandlereKort", () => {
   });
 
   it("sender valgt enhet når saken sendes til annen enhet", async () => {
-    renderMedRouter(
+    await renderMedRouter(
       <SaksbehandlereKort
         erEier={true}
         sak={lagKontrollsak({
@@ -202,18 +204,21 @@ describe("SaksbehandlereKort", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Send til annen enhet" }));
+    await waitFor(() => {});
 
     const nåværendeEnhet = screen.getByRole("option", { name: "Øst" });
     expect((nåværendeEnhet as HTMLOptionElement).disabled).toBe(true);
     expect(screen.getByRole("option", { name: "Nord" })).toBeDefined();
     fireEvent.change(screen.getByLabelText("Ny enhet"), { target: { value: "hu424t" } });
     fireEvent.click(screen.getByRole("button", { name: "Fortsett" }));
+    await waitFor(() => {});
     const sendKnapper = screen.getAllByRole("button", { name: "Send til annen enhet" });
     const sendKnapp = sendKnapper.at(-1);
     if (!sendKnapp) {
       throw new Error("Fant ikke send-knapp i bekreftelsessteget");
     }
     fireEvent.click(sendKnapp);
+    await waitFor(() => {});
 
     expect(submitMock).toHaveBeenCalledTimes(1);
     const [formData, options] = submitMock.mock.calls[0];
@@ -224,7 +229,7 @@ describe("SaksbehandlereKort", () => {
   });
 
   it("viser ikke tilgangsvarsel i enhetsmodalen når saken mangler ansvarlig saksbehandler", async () => {
-    renderMedRouter(
+    await renderMedRouter(
       <SaksbehandlereKort
         erEier={true}
         sak={lagKontrollsak({
@@ -247,7 +252,7 @@ describe("SaksbehandlereKort", () => {
   });
 
   it("viser at innlogget saksbehandler selv mister tilgang i enhetsmodalen", async () => {
-    renderMedRouter(
+    await renderMedRouter(
       <SaksbehandlereKort
         erEier={true}
         sak={lagKontrollsak()}
@@ -260,6 +265,7 @@ describe("SaksbehandlereKort", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Send til annen enhet" }));
+    await waitFor(() => {});
     expect(screen.queryByText(/mister tilgang til dokumentasjonen/)).toBeNull();
 
     await act(async () => {
@@ -273,7 +279,7 @@ describe("SaksbehandlereKort", () => {
   });
 
   it("viser navnet på en annen ansvarlig saksbehandler som mister tilgang i enhetsmodalen", async () => {
-    renderMedRouter(
+    await renderMedRouter(
       <SaksbehandlereKort
         erEier={true}
         sak={lagKontrollsak()}
@@ -298,10 +304,10 @@ describe("SaksbehandlereKort", () => {
     ).toBeDefined();
   });
 
-  it("venter med å sende brukeren til dashboardet til suksesssteget er lukket", () => {
+  it("venter med å sende brukeren til dashboardet til suksesssteget er lukket", async () => {
     fetcherData = { ok: true };
 
-    renderMedRouter(
+    await renderMedRouter(
       <SaksbehandlereKort
         erEier={true}
         sak={lagKontrollsak()}
@@ -313,8 +319,8 @@ describe("SaksbehandlereKort", () => {
     expect(navigateMock).not.toHaveBeenCalled();
   });
 
-  it("skjuler Tildel meg når kanTildeleSak er false", () => {
-    renderMedRouter(
+  it("skjuler Tildel meg når kanTildeleSak er false", async () => {
+    await renderMedRouter(
       <SaksbehandlereKort
         erEier={false}
         sak={lagKontrollsak({

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { PersonIdentHistorikkModal } from "./PersonIdentHistorikkModal";
@@ -35,20 +35,20 @@ function lagSak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakRespon
   };
 }
 
+async function renderModal(sak: KontrollsakResponse) {
+  const resultat = render(<PersonIdentHistorikkModal sak={sak} åpen={true} onClose={vi.fn()} />);
+  await waitFor(() => {});
+  return resultat;
+}
+
 describe("PersonIdentHistorikkModal", () => {
-  it("viser tom-tilstand når historiskeIdenter er tom", () => {
-    render(
-      <PersonIdentHistorikkModal
-        sak={lagSak({ historiskeIdenter: [] })}
-        åpen={true}
-        onClose={vi.fn()}
-      />,
-    );
+  it("viser tom-tilstand når historiskeIdenter er tom", async () => {
+    await renderModal(lagSak({ historiskeIdenter: [] }));
 
     expect(screen.getByText("Ingen historiske identifikatorer funnet.")).toBeDefined();
   });
 
-  it("viser rad for hvert fødselsnummer med riktig type-label", () => {
+  it("viser rad for hvert fødselsnummer med riktig type-label", async () => {
     const sak = lagSak({
       historiskeIdenter: [
         { personIdent: "12345678901", type: "FOEDSELSNUMMER", historisk: false },
@@ -56,34 +56,34 @@ describe("PersonIdentHistorikkModal", () => {
       ],
     });
 
-    render(<PersonIdentHistorikkModal sak={sak} åpen={true} onClose={vi.fn()} />);
+    await renderModal(sak);
 
     expect(screen.getByText("12345678901")).toBeDefined();
     expect(screen.getByText("09876543210")).toBeDefined();
     expect(screen.getAllByText("Fødselsnummer")).toHaveLength(2);
   });
 
-  it("viser D-nummer som type-label for DNR-ident", () => {
+  it("viser D-nummer som type-label for DNR-ident", async () => {
     const sak = lagSak({
       historiskeIdenter: [{ personIdent: "41234567890", type: "DNR", historisk: true }],
     });
 
-    render(<PersonIdentHistorikkModal sak={sak} åpen={true} onClose={vi.fn()} />);
+    await renderModal(sak);
 
     expect(screen.getByText("D-nummer")).toBeDefined();
   });
 
-  it("viser ukjent type-kode uendret som fallback", () => {
+  it("viser ukjent type-kode uendret som fallback", async () => {
     const sak = lagSak({
       historiskeIdenter: [{ personIdent: "12345678901", type: "UKJENT_TYPE", historisk: false }],
     });
 
-    render(<PersonIdentHistorikkModal sak={sak} åpen={true} onClose={vi.fn()} />);
+    await renderModal(sak);
 
     expect(screen.getByText("UKJENT_TYPE")).toBeDefined();
   });
 
-  it("viser Gjeldende-tag for ikke-historisk ident og Historisk-tag for historisk ident", () => {
+  it("viser Gjeldende-tag for ikke-historisk ident og Historisk-tag for historisk ident", async () => {
     const sak = lagSak({
       historiskeIdenter: [
         { personIdent: "12345678901", type: "FOEDSELSNUMMER", historisk: false },
@@ -91,7 +91,7 @@ describe("PersonIdentHistorikkModal", () => {
       ],
     });
 
-    render(<PersonIdentHistorikkModal sak={sak} åpen={true} onClose={vi.fn()} />);
+    await renderModal(sak);
 
     expect(screen.getByText("Gjeldende")).toBeDefined();
     expect(screen.getByText("Historisk")).toBeDefined();

@@ -14,7 +14,7 @@ import {
   UNSAFE_Combobox,
   VStack,
 } from "@navikt/ds-react";
-import { MagnifyingGlassIcon, PersonIcon, PlusIcon } from "@navikt/aksel-icons";
+import { MagnifyingGlassIcon, PlusIcon } from "@navikt/aksel-icons";
 import { useMemo, useRef, useState, useEffect } from "react";
 import {
   Form,

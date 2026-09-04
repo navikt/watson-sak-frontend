@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { hentMockState, resetDefaultSession } from "~/testing/mock-store/session.server";
 import { hentFordelingssaker } from "~/testing/mock-store/alle-saker.server";
+import { required } from "~/testing/required";
 import { hentAlleSaker } from "./mock-alle-saker.server";
 import { hentHistorikk } from "./historikk/mock-data.server";
 import { hentDokumenttreForSak } from "./filer/mock-data.server";
@@ -190,10 +191,14 @@ describe("SakDetaljSide action", () => {
   });
 
   it("kobler og fjerner kobling mellom saker på samme person i mockdata", async () => {
-    const kontrollsak = hentAlleSaker(testRequest).find((sak) => sak.id === utredningSakId)!;
-    const kobletSak = hentAlleSaker(testRequest).find(
-      (sak) => sak.id !== kontrollsak.id && sak.personIdent === kontrollsak.personIdent,
-    )!;
+    const kontrollsak = required(
+      hentAlleSaker(testRequest).find((sak) => sak.id === utredningSakId),
+    );
+    const kobletSak = required(
+      hentAlleSaker(testRequest).find(
+        (sak) => sak.id !== kontrollsak.id && sak.personIdent === kontrollsak.personIdent,
+      ),
+    );
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z999999",
       navn: "Test Saksbehandler",
@@ -232,10 +237,14 @@ describe("SakDetaljSide action", () => {
   });
 
   it("kobler når innlogget bruker er delt med på målsaken", async () => {
-    const kontrollsak = hentAlleSaker(testRequest).find((sak) => sak.id === utredningSakId)!;
-    const kobletSak = hentAlleSaker(testRequest).find(
-      (sak) => sak.id !== kontrollsak.id && sak.personIdent === kontrollsak.personIdent,
-    )!;
+    const kontrollsak = required(
+      hentAlleSaker(testRequest).find((sak) => sak.id === utredningSakId),
+    );
+    const kobletSak = required(
+      hentAlleSaker(testRequest).find(
+        (sak) => sak.id !== kontrollsak.id && sak.personIdent === kontrollsak.personIdent,
+      ),
+    );
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z111111",
       navn: "Annen Saksbehandler",
@@ -283,10 +292,14 @@ describe("SakDetaljSide action", () => {
   });
 
   it("avviser kobling når innlogget bruker ikke er saksbehandler på noen av sakene", async () => {
-    const kontrollsak = hentAlleSaker(testRequest).find((sak) => sak.id === utredningSakId)!;
-    const kobletSak = hentAlleSaker(testRequest).find(
-      (sak) => sak.id !== kontrollsak.id && sak.personIdent === kontrollsak.personIdent,
-    )!;
+    const kontrollsak = required(
+      hentAlleSaker(testRequest).find((sak) => sak.id === utredningSakId),
+    );
+    const kobletSak = required(
+      hentAlleSaker(testRequest).find(
+        (sak) => sak.id !== kontrollsak.id && sak.personIdent === kontrollsak.personIdent,
+      ),
+    );
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z111111",
       navn: "Annen Saksbehandler",
@@ -316,7 +329,9 @@ describe("SakDetaljSide action", () => {
   });
 
   it("avviser desimal som ID på koblet sak", async () => {
-    const kontrollsak = hentAlleSaker(testRequest).find((sak) => sak.id === utredningSakId)!;
+    const kontrollsak = required(
+      hentAlleSaker(testRequest).find((sak) => sak.id === utredningSakId),
+    );
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z999999",
       navn: "Test Saksbehandler",
@@ -342,10 +357,12 @@ describe("SakDetaljSide action", () => {
   });
 
   it("avviser kobling til sak på en annen person", async () => {
-    const kontrollsak = hentAlleSaker(testRequest).find((sak) => sak.id === utredningSakId)!;
-    const annenPersonSak = hentAlleSaker(testRequest).find(
-      (sak) => sak.personIdent !== kontrollsak.personIdent,
-    )!;
+    const kontrollsak = required(
+      hentAlleSaker(testRequest).find((sak) => sak.id === utredningSakId),
+    );
+    const annenPersonSak = required(
+      hentAlleSaker(testRequest).find((sak) => sak.personIdent !== kontrollsak.personIdent),
+    );
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z999999",
       navn: "Test Saksbehandler",
@@ -802,7 +819,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   });
 
   it("arkiverer valgte redigerbare dokumenter ved opprettelse av journalpost", async () => {
-    const kontrollsak = hentAlleSaker(testRequest).find((sak) => sak.id === 102)!;
+    const kontrollsak = required(hentAlleSaker(testRequest).find((sak) => sak.id === 102));
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z999999",
@@ -840,7 +857,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   });
 
   it("arkiverer valgte vedlegg ved opprettelse av journalpost", async () => {
-    const kontrollsak = hentAlleSaker(testRequest).find((sak) => sak.id === 102)!;
+    const kontrollsak = required(hentAlleSaker(testRequest).find((sak) => sak.id === 102));
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z999999",
@@ -883,7 +900,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   });
 
   it("lager en arkivert PDF-fil når et dokument arkiveres i en journalpost", async () => {
-    const kontrollsak = hentAlleSaker(testRequest).find((sak) => sak.id === 102)!;
+    const kontrollsak = required(hentAlleSaker(testRequest).find((sak) => sak.id === 102));
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z999999",

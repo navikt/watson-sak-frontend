@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { mockKodeverk } from "~/testing/mock-store/kodeverk.server";
@@ -52,7 +52,7 @@ function lagKontrollsak(
   };
 }
 
-function renderMedRouter(ui: React.ReactNode) {
+async function renderMedRouter(ui: React.ReactNode) {
   const router = createMemoryRouter(
     [
       {
@@ -68,12 +68,14 @@ function renderMedRouter(ui: React.ReactNode) {
       initialEntries: ["/"],
     },
   );
-  return render(<RouterProvider router={router} />);
+  const resultat = render(<RouterProvider router={router} />);
+  await waitFor(() => {});
+  return resultat;
 }
 
 describe("SakerPåSammePerson", () => {
-  it("rendrer ingenting når lista er tom", () => {
-    const { container } = renderMedRouter(
+  it("rendrer ingenting når lista er tom", async () => {
+    const { container } = await renderMedRouter(
       <SakerPåSammePerson
         saker={[]}
         gjeldendeSak={lagKontrollsak("105")}
@@ -83,9 +85,9 @@ describe("SakerPåSammePerson", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("rendrer ingenting når alle saker er gjeldende sak", () => {
+  it("rendrer ingenting når alle saker er gjeldende sak", async () => {
     const gjeldendeSak = lagKontrollsak("105");
-    const { container } = renderMedRouter(
+    const { container } = await renderMedRouter(
       <SakerPåSammePerson
         saker={[gjeldendeSak]}
         gjeldendeSak={gjeldendeSak}
@@ -95,8 +97,8 @@ describe("SakerPåSammePerson", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("viser seksjonsoverskrift og kompakt rad for annen sak", () => {
-    renderMedRouter(
+  it("viser seksjonsoverskrift og kompakt rad for annen sak", async () => {
+    await renderMedRouter(
       <SakerPåSammePerson
         saker={[lagKontrollsak("203")]}
         gjeldendeSak={lagKontrollsak("105")}
@@ -108,8 +110,8 @@ describe("SakerPåSammePerson", () => {
     expect(screen.getByText("12345678901", { exact: false })).toBeDefined();
   });
 
-  it("åpner koblingsmodalen fra en ekspandert sak", () => {
-    renderMedRouter(
+  it("åpner koblingsmodalen fra en ekspandert sak", async () => {
+    await renderMedRouter(
       <SakerPåSammePerson
         saker={[lagKontrollsak("203")]}
         gjeldendeSak={lagKontrollsak("105")}
@@ -119,15 +121,17 @@ describe("SakerPåSammePerson", () => {
 
     const ekspanderKnapp = screen.getByRole("button", { name: "Vis detaljer" });
     fireEvent.click(ekspanderKnapp);
+    await waitFor(() => {});
 
     fireEvent.click(screen.getByRole("button", { name: "Koble til sak" }));
+    await waitFor(() => {});
 
     expect(screen.getByRole("heading", { name: "Koble til sak" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Skjul" })).toBeDefined();
   });
 
-  it("lenker til den utvidede saken", () => {
-    renderMedRouter(
+  it("lenker til den utvidede saken", async () => {
+    await renderMedRouter(
       <SakerPåSammePerson
         saker={[lagKontrollsak("203")]}
         gjeldendeSak={lagKontrollsak("105")}
@@ -136,20 +140,21 @@ describe("SakerPåSammePerson", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Vis detaljer" }));
+    await waitFor(() => {});
 
     expect(screen.getByRole("button", { name: "Gå til sak" }).getAttribute("href")).toBe(
       "/saker/203",
     );
   });
 
-  it("viser identifikatorhistorikk for den utvidede saken", () => {
+  it("viser identifikatorhistorikk for den utvidede saken", async () => {
     const annenSak = lagKontrollsak("203", {
       historiskeIdenter: [
         { personIdent: "12345678901", type: "FOEDSELSNUMMER", historisk: false },
         { personIdent: "09876543210", type: "FOEDSELSNUMMER", historisk: true },
       ],
     });
-    renderMedRouter(
+    await renderMedRouter(
       <SakerPåSammePerson
         saker={[annenSak]}
         gjeldendeSak={lagKontrollsak("105")}
@@ -158,14 +163,16 @@ describe("SakerPåSammePerson", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Vis detaljer" }));
+    await waitFor(() => {});
     fireEvent.click(screen.getByRole("button", { name: "Vis identifikatorhistorikk" }));
+    await waitFor(() => {});
 
     expect(screen.getByRole("heading", { name: "Identifikatorhistorikk" })).toBeDefined();
     expect(screen.getByText("09876543210")).toBeDefined();
   });
 
   it("viser feil i koblingsmodalen når innsendingen feiler", async () => {
-    renderMedRouter(
+    await renderMedRouter(
       <SakerPåSammePerson
         saker={[lagKontrollsak("203")]}
         gjeldendeSak={lagKontrollsak("105")}
@@ -174,14 +181,17 @@ describe("SakerPåSammePerson", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Vis detaljer" }));
+    await waitFor(() => {});
     fireEvent.click(screen.getByRole("button", { name: "Koble til sak" }));
+    await waitFor(() => {});
     fireEvent.click(screen.getAllByRole("button", { name: "Koble til sak" })[1]);
+    await waitFor(() => {});
 
     expect(await screen.findByText("Denne funksjonen er ikke tilgjengelig ennå.")).toBeDefined();
   });
 
-  it("viser frakoblingsmodal for koblede saker", () => {
-    renderMedRouter(
+  it("viser frakoblingsmodal for koblede saker", async () => {
+    await renderMedRouter(
       <SakerPåSammePerson
         saker={[lagKontrollsak("203")]}
         gjeldendeSak={lagKontrollsak("105", { kobledeSaker: [203] })}
@@ -190,13 +200,15 @@ describe("SakerPåSammePerson", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Vis detaljer" }));
+    await waitFor(() => {});
     fireEvent.click(screen.getByRole("button", { name: "Fjern kobling" }));
+    await waitFor(() => {});
 
     expect(screen.getByRole("heading", { name: "Fjern kobling" })).toBeDefined();
     expect(screen.getByText(/Vil du fjerne koblingen mellom sak.*og sak/)).toBeDefined();
   });
 
-  it("skjuler koblingshandlingen når innlogget bruker ikke er saksbehandler på noen av sakene", () => {
+  it("skjuler koblingshandlingen når innlogget bruker ikke er saksbehandler på noen av sakene", async () => {
     const gjeldendeSak = lagKontrollsak("105", {
       saksbehandlere: {
         eier: { navIdent: "Z111111", navn: "Annen Saksbehandler", enhet: "Øst" },
@@ -212,7 +224,7 @@ describe("SakerPåSammePerson", () => {
       },
     });
 
-    renderMedRouter(
+    await renderMedRouter(
       <SakerPåSammePerson
         saker={[annenSak]}
         gjeldendeSak={gjeldendeSak}
@@ -221,6 +233,7 @@ describe("SakerPåSammePerson", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Vis detaljer" }));
+    await waitFor(() => {});
 
     expect(screen.queryByRole("button", { name: "Koble til sak" })).toBeNull();
     expect(screen.getByRole("button", { name: "Gå til sak" })).toBeDefined();

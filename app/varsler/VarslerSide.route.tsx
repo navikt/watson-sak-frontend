@@ -28,10 +28,11 @@ export default function VarslerSide() {
   }, [loaderData]);
 
   useEffect(() => {
-    if (lastFlereFetcher.data) {
-      setAkkumulerteVarsler((prev) => [...prev, ...lastFlereFetcher.data!.varsler]);
-      setNesteSide(lastFlereFetcher.data.page + 1);
-      setHarFlere(lastFlereFetcher.data.harFlere);
+    const data = lastFlereFetcher.data;
+    if (data) {
+      setAkkumulerteVarsler((prev) => [...prev, ...data.varsler]);
+      setNesteSide(data.page + 1);
+      setHarFlere(data.harFlere);
     }
   }, [lastFlereFetcher.data]);
 

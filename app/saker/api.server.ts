@@ -714,11 +714,6 @@ const filResponseSchema = z.object({
   arkivertFraDokumentId: z.string().nullish(),
 });
 
-const filNedlastingResponseSchema = z.object({
-  url: z.string(),
-  utloper: z.string(),
-});
-
 export async function hentFiler(token: string, sakId: string): Promise<FilResponse[]> {
   const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/filer`), {
     headers: authHeaders(token),

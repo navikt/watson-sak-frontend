@@ -55,6 +55,7 @@ function renderSide(kanRedigere: boolean) {
     {
       path: "/saker/:sakId/dokumenter/:docId",
       Component: DokumentSide,
+      HydrateFallback: () => null,
       loader: () => ({
         dokument: {
           id: "1",
