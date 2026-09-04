@@ -28,7 +28,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     return await backendApi.lastNedFil(token, sakId, filId);
   }
 
-  return hentFilInnholdMock(request, sakId, filId);
+  return await hentFilInnholdMock(request, sakId, filId);
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
