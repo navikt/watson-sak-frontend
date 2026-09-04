@@ -81,6 +81,12 @@ type Hendelse =
   | "endre status lagret"
   | "endre status lagring feilet"
   | "endre status dialog avbrutt"
+  | "send til annen enhet dialog åpnet"
+  | "send til annen enhet bekreftelse vist"
+  | "send til annen enhet avbrutt i bekreftelse"
+  | "send til annen enhet klikket"
+  | "send til annen enhet sendt"
+  | "send til annen enhet sending feilet"
   | "søk opprett sak klikket"
   | "søk watson søk klikket"
   | "søk se alle saker klikket";
