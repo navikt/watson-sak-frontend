@@ -75,6 +75,8 @@ type Hendelse =
   | "endre status saksstatus valgt"
   | "endre status arbeidsstatus valgt"
   | "endre status henleggelsesårsak valgt"
+  | "endre status bekreftelse vist"
+  | "endre status avbrutt i bekreftelse"
   | "endre status lagre klikket"
   | "endre status lagret"
   | "endre status lagring feilet"

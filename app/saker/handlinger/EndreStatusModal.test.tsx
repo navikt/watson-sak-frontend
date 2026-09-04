@@ -1,21 +1,29 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EndreStatusModal } from "./EndreStatusModal";
 
 const submitMock = vi.fn();
+let mockInnsendingsResultat: unknown = undefined;
 
 vi.mock("react-router", async () => {
   const actual = await vi.importActual<typeof import("react-router")>("react-router");
+  const react = await import("react");
 
   return {
     ...actual,
-    useFetcher: () => ({
-      state: "idle",
-      submit: submitMock,
-      data: undefined,
-      Form: "form",
-    }),
+    useFetcher: () => {
+      const [data, setData] = react.useState<unknown>(undefined);
+      return {
+        state: "idle",
+        submit: (formData: FormData, opts: unknown) => {
+          submitMock(formData, opts);
+          setData(mockInnsendingsResultat);
+        },
+        data,
+        Form: "form",
+      };
+    },
   };
 });
 
@@ -28,6 +36,10 @@ function renderMedRouter(ui: React.ReactNode) {
 }
 
 describe("EndreStatusModal", () => {
+  afterEach(() => {
+    mockInnsendingsResultat = undefined;
+  });
+
   beforeEach(() => {
     submitMock.mockClear();
   });
@@ -113,7 +125,7 @@ describe("EndreStatusModal", () => {
     expect(screen.queryByLabelText("Henleggelsesårsak")).toBeNull();
   });
 
-  it("skjuler arbeidsstatus og viser advarsel ved Avsluttet", () => {
+  it("skjuler arbeidsstatus ved Avsluttet, og viser advarsel i bekreftelsessteget", () => {
     renderMedRouter(
       <EndreStatusModal
         sakId="00000000-0000-4000-8000-000000000001"
@@ -129,11 +141,17 @@ describe("EndreStatusModal", () => {
 
     expect(screen.queryByRole("radiogroup", { name: "Arbeidsstatus" })).toBeNull();
     expect(
+      screen.queryByText("Avsluttet er en endelig status – du kan ikke endre tilbake"),
+    ).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+
+    expect(
       screen.getByText("Avsluttet er en endelig status – du kan ikke endre tilbake"),
     ).toBeDefined();
   });
 
-  it("kan lagre når status settes til Avsluttet", () => {
+  it("viser bekreftelsessteg før innsending, og sender først når bruker bekrefter", () => {
     renderMedRouter(
       <EndreStatusModal
         sakId="00000000-0000-4000-8000-000000000001"
@@ -148,10 +166,38 @@ describe("EndreStatusModal", () => {
     fireEvent.click(screen.getByRole("radio", { name: "Avsluttet" }));
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
 
+    expect(submitMock).not.toHaveBeenCalled();
+    expect(screen.getByText("Du endrer nå status på saken:")).toBeDefined();
+    expect(screen.getByText("Fra «Utredes» til «Avsluttet»")).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: "Endre status" }));
+
     expect(submitMock).toHaveBeenCalledOnce();
     const formData = submitMock.mock.calls[0][0] as FormData;
     expect(formData.get("status")).toBe("AVSLUTTET");
-    expect(formData.get("blokkert")).toBe("I_BERO");
+  });
+
+  it("går tilbake til skjemaet når bruker avbryter i bekreftelsessteget", () => {
+    renderMedRouter(
+      <EndreStatusModal
+        sakId="00000000-0000-4000-8000-000000000001"
+        nåværendeStatus="UTREDES"
+        nåværendeBlokkering={null}
+        nåværendeHenleggelsesarsak={null}
+        åpen={true}
+        onClose={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("radio", { name: "Anmeldt" }));
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    expect(screen.getByText("Du endrer nå status på saken:")).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: "Avbryt" }));
+
+    expect(submitMock).not.toHaveBeenCalled();
+    expect(screen.getByRole("radiogroup", { name: "Saksstatus" })).toBeDefined();
+    expect(screen.getByRole("radio", { name: "Anmeldt" })).toBeDefined();
   });
 
   it("viser feil ved henlagt uten henleggelsesårsak", () => {
@@ -192,6 +238,7 @@ describe("EndreStatusModal", () => {
     fireEvent.click(screen.getByRole("radio", { name: "Venter på informasjon" }));
 
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    fireEvent.click(screen.getByRole("button", { name: "Endre status" }));
 
     expect(submitMock).toHaveBeenCalledOnce();
     const formData = submitMock.mock.calls[0][0] as FormData;
@@ -214,10 +261,34 @@ describe("EndreStatusModal", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    fireEvent.click(screen.getByRole("button", { name: "Endre status" }));
 
     expect(submitMock).toHaveBeenCalledOnce();
     const formData = submitMock.mock.calls[0][0] as FormData;
     expect(formData.get("status")).toBe("HENLAGT");
     expect(formData.get("henleggelsesarsak")).toBe("IKKE_KAPASITET");
+  });
+
+  it("viser suksesssteg med ny status etter vellykket innsending", () => {
+    mockInnsendingsResultat = { ok: true };
+
+    renderMedRouter(
+      <EndreStatusModal
+        sakId="00000000-0000-4000-8000-000000000001"
+        nåværendeStatus="OPPRETTET"
+        nåværendeBlokkering={null}
+        nåværendeHenleggelsesarsak={null}
+        åpen={true}
+        onClose={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("radio", { name: "Utredes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    fireEvent.click(screen.getByRole("button", { name: "Endre status" }));
+
+    expect(screen.getByText("Status endret")).toBeDefined();
+    expect(screen.getByText("Statusen på saken er endret til «Utredes».")).toBeDefined();
+    expect(screen.getAllByRole("button", { name: "Lukk" }).length).toBeGreaterThan(0);
   });
 });
