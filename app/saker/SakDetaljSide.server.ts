@@ -24,7 +24,11 @@ import { henleggelsesarsakSchema } from "~/saker/types.backend";
 import { lagIsoTidspunktFraNorskDatoTid } from "~/utils/date-utils";
 import { hentTekstfelt, hentValgfriTekst } from "~/utils/form-data";
 import { hentDokumenttreForSak } from "./filer/mock-data.server";
-import { hentFilerForSak } from "./filer/mock-data-filer.server";
+import {
+  arkiverFil,
+  hentFilerForSak,
+  opprettArkivertFilFraDokument,
+} from "./filer/mock-data-filer.server";
 import { arkiverDokument } from "~/testing/mock-store/dokumenter.server";
 import { hentMockState } from "~/testing/mock-store/session.server";
 import { notatMalValg } from "./handlinger/notatValg";
@@ -1269,12 +1273,25 @@ async function mockAction(
       const jpTittel = hentValgfriTekst(formData, "tittel") ?? "Journalpost";
       const innhold = hentValgfriTekst(formData, "innhold") ?? "";
       const dokumentIds = formData.getAll("dokumentId").map(String);
+      const vedleggIdsForArkivering = formData.getAll("vedleggId").map(String);
       const knyttTilOppgave = formData.get("knyttTilOppgave") === "true";
       const { navIdent } = await hentInnloggetBruker({ request });
       const journalpostId = `demo-${crypto.randomUUID()}`;
 
+      const antallArkiverteVedlegg = vedleggIdsForArkivering.filter(
+        (filId) => arkiverFil(request, sakId, filId, navIdent, journalpostId) !== null,
+      ).length;
+
+      const dokumenttre = hentDokumenttreForSak(request, sakId);
+      let antallArkiverteDokumenter = 0;
       for (const dokumentId of dokumentIds) {
-        arkiverDokument(hentMockState(request), sakId, dokumentId, navIdent, journalpostId);
+        const dokument = dokumenttre.find((node) => node.id === dokumentId);
+        if (!dokument || dokument.arkivert) continue;
+        if (!arkiverDokument(hentMockState(request), sakId, dokumentId, navIdent, journalpostId)) {
+          continue;
+        }
+        opprettArkivertFilFraDokument(request, sakId, dokument, navIdent, journalpostId);
+        antallArkiverteDokumenter += 1;
       }
 
       const deler = [innhold];
@@ -1292,6 +1309,17 @@ async function mockAction(
         tittel: `${formaterJournalposttype(journalposttype)}: ${jpTittel}`,
         beskrivelse: deler.join("\n"),
       });
+
+      for (let i = 0; i < antallArkiverteVedlegg; i += 1) {
+        leggTilHendelse(request, sak, "FIL_ARKIVERT", undefined, {
+          beskrivelse: "Vedlegg arkivert i journalpost",
+        });
+      }
+      for (let i = 0; i < antallArkiverteDokumenter; i += 1) {
+        leggTilHendelse(request, sak, "FIL_ARKIVERT", undefined, {
+          beskrivelse: "Dokument arkivert i journalpost",
+        });
+      }
 
       if (knyttTilOppgave) {
         const oppgavetype = hentValgfriTekst(formData, "oppgavetype") ?? "";
