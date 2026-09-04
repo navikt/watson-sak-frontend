@@ -87,6 +87,12 @@ type Hendelse =
   | "send til annen enhet klikket"
   | "send til annen enhet sendt"
   | "send til annen enhet sending feilet"
+  | "journalpost bekreftelse vist"
+  | "journalpost avbrutt i bekreftelse"
+  | "journalpost opprettet"
+  | "oppgave bekreftelse vist"
+  | "oppgave avbrutt i bekreftelse"
+  | "oppgave opprettet"
   | "søk opprett sak klikket"
   | "søk watson søk klikket"
   | "søk se alle saker klikket";

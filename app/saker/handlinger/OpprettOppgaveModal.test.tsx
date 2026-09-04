@@ -67,6 +67,8 @@ describe("OpprettOppgaveModal", () => {
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    expect(screen.getByText("Du oppretter nå en oppgave:")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Opprett" }));
 
     expect(submitMock).toHaveBeenCalledTimes(1);
     const [formData, options] = submitMock.mock.calls[0];
