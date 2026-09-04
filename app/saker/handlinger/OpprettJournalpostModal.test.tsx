@@ -115,6 +115,8 @@ describe("OpprettJournalpostModal", () => {
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    expect(screen.getByText("Du oppretter nå:")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Opprett" }));
 
     expect(submitMock).toHaveBeenCalledTimes(1);
     const [formData, options] = submitMock.mock.calls[0];
@@ -173,6 +175,7 @@ describe("OpprettJournalpostModal", () => {
     fireEvent.click(screen.getByRole("checkbox", { name: /rapport\.pdf/ }));
 
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    fireEvent.click(screen.getByRole("button", { name: "Opprett" }));
 
     expect(submitMock).toHaveBeenCalledTimes(1);
     const [formData] = submitMock.mock.calls[0];
@@ -191,6 +194,7 @@ describe("OpprettJournalpostModal", () => {
     fireEvent.click(screen.getByRole("checkbox", { name: /Vurderingsnotat/ }));
 
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    fireEvent.click(screen.getByRole("button", { name: "Opprett" }));
 
     expect(submitMock).toHaveBeenCalledTimes(1);
     const [formData] = submitMock.mock.calls[0];
@@ -206,6 +210,7 @@ describe("OpprettJournalpostModal", () => {
     fireEvent.change(screen.getByLabelText("Innhold"), { target: { value: "Innhold" } });
 
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    fireEvent.click(screen.getByRole("button", { name: "Opprett" }));
 
     const [formData] = submitMock.mock.calls[0];
     expect(formData.getAll("vedleggId")).toEqual([]);
@@ -276,6 +281,9 @@ describe("OpprettJournalpostModal", () => {
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    expect(screen.getByText("Journalpost")).toBeDefined();
+    expect(screen.getByText("Oppgave")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Opprett" }));
 
     expect(submitMock).toHaveBeenCalledTimes(1);
     const [formData] = submitMock.mock.calls[0];

@@ -10,12 +10,7 @@ import {
 } from "@navikt/ds-react";
 import { formaterTilIsoDato } from "~/utils/date-utils";
 import { behandlendeEnheter } from "./behandlendeEnheter";
-
-const oppgavetypeValg = [
-  { verdi: "VUR", label: "Vurder dokument" },
-  { verdi: "VURD_HENV", label: "Vurder henvendelse" },
-  { verdi: "VUR_KONS_YTE", label: "Vurder konsekvens for ytelse" },
-] as const;
+import { oppgavetypeValg, prioritetValg } from "./opprett-formatering";
 
 interface OppgaveSkjemaProps {
   fields: {
@@ -70,9 +65,11 @@ export function OppgaveSkjema({ fields }: OppgaveSkjemaProps) {
           error={fields.prioritet.errors?.[0]}
         >
           <option value="">Velg prioritet</option>
-          <option value="LAV">Lav</option>
-          <option value="NORMAL">Normal</option>
-          <option value="HOY">Høy</option>
+          {prioritetValg.map(({ verdi, label }) => (
+            <option key={verdi} value={verdi}>
+              {label}
+            </option>
+          ))}
         </Select>
 
         <input
