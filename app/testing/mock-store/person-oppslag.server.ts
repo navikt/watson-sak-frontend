@@ -42,7 +42,7 @@ const manuelleEksisterendeSaker: Record<string, EksisterendeSak[]> = {
       opprettetDato: "2025-10-12",
       personNavn: "Birger Egil Lorumipsum-Olsen",
       saksbehandler: "Lise Raus",
-      enhet: "Øst",
+      enhet: "ky153k",
       status: "Til utredning",
     },
   ],

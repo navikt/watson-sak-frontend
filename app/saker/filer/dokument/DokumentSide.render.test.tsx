@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import type { DokumentInnhold, DokumentNode } from "~/saker/filer/typer";
+import { mockKodeverk } from "~/testing/mock-store/kodeverk.server";
 import DokumentSide from "./DokumentSide.route";
 
 vi.mock("~/config/env.server", () => ({
@@ -20,6 +21,10 @@ vi.mock("~/auth/innlogget-bruker.server", () => ({
 
 vi.mock("~/analytics/analytics", () => ({
   sporHendelse: vi.fn(),
+}));
+
+vi.mock("~/kodeverk/useKodeverk", () => ({
+  useKodeverk: () => mockKodeverk,
 }));
 
 const innhold: DokumentInnhold = [{ type: "p", children: [{ text: "" }] }];
@@ -69,7 +74,7 @@ function renderSide(kanRedigere: boolean) {
           fødselsnummer: "01010112345",
           saksnummer: "Sak 105",
           saksbehandler: "Test Saksbehandler",
-          avdeling: "4812",
+          avdeling: "hu424t",
         },
       }),
     },
@@ -122,6 +127,21 @@ describe("DokumentSide", () => {
     expect((await screen.findByText("01010112345")).className).toContain(
       "bg-ax-bg-accent-moderate",
     );
+  });
+
+  it("viser enhetsnavnet, ikke enhetskoden, i «avdeling»-variabelen", async () => {
+    renderSide(true);
+
+    fireEvent.click(await screen.findByRole("button", { name: /Dokumenter/ }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Variabler" }));
+
+    const sidepanel = screen.getByRole("complementary");
+    fireEvent.click(
+      within(sidepanel).getByRole("button", { name: "Sett inn variabelen Avdeling" }),
+    );
+
+    expect(await screen.findByText("Nord")).toBeDefined();
+    expect(screen.queryByText("hu424t")).toBeNull();
   });
 
   it("viser slett-knapp når man kan redigere", async () => {

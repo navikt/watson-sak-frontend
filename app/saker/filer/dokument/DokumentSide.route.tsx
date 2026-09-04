@@ -1,6 +1,6 @@
 import { ArrowLeftIcon, TrashIcon } from "@navikt/aksel-icons";
 import { Button, Detail, HStack, VStack } from "@navikt/ds-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   isRouteErrorResponse,
   Link as RouterLink,
@@ -9,6 +9,8 @@ import {
   useRevalidator,
 } from "react-router";
 import { DokumentIkkeFunnet } from "~/feilhåndtering/DokumentIkkeFunnet";
+import { finnEnhetsnavn } from "~/kodeverk/enheter";
+import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { RouteConfig } from "~/routeConfig";
 import { DokumentTre } from "~/saker/filer/DokumentTre";
@@ -360,6 +362,18 @@ export default function DokumentSide() {
     variabelVerdier,
     miljø,
   } = useLoaderData<typeof loader>();
+  const kodeverk = useKodeverk();
+
+  // Saken lagrer enhetskoden, men i dokumentteksten skal «avdeling» vise enhetsnavnet.
+  const variablerTilVisning = useMemo(
+    () => ({
+      ...variabelVerdier,
+      avdeling: variabelVerdier.avdeling
+        ? finnEnhetsnavn(kodeverk.enheter, variabelVerdier.avdeling)
+        : variabelVerdier.avdeling,
+    }),
+    [variabelVerdier, kodeverk.enheter],
+  );
 
   // `key` på dokument-id sørger for at all lokal redigeringstilstand (tittel, innhold,
   // editor-instans og autolagring) nullstilles når man navigerer til et annet dokument
@@ -372,7 +386,7 @@ export default function DokumentSide() {
       dokumentHistorikk={dokumentHistorikk}
       sakReferanse={sakReferanse}
       kanRedigere={kanRedigere}
-      variabelVerdier={variabelVerdier}
+      variabelVerdier={variablerTilVisning}
       erDemo={miljø === "demo"}
     />
   );
