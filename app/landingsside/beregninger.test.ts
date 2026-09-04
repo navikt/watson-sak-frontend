@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import type { KontrollsakResponse } from "~/saker/types.backend";
-import type { Avslutningsdatoer } from "~/statistikk/mock-data.server";
+import type { Avslutningsdatoer } from "./beregninger";
 import { beregnNokkeltall } from "./beregninger";
 
 function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): KontrollsakResponse {

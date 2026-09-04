@@ -11,7 +11,6 @@ export default [
     route(RouteConfig.MINE_SAKER, "mine-saker/MineSakerSide.route.tsx"),
     route(RouteConfig.ALLE_SAKER, "alle-saker/AlleSakerSide.route.tsx"),
     route(RouteConfig.REGISTRER_SAK, "registrer-sak/RegistrerSakSide.route.tsx"),
-    route(RouteConfig.STATISTIKK, "statistikk/StatistikkSide.route.tsx"),
     route(RouteConfig.PERSONVERN, "personvern/PersonvernSide.route.tsx"),
     route(RouteConfig.SØK, "søk/SøkSide.route.tsx"),
     route(RouteConfig.VARSLER, "varsler/VarslerSide.route.tsx"),

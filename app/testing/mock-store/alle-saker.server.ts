@@ -1,9 +1,6 @@
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { finnSakMedReferanse } from "~/saker/id";
-import {
-  mockMineSakerAvslutningsdatoer,
-  mockMineSakerInnloggetNavIdent,
-} from "./saker/mine-saker.server";
+import { mockMineSakerInnloggetNavIdent } from "./saker/mine-saker.server";
 import type { MockState } from "./session.server";
 export { leggTilMockSakIFordeling } from "./saker/fordeling.server";
 
@@ -66,19 +63,4 @@ export function hentSakMedReferanse(
   sakId: string,
 ): KontrollsakResponse | undefined {
   return finnSakMedReferanse(hentAlleSaker(state), sakId);
-}
-
-export function hentAvslutningsdatoer(state: MockState): Record<string, string> {
-  const avslutningsdatoer: Record<string, string> = { ...mockMineSakerAvslutningsdatoer };
-
-  for (const sak of hentAlleSaker(state)) {
-    if (
-      (sak.status === "AVSLUTTET" || sak.status === "HENLAGT") &&
-      avslutningsdatoer[String(sak.id)] === undefined
-    ) {
-      avslutningsdatoer[String(sak.id)] = (sak.oppdatert ?? sak.opprettet).slice(0, 10);
-    }
-  }
-
-  return avslutningsdatoer;
 }
