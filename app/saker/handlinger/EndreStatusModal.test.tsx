@@ -335,4 +335,57 @@ describe("EndreStatusModal", () => {
       ),
     ).toBeDefined();
   });
+
+  it("viser kun arbeidsstatusendringen i suksessmeldingen når status er uendret", () => {
+    mockInnsendingsResultat = { ok: true };
+
+    renderMedRouter(
+      <EndreStatusModal
+        sakId="00000000-0000-4000-8000-000000000001"
+        nåværendeStatus="UTREDES"
+        nåværendeBlokkering={null}
+        nåværendeHenleggelsesarsak={null}
+        åpen={true}
+        onClose={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("radio", { name: "I bero" }));
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    fireEvent.click(screen.getByRole("button", { name: "Endre status" }));
+
+    expect(screen.getByText("Status endret")).toBeDefined();
+    expect(
+      screen.getByText(
+        "Arbeidsstatusen på sak #00000000-0000-4000-8000-000000000001 er satt til i bero.",
+      ),
+    ).toBeDefined();
+  });
+
+  it("viser både status- og arbeidsstatusendring i suksessmeldingen når begge er endret", () => {
+    mockInnsendingsResultat = { ok: true };
+
+    renderMedRouter(
+      <EndreStatusModal
+        sakId="00000000-0000-4000-8000-000000000001"
+        nåværendeStatus="OPPRETTET"
+        nåværendeBlokkering={null}
+        nåværendeHenleggelsesarsak={null}
+        åpen={true}
+        onClose={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("radio", { name: "Utredes" }));
+    fireEvent.click(screen.getByRole("radio", { name: "I bero" }));
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    fireEvent.click(screen.getByRole("button", { name: "Endre status" }));
+
+    expect(screen.getByText("Status endret")).toBeDefined();
+    expect(
+      screen.getByText(
+        "Statusen på sak #00000000-0000-4000-8000-000000000001 er satt til Utredes, og arbeidsstatusen er satt til i bero.",
+      ),
+    ).toBeDefined();
+  });
 });
