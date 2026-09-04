@@ -55,6 +55,21 @@ describe("hendelseBeskrivelse", () => {
     expect(resultat).toContain("Status: Henlagt");
     expect(resultat).not.toContain("Årsak:");
   });
+
+  it("viser hvilke felter som ble endret for SAKSINFORMASJON_ENDRET", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "SAKSINFORMASJON_ENDRET",
+      beskrivelse: "Endret kategori og ytelser.",
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe("Endret kategori og ytelser.");
+  });
+
+  it("faller tilbake til status for SAKSINFORMASJON_ENDRET uten beskrivelse", () => {
+    const hendelse = lagHendelse({ hendelsesType: "SAKSINFORMASJON_ENDRET" });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe("Status: Utredes");
+  });
 });
 
 describe("filhendelser", () => {

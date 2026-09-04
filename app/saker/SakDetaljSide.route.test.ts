@@ -651,6 +651,8 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
 
     const historikk = hentHistorikk(testRequest, String(kontrollsak.id));
     expect(historikk[0]?.hendelsesType).toBe("SAKSINFORMASJON_ENDRET");
+    expect(historikk[0]?.beskrivelse).toMatch(/^Endret /);
+    expect(historikk[0]?.beskrivelse).toContain("ytelser");
   });
 
   it("oppdaterer kilde når sak får oppdatert kilde", async () => {
