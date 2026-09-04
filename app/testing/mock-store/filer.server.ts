@@ -1,5 +1,6 @@
 import type { FilResponse } from "~/saker/filer/typer";
 import type { MockState } from "./session.server";
+import { hentLagretFilInnhold, lagreFilInnhold, slettFilInnhold } from "./fil-innhold.server";
 
 const filSeeds: { sakId: string; filer: FilResponse[] }[] = [
   {
@@ -56,6 +57,7 @@ export function leggTilFil(
     bruktIDokumenter: [],
   };
   liste.unshift(nyFil);
+  lagreFilInnhold(nyFil.id, fil);
   return nyFil;
 }
 
@@ -114,17 +116,48 @@ export function opprettArkivertFilFraDokument(
   return nyFil;
 }
 
-export function hentFilInnhold(state: MockState, sakId: string, filId: string): Response {
+export async function hentFilInnhold(
+  state: MockState,
+  sakId: string,
+  filId: string,
+): Promise<Response> {
   const liste = initialiserFilerForSak(state, sakId);
   const fil = liste.find((f) => f.id === filId);
   const filnavn = sanitiserFilnavn(fil?.filnavn ?? `fil-${filId}`);
   const contentType = fil?.contentType ?? "application/octet-stream";
+
+  const innhold = hentLagretFilInnhold(filId);
+  if (innhold) {
+    return new Response(new Uint8Array(await innhold.arrayBuffer()), {
+      headers: {
+        "Content-Type": contentType,
+        "Content-Disposition": `inline; filename="${filnavn}"`,
+      },
+    });
+  }
+
+  // Seedede filer har ikke reelt innhold. For bilder gir vi en placeholder slik at
+  // forhåndsvisning og dokumenteditor viser noe fremfor et ødelagt bilde.
+  if (contentType.startsWith("image/")) {
+    return new Response(lagPlaceholderBilde(fil?.filnavn ?? "Bilde"), {
+      headers: {
+        "Content-Type": "image/svg+xml",
+        "Content-Disposition": `inline; filename="${filnavn}"`,
+      },
+    });
+  }
+
   return new Response(new Uint8Array([37, 80, 68, 70]), {
     headers: {
       "Content-Type": contentType,
       "Content-Disposition": `inline; filename="${filnavn}"`,
     },
   });
+}
+
+function lagPlaceholderBilde(tekst: string): string {
+  const escapet = tekst.replace(/[<>&"]/g, "");
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360" role="img" aria-label="${escapet}"><rect width="640" height="360" fill="#e6f0ff"/><rect x="8" y="8" width="624" height="344" fill="none" stroke="#0067c5" stroke-width="4" stroke-dasharray="12 8"/><text x="320" y="170" text-anchor="middle" font-family="sans-serif" font-size="28" fill="#0067c5">Demobilde</text><text x="320" y="210" text-anchor="middle" font-family="sans-serif" font-size="20" fill="#4a5a70">${escapet}</text></svg>`;
 }
 
 function sanitiserFilnavn(filnavn: string): string {
@@ -136,5 +169,6 @@ export function slettFil(state: MockState, sakId: string, filId: string): FilRes
   const indeks = liste.findIndex((f) => f.id === filId);
   if (indeks === -1) return null;
   const [slettetFil] = liste.splice(indeks, 1);
+  slettFilInnhold(filId);
   return slettetFil;
 }

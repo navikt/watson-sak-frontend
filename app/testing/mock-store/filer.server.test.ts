@@ -2,10 +2,13 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   arkiverFil,
   hentFilerForSak,
+  hentFilInnhold,
   leggTilFil,
   opprettArkivertFilFraDokument,
+  slettFil,
 } from "./filer.server";
 import { hentMockState, resetDefaultSession } from "./session.server";
+import { tømFilInnholdslager } from "./fil-innhold.server";
 
 const testRequest = new Request("http://localhost");
 function state() {
@@ -26,6 +29,7 @@ function lastOppPdf(navn: string) {
 describe("mock-store filer", () => {
   beforeEach(() => {
     resetDefaultSession();
+    tømFilInnholdslager();
   });
 
   it("markerer en fil som arkivert med saksbehandler og journalpost", () => {
@@ -84,5 +88,53 @@ describe("mock-store filer", () => {
     );
 
     expect(fil.filnavn).toBe("Uten tittel.pdf");
+  });
+
+  it("returnerer opplastet innhold igjen ved nedlasting", async () => {
+    const fil = leggTilFil(
+      state(),
+      sakId,
+      new File(["bildebytes"], "bilde.png", { type: "image/png" }),
+      "Ola Nordmann",
+    );
+
+    const respons = await hentFilInnhold(state(), sakId, fil.id);
+
+    expect(respons.headers.get("Content-Type")).toBe("image/png");
+    expect(await respons.text()).toBe("bildebytes");
+  });
+
+  it("gir en placeholder for seedede bilder uten innhold", async () => {
+    const seedetBilde = hentFilerForSak(state(), sakId).find((f) => f.contentType === "image/png")!;
+
+    const respons = await hentFilInnhold(state(), sakId, seedetBilde.id);
+
+    expect(respons.headers.get("Content-Type")).toBe("image/svg+xml");
+    expect(await respons.text()).toContain("<svg");
+  });
+
+  it("lagrer ikke innholdet for filer over størrelsesgrensen", async () => {
+    const stor = new File([new Uint8Array(13 * 1024 * 1024)], "stor.png", {
+      type: "image/png",
+    });
+    const fil = leggTilFil(state(), sakId, stor, "Ola Nordmann");
+
+    const respons = await hentFilInnhold(state(), sakId, fil.id);
+
+    expect(respons.headers.get("Content-Type")).toBe("image/svg+xml");
+  });
+
+  it("fjerner innholdet når filen slettes", async () => {
+    const fil = leggTilFil(
+      state(),
+      sakId,
+      new File(["bildebytes"], "bilde.png", { type: "image/png" }),
+      "Ola Nordmann",
+    );
+    slettFil(state(), sakId, fil.id);
+
+    const respons = await hentFilInnhold(state(), sakId, fil.id);
+
+    expect(await respons.text()).not.toBe("bildebytes");
   });
 });

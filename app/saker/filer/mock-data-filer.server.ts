@@ -13,7 +13,7 @@ export function hentFilerForSak(request: Request, sakId: string): FilResponse[] 
   return _hentFilerForSak(hentMockState(request), sakId);
 }
 
-export function hentFilInnhold(request: Request, sakId: string, filId: string): Response {
+export function hentFilInnhold(request: Request, sakId: string, filId: string): Promise<Response> {
   return _hentFilInnhold(hentMockState(request), sakId, filId);
 }
 
