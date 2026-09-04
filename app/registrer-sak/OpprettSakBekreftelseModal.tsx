@@ -169,7 +169,11 @@ export function OpprettSakBekreftelseModal({
 
         {steg === "suksess" && (
           <VStack gap="space-16" align="center" className="py-6 text-center">
-            <CheckmarkCircleFillIcon aria-hidden fontSize="3rem" className="text-ax-text-success" />
+            <CheckmarkCircleFillIcon
+              aria-hidden
+              fontSize="3rem"
+              className="text-ax-bg-success-strong"
+            />
             <VStack gap="space-4" align="center">
               <BodyShort weight="semibold">Sak opprettet</BodyShort>
               <BodyShort textColor="subtle">
