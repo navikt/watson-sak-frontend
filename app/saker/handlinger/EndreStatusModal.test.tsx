@@ -288,7 +288,11 @@ describe("EndreStatusModal", () => {
     fireEvent.click(screen.getByRole("button", { name: "Endre status" }));
 
     expect(screen.getByText("Status endret")).toBeDefined();
-    expect(screen.getByText("Statusen på saken er endret til «Utredes».")).toBeDefined();
+    expect(
+      screen.getByText(
+        "Statusen på sak #00000000-0000-4000-8000-000000000001 er satt til Utredes.",
+      ),
+    ).toBeDefined();
     expect(screen.getAllByRole("button", { name: "Lukk" }).length).toBeGreaterThan(0);
   });
 });

@@ -414,7 +414,7 @@ export function EndreStatusModal({
                 <BodyShort weight="semibold">Status endret</BodyShort>
                 <BodyShort textColor="subtle">
                   {statusEndret
-                    ? `Statusen på saken er endret til «${nyStatusLabel}».`
+                    ? `Statusen på sak #${getSaksreferanse(sakId)} er satt til ${nyStatusLabel}.`
                     : "Saken er oppdatert."}
                 </BodyShort>
               </VStack>
