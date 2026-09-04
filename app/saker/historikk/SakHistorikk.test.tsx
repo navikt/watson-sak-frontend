@@ -222,6 +222,143 @@ describe("SakHistorikk", () => {
     expect(screen.getByText("Sak tatt ut av bero")).toBeDefined();
   });
 
+  it("viser statusendring for SAK_STATUS_ENDRET fra backend", () => {
+    renderMedRouter(
+      <SakHistorikk
+        redigerbar={true}
+        sakId={1}
+        hendelser={[
+          lagBackendHendelse({
+            hendelseId: "00000000-0000-4000-8000-000000000002",
+            hendelsesType: "SAK_STATUS_ENDRET",
+            status: "UTREDES",
+            tidspunkt: "2026-03-31T11:00:00Z",
+          }),
+          lagBackendHendelse({
+            hendelseId: "00000000-0000-4000-8000-000000000001",
+            hendelsesType: "SAK_OPPRETTET",
+            status: "OPPRETTET",
+            tidspunkt: "2026-03-31T10:00:00Z",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Sak utredes")).toBeDefined();
+    expect(screen.getByText(/Status: Utredes/)).toBeDefined();
+  });
+
+  it("viser arbeidsstatusendring for SAK_STATUS_ENDRET når kun blokkering endres", () => {
+    renderMedRouter(
+      <SakHistorikk
+        redigerbar={true}
+        sakId={1}
+        hendelser={[
+          lagBackendHendelse({
+            hendelseId: "00000000-0000-4000-8000-000000000002",
+            hendelsesType: "SAK_STATUS_ENDRET",
+            status: "UTREDES",
+            blokkert: "I_BERO",
+            tidspunkt: "2026-03-31T11:00:00Z",
+          }),
+          lagBackendHendelse({
+            hendelseId: "00000000-0000-4000-8000-000000000001",
+            hendelsesType: "SAK_STATUS_ENDRET",
+            status: "UTREDES",
+            blokkert: null,
+            tidspunkt: "2026-03-31T10:00:00Z",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Sak satt i bero")).toBeDefined();
+    expect(screen.getByText(/Arbeidsstatus: I bero – Status: Utredes/)).toBeDefined();
+  });
+
+  it("viser gjenopptak for SAK_STATUS_ENDRET når blokkering fjernes", () => {
+    renderMedRouter(
+      <SakHistorikk
+        redigerbar={true}
+        sakId={1}
+        hendelser={[
+          lagBackendHendelse({
+            hendelseId: "00000000-0000-4000-8000-000000000002",
+            hendelsesType: "SAK_STATUS_ENDRET",
+            status: "UTREDES",
+            blokkert: null,
+            tidspunkt: "2026-03-31T11:00:00Z",
+          }),
+          lagBackendHendelse({
+            hendelseId: "00000000-0000-4000-8000-000000000001",
+            hendelsesType: "SAK_STATUS_ENDRET",
+            status: "UTREDES",
+            blokkert: "VENTER_PA_VEDTAK",
+            tidspunkt: "2026-03-31T10:00:00Z",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Sak gjenopptatt")).toBeDefined();
+    expect(screen.getByText(/Arbeidsstatus: Aktiv – Status: Utredes/)).toBeDefined();
+  });
+
+  it("viser både status- og arbeidsstatusendring når begge endres samtidig for SAK_STATUS_ENDRET", () => {
+    renderMedRouter(
+      <SakHistorikk
+        redigerbar={true}
+        sakId={1}
+        hendelser={[
+          lagBackendHendelse({
+            hendelseId: "00000000-0000-4000-8000-000000000002",
+            hendelsesType: "SAK_STATUS_ENDRET",
+            status: "AVSLUTTET",
+            blokkert: null,
+            tidspunkt: "2026-03-31T11:00:00Z",
+          }),
+          lagBackendHendelse({
+            hendelseId: "00000000-0000-4000-8000-000000000001",
+            hendelsesType: "SAK_STATUS_ENDRET",
+            status: "UTREDES",
+            blokkert: "I_BERO",
+            tidspunkt: "2026-03-31T10:00:00Z",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Sak avsluttet og tatt ut av bero")).toBeDefined();
+    expect(screen.getByText(/Arbeidsstatus: Aktiv – Status: Avsluttet/)).toBeDefined();
+  });
+
+  it("viser henleggelsesårsak for SAK_STATUS_ENDRET når status blir HENLAGT", () => {
+    renderMedRouter(
+      <SakHistorikk
+        redigerbar={true}
+        sakId={1}
+        hendelser={[
+          lagBackendHendelse({
+            hendelseId: "00000000-0000-4000-8000-000000000002",
+            hendelsesType: "SAK_STATUS_ENDRET",
+            status: "HENLAGT",
+            henleggelsesarsak: "FORELDET",
+            tidspunkt: "2026-03-31T11:00:00Z",
+          }),
+          lagBackendHendelse({
+            hendelseId: "00000000-0000-4000-8000-000000000001",
+            hendelsesType: "SAK_STATUS_ENDRET",
+            status: "UTREDES",
+            tidspunkt: "2026-03-31T10:00:00Z",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Sak henlagt")).toBeDefined();
+    expect(screen.getByText(/Årsak: Foreldet/)).toBeDefined();
+  });
+
   it("renderer fritekst for manuelt historikkinnslag", () => {
     renderMedRouter(
       <SakHistorikk

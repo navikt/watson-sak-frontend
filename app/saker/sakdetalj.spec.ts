@@ -86,12 +86,20 @@ test.describe("Sakdetalj", () => {
   test("kan endre status og arbeidsstatus i samlet dialog", async ({ page }) => {
     await page.getByRole("button", { name: "Endre status" }).click();
 
-    const dialog = page.getByRole("dialog", { name: "Endre status" });
+    const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
 
     await dialog.getByRole("radio", { name: "Anmeldt" }).click();
     await dialog.getByRole("radio", { name: "Venter på informasjon" }).click();
     await dialog.getByRole("button", { name: "Lagre" }).click();
+
+    // Viser bekreftelsessteg før innsending
+    await expect(dialog.getByText("Du endrer nå status på saken:")).toBeVisible();
+    await dialog.getByRole("button", { name: "Endre status" }).click();
+
+    // Viser suksesssteg, som må lukkes manuelt
+    await expect(dialog.getByText("Status endret")).toBeVisible();
+    await dialog.getByRole("button", { name: "Lukk" }).last().click();
 
     await expect(dialog).not.toBeVisible();
     await expect(page.locator(".aksel-tag", { hasText: "Anmeldt" })).toBeVisible();

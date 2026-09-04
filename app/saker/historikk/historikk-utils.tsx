@@ -31,6 +31,86 @@ export function erManuellHendelse(hendelse: SakHendelse): boolean {
   return hendelse.hendelsesType === "MANUELL_HENDELSE";
 }
 
+/**
+ * Bygger et oppslag fra hendelseId til foregående hendelse (kronologisk),
+ * gitt en full, usortert/uslicet liste med hendelser (nyeste først).
+ *
+ * Trengs fordi backend kun sender ett generisk `SAK_STATUS_ENDRET` for både
+ * statusendringer og arbeidsstatus(blokkering)-endringer – vi må sammenligne
+ * med forrige hendelse sin status/blokkert-snapshot for å vite hva som
+ * faktisk endret seg.
+ */
+export function lagForrigeHendelseKart(hendelser: SakHendelse[]): Map<string, SakHendelse> {
+  const kart = new Map<string, SakHendelse>();
+  for (let i = 0; i < hendelser.length - 1; i++) {
+    kart.set(hendelser[i].hendelseId, hendelser[i + 1]);
+  }
+  return kart;
+}
+
+function diffStatusOgArbeidsstatus(hendelse: SakHendelse, forrigeHendelse?: SakHendelse) {
+  const forrigeBlokkert = forrigeHendelse?.blokkert ?? null;
+  return {
+    statusEndret: !forrigeHendelse || hendelse.status !== (forrigeHendelse.status ?? null),
+    arbeidsstatusEndret: !!forrigeHendelse && (hendelse.blokkert ?? null) !== forrigeBlokkert,
+    forrigeBlokkert,
+  };
+}
+
+function statusTittel(status: SakHendelse["status"]): string {
+  return `Sak ${formaterStatus(status).toLocaleLowerCase("nb-NO")}`;
+}
+
+function arbeidsstatusKortTittel(
+  blokkert: SakHendelse["blokkert"],
+  forrigeBlokkert: SakHendelse["blokkert"],
+): string {
+  if (!blokkert) {
+    return forrigeBlokkert === "I_BERO" ? "tatt ut av bero" : "gjenopptatt";
+  }
+  return blokkert === "I_BERO" ? "satt i bero" : "satt på vent";
+}
+
+function statusOgArbeidsstatusTittel(hendelse: SakHendelse, forrigeHendelse?: SakHendelse): string {
+  const { statusEndret, arbeidsstatusEndret, forrigeBlokkert } = diffStatusOgArbeidsstatus(
+    hendelse,
+    forrigeHendelse,
+  );
+
+  if (statusEndret && arbeidsstatusEndret) {
+    return `${statusTittel(hendelse.status)} og ${arbeidsstatusKortTittel(hendelse.blokkert, forrigeBlokkert)}`;
+  }
+  if (arbeidsstatusEndret) {
+    const kort = arbeidsstatusKortTittel(hendelse.blokkert, forrigeBlokkert);
+    return `Sak ${kort}`;
+  }
+  return statusTittel(hendelse.status);
+}
+
+function statusOgArbeidsstatusBeskrivelse(
+  hendelse: SakHendelse,
+  forrigeHendelse?: SakHendelse,
+): string {
+  const { arbeidsstatusEndret } = diffStatusOgArbeidsstatus(hendelse, forrigeHendelse);
+  const deler: string[] = [];
+
+  if (hendelse.beskrivelse) {
+    deler.push(hendelse.beskrivelse);
+  }
+
+  if (arbeidsstatusEndret) {
+    deler.push(
+      hendelse.blokkert
+        ? `Arbeidsstatus: ${formaterBlokkeringsarsak(hendelse.blokkert)}`
+        : "Arbeidsstatus: Aktiv",
+    );
+  }
+
+  deler.push(`Status: ${formaterStatus(hendelse.status)}`);
+
+  return deler.join(" – ");
+}
+
 export function formaterTidspunkt(isoString: string): string {
   try {
     return new Intl.DateTimeFormat("nb-NO", {
@@ -46,7 +126,7 @@ export function formaterTidspunkt(isoString: string): string {
   }
 }
 
-export function hendelseTittel(hendelse: SakHendelse): string {
+export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHendelse): string {
   switch (hendelse.hendelsesType) {
     case "SAK_OPPRETTET":
       return "Sak opprettet";
@@ -55,7 +135,8 @@ export function hendelseTittel(hendelse: SakHendelse): string {
     case "SAK_TILDELT":
       return "Sak tildelt";
     case "STATUS_ENDRET":
-      return `Sak ${formaterStatus(hendelse.status).toLocaleLowerCase("nb-NO")}`;
+    case "SAK_STATUS_ENDRET":
+      return statusOgArbeidsstatusTittel(hendelse, forrigeHendelse);
     case "SAKSINFORMASJON_ENDRET":
       return "Saksinformasjon endret";
     case "MOTTAKSENHET_ENDRET":
@@ -101,7 +182,10 @@ export function hendelseTittel(hendelse: SakHendelse): string {
   }
 }
 
-export function hendelseBeskrivelse(hendelse: SakHendelse): string | null {
+export function hendelseBeskrivelse(
+  hendelse: SakHendelse,
+  forrigeHendelse?: SakHendelse,
+): string | null {
   if (hendelse.hendelsesType === "MANUELL_HENDELSE") {
     return hendelse.beskrivelse ?? null;
   }
@@ -121,16 +205,11 @@ export function hendelseBeskrivelse(hendelse: SakHendelse): string | null {
     return hendelse.beskrivelse ?? `Status: ${formaterStatus(hendelse.status)}`;
   }
 
-  if (hendelse.hendelsesType === "STATUS_ENDRET") {
-    const deler: string[] = [];
-
-    if (hendelse.beskrivelse) {
-      deler.push(hendelse.beskrivelse);
-    }
-
-    deler.push(`Status: ${formaterStatus(hendelse.status)}`);
-
-    return deler.join(" – ");
+  if (
+    hendelse.hendelsesType === "STATUS_ENDRET" ||
+    hendelse.hendelsesType === "SAK_STATUS_ENDRET"
+  ) {
+    return statusOgArbeidsstatusBeskrivelse(hendelse, forrigeHendelse);
   }
 
   if (hendelse.hendelsesType === "SAK_HENLAGT") {
@@ -243,6 +322,11 @@ export function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
       return <ClockDashedIcon {...iconProps} />;
     case "SAK_GJENOPPTATT":
       return <ArrowUndoIcon {...iconProps} />;
+    case "SAK_STATUS_ENDRET":
+      if (hendelse.status === "HENLAGT") return <XMarkOctagonIcon {...iconProps} />;
+      if (hendelse.status === "ANMELDT") return <GavelIcon {...iconProps} />;
+      if (hendelse.blokkert) return <ClockDashedIcon {...iconProps} />;
+      return <ClockIcon {...iconProps} />;
     case "NOTAT_SENDT":
       return <DocPencilIcon {...iconProps} />;
     case "JOURNALPOST_OPPRETTET":
@@ -284,7 +368,10 @@ export function HendelseInnhold({
     );
   }
 
-  if (hendelse.hendelsesType === "SAK_HENLAGT") {
+  if (
+    hendelse.hendelsesType === "SAK_HENLAGT" ||
+    (hendelse.hendelsesType === "SAK_STATUS_ENDRET" && hendelse.status === "HENLAGT")
+  ) {
     return (
       <VStack gap="space-1">
         {beskrivelse && <BodyShort size="small">{beskrivelse}</BodyShort>}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { SakHendelse } from "./typer";
-import { hendelseBeskrivelse, hendelseTittel } from "./historikk-utils";
+import { hendelseBeskrivelse, hendelseTittel, lagForrigeHendelseKart } from "./historikk-utils";
 
 function lagHendelse(overrides: Partial<SakHendelse>): SakHendelse {
   return {
@@ -69,6 +69,88 @@ describe("hendelseBeskrivelse", () => {
     const hendelse = lagHendelse({ hendelsesType: "SAKSINFORMASJON_ENDRET" });
 
     expect(hendelseBeskrivelse(hendelse)).toBe("Status: Utredes");
+  });
+});
+
+describe("SAK_STATUS_ENDRET (generisk hendelse fra backend for status- og arbeidsstatusendring)", () => {
+  it("bruker forrige hendelse i lista til å avgjøre hva som faktisk endret seg", () => {
+    const hendelser: SakHendelse[] = [
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000002",
+        hendelsesType: "SAK_STATUS_ENDRET",
+        status: "UTREDES",
+        blokkert: "I_BERO",
+        tidspunkt: "2025-01-02T12:00:00Z",
+      }),
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000001",
+        hendelsesType: "SAK_STATUS_ENDRET",
+        status: "UTREDES",
+        blokkert: null,
+        tidspunkt: "2025-01-01T12:00:00Z",
+      }),
+    ];
+    const kart = lagForrigeHendelseKart(hendelser);
+    const forrigeHendelse = kart.get(hendelser[0].hendelseId);
+
+    expect(hendelseTittel(hendelser[0], forrigeHendelse)).toBe("Sak satt i bero");
+    expect(hendelseBeskrivelse(hendelser[0], forrigeHendelse)).toBe(
+      "Arbeidsstatus: I bero – Status: Utredes",
+    );
+  });
+
+  it("viser statusendring uten forrigeHendelse som om alt er endret (bakoverkompatibelt)", () => {
+    const hendelse = lagHendelse({ hendelsesType: "SAK_STATUS_ENDRET", status: "ANMELDT" });
+
+    expect(hendelseTittel(hendelse)).toBe("Sak anmeldt");
+    expect(hendelseBeskrivelse(hendelse)).toBe("Status: Anmeldt");
+  });
+
+  it("viser både status- og arbeidsstatusendring samtidig", () => {
+    const hendelser: SakHendelse[] = [
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000002",
+        hendelsesType: "SAK_STATUS_ENDRET",
+        status: "AVSLUTTET",
+        blokkert: null,
+        tidspunkt: "2025-01-02T12:00:00Z",
+      }),
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000001",
+        hendelsesType: "SAK_STATUS_ENDRET",
+        status: "UTREDES",
+        blokkert: "VENTER_PA_VEDTAK",
+        tidspunkt: "2025-01-01T12:00:00Z",
+      }),
+    ];
+    const kart = lagForrigeHendelseKart(hendelser);
+    const forrigeHendelse = kart.get(hendelser[0].hendelseId);
+
+    expect(hendelseTittel(hendelser[0], forrigeHendelse)).toBe("Sak avsluttet og gjenopptatt");
+  });
+
+  it("viser ingen arbeidsstatusendring når kun status endres", () => {
+    const hendelser: SakHendelse[] = [
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000002",
+        hendelsesType: "SAK_STATUS_ENDRET",
+        status: "AVSLUTTET",
+        blokkert: null,
+        tidspunkt: "2025-01-02T12:00:00Z",
+      }),
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000001",
+        hendelsesType: "SAK_STATUS_ENDRET",
+        status: "UTREDES",
+        blokkert: null,
+        tidspunkt: "2025-01-01T12:00:00Z",
+      }),
+    ];
+    const kart = lagForrigeHendelseKart(hendelser);
+    const forrigeHendelse = kart.get(hendelser[0].hendelseId);
+
+    expect(hendelseTittel(hendelser[0], forrigeHendelse)).toBe("Sak avsluttet");
+    expect(hendelseBeskrivelse(hendelser[0], forrigeHendelse)).toBe("Status: Avsluttet");
   });
 });
 
