@@ -112,6 +112,7 @@ export function EndreStatusModal({
   const [steg, setSteg] = useState<Steg>("skjema");
   const [innsendingFormData, setInnsendingFormData] = useState<FormData | null>(null);
   const [feilmelding, setFeilmelding] = useState<string | null>(null);
+  const [bekreftetStatus, setBekreftetStatus] = useState<KontrollsakStatus | null>(null);
 
   const [form, fields] = useForm({
     id: "endre-status",
@@ -200,6 +201,7 @@ export function EndreStatusModal({
       fraStatus: nåværendeStatus,
       tilStatus: valgtStatus,
     });
+    setBekreftetStatus(valgtStatus);
     submitPågår.current = true;
     fetcher.submit(innsendingFormData, {
       method: "post",
@@ -219,6 +221,7 @@ export function EndreStatusModal({
       setSteg("skjema");
       setInnsendingFormData(null);
       setFeilmelding(null);
+      setBekreftetStatus(null);
     }
     forrigeÅpen.current = åpen;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -413,9 +416,7 @@ export function EndreStatusModal({
               <VStack gap="space-4" align="center">
                 <BodyShort weight="semibold">Status endret</BodyShort>
                 <BodyShort textColor="subtle">
-                  {statusEndret
-                    ? `Statusen på sak #${getSaksreferanse(sakId)} er satt til ${nyStatusLabel}.`
-                    : "Saken er oppdatert."}
+                  {`Statusen på sak #${getSaksreferanse(sakId)} er satt til ${formaterStatus(bekreftetStatus ?? nåværendeStatus)}.`}
                 </BodyShort>
               </VStack>
             </VStack>

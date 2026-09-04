@@ -295,4 +295,44 @@ describe("EndreStatusModal", () => {
     ).toBeDefined();
     expect(screen.getAllByRole("button", { name: "Lukk" }).length).toBeGreaterThan(0);
   });
+
+  it("beholder korrekt suksessmelding selv om nåværendeStatus oppdateres samtidig (revalidering)", () => {
+    mockInnsendingsResultat = { ok: true };
+
+    function Wrapper({ status }: { status: "OPPRETTET" | "UTREDES" }) {
+      return (
+        <EndreStatusModal
+          sakId="00000000-0000-4000-8000-000000000001"
+          nåværendeStatus={status}
+          nåværendeBlokkering={null}
+          nåværendeHenleggelsesarsak={null}
+          åpen={true}
+          onClose={() => {}}
+        />
+      );
+    }
+
+    const router = createMemoryRouter([{ path: "/", element: <Wrapper status="OPPRETTET" /> }], {
+      initialEntries: ["/"],
+    });
+    const { rerender } = render(<RouterProvider router={router} />);
+
+    fireEvent.click(screen.getByRole("radio", { name: "Utredes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    fireEvent.click(screen.getByRole("button", { name: "Endre status" }));
+
+    // Simulerer at loaderen revaliderer og sender inn den nye statusen som prop,
+    // slik at nåværendeStatus === valgtStatus akkurat idet suksesssteget vises.
+    const router2 = createMemoryRouter([{ path: "/", element: <Wrapper status="UTREDES" /> }], {
+      initialEntries: ["/"],
+    });
+    rerender(<RouterProvider router={router2} />);
+
+    expect(screen.getByText("Status endret")).toBeDefined();
+    expect(
+      screen.getByText(
+        "Statusen på sak #00000000-0000-4000-8000-000000000001 er satt til Utredes.",
+      ),
+    ).toBeDefined();
+  });
 });
