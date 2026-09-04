@@ -8,6 +8,8 @@ import {
 } from "@navikt/aksel-icons";
 import { useLoaderData } from "react-router";
 import { skalBrukeMockdata } from "~/config/env.server";
+import { finnEnhetsnavn } from "~/kodeverk/enheter";
+import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { hentAlleSaker, hentAvslutningsdatoer } from "~/saker/mock-alle-saker.server";
 import { formaterStatus, type KontrollsakStatus } from "~/saker/visning";
@@ -46,6 +48,7 @@ export function loader({ request }: Route.LoaderArgs) {
 
 export default function StatistikkSide() {
   const data = useLoaderData<typeof loader>();
+  const kodeverk = useKodeverk();
 
   if (data.ikkeImplementert) {
     return (
@@ -76,6 +79,12 @@ export default function StatistikkSide() {
   const statusData = (Object.keys(antallPerStatus) as KontrollsakStatus[]).map((status) => ({
     navn: formaterStatus(status),
     antall: antallPerStatus[status],
+  }));
+
+  // Sakene grupperes på enhetskode, mens diagrammet skal vise enhetsnavnet.
+  const seksjonData = antallPerSeksjon.map((seksjon) => ({
+    ...seksjon,
+    navn: finnEnhetsnavn(kodeverk.enheter, seksjon.navn),
   }));
 
   return (
@@ -143,8 +152,8 @@ export default function StatistikkSide() {
             Saker per seksjon
           </Heading>
           <HorisontaltSoylediagram
-            data={antallPerSeksjon}
-            ariaLabel={`Søylediagram over saker per seksjon. ${antallPerSeksjon.map((s) => `${s.navn}: ${s.antall}`).join(", ")}`}
+            data={seksjonData}
+            ariaLabel={`Søylediagram over saker per seksjon. ${seksjonData.map((s) => `${s.navn}: ${s.antall}`).join(", ")}`}
           />
         </section>
 

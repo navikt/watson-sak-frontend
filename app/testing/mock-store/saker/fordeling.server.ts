@@ -26,7 +26,7 @@ const initialeMockKontrollsaker = [
     status: "OPPRETTET",
     kategori: "SAMLIV",
     prioritet: "NORMAL",
-    mottakEnhet: "Nord",
+    mottakEnhet: "hu424t",
     mottakSaksbehandler: "Z999999",
     organisasjonsnummer: "987654321",
     ytelser: [
@@ -58,7 +58,7 @@ const initialeMockKontrollsaker = [
     status: "OPPRETTET",
     kategori: "ARBEID",
     prioritet: "NORMAL",
-    mottakEnhet: "Øst",
+    mottakEnhet: "ky153k",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -89,7 +89,7 @@ const initialeMockKontrollsaker = [
     status: "AVKLART",
     kategori: "SAMLIV",
     prioritet: "NORMAL",
-    mottakEnhet: "Nord",
+    mottakEnhet: "hu424t",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -120,7 +120,7 @@ const initialeMockKontrollsaker = [
     status: "OPPRETTET",
     kategori: "UTLAND",
     prioritet: "NORMAL",
-    mottakEnhet: "Vest",
+    mottakEnhet: "gu301n",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -153,7 +153,7 @@ const initialeMockKontrollsaker = [
     status: "OPPRETTET",
     kategori: "ARBEID",
     prioritet: "NORMAL",
-    mottakEnhet: "Øst",
+    mottakEnhet: "ky153k",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -204,7 +204,7 @@ const initialeMockKontrollsaker = [
     status: "AVKLART",
     kategori: "SAMLIV",
     prioritet: "NORMAL",
-    mottakEnhet: "Nord",
+    mottakEnhet: "hu424t",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -235,7 +235,7 @@ const initialeMockKontrollsaker = [
     status: "OPPRETTET",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Vest",
+    mottakEnhet: "gu301n",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -265,7 +265,7 @@ const initialeMockKontrollsaker = [
     status: "OPPRETTET",
     kategori: "DOKUMENTFALSK",
     prioritet: "NORMAL",
-    mottakEnhet: "Øst",
+    mottakEnhet: "ky153k",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -295,7 +295,7 @@ const initialeMockKontrollsaker = [
     status: "AVKLART",
     kategori: "ARBEID",
     prioritet: "NORMAL",
-    mottakEnhet: "Nord",
+    mottakEnhet: "hu424t",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -326,7 +326,7 @@ const initialeMockKontrollsaker = [
     status: "OPPRETTET",
     kategori: "UTLAND",
     prioritet: "NORMAL",
-    mottakEnhet: "Vest",
+    mottakEnhet: "gu301n",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -357,7 +357,7 @@ const initialeMockKontrollsaker = [
     status: "OPPRETTET",
     kategori: "TILTAK",
     prioritet: "NORMAL",
-    mottakEnhet: "Analyse",
+    mottakEnhet: "by295h",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -388,7 +388,7 @@ const initialeMockKontrollsaker = [
     status: "AVKLART",
     kategori: "IDENTITET",
     prioritet: "NORMAL",
-    mottakEnhet: "Nord",
+    mottakEnhet: "hu424t",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -419,7 +419,7 @@ const initialeMockKontrollsaker = [
     status: "UTREDES",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Nord",
+    mottakEnhet: "hu424t",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -449,7 +449,7 @@ const initialeMockKontrollsaker = [
     status: "AVSLUTTET",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Øst",
+    mottakEnhet: "ky153k",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {

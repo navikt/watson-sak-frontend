@@ -1,8 +1,13 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { mockKodeverk } from "~/testing/mock-store/kodeverk.server";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { SakerPåSammePerson } from "./SakerPåSammePerson";
+
+vi.mock("~/kodeverk/useKodeverk", () => ({
+  useKodeverk: () => mockKodeverk,
+}));
 
 function lagKontrollsak(
   idNum: string,

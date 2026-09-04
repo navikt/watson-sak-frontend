@@ -7,7 +7,7 @@ export const mockMineSakerInnloggetNavIdent = "Z999999";
 const innloggetEier = {
   navIdent: mockMineSakerInnloggetNavIdent,
   navn: "Saks Behandlersen",
-  enhet: "Nord",
+  enhet: "hu424t",
 };
 
 const initialeMockMineKontrollsaker = [
@@ -20,7 +20,7 @@ const initialeMockMineKontrollsaker = [
     status: "UTREDES",
     kategori: "ARBEID",
     prioritet: "NORMAL",
-    mottakEnhet: "Nord",
+    mottakEnhet: "hu424t",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -52,7 +52,7 @@ const initialeMockMineKontrollsaker = [
     status: "AVKLART",
     kategori: "ARBEID",
     prioritet: "NORMAL",
-    mottakEnhet: "Øst",
+    mottakEnhet: "ky153k",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -85,12 +85,12 @@ const initialeMockMineKontrollsaker = [
       eier: {
         navIdent: "Z123456",
         navn: "Kari Nordmann",
-        enhet: "Nord",
+        enhet: "hu424t",
       },
       deltMed: [
         {
           navn: "Kari Nordmann",
-          enhet: "Nord",
+          enhet: "hu424t",
           navIdent: "Z123456",
         },
       ],
@@ -98,7 +98,7 @@ const initialeMockMineKontrollsaker = [
     status: "UTREDES",
     kategori: "SAMLIV",
     prioritet: "NORMAL",
-    mottakEnhet: "Øst",
+    mottakEnhet: "ky153k",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -138,7 +138,7 @@ const initialeMockMineKontrollsaker = [
     status: "OPPRETTET",
     kategori: "ARBEID",
     prioritet: "NORMAL",
-    mottakEnhet: "Vest",
+    mottakEnhet: "gu301n",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -182,7 +182,7 @@ const initialeMockMineKontrollsaker = [
     status: "AVKLART",
     kategori: "ARBEID",
     prioritet: "NORMAL",
-    mottakEnhet: "Øst",
+    mottakEnhet: "ky153k",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -214,7 +214,7 @@ const initialeMockMineKontrollsaker = [
     status: "VENTER_PA_VEDTAK",
     kategori: "ARBEID",
     prioritet: "NORMAL",
-    mottakEnhet: "Nord",
+    mottakEnhet: "hu424t",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -246,7 +246,7 @@ const initialeMockMineKontrollsaker = [
     status: "HENLAGT",
     kategori: "DOKUMENTFALSK",
     prioritet: "NORMAL",
-    mottakEnhet: "Vest",
+    mottakEnhet: "gu301n",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -277,7 +277,7 @@ const initialeMockMineKontrollsaker = [
     status: "UTREDES",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Nord",
+    mottakEnhet: "hu424t",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -308,7 +308,7 @@ const initialeMockMineKontrollsaker = [
     status: "AVSLUTTET",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Øst",
+    mottakEnhet: "ky153k",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -345,7 +345,7 @@ const initialeMockMineKontrollsaker = [
     status: "HENLAGT",
     kategori: "IDENTITET",
     prioritet: "NORMAL",
-    mottakEnhet: "Analyse",
+    mottakEnhet: "by295h",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -377,7 +377,7 @@ const initialeMockMineKontrollsaker = [
     status: "STRAFFERETTSLIG_VURDERING",
     kategori: "ARBEID",
     prioritet: "HOY",
-    mottakEnhet: "Øst",
+    mottakEnhet: "ky153k",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {

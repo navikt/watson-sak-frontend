@@ -12,6 +12,8 @@ import {
 } from "@navikt/ds-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useFetcher } from "react-router";
+import { finnEnhetsnavn } from "~/kodeverk/enheter";
+import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { getKategoriText, getSaksenhet } from "~/saker/selectors";
@@ -46,10 +48,12 @@ function SakKort({
   onVisIdentHistorikk,
 }: SakKortProps) {
   const [åpen, setÅpen] = useState(false);
+  const kodeverk = useKodeverk();
   const saksreferanse = getSaksreferanse(sak.id);
   const personIdent = getPersonIdent(sak);
   const statusTekst = getStatus(sak);
-  const enhet = getSaksenhet(sak) || "Ukjent";
+  const enhetskode = getSaksenhet(sak);
+  const enhet = enhetskode ? finnEnhetsnavn(kodeverk.enheter, enhetskode) : "Ukjent";
   const saksbehandler = sak.saksbehandlere.eier?.navn ?? sak.saksbehandlere.opprettetAv.navn;
 
   return (

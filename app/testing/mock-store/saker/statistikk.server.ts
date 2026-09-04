@@ -13,7 +13,7 @@ const initialeMockStatistikkSaker = [
     status: "OPPRETTET",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Nord",
+    mottakEnhet: "hu424t",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -42,7 +42,7 @@ const initialeMockStatistikkSaker = [
     status: "OPPRETTET",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Øst",
+    mottakEnhet: "ky153k",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -77,7 +77,7 @@ const initialeMockStatistikkSaker = [
     status: "OPPRETTET",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Vest",
+    mottakEnhet: "gu301n",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -106,7 +106,7 @@ const initialeMockStatistikkSaker = [
     status: "OPPRETTET",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Nord",
+    mottakEnhet: "hu424t",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -135,7 +135,7 @@ const initialeMockStatistikkSaker = [
     status: "OPPRETTET",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Analyse",
+    mottakEnhet: "by295h",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -164,7 +164,7 @@ const initialeMockStatistikkSaker = [
     status: "OPPRETTET",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Analyse",
+    mottakEnhet: "by295h",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -199,7 +199,7 @@ const initialeMockStatistikkSaker = [
     status: "AVKLART",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Øst",
+    mottakEnhet: "ky153k",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -228,7 +228,7 @@ const initialeMockStatistikkSaker = [
     status: "AVKLART",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Nord",
+    mottakEnhet: "hu424t",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -263,7 +263,7 @@ const initialeMockStatistikkSaker = [
     status: "AVKLART",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Vest",
+    mottakEnhet: "gu301n",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -292,7 +292,7 @@ const initialeMockStatistikkSaker = [
     status: "AVKLART",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Analyse",
+    mottakEnhet: "by295h",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -321,7 +321,7 @@ const initialeMockStatistikkSaker = [
     status: "AVKLART",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Nord",
+    mottakEnhet: "hu424t",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -356,7 +356,7 @@ const initialeMockStatistikkSaker = [
     status: "UTREDES",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Nord",
+    mottakEnhet: "hu424t",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -385,7 +385,7 @@ const initialeMockStatistikkSaker = [
     status: "UTREDES",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Øst",
+    mottakEnhet: "ky153k",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -420,7 +420,7 @@ const initialeMockStatistikkSaker = [
     status: "UTREDES",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Vest",
+    mottakEnhet: "gu301n",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -461,7 +461,7 @@ const initialeMockStatistikkSaker = [
     status: "UTREDES",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Analyse",
+    mottakEnhet: "by295h",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -490,7 +490,7 @@ const initialeMockStatistikkSaker = [
     status: "UTREDES",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Nord",
+    mottakEnhet: "hu424t",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -525,7 +525,7 @@ const initialeMockStatistikkSaker = [
     status: "UTREDES",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Analyse",
+    mottakEnhet: "by295h",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -554,7 +554,7 @@ const initialeMockStatistikkSaker = [
     status: "UTREDES",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Øst",
+    mottakEnhet: "ky153k",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -583,7 +583,7 @@ const initialeMockStatistikkSaker = [
     status: "UTREDES",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Vest",
+    mottakEnhet: "gu301n",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -618,7 +618,7 @@ const initialeMockStatistikkSaker = [
     status: "I_BERO",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Vest",
+    mottakEnhet: "gu301n",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -647,7 +647,7 @@ const initialeMockStatistikkSaker = [
     status: "AVSLUTTET",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Nord",
+    mottakEnhet: "hu424t",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -676,7 +676,7 @@ const initialeMockStatistikkSaker = [
     status: "AVSLUTTET",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Øst",
+    mottakEnhet: "ky153k",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -711,7 +711,7 @@ const initialeMockStatistikkSaker = [
     status: "AVSLUTTET",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Nord",
+    mottakEnhet: "hu424t",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -740,7 +740,7 @@ const initialeMockStatistikkSaker = [
     status: "AVSLUTTET",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Vest",
+    mottakEnhet: "gu301n",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -775,7 +775,7 @@ const initialeMockStatistikkSaker = [
     status: "AVSLUTTET",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Analyse",
+    mottakEnhet: "by295h",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -804,7 +804,7 @@ const initialeMockStatistikkSaker = [
     status: "AVSLUTTET",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Analyse",
+    mottakEnhet: "by295h",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -833,7 +833,7 @@ const initialeMockStatistikkSaker = [
     status: "AVSLUTTET",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Nord",
+    mottakEnhet: "hu424t",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -868,7 +868,7 @@ const initialeMockStatistikkSaker = [
     status: "AVSLUTTET",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Øst",
+    mottakEnhet: "ky153k",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -897,7 +897,7 @@ const initialeMockStatistikkSaker = [
     status: "HENLAGT",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Nord",
+    mottakEnhet: "hu424t",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -926,7 +926,7 @@ const initialeMockStatistikkSaker = [
     status: "HENLAGT",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Vest",
+    mottakEnhet: "gu301n",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {
@@ -961,7 +961,7 @@ const initialeMockStatistikkSaker = [
     status: "HENLAGT",
     kategori: "ANNET",
     prioritet: "NORMAL",
-    mottakEnhet: "Analyse",
+    mottakEnhet: "by295h",
     mottakSaksbehandler: "Z999999",
     ytelser: [
       {

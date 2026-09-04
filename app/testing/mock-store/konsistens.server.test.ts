@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { getSaksreferanse } from "~/saker/id";
+import { getSaksenhet } from "~/saker/selectors";
 import { slaOppPerson } from "~/registrer-sak/person-oppslag.mock.server";
 import { hentAlleMockPersoner, hentMockPersonNavn } from "~/testing/mock-store/personer.server";
+import { mockKodeverk } from "~/testing/mock-store/kodeverk.server";
 import {
   hentAlleSaker,
   hentFordelingssaker,
@@ -48,10 +50,18 @@ describe("mock-store konsistens", () => {
     fordelingssak.saksbehandlere.eier = {
       navIdent: "Z999999",
       navn: "Saks Behandlersen",
-      enhet: "Nord",
+      enhet: "hu424t",
     };
 
     expect(hentMineSaker(state())).toContain(fordelingssak);
+  });
+
+  it("gir alle mock-saker en enhet som finnes i kodeverket, slik at enhetsfilteret matcher", () => {
+    const gyldigeEnhetskoder = mockKodeverk.enheter.map((enhet) => enhet.kode);
+
+    for (const sak of hentAlleSaker(state())) {
+      expect(gyldigeEnhetskoder).toContain(getSaksenhet(sak));
+    }
   });
 
   it("har samme navn for samme personident i saker og personoppslag", () => {

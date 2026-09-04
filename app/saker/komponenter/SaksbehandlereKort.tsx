@@ -3,6 +3,7 @@ import { BodyShort, Button, HStack, Label, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import { useFetcher } from "react-router";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
+import { finnEnhetsnavn } from "~/kodeverk/enheter";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
@@ -72,8 +73,7 @@ export function SaksbehandlereKort({
   const ansvarligSaksbehandler = ansvarligFraProps ?? sak.saksbehandlere.eier;
   const sakPath = RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id));
   const enhetskode = getSaksenhet(sak);
-  const enhetsnavn =
-    kodeverk.enheter.find((enhet) => enhet.kode === enhetskode)?.beskrivelse ?? enhetskode;
+  const enhetsnavn = finnEnhetsnavn(kodeverk.enheter, enhetskode);
 
   function fjernDeltTilgang(navIdent: string) {
     fetcher.submit(
