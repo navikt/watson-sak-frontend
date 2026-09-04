@@ -16,6 +16,7 @@ interface HistorikkProsessListeProps {
   onRediger: (hendelse: SakHendelse) => void;
   onSlett: (hendelse: SakHendelse) => void;
   className?: string;
+  forrigeHendelseKart?: Map<string, SakHendelse>;
 }
 
 /**
@@ -33,11 +34,13 @@ export function HistorikkProsessListe({
   onRediger,
   onSlett,
   className,
+  forrigeHendelseKart,
 }: HistorikkProsessListeProps) {
   return (
     <Process className={className}>
       {hendelser.map((hendelse) => {
-        const beskrivelse = hendelseBeskrivelse(hendelse);
+        const forrigeHendelse = forrigeHendelseKart?.get(hendelse.hendelseId);
+        const beskrivelse = hendelseBeskrivelse(hendelse, forrigeHendelse);
         const erEgenManuellHendelse =
           hendelse.hendelsesType === "MANUELL_HENDELSE" &&
           hendelse.opprettetAvNavIdent === innloggetNavIdent;
@@ -45,7 +48,7 @@ export function HistorikkProsessListe({
         return (
           <Process.Event
             key={hendelse.hendelseId}
-            title={hendelseTittel(hendelse)}
+            title={hendelseTittel(hendelse, forrigeHendelse)}
             timestamp={formaterTidspunkt(hendelse.tidspunkt)}
             status="completed"
             bullet={<HendelseBullet hendelse={hendelse} />}

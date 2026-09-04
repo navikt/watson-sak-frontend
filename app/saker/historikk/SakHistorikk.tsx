@@ -1,12 +1,13 @@
 import { PlusCircleIcon } from "@navikt/aksel-icons";
 import { Alert, BodyShort, Box, Button, Heading, HStack } from "@navikt/ds-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useFetcher } from "react-router";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { useDisclosure } from "~/utils/useDisclosure";
 import { HistorikkProsessListe } from "./HistorikkProsessListe";
+import { lagForrigeHendelseKart } from "./historikk-utils";
 import { LeggTilHistorikkModal } from "./LeggTilHistorikkModal";
 import { RedigerHistorikkModal } from "./RedigerHistorikkModal";
 import { VisAllHistorikkModal } from "./VisAllHistorikkModal";
@@ -28,6 +29,7 @@ export function SakHistorikk({ sakId, hendelser, redigerbar }: SakHistorikkProps
   const innloggetBruker = useInnloggetBruker();
   const fetcher = useFetcher();
   const synligeHendelser = hendelser.slice(0, MAKS_SYNLIGE_HENDELSER);
+  const forrigeHendelseKart = useMemo(() => lagForrigeHendelseKart(hendelser), [hendelser]);
   const slettFeilmelding =
     fetcher.state === "idle" && fetcher.data && "ok" in fetcher.data && !fetcher.data.ok
       ? fetcher.data.feil?.skjema?.[0]
@@ -80,6 +82,7 @@ export function SakHistorikk({ sakId, hendelser, redigerbar }: SakHistorikkProps
             innloggetNavIdent={innloggetBruker.navIdent}
             onRediger={åpneRediger}
             onSlett={slettHendelse}
+            forrigeHendelseKart={forrigeHendelseKart}
           />
           <Button variant="tertiary" size="small" onClick={onÅpneVisAlle} className="mt-2">
             Vis all historikk ({hendelser.length})
@@ -106,6 +109,7 @@ export function SakHistorikk({ sakId, hendelser, redigerbar }: SakHistorikkProps
           onRediger={åpneRediger}
           onSlett={slettHendelse}
           slettFeilmelding={slettFeilmelding}
+          forrigeHendelseKart={forrigeHendelseKart}
         />
       )}
     </Box>

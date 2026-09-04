@@ -15,6 +15,7 @@ interface VisAllHistorikkModalProps {
   onRediger: (hendelse: SakHendelse) => void;
   onSlett: (hendelse: SakHendelse) => void;
   slettFeilmelding?: string;
+  forrigeHendelseKart?: Map<string, SakHendelse>;
 }
 
 type HistorikkFilter = "ALLE" | "AUTOMATISK" | "MANUELL";
@@ -43,6 +44,7 @@ export function VisAllHistorikkModal({
   onRediger,
   onSlett,
   slettFeilmelding,
+  forrigeHendelseKart,
 }: VisAllHistorikkModalProps) {
   const modalRef = useRef<HTMLDialogElement>(null);
   const [filter, setFilter] = useState<HistorikkFilter>("ALLE");
@@ -116,6 +118,7 @@ export function VisAllHistorikkModal({
             onRediger={onRediger}
             onSlett={onSlett}
             className="pt-1"
+            forrigeHendelseKart={forrigeHendelseKart}
           />
         )}
       </Modal.Body>
