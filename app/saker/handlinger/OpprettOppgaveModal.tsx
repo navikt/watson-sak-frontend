@@ -204,9 +204,6 @@ export function OpprettOppgaveModal({ sakId, åpen, onClose }: OpprettOppgaveMod
           )}
           {steg === "bekreft" && (
             <>
-              <Button type="button" variant="secondary" onClick={handleAvbrytBekreftelse}>
-                Avbryt
-              </Button>
               <Button
                 type="button"
                 variant="primary"
@@ -216,6 +213,9 @@ export function OpprettOppgaveModal({ sakId, åpen, onClose }: OpprettOppgaveMod
                 autoFocus
               >
                 Opprett
+              </Button>
+              <Button type="button" variant="secondary" onClick={handleAvbrytBekreftelse}>
+                Avbryt
               </Button>
             </>
           )}

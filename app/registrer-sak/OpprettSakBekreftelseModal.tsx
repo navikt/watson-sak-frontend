@@ -187,25 +187,25 @@ export function OpprettSakBekreftelseModal({
       <Modal.Footer>
         {steg === "bekreft" && (
           <>
-            <Button variant="secondary" onClick={onAvbryt} disabled={senderInn}>
-              Avbryt
-            </Button>
             <Button variant="primary" onClick={onBekreft} loading={senderInn} disabled={senderInn}>
               Opprett sak
+            </Button>
+            <Button variant="secondary" onClick={onAvbryt} disabled={senderInn}>
+              Avbryt
             </Button>
           </>
         )}
         {steg === "suksess" && sakId && (
           <>
-            <Button variant="secondary" onClick={onOpprettNySak}>
-              Opprett ny sak
-            </Button>
             <Button
               as={Link}
               to={RouteConfig.SAKER_DETALJ.replace(":sakId", sakId)}
               variant="primary"
             >
               Gå til saken
+            </Button>
+            <Button variant="secondary" onClick={onOpprettNySak}>
+              Opprett ny sak
             </Button>
           </>
         )}

@@ -177,6 +177,28 @@ describe("EndreStatusModal", () => {
     expect(formData.get("status")).toBe("AVSLUTTET");
   });
 
+  it("plasserer primærhandlingen før Avbryt i bekreftelsesmodalen", () => {
+    renderMedRouter(
+      <EndreStatusModal
+        sakId="00000000-0000-4000-8000-000000000001"
+        nåværendeStatus="UTREDES"
+        nåværendeBlokkering={null}
+        nåværendeHenleggelsesarsak={null}
+        åpen={true}
+        onClose={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("radio", { name: "Anmeldt" }));
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+
+    expect(
+      screen
+        .getByRole("button", { name: "Endre status" })
+        .compareDocumentPosition(screen.getByRole("button", { name: "Avbryt" })),
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
   it("går tilbake til skjemaet når bruker avbryter i bekreftelsessteget", () => {
     renderMedRouter(
       <EndreStatusModal
