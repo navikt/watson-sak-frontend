@@ -28,5 +28,8 @@ COPY --from=builder /app/build ./build
 # uansett kjørebruker til 1069 (se https://sikkerhet.nav.no/docs/sikker-utvikling/baseimages)
 ENV NODE_ENV=production
 EXPOSE 3000
-CMD ["./node_modules/.bin/react-router-serve", "./build/server/index.js"]
+# Chainguards node-image bruker /usr/bin/node som ENTRYPOINT (ikke shell), så CMD
+# sendes rett til node. node_modules/.bin/react-router-serve er en sh-shim, ikke
+# JS — pek derfor direkte på den ekte bin-filen i pakken.
+CMD ["./node_modules/@react-router/serve/bin.cjs", "./build/server/index.js"]
 
