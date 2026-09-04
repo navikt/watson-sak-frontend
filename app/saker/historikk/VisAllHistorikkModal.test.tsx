@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { SakHendelse } from "./typer";
 import { VisAllHistorikkModal } from "./VisAllHistorikkModal";
@@ -19,8 +19,8 @@ function lagHendelse(overrides: Partial<SakHendelse> = {}): SakHendelse {
 
 const INNLOGGET_NAV_IDENT = "Z999999";
 
-function renderModal(props: Partial<React.ComponentProps<typeof VisAllHistorikkModal>> = {}) {
-  return render(
+async function renderModal(props: Partial<React.ComponentProps<typeof VisAllHistorikkModal>> = {}) {
+  const resultat = render(
     <VisAllHistorikkModal
       redigerbar={true}
       hendelser={[]}
@@ -33,10 +33,12 @@ function renderModal(props: Partial<React.ComponentProps<typeof VisAllHistorikkM
       {...props}
     />,
   );
+  await waitFor(() => {});
+  return resultat;
 }
 
 describe("VisAllHistorikkModal", () => {
-  it("viser alle hendelser i modalen", () => {
+  it("viser alle hendelser i modalen", async () => {
     const hendelser = [
       lagHendelse({ hendelseId: "00000000-0000-4000-8000-000000000001" }),
       lagHendelse({
@@ -46,13 +48,13 @@ describe("VisAllHistorikkModal", () => {
       }),
     ];
 
-    renderModal({ hendelser });
+    await renderModal({ hendelser });
 
     expect(screen.getByText("Sak opprettet")).toBeDefined();
     expect(screen.getByText("Sak utredes")).toBeDefined();
   });
 
-  it("viser 'Rediger'-knapp for egne manuelle notater", () => {
+  it("viser 'Rediger'-knapp for egne manuelle notater", async () => {
     const hendelser = [
       lagHendelse({
         hendelseId: "00000000-0000-4000-8000-000000000001",
@@ -63,12 +65,12 @@ describe("VisAllHistorikkModal", () => {
       }),
     ];
 
-    renderModal({ hendelser });
+    await renderModal({ hendelser });
 
     expect(screen.getByRole("button", { name: "Rediger" })).toBeDefined();
   });
 
-  it("viser 'Slett'-knapp for egne manuelle notater", () => {
+  it("viser 'Slett'-knapp for egne manuelle notater", async () => {
     const hendelser = [
       lagHendelse({
         hendelseId: "00000000-0000-4000-8000-000000000001",
@@ -79,12 +81,12 @@ describe("VisAllHistorikkModal", () => {
       }),
     ];
 
-    renderModal({ hendelser });
+    await renderModal({ hendelser });
 
     expect(screen.getByRole("button", { name: "Slett" })).toBeDefined();
   });
 
-  it("viser ikke 'Slett'-knapp for andres manuelle notater", () => {
+  it("viser ikke 'Slett'-knapp for andres manuelle notater", async () => {
     const hendelser = [
       lagHendelse({
         hendelseId: "00000000-0000-4000-8000-000000000001",
@@ -95,12 +97,12 @@ describe("VisAllHistorikkModal", () => {
       }),
     ];
 
-    renderModal({ hendelser });
+    await renderModal({ hendelser });
 
     expect(screen.queryByRole("button", { name: "Slett" })).toBeNull();
   });
 
-  it("viser ikke 'Rediger'-knapp for andres manuelle notater", () => {
+  it("viser ikke 'Rediger'-knapp for andres manuelle notater", async () => {
     const hendelser = [
       lagHendelse({
         hendelseId: "00000000-0000-4000-8000-000000000001",
@@ -111,12 +113,12 @@ describe("VisAllHistorikkModal", () => {
       }),
     ];
 
-    renderModal({ hendelser });
+    await renderModal({ hendelser });
 
     expect(screen.queryByRole("button", { name: "Rediger" })).toBeNull();
   });
 
-  it("viser ikke 'Rediger'-knapp for ikke-manuelle hendelser", () => {
+  it("viser ikke 'Rediger'-knapp for ikke-manuelle hendelser", async () => {
     const hendelser = [
       lagHendelse({
         hendelseId: "00000000-0000-4000-8000-000000000001",
@@ -124,18 +126,18 @@ describe("VisAllHistorikkModal", () => {
       }),
     ];
 
-    renderModal({ hendelser });
+    await renderModal({ hendelser });
 
     expect(screen.queryByRole("button", { name: "Rediger" })).toBeNull();
   });
 
-  it("viser tom-melding når det ikke er noen hendelser", () => {
-    renderModal({ hendelser: [] });
+  it("viser tom-melding når det ikke er noen hendelser", async () => {
+    await renderModal({ hendelser: [] });
 
     expect(screen.getByText("Ingen historikk for denne saken.")).toBeDefined();
   });
 
-  it("skjuler Rediger/Slett for egne notater når redigerbar er false", () => {
+  it("skjuler Rediger/Slett for egne notater når redigerbar er false", async () => {
     const hendelser = [
       lagHendelse({
         hendelseId: "00000000-0000-4000-8000-000000000001",
@@ -146,13 +148,13 @@ describe("VisAllHistorikkModal", () => {
       }),
     ];
 
-    renderModal({ redigerbar: false, hendelser });
+    await renderModal({ redigerbar: false, hendelser });
 
     expect(screen.queryByRole("button", { name: "Rediger" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Slett" })).toBeNull();
   });
 
-  it("viser filterknapper med riktig antall for hver kategori", () => {
+  it("viser filterknapper med riktig antall for hver kategori", async () => {
     const hendelser = [
       lagHendelse({ hendelseId: "00000000-0000-4000-8000-000000000001" }),
       lagHendelse({
@@ -169,14 +171,14 @@ describe("VisAllHistorikkModal", () => {
       }),
     ];
 
-    renderModal({ hendelser });
+    await renderModal({ hendelser });
 
     expect(screen.getByRole("radio", { name: "Alle (3)" })).toBeDefined();
     expect(screen.getByRole("radio", { name: "Automatiske (2)" })).toBeDefined();
     expect(screen.getByRole("radio", { name: "Manuelle (1)" })).toBeDefined();
   });
 
-  it("viser kun manuelle hendelser når 'Manuelle'-filteret velges", () => {
+  it("viser kun manuelle hendelser når 'Manuelle'-filteret velges", async () => {
     const hendelser = [
       lagHendelse({
         hendelseId: "00000000-0000-4000-8000-000000000001",
@@ -191,7 +193,7 @@ describe("VisAllHistorikkModal", () => {
       }),
     ];
 
-    renderModal({ hendelser });
+    await renderModal({ hendelser });
 
     fireEvent.click(screen.getByRole("radio", { name: "Manuelle (1)" }));
 
@@ -199,7 +201,7 @@ describe("VisAllHistorikkModal", () => {
     expect(screen.getByText("Mitt notat")).toBeDefined();
   });
 
-  it("deaktiverer 'Manuelle'-filteret når det ikke finnes manuelle hendelser", () => {
+  it("deaktiverer 'Manuelle'-filteret når det ikke finnes manuelle hendelser", async () => {
     const hendelser = [
       lagHendelse({
         hendelseId: "00000000-0000-4000-8000-000000000001",
@@ -207,12 +209,12 @@ describe("VisAllHistorikkModal", () => {
       }),
     ];
 
-    renderModal({ hendelser });
+    await renderModal({ hendelser });
 
     expect(screen.getByRole("radio", { name: "Manuelle (0)" })).toHaveProperty("disabled", true);
   });
 
-  it("deaktiverer 'Automatiske'-filteret når det bare finnes manuelle hendelser", () => {
+  it("deaktiverer 'Automatiske'-filteret når det bare finnes manuelle hendelser", async () => {
     const hendelser = [
       lagHendelse({
         hendelseId: "00000000-0000-4000-8000-000000000001",
@@ -223,33 +225,33 @@ describe("VisAllHistorikkModal", () => {
       }),
     ];
 
-    renderModal({ hendelser });
+    await renderModal({ hendelser });
 
     expect(screen.getByRole("radio", { name: "Automatiske (0)" })).toHaveProperty("disabled", true);
   });
 
-  it("viser 'Legg til'-knapp øverst når redigerbar er true", () => {
-    renderModal({ hendelser: [] });
+  it("viser 'Legg til'-knapp øverst når redigerbar er true", async () => {
+    await renderModal({ hendelser: [] });
 
     expect(screen.getByRole("button", { name: "Legg til" })).toBeDefined();
   });
 
-  it("skjuler 'Legg til'-knapp når redigerbar er false", () => {
-    renderModal({ redigerbar: false, hendelser: [] });
+  it("skjuler 'Legg til'-knapp når redigerbar er false", async () => {
+    await renderModal({ redigerbar: false, hendelser: [] });
 
     expect(screen.queryByRole("button", { name: "Legg til" })).toBeNull();
   });
 
-  it("kaller onLeggTil når 'Legg til' klikkes", () => {
+  it("kaller onLeggTil når 'Legg til' klikkes", async () => {
     const onLeggTil = vi.fn();
-    renderModal({ hendelser: [], onLeggTil });
+    await renderModal({ hendelser: [], onLeggTil });
 
     fireEvent.click(screen.getByRole("button", { name: "Legg til" }));
 
     expect(onLeggTil).toHaveBeenCalledOnce();
   });
 
-  it("kaller onRediger med riktig hendelse når 'Rediger' klikkes", () => {
+  it("kaller onRediger med riktig hendelse når 'Rediger' klikkes", async () => {
     const onRediger = vi.fn();
     const hendelse = lagHendelse({
       hendelseId: "00000000-0000-4000-8000-000000000001",
@@ -258,14 +260,14 @@ describe("VisAllHistorikkModal", () => {
       opprettetAvNavIdent: INNLOGGET_NAV_IDENT,
     });
 
-    renderModal({ hendelser: [hendelse], onRediger });
+    await renderModal({ hendelser: [hendelse], onRediger });
 
     fireEvent.click(screen.getByRole("button", { name: "Rediger" }));
 
     expect(onRediger).toHaveBeenCalledWith(hendelse);
   });
 
-  it("kaller onSlett med riktig hendelse når 'Slett' klikkes", () => {
+  it("kaller onSlett med riktig hendelse når 'Slett' klikkes", async () => {
     const onSlett = vi.fn();
     const hendelse = lagHendelse({
       hendelseId: "00000000-0000-4000-8000-000000000001",
@@ -274,7 +276,7 @@ describe("VisAllHistorikkModal", () => {
       opprettetAvNavIdent: INNLOGGET_NAV_IDENT,
     });
 
-    renderModal({ hendelser: [hendelse], onSlett });
+    await renderModal({ hendelser: [hendelse], onSlett });
 
     fireEvent.click(screen.getByRole("button", { name: "Slett" }));
 

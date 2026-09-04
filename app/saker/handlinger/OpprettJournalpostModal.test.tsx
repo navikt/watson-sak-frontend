@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { OpprettJournalpostModal } from "./OpprettJournalpostModal";
@@ -19,12 +19,14 @@ vi.mock("react-router", async () => {
   };
 });
 
-function renderMedRouter(ui: React.ReactNode) {
+async function renderMedRouter(ui: React.ReactNode) {
   const router = createMemoryRouter([{ path: "/", element: ui }], {
     initialEntries: ["/"],
   });
 
-  return render(<RouterProvider router={router} />);
+  const resultat = render(<RouterProvider router={router} />);
+  await waitFor(() => {});
+  return resultat;
 }
 
 const ingenFiler: FilResponse[] = [];
@@ -95,18 +97,20 @@ describe("OpprettJournalpostModal", () => {
     defaultProps.onClose.mockClear();
   });
 
-  it("validerer at tittel og innhold er påkrevd – submit kalles ikke når feltene er tomme", () => {
-    renderMedRouter(<OpprettJournalpostModal {...defaultProps} />);
+  it("validerer at tittel og innhold er påkrevd – submit kalles ikke når feltene er tomme", async () => {
+    await renderMedRouter(<OpprettJournalpostModal {...defaultProps} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    await waitFor(() => {});
 
     expect(submitMock).not.toHaveBeenCalled();
   });
 
-  it("kaller submit med riktig payload når obligatoriske felter er fylt ut", () => {
-    renderMedRouter(<OpprettJournalpostModal {...defaultProps} />);
+  it("kaller submit med riktig payload når obligatoriske felter er fylt ut", async () => {
+    await renderMedRouter(<OpprettJournalpostModal {...defaultProps} />);
 
     fireEvent.click(screen.getByRole("radio", { name: "Inngående" }));
+    await waitFor(() => {});
     fireEvent.change(screen.getByLabelText("Tittel"), {
       target: { value: "Min journalpost" },
     });
@@ -115,8 +119,10 @@ describe("OpprettJournalpostModal", () => {
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    await waitFor(() => {});
     expect(screen.getByText("Du oppretter nå:")).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: "Opprett" }));
+    await waitFor(() => {});
 
     expect(submitMock).toHaveBeenCalledTimes(1);
     const [formData, options] = submitMock.mock.calls[0];
@@ -128,10 +134,11 @@ describe("OpprettJournalpostModal", () => {
     expect(options).toEqual(expect.objectContaining({ method: "post" }));
   });
 
-  it("plasserer primærhandlingen før Avbryt i bekreftelsesmodalen", () => {
-    renderMedRouter(<OpprettJournalpostModal {...defaultProps} />);
+  it("plasserer primærhandlingen før Avbryt i bekreftelsesmodalen", async () => {
+    await renderMedRouter(<OpprettJournalpostModal {...defaultProps} />);
 
     fireEvent.click(screen.getByRole("radio", { name: "Inngående" }));
+    await waitFor(() => {});
     fireEvent.change(screen.getByLabelText("Tittel"), {
       target: { value: "Min journalpost" },
     });
@@ -139,6 +146,7 @@ describe("OpprettJournalpostModal", () => {
       target: { value: "Innholdet i journalposten" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    await waitFor(() => {});
 
     expect(
       screen
@@ -147,21 +155,21 @@ describe("OpprettJournalpostModal", () => {
     ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
-  it("viser melding om ingen filer eller dokumenter når begge er tomme", () => {
-    renderMedRouter(<OpprettJournalpostModal {...defaultProps} filer={ingenFiler} />);
+  it("viser melding om ingen filer eller dokumenter når begge er tomme", async () => {
+    await renderMedRouter(<OpprettJournalpostModal {...defaultProps} filer={ingenFiler} />);
 
     expect(screen.getByText(/Ingen filer eller dokumenter/)).toBeDefined();
   });
 
-  it("viser kun PDF-filer i velgeren, ikke bilder", () => {
-    renderMedRouter(<OpprettJournalpostModal {...defaultProps} filer={[pdfFil, bildeFil]} />);
+  it("viser kun PDF-filer i velgeren, ikke bilder", async () => {
+    await renderMedRouter(<OpprettJournalpostModal {...defaultProps} filer={[pdfFil, bildeFil]} />);
 
     expect(screen.getByRole("checkbox", { name: /rapport\.pdf/ })).toBeDefined();
     expect(screen.queryByRole("checkbox", { name: /screenshot\.png/ })).toBeNull();
   });
 
-  it("viser ikke arkiverte filer eller dokumenter i velgeren", () => {
-    renderMedRouter(
+  it("viser ikke arkiverte filer eller dokumenter i velgeren", async () => {
+    await renderMedRouter(
       <OpprettJournalpostModal
         {...defaultProps}
         filer={[pdfFil, arkivertFil]}
@@ -175,8 +183,8 @@ describe("OpprettJournalpostModal", () => {
     expect(screen.queryByRole("checkbox", { name: /Arkivert notat/ })).toBeNull();
   });
 
-  it("viser filer og dokumenter i én samlet liste uten skille mellom vedlegg og dokumenter", () => {
-    renderMedRouter(
+  it("viser filer og dokumenter i én samlet liste uten skille mellom vedlegg og dokumenter", async () => {
+    await renderMedRouter(
       <OpprettJournalpostModal {...defaultProps} filer={[pdfFil]} dokumenter={[dokument]} />,
     );
 
@@ -185,16 +193,20 @@ describe("OpprettJournalpostModal", () => {
     expect(screen.getByRole("checkbox", { name: /Vurderingsnotat/ })).toBeDefined();
   });
 
-  it("inkluderer valgte vedlegg-ID-er i form payload", () => {
-    renderMedRouter(<OpprettJournalpostModal {...defaultProps} filer={[pdfFil]} />);
+  it("inkluderer valgte vedlegg-ID-er i form payload", async () => {
+    await renderMedRouter(<OpprettJournalpostModal {...defaultProps} filer={[pdfFil]} />);
 
     fireEvent.click(screen.getByRole("radio", { name: "Notat" }));
+    await waitFor(() => {});
     fireEvent.change(screen.getByLabelText("Tittel"), { target: { value: "Med vedlegg" } });
     fireEvent.change(screen.getByLabelText("Innhold"), { target: { value: "Innhold" } });
     fireEvent.click(screen.getByRole("checkbox", { name: /rapport\.pdf/ }));
+    await waitFor(() => {});
 
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    await waitFor(() => {});
     fireEvent.click(screen.getByRole("button", { name: "Opprett" }));
+    await waitFor(() => {});
 
     expect(submitMock).toHaveBeenCalledTimes(1);
     const [formData] = submitMock.mock.calls[0];
@@ -202,18 +214,22 @@ describe("OpprettJournalpostModal", () => {
     expect(formData.getAll("dokumentId")).toEqual([]);
   });
 
-  it("inkluderer valgte dokument-ID-er i form payload", () => {
-    renderMedRouter(
+  it("inkluderer valgte dokument-ID-er i form payload", async () => {
+    await renderMedRouter(
       <OpprettJournalpostModal {...defaultProps} filer={[]} dokumenter={[dokument]} />,
     );
 
     fireEvent.click(screen.getByRole("radio", { name: "Notat" }));
+    await waitFor(() => {});
     fireEvent.change(screen.getByLabelText("Tittel"), { target: { value: "Med dokument" } });
     fireEvent.change(screen.getByLabelText("Innhold"), { target: { value: "Innhold" } });
     fireEvent.click(screen.getByRole("checkbox", { name: /Vurderingsnotat/ }));
+    await waitFor(() => {});
 
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    await waitFor(() => {});
     fireEvent.click(screen.getByRole("button", { name: "Opprett" }));
+    await waitFor(() => {});
 
     expect(submitMock).toHaveBeenCalledTimes(1);
     const [formData] = submitMock.mock.calls[0];
@@ -221,21 +237,24 @@ describe("OpprettJournalpostModal", () => {
     expect(formData.getAll("vedleggId")).toEqual([]);
   });
 
-  it("sender ingen vedleggId når ingen filer er valgt", () => {
-    renderMedRouter(<OpprettJournalpostModal {...defaultProps} filer={[pdfFil]} />);
+  it("sender ingen vedleggId når ingen filer er valgt", async () => {
+    await renderMedRouter(<OpprettJournalpostModal {...defaultProps} filer={[pdfFil]} />);
 
     fireEvent.click(screen.getByRole("radio", { name: "Notat" }));
+    await waitFor(() => {});
     fireEvent.change(screen.getByLabelText("Tittel"), { target: { value: "Uten vedlegg" } });
     fireEvent.change(screen.getByLabelText("Innhold"), { target: { value: "Innhold" } });
 
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    await waitFor(() => {});
     fireEvent.click(screen.getByRole("button", { name: "Opprett" }));
+    await waitFor(() => {});
 
     const [formData] = submitMock.mock.calls[0];
     expect(formData.getAll("vedleggId")).toEqual([]);
   });
 
-  it("deaktiverer flere valg når 10 filer/dokumenter allerede er valgt", () => {
+  it("deaktiverer flere valg når 10 filer/dokumenter allerede er valgt", async () => {
     const mangeFiler: FilResponse[] = Array.from({ length: 10 }, (_, i) => ({
       id: `fil-${i}`,
       filnavn: `fil-${i}.pdf`,
@@ -246,13 +265,14 @@ describe("OpprettJournalpostModal", () => {
       bruktIDokumenter: [],
     }));
 
-    renderMedRouter(
+    await renderMedRouter(
       <OpprettJournalpostModal {...defaultProps} filer={mangeFiler} dokumenter={[dokument]} />,
     );
 
-    mangeFiler.forEach((fil) => {
+    for (const fil of mangeFiler) {
       fireEvent.click(screen.getByRole("checkbox", { name: new RegExp(fil.filnavn) }));
-    });
+      await waitFor(() => {});
+    }
 
     expect(screen.getByRole("checkbox", { name: /Vurderingsnotat/ })).toHaveProperty(
       "disabled",
@@ -260,12 +280,13 @@ describe("OpprettJournalpostModal", () => {
     );
   });
 
-  it("viser oppgaveskjema når 'Opprett og knytt til oppgave' er huket av", () => {
-    renderMedRouter(<OpprettJournalpostModal {...defaultProps} />);
+  it("viser oppgaveskjema når 'Opprett og knytt til oppgave' er huket av", async () => {
+    await renderMedRouter(<OpprettJournalpostModal {...defaultProps} />);
 
     expect(screen.queryByLabelText("Oppgavetype")).toBeNull();
 
     fireEvent.click(screen.getByLabelText("Opprett og knytt til oppgave"));
+    await waitFor(() => {});
 
     expect(screen.getByLabelText("Oppgavetype")).toBeDefined();
     expect(screen.getByLabelText("Prioritet")).toBeDefined();
@@ -273,10 +294,11 @@ describe("OpprettJournalpostModal", () => {
     expect(screen.getByLabelText("Beskrivelse")).toBeDefined();
   });
 
-  it("inkluderer oppgavedata i payload når 'Opprett og knytt til oppgave' er huket av", () => {
-    renderMedRouter(<OpprettJournalpostModal {...defaultProps} />);
+  it("inkluderer oppgavedata i payload når 'Opprett og knytt til oppgave' er huket av", async () => {
+    await renderMedRouter(<OpprettJournalpostModal {...defaultProps} />);
 
     fireEvent.click(screen.getByRole("radio", { name: "Notat" }));
+    await waitFor(() => {});
     fireEvent.change(screen.getByLabelText("Tittel"), {
       target: { value: "Journalpost med oppgave" },
     });
@@ -284,6 +306,7 @@ describe("OpprettJournalpostModal", () => {
       target: { value: "Innhold" },
     });
     fireEvent.click(screen.getByLabelText("Opprett og knytt til oppgave"));
+    await waitFor(() => {});
 
     fireEvent.change(screen.getByLabelText("Oppgavetype"), {
       target: { value: "VUR" },
@@ -300,9 +323,11 @@ describe("OpprettJournalpostModal", () => {
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    await waitFor(() => {});
     expect(screen.getByText("Journalpost")).toBeDefined();
     expect(screen.getByText("Oppgave")).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: "Opprett" }));
+    await waitFor(() => {});
 
     expect(submitMock).toHaveBeenCalledTimes(1);
     const [formData] = submitMock.mock.calls[0];
@@ -311,10 +336,11 @@ describe("OpprettJournalpostModal", () => {
     expect(formData.get("oppgavetype")).toBe("VUR");
   });
 
-  it("kaller onClose ved avbryt", () => {
-    renderMedRouter(<OpprettJournalpostModal {...defaultProps} />);
+  it("kaller onClose ved avbryt", async () => {
+    await renderMedRouter(<OpprettJournalpostModal {...defaultProps} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Avbryt" }));
+    await waitFor(() => {});
 
     expect(defaultProps.onClose).toHaveBeenCalledTimes(1);
   });

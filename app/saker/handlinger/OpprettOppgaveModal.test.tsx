@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { OpprettOppgaveModal } from "./OpprettOppgaveModal";
@@ -18,12 +18,14 @@ vi.mock("react-router", async () => {
   };
 });
 
-function renderMedRouter(ui: React.ReactNode) {
+async function renderMedRouter(ui: React.ReactNode) {
   const router = createMemoryRouter([{ path: "/", element: ui }], {
     initialEntries: ["/"],
   });
 
-  return render(<RouterProvider router={router} />);
+  const resultat = render(<RouterProvider router={router} />);
+  await waitFor(() => {});
+  return resultat;
 }
 
 const defaultProps = {
@@ -38,8 +40,8 @@ describe("OpprettOppgaveModal", () => {
     defaultProps.onClose.mockClear();
   });
 
-  it("viser oppgaveskjemaet med alle felter", () => {
-    renderMedRouter(<OpprettOppgaveModal {...defaultProps} />);
+  it("viser oppgaveskjemaet med alle felter", async () => {
+    await renderMedRouter(<OpprettOppgaveModal {...defaultProps} />);
 
     expect(screen.getByLabelText("Oppgavetype")).toBeDefined();
     expect(screen.getByLabelText("Prioritet")).toBeDefined();
@@ -48,8 +50,8 @@ describe("OpprettOppgaveModal", () => {
     expect(screen.getByLabelText("Beskrivelse")).toBeDefined();
   });
 
-  it("kaller submit med riktig payload", () => {
-    renderMedRouter(<OpprettOppgaveModal {...defaultProps} />);
+  it("kaller submit med riktig payload", async () => {
+    await renderMedRouter(<OpprettOppgaveModal {...defaultProps} />);
 
     fireEvent.change(screen.getByLabelText("Oppgavetype"), {
       target: { value: "VURD_HENV" },
@@ -67,8 +69,10 @@ describe("OpprettOppgaveModal", () => {
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    await waitFor(() => {});
     expect(screen.getByText("Du oppretter nå en oppgave:")).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: "Opprett" }));
+    await waitFor(() => {});
 
     expect(submitMock).toHaveBeenCalledTimes(1);
     const [formData, options] = submitMock.mock.calls[0];
@@ -80,8 +84,8 @@ describe("OpprettOppgaveModal", () => {
     expect(options).toEqual(expect.objectContaining({ method: "post" }));
   });
 
-  it("plasserer primærhandlingen før Avbryt i bekreftelsesmodalen", () => {
-    renderMedRouter(<OpprettOppgaveModal {...defaultProps} />);
+  it("plasserer primærhandlingen før Avbryt i bekreftelsesmodalen", async () => {
+    await renderMedRouter(<OpprettOppgaveModal {...defaultProps} />);
 
     fireEvent.change(screen.getByLabelText("Oppgavetype"), {
       target: { value: "VURD_HENV" },
@@ -99,6 +103,7 @@ describe("OpprettOppgaveModal", () => {
       target: { value: "En beskrivelse" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    await waitFor(() => {});
 
     expect(
       screen
@@ -107,10 +112,11 @@ describe("OpprettOppgaveModal", () => {
     ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
-  it("kaller onClose ved avbryt", () => {
-    renderMedRouter(<OpprettOppgaveModal {...defaultProps} />);
+  it("kaller onClose ved avbryt", async () => {
+    await renderMedRouter(<OpprettOppgaveModal {...defaultProps} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Avbryt" }));
+    await waitFor(() => {});
 
     expect(defaultProps.onClose).toHaveBeenCalledTimes(1);
   });

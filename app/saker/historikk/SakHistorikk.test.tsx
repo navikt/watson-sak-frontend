@@ -55,11 +55,13 @@ function lagBackendHendelse(overrides: Partial<SakHendelse> = {}): SakHendelse {
   };
 }
 
-function renderMedRouter(ui: React.ReactNode) {
+async function renderMedRouter(ui: React.ReactNode) {
   const router = createMemoryRouter([{ path: "/", element: ui }], {
     initialEntries: ["/"],
   });
-  return render(<RouterProvider router={router} />);
+  const resultat = render(<RouterProvider router={router} />);
+  await waitFor(() => {});
+  return resultat;
 }
 
 describe("SakHistorikk", () => {
@@ -67,8 +69,8 @@ describe("SakHistorikk", () => {
     vi.useRealTimers();
   });
 
-  it("renderer backend hendelsestype og statusfelt", () => {
-    renderMedRouter(
+  it("renderer backend hendelsestype og statusfelt", async () => {
+    await renderMedRouter(
       <SakHistorikk redigerbar={true} sakId={1} hendelser={[lagBackendHendelse()]} />,
     );
 
@@ -76,8 +78,8 @@ describe("SakHistorikk", () => {
     expect(screen.getByText(/Status: Opprettet/)).toBeDefined();
   });
 
-  it("viser historikktidspunkt i norsk tidssone", () => {
-    renderMedRouter(
+  it("viser historikktidspunkt i norsk tidssone", async () => {
+    await renderMedRouter(
       <SakHistorikk
         redigerbar={true}
         sakId={1}
@@ -88,8 +90,8 @@ describe("SakHistorikk", () => {
     expect(screen.getByText(/11:00/)).toBeDefined();
   });
 
-  it("renderer avklaringshendelse med oppdatert status", () => {
-    renderMedRouter(
+  it("renderer avklaringshendelse med oppdatert status", async () => {
+    await renderMedRouter(
       <SakHistorikk
         redigerbar={true}
         sakId={1}
@@ -106,8 +108,8 @@ describe("SakHistorikk", () => {
     expect(screen.getByText(/Status: Avsluttet/)).toBeDefined();
   });
 
-  it("renderer beskrivelse for statusendring", () => {
-    renderMedRouter(
+  it("renderer beskrivelse for statusendring", async () => {
+    await renderMedRouter(
       <SakHistorikk
         redigerbar={true}
         sakId={1}
@@ -125,8 +127,8 @@ describe("SakHistorikk", () => {
     expect(screen.getByText(/Saken er vurdert og anmeldt – Status: Anmeldt/)).toBeDefined();
   });
 
-  it("renderer historikk for endret ansvarlig saksbehandler", () => {
-    renderMedRouter(
+  it("renderer historikk for endret ansvarlig saksbehandler", async () => {
+    await renderMedRouter(
       <SakHistorikk
         redigerbar={true}
         sakId={1}
@@ -147,8 +149,8 @@ describe("SakHistorikk", () => {
     ).toBeDefined();
   });
 
-  it("renderer historikk for fjernet deling", () => {
-    renderMedRouter(
+  it("renderer historikk for fjernet deling", async () => {
+    await renderMedRouter(
       <SakHistorikk
         redigerbar={true}
         sakId={1}
@@ -169,8 +171,8 @@ describe("SakHistorikk", () => {
     ).toBeDefined();
   });
 
-  it("renderer sak satt på vent med blokkeringsårsak og status", () => {
-    renderMedRouter(
+  it("renderer sak satt på vent med blokkeringsårsak og status", async () => {
+    await renderMedRouter(
       <SakHistorikk
         redigerbar={true}
         sakId={1}
@@ -188,8 +190,8 @@ describe("SakHistorikk", () => {
     expect(screen.getByText(/På vent: Venter på vedtak – Status: Utredes/)).toBeDefined();
   });
 
-  it("renderer gjenoppta som vanlig gjenopptak for ventesaker", () => {
-    renderMedRouter(
+  it("renderer gjenoppta som vanlig gjenopptak for ventesaker", async () => {
+    await renderMedRouter(
       <SakHistorikk
         redigerbar={true}
         sakId={1}
@@ -205,8 +207,8 @@ describe("SakHistorikk", () => {
     expect(screen.getByText("Sak gjenopptatt")).toBeDefined();
   });
 
-  it("renderer gjenoppta som tatt ut av bero for bero-saker", () => {
-    renderMedRouter(
+  it("renderer gjenoppta som tatt ut av bero for bero-saker", async () => {
+    await renderMedRouter(
       <SakHistorikk
         redigerbar={true}
         sakId={1}
@@ -222,8 +224,8 @@ describe("SakHistorikk", () => {
     expect(screen.getByText("Sak tatt ut av bero")).toBeDefined();
   });
 
-  it("viser statusendring for SAK_STATUS_ENDRET fra backend", () => {
-    renderMedRouter(
+  it("viser statusendring for SAK_STATUS_ENDRET fra backend", async () => {
+    await renderMedRouter(
       <SakHistorikk
         redigerbar={true}
         sakId={1}
@@ -248,8 +250,8 @@ describe("SakHistorikk", () => {
     expect(screen.getByText(/Status: Utredes/)).toBeDefined();
   });
 
-  it("viser arbeidsstatusendring for SAK_STATUS_ENDRET når kun blokkering endres", () => {
-    renderMedRouter(
+  it("viser arbeidsstatusendring for SAK_STATUS_ENDRET når kun blokkering endres", async () => {
+    await renderMedRouter(
       <SakHistorikk
         redigerbar={true}
         sakId={1}
@@ -276,8 +278,8 @@ describe("SakHistorikk", () => {
     expect(screen.getByText(/Arbeidsstatus: I bero – Status: Utredes/)).toBeDefined();
   });
 
-  it("viser gjenopptak for SAK_STATUS_ENDRET når blokkering fjernes", () => {
-    renderMedRouter(
+  it("viser gjenopptak for SAK_STATUS_ENDRET når blokkering fjernes", async () => {
+    await renderMedRouter(
       <SakHistorikk
         redigerbar={true}
         sakId={1}
@@ -304,8 +306,8 @@ describe("SakHistorikk", () => {
     expect(screen.getByText(/Arbeidsstatus: Aktiv – Status: Utredes/)).toBeDefined();
   });
 
-  it("viser både status- og arbeidsstatusendring når begge endres samtidig for SAK_STATUS_ENDRET", () => {
-    renderMedRouter(
+  it("viser både status- og arbeidsstatusendring når begge endres samtidig for SAK_STATUS_ENDRET", async () => {
+    await renderMedRouter(
       <SakHistorikk
         redigerbar={true}
         sakId={1}
@@ -332,8 +334,8 @@ describe("SakHistorikk", () => {
     expect(screen.getByText(/Arbeidsstatus: Aktiv – Status: Avsluttet/)).toBeDefined();
   });
 
-  it("viser henleggelsesårsak for SAK_STATUS_ENDRET når status blir HENLAGT", () => {
-    renderMedRouter(
+  it("viser henleggelsesårsak for SAK_STATUS_ENDRET når status blir HENLAGT", async () => {
+    await renderMedRouter(
       <SakHistorikk
         redigerbar={true}
         sakId={1}
@@ -359,8 +361,8 @@ describe("SakHistorikk", () => {
     expect(screen.getByText(/Årsak: Foreldet/)).toBeDefined();
   });
 
-  it("renderer fritekst for manuelt historikkinnslag", () => {
-    renderMedRouter(
+  it("renderer fritekst for manuelt historikkinnslag", async () => {
+    await renderMedRouter(
       <SakHistorikk
         redigerbar={true}
         sakId={1}
@@ -378,11 +380,11 @@ describe("SakHistorikk", () => {
     expect(screen.getByText("Avklarte dokumentasjon og neste steg.")).toBeDefined();
   });
 
-  it("setter tidspunkt for nytt historikkinnslag når modalen åpnes", () => {
+  it("setter tidspunkt for nytt historikkinnslag når modalen åpnes", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-05-06T08:15:00"));
 
-    renderMedRouter(
+    await renderMedRouter(
       <SakHistorikk redigerbar={true} sakId={1} hendelser={[lagBackendHendelse()]} />,
     );
 
@@ -390,12 +392,13 @@ describe("SakHistorikk", () => {
     act(() => {
       fireEvent.click(screen.getByRole("button", { name: "Legg til" }));
     });
+    await waitFor(() => {});
 
     expect((screen.getByLabelText("Dato") as HTMLInputElement).value).toBe("06.05.2026");
     expect((screen.getByLabelText("Klokkeslett") as HTMLInputElement).value).toBe("09:42");
   });
 
-  it("viser 'Vis all historikk'-knapp uansett antall hendelser", () => {
+  it("viser 'Vis all historikk'-knapp uansett antall hendelser", async () => {
     const hendelser = Array.from({ length: 3 }, (_, i) =>
       lagBackendHendelse({
         hendelseId: `00000000-0000-4000-8000-00000000${String(i).padStart(4, "0")}`,
@@ -403,12 +406,12 @@ describe("SakHistorikk", () => {
       }),
     );
 
-    renderMedRouter(<SakHistorikk redigerbar={true} sakId={1} hendelser={hendelser} />);
+    await renderMedRouter(<SakHistorikk redigerbar={true} sakId={1} hendelser={hendelser} />);
 
     expect(screen.getByRole("button", { name: "Vis all historikk (3)" })).toBeDefined();
   });
 
-  it("har ingen duplikate <form>-id-er når 'Vis all historikk' åpnes", () => {
+  it("har ingen duplikate <form>-id-er når 'Vis all historikk' åpnes", async () => {
     // Regresjonstest for bug: SakHistorikk monterte tidligere sin egen
     // LeggTilHistorikkModal, og VisAllHistorikkModal monterte også sin egen
     // instans når den åpnet. @navikt/ds-react sin Modal-komponent portalerer
@@ -431,13 +434,14 @@ describe("SakHistorikk", () => {
     // (Eksplisitte, stabile useForm-id-er ble senere reintrodusert i begge
     // modaler for konsistens med resten av kodebasen — trygt nå som det kun
     // finnes ett mount-punkt per sakId/hendelseId.)
-    renderMedRouter(
+    await renderMedRouter(
       <SakHistorikk redigerbar={true} sakId={1} hendelser={[lagBackendHendelse()]} />,
     );
 
     act(() => {
       fireEvent.click(screen.getByRole("button", { name: /Vis all historikk/ }));
     });
+    await waitFor(() => {});
 
     const formIder = Array.from(document.querySelectorAll("form[id]")).map((el) => el.id);
     const settIder = new Set<string>();
@@ -450,17 +454,18 @@ describe("SakHistorikk", () => {
     expect(duplikater).toEqual([]);
   });
 
-  it("åpner delt 'Legg til historikkinnslag'-modal fra 'Vis all historikk'", () => {
+  it("åpner delt 'Legg til historikkinnslag'-modal fra 'Vis all historikk'", async () => {
     // Verifiserer selve brukerflyten som var brutt: å trykke "Legg til" inne
     // i "Vis all historikk"-modalen skal åpne samme (eneste) instans av
     // LeggTilHistorikkModal som SakHistorikk selv eier — ikke en egen kopi.
-    renderMedRouter(
+    await renderMedRouter(
       <SakHistorikk redigerbar={true} sakId={1} hendelser={[lagBackendHendelse()]} />,
     );
 
     act(() => {
       fireEvent.click(screen.getByRole("button", { name: /Vis all historikk/ }));
     });
+    await waitFor(() => {});
 
     const alleLeggTilKnapper = screen.getAllByRole("button", { name: "Legg til" });
     // Kun én "Legg til"-knapp skal finnes inne i "Vis all historikk"-modalen
@@ -469,6 +474,7 @@ describe("SakHistorikk", () => {
     act(() => {
       fireEvent.click(alleLeggTilKnapper[alleLeggTilKnapper.length - 1]);
     });
+    await waitFor(() => {});
 
     expect(screen.getByText("Legg til historikkinnslag")).toBeDefined();
 
@@ -478,7 +484,7 @@ describe("SakHistorikk", () => {
 });
 
 describe("SakHistorikk — feilhåndtering ved lagring", () => {
-  function renderMedAksjon(ui: React.ReactNode, actionResult: unknown) {
+  async function renderMedAksjon(ui: React.ReactNode, actionResult: unknown) {
     const router = createMemoryRouter(
       [
         {
@@ -489,7 +495,9 @@ describe("SakHistorikk — feilhåndtering ved lagring", () => {
       ],
       { initialEntries: ["/saker/1"] },
     );
-    return render(<RouterProvider router={router} />);
+    const resultat = render(<RouterProvider router={router} />);
+    await waitFor(() => {});
+    return resultat;
   }
 
   const FEILMELDING_STREAMING_BUFFER =
@@ -497,7 +505,7 @@ describe("SakHistorikk — feilhåndtering ved lagring", () => {
     "Dette skyldes en midlertidig begrensning i BigQuery og kan ta opptil 30–90 minutter å løse seg. Prøv igjen senere.";
 
   it("viser feilmelding og lar 'Legg til'-modalen forbli åpen når lagring feiler (f.eks. 409 fra backend)", async () => {
-    renderMedAksjon(<SakHistorikk redigerbar={true} sakId={1} hendelser={[]} />, {
+    await renderMedAksjon(<SakHistorikk redigerbar={true} sakId={1} hendelser={[]} />, {
       ok: false,
       feil: { skjema: [FEILMELDING_STREAMING_BUFFER] },
     });
@@ -505,12 +513,14 @@ describe("SakHistorikk — feilhåndtering ved lagring", () => {
     act(() => {
       fireEvent.click(screen.getByRole("button", { name: "Legg til" }));
     });
+    await waitFor(() => {});
     act(() => {
       fireEvent.change(screen.getByLabelText("Tittel"), { target: { value: "Ringte bruker" } });
     });
     act(() => {
       fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
     });
+    await waitFor(() => {});
 
     await waitFor(() => {
       expect(screen.getByText(FEILMELDING_STREAMING_BUFFER)).toBeDefined();
@@ -524,11 +534,14 @@ describe("SakHistorikk — feilhåndtering ved lagring", () => {
   });
 
   it("lukker 'Legg til'-modalen når lagring lykkes", async () => {
-    renderMedAksjon(<SakHistorikk redigerbar={true} sakId={1} hendelser={[]} />, { ok: true });
+    await renderMedAksjon(<SakHistorikk redigerbar={true} sakId={1} hendelser={[]} />, {
+      ok: true,
+    });
 
     act(() => {
       fireEvent.click(screen.getByRole("button", { name: "Legg til" }));
     });
+    await waitFor(() => {});
     act(() => {
       fireEvent.change(screen.getByLabelText("Tittel"), { target: { value: "Ringte bruker" } });
     });
@@ -539,6 +552,7 @@ describe("SakHistorikk — feilhåndtering ved lagring", () => {
     act(() => {
       fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
     });
+    await waitFor(() => {});
 
     // @navikt/ds-react sin Modal fjerner ikke innholdet fra DOM-en ved
     // lukking (kun native dialog.close()) — sjekk derfor dialog.open
@@ -554,7 +568,7 @@ describe("SakHistorikk — feilhåndtering ved lagring", () => {
     // innsending kan i prinsippet henge igjen. Feilmeldingen skal derfor
     // kun vises i visningen der den faktisk oppstod — ikke dukke opp igjen
     // ved en senere åpning uten et nytt lagringsforsøk.
-    renderMedAksjon(<SakHistorikk redigerbar={true} sakId={1} hendelser={[]} />, {
+    await renderMedAksjon(<SakHistorikk redigerbar={true} sakId={1} hendelser={[]} />, {
       ok: false,
       feil: { skjema: [FEILMELDING_STREAMING_BUFFER] },
     });
@@ -562,12 +576,14 @@ describe("SakHistorikk — feilhåndtering ved lagring", () => {
     act(() => {
       fireEvent.click(screen.getByRole("button", { name: "Legg til" }));
     });
+    await waitFor(() => {});
     act(() => {
       fireEvent.change(screen.getByLabelText("Tittel"), { target: { value: "Ringte bruker" } });
     });
     act(() => {
       fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
     });
+    await waitFor(() => {});
 
     await waitFor(() => {
       expect(screen.getByText(FEILMELDING_STREAMING_BUFFER)).toBeDefined();
@@ -576,9 +592,11 @@ describe("SakHistorikk — feilhåndtering ved lagring", () => {
     act(() => {
       fireEvent.click(screen.getByRole("button", { name: "Avbryt" }));
     });
+    await waitFor(() => {});
     act(() => {
       fireEvent.click(screen.getByRole("button", { name: "Legg til" }));
     });
+    await waitFor(() => {});
 
     expect(screen.queryByText(FEILMELDING_STREAMING_BUFFER)).toBeNull();
   });
@@ -590,7 +608,7 @@ describe("SakHistorikk — feilhåndtering ved lagring", () => {
       opprettetAvNavIdent: "Z999999",
     });
 
-    renderMedAksjon(<SakHistorikk redigerbar={true} sakId={1} hendelser={[hendelse]} />, {
+    await renderMedAksjon(<SakHistorikk redigerbar={true} sakId={1} hendelser={[hendelse]} />, {
       ok: false,
       feil: { skjema: [FEILMELDING_STREAMING_BUFFER] },
     });
@@ -598,6 +616,7 @@ describe("SakHistorikk — feilhåndtering ved lagring", () => {
     act(() => {
       fireEvent.click(screen.getByRole("button", { name: "Slett" }));
     });
+    await waitFor(() => {});
 
     await waitFor(() => {
       expect(screen.getByText(FEILMELDING_STREAMING_BUFFER)).toBeDefined();
