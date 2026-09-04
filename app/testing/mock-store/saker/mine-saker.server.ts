@@ -426,18 +426,6 @@ function lagMockMineKontrollsaker() {
 /** Factory som brukes av session.server.ts for å bygge initial tilstand */
 export const lagInitialMineKontrollsaker = lagMockMineKontrollsaker;
 
-export const mockMineSakerAvslutningsdatoer: Record<string, string> = {
-  [String(207)]: "2026-03-12",
-  [String(209)]: "2026-03-16",
-  [String(210)]: "2026-03-18",
-  [String(1019)]: "2026-05-19",
-  [String(1020)]: "2026-05-18",
-  [String(1021)]: "2026-05-20",
-  [String(1022)]: "2026-05-19",
-  [String(1023)]: "2026-05-21",
-  [String(1024)]: "2026-05-20",
-};
-
 // Backend-genererte demo-saker (28 stk) i nytt format — parses direkte med kontrollsakResponseSchema
 const backendGenererteDemoSaker = [
   {

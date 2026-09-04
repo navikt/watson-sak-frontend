@@ -1,7 +1,6 @@
 import { hentMockState } from "~/testing/mock-store/session.server";
 import {
   hentAlleSaker as _hentAlleSaker,
-  hentAvslutningsdatoer as _hentAvslutningsdatoer,
   hentFordelingssaker as _hentFordelingssaker,
   hentMineSaker as _hentMineSaker,
   leggTilMockSakIFordeling as _leggTilMockSakIFordeling,
@@ -20,10 +19,6 @@ export function hentFordelingssaker(request: Request) {
 
 export function hentMineSaker(request: Request, navIdent?: string, navn?: string) {
   return _hentMineSaker(hentMockState(request), navIdent, navn);
-}
-
-export function hentAvslutningsdatoer(request: Request) {
-  return _hentAvslutningsdatoer(hentMockState(request));
 }
 
 export function leggTilMockSakIFordeling(

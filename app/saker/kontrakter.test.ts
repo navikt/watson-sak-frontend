@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { hentMockState } from "~/testing/mock-store/session.server";
 import { hentFordelingssaker } from "~/testing/mock-store/alle-saker.server";
 import { lagInitialMineKontrollsaker } from "~/testing/mock-store/saker/mine-saker.server";
-import { mockStatistikkSaker } from "~/statistikk/mock-data.server";
 import { hentHistorikk } from "./historikk/mock-data.server";
 import {
   kontrollsakHendelseResponseSchema,
@@ -164,7 +163,7 @@ describe("Kontrollsak-kontrakter", () => {
     const mockKontrollsaker = hentFordelingssaker(state());
     const mockMineKontrollsaker = lagInitialMineKontrollsaker();
     expect(() => {
-      for (const sak of [...mockKontrollsaker, ...mockMineKontrollsaker, ...mockStatistikkSaker]) {
+      for (const sak of [...mockKontrollsaker, ...mockMineKontrollsaker]) {
         kontrollsakResponseSchema.parse(sak);
       }
     }).not.toThrow();

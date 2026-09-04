@@ -10,7 +10,6 @@ const sider = [
   { lenketekst: "Ufordelte saker", sti: "/fordeling", overskrift: "Ufordelte saker" },
   { lenketekst: "Alle saker", sti: "/alle-saker", overskrift: "Alle saker" },
   { lenketekst: "Opprett sak", sti: "/registrer-sak", overskrift: "Opprett sak" },
-  { lenketekst: "Statistikk", sti: "/statistikk", overskrift: "Statistikk" },
 ];
 
 test.describe("Navigasjon og sidebar", () => {

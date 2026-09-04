@@ -10,7 +10,6 @@ export const RouteConfig = {
   MINE_SAKER: "/mine-saker",
   ALLE_SAKER: "/alle-saker",
   REGISTRER_SAK: "/registrer-sak",
-  STATISTIKK: "/statistikk",
   PERSONVERN: "/personvern",
   SØK: "/søk",
   VARSLER: "/varsler",
