@@ -8,8 +8,6 @@ const config: KnipConfig = {
     "@navikt/ds-css",
     "tailwindcss",
   ],
-  // react-router genererer typer via rootDirs i tsconfig, men knip forstår ikke rootDirs.
-  // Inkluder de genererte typene eksplisitt slik at knip kan løse +types/-importer.
   project: ["**/*.{ts,tsx}"],
 };
 
