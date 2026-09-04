@@ -1,4 +1,7 @@
 FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/node:24-dev AS dependencies
+# Chainguard-imaget kjører som nonroot som standard, og corepack må skrive til
+# /usr/bin. Kun i denne (kasserte) byggefasen — sluttimaget forblir nonroot.
+USER root
 WORKDIR /app
 COPY package.json pnpm-lock.yaml .npmrc ./
 
@@ -8,6 +11,7 @@ RUN --mount=type=secret,id=NODE_AUTH_TOKEN sh -c \
     pnpm install --frozen-lockfile'
 
 FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/node:24-dev AS builder
+USER root
 WORKDIR /app
 COPY . .
 COPY --from=dependencies /app/node_modules ./node_modules
