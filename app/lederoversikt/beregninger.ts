@@ -3,7 +3,7 @@ import type { KontrollsakResponse } from "~/saker/types.backend";
 import { forskjellIDager } from "~/utils/date-utils";
 
 /** Antall dager uten oppdatering før en åpen sak regnes som "over frist". */
-export const OVER_FRIST_DAGER = 30;
+const OVER_FRIST_DAGER = 30;
 
 const lukkedeStatuser: KontrollsakResponse["status"][] = ["ANMELDT", "HENLAGT", "AVSLUTTET"];
 
@@ -59,7 +59,7 @@ export interface EnhetsOppsummering {
   antallUfordelte: number;
 }
 
-/** Aggregerer enhetens saker til nøkkeltall brukt i velkomstseksjonen og advarsler. */
+/** Aggregerer enhetens saker til nøkkeltall brukt i velkomstseksjonen. */
 export function beregnEnhetsOppsummering(
   saker: KontrollsakResponse[],
   nå: Date = new Date(),

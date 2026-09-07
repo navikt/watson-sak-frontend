@@ -52,7 +52,6 @@ export default function LandingSide() {
         {loaderData.type === "leder" ? (
           <LederOversikt
             enhetId={loaderData.enhetId}
-            advarsler={loaderData.advarsler}
             ansatteOversikt={loaderData.ansatteOversikt}
           />
         ) : (

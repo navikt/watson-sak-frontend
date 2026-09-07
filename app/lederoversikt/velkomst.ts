@@ -32,9 +32,3 @@ export function lagLederVelkomstOppsummering(
 
   return `Enheten ${enhetNavn} har ${sammenstill(deler)} akkurat nå.`;
 }
-
-export interface LederAdvarsel {
-  id: string;
-  tekst: string;
-  lenke: { to: string; label: string };
-}
