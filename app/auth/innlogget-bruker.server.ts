@@ -26,7 +26,7 @@ export async function hentInnloggetBruker({
   oboToken,
 }: HentInnloggetBrukerArgs): Promise<InnloggetBruker> {
   if (env.ENVIRONMENT === "local-mock") {
-    if (env.LOCAL_MOCK_PROFIL === "leder") {
+    if (env.BRUKERPROFIL === "leder") {
       // Enhetskoden "hu424t" (Nord) matcher enheten mockdataen for kontrollsaker
       // og saksbehandlere bruker, slik at lederoversikten viser reelle mocktall.
       return {

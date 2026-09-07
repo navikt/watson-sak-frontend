@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const testState = vi.hoisted(() => ({
   environment: "demo",
-  localMockProfil: "saksbehandler",
+  brukerprofil: "saksbehandler",
 }));
 
 const parseAzureUserTokenMock = vi.hoisted(() => vi.fn());
@@ -19,8 +19,8 @@ vi.mock("~/config/env.server", () => ({
     get ENVIRONMENT() {
       return testState.environment;
     },
-    get LOCAL_MOCK_PROFIL() {
-      return testState.localMockProfil;
+    get BRUKERPROFIL() {
+      return testState.brukerprofil;
     },
   },
 }));
@@ -44,7 +44,7 @@ describe("hentInnloggetBruker", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     testState.environment = "demo";
-    testState.localMockProfil = "saksbehandler";
+    testState.brukerprofil = "saksbehandler";
     getValidTokenMock.mockResolvedValue("gyldig-token");
     getBackendOboTokenMock.mockResolvedValue("obo-token");
     parseAzureUserTokenMock.mockReturnValue({
@@ -125,9 +125,9 @@ describe("hentInnloggetBruker", () => {
     });
   });
 
-  it("logger inn som leder i local-mock når LOCAL_MOCK_PROFIL er satt til leder", async () => {
+  it("logger inn som leder i local-mock når BRUKERPROFIL er satt til leder", async () => {
     testState.environment = "local-mock";
-    testState.localMockProfil = "leder";
+    testState.brukerprofil = "leder";
 
     const { hentInnloggetBruker } = await import("./innlogget-bruker.server");
 
