@@ -36,6 +36,7 @@ import {
   formaterOppgavePrioritet,
   formaterOppgavetype,
   SammendragRad,
+  VedleggSammendrag,
 } from "./opprett-formatering";
 
 /** Kombinert grense for antall filer og dokumenter som til sammen kan velges for arkivering. */
@@ -211,6 +212,26 @@ export function OpprettJournalpostModal({
 
   const journalpostFormData = innsendingFormData;
   const oppgaveFormData = innsendingFormData && knyttTilOppgave ? innsendingFormData : null;
+  const valgteVedlegg = journalpostFormData
+    ? journalpostFormData
+        .getAll("vedleggId")
+        .map(String)
+        .map((id) =>
+          valgbareElementer.find((element) => element.type === "fil" && element.id === id),
+        )
+        .filter((element): element is ValgbartElement => element !== undefined)
+        .map((element) => element.navn)
+    : [];
+  const valgteDokumenter = journalpostFormData
+    ? journalpostFormData
+        .getAll("dokumentId")
+        .map(String)
+        .map((id) =>
+          valgbareElementer.find((element) => element.type === "dokument" && element.id === id),
+        )
+        .filter((element): element is ValgbartElement => element !== undefined)
+        .map((element) => element.navn)
+    : [];
 
   return (
     <Modal
@@ -349,6 +370,7 @@ export function OpprettJournalpostModal({
                       label="Innhold"
                       verdi={journalpostFormData.get("innhold")?.toString() ?? ""}
                     />
+                    <VedleggSammendrag navn={[...valgteVedlegg, ...valgteDokumenter]} />
                   </HGrid>
                 </Box>
                 {oppgaveFormData && (
