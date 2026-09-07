@@ -92,6 +92,7 @@ TODO
 ## Mockdata
 
 - Opprett sak bruker søkbar person-mockdata fra [`app/testing/mock-store/person-oppslag.server.ts`](app/testing/mock-store/person-oppslag.server.ts).
+- I `local-mock` logges du normalt inn som en vanlig saksbehandler. Sett `LOCAL_MOCK_PROFIL=leder` i `.env` (og restart utviklingsserveren) for å logges inn som leder og se lederoversikten på forsiden i stedet.
 
 </details>
 

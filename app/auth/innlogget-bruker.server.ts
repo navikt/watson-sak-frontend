@@ -5,7 +5,7 @@ import { logger } from "~/logging/logging";
 import { getBackendOboToken, getValidToken } from "./access-token";
 import { hentSaksbehandlerInfo } from "./api.server";
 
-interface InnloggetBruker {
+export interface InnloggetBruker {
   preferredUsername: string;
   name: string;
   navIdent: string;
@@ -26,6 +26,19 @@ export async function hentInnloggetBruker({
   oboToken,
 }: HentInnloggetBrukerArgs): Promise<InnloggetBruker> {
   if (env.ENVIRONMENT === "local-mock") {
+    if (env.LOCAL_MOCK_PROFIL === "leder") {
+      // Enhetskoden "hu424t" (Nord) matcher enheten mockdataen for kontrollsaker
+      // og saksbehandlere bruker, slik at lederoversikten viser reelle mocktall.
+      return {
+        preferredUsername: "leder",
+        name: "Leder Ledersen",
+        navIdent: "Z888888",
+        enhet: "Nord",
+        enhetId: "hu424t",
+        erLeder: true,
+      };
+    }
+
     return {
       preferredUsername: "test",
       name: "Saks Behandlersen",

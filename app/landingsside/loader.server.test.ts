@@ -21,8 +21,15 @@ describe("landingsside-loader", () => {
     context: {},
   } as Parameters<typeof loader>[0];
 
+  it("returnerer saksbehandler-typen (ikke leder) for en vanlig innlogget bruker", async () => {
+    const data = await loader(loaderArgs);
+
+    expect(data.type).toBe("saksbehandler");
+  });
+
   it("returnerer bare aktive saker (ikke ANMELDT, HENLAGT eller AVSLUTTET)", async () => {
     const data = await loader(loaderArgs);
+    if (data.type !== "saksbehandler") throw new Error("Forventet saksbehandler-data");
 
     const ikkeAktiveStatuser: Array<(typeof data.mineSaker)[number]["status"]> = [
       "ANMELDT",
@@ -35,6 +42,7 @@ describe("landingsside-loader", () => {
 
   it("returnerer bare saker eid av innlogget bruker i dashboardets mine saker-liste", async () => {
     const data = await loader(loaderArgs);
+    if (data.type !== "saksbehandler") throw new Error("Forventet saksbehandler-data");
 
     expect(data.mineSaker.every((sak) => sak.saksbehandlere.eier?.navIdent === "Z999999")).toBe(
       true,
@@ -43,6 +51,7 @@ describe("landingsside-loader", () => {
 
   it("returnerer en velkomstoppsummering basert på sakene dine", async () => {
     const data = await loader(loaderArgs);
+    if (data.type !== "saksbehandler") throw new Error("Forventet saksbehandler-data");
 
     expect(data.velkomstOppsummering).toBe("Akkurat nå har du 28 aktive saker og 1 sak på vent.");
   });

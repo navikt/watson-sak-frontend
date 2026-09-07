@@ -1,27 +1,6 @@
 import { BodyLong, Heading, VStack } from "@navikt/ds-react";
-import { CoffeeIcon, MoonIcon, SunIcon } from "@navikt/aksel-icons";
-import type { ComponentType, SVGProps } from "react";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
-
-interface Hilsen {
-  tekst: string;
-  Ikon: ComponentType<SVGProps<SVGSVGElement>>;
-}
-
-function hentHilsen(): Hilsen {
-  const time = new Date().getHours();
-  if (time < 6) return { tekst: "God natt", Ikon: MoonIcon };
-  if (time < 10) return { tekst: "God morgen", Ikon: CoffeeIcon };
-  if (time < 17) return { tekst: "God dag", Ikon: SunIcon };
-  if (time < 20) return { tekst: "God ettermiddag", Ikon: SunIcon };
-  return { tekst: "God kveld", Ikon: MoonIcon };
-}
-
-function hentFornavn(fulltNavn: string): string {
-  const navn = fulltNavn.includes(",") ? fulltNavn.split(",")[1] : fulltNavn;
-
-  return navn.trim().split(" ")[0];
-}
+import { hentFornavn, hentHilsen } from "~/utils/hilsen";
 
 export function Velkomst({ oppsummering }: { oppsummering: string }) {
   const bruker = useInnloggetBruker();
