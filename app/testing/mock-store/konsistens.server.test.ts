@@ -23,6 +23,29 @@ describe("mock-store konsistens", () => {
     resetDefaultSession();
   });
 
+  it("har ti mock-personer uten eksisterende saker", () => {
+    const personerUtenSaker = [
+      "13579024680",
+      "24680135791",
+      "35791246802",
+      "46802357913",
+      "57913468024",
+      "68024579135",
+      "79135680246",
+      "80246791357",
+      "91357802468",
+      "02468013579",
+    ];
+
+    const saker = hentAlleSaker(state());
+
+    expect(
+      personerUtenSaker.filter((personIdent) =>
+        saker.some((sak) => sak.personIdent === personIdent),
+      ),
+    ).toEqual([]);
+  });
+
   it("bruker samme saksobjekt for Mine saker og detaljoppslag", () => {
     for (const mineSak of hentMineSaker(state())) {
       const detaljSak = hentSakMedReferanse(state(), getSaksreferanse(mineSak.id));
