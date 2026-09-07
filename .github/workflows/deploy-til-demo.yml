@@ -1,7 +1,8 @@
 name: Deploy til demo-miljø
 on:
-  push:
-    branches: [main]
+  # Automatisk deploy til demo er midlertidig deaktivert i forbindelse med brukertesting.
+  # push:
+  #   branches: [main]
   workflow_dispatch:
 
 jobs:
