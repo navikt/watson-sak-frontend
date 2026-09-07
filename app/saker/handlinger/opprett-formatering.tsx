@@ -52,3 +52,24 @@ export function SammendragRad({ label, verdi }: { label: string; verdi: React.Re
     </>
   );
 }
+
+export function VedleggSammendrag({ navn }: { navn: string[] }) {
+  return (
+    <>
+      <BodyShort size="small" textColor="subtle">
+        Vedlegg
+      </BodyShort>
+      <div className="text-sm">
+        {navn.length > 0 ? (
+          <ul className="list-disc pl-4">
+            {navn.map((filnavn, indeks) => (
+              <li key={`${filnavn}-${indeks}`}>{filnavn}</li>
+            ))}
+          </ul>
+        ) : (
+          "Ingen"
+        )}
+      </div>
+    </>
+  );
+}

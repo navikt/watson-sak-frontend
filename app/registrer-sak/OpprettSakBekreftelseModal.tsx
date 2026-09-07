@@ -19,6 +19,7 @@ export type OpprettSakSammendrag = {
   misbrukstypeLabels: string[];
   orgnumre: string[];
   ytelser: YtelseSammendrag[];
+  vedlegg: string[];
 };
 
 function lesTekst(formData: FormData, navn: string): string {
@@ -67,6 +68,11 @@ export function byggOpprettSakSammendrag(
       beløp: rad.beløp ? `${formaterBelop(Number(rad.beløp))} kr` : undefined,
     }));
 
+  const vedlegg = formData
+    .getAll("filer")
+    .filter((verdi): verdi is File => verdi instanceof File)
+    .map((fil) => fil.name);
+
   return {
     kategoriLabel: finnBeskrivelse(kodeverk.kategorier, kategoriKode),
     kildeLabel: finnBeskrivelse(kodeverk.kilder, kildeKode),
@@ -74,6 +80,7 @@ export function byggOpprettSakSammendrag(
     misbrukstypeLabels,
     orgnumre,
     ytelser,
+    vedlegg,
   };
 }
 
@@ -84,6 +91,27 @@ function SammendragRad({ label, verdi }: { label: string; verdi: React.ReactNode
         {label}
       </BodyShort>
       <BodyShort size="small">{verdi}</BodyShort>
+    </>
+  );
+}
+
+function VedleggSammendrag({ navn }: { navn: string[] }) {
+  return (
+    <>
+      <BodyShort size="small" textColor="subtle">
+        Vedlegg
+      </BodyShort>
+      <div className="text-sm">
+        {navn.length > 0 ? (
+          <ul className="list-disc pl-4">
+            {navn.map((filnavn, indeks) => (
+              <li key={`${filnavn}-${indeks}`}>{filnavn}</li>
+            ))}
+          </ul>
+        ) : (
+          "Ingen"
+        )}
+      </div>
     </>
   );
 }
@@ -162,6 +190,7 @@ export function OpprettSakBekreftelseModal({
                     }
                   />
                 )}
+                <VedleggSammendrag navn={sammendrag.vedlegg} />
               </HGrid>
             </div>
           </VStack>

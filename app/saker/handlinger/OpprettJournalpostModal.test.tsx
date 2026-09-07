@@ -193,6 +193,39 @@ describe("OpprettJournalpostModal", () => {
     expect(screen.getByRole("checkbox", { name: /Vurderingsnotat/ })).toBeDefined();
   });
 
+  it("viser valgte filer og dokumenter i oppsummeringen", async () => {
+    await renderMedRouter(
+      <OpprettJournalpostModal {...defaultProps} filer={[pdfFil]} dokumenter={[dokument]} />,
+    );
+
+    fireEvent.click(screen.getByRole("radio", { name: "Notat" }));
+    await waitFor(() => {});
+    fireEvent.change(screen.getByLabelText("Tittel"), { target: { value: "Med vedlegg" } });
+    fireEvent.change(screen.getByLabelText("Innhold"), { target: { value: "Innhold" } });
+    fireEvent.click(screen.getByRole("checkbox", { name: /rapport\.pdf/ }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /Vurderingsnotat/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    await waitFor(() => {});
+
+    const vedlegg = screen.getByText("Vedlegg").parentElement;
+    expect(vedlegg?.textContent).toContain("rapport.pdf");
+    expect(vedlegg?.textContent).toContain("Vurderingsnotat");
+  });
+
+  it("viser ingen når ingen filer eller dokumenter er valgt i oppsummeringen", async () => {
+    await renderMedRouter(<OpprettJournalpostModal {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole("radio", { name: "Notat" }));
+    await waitFor(() => {});
+    fireEvent.change(screen.getByLabelText("Tittel"), { target: { value: "Uten vedlegg" } });
+    fireEvent.change(screen.getByLabelText("Innhold"), { target: { value: "Innhold" } });
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    await waitFor(() => {});
+
+    const vedlegg = screen.getByText("Vedlegg").parentElement;
+    expect(vedlegg?.textContent).toContain("Ingen");
+  });
+
   it("inkluderer valgte vedlegg-ID-er i form payload", async () => {
     await renderMedRouter(<OpprettJournalpostModal {...defaultProps} filer={[pdfFil]} />);
 
