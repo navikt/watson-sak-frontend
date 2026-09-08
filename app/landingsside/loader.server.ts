@@ -74,9 +74,10 @@ async function lastLederData(
   const { saker, ansatte } = await hentLederOversiktData({ request, innloggetBruker });
 
   const enhetsOppsummering = beregnEnhetsOppsummering(saker);
-  const ansatteOversikt = [...beregnAnsatteOversikt(saker, ansatte)].sort(
-    (a, b) => b.totalAntall - a.totalAntall,
-  );
+  // Sorteres ikke her: AnsatteOversikt-komponenten sorterer selv ved render
+  // (STANDARD_SORTERING) og lar brukeren endre sortering interaktivt, så en
+  // ekstra sortering i loaderen ville bare vært duplisert arbeid.
+  const ansatteOversikt = beregnAnsatteOversikt(saker, ansatte);
 
   return {
     type: "leder" as const,

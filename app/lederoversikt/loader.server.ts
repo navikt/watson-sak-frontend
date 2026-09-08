@@ -63,9 +63,11 @@ export async function hentLederOversiktData({
 
   // De aller fleste enheter har færre saker enn STOR_SIDESTØRRELSE, men for å
   // ikke gi leder et ufullstendig bilde henter vi resten av sidene også når
-  // enheten har mer enn én side med kontrollsaker.
+  // enheten har mer enn én side med kontrollsaker. `totalPages` kan være 0
+  // (tom enhet), så vi bunner lengden på 0 for å unngå RangeError.
+  const antallØvrigeSider = Math.max(0, førsteSide.totalPages - 1);
   const øvrigeSider = await Promise.all(
-    Array.from({ length: førsteSide.totalPages - 1 }, (_, i) =>
+    Array.from({ length: antallØvrigeSider }, (_, i) =>
       hentKontrollsaker({ token, page: i + 2, size: STOR_SIDESTØRRELSE, enhet: [enhetId] }),
     ),
   );

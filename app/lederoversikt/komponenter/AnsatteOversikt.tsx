@@ -24,6 +24,14 @@ function sorterAnsatte(ansatte: AnsattOversikt[], sortering: Sortering): AnsattO
   });
 }
 
+function ariaSortForKolonne(
+  kolonne: SortKolonne,
+  sortering: Sortering,
+): "ascending" | "descending" | "none" {
+  if (sortering.kolonne !== kolonne) return "none";
+  return sortering.retning === "stigende" ? "ascending" : "descending";
+}
+
 /** Viser antall saker per saksbehandler i enheten som en horisontal stolpe,
  * delt i innenfor frist (blå) og over frist (rød). Bygget som en vanlig
  * tabell (ikke et grafikkbibliotek) slik at den forblir tastatur- og
@@ -78,7 +86,11 @@ export function AnsatteOversikt({
             <Table size="small">
               <Table.Header>
                 <Table.Row>
-                  <Table.HeaderCell scope="col" className="w-1/3">
+                  <Table.HeaderCell
+                    scope="col"
+                    className="w-1/3"
+                    aria-sort={ariaSortForKolonne("navn", sortering)}
+                  >
                     <KolonneHeading
                       tittel="Saksbehandler"
                       sortering={{
@@ -88,7 +100,7 @@ export function AnsatteOversikt({
                       }}
                     />
                   </Table.HeaderCell>
-                  <Table.HeaderCell scope="col">
+                  <Table.HeaderCell scope="col" aria-sort={ariaSortForKolonne("antall", sortering)}>
                     <KolonneHeading
                       tittel="Saker"
                       sortering={{

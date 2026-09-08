@@ -80,6 +80,28 @@ describe("hentLederOversiktData", () => {
     expect(resultat.ansatte.every((a) => typeof a.navIdent === "string")).toBe(true);
   });
 
+  it("henter ikke flere sider når enheten ikke har noen kontrollsaker (totalPages: 0)", async () => {
+    testState.skalBrukeMockdata = false;
+    hentKontrollsakerMock.mockResolvedValue({
+      items: [],
+      page: 1,
+      size: 500,
+      totalItems: 0,
+      totalPages: 0,
+    });
+    hentSaksbehandlereMock.mockResolvedValue([]);
+
+    const { hentLederOversiktData } = await import("./loader.server");
+
+    const resultat = await hentLederOversiktData({
+      request: new Request("http://localhost"),
+      innloggetBruker: lederBruker(),
+    });
+
+    expect(hentKontrollsakerMock).toHaveBeenCalledTimes(1);
+    expect(resultat.saker).toEqual([]);
+  });
+
   it("henter alle sider med kontrollsaker når enheten har flere sider enn STOR_SIDESTØRRELSE", async () => {
     testState.skalBrukeMockdata = false;
     hentKontrollsakerMock.mockImplementation(({ page }: { page: number }) =>
