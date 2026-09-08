@@ -50,10 +50,7 @@ export default function LandingSide() {
         />
 
         {loaderData.type === "leder" ? (
-          <LederOversikt
-            enhetId={loaderData.enhetId}
-            ansatteOversikt={loaderData.ansatteOversikt}
-          />
+          <LederOversikt statistikk={loaderData.statistikk} />
         ) : (
           <SistAktiveSakerOversikt saker={loaderData.mineSaker} />
         )}

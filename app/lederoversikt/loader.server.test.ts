@@ -1,16 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getSaksenhet } from "~/saker/selectors";
-import { mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
-import { resetDefaultSession } from "~/testing/mock-store/session.server";
 import type { InnloggetBruker } from "~/auth/innlogget-bruker.server";
 
 const testState = vi.hoisted(() => ({
-  skalBrukeMockdata: true,
+  skalBrukeMockdata: false,
 }));
 
 const getBackendOboTokenMock = vi.hoisted(() => vi.fn().mockResolvedValue("token-123"));
-const hentKontrollsakerMock = vi.hoisted(() => vi.fn());
-const hentSaksbehandlereMock = vi.hoisted(() => vi.fn());
+const hentLederStatistikkMock = vi.hoisted(() => vi.fn());
+const lagMockLederStatistikkMock = vi.hoisted(() => vi.fn());
 
 vi.mock("~/auth/access-token", () => ({
   getBackendOboToken: getBackendOboTokenMock,
@@ -22,145 +19,82 @@ vi.mock("~/config/env.server", () => ({
   },
 }));
 
-vi.mock("~/fordeling/api.server", () => ({
-  hentKontrollsaker: hentKontrollsakerMock,
+vi.mock("./api.server", () => ({
+  hentLederStatistikk: hentLederStatistikkMock,
 }));
 
-vi.mock("~/saker/api.server", () => ({
-  hentSaksbehandlere: hentSaksbehandlereMock,
+vi.mock("./mock.server", () => ({
+  lagMockLederStatistikk: lagMockLederStatistikkMock,
 }));
 
-function lederBruker(overstyringer: Partial<InnloggetBruker> = {}): InnloggetBruker {
-  return {
-    preferredUsername: "leder",
-    name: "Leder Ledersen",
-    navIdent: "Z888888",
-    enhet: "Nord",
-    enhetId: "hu424t",
-    erLeder: true,
-    ...overstyringer,
-  };
-}
+const respons = {
+  enhetId: "hu424t",
+  enhetNavn: "Nord",
+  enhet: {
+    totaltAntallIkkeAvsluttede: 7,
+    antallOverFrist: 2,
+    perStatus: {
+      OPPRETTET: 1,
+      UTREDES: 2,
+      STRAFFERETTSLIG_VURDERING: 1,
+      ANMELDT: 2,
+      HENLAGT: 1,
+    },
+    perArbeidsstatus: {
+      IKKE_BLOKKERT: 4,
+      VENTER_PA_INFORMASJON: 1,
+      VENTER_PA_VEDTAK: 1,
+      I_BERO: 1,
+    },
+    antallUfordelte: 1,
+  },
+  ansatte: {
+    tilgjengelig: true,
+    liste: [],
+    ufordelt: { totaltAntallIkkeAvsluttede: 1, antallOverFrist: 0 },
+  },
+};
+
+const leder: InnloggetBruker = {
+  preferredUsername: "leder",
+  name: "Leder Ledersen",
+  navIdent: "Z888888",
+  enhet: "Nord",
+  enhetId: "hu424t",
+  erLeder: true,
+};
 
 describe("hentLederOversiktData", () => {
   beforeEach(() => {
-    testState.skalBrukeMockdata = true;
+    testState.skalBrukeMockdata = false;
     vi.clearAllMocks();
-    resetDefaultSession();
+    hentLederStatistikkMock.mockResolvedValue(respons);
+    lagMockLederStatistikkMock.mockReturnValue(respons);
   });
 
-  it("returnerer tom liste når leder mangler enhetId", async () => {
+  it("gjør ett backendkall uten klientstyrt enhet", async () => {
     const { hentLederOversiktData } = await import("./loader.server");
 
     const resultat = await hentLederOversiktData({
       request: new Request("http://localhost"),
-      innloggetBruker: lederBruker({ enhetId: null }),
+      innloggetBruker: leder,
     });
 
-    expect(resultat).toEqual({ saker: [], ansatte: [] });
+    expect(getBackendOboTokenMock).toHaveBeenCalledTimes(1);
+    expect(hentLederStatistikkMock).toHaveBeenCalledWith("token-123");
+    expect(hentLederStatistikkMock).toHaveBeenCalledTimes(1);
+    expect(resultat).toEqual(respons);
   });
 
-  it("filtrerer mockdata på lederens enhet", async () => {
+  it("bruker samme kontrakt i mockmodus", async () => {
+    testState.skalBrukeMockdata = true;
+    const request = new Request("http://localhost");
     const { hentLederOversiktData } = await import("./loader.server");
 
-    const resultat = await hentLederOversiktData({
-      request: new Request("http://localhost"),
-      innloggetBruker: lederBruker(),
-    });
+    const resultat = await hentLederOversiktData({ request, innloggetBruker: leder });
 
-    expect(resultat.saker.length).toBeGreaterThan(0);
-    for (const sak of resultat.saker) {
-      expect(getSaksenhet(sak)).toBe("hu424t");
-    }
-
-    const forventetAntallAnsatte = mockSaksbehandlerDetaljer.filter(
-      (sb) => sb.enhet === "hu424t",
-    ).length;
-    expect(resultat.ansatte).toHaveLength(forventetAntallAnsatte);
-    expect(resultat.ansatte.every((a) => typeof a.navIdent === "string")).toBe(true);
-  });
-
-  it("henter ikke flere sider når enheten ikke har noen kontrollsaker (totalPages: 0)", async () => {
-    testState.skalBrukeMockdata = false;
-    hentKontrollsakerMock.mockResolvedValue({
-      items: [],
-      page: 1,
-      size: 500,
-      totalItems: 0,
-      totalPages: 0,
-    });
-    hentSaksbehandlereMock.mockResolvedValue([]);
-
-    const { hentLederOversiktData } = await import("./loader.server");
-
-    const resultat = await hentLederOversiktData({
-      request: new Request("http://localhost"),
-      innloggetBruker: lederBruker(),
-    });
-
-    expect(hentKontrollsakerMock).toHaveBeenCalledTimes(1);
-    expect(resultat.saker).toEqual([]);
-  });
-
-  it("henter alle sider med kontrollsaker når enheten har flere sider enn STOR_SIDESTØRRELSE", async () => {
-    testState.skalBrukeMockdata = false;
-    hentKontrollsakerMock.mockImplementation(({ page }: { page: number }) =>
-      Promise.resolve({
-        items: [{ id: page }],
-        page,
-        size: 500,
-        totalItems: 3,
-        totalPages: 3,
-      }),
-    );
-    hentSaksbehandlereMock.mockResolvedValue([]);
-
-    const { hentLederOversiktData } = await import("./loader.server");
-
-    const resultat = await hentLederOversiktData({
-      request: new Request("http://localhost"),
-      innloggetBruker: lederBruker(),
-    });
-
-    expect(hentKontrollsakerMock).toHaveBeenCalledTimes(3);
-    expect(hentKontrollsakerMock).toHaveBeenCalledWith(
-      expect.objectContaining({ page: 1, enhet: ["hu424t"] }),
-    );
-    expect(hentKontrollsakerMock).toHaveBeenCalledWith(
-      expect.objectContaining({ page: 2, enhet: ["hu424t"] }),
-    );
-    expect(hentKontrollsakerMock).toHaveBeenCalledWith(
-      expect.objectContaining({ page: 3, enhet: ["hu424t"] }),
-    );
-    expect(resultat.saker).toEqual([{ id: 1 }, { id: 2 }, { id: 3 }]);
-  });
-
-  it("henter kontrollsaker og saksbehandlere fra backend utenfor mockmodus, filtrert på enhetsnavn", async () => {
-    testState.skalBrukeMockdata = false;
-    hentKontrollsakerMock.mockResolvedValue({
-      items: [{ id: 1 }],
-      page: 1,
-      size: 500,
-      totalItems: 1,
-      totalPages: 1,
-    });
-    hentSaksbehandlereMock.mockResolvedValue([
-      { navIdent: "Z1", navn: "Ada", enhet: "Nord" },
-      { navIdent: "Z2", navn: "Bjørn", enhet: "Sør" },
-    ]);
-
-    const { hentLederOversiktData } = await import("./loader.server");
-
-    const resultat = await hentLederOversiktData({
-      request: new Request("http://localhost"),
-      innloggetBruker: lederBruker(),
-    });
-
-    expect(getBackendOboTokenMock).toHaveBeenCalled();
-    expect(hentKontrollsakerMock).toHaveBeenCalledWith(
-      expect.objectContaining({ token: "token-123", enhet: ["hu424t"] }),
-    );
-    expect(resultat.saker).toEqual([{ id: 1 }]);
-    expect(resultat.ansatte).toEqual([{ navIdent: "Z1", navn: "Ada" }]);
+    expect(getBackendOboTokenMock).not.toHaveBeenCalled();
+    expect(lagMockLederStatistikkMock).toHaveBeenCalledWith(request, "hu424t", "Nord");
+    expect(resultat).toEqual(respons);
   });
 });
