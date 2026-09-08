@@ -22,7 +22,8 @@ const envSchema = z.object({
     .describe("The OAuth token for the development environment. Is not set in production."),
   BRUKERPROFIL: z
     .enum([
-      "saksbehandler",
+      "saksbehandler-analyse",
+      "leder-analyse",
       "leder-øst",
       "leder-vest",
       "saksbehandler-øst-1",
@@ -30,16 +31,16 @@ const envSchema = z.object({
       "saksbehandler-vest-1",
       "saksbehandler-vest-2",
     ])
-    .default("saksbehandler")
+    .default("saksbehandler-analyse")
     .describe(
-      "Hvilken brukerprofil som logges inn som lokalt. 'saksbehandler' (default) gir standard " +
-        "mockbruker Z999999. 'leder-øst'/'leder-vest' gir tilgang til lederoversikten for hhv. " +
-        "enhet Øst og Vest, mens 'saksbehandler-øst-*'/'saksbehandler-vest-*' logger inn som en " +
-        "navngitt saksbehandler under den enheten — nyttig for å teste overføring av saker mellom " +
-        "saksbehandlere og enheter lokalt. I local-mock styrer denne hvilken mock-bruker som " +
-        "returneres. I local-backend brukes den til å be mock-oauth2-server om et token for samme " +
-        "profil (se watson-developer), slik at man får reelle data fra backenden for den valgte " +
-        "brukeren.",
+      "Hvilken brukerprofil som logges inn som lokalt. 'saksbehandler-analyse' (default) gir " +
+        "standard mockbruker (Lokal Utvikler) i enhet Analyse. 'leder-analyse'/'leder-øst'/'leder-vest' " +
+        "gir tilgang til lederoversikten for hhv. enhet Analyse, Øst og Vest, mens " +
+        "'saksbehandler-øst-*'/'saksbehandler-vest-*' logger inn som en navngitt saksbehandler under " +
+        "den enheten — nyttig for å teste overføring av saker mellom saksbehandlere og enheter " +
+        "lokalt. I local-mock styrer denne hvilken mock-bruker som returneres. I local-backend " +
+        "brukes den til å be mock-oauth2-server om et token for samme profil (se watson-developer), " +
+        "slik at man får reelle data fra backenden for den valgte brukeren.",
     ),
   WATSON_ADMIN_API_URL: z
     .string()

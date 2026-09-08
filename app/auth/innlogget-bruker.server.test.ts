@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const testState = vi.hoisted(() => ({
   environment: "demo",
-  brukerprofil: "saksbehandler",
+  brukerprofil: "saksbehandler-analyse",
 }));
 
 const parseAzureUserTokenMock = vi.hoisted(() => vi.fn());
@@ -44,7 +44,7 @@ describe("hentInnloggetBruker", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     testState.environment = "demo";
-    testState.brukerprofil = "saksbehandler";
+    testState.brukerprofil = "saksbehandler-analyse";
     getValidTokenMock.mockResolvedValue("gyldig-token");
     getBackendOboTokenMock.mockResolvedValue("obo-token");
     parseAzureUserTokenMock.mockReturnValue({
@@ -116,11 +116,11 @@ describe("hentInnloggetBruker", () => {
 
     expect(getValidTokenMock).not.toHaveBeenCalled();
     expect(bruker).toEqual({
-      preferredUsername: "test",
-      name: "Saks Behandlersen",
-      navIdent: "Z999999",
-      enhet: "4812",
-      enhetId: "4812",
+      preferredUsername: "lokal.utvikler",
+      name: "Lokal Utvikler",
+      navIdent: "L999999",
+      enhet: "Analyse",
+      enhetId: "by295h",
       erLeder: false,
     });
   });
@@ -147,6 +147,7 @@ describe("hentInnloggetBruker", () => {
   });
 
   it.each([
+    ["leder-analyse", "Lene Leder", "L900006", "Analyse", "by295h", true],
     ["leder-vest", "Lisa Leder", "L900001", "Vest", "gu301n", true],
     ["saksbehandler-øst-1", "Simen Saksbehandler", "L900002", "Øst", "ky153k", false],
     ["saksbehandler-øst-2", "Sara Saksbehandler", "L900003", "Øst", "ky153k", false],

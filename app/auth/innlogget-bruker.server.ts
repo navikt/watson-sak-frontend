@@ -26,6 +26,22 @@ export interface InnloggetBruker {
  * overføring på tvers av enheter (Øst/Vest/Analyse).
  */
 const LOKALE_BRUKERPROFILER: Record<string, InnloggetBruker> = {
+  "saksbehandler-analyse": {
+    preferredUsername: "lokal.utvikler",
+    name: "Lokal Utvikler",
+    navIdent: "L999999",
+    enhet: "Analyse",
+    enhetId: "by295h",
+    erLeder: false,
+  },
+  "leder-analyse": {
+    preferredUsername: "lene.leder",
+    name: "Lene Leder",
+    navIdent: "L900006",
+    enhet: "Analyse",
+    enhetId: "by295h",
+    erLeder: true,
+  },
   "leder-øst": {
     preferredUsername: "lars.leder",
     name: "Lars Leder",
