@@ -1,6 +1,7 @@
 import { VStack } from "@navikt/ds-react";
 import { useEffect, useRef } from "react";
 import { useFetcher, useLoaderData } from "react-router";
+import { LederOversikt } from "~/lederoversikt/LederOversikt";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { usePreferences } from "~/preferanser/PreferencesContext";
 import { RouteConfig } from "~/routeConfig";
@@ -48,7 +49,14 @@ export default function LandingSide() {
           }}
         />
 
-        <SistAktiveSakerOversikt saker={loaderData.mineSaker} />
+        {loaderData.type === "leder" ? (
+          <LederOversikt
+            enhetId={loaderData.enhetId}
+            ansatteOversikt={loaderData.ansatteOversikt}
+          />
+        ) : (
+          <SistAktiveSakerOversikt saker={loaderData.mineSaker} />
+        )}
       </VStack>
     </>
   );

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const testState = vi.hoisted(() => ({
   environment: "demo",
+  brukerprofil: "saksbehandler-analyse",
 }));
 
 const parseAzureUserTokenMock = vi.hoisted(() => vi.fn());
@@ -17,6 +18,9 @@ vi.mock("~/config/env.server", () => ({
   env: {
     get ENVIRONMENT() {
       return testState.environment;
+    },
+    get BRUKERPROFIL() {
+      return testState.brukerprofil;
     },
   },
 }));
@@ -40,6 +44,7 @@ describe("hentInnloggetBruker", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     testState.environment = "demo";
+    testState.brukerprofil = "saksbehandler-analyse";
     getValidTokenMock.mockResolvedValue("gyldig-token");
     getBackendOboTokenMock.mockResolvedValue("obo-token");
     parseAzureUserTokenMock.mockReturnValue({
@@ -111,12 +116,61 @@ describe("hentInnloggetBruker", () => {
 
     expect(getValidTokenMock).not.toHaveBeenCalled();
     expect(bruker).toEqual({
-      preferredUsername: "test",
-      name: "Saks Behandlersen",
-      navIdent: "Z999999",
-      enhet: "4812",
-      enhetId: "4812",
+      preferredUsername: "bjarte.byrakratsen",
+      name: "Bjarte Byråkratsen",
+      navIdent: "L999999",
+      enhet: "Analyse",
+      enhetId: "by295h",
       erLeder: false,
     });
   });
+
+  it("logger inn som leder-øst i local-mock når BRUKERPROFIL er satt til leder-øst", async () => {
+    testState.environment = "local-mock";
+    testState.brukerprofil = "leder-øst";
+
+    const { hentInnloggetBruker } = await import("./innlogget-bruker.server");
+
+    const bruker = await hentInnloggetBruker({
+      request: new Request("http://localhost"),
+    });
+
+    expect(getValidTokenMock).not.toHaveBeenCalled();
+    expect(bruker).toEqual({
+      preferredUsername: "ove.overordnerud",
+      name: "Ove Overordnerud",
+      navIdent: "L900000",
+      enhet: "Øst",
+      enhetId: "ky153k",
+      erLeder: true,
+    });
+  });
+
+  it.each([
+    ["leder-analyse", "Stian Sjeferud", "L900006", "Analyse", "by295h", true],
+    ["leder-vest", "Kari Kommandørsen", "L900001", "Vest", "gu301n", true],
+    ["saksbehandler-øst-1", "Ulrikke Utrederson", "L900002", "Øst", "ky153k", false],
+    ["saksbehandler-øst-2", "Trine Trygdesen", "L900003", "Øst", "ky153k", false],
+    ["saksbehandler-vest-1", "Kjell Kontrollsen", "L900004", "Vest", "gu301n", false],
+    ["saksbehandler-vest-2", "Gunnar Granskeren", "L900005", "Vest", "gu301n", false],
+  ] as const)(
+    "logger inn med riktig identitet i local-mock for BRUKERPROFIL=%s",
+    async (profil, navn, navIdent, enhet, enhetId, erLeder) => {
+      testState.environment = "local-mock";
+      testState.brukerprofil = profil;
+
+      const { hentInnloggetBruker } = await import("./innlogget-bruker.server");
+
+      const bruker = await hentInnloggetBruker({
+        request: new Request("http://localhost"),
+      });
+
+      expect(getValidTokenMock).not.toHaveBeenCalled();
+      expect(bruker.name).toBe(navn);
+      expect(bruker.navIdent).toBe(navIdent);
+      expect(bruker.enhet).toBe(enhet);
+      expect(bruker.enhetId).toBe(enhetId);
+      expect(bruker.erLeder).toBe(erLeder);
+    },
+  );
 });

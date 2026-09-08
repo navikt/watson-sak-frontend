@@ -92,6 +92,13 @@ TODO
 ## Mockdata
 
 - Opprett sak bruker søkbar person-mockdata fra [`app/testing/mock-store/person-oppslag.server.ts`](app/testing/mock-store/person-oppslag.server.ts).
+- I `local-mock` logges du normalt inn som en vanlig saksbehandler. Sett `BRUKERPROFIL` i `.env` (og restart utviklingsserveren) for å teste andre profiler:
+  - `saksbehandler-analyse` (default) — vanlig saksbehandler i enhet Analyse.
+  - `leder-analyse` / `leder-øst` / `leder-vest` — leder for hhv. enhet Analyse, Øst og Vest, ser lederoversikten på forsiden.
+  - `saksbehandler-øst-1` / `saksbehandler-øst-2` — to ulike saksbehandlere i enhet Øst.
+  - `saksbehandler-vest-1` / `saksbehandler-vest-2` — to ulike saksbehandlere i enhet Vest.
+
+  Kombinasjonen gjør det mulig å teste overføring av saker mellom saksbehandlere i samme enhet og på tvers av enheter. Se `watson-developer/README.md` for hvordan du starter med en gitt profil mot en ekte lokal backend (`local-backend`).
 
 </details>
 
