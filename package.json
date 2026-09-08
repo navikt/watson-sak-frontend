@@ -7,7 +7,7 @@
     "build": "react-router build",
     "dev": "react-router dev",
     "dev:local": "ENVIRONMENT=local-backend react-router dev",
-    "dev:leder": "ENVIRONMENT=local-mock BRUKERPROFIL=leder react-router dev",
+    "dev:leder": "ENVIRONMENT=local-mock BRUKERPROFIL=leder-øst react-router dev",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc --noEmit",
     "lint": "oxlint .",

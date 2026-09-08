@@ -21,12 +21,25 @@ const envSchema = z.object({
     .optional()
     .describe("The OAuth token for the development environment. Is not set in production."),
   BRUKERPROFIL: z
-    .enum(["saksbehandler", "leder"])
+    .enum([
+      "saksbehandler",
+      "leder-øst",
+      "leder-vest",
+      "saksbehandler-øst-1",
+      "saksbehandler-øst-2",
+      "saksbehandler-vest-1",
+      "saksbehandler-vest-2",
+    ])
     .default("saksbehandler")
     .describe(
-      "Hvilken brukerprofil som logges inn som lokalt. 'leder' gir tilgang til lederoversikten. " +
-        "I local-mock styrer denne hvilken mock-bruker som returneres. I local-backend brukes den " +
-        "kun til logging/dokumentasjon — hvem man er logges inn som avgjøres av OAuth-tokenet man kjører med.",
+      "Hvilken brukerprofil som logges inn som lokalt. 'saksbehandler' (default) gir standard " +
+        "mockbruker Z999999. 'leder-øst'/'leder-vest' gir tilgang til lederoversikten for hhv. " +
+        "enhet Øst og Vest, mens 'saksbehandler-øst-*'/'saksbehandler-vest-*' logger inn som en " +
+        "navngitt saksbehandler under den enheten — nyttig for å teste overføring av saker mellom " +
+        "saksbehandlere og enheter lokalt. I local-mock styrer denne hvilken mock-bruker som " +
+        "returneres. I local-backend brukes den til å be mock-oauth2-server om et token for samme " +
+        "profil (se watson-developer), slik at man får reelle data fra backenden for den valgte " +
+        "brukeren.",
     ),
   WATSON_ADMIN_API_URL: z
     .string()

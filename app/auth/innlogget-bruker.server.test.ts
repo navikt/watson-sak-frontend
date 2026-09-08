@@ -125,9 +125,9 @@ describe("hentInnloggetBruker", () => {
     });
   });
 
-  it("logger inn som leder i local-mock når BRUKERPROFIL er satt til leder", async () => {
+  it("logger inn som leder-øst i local-mock når BRUKERPROFIL er satt til leder-øst", async () => {
     testState.environment = "local-mock";
-    testState.brukerprofil = "leder";
+    testState.brukerprofil = "leder-øst";
 
     const { hentInnloggetBruker } = await import("./innlogget-bruker.server");
 
@@ -137,12 +137,39 @@ describe("hentInnloggetBruker", () => {
 
     expect(getValidTokenMock).not.toHaveBeenCalled();
     expect(bruker).toEqual({
-      preferredUsername: "leder",
-      name: "Leder Ledersen",
-      navIdent: "Z888888",
-      enhet: "Nord",
-      enhetId: "hu424t",
+      preferredUsername: "lars.leder",
+      name: "Lars Leder",
+      navIdent: "L900000",
+      enhet: "Øst",
+      enhetId: "ky153k",
       erLeder: true,
     });
   });
+
+  it.each([
+    ["leder-vest", "Lisa Leder", "L900001", "Vest", "gu301n", true],
+    ["saksbehandler-øst-1", "Simen Saksbehandler", "L900002", "Øst", "ky153k", false],
+    ["saksbehandler-øst-2", "Sara Saksbehandler", "L900003", "Øst", "ky153k", false],
+    ["saksbehandler-vest-1", "Silje Saksbehandler", "L900004", "Vest", "gu301n", false],
+    ["saksbehandler-vest-2", "Stian Saksbehandler", "L900005", "Vest", "gu301n", false],
+  ] as const)(
+    "logger inn med riktig identitet i local-mock for BRUKERPROFIL=%s",
+    async (profil, navn, navIdent, enhet, enhetId, erLeder) => {
+      testState.environment = "local-mock";
+      testState.brukerprofil = profil;
+
+      const { hentInnloggetBruker } = await import("./innlogget-bruker.server");
+
+      const bruker = await hentInnloggetBruker({
+        request: new Request("http://localhost"),
+      });
+
+      expect(getValidTokenMock).not.toHaveBeenCalled();
+      expect(bruker.name).toBe(navn);
+      expect(bruker.navIdent).toBe(navIdent);
+      expect(bruker.enhet).toBe(enhet);
+      expect(bruker.enhetId).toBe(enhetId);
+      expect(bruker.erLeder).toBe(erLeder);
+    },
+  );
 });
