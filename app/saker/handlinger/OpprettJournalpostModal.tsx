@@ -312,6 +312,8 @@ export function OpprettJournalpostModal({
                 </Detail>
               )}
 
+              <hr className="my-4 border-ax-border-neutral-subtle" />
+
               <VStack gap="space-2">
                 <input
                   name={fields.knyttTilOppgave.name}
