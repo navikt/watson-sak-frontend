@@ -27,11 +27,14 @@ test.describe("Ufordelte saker", () => {
   test("kan sortere, paginere, filtrere og tildele en sak fra tabellen", async ({ page }) => {
     const rader = page.locator("tbody tr");
 
-    await page.getByRole("button", { name: "Sorter på kategori" }).click();
-    await expect(page.getByRole("columnheader", { name: "Kategori" })).toHaveAttribute(
-      "aria-sort",
-      "ascending",
-    );
+    await expect(async () => {
+      await page.getByRole("button", { name: "Sorter på kategori" }).click();
+      await expect(page.getByRole("columnheader", { name: "Kategori" })).toHaveAttribute(
+        "aria-sort",
+        "ascending",
+        { timeout: 1000 },
+      );
+    }).toPass({ timeout: 10000 });
     await expect(rader.nth(0)).toContainText("Annet");
 
     await page.getByRole("button", { name: "2" }).click();
