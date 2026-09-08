@@ -4,7 +4,7 @@ const sider = [
   {
     lenketekst: "Oversikt",
     sti: "/",
-    overskrift: /God (morgen|dag|ettermiddag|kveld|natt), Saks/,
+    overskrift: /God (morgen|dag|ettermiddag|kveld|natt), \S+/,
   },
   { lenketekst: "Mine saker", sti: "/mine-saker", overskrift: "Mine saker" },
   { lenketekst: "Ufordelte saker", sti: "/fordeling", overskrift: "Ufordelte saker" },

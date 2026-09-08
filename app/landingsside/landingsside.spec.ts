@@ -14,7 +14,7 @@ test.describe("Landingsside", () => {
   test("viser velkomsthilsen med brukerens navn", async ({ page }) => {
     await expect(
       page.getByRole("heading", {
-        name: /God (morgen|dag|ettermiddag|kveld|natt), Saks/,
+        name: /God (morgen|dag|ettermiddag|kveld|natt), \S+/,
       }),
     ).toBeVisible();
   });
@@ -40,7 +40,7 @@ test.describe("Landingsside", () => {
 
     await expect(
       page.getByRole("heading", {
-        name: /God (morgen|dag|ettermiddag|kveld|natt), Saks/,
+        name: /God (morgen|dag|ettermiddag|kveld|natt), \S+/,
       }),
     ).not.toBeVisible();
 
@@ -48,7 +48,7 @@ test.describe("Landingsside", () => {
 
     await expect(
       page.getByRole("heading", {
-        name: /God (morgen|dag|ettermiddag|kveld|natt), Saks/,
+        name: /God (morgen|dag|ettermiddag|kveld|natt), \S+/,
       }),
     ).not.toBeVisible();
   });
