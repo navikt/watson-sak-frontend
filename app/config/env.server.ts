@@ -34,7 +34,7 @@ const envSchema = z.object({
     .default("saksbehandler-analyse")
     .describe(
       "Hvilken brukerprofil som logges inn som lokalt. 'saksbehandler-analyse' (default) gir " +
-        "standard mockbruker (Lokal Utvikler) i enhet Analyse. 'leder-analyse'/'leder-øst'/'leder-vest' " +
+        "standard mockbruker (Bjarte Byråkratsen) i enhet Analyse. 'leder-analyse'/'leder-øst'/'leder-vest' " +
         "gir tilgang til lederoversikten for hhv. enhet Analyse, Øst og Vest, mens " +
         "'saksbehandler-øst-*'/'saksbehandler-vest-*' logger inn som en navngitt saksbehandler under " +
         "den enheten — nyttig for å teste overføring av saker mellom saksbehandlere og enheter " +

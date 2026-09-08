@@ -116,8 +116,8 @@ describe("hentInnloggetBruker", () => {
 
     expect(getValidTokenMock).not.toHaveBeenCalled();
     expect(bruker).toEqual({
-      preferredUsername: "lokal.utvikler",
-      name: "Lokal Utvikler",
+      preferredUsername: "bjarte.byrakratsen",
+      name: "Bjarte Byråkratsen",
       navIdent: "L999999",
       enhet: "Analyse",
       enhetId: "by295h",
@@ -137,8 +137,8 @@ describe("hentInnloggetBruker", () => {
 
     expect(getValidTokenMock).not.toHaveBeenCalled();
     expect(bruker).toEqual({
-      preferredUsername: "lars.leder",
-      name: "Lars Leder",
+      preferredUsername: "ove.overordnerud",
+      name: "Ove Overordnerud",
       navIdent: "L900000",
       enhet: "Øst",
       enhetId: "ky153k",
@@ -147,12 +147,12 @@ describe("hentInnloggetBruker", () => {
   });
 
   it.each([
-    ["leder-analyse", "Lene Leder", "L900006", "Analyse", "by295h", true],
-    ["leder-vest", "Lisa Leder", "L900001", "Vest", "gu301n", true],
-    ["saksbehandler-øst-1", "Simen Saksbehandler", "L900002", "Øst", "ky153k", false],
-    ["saksbehandler-øst-2", "Sara Saksbehandler", "L900003", "Øst", "ky153k", false],
-    ["saksbehandler-vest-1", "Silje Saksbehandler", "L900004", "Vest", "gu301n", false],
-    ["saksbehandler-vest-2", "Stian Saksbehandler", "L900005", "Vest", "gu301n", false],
+    ["leder-analyse", "Stian Sjeferud", "L900006", "Analyse", "by295h", true],
+    ["leder-vest", "Kari Kommandørsen", "L900001", "Vest", "gu301n", true],
+    ["saksbehandler-øst-1", "Ulrikke Utrederson", "L900002", "Øst", "ky153k", false],
+    ["saksbehandler-øst-2", "Trine Trygdesen", "L900003", "Øst", "ky153k", false],
+    ["saksbehandler-vest-1", "Kjell Kontrollsen", "L900004", "Vest", "gu301n", false],
+    ["saksbehandler-vest-2", "Gunnar Granskeren", "L900005", "Vest", "gu301n", false],
   ] as const)(
     "logger inn med riktig identitet i local-mock for BRUKERPROFIL=%s",
     async (profil, navn, navIdent, enhet, enhetId, erLeder) => {
