@@ -1,6 +1,5 @@
 import { getOppdatertDato } from "~/saker/selectors";
 import type { KontrollsakResponse } from "~/saker/types.backend";
-import { forskjellIDager } from "~/utils/date-utils";
 
 /** Antall dager uten oppdatering før en åpen sak regnes som "over frist". */
 const OVER_FRIST_DAGER = 30;
@@ -12,9 +11,22 @@ export function erÅpenSak(sak: KontrollsakResponse): boolean {
   return !lukkedeStatuser.includes(sak.status);
 }
 
-/** En åpen sak er "over frist" når den ikke er oppdatert de siste 30 dagene. */
+/**
+ * En åpen sak er "over frist" når den ikke er oppdatert de siste 30 dagene.
+ *
+ * Vi regner dager siden oppdatering direkte (nå minus oppdatert), i stedet for
+ * å bruke `forskjellIDager` sin absoluttverdi: en sak med en (feilaktig)
+ * fremtidig oppdateringsdato skal ikke telles som over frist bare fordi
+ * avstanden i tid er stor.
+ */
 export function erOverFrist(sak: KontrollsakResponse, nå: Date = new Date()): boolean {
-  return erÅpenSak(sak) && forskjellIDager(getOppdatertDato(sak), nå) > OVER_FRIST_DAGER;
+  if (!erÅpenSak(sak)) return false;
+
+  const dagerSidenOppdatert = Math.floor(
+    (nå.getTime() - new Date(getOppdatertDato(sak)).getTime()) / (1000 * 60 * 60 * 24),
+  );
+
+  return dagerSidenOppdatert > OVER_FRIST_DAGER;
 }
 
 export interface AnsattOversikt {

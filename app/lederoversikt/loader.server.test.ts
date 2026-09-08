@@ -80,6 +80,39 @@ describe("hentLederOversiktData", () => {
     expect(resultat.ansatte.every((a) => typeof a.navIdent === "string")).toBe(true);
   });
 
+  it("henter alle sider med kontrollsaker når enheten har flere sider enn STOR_SIDESTØRRELSE", async () => {
+    testState.skalBrukeMockdata = false;
+    hentKontrollsakerMock.mockImplementation(({ page }: { page: number }) =>
+      Promise.resolve({
+        items: [{ id: page }],
+        page,
+        size: 500,
+        totalItems: 3,
+        totalPages: 3,
+      }),
+    );
+    hentSaksbehandlereMock.mockResolvedValue([]);
+
+    const { hentLederOversiktData } = await import("./loader.server");
+
+    const resultat = await hentLederOversiktData({
+      request: new Request("http://localhost"),
+      innloggetBruker: lederBruker(),
+    });
+
+    expect(hentKontrollsakerMock).toHaveBeenCalledTimes(3);
+    expect(hentKontrollsakerMock).toHaveBeenCalledWith(
+      expect.objectContaining({ page: 1, enhet: ["hu424t"] }),
+    );
+    expect(hentKontrollsakerMock).toHaveBeenCalledWith(
+      expect.objectContaining({ page: 2, enhet: ["hu424t"] }),
+    );
+    expect(hentKontrollsakerMock).toHaveBeenCalledWith(
+      expect.objectContaining({ page: 3, enhet: ["hu424t"] }),
+    );
+    expect(resultat.saker).toEqual([{ id: 1 }, { id: 2 }, { id: 3 }]);
+  });
+
   it("henter kontrollsaker og saksbehandlere fra backend utenfor mockmodus, filtrert på enhetsnavn", async () => {
     testState.skalBrukeMockdata = false;
     hentKontrollsakerMock.mockResolvedValue({

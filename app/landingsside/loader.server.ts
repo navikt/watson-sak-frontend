@@ -55,18 +55,33 @@ async function lastLederData(
   request: Request,
   innloggetBruker: Awaited<ReturnType<typeof hentInnloggetBruker>>,
 ) {
+  const enhetNavn = innloggetBruker.enhet;
+
+  // En leder skal alltid ha en enhetstilhørighet. Mangler den likevel (feil i
+  // NOM-oppslaget e.l.), vil hentLederOversiktData gi tomme lister, og da vil
+  // velkomstteksten feilaktig kunne se ut som om enheten ikke har åpne saker.
+  // Vi gir derfor en eksplisitt feilmelding i stedet for et misvisende "0 saker".
+  if (!innloggetBruker.enhetId) {
+    return {
+      type: "leder" as const,
+      velkomstOppsummering: `Fant ikke enhetstilhørigheten din. Ta kontakt med support hvis dette vedvarer.`,
+      enhetId: "",
+      enhetNavn,
+      ansatteOversikt: [],
+    };
+  }
+
   const { saker, ansatte } = await hentLederOversiktData({ request, innloggetBruker });
 
   const enhetsOppsummering = beregnEnhetsOppsummering(saker);
   const ansatteOversikt = [...beregnAnsatteOversikt(saker, ansatte)].sort(
     (a, b) => b.totalAntall - a.totalAntall,
   );
-  const enhetNavn = innloggetBruker.enhet;
 
   return {
     type: "leder" as const,
     velkomstOppsummering: lagLederVelkomstOppsummering(enhetsOppsummering, enhetNavn),
-    enhetId: innloggetBruker.enhetId ?? "",
+    enhetId: innloggetBruker.enhetId,
     enhetNavn,
     ansatteOversikt,
   };

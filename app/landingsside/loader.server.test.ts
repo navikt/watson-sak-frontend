@@ -5,13 +5,19 @@ vi.mock("~/config/env.server", () => ({
   skalBrukeMockdata: true,
 }));
 
-vi.mock("~/auth/innlogget-bruker.server", () => ({
-  hentInnloggetBruker: vi.fn().mockResolvedValue({
+const hentInnloggetBrukerMock = vi.hoisted(() =>
+  vi.fn().mockResolvedValue({
     preferredUsername: "test",
     name: "Saks Behandlersen",
     navIdent: "Z999999",
     enhet: "4812",
+    enhetId: "4812",
+    erLeder: false,
   }),
+);
+
+vi.mock("~/auth/innlogget-bruker.server", () => ({
+  hentInnloggetBruker: hentInnloggetBrukerMock,
 }));
 
 describe("landingsside-loader", () => {
@@ -25,6 +31,26 @@ describe("landingsside-loader", () => {
     const data = await loader(loaderArgs);
 
     expect(data.type).toBe("saksbehandler");
+  });
+
+  it("returnerer leder-typen med enhetsdata for en innlogget leder", async () => {
+    hentInnloggetBrukerMock.mockResolvedValueOnce({
+      preferredUsername: "leder",
+      name: "Leder Ledersen",
+      navIdent: "Z888888",
+      enhet: "Nord",
+      enhetId: "hu424t",
+      erLeder: true,
+    });
+
+    const data = await loader(loaderArgs);
+    if (data.type !== "leder") throw new Error("Forventet lederdata");
+
+    expect(data.type).toBe("leder");
+    expect(data.enhetId).toBe("hu424t");
+    expect(data.enhetNavn).toBe("Nord");
+    expect(data.ansatteOversikt.length).toBeGreaterThan(0);
+    expect(typeof data.velkomstOppsummering).toBe("string");
   });
 
   it("returnerer bare aktive saker (ikke ANMELDT, HENLAGT eller AVSLUTTET)", async () => {
