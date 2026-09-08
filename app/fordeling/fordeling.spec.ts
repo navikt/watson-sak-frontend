@@ -28,6 +28,10 @@ test.describe("Ufordelte saker", () => {
     const rader = page.locator("tbody tr");
 
     await page.getByRole("button", { name: "Sorter på kategori" }).click();
+    await expect(page.getByRole("columnheader", { name: "Kategori" })).toHaveAttribute(
+      "aria-sort",
+      "ascending",
+    );
     await expect(rader.nth(0)).toContainText("Annet");
 
     await page.getByRole("button", { name: "2" }).click();
