@@ -116,9 +116,9 @@ describe("AnsatteOversikt", () => {
     renderMedRouter(<AnsatteOversikt ansatte={ansatte} enhetId="hu424t" />);
 
     expect(screen.getAllByRole("row")).toHaveLength(1 + 8 + 1); // header + ansatte + ufordelt
-    expect(screen.getByRole("button", { name: "Vis alle (10)" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Vis alle saksbehandlere (10)" })).toBeDefined();
 
-    fireEvent.click(screen.getByRole("button", { name: "Vis alle (10)" }));
+    fireEvent.click(screen.getByRole("button", { name: "Vis alle saksbehandlere (10)" }));
 
     expect(screen.getAllByRole("row")).toHaveLength(1 + 10 + 1);
     expect(screen.getByRole("button", { name: "Vis færre" })).toBeDefined();
@@ -141,7 +141,7 @@ describe("AnsatteOversikt", () => {
     rader = screen.getAllByRole("row").slice(1);
     expect(rader[0].textContent).toContain("Ada");
 
-    fireEvent.click(screen.getByRole("button", { name: "Sorter på saker" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sorter på antall aktive saker" }));
     rader = screen.getAllByRole("row").slice(1);
     expect(rader[0].textContent).toContain("Bjørn");
   });

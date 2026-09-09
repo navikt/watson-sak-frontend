@@ -8,9 +8,9 @@ import {
   Table,
   VStack,
 } from "@navikt/ds-react";
-import { PersonGroupIcon } from "@navikt/aksel-icons";
 import { useState } from "react";
 import { Link as RouterLink } from "react-router";
+import { ArrowRightIcon } from "@navikt/aksel-icons";
 import { Kort } from "~/komponenter/Kort";
 import { KolonneHeading, type Sorteringsretning } from "~/saker/saksliste/KolonneHeading";
 import { RouteConfig } from "~/routeConfig";
@@ -91,14 +91,16 @@ export function AnsatteOversikt({
     <Kort as="section">
       <VStack gap="space-4">
         <HStack justify="space-between" align="center" wrap>
-          <HStack gap="space-4" align="center">
-            <PersonGroupIcon aria-hidden fontSize="1.25rem" />
-            <Heading level="2" size="medium">
-              Saker per saksbehandler
+          <VStack gap="space-1">
+            <Heading level="2" size="small">
+              Ansattoversikt
             </Heading>
-          </HStack>
+            <BodyShort size="small" className="text-ax-text-neutral-subtle">
+              Viser {synlige.length} av {ansatte.liste.length}
+            </BodyShort>
+          </VStack>
           <HStack gap="space-4" align="center">
-            <Tegnforklaring farge="bg-ax-bg-info-strong" tekst="Innenfor frist" />
+            <Tegnforklaring farge="bg-ax-bg-accent-strong" tekst="Innenfor frist" />
             <Tegnforklaring farge="bg-ax-bg-danger-strong" tekst="Over frist" />
           </HStack>
         </HStack>
@@ -138,7 +140,7 @@ export function AnsatteOversikt({
                   </Table.HeaderCell>
                   <Table.HeaderCell scope="col" aria-sort={ariaSortForKolonne("antall", sortering)}>
                     <KolonneHeading
-                      tittel="Saker"
+                      tittel="Antall aktive saker"
                       sortering={{
                         aktiv: sortering.kolonne === "antall",
                         retning: sortering.kolonne === "antall" ? sortering.retning : null,
@@ -181,9 +183,11 @@ export function AnsatteOversikt({
                   type="button"
                   variant="tertiary"
                   size="small"
+                  icon={visAlle ? undefined : <ArrowRightIcon aria-hidden />}
+                  iconPosition="right"
                   onClick={() => setVisAlle((v) => !v)}
                 >
-                  {visAlle ? "Vis færre" : `Vis alle (${ansatte.liste.length})`}
+                  {visAlle ? "Vis færre" : `Vis alle saksbehandlere (${ansatte.liste.length})`}
                 </Button>
               </HStack>
             )}
@@ -197,7 +201,7 @@ export function AnsatteOversikt({
 function Tegnforklaring({ farge, tekst }: { farge: string; tekst: string }) {
   return (
     <HStack gap="space-2" align="center">
-      <span aria-hidden className={`inline-block h-3 w-3 rounded-full ${farge}`} />
+      <span aria-hidden className={`inline-block h-3 w-3 rounded-xs ${farge}`} />
       <BodyShort size="small" className="text-ax-text-neutral-subtle">
         {tekst}
       </BodyShort>
@@ -226,7 +230,10 @@ function AnsattStolpe({
         className="flex h-4 min-w-24 flex-1 overflow-hidden rounded-sm bg-ax-bg-neutral-moderate"
       >
         {innenforFrist > 0 && (
-          <div className="h-full bg-ax-bg-info-strong" style={{ width: bredde(innenforFrist) }} />
+          <div
+            className="h-full bg-ax-bg-accent-strong"
+            style={{ width: bredde(innenforFrist) }}
+          />
         )}
         {ansatt.antallOverFrist > 0 && (
           <div
