@@ -5,9 +5,13 @@ import type { LederAnsatteStatistikk, LederAnsattStatistikk } from "../types";
 import { AnsatteOversikt } from "./AnsatteOversikt";
 
 function renderMedRouter(ui: React.ReactNode) {
-  const router = createMemoryRouter([{ path: "/", element: ui }], {
-    initialEntries: ["/"],
-  });
+  const router = createMemoryRouter(
+    [
+      { path: "/", element: ui },
+      { path: "/alle-saker", element: <p>Alle saker</p> },
+    ],
+    { initialEntries: ["/"] },
+  );
 
   return render(<RouterProvider router={router} />);
 }
@@ -35,18 +39,23 @@ function lagAnsatte(
 }
 
 describe("AnsatteOversikt", () => {
-  it("viser navn, navIdent og lenke til saker filtrert på enhet og saksbehandler", () => {
+  it("viser navn og navigerer til saker filtrert på enhet og saksbehandler når raden klikkes", () => {
     const ansatte = lagAnsatte([
       lagAnsatt({ navIdent: "Z1", navn: "Ada Larsen", totaltAntallIkkeAvsluttede: 5 }),
     ]);
 
     renderMedRouter(<AnsatteOversikt ansatte={ansatte} enhetId="hu424t" />);
 
-    const lenke = screen.getByRole("link", { name: "Ada Larsen" });
-    expect(lenke.getAttribute("href")).toBe(
-      "/alle-saker?enhet=hu424t&saksbehandler=Z1&status=OPPRETTET&status=UTREDES&status=STRAFFERETTSLIG_VURDERING&status=ANMELDT&status=HENLAGT",
-    );
-    expect(screen.getByText("Z1")).toBeDefined();
+    expect(screen.getByText("Ada Larsen")).toBeDefined();
+    expect(screen.queryByRole("link", { name: /Ada Larsen/ })).toBeNull();
+    expect(screen.queryByText("Z1")).toBeNull();
+
+    const rad = screen.getByText("Ada Larsen").closest("tr");
+    expect(rad?.getAttribute("tabindex")).toBe("0");
+
+    fireEvent.click(rad!);
+
+    expect(screen.getByText("Alle saker")).toBeDefined();
   });
 
   it("viser antall saker og skiller innenfor/over frist i den tilgjengelige beskrivelsen", () => {
@@ -121,7 +130,7 @@ describe("AnsatteOversikt", () => {
     fireEvent.click(screen.getByRole("button", { name: "Vis alle saksbehandlere (10)" }));
 
     expect(screen.getAllByRole("row")).toHaveLength(1 + 10 + 1);
-    expect(screen.getByRole("button", { name: "Vis færre" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Vis færre saksbehandlere" })).toBeDefined();
   });
 
   it("kan sortere på navn og saker", () => {

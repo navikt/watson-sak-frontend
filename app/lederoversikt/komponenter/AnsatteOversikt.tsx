@@ -3,13 +3,12 @@ import {
   Button,
   Heading,
   HStack,
-  Link,
   LocalAlert,
   Table,
   VStack,
 } from "@navikt/ds-react";
 import { useState } from "react";
-import { Link as RouterLink } from "react-router";
+import { useNavigate } from "react-router";
 import { ArrowRightIcon } from "@navikt/aksel-icons";
 import { Kort } from "~/komponenter/Kort";
 import { KolonneHeading, type Sorteringsretning } from "~/saker/saksliste/KolonneHeading";
@@ -54,6 +53,16 @@ function lagAnsattLenke(enhetId: string, navIdent: string): string {
   return `${RouteConfig.ALLE_SAKER}?${parametere}`;
 }
 
+/**
+ * Sjekker om en klikk-/tastatur-hendelse på raden stammer fra et interaktivt
+ * element inni raden, slik at rad-navigasjonen ikke også trigges i tillegg
+ * til elementets egen handling. Se tilsvarende funksjon i Saksliste.tsx.
+ */
+function kommerFraInteraktivtElement(event: { target: EventTarget }): boolean {
+  const target = event.target as HTMLElement;
+  return target.closest("a, button, input, select, textarea, [role='button']") !== null;
+}
+
 /** Viser antall saker per saksbehandler i enheten som en horisontal stolpe,
  * delt i innenfor frist (blå) og over frist (rød). Bygget som en vanlig
  * tabell (ikke et grafikkbibliotek) slik at den forblir tastatur- og
@@ -68,6 +77,7 @@ export function AnsatteOversikt({
 }) {
   const [sortering, setSortering] = useState<Sortering>(STANDARD_SORTERING);
   const [visAlle, setVisAlle] = useState(false);
+  const navigate = useNavigate();
 
   const sorterte = sorterAnsatte(ansatte.liste, sortering);
   const synlige = visAlle ? sorterte : sorterte.slice(0, STANDARD_ANTALL_SYNLIGE);
@@ -99,7 +109,7 @@ export function AnsatteOversikt({
               Viser {synlige.length} av {ansatte.liste.length}
             </BodyShort>
           </VStack>
-          <HStack gap="space-4" align="center">
+          <HStack gap="space-16" align="center">
             <Tegnforklaring farge="bg-ax-bg-accent-strong" tekst="Innenfor frist" />
             <Tegnforklaring farge="bg-ax-bg-danger-strong" tekst="Over frist" />
           </HStack>
@@ -151,23 +161,39 @@ export function AnsatteOversikt({
                 </Table.Row>
               </Table.Header>
               <Table.Body>
-                {synlige.map((ansatt) => (
-                  <Table.Row key={ansatt.navIdent}>
-                    <Table.DataCell>
-                      <VStack gap="space-1">
-                        <Link as={RouterLink} to={lagAnsattLenke(enhetId, ansatt.navIdent)}>
-                          {ansatt.navn}
-                        </Link>
-                        <BodyShort size="small" className="text-ax-text-neutral-subtle">
-                          {ansatt.navIdent}
-                        </BodyShort>
-                      </VStack>
-                    </Table.DataCell>
-                    <Table.DataCell>
-                      <AnsattStolpe ansatt={ansatt} maksAntall={maksAntall} />
-                    </Table.DataCell>
-                  </Table.Row>
-                ))}
+                {synlige.map((ansatt) => {
+                  const href = lagAnsattLenke(enhetId, ansatt.navIdent);
+
+                  return (
+                    <Table.Row
+                      key={ansatt.navIdent}
+                      onClick={(event) => {
+                        if (kommerFraInteraktivtElement(event)) {
+                          return;
+                        }
+                        navigate(href);
+                      }}
+                      onKeyDown={(event) => {
+                        if (kommerFraInteraktivtElement(event)) {
+                          return;
+                        }
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          navigate(href);
+                        }
+                      }}
+                      tabIndex={0}
+                      className="cursor-pointer"
+                    >
+                      <Table.DataCell>
+                        <BodyShort>{ansatt.navn}</BodyShort>
+                      </Table.DataCell>
+                      <Table.DataCell>
+                        <AnsattStolpe ansatt={ansatt} maksAntall={maksAntall} />
+                      </Table.DataCell>
+                    </Table.Row>
+                  );
+                })}
                 <Table.Row>
                   <Table.DataCell>Ufordelt</Table.DataCell>
                   <Table.DataCell>
@@ -187,7 +213,7 @@ export function AnsatteOversikt({
                   iconPosition="right"
                   onClick={() => setVisAlle((v) => !v)}
                 >
-                  {visAlle ? "Vis færre" : `Vis alle saksbehandlere (${ansatte.liste.length})`}
+                  {visAlle ? "Vis færre saksbehandlere" : `Vis alle saksbehandlere (${ansatte.liste.length})`}
                 </Button>
               </HStack>
             )}
