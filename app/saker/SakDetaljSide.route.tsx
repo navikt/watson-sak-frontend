@@ -192,13 +192,13 @@ export default function SakDetaljSide() {
   const innloggetBruker = useInnloggetBruker();
   const erEier = erSakseier(sak, innloggetBruker.navIdent);
   const harDeltTilgang = delteSaksbehandlere.some((s) => s.navIdent === innloggetBruker.navIdent);
-  const harDirekteTilgang = erEier || harDeltTilgang;
-  // Filområdet (dokumenter og vedlegg) vises kun for eier eller delt-med — andre
-  // roller (f.eks. ansvarlig på en koblet sak) kan ikke åpne enkeltdokumenter,
+  const harDirekteTilgang = erEier || harDeltTilgang || innloggetBruker.erLeder;
+  // Filområdet (dokumenter og vedlegg) vises for eier, delt-med eller leder.
+  // Andre roller (f.eks. ansvarlig på en koblet sak) kan ikke åpne enkeltdokumenter,
   // så blokken skjules helt i stedet for å vise innhold man ikke får tilgang til.
   const kanSeFilområde = harDirekteTilgang;
   const kanRedigere = erEier && erAktiv;
-  // Historikk vises kun for eier eller delt-med (samme regel som filområdet). I tillegg kan
+  // Historikk vises for eier, delt-med eller leder (samme regel som filområdet). I tillegg kan
   // backend skjule historikk helt for adresseskjermede saker som krever utvidet tilgang
   // (sak.tilgang.kanSeHistorikk). Begge tilfellene vises som informasjonskort i stedet for å
   // skjule blokken helt, etter mønsteret fra IngenFiltilgangKort.

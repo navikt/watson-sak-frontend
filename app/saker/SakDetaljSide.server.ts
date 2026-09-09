@@ -368,7 +368,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     const andreSaker = await hentAndreSakerMedTilgangskontroll(token, sak);
 
     // Dokumenter/filer skal kun eksponeres i loader-responsen (og dermed nås av klienten)
-    // for saksbehandlere med direkte tilgang (eier/delt-med) — se `kanSeFilområde` i
+    // for saksbehandlere med direkte tilgang (eier/delt-med/leder) — se `kanSeFilområde` i
     // SakDetaljSide.route.tsx, som styrer UI-visningen. Uten denne sperren ville
     // metadata om dokumenter/filer likevel bli sendt til klienten i SSR-payloaden
     // selv om komponenten ikke rendrer dem. Sperren må gjelde både det dedikerte
@@ -378,7 +378,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     const harDeltTilgang = sak.saksbehandlere.deltMed.some(
       (s) => s.navIdent === innlogget.navIdent,
     );
-    const harDirekteTilgang = erEier || harDeltTilgang;
+    const harDirekteTilgang = erEier || harDeltTilgang || innlogget.erLeder;
     const sakForRespons = harDirekteTilgang ? sak : { ...sak, dokumenter: [] };
 
     return {
@@ -415,7 +415,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   // (se `kanSeFilområde` i SakDetaljSide.route.tsx). `harFilTilgang` er bredere
   // (inkluderer tilgang via koblet sak) og brukes ikke til å avgjøre om
   // dokument-/filmetadata skal eksponeres i loader-responsen.
-  const harDirekteTilgang = erEier || harDeltTilgang;
+  const harDirekteTilgang = erEier || harDeltTilgang || innlogget.erLeder;
   const dokumenter = harDirekteTilgang ? hentDokumenttreForSak(request, String(sak.id)) : [];
   const filer = harDirekteTilgang ? hentFilerForSak(request, String(sak.id)) : [];
   const andreSaker = alleSaker.filter(

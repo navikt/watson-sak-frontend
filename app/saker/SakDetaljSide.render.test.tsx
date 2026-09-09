@@ -16,6 +16,7 @@ vi.mock("~/auth/innlogget-bruker.server", () => ({
     name: "Test Saksbehandler",
     preferredUsername: "test@nav.no",
     enhet: "4812",
+    erLeder,
   }),
 }));
 
@@ -24,6 +25,7 @@ vi.mock("~/auth/innlogget-bruker", () => ({
     navIdent: "Z999999",
     name: "Test Saksbehandler",
     enhet: "4812",
+    erLeder,
   }),
 }));
 
@@ -34,6 +36,7 @@ vi.mock("~/kodeverk/useKodeverk", () => ({
 const testRequest = new Request("http://localhost");
 const testSakId = "201";
 const deltMedSakId = "101";
+let erLeder = false;
 
 function renderDetaljside(sakId = testSakId) {
   const router = createMemoryRouter(
@@ -57,6 +60,7 @@ function renderDetaljside(sakId = testSakId) {
 describe("SakDetaljSide render", () => {
   beforeEach(() => {
     resetDefaultSession();
+    erLeder = false;
   });
 
   it("viser lagre og avbryt i redigeringsmodus", async () => {
@@ -213,6 +217,21 @@ describe("SakDetaljSide render", () => {
       ),
     ).toBeDefined();
     expect(screen.queryByRole("heading", { name: "Filer" })).toBeNull();
+  }, 15000);
+
+  it("viser filer og historikk for leder uten direkte tilgang", async () => {
+    erLeder = true;
+
+    renderDetaljside("102");
+
+    expect(await screen.findByRole("heading", { name: "Filer" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Historikk" })).toBeDefined();
+    expect(
+      screen.queryByText("Du må få delt tilgang til saken for å kunne se dokumenter og vedlegg."),
+    ).toBeNull();
+    expect(
+      screen.queryByText("Du må få delt tilgang til saken for å kunne se historikk."),
+    ).toBeNull();
   }, 15000);
 
   it("viser organisasjonsnummer-felt i redigeringsmodus", async () => {
