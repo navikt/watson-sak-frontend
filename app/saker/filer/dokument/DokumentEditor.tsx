@@ -453,15 +453,17 @@ function Verktøylinje({
                 {lasterOppBilde ? <Loader size="xsmall" aria-hidden /> : <ImageIcon aria-hidden />}
               </VerktøyKnapp>
               <ActionMenu>
-                <ActionMenu.Trigger>
-                  <Button
-                    type="button"
-                    size="small"
-                    variant="tertiary"
-                    aria-label="Sett inn variabel"
-                    icon={<TagIcon aria-hidden />}
-                  />
-                </ActionMenu.Trigger>
+                <Tooltip content="Sett inn variabel">
+                  <ActionMenu.Trigger>
+                    <Button
+                      type="button"
+                      size="small"
+                      variant="tertiary"
+                      aria-label="Sett inn variabel"
+                      icon={<TagIcon aria-hidden />}
+                    />
+                  </ActionMenu.Trigger>
+                </Tooltip>
                 <ActionMenu.Content>
                   <ActionMenu.Group label="Sett inn variabel">
                     {STANDARD_VARIABLER.map(({ id, etikett }) => (
