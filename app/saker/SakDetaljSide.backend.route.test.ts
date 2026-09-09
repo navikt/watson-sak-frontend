@@ -198,6 +198,36 @@ describe("SakDetaljSide loader — backend-sti", () => {
     expect(resultat.sak.dokumenter.length).toBe(1);
   });
 
+  it("eksponerer dokumenter/filer i loader-responsen når innlogget bruker er leder", async () => {
+    const filer = [{ id: "f1", filnavn: "vedlegg.pdf" }];
+    mockHentInnloggetBruker.mockResolvedValueOnce({
+      preferredUsername: "leder",
+      name: "Leder",
+      navIdent: "Z999999",
+      enhet: "4812",
+      erLeder: true,
+    });
+    mockHentKontrollsak.mockResolvedValue({
+      ...grunnleggendeSak,
+      saksbehandlere: {
+        eier: { navIdent: "Z111111", navn: "Annen Saksbehandler", enhet: "4812" },
+        deltMed: [],
+        opprettetAv: { navIdent: "Z111111", navn: "Annen Saksbehandler", enhet: "4812" },
+      },
+    });
+    mockHentHendelser.mockResolvedValue([]);
+    mockHentJournalposter.mockResolvedValue([]);
+    mockHentSaksbehandlere.mockResolvedValue([]);
+    mockHentFiler.mockResolvedValue(filer);
+
+    const { loader } = await import("./SakDetaljSide.server");
+    const resultat = await loader(lagLoaderArgs());
+
+    expect(resultat.dokumenter.length).toBe(1);
+    expect(resultat.filer).toEqual(filer);
+    expect(resultat.sak.dokumenter.length).toBe(1);
+  });
+
   it("hopper over søk etter relaterte saker når kapabiliteten kanSeRelaterteSaker er false", async () => {
     mockHentKontrollsak.mockResolvedValue({
       ...grunnleggendeSak,

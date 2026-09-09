@@ -6,9 +6,9 @@ import { finnSakMedReferanse } from "./id";
 
 export type Sakstilgang = {
   sak: KontrollsakResponse;
-  /** Eier eller delt-med: kan se saken og dens dokumenter. */
+  /** Eier, delt-med eller leder: kan se saken og dens dokumenter. */
   kanSe: boolean;
-  /** Kan redigere dokumenter: (eier eller delt-med) og saken er aktiv. */
+  /** Kan redigere dokumenter: eier, delt-med eller leder på en aktiv sak. */
   kanRedigereDokumenter: boolean;
 };
 
@@ -34,7 +34,7 @@ export async function hentSakstilgangFraMock(
 
   const erEier = erSakseier(sak, innlogget.navIdent);
   const harDeltTilgang = sak.saksbehandlere.deltMed.some((s) => s.navIdent === innlogget.navIdent);
-  const kanSe = erEier || harDeltTilgang;
+  const kanSe = erEier || harDeltTilgang || innlogget.erLeder;
 
   return {
     sak,
