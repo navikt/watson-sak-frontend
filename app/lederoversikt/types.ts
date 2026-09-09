@@ -8,8 +8,6 @@ export const LEDERSTATISTIKK_STATUSER = [
   "HENLAGT",
 ] as const;
 
-const lederStatistikkStatusSchema = z.enum(LEDERSTATISTIKK_STATUSER);
-
 const lederArbeidsstatusSchema = z.enum([
   "IKKE_BLOKKERT",
   "VENTER_PA_INFORMASJON",

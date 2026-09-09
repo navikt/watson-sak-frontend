@@ -53,7 +53,11 @@ describe("AnsatteOversikt", () => {
     const rad = screen.getByText("Ada Larsen").closest("tr");
     expect(rad?.getAttribute("tabindex")).toBe("0");
 
-    fireEvent.click(rad!);
+    if (rad === null) {
+      throw new Error("Fant ikke raden for Ada Larsen");
+    }
+
+    fireEvent.click(rad);
 
     expect(screen.getByText("Alle saker")).toBeDefined();
   });
