@@ -1,12 +1,4 @@
-import {
-  BodyShort,
-  Button,
-  Heading,
-  HStack,
-  LocalAlert,
-  Table,
-  VStack,
-} from "@navikt/ds-react";
+import { BodyShort, Button, Heading, HStack, LocalAlert, Table, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { ArrowRightIcon } from "@navikt/aksel-icons";
@@ -213,7 +205,9 @@ export function AnsatteOversikt({
                   iconPosition="right"
                   onClick={() => setVisAlle((v) => !v)}
                 >
-                  {visAlle ? "Vis færre saksbehandlere" : `Vis alle saksbehandlere (${ansatte.liste.length})`}
+                  {visAlle
+                    ? "Vis færre saksbehandlere"
+                    : `Vis alle saksbehandlere (${ansatte.liste.length})`}
                 </Button>
               </HStack>
             )}
@@ -256,10 +250,7 @@ function AnsattStolpe({
         className="flex h-4 min-w-24 flex-1 overflow-hidden rounded-sm bg-ax-bg-neutral-moderate"
       >
         {innenforFrist > 0 && (
-          <div
-            className="h-full bg-ax-bg-accent-strong"
-            style={{ width: bredde(innenforFrist) }}
-          />
+          <div className="h-full bg-ax-bg-accent-strong" style={{ width: bredde(innenforFrist) }} />
         )}
         {ansatt.antallOverFrist > 0 && (
           <div
