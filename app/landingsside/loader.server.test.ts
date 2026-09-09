@@ -47,9 +47,9 @@ describe("landingsside-loader", () => {
     if (data.type !== "leder") throw new Error("Forventet lederdata");
 
     expect(data.type).toBe("leder");
-    expect(data.enhetId).toBe("hu424t");
-    expect(data.enhetNavn).toBe("Nord");
-    expect(data.ansatteOversikt.length).toBeGreaterThan(0);
+    expect(data.statistikk.enhetId).toBe("hu424t");
+    expect(data.statistikk.enhetNavn).toBe("Nord");
+    expect(data.statistikk.ansatte.liste.length).toBeGreaterThan(0);
     expect(typeof data.velkomstOppsummering).toBe("string");
   });
 

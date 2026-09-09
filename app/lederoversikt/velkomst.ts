@@ -1,4 +1,4 @@
-import type { EnhetsOppsummering } from "./beregninger";
+import type { LederEnhetStatistikk } from "./types";
 
 function formaterSakTekst(antall: number, entall: string, flertall: string) {
   return `${antall} ${antall === 1 ? entall : flertall}`;
@@ -11,14 +11,16 @@ function sammenstill(deler: string[]): string {
 
 /** Bygger velkomstteksten for lederoversikten, aggregert på enhetsnivå. */
 export function lagLederVelkomstOppsummering(
-  oppsummering: EnhetsOppsummering,
+  oppsummering: LederEnhetStatistikk,
   enhetNavn: string,
 ): string {
-  if (oppsummering.antallÅpneSaker === 0) {
-    return `Enheten ${enhetNavn} har ingen åpne saker akkurat nå.`;
+  if (oppsummering.totaltAntallIkkeAvsluttede === 0) {
+    return `Enheten ${enhetNavn} har ingen aktive saker akkurat nå.`;
   }
 
-  const deler = [formaterSakTekst(oppsummering.antallÅpneSaker, "åpen sak", "åpne saker")];
+  const deler = [
+    formaterSakTekst(oppsummering.totaltAntallIkkeAvsluttede, "aktiv sak", "aktive saker"),
+  ];
 
   if (oppsummering.antallOverFrist > 0) {
     deler.push(

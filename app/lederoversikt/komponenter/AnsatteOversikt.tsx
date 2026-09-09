@@ -1,11 +1,15 @@
-import { BodyShort, Button, Heading, HStack, Link, Table, VStack } from "@navikt/ds-react";
-import { PersonGroupIcon } from "@navikt/aksel-icons";
+import { BodyShort, Button, Heading, HStack, LocalAlert, Table, VStack } from "@navikt/ds-react";
 import { useState } from "react";
-import { Link as RouterLink } from "react-router";
+import { useNavigate } from "react-router";
+import { ArrowRightIcon } from "@navikt/aksel-icons";
 import { Kort } from "~/komponenter/Kort";
 import { KolonneHeading, type Sorteringsretning } from "~/saker/saksliste/KolonneHeading";
 import { RouteConfig } from "~/routeConfig";
-import type { AnsattOversikt } from "../beregninger";
+import {
+  LEDERSTATISTIKK_STATUSER,
+  type LederAnsatteStatistikk,
+  type LederAnsattStatistikk,
+} from "../types";
 
 type SortKolonne = "navn" | "antall";
 type Sortering = { kolonne: SortKolonne; retning: Sorteringsretning };
@@ -13,14 +17,17 @@ type Sortering = { kolonne: SortKolonne; retning: Sorteringsretning };
 const STANDARD_ANTALL_SYNLIGE = 8;
 const STANDARD_SORTERING: Sortering = { kolonne: "antall", retning: "synkende" };
 
-function sorterAnsatte(ansatte: AnsattOversikt[], sortering: Sortering): AnsattOversikt[] {
+function sorterAnsatte(
+  ansatte: LederAnsattStatistikk[],
+  sortering: Sortering,
+): LederAnsattStatistikk[] {
   const faktor = sortering.retning === "stigende" ? 1 : -1;
 
   return [...ansatte].sort((a, b) => {
     if (sortering.kolonne === "navn") {
       return a.navn.localeCompare(b.navn, "nb") * faktor;
     }
-    return (a.totalAntall - b.totalAntall) * faktor;
+    return (a.totaltAntallIkkeAvsluttede - b.totaltAntallIkkeAvsluttede) * faktor;
   });
 }
 
@@ -32,6 +39,22 @@ function ariaSortForKolonne(
   return sortering.retning === "stigende" ? "ascending" : "descending";
 }
 
+function lagAnsattLenke(enhetId: string, navIdent: string): string {
+  const parametere = new URLSearchParams({ enhet: enhetId, saksbehandler: navIdent });
+  LEDERSTATISTIKK_STATUSER.forEach((status) => parametere.append("status", status));
+  return `${RouteConfig.ALLE_SAKER}?${parametere}`;
+}
+
+/**
+ * Sjekker om en klikk-/tastatur-hendelse på raden stammer fra et interaktivt
+ * element inni raden, slik at rad-navigasjonen ikke også trigges i tillegg
+ * til elementets egen handling. Se tilsvarende funksjon i Saksliste.tsx.
+ */
+function kommerFraInteraktivtElement(event: { target: EventTarget }): boolean {
+  const target = event.target as HTMLElement;
+  return target.closest("a, button, input, select, textarea, [role='button']") !== null;
+}
+
 /** Viser antall saker per saksbehandler i enheten som en horisontal stolpe,
  * delt i innenfor frist (blå) og over frist (rød). Bygget som en vanlig
  * tabell (ikke et grafikkbibliotek) slik at den forblir tastatur- og
@@ -41,16 +64,21 @@ export function AnsatteOversikt({
   ansatte,
   enhetId,
 }: {
-  ansatte: AnsattOversikt[];
+  ansatte: LederAnsatteStatistikk;
   enhetId: string;
 }) {
   const [sortering, setSortering] = useState<Sortering>(STANDARD_SORTERING);
   const [visAlle, setVisAlle] = useState(false);
+  const navigate = useNavigate();
 
-  const sorterte = sorterAnsatte(ansatte, sortering);
+  const sorterte = sorterAnsatte(ansatte.liste, sortering);
   const synlige = visAlle ? sorterte : sorterte.slice(0, STANDARD_ANTALL_SYNLIGE);
-  const maksAntall = Math.max(1, ...ansatte.map((ansatt) => ansatt.totalAntall));
-  const kanViseFærre = ansatte.length > STANDARD_ANTALL_SYNLIGE;
+  const maksAntall = Math.max(
+    1,
+    ansatte.ufordelt.totaltAntallIkkeAvsluttede,
+    ...ansatte.liste.map((ansatt) => ansatt.totaltAntallIkkeAvsluttede),
+  );
+  const kanViseFærre = ansatte.liste.length > STANDARD_ANTALL_SYNLIGE;
 
   function sorterPå(kolonne: SortKolonne) {
     setSortering((forrige) => {
@@ -65,23 +93,35 @@ export function AnsatteOversikt({
     <Kort as="section">
       <VStack gap="space-4">
         <HStack justify="space-between" align="center" wrap>
-          <HStack gap="space-4" align="center">
-            <PersonGroupIcon aria-hidden fontSize="1.25rem" />
-            <Heading level="2" size="medium">
-              Saker per saksbehandler
+          <VStack gap="space-1">
+            <Heading level="2" size="small">
+              Ansattoversikt
             </Heading>
-          </HStack>
-          <HStack gap="space-4" align="center">
-            <Tegnforklaring farge="bg-ax-bg-info-strong" tekst="Innenfor frist" />
+            <BodyShort size="small" className="text-ax-text-neutral-subtle">
+              Viser {synlige.length} av {ansatte.liste.length}
+            </BodyShort>
+          </VStack>
+          <HStack gap="space-16" align="center">
+            <Tegnforklaring farge="bg-ax-bg-accent-strong" tekst="Innenfor frist" />
             <Tegnforklaring farge="bg-ax-bg-danger-strong" tekst="Over frist" />
           </HStack>
         </HStack>
 
-        {ansatte.length === 0 ? (
+        {!ansatte.tilgjengelig && (
+          <LocalAlert status="warning">
+            <LocalAlert.Content>
+              Ansattlisten er midlertidig utilgjengelig. Sakstallene for enheten vises fortsatt.
+            </LocalAlert.Content>
+          </LocalAlert>
+        )}
+
+        {ansatte.tilgjengelig && ansatte.liste.length === 0 ? (
           <BodyShort className="text-ax-text-neutral-subtle">
             Fant ingen saksbehandlere i enheten.
           </BodyShort>
-        ) : (
+        ) : null}
+
+        {(ansatte.liste.length > 0 || ansatte.ufordelt.totaltAntallIkkeAvsluttede > 0) && (
           <>
             <Table size="small">
               <Table.Header>
@@ -102,7 +142,7 @@ export function AnsatteOversikt({
                   </Table.HeaderCell>
                   <Table.HeaderCell scope="col" aria-sort={ariaSortForKolonne("antall", sortering)}>
                     <KolonneHeading
-                      tittel="Saker"
+                      tittel="Antall aktive saker"
                       sortering={{
                         aktiv: sortering.kolonne === "antall",
                         retning: sortering.kolonne === "antall" ? sortering.retning : null,
@@ -113,21 +153,45 @@ export function AnsatteOversikt({
                 </Table.Row>
               </Table.Header>
               <Table.Body>
-                {synlige.map((ansatt) => (
-                  <Table.Row key={ansatt.navIdent}>
-                    <Table.DataCell>
-                      <Link
-                        as={RouterLink}
-                        to={`${RouteConfig.ALLE_SAKER}?enhet=${enhetId}&saksbehandler=${ansatt.navIdent}`}
-                      >
-                        {ansatt.navn}
-                      </Link>
-                    </Table.DataCell>
-                    <Table.DataCell>
-                      <AnsattStolpe ansatt={ansatt} maksAntall={maksAntall} />
-                    </Table.DataCell>
-                  </Table.Row>
-                ))}
+                {synlige.map((ansatt) => {
+                  const href = lagAnsattLenke(enhetId, ansatt.navIdent);
+
+                  return (
+                    <Table.Row
+                      key={ansatt.navIdent}
+                      onClick={(event) => {
+                        if (kommerFraInteraktivtElement(event)) {
+                          return;
+                        }
+                        navigate(href);
+                      }}
+                      onKeyDown={(event) => {
+                        if (kommerFraInteraktivtElement(event)) {
+                          return;
+                        }
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          navigate(href);
+                        }
+                      }}
+                      tabIndex={0}
+                      className="cursor-pointer"
+                    >
+                      <Table.DataCell>
+                        <BodyShort>{ansatt.navn}</BodyShort>
+                      </Table.DataCell>
+                      <Table.DataCell>
+                        <AnsattStolpe ansatt={ansatt} maksAntall={maksAntall} />
+                      </Table.DataCell>
+                    </Table.Row>
+                  );
+                })}
+                <Table.Row>
+                  <Table.DataCell>Ufordelt</Table.DataCell>
+                  <Table.DataCell>
+                    <AnsattStolpe ansatt={ansatte.ufordelt} maksAntall={maksAntall} />
+                  </Table.DataCell>
+                </Table.Row>
               </Table.Body>
             </Table>
 
@@ -137,9 +201,13 @@ export function AnsatteOversikt({
                   type="button"
                   variant="tertiary"
                   size="small"
+                  icon={visAlle ? undefined : <ArrowRightIcon aria-hidden />}
+                  iconPosition="right"
                   onClick={() => setVisAlle((v) => !v)}
                 >
-                  {visAlle ? "Vis færre" : `Vis alle (${ansatte.length})`}
+                  {visAlle
+                    ? "Vis færre saksbehandlere"
+                    : `Vis alle saksbehandlere (${ansatte.liste.length})`}
                 </Button>
               </HStack>
             )}
@@ -153,7 +221,7 @@ export function AnsatteOversikt({
 function Tegnforklaring({ farge, tekst }: { farge: string; tekst: string }) {
   return (
     <HStack gap="space-2" align="center">
-      <span aria-hidden className={`inline-block h-3 w-3 rounded-full ${farge}`} />
+      <span aria-hidden className={`inline-block h-3 w-3 rounded-xs ${farge}`} />
       <BodyShort size="small" className="text-ax-text-neutral-subtle">
         {tekst}
       </BodyShort>
@@ -161,31 +229,38 @@ function Tegnforklaring({ farge, tekst }: { farge: string; tekst: string }) {
   );
 }
 
-function AnsattStolpe({ ansatt, maksAntall }: { ansatt: AnsattOversikt; maksAntall: number }) {
+function AnsattStolpe({
+  ansatt,
+  maksAntall,
+}: {
+  ansatt: {
+    totaltAntallIkkeAvsluttede: number;
+    antallOverFrist: number;
+  };
+  maksAntall: number;
+}) {
   const bredde = (antall: number) => `${(antall / maksAntall) * 100}%`;
+  const innenforFrist = ansatt.totaltAntallIkkeAvsluttede - ansatt.antallOverFrist;
 
   return (
     <HStack gap="space-4" align="center">
       <div
         role="img"
-        aria-label={`${ansatt.innenforFrist} innenfor frist og ${ansatt.overFrist} over frist, av totalt ${ansatt.totalAntall} saker`}
+        aria-label={`${innenforFrist} innenfor frist og ${ansatt.antallOverFrist} over frist, av totalt ${ansatt.totaltAntallIkkeAvsluttede} saker`}
         className="flex h-4 min-w-24 flex-1 overflow-hidden rounded-sm bg-ax-bg-neutral-moderate"
       >
-        {ansatt.innenforFrist > 0 && (
-          <div
-            className="h-full bg-ax-bg-info-strong"
-            style={{ width: bredde(ansatt.innenforFrist) }}
-          />
+        {innenforFrist > 0 && (
+          <div className="h-full bg-ax-bg-accent-strong" style={{ width: bredde(innenforFrist) }} />
         )}
-        {ansatt.overFrist > 0 && (
+        {ansatt.antallOverFrist > 0 && (
           <div
             className="h-full bg-ax-bg-danger-strong"
-            style={{ width: bredde(ansatt.overFrist) }}
+            style={{ width: bredde(ansatt.antallOverFrist) }}
           />
         )}
       </div>
       <BodyShort size="small" className="w-6 shrink-0 text-right tabular-nums">
-        {ansatt.totalAntall}
+        {ansatt.totaltAntallIkkeAvsluttede}
       </BodyShort>
     </HStack>
   );
