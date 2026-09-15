@@ -121,6 +121,20 @@ describe("SakFilområde", () => {
     expect(screen.queryByText("Last opp fil")).toBeNull();
   });
 
+  it("tillater filopplasting uten å tillate opprettelse eller endring av dokumenter", () => {
+    renderOmråde({
+      dokumenter: mockDokumenter,
+      filer: [],
+      sakId: "ABC-123",
+      redigerbar: false,
+      kanLasteOppFiler: true,
+    });
+
+    expect(screen.queryByText("Opprett dokument")).toBeNull();
+    expect(screen.getByText("Last opp fil")).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Slett Rapport" })).toBeNull();
+  });
+
   it("viser modal med tomt dokument og alle malvalg", async () => {
     renderOmråde({ dokumenter: [], filer: [], sakId: "ABC-123" });
 

@@ -6,6 +6,10 @@ export function erAktivSakKontrollsak(status: KontrollsakStatus): boolean {
   return status !== "AVSLUTTET";
 }
 
+export function kanRedigereDokumenterPåSak(status: KontrollsakStatus): boolean {
+  return erAktivSakKontrollsak(status) && status !== "OPPRETTET";
+}
+
 /** Sjekker om brukeren med gitt navIdent er sakens tildelte eier. */
 export function erSakseier(sak: KontrollsakResponse, navIdent: string): boolean {
   return sak.saksbehandlere.eier?.navIdent === navIdent;
@@ -18,6 +22,10 @@ export function hentTilgjengeligeSakshandlinger(sak: KontrollsakResponse): Saksh
 
   if (sak.blokkert !== null) {
     return ["gjenoppta", "opprett-journalpost", "opprett-oppgave"];
+  }
+
+  if (sak.status === "OPPRETTET") {
+    return ["endre-status"];
   }
 
   return ["endre-status", "opprett-journalpost", "opprett-oppgave"];

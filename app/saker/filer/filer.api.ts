@@ -79,7 +79,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   if (!tilgang) {
     throw data("Sak ikke funnet", { status: 404 });
   }
-  if (!tilgang.kanRedigereDokumenter) {
+  if (!tilgang.kanLasteOppFiler) {
     throw data("Ingen tilgang til å laste opp filer", { status: 403 });
   }
 

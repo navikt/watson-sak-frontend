@@ -130,6 +130,18 @@ describe("DokumentSide loader", () => {
     expect(resultat.kanRedigere).toBe(false);
   });
 
+  it("gir kun lesetilgang når saken har status Opprettet", async () => {
+    const { ref, docId } = settOppSak({ eier: eierMeg, deltMed: [], status: "OPPRETTET" });
+
+    const resultat = await loader({
+      request: testRequest,
+      params: { sakId: ref, docId },
+    } as Route.LoaderArgs);
+
+    expect(resultat.dokument.id).toBe(docId);
+    expect(resultat.kanRedigere).toBe(false);
+  });
+
   it("avviser bruker uten tilgang med 403", async () => {
     const { ref, docId } = settOppSak({
       eier: annenSaksbehandler,
@@ -187,6 +199,17 @@ describe("DokumentSide action", () => {
 
   it("avviser redigering på avsluttet sak med 403", async () => {
     const { ref, docId } = settOppSak({ eier: eierMeg, deltMed: [], status: "AVSLUTTET" });
+
+    await expect(
+      action({
+        request: putRequest({ tittel: "Forsøk", innhold: enkeltInnhold }),
+        params: { sakId: ref, docId },
+      } as Route.ActionArgs),
+    ).rejects.toMatchObject({ init: { status: 403 } });
+  });
+
+  it("avviser redigering når saken har status Opprettet", async () => {
+    const { ref, docId } = settOppSak({ eier: eierMeg, deltMed: [], status: "OPPRETTET" });
 
     await expect(
       action({

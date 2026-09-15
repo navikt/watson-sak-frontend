@@ -40,7 +40,11 @@ import type { Route } from "./+types/SakDetaljSide.route";
 import { IngenFiltilgangKort } from "./filer/IngenFiltilgangKort";
 import { SakFilområde } from "./filer/SakFilområde";
 import { SakHandlingerKnapper } from "./handlinger/SakHandlingerKnapper";
-import { erAktivSakKontrollsak, erSakseier } from "./handlinger/tilgjengeligeHandlinger";
+import {
+  erAktivSakKontrollsak,
+  erSakseier,
+  kanRedigereDokumenterPåSak,
+} from "./handlinger/tilgjengeligeHandlinger";
 import { IngenHistorikktilgangKort } from "./historikk/IngenHistorikktilgangKort";
 import { SakHistorikk } from "./historikk/SakHistorikk";
 import { getSaksreferanse } from "./id";
@@ -208,8 +212,8 @@ export default function SakDetaljSide() {
       ? "vis"
       : "skjermet";
   const kanTildeleSak = sak.tilgang?.kanTildeleSak ?? true;
-  // Dokumenter kan redigeres av eier ELLER delt-med, så lenge saken er aktiv.
-  const kanRedigereDokumenter = harDirekteTilgang && erAktiv;
+  const kanRedigereDokumenter = harDirekteTilgang && kanRedigereDokumenterPåSak(sak.status);
+  const kanLasteOppFiler = harDirekteTilgang && erAktiv;
   const [redigerer, setRedigerer] = useState(false);
   const [redigeringsøkt, setRedigeringsøkt] = useState(0);
   const [visFeil, setVisFeil] = useState(false);
@@ -663,6 +667,7 @@ export default function SakDetaljSide() {
                 filer={filer}
                 sakId={saksreferanse}
                 redigerbar={kanRedigereDokumenter}
+                kanLasteOppFiler={kanLasteOppFiler}
                 erSakseier={erEier}
               />
             ) : (
@@ -694,7 +699,12 @@ export default function SakDetaljSide() {
             <SakHandlingerKnapper sak={sak} erEier={erEier} filer={filer} dokumenter={dokumenter} />
 
             {historikkTilstand === "vis" ? (
-              <SakHistorikk sakId={sak.id} hendelser={historikk} redigerbar={kanRedigere} />
+              <SakHistorikk
+                sakId={sak.id}
+                hendelser={historikk}
+                redigerbar={kanRedigere}
+                kanLeggeTil={kanRedigere && sak.status !== "OPPRETTET"}
+              />
             ) : (
               <IngenHistorikktilgangKort årsak={historikkTilstand} />
             )}

@@ -57,6 +57,8 @@ interface SakFilområdeProps {
   sakId: string;
   /** Om brukeren kan opprette og redigere dokumenter. Standard: `true` */
   redigerbar?: boolean;
+  /** Om brukeren kan laste opp filer. Standard: samme verdi som `redigerbar`. */
+  kanLasteOppFiler?: boolean;
   /** Om innlogget bruker er sakseier og kan slette vedlegg. Standard: `false` */
   erSakseier?: boolean;
 }
@@ -66,6 +68,7 @@ export function SakFilområde({
   filer,
   sakId,
   redigerbar = true,
+  kanLasteOppFiler = redigerbar,
   erSakseier = false,
 }: SakFilområdeProps) {
   // Filopplasting eies her, siden «Last opp fil»-knappen ligger i den felles headeren for hele
@@ -113,27 +116,33 @@ export function SakFilområde({
           <Heading level="2" size="small">
             Filer
           </Heading>
-          {redigerbar && (
+          {(redigerbar || kanLasteOppFiler) && (
             <HStack gap="space-2" align="center">
-              <OpprettDokumentKnapp sakId={sakId} />
-              <input
-                ref={inputRef}
-                type="file"
-                className="sr-only"
-                aria-hidden
-                tabIndex={-1}
-                onChange={håndterFilvalg}
-              />
-              <Button
-                type="button"
-                size="xsmall"
-                variant="tertiary"
-                icon={lasterOpp ? <Loader size="xsmall" aria-hidden /> : <UploadIcon aria-hidden />}
-                disabled={lasterOpp}
-                onClick={() => inputRef.current?.click()}
-              >
-                Last opp fil
-              </Button>
+              {redigerbar && <OpprettDokumentKnapp sakId={sakId} />}
+              {kanLasteOppFiler && (
+                <>
+                  <input
+                    ref={inputRef}
+                    type="file"
+                    className="sr-only"
+                    aria-hidden
+                    tabIndex={-1}
+                    onChange={håndterFilvalg}
+                  />
+                  <Button
+                    type="button"
+                    size="xsmall"
+                    variant="tertiary"
+                    icon={
+                      lasterOpp ? <Loader size="xsmall" aria-hidden /> : <UploadIcon aria-hidden />
+                    }
+                    disabled={lasterOpp}
+                    onClick={() => inputRef.current?.click()}
+                  >
+                    Last opp fil
+                  </Button>
+                </>
+              )}
             </HStack>
           )}
         </HStack>

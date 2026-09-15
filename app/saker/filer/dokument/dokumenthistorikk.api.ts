@@ -3,6 +3,7 @@ import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
 import * as backendApi from "~/saker/api.server";
+import { kanRedigereDokumenterPåSak } from "~/saker/handlinger/tilgjengeligeHandlinger";
 import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
 import { gjenopprettDokumentHistorikk, hentDokumentHistorikkpunkt } from "../mock-data.server";
 
@@ -39,6 +40,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
         kropp.historikkId,
       );
       return Response.json({ historikkpunkt });
+    }
+    const sak = await backendApi.hentKontrollsak(token, sakReferanse);
+    if (!kanRedigereDokumenterPåSak(sak.status)) {
+      throw data("Dokumenter kan ikke redigeres før saken er satt til Utredes", { status: 403 });
     }
     const dokument = await backendApi.gjenopprettDokumentHistorikk(
       token,

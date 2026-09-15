@@ -1,7 +1,11 @@
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { hentAlleSaker, medInnloggetEier } from "~/saker/mock-alle-saker.server";
 import type { KontrollsakResponse } from "~/saker/types.backend";
-import { erAktivSakKontrollsak, erSakseier } from "./handlinger/tilgjengeligeHandlinger";
+import {
+  erAktivSakKontrollsak,
+  erSakseier,
+  kanRedigereDokumenterPåSak,
+} from "./handlinger/tilgjengeligeHandlinger";
 import { finnSakMedReferanse } from "./id";
 
 export type Sakstilgang = {
@@ -10,6 +14,8 @@ export type Sakstilgang = {
   kanSe: boolean;
   /** Kan redigere dokumenter: eier, delt-med eller leder på en aktiv sak. */
   kanRedigereDokumenter: boolean;
+  /** Kan laste opp filer: eier, delt-med eller leder på en aktiv sak. */
+  kanLasteOppFiler: boolean;
 };
 
 /**
@@ -39,6 +45,7 @@ export async function hentSakstilgangFraMock(
   return {
     sak,
     kanSe,
-    kanRedigereDokumenter: kanSe && erAktivSakKontrollsak(sak.status),
+    kanRedigereDokumenter: kanSe && kanRedigereDokumenterPåSak(sak.status),
+    kanLasteOppFiler: kanSe && erAktivSakKontrollsak(sak.status),
   };
 }

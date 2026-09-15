@@ -250,6 +250,14 @@ const tildelingshandlinger = new Set([
   "videresend_seksjon",
 ]);
 const koblingshandlinger = new Set(["koble_sak", "fjern_kobling"]);
+const handlingerSomKreverUtredning = new Set([
+  "del_tilgang",
+  "fjern_delt_tilgang",
+  "send_notat",
+  "opprett_journalpost",
+  "opprett_oppgave",
+  "legg_til_historikk",
+]);
 
 function erTildelingshandling(handling: string): boolean {
   return tildelingshandlinger.has(handling);
@@ -467,6 +475,13 @@ async function backendAction(
       throw data("Du må være tildelt saken for å utføre denne handlingen", { status: 403 });
     }
     sakFraTilgangskontroll = nåværendeSak;
+  }
+
+  if (
+    sakFraTilgangskontroll?.status === "OPPRETTET" &&
+    handlingerSomKreverUtredning.has(handling)
+  ) {
+    throw data("Handlingen krever at saken har status Utredes", { status: 400 });
   }
 
   switch (handling) {
@@ -880,6 +895,10 @@ async function mockAction(
   }
 
   const saksbehandlere = sak.saksbehandlere;
+
+  if (sak.status === "OPPRETTET" && handlingerSomKreverUtredning.has(handling)) {
+    throw data("Handlingen krever at saken har status Utredes", { status: 400 });
+  }
 
   switch (handling) {
     case "TILDEL": {

@@ -40,6 +40,12 @@ function settOppAktivSak() {
   return { sak, ref: getSaksreferanse(sak.id) };
 }
 
+function settOppOpprettetSak() {
+  const resultat = settOppAktivSak();
+  resultat.sak.status = "OPPRETTET";
+  return resultat;
+}
+
 /**
  * Bygger en minimal request-lignende verdi med et ekte FormData/File-innhold.
  *
@@ -80,5 +86,16 @@ describe("filer.api POST", () => {
       hendelsesType: "FIL_LASTET_OPP",
       beskrivelse: "bevis.pdf",
     });
+  });
+
+  it("tillater filopplasting når saken har status Opprettet", async () => {
+    const { ref } = settOppOpprettetSak();
+
+    const respons = (await action({
+      request: uploadRequest("bevis.pdf"),
+      params: { sakId: ref },
+    } as Route.ActionArgs)) as { filnavn: string };
+
+    expect(respons.filnavn).toBe("bevis.pdf");
   });
 });

@@ -70,6 +70,7 @@ export function SaksbehandlereKort({
   const tildelMegFetcher = useFetcher();
   const erAktiv = erAktivSakKontrollsak(sak.status);
   const kanEndreTilgang = erAktiv && sak.blokkert === null;
+  const kanEndreDeltTilgang = kanEndreTilgang && sak.status !== "OPPRETTET";
   const ansvarligSaksbehandler = ansvarligFraProps ?? sak.saksbehandlere.eier;
   const sakPath = RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id));
   const enhetskode = getSaksenhet(sak);
@@ -181,7 +182,7 @@ export function SaksbehandlereKort({
                     key={saksbehandler.navIdent}
                     saksbehandler={saksbehandler}
                     handling={
-                      erEier && kanEndreTilgang ? (
+                      erEier && kanEndreDeltTilgang ? (
                         <Button
                           type="button"
                           variant="tertiary"
@@ -200,7 +201,7 @@ export function SaksbehandlereKort({
             </>
           )}
 
-          {erEier && kanEndreTilgang && ansvarligSaksbehandler && (
+          {erEier && kanEndreDeltTilgang && ansvarligSaksbehandler && (
             <Button
               type="button"
               variant="secondary"

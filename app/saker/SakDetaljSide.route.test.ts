@@ -45,9 +45,40 @@ describe("SakDetaljSide action", () => {
     expect(sak?.saksbehandlere.eier).toBeNull();
   });
 
+  it.each([
+    "del_tilgang",
+    "fjern_delt_tilgang",
+    "send_notat",
+    "opprett_journalpost",
+    "opprett_oppgave",
+    "legg_til_historikk",
+  ])("avviser %s når saken har status Opprettet", async (handling) => {
+    const kontrollsak = hentFordelingssaker(state())[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.status = "OPPRETTET";
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
+    const formData = new FormData();
+    formData.set("handling", handling);
+
+    await expect(
+      action({
+        request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+          method: "POST",
+          body: formData,
+        }),
+        params: { sakId: kontrollsakRef },
+      } as Route.ActionArgs),
+    ).rejects.toMatchObject({ init: { status: 400 } });
+  });
+
   it("legger til delt saksbehandler og logger historikk", async () => {
     const kontrollsak = hentFordelingssaker(state())[1];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.status = "UTREDES";
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z999999",
       navn: "Test Saksbehandler",
@@ -84,6 +115,7 @@ describe("SakDetaljSide action", () => {
   it("fjerner delt saksbehandler og logger historikk", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.status = "UTREDES";
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z999999",
       navn: "Test Saksbehandler",
@@ -161,6 +193,7 @@ describe("SakDetaljSide action", () => {
   it("inkluderer valgt mal når notat logges i historikk", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.status = "UTREDES";
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z999999",
       navn: "Test Saksbehandler",
@@ -791,6 +824,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   it("opprett_journalpost logger hendelse med tittel og beskrivelse", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.status = "UTREDES";
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z999999",
       navn: "Test Saksbehandler",
@@ -821,6 +855,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   it("arkiverer valgte redigerbare dokumenter ved opprettelse av journalpost", async () => {
     const kontrollsak = required(hentAlleSaker(testRequest).find((sak) => sak.id === 102));
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.status = "UTREDES";
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z999999",
       navn: "Test Saksbehandler",
@@ -859,6 +894,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   it("arkiverer valgte vedlegg ved opprettelse av journalpost", async () => {
     const kontrollsak = required(hentAlleSaker(testRequest).find((sak) => sak.id === 102));
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.status = "UTREDES";
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z999999",
       navn: "Test Saksbehandler",
@@ -902,6 +938,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   it("lager en arkivert PDF-fil når et dokument arkiveres i en journalpost", async () => {
     const kontrollsak = required(hentAlleSaker(testRequest).find((sak) => sak.id === 102));
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.status = "UTREDES";
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z999999",
       navn: "Test Saksbehandler",
@@ -936,6 +973,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   it("opprett_oppgave logger hendelse med oppgavetype og beskrivelse", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.status = "UTREDES";
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z999999",
       navn: "Test Saksbehandler",
@@ -1296,6 +1334,7 @@ describe("SakDetaljSide rediger arbeidsgivere", () => {
   it("logger to historikk-hendelser når journalpost opprettes med knyttTilOppgave", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.status = "UTREDES";
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z999999",
       navn: "Test Saksbehandler",
