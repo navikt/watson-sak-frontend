@@ -58,12 +58,17 @@ export function InnstillingerModal({
             Vis velkomstmelding
           </Switch>
 
-          <Switch
-            checked={preferences.visInfopaneler}
-            onChange={(event) => sporOgEndrePreferanse("visInfopaneler", event.target.checked)}
-          >
-            Vis informasjonspaneler
-          </Switch>
+          <VStack gap="space-2">
+            <Switch
+              checked={preferences.visInfopaneler}
+              onChange={(event) => sporOgEndrePreferanse("visInfopaneler", event.target.checked)}
+            >
+              Vis informasjonspaneler
+            </Switch>
+            <BodyLong size="small" className="text-ax-text-neutral-subtle">
+              Få veiledning om funksjoner du møter i Watson Sak.
+            </BodyLong>
+          </VStack>
         </VStack>
       </Modal.Body>
       <Modal.Footer>
