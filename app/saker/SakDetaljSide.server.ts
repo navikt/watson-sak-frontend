@@ -42,6 +42,7 @@ import {
 } from "./historikk/mock-data.server";
 import { finnSakMedReferanse } from "./id";
 import { getSaksenhet } from "./selectors";
+import { hentStatusbaserteSaksregler } from "./statusregler";
 import type { KontrollsakStatus } from "./visning";
 import type { Route } from "./+types/SakDetaljSide.route";
 
@@ -250,6 +251,14 @@ const tildelingshandlinger = new Set([
   "videresend_seksjon",
 ]);
 const koblingshandlinger = new Set(["koble_sak", "fjern_kobling"]);
+const handlingerSomKreverUtredning = new Set([
+  "del_tilgang",
+  "fjern_delt_tilgang",
+  "send_notat",
+  "opprett_journalpost",
+  "opprett_oppgave",
+  "legg_til_historikk",
+]);
 
 function erTildelingshandling(handling: string): boolean {
   return tildelingshandlinger.has(handling);
@@ -467,6 +476,14 @@ async function backendAction(
       throw data("Du må være tildelt saken for å utføre denne handlingen", { status: 403 });
     }
     sakFraTilgangskontroll = nåværendeSak;
+  }
+
+  if (
+    sakFraTilgangskontroll &&
+    !hentStatusbaserteSaksregler(sakFraTilgangskontroll.status).kanUtføreUtredningsarbeid &&
+    handlingerSomKreverUtredning.has(handling)
+  ) {
+    throw data("Handlingen krever at saken har status Utredes", { status: 400 });
   }
 
   switch (handling) {
@@ -880,6 +897,13 @@ async function mockAction(
   }
 
   const saksbehandlere = sak.saksbehandlere;
+
+  if (
+    !hentStatusbaserteSaksregler(sak.status).kanUtføreUtredningsarbeid &&
+    handlingerSomKreverUtredning.has(handling)
+  ) {
+    throw data("Handlingen krever at saken har status Utredes", { status: 400 });
+  }
 
   switch (handling) {
     case "TILDEL": {

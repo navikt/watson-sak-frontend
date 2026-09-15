@@ -10,6 +10,7 @@ interface VisAllHistorikkModalProps {
   åpen: boolean;
   onClose: () => void;
   redigerbar: boolean;
+  kanLeggeTil?: boolean;
   innloggetNavIdent: string;
   onLeggTil: () => void;
   onRediger: (hendelse: SakHendelse) => void;
@@ -39,6 +40,7 @@ export function VisAllHistorikkModal({
   åpen,
   onClose,
   redigerbar,
+  kanLeggeTil = redigerbar,
   innloggetNavIdent,
   onLeggTil,
   onRediger,
@@ -95,7 +97,7 @@ export function VisAllHistorikkModal({
           ) : (
             <div />
           )}
-          {redigerbar && (
+          {kanLeggeTil && (
             <Button
               variant="tertiary"
               size="small"

@@ -9,8 +9,8 @@ import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { getSaksenhet } from "~/saker/selectors";
+import { hentStatusbaserteSaksregler } from "~/saker/statusregler";
 import type { KontrollsakResponse, KontrollsakSaksbehandler } from "~/saker/types.backend";
-import { erAktivSakKontrollsak } from "~/saker/handlinger/tilgjengeligeHandlinger";
 import { DelTilgangModal } from "~/saker/handlinger/DelTilgangModal";
 import { OverforAnsvarligModal } from "~/saker/handlinger/OverforAnsvarligModal";
 import { SendTilAnnenEnhetModal } from "~/saker/handlinger/SendTilAnnenEnhetModal";
@@ -68,8 +68,9 @@ export function SaksbehandlereKort({
   const kodeverk = useKodeverk();
   const fetcher = useFetcher();
   const tildelMegFetcher = useFetcher();
-  const erAktiv = erAktivSakKontrollsak(sak.status);
-  const kanEndreTilgang = erAktiv && sak.blokkert === null;
+  const statusregler = hentStatusbaserteSaksregler(sak.status);
+  const kanEndreTilgang = statusregler.erAktiv && sak.blokkert === null;
+  const kanEndreDeltTilgang = statusregler.kanEndreDeltTilgang && sak.blokkert === null;
   const ansvarligSaksbehandler = ansvarligFraProps ?? sak.saksbehandlere.eier;
   const sakPath = RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id));
   const enhetskode = getSaksenhet(sak);
@@ -181,7 +182,7 @@ export function SaksbehandlereKort({
                     key={saksbehandler.navIdent}
                     saksbehandler={saksbehandler}
                     handling={
-                      erEier && kanEndreTilgang ? (
+                      erEier && kanEndreDeltTilgang ? (
                         <Button
                           type="button"
                           variant="tertiary"
@@ -200,7 +201,7 @@ export function SaksbehandlereKort({
             </>
           )}
 
-          {erEier && kanEndreTilgang && ansvarligSaksbehandler && (
+          {erEier && kanEndreDeltTilgang && ansvarligSaksbehandler && (
             <Button
               type="button"
               variant="secondary"

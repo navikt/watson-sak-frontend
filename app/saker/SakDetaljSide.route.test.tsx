@@ -125,7 +125,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
 
   it("endre_status til AVSLUTTET nullstiller blokkert", async () => {
     const saker = hentAlleSaker(testRequest);
-    const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
+    const sak = saker.find((s: KontrollsakResponse) => s.status === "UTREDES");
     expect(sak).toBeDefined();
     if (!sak) return;
     settInnloggetSomEier(sak);
@@ -199,7 +199,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
 
   it("gjenoppta nullstiller blokkert uten modaldata", async () => {
     const saker = hentAlleSaker(testRequest);
-    const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
+    const sak = saker.find((s: KontrollsakResponse) => s.status === "UTREDES");
     expect(sak).toBeDefined();
     if (!sak) return;
     settInnloggetSomEier(sak);
@@ -325,7 +325,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
 
   it("legger til manuelt historikkinnslag", async () => {
     const saker = hentAlleSaker(testRequest);
-    const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
+    const sak = saker.find((s: KontrollsakResponse) => s.status === "UTREDES");
     expect(sak).toBeDefined();
     if (!sak) return;
     settInnloggetSomEier(sak);
@@ -352,7 +352,7 @@ describe("SakDetaljSide route action – ny statusflyt", () => {
 
   it("sorterer manuelle historikkinnslag stabilt når de har samme tidspunkt", async () => {
     const saker = hentAlleSaker(testRequest);
-    const sak = saker.find((s: KontrollsakResponse) => s.status !== "AVSLUTTET");
+    const sak = saker.find((s: KontrollsakResponse) => s.status === "UTREDES");
     expect(sak).toBeDefined();
     if (!sak) return;
     settInnloggetSomEier(sak);

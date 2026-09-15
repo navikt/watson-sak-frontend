@@ -17,11 +17,17 @@ interface SakHistorikkProps {
   sakId: number;
   hendelser: SakHendelse[];
   redigerbar: boolean;
+  kanLeggeTil?: boolean;
 }
 
 const MAKS_SYNLIGE_HENDELSER = 5;
 
-export function SakHistorikk({ sakId, hendelser, redigerbar }: SakHistorikkProps) {
+export function SakHistorikk({
+  sakId,
+  hendelser,
+  redigerbar,
+  kanLeggeTil = redigerbar,
+}: SakHistorikkProps) {
   const { erÅpen: leggTilÅpen, onÅpne: onÅpneLeggTil, onLukk: onLukkLeggTil } = useDisclosure();
   const { erÅpen: visAlleÅpen, onÅpne: onÅpneVisAlle, onLukk: onLukkVisAlle } = useDisclosure();
   const { erÅpen: redigerÅpen, onÅpne: onÅpneRediger, onLukk: onLukkRediger } = useDisclosure();
@@ -56,7 +62,7 @@ export function SakHistorikk({ sakId, hendelser, redigerbar }: SakHistorikkProps
         <Heading level="2" size="small">
           Historikk
         </Heading>
-        {redigerbar && (
+        {kanLeggeTil && (
           <Button
             variant="tertiary"
             size="small"
@@ -104,6 +110,7 @@ export function SakHistorikk({ sakId, hendelser, redigerbar }: SakHistorikkProps
           åpen={visAlleÅpen}
           onClose={onLukkVisAlle}
           redigerbar={redigerbar}
+          kanLeggeTil={kanLeggeTil}
           innloggetNavIdent={innloggetBruker.navIdent}
           onLeggTil={onÅpneLeggTil}
           onRediger={åpneRediger}

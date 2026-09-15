@@ -23,11 +23,12 @@ describe("hentSakstilgangFraMock", () => {
     });
   });
 
-  it("gir leder tilgang til dokumenter på en aktiv sak uten direkte tilgang", async () => {
+  it("gir leder lesetilgang og filopplasting, men ikke dokumentredigering på Opprettet", async () => {
     const tilgang = await hentSakstilgangFraMock(new Request("http://localhost"), "102");
 
     expect(tilgang).not.toBeNull();
     expect(tilgang?.kanSe).toBe(true);
-    expect(tilgang?.kanRedigereDokumenter).toBe(true);
+    expect(tilgang?.kanRedigereDokumenter).toBe(false);
+    expect(tilgang?.kanLasteOppFiler).toBe(true);
   });
 });

@@ -40,10 +40,11 @@ import type { Route } from "./+types/SakDetaljSide.route";
 import { IngenFiltilgangKort } from "./filer/IngenFiltilgangKort";
 import { SakFilområde } from "./filer/SakFilområde";
 import { SakHandlingerKnapper } from "./handlinger/SakHandlingerKnapper";
-import { erAktivSakKontrollsak, erSakseier } from "./handlinger/tilgjengeligeHandlinger";
+import { erSakseier } from "./handlinger/tilgjengeligeHandlinger";
 import { IngenHistorikktilgangKort } from "./historikk/IngenHistorikktilgangKort";
 import { SakHistorikk } from "./historikk/SakHistorikk";
 import { getSaksreferanse } from "./id";
+import { hentStatusbaserteSaksregler } from "./statusregler";
 import { PersonIdentHistorikkModal } from "./komponenter/PersonIdentHistorikkModal";
 import { PersonIdentMedHistorikk } from "./komponenter/PersonIdentMedHistorikk";
 import { SakDetaljerFelter } from "./komponenter/SakDetaljerFelter";
@@ -181,7 +182,8 @@ export default function SakDetaljSide() {
   const harHistoriskIdent = sak.historiskeIdenter.some((i) => i.historisk);
   const identHistorikkModal = useDisclosure();
   const statusTekst = formaterStatus(sak.status);
-  const erAktiv = erAktivSakKontrollsak(sak.status);
+  const statusregler = hentStatusbaserteSaksregler(sak.status);
+  const erAktiv = statusregler.erAktiv;
   const saksreferanse = getSaksreferanse(sak.id);
   const navn = getNavn(sak);
   const alder = getAlder(sak);
@@ -208,8 +210,8 @@ export default function SakDetaljSide() {
       ? "vis"
       : "skjermet";
   const kanTildeleSak = sak.tilgang?.kanTildeleSak ?? true;
-  // Dokumenter kan redigeres av eier ELLER delt-med, så lenge saken er aktiv.
-  const kanRedigereDokumenter = harDirekteTilgang && erAktiv;
+  const kanRedigereDokumenter = harDirekteTilgang && statusregler.kanRedigereDokumenter;
+  const kanLasteOppFiler = harDirekteTilgang && statusregler.kanLasteOppFiler;
   const [redigerer, setRedigerer] = useState(false);
   const [redigeringsøkt, setRedigeringsøkt] = useState(0);
   const [visFeil, setVisFeil] = useState(false);
@@ -663,6 +665,7 @@ export default function SakDetaljSide() {
                 filer={filer}
                 sakId={saksreferanse}
                 redigerbar={kanRedigereDokumenter}
+                kanLasteOppFiler={kanLasteOppFiler}
                 erSakseier={erEier}
               />
             ) : (
@@ -694,7 +697,12 @@ export default function SakDetaljSide() {
             <SakHandlingerKnapper sak={sak} erEier={erEier} filer={filer} dokumenter={dokumenter} />
 
             {historikkTilstand === "vis" ? (
-              <SakHistorikk sakId={sak.id} hendelser={historikk} redigerbar={kanRedigere} />
+              <SakHistorikk
+                sakId={sak.id}
+                hendelser={historikk}
+                redigerbar={kanRedigere}
+                kanLeggeTil={erEier && statusregler.kanLeggeTilHistorikk}
+              />
             ) : (
               <IngenHistorikktilgangKort årsak={historikkTilstand} />
             )}

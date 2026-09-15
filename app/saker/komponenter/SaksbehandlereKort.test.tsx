@@ -172,6 +172,29 @@ describe("SaksbehandlereKort", () => {
     expect(screen.queryByRole("button", { name: "Send til annen enhet" })).toBeNull();
   });
 
+  it("skjuler delt tilgang, men tillater endring av ansvarlig og enhet for Opprettet", async () => {
+    await renderMedRouter(
+      <SaksbehandlereKort
+        erEier={true}
+        sak={lagKontrollsak({
+          status: "OPPRETTET",
+          saksbehandlere: {
+            eier: lagSaksbehandler(),
+            deltMed: [lagSaksbehandler({ navIdent: "Z234567", navn: "Ada Larsen" })],
+            opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
+          },
+        })}
+        saksbehandlerDetaljer={[lagSaksbehandler()]}
+        ansvarligSaksbehandler={lagSaksbehandler()}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Del tilgang" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Fjern deling med Ada Larsen" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Endre ansvarlig saksbehandler" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Send til annen enhet" })).toBeDefined();
+  });
+
   it("viser ikke Del tilgang for blokkert sak", async () => {
     await renderMedRouter(
       <SaksbehandlereKort

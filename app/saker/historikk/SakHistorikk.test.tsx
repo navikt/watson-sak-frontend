@@ -398,6 +398,27 @@ describe("SakHistorikk", () => {
     expect((screen.getByLabelText("Klokkeslett") as HTMLInputElement).value).toBe("09:42");
   });
 
+  it("skjuler Legg til uten å skjule redigering av eksisterende manuell historikk", async () => {
+    await renderMedRouter(
+      <SakHistorikk
+        redigerbar={true}
+        kanLeggeTil={false}
+        sakId={1}
+        hendelser={[
+          lagBackendHendelse({
+            hendelsesType: "MANUELL_HENDELSE",
+            tittel: "Ringte bruker",
+            opprettetAvNavIdent: "Z999999",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Legg til" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Rediger" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Slett" })).toBeDefined();
+  });
+
   it("viser 'Vis all historikk'-knapp uansett antall hendelser", async () => {
     const hendelser = Array.from({ length: 3 }, (_, i) =>
       lagBackendHendelse({

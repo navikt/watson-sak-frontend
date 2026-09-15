@@ -132,6 +132,21 @@ describe("dokumenter.api POST", () => {
       } as Route.ActionArgs),
     ).rejects.toMatchObject({ init: { status: 403 } });
   });
+
+  it("avviser opprettelse når saken har status Opprettet", async () => {
+    const sak = hentFordelingssaker(state())[0];
+    sak.saksbehandlere.eier = eierMeg;
+    sak.saksbehandlere.deltMed = [];
+    sak.status = "OPPRETTET";
+    const ref = getSaksreferanse(sak.id);
+
+    await expect(
+      action({
+        request: new Request("http://localhost", { method: "POST" }),
+        params: { sakId: ref },
+      } as Route.ActionArgs),
+    ).rejects.toMatchObject({ init: { status: 403 } });
+  });
 });
 
 describe("dokumenter.api DELETE", () => {
@@ -208,6 +223,18 @@ describe("dokumenter.api DELETE", () => {
       eier: eierMeg,
       deltMed: [],
       status: "AVSLUTTET",
+    });
+
+    await expect(
+      action({ request: deleteRequest(docId), params: { sakId: ref } } as Route.ActionArgs),
+    ).rejects.toMatchObject({ init: { status: 403 } });
+  });
+
+  it("avviser sletting når saken har status Opprettet", async () => {
+    const { ref, docId } = settOppSakMedDokument({
+      eier: eierMeg,
+      deltMed: [],
+      status: "OPPRETTET",
     });
 
     await expect(

@@ -92,6 +92,21 @@ describe("SakHandlingerKnapper", () => {
     expect(screen.queryByRole("button", { name: "Gjenoppta" })).toBeNull();
   });
 
+  it("viser bare Endre status for sak med status Opprettet", () => {
+    renderMedRouter(
+      <SakHandlingerKnapper
+        erEier={true}
+        sak={lagKontrollsak({ status: "OPPRETTET", blokkert: null })}
+        filer={[]}
+        dokumenter={[]}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Endre status" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Opprett journalpost" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Opprett oppgave" })).toBeNull();
+  });
+
   it("viser Gjenoppta, Opprett journalpost og Opprett oppgave for blokkert sak med eier", () => {
     renderMedRouter(
       <SakHandlingerKnapper
