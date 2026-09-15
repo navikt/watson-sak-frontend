@@ -109,7 +109,7 @@ describe("SaksbehandlereKort", () => {
     expect(screen.getByRole("button", { name: "Del tilgang" })).toBeDefined();
   });
 
-  it("viser Send til annen enhet i enhetsseksjonen øverst for aktiv sak", async () => {
+  it("viser Endre i enhetsseksjonen øverst for aktiv sak", async () => {
     await renderMedRouter(
       <SaksbehandlereKort
         erEier={true}
@@ -120,7 +120,7 @@ describe("SaksbehandlereKort", () => {
     );
 
     const knapper = screen.getAllByRole("button").map((knapp) => knapp.textContent);
-    expect(knapper.at(0)).toBe("Send til annen enhet");
+    expect(knapper.at(0)).toBe("Endre");
   });
 
   it("viser enhetsseksjonen over saksbehandlerseksjonen", async () => {
@@ -169,7 +169,7 @@ describe("SaksbehandlereKort", () => {
     );
 
     expect(screen.queryByRole("button", { name: "Del tilgang" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Send til annen enhet" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Endre enhet" })).toBeNull();
   });
 
   it("skjuler delt tilgang, men tillater endring av ansvarlig og enhet for Opprettet", async () => {
@@ -192,7 +192,7 @@ describe("SaksbehandlereKort", () => {
     expect(screen.queryByRole("button", { name: "Del tilgang" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Fjern deling med Ada Larsen" })).toBeNull();
     expect(screen.getByRole("button", { name: "Endre ansvarlig saksbehandler" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Send til annen enhet" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Endre enhet" })).toBeDefined();
   });
 
   it("viser ikke Del tilgang for blokkert sak", async () => {
@@ -206,7 +206,7 @@ describe("SaksbehandlereKort", () => {
     );
 
     expect(screen.queryByRole("button", { name: "Del tilgang" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Send til annen enhet" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Endre enhet" })).toBeNull();
   });
 
   it("sender valgt enhet når saken sendes til annen enhet", async () => {
@@ -226,7 +226,7 @@ describe("SaksbehandlereKort", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Send til annen enhet" }));
+    fireEvent.click(screen.getByRole("button", { name: "Endre enhet" }));
     await waitFor(() => {});
 
     const nåværendeEnhet = screen.getByRole("option", { name: "Øst" });
@@ -268,7 +268,7 @@ describe("SaksbehandlereKort", () => {
     );
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Send til annen enhet" }));
+      fireEvent.click(screen.getByRole("button", { name: "Endre enhet" }));
     });
 
     expect(screen.queryByText(/mister tilgang til dokumentasjonen/)).toBeNull();
@@ -287,7 +287,7 @@ describe("SaksbehandlereKort", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Send til annen enhet" }));
+    fireEvent.click(screen.getByRole("button", { name: "Endre enhet" }));
     await waitFor(() => {});
     expect(screen.queryByText(/mister tilgang til dokumentasjonen/)).toBeNull();
 
@@ -315,7 +315,7 @@ describe("SaksbehandlereKort", () => {
     );
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Send til annen enhet" }));
+      fireEvent.click(screen.getByRole("button", { name: "Endre enhet" }));
       fireEvent.change(screen.getByLabelText("Ny enhet"), { target: { value: "hu424t" } });
       fireEvent.click(screen.getByRole("button", { name: "Fortsett" }));
     });
