@@ -99,7 +99,7 @@ export function Versjonsvarsling({ gjeldendeVersjon }: VersjonsvarslingProps) {
       open={skalVises}
       onClose={() => {}}
       header={{
-        heading: "Watson Søk har blitt oppdatert",
+        heading: "Watson Sak har blitt oppdatert",
         icon: <BellIcon aria-hidden={true} />,
         closeButton: false,
       }}
@@ -108,7 +108,7 @@ export function Versjonsvarsling({ gjeldendeVersjon }: VersjonsvarslingProps) {
     >
       <ModalBody>
         <BodyLong>
-          Det har kommet en ny versjon av Watson Søk. For å fortsette å bruke løsningen, må du laste
+          Det har kommet en ny versjon av Watson Sak. For å fortsette å bruke løsningen, må du laste
           inn siden på nytt.
         </BodyLong>
       </ModalBody>
