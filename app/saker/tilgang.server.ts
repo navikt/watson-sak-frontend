@@ -1,18 +1,15 @@
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { hentAlleSaker, medInnloggetEier } from "~/saker/mock-alle-saker.server";
 import type { KontrollsakResponse } from "~/saker/types.backend";
-import {
-  erAktivSakKontrollsak,
-  erSakseier,
-  kanRedigereDokumenterPåSak,
-} from "./handlinger/tilgjengeligeHandlinger";
+import { erSakseier } from "./handlinger/tilgjengeligeHandlinger";
 import { finnSakMedReferanse } from "./id";
+import { hentStatusbaserteSaksregler } from "./statusregler";
 
 export type Sakstilgang = {
   sak: KontrollsakResponse;
   /** Eier, delt-med eller leder: kan se saken og dens dokumenter. */
   kanSe: boolean;
-  /** Kan redigere dokumenter: eier, delt-med eller leder på en aktiv sak. */
+  /** Kan redigere dokumenter: eier, delt-med eller leder etter at utredning er startet. */
   kanRedigereDokumenter: boolean;
   /** Kan laste opp filer: eier, delt-med eller leder på en aktiv sak. */
   kanLasteOppFiler: boolean;
@@ -41,11 +38,12 @@ export async function hentSakstilgangFraMock(
   const erEier = erSakseier(sak, innlogget.navIdent);
   const harDeltTilgang = sak.saksbehandlere.deltMed.some((s) => s.navIdent === innlogget.navIdent);
   const kanSe = erEier || harDeltTilgang || innlogget.erLeder;
+  const statusregler = hentStatusbaserteSaksregler(sak.status);
 
   return {
     sak,
     kanSe,
-    kanRedigereDokumenter: kanSe && kanRedigereDokumenterPåSak(sak.status),
-    kanLasteOppFiler: kanSe && erAktivSakKontrollsak(sak.status),
+    kanRedigereDokumenter: kanSe && statusregler.kanRedigereDokumenter,
+    kanLasteOppFiler: kanSe && statusregler.kanLasteOppFiler,
   };
 }

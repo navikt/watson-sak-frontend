@@ -12,7 +12,7 @@ import {
   lagreDokument,
   opprettEllerOppdaterDokumentHistorikk,
 } from "../mock-data.server";
-import { kanRedigereDokumenterPåSak } from "../../handlinger/tilgjengeligeHandlinger";
+import { hentStatusbaserteSaksregler } from "../../statusregler";
 import { getSaksenhet } from "~/saker/selectors";
 import type { Route } from "./+types/DokumentSide.route";
 import type { KontrollsakResponse } from "~/saker/types.backend";
@@ -64,7 +64,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       dokumenter: sak.dokumenter ?? [],
       dokumentHistorikk: dokumentHistorikk.items,
       sakReferanse,
-      kanRedigere: kanSe && kanRedigereDokumenterPåSak(sak.status) && !dokument.arkivert,
+      kanRedigere:
+        kanSe &&
+        hentStatusbaserteSaksregler(sak.status).kanRedigereDokumenter &&
+        !dokument.arkivert,
       variabelVerdier: byggVariabelVerdier(sak, innlogget),
       miljø: env.ENVIRONMENT,
     };
@@ -127,7 +130,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
     const token = await getBackendOboToken(request);
     const sak = await backendApi.hentKontrollsak(token, sakReferanse);
-    if (!kanRedigereDokumenterPåSak(sak.status)) {
+    if (!hentStatusbaserteSaksregler(sak.status).kanRedigereDokumenter) {
       throw data("Dokumenter kan ikke redigeres før saken er satt til Utredes", { status: 403 });
     }
     let kropp: { tittel?: unknown; innhold?: unknown; opprettHistorikk?: unknown };

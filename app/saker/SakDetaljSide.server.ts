@@ -42,6 +42,7 @@ import {
 } from "./historikk/mock-data.server";
 import { finnSakMedReferanse } from "./id";
 import { getSaksenhet } from "./selectors";
+import { hentStatusbaserteSaksregler } from "./statusregler";
 import type { KontrollsakStatus } from "./visning";
 import type { Route } from "./+types/SakDetaljSide.route";
 
@@ -478,7 +479,8 @@ async function backendAction(
   }
 
   if (
-    sakFraTilgangskontroll?.status === "OPPRETTET" &&
+    sakFraTilgangskontroll &&
+    !hentStatusbaserteSaksregler(sakFraTilgangskontroll.status).kanUtføreUtredningsarbeid &&
     handlingerSomKreverUtredning.has(handling)
   ) {
     throw data("Handlingen krever at saken har status Utredes", { status: 400 });
@@ -896,7 +898,10 @@ async function mockAction(
 
   const saksbehandlere = sak.saksbehandlere;
 
-  if (sak.status === "OPPRETTET" && handlingerSomKreverUtredning.has(handling)) {
+  if (
+    !hentStatusbaserteSaksregler(sak.status).kanUtføreUtredningsarbeid &&
+    handlingerSomKreverUtredning.has(handling)
+  ) {
     throw data("Handlingen krever at saken har status Utredes", { status: 400 });
   }
 
