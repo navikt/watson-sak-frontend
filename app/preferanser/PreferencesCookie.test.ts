@@ -7,12 +7,14 @@ describe("PreferencesCookie", () => {
       sidebarKollapset: true,
       tema: "system",
       visVelkomstmelding: false,
+      visInfopaneler: false,
     });
 
     expect(preferences).toEqual({
       sidebarKollapset: true,
       tema: "system",
       visVelkomstmelding: false,
+      visInfopaneler: false,
     });
   });
 
@@ -21,6 +23,17 @@ describe("PreferencesCookie", () => {
       sidebarKollapset: false,
       tema: "system",
       visVelkomstmelding: true,
+      visInfopaneler: true,
     });
+  });
+
+  test("viser infopaneler som standard for eksisterende preferansecookies", () => {
+    const preferences = parsePreferences({
+      sidebarKollapset: true,
+      tema: "dark",
+      visVelkomstmelding: false,
+    });
+
+    expect(preferences.visInfopaneler).toBe(true);
   });
 });

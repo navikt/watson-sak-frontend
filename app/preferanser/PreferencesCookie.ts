@@ -13,6 +13,7 @@ const preferencesSchema = z.object({
   sidebarKollapset: z.boolean().default(false),
   tema: z.enum(["light", "dark", "system"]).default("system"),
   visVelkomstmelding: z.boolean().default(true),
+  visInfopaneler: z.boolean().default(true),
 });
 
 export type Preferences = z.infer<typeof preferencesSchema>;
@@ -21,6 +22,7 @@ export const defaultPreferences: Preferences = {
   sidebarKollapset: false,
   tema: "system",
   visVelkomstmelding: true,
+  visInfopaneler: true,
 };
 
 export function parsePreferences(value: unknown): Preferences {
