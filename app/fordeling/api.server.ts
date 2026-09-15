@@ -1,4 +1,5 @@
 import { getBackendOboToken } from "~/auth/access-token";
+import { kastHvisUtlogget } from "~/auth/session-utløpt.server";
 import { BACKEND_API_URL, skalBrukeMockdata } from "~/config/env.server";
 import { logger } from "~/logging/logging";
 import { kontrollsakPageResponseSchema } from "~/saker/types.backend";
@@ -61,6 +62,7 @@ export async function hentKontrollsaker(
   });
 
   if (!response.ok) {
+    kastHvisUtlogget(response);
     logger.error("Kunne ikke hente kontrollsaker fra Watson Admin API", {
       status: response.status,
     });
@@ -113,6 +115,7 @@ export async function tildelKontrollsak({
   });
 
   if (!response.ok) {
+    kastHvisUtlogget(response);
     logger.error("Kunne ikke tildele kontrollsak i Watson Admin API", {
       status: response.status,
       sakId,

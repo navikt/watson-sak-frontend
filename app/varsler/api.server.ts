@@ -1,3 +1,4 @@
+import { kastHvisUtlogget } from "~/auth/session-utløpt.server";
 import { BACKEND_API_URL } from "~/config/env.server";
 import { logger } from "~/logging/logging";
 import { tilVarsel, varselPageBackendResponseSchema } from "./typer";
@@ -16,6 +17,7 @@ async function fetchVarslerPage(token: string, params: URLSearchParams, kontekst
   });
 
   if (!response.ok) {
+    kastHvisUtlogget(response);
     logger.error(`Kunne ikke hente varsler (${kontekst})`, { status: response.status });
     throw new Error("Kunne ikke hente varsler.");
   }
@@ -81,6 +83,7 @@ export async function markerVarselSomLest(token: string, varselId: string): Prom
   }
 
   if (!response.ok) {
+    kastHvisUtlogget(response);
     logger.error("Kunne ikke markere varsel som lest", { status: response.status, varselId });
     throw new Error("Kunne ikke markere varsel som lest.");
   }

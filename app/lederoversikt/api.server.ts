@@ -1,3 +1,4 @@
+import { kastHvisUtlogget } from "~/auth/session-utløpt.server";
 import { BACKEND_API_URL } from "~/config/env.server";
 import { logger } from "~/logging/logging";
 import { lederStatistikkResponseSchema, type LederStatistikk } from "./types";
@@ -16,6 +17,7 @@ export async function hentLederStatistikk(token: string): Promise<LederStatistik
   });
 
   if (!response.ok) {
+    kastHvisUtlogget(response);
     logger.error("Kunne ikke hente lederstatistikk fra Watson Admin API", {
       status: response.status,
     });

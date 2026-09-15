@@ -1,5 +1,6 @@
 import { data } from "react-router";
 import { z } from "zod";
+import { kastHvisUtlogget } from "~/auth/session-utløpt.server";
 import { BACKEND_API_URL } from "~/config/env.server";
 import { logger } from "~/logging/logging";
 import type {
@@ -109,6 +110,7 @@ async function håndterFeil(
   beskrivelse: string,
   opts?: { forventedeStatuser?: number[] },
 ): Promise<never> {
+  kastHvisUtlogget(respons);
   const detalj = await hentProblemDetail(respons);
   const melding = `${beskrivelse} — status ${respons.status}${detalj ? `: ${detalj}` : ""}`;
   if (opts?.forventedeStatuser?.includes(respons.status)) {
