@@ -1,4 +1,4 @@
-import { ArrowForwardIcon, PersonPencilIcon, PersonPlusIcon, TrashIcon } from "@navikt/aksel-icons";
+import { PersonPencilIcon, PersonPlusIcon, TrashIcon } from "@navikt/aksel-icons";
 import { BodyShort, Button, HStack, Label, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import { useFetcher } from "react-router";
@@ -99,19 +99,21 @@ export function SaksbehandlereKort({
               Enhet
             </Label>
 
-            <BodyShort>{enhetsnavn || "Ingen"}</BodyShort>
+            <HStack justify="space-between" align="center">
+              <BodyShort>{enhetsnavn || "Ingen"}</BodyShort>
 
-            {kanEndreTilgang && (
-              <Button
-                type="button"
-                variant="secondary"
-                size="small"
-                icon={<ArrowForwardIcon aria-hidden />}
-                onClick={() => setVisSendTilAnnenEnhetModal(true)}
-              >
-                Send til annen enhet
-              </Button>
-            )}
+              {kanEndreTilgang && (
+                <Button
+                  type="button"
+                  variant="tertiary"
+                  size="xsmall"
+                  onClick={() => setVisSendTilAnnenEnhetModal(true)}
+                  aria-label="Endre enhet"
+                >
+                  Endre
+                </Button>
+              )}
+            </HStack>
           </VStack>
 
           <hr className="my-4 border-ax-border-neutral-subtle" />
