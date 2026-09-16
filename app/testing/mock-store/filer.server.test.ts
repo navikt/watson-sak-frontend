@@ -6,6 +6,7 @@ import {
   hentFilInnhold,
   leggTilFil,
   opprettArkivertFilFraDokument,
+  omdøpFil,
   slettFil,
 } from "./filer.server";
 import { hentMockState, resetDefaultSession } from "./session.server";
@@ -139,5 +140,13 @@ describe("mock-store filer", () => {
     const respons = await hentFilInnhold(state(), sakId, fil.id);
 
     expect(await respons.text()).not.toBe("bildebytes");
+  });
+
+  it("endrer navn og bevarer filendelsen", () => {
+    const fil = lastOppPdf("gammelt.navn.pdf");
+
+    const omdøpt = omdøpFil(state(), sakId, fil.id, "  nytt navn  ");
+
+    expect(omdøpt?.filnavn).toBe("nytt navn.pdf");
   });
 });

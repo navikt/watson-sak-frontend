@@ -57,6 +57,49 @@ async function lastOppFil(ref: string, filnavn: string): Promise<string> {
   return respons.id;
 }
 
+describe("fil.api PATCH", () => {
+  beforeEach(() => {
+    resetDefaultSession();
+  });
+
+  it("endrer navn, bevarer endelsen og legger til FIL_OMDØPT i historikken", async () => {
+    const { sak, ref } = settOppAktivSak();
+    const filId = await lastOppFil(ref, "gammelt.navn.pdf");
+    const antallFør = hentHistorikk(testRequest, sak.id).length;
+
+    const resultat = await action({
+      request: new Request("http://localhost", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ navn: "nytt navn" }),
+      }),
+      params: { sakId: ref, filId },
+    } as Route.ActionArgs);
+
+    expect(resultat).toMatchObject({ ok: true, fil: { filnavn: "nytt navn.pdf" } });
+    expect(hentHistorikk(testRequest, sak.id)).toHaveLength(antallFør + 1);
+    expect(hentHistorikk(testRequest, sak.id)[0]).toMatchObject({
+      hendelsesType: "FIL_OMDØPT",
+    });
+  });
+
+  it("returnerer 400 for ugyldig navn", async () => {
+    const { ref } = settOppAktivSak();
+    const filId = await lastOppFil(ref, "bevis.pdf");
+
+    const respons = await action({
+      request: new Request("http://localhost", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ navn: "../bevis" }),
+      }),
+      params: { sakId: ref, filId },
+    } as Route.ActionArgs);
+
+    expect(respons).toMatchObject({ init: { status: 400 } });
+  });
+});
+
 describe("fil.api DELETE", () => {
   beforeEach(() => {
     resetDefaultSession();

@@ -752,6 +752,23 @@ export async function slettFil(token: string, sakId: string, filId: string): Pro
   await håndterFeil(respons, "Kunne ikke slette fil");
 }
 
+export async function omdøpFil(
+  token: string,
+  sakId: string,
+  filId: string,
+  navn: string,
+): Promise<FilResponse> {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/filer/${filId}`), {
+    method: "PATCH",
+    headers: authHeaders(token),
+    body: JSON.stringify({ navn }),
+  });
+  if (!respons.ok) {
+    await håndterFeil(respons, "Kunne ikke endre filnavn", { forventedeStatuser: [400, 409] });
+  }
+  return parseEllerKastFeil(filResponseSchema, await respons.json(), "omdøpFil");
+}
+
 /**
  * Henter filinnhold direkte fra backend og returnerer det rå HTTP-svaret.
  * Svaret inneholder filbytes med Content-Disposition-header for nedlasting.

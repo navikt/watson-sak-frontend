@@ -1,4 +1,5 @@
 import type { FilResponse } from "~/saker/filer/typer";
+import { medNyttFilnavn } from "~/saker/filer/filnavn-utils";
 import type { MockState } from "./session.server";
 import { hentLagretFilInnhold, lagreFilInnhold, slettFilInnhold } from "./fil-innhold.server";
 
@@ -171,4 +172,17 @@ export function slettFil(state: MockState, sakId: string, filId: string): FilRes
   const [slettetFil] = liste.splice(indeks, 1);
   slettFilInnhold(filId);
   return slettetFil;
+}
+
+export function omdøpFil(
+  state: MockState,
+  sakId: string,
+  filId: string,
+  nyttNavn: string,
+): FilResponse | null {
+  const liste = initialiserFilerForSak(state, sakId);
+  const fil = liste.find((kandidat) => kandidat.id === filId);
+  if (!fil || fil.arkivert) return null;
+  fil.filnavn = medNyttFilnavn(fil.filnavn, nyttNavn);
+  return fil;
 }

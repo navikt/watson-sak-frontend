@@ -83,6 +83,40 @@ describe("VedleggSeksjon", () => {
     expect(screen.getByLabelText("Slett screenshot.png")).toBeDefined();
   });
 
+  it("viser knapp for å endre navn kun når erSakseier er true", async () => {
+    await renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: true });
+    expect(screen.getByLabelText("Endre navn på anmeldelse.pdf")).toBeDefined();
+    expect(screen.getByLabelText("Endre navn på screenshot.png")).toBeDefined();
+  });
+
+  it("åpner modal med navnedelen og låst filendelse", async () => {
+    await renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: true });
+
+    fireEvent.click(screen.getByLabelText("Endre navn på anmeldelse.pdf"));
+
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { name: "Endre navn på vedlegg" })).toBeDefined();
+    });
+    expect(screen.getByRole("textbox", { name: "Filnavn" }).getAttribute("value")).toBe(
+      "anmeldelse",
+    );
+    expect(screen.getByText("Filendelsen .pdf beholdes.")).toBeDefined();
+  });
+
+  it("viser valideringsfeil for ugyldig navn", async () => {
+    await renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: true });
+    fireEvent.click(screen.getByLabelText("Endre navn på anmeldelse.pdf"));
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { name: "Endre navn på vedlegg" })).toBeDefined();
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "Filnavn" }), {
+      target: { value: "../bevis" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Lagre navn" }));
+
+    expect(screen.getByText("Filnavnet inneholder ugyldige tegn")).toBeDefined();
+  });
+
   it("viser lastespinner når en opplasting pågår", async () => {
     await renderSeksjon({ filer: [], sakId: "SAK-1", erSakseier: false, lasterOpp: true });
     expect(screen.getByText("Laster opp …")).toBeDefined();

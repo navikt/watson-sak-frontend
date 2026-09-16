@@ -7,14 +7,17 @@ import { erSakseier } from "~/saker/handlinger/tilgjengeligeHandlinger";
 import { leggTilHendelse } from "~/saker/historikk/mock-data.server";
 import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
 import {
+  omdøpFil as omdøpFilMock,
   slettFil as slettFilMock,
   hentFilInnhold as hentFilInnholdMock,
 } from "./mock-data-filer.server";
+import { filnavnSchema } from "./filnavn-utils";
 
 /**
  * Resource route for én enkelt fil på en sak.
  *
  * - GET: streamer filinnhold direkte fra backend (ingen signert URL).
+ * - PATCH: endrer navnedelen til filen (kun sakseier).
  * - DELETE: sletter filen (kun sakseier).
  */
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -37,12 +40,42 @@ export async function action({ request, params }: ActionFunctionArgs) {
     throw data("Mangler sak eller fil", { status: 400 });
   }
 
-  if (request.method !== "DELETE") {
+  if (request.method !== "DELETE" && request.method !== "PATCH") {
     throw data("Metoden støttes ikke", { status: 405 });
+  }
+
+  let nyttNavn: string | undefined;
+  if (request.method === "PATCH") {
+    const body: unknown = await request.json().catch(() => null);
+    const resultat = filnavnSchema.safeParse(
+      body && typeof body === "object" && "navn" in body ? body.navn : undefined,
+    );
+    if (!resultat.success) {
+      return data(
+        { ok: false as const, melding: resultat.error.issues[0]?.message ?? "Ugyldig filnavn" },
+        { status: 400 },
+      );
+    }
+    nyttNavn = resultat.data;
   }
 
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
+    if (request.method === "PATCH" && nyttNavn !== undefined) {
+      try {
+        const fil = await backendApi.omdøpFil(token, sakId, filId, nyttNavn);
+        return { ok: true as const, fil };
+      } catch (feil) {
+        if (
+          feil instanceof backendApi.BackendFeilException &&
+          (feil.status === 400 || feil.status === 409)
+        ) {
+          return data({ ok: false as const, melding: feil.message }, { status: feil.status });
+        }
+        throw feil;
+      }
+    }
+
     // Sakseier-sjekk håndheves av backend — den returnerer 403 om brukeren ikke er eier.
     try {
       await backendApi.slettFil(token, sakId, filId);
@@ -67,7 +100,16 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   const innlogget = await hentInnloggetBruker({ request });
   if (!erSakseier(tilgang.sak, innlogget.navIdent)) {
-    throw data("Kun sakseier kan slette vedlegg", { status: 403 });
+    throw data("Kun sakseier kan endre eller slette vedlegg", { status: 403 });
+  }
+
+  if (request.method === "PATCH" && nyttNavn !== undefined) {
+    const omdøpt = omdøpFilMock(request, String(tilgang.sak.id), filId, nyttNavn);
+    if (!omdøpt) {
+      throw data("Fil ikke funnet eller arkivert", { status: 404 });
+    }
+    leggTilHendelse(request, tilgang.sak, "FIL_OMDØPT");
+    return { ok: true as const, fil: omdøpt };
   }
 
   const slettet = slettFilMock(request, String(tilgang.sak.id), filId);

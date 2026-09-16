@@ -165,6 +165,12 @@ describe("filhendelser", () => {
     expect(hendelseTittel(hendelse)).toBe("Fil åpnet");
   });
 
+  it("hendelseTittel returnerer 'Filnavn endret' for FIL_OMDØPT", () => {
+    const hendelse = lagHendelse({ hendelsesType: "FIL_OMDØPT", status: null });
+    expect(hendelseTittel(hendelse)).toBe("Filnavn endret");
+    expect(hendelseBeskrivelse(hendelse)).toBeNull();
+  });
+
   it("hendelseTittel returnerer 'Fil arkivert' for FIL_ARKIVERT", () => {
     const hendelse = lagHendelse({ hendelsesType: "FIL_ARKIVERT", status: null });
     expect(hendelseTittel(hendelse)).toBe("Fil arkivert");

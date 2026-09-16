@@ -1,4 +1,4 @@
-import { LinkIcon, TrashIcon } from "@navikt/aksel-icons";
+import { LinkIcon, PencilIcon, TrashIcon } from "@navikt/aksel-icons";
 import { Alert, BodyShort, Button, Loader, Tooltip } from "@navikt/ds-react";
 import { useEffect, useState } from "react";
 import { useFetcher } from "react-router";
@@ -6,6 +6,7 @@ import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { formaterStorrelse } from "~/utils/number-utils";
 import { FilIBrukModal } from "./FilIBrukModal";
+import { OmdøpFilModal } from "./OmdøpFilModal";
 import { filTypeIkon, filTypeTekst } from "./fil-type-utils";
 import { FilerRad, FilerSeksjonCaption } from "./FilerRad";
 import { ÅpneFilKnapp, formaterDato } from "./fil-visning-utils";
@@ -80,6 +81,29 @@ function SlettKnapp({ filId, filnavn, sakId, bruktIDokumenter }: SlettKnappProps
   );
 }
 
+function OmdøpKnapp({ filId, filnavn, sakId }: Omit<SlettKnappProps, "bruktIDokumenter">) {
+  const [modalÅpen, setModalÅpen] = useState(false);
+  return (
+    <>
+      <Button
+        type="button"
+        variant="tertiary-neutral"
+        size="xsmall"
+        icon={<PencilIcon aria-hidden />}
+        aria-label={`Endre navn på ${filnavn}`}
+        onClick={() => setModalÅpen(true)}
+      />
+      <OmdøpFilModal
+        filId={filId}
+        filnavn={filnavn}
+        sakId={sakId}
+        åpen={modalÅpen}
+        onClose={() => setModalÅpen(false)}
+      />
+    </>
+  );
+}
+
 interface VedleggSeksjonProps {
   filer: FilResponse[];
   sakId: string;
@@ -105,7 +129,7 @@ export function VedleggSeksjon({
     <div>
       <FilerSeksjonCaption
         tittel="Opplastede filer"
-        undertekst="Lastet opp utenfra – kan ikke redigeres"
+        undertekst="Lastet opp utenfra – filnavnet kan endres"
       />
 
       {feilFraServer && (
@@ -143,12 +167,15 @@ export function VedleggSeksjon({
                 <>
                   <ÅpneFilKnapp filId={fil.id} filnavn={fil.filnavn} sakId={sakId} />
                   {erSakseier && (
-                    <SlettKnapp
-                      filId={fil.id}
-                      filnavn={fil.filnavn}
-                      sakId={sakId}
-                      bruktIDokumenter={fil.bruktIDokumenter}
-                    />
+                    <>
+                      <OmdøpKnapp filId={fil.id} filnavn={fil.filnavn} sakId={sakId} />
+                      <SlettKnapp
+                        filId={fil.id}
+                        filnavn={fil.filnavn}
+                        sakId={sakId}
+                        bruktIDokumenter={fil.bruktIDokumenter}
+                      />
+                    </>
                   )}
                 </>
               }
