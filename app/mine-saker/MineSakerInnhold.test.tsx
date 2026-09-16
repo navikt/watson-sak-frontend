@@ -55,7 +55,7 @@ const standardFilterAlternativer = {
     { verdi: "AVSLUTTET", etikett: "Avsluttet" },
   ],
   ventestatus: [
-    { verdi: "INGEN", etikett: "Ingen" },
+    { verdi: "INGEN", etikett: "Aktiv" },
     { verdi: "VENTER_PA_INFORMASJON", etikett: "Venter på informasjon" },
     { verdi: "VENTER_PA_VEDTAK", etikett: "Venter på vedtak" },
     { verdi: "I_BERO", etikett: "I bero" },
@@ -125,7 +125,7 @@ describe("MineSakerInnhold", () => {
     expect(screen.getByText("Arbeidsstatus")).toBeDefined();
     expect(screen.getByRole("button", { name: "Opprettet" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Utredes" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Ingen" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Aktiv" })).toBeDefined();
     expect(screen.getByRole("button", { name: "I bero" })).toBeDefined();
   });
 
