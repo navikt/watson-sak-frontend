@@ -16,7 +16,7 @@ export const ALLE_VENTESTATUSER: (Blokkeringsarsak | "INGEN")[] = [
 ];
 
 export function formaterVentestatus(verdi: Blokkeringsarsak | "INGEN"): string {
-  return verdi === "INGEN" ? "Ingen" : formaterBlokkeringsarsak(verdi);
+  return verdi === "INGEN" ? "Aktiv" : formaterBlokkeringsarsak(verdi);
 }
 
 export function filtrerMineSaker(

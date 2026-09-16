@@ -75,6 +75,10 @@ describe("MineSakerSide loader", () => {
 
     expect(resultat.filterAlternativer.status.length).toBe(6);
     expect(resultat.filterAlternativer.ventestatus.length).toBe(4);
+    expect(resultat.filterAlternativer.ventestatus).toContainEqual({
+      verdi: "INGEN",
+      etikett: "Aktiv",
+    });
   });
 
   it("har ingen aktive filtre når ingen URL-parametere er satt", async () => {
