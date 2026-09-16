@@ -1,13 +1,7 @@
-import {
-  Button,
-  DatePicker,
-  HStack,
-  TextField,
-  UNSAFE_Combobox,
-  useRangeDatepicker,
-} from "@navikt/ds-react";
+import { Button, DatePicker, HStack, UNSAFE_Combobox, useRangeDatepicker } from "@navikt/ds-react";
 import { TrashIcon } from "@navikt/aksel-icons";
 import { useMemo, useState } from "react";
+import { Beløpsfelt } from "~/formaterte-inputfelt/FormaterteInputfelt";
 import { lagRegistrerSakDatepickerValg } from "./registrerSakDatepicker";
 import type { YtelseRadVerdier } from "./skjema-helpers";
 
@@ -144,12 +138,11 @@ export function YtelseRadFelt({
         </HStack>
       </DatePicker>
 
-      <TextField
+      <Beløpsfelt
         id={ankerIdForFelt(`ytelser.${indeks}.beløp`)}
         name={beløpFeltnavn}
         label={"Antatt\u00A0beløp"}
         size={size}
-        inputMode="numeric"
         htmlSize={12}
         autoComplete="off"
         defaultValue={defaults.beløp ?? ""}
@@ -157,12 +150,11 @@ export function YtelseRadFelt({
       />
 
       {visEndeligBeløp && (
-        <TextField
+        <Beløpsfelt
           id={ankerIdForFelt(`ytelser.${indeks}.endeligBeløp`)}
           name={endeligBeløpFeltnavn}
           label={"Endelig\u00A0beløp"}
           size={size}
-          inputMode="numeric"
           htmlSize={12}
           autoComplete="off"
           defaultValue={defaults.endeligBeløp ?? ""}
