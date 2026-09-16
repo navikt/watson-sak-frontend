@@ -1,3 +1,4 @@
+import { redirectDocument } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { skalBrukeMockdata } from "~/config/env.server";
 import { logger } from "~/logging/logging";
@@ -6,13 +7,40 @@ import * as backendApi from "~/saker/api.server";
 import { getSaksenhet } from "~/saker/selectors";
 import { getStatus } from "~/saker/visning";
 import { hentValgfriTekst } from "~/utils/form-data";
-import { formaterFødselsnummer } from "~/utils/string-utils";
+import { erFnr, formaterFødselsnummer } from "~/utils/string-utils";
+import { RouteConfig } from "~/routeConfig";
 import { INGEN_TILGANG_TIL_Å_OPPRETTE_SAK_MELDING } from "./feilmeldinger";
+import { pendingFnrCookie } from "./pending-fnr.server";
 import { slaOppPerson } from "./person-oppslag.mock.server";
 
 export async function action({ request }: { request: Request }) {
   const formData = await request.formData();
   const fnr = (hentValgfriTekst(formData, "fnr") ?? "").replace(/\s/g, "");
+
+  // Dette endepunktet er bygget for å kalles via `personFetcher.Form`
+  // (React Router sin klient-side interception), ikke som en vanlig
+  // sideinnsending. Enkelte nettlesere (bl.a. observert i eldre macOS
+  // Safari, trolig knyttet til autofyll/"recent searches" på
+  // <input type="search">) kan av og til gjøre en ekte, native
+  // skjemainnsending i stedet for å la React fange opp submit-eventet.
+  // Da ender brukeren opp på denne URL-en direkte, og ville uten denne
+  // sjekken se det rå JSON-svaret i stedet for opprett-sak-siden.
+  //
+  // Ekte sidenavigasjoner sender `Accept: text/html...`, mens
+  // React Router sin interne `fetch()` bruker standard `Accept: */*`.
+  // Vi bruker dette til å skille de to, og faller tilbake til en
+  // redirect til opprett-sak-siden (med fnr forhåndsutfylt via samme
+  // cookie som `forhåndsutfyll.api.ts` bruker) i stedet for å returnere
+  // JSON direkte til nettleseren.
+  const erSidenavigasjon = request.headers.get("Accept")?.includes("text/html") ?? false;
+  if (erSidenavigasjon) {
+    if (!erFnr(fnr)) {
+      return redirectDocument(RouteConfig.REGISTRER_SAK);
+    }
+    return redirectDocument(RouteConfig.REGISTRER_SAK, {
+      headers: { "Set-Cookie": await pendingFnrCookie.serialize(fnr) },
+    });
+  }
 
   if (!fnr || !/^\d{11}$/.test(fnr)) {
     return Response.json({ feil: "Ugyldig fødselsnummer" }, { status: 400 });

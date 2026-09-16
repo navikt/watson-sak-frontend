@@ -15,6 +15,7 @@ vi.mock("~/config/env.server", () => ({
   get skalBrukeMockdata() {
     return testState.skalBrukeMockdata;
   },
+  env: { IDENT_SESSION_SECRET: "test-secret" },
 }));
 
 vi.mock("~/auth/access-token", () => ({
@@ -30,18 +31,19 @@ vi.mock("./person-oppslag.mock.server", () => ({
   slaOppPerson: slaOppPersonMockServerMock,
 }));
 
-function lagRequest(fnr: string) {
+function lagRequest(fnr: string, headers?: HeadersInit) {
   const formData = new FormData();
   formData.set("fnr", fnr);
   return new Request("http://localhost/api/registrer-sak/person-oppslag", {
     method: "POST",
     body: formData,
+    headers,
   });
 }
 
-async function runAction(fnr: string) {
+async function runAction(fnr: string, headers?: HeadersInit) {
   const { action } = await import("./person-oppslag.api");
-  const request = lagRequest(fnr);
+  const request = lagRequest(fnr, headers);
   return action({ request });
 }
 
@@ -132,6 +134,28 @@ describe("person-oppslag action", () => {
       const json = await response.json();
 
       expect(json.søktMedHistoriskIdent).toBe(true);
+    });
+  });
+
+  describe("når skjemaet sendes inn som en ekte sidenavigasjon (JS fanget ikke opp submit)", () => {
+    it("redirecter til opprett-sak i stedet for å returnere rå JSON, med fnr lagret i cookie", async () => {
+      const response = await runAction("12345678901", {
+        Accept: "text/html,application/xhtml+xml",
+      });
+
+      expect(response.status).toBe(302);
+      expect(response.headers.get("Location")).toBe("/registrer-sak");
+      expect(response.headers.get("Set-Cookie")).toContain("pending-fnr=");
+      expect(slåOppPersonMock).not.toHaveBeenCalled();
+      expect(slaOppPersonMockServerMock).not.toHaveBeenCalled();
+    });
+
+    it("redirecter til opprett-sak uten å sette cookie når fnr er ugyldig", async () => {
+      const response = await runAction("ugyldig", { Accept: "text/html,application/xhtml+xml" });
+
+      expect(response.status).toBe(302);
+      expect(response.headers.get("Location")).toBe("/registrer-sak");
+      expect(response.headers.get("Set-Cookie")).toBeNull();
     });
   });
 });
