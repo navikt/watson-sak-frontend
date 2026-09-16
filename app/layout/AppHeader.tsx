@@ -1,8 +1,9 @@
 import { BooksIcon, LeaveIcon, LightBulbIcon, MenuGridIcon, PersonIcon } from "@navikt/aksel-icons";
-import { ActionMenu, InternalHeader, Search, Spacer, Tag } from "@navikt/ds-react";
+import { ActionMenu, InternalHeader, Spacer, Tag } from "@navikt/ds-react";
 import { useEffect, useRef } from "react";
 import { Form, Link, useLocation } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
+import { IdentifikatorSøkefelt } from "~/formaterte-inputfelt/FormaterteInputfelt";
 import { useInnloggetBrukerValgfri } from "~/auth/innlogget-bruker";
 import { hentWatsonSakUrl, hentWatsonSokUrl } from "~/config/backend-config";
 import { useMiljø } from "~/miljø/useMiljø";
@@ -95,7 +96,7 @@ export function AppHeader() {
           }
         }}
       >
-        <Search
+        <IdentifikatorSøkefelt
           label="Søk i saker"
           name="søketekst"
           variant="secondary"

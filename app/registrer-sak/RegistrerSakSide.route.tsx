@@ -9,7 +9,6 @@ import {
   Heading,
   HStack,
   Loader,
-  Search,
   Select,
   UNSAFE_Combobox,
   VStack,
@@ -26,6 +25,7 @@ import {
   useSubmit,
 } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
+import { FødselsnummerSøkefelt } from "~/formaterte-inputfelt/FormaterteInputfelt";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { RouteConfig } from "~/routeConfig";
@@ -261,7 +261,7 @@ export default function OpprettSakSide() {
           className="mb-6"
           onSubmit={() => sporHendelse("person oppslag")}
         >
-          <Search
+          <FødselsnummerSøkefelt
             label="Fødsels- eller d-nummer"
             hideLabel={false}
             name="fnr"
@@ -288,7 +288,7 @@ export default function OpprettSakSide() {
               }
               className="aksel-search__button-search"
             />
-          </Search>
+          </FødselsnummerSøkefelt>
         </personFetcher.Form>
 
         {/* Feil fra personoppslag */}
