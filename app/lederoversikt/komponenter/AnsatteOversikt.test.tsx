@@ -9,6 +9,7 @@ function renderMedRouter(ui: React.ReactNode) {
     [
       { path: "/", element: ui },
       { path: "/alle-saker", element: <p>Alle saker</p> },
+      { path: "/fordeling", element: <p>Ufordelte saker</p> },
     ],
     { initialEntries: ["/"] },
   );
@@ -86,7 +87,7 @@ describe("AnsatteOversikt", () => {
     expect(screen.getByText("Fant ingen saksbehandlere i enheten.")).toBeDefined();
   });
 
-  it("viser ufordelte saker som egen rad uten personlenke", () => {
+  it("navigerer til ufordelte saker når ufordelt-raden klikkes", () => {
     renderMedRouter(
       <AnsatteOversikt
         ansatte={lagAnsatte([], {
@@ -97,10 +98,19 @@ describe("AnsatteOversikt", () => {
     );
 
     const rad = screen.getByText("Ufordelt").closest("tr");
+    expect(rad?.getAttribute("tabindex")).toBe("0");
     expect(rad?.querySelector("a")).toBeNull();
     expect(
       screen.getByRole("img", { name: "2 innenfor frist og 1 over frist, av totalt 3 saker" }),
     ).toBeDefined();
+
+    if (rad === null) {
+      throw new Error("Fant ikke raden for ufordelte saker");
+    }
+
+    fireEvent.click(rad);
+
+    expect(screen.getByText("Ufordelte saker")).toBeDefined();
   });
 
   it("viser en tydelig melding når ansattlisten er utilgjengelig", () => {

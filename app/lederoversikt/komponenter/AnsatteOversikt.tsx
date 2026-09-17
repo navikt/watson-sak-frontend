@@ -186,7 +186,17 @@ export function AnsatteOversikt({
                     </Table.Row>
                   );
                 })}
-                <Table.Row>
+                <Table.Row
+                  onClick={() => navigate(RouteConfig.FORDELING)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      navigate(RouteConfig.FORDELING);
+                    }
+                  }}
+                  tabIndex={0}
+                  className="cursor-pointer"
+                >
                   <Table.DataCell>Ufordelt</Table.DataCell>
                   <Table.DataCell>
                     <AnsattStolpe ansatt={ansatte.ufordelt} maksAntall={maksAntall} />
