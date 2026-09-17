@@ -111,6 +111,38 @@ describe("DokumentEditor med kommentarer", () => {
     expect(serialisert).not.toContain("kommentar");
   });
 
+  it("viser markeringen som en svak gul highlight og gjør den sterkere når tråden velges", async () => {
+    renderEditor();
+
+    await waitFor(() => {
+      expect(document.querySelector("mark[data-kommentartraad]")).not.toBeNull();
+    });
+    const markering = document.querySelector("mark[data-kommentartraad]");
+    if (!markering) throw new Error("Fant ingen kommentarmarkering");
+
+    expect(markering.classList.contains("bg-ax-bg-warning-soft")).toBe(true);
+    expect(markering.className).not.toContain("text-decoration");
+
+    fireEvent.click(markering);
+
+    await waitFor(() => {
+      const aktivMarkering = document.querySelector("mark[data-kommentar-aktiv='true']");
+      expect(aktivMarkering?.classList.contains("bg-ax-bg-warning-moderate")).toBe(true);
+    });
+  });
+
+  it("beholder elementknappen når pekeren flyttes fra avsnittet til knappen", async () => {
+    renderEditor();
+
+    const avsnitt = await screen.findByText(/Brødtekst med et/);
+    fireEvent.mouseOver(avsnitt);
+
+    const knapp = await screen.findByRole("button", { name: "Kommenter avsnitt" });
+    fireEvent.mouseOver(knapp);
+
+    expect(screen.getByRole("button", { name: "Kommenter avsnitt" })).toBeDefined();
+  });
+
   it("markerer ikke løste tråder i dokumentet", async () => {
     renderEditor({ kommentarliste: liste([løstTraad]) });
 

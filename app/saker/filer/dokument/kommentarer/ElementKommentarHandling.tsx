@@ -57,7 +57,11 @@ export function ElementKommentarHandling({
   const etikett = `Kommenter ${elementEtikett(aktivt.slateType).toLocaleLowerCase("nb-NO")}`;
 
   return (
-    <div className="absolute z-10" style={{ top: posisjon.topp, left: posisjon.venstre }}>
+    <div
+      className="absolute z-10 flex pr-[var(--ax-space-4)]"
+      style={{ top: posisjon.topp, left: posisjon.venstre }}
+      onMouseOver={(event) => event.stopPropagation()}
+    >
       <Button
         type="button"
         size="xsmall"

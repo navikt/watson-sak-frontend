@@ -160,12 +160,8 @@ export function KommentarMarkeringLeaf(props: PlateLeafProps) {
           if (traadIder[0]) onVelgTraad(traadIder[0]);
         },
         className:
-          "cursor-pointer bg-ax-bg-warning-soft text-ax-text-default " +
-          // Aktiv/inaktiv skilles på mer enn farge: aktiv får heltrukken, tykkere
-          // understrek og halvfet tekst, inaktiv en stiplet understrek.
-          (erAktiv
-            ? "font-semibold [text-decoration:underline] [text-decoration-style:solid] [text-decoration-thickness:3px] [text-underline-offset:3px] decoration-ax-border-warning"
-            : "[text-decoration:underline] [text-decoration-style:dotted] [text-decoration-thickness:2px] [text-underline-offset:3px] decoration-ax-border-warning"),
+          "cursor-pointer rounded-xs text-ax-text-default " +
+          (erAktiv ? "bg-ax-bg-warning-moderate" : "bg-ax-bg-warning-soft"),
       }}
     >
       {props.children}
