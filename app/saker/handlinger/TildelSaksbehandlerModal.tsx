@@ -63,7 +63,7 @@ export function TildelSaksbehandlerModal({
 
   function handleFjernSaksbehandler() {
     fetcher.submit({ handling: "FRISTILL", sakId }, { method: "post", action: actionPath });
-    onClose();
+    handleClose();
   }
 
   function handleClose() {
@@ -75,10 +75,16 @@ export function TildelSaksbehandlerModal({
   const valgbareSaksbehandlere =
     saksbehandlerDetaljer.length > 0
       ? saksbehandlerDetaljer.map((saksbehandler) => ({
-          verdi: saksbehandler.navIdent,
-          etikett: `${saksbehandler.navn} (${saksbehandler.navIdent})`,
+          value: saksbehandler.navIdent,
+          label: `${saksbehandler.navn} (${saksbehandler.navIdent})`,
         }))
-      : saksbehandlere.map((saksbehandler) => ({ verdi: saksbehandler, etikett: saksbehandler }));
+      : saksbehandlere.map((saksbehandler) => ({
+          value: saksbehandler,
+          label: saksbehandler,
+        }));
+  const valgtSaksbehandler = valgbareSaksbehandlere.find(
+    (saksbehandler) => saksbehandler.value === valgtNavIdent,
+  );
 
   const heading = nåværendeSaksbehandler ? "Endre saksbehandler" : "Tildel saksbehandler";
 
@@ -110,11 +116,8 @@ export function TildelSaksbehandlerModal({
               id={fields.navIdent.id}
               label="Saksbehandler"
               placeholder="Søk etter saksbehandler"
-              options={valgbareSaksbehandlere.map((saksbehandler) => ({
-                label: saksbehandler.etikett,
-                value: saksbehandler.verdi,
-              }))}
-              selectedOptions={valgtNavIdent ? [valgtNavIdent] : []}
+              options={valgbareSaksbehandlere}
+              selectedOptions={valgtSaksbehandler ? [valgtSaksbehandler] : []}
               onToggleSelected={(navIdent, erValgt) => {
                 setValgtNavIdent(erValgt ? navIdent : "");
               }}

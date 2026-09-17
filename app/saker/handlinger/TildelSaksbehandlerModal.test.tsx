@@ -47,6 +47,35 @@ describe("TildelSaksbehandlerModal", () => {
     });
 
     expect(screen.getByRole<HTMLButtonElement>("button", { name: "Tildel" }).disabled).toBe(false);
+    expect(screen.getAllByText("Saks Behandlersen (Z999999)")).toHaveLength(2);
     expect(document.querySelector<HTMLInputElement>('input[type="hidden"]')?.value).toBe("Z999999");
+  });
+
+  it("nullstiller valgt saksbehandler når ansvarlig fjernes", async () => {
+    const onClose = vi.fn();
+
+    render(
+      <TildelSaksbehandlerModal
+        sakId="101"
+        saksbehandlere={[]}
+        saksbehandlerDetaljer={saksbehandlerDetaljer}
+        nåværendeSaksbehandler={saksbehandlerDetaljer[0]}
+        åpen={true}
+        onClose={onClose}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("combobox", { name: "Saksbehandler" }));
+      fireEvent.pointerUp(screen.getByRole("option", { name: "Saks Behandlersen (Z999999)" }));
+      fireEvent.click(screen.getByRole("button", { name: "Fjern saksbehandler" }));
+    });
+
+    expect(submitMock).toHaveBeenCalledWith(
+      { handling: "FRISTILL", sakId: "101" },
+      expect.objectContaining({ method: "post" }),
+    );
+    expect(document.querySelector<HTMLInputElement>('input[type="hidden"]')?.value).toBe("");
+    expect(onClose).toHaveBeenCalledOnce();
   });
 });
