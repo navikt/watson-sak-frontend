@@ -248,6 +248,7 @@ describe("grupperte kommentarhendelser", () => {
     expect(tittel("DOKUMENT_KOMMENTAR_SVAR")).toBe("Svarte på kommentarer");
     expect(tittel("DOKUMENT_KOMMENTAR_ADRESSERT")).toBe("Adresserte kommentarer");
     expect(tittel("DOKUMENT_KOMMENTAR_GJENAAPNET")).toBe("Gjenåpnet kommentarer");
+    expect(tittel("DOKUMENT_KOMMENTERT")).toBe("Kommentaraktivitet på dokument");
   });
 
   it("inneholder aldri kommentarinnhold – bare backendens visningstekst", () => {

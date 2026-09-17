@@ -29,6 +29,7 @@ type Segment = {
   start: number;
   slutt: number;
   traadIder: string[];
+  tastaturTraadId?: string;
 };
 
 type KommentarKontekst = {
@@ -73,7 +74,10 @@ export function segmenter(markeringer: Kommentarmarkering[]): Segment[] {
     const traadIder = markeringer
       .filter((markering) => markering.startOffset <= start && markering.sluttOffset >= slutt)
       .map((markering) => markering.traadId);
-    if (traadIder.length > 0) resultat.push({ start, slutt, traadIder });
+    const tastaturTraadId = markeringer.find(
+      (markering) => markering.startOffset === start && traadIder.includes(markering.traadId),
+    )?.traadId;
+    if (traadIder.length > 0) resultat.push({ start, slutt, traadIder, tastaturTraadId });
   }
   return resultat;
 }
@@ -124,6 +128,7 @@ export const KommentarMarkeringPlugin = createPlatePlugin({
           focus,
           [KOMMENTAR_MARKERING_KEY]: true,
           kommentarTraadIder: segment.traadIder,
+          kommentarTastaturTraadId: segment.tastaturTraadId,
           kommentarAktiv: !!aktivTraadId && segment.traadIder.includes(aktivTraadId),
         },
       ];
@@ -134,6 +139,7 @@ export const KommentarMarkeringPlugin = createPlatePlugin({
 type MarkeringLeaf = {
   kommentarTraadIder?: string[];
   kommentarAktiv?: boolean;
+  kommentarTastaturTraadId?: string;
 };
 
 export function KommentarMarkeringLeaf(props: PlateLeafProps) {
@@ -142,12 +148,13 @@ export function KommentarMarkeringLeaf(props: PlateLeafProps) {
   const traadIder = leaf.kommentarTraadIder ?? [];
   const erAktiv = leaf.kommentarAktiv ?? (!!aktivTraadId && traadIder.includes(aktivTraadId));
   const antall = traadIder.length;
+  const tastaturTraadId = leaf.kommentarTastaturTraadId;
   const tilgjengeligNavn =
     antall > 1
       ? `${antall} kommentarer. Åpne kommentarpanelet.`
       : "Kommentar. Åpne kommentarpanelet.";
-  const velgFørsteTraad = () => {
-    if (traadIder[0]) onVelgTraad(traadIder[0]);
+  const velgTraad = (traadId = traadIder[0]) => {
+    if (traadId) onVelgTraad(traadId);
   };
 
   return (
@@ -159,15 +166,15 @@ export function KommentarMarkeringLeaf(props: PlateLeafProps) {
         "data-kommentartraad": traadIder[0],
         "data-kommentar-aktiv": erAktiv ? "true" : "false",
         role: "button",
-        tabIndex: 0,
+        tabIndex: tastaturTraadId ? 0 : -1,
         "aria-label": tilgjengeligNavn,
         title: tilgjengeligNavn,
-        onClick: velgFørsteTraad,
+        onClick: () => velgTraad(),
         onKeyDownCapture: (event) => {
           if (event.key !== "Enter" && event.key !== " ") return;
           event.preventDefault();
           event.stopPropagation();
-          velgFørsteTraad();
+          velgTraad(tastaturTraadId);
         },
         className:
           "cursor-pointer rounded-xs text-ax-text-default " +

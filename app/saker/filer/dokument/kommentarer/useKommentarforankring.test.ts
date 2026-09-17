@@ -103,4 +103,17 @@ describe("useKommentarforankring – sitatlengde", () => {
 
     expect(result.current.startTekstutkast("tekstmarkering")).toBe(false);
   });
+
+  it("lager ikke utkast for markering over flere blokker", () => {
+    const editor = lagEditor("Andre avsnitt");
+    editor.selection = {
+      anchor: { path: [0, 0], offset: 2 },
+      focus: { path: [1, 0], offset: 5 },
+    };
+    const { result } = renderHook(() =>
+      useKommentarforankring({ editor, traader: [], kanKommentere: true }),
+    );
+
+    expect(result.current.startTekstutkast("tekstmarkering")).toBe(false);
+  });
 });

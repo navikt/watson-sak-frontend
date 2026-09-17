@@ -193,6 +193,7 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
       return "Gjenåpnet kommentarer";
     // Fanger en eventuell samlet gruppetype fra backend.
     case "DOKUMENT_KOMMENTARER":
+    case "DOKUMENT_KOMMENTERT":
       return "Kommentaraktivitet på dokument";
     default:
       return hendelse.hendelsesType;
@@ -381,6 +382,7 @@ export function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
     case "DOKUMENT_KOMMENTAR_OPPRETTET":
     case "DOKUMENT_KOMMENTAR_SVAR":
     case "DOKUMENT_KOMMENTARER":
+    case "DOKUMENT_KOMMENTERT":
       return <ChatIcon {...iconProps} />;
     case "DOKUMENT_KOMMENTAR_ADRESSERT":
       return <CheckmarkCircleIcon {...iconProps} />;

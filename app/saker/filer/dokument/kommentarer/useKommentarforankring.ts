@@ -9,6 +9,7 @@ import {
   finnNode,
   kategoriserElement,
   løsAnker,
+  sammenlignStier,
   type AnkerTreff,
 } from "./anker";
 import type { AktivtElement } from "./ElementKommentarHandling";
@@ -123,13 +124,15 @@ export function useKommentarforankring({
       const blokk = editor.api.block<TElement>({ at: start.path });
       if (!blokk) return null;
       const [, blokkSti] = blokk;
+      const sluttblokk = editor.api.block<TElement>({ at: slutt.path });
+      if (!sluttblokk || sammenlignStier(blokkSti as number[], sluttblokk[1] as number[]) !== 0) {
+        return null;
+      }
 
       const blokkStart = editor.api.start(blokkSti);
       const blokkSlutt = editor.api.end(blokkSti);
       if (!blokkStart || !blokkSlutt) return null;
 
-      // Markeringen kan strekke seg over flere blokker. Vi forankrer i startblokken
-      // og klipper markeringen til den, slik at offsetene alltid er gyldige.
       const snitt = RangeApi.intersection(
         { anchor: blokkStart, focus: blokkSlutt },
         { anchor: start, focus: slutt },

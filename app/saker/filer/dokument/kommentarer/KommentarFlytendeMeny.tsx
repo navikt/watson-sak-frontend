@@ -12,6 +12,11 @@ import { useCallback, useEffect, useState } from "react";
 
 type Posisjon = { topp: number; venstre: number };
 
+function finnBlokk(node: Node | null): HTMLElement | null {
+  const element = node instanceof HTMLElement ? node : node?.parentElement;
+  return element?.closest<HTMLElement>("[data-slate-node='element']") ?? null;
+}
+
 export function KommentarFlytendeMeny({
   beholderRef,
   aktiv,
@@ -38,6 +43,12 @@ export function KommentarFlytendeMeny({
     }
     const range = utvalg.getRangeAt(0);
     if (!beholder.contains(range.commonAncestorContainer)) {
+      settPosisjon(null);
+      return;
+    }
+    const startblokk = finnBlokk(range.startContainer);
+    const sluttblokk = finnBlokk(range.endContainer);
+    if (!startblokk || startblokk !== sluttblokk) {
       settPosisjon(null);
       return;
     }

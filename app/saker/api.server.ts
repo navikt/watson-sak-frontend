@@ -13,7 +13,6 @@ import type {
   FilResponse,
 } from "~/saker/filer/typer";
 import {
-  kontrollsakHendelseResponseSchema,
   dokumentNodeSchema,
   kontrollsakPageResponseSchema,
   kontrollsakResponseSchema,
