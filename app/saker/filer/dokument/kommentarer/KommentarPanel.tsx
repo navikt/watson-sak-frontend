@@ -26,6 +26,8 @@ export type KommentarPanelProps = {
   /** Kommentering er skilt fra redigering: lesetilgang holder, arkivert dokument ikke. */
   kanKommentere: boolean;
   arkivert: boolean;
+  innlastingFeilet?: boolean;
+  onLastPåNytt?: () => void;
   sender: boolean;
   utkast: KommentarUtkast | null;
   handlinger: KommentarHandlinger;
@@ -49,6 +51,8 @@ export function KommentarPanel({
   aktivTraadId,
   kanKommentere,
   arkivert,
+  innlastingFeilet = false,
+  onLastPåNytt,
   sender,
   utkast,
   handlinger,
@@ -65,7 +69,8 @@ export function KommentarPanel({
   const sortert = useMemo(() => sorterTraader(traader, treffPerTraad), [traader, treffPerTraad]);
   const uloste = sortert.filter((traad) => !traad.adressert);
   const loste = sortert.filter((traad) => traad.adressert);
-  const synlige = visLoste ? [...uloste, ...loste] : uloste;
+  const aktivLost = loste.find((traad) => traad.id === aktivTraadId);
+  const synlige = visLoste ? [...uloste, ...loste] : aktivLost ? [...uloste, aktivLost] : uloste;
 
   /**
    * Når en tråd velges utenfra (klikk i dokumentet eller dyplenke), skal den rulles
@@ -117,6 +122,18 @@ export function KommentarPanel({
       {arkivert && (
         <Alert variant="info" size="small" inline>
           Dokumentet er arkivert. Kommentarer kan leses, men ikke endres.
+        </Alert>
+      )}
+      {innlastingFeilet && (
+        <Alert variant="error" size="small">
+          <VStack gap="space-8">
+            <BodyShort size="small">Kunne ikke laste kommentarer.</BodyShort>
+            {onLastPåNytt && (
+              <Button type="button" size="small" variant="secondary" onClick={onLastPåNytt}>
+                Prøv igjen
+              </Button>
+            )}
+          </VStack>
         </Alert>
       )}
 
@@ -216,6 +233,8 @@ export function KommentarPanel({
             <div
               key={traad.id}
               tabIndex={-1}
+              role="group"
+              aria-labelledby={`kommentartraad-${traad.id}`}
               ref={(element) => {
                 if (element) traadRefs.current.set(traad.id, element);
                 else traadRefs.current.delete(traad.id);

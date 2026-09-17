@@ -43,6 +43,8 @@ function renderPanel({
   utkast = null as KommentarUtkast | null,
   kanKommentere = true,
   arkivert = false,
+  innlastingFeilet = false,
+  onLastPåNytt = vi.fn(),
   aktivTraadId = null as string | null,
   onVelgTraad = vi.fn(),
   onGåTilAnker = vi.fn(),
@@ -55,6 +57,8 @@ function renderPanel({
   utkast: KommentarUtkast | null;
   kanKommentere: boolean;
   arkivert: boolean;
+  innlastingFeilet: boolean;
+  onLastPåNytt: () => void;
   aktivTraadId: string | null;
   onVelgTraad: () => void;
   onGåTilAnker: () => void;
@@ -68,6 +72,8 @@ function renderPanel({
       aktivTraadId={aktivTraadId}
       kanKommentere={kanKommentere}
       arkivert={arkivert}
+      innlastingFeilet={innlastingFeilet}
+      onLastPåNytt={onLastPåNytt}
       sender={false}
       utkast={utkast}
       handlinger={handlinger}
@@ -94,6 +100,21 @@ describe("KommentarPanel", () => {
     renderPanel({ traader: [], treff: new Map() });
 
     expect(screen.getByText("Ingen kommentarer på dette dokumentet ennå.")).toBeDefined();
+  });
+
+  it("viser innlastingsfeil og lar brukeren prøve på nytt", () => {
+    const onLastPåNytt = vi.fn();
+    renderPanel({
+      traader: [],
+      treff: new Map(),
+      kanKommentere: false,
+      innlastingFeilet: true,
+      onLastPåNytt,
+    });
+
+    expect(screen.getByText("Kunne ikke laste kommentarer.")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Prøv igjen" }));
+    expect(onLastPåNytt).toHaveBeenCalledOnce();
   });
 
   it("skjuler løste tråder til man slår dem på", () => {
@@ -398,7 +419,15 @@ describe("KommentarPanel", () => {
         />,
       );
 
-      expect(document.activeElement?.querySelector("[data-kommentartraad]")).not.toBeNull();
+      expect(document.activeElement?.getAttribute("aria-labelledby")).toBe("kommentartraad-t1");
+      expect(document.activeElement?.getAttribute("role")).toBe("group");
+    });
+
+    it("viser og fokuserer en løst tråd som er valgt via dyplenke", () => {
+      renderPanel({ ...toTraader, aktivTraadId: "t2" });
+
+      expect(document.querySelector("[data-kommentartraad='t2']")).not.toBeNull();
+      expect(document.activeElement?.getAttribute("aria-labelledby")).toBe("kommentartraad-t2");
     });
 
     it("stjeler ikke fokus når man slår på «Vis løste»", () => {

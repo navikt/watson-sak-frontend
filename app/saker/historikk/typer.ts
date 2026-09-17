@@ -15,7 +15,7 @@ const kommentarAktivitetSchema = z.object({
 
 export type KommentarAktivitet = z.infer<typeof kommentarAktivitetSchema>;
 
-const sakHendelseSchema = kontrollsakHendelseResponseSchema.extend({
+export const sakHendelseSchema = kontrollsakHendelseResponseSchema.extend({
   berortSaksbehandlerNavn: z.string().optional(),
   berortSaksbehandlerNavIdent: z.string().optional(),
   berortSaksbehandlerEnhet: z.string().optional(),

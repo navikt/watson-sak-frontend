@@ -103,6 +103,34 @@ const kommentarSchema = z.object({
 
 export type Kommentar = z.infer<typeof kommentarSchema>;
 
+const ankerSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("DOCUMENT") }),
+  tekstAnkerPayloadSchema.extend({ type: z.literal("TEXT") }),
+  elementAnkerPayloadSchema.extend({ type: z.literal("ELEMENT") }),
+]);
+
+/** Frontendformatet som BFF-en returnerer etter transformasjon av backendresponsen. */
+export const kommentartraadKlientSchema = z.object({
+  id: z.string(),
+  dokumentId: z.string(),
+  ankertype: ankertypeSchema,
+  anker: ankerSchema,
+  ankerVersjon: z.number().default(ANKER_VERSJON),
+  opprinneligSitat: z.string().nullish(),
+  opprettetAvIdent: z.string().default(""),
+  opprettetAvNavn: z.string().default(""),
+  opprettet: z.string(),
+  resolved: z.string().nullish(),
+  adressert: z.boolean(),
+  resolvedAvIdent: z.string().nullish(),
+  resolvedAvNavn: z.string().nullish(),
+  versjon: z.number().default(0),
+  synlig: z.boolean().default(true),
+  kommentarer: z.array(kommentarSchema).default([]),
+});
+
+export type Kommentartraad = z.infer<typeof kommentartraadKlientSchema>;
+
 /**
  * Eksakt speiling av `KommentarTraadResponse`, transformert til frontendvennlige
  * navn: `ankertype`, den sammensatte `anker`-unionen og det avledede flagget
@@ -126,27 +154,27 @@ export const kommentartraadSchema = z
     synlig: z.boolean().default(true),
     kommentarer: z.array(kommentarSchema).default([]),
   })
-  .transform((rå) => ({
-    id: rå.id,
-    dokumentId: rå.dokumentId,
-    ankertype: rå.ankerType,
-    anker: fraBackendAnker(rå.ankerType, rå.anker),
-    ankerVersjon: rå.ankerVersjon,
-    opprinneligSitat: rå.opprinneligSitat ?? null,
-    opprettetAvIdent: rå.opprettetAvIdent,
-    opprettetAvNavn: rå.opprettetAvNavn,
-    opprettet: rå.opprettet,
-    resolved: rå.resolved ?? null,
-    /** Avledet av `resolved`: en adressert tråd er skrivebeskyttet til den gjenåpnes. */
-    adressert: (rå.resolved ?? null) !== null,
-    resolvedAvIdent: rå.resolvedAvIdent ?? null,
-    resolvedAvNavn: rå.resolvedAvNavn ?? null,
-    versjon: rå.versjon,
-    synlig: rå.synlig,
-    kommentarer: rå.kommentarer,
-  }));
-
-export type Kommentartraad = z.infer<typeof kommentartraadSchema>;
+  .transform(
+    (rå): Kommentartraad => ({
+      id: rå.id,
+      dokumentId: rå.dokumentId,
+      ankertype: rå.ankerType,
+      anker: fraBackendAnker(rå.ankerType, rå.anker),
+      ankerVersjon: rå.ankerVersjon,
+      opprinneligSitat: rå.opprinneligSitat ?? null,
+      opprettetAvIdent: rå.opprettetAvIdent,
+      opprettetAvNavn: rå.opprettetAvNavn,
+      opprettet: rå.opprettet,
+      resolved: rå.resolved ?? null,
+      /** Avledet av `resolved`: en adressert tråd er skrivebeskyttet til den gjenåpnes. */
+      adressert: (rå.resolved ?? null) !== null,
+      resolvedAvIdent: rå.resolvedAvIdent ?? null,
+      resolvedAvNavn: rå.resolvedAvNavn ?? null,
+      versjon: rå.versjon,
+      synlig: rå.synlig,
+      kommentarer: rå.kommentarer,
+    }),
+  );
 
 /** Eksakt speiling av `KommentarTraadListeResponse`. */
 export const kommentarlisteSchema = z.object({
@@ -158,6 +186,14 @@ export const kommentarlisteSchema = z.object({
 });
 
 export type Kommentarliste = z.infer<typeof kommentarlisteSchema>;
+
+/** Frontendformatet som returneres fra kommentar-BFF-en. */
+export const kommentarlisteKlientSchema = z.object({
+  dokumentId: z.string(),
+  arkivert: z.string().nullish(),
+  kanKommentere: z.boolean(),
+  traader: z.array(kommentartraadKlientSchema).default([]),
+});
 
 /** Maks lengde på `opprinneligSitat`. Speiler `@Size(max = 2000)` i backend. */
 export const MAKS_SITATLENGDE = 2000;

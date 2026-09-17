@@ -142,6 +142,13 @@ export function KommentarMarkeringLeaf(props: PlateLeafProps) {
   const traadIder = leaf.kommentarTraadIder ?? [];
   const erAktiv = leaf.kommentarAktiv ?? (!!aktivTraadId && traadIder.includes(aktivTraadId));
   const antall = traadIder.length;
+  const tilgjengeligNavn =
+    antall > 1
+      ? `${antall} kommentarer. Åpne kommentarpanelet.`
+      : "Kommentar. Åpne kommentarpanelet.";
+  const velgFørsteTraad = () => {
+    if (traadIder[0]) onVelgTraad(traadIder[0]);
+  };
 
   return (
     <PlateLeaf
@@ -151,13 +158,16 @@ export function KommentarMarkeringLeaf(props: PlateLeafProps) {
         ...props.attributes,
         "data-kommentartraad": traadIder[0],
         "data-kommentar-aktiv": erAktiv ? "true" : "false",
-        // Tittelen gir musebrukere kontekst; panelet er den tilgjengelige inngangen.
-        title:
-          antall > 1
-            ? `${antall} kommentarer. Klikk for å åpne kommentarpanelet.`
-            : "Kommentar. Klikk for å åpne kommentarpanelet.",
-        onClick: () => {
-          if (traadIder[0]) onVelgTraad(traadIder[0]);
+        role: "button",
+        tabIndex: 0,
+        "aria-label": tilgjengeligNavn,
+        title: tilgjengeligNavn,
+        onClick: velgFørsteTraad,
+        onKeyDownCapture: (event) => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          event.stopPropagation();
+          velgFørsteTraad();
         },
         className:
           "cursor-pointer rounded-xs text-ax-text-default " +

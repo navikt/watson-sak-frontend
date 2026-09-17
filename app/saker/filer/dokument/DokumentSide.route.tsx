@@ -82,6 +82,7 @@ function DokumentRedigering({
   dokumenter,
   dokumentHistorikk = [],
   kommentarliste,
+  kommentarinnlastingFeilet,
   sakReferanse,
   kanRedigere,
   variabelVerdier,
@@ -93,6 +94,7 @@ function DokumentRedigering({
   dokumenter: LoaderData["dokumenter"];
   dokumentHistorikk: LoaderData["dokumentHistorikk"];
   kommentarliste: LoaderData["kommentarliste"];
+  kommentarinnlastingFeilet: LoaderData["kommentarinnlastingFeilet"];
   sakReferanse: string;
   kanRedigere: boolean;
   variabelVerdier: LoaderData["variabelVerdier"];
@@ -320,6 +322,8 @@ function DokumentRedigering({
         docId={dokument.id}
         variabelVerdier={variabelVerdier}
         kommentarliste={kommentarliste}
+        kommentarinnlastingFeilet={kommentarinnlastingFeilet}
+        onLastKommentarerPåNytt={() => revalidator.revalidate()}
         kommentarUrl={kommentarUrl}
         startSidepanel={startSidepanel}
         startKommentartraadId={startKommentartraadId}
@@ -379,6 +383,7 @@ export default function DokumentSide() {
     dokumenter,
     dokumentHistorikk,
     kommentarliste,
+    kommentarinnlastingFeilet,
     sakReferanse,
     kanRedigere,
     variabelVerdier,
@@ -415,6 +420,7 @@ export default function DokumentSide() {
       dokumenter={dokumenter}
       dokumentHistorikk={dokumentHistorikk}
       kommentarliste={kommentarliste}
+      kommentarinnlastingFeilet={kommentarinnlastingFeilet}
       sakReferanse={sakReferanse}
       kanRedigere={kanRedigere}
       variabelVerdier={variablerTilVisning}

@@ -5,13 +5,14 @@ import { useKommentarer } from "./useKommentarer";
 
 const URL = "/api/saker/ABC-1/dokumenter/d1/kommentarer";
 
-/** Backendens råform for en tråd – det hooken faktisk får tilbake fra BFF-en. */
-function råTraad(overstyringer: Record<string, unknown> = {}) {
+/** Frontendformatet som kommentar-BFF-en returnerer til hooken. */
+function bffTraad(overstyringer: Record<string, unknown> = {}) {
   return {
     id: "11111111-1111-4111-8111-111111111111",
     dokumentId: "d1",
-    ankerType: "TEXT",
+    ankertype: "TEXT",
     anker: {
+      type: "TEXT",
       nodeId: "blokk-1",
       path: [1],
       startOffset: 18,
@@ -26,6 +27,7 @@ function råTraad(overstyringer: Record<string, unknown> = {}) {
     opprettetAvNavn: "Test Saksbehandler",
     opprettet: "2026-03-01T09:00:00Z",
     resolved: null,
+    adressert: false,
     resolvedAvIdent: null,
     resolvedAvNavn: null,
     versjon: 1,
@@ -77,7 +79,7 @@ afterEach(() => {
 
 describe("useKommentarer", () => {
   it("sender eksakt body for ny tråd, med ankerType og anker delt opp", async () => {
-    const mock = stubFetch(svar({ ok: true, traad: råTraad() }));
+    const mock = stubFetch(svar({ ok: true, traad: bffTraad() }));
     const { result } = renderHook(() => useKommentarer({ url: URL, startListe }));
 
     await act(async () => {
@@ -110,7 +112,7 @@ describe("useKommentarer", () => {
   });
 
   it("sender traadVersjon ved svar", async () => {
-    const mock = stubFetch(svar({ ok: true, traad: råTraad({ versjon: 2 }) }));
+    const mock = stubFetch(svar({ ok: true, traad: bffTraad({ versjon: 2 }) }));
     const { result } = renderHook(() => useKommentarer({ url: URL, startListe }));
 
     await act(async () => {
@@ -126,8 +128,8 @@ describe("useKommentarer", () => {
 
   it("sender kommentarens versjon ved redigering og sletting", async () => {
     const mock = stubFetch(
-      svar({ ok: true, traad: råTraad() }),
-      svar({ ok: true, traad: råTraad({ synlig: false, kommentarer: [] }) }),
+      svar({ ok: true, traad: bffTraad() }),
+      svar({ ok: true, traad: bffTraad({ synlig: false, kommentarer: [] }) }),
     );
     const { result } = renderHook(() => useKommentarer({ url: URL, startListe }));
 
@@ -148,7 +150,10 @@ describe("useKommentarer", () => {
 
   it("sender trådens versjon ved adressering", async () => {
     const mock = stubFetch(
-      svar({ ok: true, traad: råTraad({ resolved: "2026-03-02T09:00:00Z" }) }),
+      svar({
+        ok: true,
+        traad: bffTraad({ resolved: "2026-03-02T09:00:00Z", adressert: true }),
+      }),
     );
     const { result } = renderHook(() => useKommentarer({ url: URL, startListe }));
 
@@ -167,7 +172,7 @@ describe("useKommentarer", () => {
   });
 
   it("fjerner tråden fra lista når svaret sier synlig: false", async () => {
-    stubFetch(svar({ ok: true, traad: råTraad({ synlig: false, kommentarer: [] }) }));
+    stubFetch(svar({ ok: true, traad: bffTraad({ synlig: false, kommentarer: [] }) }));
     const { result } = renderHook(() => useKommentarer({ url: URL, startListe }));
 
     await act(async () => {
@@ -184,7 +189,7 @@ describe("useKommentarer", () => {
         dokumentId: "d1",
         arkivert: null,
         kanKommentere: true,
-        traader: [råTraad({ versjon: 9, kommentarer: [], synlig: true })],
+        traader: [bffTraad({ versjon: 9, kommentarer: [], synlig: true })],
       }),
     );
     const { result } = renderHook(() => useKommentarer({ url: URL, startListe }));
@@ -200,6 +205,7 @@ describe("useKommentarer", () => {
     expect(mock.mock.calls[1][1]?.method).toBeUndefined();
     await waitFor(() => {
       expect(result.current.traader[0].versjon).toBe(9);
+      expect(result.current.traader[0].anker.type).toBe("TEXT");
     });
   });
 

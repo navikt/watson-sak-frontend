@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { useState } from "react";
 import { createRoutesStub } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { DokumentInnhold } from "~/saker/filer/typer";
@@ -58,6 +59,39 @@ function renderEditor(props: Partial<Parameters<typeof DokumentEditor>[0]> = {})
   return render(<Stub initialEntries={["/saker/ABC-1"]} />);
 }
 
+function renderEditorMedDynamiskDyplenke() {
+  function Vert() {
+    const [dyplenkeAktiv, settDyplenkeAktiv] = useState(false);
+    return (
+      <>
+        <button type="button" onClick={() => settDyplenkeAktiv(true)}>
+          Simuler ny dyplenke
+        </button>
+        <DokumentEditor
+          startInnhold={innhold}
+          redigerbar
+          onEndring={() => {}}
+          sakId="ABC-1"
+          docId="d1"
+          dokumentliste={<p>Dokumentliste</p>}
+          variabelVerdier={{}}
+          kommentarliste={liste([forankretTraad])}
+          kommentarUrl="/api/saker/ABC-1/dokumenter/d1/kommentarer"
+          startSidepanel={dyplenkeAktiv ? "kommentarer" : undefined}
+          startKommentartraadId={dyplenkeAktiv ? forankretTraad.id : null}
+        />
+      </>
+    );
+  }
+  const Stub = createRoutesStub([
+    {
+      path: "/saker/:sakId",
+      Component: Vert,
+    },
+  ]);
+  return render(<Stub initialEntries={["/saker/ABC-1"]} />);
+}
+
 describe("DokumentEditor med kommentarer", () => {
   beforeEach(() => {
     vi.stubGlobal(
@@ -75,6 +109,20 @@ describe("DokumentEditor med kommentarer", () => {
 
     expect(await screen.findByRole("heading", { name: "Kommentarer" })).toBeDefined();
     expect(screen.getByText("Kan vi utdype dette?")).toBeDefined();
+  });
+
+  it("synkroniserer en ny kommentardyplenke uten å remounte editoren", async () => {
+    renderEditorMedDynamiskDyplenke();
+    expect(screen.queryByRole("heading", { name: "Kommentarer" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Simuler ny dyplenke" }));
+
+    expect(await screen.findByRole("heading", { name: "Kommentarer" })).toBeDefined();
+    await waitFor(() => {
+      expect(screen.getByRole("article", { name: "Kari Hansen" }).getAttribute("data-aktiv")).toBe(
+        "true",
+      );
+    });
   });
 
   it("viser antall uløste kommentarer som badge i panelmenyen", async () => {
@@ -162,6 +210,25 @@ describe("DokumentEditor med kommentarer", () => {
     if (!markering) throw new Error("Fant ingen kommentarmarkering");
 
     fireEvent.click(markering);
+
+    expect(await screen.findByRole("heading", { name: "Kommentarer" })).toBeDefined();
+    await waitFor(() => {
+      expect(screen.getByRole("article", { name: "Kari Hansen" }).getAttribute("data-aktiv")).toBe(
+        "true",
+      );
+    });
+  });
+
+  it("lar tastaturbrukere åpne tråden fra en tekstmarkering", async () => {
+    renderEditor();
+
+    const markering = await waitFor(() => {
+      const element = screen.getByRole("button", { name: "Kommentar. Åpne kommentarpanelet." });
+      expect(element.getAttribute("tabindex")).toBe("0");
+      return element;
+    });
+
+    fireEvent.keyDown(markering, { key: "Enter" });
 
     expect(await screen.findByRole("heading", { name: "Kommentarer" })).toBeDefined();
     await waitFor(() => {

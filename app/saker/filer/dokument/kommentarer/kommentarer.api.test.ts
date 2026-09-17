@@ -6,7 +6,7 @@ import { arkiverDokument, opprettDokument } from "~/testing/mock-store/dokumente
 import { hentKommentarliste } from "~/testing/mock-store/kommentarer.server";
 import { hentMockState, resetDefaultSession } from "~/testing/mock-store/session.server";
 import { action, loader } from "./kommentarer.api";
-import { kommentarlisteSchema, type Kommentarliste, type Kommentartraad } from "./typer";
+import { kommentarlisteKlientSchema, type Kommentarliste, type Kommentartraad } from "./typer";
 
 vi.mock("~/config/env.server", () => ({
   skalBrukeMockdata: true,
@@ -101,8 +101,7 @@ describe("kommentarer.api loader", () => {
     } as never)) as Response;
 
     expect(respons.status).toBe(200);
-    // Svaret må kunne leses av det samme skjemaet som brukes mot ekte backend.
-    const kropp = kommentarlisteSchema.parse(await respons.json());
+    const kropp = kommentarlisteKlientSchema.parse(await respons.json());
     expect(kropp.dokumentId).toBe(docId);
     expect(kropp.arkivert).toBeNull();
     expect(kropp.kanKommentere).toBe(true);
@@ -120,7 +119,7 @@ describe("kommentarer.api loader", () => {
       params: { sakId: ref, docId },
     } as never)) as Response;
 
-    const kropp = kommentarlisteSchema.parse(await respons.json());
+    const kropp = kommentarlisteKlientSchema.parse(await respons.json());
     expect(kropp.kanKommentere).toBe(false);
     expect(kropp.arkivert).not.toBeNull();
   });

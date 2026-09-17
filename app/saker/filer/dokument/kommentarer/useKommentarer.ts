@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  kommentarlisteSchema,
-  kommentartraadSchema,
+  kommentarlisteKlientSchema,
+  kommentartraadKlientSchema,
   tilBackendAnker,
   type Anker,
   type Kommentar,
@@ -51,7 +51,7 @@ const KONFLIKT_FEIL =
   "Kommentaren er endret av noen andre. Se den oppdaterte teksten før du lagrer.";
 
 function lesTraad(verdi: unknown): Kommentartraad | null {
-  const resultat = kommentartraadSchema.safeParse(verdi);
+  const resultat = kommentartraadKlientSchema.safeParse(verdi);
   return resultat.success ? resultat.data : null;
 }
 
@@ -76,7 +76,7 @@ export function useKommentarer({ url, startListe }: { url: string; startListe: K
     try {
       const respons = await fetch(url, { headers: { Accept: "application/json" } });
       if (!respons.ok) return;
-      const parset = kommentarlisteSchema.safeParse(await respons.json());
+      const parset = kommentarlisteKlientSchema.safeParse(await respons.json());
       if (!parset.success) return;
       settTraader(parset.data.traader);
       settKanKommentere(parset.data.kanKommentere);

@@ -617,6 +617,9 @@ type DokumentEditorProps = {
    * saker. Arkiverte dokumenter kan derimot ikke muteres.
    */
   kommentarliste?: Kommentarliste;
+  /** Om første innlasting av kommentarer feilet mens dokumentet fortsatt kunne vises. */
+  kommentarinnlastingFeilet?: boolean;
+  onLastKommentarerPåNytt?: () => void;
   /** URL til kommentar-BFF-en for dette dokumentet. */
   kommentarUrl?: string;
   /** Sidepanelet som skal være åpent ved første render (f.eks. fra query-parameter). */
@@ -655,6 +658,8 @@ export function DokumentEditor({
   historikkInnhold,
   variabelVerdier,
   kommentarliste = TOM_KOMMENTARLISTE,
+  kommentarinnlastingFeilet = false,
+  onLastKommentarerPåNytt,
   kommentarUrl = "",
   startSidepanel,
   startKommentartraadId = null,
@@ -711,12 +716,22 @@ export function DokumentEditor({
     [],
   );
 
-  // Dyplenke (?sidepanel=kommentarer&kommentartraad=…) velger tråden ved oppstart.
-  const harValgtStarttraad = useRef(false);
   useEffect(() => {
-    if (harValgtStarttraad.current || !startKommentartraadId) return;
+    if (startSidepanel) settAktivtSidepanel(startSidepanel);
+  }, [startSidepanel]);
+
+  // Synkroniser dyplenker også når søkeparametrene endres på en allerede montert
+  // dokumentrute. Editoren remountes ikke, så ulagrede dokumentendringer beholdes.
+  const sistValgteDyplenke = useRef<string | null>(null);
+  useEffect(() => {
+    if (!startKommentartraadId) {
+      sistValgteDyplenke.current = null;
+      return;
+    }
+    if (sistValgteDyplenke.current === startKommentartraadId) return;
     if (!kommentarer.traader.some((traad) => traad.id === startKommentartraadId)) return;
-    harValgtStarttraad.current = true;
+    sistValgteDyplenke.current = startKommentartraadId;
+    settAktivtSidepanel("kommentarer");
     forankring.velgTraad(startKommentartraadId);
     kommentarAnalytics.ankernavigasjon("DOCUMENT", "til_traad");
   }, [forankring, kommentarer.traader, startKommentartraadId]);
@@ -1155,6 +1170,8 @@ export function DokumentEditor({
                     aktivTraadId={forankring.aktivTraadId}
                     kanKommentere={kanKommentere}
                     arkivert={arkivert}
+                    innlastingFeilet={kommentarinnlastingFeilet}
+                    onLastPåNytt={onLastKommentarerPåNytt}
                     sender={kommentarer.sender}
                     utkast={forankring.utkast}
                     handlinger={kommentarer}

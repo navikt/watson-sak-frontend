@@ -46,7 +46,7 @@ test.describe("Dokumentkommentarer", () => {
 
   test("kan legge til en generell kommentar", async ({ page }) => {
     await page.getByRole("button", { name: "Ny kommentar" }).click();
-    await page.getByLabel("Kommentar").fill("Ny kommentar fra e2e-testen");
+    await page.getByLabel("Kommentar", { exact: true }).fill("Ny kommentar fra e2e-testen");
     await page.getByRole("button", { name: "Legg til kommentar" }).click();
 
     await expect(page.getByText("Ny kommentar fra e2e-testen")).toBeVisible();

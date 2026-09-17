@@ -49,19 +49,19 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     // Kommentarene hentes parallelt med dokument og historikk, slik at panelet er
     // fylt allerede ved første render. Feiler kommentarkallet, vil vi fortsatt vise
     // dokumentet – kommentarer skal ikke kunne blokkere saksbehandlingen.
-    const [sak, dokument, innlogget, dokumentHistorikk, kommentarliste] = await Promise.all([
+    const [sak, dokument, innlogget, dokumentHistorikk, kommentarresultat] = await Promise.all([
       backendApi.hentKontrollsak(token, sakReferanse),
       backendApi.hentDokument(token, sakReferanse, docId),
       hentInnloggetBruker({ request }),
       backendApi.hentDokumentHistorikk(token, sakReferanse, docId),
-      hentKommentarlisteFraBackend(token, sakReferanse, docId).catch(
-        (feil: unknown): Kommentarliste | null => {
+      hentKommentarlisteFraBackend(token, sakReferanse, docId)
+        .then((liste) => ({ liste, feilet: false }))
+        .catch((feil: unknown): { liste: Kommentarliste | null; feilet: true } => {
           logger.warn(`Kunne ikke hente kommentarer for dokument ${docId}`, {
             feil: String(feil),
           });
-          return null;
-        },
-      ),
+          return { liste: null, feilet: true };
+        }),
     ]);
 
     const kanSe =
@@ -79,15 +79,16 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       dokumenter: sak.dokumenter ?? [],
       dokumentHistorikk: dokumentHistorikk.items,
       // Kommenterbarhet er backendens fasit (`kanKommentere` i GET-wrapperen).
-      // Falt kallet ut, viser vi et tomt, skrivebeskyttet panel fremfor å gjette.
+      // Falt kallet ut, viser vi et skrivebeskyttet panel med tydelig retry.
       kommentarliste:
-        kommentarliste ??
+        kommentarresultat.liste ??
         ({
           dokumentId: docId,
           arkivert: dokument.arkivert ?? null,
           kanKommentere: false,
           traader: [],
         } satisfies Kommentarliste),
+      kommentarinnlastingFeilet: kommentarresultat.feilet,
       sakReferanse,
       kanRedigere:
         kanSe &&
@@ -122,6 +123,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       innloggetIdent: innlogget.navIdent,
       arkivert: dokument.arkivert ?? null,
     }),
+    kommentarinnlastingFeilet: false,
     sakReferanse: params.sakId,
     kanRedigere: tilgang.kanRedigereDokumenter && !dokument.arkivert,
     variabelVerdier: byggVariabelVerdier(tilgang.sak, innlogget),
