@@ -42,7 +42,8 @@ test.describe("Oppretting og tildeling av sak", () => {
 
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
-    await dialog.getByLabel("Saksbehandler").selectOption("Z999999");
+    await dialog.getByLabel("Saksbehandler").fill("Saks Behandlersen");
+    await dialog.getByRole("option", { name: "Saks Behandlersen (Z999999)" }).click();
 
     const tildelKnapp = dialog.getByRole("button", { name: "Tildel" });
     await expect(tildelKnapp).toBeEnabled();
