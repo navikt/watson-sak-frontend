@@ -1072,7 +1072,15 @@ export function DokumentEditor({
                 }
                 onFocusCapture={
                   kanKommentere
-                    ? (event) => forankring.oppdaterAktivtElementFraDom(event.target)
+                    ? (event) => {
+                        if (
+                          event.target instanceof Element &&
+                          event.target.closest("[data-element-kommentar-handling]")
+                        ) {
+                          return;
+                        }
+                        forankring.oppdaterAktivtElementFraDom(event.target);
+                      }
                     : undefined
                 }
               >

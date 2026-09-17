@@ -58,10 +58,10 @@ export function ElementKommentarHandling({
 
   return (
     <div
+      data-element-kommentar-handling
       className="absolute z-10 flex pr-[var(--ax-space-4)]"
       style={{ top: posisjon.topp, left: posisjon.venstre }}
       onMouseOver={(event) => event.stopPropagation()}
-      onFocus={(event) => event.stopPropagation()}
     >
       <Button
         type="button"

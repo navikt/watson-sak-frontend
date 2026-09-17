@@ -191,6 +191,20 @@ describe("DokumentEditor med kommentarer", () => {
     expect(screen.getByRole("button", { name: "Kommenter avsnitt" })).toBeDefined();
   });
 
+  it("beholder elementknappen når den får tastaturfokus og kan aktivere den", async () => {
+    renderEditor();
+
+    const avsnitt = await screen.findByText(/Brødtekst med et/);
+    fireEvent.focus(avsnitt);
+
+    const knapp = await screen.findByRole("button", { name: "Kommenter avsnitt" });
+    fireEvent.focus(knapp);
+
+    expect(screen.getByRole("button", { name: "Kommenter avsnitt" })).toBeDefined();
+    fireEvent.click(knapp);
+    expect(await screen.findByText("Ny kommentar på avsnitt")).toBeDefined();
+  });
+
   it("markerer ikke løste tråder i dokumentet", async () => {
     renderEditor({ kommentarliste: liste([løstTraad]) });
 
