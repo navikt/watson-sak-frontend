@@ -1,4 +1,5 @@
 import type { FilResponse } from "~/saker/filer/typer";
+import { medNyttFilnavn } from "~/saker/filer/filnavn-utils";
 import type { MockState } from "./session.server";
 import { hentLagretFilInnhold, lagreFilInnhold, slettFilInnhold } from "./fil-innhold.server";
 
@@ -31,7 +32,7 @@ const filSeeds: { sakId: string; filer: FilResponse[] }[] = [
 function initialiserFilerForSak(state: MockState, sakId: string): FilResponse[] {
   if (!state.filer.has(sakId)) {
     const seed = filSeeds.find((s) => s.sakId === sakId);
-    state.filer.set(sakId, seed ? [...seed.filer] : []);
+    state.filer.set(sakId, seed ? structuredClone(seed.filer) : []);
   }
   return state.filer.get(sakId) ?? [];
 }
@@ -76,13 +77,18 @@ export function arkiverFil(
   journalpostId: string,
 ): FilResponse | null {
   const liste = initialiserFilerForSak(state, sakId);
-  const fil = liste.find((f) => f.id === filId);
+  const indeks = liste.findIndex((fil) => fil.id === filId);
+  const fil = liste[indeks];
   if (!fil || fil.arkivert) return null;
 
-  fil.arkivert = new Date().toISOString();
-  fil.arkivertAv = arkivertAv;
-  fil.arkivertJournalpostId = journalpostId;
-  return fil;
+  const arkivertFil = {
+    ...fil,
+    arkivert: new Date().toISOString(),
+    arkivertAv,
+    arkivertJournalpostId: journalpostId,
+  };
+  liste[indeks] = arkivertFil;
+  return arkivertFil;
 }
 
 /**
@@ -171,4 +177,19 @@ export function slettFil(state: MockState, sakId: string, filId: string): FilRes
   const [slettetFil] = liste.splice(indeks, 1);
   slettFilInnhold(filId);
   return slettetFil;
+}
+
+export function omdøpFil(
+  state: MockState,
+  sakId: string,
+  filId: string,
+  nyttNavn: string,
+): FilResponse | null {
+  const liste = initialiserFilerForSak(state, sakId);
+  const indeks = liste.findIndex((kandidat) => kandidat.id === filId);
+  const fil = liste[indeks];
+  if (!fil || fil.arkivert) return null;
+  const omdøptFil = { ...fil, filnavn: medNyttFilnavn(fil.filnavn, nyttNavn) };
+  liste[indeks] = omdøptFil;
+  return omdøptFil;
 }

@@ -173,6 +173,8 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
       return "Fil lastet opp";
     case "FIL_SLETTET":
       return "Fil slettet";
+    case "FIL_OMDØPT":
+      return "Filnavn endret";
     case "FIL_ÅPNET":
       return "Fil åpnet";
     case "FIL_ARKIVERT":
@@ -281,6 +283,7 @@ export function hendelseBeskrivelse(
   if (
     hendelse.hendelsesType === "FIL_LASTET_OPP" ||
     hendelse.hendelsesType === "FIL_SLETTET" ||
+    hendelse.hendelsesType === "FIL_OMDØPT" ||
     hendelse.hendelsesType === "FIL_ÅPNET" ||
     hendelse.hendelsesType === "FIL_ARKIVERT"
   ) {
@@ -337,6 +340,8 @@ export function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
       return <FilesIcon {...iconProps} />;
     case "FIL_SLETTET":
       return <TrashIcon {...iconProps} />;
+    case "FIL_OMDØPT":
+      return <PencilIcon {...iconProps} />;
     case "FIL_ÅPNET":
       return <DownloadIcon {...iconProps} />;
     case "FIL_ARKIVERT":

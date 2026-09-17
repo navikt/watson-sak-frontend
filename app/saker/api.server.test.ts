@@ -68,6 +68,43 @@ describe("søkKontrollsaker", () => {
     vi.unstubAllGlobals();
   });
 
+  describe("omdøpFil", () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+      vi.unstubAllGlobals();
+    });
+
+    it("sender bare ny navnedel med PATCH", async () => {
+      const omdøptFil = {
+        id: "fil-1",
+        filnavn: "nytt navn.pdf",
+        storrelse: 100,
+        contentType: "application/pdf",
+        opprettetAv: "Z999999",
+        opprettet: "2026-09-16T12:00:00Z",
+        bruktIDokumenter: [],
+      };
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => omdøptFil,
+      });
+      vi.stubGlobal("fetch", fetchMock);
+
+      const { omdøpFil } = await import("./api.server");
+      const resultat = await omdøpFil("token", "42", "fil-1", "nytt navn");
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://backend.test/api/v1/kontrollsaker/42/filer/fil-1",
+        expect.objectContaining({
+          method: "PATCH",
+          body: JSON.stringify({ navn: "nytt navn" }),
+        }),
+      );
+      expect(resultat.filnavn).toBe("nytt navn.pdf");
+    });
+  });
+
   it("søker mot riktig URL med page/size og personIdent i body", async () => {
     const tomSide = { items: [], page: 2, size: 20, totalItems: 0, totalPages: 1 };
     const fetchMock = vi.fn().mockResolvedValue({

@@ -54,6 +54,7 @@ type Hendelse =
   | "vedlegg lastet opp"
   | "vedlegg åpnet"
   | "vedlegg lastet ned"
+  | "vedlegg omdøpt"
   | "vedlegg slettet"
   | "dokument opprettet"
   | "dokument formatert"

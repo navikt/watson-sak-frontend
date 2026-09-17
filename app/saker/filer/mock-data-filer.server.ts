@@ -6,6 +6,7 @@ import {
   hentFilInnhold as _hentFilInnhold,
   leggTilFil as _leggTilFil,
   opprettArkivertFilFraDokument as _opprettArkivertFilFraDokument,
+  omdøpFil as _omdøpFil,
   slettFil as _slettFil,
 } from "~/testing/mock-store/filer.server";
 
@@ -28,6 +29,15 @@ export function leggTilFil(
 
 export function slettFil(request: Request, sakId: string, filId: string): FilResponse | null {
   return _slettFil(hentMockState(request), sakId, filId);
+}
+
+export function omdøpFil(
+  request: Request,
+  sakId: string,
+  filId: string,
+  nyttNavn: string,
+): FilResponse | null {
+  return _omdøpFil(hentMockState(request), sakId, filId, nyttNavn);
 }
 
 export function arkiverFil(
