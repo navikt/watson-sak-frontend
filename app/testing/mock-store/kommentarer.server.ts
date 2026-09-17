@@ -67,8 +67,8 @@ function seedKommentarer(sakId: string, docId: string): LagretTraad[] {
   const tekstAnker: Anker = {
     type: "TEXT",
     path: [0],
-    startOffset: 11,
-    sluttOffset: 27,
+    startOffset: 12,
+    sluttOffset: 28,
     exact: "eksempeldokument",
     prefix: "Dette er et ",
     suffix: " som beskriver",

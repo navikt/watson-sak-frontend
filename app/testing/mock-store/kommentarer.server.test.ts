@@ -68,6 +68,14 @@ describe("mock-store for kommentarer", () => {
     // Rotkommentaren er markert, og teksten ligger i `tekst` – ikke `innhold`.
     expect(traader[0].kommentarer[0].erRot).toBe(true);
     expect(traader[0].kommentarer[0].tekst).toContain("presisere");
+    expect(traader[0].anker).toMatchObject({
+      type: "TEXT",
+      startOffset: 12,
+      sluttOffset: 28,
+      exact: "eksempeldokument",
+      prefix: "Dette er et ",
+      suffix: " som beskriver",
+    });
   });
 
   it("setter erEgen ut fra innlogget ident", () => {
