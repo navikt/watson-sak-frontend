@@ -10,7 +10,7 @@ export const filnavnSchema = z
 
 export function splittFilnavn(filnavn: string): { navn: string; endelse: string } {
   const sistePunktum = filnavn.lastIndexOf(".");
-  return sistePunktum > 0
+  return sistePunktum > 0 && sistePunktum < filnavn.length - 1
     ? { navn: filnavn.slice(0, sistePunktum), endelse: filnavn.slice(sistePunktum) }
     : { navn: filnavn, endelse: "" };
 }

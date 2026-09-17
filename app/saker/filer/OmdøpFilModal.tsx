@@ -63,7 +63,12 @@ export function OmdøpFilModal({ filId, filnavn, sakId, åpen, onClose }: Omdøp
     <Modal
       open={åpen}
       onClose={onClose}
-      header={{ heading: "Endre navn på vedlegg", icon: <PencilIcon aria-hidden /> }}
+      onBeforeClose={() => !lagrer}
+      header={{
+        heading: "Endre navn på vedlegg",
+        icon: <PencilIcon aria-hidden />,
+        closeButton: !lagrer,
+      }}
       width="small"
     >
       <form onSubmit={lagre}>

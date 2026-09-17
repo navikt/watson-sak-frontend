@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { FilResponse } from "./typer";
 import { VedleggSeksjon } from "./VedleggSeksjon";
 
@@ -25,11 +25,20 @@ const mockFiler: FilResponse[] = [
   },
 ];
 
+const mockFilAction = vi.fn(async ({ request }: { request: Request }) => ({
+  ok: true,
+  body: await request.json(),
+}));
+
 async function renderSeksjon(props: Parameters<typeof VedleggSeksjon>[0]) {
   const Stub = createRoutesStub([
     {
       path: "/saker/:sakId",
       Component: () => <VedleggSeksjon {...props} />,
+    },
+    {
+      path: "/api/saker/:sakId/filer/:filId",
+      action: mockFilAction,
     },
   ]);
   const resultat = render(<Stub initialEntries={["/saker/SAK-1"]} />);
@@ -38,6 +47,10 @@ async function renderSeksjon(props: Parameters<typeof VedleggSeksjon>[0]) {
 }
 
 describe("VedleggSeksjon", () => {
+  beforeEach(() => {
+    mockFilAction.mockClear();
+  });
+
   it("viser caption 'Opplastede filer'", async () => {
     await renderSeksjon({ filer: [], sakId: "SAK-1", erSakseier: false });
     expect(screen.getByRole("heading", { name: "Opplastede filer" })).toBeDefined();
@@ -115,6 +128,26 @@ describe("VedleggSeksjon", () => {
     fireEvent.click(screen.getByRole("button", { name: "Lagre navn" }));
 
     expect(screen.getByText("Filnavnet inneholder ugyldige tegn")).toBeDefined();
+  });
+
+  it("sender gyldig navnedel som JSON og lukker modalen ved suksess", async () => {
+    await renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: true });
+    fireEvent.click(screen.getByLabelText("Endre navn på anmeldelse.pdf"));
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { name: "Endre navn på vedlegg" })).toBeDefined();
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "Filnavn" }), {
+      target: { value: "ny anmeldelse" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Lagre navn" }));
+
+    await waitFor(() => {
+      expect(mockFilAction).toHaveBeenCalledOnce();
+      expect(screen.queryByRole("dialog", { name: "Endre navn på vedlegg" })).toBeNull();
+    });
+    const request = mockFilAction.mock.calls[0]?.[0].request;
+    expect(request.method).toBe("PATCH");
   });
 
   it("viser lastespinner når en opplasting pågår", async () => {

@@ -68,7 +68,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
       } catch (feil) {
         if (
           feil instanceof backendApi.BackendFeilException &&
-          (feil.status === 400 || feil.status === 409)
+          (feil.status === 400 || feil.status === 404 || feil.status === 409)
         ) {
           return data({ ok: false as const, melding: feil.message }, { status: feil.status });
         }
@@ -106,7 +106,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
   if (request.method === "PATCH" && nyttNavn !== undefined) {
     const omdøpt = omdøpFilMock(request, String(tilgang.sak.id), filId, nyttNavn);
     if (!omdøpt) {
-      throw data("Fil ikke funnet eller arkivert", { status: 404 });
+      return data(
+        { ok: false as const, melding: "Filen finnes ikke lenger eller er arkivert" },
+        { status: 404 },
+      );
     }
     leggTilHendelse(request, tilgang.sak, "FIL_OMDØPT");
     return { ok: true as const, fil: omdøpt };

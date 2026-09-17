@@ -149,4 +149,23 @@ describe("mock-store filer", () => {
 
     expect(omdøpt?.filnavn).toBe("nytt navn.pdf");
   });
+
+  it("endrer ikke seed-data som brukes av en ny mock-sesjon", () => {
+    const seedetFil = required(hentFilerForSak(state(), sakId)[0]);
+    const opprinneligNavn = seedetFil.filnavn;
+    omdøpFil(state(), sakId, seedetFil.id, "nytt navn");
+
+    resetDefaultSession();
+
+    expect(required(hentFilerForSak(state(), sakId)[0]).filnavn).toBe(opprinneligNavn);
+  });
+
+  it("arkiverer ikke seed-data som brukes av en ny mock-sesjon", () => {
+    const seedetFil = required(hentFilerForSak(state(), sakId)[0]);
+    arkiverFil(state(), sakId, seedetFil.id, "Z999999", "demo-1");
+
+    resetDefaultSession();
+
+    expect(required(hentFilerForSak(state(), sakId)[0]).arkivert).toBeUndefined();
+  });
 });

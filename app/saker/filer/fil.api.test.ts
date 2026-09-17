@@ -98,6 +98,30 @@ describe("fil.api PATCH", () => {
 
     expect(respons).toMatchObject({ init: { status: 400 } });
   });
+
+  it("returnerer en håndterbar 404 når filen er arkivert", async () => {
+    const { sak, ref } = settOppAktivSak();
+    const filId = await lastOppFil(ref, "bevis.pdf");
+    const fil = state()
+      .filer.get(String(sak.id))
+      ?.find((kandidat) => kandidat.id === filId);
+    if (!fil) throw new Error("Testfil mangler");
+    fil.arkivert = new Date().toISOString();
+
+    const respons = await action({
+      request: new Request("http://localhost", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ navn: "nytt navn" }),
+      }),
+      params: { sakId: ref, filId },
+    } as Route.ActionArgs);
+
+    expect(respons).toMatchObject({
+      data: { ok: false, melding: "Filen finnes ikke lenger eller er arkivert" },
+      init: { status: 404 },
+    });
+  });
 });
 
 describe("fil.api DELETE", () => {

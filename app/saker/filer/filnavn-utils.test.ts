@@ -10,6 +10,7 @@ describe("filnavn-utils", () => {
   it("behandler filer uten endelse og skjulte filer som navn uten endelse", () => {
     expect(splittFilnavn("README")).toEqual({ navn: "README", endelse: "" });
     expect(splittFilnavn(".gitignore")).toEqual({ navn: ".gitignore", endelse: "" });
+    expect(splittFilnavn("rapport.")).toEqual({ navn: "rapport.", endelse: "" });
   });
 
   it("bevarer endelsen når navnet endres", () => {

@@ -129,7 +129,11 @@ export function VedleggSeksjon({
     <div>
       <FilerSeksjonCaption
         tittel="Opplastede filer"
-        undertekst="Lastet opp utenfra – filnavnet kan endres"
+        undertekst={
+          erSakseier
+            ? "Lastet opp utenfra – filnavnet kan endres"
+            : "Lastet opp utenfra – bare sakseier kan endre filnavnet"
+        }
       />
 
       {feilFraServer && (
