@@ -129,6 +129,19 @@ describe("løsAnker for tekst", () => {
     });
   });
 
+  it("bruker kontekst selv når gammel offset peker på en ny identisk tekst", () => {
+    const original: DokumentInnhold = [avsnitt("før original etter", "a")];
+    const anker = byggTekstAnker(original, [0], 4, 12) as TekstAnker;
+    const endretTekst = "før original ekstra før original etter";
+    const endret: DokumentInnhold = [avsnitt(endretTekst, "a")];
+
+    expect(løsAnker(endret, anker)).toMatchObject({
+      type: "TEXT",
+      path: [0],
+      startOffset: endretTekst.lastIndexOf("original"),
+    });
+  });
+
   it("gir frakoblet tråd når sitatet er slettet", () => {
     const anker = byggTekstAnker(enkeltDokument, [0], 26, 31) as TekstAnker;
     const slettet: DokumentInnhold = [avsnitt("Helt annen tekst uten treff.")];

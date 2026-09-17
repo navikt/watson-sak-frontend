@@ -1,4 +1,4 @@
-import { data } from "react-router";
+import { data, isRouteErrorResponse } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { env, skalBrukeMockdata } from "~/config/env.server";
@@ -37,6 +37,14 @@ function byggVariabelVerdier(
   };
 }
 
+function erUtloggetFeil(feil: unknown): boolean {
+  if (isRouteErrorResponse(feil)) return feil.status === 401;
+  if (feil instanceof Response) return feil.status === 401;
+  if (!feil || typeof feil !== "object" || !("init" in feil)) return false;
+  const init = feil.init;
+  return !!init && typeof init === "object" && "status" in init && init.status === 401;
+}
+
 export async function loader({ request, params }: Route.LoaderArgs) {
   if (!skalBrukeMockdata) {
     const sakReferanse = params.sakId;
@@ -57,6 +65,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       hentKommentarlisteFraBackend(token, sakReferanse, docId)
         .then((liste) => ({ liste, feilet: false }))
         .catch((feil: unknown): { liste: Kommentarliste | null; feilet: true } => {
+          if (erUtloggetFeil(feil)) throw feil;
           logger.warn(`Kunne ikke hente kommentarer for dokument ${docId}`, {
             feil: String(feil),
           });

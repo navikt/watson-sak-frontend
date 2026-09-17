@@ -231,15 +231,6 @@ function velgEntydig<T>(kandidater: T[], poeng: (kandidat: T) => number): T | nu
 
 function finnIBlokk(node: Node, path: number[], anker: TekstAnker): TekstTreff | null {
   const tekst = blokktekst(node);
-  if (tekst.slice(anker.startOffset, anker.sluttOffset) === anker.exact) {
-    return {
-      type: "TEXT",
-      path,
-      startOffset: anker.startOffset,
-      sluttOffset: anker.startOffset + anker.exact.length,
-    };
-  }
-
   const forekomster = alleForekomster(tekst, anker.exact);
   const valgt = velgEntydig(forekomster, (indeks) => kontekstpoeng(tekst, indeks, anker));
   if (valgt === null) return null;
