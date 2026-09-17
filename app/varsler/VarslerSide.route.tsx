@@ -7,6 +7,7 @@ import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import type { Varsel } from "./typer";
+import { varselDestinasjon } from "./typer";
 import type { loader } from "./VarslerSide.loader.server";
 
 export { action } from "./VarslerSide.action.server";
@@ -96,9 +97,11 @@ export default function VarslerSide() {
                         size="small"
                         data-color="accent"
                         onClick={() => {
+                          const sakReferanse = getSaksreferanse(varsel.sakId);
+                          const destinasjon = varselDestinasjon(varsel, sakReferanse);
                           sporHendelse("navigere", {
                             kilde: "varsler-side",
-                            destinasjon: `/saker/${getSaksreferanse(varsel.sakId)}`,
+                            destinasjon: varsel.dokumentId ? "dokument-kommentarer" : "sak",
                           });
                           if (!varsel.erLest) {
                             // Fire-and-forget med keepalive slik at requesten overlever navigasjon
@@ -110,16 +113,12 @@ export default function VarslerSide() {
                               keepalive: true,
                             });
                           }
-                          navigate(
-                            RouteConfig.SAKER_DETALJ.replace(
-                              ":sakId",
-                              getSaksreferanse(varsel.sakId),
-                            ),
-                            { state: { tilbake: { to: RouteConfig.VARSLER, label: "Varsler" } } },
-                          );
+                          navigate(destinasjon, {
+                            state: { tilbake: { to: RouteConfig.VARSLER, label: "Varsler" } },
+                          });
                         }}
                       >
-                        Gå til sak
+                        {varsel.dokumentId ? "Åpne kommentaren" : "Gå til sak"}
                       </Button>
                     </HStack>
                   </VStack>

@@ -14,6 +14,10 @@ import {
 } from "../mock-data.server";
 import { hentStatusbaserteSaksregler } from "../../statusregler";
 import { getSaksenhet } from "~/saker/selectors";
+import { hentKommentarliste as hentKommentarlisteFraBackend } from "./kommentarer/kommentarer.api.server";
+import { hentKommentarliste as hentKommentarlisteFraMock } from "./kommentarer/mock-data.server";
+import { logger } from "~/logging/logging";
+import type { Kommentarliste } from "./kommentarer/typer";
 import type { Route } from "./+types/DokumentSide.route";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import type { VariabelVerdier } from "./variabler/variabel-typer";
@@ -42,11 +46,22 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     }
 
     const token = await getBackendOboToken(request);
-    const [sak, dokument, innlogget, dokumentHistorikk] = await Promise.all([
+    // Kommentarene hentes parallelt med dokument og historikk, slik at panelet er
+    // fylt allerede ved første render. Feiler kommentarkallet, vil vi fortsatt vise
+    // dokumentet – kommentarer skal ikke kunne blokkere saksbehandlingen.
+    const [sak, dokument, innlogget, dokumentHistorikk, kommentarliste] = await Promise.all([
       backendApi.hentKontrollsak(token, sakReferanse),
       backendApi.hentDokument(token, sakReferanse, docId),
       hentInnloggetBruker({ request }),
       backendApi.hentDokumentHistorikk(token, sakReferanse, docId),
+      hentKommentarlisteFraBackend(token, sakReferanse, docId).catch(
+        (feil: unknown): Kommentarliste | null => {
+          logger.warn(`Kunne ikke hente kommentarer for dokument ${docId}`, {
+            feil: String(feil),
+          });
+          return null;
+        },
+      ),
     ]);
 
     const kanSe =
@@ -63,6 +78,16 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       dokument,
       dokumenter: sak.dokumenter ?? [],
       dokumentHistorikk: dokumentHistorikk.items,
+      // Kommenterbarhet er backendens fasit (`kanKommentere` i GET-wrapperen).
+      // Falt kallet ut, viser vi et tomt, skrivebeskyttet panel fremfor å gjette.
+      kommentarliste:
+        kommentarliste ??
+        ({
+          dokumentId: docId,
+          arkivert: dokument.arkivert ?? null,
+          kanKommentere: false,
+          traader: [],
+        } satisfies Kommentarliste),
       sakReferanse,
       kanRedigere:
         kanSe &&
@@ -93,6 +118,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     dokument,
     dokumenter: hentDokumenttreForSak(request, String(tilgang.sak.id)),
     dokumentHistorikk: hentDokumentHistorikk(request, String(tilgang.sak.id), params.docId),
+    kommentarliste: hentKommentarlisteFraMock(request, String(tilgang.sak.id), params.docId, {
+      innloggetIdent: innlogget.navIdent,
+      arkivert: dokument.arkivert ?? null,
+    }),
     sakReferanse: params.sakId,
     kanRedigere: tilgang.kanRedigereDokumenter && !dokument.arkivert,
     variabelVerdier: byggVariabelVerdier(tilgang.sak, innlogget),

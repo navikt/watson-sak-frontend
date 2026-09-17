@@ -55,12 +55,26 @@ import {
   usePlateEditor,
 } from "platejs/react";
 import type { TElement } from "platejs";
+import { NodeIdPlugin } from "platejs";
 import type { PlateElementProps } from "platejs/react";
 import { sporHendelse } from "~/analytics/analytics";
 import { Kort } from "~/komponenter/Kort";
 import type { DokumentInnhold, FilResponse } from "~/saker/filer/typer";
 import { BildeElement } from "./BildeElement";
 import { SettInnBildeModal } from "./SettInnBildeModal";
+import { ElementKommentarHandling } from "./kommentarer/ElementKommentarHandling";
+import { KommentarFlytendeMeny } from "./kommentarer/KommentarFlytendeMeny";
+import {
+  KommentarMarkeringLeaf,
+  KommentarMarkeringPlugin,
+  KommentarMarkeringProvider,
+} from "./kommentarer/KommentarMarkering";
+import { KommentarPanel } from "./kommentarer/KommentarPanel";
+import { kommentarAnalytics } from "./kommentarer/kommentarer.analytics";
+import { antallUloste } from "./kommentarer/sortering";
+import type { Kommentarliste } from "./kommentarer/typer";
+import { useKommentarer } from "./kommentarer/useKommentarer";
+import { useKommentarforankring } from "./kommentarer/useKommentarforankring";
 import {
   BildeOpplastingFeil,
   BILDE_FLYTT_MIMETYPE,
@@ -223,6 +237,7 @@ function Verktøylinje({
   onFormater,
   aktivtSidepanel,
   onVelgSidepanel,
+  antallKommentarer,
   lasterOppBilde,
   onÅpneBildeModal,
   onSettInnVariabel,
@@ -230,6 +245,7 @@ function Verktøylinje({
   onFormater: (etikett: string) => void;
   aktivtSidepanel: SidepanelValg;
   onVelgSidepanel: (valg: SidepanelValg) => void;
+  antallKommentarer: number;
   lasterOppBilde: boolean;
   onÅpneBildeModal: () => void;
   onSettInnVariabel: (variabelId: VariabelId) => void;
@@ -480,7 +496,11 @@ function Verktøylinje({
               </ActionMenu>
             </HStack>
 
-            <SidepanelMeny aktivt={aktivtSidepanel} onVelg={onVelgSidepanel} />
+            <SidepanelMeny
+              aktivt={aktivtSidepanel}
+              onVelg={onVelgSidepanel}
+              antallKommentarer={antallKommentarer}
+            />
           </HStack>
         </SettAktivEtikettContext.Provider>
       </AktivEtikettContext.Provider>
@@ -567,6 +587,11 @@ const PLUGINS = [
   )),
   ImagePlugin.withComponent(BildeElement),
   VariabelPlugin.withComponent(VariabelElement),
+  // Gir blokkene stabile IDer, som er det sterkeste holdepunktet for
+  // kommentarankere. Dokumenter uten IDer fungerer fortsatt – da faller
+  // ankermotoren tilbake på sti og sitat.
+  NodeIdPlugin.configure({ options: { initialValueIds: "always" } }),
+  KommentarMarkeringPlugin.withComponent(KommentarMarkeringLeaf),
 ];
 
 type DokumentEditorProps = {
@@ -584,6 +609,20 @@ type DokumentEditorProps = {
   historikkInnhold?: ReactNode;
   /** Verdier fra saken og innlogget bruker som levende variabler løses mot. */
   variabelVerdier: VariabelVerdier;
+  /**
+   * Kommentarene hentet i loaderen, parallelt med dokument og historikk.
+   * Wrapperen bærer backendens `kanKommentere` og `arkivert` – frontend regner
+   * aldri ut kommenterbarhet selv. Kommentering er bevisst skilt fra
+   * `redigerbar`: lesetilgang holder, også på låste dokumenter og avsluttede
+   * saker. Arkiverte dokumenter kan derimot ikke muteres.
+   */
+  kommentarliste?: Kommentarliste;
+  /** URL til kommentar-BFF-en for dette dokumentet. */
+  kommentarUrl?: string;
+  /** Sidepanelet som skal være åpent ved første render (f.eks. fra query-parameter). */
+  startSidepanel?: SidepanelValg;
+  /** Kommentartråd som skal markeres og fokuseres ved første render. */
+  startKommentartraadId?: string | null;
   /** Renderer innholdet for «Forhåndsvisning» i sidepanelet. Sendes inn som en funksjon
    * (ikke ferdig innhold) slik at f.eks. PDF-genereringen bare kjører mens fanen er
    * valgt, ikke ved hver render av siden. */
@@ -592,6 +631,13 @@ type DokumentEditorProps = {
 
 const MINSTE_EDITORBREDDE = 25;
 const STØRSTE_EDITORBREDDE = 75;
+/** Stabil referanse, slik at en manglende kommentarliste ikke gir nytt objekt hver render. */
+const TOM_KOMMENTARLISTE: Kommentarliste = {
+  dokumentId: "",
+  arkivert: null,
+  kanKommentere: false,
+  traader: [],
+};
 // Forhåndsvisning skal se ut som editoren, altså 50/50. De andre fanene
 // (dokumenter/variabler/historikk) er tekstlister som ikke trenger like mye plass,
 // så sidepanelet starter smalere (25 %) for dem.
@@ -608,15 +654,22 @@ export function DokumentEditor({
   lagreStatus,
   historikkInnhold,
   variabelVerdier,
+  kommentarliste = TOM_KOMMENTARLISTE,
+  kommentarUrl = "",
+  startSidepanel,
+  startKommentartraadId = null,
   renderForhåndsvisning,
 }: DokumentEditorProps) {
   const editor = usePlateEditor({
     plugins: PLUGINS,
     value: startInnhold as TElement[],
   });
-  const [aktivtSidepanel, settAktivtSidepanel] = useState<SidepanelValg>(STANDARD_SIDEPANEL);
+  const [aktivtSidepanel, settAktivtSidepanel] = useState<SidepanelValg>(
+    startSidepanel ?? STANDARD_SIDEPANEL,
+  );
   const erForhåndsvisningAktiv = aktivtSidepanel === "forhåndsvisning";
   const flateRef = useRef<HTMLDivElement>(null);
+  const arkRef = useRef<HTMLDivElement>(null);
   const delingsflateRef = useRef<HTMLDivElement>(null);
   const høyde = useTilgjengeligHøyde(flateRef);
   // Egne breddevalg for forhåndsvisning og de andre fanene, slik at man kan resize
@@ -635,6 +688,52 @@ export function DokumentEditor({
   const [bildeFeil, settBildeFeil] = useState<string | null>(null);
   const [bildeModalÅpen, settBildeModalÅpen] = useState(false);
   const revalidator = useRevalidator();
+
+  const kommentarer = useKommentarer({ url: kommentarUrl, startListe: kommentarliste });
+  // Backendfasit: kun arkiverte dokumenter blokkerer kommentering.
+  const kanKommentere = kommentarer.kanKommentere;
+  const arkivert = (kommentarliste.arkivert ?? null) !== null;
+  const forankring = useKommentarforankring({
+    editor,
+    traader: kommentarer.traader,
+    kanKommentere,
+  });
+  const antallUløsteKommentarer = antallUloste(kommentarer.traader);
+
+  /** Panelet skal alltid være synlig når man begynner å kommentere. */
+  const åpneKommentarpanel = useCallback(
+    (kilde: Parameters<typeof kommentarAnalytics.panelÅpnet>[0]) => {
+      settAktivtSidepanel((gjeldende) => {
+        if (gjeldende !== "kommentarer") kommentarAnalytics.panelÅpnet(kilde);
+        return "kommentarer";
+      });
+    },
+    [],
+  );
+
+  // Dyplenke (?sidepanel=kommentarer&kommentartraad=…) velger tråden ved oppstart.
+  const harValgtStarttraad = useRef(false);
+  useEffect(() => {
+    if (harValgtStarttraad.current || !startKommentartraadId) return;
+    if (!kommentarer.traader.some((traad) => traad.id === startKommentartraadId)) return;
+    harValgtStarttraad.current = true;
+    forankring.velgTraad(startKommentartraadId);
+    kommentarAnalytics.ankernavigasjon("DOCUMENT", "til_traad");
+  }, [forankring, kommentarer.traader, startKommentartraadId]);
+
+  // Cmd/Ctrl + Shift + M kommenterer markeringen, eller blokken skrivemerket står i.
+  const håndterSnarvei = forankring.håndterSnarvei;
+  useEffect(() => {
+    if (!kanKommentere) return;
+    function lytter(event: globalThis.KeyboardEvent) {
+      const før = event.defaultPrevented;
+      håndterSnarvei(event);
+      if (!før && event.defaultPrevented) åpneKommentarpanel("tastatursnarvei");
+    }
+    document.addEventListener("keydown", lytter);
+    return () => document.removeEventListener("keydown", lytter);
+  }, [håndterSnarvei, kanKommentere, åpneKommentarpanel]);
+
   const settInnVariabel = useCallback(
     (variabelId: VariabelId) => {
       editor.tf.insertNodes({
@@ -881,133 +980,213 @@ export function DokumentEditor({
       verdier={variabelVerdier}
       erVariabelpanelÅpent={aktivtSidepanel === "variabler"}
     >
-      <Plate
-        editor={editor}
-        readOnly={!redigerbar}
-        onChange={({ value }) => onEndring(value as DokumentInnhold)}
+      <KommentarMarkeringProvider
+        aktivTraadId={forankring.aktivTraadId}
+        onVelgTraad={(traadId) => {
+          forankring.velgTraad(traadId);
+          åpneKommentarpanel("markering");
+          kommentarAnalytics.ankernavigasjon("TEXT", "til_traad");
+        }}
       >
-        {/* Editorflaten fyller resten av vinduet og scroller selv, slik at verktøylinja og
-      sidepanelet står stille mens man jobber i et langt dokument. */}
-        <div
-          ref={flateRef}
-          style={høyde ? { height: høyde } : undefined}
-          className="flex flex-col gap-[var(--ax-space-12)] overflow-hidden"
-        >
-          {redigerbar && (
-            <div className="px-[var(--ax-space-16)] lg:px-[var(--ax-space-24)]">
-              <Verktøylinje
-                onFormater={(format) =>
-                  sporHendelse("dokument formatert", { sakId, docId, format })
-                }
-                aktivtSidepanel={aktivtSidepanel}
-                onVelgSidepanel={settAktivtSidepanel}
-                lasterOppBilde={lasterOppBilde}
-                onÅpneBildeModal={() => settBildeModalÅpen(true)}
-                onSettInnVariabel={settInnVariabel}
-              />
-              {bildeFeil && !bildeModalÅpen && (
-                <Alert variant="error" size="small" className="mt-[var(--ax-space-8)]">
-                  {bildeFeil}
-                </Alert>
-              )}
-            </div>
-          )}
-          {/* Grå flate med «arket» til venstre og sidepanelet som en egen seksjon til høyre.
-        Raden går helt ut til kantene fordi ruta har bedt layouten om full bredde. */}
-          <div
-            ref={delingsflateRef}
-            className="flex min-h-0 flex-1 flex-col lg:flex-row lg:items-stretch"
-            style={{ "--editor-bredde": `${editorBredde}%` } as CSSProperties}
-          >
-            <div
-              className={
-                "ml-[var(--ax-space-16)] flex min-w-0 flex-1 justify-center overflow-y-auto rounded-lg " +
-                "bg-ax-bg-neutral-moderate px-[var(--ax-space-16)] py-[var(--ax-space-32)] " +
-                "lg:ml-[var(--ax-space-24)] lg:px-[var(--ax-space-48)] " +
-                "lg:shrink-0 lg:flex-none lg:basis-[var(--editor-bredde)]"
-              }
-            >
-              <Kort
-                padding={{ xs: "space-24", md: "space-64" }}
-                className="h-fit w-full max-w-[210mm] shadow-[var(--ax-shadow-dialog)]"
-              >
-                <PlateContent
-                  role="textbox"
-                  aria-multiline
-                  aria-label="Dokumentinnhold"
-                  onDrop={redigerbar ? håndterDrop : undefined}
-                  onDragOver={redigerbar ? håndterDragOver : undefined}
-                  onPaste={redigerbar ? håndterPaste : undefined}
-                  className={
-                    "min-h-[60vh] focus:outline-none [&_h1]:mt-8 [&_h1]:mb-4 [&_h1]:text-2xl [&_h1]:font-bold " +
-                    "[&_h2]:mt-6 [&_h2]:mb-3 [&_h2]:text-xl [&_h2]:font-bold " +
-                    "[&_h3]:mt-4 [&_h3]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold " +
-                    "[&>*:first-child]:mt-0 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
-                    "[&_blockquote]:border-l-4 [&_blockquote]:border-ax-border-neutral-subtle " +
-                    "[&_blockquote]:pl-4 [&_blockquote]:italic [&_p]:mb-4 [&_p:last-child]:mb-0 " +
-                    "[&_table]:border-collapse [&_table]:my-3 [&_table]:w-full " +
-                    "[&_td]:border [&_td]:border-ax-border-neutral-subtle [&_td]:p-2 [&_td]:align-top " +
-                    "[&_th]:border [&_th]:border-ax-border-neutral-subtle [&_th]:p-2 [&_th]:align-top " +
-                    "[&_th]:bg-ax-bg-neutral-soft [&_th]:text-left [&_th]:font-semibold " +
-                    "[&_u]:underline [&_s]:line-through"
-                  }
-                />
-              </Kort>
-            </div>
-
-            <div
-              role="separator"
-              aria-label="Endre bredde mellom editor og sidepanel"
-              aria-orientation="vertical"
-              aria-valuemin={MINSTE_EDITORBREDDE}
-              aria-valuemax={STØRSTE_EDITORBREDDE}
-              aria-valuenow={editorBredde}
-              aria-valuetext={`Editoren bruker ${editorBredde} prosent av arbeidsflaten`}
-              tabIndex={0}
-              className="group hidden shrink-0 cursor-col-resize touch-none items-center justify-center px-1 bg-ax-bg-default focus:outline-none lg:flex"
-              onKeyDown={håndterSkillelinjeTastatur}
-              onPointerDown={håndterSkillelinjePekerNed}
-              onPointerMove={håndterSkillelinjePekerFlytt}
-              onPointerUp={(event) => event.currentTarget.releasePointerCapture(event.pointerId)}
-            >
-              {/* Vertikalt dratthåndtak – tre punkter, slik man kjenner igjen fra
-              resizable paneler. Rent dekorativt; selve interaksjonen er på forelderen. */}
-              <span
-                aria-hidden
-                className="flex flex-col gap-[3px] rounded-full bg-ax-bg-neutral-moderate px-[1px] py-[6px] group-hover:bg-ax-bg-accent-moderate group-focus:bg-ax-bg-accent-moderate"
-              >
-                <span className="h-1 w-1 rounded-full bg-ax-icon-neutral group-hover:bg-ax-icon-accent group-focus:bg-ax-icon-accent" />
-                <span className="h-1 w-1 rounded-full bg-ax-icon-neutral group-hover:bg-ax-icon-accent group-focus:bg-ax-icon-accent" />
-                <span className="h-1 w-1 rounded-full bg-ax-icon-neutral group-hover:bg-ax-icon-accent group-focus:bg-ax-icon-accent" />
-              </span>
-            </div>
-
-            <Sidepanel
-              aktivt={aktivtSidepanel}
-              dokumentliste={dokumentliste}
-              variabelInnhold={<VariabelListe onSettInn={settInnVariabel} disabled={!redigerbar} />}
-              historikkInnhold={historikkInnhold ?? null}
-              forhåndsvisningInnhold={
-                erForhåndsvisningAktiv ? renderForhåndsvisning?.() : undefined
-              }
-              lagreStatus={lagreStatus}
-            />
-          </div>
-        </div>
-        <SettInnBildeModal
-          åpen={bildeModalÅpen}
-          sakId={sakId}
-          lasterOpp={lasterOppBilde}
-          feil={bildeFeil}
-          onClose={() => settBildeModalÅpen(false)}
-          onVelg={settInnBilde}
-          onLastOpp={(filer) => {
-            void håndterBildefiler(filer).then((ok) => {
-              if (ok) settBildeModalÅpen(false);
-            });
+        <Plate
+          editor={editor}
+          readOnly={!redigerbar}
+          onChange={({ value }) => {
+            onEndring(value as DokumentInnhold);
+            forankring.registrerDokumentendring();
           }}
-        />
-      </Plate>
+        >
+          {/* Editorflaten fyller resten av vinduet og scroller selv, slik at verktøylinja og
+      sidepanelet står stille mens man jobber i et langt dokument. */}
+          <div
+            ref={flateRef}
+            style={høyde ? { height: høyde } : undefined}
+            className="flex flex-col gap-[var(--ax-space-12)] overflow-hidden"
+          >
+            {redigerbar ? (
+              <div className="px-[var(--ax-space-16)] lg:px-[var(--ax-space-24)]">
+                <Verktøylinje
+                  onFormater={(format) =>
+                    sporHendelse("dokument formatert", { sakId, docId, format })
+                  }
+                  aktivtSidepanel={aktivtSidepanel}
+                  onVelgSidepanel={settAktivtSidepanel}
+                  antallKommentarer={antallUløsteKommentarer}
+                  lasterOppBilde={lasterOppBilde}
+                  onÅpneBildeModal={() => settBildeModalÅpen(true)}
+                  onSettInnVariabel={settInnVariabel}
+                />
+                {bildeFeil && !bildeModalÅpen && (
+                  <Alert variant="error" size="small" className="mt-[var(--ax-space-8)]">
+                    {bildeFeil}
+                  </Alert>
+                )}
+              </div>
+            ) : (
+              // Uten skrivetilgang finnes ingen verktøylinje, men man skal likevel
+              // kunne bytte sidepanel – blant annet for å lese og skrive kommentarer.
+              <div className="flex justify-end px-[var(--ax-space-16)] lg:px-[var(--ax-space-24)]">
+                <SidepanelMeny
+                  aktivt={aktivtSidepanel}
+                  onVelg={settAktivtSidepanel}
+                  antallKommentarer={antallUløsteKommentarer}
+                />
+              </div>
+            )}
+            {/* Grå flate med «arket» til venstre og sidepanelet som en egen seksjon til høyre.
+        Raden går helt ut til kantene fordi ruta har bedt layouten om full bredde. */}
+            <div
+              ref={delingsflateRef}
+              className="flex min-h-0 flex-1 flex-col lg:flex-row lg:items-stretch"
+              style={{ "--editor-bredde": `${editorBredde}%` } as CSSProperties}
+            >
+              <div
+                ref={arkRef}
+                // Flaten scroller selv, og må derfor kunne få tastaturfokus (WCAG 2.1.1).
+                tabIndex={0}
+                className={
+                  "relative ml-[var(--ax-space-16)] flex min-w-0 flex-1 justify-center overflow-y-auto rounded-lg " +
+                  "bg-ax-bg-neutral-moderate px-[var(--ax-space-16)] py-[var(--ax-space-32)] " +
+                  "lg:ml-[var(--ax-space-24)] lg:px-[var(--ax-space-48)] " +
+                  "lg:shrink-0 lg:flex-none lg:basis-[var(--editor-bredde)]"
+                }
+                onMouseOver={
+                  kanKommentere
+                    ? (event) => forankring.oppdaterAktivtElementFraDom(event.target)
+                    : undefined
+                }
+                onFocusCapture={
+                  kanKommentere
+                    ? (event) => forankring.oppdaterAktivtElementFraDom(event.target)
+                    : undefined
+                }
+              >
+                <Kort
+                  padding={{ xs: "space-24", md: "space-64" }}
+                  className="h-fit w-full max-w-[210mm] shadow-[var(--ax-shadow-dialog)]"
+                >
+                  <PlateContent
+                    role="textbox"
+                    aria-multiline
+                    aria-label="Dokumentinnhold"
+                    onDrop={redigerbar ? håndterDrop : undefined}
+                    onDragOver={redigerbar ? håndterDragOver : undefined}
+                    onPaste={redigerbar ? håndterPaste : undefined}
+                    onKeyUp={
+                      kanKommentere
+                        ? (event) => forankring.oppdaterAktivtElementFraDom(event.target)
+                        : undefined
+                    }
+                    className={
+                      "min-h-[60vh] focus:outline-none [&_h1]:mt-8 [&_h1]:mb-4 [&_h1]:text-2xl [&_h1]:font-bold " +
+                      "[&_h2]:mt-6 [&_h2]:mb-3 [&_h2]:text-xl [&_h2]:font-bold " +
+                      "[&_h3]:mt-4 [&_h3]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold " +
+                      "[&>*:first-child]:mt-0 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 " +
+                      "[&_blockquote]:border-l-4 [&_blockquote]:border-ax-border-neutral-subtle " +
+                      "[&_blockquote]:pl-4 [&_blockquote]:italic [&_p]:mb-4 [&_p:last-child]:mb-0 " +
+                      "[&_table]:border-collapse [&_table]:my-3 [&_table]:w-full " +
+                      "[&_td]:border [&_td]:border-ax-border-neutral-subtle [&_td]:p-2 [&_td]:align-top " +
+                      "[&_th]:border [&_th]:border-ax-border-neutral-subtle [&_th]:p-2 [&_th]:align-top " +
+                      "[&_th]:bg-ax-bg-neutral-soft [&_th]:text-left [&_th]:font-semibold " +
+                      "[&_u]:underline [&_s]:line-through " +
+                      "[&_mark]:bg-transparent"
+                    }
+                  />
+                </Kort>
+
+                <KommentarFlytendeMeny
+                  beholderRef={arkRef}
+                  aktiv={kanKommentere}
+                  onKommenter={() => {
+                    if (forankring.startTekstutkast("tekstmarkering")) {
+                      åpneKommentarpanel("tekstmarkering");
+                    }
+                  }}
+                />
+                <ElementKommentarHandling
+                  beholderRef={arkRef}
+                  aktivt={forankring.aktivtElement}
+                  aktiv={kanKommentere}
+                  onKommenter={(element) => {
+                    if (forankring.startElementutkast(element, "element")) {
+                      åpneKommentarpanel("element");
+                    }
+                  }}
+                />
+              </div>
+
+              <div
+                role="separator"
+                aria-label="Endre bredde mellom editor og sidepanel"
+                aria-orientation="vertical"
+                aria-valuemin={MINSTE_EDITORBREDDE}
+                aria-valuemax={STØRSTE_EDITORBREDDE}
+                aria-valuenow={editorBredde}
+                aria-valuetext={`Editoren bruker ${editorBredde} prosent av arbeidsflaten`}
+                tabIndex={0}
+                className="group hidden shrink-0 cursor-col-resize touch-none items-center justify-center px-1 bg-ax-bg-default focus:outline-none lg:flex"
+                onKeyDown={håndterSkillelinjeTastatur}
+                onPointerDown={håndterSkillelinjePekerNed}
+                onPointerMove={håndterSkillelinjePekerFlytt}
+                onPointerUp={(event) => event.currentTarget.releasePointerCapture(event.pointerId)}
+              >
+                {/* Vertikalt dratthåndtak – tre punkter, slik man kjenner igjen fra
+              resizable paneler. Rent dekorativt; selve interaksjonen er på forelderen. */}
+                <span
+                  aria-hidden
+                  className="flex flex-col gap-[3px] rounded-full bg-ax-bg-neutral-moderate px-[1px] py-[6px] group-hover:bg-ax-bg-accent-moderate group-focus:bg-ax-bg-accent-moderate"
+                >
+                  <span className="h-1 w-1 rounded-full bg-ax-icon-neutral group-hover:bg-ax-icon-accent group-focus:bg-ax-icon-accent" />
+                  <span className="h-1 w-1 rounded-full bg-ax-icon-neutral group-hover:bg-ax-icon-accent group-focus:bg-ax-icon-accent" />
+                  <span className="h-1 w-1 rounded-full bg-ax-icon-neutral group-hover:bg-ax-icon-accent group-focus:bg-ax-icon-accent" />
+                </span>
+              </div>
+
+              <Sidepanel
+                aktivt={aktivtSidepanel}
+                dokumentliste={dokumentliste}
+                variabelInnhold={
+                  <VariabelListe onSettInn={settInnVariabel} disabled={!redigerbar} />
+                }
+                historikkInnhold={historikkInnhold ?? null}
+                kommentarInnhold={
+                  <KommentarPanel
+                    traader={kommentarer.traader}
+                    treffPerTraad={forankring.treffPerTraad}
+                    aktivTraadId={forankring.aktivTraadId}
+                    kanKommentere={kanKommentere}
+                    arkivert={arkivert}
+                    sender={kommentarer.sender}
+                    utkast={forankring.utkast}
+                    handlinger={kommentarer}
+                    onStartGenereltUtkast={() => forankring.startGenereltUtkast("panel")}
+                    onAvbrytUtkast={forankring.avbrytUtkast}
+                    onVelgTraad={forankring.velgTraad}
+                    onGåTilAnker={forankring.gåTilAnker}
+                  />
+                }
+                forhåndsvisningInnhold={
+                  erForhåndsvisningAktiv ? renderForhåndsvisning?.() : undefined
+                }
+                lagreStatus={lagreStatus}
+              />
+            </div>
+          </div>
+          <SettInnBildeModal
+            åpen={bildeModalÅpen}
+            sakId={sakId}
+            lasterOpp={lasterOppBilde}
+            feil={bildeFeil}
+            onClose={() => settBildeModalÅpen(false)}
+            onVelg={settInnBilde}
+            onLastOpp={(filer) => {
+              void håndterBildefiler(filer).then((ok) => {
+                if (ok) settBildeModalÅpen(false);
+              });
+            }}
+          />
+        </Plate>
+      </KommentarMarkeringProvider>
     </VariabelVerdierProvider>
   );
 }

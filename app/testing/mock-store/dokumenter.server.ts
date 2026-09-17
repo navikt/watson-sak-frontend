@@ -6,6 +6,7 @@ import type {
   DokumentNode,
 } from "~/saker/filer/typer";
 import type { MockState } from "./session.server";
+import { slettKommentarerForDokument } from "./kommentarer.server";
 
 function innholdsnøkkel(sakId: string, docId: string): string {
   return `${sakId}:${docId}`;
@@ -351,5 +352,6 @@ export function slettDokument(state: MockState, sakId: string, docId: string): b
   dokumenter.splice(indeks, 1);
   state.dokumentInnhold.delete(innholdsnøkkel(sakId, docId));
   state.dokumentHistorikk.delete(historikknøkkel(sakId, docId));
+  slettKommentarerForDokument(state, sakId, docId);
   return true;
 }

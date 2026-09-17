@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { RouteConfig } from "~/routeConfig";
+import { byggKommentarLenke } from "~/saker/filer/dokument/kommentarer/lenker";
 
 export const varselSchema = z.object({
   id: z.string(),
@@ -8,6 +10,10 @@ export const varselSchema = z.object({
   tidspunkt: z.string(),
   erLest: z.boolean().default(false),
   status: z.enum(["announcement", "warning", "success", "error"]).optional(),
+  /** Dokumentet varselet gjelder. Satt for kommentarvarsler, ellers udefinert. */
+  dokumentId: z.string().optional(),
+  /** Kommentartråden varselet gjelder, slik at lenken kan åpne riktig tråd. */
+  traadId: z.string().optional(),
 });
 
 export type Varsel = z.infer<typeof varselSchema>;
@@ -19,6 +25,9 @@ const varselBackendResponseSchema = z.object({
   beskrivelse: z.string(),
   opprettet: z.string(),
   lestTidspunkt: z.string().nullable(),
+  // Eksakte feltnavn fra VarselResponse i watson-admin-api.
+  dokumentId: z.string().nullish(),
+  traadId: z.string().nullish(),
 });
 
 export const varselPageBackendResponseSchema = z.object({
@@ -39,5 +48,19 @@ export function tilVarsel(backend: VarselBackendResponse): Varsel {
     tekst: backend.beskrivelse,
     tidspunkt: backend.opprettet,
     erLest: backend.lestTidspunkt !== null,
+    dokumentId: backend.dokumentId ?? undefined,
+    traadId: backend.traadId ?? undefined,
   };
+}
+
+/**
+ * Hvor varselet skal føre saksbehandleren. Varsler om dokumentkommentarer går
+ * rett til dokumentet med kommentarpanelet åpent (og riktig tråd markert),
+ * resten går til saken.
+ */
+export function varselDestinasjon(varsel: Varsel, sakReferanse: string): string {
+  if (varsel.dokumentId) {
+    return byggKommentarLenke(sakReferanse, varsel.dokumentId, varsel.traadId);
+  }
+  return RouteConfig.SAKER_DETALJ.replace(":sakId", sakReferanse);
 }
