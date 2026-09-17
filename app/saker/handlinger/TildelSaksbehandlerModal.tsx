@@ -1,7 +1,8 @@
 import { getFormProps, useForm } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { PersonPencilIcon } from "@navikt/aksel-icons";
-import { BodyShort, Button, Modal, Select, VStack } from "@navikt/ds-react";
+import { BodyShort, Button, Modal, UNSAFE_Combobox, VStack } from "@navikt/ds-react";
+import { useState } from "react";
 import { useFetcher } from "react-router";
 import { z } from "zod";
 import { sporHendelse } from "~/analytics/analytics";
@@ -34,6 +35,7 @@ export function TildelSaksbehandlerModal({
 }: TildelSaksbehandlerModalProps) {
   const fetcher = useFetcher();
   const saksreferanse = getSaksreferanse(sakId);
+  const [valgtNavIdent, setValgtNavIdent] = useState("");
 
   const erSubmitting = fetcher.state !== "idle";
   const actionPath =
@@ -54,27 +56,35 @@ export function TildelSaksbehandlerModal({
       sporHendelse("fordeling utført");
       fetcher.submit(formData, { method: "post", action: actionPath });
       form.reset();
+      setValgtNavIdent("");
       onClose();
     },
   });
 
   function handleFjernSaksbehandler() {
     fetcher.submit({ handling: "FRISTILL", sakId }, { method: "post", action: actionPath });
-    onClose();
+    handleClose();
   }
 
   function handleClose() {
     form.reset();
+    setValgtNavIdent("");
     onClose();
   }
 
   const valgbareSaksbehandlere =
     saksbehandlerDetaljer.length > 0
       ? saksbehandlerDetaljer.map((saksbehandler) => ({
-          verdi: saksbehandler.navIdent,
-          etikett: `${saksbehandler.navn} (${saksbehandler.navIdent})`,
+          value: saksbehandler.navIdent,
+          label: `${saksbehandler.navn} (${saksbehandler.navIdent})`,
         }))
-      : saksbehandlere.map((saksbehandler) => ({ verdi: saksbehandler, etikett: saksbehandler }));
+      : saksbehandlere.map((saksbehandler) => ({
+          value: saksbehandler,
+          label: saksbehandler,
+        }));
+  const valgtSaksbehandler = valgbareSaksbehandlere.find(
+    (saksbehandler) => saksbehandler.value === valgtNavIdent,
+  );
 
   const heading = nåværendeSaksbehandler ? "Endre saksbehandler" : "Tildel saksbehandler";
 
@@ -100,25 +110,23 @@ export function TildelSaksbehandlerModal({
               </BodyShort>
             )}
             <BodyShort>Velg saksbehandler som skal ha ansvar for sak {saksreferanse}.</BodyShort>
-            <Select
+            <input type="hidden" name={fields.navIdent.name} value={valgtNavIdent} />
+            <UNSAFE_Combobox
               key={fields.navIdent.key}
-              name={fields.navIdent.name}
               id={fields.navIdent.id}
-              defaultValue={fields.navIdent.initialValue ?? ""}
               label="Saksbehandler"
+              placeholder="Søk etter saksbehandler"
+              options={valgbareSaksbehandlere}
+              selectedOptions={valgtSaksbehandler ? [valgtSaksbehandler] : []}
+              onToggleSelected={(navIdent, erValgt) => {
+                setValgtNavIdent(erValgt ? navIdent : "");
+              }}
               error={fields.navIdent.errors?.[0]}
-            >
-              <option value="">Velg saksbehandler</option>
-              {valgbareSaksbehandlere.map((saksbehandler) => (
-                <option key={saksbehandler.verdi} value={saksbehandler.verdi}>
-                  {saksbehandler.etikett}
-                </option>
-              ))}
-            </Select>
+            />
           </VStack>
         </Modal.Body>
         <Modal.Footer>
-          <Button type="submit" disabled={erSubmitting}>
+          <Button type="submit" disabled={erSubmitting || !valgtNavIdent}>
             Tildel
           </Button>
           <Button type="button" variant="secondary" onClick={handleClose}>
