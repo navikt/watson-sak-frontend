@@ -209,3 +209,56 @@ describe("filhendelser", () => {
     expect(hendelseBeskrivelse(hendelse)).toBe("Virusskanning OK");
   });
 });
+
+describe("grupperte kommentarhendelser", () => {
+  const kommentarAktivitet = {
+    handling: "THREAD_CREATED",
+    dokumentId: "9f1c0a2e-0000-4000-8000-000000000001",
+    dokumentTittel: "Kontrollrapport",
+    utfortAvIdent: "Z999999",
+    utfortAvNavn: "Ola Nordmann",
+    antall: 4,
+    dato: "2026-03-01",
+    visningstekst: "Ola Nordmann kommenterte 4 steder i dokumentet «Kontrollrapport».",
+  };
+
+  it("bruker backendens ferdigformulerte visningstekst", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "DOKUMENT_KOMMENTAR_OPPRETTET",
+      kommentarAktivitet,
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe(kommentarAktivitet.visningstekst);
+  });
+
+  it("gjenkjenner kommentarhendelser på kommentarAktivitet, ikke på hendelsestypen", () => {
+    const ukjentType = lagHendelse({
+      hendelsesType: "DOKUMENT_KOMMENTARER",
+      kommentarAktivitet: { ...kommentarAktivitet, handling: "REPLY_CREATED" },
+    });
+
+    expect(hendelseBeskrivelse(ukjentType)).toBe(kommentarAktivitet.visningstekst);
+  });
+
+  it("gir norske titler for de fire kommentartypene", () => {
+    const tittel = (type: string) =>
+      hendelseTittel(lagHendelse({ hendelsesType: type, kommentarAktivitet }));
+
+    expect(tittel("DOKUMENT_KOMMENTAR_OPPRETTET")).toBe("Kommenterte dokument");
+    expect(tittel("DOKUMENT_KOMMENTAR_SVAR")).toBe("Svarte på kommentarer");
+    expect(tittel("DOKUMENT_KOMMENTAR_ADRESSERT")).toBe("Adresserte kommentarer");
+    expect(tittel("DOKUMENT_KOMMENTAR_GJENAAPNET")).toBe("Gjenåpnet kommentarer");
+  });
+
+  it("inneholder aldri kommentarinnhold – bare backendens visningstekst", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "DOKUMENT_KOMMENTAR_SVAR",
+      kommentarAktivitet,
+      beskrivelse: "skal ikke brukes",
+    });
+
+    const beskrivelse = hendelseBeskrivelse(hendelse);
+    expect(beskrivelse).not.toContain("skal ikke brukes");
+    expect(beskrivelse).toBe(kommentarAktivitet.visningstekst);
+  });
+});
