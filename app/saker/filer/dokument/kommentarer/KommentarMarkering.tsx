@@ -177,7 +177,7 @@ export function KommentarMarkeringLeaf(props: PlateLeafProps) {
           velgTraad(tastaturTraadId);
         },
         className:
-          "cursor-pointer rounded-xs text-ax-text-default " +
+          "cursor-pointer rounded-xs text-ax-text-neutral " +
           (erAktiv ? "bg-ax-bg-warning-moderate" : "bg-ax-bg-warning-soft"),
       }}
     >

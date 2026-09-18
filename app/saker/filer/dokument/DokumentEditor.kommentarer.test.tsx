@@ -169,6 +169,7 @@ describe("DokumentEditor med kommentarer", () => {
     if (!markering) throw new Error("Fant ingen kommentarmarkering");
 
     expect(markering.classList.contains("bg-ax-bg-warning-soft")).toBe(true);
+    expect(markering.classList.contains("text-ax-text-neutral")).toBe(true);
     expect(markering.className).not.toContain("text-decoration");
 
     fireEvent.click(markering);
