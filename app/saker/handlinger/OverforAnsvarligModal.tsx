@@ -53,11 +53,6 @@ export function OverforAnsvarligModal({
     onClose();
   }
 
-  function handleFjernSaksbehandler() {
-    fetcher.submit({ handling: "FRISTILL" }, { method: "post", action: actionPath });
-    handleClose();
-  }
-
   return (
     <Modal
       open={åpen}
@@ -92,14 +87,6 @@ export function OverforAnsvarligModal({
         <Modal.Footer>
           <Button type="submit" disabled={erSubmitting}>
             Overfør sak
-          </Button>
-          <Button
-            type="button"
-            variant="danger"
-            onClick={handleFjernSaksbehandler}
-            disabled={erSubmitting}
-          >
-            Fjern saksbehandler
           </Button>
           <Button type="button" variant="secondary" onClick={handleClose}>
             Avbryt

@@ -24,12 +24,15 @@ vi.mock("react-router", async () => {
   };
 });
 
+const useInnloggetBrukerMock = vi.fn(() => ({
+  navIdent: "Z999999",
+  name: "Test Saksbehandler",
+  enhet: "4812",
+  erLeder: false,
+}));
+
 vi.mock("~/auth/innlogget-bruker", () => ({
-  useInnloggetBruker: () => ({
-    navIdent: "Z999999",
-    name: "Test Saksbehandler",
-    enhet: "4812",
-  }),
+  useInnloggetBruker: () => useInnloggetBrukerMock(),
 }));
 
 vi.mock("~/kodeverk/useKodeverk", () => ({
@@ -94,6 +97,12 @@ describe("SaksbehandlereKort", () => {
     submitMock.mockClear();
     navigateMock.mockClear();
     fetcherData = undefined;
+    useInnloggetBrukerMock.mockReturnValue({
+      navIdent: "Z999999",
+      name: "Test Saksbehandler",
+      enhet: "4812",
+      erLeder: false,
+    });
   });
 
   it("viser Del tilgang i saksbehandler-boksen for aktiv sak med ansvarlig saksbehandler", async () => {
@@ -361,5 +370,56 @@ describe("SaksbehandlereKort", () => {
 
     expect(screen.queryByRole("button", { name: "Tildel meg" })).toBeNull();
     expect(screen.getByRole("button", { name: "Tildel saksbehandler" })).toBeDefined();
+  });
+
+  it("viser Fjern saksbehandler for sakens ansvarlige saksbehandler", async () => {
+    await renderMedRouter(
+      <SaksbehandlereKort
+        erEier={true}
+        sak={lagKontrollsak()}
+        saksbehandlerDetaljer={[lagSaksbehandler()]}
+        ansvarligSaksbehandler={lagSaksbehandler()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Fjern saksbehandler" }));
+
+    expect(submitMock).toHaveBeenCalledTimes(1);
+    const [payload, options] = submitMock.mock.calls[0];
+    expect(payload).toEqual({ handling: "FRISTILL" });
+    expect(options).toEqual(expect.objectContaining({ method: "post" }));
+  });
+
+  it("viser Fjern saksbehandler for en leder som ikke er sakseier", async () => {
+    useInnloggetBrukerMock.mockReturnValue({
+      navIdent: "Z999999",
+      name: "Leder Lederesen",
+      enhet: "4812",
+      erLeder: true,
+    });
+
+    await renderMedRouter(
+      <SaksbehandlereKort
+        erEier={false}
+        sak={lagKontrollsak()}
+        saksbehandlerDetaljer={[lagSaksbehandler()]}
+        ansvarligSaksbehandler={lagSaksbehandler()}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Fjern saksbehandler" })).toBeDefined();
+  });
+
+  it("skjuler Fjern saksbehandler for en saksbehandler uten eierskap eller lederrolle", async () => {
+    await renderMedRouter(
+      <SaksbehandlereKort
+        erEier={false}
+        sak={lagKontrollsak()}
+        saksbehandlerDetaljer={[lagSaksbehandler()]}
+        ansvarligSaksbehandler={lagSaksbehandler()}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Fjern saksbehandler" })).toBeNull();
   });
 });
