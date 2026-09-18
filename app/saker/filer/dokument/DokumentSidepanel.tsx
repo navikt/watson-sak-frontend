@@ -1,4 +1,5 @@
 import {
+  ChatIcon,
   ChevronDownIcon,
   ClockIcon,
   FilePdfIcon,
@@ -6,10 +7,15 @@ import {
   SidebarRightIcon,
   TagIcon,
 } from "@navikt/aksel-icons";
-import { ActionMenu, Button, Heading, HStack, VStack } from "@navikt/ds-react";
+import { ActionMenu, Button, Heading, HStack, Tag, VStack } from "@navikt/ds-react";
 import type { ComponentType, ReactNode } from "react";
 
-export type SidepanelValg = "dokumenter" | "variabler" | "historikk" | "forhåndsvisning";
+export type SidepanelValg =
+  | "dokumenter"
+  | "variabler"
+  | "historikk"
+  | "kommentarer"
+  | "forhåndsvisning";
 
 export const STANDARD_SIDEPANEL: SidepanelValg = "dokumenter";
 
@@ -32,6 +38,11 @@ const SIDEPANELER: Sidepanelvalg[] = [
     ikon: ClockIcon,
   },
   {
+    verdi: "kommentarer",
+    etikett: "Kommentarer",
+    ikon: ChatIcon,
+  },
+  {
     verdi: "forhåndsvisning",
     etikett: "Forhåndsvisning",
     ikon: FilePdfIcon,
@@ -45,10 +56,12 @@ function finnValg(verdi: SidepanelValg): Sidepanelvalg {
 type SidepanelMenyProps = {
   aktivt: SidepanelValg;
   onVelg: (valg: SidepanelValg) => void;
+  /** Antall uløste kommentarer. Vises som badge på «Kommentarer». */
+  antallKommentarer?: number;
 };
 
 /** Velger hva sidepanelet ved siden av dokumentet skal vise. */
-export function SidepanelMeny({ aktivt, onVelg }: SidepanelMenyProps) {
+export function SidepanelMeny({ aktivt, onVelg, antallKommentarer = 0 }: SidepanelMenyProps) {
   const valgt = finnValg(aktivt);
 
   return (
@@ -65,6 +78,11 @@ export function SidepanelMeny({ aktivt, onVelg }: SidepanelMenyProps) {
           <HStack as="span" gap="space-8" align="center" wrap={false}>
             <SidebarRightIcon aria-hidden />
             {valgt.etikett}
+            {antallKommentarer > 0 && valgt.verdi !== "kommentarer" && (
+              <Tag variant="warning" size="xsmall">
+                {antallKommentarer}
+              </Tag>
+            )}
           </HStack>
         </Button>
       </ActionMenu.Trigger>
@@ -72,7 +90,14 @@ export function SidepanelMeny({ aktivt, onVelg }: SidepanelMenyProps) {
         <ActionMenu.Group label="Vis i sidepanelet">
           {SIDEPANELER.map(({ verdi, etikett, ikon: Ikon }) => (
             <ActionMenu.Item key={verdi} icon={<Ikon aria-hidden />} onSelect={() => onVelg(verdi)}>
-              {etikett}
+              <HStack as="span" gap="space-8" align="center" wrap={false}>
+                {etikett}
+                {verdi === "kommentarer" && antallKommentarer > 0 && (
+                  <Tag variant="warning" size="xsmall">
+                    {antallKommentarer} uløste
+                  </Tag>
+                )}
+              </HStack>
             </ActionMenu.Item>
           ))}
         </ActionMenu.Group>
@@ -89,6 +114,8 @@ type SidepanelProps = {
   variabelInnhold: ReactNode;
   /** Innholdet for «Historikk». */
   historikkInnhold: ReactNode;
+  /** Innholdet for «Kommentarer». */
+  kommentarInnhold?: ReactNode;
   /** Innholdet for «Forhåndsvisning». */
   forhåndsvisningInnhold?: ReactNode;
   /** Lagrestatusen, som ligger nederst i panelet. Eies av siden som gjør lagringen. */
@@ -102,6 +129,7 @@ export function Sidepanel({
   dokumentliste,
   variabelInnhold,
   historikkInnhold,
+  kommentarInnhold,
   forhåndsvisningInnhold,
   lagreStatus,
 }: SidepanelProps) {
@@ -113,7 +141,9 @@ export function Sidepanel({
         ? variabelInnhold
         : aktivt === "historikk"
           ? historikkInnhold
-          : forhåndsvisningInnhold;
+          : aktivt === "kommentarer"
+            ? kommentarInnhold
+            : forhåndsvisningInnhold;
 
   return (
     <aside className="flex w-full shrink-0 flex-col gap-[var(--ax-space-12)] overflow-hidden border-t border-ax-border-neutral-subtle bg-ax-bg-default px-[var(--ax-space-16)] pt-0 pb-[var(--ax-space-16)] lg:min-w-0 lg:flex-1 lg:border-t-0 lg:pl-0">

@@ -7,6 +7,7 @@ import {
   useLoaderData,
   useParams,
   useRevalidator,
+  useSearchParams,
 } from "react-router";
 import { DokumentIkkeFunnet } from "~/feilhåndtering/DokumentIkkeFunnet";
 import { finnEnhetsnavn } from "~/kodeverk/enheter";
@@ -17,6 +18,12 @@ import { DokumentTre } from "~/saker/filer/DokumentTre";
 import type { Dokument, DokumentHistorikk, DokumentInnhold } from "~/saker/filer/typer";
 import { formaterRelativTid } from "~/utils/date-utils";
 import { DokumentEditor } from "./DokumentEditor";
+import type { SidepanelValg } from "./DokumentSidepanel";
+import {
+  KOMMENTARTRAAD_QUERY,
+  KOMMENTAR_SIDEPANEL_VERDI,
+  SIDEPANEL_QUERY,
+} from "./kommentarer/lenker";
 import { PdfForhåndsvisning } from "./PdfForhåndsvisning";
 import { DokumentHistorikkPanel } from "./DokumentHistorikkPanel";
 import { DokumentTittel } from "./DokumentTittel";
@@ -74,18 +81,26 @@ function DokumentRedigering({
   dokument,
   dokumenter,
   dokumentHistorikk = [],
+  kommentarliste,
+  kommentarinnlastingFeilet,
   sakReferanse,
   kanRedigere,
   variabelVerdier,
   erDemo,
+  startSidepanel,
+  startKommentartraadId,
 }: {
   dokument: LoaderData["dokument"];
   dokumenter: LoaderData["dokumenter"];
   dokumentHistorikk: LoaderData["dokumentHistorikk"];
+  kommentarliste: LoaderData["kommentarliste"];
+  kommentarinnlastingFeilet: LoaderData["kommentarinnlastingFeilet"];
   sakReferanse: string;
   kanRedigere: boolean;
   variabelVerdier: LoaderData["variabelVerdier"];
   erDemo: boolean;
+  startSidepanel?: SidepanelValg;
+  startKommentartraadId: string | null;
 }) {
   const [tittel, setTittel] = useState(dokument.tittel);
   const tittelRef = useRef(dokument.tittel);
@@ -120,6 +135,10 @@ function DokumentRedigering({
     sakReferanse,
   ).replace(":docId", dokument.id);
   const pdfForhåndsvisningUrl = RouteConfig.API.PDF_FORHÅNDSVISNING.replace(
+    ":sakId",
+    sakReferanse,
+  ).replace(":docId", dokument.id);
+  const kommentarUrl = RouteConfig.API.SAK_DOKUMENT_KOMMENTARER.replace(
     ":sakId",
     sakReferanse,
   ).replace(":docId", dokument.id);
@@ -302,6 +321,12 @@ function DokumentRedigering({
         sakId={sakReferanse}
         docId={dokument.id}
         variabelVerdier={variabelVerdier}
+        kommentarliste={kommentarliste}
+        kommentarinnlastingFeilet={kommentarinnlastingFeilet}
+        onLastKommentarerPåNytt={() => revalidator.revalidate()}
+        kommentarUrl={kommentarUrl}
+        startSidepanel={startSidepanel}
+        startKommentartraadId={startKommentartraadId}
         dokumentliste={
           dokumenter.length > 0 ? (
             <DokumentTre
@@ -357,12 +382,22 @@ export default function DokumentSide() {
     dokument,
     dokumenter,
     dokumentHistorikk,
+    kommentarliste,
+    kommentarinnlastingFeilet,
     sakReferanse,
     kanRedigere,
     variabelVerdier,
     miljø,
   } = useLoaderData<typeof loader>();
   const kodeverk = useKodeverk();
+  const [søkeparametre] = useSearchParams();
+
+  // Dyplenker fra sakshistorikk og varsler kan be om kommentarpanelet og en
+  // bestemt tråd: ?sidepanel=kommentarer&kommentartraad=<uuid>
+  const ønsketSidepanel = søkeparametre.get(SIDEPANEL_QUERY);
+  const startSidepanel =
+    ønsketSidepanel === KOMMENTAR_SIDEPANEL_VERDI ? ("kommentarer" as const) : undefined;
+  const startKommentartraadId = søkeparametre.get(KOMMENTARTRAAD_QUERY);
 
   // Saken lagrer enhetskoden, men i dokumentteksten skal «avdeling» vise enhetsnavnet.
   const variablerTilVisning = useMemo(
@@ -384,10 +419,14 @@ export default function DokumentSide() {
       dokument={dokument}
       dokumenter={dokumenter}
       dokumentHistorikk={dokumentHistorikk}
+      kommentarliste={kommentarliste}
+      kommentarinnlastingFeilet={kommentarinnlastingFeilet}
       sakReferanse={sakReferanse}
       kanRedigere={kanRedigere}
       variabelVerdier={variablerTilVisning}
       erDemo={miljø === "demo"}
+      startSidepanel={startSidepanel}
+      startKommentartraadId={startKommentartraadId}
     />
   );
 }

@@ -138,6 +138,47 @@ describe("søkKontrollsaker", () => {
   });
 });
 
+describe("hentHendelser", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it("beholder gruppert kommentaraktivitet fra backend", async () => {
+    const kommentarAktivitet = {
+      handling: "KOMMENTERTE",
+      dokumentId: "dokument-1",
+      dokumentTittel: "Rapport",
+      utfortAvIdent: "Z999999",
+      utfortAvNavn: "Test Saksbehandler",
+      antall: 2,
+      dato: "2026-09-17",
+      visningstekst: "Test Saksbehandler kommenterte to ganger i Rapport.",
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => [
+          {
+            hendelseId: "11111111-1111-4111-8111-111111111111",
+            tidspunkt: "2026-09-17T12:00:00Z",
+            hendelsesType: "DOKUMENT_KOMMENTERT",
+            sakId: 42,
+            kommentarAktivitet,
+          },
+        ],
+      }),
+    );
+
+    const { hentHendelser } = await import("./api.server");
+    const resultat = await hentHendelser("token", "42");
+
+    expect(resultat[0].kommentarAktivitet).toEqual(kommentarAktivitet);
+  });
+});
+
 describe("søkKontrollsakerOrganisasjon", () => {
   afterEach(() => {
     vi.restoreAllMocks();

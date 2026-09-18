@@ -20,6 +20,11 @@ export interface MockState {
   dokumenter: Map<string, DokumentNode[]>;
   dokumentInnhold: Map<string, DokumentInnhold>;
   dokumentHistorikk: Map<string, DokumentHistorikk[]>;
+  /**
+   * Kommentartråder per «sakId:docId». Lagres i mock-storens eget, litt rikere
+   * format (soft delete-flagg), derav `unknown[]` her – se `kommentarer.server.ts`.
+   */
+  dokumentKommentarer: Map<string, unknown[]>;
   filer: Map<string, FilResponse[]>;
   varsler: Varsel[];
   nesteFordelingssakId: number;
@@ -44,6 +49,7 @@ function lagFreshState(): MockState {
     dokumenter: new Map(),
     dokumentInnhold: new Map(),
     dokumentHistorikk: new Map(),
+    dokumentKommentarer: new Map(),
     filer: new Map(),
     varsler: lagInitialeVarsler(),
     nesteFordelingssakId: 10000,

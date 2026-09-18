@@ -1,5 +1,6 @@
 import {
   ArchiveIcon,
+  ChatIcon,
   CheckmarkCircleIcon,
   ArrowRightIcon,
   ArrowUndoIcon,
@@ -18,14 +19,17 @@ import {
   TrashIcon,
   XMarkOctagonIcon,
 } from "@navikt/aksel-icons";
-import { BodyShort, VStack } from "@navikt/ds-react";
+import { BodyShort, Link, VStack } from "@navikt/ds-react";
+import { Link as RouterLink } from "react-router";
+import { byggKommentarLenke } from "~/saker/filer/dokument/kommentarer/lenker";
+import { getSaksreferanse } from "~/saker/id";
 import {
   formaterBlokkeringsarsak,
   formaterHenleggelsesarsak,
   formaterStatus,
 } from "~/saker/visning";
 import { NORSK_TIDSSONE } from "~/utils/date-utils";
-import type { SakHendelse } from "./typer";
+import type { KommentarAktivitet, SakHendelse } from "./typer";
 
 export function erManuellHendelse(hendelse: SakHendelse): boolean {
   return hendelse.hendelsesType === "MANUELL_HENDELSE";
@@ -179,15 +183,44 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
       return "Fil åpnet";
     case "FIL_ARKIVERT":
       return "Fil arkivert";
+    case "DOKUMENT_KOMMENTAR_OPPRETTET":
+      return "Kommenterte dokument";
+    case "DOKUMENT_KOMMENTAR_SVAR":
+      return "Svarte på kommentarer";
+    case "DOKUMENT_KOMMENTAR_ADRESSERT":
+      return "Adresserte kommentarer";
+    case "DOKUMENT_KOMMENTAR_GJENAAPNET":
+      return "Gjenåpnet kommentarer";
+    // Fanger en eventuell samlet gruppetype fra backend.
+    case "DOKUMENT_KOMMENTARER":
+    case "DOKUMENT_KOMMENTERT":
+      return "Kommentaraktivitet på dokument";
     default:
       return hendelse.hendelsesType;
   }
+}
+
+/**
+ * Kommentarhendelser gjenkjennes på at backend har fylt `kommentarAktivitet`,
+ * ikke på hendelsestypen. Da tåler frontend at backend legger til flere
+ * kommentartyper uten at vi må endre koden.
+ */
+function erKommentarhendelse(
+  hendelse: SakHendelse,
+): hendelse is SakHendelse & { kommentarAktivitet: KommentarAktivitet } {
+  return !!hendelse.kommentarAktivitet;
 }
 
 export function hendelseBeskrivelse(
   hendelse: SakHendelse,
   forrigeHendelse?: SakHendelse,
 ): string | null {
+  if (erKommentarhendelse(hendelse)) {
+    // Backend har allerede formulert setningen, og den inneholder aldri
+    // kommentarinnhold. Vi viser den som den er i stedet for å bygge vår egen.
+    return hendelse.kommentarAktivitet.visningstekst;
+  }
+
   if (hendelse.hendelsesType === "MANUELL_HENDELSE") {
     return hendelse.beskrivelse ?? null;
   }
@@ -346,6 +379,15 @@ export function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
       return <DownloadIcon {...iconProps} />;
     case "FIL_ARKIVERT":
       return <ArchiveIcon {...iconProps} />;
+    case "DOKUMENT_KOMMENTAR_OPPRETTET":
+    case "DOKUMENT_KOMMENTAR_SVAR":
+    case "DOKUMENT_KOMMENTARER":
+    case "DOKUMENT_KOMMENTERT":
+      return <ChatIcon {...iconProps} />;
+    case "DOKUMENT_KOMMENTAR_ADRESSERT":
+      return <CheckmarkCircleIcon {...iconProps} />;
+    case "DOKUMENT_KOMMENTAR_GJENAAPNET":
+      return <ArrowUndoIcon {...iconProps} />;
     default:
       return <ClockIcon {...iconProps} />;
   }
@@ -358,6 +400,25 @@ export function HendelseInnhold({
   hendelse: SakHendelse;
   beskrivelse: string | null;
 }) {
+  if (erKommentarhendelse(hendelse) && hendelse.sakId) {
+    // Gruppert aktivitet har ingen trådId, så lenken åpner dokumentets
+    // kommentarpanel uten å peke på en enkelt tråd.
+    return (
+      <VStack gap="space-2">
+        {beskrivelse && <BodyShort size="small">{beskrivelse}</BodyShort>}
+        <Link
+          as={RouterLink}
+          to={byggKommentarLenke(
+            getSaksreferanse(hendelse.sakId),
+            hendelse.kommentarAktivitet.dokumentId,
+          )}
+        >
+          Åpne kommentarene
+        </Link>
+      </VStack>
+    );
+  }
+
   if (
     (hendelse.hendelsesType === "JOURNALPOST_OPPRETTET" ||
       hendelse.hendelsesType === "OPPGAVE_OPPRETTET") &&

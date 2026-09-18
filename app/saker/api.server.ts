@@ -13,7 +13,6 @@ import type {
   FilResponse,
 } from "~/saker/filer/typer";
 import {
-  kontrollsakHendelseResponseSchema,
   dokumentNodeSchema,
   kontrollsakPageResponseSchema,
   kontrollsakResponseSchema,
@@ -25,6 +24,7 @@ import {
   type KontrollsakSaksbehandler,
   type KontrollsakStatus,
 } from "./types.backend";
+import { sakHendelseSchema } from "./historikk/typer";
 
 const saksbehandlerListeSchema = z.array(
   z.object({
@@ -273,11 +273,7 @@ export async function hentHendelser(token: string, sakId: string) {
     headers: authHeaders(token),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke hente hendelser");
-  return parseEllerKastFeil(
-    z.array(kontrollsakHendelseResponseSchema),
-    await respons.json(),
-    "hentHendelser",
-  );
+  return parseEllerKastFeil(z.array(sakHendelseSchema), await respons.json(), "hentHendelser");
 }
 
 // --- Journalposter ---
