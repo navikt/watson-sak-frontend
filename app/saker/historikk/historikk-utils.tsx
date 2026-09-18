@@ -211,6 +211,16 @@ function erKommentarhendelse(
   return !!hendelse.kommentarAktivitet;
 }
 
+/**
+ * Kommentar- og kommentarløsningsaktivitet logges som egne hendelser, men
+ * skal ikke vises i sakshistorikken – de er allerede synlige der
+ * kommentarene lever (dokumentets kommentarpanel), og gjør historikklisten
+ * masete når saksbehandlere kommenterer/adresserer mye.
+ */
+export function skalVisesIHistorikk(hendelse: SakHendelse): boolean {
+  return !erKommentarhendelse(hendelse);
+}
+
 export function hendelseBeskrivelse(
   hendelse: SakHendelse,
   forrigeHendelse?: SakHendelse,
