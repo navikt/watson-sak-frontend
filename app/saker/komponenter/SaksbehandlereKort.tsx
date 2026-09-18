@@ -1,4 +1,4 @@
-import { PersonPencilIcon, PersonPlusIcon, TrashIcon } from "@navikt/aksel-icons";
+import { PersonPencilIcon, PersonPlusIcon } from "@navikt/aksel-icons";
 import { BodyShort, Button, HStack, Label, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import { useFetcher } from "react-router";
@@ -68,6 +68,7 @@ export function SaksbehandlereKort({
   const kodeverk = useKodeverk();
   const fetcher = useFetcher();
   const tildelMegFetcher = useFetcher();
+  const fjernSaksbehandlerFetcher = useFetcher();
   const statusregler = hentStatusbaserteSaksregler(sak.status);
   const kanEndreTilgang = statusregler.erAktiv && sak.blokkert === null;
   const kanEndreDeltTilgang = statusregler.kanEndreDeltTilgang && sak.blokkert === null;
@@ -89,6 +90,13 @@ export function SaksbehandlereKort({
       { method: "post", action: sakPath },
     );
   }
+
+  function handleFjernSaksbehandler() {
+    fjernSaksbehandlerFetcher.submit({ handling: "FRISTILL" }, { method: "post", action: sakPath });
+  }
+
+  // Kun sakens ansvarlige saksbehandler eller en leder kan fjerne ansvarlig saksbehandler.
+  const kanFjerneSaksbehandler = kanEndreTilgang && (erEier || innloggetBruker.erLeder);
 
   return (
     <>
@@ -123,22 +131,35 @@ export function SaksbehandlereKort({
           </Label>
 
           {ansvarligSaksbehandler ? (
-            <SaksbehandlerRad
-              saksbehandler={ansvarligSaksbehandler}
-              handling={
-                kanEndreTilgang ? (
-                  <Button
-                    type="button"
-                    variant="tertiary"
-                    size="xsmall"
-                    onClick={() => setVisOverforModal(true)}
-                    aria-label="Endre ansvarlig saksbehandler"
-                  >
-                    Endre
-                  </Button>
-                ) : null
-              }
-            />
+            <>
+              <SaksbehandlerRad
+                saksbehandler={ansvarligSaksbehandler}
+                handling={
+                  kanEndreTilgang ? (
+                    <Button
+                      type="button"
+                      variant="tertiary"
+                      size="xsmall"
+                      onClick={() => setVisOverforModal(true)}
+                      aria-label="Endre ansvarlig saksbehandler"
+                    >
+                      Endre
+                    </Button>
+                  ) : null
+                }
+              />
+              {kanFjerneSaksbehandler && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="small"
+                  onClick={handleFjernSaksbehandler}
+                  loading={fjernSaksbehandlerFetcher.state !== "idle"}
+                >
+                  Fjern saksbehandler
+                </Button>
+              )}
+            </>
           ) : (
             <>
               <BodyShort className="text-ax-text-neutral-subtle">
@@ -189,7 +210,6 @@ export function SaksbehandlereKort({
                           type="button"
                           variant="tertiary"
                           size="xsmall"
-                          icon={<TrashIcon aria-hidden />}
                           onClick={() => fjernDeltTilgang(saksbehandler.navIdent)}
                           aria-label={`Fjern deling med ${saksbehandler.navn}`}
                         >
