@@ -78,6 +78,35 @@ describe("SakHistorikk", () => {
     expect(screen.getByText(/Status: Opprettet/)).toBeDefined();
   });
 
+  it("skjuler kommentarhendelser fra historikken", async () => {
+    const kommentarHendelse = lagBackendHendelse({
+      hendelseId: "00000000-0000-4000-8000-000000000456",
+      hendelsesType: "DOKUMENT_KOMMENTAR_OPPRETTET",
+      kommentarAktivitet: {
+        handling: "THREAD_CREATED",
+        dokumentId: "9f1c0a2e-0000-4000-8000-000000000001",
+        dokumentTittel: "Kontrollrapport",
+        utfortAvIdent: "Z999999",
+        utfortAvNavn: "Ola Nordmann",
+        antall: 1,
+        dato: "2026-03-01",
+        visningstekst: "Ola Nordmann kommenterte i dokumentet «Kontrollrapport».",
+      },
+    });
+
+    await renderMedRouter(
+      <SakHistorikk
+        redigerbar={true}
+        sakId={1}
+        hendelser={[lagBackendHendelse(), kommentarHendelse]}
+      />,
+    );
+
+    expect(screen.getByText("Sak opprettet")).toBeDefined();
+    expect(screen.queryByText(/kommenterte i dokumentet/)).toBeNull();
+    expect(screen.getByText("Vis all historikk (1)")).toBeDefined();
+  });
+
   it("viser historikktidspunkt i norsk tidssone", async () => {
     await renderMedRouter(
       <SakHistorikk

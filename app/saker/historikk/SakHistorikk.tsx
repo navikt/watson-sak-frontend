@@ -7,7 +7,7 @@ import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { useDisclosure } from "~/utils/useDisclosure";
 import { HistorikkProsessListe } from "./HistorikkProsessListe";
-import { lagForrigeHendelseKart } from "./historikk-utils";
+import { lagForrigeHendelseKart, skalVisesIHistorikk } from "./historikk-utils";
 import { LeggTilHistorikkModal } from "./LeggTilHistorikkModal";
 import { RedigerHistorikkModal } from "./RedigerHistorikkModal";
 import { VisAllHistorikkModal } from "./VisAllHistorikkModal";
@@ -34,8 +34,14 @@ export function SakHistorikk({
   const [valgtHendelse, setValgtHendelse] = useState<SakHendelse | null>(null);
   const innloggetBruker = useInnloggetBruker();
   const fetcher = useFetcher();
-  const synligeHendelser = hendelser.slice(0, MAKS_SYNLIGE_HENDELSER);
-  const forrigeHendelseKart = useMemo(() => lagForrigeHendelseKart(hendelser), [hendelser]);
+  // Kommentaraktivitet (opprettet/besvart/adressert/gjenåpnet) vises allerede
+  // i dokumentets kommentarpanel og skal ikke dukke opp i sakshistorikken.
+  const historikkHendelser = useMemo(() => hendelser.filter(skalVisesIHistorikk), [hendelser]);
+  const synligeHendelser = historikkHendelser.slice(0, MAKS_SYNLIGE_HENDELSER);
+  const forrigeHendelseKart = useMemo(
+    () => lagForrigeHendelseKart(historikkHendelser),
+    [historikkHendelser],
+  );
   const slettFeilmelding =
     fetcher.state === "idle" && fetcher.data && "ok" in fetcher.data && !fetcher.data.ok
       ? fetcher.data.feil?.skjema?.[0]
@@ -78,7 +84,7 @@ export function SakHistorikk({
           {slettFeilmelding}
         </Alert>
       )}
-      {hendelser.length === 0 ? (
+      {historikkHendelser.length === 0 ? (
         <BodyShort>Ingen historikk for denne saken.</BodyShort>
       ) : (
         <>
@@ -91,7 +97,7 @@ export function SakHistorikk({
             forrigeHendelseKart={forrigeHendelseKart}
           />
           <Button variant="tertiary" size="small" onClick={onÅpneVisAlle} className="mt-2">
-            Vis all historikk ({hendelser.length})
+            Vis all historikk ({historikkHendelser.length})
           </Button>
         </>
       )}
@@ -106,7 +112,7 @@ export function SakHistorikk({
       )}
       {visAlleÅpen && (
         <VisAllHistorikkModal
-          hendelser={hendelser}
+          hendelser={historikkHendelser}
           åpen={visAlleÅpen}
           onClose={onLukkVisAlle}
           redigerbar={redigerbar}
