@@ -10,6 +10,7 @@ import { getSaksreferanse } from "~/saker/id";
 import { getBeskrivelse, getKildeText, getPersonIdent, getYtelseTyper } from "~/saker/visning";
 import type { Route } from "./+types/SakDetaljSide.route";
 import { action, loader } from "./SakDetaljSide.server";
+import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 
 vi.mock("~/config/env.server", () => ({
   skalBrukeMockdata: true,
@@ -17,12 +18,14 @@ vi.mock("~/config/env.server", () => ({
 }));
 
 vi.mock("~/auth/innlogget-bruker.server", () => ({
-  hentInnloggetBruker: async () => ({
+  hentInnloggetBruker: vi.fn(async () => ({
     navIdent: "Z999999",
     name: "Test Saksbehandler",
     preferredUsername: "test@nav.no",
     enhet: "4812",
-  }),
+    enhetId: "by295h",
+    erLeder: false,
+  })),
 }));
 
 const testRequest = new Request("http://localhost");
@@ -1008,6 +1011,14 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
 describe("SakDetaljSide tilgangskontroll", () => {
   beforeEach(() => {
     resetDefaultSession();
+    vi.mocked(hentInnloggetBruker).mockResolvedValue({
+      navIdent: "Z999999",
+      name: "Test Saksbehandler",
+      preferredUsername: "test@nav.no",
+      enhet: "4812",
+      enhetId: "by295h",
+      erLeder: false,
+    });
   });
 
   it("avviser mutasjon fra ikke-eier med 403", async () => {
@@ -1084,7 +1095,39 @@ describe("SakDetaljSide tilgangskontroll", () => {
     expect(resultat).toMatchObject({ ok: true });
   });
 
-  it("tillater FRISTILL for ikke-eier", async () => {
+  it("avviser FRISTILL for ikke-eier uten lederrolle", async () => {
+    const kontrollsak = hentFordelingssaker(hentMockState(testRequest))[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z111111",
+      navn: "Annen Saksbehandler",
+      enhet: "4800",
+    };
+
+    const formData = new FormData();
+    formData.set("handling", "FRISTILL");
+
+    await expect(
+      action({
+        request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+          method: "POST",
+          body: formData,
+        }),
+        params: { sakId: kontrollsakRef },
+      } as Route.ActionArgs),
+    ).rejects.toMatchObject({ init: { status: 403 } });
+  });
+
+  it("tillater FRISTILL for leder som ikke er eier", async () => {
+    vi.mocked(hentInnloggetBruker).mockResolvedValue({
+      navIdent: "Z999999",
+      name: "Leder Lederesen",
+      preferredUsername: "leder@nav.no",
+      enhet: "4812",
+      enhetId: "by295h",
+      erLeder: true,
+    });
+
     const kontrollsak = hentFordelingssaker(hentMockState(testRequest))[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
     kontrollsak.saksbehandlere.eier = {
