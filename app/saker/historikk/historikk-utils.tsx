@@ -23,11 +23,7 @@ import { BodyShort, Link, VStack } from "@navikt/ds-react";
 import { Link as RouterLink } from "react-router";
 import { byggKommentarLenke } from "~/saker/filer/dokument/kommentarer/lenker";
 import { getSaksreferanse } from "~/saker/id";
-import {
-  formaterBlokkeringsarsak,
-  formaterHenleggelsesarsak,
-  formaterStatus,
-} from "~/saker/visning";
+import { formaterHenleggelsesarsak, formaterStatus } from "~/saker/visning";
 import { formaterSteg } from "~/saker/visning";
 import { NORSK_TIDSSONE } from "~/utils/date-utils";
 import type { KommentarAktivitet, SakHendelse } from "./typer";
