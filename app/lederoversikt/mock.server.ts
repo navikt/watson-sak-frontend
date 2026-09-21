@@ -3,14 +3,14 @@ import { mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import { getSaksenhet } from "~/saker/selectors";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import {
-  LEDERSTATISTIKK_STATUSER,
+  LEDERSTATISTIKK_STEG,
   type LederAnsattStatistikk,
-  type LederArbeidsstatus,
   type LederStatistikk,
+  type LederStatus,
 } from "./types";
 
-const ARBEIDSSTATUSER: LederArbeidsstatus[] = [
-  "IKKE_BLOKKERT",
+const STATUSER: LederStatus[] = [
+  "UTEN_STATUS",
   "VENTER_PA_INFORMASJON",
   "VENTER_PA_VEDTAK",
   "I_BERO",
@@ -24,24 +24,21 @@ export function lagMockLederStatistikk(
   iDag: Date = new Date(),
 ): LederStatistikk {
   const saker = hentAlleSaker(request).filter(
-    (sak) => getSaksenhet(sak) === enhetId && sak.status !== "AVSLUTTET",
+    (sak) => getSaksenhet(sak) === enhetId && sak.steg !== "AVSLUTTET",
   );
   const grensedato = trekkFraDager(datoIOslo(iDag), 30);
   const erOverFrist = (sak: KontrollsakResponse) =>
     sak.oppdatert !== null && datoIOslo(new Date(sak.oppdatert)) <= grensedato;
 
+  const perSteg = Object.fromEntries(
+    LEDERSTATISTIKK_STEG.map((steg) => [steg, saker.filter((sak) => sak.steg === steg).length]),
+  ) as LederStatistikk["enhet"]["perSteg"];
   const perStatus = Object.fromEntries(
-    LEDERSTATISTIKK_STATUSER.map((status) => [
+    STATUSER.map((status) => [
       status,
-      saker.filter((sak) => sak.status === status).length,
+      saker.filter((sak) => (sak.status ?? "UTEN_STATUS") === status).length,
     ]),
-  ) as LederStatistikk["enhet"]["perStatus"];
-  const perArbeidsstatus = Object.fromEntries(
-    ARBEIDSSTATUSER.map((arbeidsstatus) => [
-      arbeidsstatus,
-      saker.filter((sak) => (sak.blokkert ?? "IKKE_BLOKKERT") === arbeidsstatus).length,
-    ]),
-  ) as Record<LederArbeidsstatus, number>;
+  ) as Record<LederStatus, number>;
 
   const ansatte: LederAnsattStatistikk[] = mockSaksbehandlerDetaljer
     .filter((ansatt) => ansatt.enhet === enhetId)
@@ -66,8 +63,8 @@ export function lagMockLederStatistikk(
     enhet: {
       totaltAntallIkkeAvsluttede: saker.length,
       antallOverFrist: saker.filter(erOverFrist).length,
+      perSteg,
       perStatus,
-      perArbeidsstatus,
       antallUfordelte: ufordelte.length,
     },
     ansatte: {

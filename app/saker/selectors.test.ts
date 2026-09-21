@@ -11,7 +11,7 @@ import {
   getOpprettetDato,
   getPeriodeText,
   getSaksenhet,
-  getStatusVariantForSak,
+  getStegVariantForSak,
   getTags,
 } from "./selectors";
 
@@ -33,12 +33,12 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
         enhet: "4801",
       },
     },
-    status: "UTREDES",
+    steg: "UTREDES",
     kategori: "ARBEID",
     kilde: "NAV_KONTROLL",
     misbruktype: [],
     prioritet: "NORMAL",
-    blokkert: null,
+    status: null,
     henleggelsesarsak: null,
     ytelser: [
       {
@@ -90,11 +90,11 @@ describe("saker-selectors", () => {
     expect(getPeriodeText(lagKontrollsak({ ytelser: [] }))).toBeNull();
   });
 
-  it("mapper backend-kategori og backend-statusvariant for kontrollsak", () => {
+  it("mapper backend-kategori og backend-stegvariant for kontrollsak", () => {
     const sak = lagKontrollsak();
 
     expect(getKategoriText(sak)).toBe("Arbeid");
-    expect(getStatusVariantForSak(sak)).toBe("warning");
+    expect(getStegVariantForSak(sak)).toBe("warning");
   });
 
   it("bruker sak.enhet som saksenhet og skjuler legacy-only metadata for kontrollsak", () => {

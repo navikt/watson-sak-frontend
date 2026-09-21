@@ -34,11 +34,11 @@ async function lastSaksbehandlerData(
   }
 
   const aktiveMineSaker = mineSakerHosInnloggetBruker.filter(
-    (sak) => sak.status !== "ANMELDT" && sak.status !== "HENLAGT" && sak.status !== "AVSLUTTET",
+    (sak) => sak.steg !== "ANMELDT" && sak.steg !== "HENLAGT" && sak.steg !== "AVSLUTTET",
   );
 
   const sakerForVelkomstOppsummering = mineSakerHosInnloggetBruker.filter(
-    (sak) => sak.status !== "HENLAGT" && sak.status !== "AVSLUTTET",
+    (sak) => sak.steg !== "HENLAGT" && sak.steg !== "AVSLUTTET",
   );
 
   const mineSaker = [...aktiveMineSaker]

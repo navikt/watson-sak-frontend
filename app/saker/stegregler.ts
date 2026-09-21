@@ -1,6 +1,6 @@
-import type { KontrollsakStatus } from "~/saker/types.backend";
+import type { KontrollsakSteg } from "~/saker/types.backend";
 
-export type StatusbaserteSaksregler = {
+export type StegbaserteSaksregler = {
   erAktiv: boolean;
   kanUtføreUtredningsarbeid: boolean;
   kanLasteOppFiler: boolean;
@@ -9,9 +9,9 @@ export type StatusbaserteSaksregler = {
   kanEndreDeltTilgang: boolean;
 };
 
-export function hentStatusbaserteSaksregler(status: KontrollsakStatus): StatusbaserteSaksregler {
-  const erAktiv = status !== "AVSLUTTET";
-  const kanUtføreUtredningsarbeid = erAktiv && status !== "OPPRETTET";
+export function hentStegbaserteSaksregler(steg: KontrollsakSteg): StegbaserteSaksregler {
+  const erAktiv = steg !== "AVSLUTTET";
+  const kanUtføreUtredningsarbeid = erAktiv && steg !== "OPPRETTET";
 
   return {
     erAktiv,

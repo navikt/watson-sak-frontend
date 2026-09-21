@@ -13,12 +13,12 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
       deltMed: [],
       opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
     },
-    status: "OPPRETTET",
+    steg: "OPPRETTET",
     kategori: "ANNET",
     kilde: "NAV_KONTROLL",
     misbruktype: [],
     prioritet: "NORMAL",
-    blokkert: null,
+    status: null,
     henleggelsesarsak: null,
     ytelser: [
       {
@@ -46,11 +46,11 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
 describe("beregnNokkeltall", () => {
   test("teller pågående saker (ekskluderer henlagte og avsluttede)", () => {
     const saker = [
-      lagKontrollsak({ id: 1, status: "OPPRETTET" }),
-      lagKontrollsak({ id: 2, status: "UTREDES" }),
-      lagKontrollsak({ id: 3, status: "HENLAGT" }),
-      lagKontrollsak({ id: 4, status: "AVSLUTTET" }),
-      lagKontrollsak({ id: 5, status: "STRAFFERETTSLIG_VURDERING" }),
+      lagKontrollsak({ id: 1, steg: "OPPRETTET" }),
+      lagKontrollsak({ id: 2, steg: "UTREDES" }),
+      lagKontrollsak({ id: 3, steg: "HENLAGT" }),
+      lagKontrollsak({ id: 4, steg: "AVSLUTTET" }),
+      lagKontrollsak({ id: 5, steg: "STRAFFERETTSLIG_VURDERING" }),
     ];
 
     const resultat = beregnNokkeltall(saker, {});
@@ -58,11 +58,11 @@ describe("beregnNokkeltall", () => {
     expect(resultat.pagaendeSaker).toBe(3);
   });
 
-  test("teller saker på vent (blokkert er satt)", () => {
+  test("teller saker på vent (status er satt)", () => {
     const saker = [
-      lagKontrollsak({ id: 1, blokkert: "I_BERO" }),
-      lagKontrollsak({ id: 2, blokkert: "VENTER_PA_VEDTAK" }),
-      lagKontrollsak({ id: 3, blokkert: null }),
+      lagKontrollsak({ id: 1, status: "I_BERO" }),
+      lagKontrollsak({ id: 2, status: "VENTER_PA_VEDTAK" }),
+      lagKontrollsak({ id: 3, status: null }),
     ];
 
     const resultat = beregnNokkeltall(saker, {});
@@ -72,9 +72,9 @@ describe("beregnNokkeltall", () => {
 
   test("beregner prosent utredet innen 12 og 15 uker", () => {
     const saker = [
-      lagKontrollsak({ id: 1, status: "AVSLUTTET", opprettet: "2026-01-01T00:00:00Z" }),
-      lagKontrollsak({ id: 2, status: "AVSLUTTET", opprettet: "2026-01-01T00:00:00Z" }),
-      lagKontrollsak({ id: 3, status: "HENLAGT", opprettet: "2026-01-01T00:00:00Z" }),
+      lagKontrollsak({ id: 1, steg: "AVSLUTTET", opprettet: "2026-01-01T00:00:00Z" }),
+      lagKontrollsak({ id: 2, steg: "AVSLUTTET", opprettet: "2026-01-01T00:00:00Z" }),
+      lagKontrollsak({ id: 3, steg: "HENLAGT", opprettet: "2026-01-01T00:00:00Z" }),
     ];
 
     const avslutningsdatoer: Avslutningsdatoer = {
@@ -91,8 +91,8 @@ describe("beregnNokkeltall", () => {
 
   test("beregner gjennomsnittlig saksbehandlingstid", () => {
     const saker = [
-      lagKontrollsak({ id: 1, status: "AVSLUTTET", opprettet: "2026-01-01T00:00:00Z" }),
-      lagKontrollsak({ id: 2, status: "HENLAGT", opprettet: "2026-01-01T00:00:00Z" }),
+      lagKontrollsak({ id: 1, steg: "AVSLUTTET", opprettet: "2026-01-01T00:00:00Z" }),
+      lagKontrollsak({ id: 2, steg: "HENLAGT", opprettet: "2026-01-01T00:00:00Z" }),
     ];
 
     const avslutningsdatoer: Avslutningsdatoer = {
@@ -107,8 +107,8 @@ describe("beregnNokkeltall", () => {
 
   test("returnerer 0 for prosenter og snitt når ingen saker er avsluttet", () => {
     const saker = [
-      lagKontrollsak({ id: 1, status: "OPPRETTET" }),
-      lagKontrollsak({ id: 2, status: "UTREDES" }),
+      lagKontrollsak({ id: 1, steg: "OPPRETTET" }),
+      lagKontrollsak({ id: 2, steg: "UTREDES" }),
     ];
 
     const resultat = beregnNokkeltall(saker, {});

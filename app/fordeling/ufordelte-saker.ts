@@ -2,7 +2,7 @@ import { forskjellIDager } from "~/utils/date-utils";
 import { getSaksreferanse } from "~/saker/id";
 export { paginerElementer } from "~/utils/paginering";
 import type { FordelingSak } from "./typer";
-import type { KontrollsakStatus } from "~/saker/types.backend";
+import type { KontrollsakSteg } from "~/saker/types.backend";
 
 export const ufordelteSorteringskolonner = [
   "saksid",
@@ -19,7 +19,7 @@ interface UfordelteFiltre {
   kategorier: string[];
   misbrukstyper: string[];
   merkinger: string[];
-  statuser: KontrollsakStatus[];
+  steg: KontrollsakSteg[];
 }
 
 export function hentUfordelteFiltervalg(saker: FordelingSak[]) {
@@ -46,9 +46,9 @@ export function filtrerUfordelteSaker(
     const matcherMerking =
       filtre.merkinger.length === 0 ||
       sak.merking.some((merking) => filtre.merkinger.includes(merking));
-    const matcherStatus = filtre.statuser.length === 0 || filtre.statuser.includes(sak.statusKode);
+    const matcherSteg = filtre.steg.length === 0 || filtre.steg.includes(sak.stegKode);
 
-    return matcherKategori && matcherMisbrukstype && matcherMerking && matcherStatus;
+    return matcherKategori && matcherMisbrukstype && matcherMerking && matcherSteg;
   });
 }
 
@@ -108,7 +108,7 @@ function hentSorteringsverdi(sak: FordelingSak, kolonne: UfordeltSorteringskolon
     case "misbrukstype":
       return sak.misbrukstyper.join(", ");
     case "status":
-      return sak.status;
+      return sak.steg;
     case "opprettet":
       return sak.opprettetDato;
     case "oppdatert":

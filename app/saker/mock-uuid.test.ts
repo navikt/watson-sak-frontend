@@ -35,8 +35,8 @@ describe("normaliserLegacyKontrollsak", () => {
     });
 
     expect(sak.id).toBe(201);
-    expect(sak.status).toBe("UTREDES");
-    expect(sak.blokkert).toBeNull();
+    expect(sak.steg).toBe("UTREDES");
+    expect(sak.status).toBeNull();
     expect(sak.kilde).toBe("PUBLIKUM");
     expect(sak.misbruktype).toEqual(["SVART_ARBEID"]);
     expect(sak.personNavn).toBe("Ola Nordmann");
@@ -69,8 +69,8 @@ describe("normaliserLegacyKontrollsak", () => {
     const sakFørKall = { ...sak };
     oppdaterTilgjengeligeHandlinger(sak);
 
+    expect(sak.steg).toBe(sakFørKall.steg);
     expect(sak.status).toBe(sakFørKall.status);
-    expect(sak.blokkert).toBe(sakFørKall.blokkert);
   });
 
   it("faller tilbake trygt når legacy-eier og kategorifelter mangler", () => {
@@ -90,8 +90,8 @@ describe("normaliserLegacyKontrollsak", () => {
     });
 
     expect(sak.id).toBe(7);
-    expect(sak.status).toBe("OPPRETTET");
-    expect(sak.blokkert).toBeNull();
+    expect(sak.steg).toBe("OPPRETTET");
+    expect(sak.status).toBeNull();
     expect(sak.kategori).toBe("ANNET");
     expect(sak.kilde).toBe("ANNET");
     expect(sak.misbruktype).toEqual([]);
@@ -124,8 +124,8 @@ describe("normaliserLegacyKontrollsak", () => {
       opprettet: "2026-01-01T00:00:00Z",
     });
 
-    expect(sak.status).toBe("OPPRETTET");
-    expect(sak.blokkert).toBeNull();
+    expect(sak.steg).toBe("OPPRETTET");
+    expect(sak.status).toBeNull();
     expect(sak.saksbehandlere.eier).toBeNull();
     expect(sak.saksbehandlere.opprettetAv).toEqual({
       navIdent: "Z123456",
@@ -144,11 +144,11 @@ describe("normaliserLegacyKontrollsak", () => {
       opprettet: "2026-01-01T00:00:00Z",
     });
 
-    expect(sak.status).toBe("HENLAGT");
-    expect(sak.blokkert).toBeNull();
+    expect(sak.steg).toBe("HENLAGT");
+    expect(sak.status).toBeNull();
   });
 
-  it("mapper I_BERO til OPPRETTET-status med blokkert I_BERO", () => {
+  it("mapper I_BERO til OPPRETTET-steg med status I_BERO", () => {
     const sak = normaliserLegacyKontrollsak({
       id: "401",
       personIdent: "12345678901",
@@ -158,11 +158,11 @@ describe("normaliserLegacyKontrollsak", () => {
       opprettet: "2026-01-01T00:00:00Z",
     });
 
-    expect(sak.blokkert).toBe("I_BERO");
-    expect(sak.status).toBe("OPPRETTET");
+    expect(sak.status).toBe("I_BERO");
+    expect(sak.steg).toBe("OPPRETTET");
   });
 
-  it("mapper VENTER_PA_VEDTAK til UTREDES-status med blokkert VENTER_PA_VEDTAK", () => {
+  it("mapper VENTER_PA_VEDTAK til UTREDES-steg med status VENTER_PA_VEDTAK", () => {
     const sak = normaliserLegacyKontrollsak({
       id: "501",
       personIdent: "12345678901",
@@ -172,7 +172,7 @@ describe("normaliserLegacyKontrollsak", () => {
       opprettet: "2026-01-01T00:00:00Z",
     });
 
-    expect(sak.status).toBe("UTREDES");
-    expect(sak.blokkert).toBe("VENTER_PA_VEDTAK");
+    expect(sak.steg).toBe("UTREDES");
+    expect(sak.status).toBe("VENTER_PA_VEDTAK");
   });
 });

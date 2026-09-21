@@ -6,16 +6,16 @@ import { hentKontrollsaker } from "~/fordeling/api.server";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { RouteConfig } from "~/routeConfig";
 import { hentMineSaker } from "~/saker/mock-alle-saker.server";
-import { formaterStatus } from "~/saker/visning";
-import type { Blokkeringsarsak, KontrollsakResponse } from "~/saker/types.backend";
+import { formaterSteg } from "~/saker/visning";
+import type { KontrollsakResponse, KontrollsakStatus } from "~/saker/types.backend";
 import type { Route } from "./+types/MineSakerSide.route";
 import { MineSakerInnhold } from "./MineSakerInnhold";
 import {
-  ALLE_STATUSER,
+  ALLE_STEG,
   ALLE_VENTESTATUSER,
   filtrerMineSaker,
   formaterVentestatus,
-  parseStatuser,
+  parseSteg,
   parseVentestatuser,
 } from "./filtre";
 
@@ -27,20 +27,16 @@ export async function loader({ request }: Route.LoaderArgs) {
   const innloggetBruker = await hentInnloggetBruker({ request });
 
   const url = new URL(request.url);
-  const harFilterParams = url.searchParams.has("status") || url.searchParams.has("ventestatus");
+  const harFilterParams = url.searchParams.has("steg") || url.searchParams.has("status");
 
-  const statusFilter = harFilterParams ? parseStatuser(url.searchParams.getAll("status")) : [];
+  const stegFilter = harFilterParams ? parseSteg(url.searchParams.getAll("steg")) : [];
 
-  const ventestatusFilter = harFilterParams
-    ? parseVentestatuser(url.searchParams.getAll("ventestatus"))
-    : [];
+  const statusFilter = harFilterParams ? parseVentestatuser(url.searchParams.getAll("status")) : [];
 
-  // Map ventestatus til backend-parametre:
-  // "INGEN" → utenBlokkering=true, faktiske blokkeringsårsaker → blokkert[]
-  const blokkerteVentestatus = ventestatusFilter.filter(
-    (v): v is Blokkeringsarsak => v !== "INGEN",
-  );
-  const harIngenVentestatus = ventestatusFilter.length > 0 && ventestatusFilter.includes("INGEN");
+  // Map status-filteret til backend-parametre:
+  // "INGEN" → utenStatus=true, faktiske blokkerende statuser → status[]
+  const blokkerendeStatus = statusFilter.filter((v): v is KontrollsakStatus => v !== "INGEN");
+  const harIngenStatus = statusFilter.length > 0 && statusFilter.includes("INGEN");
 
   let saker: KontrollsakResponse[];
   let deltMedSaker: KontrollsakResponse[];
@@ -51,9 +47,9 @@ export async function loader({ request }: Route.LoaderArgs) {
       page: 1,
       // TODO: Legg til paginering (se RAILS-2-1). size=200 er en midlertidig øvre grense.
       size: 200,
-      status: statusFilter.length > 0 ? statusFilter : undefined,
-      blokkert: blokkerteVentestatus.length > 0 ? blokkerteVentestatus : undefined,
-      utenBlokkering: harIngenVentestatus ? true : undefined,
+      steg: stegFilter.length > 0 ? stegFilter : undefined,
+      status: blokkerendeStatus.length > 0 ? blokkerendeStatus : undefined,
+      utenStatus: harIngenStatus ? true : undefined,
     };
     const [mineSakerResultat, tilknyttedeSakerResultat] = await Promise.all([
       hentKontrollsaker({ ...felles, ansvarligNavIdent: innloggetBruker.navIdent }),
@@ -65,7 +61,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     );
   } else {
     const alleSaker = hentMineSaker(request, innloggetBruker.navIdent, innloggetBruker.name);
-    saker = filtrerMineSaker(alleSaker, statusFilter, ventestatusFilter);
+    saker = filtrerMineSaker(alleSaker, stegFilter, statusFilter);
     deltMedSaker = [];
   }
 
@@ -73,12 +69,12 @@ export async function loader({ request }: Route.LoaderArgs) {
     saker,
     deltMedSaker,
     filterAlternativer: {
-      status: ALLE_STATUSER.map((s) => ({ verdi: s, etikett: formaterStatus(s) })),
-      ventestatus: ALLE_VENTESTATUSER.map((v) => ({ verdi: v, etikett: formaterVentestatus(v) })),
+      steg: ALLE_STEG.map((s) => ({ verdi: s, etikett: formaterSteg(s) })),
+      status: ALLE_VENTESTATUSER.map((v) => ({ verdi: v, etikett: formaterVentestatus(v) })),
     },
     aktivtFilter: {
+      steg: stegFilter,
       status: statusFilter,
-      ventestatus: ventestatusFilter,
     },
   };
 }

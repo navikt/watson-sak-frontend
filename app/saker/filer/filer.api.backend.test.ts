@@ -29,7 +29,7 @@ vi.mock("~/saker/api.server", () => ({
 }));
 
 const sak = {
-  status: "UTREDES",
+  steg: "UTREDES",
 } as KontrollsakResponse;
 
 function uploadRequest(): Request {
@@ -49,14 +49,14 @@ describe("filer.api POST — backend-sti", () => {
     mockLastOppFil.mockResolvedValue({ id: "fil-1", filnavn: "bevis.pdf" });
   });
 
-  it("laster opp fil når statusen tillater det", async () => {
+  it("laster opp fil når steget tillater det", async () => {
     await actionMedBackend();
 
     expect(mockLastOppFil).toHaveBeenCalledWith("mock-token", "SAK-1", expect.any(File));
   });
 
   it("avviser opplasting på avsluttet sak før fil-API-et kalles", async () => {
-    mockHentKontrollsak.mockResolvedValue({ ...sak, status: "AVSLUTTET" });
+    mockHentKontrollsak.mockResolvedValue({ ...sak, steg: "AVSLUTTET" });
 
     await expect(actionMedBackend()).rejects.toMatchObject({ init: { status: 403 } });
     expect(mockLastOppFil).not.toHaveBeenCalled();

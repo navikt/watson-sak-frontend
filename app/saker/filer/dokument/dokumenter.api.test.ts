@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getSaksreferanse } from "~/saker/id";
-import type { KontrollsakSaksbehandler, KontrollsakStatus } from "~/saker/types.backend";
+import type { KontrollsakSaksbehandler, KontrollsakSteg } from "~/saker/types.backend";
 import { hentFordelingssaker } from "~/testing/mock-store/alle-saker.server";
 import {
   hentDokument,
@@ -45,12 +45,12 @@ const annenSaksbehandler: KontrollsakSaksbehandler = {
 function settOppSakMedDokument(opts: {
   eier: KontrollsakSaksbehandler | null;
   deltMed: KontrollsakSaksbehandler[];
-  status: KontrollsakStatus;
+  steg: KontrollsakSteg;
 }) {
   const sak = hentFordelingssaker(state())[0];
   sak.saksbehandlere.eier = opts.eier;
   sak.saksbehandlere.deltMed = opts.deltMed;
-  sak.status = opts.status;
+  sak.steg = opts.steg;
 
   const ref = getSaksreferanse(sak.id);
   const { id: docId } = opprettDokument(state(), String(sak.id), "Test Saksbehandler");
@@ -72,7 +72,7 @@ describe("dokumenter.api POST", () => {
     const sak = hentFordelingssaker(state())[0];
     sak.saksbehandlere.eier = eierMeg;
     sak.saksbehandlere.deltMed = [];
-    sak.status = "UTREDES";
+    sak.steg = "UTREDES";
     const ref = getSaksreferanse(sak.id);
     const antallFør = hentDokumenttreForSak(state(), String(sak.id)).length;
 
@@ -96,7 +96,7 @@ describe("dokumenter.api POST", () => {
     const sak = hentFordelingssaker(state())[0];
     sak.saksbehandlere.eier = eierMeg;
     sak.saksbehandlere.deltMed = [];
-    sak.status = "UTREDES";
+    sak.steg = "UTREDES";
     const ref = getSaksreferanse(sak.id);
     const formData = new FormData();
     formData.set("malId", "arbeid");
@@ -122,7 +122,7 @@ describe("dokumenter.api POST", () => {
     const sak = hentFordelingssaker(state())[0];
     sak.saksbehandlere.eier = annenSaksbehandler;
     sak.saksbehandlere.deltMed = [];
-    sak.status = "UTREDES";
+    sak.steg = "UTREDES";
     const ref = getSaksreferanse(sak.id);
 
     await expect(
@@ -133,11 +133,11 @@ describe("dokumenter.api POST", () => {
     ).rejects.toMatchObject({ init: { status: 403 } });
   });
 
-  it("avviser opprettelse når saken har status Opprettet", async () => {
+  it("avviser opprettelse når saken har steg Opprettet", async () => {
     const sak = hentFordelingssaker(state())[0];
     sak.saksbehandlere.eier = eierMeg;
     sak.saksbehandlere.deltMed = [];
-    sak.status = "OPPRETTET";
+    sak.steg = "OPPRETTET";
     const ref = getSaksreferanse(sak.id);
 
     await expect(
@@ -158,7 +158,7 @@ describe("dokumenter.api DELETE", () => {
     const { sak, ref, docId } = settOppSakMedDokument({
       eier: eierMeg,
       deltMed: [],
-      status: "UTREDES",
+      steg: "UTREDES",
     });
 
     const resultat = await action({
@@ -174,7 +174,7 @@ describe("dokumenter.api DELETE", () => {
     const { sak, ref, docId } = settOppSakMedDokument({
       eier: eierMeg,
       deltMed: [],
-      status: "UTREDES",
+      steg: "UTREDES",
     });
 
     const formData = new FormData();
@@ -192,7 +192,7 @@ describe("dokumenter.api DELETE", () => {
   });
 
   it("ignorerer redirectTo som ikke er en trygg intern URL", async () => {
-    const { ref, docId } = settOppSakMedDokument({ eier: eierMeg, deltMed: [], status: "UTREDES" });
+    const { ref, docId } = settOppSakMedDokument({ eier: eierMeg, deltMed: [], steg: "UTREDES" });
 
     const formData = new FormData();
     formData.set("docId", docId);
@@ -210,7 +210,7 @@ describe("dokumenter.api DELETE", () => {
     const { ref, docId } = settOppSakMedDokument({
       eier: annenSaksbehandler,
       deltMed: [],
-      status: "UTREDES",
+      steg: "UTREDES",
     });
 
     await expect(
@@ -222,7 +222,7 @@ describe("dokumenter.api DELETE", () => {
     const { ref, docId } = settOppSakMedDokument({
       eier: eierMeg,
       deltMed: [],
-      status: "AVSLUTTET",
+      steg: "AVSLUTTET",
     });
 
     await expect(
@@ -230,11 +230,11 @@ describe("dokumenter.api DELETE", () => {
     ).rejects.toMatchObject({ init: { status: 403 } });
   });
 
-  it("avviser sletting når saken har status Opprettet", async () => {
+  it("avviser sletting når saken har steg Opprettet", async () => {
     const { ref, docId } = settOppSakMedDokument({
       eier: eierMeg,
       deltMed: [],
-      status: "OPPRETTET",
+      steg: "OPPRETTET",
     });
 
     await expect(
@@ -243,7 +243,7 @@ describe("dokumenter.api DELETE", () => {
   });
 
   it("svarer 404 når dokumentet ikke finnes", async () => {
-    const { ref } = settOppSakMedDokument({ eier: eierMeg, deltMed: [], status: "UTREDES" });
+    const { ref } = settOppSakMedDokument({ eier: eierMeg, deltMed: [], steg: "UTREDES" });
 
     await expect(
       action({ request: deleteRequest("finnes-ikke"), params: { sakId: ref } } as Route.ActionArgs),
@@ -251,7 +251,7 @@ describe("dokumenter.api DELETE", () => {
   });
 
   it("avviser metoder utenom POST/DELETE med 405", async () => {
-    const { ref } = settOppSakMedDokument({ eier: eierMeg, deltMed: [], status: "UTREDES" });
+    const { ref } = settOppSakMedDokument({ eier: eierMeg, deltMed: [], steg: "UTREDES" });
 
     await expect(
       action({

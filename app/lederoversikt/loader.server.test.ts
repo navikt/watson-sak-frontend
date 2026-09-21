@@ -33,15 +33,15 @@ const respons = {
   enhet: {
     totaltAntallIkkeAvsluttede: 7,
     antallOverFrist: 2,
-    perStatus: {
+    perSteg: {
       OPPRETTET: 1,
       UTREDES: 2,
       STRAFFERETTSLIG_VURDERING: 1,
       ANMELDT: 2,
       HENLAGT: 1,
     },
-    perArbeidsstatus: {
-      IKKE_BLOKKERT: 4,
+    perStatus: {
+      UTEN_STATUS: 4,
       VENTER_PA_INFORMASJON: 1,
       VENTER_PA_VEDTAK: 1,
       I_BERO: 1,

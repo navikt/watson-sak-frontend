@@ -19,13 +19,13 @@ import { getSaksreferanse } from "~/saker/id";
 import { getKategoriText, getOpprettetDato } from "~/saker/selectors";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import {
-  formaterBlokkeringsarsak,
   formaterMisbrukstype,
   formaterPrioritet,
+  formaterStatus,
   getBeskrivelse,
   getKildeText,
   getPersonIdent,
-  getStatus,
+  getStegOgStatusTekst,
 } from "~/saker/visning";
 import { formaterDato } from "~/utils/date-utils";
 
@@ -104,13 +104,13 @@ export function SøkSakOppsummering({ sak }: SøkSakOppsummeringProps) {
           </VStack>
 
           <HStack gap="space-2">
-            {sak.blokkert && (
+            {sak.status && (
               <Tag variant="outline" data-color="warning" size="medium">
-                {formaterBlokkeringsarsak(sak.blokkert)}
+                {formaterStatus(sak.status)}
               </Tag>
             )}
             <Tag variant="outline" data-color="success" size="medium">
-              {getStatus(sak)}
+              {getStegOgStatusTekst(sak)}
             </Tag>
           </HStack>
         </HStack>

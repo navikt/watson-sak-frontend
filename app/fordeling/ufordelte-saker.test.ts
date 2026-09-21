@@ -17,9 +17,9 @@ const lagSak = (overstyringer: Partial<FordelingSak>): FordelingSak => ({
   misbrukstyper: [],
   ytelser: ["Dagpenger"],
   merking: [],
-  status: "Opprettet",
-  statusKode: "OPPRETTET",
-  ventestatus: null,
+  steg: "Opprettet",
+  stegKode: "OPPRETTET",
+  status: null,
   ...overstyringer,
 });
 
@@ -39,7 +39,7 @@ describe("ufordelte-saker", () => {
     });
   });
 
-  it("filtrerer med kategori, misbrukstype, merking og status og justerer ugyldig side ved paginering", () => {
+  it("filtrerer med kategori, misbrukstype, merking og steg og justerer ugyldig side ved paginering", () => {
     const saker = [
       lagSak({ id: 1, kategori: "Arbeid", misbrukstyper: ["Svart arbeid"] }),
       lagSak({ id: 2, kategori: "Arbeid", misbrukstyper: ["Falsk identitet"] }),
@@ -52,7 +52,7 @@ describe("ufordelte-saker", () => {
       kategorier: ["Arbeid"],
       misbrukstyper: ["Svart arbeid"],
       merkinger: [],
-      statuser: [],
+      steg: [],
     });
 
     expect(filtrerteSaker.map((sak) => sak.id)).toEqual([1, 3]);
@@ -64,10 +64,10 @@ describe("ufordelte-saker", () => {
     });
   });
 
-  it("filtrerer på statuskode", () => {
+  it("filtrerer på stegkode", () => {
     const saker = [
-      lagSak({ id: 1, statusKode: "OPPRETTET" }),
-      lagSak({ id: 2, statusKode: "UTREDES" }),
+      lagSak({ id: 1, stegKode: "OPPRETTET" }),
+      lagSak({ id: 2, stegKode: "UTREDES" }),
     ];
 
     expect(
@@ -75,7 +75,7 @@ describe("ufordelte-saker", () => {
         kategorier: [],
         misbrukstyper: [],
         merkinger: [],
-        statuser: ["UTREDES"],
+        steg: ["UTREDES"],
       }).map((sak) => sak.id),
     ).toEqual([2]);
   });
@@ -117,7 +117,7 @@ describe("ufordelte-saker", () => {
         oppdatertDato: "2026-01-14",
         kategori: "Tiltak",
         ytelser: ["Sykepenger"],
-        status: "Utredes",
+        steg: "Utredes",
       }),
       lagSak({
         id: 1000,
@@ -125,7 +125,7 @@ describe("ufordelte-saker", () => {
         oppdatertDato: "2026-02-17",
         kategori: "Arbeid",
         ytelser: ["Barnetrygd"],
-        status: "Opprettet",
+        steg: "Opprettet",
       }),
       lagSak({
         id: 2000,
@@ -133,7 +133,7 @@ describe("ufordelte-saker", () => {
         oppdatertDato: "2026-01-21",
         kategori: "Samliv",
         ytelser: ["Dagpenger"],
-        status: "Avsluttet",
+        steg: "Avsluttet",
       }),
     ];
 

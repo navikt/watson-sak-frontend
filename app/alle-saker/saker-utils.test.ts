@@ -12,12 +12,12 @@ function lagSak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakRespon
       deltMed: [],
       opprettetAv: { navIdent: "Z654321", navn: "Oppretter", enhet: "4812" },
     },
-    status: "OPPRETTET",
+    steg: "OPPRETTET",
     kategori: "SAMLIV",
     kilde: "PUBLIKUM",
     misbruktype: ["SKJULT_SAMLIV"],
     prioritet: "NORMAL",
-    blokkert: null,
+    status: null,
     henleggelsesarsak: null,
     ytelser: [],
     merking: [],
@@ -93,7 +93,7 @@ describe("filtrerSaker", () => {
         kategori: [],
         misbrukstype: [],
         merking: [],
-        status: [],
+        steg: [],
       }),
     ).toHaveLength(2);
   });
@@ -105,7 +105,7 @@ describe("filtrerSaker", () => {
       kategori: ["SAMLIV"],
       misbrukstype: [],
       merking: [],
-      status: [],
+      steg: [],
     });
     expect(resultat).toHaveLength(1);
     expect(resultat[0].id).toBe(100);
@@ -118,7 +118,7 @@ describe("filtrerSaker", () => {
       kategori: [],
       misbrukstype: [],
       merking: [],
-      status: [],
+      steg: [],
     });
     expect(resultat).toHaveLength(1);
     expect(resultat[0].id).toBe(200);
@@ -131,7 +131,7 @@ describe("filtrerSaker", () => {
       kategori: ["ARBEID"],
       misbrukstype: [],
       merking: [],
-      status: [],
+      steg: [],
     });
     expect(resultat).toHaveLength(0);
   });
@@ -143,7 +143,7 @@ describe("filtrerSaker", () => {
       kategori: [],
       misbrukstype: ["SKJULT_SAMLIV"],
       merking: [],
-      status: [],
+      steg: [],
     });
     expect(resultat).toHaveLength(1);
     expect(resultat[0].id).toBe(100);
@@ -156,7 +156,7 @@ describe("filtrerSaker", () => {
       kategori: ["ARBEID"],
       misbrukstype: ["FIKTIVT_ARBEIDSFORHOLD"],
       merking: [],
-      status: [],
+      steg: [],
     });
     expect(resultat).toHaveLength(1);
     expect(resultat[0].id).toBe(200);
@@ -170,21 +170,21 @@ describe("filtrerSaker", () => {
       kategori: ["ARBEID"],
       misbrukstype: ["SKJULT_SAMLIV"],
       merking: [],
-      status: [],
+      steg: [],
     });
     expect(resultat).toHaveLength(0);
   });
 
-  it("filtrerer på status", () => {
-    const sakerMedUlikStatus = [...saker, lagSak({ id: 300, status: "UTREDES" })];
+  it("filtrerer på steg", () => {
+    const sakerMedUliktSteg = [...saker, lagSak({ id: 300, steg: "UTREDES" })];
 
-    const resultat = filtrerSaker(sakerMedUlikStatus, {
+    const resultat = filtrerSaker(sakerMedUliktSteg, {
       enhet: [],
       saksbehandler: [],
       kategori: [],
       misbrukstype: [],
       merking: [],
-      status: ["UTREDES"],
+      steg: ["UTREDES"],
     });
 
     expect(resultat).toHaveLength(1);

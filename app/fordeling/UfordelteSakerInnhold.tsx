@@ -22,8 +22,8 @@ import {
   type UfordeltSorteringsretning,
 } from "./ufordelte-saker";
 import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
-import { ALLE_STATUSER, parseStatuser } from "~/saker/status";
-import { formaterStatus } from "~/saker/visning";
+import { ALLE_STEG, parseSteg } from "~/saker/steg";
+import { formaterSteg } from "~/saker/visning";
 import type { FordelingSak } from "./typer";
 
 const antallPerSide = 6;
@@ -48,22 +48,19 @@ export function UfordelteSakerInnhold({
   const kategoriFilter = useFilterParam("kategori", { resetKeys: RESET_KEYS });
   const misbrukstypeFilter = useFilterParam("misbrukstype", { resetKeys: RESET_KEYS });
   const merkingFilter = useFilterParam("merking", { resetKeys: RESET_KEYS });
-  const statusFilter = useFilterParam("status", { resetKeys: RESET_KEYS });
+  const stegFilter = useFilterParam("steg", { resetKeys: RESET_KEYS });
 
   const valgtSide = Number.parseInt(searchParams.get("side") ?? "1", 10) || 1;
   const sorteringskolonne = hentSorteringskolonne(searchParams.get("sorter"));
   const sorteringsretning = hentSorteringsretning(searchParams.get("retning"));
 
   const filtervalg = useMemo(() => hentUfordelteFiltervalg(saker), [saker]);
-  const gyldigeStatuser = useMemo(
-    () => parseStatuser(statusFilter.valgteVerdier),
-    [statusFilter.valgteVerdier],
-  );
+  const gyldigSteg = useMemo(() => parseSteg(stegFilter.valgteVerdier), [stegFilter.valgteVerdier]);
   const aktiveFiltreVerdier = [
     ...kategoriFilter.valgteVerdier,
     ...misbrukstypeFilter.valgteVerdier,
     ...merkingFilter.valgteVerdier,
-    ...gyldigeStatuser.map((status) => formaterStatus(status)),
+    ...gyldigSteg.map((steg) => formaterSteg(steg)),
   ];
   const filterTekst = aktiveFiltreVerdier.length > 0 ? aktiveFiltreVerdier.join(", ") : null;
   const overskrift = filterTekst ? `Ufordelte saker – ${filterTekst}` : "Ufordelte saker";
@@ -73,14 +70,14 @@ export function UfordelteSakerInnhold({
         kategorier: kategoriFilter.valgteVerdier,
         misbrukstyper: misbrukstypeFilter.valgteVerdier,
         merkinger: merkingFilter.valgteVerdier,
-        statuser: gyldigeStatuser,
+        steg: gyldigSteg,
       }),
     [
       saker,
       kategoriFilter.valgteVerdier,
       misbrukstypeFilter.valgteVerdier,
       merkingFilter.valgteVerdier,
-      gyldigeStatuser,
+      gyldigSteg,
     ],
   );
   const sorterteSaker = useMemo(() => {
@@ -238,12 +235,12 @@ export function UfordelteSakerInnhold({
                 />
               )}
               <ChipsFiltergruppe
-                tittel="Status"
-                alternativer={ALLE_STATUSER.map((s) => ({ verdi: s, etikett: formaterStatus(s) }))}
-                valgteVerdier={statusFilter.valgteVerdier}
+                tittel="Steg"
+                alternativer={ALLE_STEG.map((s) => ({ verdi: s, etikett: formaterSteg(s) }))}
+                valgteVerdier={stegFilter.valgteVerdier}
                 onToggle={(verdi) => {
                   sporHendelse("filter brukt", { filtergruppe: "status", side: "fordeling" });
-                  statusFilter.toggle(verdi);
+                  stegFilter.toggle(verdi);
                 }}
                 size="small"
               />

@@ -14,22 +14,22 @@ describe("shared mock-store", () => {
 
   it("tilbakestiller mocktilstand via resetDefaultSession", () => {
     const fordelingssaker = hentFordelingssaker(state());
-    fordelingssaker[0].status = "UTREDES";
+    fordelingssaker[0].steg = "UTREDES";
 
-    expect(hentFordelingssaker(state())[0]?.status).toBe("UTREDES");
+    expect(hentFordelingssaker(state())[0]?.steg).toBe("UTREDES");
 
     resetDefaultSession();
 
-    expect(hentFordelingssaker(state())[0]?.status).toBe("OPPRETTET");
+    expect(hentFordelingssaker(state())[0]?.steg).toBe("OPPRETTET");
   });
 
   it("tilbakestiller flere saksdomener via sentral reset", () => {
-    hentFordelingssaker(state())[0].status = "UTREDES";
-    hentMineSaker(state())[0].status = "AVSLUTTET";
+    hentFordelingssaker(state())[0].steg = "UTREDES";
+    hentMineSaker(state())[0].steg = "AVSLUTTET";
 
     resetDefaultSession();
 
-    expect(hentFordelingssaker(state())[0]?.status).toBe("OPPRETTET");
-    expect(hentMineSaker(state())[0]?.status).toBe("UTREDES");
+    expect(hentFordelingssaker(state())[0]?.steg).toBe("OPPRETTET");
+    expect(hentMineSaker(state())[0]?.steg).toBe("UTREDES");
   });
 });

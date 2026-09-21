@@ -25,13 +25,13 @@ export function beregnNokkeltall(
   avslutningsdatoer: Avslutningsdatoer,
 ): Nokkeltall {
   const pagaendeSaker = saker.filter(
-    (sak) => sak.status !== "HENLAGT" && sak.status !== "AVSLUTTET",
+    (sak) => sak.steg !== "HENLAGT" && sak.steg !== "AVSLUTTET",
   ).length;
 
-  const paVent = saker.filter((sak) => sak.blokkert !== null).length;
+  const paVent = saker.filter((sak) => sak.status !== null).length;
 
   const avsluttedeMedDato = saker
-    .filter((s) => s.status === "AVSLUTTET" || s.status === "HENLAGT")
+    .filter((s) => s.steg === "AVSLUTTET" || s.steg === "HENLAGT")
     .filter((s) => avslutningsdatoer[s.id] !== undefined)
     .map((s) => dagerMellom(s.opprettet, avslutningsdatoer[s.id]));
 

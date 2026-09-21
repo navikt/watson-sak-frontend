@@ -1,11 +1,11 @@
 import type {
-  Blokkeringsarsak,
   Henleggelsesarsak,
   KontrollsakKategori,
   KontrollsakKilde,
   KontrollsakMisbrukstype,
   KontrollsakResponse,
   KontrollsakStatus,
+  KontrollsakSteg,
   KontrollsakYtelse,
 } from "./types.backend";
 import { henleggelsesarsakSchema } from "./types.backend";
@@ -16,11 +16,11 @@ import {
   kontrollsakYtelseTypeEtiketter,
 } from "./kategorier";
 
-export type { KontrollsakStatus };
+export type { KontrollsakSteg };
 
-type StatusVariant = "info" | "warning" | "success" | "neutral";
+type StegVariant = "info" | "warning" | "success" | "neutral";
 
-const statusEtiketter: Record<KontrollsakStatus, string> = {
+const stegEtiketter: Record<KontrollsakSteg, string> = {
   OPPRETTET: "Opprettet",
   UTREDES: "Utredes",
   STRAFFERETTSLIG_VURDERING: "Strafferettslig vurdering",
@@ -29,7 +29,7 @@ const statusEtiketter: Record<KontrollsakStatus, string> = {
   AVSLUTTET: "Avsluttet",
 };
 
-const statusVarianter: Record<KontrollsakStatus, StatusVariant> = {
+const stegVarianter: Record<KontrollsakSteg, StegVariant> = {
   OPPRETTET: "info",
   UTREDES: "warning",
   STRAFFERETTSLIG_VURDERING: "warning",
@@ -38,7 +38,7 @@ const statusVarianter: Record<KontrollsakStatus, StatusVariant> = {
   AVSLUTTET: "neutral",
 };
 
-const blokkeringsarsakEtiketter: Record<Blokkeringsarsak, string> = {
+const statusEtiketter: Record<KontrollsakStatus, string> = {
   VENTER_PA_INFORMASJON: "Venter på informasjon",
   VENTER_PA_VEDTAK: "Venter på vedtak",
   I_BERO: "I bero",
@@ -52,18 +52,18 @@ const henleggelsesarsakEtiketter: Record<Henleggelsesarsak, string> = {
   FORELDET: "Foreldet",
 };
 
-export function formaterStatus(status: KontrollsakStatus | null | undefined): string {
-  if (!status) return "Ukjent";
+export function formaterSteg(steg: KontrollsakSteg | null | undefined): string {
+  if (!steg) return "Ukjent";
+  return stegEtiketter[steg];
+}
+
+export function hentStegVariant(steg: KontrollsakSteg | null | undefined): StegVariant {
+  if (!steg) return "neutral";
+  return stegVarianter[steg];
+}
+
+export function formaterStatus(status: KontrollsakStatus): string {
   return statusEtiketter[status];
-}
-
-export function hentStatusVariant(status: KontrollsakStatus | null | undefined): StatusVariant {
-  if (!status) return "neutral";
-  return statusVarianter[status];
-}
-
-export function formaterBlokkeringsarsak(arsak: Blokkeringsarsak): string {
-  return blokkeringsarsakEtiketter[arsak];
 }
 
 export function formaterHenleggelsesarsak(arsak: Henleggelsesarsak | null | undefined): string {
@@ -157,12 +157,12 @@ export function getPersonIdent(sak: KontrollsakResponse): string {
   return sak.personIdent;
 }
 
-export function getStatus(sak: KontrollsakResponse): string {
-  if (sak.blokkert) {
-    return `${formaterBlokkeringsarsak(sak.blokkert)} · ${formaterStatus(sak.status)}`;
+export function getStegOgStatusTekst(sak: KontrollsakResponse): string {
+  if (sak.status) {
+    return `${formaterStatus(sak.status)} · ${formaterSteg(sak.steg)}`;
   }
 
-  return formaterStatus(sak.status);
+  return formaterSteg(sak.steg);
 }
 
 export function getYtelseTyper(sak: KontrollsakResponse): string[] {

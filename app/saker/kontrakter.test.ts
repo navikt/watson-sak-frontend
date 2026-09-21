@@ -38,8 +38,8 @@ describe("Kontrollsak-kontrakter", () => {
             enhet: "4801",
           },
         },
-        status: "OPPRETTET",
-        blokkert: null,
+        steg: "OPPRETTET",
+        status: null,
         kategori: "ARBEID",
         kilde: "NAV_KONTROLL",
         misbruktype: ["FIKTIVT_ARBEIDSFORHOLD"],
@@ -61,7 +61,7 @@ describe("Kontrollsak-kontrakter", () => {
       }),
     ).toMatchObject({
       id: 42,
-      status: "OPPRETTET",
+      steg: "OPPRETTET",
       personIdent: "12345678901",
       personNavn: "Birger Testesen",
       ytelser: [{ type: "DAGPENGER" }],
@@ -83,8 +83,8 @@ describe("Kontrollsak-kontrakter", () => {
             enhet: null,
           },
         },
-        status: "OPPRETTET",
-        blokkert: null,
+        steg: "OPPRETTET",
+        status: null,
         kategori: "ARBEID",
         kilde: "PUBLIKUM",
         misbruktype: [],
@@ -117,8 +117,8 @@ describe("Kontrollsak-kontrakter", () => {
                 enhet: null,
               },
             },
-            status: "OPPRETTET",
-            blokkert: null,
+            steg: "OPPRETTET",
+            status: null,
             kategori: "ARBEID",
             kilde: "PUBLIKUM",
             misbruktype: [],
@@ -137,7 +137,7 @@ describe("Kontrollsak-kontrakter", () => {
       }),
     ).toMatchObject({
       totalItems: 1,
-      items: [{ status: "OPPRETTET" }],
+      items: [{ steg: "OPPRETTET" }],
     });
   });
 
@@ -150,12 +150,12 @@ describe("Kontrollsak-kontrakter", () => {
         sakId: 42,
         kategori: "ARBEID",
         prioritet: "NORMAL",
-        status: "OPPRETTET",
+        steg: "OPPRETTET",
         ytelseTyper: ["SYKEPENGER"],
       }),
     ).toMatchObject({
       hendelsesType: "SAK_OPPRETTET",
-      status: "OPPRETTET",
+      steg: "OPPRETTET",
     });
   });
 

@@ -16,15 +16,15 @@ const gyldigRespons = {
   enhet: {
     totaltAntallIkkeAvsluttede: 1,
     antallOverFrist: 0,
-    perStatus: {
+    perSteg: {
       OPPRETTET: 1,
       UTREDES: 0,
       STRAFFERETTSLIG_VURDERING: 0,
       ANMELDT: 0,
       HENLAGT: 0,
     },
-    perArbeidsstatus: {
-      IKKE_BLOKKERT: 1,
+    perStatus: {
+      UTEN_STATUS: 1,
       VENTER_PA_INFORMASJON: 0,
       VENTER_PA_VEDTAK: 0,
       I_BERO: 0,

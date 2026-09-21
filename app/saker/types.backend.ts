@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const kontrollsakStatusSchema = z.enum([
+const kontrollsakStegSchema = z.enum([
   "OPPRETTET",
   "UTREDES",
   "STRAFFERETTSLIG_VURDERING",
@@ -9,7 +9,7 @@ const kontrollsakStatusSchema = z.enum([
   "AVSLUTTET",
 ]);
 
-export const blokkeringsarsakSchema = z.enum([
+export const kontrollsakStatusSchema = z.enum([
   "VENTER_PA_INFORMASJON",
   "VENTER_PA_VEDTAK",
   "I_BERO",
@@ -140,8 +140,8 @@ export const kontrollsakResponseSchema = z
       id: z.number(),
       kontrollobjekt: kontrollobjektSchema,
       saksbehandlere: saksbehandlereSchema,
-      status: kontrollsakStatusSchema,
-      blokkert: blokkeringsarsakSchema.nullable(),
+      steg: kontrollsakStegSchema,
+      status: kontrollsakStatusSchema.nullable(),
       henleggelsesarsak: henleggelsesarsakSchema.nullable().optional().catch(null),
       kategori: kontrollsakKategoriSchema,
       kilde: kontrollsakKildeSchema,
@@ -188,10 +188,10 @@ export const kontrollsakHendelseResponseSchema = z.object({
   sakId: z.number().nullable().optional(),
   kategori: kontrollsakKategoriSchema.nullable().optional(),
   prioritet: kontrollsakPrioritetSchema.nullable().optional(),
-  status: kontrollsakStatusSchema.nullable().optional(),
+  steg: kontrollsakStegSchema.nullable().optional(),
   ytelseTyper: z.array(z.string()).default([]),
   kilde: kontrollsakKildeSchema.nullable().optional(),
-  blokkert: blokkeringsarsakSchema.nullable().optional(),
+  status: kontrollsakStatusSchema.nullable().optional(),
   henleggelsesarsak: henleggelsesarsakSchema.nullable().optional().catch(null),
   beskrivelse: z.string().nullable().optional(),
   tittel: z.string().nullable().optional(),
@@ -201,8 +201,8 @@ export const kontrollsakHendelseResponseSchema = z.object({
 export type KontrollsakYtelse = z.infer<typeof kontrollsakYtelseSchema>;
 export type KontrollsakSaksbehandler = z.infer<typeof kontrollsakSaksbehandlerSchema>;
 export type KontrollsakPageResponse = z.infer<typeof kontrollsakPageResponseSchema>;
+export type KontrollsakSteg = z.infer<typeof kontrollsakStegSchema>;
 export type KontrollsakStatus = z.infer<typeof kontrollsakStatusSchema>;
-export type Blokkeringsarsak = z.infer<typeof blokkeringsarsakSchema>;
 export type Henleggelsesarsak = z.infer<typeof henleggelsesarsakSchema>;
 export type KontrollsakKategori = z.infer<typeof kontrollsakKategoriSchema>;
 export type KontrollsakKilde = z.infer<typeof kontrollsakKildeSchema>;

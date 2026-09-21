@@ -23,25 +23,25 @@ import { z } from "zod";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
-import type { Blokkeringsarsak, Henleggelsesarsak, KontrollsakStatus } from "~/saker/types.backend";
+import type { Henleggelsesarsak, KontrollsakStatus, KontrollsakSteg } from "~/saker/types.backend";
 import { henleggelsesarsakSchema } from "~/saker/types.backend";
 import {
-  formaterBlokkeringsarsak,
   formaterHenleggelsesarsak,
   formaterStatus,
+  formaterSteg,
   henleggelsesarsakAlternativer,
 } from "~/saker/visning";
 
 interface EndreStatusModalProps {
   sakId: string;
-  nåværendeStatus: KontrollsakStatus;
-  nåværendeBlokkering: Blokkeringsarsak | null;
+  nåværendeSteg: KontrollsakSteg;
+  nåværendeStatus: KontrollsakStatus | null;
   nåværendeHenleggelsesarsak: Henleggelsesarsak | null;
   åpen: boolean;
   onClose: () => void;
 }
 
-const valgbareStatuser: KontrollsakStatus[] = [
+const valgbareSteg: KontrollsakSteg[] = [
   "OPPRETTET",
   "UTREDES",
   "STRAFFERETTSLIG_VURDERING",
@@ -52,8 +52,8 @@ const valgbareStatuser: KontrollsakStatus[] = [
 
 const endreStatusSkjema = z
   .object({
-    status: z.string({ error: "Velg en status" }).min(1, "Velg en status"),
-    blokkert: z.string({ error: "Velg arbeidsstatus" }).min(1, "Velg arbeidsstatus"),
+    steg: z.string({ error: "Velg et steg" }).min(1, "Velg et steg"),
+    status: z.string({ error: "Velg status" }).min(1, "Velg status"),
     henleggelsesarsak: z.preprocess(
       (val) => (val === "" ? undefined : val),
       henleggelsesarsakSchema.optional(),
@@ -61,7 +61,7 @@ const endreStatusSkjema = z
     beskrivelse: z.string().optional(),
   })
   .superRefine((data, ctx) => {
-    if (data.status === "HENLAGT" && data.henleggelsesarsak === undefined) {
+    if (data.steg === "HENLAGT" && data.henleggelsesarsak === undefined) {
       ctx.addIssue({
         code: "custom",
         path: ["henleggelsesarsak"],
@@ -70,18 +70,18 @@ const endreStatusSkjema = z
     }
   });
 
-const arbeidsstatusValg: Array<{ value: "AKTIV" | Blokkeringsarsak; label: string }> = [
+const statusValg: Array<{ value: "AKTIV" | KontrollsakStatus; label: string }> = [
   { value: "AKTIV", label: "Aktiv" },
-  { value: "VENTER_PA_VEDTAK", label: formaterBlokkeringsarsak("VENTER_PA_VEDTAK") },
+  { value: "VENTER_PA_VEDTAK", label: formaterStatus("VENTER_PA_VEDTAK") },
   {
     value: "VENTER_PA_INFORMASJON",
-    label: formaterBlokkeringsarsak("VENTER_PA_INFORMASJON"),
+    label: formaterStatus("VENTER_PA_INFORMASJON"),
   },
-  { value: "I_BERO", label: formaterBlokkeringsarsak("I_BERO") },
+  { value: "I_BERO", label: formaterStatus("I_BERO") },
 ];
 
-function formaterArbeidsstatus(verdi: "AKTIV" | Blokkeringsarsak): string {
-  return arbeidsstatusValg.find((valg) => valg.value === verdi)?.label ?? verdi;
+function formaterValgtStatus(verdi: "AKTIV" | KontrollsakStatus): string {
+  return statusValg.find((valg) => valg.value === verdi)?.label ?? verdi;
 }
 
 function SammendragRad({ label, verdi }: { label: string; verdi: React.ReactNode }) {
@@ -96,10 +96,10 @@ function SammendragRad({ label, verdi }: { label: string; verdi: React.ReactNode
 }
 
 type BekreftetResultat = {
-  status: KontrollsakStatus;
+  steg: KontrollsakSteg;
+  stegEndret: boolean;
+  status: "AKTIV" | KontrollsakStatus;
   statusEndret: boolean;
-  arbeidsstatus: "AKTIV" | Blokkeringsarsak;
-  arbeidsstatusEndret: boolean;
 };
 
 function byggSuksessmelding(sakId: string, resultat: BekreftetResultat | null): string {
@@ -108,26 +108,26 @@ function byggSuksessmelding(sakId: string, resultat: BekreftetResultat | null): 
     return `Saken #${saksreferanse} er oppdatert.`;
   }
 
-  const { status, statusEndret, arbeidsstatus, arbeidsstatusEndret } = resultat;
+  const { steg, stegEndret, status, statusEndret } = resultat;
 
-  if (statusEndret && arbeidsstatusEndret) {
-    return `Statusen på sak #${saksreferanse} er satt til ${formaterStatus(status)}, og arbeidsstatusen er satt til ${formaterArbeidsstatus(arbeidsstatus).toLowerCase()}.`;
+  if (stegEndret && statusEndret) {
+    return `Steget på sak #${saksreferanse} er satt til ${formaterSteg(steg)}, og statusen er satt til ${formaterValgtStatus(status).toLowerCase()}.`;
+  }
+  if (stegEndret) {
+    return `Steget på sak #${saksreferanse} er satt til ${formaterSteg(steg)}.`;
   }
   if (statusEndret) {
-    return `Statusen på sak #${saksreferanse} er satt til ${formaterStatus(status)}.`;
-  }
-  if (arbeidsstatusEndret) {
-    return `Arbeidsstatusen på sak #${saksreferanse} er satt til ${formaterArbeidsstatus(arbeidsstatus).toLowerCase()}.`;
+    return `Statusen på sak #${saksreferanse} er satt til ${formaterValgtStatus(status).toLowerCase()}.`;
   }
   return `Saken #${saksreferanse} er oppdatert.`;
 }
 
-type Steg = "skjema" | "bekreft" | "suksess";
+type ModalFase = "skjema" | "bekreft" | "suksess";
 
 export function EndreStatusModal({
   sakId,
+  nåværendeSteg,
   nåværendeStatus,
-  nåværendeBlokkering,
   nåværendeHenleggelsesarsak,
   åpen,
   onClose,
@@ -136,7 +136,7 @@ export function EndreStatusModal({
   const erSubmitting = fetcher.state !== "idle";
   const submitPågår = useRef(false);
   const forrigeÅpen = useRef(false);
-  const [steg, setSteg] = useState<Steg>("skjema");
+  const [fase, setFase] = useState<ModalFase>("skjema");
   const [innsendingFormData, setInnsendingFormData] = useState<FormData | null>(null);
   const [feilmelding, setFeilmelding] = useState<string | null>(null);
   const [bekreftetResultat, setBekreftetResultat] = useState<BekreftetResultat | null>(null);
@@ -152,49 +152,47 @@ export function EndreStatusModal({
     shouldRevalidate: "onInput",
     onSubmit(event, { formData }) {
       event.preventDefault();
-      formData.set("handling", "endre_status_dialog");
-      const nyStatus = formData.get("status") as string;
-      const arbeidsstatus = formData.get("blokkert") as string;
-      if (nyStatus !== "AVSLUTTET") {
-        formData.set("blokkert", arbeidsstatus);
+      formData.set("handling", "endre_steg_dialog");
+      const nyttSteg = formData.get("steg") as string;
+      const status = formData.get("status") as string;
+      if (nyttSteg !== "AVSLUTTET") {
+        formData.set("status", status);
       }
-      if (nyStatus === "HENLAGT") {
+      if (nyttSteg === "HENLAGT") {
         formData.set("henleggelsesarsak", valgtHenleggelsesarsak);
       }
       const beskrivelse = (formData.get("beskrivelse") as string | null) ?? "";
       formData.set("beskrivelse", beskrivelse.trim());
       sporHendelse("endre status bekreftelse vist", {
-        fraStatus: nåværendeStatus,
-        tilStatus: nyStatus,
+        fraSteg: nåværendeSteg,
+        tilSteg: nyttSteg,
       });
       setFeilmelding(null);
       setInnsendingFormData(formData);
-      setSteg("bekreft");
+      setFase("bekreft");
     },
   });
 
+  const stegControl = useInputControl(fields.steg);
   const statusControl = useInputControl(fields.status);
-  const blokkertControl = useInputControl(fields.blokkert);
   const beskrivelseControl = useInputControl(fields.beskrivelse);
   const [valgtHenleggelsesarsak, setValgtHenleggelsesarsak] = useState(
-    nåværendeStatus === "HENLAGT" ? (nåværendeHenleggelsesarsak ?? "") : "",
+    nåværendeSteg === "HENLAGT" ? (nåværendeHenleggelsesarsak ?? "") : "",
   );
-  const valgtStatus = (statusControl.value as KontrollsakStatus | undefined) ?? nåværendeStatus;
-  const valgtBlokkering =
-    (blokkertControl.value as "AKTIV" | Blokkeringsarsak | undefined) ??
-    nåværendeBlokkering ??
-    "AKTIV";
-  const visHenleggelse = valgtStatus === "HENLAGT";
-  const erAvsluttet = valgtStatus === "AVSLUTTET";
+  const valgtSteg = (stegControl.value as KontrollsakSteg | undefined) ?? nåværendeSteg;
+  const valgtStatus =
+    (statusControl.value as "AKTIV" | KontrollsakStatus | undefined) ?? nåværendeStatus ?? "AKTIV";
+  const visHenleggelse = valgtSteg === "HENLAGT";
+  const erAvsluttet = valgtSteg === "AVSLUTTET";
 
-  const gammelStatusLabel = formaterStatus(nåværendeStatus);
-  const nyStatusLabel = formaterStatus(valgtStatus);
-  const statusEndret = valgtStatus !== nåværendeStatus;
+  const gammelStegLabel = formaterSteg(nåværendeSteg);
+  const nyttStegLabel = formaterSteg(valgtSteg);
+  const stegEndret = valgtSteg !== nåværendeSteg;
 
-  const gammelArbeidsstatus = nåværendeBlokkering ?? "AKTIV";
-  const arbeidsstatusEndret = !erAvsluttet && valgtBlokkering !== gammelArbeidsstatus;
+  const gammelStatus = nåværendeStatus ?? "AKTIV";
+  const statusEndret = !erAvsluttet && valgtStatus !== gammelStatus;
 
-  const gammelHenleggelsesarsak = nåværendeStatus === "HENLAGT" ? nåværendeHenleggelsesarsak : null;
+  const gammelHenleggelsesarsak = nåværendeSteg === "HENLAGT" ? nåværendeHenleggelsesarsak : null;
   const henleggelsesarsakEndret =
     visHenleggelse &&
     valgtHenleggelsesarsak !== "" &&
@@ -205,14 +203,14 @@ export function EndreStatusModal({
   function nullstill() {
     form.reset();
     setValgtHenleggelsesarsak("");
-    setSteg("skjema");
+    setFase("skjema");
     setInnsendingFormData(null);
     setFeilmelding(null);
   }
 
   function handleDismiss() {
     if (erSubmitting) return;
-    if (steg !== "suksess") {
+    if (fase !== "suksess") {
       sporHendelse("endre status dialog avbrutt");
     }
     nullstill();
@@ -221,20 +219,20 @@ export function EndreStatusModal({
 
   function handleAvbrytBekreftelse() {
     sporHendelse("endre status avbrutt i bekreftelse");
-    setSteg("skjema");
+    setFase("skjema");
   }
 
   function handleBekreft() {
     if (!innsendingFormData) return;
     sporHendelse("endre status lagre klikket", {
-      fraStatus: nåværendeStatus,
-      tilStatus: valgtStatus,
+      fraSteg: nåværendeSteg,
+      tilSteg: valgtSteg,
     });
     setBekreftetResultat({
+      steg: valgtSteg,
+      stegEndret,
       status: valgtStatus,
       statusEndret,
-      arbeidsstatus: valgtBlokkering,
-      arbeidsstatusEndret,
     });
     submitPågår.current = true;
     fetcher.submit(innsendingFormData, {
@@ -246,24 +244,24 @@ export function EndreStatusModal({
   useEffect(() => {
     if (åpen && !forrigeÅpen.current) {
       sporHendelse("endre status dialog åpnet");
-      statusControl.change(nåværendeStatus);
-      blokkertControl.change(nåværendeBlokkering ?? "AKTIV");
+      stegControl.change(nåværendeSteg);
+      statusControl.change(nåværendeStatus ?? "AKTIV");
       beskrivelseControl.change("");
       setValgtHenleggelsesarsak(
-        nåværendeStatus === "HENLAGT" ? (nåværendeHenleggelsesarsak ?? "") : "",
+        nåværendeSteg === "HENLAGT" ? (nåværendeHenleggelsesarsak ?? "") : "",
       );
-      setSteg("skjema");
+      setFase("skjema");
       setInnsendingFormData(null);
       setFeilmelding(null);
       setBekreftetResultat(null);
     }
     forrigeÅpen.current = åpen;
-    // statusControl/blokkertControl/beskrivelseControl er bevisst utelatt: useInputControl
+    // stegControl/statusControl/beskrivelseControl er bevisst utelatt: useInputControl
     // returnerer nye objektreferanser ved hver render, så å inkludere dem ville trigget
     // effekten på nytt hele tiden. Vi trenger kun de nyeste `.change`-funksjonene når
     // modalen faktisk åpnes (styrt av åpen/forrigeÅpen.current), ikke ved hver render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [åpen, nåværendeBlokkering, nåværendeHenleggelsesarsak, nåværendeStatus]);
+  }, [åpen, nåværendeStatus, nåværendeHenleggelsesarsak, nåværendeSteg]);
 
   useEffect(() => {
     if (!submitPågår.current || fetcher.state !== "idle") {
@@ -273,11 +271,11 @@ export function EndreStatusModal({
     if (fetcher.data && "ok" in fetcher.data && fetcher.data.ok) {
       sporHendelse("endre status lagret");
       setFeilmelding(null);
-      setSteg("suksess");
+      setFase("suksess");
     } else {
       sporHendelse("endre status lagring feilet");
       setFeilmelding("Kunne ikke endre status. Prøv igjen.");
-      setSteg("bekreft");
+      setFase("bekreft");
     }
     submitPågår.current = false;
   }, [fetcher.data, fetcher.state]);
@@ -287,44 +285,42 @@ export function EndreStatusModal({
       open={åpen}
       onClose={handleDismiss}
       header={
-        steg === "suksess"
-          ? undefined
-          : { heading: "Endre status", icon: <PencilIcon aria-hidden /> }
+        fase === "suksess" ? undefined : { heading: "Endre steg", icon: <PencilIcon aria-hidden /> }
       }
-      aria-label={steg === "suksess" ? "Status endret" : "Endre status"}
-      width={steg === "skjema" ? "medium" : "small"}
+      aria-label={fase === "suksess" ? "Lagret" : "Endre steg"}
+      width={fase === "skjema" ? "medium" : "small"}
     >
-      {steg === "suksess" && <Modal.Header />}
+      {fase === "suksess" && <Modal.Header />}
       <fetcher.Form method="post" {...getFormProps(form)}>
         <Modal.Body>
-          {steg === "skjema" && (
+          {fase === "skjema" && (
             <VStack gap="space-4">
               <VStack gap="space-8">
                 <input
-                  key={fields.status.key}
-                  name={fields.status.name}
-                  value={valgtStatus}
+                  key={fields.steg.key}
+                  name={fields.steg.name}
+                  value={valgtSteg}
                   readOnly
                   hidden
                   tabIndex={-1}
-                  onFocus={() => statusControl.focus()}
+                  onFocus={() => stegControl.focus()}
                 />
                 <RadioGroup
-                  legend="Saksstatus"
-                  value={valgtStatus}
+                  legend="Steg"
+                  value={valgtSteg}
                   onChange={(value) => {
-                    statusControl.change(value);
-                    sporHendelse("endre status saksstatus valgt", { status: value });
+                    stegControl.change(value);
+                    sporHendelse("endre status saksstatus valgt", { steg: value });
                     if (value !== "HENLAGT") {
                       setValgtHenleggelsesarsak("");
                     }
                   }}
-                  onBlur={statusControl.blur}
-                  error={fields.status.errors?.[0]}
+                  onBlur={stegControl.blur}
+                  error={fields.steg.errors?.[0]}
                 >
-                  {valgbareStatuser.map((s) => (
+                  {valgbareSteg.map((s) => (
                     <Radio key={s} value={s}>
-                      {formaterStatus(s)}
+                      {formaterSteg(s)}
                     </Radio>
                   ))}
                 </RadioGroup>
@@ -353,27 +349,27 @@ export function EndreStatusModal({
                 ) : null}
                 <hr className="border-ax-border-neutral-subtle" />
                 <input
-                  key={fields.blokkert.key}
-                  name={fields.blokkert.name}
-                  value={valgtBlokkering}
+                  key={fields.status.key}
+                  name={fields.status.name}
+                  value={valgtStatus}
                   readOnly
                   hidden
                   tabIndex={-1}
-                  onFocus={() => blokkertControl.focus()}
+                  onFocus={() => statusControl.focus()}
                 />
                 {!erAvsluttet ? (
                   <>
                     <RadioGroup
-                      legend="Arbeidsstatus"
-                      value={valgtBlokkering}
+                      legend="Status"
+                      value={valgtStatus}
                       onChange={(value) => {
-                        blokkertControl.change(value);
-                        sporHendelse("endre status arbeidsstatus valgt", { arbeidsstatus: value });
+                        statusControl.change(value);
+                        sporHendelse("endre status arbeidsstatus valgt", { status: value });
                       }}
-                      onBlur={blokkertControl.blur}
-                      error={fields.blokkert.errors?.[0]}
+                      onBlur={statusControl.blur}
+                      error={fields.status.errors?.[0]}
                     >
-                      {arbeidsstatusValg.map((valg) => (
+                      {statusValg.map((valg) => (
                         <Radio key={valg.value} value={valg.value}>
                           {valg.label}
                         </Radio>
@@ -398,23 +394,23 @@ export function EndreStatusModal({
             </VStack>
           )}
 
-          {steg === "bekreft" && (
+          {fase === "bekreft" && (
             <VStack gap="space-16">
-              <BodyShort>Du endrer nå status på saken:</BodyShort>
+              <BodyShort>Du endrer nå steg og status på saken:</BodyShort>
               <div className="rounded-md bg-ax-bg-neutral-soft px-5 py-4">
                 <HGrid columns="auto 1fr" gap="space-4 space-16">
                   <SammendragRad
-                    label="Status"
+                    label="Steg"
                     verdi={
-                      statusEndret
-                        ? `Fra «${gammelStatusLabel}» til «${nyStatusLabel}»`
-                        : `«${nyStatusLabel}» (uendret)`
+                      stegEndret
+                        ? `Fra «${gammelStegLabel}» til «${nyttStegLabel}»`
+                        : `«${nyttStegLabel}» (uendret)`
                     }
                   />
-                  {arbeidsstatusEndret && (
+                  {statusEndret && (
                     <SammendragRad
-                      label="Arbeidsstatus"
-                      verdi={`Fra «${formaterArbeidsstatus(gammelArbeidsstatus)}» til «${formaterArbeidsstatus(valgtBlokkering)}»`}
+                      label="Status"
+                      verdi={`Fra «${formaterValgtStatus(gammelStatus)}» til «${formaterValgtStatus(valgtStatus)}»`}
                     />
                   )}
                   {henleggelsesarsakEndret && (
@@ -445,7 +441,7 @@ export function EndreStatusModal({
             </VStack>
           )}
 
-          {steg === "suksess" && (
+          {fase === "suksess" && (
             <VStack gap="space-16" align="center" className="py-6 text-center">
               <CheckmarkCircleFillIcon
                 aria-hidden
@@ -453,7 +449,7 @@ export function EndreStatusModal({
                 className="text-ax-bg-success-strong"
               />
               <VStack gap="space-4" align="center">
-                <BodyShort weight="semibold">Status endret</BodyShort>
+                <BodyShort weight="semibold">Lagret</BodyShort>
                 <BodyShort textColor="subtle">
                   {byggSuksessmelding(sakId, bekreftetResultat)}
                 </BodyShort>
@@ -462,7 +458,7 @@ export function EndreStatusModal({
           )}
         </Modal.Body>
         <Modal.Footer>
-          {steg === "skjema" && (
+          {fase === "skjema" && (
             <>
               <Button
                 type="submit"
@@ -477,7 +473,7 @@ export function EndreStatusModal({
               </Button>
             </>
           )}
-          {steg === "bekreft" && (
+          {fase === "bekreft" && (
             <>
               <Button
                 type="button"
@@ -486,14 +482,14 @@ export function EndreStatusModal({
                 loading={erSubmitting}
                 disabled={erSubmitting}
               >
-                Endre status
+                Endre steg
               </Button>
               <Button variant="secondary" onClick={handleAvbrytBekreftelse} disabled={erSubmitting}>
                 Avbryt
               </Button>
             </>
           )}
-          {steg === "suksess" && (
+          {fase === "suksess" && (
             <Button variant="primary" onClick={handleDismiss}>
               Lukk
             </Button>

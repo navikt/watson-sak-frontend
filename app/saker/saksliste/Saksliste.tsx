@@ -25,8 +25,8 @@ export type SakslisteRad = {
   navn: string | null;
   kategori: string | null;
   misbrukstyper: string[];
+  steg: string | null;
   status: string | null;
-  ventestatus: string | null;
   opprettet: string;
   oppdatert: string | null;
   saksbehandler: string | null;
@@ -227,13 +227,13 @@ function renderCelle(
         <TagOverflow tags={rad.misbrukstyper} tomInnhold={<BodyShort size="small">–</BodyShort>} />
       );
     case "status":
-      return rad.ventestatus ? (
+      return rad.status ? (
         <Tag variant="outline" data-color="warning" size="small">
-          {rad.ventestatus}
-        </Tag>
-      ) : rad.status ? (
-        <Tag variant="outline" data-color="success" size="small">
           {rad.status}
+        </Tag>
+      ) : rad.steg ? (
+        <Tag variant="outline" data-color="success" size="small">
+          {rad.steg}
         </Tag>
       ) : (
         <BodyShort size="small">–</BodyShort>

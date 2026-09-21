@@ -22,8 +22,8 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
       deltMed: [],
       opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
     },
-    status: "UTREDES",
-    blokkert: null,
+    steg: "UTREDES",
+    status: null,
     henleggelsesarsak: null,
     kategori: "ARBEID",
     kilde: "NAV_KONTROLL",
@@ -65,7 +65,7 @@ describe("SakHandlingerKnapper", () => {
     renderMedRouter(
       <SakHandlingerKnapper
         erEier={true}
-        sak={lagKontrollsak({ status: "AVSLUTTET" })}
+        sak={lagKontrollsak({ steg: "AVSLUTTET" })}
         filer={[]}
         dokumenter={[]}
       />,
@@ -74,17 +74,17 @@ describe("SakHandlingerKnapper", () => {
     expect(screen.queryByRole("button")).toBeNull();
   });
 
-  it("viser Endre status for aktiv ikke-blokkert sak med eier", () => {
+  it("viser Endre steg for aktiv ikke-blokkert sak med eier", () => {
     renderMedRouter(
       <SakHandlingerKnapper
         erEier={true}
-        sak={lagKontrollsak({ status: "UTREDES", blokkert: null })}
+        sak={lagKontrollsak({ steg: "UTREDES", status: null })}
         filer={[]}
         dokumenter={[]}
       />,
     );
 
-    expect(screen.getByRole("button", { name: "Endre status" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Endre steg" })).toBeDefined();
     expect(screen.getByRole("separator")).toBeDefined();
     expect(screen.getByRole("button", { name: "Opprett journalpost" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Opprett oppgave" })).toBeDefined();
@@ -92,17 +92,17 @@ describe("SakHandlingerKnapper", () => {
     expect(screen.queryByRole("button", { name: "Gjenoppta" })).toBeNull();
   });
 
-  it("viser bare Endre status for sak med status Opprettet", () => {
+  it("viser bare Endre steg for sak med steg Opprettet", () => {
     renderMedRouter(
       <SakHandlingerKnapper
         erEier={true}
-        sak={lagKontrollsak({ status: "OPPRETTET", blokkert: null })}
+        sak={lagKontrollsak({ steg: "OPPRETTET", status: null })}
         filer={[]}
         dokumenter={[]}
       />,
     );
 
-    expect(screen.getByRole("button", { name: "Endre status" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Endre steg" })).toBeDefined();
     expect(screen.queryByRole("button", { name: "Opprett journalpost" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Opprett oppgave" })).toBeNull();
   });
@@ -111,7 +111,7 @@ describe("SakHandlingerKnapper", () => {
     renderMedRouter(
       <SakHandlingerKnapper
         erEier={true}
-        sak={lagKontrollsak({ status: "UTREDES", blokkert: "VENTER_PA_INFORMASJON" })}
+        sak={lagKontrollsak({ steg: "UTREDES", status: "VENTER_PA_INFORMASJON" })}
         filer={[]}
         dokumenter={[]}
       />,
@@ -121,7 +121,7 @@ describe("SakHandlingerKnapper", () => {
     expect(screen.getByRole("separator")).toBeDefined();
     expect(screen.getByRole("button", { name: "Opprett journalpost" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Opprett oppgave" })).toBeDefined();
-    expect(screen.queryByRole("button", { name: "Endre status" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Endre steg" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Sett på vent" })).toBeNull();
   });
 
@@ -132,7 +132,7 @@ describe("SakHandlingerKnapper", () => {
         filer={[]}
         dokumenter={[]}
         sak={lagKontrollsak({
-          status: "OPPRETTET",
+          steg: "OPPRETTET",
           saksbehandlere: {
             eier: null,
             deltMed: [],
@@ -152,8 +152,8 @@ describe("SakHandlingerKnapper", () => {
         filer={[]}
         dokumenter={[]}
         sak={lagKontrollsak({
-          status: "OPPRETTET",
-          blokkert: "I_BERO",
+          steg: "OPPRETTET",
+          status: "I_BERO",
           saksbehandlere: {
             eier: null,
             deltMed: [],

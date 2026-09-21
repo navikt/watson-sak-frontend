@@ -11,7 +11,7 @@ function lagHendelse(overrides: Partial<SakHendelse> = {}): SakHendelse {
     sakId: 1,
     kategori: "ARBEID",
     prioritet: "NORMAL",
-    status: "OPPRETTET",
+    steg: "OPPRETTET",
     ytelseTyper: ["SYKEPENGER"],
     ...overrides,
   };
@@ -44,7 +44,7 @@ describe("VisAllHistorikkModal", () => {
       lagHendelse({
         hendelseId: "00000000-0000-4000-8000-000000000002",
         hendelsesType: "STATUS_ENDRET",
-        status: "UTREDES",
+        steg: "UTREDES",
       }),
     ];
 
@@ -160,7 +160,7 @@ describe("VisAllHistorikkModal", () => {
       lagHendelse({
         hendelseId: "00000000-0000-4000-8000-000000000002",
         hendelsesType: "STATUS_ENDRET",
-        status: "UTREDES",
+        steg: "UTREDES",
       }),
       lagHendelse({
         hendelseId: "00000000-0000-4000-8000-000000000003",

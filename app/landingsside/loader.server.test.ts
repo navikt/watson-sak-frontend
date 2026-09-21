@@ -57,13 +57,13 @@ describe("landingsside-loader", () => {
     const data = await loader(loaderArgs);
     if (data.type !== "saksbehandler") throw new Error("Forventet saksbehandler-data");
 
-    const ikkeAktiveStatuser: Array<(typeof data.mineSaker)[number]["status"]> = [
+    const ikkeAktiveSteg: Array<(typeof data.mineSaker)[number]["steg"]> = [
       "ANMELDT",
       "HENLAGT",
       "AVSLUTTET",
     ];
 
-    expect(data.mineSaker.every((sak) => !ikkeAktiveStatuser.includes(sak.status))).toBe(true);
+    expect(data.mineSaker.every((sak) => !ikkeAktiveSteg.includes(sak.steg))).toBe(true);
   });
 
   it("returnerer bare saker eid av innlogget bruker i dashboardets mine saker-liste", async () => {

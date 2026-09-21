@@ -4,14 +4,14 @@ import {
   formaterBelop,
   formaterKategori,
   formaterPeriodeForYtelser,
-  formaterStatus,
+  formaterSteg,
   getBeskrivelse,
   getKildeText,
   getKontaktinformasjon,
   getPersonIdent,
-  getStatus,
+  getStegOgStatusTekst,
   getYtelseTyper,
-  hentStatusVariant,
+  hentStegVariant,
 } from "./visning";
 
 function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
@@ -32,12 +32,12 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
         enhet: "4801",
       },
     },
-    status: "UTREDES",
+    steg: "UTREDES",
     kategori: "ARBEID",
     kilde: "NAV_KONTROLL",
     misbruktype: ["FIKTIVT_ARBEIDSFORHOLD"],
     prioritet: "NORMAL",
-    blokkert: null,
+    status: null,
     henleggelsesarsak: null,
     ytelser: [
       {
@@ -63,12 +63,12 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
 }
 
 describe("sak-visning", () => {
-  it("formaterer backend-status til visningstekst", () => {
-    expect(formaterStatus("UTREDES")).toBe("Utredes");
+  it("formaterer backend-steg til visningstekst", () => {
+    expect(formaterSteg("UTREDES")).toBe("Utredes");
   });
 
-  it("formaterer OPPRETTET-status til «Opprettet»", () => {
-    expect(formaterStatus("OPPRETTET")).toBe("Opprettet");
+  it("formaterer OPPRETTET-steg til «Opprettet»", () => {
+    expect(formaterSteg("OPPRETTET")).toBe("Opprettet");
   });
 
   it("formaterer beløp med norsk tusen-separator", () => {
@@ -77,8 +77,8 @@ describe("sak-visning", () => {
     expect(formaterBelop(1234567)).toBe("1\u00a0234\u00a0567");
   });
 
-  it("maper backend-status til riktig tag-variant", () => {
-    expect(hentStatusVariant("ANMELDT")).toBe("success");
+  it("maper backend-steg til riktig tag-variant", () => {
+    expect(hentStegVariant("ANMELDT")).toBe("success");
   });
 
   it("formaterer backend-kategori til visningstekst", () => {
@@ -103,14 +103,14 @@ describe("sak-visning", () => {
     expect(getPersonIdent(lagKontrollsak())).toBe("10987654321");
   });
 
-  it("henter formatert status fra kontrollsak", () => {
-    expect(getStatus(lagKontrollsak({ status: "UTREDES", blokkert: "VENTER_PA_VEDTAK" }))).toBe(
-      "Venter på vedtak · Utredes",
-    );
+  it("henter formatert steg og status fra kontrollsak", () => {
+    expect(
+      getStegOgStatusTekst(lagKontrollsak({ steg: "UTREDES", status: "VENTER_PA_VEDTAK" })),
+    ).toBe("Venter på vedtak · Utredes");
   });
 
-  it("viser blokkert med underliggende status", () => {
-    expect(getStatus(lagKontrollsak({ status: "UTREDES", blokkert: "I_BERO" }))).toBe(
+  it("viser status med underliggende steg", () => {
+    expect(getStegOgStatusTekst(lagKontrollsak({ steg: "UTREDES", status: "I_BERO" }))).toBe(
       "I bero · Utredes",
     );
   });

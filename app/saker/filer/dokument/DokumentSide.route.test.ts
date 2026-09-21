@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getSaksreferanse } from "~/saker/id";
-import type { KontrollsakSaksbehandler, KontrollsakStatus } from "~/saker/types.backend";
+import type { KontrollsakSaksbehandler, KontrollsakSteg } from "~/saker/types.backend";
 import { hentFordelingssaker } from "~/testing/mock-store/alle-saker.server";
 import { hentDokument, opprettDokument } from "~/testing/mock-store/dokumenter.server";
 import { hentMockState, resetDefaultSession } from "~/testing/mock-store/session.server";
@@ -40,12 +40,12 @@ const annenSaksbehandler: KontrollsakSaksbehandler = {
 function settOppSak(opts: {
   eier: KontrollsakSaksbehandler | null;
   deltMed: KontrollsakSaksbehandler[];
-  status: KontrollsakStatus;
+  steg: KontrollsakSteg;
 }) {
   const sak = hentFordelingssaker(state())[0];
   sak.saksbehandlere.eier = opts.eier;
   sak.saksbehandlere.deltMed = opts.deltMed;
-  sak.status = opts.status;
+  sak.steg = opts.steg;
 
   const ref = getSaksreferanse(sak.id);
   const { id: docId } = opprettDokument(state(), String(sak.id), "Test Saksbehandler");
@@ -68,7 +68,7 @@ describe("DokumentSide loader", () => {
   });
 
   it("gir eier på aktiv sak full redigeringstilgang", async () => {
-    const { sak, ref, docId } = settOppSak({ eier: eierMeg, deltMed: [], status: "UTREDES" });
+    const { sak, ref, docId } = settOppSak({ eier: eierMeg, deltMed: [], steg: "UTREDES" });
     // Enheten settes eksplisitt så testen ikke avhenger av enheten i mockdataene.
     sak.enhet = "4812";
 
@@ -91,7 +91,7 @@ describe("DokumentSide loader", () => {
   });
 
   it("bruker enheten registrert på saken, ikke saksbehandlerens egen enhet, som «avdeling»", async () => {
-    const { sak, ref, docId } = settOppSak({ eier: eierMeg, deltMed: [], status: "UTREDES" });
+    const { sak, ref, docId } = settOppSak({ eier: eierMeg, deltMed: [], steg: "UTREDES" });
     // Saken er overført til en annen enhet enn saksbehandlerens (4812).
     sak.enhet = "0400";
 
@@ -107,7 +107,7 @@ describe("DokumentSide loader", () => {
     const { ref, docId } = settOppSak({
       eier: annenSaksbehandler,
       deltMed: [eierMeg],
-      status: "UTREDES",
+      steg: "UTREDES",
     });
 
     const resultat = await loader({
@@ -119,7 +119,7 @@ describe("DokumentSide loader", () => {
   });
 
   it("gir kun lesetilgang når saken er avsluttet", async () => {
-    const { ref, docId } = settOppSak({ eier: eierMeg, deltMed: [], status: "AVSLUTTET" });
+    const { ref, docId } = settOppSak({ eier: eierMeg, deltMed: [], steg: "AVSLUTTET" });
 
     const resultat = await loader({
       request: testRequest,
@@ -130,8 +130,8 @@ describe("DokumentSide loader", () => {
     expect(resultat.kanRedigere).toBe(false);
   });
 
-  it("gir kun lesetilgang når saken har status Opprettet", async () => {
-    const { ref, docId } = settOppSak({ eier: eierMeg, deltMed: [], status: "OPPRETTET" });
+  it("gir kun lesetilgang når saken har steg Opprettet", async () => {
+    const { ref, docId } = settOppSak({ eier: eierMeg, deltMed: [], steg: "OPPRETTET" });
 
     const resultat = await loader({
       request: testRequest,
@@ -146,7 +146,7 @@ describe("DokumentSide loader", () => {
     const { ref, docId } = settOppSak({
       eier: annenSaksbehandler,
       deltMed: [],
-      status: "UTREDES",
+      steg: "UTREDES",
     });
 
     await expect(
@@ -155,7 +155,7 @@ describe("DokumentSide loader", () => {
   });
 
   it("svarer 404 når dokumentet ikke finnes", async () => {
-    const { ref } = settOppSak({ eier: eierMeg, deltMed: [], status: "UTREDES" });
+    const { ref } = settOppSak({ eier: eierMeg, deltMed: [], steg: "UTREDES" });
 
     await expect(
       loader({
@@ -172,7 +172,7 @@ describe("DokumentSide action", () => {
   });
 
   it("lagrer tittel og innhold ved PUT", async () => {
-    const { sak, ref, docId } = settOppSak({ eier: eierMeg, deltMed: [], status: "UTREDES" });
+    const { sak, ref, docId } = settOppSak({ eier: eierMeg, deltMed: [], steg: "UTREDES" });
 
     const resultat = await action({
       request: putRequest({ tittel: "Oppdatert tittel", innhold: enkeltInnhold }),
@@ -187,7 +187,7 @@ describe("DokumentSide action", () => {
   });
 
   it("normaliserer tom tittel til 'Uten tittel'", async () => {
-    const { sak, ref, docId } = settOppSak({ eier: eierMeg, deltMed: [], status: "UTREDES" });
+    const { sak, ref, docId } = settOppSak({ eier: eierMeg, deltMed: [], steg: "UTREDES" });
 
     await action({
       request: putRequest({ tittel: "   ", innhold: enkeltInnhold }),
@@ -198,7 +198,7 @@ describe("DokumentSide action", () => {
   });
 
   it("avviser redigering på avsluttet sak med 403", async () => {
-    const { ref, docId } = settOppSak({ eier: eierMeg, deltMed: [], status: "AVSLUTTET" });
+    const { ref, docId } = settOppSak({ eier: eierMeg, deltMed: [], steg: "AVSLUTTET" });
 
     await expect(
       action({
@@ -208,8 +208,8 @@ describe("DokumentSide action", () => {
     ).rejects.toMatchObject({ init: { status: 403 } });
   });
 
-  it("avviser redigering når saken har status Opprettet", async () => {
-    const { ref, docId } = settOppSak({ eier: eierMeg, deltMed: [], status: "OPPRETTET" });
+  it("avviser redigering når saken har steg Opprettet", async () => {
+    const { ref, docId } = settOppSak({ eier: eierMeg, deltMed: [], steg: "OPPRETTET" });
 
     await expect(
       action({
@@ -220,7 +220,7 @@ describe("DokumentSide action", () => {
   });
 
   it("avviser ikke-PUT-metoder med 405", async () => {
-    const { ref, docId } = settOppSak({ eier: eierMeg, deltMed: [], status: "UTREDES" });
+    const { ref, docId } = settOppSak({ eier: eierMeg, deltMed: [], steg: "UTREDES" });
 
     await expect(
       action({

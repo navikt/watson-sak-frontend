@@ -3,15 +3,15 @@ import { lagLederVelkomstOppsummering } from "./velkomst";
 
 describe("lagLederVelkomstOppsummering", () => {
   const fordelinger = {
-    perStatus: {
+    perSteg: {
       OPPRETTET: 0,
       UTREDES: 0,
       STRAFFERETTSLIG_VURDERING: 0,
       ANMELDT: 0,
       HENLAGT: 0,
     },
-    perArbeidsstatus: {
-      IKKE_BLOKKERT: 0,
+    perStatus: {
+      UTEN_STATUS: 0,
       VENTER_PA_INFORMASJON: 0,
       VENTER_PA_VEDTAK: 0,
       I_BERO: 0,

@@ -13,12 +13,12 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
       deltMed: [],
       opprettetAv: { navIdent: "Z999999", navn: "Lise Raus", enhet: "Øst" },
     },
-    status: "UTREDES",
+    steg: "UTREDES",
     kategori: "SAMLIV",
     kilde: "ANNET",
     misbruktype: [],
     prioritet: "NORMAL",
-    blokkert: null,
+    status: null,
     henleggelsesarsak: null,
     ytelser: [
       {

@@ -4,7 +4,7 @@ import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
 import { RouteConfig } from "~/routeConfig";
 import * as backendApi from "~/saker/api.server";
-import { hentStatusbaserteSaksregler } from "~/saker/statusregler";
+import { hentStegbaserteSaksregler } from "~/saker/stegregler";
 import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
 import {
   lagreDokument,
@@ -57,7 +57,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
     const sak = await backendApi.hentKontrollsak(token, sakReferanse);
-    if (!hentStatusbaserteSaksregler(sak.status).kanRedigereDokumenter) {
+    if (!hentStegbaserteSaksregler(sak.steg).kanRedigereDokumenter) {
       throw data("Dokumenter kan ikke endres før saken er satt til Utredes", { status: 403 });
     }
 

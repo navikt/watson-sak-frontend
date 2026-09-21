@@ -46,19 +46,19 @@ describe("EndreStatusModal", () => {
     submitMock.mockClear();
   });
 
-  it("viser saksstatusvalg i radiogruppe", async () => {
+  it("viser stegvalg i radiogruppe", async () => {
     await renderMedRouter(
       <EndreStatusModal
         sakId="00000000-0000-4000-8000-000000000001"
-        nåværendeStatus="UTREDES"
-        nåværendeBlokkering={null}
+        nåværendeSteg="UTREDES"
+        nåværendeStatus={null}
         nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
       />,
     );
 
-    expect(screen.getByRole("radiogroup", { name: "Saksstatus" })).toBeDefined();
+    expect(screen.getByRole("radiogroup", { name: "Steg" })).toBeDefined();
     expect(screen.getByRole("radio", { name: "Opprettet" })).toBeDefined();
     expect(screen.getByRole("radio", { name: "Utredes" })).toBeDefined();
     expect(screen.getByRole("radio", { name: "Strafferettslig vurdering" })).toBeDefined();
@@ -67,19 +67,19 @@ describe("EndreStatusModal", () => {
     expect(screen.getByRole("radio", { name: "Avsluttet" })).toBeDefined();
   });
 
-  it("viser arbeidsstatusvalg som standard", async () => {
+  it("viser statusvalg som standard", async () => {
     await renderMedRouter(
       <EndreStatusModal
         sakId="00000000-0000-4000-8000-000000000001"
-        nåværendeStatus="UTREDES"
-        nåværendeBlokkering={null}
+        nåværendeSteg="UTREDES"
+        nåværendeStatus={null}
         nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
       />,
     );
 
-    expect(screen.getByRole("radiogroup", { name: "Arbeidsstatus" })).toBeDefined();
+    expect(screen.getByRole("radiogroup", { name: "Status" })).toBeDefined();
     expect(screen.getByRole("radio", { name: "Aktiv" })).toBeDefined();
     expect(screen.getByRole("radio", { name: "Venter på vedtak" })).toBeDefined();
     expect(screen.getByRole("radio", { name: "Venter på informasjon" })).toBeDefined();
@@ -90,8 +90,8 @@ describe("EndreStatusModal", () => {
     await renderMedRouter(
       <EndreStatusModal
         sakId="00000000-0000-4000-8000-000000000001"
-        nåværendeStatus="UTREDES"
-        nåværendeBlokkering={null}
+        nåværendeSteg="UTREDES"
+        nåværendeStatus={null}
         nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
@@ -109,12 +109,12 @@ describe("EndreStatusModal", () => {
     expect(screen.getByRole("option", { name: "Foreldet" })).toBeDefined();
   });
 
-  it("skjuler henleggelsesårsak når annen status velges", async () => {
+  it("skjuler henleggelsesårsak når annet steg velges", async () => {
     await renderMedRouter(
       <EndreStatusModal
         sakId="00000000-0000-4000-8000-000000000001"
-        nåværendeStatus="UTREDES"
-        nåværendeBlokkering={null}
+        nåværendeSteg="UTREDES"
+        nåværendeStatus={null}
         nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
@@ -130,12 +130,12 @@ describe("EndreStatusModal", () => {
     expect(screen.queryByLabelText("Henleggelsesårsak")).toBeNull();
   });
 
-  it("skjuler arbeidsstatus ved Avsluttet, og viser advarsel i bekreftelsessteget", async () => {
+  it("skjuler status ved Avsluttet, og viser advarsel i bekreftelsessteget", async () => {
     await renderMedRouter(
       <EndreStatusModal
         sakId="00000000-0000-4000-8000-000000000001"
-        nåværendeStatus="UTREDES"
-        nåværendeBlokkering={"I_BERO"}
+        nåværendeSteg="UTREDES"
+        nåværendeStatus={"I_BERO"}
         nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
@@ -145,7 +145,7 @@ describe("EndreStatusModal", () => {
     fireEvent.click(screen.getByRole("radio", { name: "Avsluttet" }));
     await waitFor(() => {});
 
-    expect(screen.queryByRole("radiogroup", { name: "Arbeidsstatus" })).toBeNull();
+    expect(screen.queryByRole("radiogroup", { name: "Status" })).toBeNull();
     expect(
       screen.queryByText("Avsluttet er en endelig status – du kan ikke endre tilbake"),
     ).toBeNull();
@@ -162,8 +162,8 @@ describe("EndreStatusModal", () => {
     await renderMedRouter(
       <EndreStatusModal
         sakId="00000000-0000-4000-8000-000000000001"
-        nåværendeStatus="UTREDES"
-        nåværendeBlokkering={"I_BERO"}
+        nåværendeSteg="UTREDES"
+        nåværendeStatus={"I_BERO"}
         nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
@@ -176,23 +176,23 @@ describe("EndreStatusModal", () => {
     await waitFor(() => {});
 
     expect(submitMock).not.toHaveBeenCalled();
-    expect(screen.getByText("Du endrer nå status på saken:")).toBeDefined();
+    expect(screen.getByText("Du endrer nå steg og status på saken:")).toBeDefined();
     expect(screen.getByText("Fra «Utredes» til «Avsluttet»")).toBeDefined();
 
-    fireEvent.click(screen.getByRole("button", { name: "Endre status" }));
+    fireEvent.click(screen.getByRole("button", { name: "Endre steg" }));
     await waitFor(() => {});
 
     expect(submitMock).toHaveBeenCalledOnce();
     const formData = submitMock.mock.calls[0][0] as FormData;
-    expect(formData.get("status")).toBe("AVSLUTTET");
+    expect(formData.get("steg")).toBe("AVSLUTTET");
   });
 
   it("plasserer primærhandlingen før Avbryt i bekreftelsesmodalen", async () => {
     await renderMedRouter(
       <EndreStatusModal
         sakId="00000000-0000-4000-8000-000000000001"
-        nåværendeStatus="UTREDES"
-        nåværendeBlokkering={null}
+        nåværendeSteg="UTREDES"
+        nåværendeStatus={null}
         nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
@@ -206,7 +206,7 @@ describe("EndreStatusModal", () => {
 
     expect(
       screen
-        .getByRole("button", { name: "Endre status" })
+        .getByRole("button", { name: "Endre steg" })
         .compareDocumentPosition(screen.getByRole("button", { name: "Avbryt" })),
     ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
@@ -215,8 +215,8 @@ describe("EndreStatusModal", () => {
     await renderMedRouter(
       <EndreStatusModal
         sakId="00000000-0000-4000-8000-000000000001"
-        nåværendeStatus="UTREDES"
-        nåværendeBlokkering={null}
+        nåværendeSteg="UTREDES"
+        nåværendeStatus={null}
         nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
@@ -227,13 +227,13 @@ describe("EndreStatusModal", () => {
     await waitFor(() => {});
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
     await waitFor(() => {});
-    expect(screen.getByText("Du endrer nå status på saken:")).toBeDefined();
+    expect(screen.getByText("Du endrer nå steg og status på saken:")).toBeDefined();
 
     fireEvent.click(screen.getByRole("button", { name: "Avbryt" }));
     await waitFor(() => {});
 
     expect(submitMock).not.toHaveBeenCalled();
-    expect(screen.getByRole("radiogroup", { name: "Saksstatus" })).toBeDefined();
+    expect(screen.getByRole("radiogroup", { name: "Steg" })).toBeDefined();
     expect(screen.getByRole("radio", { name: "Anmeldt" })).toBeDefined();
   });
 
@@ -241,8 +241,8 @@ describe("EndreStatusModal", () => {
     await renderMedRouter(
       <EndreStatusModal
         sakId="00000000-0000-4000-8000-000000000001"
-        nåværendeStatus="UTREDES"
-        nåværendeBlokkering={null}
+        nåværendeSteg="UTREDES"
+        nåværendeStatus={null}
         nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
@@ -258,12 +258,12 @@ describe("EndreStatusModal", () => {
     expect(submitMock).not.toHaveBeenCalled();
   });
 
-  it("sender inn samlet statusdialog med riktig payload", async () => {
+  it("sender inn samlet stegdialog med riktig payload", async () => {
     await renderMedRouter(
       <EndreStatusModal
         sakId="00000000-0000-4000-8000-000000000001"
-        nåværendeStatus="UTREDES"
-        nåværendeBlokkering={null}
+        nåværendeSteg="UTREDES"
+        nåværendeStatus={null}
         nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
@@ -280,23 +280,23 @@ describe("EndreStatusModal", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
     await waitFor(() => {});
-    fireEvent.click(screen.getByRole("button", { name: "Endre status" }));
+    fireEvent.click(screen.getByRole("button", { name: "Endre steg" }));
     await waitFor(() => {});
 
     expect(submitMock).toHaveBeenCalledOnce();
     const formData = submitMock.mock.calls[0][0] as FormData;
-    expect(formData.get("status")).toBe("HENLAGT");
+    expect(formData.get("steg")).toBe("HENLAGT");
     expect(formData.get("henleggelsesarsak")).toBe("IKKE_KAPASITET");
-    expect(formData.get("handling")).toBe("endre_status_dialog");
-    expect(formData.get("blokkert")).toBe("VENTER_PA_INFORMASJON");
+    expect(formData.get("handling")).toBe("endre_steg_dialog");
+    expect(formData.get("status")).toBe("VENTER_PA_INFORMASJON");
   });
 
   it("tillater no-op for henlagt med eksisterende henleggelsesårsak", async () => {
     await renderMedRouter(
       <EndreStatusModal
         sakId="00000000-0000-4000-8000-000000000001"
-        nåværendeStatus="HENLAGT"
-        nåværendeBlokkering={null}
+        nåværendeSteg="HENLAGT"
+        nåværendeStatus={null}
         nåværendeHenleggelsesarsak="IKKE_KAPASITET"
         åpen={true}
         onClose={() => {}}
@@ -305,23 +305,23 @@ describe("EndreStatusModal", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
     await waitFor(() => {});
-    fireEvent.click(screen.getByRole("button", { name: "Endre status" }));
+    fireEvent.click(screen.getByRole("button", { name: "Endre steg" }));
     await waitFor(() => {});
 
     expect(submitMock).toHaveBeenCalledOnce();
     const formData = submitMock.mock.calls[0][0] as FormData;
-    expect(formData.get("status")).toBe("HENLAGT");
+    expect(formData.get("steg")).toBe("HENLAGT");
     expect(formData.get("henleggelsesarsak")).toBe("IKKE_KAPASITET");
   });
 
-  it("viser suksesssteg med ny status etter vellykket innsending", async () => {
+  it("viser suksesssteg med nytt steg etter vellykket innsending", async () => {
     mockInnsendingsResultat = { ok: true };
 
     await renderMedRouter(
       <EndreStatusModal
         sakId="00000000-0000-4000-8000-000000000001"
-        nåværendeStatus="OPPRETTET"
-        nåværendeBlokkering={null}
+        nåværendeSteg="OPPRETTET"
+        nåværendeStatus={null}
         nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
@@ -332,14 +332,12 @@ describe("EndreStatusModal", () => {
     await waitFor(() => {});
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
     await waitFor(() => {});
-    fireEvent.click(screen.getByRole("button", { name: "Endre status" }));
+    fireEvent.click(screen.getByRole("button", { name: "Endre steg" }));
     await waitFor(() => {});
 
-    expect(screen.getByText("Status endret")).toBeDefined();
+    expect(screen.getByText("Lagret")).toBeDefined();
     expect(
-      screen.getByText(
-        "Statusen på sak #00000000-0000-4000-8000-000000000001 er satt til Utredes.",
-      ),
+      screen.getByText("Steget på sak #00000000-0000-4000-8000-000000000001 er satt til Utredes."),
     ).toBeDefined();
     expect(screen.getAllByRole("button", { name: "Lukk" }).length).toBeGreaterThan(0);
   });
@@ -347,12 +345,12 @@ describe("EndreStatusModal", () => {
   it("beholder korrekt suksessmelding selv om nåværendeStatus oppdateres samtidig (revalidering)", async () => {
     mockInnsendingsResultat = { ok: true };
 
-    function Wrapper({ status }: { status: "OPPRETTET" | "UTREDES" }) {
+    function Wrapper({ steg }: { steg: "OPPRETTET" | "UTREDES" }) {
       return (
         <EndreStatusModal
           sakId="00000000-0000-4000-8000-000000000001"
-          nåværendeStatus={status}
-          nåværendeBlokkering={null}
+          nåværendeSteg={steg}
+          nåværendeStatus={null}
           nåværendeHenleggelsesarsak={null}
           åpen={true}
           onClose={() => {}}
@@ -360,7 +358,7 @@ describe("EndreStatusModal", () => {
       );
     }
 
-    const router = createMemoryRouter([{ path: "/", element: <Wrapper status="OPPRETTET" /> }], {
+    const router = createMemoryRouter([{ path: "/", element: <Wrapper steg="OPPRETTET" /> }], {
       initialEntries: ["/"],
     });
     const { rerender } = render(<RouterProvider router={router} />);
@@ -370,33 +368,31 @@ describe("EndreStatusModal", () => {
     await waitFor(() => {});
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
     await waitFor(() => {});
-    fireEvent.click(screen.getByRole("button", { name: "Endre status" }));
+    fireEvent.click(screen.getByRole("button", { name: "Endre steg" }));
     await waitFor(() => {});
 
     // Simulerer at loaderen revaliderer og sender inn den nye statusen som prop,
     // slik at nåværendeStatus === valgtStatus akkurat idet suksesssteget vises.
-    const router2 = createMemoryRouter([{ path: "/", element: <Wrapper status="UTREDES" /> }], {
+    const router2 = createMemoryRouter([{ path: "/", element: <Wrapper steg="UTREDES" /> }], {
       initialEntries: ["/"],
     });
     rerender(<RouterProvider router={router2} />);
     await waitFor(() => {});
 
-    expect(screen.getByText("Status endret")).toBeDefined();
+    expect(screen.getByText("Lagret")).toBeDefined();
     expect(
-      screen.getByText(
-        "Statusen på sak #00000000-0000-4000-8000-000000000001 er satt til Utredes.",
-      ),
+      screen.getByText("Steget på sak #00000000-0000-4000-8000-000000000001 er satt til Utredes."),
     ).toBeDefined();
   });
 
-  it("viser kun arbeidsstatusendringen i suksessmeldingen når status er uendret", async () => {
+  it("viser kun statusendringen i suksessmeldingen når steg er uendret", async () => {
     mockInnsendingsResultat = { ok: true };
 
     await renderMedRouter(
       <EndreStatusModal
         sakId="00000000-0000-4000-8000-000000000001"
-        nåværendeStatus="UTREDES"
-        nåværendeBlokkering={null}
+        nåværendeSteg="UTREDES"
+        nåværendeStatus={null}
         nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
@@ -407,25 +403,23 @@ describe("EndreStatusModal", () => {
     await waitFor(() => {});
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
     await waitFor(() => {});
-    fireEvent.click(screen.getByRole("button", { name: "Endre status" }));
+    fireEvent.click(screen.getByRole("button", { name: "Endre steg" }));
     await waitFor(() => {});
 
-    expect(screen.getByText("Status endret")).toBeDefined();
+    expect(screen.getByText("Lagret")).toBeDefined();
     expect(
-      screen.getByText(
-        "Arbeidsstatusen på sak #00000000-0000-4000-8000-000000000001 er satt til i bero.",
-      ),
+      screen.getByText("Statusen på sak #00000000-0000-4000-8000-000000000001 er satt til i bero."),
     ).toBeDefined();
   });
 
-  it("viser både status- og arbeidsstatusendring i suksessmeldingen når begge er endret", async () => {
+  it("viser både steg- og statusendring i suksessmeldingen når begge er endret", async () => {
     mockInnsendingsResultat = { ok: true };
 
     await renderMedRouter(
       <EndreStatusModal
         sakId="00000000-0000-4000-8000-000000000001"
-        nåværendeStatus="OPPRETTET"
-        nåværendeBlokkering={null}
+        nåværendeSteg="OPPRETTET"
+        nåværendeStatus={null}
         nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
@@ -438,13 +432,13 @@ describe("EndreStatusModal", () => {
     await waitFor(() => {});
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
     await waitFor(() => {});
-    fireEvent.click(screen.getByRole("button", { name: "Endre status" }));
+    fireEvent.click(screen.getByRole("button", { name: "Endre steg" }));
     await waitFor(() => {});
 
-    expect(screen.getByText("Status endret")).toBeDefined();
+    expect(screen.getByText("Lagret")).toBeDefined();
     expect(
       screen.getByText(
-        "Statusen på sak #00000000-0000-4000-8000-000000000001 er satt til Utredes, og arbeidsstatusen er satt til i bero.",
+        "Steget på sak #00000000-0000-4000-8000-000000000001 er satt til Utredes, og statusen er satt til i bero.",
       ),
     ).toBeDefined();
   });
@@ -455,8 +449,8 @@ describe("EndreStatusModal", () => {
     await renderMedRouter(
       <EndreStatusModal
         sakId="00000000-0000-4000-8000-000000000001"
-        nåværendeStatus="UTREDES"
-        nåværendeBlokkering={null}
+        nåværendeSteg="UTREDES"
+        nåværendeStatus={null}
         nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
@@ -467,15 +461,15 @@ describe("EndreStatusModal", () => {
     await waitFor(() => {});
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
     await waitFor(() => {});
-    fireEvent.click(screen.getByRole("button", { name: "Endre status" }));
+    fireEvent.click(screen.getByRole("button", { name: "Endre steg" }));
     await waitFor(() => {});
 
     expect(submitMock).toHaveBeenCalledOnce();
     expect(screen.getByText("Kunne ikke endre status. Prøv igjen.")).toBeDefined();
-    expect(screen.getByText("Du endrer nå status på saken:")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Endre status" })).toBeDefined();
+    expect(screen.getByText("Du endrer nå steg og status på saken:")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Endre steg" })).toBeDefined();
 
-    fireEvent.click(screen.getByRole("button", { name: "Endre status" }));
+    fireEvent.click(screen.getByRole("button", { name: "Endre steg" }));
     await waitFor(() => {});
 
     expect(submitMock).toHaveBeenCalledTimes(2);
@@ -485,8 +479,8 @@ describe("EndreStatusModal", () => {
     await renderMedRouter(
       <EndreStatusModal
         sakId="00000000-0000-4000-8000-000000000001"
-        nåværendeStatus="UTREDES"
-        nåværendeBlokkering={null}
+        nåværendeSteg="UTREDES"
+        nåværendeStatus={null}
         nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
@@ -503,7 +497,7 @@ describe("EndreStatusModal", () => {
 
     expect(screen.getByText("Saken er anmeldt")).toBeDefined();
 
-    fireEvent.click(screen.getByRole("button", { name: "Endre status" }));
+    fireEvent.click(screen.getByRole("button", { name: "Endre steg" }));
     await waitFor(() => {});
 
     const formData = submitMock.mock.calls[0][0] as FormData;

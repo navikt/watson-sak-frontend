@@ -19,9 +19,9 @@ const lagSak = (overstyringer: Partial<FordelingSak> = {}): FordelingSak => ({
   misbrukstyper: ["Skjult samliv"],
   ytelser: ["Dagpenger"],
   merking: [],
-  status: "Opprettet",
-  statusKode: "OPPRETTET",
-  ventestatus: null,
+  status: null,
+  steg: "Opprettet",
+  stegKode: "OPPRETTET",
   ...overstyringer,
 });
 

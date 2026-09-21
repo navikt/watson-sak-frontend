@@ -8,7 +8,7 @@ const ALTERNATIVER = {
   saksbehandler: [],
   enhet: [],
   merking: [],
-  status: [],
+  steg: [],
   kategori: [
     { label: "Arbeid", value: "ARBEID" },
     { label: "Samliv", value: "SAMLIV" },

@@ -60,8 +60,8 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
       deltMed: [],
       opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
     },
-    status: "UTREDES",
-    blokkert: null,
+    steg: "UTREDES",
+    status: null,
     henleggelsesarsak: null,
     kategori: "ARBEID",
     kilde: "NAV_KONTROLL",
@@ -171,7 +171,7 @@ describe("SaksbehandlereKort", () => {
     await renderMedRouter(
       <SaksbehandlereKort
         erEier={true}
-        sak={lagKontrollsak({ status: "AVSLUTTET" })}
+        sak={lagKontrollsak({ steg: "AVSLUTTET" })}
         saksbehandlerDetaljer={[lagSaksbehandler()]}
         ansvarligSaksbehandler={lagSaksbehandler()}
       />,
@@ -186,7 +186,7 @@ describe("SaksbehandlereKort", () => {
       <SaksbehandlereKort
         erEier={true}
         sak={lagKontrollsak({
-          status: "OPPRETTET",
+          steg: "OPPRETTET",
           saksbehandlere: {
             eier: lagSaksbehandler(),
             deltMed: [lagSaksbehandler({ navIdent: "Z234567", navn: "Ada Larsen" })],
@@ -204,11 +204,11 @@ describe("SaksbehandlereKort", () => {
     expect(screen.getByRole("button", { name: "Endre enhet" })).toBeDefined();
   });
 
-  it("viser ikke Del tilgang for blokkert sak", async () => {
+  it("viser ikke Del tilgang for sak med status", async () => {
     await renderMedRouter(
       <SaksbehandlereKort
         erEier={true}
-        sak={lagKontrollsak({ blokkert: "VENTER_PA_VEDTAK" })}
+        sak={lagKontrollsak({ status: "VENTER_PA_VEDTAK" })}
         saksbehandlerDetaljer={[lagSaksbehandler()]}
         ansvarligSaksbehandler={lagSaksbehandler()}
       />,

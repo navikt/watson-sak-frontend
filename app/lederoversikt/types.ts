@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const LEDERSTATISTIKK_STATUSER = [
+export const LEDERSTATISTIKK_STEG = [
   "OPPRETTET",
   "UTREDES",
   "STRAFFERETTSLIG_VURDERING",
@@ -8,8 +8,8 @@ export const LEDERSTATISTIKK_STATUSER = [
   "HENLAGT",
 ] as const;
 
-const lederArbeidsstatusSchema = z.enum([
-  "IKKE_BLOKKERT",
+const lederStatusSchema = z.enum([
+  "UTEN_STATUS",
   "VENTER_PA_INFORMASJON",
   "VENTER_PA_VEDTAK",
   "I_BERO",
@@ -26,15 +26,15 @@ export const lederStatistikkResponseSchema = z.object({
   enhetId: z.string().min(1),
   enhetNavn: z.string().min(1),
   enhet: sakstallSchema.extend({
-    perStatus: z.object({
+    perSteg: z.object({
       OPPRETTET: antallSchema,
       UTREDES: antallSchema,
       STRAFFERETTSLIG_VURDERING: antallSchema,
       ANMELDT: antallSchema,
       HENLAGT: antallSchema,
     }),
-    perArbeidsstatus: z.object({
-      IKKE_BLOKKERT: antallSchema,
+    perStatus: z.object({
+      UTEN_STATUS: antallSchema,
       VENTER_PA_INFORMASJON: antallSchema,
       VENTER_PA_VEDTAK: antallSchema,
       I_BERO: antallSchema,
@@ -53,7 +53,7 @@ export const lederStatistikkResponseSchema = z.object({
   }),
 });
 
-export type LederArbeidsstatus = z.infer<typeof lederArbeidsstatusSchema>;
+export type LederStatus = z.infer<typeof lederStatusSchema>;
 export type LederStatistikk = z.infer<typeof lederStatistikkResponseSchema>;
 export type LederAnsattStatistikk = LederStatistikk["ansatte"]["liste"][number];
 export type LederAnsatteStatistikk = LederStatistikk["ansatte"];

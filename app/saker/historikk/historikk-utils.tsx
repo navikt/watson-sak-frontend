@@ -28,6 +28,7 @@ import {
   formaterHenleggelsesarsak,
   formaterStatus,
 } from "~/saker/visning";
+import { formaterSteg } from "~/saker/visning";
 import { NORSK_TIDSSONE } from "~/utils/date-utils";
 import type { KommentarAktivitet, SakHendelse } from "./typer";
 
@@ -40,8 +41,8 @@ export function erManuellHendelse(hendelse: SakHendelse): boolean {
  * gitt en full, usortert/uslicet liste med hendelser (nyeste først).
  *
  * Trengs fordi backend kun sender ett generisk `SAK_STATUS_ENDRET` for både
- * statusendringer og arbeidsstatus(blokkering)-endringer – vi må sammenligne
- * med forrige hendelse sin status/blokkert-snapshot for å vite hva som
+ * stegendringer og arbeidsstatus(status)-endringer – vi må sammenligne
+ * med forrige hendelse sitt steg/status-snapshot for å vite hva som
  * faktisk endret seg.
  */
 export function lagForrigeHendelseKart(hendelser: SakHendelse[]): Map<string, SakHendelse> {
@@ -52,65 +53,55 @@ export function lagForrigeHendelseKart(hendelser: SakHendelse[]): Map<string, Sa
   return kart;
 }
 
-function diffStatusOgArbeidsstatus(hendelse: SakHendelse, forrigeHendelse?: SakHendelse) {
-  const forrigeBlokkert = forrigeHendelse?.blokkert ?? null;
+function diffStegOgStatus(hendelse: SakHendelse, forrigeHendelse?: SakHendelse) {
+  const forrigeStatus = forrigeHendelse?.status ?? null;
   return {
-    statusEndret: !forrigeHendelse || hendelse.status !== (forrigeHendelse.status ?? null),
-    arbeidsstatusEndret: !!forrigeHendelse && (hendelse.blokkert ?? null) !== forrigeBlokkert,
-    forrigeBlokkert,
+    stegEndret: !forrigeHendelse || hendelse.steg !== (forrigeHendelse.steg ?? null),
+    statusEndret: !!forrigeHendelse && (hendelse.status ?? null) !== forrigeStatus,
+    forrigeStatus,
   };
 }
 
-function statusTittel(status: SakHendelse["status"]): string {
-  return `Sak ${formaterStatus(status).toLocaleLowerCase("nb-NO")}`;
+function stegTittel(steg: SakHendelse["steg"]): string {
+  return `Sak ${formaterSteg(steg).toLocaleLowerCase("nb-NO")}`;
 }
 
-function arbeidsstatusKortTittel(
-  blokkert: SakHendelse["blokkert"],
-  forrigeBlokkert: SakHendelse["blokkert"],
+function statusKortTittel(
+  status: SakHendelse["status"],
+  forrigeStatus: SakHendelse["status"],
 ): string {
-  if (!blokkert) {
-    return forrigeBlokkert === "I_BERO" ? "tatt ut av bero" : "gjenopptatt";
+  if (!status) {
+    return forrigeStatus === "I_BERO" ? "tatt ut av bero" : "gjenopptatt";
   }
-  return blokkert === "I_BERO" ? "satt i bero" : "satt på vent";
+  return status === "I_BERO" ? "satt i bero" : "satt på vent";
 }
 
-function statusOgArbeidsstatusTittel(hendelse: SakHendelse, forrigeHendelse?: SakHendelse): string {
-  const { statusEndret, arbeidsstatusEndret, forrigeBlokkert } = diffStatusOgArbeidsstatus(
-    hendelse,
-    forrigeHendelse,
-  );
+function stegOgStatusTittel(hendelse: SakHendelse, forrigeHendelse?: SakHendelse): string {
+  const { stegEndret, statusEndret, forrigeStatus } = diffStegOgStatus(hendelse, forrigeHendelse);
 
-  if (statusEndret && arbeidsstatusEndret) {
-    return `${statusTittel(hendelse.status)} og ${arbeidsstatusKortTittel(hendelse.blokkert, forrigeBlokkert)}`;
+  if (stegEndret && statusEndret) {
+    return `${stegTittel(hendelse.steg)} og ${statusKortTittel(hendelse.status, forrigeStatus)}`;
   }
-  if (arbeidsstatusEndret) {
-    const kort = arbeidsstatusKortTittel(hendelse.blokkert, forrigeBlokkert);
+  if (statusEndret) {
+    const kort = statusKortTittel(hendelse.status, forrigeStatus);
     return `Sak ${kort}`;
   }
-  return statusTittel(hendelse.status);
+  return stegTittel(hendelse.steg);
 }
 
-function statusOgArbeidsstatusBeskrivelse(
-  hendelse: SakHendelse,
-  forrigeHendelse?: SakHendelse,
-): string {
-  const { arbeidsstatusEndret } = diffStatusOgArbeidsstatus(hendelse, forrigeHendelse);
+function stegOgStatusBeskrivelse(hendelse: SakHendelse, forrigeHendelse?: SakHendelse): string {
+  const { statusEndret } = diffStegOgStatus(hendelse, forrigeHendelse);
   const deler: string[] = [];
 
   if (hendelse.beskrivelse) {
     deler.push(hendelse.beskrivelse);
   }
 
-  if (arbeidsstatusEndret) {
-    deler.push(
-      hendelse.blokkert
-        ? `Arbeidsstatus: ${formaterBlokkeringsarsak(hendelse.blokkert)}`
-        : "Arbeidsstatus: Aktiv",
-    );
+  if (statusEndret) {
+    deler.push(hendelse.status ? `Status: ${formaterStatus(hendelse.status)}` : "Status: Aktiv");
   }
 
-  deler.push(`Status: ${formaterStatus(hendelse.status)}`);
+  deler.push(`Steg: ${formaterSteg(hendelse.steg)}`);
 
   return deler.join(" – ");
 }
@@ -140,7 +131,7 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
       return "Sak tildelt";
     case "STATUS_ENDRET":
     case "SAK_STATUS_ENDRET":
-      return statusOgArbeidsstatusTittel(hendelse, forrigeHendelse);
+      return stegOgStatusTittel(hendelse, forrigeHendelse);
     case "SAKSINFORMASJON_ENDRET":
       return "Saksinformasjon endret";
     case "MOTTAKSENHET_ENDRET":
@@ -164,7 +155,7 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
     case "SAK_SATT_I_BERO":
       return "Sak satt i bero";
     case "SAK_GJENOPPTATT":
-      return hendelse.blokkert === "I_BERO" ? "Sak tatt ut av bero" : "Sak gjenopptatt";
+      return hendelse.status === "I_BERO" ? "Sak tatt ut av bero" : "Sak gjenopptatt";
     case "MANUELL_HENDELSE":
       return hendelse.tittel ?? "Notat";
     case "NOTAT_SENDT":
@@ -247,18 +238,18 @@ export function hendelseBeskrivelse(
   }
 
   if (hendelse.hendelsesType === "SAKSINFORMASJON_ENDRET") {
-    return hendelse.beskrivelse ?? `Status: ${formaterStatus(hendelse.status)}`;
+    return hendelse.beskrivelse ?? `Steg: ${formaterSteg(hendelse.steg)}`;
   }
 
   if (
     hendelse.hendelsesType === "STATUS_ENDRET" ||
     hendelse.hendelsesType === "SAK_STATUS_ENDRET"
   ) {
-    return statusOgArbeidsstatusBeskrivelse(hendelse, forrigeHendelse);
+    return stegOgStatusBeskrivelse(hendelse, forrigeHendelse);
   }
 
   if (hendelse.hendelsesType === "SAK_HENLAGT") {
-    const deler: string[] = [`Status: ${formaterStatus(hendelse.status)}`];
+    const deler: string[] = [`Steg: ${formaterSteg(hendelse.steg)}`];
 
     if (hendelse.beskrivelse) {
       deler.push(hendelse.beskrivelse);
@@ -274,7 +265,7 @@ export function hendelseBeskrivelse(
       deler.push(hendelse.beskrivelse);
     }
 
-    deler.push(`Status: ${formaterStatus(hendelse.status)}`);
+    deler.push(`Steg: ${formaterSteg(hendelse.steg)}`);
 
     return deler.join(" – ");
   }
@@ -300,11 +291,11 @@ export function hendelseBeskrivelse(
   if (
     (hendelse.hendelsesType === "SAK_SATT_PA_VENT" ||
       hendelse.hendelsesType === "SAK_SATT_I_BERO") &&
-    hendelse.blokkert
+    hendelse.status
   ) {
     const deler = [
-      `På vent: ${formaterBlokkeringsarsak(hendelse.blokkert)}`,
-      `Status: ${formaterStatus(hendelse.status)}`,
+      `På vent: ${formaterStatus(hendelse.status)}`,
+      `Steg: ${formaterSteg(hendelse.steg)}`,
     ];
 
     if (hendelse.beskrivelse) {
@@ -333,7 +324,7 @@ export function hendelseBeskrivelse(
     return hendelse.beskrivelse ?? null;
   }
 
-  return `Status: ${formaterStatus(hendelse.status)}`;
+  return `Steg: ${formaterSteg(hendelse.steg)}`;
 }
 
 export function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
@@ -369,9 +360,9 @@ export function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
     case "SAK_GJENOPPTATT":
       return <ArrowUndoIcon {...iconProps} />;
     case "SAK_STATUS_ENDRET":
-      if (hendelse.status === "HENLAGT") return <XMarkOctagonIcon {...iconProps} />;
-      if (hendelse.status === "ANMELDT") return <GavelIcon {...iconProps} />;
-      if (hendelse.blokkert) return <ClockDashedIcon {...iconProps} />;
+      if (hendelse.steg === "HENLAGT") return <XMarkOctagonIcon {...iconProps} />;
+      if (hendelse.steg === "ANMELDT") return <GavelIcon {...iconProps} />;
+      if (hendelse.status) return <ClockDashedIcon {...iconProps} />;
       return <ClockIcon {...iconProps} />;
     case "NOTAT_SENDT":
       return <DocPencilIcon {...iconProps} />;
@@ -446,7 +437,7 @@ export function HendelseInnhold({
 
   if (
     hendelse.hendelsesType === "SAK_HENLAGT" ||
-    (hendelse.hendelsesType === "SAK_STATUS_ENDRET" && hendelse.status === "HENLAGT")
+    (hendelse.hendelsesType === "SAK_STATUS_ENDRET" && hendelse.steg === "HENLAGT")
   ) {
     return (
       <VStack gap="space-1">
