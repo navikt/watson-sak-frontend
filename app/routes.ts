@@ -31,6 +31,7 @@ export default [
   route(RouteConfig.API.SAK_FIL, "saker/filer/fil.api.ts"),
   route(RouteConfig.API.VARSLER_ULESTE, "varsler/uleste.api.ts"),
   route(RouteConfig.API.MARKER_VARSEL_LEST, "varsler/marker-lest.api.ts"),
+  route(RouteConfig.API.AI_VEILEDER_MELDING, "ai-veileder/chat.api.ts"),
 
   // Well-known routes
   route(RouteConfig.WELL_KNOWN.SECURITY_TXT, "sikkerhet/well-known/api.ts"),

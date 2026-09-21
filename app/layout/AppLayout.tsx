@@ -1,6 +1,7 @@
 import { PageBlock } from "@navikt/ds-react/Page";
 import { Outlet, useMatches } from "react-router";
 import type { LoaderFunctionArgs, ShouldRevalidateFunctionArgs } from "react-router";
+import { AiVeilederChatBobble } from "~/ai-veileder/AiVeilederChatBobble";
 import { getBackendOboToken } from "~/auth/access-token";
 import { skalBrukeMockdata } from "~/config/env.server";
 import { logger } from "~/logging/logging";
@@ -84,6 +85,7 @@ export default function RootLayout() {
         </main>
       </div>
       {!skjulFooter && <AppFooter />}
+      <AiVeilederChatBobble />
     </div>
   );
 }
