@@ -44,7 +44,7 @@ describe("SakDetaljSide action", () => {
   it("eksponerer tildeling som tilgjengelig handling når kontrollsaken er ownerløs under utredning", async () => {
     const sak = hentAlleSaker(testRequest).find((sak) => sak.id === utredningSakId);
 
-    expect(sak?.status).toBe("UTREDES");
+    expect(sak?.steg).toBe("UTREDES");
     expect(sak?.saksbehandlere.eier).toBeNull();
   });
 
@@ -55,10 +55,10 @@ describe("SakDetaljSide action", () => {
     "opprett_journalpost",
     "opprett_oppgave",
     "legg_til_historikk",
-  ])("avviser %s når saken har status Opprettet", async (handling) => {
+  ])("avviser %s når saken har steg Opprettet", async (handling) => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
-    kontrollsak.status = "OPPRETTET";
+    kontrollsak.steg = "OPPRETTET";
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z999999",
       navn: "Test Saksbehandler",
@@ -81,7 +81,7 @@ describe("SakDetaljSide action", () => {
   it("legger til delt saksbehandler og logger historikk", async () => {
     const kontrollsak = hentFordelingssaker(state())[1];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
-    kontrollsak.status = "UTREDES";
+    kontrollsak.steg = "UTREDES";
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z999999",
       navn: "Test Saksbehandler",
@@ -118,7 +118,7 @@ describe("SakDetaljSide action", () => {
   it("fjerner delt saksbehandler og logger historikk", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
-    kontrollsak.status = "UTREDES";
+    kontrollsak.steg = "UTREDES";
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z999999",
       navn: "Test Saksbehandler",
@@ -196,7 +196,7 @@ describe("SakDetaljSide action", () => {
   it("inkluderer valgt mal når notat logges i historikk", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
-    kontrollsak.status = "UTREDES";
+    kontrollsak.steg = "UTREDES";
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z999999",
       navn: "Test Saksbehandler",
@@ -507,7 +507,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
 
-    expect(kontrollsak.status).toBe("OPPRETTET");
+    expect(kontrollsak.steg).toBe("OPPRETTET");
 
     const formData = new FormData();
     formData.set("handling", "TILDEL");
@@ -521,7 +521,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
       params: { sakId: kontrollsakRef },
     } as Route.ActionArgs);
 
-    expect(kontrollsak.status).toBe("OPPRETTET");
+    expect(kontrollsak.steg).toBe("OPPRETTET");
     expect(kontrollsak.saksbehandlere.eier?.navIdent).toBe("Z123456");
   });
 
@@ -529,7 +529,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
 
-    kontrollsak.status = "OPPRETTET";
+    kontrollsak.steg = "OPPRETTET";
     kontrollsak.saksbehandlere.eier = null;
     kontrollsak.saksbehandlere.opprettetAv = {
       navn: "Tidligere Saksbehandler",
@@ -537,7 +537,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
       enhet: "Nord",
     };
 
-    expect(kontrollsak.status).toBe("OPPRETTET");
+    expect(kontrollsak.steg).toBe("OPPRETTET");
     expect(kontrollsak.saksbehandlere.eier).toBeNull();
 
     const formData = new FormData();
@@ -563,7 +563,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
 
-    kontrollsak.status = "OPPRETTET";
+    kontrollsak.steg = "OPPRETTET";
     kontrollsak.saksbehandlere.eier = null;
 
     const formData = new FormData();
@@ -589,7 +589,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
 
-    kontrollsak.status = "OPPRETTET";
+    kontrollsak.steg = "OPPRETTET";
     kontrollsak.saksbehandlere.eier = null;
     kontrollsak.saksbehandlere.opprettetAv = {
       navn: "Tidligere Saksbehandler",
@@ -659,7 +659,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     };
 
     const opprinneligPersonIdent = kontrollsak.personIdent;
-    const opprinneligStatus = kontrollsak.status;
+    const opprinneligSteg = kontrollsak.steg;
     const opprinneligSaksbehandler = kontrollsak.saksbehandlere.eier?.navn ?? null;
 
     const formData = new FormData();
@@ -700,7 +700,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
       "2026-02-28",
     ]);
     expect(kontrollsak.personIdent).toBe(opprinneligPersonIdent);
-    expect(kontrollsak.status).toBe(opprinneligStatus);
+    expect(kontrollsak.steg).toBe(opprinneligSteg);
     expect(kontrollsak.saksbehandlere.eier?.navn ?? null).toBe(opprinneligSaksbehandler);
 
     const historikk = hentHistorikk(testRequest, String(kontrollsak.id));
@@ -796,7 +796,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
       navn: "Test Saksbehandler",
       enhet: "4812",
     };
-    kontrollsak.status = "AVSLUTTET";
+    kontrollsak.steg = "AVSLUTTET";
 
     const formData = new FormData();
     formData.set("handling", "rediger_saksinformasjon");
@@ -818,16 +818,16 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
 
     expect(resultat).toEqual({
       ok: false,
-      feil: { skjema: ["Saken kan ikke redigeres i denne statusen."] },
+      feil: { skjema: ["Saken kan ikke redigeres i dette steget."] },
     });
-    expect(kontrollsak.status).toBe("AVSLUTTET");
+    expect(kontrollsak.steg).toBe("AVSLUTTET");
     expect(kontrollsak.kategori).not.toBe("ARBEID");
   });
 
   it("opprett_journalpost logger hendelse med tittel og beskrivelse", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
-    kontrollsak.status = "UTREDES";
+    kontrollsak.steg = "UTREDES";
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z999999",
       navn: "Test Saksbehandler",
@@ -858,7 +858,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   it("arkiverer valgte redigerbare dokumenter ved opprettelse av journalpost", async () => {
     const kontrollsak = required(hentAlleSaker(testRequest).find((sak) => sak.id === 102));
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
-    kontrollsak.status = "UTREDES";
+    kontrollsak.steg = "UTREDES";
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z999999",
       navn: "Test Saksbehandler",
@@ -897,7 +897,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   it("arkiverer valgte vedlegg ved opprettelse av journalpost", async () => {
     const kontrollsak = required(hentAlleSaker(testRequest).find((sak) => sak.id === 102));
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
-    kontrollsak.status = "UTREDES";
+    kontrollsak.steg = "UTREDES";
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z999999",
       navn: "Test Saksbehandler",
@@ -941,7 +941,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   it("lager en arkivert PDF-fil når et dokument arkiveres i en journalpost", async () => {
     const kontrollsak = required(hentAlleSaker(testRequest).find((sak) => sak.id === 102));
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
-    kontrollsak.status = "UTREDES";
+    kontrollsak.steg = "UTREDES";
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z999999",
       navn: "Test Saksbehandler",
@@ -976,7 +976,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
   it("opprett_oppgave logger hendelse med oppgavetype og beskrivelse", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
-    kontrollsak.status = "UTREDES";
+    kontrollsak.steg = "UTREDES";
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z999999",
       navn: "Test Saksbehandler",
@@ -1377,7 +1377,7 @@ describe("SakDetaljSide rediger arbeidsgivere", () => {
   it("logger to historikk-hendelser når journalpost opprettes med knyttTilOppgave", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
-    kontrollsak.status = "UTREDES";
+    kontrollsak.steg = "UTREDES";
     kontrollsak.saksbehandlere.eier = {
       navIdent: "Z999999",
       navn: "Test Saksbehandler",

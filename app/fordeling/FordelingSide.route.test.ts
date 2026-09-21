@@ -86,7 +86,7 @@ describe("FordelingSide action", () => {
     } as Route.ActionArgs);
 
     expect(
-      hentFordelingssaker(state()).find((sak) => sak.id === tildelbarKontrollsakId)?.status,
+      hentFordelingssaker(state()).find((sak) => sak.id === tildelbarKontrollsakId)?.steg,
     ).toBe("OPPRETTET");
     expect(
       hentFordelingssaker(state()).find((sak) => sak.id === tildelbarKontrollsakId)?.saksbehandlere

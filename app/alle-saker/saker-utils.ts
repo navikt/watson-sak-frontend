@@ -5,7 +5,7 @@ import {
   getOpprettetDato,
 } from "~/saker/selectors";
 import type { KontrollsakResponse } from "~/saker/types.backend";
-import { getStatus } from "~/saker/visning";
+import { getStegOgStatusTekst } from "~/saker/visning";
 import { getSaksreferanse } from "~/saker/id";
 
 export const sorteringskolonner = [
@@ -27,7 +27,7 @@ type FilterState = {
   kategori: string[];
   misbrukstype: string[];
   merking: string[];
-  status: string[];
+  steg: string[];
 };
 
 export function normaliserFilterVerdier(verdier: string[]): string[] {
@@ -57,7 +57,7 @@ export function filtrerSaker(
       return false;
     if (filter.merking.length > 0 && !sak.merking.some((m) => filter.merking.includes(m)))
       return false;
-    if (filter.status.length > 0 && !filter.status.includes(sak.status)) return false;
+    if (filter.steg.length > 0 && !filter.steg.includes(sak.steg)) return false;
     return true;
   });
 }
@@ -71,7 +71,7 @@ function hentSorteringsverdi(sak: KontrollsakResponse, kolonne: AlleSakerKolonne
     case "misbrukstype":
       return getMisbrukstyper(sak).join(", ");
     case "status":
-      return getStatus(sak);
+      return getStegOgStatusTekst(sak);
     case "opprettet":
       return getOpprettetDato(sak);
     case "oppdatert":

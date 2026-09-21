@@ -30,7 +30,7 @@ const handlingsvisning: Record<
   }
 > = {
   "endre-status": {
-    label: "Endre status",
+    label: "Endre steg",
     variant: "primary",
     icon: <PencilIcon aria-hidden />,
   },
@@ -138,8 +138,8 @@ export function SakHandlingerKnapper({
 
       <EndreStatusModal
         sakId={String(sak.id)}
+        nåværendeSteg={sak.steg}
         nåværendeStatus={sak.status}
-        nåværendeBlokkering={sak.blokkert}
         nåværendeHenleggelsesarsak={sak.henleggelsesarsak}
         åpen={åpenModal === "endre-status"}
         onClose={() => setÅpenModal(null)}

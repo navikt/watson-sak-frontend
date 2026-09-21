@@ -4,7 +4,7 @@ import { logger } from "~/logging/logging";
 import { getSaksreferanse } from "~/saker/id";
 import * as backendApi from "~/saker/api.server";
 import { getSaksenhet } from "~/saker/selectors";
-import { getStatus } from "~/saker/visning";
+import { getStegOgStatusTekst } from "~/saker/visning";
 import { hentValgfriTekst } from "~/utils/form-data";
 import { formaterFødselsnummer } from "~/utils/string-utils";
 import { INGEN_TILGANG_TIL_Å_OPPRETTE_SAK_MELDING } from "./feilmeldinger";
@@ -58,7 +58,7 @@ export async function action({ request }: { request: Request }) {
           personNavn: sak.personNavn ?? resultat.person.navn,
           saksbehandler: sak.saksbehandlere.eier?.navn ?? sak.saksbehandlere.opprettetAv.navn,
           enhet: getSaksenhet(sak) || "Ukjent",
-          status: getStatus(sak),
+          status: getStegOgStatusTekst(sak),
         }));
       } catch (error) {
         logger.warn("Kunne ikke hente eksisterende saker for person", { error });

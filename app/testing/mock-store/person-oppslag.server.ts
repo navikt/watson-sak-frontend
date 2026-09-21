@@ -1,7 +1,7 @@
 import { getSaksreferanse } from "~/saker/id";
 import { getSaksenhet } from "~/saker/selectors";
 import type { KontrollsakResponse } from "~/saker/types.backend";
-import { getStatus } from "~/saker/visning";
+import { getStegOgStatusTekst } from "~/saker/visning";
 import { hentAlleSaker } from "./alle-saker.server";
 import { hentMockState } from "./session.server";
 import {
@@ -74,7 +74,7 @@ function mapEksisterendeSak(sak: KontrollsakResponse): EksisterendeSak {
     personNavn: sak.personNavn ?? "Ukjent navn",
     saksbehandler: sak.saksbehandlere.eier?.navn ?? sak.saksbehandlere.opprettetAv.navn,
     enhet: getSaksenhet(sak) || "Ukjent",
-    status: getStatus(sak),
+    status: getStegOgStatusTekst(sak),
   };
 }
 

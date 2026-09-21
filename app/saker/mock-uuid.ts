@@ -1,4 +1,4 @@
-import type { Blokkeringsarsak, KontrollsakResponse, KontrollsakStatus } from "./types.backend";
+import type { KontrollsakResponse, KontrollsakStatus } from "./types.backend";
 
 export function nullstillMockStatushistorikk() {}
 
@@ -80,7 +80,7 @@ export function normaliserLegacyKontrollsak(sak: LegacyKontrollsak): Kontrollsak
       ? String((sak as { bakgrunn?: { kilde?: unknown } }).bakgrunn?.kilde)
       : null;
 
-  const statusMap: Record<string, KontrollsakResponse["status"]> = {
+  const statusMap: Record<string, KontrollsakResponse["steg"]> = {
     OPPRETTET: "OPPRETTET",
     AVKLART: "OPPRETTET",
     UTREDES: "UTREDES",
@@ -95,7 +95,7 @@ export function normaliserLegacyKontrollsak(sak: LegacyKontrollsak): Kontrollsak
     STRAFFERETTSLIG_VURDERING: "STRAFFERETTSLIG_VURDERING",
   };
 
-  const blokkertMap: Record<string, Blokkeringsarsak | null> = {
+  const blokkertMap: Record<string, KontrollsakStatus | null> = {
     I_BERO: "I_BERO",
     VENTER_PA_INFORMASJON: "VENTER_PA_INFORMASJON",
     VENTER_PA_VEDTAK: "VENTER_PA_VEDTAK",
@@ -141,8 +141,8 @@ export function normaliserLegacyKontrollsak(sak: LegacyKontrollsak): Kontrollsak
     "Avbrutt tiltak": "AVBRUTT_TILTAK",
   };
 
-  const normalisertStatus: KontrollsakStatus = statusMap[legacyStatus] ?? "OPPRETTET";
-  const blokkert: Blokkeringsarsak | null = blokkertMap[legacyStatus] ?? null;
+  const normalisertSteg: KontrollsakResponse["steg"] = statusMap[legacyStatus] ?? "OPPRETTET";
+  const status: KontrollsakStatus | null = blokkertMap[legacyStatus] ?? null;
   const opprettetAv = normaliserLegacyOpprettetAv(sak, saksbehandlerNavn, saksbehandlerEnhet);
   const eier = normaliserLegacyEier(sak);
 
@@ -162,8 +162,8 @@ export function normaliserLegacyKontrollsak(sak: LegacyKontrollsak): Kontrollsak
         ),
       opprettetAv,
     },
-    status: normalisertStatus,
-    blokkert,
+    steg: normalisertSteg,
+    status,
     henleggelsesarsak: null,
     kategori: (legacyKategori in
     {

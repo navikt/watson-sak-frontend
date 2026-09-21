@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getSaksreferanse } from "~/saker/id";
-import type { KontrollsakSaksbehandler, KontrollsakStatus } from "~/saker/types.backend";
+import type {
+  KontrollsakSaksbehandler,
+  KontrollsakStatus,
+  KontrollsakSteg,
+} from "~/saker/types.backend";
 import { hentFordelingssaker } from "~/testing/mock-store/alle-saker.server";
 import { arkiverDokument, opprettDokument } from "~/testing/mock-store/dokumenter.server";
 import { hentKommentarliste } from "~/testing/mock-store/kommentarer.server";
@@ -39,12 +43,17 @@ const annenSaksbehandler: KontrollsakSaksbehandler = {
 };
 
 function settOppSak(
-  opts: { eier?: KontrollsakSaksbehandler | null; status?: KontrollsakStatus } = {},
+  opts: {
+    eier?: KontrollsakSaksbehandler | null;
+    steg?: KontrollsakSteg;
+    status?: KontrollsakStatus | null;
+  } = {},
 ) {
   const sak = hentFordelingssaker(state())[0];
   sak.saksbehandlere.eier = opts.eier === undefined ? eierMeg : opts.eier;
   sak.saksbehandlere.deltMed = [];
-  sak.status = opts.status ?? "UTREDES";
+  sak.steg = opts.steg ?? "UTREDES";
+  sak.status = opts.status ?? null;
 
   const { id: docId } = opprettDokument(state(), String(sak.id), "Test Saksbehandler");
   return { sak, ref: getSaksreferanse(sak.id), docId, sakId: String(sak.id) };
@@ -147,7 +156,7 @@ describe("kommentarer.api loader", () => {
   });
 
   it("lar lesetilgang hente kommentarer på en avsluttet sak", async () => {
-    const { ref, docId } = settOppSak({ status: "AVSLUTTET" });
+    const { ref, docId } = settOppSak({ steg: "AVSLUTTET" });
 
     const respons = (await loader({
       request: testRequest,
@@ -433,7 +442,7 @@ describe("kommentarer.api action", () => {
   });
 
   it("lar lesetilgang kommentere selv om saken er avsluttet", async () => {
-    const { ref, docId, sakId } = settOppSak({ status: "AVSLUTTET" });
+    const { ref, docId, sakId } = settOppSak({ steg: "AVSLUTTET" });
     await opprettTraad(ref, docId, "Kommentar på avsluttet sak");
 
     expect(mockliste(sakId, docId).traader).toHaveLength(1);

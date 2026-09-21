@@ -6,7 +6,7 @@ import { Kort } from "~/komponenter/Kort";
 import { KolonneHeading, type Sorteringsretning } from "~/saker/saksliste/KolonneHeading";
 import { RouteConfig } from "~/routeConfig";
 import {
-  LEDERSTATISTIKK_STATUSER,
+  LEDERSTATISTIKK_STEG,
   type LederAnsatteStatistikk,
   type LederAnsattStatistikk,
 } from "../types";
@@ -41,7 +41,7 @@ function ariaSortForKolonne(
 
 function lagAnsattLenke(enhetId: string, navIdent: string): string {
   const parametere = new URLSearchParams({ enhet: enhetId, saksbehandler: navIdent });
-  LEDERSTATISTIKK_STATUSER.forEach((status) => parametere.append("status", status));
+  LEDERSTATISTIKK_STEG.forEach((steg) => parametere.append("steg", steg));
   return `${RouteConfig.ALLE_SAKER}?${parametere}`;
 }
 

@@ -61,17 +61,17 @@ describe("Fordeling api.server", () => {
     expect(url).toContain("ansvarligNavIdent=Z999999");
   }, 15000);
 
-  it("sender status som gjentatte query-parametre", async () => {
+  it("sender steg som gjentatte query-parametre", async () => {
     const fetchMock = vi.fn().mockResolvedValue(tomSideSvar);
     vi.stubGlobal("fetch", fetchMock);
 
     const { hentKontrollsaker } = await import("./api.server");
 
-    await hentKontrollsaker({ token: "t", page: 1, size: 20, status: ["OPPRETTET", "UTREDES"] });
+    await hentKontrollsaker({ token: "t", page: 1, size: 20, steg: ["OPPRETTET", "UTREDES"] });
 
     const url = fetchMock.mock.calls[0][0] as string;
-    expect(url).toContain("status=OPPRETTET");
-    expect(url).toContain("status=UTREDES");
+    expect(url).toContain("steg=OPPRETTET");
+    expect(url).toContain("steg=UTREDES");
   }, 15000);
 
   it("sender utenAnsvarlig=true for fordeling", async () => {
@@ -108,16 +108,16 @@ describe("Fordeling api.server", () => {
     expect(url).toContain("merking=PRIORITERT");
   }, 15000);
 
-  it("sender utenBlokkering=true som query-parameter", async () => {
+  it("sender utenStatus=true som query-parameter", async () => {
     const fetchMock = vi.fn().mockResolvedValue(tomSideSvar);
     vi.stubGlobal("fetch", fetchMock);
 
     const { hentKontrollsaker } = await import("./api.server");
 
-    await hentKontrollsaker({ token: "t", page: 1, size: 20, utenBlokkering: true });
+    await hentKontrollsaker({ token: "t", page: 1, size: 20, utenStatus: true });
 
     const url = fetchMock.mock.calls[0][0] as string;
-    expect(url).toContain("utenBlokkering=true");
+    expect(url).toContain("utenStatus=true");
   }, 15000);
 
   it("sender sortering som query-parameter", async () => {

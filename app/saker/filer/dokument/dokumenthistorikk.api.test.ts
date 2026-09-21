@@ -41,7 +41,7 @@ describe("dokumenthistorikk.api", () => {
       navn: "Test Saksbehandler",
       enhet: "4812",
     };
-    sak.status = "UTREDES";
+    sak.steg = "UTREDES";
     const { id: docId } = opprettDokument(state, String(sak.id), "Test Saksbehandler");
     const innhold = [{ type: "p", children: [{ text: "Historisk innhold" }] }];
     const dokument = lagreDokument(state, String(sak.id), docId, {
@@ -83,7 +83,7 @@ describe("dokumenthistorikk.api", () => {
       navn: "Test Saksbehandler",
       enhet: "4812",
     };
-    sak.status = "OPPRETTET";
+    sak.steg = "OPPRETTET";
     const { id: docId } = opprettDokument(state, String(sak.id), "Test Saksbehandler");
     const dokument = hentDokument(state, String(sak.id), docId);
     if (!dokument) throw new Error("Kunne ikke opprette testdokument");

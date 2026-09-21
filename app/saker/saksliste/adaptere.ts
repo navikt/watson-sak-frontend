@@ -9,7 +9,7 @@ import {
   getOpprettetDato,
 } from "~/saker/selectors";
 import type { KontrollsakResponse } from "~/saker/types.backend";
-import { formaterBlokkeringsarsak, getStatus } from "~/saker/visning";
+import { formaterSteg, formaterStatus } from "~/saker/visning";
 import type { SakslisteRad } from "./Saksliste";
 
 export function mapKontrollsakTilSakslisteRad(
@@ -25,8 +25,8 @@ export function mapKontrollsakTilSakslisteRad(
     navn: getNavn(sak),
     kategori: getKategoriText(sak),
     misbrukstyper: getMisbrukstyper(sak),
-    status: getStatus(sak),
-    ventestatus: sak.blokkert ? formaterBlokkeringsarsak(sak.blokkert) : null,
+    steg: formaterSteg(sak.steg),
+    status: sak.status ? formaterStatus(sak.status) : null,
     opprettet: getOpprettetDato(sak),
     oppdatert: getOppdatertDato(sak),
     saksbehandler: sak.saksbehandlere.eier?.navn ?? null,
@@ -46,8 +46,8 @@ export function mapFordelingSakTilSakslisteRad(
     navn: sak.navn,
     kategori: sak.kategori,
     misbrukstyper: sak.misbrukstyper,
+    steg: sak.steg,
     status: sak.status,
-    ventestatus: sak.ventestatus,
     opprettet: sak.opprettetDato,
     oppdatert: sak.oppdatertDato,
     saksbehandler: null,

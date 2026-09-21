@@ -49,7 +49,7 @@ function lagBackendHendelse(overrides: Partial<SakHendelse> = {}): SakHendelse {
     sakId: 1,
     kategori: "ARBEID",
     prioritet: "NORMAL",
-    status: "OPPRETTET",
+    steg: "OPPRETTET",
     ytelseTyper: ["SYKEPENGER"],
     ...overrides,
   };
@@ -69,13 +69,13 @@ describe("SakHistorikk", () => {
     vi.useRealTimers();
   });
 
-  it("renderer backend hendelsestype og statusfelt", async () => {
+  it("renderer backend hendelsestype og stegfelt", async () => {
     await renderMedRouter(
       <SakHistorikk redigerbar={true} sakId={1} hendelser={[lagBackendHendelse()]} />,
     );
 
     expect(screen.getByText("Sak opprettet")).toBeDefined();
-    expect(screen.getByText(/Status: Opprettet/)).toBeDefined();
+    expect(screen.getByText(/Steg: Opprettet/)).toBeDefined();
   });
 
   it("skjuler kommentarhendelser fra historikken", async () => {
@@ -119,7 +119,7 @@ describe("SakHistorikk", () => {
     expect(screen.getByText(/11:00/)).toBeDefined();
   });
 
-  it("renderer avklaringshendelse med oppdatert status", async () => {
+  it("renderer avklaringshendelse med oppdatert steg", async () => {
     await renderMedRouter(
       <SakHistorikk
         redigerbar={true}
@@ -127,17 +127,17 @@ describe("SakHistorikk", () => {
         hendelser={[
           lagBackendHendelse({
             hendelsesType: "AVKLARING_OPPRETTET",
-            status: "AVSLUTTET",
+            steg: "AVSLUTTET",
           }),
         ]}
       />,
     );
 
     expect(screen.getByText("Avklaring opprettet")).toBeDefined();
-    expect(screen.getByText(/Status: Avsluttet/)).toBeDefined();
+    expect(screen.getByText(/Steg: Avsluttet/)).toBeDefined();
   });
 
-  it("renderer beskrivelse for statusendring", async () => {
+  it("renderer beskrivelse for stegendring", async () => {
     await renderMedRouter(
       <SakHistorikk
         redigerbar={true}
@@ -145,7 +145,7 @@ describe("SakHistorikk", () => {
         hendelser={[
           lagBackendHendelse({
             hendelsesType: "STATUS_ENDRET",
-            status: "ANMELDT",
+            steg: "ANMELDT",
             beskrivelse: "Saken er vurdert og anmeldt",
           }),
         ]}
@@ -153,7 +153,7 @@ describe("SakHistorikk", () => {
     );
 
     expect(screen.getByText("Sak anmeldt")).toBeDefined();
-    expect(screen.getByText(/Saken er vurdert og anmeldt – Status: Anmeldt/)).toBeDefined();
+    expect(screen.getByText(/Saken er vurdert og anmeldt – Steg: Anmeldt/)).toBeDefined();
   });
 
   it("renderer historikk for endret ansvarlig saksbehandler", async () => {
@@ -200,7 +200,7 @@ describe("SakHistorikk", () => {
     ).toBeDefined();
   });
 
-  it("renderer sak satt på vent med blokkeringsårsak og status", async () => {
+  it("renderer sak satt på vent med status og steg", async () => {
     await renderMedRouter(
       <SakHistorikk
         redigerbar={true}
@@ -208,15 +208,15 @@ describe("SakHistorikk", () => {
         hendelser={[
           lagBackendHendelse({
             hendelsesType: "SAK_SATT_PA_VENT",
-            status: "UTREDES",
-            blokkert: "VENTER_PA_VEDTAK",
+            steg: "UTREDES",
+            status: "VENTER_PA_VEDTAK",
           }),
         ]}
       />,
     );
 
     expect(screen.getByText("Sak satt på vent")).toBeDefined();
-    expect(screen.getByText(/På vent: Venter på vedtak – Status: Utredes/)).toBeDefined();
+    expect(screen.getByText(/På vent: Venter på vedtak – Steg: Utredes/)).toBeDefined();
   });
 
   it("renderer gjenoppta som vanlig gjenopptak for ventesaker", async () => {
@@ -227,7 +227,7 @@ describe("SakHistorikk", () => {
         hendelser={[
           lagBackendHendelse({
             hendelsesType: "SAK_GJENOPPTATT",
-            blokkert: "VENTER_PA_VEDTAK",
+            status: "VENTER_PA_VEDTAK",
           }),
         ]}
       />,
@@ -244,7 +244,7 @@ describe("SakHistorikk", () => {
         hendelser={[
           lagBackendHendelse({
             hendelsesType: "SAK_GJENOPPTATT",
-            blokkert: "I_BERO",
+            status: "I_BERO",
           }),
         ]}
       />,
@@ -262,13 +262,13 @@ describe("SakHistorikk", () => {
           lagBackendHendelse({
             hendelseId: "00000000-0000-4000-8000-000000000002",
             hendelsesType: "SAK_STATUS_ENDRET",
-            status: "UTREDES",
+            steg: "UTREDES",
             tidspunkt: "2026-03-31T11:00:00Z",
           }),
           lagBackendHendelse({
             hendelseId: "00000000-0000-4000-8000-000000000001",
             hendelsesType: "SAK_OPPRETTET",
-            status: "OPPRETTET",
+            steg: "OPPRETTET",
             tidspunkt: "2026-03-31T10:00:00Z",
           }),
         ]}
@@ -276,7 +276,7 @@ describe("SakHistorikk", () => {
     );
 
     expect(screen.getByText("Sak utredes")).toBeDefined();
-    expect(screen.getByText(/Status: Utredes/)).toBeDefined();
+    expect(screen.getByText(/Steg: Utredes/)).toBeDefined();
   });
 
   it("viser arbeidsstatusendring for SAK_STATUS_ENDRET når kun blokkering endres", async () => {
@@ -288,15 +288,15 @@ describe("SakHistorikk", () => {
           lagBackendHendelse({
             hendelseId: "00000000-0000-4000-8000-000000000002",
             hendelsesType: "SAK_STATUS_ENDRET",
-            status: "UTREDES",
-            blokkert: "I_BERO",
+            steg: "UTREDES",
+            status: "I_BERO",
             tidspunkt: "2026-03-31T11:00:00Z",
           }),
           lagBackendHendelse({
             hendelseId: "00000000-0000-4000-8000-000000000001",
             hendelsesType: "SAK_STATUS_ENDRET",
-            status: "UTREDES",
-            blokkert: null,
+            steg: "UTREDES",
+            status: null,
             tidspunkt: "2026-03-31T10:00:00Z",
           }),
         ]}
@@ -304,7 +304,7 @@ describe("SakHistorikk", () => {
     );
 
     expect(screen.getByText("Sak satt i bero")).toBeDefined();
-    expect(screen.getByText(/Arbeidsstatus: I bero – Status: Utredes/)).toBeDefined();
+    expect(screen.getByText(/Status: I bero – Steg: Utredes/)).toBeDefined();
   });
 
   it("viser gjenopptak for SAK_STATUS_ENDRET når blokkering fjernes", async () => {
@@ -316,15 +316,15 @@ describe("SakHistorikk", () => {
           lagBackendHendelse({
             hendelseId: "00000000-0000-4000-8000-000000000002",
             hendelsesType: "SAK_STATUS_ENDRET",
-            status: "UTREDES",
-            blokkert: null,
+            steg: "UTREDES",
+            status: null,
             tidspunkt: "2026-03-31T11:00:00Z",
           }),
           lagBackendHendelse({
             hendelseId: "00000000-0000-4000-8000-000000000001",
             hendelsesType: "SAK_STATUS_ENDRET",
-            status: "UTREDES",
-            blokkert: "VENTER_PA_VEDTAK",
+            steg: "UTREDES",
+            status: "VENTER_PA_VEDTAK",
             tidspunkt: "2026-03-31T10:00:00Z",
           }),
         ]}
@@ -332,7 +332,7 @@ describe("SakHistorikk", () => {
     );
 
     expect(screen.getByText("Sak gjenopptatt")).toBeDefined();
-    expect(screen.getByText(/Arbeidsstatus: Aktiv – Status: Utredes/)).toBeDefined();
+    expect(screen.getByText(/Status: Aktiv – Steg: Utredes/)).toBeDefined();
   });
 
   it("viser både status- og arbeidsstatusendring når begge endres samtidig for SAK_STATUS_ENDRET", async () => {
@@ -344,15 +344,15 @@ describe("SakHistorikk", () => {
           lagBackendHendelse({
             hendelseId: "00000000-0000-4000-8000-000000000002",
             hendelsesType: "SAK_STATUS_ENDRET",
-            status: "AVSLUTTET",
-            blokkert: null,
+            steg: "AVSLUTTET",
+            status: null,
             tidspunkt: "2026-03-31T11:00:00Z",
           }),
           lagBackendHendelse({
             hendelseId: "00000000-0000-4000-8000-000000000001",
             hendelsesType: "SAK_STATUS_ENDRET",
-            status: "UTREDES",
-            blokkert: "I_BERO",
+            steg: "UTREDES",
+            status: "I_BERO",
             tidspunkt: "2026-03-31T10:00:00Z",
           }),
         ]}
@@ -360,10 +360,10 @@ describe("SakHistorikk", () => {
     );
 
     expect(screen.getByText("Sak avsluttet og tatt ut av bero")).toBeDefined();
-    expect(screen.getByText(/Arbeidsstatus: Aktiv – Status: Avsluttet/)).toBeDefined();
+    expect(screen.getByText(/Status: Aktiv – Steg: Avsluttet/)).toBeDefined();
   });
 
-  it("viser henleggelsesårsak for SAK_STATUS_ENDRET når status blir HENLAGT", async () => {
+  it("viser henleggelsesårsak for SAK_STATUS_ENDRET når steg blir HENLAGT", async () => {
     await renderMedRouter(
       <SakHistorikk
         redigerbar={true}
@@ -372,14 +372,14 @@ describe("SakHistorikk", () => {
           lagBackendHendelse({
             hendelseId: "00000000-0000-4000-8000-000000000002",
             hendelsesType: "SAK_STATUS_ENDRET",
-            status: "HENLAGT",
+            steg: "HENLAGT",
             henleggelsesarsak: "FORELDET",
             tidspunkt: "2026-03-31T11:00:00Z",
           }),
           lagBackendHendelse({
             hendelseId: "00000000-0000-4000-8000-000000000001",
             hendelsesType: "SAK_STATUS_ENDRET",
-            status: "UTREDES",
+            steg: "UTREDES",
             tidspunkt: "2026-03-31T10:00:00Z",
           }),
         ]}

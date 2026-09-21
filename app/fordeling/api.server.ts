@@ -8,15 +8,15 @@ import type { KontrollsakPageResponse } from "./types.backend";
 type KontrollsakerFilter = {
   ansvarligNavIdent?: string;
   tilknyttetNavIdent?: string;
-  status?: string[];
+  steg?: string[];
   kategori?: string[];
   misbruktype?: string[];
   ytelseType?: string[];
   merking?: string[];
-  blokkert?: string[];
+  status?: string[];
   enhet?: string[];
   utenAnsvarlig?: boolean;
-  utenBlokkering?: boolean;
+  utenStatus?: boolean;
   sortering?: string;
 };
 
@@ -31,13 +31,13 @@ function byggKontrollsakerParams(args: HentKontrollsakerArgs): URLSearchParams {
   if (args.ansvarligNavIdent) params.set("ansvarligNavIdent", args.ansvarligNavIdent);
   if (args.tilknyttetNavIdent) params.set("tilknyttetNavIdent", args.tilknyttetNavIdent);
   if (args.utenAnsvarlig != null) params.set("utenAnsvarlig", String(args.utenAnsvarlig));
-  if (args.utenBlokkering != null) params.set("utenBlokkering", String(args.utenBlokkering));
-  for (const v of args.status ?? []) params.append("status", v);
+  if (args.utenStatus != null) params.set("utenStatus", String(args.utenStatus));
+  for (const v of args.steg ?? []) params.append("steg", v);
   for (const v of args.kategori ?? []) params.append("kategori", v);
   for (const v of args.misbruktype ?? []) params.append("misbruktype", v);
   for (const v of args.ytelseType ?? []) params.append("ytelseType", v);
   for (const v of args.merking ?? []) params.append("merking", v);
-  for (const v of args.blokkert ?? []) params.append("blokkert", v);
+  for (const v of args.status ?? []) params.append("status", v);
   for (const v of args.enhet ?? []) params.append("enhet", v);
   if (args.sortering) params.set("sortering", args.sortering);
   return params;

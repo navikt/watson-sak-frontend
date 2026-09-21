@@ -18,12 +18,12 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
       deltMed: [],
       opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
     },
-    status: "OPPRETTET",
+    steg: "OPPRETTET",
     kategori: "ARBEID",
     kilde: "NAV_KONTROLL",
     misbruktype: [],
     prioritet: "NORMAL",
-    blokkert: null,
+    status: null,
     henleggelsesarsak: null,
     ytelser: [],
     merking: [],
@@ -41,28 +41,28 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
 }
 
 describe("Mine saker selectors", () => {
-  it("mapper backend-status OPPRETTET til aktive", () => {
-    expect(getMineSakerGruppeStatus(lagKontrollsak({ status: "OPPRETTET" }))).toBe("aktive");
+  it("mapper backend-steg OPPRETTET til aktive", () => {
+    expect(getMineSakerGruppeStatus(lagKontrollsak({ steg: "OPPRETTET" }))).toBe("aktive");
   });
 
   it("mapper backend-status VENTER_PA_VEDTAK til ventende", () => {
     expect(
-      getMineSakerGruppeStatus(lagKontrollsak({ status: "UTREDES", blokkert: "VENTER_PA_VEDTAK" })),
+      getMineSakerGruppeStatus(lagKontrollsak({ steg: "UTREDES", status: "VENTER_PA_VEDTAK" })),
     ).toBe("ventende");
   });
 
   it("mapper saker i bero til ventende", () => {
-    expect(
-      getMineSakerGruppeStatus(lagKontrollsak({ status: "OPPRETTET", blokkert: "I_BERO" })),
-    ).toBe("ventende");
+    expect(getMineSakerGruppeStatus(lagKontrollsak({ steg: "OPPRETTET", status: "I_BERO" }))).toBe(
+      "ventende",
+    );
   });
 
-  it("mapper backend-status AVSLUTTET til fullførte", () => {
-    expect(getMineSakerGruppeStatus(lagKontrollsak({ status: "AVSLUTTET" }))).toBe("fullførte");
+  it("mapper backend-steg AVSLUTTET til fullførte", () => {
+    expect(getMineSakerGruppeStatus(lagKontrollsak({ steg: "AVSLUTTET" }))).toBe("fullførte");
   });
 
-  it("mapper backend-status UTREDES til aktive", () => {
-    expect(getMineSakerGruppeStatus(lagKontrollsak({ status: "UTREDES" }))).toBe("aktive");
+  it("mapper backend-steg UTREDES til aktive", () => {
+    expect(getMineSakerGruppeStatus(lagKontrollsak({ steg: "UTREDES" }))).toBe("aktive");
   });
 
   it("bygger tittel fra backend-kategori og ytelsestyper", () => {

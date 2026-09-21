@@ -9,7 +9,7 @@ describe("lagMockLederStatistikk", () => {
     resetDefaultSession();
   });
 
-  it("følger backendreglene for status arbeidsstatus frist ansatte og ufordelt", () => {
+  it("følger backendreglene for steg status frist ansatte og ufordelt", () => {
     const state = hentMockState(request);
     const grunnlag = state.kontrollsaker[0];
     if (!grunnlag) throw new Error("Mangler kontrollsak i mockgrunnlaget");
@@ -19,8 +19,8 @@ describe("lagMockLederStatistikk", () => {
         ...grunnlag,
         id: 1,
         enhet: "ky153k",
-        status: "ANMELDT",
-        blokkert: null,
+        steg: "ANMELDT",
+        status: null,
         oppdatert: "2026-03-01T22:59:59Z",
         saksbehandlere: { ...grunnlag.saksbehandlere, eier: null },
       },
@@ -28,8 +28,8 @@ describe("lagMockLederStatistikk", () => {
         ...grunnlag,
         id: 2,
         enhet: "ky153k",
-        status: "HENLAGT",
-        blokkert: "I_BERO",
+        steg: "HENLAGT",
+        status: "I_BERO",
         oppdatert: "2026-03-01T23:00:00Z",
         saksbehandlere: {
           ...grunnlag.saksbehandlere,
@@ -40,8 +40,8 @@ describe("lagMockLederStatistikk", () => {
         ...grunnlag,
         id: 3,
         enhet: "ky153k",
-        status: "UTREDES",
-        blokkert: "VENTER_PA_VEDTAK",
+        steg: "UTREDES",
+        status: "VENTER_PA_VEDTAK",
         oppdatert: null,
         saksbehandlere: {
           ...grunnlag.saksbehandlere,
@@ -52,8 +52,8 @@ describe("lagMockLederStatistikk", () => {
         ...grunnlag,
         id: 4,
         enhet: "ky153k",
-        status: "AVSLUTTET",
-        blokkert: null,
+        steg: "AVSLUTTET",
+        status: null,
         oppdatert: "2020-01-01T00:00:00Z",
       },
     ];
@@ -67,11 +67,11 @@ describe("lagMockLederStatistikk", () => {
 
     expect(resultat.enhet.totaltAntallIkkeAvsluttede).toBe(3);
     expect(resultat.enhet.antallOverFrist).toBe(1);
-    expect(resultat.enhet.perStatus.ANMELDT).toBe(1);
-    expect(resultat.enhet.perStatus.HENLAGT).toBe(1);
-    expect(resultat.enhet.perArbeidsstatus.IKKE_BLOKKERT).toBe(1);
-    expect(resultat.enhet.perArbeidsstatus.I_BERO).toBe(1);
-    expect(resultat.enhet.perArbeidsstatus.VENTER_PA_VEDTAK).toBe(1);
+    expect(resultat.enhet.perSteg.ANMELDT).toBe(1);
+    expect(resultat.enhet.perSteg.HENLAGT).toBe(1);
+    expect(resultat.enhet.perStatus.UTEN_STATUS).toBe(1);
+    expect(resultat.enhet.perStatus.I_BERO).toBe(1);
+    expect(resultat.enhet.perStatus.VENTER_PA_VEDTAK).toBe(1);
     expect(resultat.ansatte.liste.find((ansatt) => ansatt.navIdent === "Z234567")).toEqual(
       expect.objectContaining({
         totaltAntallIkkeAvsluttede: 2,

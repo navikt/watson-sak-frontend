@@ -44,19 +44,14 @@ import { erSakseier } from "./handlinger/tilgjengeligeHandlinger";
 import { IngenHistorikktilgangKort } from "./historikk/IngenHistorikktilgangKort";
 import { SakHistorikk } from "./historikk/SakHistorikk";
 import { getSaksreferanse } from "./id";
-import { hentStatusbaserteSaksregler } from "./statusregler";
+import { hentStegbaserteSaksregler } from "./stegregler";
 import { PersonIdentHistorikkModal } from "./komponenter/PersonIdentHistorikkModal";
 import { PersonIdentMedHistorikk } from "./komponenter/PersonIdentMedHistorikk";
 import { SakDetaljerFelter } from "./komponenter/SakDetaljerFelter";
 import { SakerPåSammePerson } from "./komponenter/SakerPåSammePerson";
 import { SaksbehandlereKort } from "./komponenter/SaksbehandlereKort";
 import { getAlder, getNavn } from "./selectors";
-import {
-  formaterBlokkeringsarsak,
-  formaterIsoTilNorskDato,
-  formaterStatus,
-  getPersonIdent,
-} from "./visning";
+import { formaterIsoTilNorskDato, formaterStatus, formaterSteg, getPersonIdent } from "./visning";
 import { action, loader } from "./SakDetaljSide.server";
 import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
 import { RouteConfig } from "~/routeConfig";
@@ -181,9 +176,9 @@ export default function SakDetaljSide() {
   const visPersonIdent = sak.gjeldendePersonIdent ?? personIdent;
   const harHistoriskIdent = sak.historiskeIdenter.some((i) => i.historisk);
   const identHistorikkModal = useDisclosure();
-  const statusTekst = formaterStatus(sak.status);
-  const statusregler = hentStatusbaserteSaksregler(sak.status);
-  const erAktiv = statusregler.erAktiv;
+  const stegTekst = formaterSteg(sak.steg);
+  const stegregler = hentStegbaserteSaksregler(sak.steg);
+  const erAktiv = stegregler.erAktiv;
   const saksreferanse = getSaksreferanse(sak.id);
   const navn = getNavn(sak);
   const alder = getAlder(sak);
@@ -210,8 +205,8 @@ export default function SakDetaljSide() {
       ? "vis"
       : "skjermet";
   const kanTildeleSak = sak.tilgang?.kanTildeleSak ?? true;
-  const kanRedigereDokumenter = harDirekteTilgang && statusregler.kanRedigereDokumenter;
-  const kanLasteOppFiler = harDirekteTilgang && statusregler.kanLasteOppFiler;
+  const kanRedigereDokumenter = harDirekteTilgang && stegregler.kanRedigereDokumenter;
+  const kanLasteOppFiler = harDirekteTilgang && stegregler.kanLasteOppFiler;
   const [redigerer, setRedigerer] = useState(false);
   const [redigeringsøkt, setRedigeringsøkt] = useState(0);
   const [visFeil, setVisFeil] = useState(false);
@@ -360,13 +355,13 @@ export default function SakDetaljSide() {
                         </Tag>
                       </Tooltip>
                     )}
-                    {sak.blokkert && (
+                    {sak.status && (
                       <Tag variant="outline" data-color="warning" size="medium">
-                        {formaterBlokkeringsarsak(sak.blokkert)}
+                        {formaterStatus(sak.status)}
                       </Tag>
                     )}
                     <Tag variant="outline" data-color="success" size="medium">
-                      {statusTekst}
+                      {stegTekst}
                     </Tag>
                   </HStack>
                 </HStack>
@@ -605,7 +600,7 @@ export default function SakDetaljSide() {
                             defaults={rad}
                             feil={feil}
                             size="small"
-                            endeligBeløpReadOnly={sak.status !== "STRAFFERETTSLIG_VURDERING"}
+                            endeligBeløpReadOnly={sak.steg !== "STRAFFERETTSLIG_VURDERING"}
                           />
                         ))}
                         <div>
@@ -701,7 +696,7 @@ export default function SakDetaljSide() {
                 sakId={sak.id}
                 hendelser={historikk}
                 redigerbar={kanRedigere}
-                kanLeggeTil={erEier && statusregler.kanLeggeTilHistorikk}
+                kanLeggeTil={erEier && stegregler.kanLeggeTilHistorikk}
               />
             ) : (
               <IngenHistorikktilgangKort årsak={historikkTilstand} />

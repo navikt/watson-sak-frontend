@@ -5,9 +5,9 @@ import { sporHendelse } from "~/analytics/analytics";
 import { ChipsFiltergruppe } from "~/filtre/ChipsFiltergruppe";
 import { Filterpanel } from "~/filtre/Filterpanel";
 import type {
-  Blokkeringsarsak,
   KontrollsakResponse,
   KontrollsakStatus,
+  KontrollsakSteg,
 } from "~/saker/types.backend";
 import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
 import { AntallTreffEtikett } from "~/saker/saksliste/AntallTreffEtikett";
@@ -34,12 +34,12 @@ type Props = {
   deltMedSaker: KontrollsakResponse[];
   detaljSti: string;
   filterAlternativer: {
+    steg: FilterAlternativ[];
     status: FilterAlternativ[];
-    ventestatus: FilterAlternativ[];
   };
   aktivtFilter: {
-    status: KontrollsakStatus[];
-    ventestatus: (Blokkeringsarsak | "INGEN")[];
+    steg: KontrollsakSteg[];
+    status: (KontrollsakStatus | "INGEN")[];
   };
 };
 
@@ -60,12 +60,11 @@ export function MineSakerInnhold({
     [saker, sorteringskolonne, sorteringsretning],
   );
 
-  const harAktiveFiltre = aktivtFilter.status.length > 0 || aktivtFilter.ventestatus.length > 0;
+  const harAktiveFiltre = aktivtFilter.steg.length > 0 || aktivtFilter.status.length > 0;
   const tomTekst = harAktiveFiltre ? "Endre filtrering for å finne saker" : "Du har ingen saker.";
 
-  function toggleFilter(key: "status" | "ventestatus", verdi: string) {
-    const filtergruppe = key === "ventestatus" ? "arbeidsstatus" : key;
-    sporHendelse("filter brukt", { filtergruppe, side: "mine-saker" });
+  function toggleFilter(key: "steg" | "status", verdi: string) {
+    sporHendelse("filter brukt", { filtergruppe: key, side: "mine-saker" });
     setSearchParams((forrige) => {
       const neste = new URLSearchParams(forrige);
 
@@ -130,17 +129,17 @@ export function MineSakerInnhold({
           >
             <Filterpanel>
               <ChipsFiltergruppe
+                tittel="Steg"
+                alternativer={filterAlternativer.steg}
+                valgteVerdier={aktivtFilter.steg}
+                onToggle={(verdi) => toggleFilter("steg", verdi)}
+                size="small"
+              />
+              <ChipsFiltergruppe
                 tittel="Status"
                 alternativer={filterAlternativer.status}
                 valgteVerdier={aktivtFilter.status}
                 onToggle={(verdi) => toggleFilter("status", verdi)}
-                size="small"
-              />
-              <ChipsFiltergruppe
-                tittel="Arbeidsstatus"
-                alternativer={filterAlternativer.ventestatus}
-                valgteVerdier={aktivtFilter.ventestatus}
-                onToggle={(verdi) => toggleFilter("ventestatus", verdi)}
                 size="small"
               />
             </Filterpanel>

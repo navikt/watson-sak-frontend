@@ -8,15 +8,15 @@ const gyldigRespons = {
     totaltAntallIkkeAvsluttede: 5,
     antallOverFrist: 1,
     antallUfordelte: 2,
-    perStatus: {
+    perSteg: {
       OPPRETTET: 1,
       UTREDES: 1,
       STRAFFERETTSLIG_VURDERING: 1,
       ANMELDT: 1,
       HENLAGT: 1,
     },
-    perArbeidsstatus: {
-      IKKE_BLOKKERT: 2,
+    perStatus: {
+      UTEN_STATUS: 2,
       VENTER_PA_INFORMASJON: 1,
       VENTER_PA_VEDTAK: 1,
       I_BERO: 1,
@@ -44,13 +44,13 @@ describe("lederStatistikkResponseSchema", () => {
     expect(lederStatistikkResponseSchema.parse(gyldigRespons)).toEqual(gyldigRespons);
   });
 
-  it("krever alle aktive statuser og arbeidsstatuser", () => {
+  it("krever alle aktive steg og statuser", () => {
     expect(
       lederStatistikkResponseSchema.safeParse({
         ...gyldigRespons,
         enhet: {
           ...gyldigRespons.enhet,
-          perStatus: { OPPRETTET: 5 },
+          perSteg: { OPPRETTET: 5 },
         },
       }).success,
     ).toBe(false);

@@ -3,7 +3,7 @@ import { hentAlleSaker, medInnloggetEier } from "~/saker/mock-alle-saker.server"
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { erSakseier } from "./handlinger/tilgjengeligeHandlinger";
 import { finnSakMedReferanse } from "./id";
-import { hentStatusbaserteSaksregler } from "./statusregler";
+import { hentStegbaserteSaksregler } from "./stegregler";
 
 export type Sakstilgang = {
   sak: KontrollsakResponse;
@@ -38,12 +38,12 @@ export async function hentSakstilgangFraMock(
   const erEier = erSakseier(sak, innlogget.navIdent);
   const harDeltTilgang = sak.saksbehandlere.deltMed.some((s) => s.navIdent === innlogget.navIdent);
   const kanSe = erEier || harDeltTilgang || innlogget.erLeder;
-  const statusregler = hentStatusbaserteSaksregler(sak.status);
+  const stegregler = hentStegbaserteSaksregler(sak.steg);
 
   return {
     sak,
     kanSe,
-    kanRedigereDokumenter: kanSe && statusregler.kanRedigereDokumenter,
-    kanLasteOppFiler: kanSe && statusregler.kanLasteOppFiler,
+    kanRedigereDokumenter: kanSe && stegregler.kanRedigereDokumenter,
+    kanLasteOppFiler: kanSe && stegregler.kanLasteOppFiler,
   };
 }

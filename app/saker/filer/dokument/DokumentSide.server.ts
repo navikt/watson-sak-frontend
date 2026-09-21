@@ -12,7 +12,7 @@ import {
   lagreDokument,
   opprettEllerOppdaterDokumentHistorikk,
 } from "../mock-data.server";
-import { hentStatusbaserteSaksregler } from "../../statusregler";
+import { hentStegbaserteSaksregler } from "../../stegregler";
 import { getSaksenhet } from "~/saker/selectors";
 import { hentKommentarliste as hentKommentarlisteFraBackend } from "./kommentarer/kommentarer.api.server";
 import { hentKommentarliste as hentKommentarlisteFraMock } from "./kommentarer/mock-data.server";
@@ -100,9 +100,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       kommentarinnlastingFeilet: kommentarresultat.feilet,
       sakReferanse,
       kanRedigere:
-        kanSe &&
-        hentStatusbaserteSaksregler(sak.status).kanRedigereDokumenter &&
-        !dokument.arkivert,
+        kanSe && hentStegbaserteSaksregler(sak.steg).kanRedigereDokumenter && !dokument.arkivert,
       variabelVerdier: byggVariabelVerdier(sak, innlogget),
       miljø: env.ENVIRONMENT,
     };
@@ -170,7 +168,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
     const token = await getBackendOboToken(request);
     const sak = await backendApi.hentKontrollsak(token, sakReferanse);
-    if (!hentStatusbaserteSaksregler(sak.status).kanRedigereDokumenter) {
+    if (!hentStegbaserteSaksregler(sak.steg).kanRedigereDokumenter) {
       throw data("Dokumenter kan ikke redigeres før saken er satt til Utredes", { status: 403 });
     }
     let kropp: { tittel?: unknown; innhold?: unknown; opprettHistorikk?: unknown };

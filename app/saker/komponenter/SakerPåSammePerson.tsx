@@ -21,7 +21,7 @@ import type { KontrollsakResponse } from "~/saker/types.backend";
 import { storFørsteBokstavPerOrd } from "~/utils/string-utils";
 import { PersonIdentHistorikkModal } from "./PersonIdentHistorikkModal";
 import { SakDetaljerFelter } from "./SakDetaljerFelter";
-import { formaterBlokkeringsarsak, getPersonIdent, getStatus } from "~/saker/visning";
+import { formaterStatus, getPersonIdent, getStegOgStatusTekst } from "~/saker/visning";
 
 interface SakerPåSammePersonProps {
   saker: KontrollsakResponse[];
@@ -51,7 +51,7 @@ function SakKort({
   const kodeverk = useKodeverk();
   const saksreferanse = getSaksreferanse(sak.id);
   const personIdent = getPersonIdent(sak);
-  const statusTekst = getStatus(sak);
+  const stegOgStatusTekst = getStegOgStatusTekst(sak);
   const enhetskode = getSaksenhet(sak);
   const enhet = enhetskode ? finnEnhetsnavn(kodeverk.enheter, enhetskode) : "Ukjent";
   const saksbehandler = sak.saksbehandlere.eier?.navn ?? sak.saksbehandlere.opprettetAv.navn;
@@ -74,13 +74,13 @@ function SakKort({
               <BodyShort size="small">
                 Saksbehandler: <strong>{storFørsteBokstavPerOrd(saksbehandler)}</strong>
               </BodyShort>
-              {sak.blokkert ? (
+              {sak.status ? (
                 <Tag variant="outline" data-color="warning" size="small">
-                  {formaterBlokkeringsarsak(sak.blokkert)}
+                  {formaterStatus(sak.status)}
                 </Tag>
               ) : (
                 <Tag variant="outline" data-color="success" size="small">
-                  {statusTekst}
+                  {stegOgStatusTekst}
                 </Tag>
               )}
             </HStack>

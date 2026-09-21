@@ -16,12 +16,12 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
         enhet: "4812",
       },
     },
-    status: "OPPRETTET",
+    steg: "OPPRETTET",
     kategori: "ARBEID",
     kilde: "PUBLIKUM",
     misbruktype: [],
     prioritet: "NORMAL",
-    blokkert: null,
+    status: null,
     henleggelsesarsak: null,
     ytelser: [
       {
@@ -48,11 +48,11 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
 
 describe("Fordeling mapper", () => {
   it("behandler eierløs sak som klar for fordeling", () => {
-    expect(erEierlosKontrollsak(lagKontrollsak({ status: "OPPRETTET" }))).toBe(true);
+    expect(erEierlosKontrollsak(lagKontrollsak({ steg: "OPPRETTET" }))).toBe(true);
   });
 
   it("behandler eierløs sak under utredning som klar for fordeling", () => {
-    expect(erEierlosKontrollsak(lagKontrollsak({ status: "UTREDES" }))).toBe(true);
+    expect(erEierlosKontrollsak(lagKontrollsak({ steg: "UTREDES" }))).toBe(true);
   });
 
   it("behandler eid sak som ikke klar for fordeling", () => {
@@ -79,9 +79,9 @@ describe("Fordeling mapper", () => {
       misbrukstyper: [],
       ytelser: ["Dagpenger"],
       merking: [],
-      status: "Opprettet",
-      statusKode: "OPPRETTET",
-      ventestatus: null,
+      steg: "Opprettet",
+      stegKode: "OPPRETTET",
+      status: null,
     });
   });
 
@@ -99,9 +99,9 @@ describe("Fordeling mapper", () => {
       misbrukstyper: [],
       ytelser: ["Dagpenger"],
       merking: [],
-      status: "Opprettet",
-      statusKode: "OPPRETTET",
-      ventestatus: null,
+      steg: "Opprettet",
+      stegKode: "OPPRETTET",
+      status: null,
     });
   });
 });

@@ -26,12 +26,12 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
       deltMed: [],
       opprettetAv: { navIdent: "Z999999", navn: "Saks Behandlersen", enhet: "4812" },
     },
-    status: "OPPRETTET",
+    steg: "OPPRETTET",
     kategori: "ARBEID",
     kilde: "NAV_KONTROLL",
     misbruktype: [],
     prioritet: "NORMAL",
-    blokkert: null,
+    status: null,
     henleggelsesarsak: null,
     ytelser: [],
     merking: [],
@@ -70,12 +70,12 @@ describe("MineSakerSide loader", () => {
     );
   });
 
-  it("returnerer filteralternativer for status og ventestatus", async () => {
+  it("returnerer filteralternativer for steg og status", async () => {
     const resultat = await loader(loaderArgs);
 
-    expect(resultat.filterAlternativer.status.length).toBe(6);
-    expect(resultat.filterAlternativer.ventestatus.length).toBe(4);
-    expect(resultat.filterAlternativer.ventestatus).toContainEqual({
+    expect(resultat.filterAlternativer.steg.length).toBe(6);
+    expect(resultat.filterAlternativer.status.length).toBe(4);
+    expect(resultat.filterAlternativer.status).toContainEqual({
       verdi: "INGEN",
       etikett: "Aktiv",
     });
@@ -84,77 +84,71 @@ describe("MineSakerSide loader", () => {
   it("har ingen aktive filtre når ingen URL-parametere er satt", async () => {
     const resultat = await loader(loaderArgs);
 
+    expect(resultat.aktivtFilter.steg).toEqual([]);
     expect(resultat.aktivtFilter.status).toEqual([]);
-    expect(resultat.aktivtFilter.ventestatus).toEqual([]);
   });
 
   it("bruker URL-parametere for filtrering når de er satt", async () => {
     const args = {
-      request: new Request("http://localhost/mine-saker?status=AVSLUTTET"),
+      request: new Request("http://localhost/mine-saker?steg=AVSLUTTET"),
       params: {},
       context: {},
     } as Parameters<typeof loader>[0];
 
     const resultat = await loader(args);
 
-    expect(resultat.aktivtFilter.status).toEqual(["AVSLUTTET"]);
-    expect(resultat.aktivtFilter.ventestatus).toEqual([]);
+    expect(resultat.aktivtFilter.steg).toEqual(["AVSLUTTET"]);
+    expect(resultat.aktivtFilter.status).toEqual([]);
   });
 });
 
 describe("filtrerMineSaker", () => {
-  it("filtrerer på status", () => {
-    const saker = [
-      lagKontrollsak({ status: "OPPRETTET" }),
-      lagKontrollsak({ status: "AVSLUTTET" }),
-    ];
+  it("filtrerer på steg", () => {
+    const saker = [lagKontrollsak({ steg: "OPPRETTET" }), lagKontrollsak({ steg: "AVSLUTTET" })];
 
     const resultat = filtrerMineSaker(saker, ["OPPRETTET"], []);
     expect(resultat).toHaveLength(1);
-    expect(resultat[0].status).toBe("OPPRETTET");
+    expect(resultat[0].steg).toBe("OPPRETTET");
   });
 
   it("filtrerer på ventestatus INGEN (ikke blokkert)", () => {
     const saker = [
-      lagKontrollsak({ blokkert: null }),
-      lagKontrollsak({ blokkert: "VENTER_PA_VEDTAK" }),
+      lagKontrollsak({ status: null }),
+      lagKontrollsak({ status: "VENTER_PA_VEDTAK" }),
     ];
 
     const resultat = filtrerMineSaker(saker, [], ["INGEN"]);
     expect(resultat).toHaveLength(1);
-    expect(resultat[0].blokkert).toBeNull();
+    expect(resultat[0].status).toBeNull();
   });
 
   it("filtrerer på ventestatus med blokkeringsårsak", () => {
     const saker = [
-      lagKontrollsak({ blokkert: null }),
-      lagKontrollsak({ blokkert: "VENTER_PA_INFORMASJON" }),
-      lagKontrollsak({ blokkert: "I_BERO" }),
+      lagKontrollsak({ status: null }),
+      lagKontrollsak({ status: "VENTER_PA_INFORMASJON" }),
+      lagKontrollsak({ status: "I_BERO" }),
     ];
 
     const resultat = filtrerMineSaker(saker, [], ["VENTER_PA_INFORMASJON"]);
     expect(resultat).toHaveLength(1);
-    expect(resultat[0].blokkert).toBe("VENTER_PA_INFORMASJON");
+    expect(resultat[0].status).toBe("VENTER_PA_INFORMASJON");
   });
 
-  it("kombinerer status- og ventestatusfiltre", () => {
+  it("kombinerer steg- og ventestatusfiltre", () => {
     const saker = [
-      lagKontrollsak({ status: "OPPRETTET", blokkert: null }),
-      lagKontrollsak({ status: "OPPRETTET", blokkert: "I_BERO" }),
-      lagKontrollsak({ status: "AVSLUTTET", blokkert: null }),
+      lagKontrollsak({ steg: "OPPRETTET", status: null }),
+      lagKontrollsak({ steg: "OPPRETTET", status: "I_BERO" }),
+      lagKontrollsak({ steg: "AVSLUTTET", status: null }),
     ];
 
     const resultat = filtrerMineSaker(saker, ["OPPRETTET"], ["INGEN"]);
     expect(resultat).toHaveLength(1);
-    expect(resultat[0].status).toBe("OPPRETTET");
-    expect(resultat[0].blokkert).toBeNull();
+    expect(resultat[0].steg).toBe("OPPRETTET");
+    expect(resultat[0].status).toBeNull();
   });
 
   it("returnerer alle saker når ingen filtre er satt", () => {
-    const saker = [
-      lagKontrollsak({ status: "OPPRETTET" }),
-      lagKontrollsak({ status: "AVSLUTTET" }),
-    ];
+    const saker = [lagKontrollsak({ steg: "OPPRETTET" }), lagKontrollsak({ steg: "AVSLUTTET" })];
 
     const resultat = filtrerMineSaker(saker, [], []);
     expect(resultat).toHaveLength(2);

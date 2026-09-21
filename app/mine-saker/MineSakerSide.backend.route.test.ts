@@ -1,6 +1,6 @@
 /**
  * Tester for MineSakerSide loader — backend-sti (skalBrukeMockdata: false).
- * Verifiserer at ventestatus-filteret oversettes riktig til backend-parametre.
+ * Verifiserer at status-filteret (blokkerende status) oversettes riktig til backend-parametre.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -40,77 +40,75 @@ describe("MineSakerSide loader — backend-sti", () => {
     vi.clearAllMocks();
   });
 
-  it("sender INGEN ventestatus som utenBlokkering=true", async () => {
+  it("sender INGEN status som utenStatus=true", async () => {
     mockHentKontrollsaker.mockResolvedValue(tomSideResponse);
     const { loader } = await import("./MineSakerSide.route");
 
     await loader({
-      request: new Request("http://localhost/mine-saker?ventestatus=INGEN"),
+      request: new Request("http://localhost/mine-saker?status=INGEN"),
       params: {},
       context: {},
     } as Parameters<typeof loader>[0]);
 
     expect(mockHentKontrollsaker).toHaveBeenCalledWith(
       expect.objectContaining({
-        utenBlokkering: true,
-        blokkert: undefined,
+        utenStatus: true,
+        status: undefined,
       }),
     );
   }, 15000);
 
-  it("sender blokkeringsårsak uten INGEN som blokkert[]", async () => {
+  it("sender blokkerende status uten INGEN som status[]", async () => {
     mockHentKontrollsaker.mockResolvedValue(tomSideResponse);
     const { loader } = await import("./MineSakerSide.route");
 
     await loader({
-      request: new Request("http://localhost/mine-saker?ventestatus=VENTER_PA_INFORMASJON"),
+      request: new Request("http://localhost/mine-saker?status=VENTER_PA_INFORMASJON"),
       params: {},
       context: {},
     } as Parameters<typeof loader>[0]);
 
     expect(mockHentKontrollsaker).toHaveBeenCalledWith(
       expect.objectContaining({
-        utenBlokkering: undefined,
-        blokkert: ["VENTER_PA_INFORMASJON"],
+        utenStatus: undefined,
+        status: ["VENTER_PA_INFORMASJON"],
       }),
     );
   }, 15000);
 
-  it("sender begge parametre når INGEN og blokkeringsårsak er valgt", async () => {
+  it("sender begge parametre når INGEN og blokkerende status er valgt", async () => {
     mockHentKontrollsaker.mockResolvedValue(tomSideResponse);
     const { loader } = await import("./MineSakerSide.route");
 
     await loader({
-      request: new Request(
-        "http://localhost/mine-saker?ventestatus=INGEN&ventestatus=VENTER_PA_INFORMASJON",
-      ),
+      request: new Request("http://localhost/mine-saker?status=INGEN&status=VENTER_PA_INFORMASJON"),
       params: {},
       context: {},
     } as Parameters<typeof loader>[0]);
 
     expect(mockHentKontrollsaker).toHaveBeenCalledWith(
       expect.objectContaining({
-        utenBlokkering: true,
-        blokkert: ["VENTER_PA_INFORMASJON"],
+        utenStatus: true,
+        status: ["VENTER_PA_INFORMASJON"],
       }),
     );
   }, 15000);
 
-  it("sender verken utenBlokkering eller blokkert når ventestatus-filter er tomt", async () => {
+  it("sender verken utenStatus eller status når status-filter er tomt", async () => {
     mockHentKontrollsaker.mockResolvedValue(tomSideResponse);
     const { loader } = await import("./MineSakerSide.route");
 
-    // Ingen ventestatus-param i URL, men status-param finnes (utløser harFilterParams=true, ventestatusFilter=[])
+    // Ingen status-param i URL, men steg-param finnes (utløser harFilterParams=true, statusFilter=[])
     await loader({
-      request: new Request("http://localhost/mine-saker?status=OPPRETTET"),
+      request: new Request("http://localhost/mine-saker?steg=OPPRETTET"),
       params: {},
       context: {},
     } as Parameters<typeof loader>[0]);
 
     expect(mockHentKontrollsaker).toHaveBeenCalledWith(
       expect.objectContaining({
-        utenBlokkering: undefined,
-        blokkert: undefined,
+        utenStatus: undefined,
+        status: undefined,
       }),
     );
   }, 15000);

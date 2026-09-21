@@ -38,7 +38,7 @@ function settOppAktivSak() {
   const sak = hentFordelingssaker(state())[0];
   sak.saksbehandlere.eier = eierMeg;
   sak.saksbehandlere.deltMed = [];
-  sak.status = "UTREDES";
+  sak.steg = "UTREDES";
   return { sak, ref: getSaksreferanse(sak.id) };
 }
 

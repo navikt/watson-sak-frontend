@@ -184,7 +184,7 @@ describe("opprettKontrollsak", () => {
       hentFordelingssaker(state()).some(
         (sak) =>
           sak.personIdent === "12345678901" &&
-          sak.status === "OPPRETTET" &&
+          sak.steg === "OPPRETTET" &&
           sak.saksbehandlere.eier === null,
       ),
     ).toBe(true);

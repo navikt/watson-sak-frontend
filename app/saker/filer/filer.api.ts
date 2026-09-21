@@ -5,7 +5,7 @@ import { skalBrukeMockdata } from "~/config/env.server";
 import * as backendApi from "~/saker/api.server";
 import { BackendFeilException } from "~/saker/api.server";
 import { leggTilHendelse } from "~/saker/historikk/mock-data.server";
-import { hentStatusbaserteSaksregler } from "~/saker/statusregler";
+import { hentStegbaserteSaksregler } from "~/saker/stegregler";
 import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
 import { hentFilerForSak, leggTilFil } from "./mock-data-filer.server";
 
@@ -67,7 +67,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
     const sak = await backendApi.hentKontrollsak(token, sakReferanse);
-    if (!hentStatusbaserteSaksregler(sak.status).kanLasteOppFiler) {
+    if (!hentStegbaserteSaksregler(sak.steg).kanLasteOppFiler) {
       throw data("Ingen tilgang til å laste opp filer", { status: 403 });
     }
     try {

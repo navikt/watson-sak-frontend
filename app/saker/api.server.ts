@@ -17,11 +17,11 @@ import {
   kontrollsakPageResponseSchema,
   kontrollsakResponseSchema,
   oppgaveKortSchema,
-  type Blokkeringsarsak,
   type Henleggelsesarsak,
   type KontrollsakPageResponse,
   type KontrollsakResponse,
   type KontrollsakSaksbehandler,
+  type KontrollsakSteg,
   type KontrollsakStatus,
 } from "./types.backend";
 import { sakHendelseSchema } from "./historikk/typer";
@@ -301,35 +301,35 @@ export async function hentDokument(token: string, sakId: string, docId: string):
 
 // --- Handlinger ---
 
+export async function endreSteg(
+  token: string,
+  sakId: string,
+  steg: KontrollsakSteg,
+  beskrivelse?: string,
+  henleggelsesarsak?: Henleggelsesarsak | null,
+): Promise<KontrollsakResponse> {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/steg`), {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify({ steg, beskrivelse, henleggelsesarsak: henleggelsesarsak ?? null }),
+  });
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke endre steg");
+  return parseEllerKastFeil(kontrollsakResponseSchema, await respons.json(), "endreSteg");
+}
+
 export async function endreStatus(
   token: string,
   sakId: string,
-  status: KontrollsakStatus,
+  status: KontrollsakStatus | null,
   beskrivelse?: string,
-  henleggelsesarsak?: Henleggelsesarsak | null,
 ): Promise<KontrollsakResponse> {
   const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/status`), {
     method: "POST",
     headers: authHeaders(token),
-    body: JSON.stringify({ status, beskrivelse, henleggelsesarsak: henleggelsesarsak ?? null }),
+    body: JSON.stringify({ status, beskrivelse }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke endre status");
   return parseEllerKastFeil(kontrollsakResponseSchema, await respons.json(), "endreStatus");
-}
-
-export async function endreBlokkering(
-  token: string,
-  sakId: string,
-  blokkert: Blokkeringsarsak | null,
-  beskrivelse?: string,
-): Promise<KontrollsakResponse> {
-  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/blokkering`), {
-    method: "POST",
-    headers: authHeaders(token),
-    body: JSON.stringify({ blokkert, beskrivelse }),
-  });
-  if (!respons.ok) await håndterFeil(respons, "Kunne ikke endre blokkering");
-  return parseEllerKastFeil(kontrollsakResponseSchema, await respons.json(), "endreBlokkering");
 }
 
 export async function tildelKontrollsak(

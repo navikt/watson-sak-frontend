@@ -15,8 +15,8 @@ import * as backendApi from "~/saker/api.server";
 import { mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
-import { ALLE_STATUSER, parseStatuser } from "~/saker/status";
-import { formaterStatus } from "~/saker/visning";
+import { ALLE_STEG, parseSteg } from "~/saker/steg";
+import { formaterSteg } from "~/saker/visning";
 import type { Route } from "./+types/AlleSakerSide.route";
 import {
   type AlleSakerKolonne,
@@ -41,7 +41,7 @@ const BACKEND_SORT_FELT: Partial<Record<AlleSakerKolonne, string>> = {
   saksid: "id",
   opprettet: "opprettet",
   oppdatert: "oppdatert",
-  status: "status",
+  status: "steg",
   kategori: "kategori",
 };
 
@@ -69,8 +69,8 @@ export async function loader({ request }: Route.LoaderArgs) {
     parseMultiValueParam(url.searchParams, "misbrukstype"),
   );
   const filterMerking = normaliserFilterVerdier(parseMultiValueParam(url.searchParams, "merking"));
-  const filterStatus = parseStatuser(
-    normaliserFilterVerdier(parseMultiValueParam(url.searchParams, "status")),
+  const filterSteg = parseSteg(
+    normaliserFilterVerdier(parseMultiValueParam(url.searchParams, "steg")),
   );
 
   if (!skalBrukeMockdata) {
@@ -85,7 +85,7 @@ export async function loader({ request }: Route.LoaderArgs) {
         misbruktype: filterMisbrukstype.length > 0 ? filterMisbrukstype : undefined,
         merking: filterMerking.length > 0 ? filterMerking : undefined,
         enhet: filterEnhet.length > 0 ? filterEnhet : undefined,
-        status: filterStatus.length > 0 ? filterStatus : undefined,
+        steg: filterSteg.length > 0 ? filterSteg : undefined,
         sortering: lagSorteringParam(sorterKolonne, sorterRetning),
       }),
       backendApi.hentSaksbehandlere(token),
@@ -113,7 +113,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     kategori: filterKategori,
     misbrukstype: filterMisbrukstype,
     merking: filterMerking,
-    status: filterStatus,
+    steg: filterSteg,
   });
 
   const sorterteSaker = sorterSaker(filtrerteSaker, sorterKolonne, sorterRetning);
@@ -169,7 +169,7 @@ export default function AlleSakerSide() {
     "kategori",
     "misbrukstype",
     "merking",
-    "status",
+    "steg",
   ].some((nøkkel) => searchParams.getAll(nøkkel).some((verdi) => verdi.trim() !== ""));
   const tomTekst = harAktiveFiltre ? "Endre filtrering for å finne saker" : "Ingen saker funnet.";
 
@@ -262,7 +262,7 @@ export default function AlleSakerSide() {
                   kategori: kategoriAlternativer,
                   misbrukstype: misbrukstypeAlternativer,
                   merking: merker,
-                  status: ALLE_STATUSER.map((s) => ({ label: formaterStatus(s), value: s })),
+                  steg: ALLE_STEG.map((s) => ({ label: formaterSteg(s), value: s })),
                 }}
               />
             </aside>

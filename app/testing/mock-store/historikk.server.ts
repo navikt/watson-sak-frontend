@@ -1,4 +1,4 @@
-import type { KontrollsakResponse, KontrollsakStatus } from "~/saker/types.backend";
+import type { KontrollsakResponse, KontrollsakSteg } from "~/saker/types.backend";
 import type { SakHendelse } from "~/saker/historikk/typer";
 import type { MockState } from "./session.server";
 
@@ -72,14 +72,14 @@ export function hentHistorikk(state: MockState, sakId: string): SakHendelse[] {
 function lagSnapshotFraKontrollsak(
   sak: KontrollsakResponse,
   overstyringer: Partial<
-    Pick<SakHendelse, "status" | "blokkert" | "henleggelsesarsak" | "beskrivelse">
+    Pick<SakHendelse, "steg" | "status" | "henleggelsesarsak" | "beskrivelse">
   > = {},
 ): Omit<SakHendelse, "hendelseId" | "tidspunkt" | "hendelsesType" | "sakId"> {
   return {
     kategori: sak.kategori,
     prioritet: sak.prioritet,
+    steg: sak.steg,
     status: sak.status,
-    blokkert: sak.blokkert,
     henleggelsesarsak: sak.henleggelsesarsak,
     ytelseTyper: sak.ytelser.map((ytelse) => ytelse.type),
     ...overstyringer,
@@ -96,7 +96,7 @@ export function leggTilHendelse(
     | "berortSaksbehandlerNavn"
     | "berortSaksbehandlerNavIdent"
     | "berortSaksbehandlerEnhet"
-    | "blokkert"
+    | "status"
     | "beskrivelse"
     | "tittel"
   >,
@@ -196,11 +196,9 @@ export function genererHistorikkForSaker(
   };
 
   for (const sak of saker) {
-    const opprettetSnapshot: Partial<
-      Pick<SakHendelse, "status" | "blokkert" | "henleggelsesarsak">
-    > = {
-      status: "OPPRETTET",
-      blokkert: null,
+    const opprettetSnapshot: Partial<Pick<SakHendelse, "steg" | "status" | "henleggelsesarsak">> = {
+      steg: "OPPRETTET",
+      status: null,
       henleggelsesarsak: null,
     };
 
@@ -271,7 +269,7 @@ function leggTilStatushistorikk(
   const sakId = String(sak.id);
   const leggTil = (
     type: BackendHendelsestype,
-    status: KontrollsakStatus,
+    steg: KontrollsakSteg,
     hendelseTidspunkt: string,
     beskrivelse?: string,
   ) =>
@@ -280,25 +278,25 @@ function leggTilStatushistorikk(
       sakId,
       type,
       lagSnapshotFraKontrollsak(sak, {
-        status,
-        blokkert: type === "SAK_SATT_PA_VENT" || type === "SAK_SATT_I_BERO" ? sak.blokkert : null,
+        steg,
+        status: type === "SAK_SATT_PA_VENT" || type === "SAK_SATT_I_BERO" ? sak.status : null,
         henleggelsesarsak: type === "SAK_HENLAGT" ? sak.henleggelsesarsak : null,
         beskrivelse,
       }),
       hendelseTidspunkt,
     );
 
-  if (sak.status === "OPPRETTET") {
+  if (sak.steg === "OPPRETTET") {
     return;
   }
 
   leggTil("STATUS_ENDRET", "UTREDES", tidspunkt.utredes, "Saken er satt under utredning.");
 
-  switch (sak.status) {
+  switch (sak.steg) {
     case "UTREDES":
-      if (sak.blokkert) {
+      if (sak.status) {
         leggTil(
-          sak.blokkert === "I_BERO" ? "SAK_SATT_I_BERO" : "SAK_SATT_PA_VENT",
+          sak.status === "I_BERO" ? "SAK_SATT_I_BERO" : "SAK_SATT_PA_VENT",
           "UTREDES",
           tidspunkt.avsluttet,
           "Avventer nødvendig avklaring før arbeidet kan fortsette.",

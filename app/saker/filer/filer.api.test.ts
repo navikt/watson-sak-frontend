@@ -36,13 +36,13 @@ function settOppAktivSak() {
   const sak = hentFordelingssaker(state())[0];
   sak.saksbehandlere.eier = eierMeg;
   sak.saksbehandlere.deltMed = [];
-  sak.status = "UTREDES";
+  sak.steg = "UTREDES";
   return { sak, ref: getSaksreferanse(sak.id) };
 }
 
 function settOppOpprettetSak() {
   const resultat = settOppAktivSak();
-  resultat.sak.status = "OPPRETTET";
+  resultat.sak.steg = "OPPRETTET";
   return resultat;
 }
 

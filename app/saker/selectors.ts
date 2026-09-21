@@ -5,7 +5,7 @@ import {
   formaterMisbrukstype,
   formaterPeriodeForYtelser,
   getYtelseTyper,
-  hentStatusVariant as hentKontrollsakStatusVariant,
+  hentStegVariant as hentKontrollsakStegVariant,
 } from "./visning";
 
 type MineSakerGruppeStatus = "aktive" | "ventende" | "fullførte";
@@ -38,8 +38,8 @@ export function getKategoriText(sak: KontrollsakResponse): string | null {
   return formaterKategori(sak.kategori);
 }
 
-export function getStatusVariantForSak(sak: KontrollsakResponse) {
-  return hentKontrollsakStatusVariant(sak.status);
+export function getStegVariantForSak(sak: KontrollsakResponse) {
+  return hentKontrollsakStegVariant(sak.steg);
 }
 
 export function getSaksenhet(sak: KontrollsakResponse): string {
@@ -71,11 +71,11 @@ export function getBelop(sak: KontrollsakResponse): number | null {
 }
 
 export function getMineSakerGruppeStatus(sak: KontrollsakResponse): MineSakerGruppeStatus {
-  if (sak.blokkert !== null) {
+  if (sak.status !== null) {
     return "ventende";
   }
 
-  switch (sak.status) {
+  switch (sak.steg) {
     case "OPPRETTET":
     case "UTREDES":
     case "STRAFFERETTSLIG_VURDERING":

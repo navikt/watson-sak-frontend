@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
 import { getSaksreferanse } from "~/saker/id";
@@ -15,12 +15,12 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
       deltMed: [],
       opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
     },
-    status: "OPPRETTET",
+    steg: "OPPRETTET",
     kategori: "ARBEID",
     kilde: "PUBLIKUM",
     misbruktype: ["FEIL_INNTEKTSGRUNNLAG"],
     prioritet: "NORMAL",
-    blokkert: null,
+    status: null,
     henleggelsesarsak: null,
     ytelser: [
       {
@@ -46,7 +46,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
 }
 
 const standardFilterAlternativer = {
-  status: [
+  steg: [
     { verdi: "OPPRETTET", etikett: "Opprettet" },
     { verdi: "UTREDES", etikett: "Utredes" },
     { verdi: "STRAFFERETTSLIG_VURDERING", etikett: "Strafferettslig vurdering" },
@@ -54,7 +54,7 @@ const standardFilterAlternativer = {
     { verdi: "HENLAGT", etikett: "Henlagt" },
     { verdi: "AVSLUTTET", etikett: "Avsluttet" },
   ],
-  ventestatus: [
+  status: [
     { verdi: "INGEN", etikett: "Aktiv" },
     { verdi: "VENTER_PA_INFORMASJON", etikett: "Venter på informasjon" },
     { verdi: "VENTER_PA_VEDTAK", etikett: "Venter på vedtak" },
@@ -63,8 +63,8 @@ const standardFilterAlternativer = {
 };
 
 const standardAktivtFilter = {
-  status: ["OPPRETTET" as const, "UTREDES" as const, "STRAFFERETTSLIG_VURDERING" as const],
-  ventestatus: ["INGEN" as const, "VENTER_PA_INFORMASJON" as const],
+  steg: ["OPPRETTET" as const, "UTREDES" as const, "STRAFFERETTSLIG_VURDERING" as const],
+  status: ["INGEN" as const, "VENTER_PA_INFORMASJON" as const],
 };
 
 function renderMedRouter(ui: React.ReactNode) {
@@ -111,7 +111,7 @@ describe("MineSakerInnhold", () => {
     expect(lenke.getAttribute("href")).toBe(`/saker/${getSaksreferanse(sakId)}`);
   });
 
-  it("viser Chips-filtre for status og arbeidsstatus", () => {
+  it("viser Chips-filtre for steg og status", () => {
     renderMedRouter(
       <MineSakerInnhold
         saker={[lagKontrollsak()]}
@@ -122,7 +122,9 @@ describe("MineSakerInnhold", () => {
       />,
     );
 
-    expect(screen.getByText("Arbeidsstatus")).toBeDefined();
+    expect(
+      within(screen.getByRole("group", { name: "Filtrer saker" })).getByText("Status"),
+    ).toBeDefined();
     expect(screen.getByRole("button", { name: "Opprettet" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Utredes" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Aktiv" })).toBeDefined();
@@ -151,8 +153,8 @@ describe("MineSakerInnhold", () => {
         detaljSti="/saker"
         filterAlternativer={standardFilterAlternativer}
         aktivtFilter={{
+          steg: [],
           status: [],
-          ventestatus: [],
         }}
       />,
     );

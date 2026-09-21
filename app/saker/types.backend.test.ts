@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  blokkeringsarsakSchema,
+  kontrollsakStatusSchema,
   henleggelsesarsakSchema,
   kontrollsakResponseSchema,
   kontrollsakHendelseResponseSchema,
@@ -17,7 +17,7 @@ const basisSak = {
     deltMed: [],
     opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
   },
-  blokkert: null,
+  status: null,
   kategori: "ARBEID",
   kilde: "NAV_KONTROLL",
   misbruktype: [],
@@ -30,16 +30,16 @@ const basisSak = {
 } as const;
 
 describe("kontrollsakResponseSchema – ny kontraktmodell", () => {
-  it("parser sak med status OPPRETTET og blokkert null", () => {
-    const resultat = kontrollsakResponseSchema.safeParse({ ...basisSak, status: "OPPRETTET" });
+  it("parser sak med steg OPPRETTET og status null", () => {
+    const resultat = kontrollsakResponseSchema.safeParse({ ...basisSak, steg: "OPPRETTET" });
     expect(resultat.success).toBe(true);
     if (resultat.success) {
-      expect(resultat.data.status).toBe("OPPRETTET");
-      expect(resultat.data.blokkert).toBeNull();
+      expect(resultat.data.steg).toBe("OPPRETTET");
+      expect(resultat.data.status).toBeNull();
     }
   });
 
-  it("parser sak med alle gyldige statuser", () => {
+  it("parser sak med alle gyldige steg", () => {
     const gyldige = [
       "OPPRETTET",
       "UTREDES",
@@ -49,34 +49,34 @@ describe("kontrollsakResponseSchema – ny kontraktmodell", () => {
       "AVSLUTTET",
     ] as const;
 
-    for (const status of gyldige) {
-      const resultat = kontrollsakResponseSchema.safeParse({ ...basisSak, status });
+    for (const steg of gyldige) {
+      const resultat = kontrollsakResponseSchema.safeParse({ ...basisSak, steg });
+      expect(resultat.success, `Steg ${steg} skal være gyldig`).toBe(true);
+    }
+  });
+
+  it("avviser gamle steg VENTER_PA_INFORMASJON, VENTER_PA_VEDTAK og ANMELDELSE_VURDERES", () => {
+    for (const steg of ["VENTER_PA_INFORMASJON", "VENTER_PA_VEDTAK", "ANMELDELSE_VURDERES"]) {
+      const resultat = kontrollsakResponseSchema.safeParse({ ...basisSak, steg });
+      expect(resultat.success, `Steg ${steg} skal være ugyldig`).toBe(false);
+    }
+  });
+
+  it("parser sak med alle gyldige statuser", () => {
+    const statuser = ["VENTER_PA_INFORMASJON", "VENTER_PA_VEDTAK", "I_BERO"] as const;
+
+    for (const status of statuser) {
+      const resultat = kontrollsakResponseSchema.safeParse({
+        ...basisSak,
+        steg: "UTREDES",
+        status,
+      });
       expect(resultat.success, `Status ${status} skal være gyldig`).toBe(true);
     }
   });
 
-  it("avviser gamle statuser VENTER_PA_INFORMASJON, VENTER_PA_VEDTAK og ANMELDELSE_VURDERES", () => {
-    for (const status of ["VENTER_PA_INFORMASJON", "VENTER_PA_VEDTAK", "ANMELDELSE_VURDERES"]) {
-      const resultat = kontrollsakResponseSchema.safeParse({ ...basisSak, status });
-      expect(resultat.success, `Status ${status} skal være ugyldig`).toBe(false);
-    }
-  });
-
-  it("parser sak med alle gyldige blokkeringsårsaker", () => {
-    const årsaker = ["VENTER_PA_INFORMASJON", "VENTER_PA_VEDTAK", "I_BERO"] as const;
-
-    for (const blokkert of årsaker) {
-      const resultat = kontrollsakResponseSchema.safeParse({
-        ...basisSak,
-        status: "UTREDES",
-        blokkert,
-      });
-      expect(resultat.success, `Blokkeringsårsak ${blokkert} skal være gyldig`).toBe(true);
-    }
-  });
-
   it("har ikke iBero, tilgjengeligeHandlinger eller avslutningskonklusjon i parsede data", () => {
-    const resultat = kontrollsakResponseSchema.safeParse({ ...basisSak, status: "UTREDES" });
+    const resultat = kontrollsakResponseSchema.safeParse({ ...basisSak, steg: "UTREDES" });
     expect(resultat.success).toBe(true);
     if (resultat.success) {
       expect("iBero" in resultat.data).toBe(false);
@@ -86,15 +86,15 @@ describe("kontrollsakResponseSchema – ny kontraktmodell", () => {
   });
 });
 
-describe("blokkeringsarsakSchema", () => {
-  it("godtar alle tre blokkeringsårsaker", () => {
-    expect(blokkeringsarsakSchema.safeParse("VENTER_PA_INFORMASJON").success).toBe(true);
-    expect(blokkeringsarsakSchema.safeParse("VENTER_PA_VEDTAK").success).toBe(true);
-    expect(blokkeringsarsakSchema.safeParse("I_BERO").success).toBe(true);
+describe("kontrollsakStatusSchema", () => {
+  it("godtar alle tre statuser", () => {
+    expect(kontrollsakStatusSchema.safeParse("VENTER_PA_INFORMASJON").success).toBe(true);
+    expect(kontrollsakStatusSchema.safeParse("VENTER_PA_VEDTAK").success).toBe(true);
+    expect(kontrollsakStatusSchema.safeParse("I_BERO").success).toBe(true);
   });
 
-  it("avviser ukjent årsak", () => {
-    expect(blokkeringsarsakSchema.safeParse("UKJENT").success).toBe(false);
+  it("avviser ukjent status", () => {
+    expect(kontrollsakStatusSchema.safeParse("UKJENT").success).toBe(false);
   });
 });
 
@@ -121,7 +121,7 @@ describe("henleggelsesarsakSchema", () => {
   it("parser sak med henleggelsesarsak", () => {
     const resultat = kontrollsakResponseSchema.safeParse({
       ...basisSak,
-      status: "HENLAGT",
+      steg: "HENLAGT",
       henleggelsesarsak: "IKKE_KAPASITET",
     });
     expect(resultat.success).toBe(true);
@@ -131,7 +131,7 @@ describe("henleggelsesarsakSchema", () => {
   });
 
   it("parser sak uten henleggelsesarsak til null", () => {
-    const resultat = kontrollsakResponseSchema.safeParse({ ...basisSak, status: "UTREDES" });
+    const resultat = kontrollsakResponseSchema.safeParse({ ...basisSak, steg: "UTREDES" });
     expect(resultat.success).toBe(true);
     if (resultat.success) {
       expect(resultat.data.henleggelsesarsak).toBeNull();
@@ -141,7 +141,7 @@ describe("henleggelsesarsakSchema", () => {
 
 describe("adresseskjermet i kontrollobjekt", () => {
   it("defaulter adresseskjermet til false når feltet mangler", () => {
-    const resultat = kontrollsakResponseSchema.safeParse({ ...basisSak, status: "UTREDES" });
+    const resultat = kontrollsakResponseSchema.safeParse({ ...basisSak, steg: "UTREDES" });
     expect(resultat.success).toBe(true);
     if (resultat.success) {
       expect(resultat.data.adresseskjermet).toBe(false);
@@ -151,7 +151,7 @@ describe("adresseskjermet i kontrollobjekt", () => {
   it("parser adresseskjermet = true fra kontrollobjektet", () => {
     const resultat = kontrollsakResponseSchema.safeParse({
       ...basisSak,
-      status: "UTREDES",
+      steg: "UTREDES",
       kontrollobjekt: {
         personIdent: "12345678901",
         navn: "Ola Nordmann",
@@ -167,7 +167,7 @@ describe("adresseskjermet i kontrollobjekt", () => {
   it("parser adresseskjermet = false fra kontrollobjektet", () => {
     const resultat = kontrollsakResponseSchema.safeParse({
       ...basisSak,
-      status: "UTREDES",
+      steg: "UTREDES",
       kontrollobjekt: {
         personIdent: "12345678901",
         navn: "Ola Nordmann",
@@ -189,24 +189,24 @@ describe("kontrollsakHendelseResponseSchema – historikkfelt", () => {
     sakId: 1,
     kategori: "ARBEID",
     prioritet: "NORMAL",
-    status: "UTREDES",
+    steg: "UTREDES",
     ytelseTyper: [],
   } as const;
 
-  it("parser hendelse med blokkert og beskrivelse", () => {
+  it("parser hendelse med status og beskrivelse", () => {
     const resultat = kontrollsakHendelseResponseSchema.safeParse({
       ...basisHendelse,
-      blokkert: "VENTER_PA_INFORMASJON",
+      status: "VENTER_PA_INFORMASJON",
       beskrivelse: "Venter på svar fra bruker",
     });
     expect(resultat.success).toBe(true);
     if (resultat.success) {
-      expect(resultat.data.blokkert).toBe("VENTER_PA_INFORMASJON");
+      expect(resultat.data.status).toBe("VENTER_PA_INFORMASJON");
       expect(resultat.data.beskrivelse).toBe("Venter på svar fra bruker");
     }
   });
 
-  it("parser hendelse uten blokkert og beskrivelse", () => {
+  it("parser hendelse uten status og beskrivelse", () => {
     const resultat = kontrollsakHendelseResponseSchema.safeParse(basisHendelse);
     expect(resultat.success).toBe(true);
   });

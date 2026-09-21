@@ -117,17 +117,17 @@ describe("mock-store konsistens", () => {
     }
   });
 
-  it("gir saker med fremdrift en kronologisk historikk som ender i sakens status", () => {
+  it("gir saker med fremdrift en kronologisk historikk som ender i sakens steg", () => {
     for (const sak of hentAlleSaker(state())) {
       const historikk = hentHistorikk(state(), String(sak.id));
       const opprettelseshendelse = historikk.at(-1);
 
       expect(opprettelseshendelse?.hendelsesType).toBe("SAK_OPPRETTET");
-      expect(opprettelseshendelse?.status).toBe("OPPRETTET");
+      expect(opprettelseshendelse?.steg).toBe("OPPRETTET");
 
-      if (sak.status !== "OPPRETTET") {
+      if (sak.steg !== "OPPRETTET") {
         expect(historikk.length).toBeGreaterThan(1);
-        expect(historikk[0]?.status).toBe(sak.status);
+        expect(historikk[0]?.steg).toBe(sak.steg);
       }
     }
   });
