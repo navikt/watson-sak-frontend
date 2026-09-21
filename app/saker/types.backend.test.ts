@@ -56,6 +56,12 @@ describe("kontrollsakResponseSchema – ny kontraktmodell", () => {
     }
   });
 
+  it("parser historisk steg ANMELDT under utrullingen til POLITI", () => {
+    const resultat = kontrollsakResponseSchema.safeParse({ ...basisSak, steg: "ANMELDT" });
+
+    expect(resultat.success).toBe(true);
+  });
+
   it("avviser gamle steg VENTER_PA_INFORMASJON, VENTER_PA_VEDTAK og ANMELDELSE_VURDERES", () => {
     for (const steg of ["VENTER_PA_INFORMASJON", "VENTER_PA_VEDTAK", "ANMELDELSE_VURDERES"]) {
       const resultat = kontrollsakResponseSchema.safeParse({ ...basisSak, steg });

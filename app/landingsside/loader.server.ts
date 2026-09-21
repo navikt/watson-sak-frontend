@@ -34,7 +34,11 @@ async function lastSaksbehandlerData(
   }
 
   const aktiveMineSaker = mineSakerHosInnloggetBruker.filter(
-    (sak) => sak.steg !== "POLITI" && sak.steg !== "HENLAGT" && sak.steg !== "AVSLUTTET",
+    (sak) =>
+      sak.steg !== "POLITI" &&
+      sak.steg !== "ANMELDT" &&
+      sak.steg !== "HENLAGT" &&
+      sak.steg !== "AVSLUTTET",
   );
 
   const sakerForVelkomstOppsummering = mineSakerHosInnloggetBruker.filter(

@@ -6,6 +6,7 @@ const kontrollsakStegSchema = z.enum([
   "FORVALTNING",
   "STRAFFERETTSLIG_VURDERING",
   "POLITI",
+  "ANMELDT",
   "HENLAGT",
   "AVSLUTTET",
 ]);

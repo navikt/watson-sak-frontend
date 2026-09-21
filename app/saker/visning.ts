@@ -26,6 +26,7 @@ const stegEtiketter: Record<KontrollsakSteg, string> = {
   FORVALTNING: "Forvaltning",
   STRAFFERETTSLIG_VURDERING: "Strafferettslig vurdering",
   POLITI: "Politi",
+  ANMELDT: "Politi",
   HENLAGT: "Henlagt",
   AVSLUTTET: "Avsluttet",
 };
@@ -36,6 +37,7 @@ const stegVarianter: Record<KontrollsakSteg, StegVariant> = {
   FORVALTNING: "warning",
   STRAFFERETTSLIG_VURDERING: "warning",
   POLITI: "success",
+  ANMELDT: "success",
   HENLAGT: "neutral",
   AVSLUTTET: "neutral",
 };
