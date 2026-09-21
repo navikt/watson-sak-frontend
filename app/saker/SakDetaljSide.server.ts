@@ -486,6 +486,17 @@ async function backendAction(
     throw data("Handlingen krever at saken har status Utredes", { status: 400 });
   }
 
+  if (handling === "FRISTILL") {
+    const innlogget = await hentInnloggetBruker({ request });
+    const nåværendeSak = sakFraTilgangskontroll ?? (await backendApi.hentKontrollsak(token, sakId));
+    const erEier = nåværendeSak.saksbehandlere.eier?.navIdent === innlogget.navIdent;
+    if (!erEier && !innlogget.erLeder) {
+      throw data("Du må være sakens saksbehandler eller leder for å fjerne saksbehandler", {
+        status: 403,
+      });
+    }
+  }
+
   switch (handling) {
     case "TILDEL": {
       const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
@@ -883,6 +894,16 @@ async function mockAction(
     const sakMedEier = medInnloggetEier(sak, innlogget.navIdent, innlogget.name);
     if (sakMedEier.saksbehandlere.eier?.navIdent !== innlogget.navIdent) {
       throw data("Du må være tildelt saken for å utføre denne handlingen", { status: 403 });
+    }
+  }
+
+  if (handling === "FRISTILL") {
+    const innlogget = await hentInnloggetBruker({ request });
+    const erEier = sak.saksbehandlere.eier?.navIdent === innlogget.navIdent;
+    if (!erEier && !innlogget.erLeder) {
+      throw data("Du må være sakens saksbehandler eller leder for å fjerne saksbehandler", {
+        status: 403,
+      });
     }
   }
 
