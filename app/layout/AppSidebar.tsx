@@ -1,5 +1,6 @@
 import {
   ArrowRightLeftIcon,
+  ArrowsCirclepathIcon,
   BarChartIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -27,6 +28,7 @@ const lenker: Lenke[] = [
   { to: RouteConfig.MINE_SAKER, label: "Mine saker", icon: PersonIcon },
   { to: RouteConfig.FORDELING, label: "Ufordelte saker", icon: ArrowRightLeftIcon },
   { to: RouteConfig.ALLE_SAKER, label: "Alle saker", icon: FilesIcon },
+  { to: RouteConfig.MIGRERING, label: "Migrering", icon: ArrowsCirclepathIcon },
   {
     to: RouteConfig.REGISTRER_SAK,
     label: "Opprett sak",

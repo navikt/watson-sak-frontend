@@ -9,6 +9,7 @@ export const RouteConfig = {
   SAKER_DOKUMENT: "/saker/:sakId/dokumenter/:docId",
   MINE_SAKER: "/mine-saker",
   ALLE_SAKER: "/alle-saker",
+  MIGRERING: "/migrering",
   REGISTRER_SAK: "/registrer-sak",
   PERSONVERN: "/personvern",
   SØK: "/søk",
