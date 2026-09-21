@@ -83,8 +83,8 @@ test.describe("Sakdetalj", () => {
     await expect(page.getByText("Arbeid", { exact: true })).toHaveCount(0);
   });
 
-  test("kan endre status og arbeidsstatus i samlet dialog", async ({ page }) => {
-    await page.getByRole("button", { name: "Endre status" }).click();
+  test("kan endre steg og status i samlet dialog", async ({ page }) => {
+    await page.getByRole("button", { name: "Endre steg" }).click();
 
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
@@ -94,11 +94,11 @@ test.describe("Sakdetalj", () => {
     await dialog.getByRole("button", { name: "Lagre" }).click();
 
     // Viser bekreftelsessteg før innsending
-    await expect(dialog.getByText("Du endrer nå status på saken:")).toBeVisible();
-    await dialog.getByRole("button", { name: "Endre status" }).click();
+    await expect(dialog.getByText("Du endrer nå steg og status på saken:")).toBeVisible();
+    await dialog.getByRole("button", { name: "Endre steg" }).click();
 
     // Viser suksesssteg, som må lukkes manuelt
-    await expect(dialog.getByText("Status endret")).toBeVisible();
+    await expect(dialog.getByText("Lagret")).toBeVisible();
     await dialog.getByRole("button", { name: "Lukk" }).last().click();
 
     await expect(dialog).not.toBeVisible();
@@ -106,10 +106,10 @@ test.describe("Sakdetalj", () => {
     await expect(page.locator(".aksel-tag", { hasText: "Venter på informasjon" })).toBeVisible();
   });
 
-  test("krever henleggelsesårsak når status settes til henlagt", async ({ page }) => {
-    await page.getByRole("button", { name: "Endre status" }).click();
+  test("krever henleggelsesårsak når steg settes til henlagt", async ({ page }) => {
+    await page.getByRole("button", { name: "Endre steg" }).click();
 
-    const dialog = page.getByRole("dialog", { name: "Endre status" });
+    const dialog = page.getByRole("dialog", { name: "Endre steg" });
     await expect(dialog).toBeVisible();
 
     await dialog.getByRole("radio", { name: "Henlagt" }).click();
