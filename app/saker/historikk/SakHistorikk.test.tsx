@@ -145,15 +145,15 @@ describe("SakHistorikk", () => {
         hendelser={[
           lagBackendHendelse({
             hendelsesType: "STATUS_ENDRET",
-            steg: "ANMELDT",
+            steg: "POLITI",
             beskrivelse: "Saken er vurdert og anmeldt",
           }),
         ]}
       />,
     );
 
-    expect(screen.getByText("Sak anmeldt")).toBeDefined();
-    expect(screen.getByText(/Saken er vurdert og anmeldt – Steg: Anmeldt/)).toBeDefined();
+    expect(screen.getByText("Sak politi")).toBeDefined();
+    expect(screen.getByText(/Saken er vurdert og anmeldt – Steg: Politi/)).toBeDefined();
   });
 
   it("renderer historikk for endret ansvarlig saksbehandler", async () => {

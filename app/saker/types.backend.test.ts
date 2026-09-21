@@ -43,8 +43,9 @@ describe("kontrollsakResponseSchema – ny kontraktmodell", () => {
     const gyldige = [
       "OPPRETTET",
       "UTREDES",
+      "FORVALTNING",
       "STRAFFERETTSLIG_VURDERING",
-      "ANMELDT",
+      "POLITI",
       "HENLAGT",
       "AVSLUTTET",
     ] as const;

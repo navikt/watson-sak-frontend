@@ -78,7 +78,7 @@ describe("sak-visning", () => {
   });
 
   it("maper backend-steg til riktig tag-variant", () => {
-    expect(hentStegVariant("ANMELDT")).toBe("success");
+    expect(hentStegVariant("POLITI")).toBe("success");
   });
 
   it("formaterer backend-kategori til visningstekst", () => {

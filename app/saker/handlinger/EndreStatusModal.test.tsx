@@ -61,8 +61,9 @@ describe("EndreStatusModal", () => {
     expect(screen.getByRole("radiogroup", { name: "Steg" })).toBeDefined();
     expect(screen.getByRole("radio", { name: "Opprettet" })).toBeDefined();
     expect(screen.getByRole("radio", { name: "Utredes" })).toBeDefined();
+    expect(screen.getByRole("radio", { name: "Forvaltning" })).toBeDefined();
     expect(screen.getByRole("radio", { name: "Strafferettslig vurdering" })).toBeDefined();
-    expect(screen.getByRole("radio", { name: "Anmeldt" })).toBeDefined();
+    expect(screen.getByRole("radio", { name: "Politi" })).toBeDefined();
     expect(screen.getByRole("radio", { name: "Henlagt" })).toBeDefined();
     expect(screen.getByRole("radio", { name: "Avsluttet" })).toBeDefined();
   });
@@ -125,7 +126,7 @@ describe("EndreStatusModal", () => {
     await waitFor(() => {});
     expect(screen.getByLabelText("Henleggelsesårsak")).toBeDefined();
 
-    fireEvent.click(screen.getByRole("radio", { name: "Anmeldt" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Politi" }));
     await waitFor(() => {});
     expect(screen.queryByLabelText("Henleggelsesårsak")).toBeNull();
   });
@@ -199,7 +200,7 @@ describe("EndreStatusModal", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("radio", { name: "Anmeldt" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Politi" }));
     await waitFor(() => {});
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
     await waitFor(() => {});
@@ -223,7 +224,7 @@ describe("EndreStatusModal", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("radio", { name: "Anmeldt" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Politi" }));
     await waitFor(() => {});
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
     await waitFor(() => {});
@@ -234,7 +235,7 @@ describe("EndreStatusModal", () => {
 
     expect(submitMock).not.toHaveBeenCalled();
     expect(screen.getByRole("radiogroup", { name: "Steg" })).toBeDefined();
-    expect(screen.getByRole("radio", { name: "Anmeldt" })).toBeDefined();
+    expect(screen.getByRole("radio", { name: "Politi" })).toBeDefined();
   });
 
   it("viser feil ved henlagt uten henleggelsesårsak", async () => {
@@ -457,7 +458,7 @@ describe("EndreStatusModal", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("radio", { name: "Anmeldt" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Politi" }));
     await waitFor(() => {});
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
     await waitFor(() => {});
@@ -487,7 +488,7 @@ describe("EndreStatusModal", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("radio", { name: "Anmeldt" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Politi" }));
     await waitFor(() => {});
     fireEvent.change(screen.getByLabelText("Beskrivelse (valgfritt)"), {
       target: { value: "  Saken er anmeldt  " },

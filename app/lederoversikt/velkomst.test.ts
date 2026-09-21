@@ -6,8 +6,9 @@ describe("lagLederVelkomstOppsummering", () => {
     perSteg: {
       OPPRETTET: 0,
       UTREDES: 0,
+      FORVALTNING: 0,
       STRAFFERETTSLIG_VURDERING: 0,
-      ANMELDT: 0,
+      POLITI: 0,
       HENLAGT: 0,
     },
     perStatus: {

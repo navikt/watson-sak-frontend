@@ -18,7 +18,7 @@ describe("hentStegbaserteSaksregler", () => {
     const aktiveSteg: KontrollsakSteg[] = [
       "UTREDES",
       "STRAFFERETTSLIG_VURDERING",
-      "ANMELDT",
+      "POLITI",
       "HENLAGT",
     ];
 

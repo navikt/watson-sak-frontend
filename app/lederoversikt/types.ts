@@ -3,8 +3,9 @@ import { z } from "zod";
 export const LEDERSTATISTIKK_STEG = [
   "OPPRETTET",
   "UTREDES",
+  "FORVALTNING",
   "STRAFFERETTSLIG_VURDERING",
-  "ANMELDT",
+  "POLITI",
   "HENLAGT",
 ] as const;
 
@@ -29,8 +30,9 @@ export const lederStatistikkResponseSchema = z.object({
     perSteg: z.object({
       OPPRETTET: antallSchema,
       UTREDES: antallSchema,
+      FORVALTNING: antallSchema,
       STRAFFERETTSLIG_VURDERING: antallSchema,
-      ANMELDT: antallSchema,
+      POLITI: antallSchema,
       HENLAGT: antallSchema,
     }),
     perStatus: z.object({

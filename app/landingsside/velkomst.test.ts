@@ -107,7 +107,7 @@ describe("lagVelkomstOppsummering", () => {
   });
 
   test("behandler anmeldte saker som aktive i velkomstoppsummeringen", () => {
-    const saker = [lagKontrollsak({ id: 122, steg: "ANMELDT" })];
+    const saker = [lagKontrollsak({ id: 122, steg: "POLITI" })];
 
     expect(lagVelkomstOppsummering(saker)).toBe("Akkurat nå har du 1 aktiv sak.");
   });

@@ -60,11 +60,11 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
 
     const resultat = await utforAction(sakId, {
       handling: "endre_steg",
-      steg: "ANMELDT",
+      steg: "POLITI",
     });
 
     expect(resultat).toEqual({ ok: true });
-    expect(sak.steg).toBe("ANMELDT");
+    expect(sak.steg).toBe("POLITI");
 
     const historikk = hentHistorikk(testRequest, sak.id);
     expect(historikk[0]?.hendelsesType).toBe("POLITIANMELDT");
@@ -259,13 +259,13 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
 
     const resultat = await utforAction(sakId, {
       handling: "endre_steg_dialog",
-      steg: "ANMELDT",
+      steg: "POLITI",
       status: "VENTER_PA_INFORMASJON",
       beskrivelse: "Oppdatert fra ny dialog",
     });
 
     expect(resultat).toEqual({ ok: true });
-    expect(sak.steg).toBe("ANMELDT");
+    expect(sak.steg).toBe("POLITI");
     expect(sak.status).toBe("VENTER_PA_INFORMASJON");
   });
 

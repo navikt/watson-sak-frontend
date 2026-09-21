@@ -23,8 +23,9 @@ type StegVariant = "info" | "warning" | "success" | "neutral";
 const stegEtiketter: Record<KontrollsakSteg, string> = {
   OPPRETTET: "Opprettet",
   UTREDES: "Utredes",
+  FORVALTNING: "Forvaltning",
   STRAFFERETTSLIG_VURDERING: "Strafferettslig vurdering",
-  ANMELDT: "Anmeldt",
+  POLITI: "Politi",
   HENLAGT: "Henlagt",
   AVSLUTTET: "Avsluttet",
 };
@@ -32,8 +33,9 @@ const stegEtiketter: Record<KontrollsakSteg, string> = {
 const stegVarianter: Record<KontrollsakSteg, StegVariant> = {
   OPPRETTET: "info",
   UTREDES: "warning",
+  FORVALTNING: "warning",
   STRAFFERETTSLIG_VURDERING: "warning",
-  ANMELDT: "success",
+  POLITI: "success",
   HENLAGT: "neutral",
   AVSLUTTET: "neutral",
 };

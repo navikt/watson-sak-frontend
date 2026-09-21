@@ -78,9 +78,10 @@ export function getMineSakerGruppeStatus(sak: KontrollsakResponse): MineSakerGru
   switch (sak.steg) {
     case "OPPRETTET":
     case "UTREDES":
+    case "FORVALTNING":
     case "STRAFFERETTSLIG_VURDERING":
       return "aktive";
-    case "ANMELDT":
+    case "POLITI":
     case "HENLAGT":
     case "AVSLUTTET":
       return "fullførte";
