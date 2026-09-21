@@ -239,7 +239,7 @@ export function UfordelteSakerInnhold({
                 alternativer={ALLE_STEG.map((s) => ({ verdi: s, etikett: formaterSteg(s) }))}
                 valgteVerdier={stegFilter.valgteVerdier}
                 onToggle={(verdi) => {
-                  sporHendelse("filter brukt", { filtergruppe: "status", side: "fordeling" });
+                  sporHendelse("filter brukt", { filtergruppe: "steg", side: "fordeling" });
                   stegFilter.toggle(verdi);
                 }}
                 size="small"
