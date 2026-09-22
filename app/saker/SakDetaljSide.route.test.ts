@@ -1033,7 +1033,7 @@ describe("SakDetaljSide tilgangskontroll", () => {
 
     const formData = new FormData();
     formData.set("handling", "endre_status");
-    formData.set("status", "ANMELDT");
+    formData.set("status", "POLITI");
 
     await expect(
       action({

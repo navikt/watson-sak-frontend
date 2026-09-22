@@ -3,7 +3,9 @@ import { z } from "zod";
 const kontrollsakStegSchema = z.enum([
   "OPPRETTET",
   "UTREDES",
+  "FORVALTNING",
   "STRAFFERETTSLIG_VURDERING",
+  "POLITI",
   "ANMELDT",
   "HENLAGT",
   "AVSLUTTET",

@@ -44,8 +44,9 @@ interface EndreStatusModalProps {
 const valgbareSteg: KontrollsakSteg[] = [
   "OPPRETTET",
   "UTREDES",
+  "FORVALTNING",
   "STRAFFERETTSLIG_VURDERING",
-  "ANMELDT",
+  "POLITI",
   "HENLAGT",
   "AVSLUTTET",
 ];

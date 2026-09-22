@@ -19,7 +19,7 @@ describe("lagMockLederStatistikk", () => {
         ...grunnlag,
         id: 1,
         enhet: "ky153k",
-        steg: "ANMELDT",
+        steg: "POLITI",
         status: null,
         oppdatert: "2026-03-01T22:59:59Z",
         saksbehandlere: { ...grunnlag.saksbehandlere, eier: null },
@@ -67,7 +67,7 @@ describe("lagMockLederStatistikk", () => {
 
     expect(resultat.enhet.totaltAntallIkkeAvsluttede).toBe(3);
     expect(resultat.enhet.antallOverFrist).toBe(1);
-    expect(resultat.enhet.perSteg.ANMELDT).toBe(1);
+    expect(resultat.enhet.perSteg.POLITI).toBe(1);
     expect(resultat.enhet.perSteg.HENLAGT).toBe(1);
     expect(resultat.enhet.perStatus.UTEN_STATUS).toBe(1);
     expect(resultat.enhet.perStatus.I_BERO).toBe(1);

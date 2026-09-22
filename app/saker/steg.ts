@@ -5,8 +5,9 @@ import type { KontrollsakSteg } from "./types.backend";
 export const ALLE_STEG: KontrollsakSteg[] = [
   "OPPRETTET",
   "UTREDES",
+  "FORVALTNING",
   "STRAFFERETTSLIG_VURDERING",
-  "ANMELDT",
+  "POLITI",
   "HENLAGT",
   "AVSLUTTET",
 ];

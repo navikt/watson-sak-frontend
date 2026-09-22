@@ -175,8 +175,9 @@ type ActionResult =
 const gyldigeSteg = new Set<KontrollsakSteg>([
   "OPPRETTET",
   "UTREDES",
+  "FORVALTNING",
   "STRAFFERETTSLIG_VURDERING",
-  "ANMELDT",
+  "POLITI",
   "HENLAGT",
   "AVSLUTTET",
 ]);
@@ -211,7 +212,7 @@ function getHendelsestypeForStatusendring(status: KontrollsakStatus) {
 
 function getHendelsestypeForStegendring(steg: KontrollsakSteg) {
   switch (steg) {
-    case "ANMELDT":
+    case "POLITI":
       return "POLITIANMELDT";
     case "HENLAGT":
       return "SAK_HENLAGT";

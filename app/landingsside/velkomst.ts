@@ -12,8 +12,9 @@ function formaterSakTekst(antall: number, entall: string, flertall: string) {
 const aktiveSteg: KontrollsakResponse["steg"][] = [
   "OPPRETTET",
   "UTREDES",
+  "FORVALTNING",
   "STRAFFERETTSLIG_VURDERING",
-  "ANMELDT",
+  "POLITI",
 ];
 
 function erAktivSak(sak: KontrollsakResponse) {

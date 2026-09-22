@@ -49,8 +49,9 @@ const standardFilterAlternativer = {
   steg: [
     { verdi: "OPPRETTET", etikett: "Opprettet" },
     { verdi: "UTREDES", etikett: "Utredes" },
+    { verdi: "FORVALTNING", etikett: "Forvaltning" },
     { verdi: "STRAFFERETTSLIG_VURDERING", etikett: "Strafferettslig vurdering" },
-    { verdi: "ANMELDT", etikett: "Anmeldt" },
+    { verdi: "POLITI", etikett: "Politi" },
     { verdi: "HENLAGT", etikett: "Henlagt" },
     { verdi: "AVSLUTTET", etikett: "Avsluttet" },
   ],
@@ -63,7 +64,12 @@ const standardFilterAlternativer = {
 };
 
 const standardAktivtFilter = {
-  steg: ["OPPRETTET" as const, "UTREDES" as const, "STRAFFERETTSLIG_VURDERING" as const],
+  steg: [
+    "OPPRETTET" as const,
+    "UTREDES" as const,
+    "FORVALTNING" as const,
+    "STRAFFERETTSLIG_VURDERING" as const,
+  ],
   status: ["INGEN" as const, "VENTER_PA_INFORMASJON" as const],
 };
 

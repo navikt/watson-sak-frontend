@@ -19,8 +19,9 @@ const gyldigRespons = {
     perSteg: {
       OPPRETTET: 1,
       UTREDES: 0,
+      FORVALTNING: 0,
       STRAFFERETTSLIG_VURDERING: 0,
-      ANMELDT: 0,
+      POLITI: 0,
       HENLAGT: 0,
     },
     perStatus: {

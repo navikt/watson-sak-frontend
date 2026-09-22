@@ -1276,7 +1276,7 @@ const backendGenererteDemoSaker = [
       deltMed: [],
       opprettetAv: innloggetEier,
     },
-    steg: "ANMELDT",
+    steg: "POLITI",
     kategori: "ARBEID",
     kilde: "A_KRIMSAMARBEID",
     misbruktype: ["FIKTIVT_ARBEIDSFORHOLD", "SVART_ARBEID", "FEIL_INNTEKTSGRUNNLAG"],

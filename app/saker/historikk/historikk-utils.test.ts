@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
+import { GavelIcon } from "@navikt/aksel-icons";
 import type { SakHendelse } from "./typer";
-import { hendelseBeskrivelse, hendelseTittel, lagForrigeHendelseKart } from "./historikk-utils";
+import {
+  HendelseBullet,
+  hendelseBeskrivelse,
+  hendelseTittel,
+  lagForrigeHendelseKart,
+} from "./historikk-utils";
 
 function lagHendelse(overrides: Partial<SakHendelse>): SakHendelse {
   return {
@@ -72,6 +78,19 @@ describe("hendelseBeskrivelse", () => {
   });
 });
 
+describe("HendelseBullet", () => {
+  it("viser gavelikon for historisk ANMELDT-statusendring", () => {
+    const ikon = HendelseBullet({
+      hendelse: lagHendelse({
+        hendelsesType: "SAK_STATUS_ENDRET",
+        steg: "ANMELDT",
+      }),
+    });
+
+    expect(ikon.type).toBe(GavelIcon);
+  });
+});
+
 describe("SAK_STATUS_ENDRET (generisk hendelse fra backend for status- og arbeidsstatusendring)", () => {
   it("bruker forrige hendelse i lista til å avgjøre hva som faktisk endret seg", () => {
     const hendelser: SakHendelse[] = [
@@ -100,10 +119,10 @@ describe("SAK_STATUS_ENDRET (generisk hendelse fra backend for status- og arbeid
   });
 
   it("viser statusendring uten forrigeHendelse som om alt er endret (bakoverkompatibelt)", () => {
-    const hendelse = lagHendelse({ hendelsesType: "SAK_STATUS_ENDRET", steg: "ANMELDT" });
+    const hendelse = lagHendelse({ hendelsesType: "SAK_STATUS_ENDRET", steg: "POLITI" });
 
-    expect(hendelseTittel(hendelse)).toBe("Sak anmeldt");
-    expect(hendelseBeskrivelse(hendelse)).toBe("Steg: Anmeldt");
+    expect(hendelseTittel(hendelse)).toBe("Sak politi");
+    expect(hendelseBeskrivelse(hendelse)).toBe("Steg: Politi");
   });
 
   it("viser både status- og arbeidsstatusendring samtidig", () => {

@@ -89,7 +89,7 @@ test.describe("Sakdetalj", () => {
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
 
-    await dialog.getByRole("radio", { name: "Anmeldt" }).click();
+    await dialog.getByRole("radio", { name: "Politi" }).click();
     await dialog.getByRole("radio", { name: "Venter på informasjon" }).click();
     await dialog.getByRole("button", { name: "Lagre" }).click();
 
@@ -102,7 +102,7 @@ test.describe("Sakdetalj", () => {
     await dialog.getByRole("button", { name: "Lukk" }).last().click();
 
     await expect(dialog).not.toBeVisible();
-    await expect(page.locator(".aksel-tag", { hasText: "Anmeldt" })).toBeVisible();
+    await expect(page.locator(".aksel-tag", { hasText: "Politi" })).toBeVisible();
     await expect(page.locator(".aksel-tag", { hasText: "Venter på informasjon" })).toBeVisible();
   });
 

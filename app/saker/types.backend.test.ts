@@ -43,8 +43,9 @@ describe("kontrollsakResponseSchema – ny kontraktmodell", () => {
     const gyldige = [
       "OPPRETTET",
       "UTREDES",
+      "FORVALTNING",
       "STRAFFERETTSLIG_VURDERING",
-      "ANMELDT",
+      "POLITI",
       "HENLAGT",
       "AVSLUTTET",
     ] as const;
@@ -53,6 +54,12 @@ describe("kontrollsakResponseSchema – ny kontraktmodell", () => {
       const resultat = kontrollsakResponseSchema.safeParse({ ...basisSak, steg });
       expect(resultat.success, `Steg ${steg} skal være gyldig`).toBe(true);
     }
+  });
+
+  it("parser historisk steg ANMELDT under utrullingen til POLITI", () => {
+    const resultat = kontrollsakResponseSchema.safeParse({ ...basisSak, steg: "ANMELDT" });
+
+    expect(resultat.success).toBe(true);
   });
 
   it("avviser gamle steg VENTER_PA_INFORMASJON, VENTER_PA_VEDTAK og ANMELDELSE_VURDERES", () => {

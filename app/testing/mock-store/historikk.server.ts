@@ -303,6 +303,14 @@ function leggTilStatushistorikk(
         );
       }
       return;
+    case "FORVALTNING":
+      leggTil(
+        "STATUS_ENDRET",
+        "FORVALTNING",
+        tidspunkt.avsluttet,
+        "Saken er sendt til forvaltning.",
+      );
+      return;
     case "STRAFFERETTSLIG_VURDERING":
       leggTil(
         "STATUS_ENDRET",
@@ -311,13 +319,8 @@ function leggTilStatushistorikk(
         "Saken er sendt til strafferettslig vurdering.",
       );
       return;
-    case "ANMELDT":
-      leggTil(
-        "POLITIANMELDT",
-        "ANMELDT",
-        tidspunkt.avsluttet,
-        "Forholdet er anmeldt til politiet.",
-      );
+    case "POLITI":
+      leggTil("POLITIANMELDT", "POLITI", tidspunkt.avsluttet, "Forholdet er anmeldt til politiet.");
       return;
     case "HENLAGT":
       leggTil("SAK_HENLAGT", "HENLAGT", tidspunkt.avsluttet, "Saken er henlagt etter vurdering.");

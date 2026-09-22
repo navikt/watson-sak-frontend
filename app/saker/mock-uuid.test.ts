@@ -35,7 +35,7 @@ describe("normaliserLegacyKontrollsak", () => {
     });
 
     expect(sak.id).toBe(201);
-    expect(sak.steg).toBe("UTREDES");
+    expect(sak.steg).toBe("FORVALTNING");
     expect(sak.status).toBeNull();
     expect(sak.kilde).toBe("PUBLIKUM");
     expect(sak.misbruktype).toEqual(["SVART_ARBEID"]);

@@ -36,8 +36,9 @@ const respons = {
     perSteg: {
       OPPRETTET: 1,
       UTREDES: 2,
+      FORVALTNING: 0,
       STRAFFERETTSLIG_VURDERING: 1,
-      ANMELDT: 2,
+      POLITI: 2,
       HENLAGT: 1,
     },
     perStatus: {
