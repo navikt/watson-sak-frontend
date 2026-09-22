@@ -62,7 +62,6 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     },
     steg: "UTREDES",
     status: null,
-    henleggelsesarsak: null,
     kategori: "ARBEID",
     kilde: "NAV_KONTROLL",
     misbruktype: [],

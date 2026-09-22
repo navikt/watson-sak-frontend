@@ -22,12 +22,12 @@ const gyldigRespons = {
       FORVALTNING: 0,
       STRAFFERETTSLIG_VURDERING: 0,
       POLITI: 0,
-      HENLAGT: 0,
     },
     perStatus: {
       UTEN_STATUS: 1,
       VENTER_PA_INFORMASJON: 0,
       VENTER_PA_VEDTAK: 0,
+      VENTER_PA_RESULTAT: 0,
       I_BERO: 0,
     },
     antallUfordelte: 1,

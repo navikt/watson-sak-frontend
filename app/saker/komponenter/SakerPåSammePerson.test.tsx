@@ -28,7 +28,6 @@ function lagKontrollsak(
     misbruktype: [],
     prioritet: "NORMAL",
     status: null,
-    henleggelsesarsak: null,
     ytelser: [
       {
         type: "Foreldrepenger",

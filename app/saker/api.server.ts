@@ -17,7 +17,6 @@ import {
   kontrollsakPageResponseSchema,
   kontrollsakResponseSchema,
   oppgaveKortSchema,
-  type Henleggelsesarsak,
   type KontrollsakPageResponse,
   type KontrollsakResponse,
   type KontrollsakSaksbehandler,
@@ -306,12 +305,11 @@ export async function endreSteg(
   sakId: string,
   steg: KontrollsakSteg,
   beskrivelse?: string,
-  henleggelsesarsak?: Henleggelsesarsak | null,
 ): Promise<KontrollsakResponse> {
   const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/steg`), {
     method: "POST",
     headers: authHeaders(token),
-    body: JSON.stringify({ steg, beskrivelse, henleggelsesarsak: henleggelsesarsak ?? null }),
+    body: JSON.stringify({ steg, beskrivelse }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke endre steg");
   return parseEllerKastFeil(kontrollsakResponseSchema, await respons.json(), "endreSteg");

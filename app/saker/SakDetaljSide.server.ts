@@ -14,14 +14,12 @@ import { hentAlleSaker, medInnloggetEier } from "~/saker/mock-alle-saker.server"
 import { mockSaksbehandlere, mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import { mockSeksjoner } from "~/saker/mock-seksjoner.server";
 import type {
-  Henleggelsesarsak,
   KontrollsakResponse,
   KontrollsakSaksbehandler,
   KontrollsakSteg,
   KontrollsakStatus,
 } from "~/saker/types.backend";
 import type { FilResponse } from "~/saker/filer/typer";
-import { henleggelsesarsakSchema } from "~/saker/types.backend";
 import { lagIsoTidspunktFraNorskDatoTid } from "~/utils/date-utils";
 import { hentTekstfelt, hentValgfriTekst } from "~/utils/form-data";
 import { hentDokumenttreForSak } from "./filer/mock-data.server";
@@ -178,13 +176,13 @@ const gyldigeSteg = new Set<KontrollsakSteg>([
   "FORVALTNING",
   "STRAFFERETTSLIG_VURDERING",
   "POLITI",
-  "HENLAGT",
   "AVSLUTTET",
 ]);
 
 const gyldigeStatuser = new Set<KontrollsakStatus>([
   "VENTER_PA_INFORMASJON",
   "VENTER_PA_VEDTAK",
+  "VENTER_PA_RESULTAT",
   "I_BERO",
 ]);
 
@@ -214,8 +212,6 @@ function getHendelsestypeForStegendring(steg: KontrollsakSteg) {
   switch (steg) {
     case "POLITI":
       return "POLITIANMELDT";
-    case "HENLAGT":
-      return "SAK_HENLAGT";
     default:
       return "STATUS_ENDRET";
   }
@@ -515,26 +511,15 @@ async function backendAction(
         throw data("Ugyldig steg", { status: 400 });
       }
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
-      const råHenleggelsesarsak = hentValgfriTekst(formData, "henleggelsesarsak");
       const råStatus = hentValgfriTekst(formData, "status");
       const ønsketStatus = parseStatusFraDialog(råStatus);
-      let henleggelsesarsak: Henleggelsesarsak | undefined;
-      if (nyttSteg === "HENLAGT") {
-        const parsed = henleggelsesarsakSchema.safeParse(råHenleggelsesarsak);
-        if (!parsed.success) {
-          throw data("Ugyldig henleggelsesårsak", { status: 400 });
-        }
-        henleggelsesarsak = parsed.data;
-      }
 
       const nåværendeSak =
         sakFraTilgangskontroll ?? (await backendApi.hentKontrollsak(token, sakId));
       if (handling === "endre_steg" && nyttSteg === nåværendeSak.steg) {
         throw data("Steget er uendret", { status: 400 });
       }
-      const skalEndreSteg =
-        nyttSteg !== nåværendeSak.steg ||
-        (nyttSteg === "HENLAGT" && henleggelsesarsak !== nåværendeSak.henleggelsesarsak);
+      const skalEndreSteg = nyttSteg !== nåværendeSak.steg;
       const skalEndreStatus =
         nyttSteg !== "AVSLUTTET" &&
         handling === "endre_steg_dialog" &&
@@ -546,13 +531,7 @@ async function backendAction(
 
       let sak = nåværendeSak;
       if (skalEndreSteg) {
-        sak = await backendApi.endreSteg(
-          token,
-          sakId,
-          nyttSteg,
-          beskrivelse ?? undefined,
-          henleggelsesarsak,
-        );
+        sak = await backendApi.endreSteg(token, sakId, nyttSteg, beskrivelse ?? undefined);
       }
 
       if (skalEndreStatus) {
@@ -563,13 +542,7 @@ async function backendAction(
           ønsketStatus,
           !skalEndreSteg ? (beskrivelse ?? undefined) : undefined,
         );
-        sak = skalEndreSteg
-          ? {
-              ...sakEtterStatus,
-              steg: sakEtterSteg.steg,
-              henleggelsesarsak: sakEtterSteg.henleggelsesarsak ?? sakEtterStatus.henleggelsesarsak,
-            }
-          : sakEtterStatus;
+        sak = skalEndreSteg ? { ...sakEtterStatus, steg: sakEtterSteg.steg } : sakEtterStatus;
       }
 
       return { ok: true, sak };
@@ -952,13 +925,10 @@ async function mockAction(
       }
 
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
-      const råHenleggelsesarsak = hentValgfriTekst(formData, "henleggelsesarsak");
       const råStatus = hentValgfriTekst(formData, "status");
       const ønsketStatus = parseStatusFraDialog(råStatus);
       const forrigeStatus = sak.status;
-      const skalEndreSteg =
-        nyttSteg !== sak.steg ||
-        (nyttSteg === "HENLAGT" && råHenleggelsesarsak !== sak.henleggelsesarsak);
+      const skalEndreSteg = nyttSteg !== sak.steg;
       const skalEndreStatus =
         nyttSteg !== "AVSLUTTET" && handling === "endre_steg_dialog" && ønsketStatus !== sak.status;
 
@@ -968,15 +938,6 @@ async function mockAction(
 
       if (skalEndreSteg) {
         sak.steg = nyttSteg;
-        if (nyttSteg === "HENLAGT") {
-          const parsed = henleggelsesarsakSchema.safeParse(råHenleggelsesarsak);
-          if (!parsed.success) {
-            throw data("Ugyldig henleggelsesårsak", { status: 400 });
-          }
-          sak.henleggelsesarsak = parsed.data;
-        } else {
-          sak.henleggelsesarsak = null;
-        }
         if (nyttSteg === "AVSLUTTET") {
           sak.status = null;
         }

@@ -363,33 +363,6 @@ describe("SakHistorikk", () => {
     expect(screen.getByText(/Status: Aktiv – Steg: Avsluttet/)).toBeDefined();
   });
 
-  it("viser henleggelsesårsak for SAK_STATUS_ENDRET når steg blir HENLAGT", async () => {
-    await renderMedRouter(
-      <SakHistorikk
-        redigerbar={true}
-        sakId={1}
-        hendelser={[
-          lagBackendHendelse({
-            hendelseId: "00000000-0000-4000-8000-000000000002",
-            hendelsesType: "SAK_STATUS_ENDRET",
-            steg: "HENLAGT",
-            henleggelsesarsak: "FORELDET",
-            tidspunkt: "2026-03-31T11:00:00Z",
-          }),
-          lagBackendHendelse({
-            hendelseId: "00000000-0000-4000-8000-000000000001",
-            hendelsesType: "SAK_STATUS_ENDRET",
-            steg: "UTREDES",
-            tidspunkt: "2026-03-31T10:00:00Z",
-          }),
-        ]}
-      />,
-    );
-
-    expect(screen.getByText("Sak henlagt")).toBeDefined();
-    expect(screen.getByText(/Årsak: Foreldet/)).toBeDefined();
-  });
-
   it("renderer fritekst for manuelt historikkinnslag", async () => {
     await renderMedRouter(
       <SakHistorikk

@@ -7,22 +7,14 @@ const kontrollsakStegSchema = z.enum([
   "STRAFFERETTSLIG_VURDERING",
   "POLITI",
   "ANMELDT",
-  "HENLAGT",
   "AVSLUTTET",
 ]);
 
 export const kontrollsakStatusSchema = z.enum([
   "VENTER_PA_INFORMASJON",
   "VENTER_PA_VEDTAK",
+  "VENTER_PA_RESULTAT",
   "I_BERO",
-]);
-
-export const henleggelsesarsakSchema = z.enum([
-  "IKKE_KAPASITET",
-  "IKKE_TILSTREKKELIG_BEVISGRUNNLAG",
-  "IKKE_TILSTREKKELIG_SKYLD",
-  "INGEN_UTREDNING",
-  "FORELDET",
 ]);
 
 const kontrollsakKategoriSchema = z.string();
@@ -144,7 +136,6 @@ export const kontrollsakResponseSchema = z
       saksbehandlere: saksbehandlereSchema,
       steg: kontrollsakStegSchema,
       status: kontrollsakStatusSchema.nullable(),
-      henleggelsesarsak: henleggelsesarsakSchema.nullable().optional().catch(null),
       kategori: kontrollsakKategoriSchema,
       kilde: kontrollsakKildeSchema,
       misbruktype: z.array(kontrollsakMisbrukstypeSchema),
@@ -169,7 +160,6 @@ export const kontrollsakResponseSchema = z
     personNavn: kontrollobjekt.navn,
     arbeidsgivere: kontrollobjekt.arbeidsgivere.map((a) => a.organisasjonsnummer),
     adresseskjermet: kontrollobjekt.adresseskjermet,
-    henleggelsesarsak: sak.henleggelsesarsak ?? null,
     ...(sak.tilgang ? { tilgang: sak.tilgang } : {}),
   }));
 
@@ -183,7 +173,19 @@ export const kontrollsakPageResponseSchema = z.object({
   totalPages: z.number(),
 });
 
-export const kontrollsakHendelseResponseSchema = z.object({
+export function normaliserHistoriskHendelseInput(input: unknown): unknown {
+  if (!input || typeof input !== "object") {
+    return input;
+  }
+
+  const hendelse = input as Record<string, unknown>;
+  return {
+    ...hendelse,
+    steg: hendelse.steg === "HENLAGT" ? "AVSLUTTET" : hendelse.steg,
+  };
+}
+
+export const kontrollsakHendelseResponseObjectSchema = z.object({
   hendelseId: z.string().uuid(),
   tidspunkt: z.string(),
   hendelsesType: z.string(),
@@ -194,18 +196,21 @@ export const kontrollsakHendelseResponseSchema = z.object({
   ytelseTyper: z.array(z.string()).default([]),
   kilde: kontrollsakKildeSchema.nullable().optional(),
   status: kontrollsakStatusSchema.nullable().optional(),
-  henleggelsesarsak: henleggelsesarsakSchema.nullable().optional().catch(null),
   beskrivelse: z.string().nullable().optional(),
   tittel: z.string().nullable().optional(),
   opprettetAvNavIdent: z.string().nullable().optional(),
 });
+
+export const kontrollsakHendelseResponseSchema = z.preprocess(
+  normaliserHistoriskHendelseInput,
+  kontrollsakHendelseResponseObjectSchema,
+);
 
 export type KontrollsakYtelse = z.infer<typeof kontrollsakYtelseSchema>;
 export type KontrollsakSaksbehandler = z.infer<typeof kontrollsakSaksbehandlerSchema>;
 export type KontrollsakPageResponse = z.infer<typeof kontrollsakPageResponseSchema>;
 export type KontrollsakSteg = z.infer<typeof kontrollsakStegSchema>;
 export type KontrollsakStatus = z.infer<typeof kontrollsakStatusSchema>;
-export type Henleggelsesarsak = z.infer<typeof henleggelsesarsakSchema>;
 export type KontrollsakKategori = z.infer<typeof kontrollsakKategoriSchema>;
 export type KontrollsakKilde = z.infer<typeof kontrollsakKildeSchema>;
 export type KontrollsakMisbrukstype = z.infer<typeof kontrollsakMisbrukstypeSchema>;

@@ -32,7 +32,6 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     misbruktype: [],
     prioritet: "NORMAL",
     status: null,
-    henleggelsesarsak: null,
     ytelser: [],
     merking: [],
     arbeidsgivere: [],
@@ -73,8 +72,8 @@ describe("MineSakerSide loader", () => {
   it("returnerer filteralternativer for steg og status", async () => {
     const resultat = await loader(loaderArgs);
 
-    expect(resultat.filterAlternativer.steg.length).toBe(7);
-    expect(resultat.filterAlternativer.status.length).toBe(4);
+    expect(resultat.filterAlternativer.steg.length).toBe(6);
+    expect(resultat.filterAlternativer.status.length).toBe(5);
     expect(resultat.filterAlternativer.status).toContainEqual({
       verdi: "INGEN",
       etikett: "Aktiv",

@@ -38,7 +38,6 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     misbruktype: ["FIKTIVT_ARBEIDSFORHOLD"],
     prioritet: "NORMAL",
     status: null,
-    henleggelsesarsak: null,
     ytelser: [
       {
         type: "Sykepenger",
@@ -114,6 +113,12 @@ describe("sak-visning", () => {
     expect(getStegOgStatusTekst(lagKontrollsak({ steg: "UTREDES", status: "I_BERO" }))).toBe(
       "I bero · Utredes",
     );
+  });
+
+  it("formaterer VENTER_PA_RESULTAT-status til «Venter på resultat»", () => {
+    expect(
+      getStegOgStatusTekst(lagKontrollsak({ steg: "UTREDES", status: "VENTER_PA_RESULTAT" })),
+    ).toBe("Venter på resultat · Utredes");
   });
 
   it("henter ytelsestyper fra kontrollsak", () => {

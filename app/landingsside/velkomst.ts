@@ -21,12 +21,17 @@ function erAktivSak(sak: KontrollsakResponse) {
   return (
     aktiveSteg.includes(sak.steg) &&
     sak.status !== "VENTER_PA_INFORMASJON" &&
-    sak.status !== "VENTER_PA_VEDTAK"
+    sak.status !== "VENTER_PA_VEDTAK" &&
+    sak.status !== "VENTER_PA_RESULTAT"
   );
 }
 
 function erVentende(sak: KontrollsakResponse) {
-  return sak.status === "VENTER_PA_INFORMASJON" || sak.status === "VENTER_PA_VEDTAK";
+  return (
+    sak.status === "VENTER_PA_INFORMASJON" ||
+    sak.status === "VENTER_PA_VEDTAK" ||
+    sak.status === "VENTER_PA_RESULTAT"
+  );
 }
 
 function velgMestRelevantArbeid(saker: KontrollsakResponse[]): Oppsummeringsdel[] {

@@ -21,47 +21,6 @@ function lagHendelse(overrides: Partial<SakHendelse>): SakHendelse {
 }
 
 describe("hendelseBeskrivelse", () => {
-  it("viser status for SAK_HENLAGT uten årsak i beskrivelsen", () => {
-    const hendelse = lagHendelse({
-      hendelsesType: "SAK_HENLAGT",
-      steg: "HENLAGT",
-      henleggelsesarsak: "IKKE_KAPASITET",
-    });
-
-    const resultat = hendelseBeskrivelse(hendelse);
-
-    expect(resultat).toContain("Steg: Henlagt");
-    expect(resultat).not.toContain("Årsak:");
-  });
-
-  it("viser SAK_HENLAGT uten årsak når henleggelsesarsak mangler", () => {
-    const hendelse = lagHendelse({
-      hendelsesType: "SAK_HENLAGT",
-      steg: "HENLAGT",
-      henleggelsesarsak: null,
-    });
-
-    const resultat = hendelseBeskrivelse(hendelse);
-
-    expect(resultat).not.toContain("Årsak:");
-    expect(resultat).toContain("Steg: Henlagt");
-  });
-
-  it("viser beskrivelse sammen med status for SAK_HENLAGT", () => {
-    const hendelse = lagHendelse({
-      hendelsesType: "SAK_HENLAGT",
-      steg: "HENLAGT",
-      henleggelsesarsak: "FORELDET",
-      beskrivelse: "Saken er for gammel",
-    });
-
-    const resultat = hendelseBeskrivelse(hendelse);
-
-    expect(resultat).toContain("Saken er for gammel");
-    expect(resultat).toContain("Steg: Henlagt");
-    expect(resultat).not.toContain("Årsak:");
-  });
-
   it("viser hvilke felter som ble endret for SAKSINFORMASJON_ENDRET", () => {
     const hendelse = lagHendelse({
       hendelsesType: "SAKSINFORMASJON_ENDRET",

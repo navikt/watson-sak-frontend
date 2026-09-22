@@ -39,12 +39,12 @@ const respons = {
       FORVALTNING: 0,
       STRAFFERETTSLIG_VURDERING: 1,
       POLITI: 2,
-      HENLAGT: 1,
     },
     perStatus: {
       UTEN_STATUS: 4,
       VENTER_PA_INFORMASJON: 1,
       VENTER_PA_VEDTAK: 1,
+      VENTER_PA_RESULTAT: 0,
       I_BERO: 1,
     },
     antallUfordelte: 1,

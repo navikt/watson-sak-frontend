@@ -134,7 +134,7 @@ describe("normaliserLegacyKontrollsak", () => {
     });
   });
 
-  it("mapper henlagt-status til HENLAGT", () => {
+  it("mapper henlagt-status til AVSLUTTET (migrert bort fra HENLAGT)", () => {
     const sak = normaliserLegacyKontrollsak({
       id: "301",
       personIdent: "12345678901",
@@ -144,7 +144,7 @@ describe("normaliserLegacyKontrollsak", () => {
       opprettet: "2026-01-01T00:00:00Z",
     });
 
-    expect(sak.steg).toBe("HENLAGT");
+    expect(sak.steg).toBe("AVSLUTTET");
     expect(sak.status).toBeNull();
   });
 
@@ -174,5 +174,19 @@ describe("normaliserLegacyKontrollsak", () => {
 
     expect(sak.steg).toBe("UTREDES");
     expect(sak.status).toBe("VENTER_PA_VEDTAK");
+  });
+
+  it("mapper VENTER_PA_RESULTAT til UTREDES-steg med status VENTER_PA_RESULTAT", () => {
+    const sak = normaliserLegacyKontrollsak({
+      id: "601",
+      personIdent: "12345678901",
+      status: "VENTER_PA_RESULTAT",
+      kategori: "ARBEID",
+      ytelser: [],
+      opprettet: "2026-01-01T00:00:00Z",
+    });
+
+    expect(sak.steg).toBe("UTREDES");
+    expect(sak.status).toBe("VENTER_PA_RESULTAT");
   });
 });

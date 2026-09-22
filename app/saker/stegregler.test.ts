@@ -15,12 +15,7 @@ describe("hentStegbaserteSaksregler", () => {
   });
 
   it("tillater utredningsarbeid for aktive steg etter Opprettet", () => {
-    const aktiveSteg: KontrollsakSteg[] = [
-      "UTREDES",
-      "STRAFFERETTSLIG_VURDERING",
-      "POLITI",
-      "HENLAGT",
-    ];
+    const aktiveSteg: KontrollsakSteg[] = ["UTREDES", "STRAFFERETTSLIG_VURDERING", "POLITI"];
 
     for (const steg of aktiveSteg) {
       expect(hentStegbaserteSaksregler(steg)).toEqual({

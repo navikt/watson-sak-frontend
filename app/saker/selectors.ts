@@ -83,7 +83,6 @@ export function getMineSakerGruppeStatus(sak: KontrollsakResponse): MineSakerGru
       return "aktive";
     case "POLITI":
     case "ANMELDT":
-    case "HENLAGT":
     case "AVSLUTTET":
       return "fullførte";
   }

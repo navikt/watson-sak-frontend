@@ -13,7 +13,6 @@ import {
   Modal,
   Radio,
   RadioGroup,
-  Select,
   Textarea,
   VStack,
 } from "@navikt/ds-react";
@@ -23,20 +22,13 @@ import { z } from "zod";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
-import type { Henleggelsesarsak, KontrollsakStatus, KontrollsakSteg } from "~/saker/types.backend";
-import { henleggelsesarsakSchema } from "~/saker/types.backend";
-import {
-  formaterHenleggelsesarsak,
-  formaterStatus,
-  formaterSteg,
-  henleggelsesarsakAlternativer,
-} from "~/saker/visning";
+import type { KontrollsakStatus, KontrollsakSteg } from "~/saker/types.backend";
+import { formaterStatus, formaterSteg } from "~/saker/visning";
 
 interface EndreStatusModalProps {
   sakId: string;
   nåværendeSteg: KontrollsakSteg;
   nåværendeStatus: KontrollsakStatus | null;
-  nåværendeHenleggelsesarsak: Henleggelsesarsak | null;
   åpen: boolean;
   onClose: () => void;
 }
@@ -47,29 +39,14 @@ const valgbareSteg: KontrollsakSteg[] = [
   "FORVALTNING",
   "STRAFFERETTSLIG_VURDERING",
   "POLITI",
-  "HENLAGT",
   "AVSLUTTET",
 ];
 
-const endreStatusSkjema = z
-  .object({
-    steg: z.string({ error: "Velg et steg" }).min(1, "Velg et steg"),
-    status: z.string({ error: "Velg status" }).min(1, "Velg status"),
-    henleggelsesarsak: z.preprocess(
-      (val) => (val === "" ? undefined : val),
-      henleggelsesarsakSchema.optional(),
-    ),
-    beskrivelse: z.string().optional(),
-  })
-  .superRefine((data, ctx) => {
-    if (data.steg === "HENLAGT" && data.henleggelsesarsak === undefined) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["henleggelsesarsak"],
-        message: "Du må velge henleggelsesårsak.",
-      });
-    }
-  });
+const endreStatusSkjema = z.object({
+  steg: z.string({ error: "Velg et steg" }).min(1, "Velg et steg"),
+  status: z.string({ error: "Velg status" }).min(1, "Velg status"),
+  beskrivelse: z.string().optional(),
+});
 
 const statusValg: Array<{ value: "AKTIV" | KontrollsakStatus; label: string }> = [
   { value: "AKTIV", label: "Aktiv" },
@@ -78,6 +55,7 @@ const statusValg: Array<{ value: "AKTIV" | KontrollsakStatus; label: string }> =
     value: "VENTER_PA_INFORMASJON",
     label: formaterStatus("VENTER_PA_INFORMASJON"),
   },
+  { value: "VENTER_PA_RESULTAT", label: formaterStatus("VENTER_PA_RESULTAT") },
   { value: "I_BERO", label: formaterStatus("I_BERO") },
 ];
 
@@ -129,7 +107,6 @@ export function EndreStatusModal({
   sakId,
   nåværendeSteg,
   nåværendeStatus,
-  nåværendeHenleggelsesarsak,
   åpen,
   onClose,
 }: EndreStatusModalProps) {
@@ -159,9 +136,6 @@ export function EndreStatusModal({
       if (nyttSteg !== "AVSLUTTET") {
         formData.set("status", status);
       }
-      if (nyttSteg === "HENLAGT") {
-        formData.set("henleggelsesarsak", valgtHenleggelsesarsak);
-      }
       const beskrivelse = (formData.get("beskrivelse") as string | null) ?? "";
       formData.set("beskrivelse", beskrivelse.trim());
       sporHendelse("endre status bekreftelse vist", {
@@ -177,13 +151,9 @@ export function EndreStatusModal({
   const stegControl = useInputControl(fields.steg);
   const statusControl = useInputControl(fields.status);
   const beskrivelseControl = useInputControl(fields.beskrivelse);
-  const [valgtHenleggelsesarsak, setValgtHenleggelsesarsak] = useState(
-    nåværendeSteg === "HENLAGT" ? (nåværendeHenleggelsesarsak ?? "") : "",
-  );
   const valgtSteg = (stegControl.value as KontrollsakSteg | undefined) ?? nåværendeSteg;
   const valgtStatus =
     (statusControl.value as "AKTIV" | KontrollsakStatus | undefined) ?? nåværendeStatus ?? "AKTIV";
-  const visHenleggelse = valgtSteg === "HENLAGT";
   const erAvsluttet = valgtSteg === "AVSLUTTET";
 
   const gammelStegLabel = formaterSteg(nåværendeSteg);
@@ -193,17 +163,10 @@ export function EndreStatusModal({
   const gammelStatus = nåværendeStatus ?? "AKTIV";
   const statusEndret = !erAvsluttet && valgtStatus !== gammelStatus;
 
-  const gammelHenleggelsesarsak = nåværendeSteg === "HENLAGT" ? nåværendeHenleggelsesarsak : null;
-  const henleggelsesarsakEndret =
-    visHenleggelse &&
-    valgtHenleggelsesarsak !== "" &&
-    valgtHenleggelsesarsak !== gammelHenleggelsesarsak;
-
   const beskrivelseVerdi = (beskrivelseControl.value ?? "").trim();
 
   function nullstill() {
     form.reset();
-    setValgtHenleggelsesarsak("");
     setFase("skjema");
     setInnsendingFormData(null);
     setFeilmelding(null);
@@ -248,9 +211,6 @@ export function EndreStatusModal({
       stegControl.change(nåværendeSteg);
       statusControl.change(nåværendeStatus ?? "AKTIV");
       beskrivelseControl.change("");
-      setValgtHenleggelsesarsak(
-        nåværendeSteg === "HENLAGT" ? (nåværendeHenleggelsesarsak ?? "") : "",
-      );
       setFase("skjema");
       setInnsendingFormData(null);
       setFeilmelding(null);
@@ -262,7 +222,7 @@ export function EndreStatusModal({
     // effekten på nytt hele tiden. Vi trenger kun de nyeste `.change`-funksjonene når
     // modalen faktisk åpnes (styrt av åpen/forrigeÅpen.current), ikke ved hver render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [åpen, nåværendeStatus, nåværendeHenleggelsesarsak, nåværendeSteg]);
+  }, [åpen, nåværendeStatus, nåværendeSteg]);
 
   useEffect(() => {
     if (!submitPågår.current || fetcher.state !== "idle") {
@@ -312,9 +272,6 @@ export function EndreStatusModal({
                   onChange={(value) => {
                     stegControl.change(value);
                     sporHendelse("endre status saksstatus valgt", { steg: value });
-                    if (value !== "HENLAGT") {
-                      setValgtHenleggelsesarsak("");
-                    }
                   }}
                   onBlur={stegControl.blur}
                   error={fields.steg.errors?.[0]}
@@ -325,29 +282,6 @@ export function EndreStatusModal({
                     </Radio>
                   ))}
                 </RadioGroup>
-                {visHenleggelse ? (
-                  <Select
-                    key={fields.henleggelsesarsak.key}
-                    name={fields.henleggelsesarsak.name}
-                    id={fields.henleggelsesarsak.id}
-                    value={valgtHenleggelsesarsak}
-                    label="Henleggelsesårsak"
-                    onChange={(event) => {
-                      setValgtHenleggelsesarsak(event.target.value);
-                      sporHendelse("endre status henleggelsesårsak valgt", {
-                        henleggelsesarsak: event.target.value,
-                      });
-                    }}
-                    error={fields.henleggelsesarsak.errors?.[0]}
-                  >
-                    <option value="">Velg årsak</option>
-                    {henleggelsesarsakAlternativer.map((arsak) => (
-                      <option key={arsak} value={arsak}>
-                        {formaterHenleggelsesarsak(arsak)}
-                      </option>
-                    ))}
-                  </Select>
-                ) : null}
                 <hr className="border-ax-border-neutral-subtle" />
                 <input
                   key={fields.status.key}
@@ -412,12 +346,6 @@ export function EndreStatusModal({
                     <SammendragRad
                       label="Status"
                       verdi={`Fra «${formaterValgtStatus(gammelStatus)}» til «${formaterValgtStatus(valgtStatus)}»`}
-                    />
-                  )}
-                  {henleggelsesarsakEndret && (
-                    <SammendragRad
-                      label="Henleggelsesårsak"
-                      verdi={formaterHenleggelsesarsak(valgtHenleggelsesarsak as Henleggelsesarsak)}
                     />
                   )}
                   {beskrivelseVerdi && (

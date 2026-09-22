@@ -23,7 +23,7 @@ import { BodyShort, Link, VStack } from "@navikt/ds-react";
 import { Link as RouterLink } from "react-router";
 import { byggKommentarLenke } from "~/saker/filer/dokument/kommentarer/lenker";
 import { getSaksreferanse } from "~/saker/id";
-import { formaterHenleggelsesarsak, formaterStatus } from "~/saker/visning";
+import { formaterStatus } from "~/saker/visning";
 import { formaterSteg } from "~/saker/visning";
 import { NORSK_TIDSSONE } from "~/utils/date-utils";
 import type { KommentarAktivitet, SakHendelse } from "./typer";
@@ -136,8 +136,6 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
       return "Videresendt til NAY/NFP";
     case "POLITIANMELDT":
       return "Politianmeldt";
-    case "SAK_HENLAGT":
-      return "Sak henlagt";
     case "TILGANG_DELT":
       return "Tilgang delt";
     case "TILGANG_FJERNET":
@@ -244,16 +242,6 @@ export function hendelseBeskrivelse(
     return stegOgStatusBeskrivelse(hendelse, forrigeHendelse);
   }
 
-  if (hendelse.hendelsesType === "SAK_HENLAGT") {
-    const deler: string[] = [`Steg: ${formaterSteg(hendelse.steg)}`];
-
-    if (hendelse.beskrivelse) {
-      deler.push(hendelse.beskrivelse);
-    }
-
-    return deler.join(" – ");
-  }
-
   if (hendelse.hendelsesType === "POLITIANMELDT") {
     const deler: string[] = [];
 
@@ -336,8 +324,6 @@ export function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
       return <PencilIcon {...iconProps} />;
     case "MOTTAKSENHET_ENDRET":
       return <ArrowRightIcon {...iconProps} />;
-    case "SAK_HENLAGT":
-      return <XMarkOctagonIcon {...iconProps} />;
     case "VIDERESENDT_TIL_NAY_NFP":
       return <PaperplaneIcon {...iconProps} />;
     case "POLITIANMELDT":
@@ -356,7 +342,6 @@ export function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
     case "SAK_GJENOPPTATT":
       return <ArrowUndoIcon {...iconProps} />;
     case "SAK_STATUS_ENDRET":
-      if (hendelse.steg === "HENLAGT") return <XMarkOctagonIcon {...iconProps} />;
       if (hendelse.steg === "POLITI" || hendelse.steg === "ANMELDT") {
         return <GavelIcon {...iconProps} />;
       }
@@ -429,22 +414,6 @@ export function HendelseInnhold({
           {hendelse.tittel}
         </BodyShort>
         {hendelse.beskrivelse && <BodyShort size="small">{hendelse.beskrivelse}</BodyShort>}
-      </VStack>
-    );
-  }
-
-  if (
-    hendelse.hendelsesType === "SAK_HENLAGT" ||
-    (hendelse.hendelsesType === "SAK_STATUS_ENDRET" && hendelse.steg === "HENLAGT")
-  ) {
-    return (
-      <VStack gap="space-1">
-        {beskrivelse && <BodyShort size="small">{beskrivelse}</BodyShort>}
-        {hendelse.henleggelsesarsak && (
-          <BodyShort size="small">
-            Årsak: {formaterHenleggelsesarsak(hendelse.henleggelsesarsak)}
-          </BodyShort>
-        )}
       </VStack>
     );
   }

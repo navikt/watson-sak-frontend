@@ -1,6 +1,6 @@
 import type { KontrollsakResponse } from "~/saker/types.backend";
 
-/** Avslutningsdatoer for avsluttede/henlagte saker (sakId → ISO-dato) */
+/** Avslutningsdatoer for avsluttede saker (sakId → ISO-dato) */
 export type Avslutningsdatoer = Record<string, string>;
 
 export interface Nokkeltall {
@@ -24,14 +24,12 @@ export function beregnNokkeltall(
   saker: KontrollsakResponse[],
   avslutningsdatoer: Avslutningsdatoer,
 ): Nokkeltall {
-  const pagaendeSaker = saker.filter(
-    (sak) => sak.steg !== "HENLAGT" && sak.steg !== "AVSLUTTET",
-  ).length;
+  const pagaendeSaker = saker.filter((sak) => sak.steg !== "AVSLUTTET").length;
 
   const paVent = saker.filter((sak) => sak.status !== null).length;
 
   const avsluttedeMedDato = saker
-    .filter((s) => s.steg === "AVSLUTTET" || s.steg === "HENLAGT")
+    .filter((s) => s.steg === "AVSLUTTET")
     .filter((s) => avslutningsdatoer[s.id] !== undefined)
     .map((s) => dagerMellom(s.opprettet, avslutningsdatoer[s.id]));
 

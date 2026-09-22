@@ -18,7 +18,6 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
     misbruktype: [],
     prioritet: "NORMAL",
     status: null,
-    henleggelsesarsak: null,
     ytelser: [],
     merking: [],
     arbeidsgivere: [],

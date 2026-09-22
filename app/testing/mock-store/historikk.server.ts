@@ -11,7 +11,6 @@ type BackendHendelsestype =
   | "MOTTAKSENHET_ENDRET"
   | "VIDERESENDT_TIL_NAY_NFP"
   | "POLITIANMELDT"
-  | "SAK_HENLAGT"
   | "TILGANG_DELT"
   | "TILGANG_FJERNET"
   | "ANSVARLIG_SAKSBEHANDLER_ENDRET"
@@ -71,16 +70,13 @@ export function hentHistorikk(state: MockState, sakId: string): SakHendelse[] {
 
 function lagSnapshotFraKontrollsak(
   sak: KontrollsakResponse,
-  overstyringer: Partial<
-    Pick<SakHendelse, "steg" | "status" | "henleggelsesarsak" | "beskrivelse">
-  > = {},
+  overstyringer: Partial<Pick<SakHendelse, "steg" | "status" | "beskrivelse">> = {},
 ): Omit<SakHendelse, "hendelseId" | "tidspunkt" | "hendelsesType" | "sakId"> {
   return {
     kategori: sak.kategori,
     prioritet: sak.prioritet,
     steg: sak.steg,
     status: sak.status,
-    henleggelsesarsak: sak.henleggelsesarsak,
     ytelseTyper: sak.ytelser.map((ytelse) => ytelse.type),
     ...overstyringer,
   };
@@ -196,10 +192,9 @@ export function genererHistorikkForSaker(
   };
 
   for (const sak of saker) {
-    const opprettetSnapshot: Partial<Pick<SakHendelse, "steg" | "status" | "henleggelsesarsak">> = {
+    const opprettetSnapshot: Partial<Pick<SakHendelse, "steg" | "status">> = {
       steg: "OPPRETTET",
       status: null,
-      henleggelsesarsak: null,
     };
 
     leggTilBackendHendelse(
@@ -280,7 +275,6 @@ function leggTilStatushistorikk(
       lagSnapshotFraKontrollsak(sak, {
         steg,
         status: type === "SAK_SATT_PA_VENT" || type === "SAK_SATT_I_BERO" ? sak.status : null,
-        henleggelsesarsak: type === "SAK_HENLAGT" ? sak.henleggelsesarsak : null,
         beskrivelse,
       }),
       hendelseTidspunkt,
@@ -321,9 +315,6 @@ function leggTilStatushistorikk(
       return;
     case "POLITI":
       leggTil("POLITIANMELDT", "POLITI", tidspunkt.avsluttet, "Forholdet er anmeldt til politiet.");
-      return;
-    case "HENLAGT":
-      leggTil("SAK_HENLAGT", "HENLAGT", tidspunkt.avsluttet, "Saken er henlagt etter vurdering.");
       return;
     case "AVSLUTTET":
       leggTil(
