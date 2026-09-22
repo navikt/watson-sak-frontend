@@ -548,7 +548,6 @@ export function leggTilMockSakIFordeling(
     },
     steg: "OPPRETTET",
     status: null,
-    henleggelsesarsak: null,
     kategori: nySak.kategori,
     kilde: nySak.kilde,
     misbruktype: nySak.misbruktype,

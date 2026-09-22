@@ -85,7 +85,7 @@ export function normaliserLegacyKontrollsak(sak: LegacyKontrollsak): Kontrollsak
     AVKLART: "OPPRETTET",
     UTREDES: "UTREDES",
     TIL_FORVALTNING: "FORVALTNING",
-    HENLAGT: "HENLAGT",
+    HENLAGT: "AVSLUTTET",
     AVSLUTTET: "AVSLUTTET",
     I_BERO: "OPPRETTET",
     VENTER_PA_INFORMASJON: "UTREDES",
@@ -164,7 +164,6 @@ export function normaliserLegacyKontrollsak(sak: LegacyKontrollsak): Kontrollsak
     },
     steg: normalisertSteg,
     status,
-    henleggelsesarsak: null,
     kategori: (legacyKategori in
     {
       BEHANDLER: true,

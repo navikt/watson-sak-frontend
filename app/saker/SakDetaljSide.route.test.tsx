@@ -70,31 +70,6 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     expect(historikk[0]?.hendelsesType).toBe("POLITIANMELDT");
   });
 
-  it("endre_steg til HENLAGT logger henleggelse med årsak", async () => {
-    const saker = hentAlleSaker(testRequest);
-    const sak = saker.find((s: KontrollsakResponse) => s.steg !== "AVSLUTTET" && s.status === null);
-    expect(sak).toBeDefined();
-    if (!sak) return;
-    settInnloggetSomEier(sak);
-
-    const { getSaksreferanse } = await import("./id");
-    const sakId = getSaksreferanse(sak.id);
-
-    const resultat = await utforAction(sakId, {
-      handling: "endre_steg",
-      steg: "HENLAGT",
-      henleggelsesarsak: "IKKE_KAPASITET",
-    });
-
-    expect(resultat).toEqual({ ok: true });
-    expect(sak.steg).toBe("HENLAGT");
-    expect(sak.henleggelsesarsak).toBe("IKKE_KAPASITET");
-
-    const historikk = hentHistorikk(testRequest, sak.id);
-    expect(historikk[0]?.hendelsesType).toBe("SAK_HENLAGT");
-    expect(historikk[0]?.henleggelsesarsak).toBe("IKKE_KAPASITET");
-  });
-
   it("endre_steg med beskrivelse lagrer hendelse med beskrivelse", async () => {
     const saker = hentAlleSaker(testRequest);
     const sak = saker.find((s: KontrollsakResponse) => s.steg !== "AVSLUTTET" && s.status === null);

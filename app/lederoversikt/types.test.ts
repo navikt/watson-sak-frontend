@@ -14,12 +14,12 @@ const gyldigRespons = {
       FORVALTNING: 0,
       STRAFFERETTSLIG_VURDERING: 1,
       POLITI: 1,
-      HENLAGT: 1,
     },
     perStatus: {
       UTEN_STATUS: 2,
       VENTER_PA_INFORMASJON: 1,
       VENTER_PA_VEDTAK: 1,
+      VENTER_PA_RESULTAT: 0,
       I_BERO: 1,
     },
   },

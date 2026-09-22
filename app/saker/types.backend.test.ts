@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   kontrollsakStatusSchema,
-  henleggelsesarsakSchema,
   kontrollsakResponseSchema,
   kontrollsakHendelseResponseSchema,
 } from "./types.backend";
@@ -46,7 +45,6 @@ describe("kontrollsakResponseSchema – ny kontraktmodell", () => {
       "FORVALTNING",
       "STRAFFERETTSLIG_VURDERING",
       "POLITI",
-      "HENLAGT",
       "AVSLUTTET",
     ] as const;
 
@@ -94,55 +92,15 @@ describe("kontrollsakResponseSchema – ny kontraktmodell", () => {
 });
 
 describe("kontrollsakStatusSchema", () => {
-  it("godtar alle tre statuser", () => {
+  it("godtar alle fire statuser", () => {
     expect(kontrollsakStatusSchema.safeParse("VENTER_PA_INFORMASJON").success).toBe(true);
     expect(kontrollsakStatusSchema.safeParse("VENTER_PA_VEDTAK").success).toBe(true);
     expect(kontrollsakStatusSchema.safeParse("I_BERO").success).toBe(true);
+    expect(kontrollsakStatusSchema.safeParse("VENTER_PA_RESULTAT").success).toBe(true);
   });
 
   it("avviser ukjent status", () => {
     expect(kontrollsakStatusSchema.safeParse("UKJENT").success).toBe(false);
-  });
-});
-
-describe("henleggelsesarsakSchema", () => {
-  it("godtar alle gyldige henleggelsesårsaker", () => {
-    const gyldige = [
-      "IKKE_KAPASITET",
-      "IKKE_TILSTREKKELIG_BEVISGRUNNLAG",
-      "IKKE_TILSTREKKELIG_SKYLD",
-      "INGEN_UTREDNING",
-      "FORELDET",
-    ];
-    for (const arsak of gyldige) {
-      expect(henleggelsesarsakSchema.safeParse(arsak).success, `${arsak} skal være gyldig`).toBe(
-        true,
-      );
-    }
-  });
-
-  it("avviser ukjent årsak", () => {
-    expect(henleggelsesarsakSchema.safeParse("UKJENT").success).toBe(false);
-  });
-
-  it("parser sak med henleggelsesarsak", () => {
-    const resultat = kontrollsakResponseSchema.safeParse({
-      ...basisSak,
-      steg: "HENLAGT",
-      henleggelsesarsak: "IKKE_KAPASITET",
-    });
-    expect(resultat.success).toBe(true);
-    if (resultat.success) {
-      expect(resultat.data.henleggelsesarsak).toBe("IKKE_KAPASITET");
-    }
-  });
-
-  it("parser sak uten henleggelsesarsak til null", () => {
-    const resultat = kontrollsakResponseSchema.safeParse({ ...basisSak, steg: "UTREDES" });
-    expect(resultat.success).toBe(true);
-    if (resultat.success) {
-      expect(resultat.data.henleggelsesarsak).toBeNull();
-    }
   });
 });
 

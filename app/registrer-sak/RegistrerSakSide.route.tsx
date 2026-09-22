@@ -731,7 +731,7 @@ function formaterDato(iso: string): string {
 }
 
 function erLukketStatus(status: string): boolean {
-  const lukket = ["AVSLUTTET", "Avsluttet", "LUKKET", "Lukket", "HENLAGT", "Henlagt"];
+  const lukket = ["AVSLUTTET", "Avsluttet", "LUKKET", "Lukket"];
   return lukket.includes(status);
 }
 

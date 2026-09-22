@@ -17,7 +17,6 @@ function lagSak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakRespon
     },
     steg: "UTREDES",
     status: null,
-    henleggelsesarsak: null,
     kategori: "ARBEID",
     kilde: "NAV_KONTROLL",
     misbruktype: [],

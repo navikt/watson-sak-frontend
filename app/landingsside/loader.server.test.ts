@@ -53,15 +53,11 @@ describe("landingsside-loader", () => {
     expect(typeof data.velkomstOppsummering).toBe("string");
   });
 
-  it("returnerer bare aktive saker (ikke POLITI, HENLAGT eller AVSLUTTET)", async () => {
+  it("returnerer bare aktive saker (ikke POLITI eller AVSLUTTET)", async () => {
     const data = await loader(loaderArgs);
     if (data.type !== "saksbehandler") throw new Error("Forventet saksbehandler-data");
 
-    const ikkeAktiveSteg: Array<(typeof data.mineSaker)[number]["steg"]> = [
-      "POLITI",
-      "HENLAGT",
-      "AVSLUTTET",
-    ];
+    const ikkeAktiveSteg: Array<(typeof data.mineSaker)[number]["steg"]> = ["POLITI", "AVSLUTTET"];
 
     expect(data.mineSaker.every((sak) => !ikkeAktiveSteg.includes(sak.steg))).toBe(true);
   });

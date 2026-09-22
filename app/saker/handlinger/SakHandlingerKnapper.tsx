@@ -140,7 +140,6 @@ export function SakHandlingerKnapper({
         sakId={String(sak.id)}
         nåværendeSteg={sak.steg}
         nåværendeStatus={sak.status}
-        nåværendeHenleggelsesarsak={sak.henleggelsesarsak}
         åpen={åpenModal === "endre-status"}
         onClose={() => setÅpenModal(null)}
       />

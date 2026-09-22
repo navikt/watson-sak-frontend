@@ -18,7 +18,6 @@ function lagSak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakRespon
     misbruktype: ["SKJULT_SAMLIV"],
     prioritet: "NORMAL",
     status: null,
-    henleggelsesarsak: null,
     ytelser: [],
     merking: [],
     arbeidsgivere: [],

@@ -52,7 +52,6 @@ describe("EndreStatusModal", () => {
         sakId="00000000-0000-4000-8000-000000000001"
         nåværendeSteg="UTREDES"
         nåværendeStatus={null}
-        nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
       />,
@@ -64,7 +63,6 @@ describe("EndreStatusModal", () => {
     expect(screen.getByRole("radio", { name: "Forvaltning" })).toBeDefined();
     expect(screen.getByRole("radio", { name: "Strafferettslig vurdering" })).toBeDefined();
     expect(screen.getByRole("radio", { name: "Politi" })).toBeDefined();
-    expect(screen.getByRole("radio", { name: "Henlagt" })).toBeDefined();
     expect(screen.getByRole("radio", { name: "Avsluttet" })).toBeDefined();
   });
 
@@ -74,7 +72,6 @@ describe("EndreStatusModal", () => {
         sakId="00000000-0000-4000-8000-000000000001"
         nåværendeSteg="UTREDES"
         nåværendeStatus={null}
-        nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
       />,
@@ -84,51 +81,8 @@ describe("EndreStatusModal", () => {
     expect(screen.getByRole("radio", { name: "Aktiv" })).toBeDefined();
     expect(screen.getByRole("radio", { name: "Venter på vedtak" })).toBeDefined();
     expect(screen.getByRole("radio", { name: "Venter på informasjon" })).toBeDefined();
+    expect(screen.getByRole("radio", { name: "Venter på resultat" })).toBeDefined();
     expect(screen.getByRole("radio", { name: "I bero" })).toBeDefined();
-  });
-
-  it("viser henleggelsesårsak når Henlagt velges", async () => {
-    await renderMedRouter(
-      <EndreStatusModal
-        sakId="00000000-0000-4000-8000-000000000001"
-        nåværendeSteg="UTREDES"
-        nåværendeStatus={null}
-        nåværendeHenleggelsesarsak={null}
-        åpen={true}
-        onClose={() => {}}
-      />,
-    );
-
-    expect(screen.queryByLabelText("Henleggelsesårsak")).toBeNull();
-
-    fireEvent.click(screen.getByRole("radio", { name: "Henlagt" }));
-    await waitFor(() => {});
-
-    expect(screen.getByLabelText("Henleggelsesårsak")).toBeDefined();
-    expect(screen.getByRole("option", { name: "Ikke kapasitet" })).toBeDefined();
-    expect(screen.getByRole("option", { name: "Ikke tilstrekkelig bevisgrunnlag" })).toBeDefined();
-    expect(screen.getByRole("option", { name: "Foreldet" })).toBeDefined();
-  });
-
-  it("skjuler henleggelsesårsak når annet steg velges", async () => {
-    await renderMedRouter(
-      <EndreStatusModal
-        sakId="00000000-0000-4000-8000-000000000001"
-        nåværendeSteg="UTREDES"
-        nåværendeStatus={null}
-        nåværendeHenleggelsesarsak={null}
-        åpen={true}
-        onClose={() => {}}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole("radio", { name: "Henlagt" }));
-    await waitFor(() => {});
-    expect(screen.getByLabelText("Henleggelsesårsak")).toBeDefined();
-
-    fireEvent.click(screen.getByRole("radio", { name: "Politi" }));
-    await waitFor(() => {});
-    expect(screen.queryByLabelText("Henleggelsesårsak")).toBeNull();
   });
 
   it("skjuler status ved Avsluttet, og viser advarsel i bekreftelsessteget", async () => {
@@ -137,7 +91,6 @@ describe("EndreStatusModal", () => {
         sakId="00000000-0000-4000-8000-000000000001"
         nåværendeSteg="UTREDES"
         nåværendeStatus={"I_BERO"}
-        nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
       />,
@@ -165,7 +118,6 @@ describe("EndreStatusModal", () => {
         sakId="00000000-0000-4000-8000-000000000001"
         nåværendeSteg="UTREDES"
         nåværendeStatus={"I_BERO"}
-        nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
       />,
@@ -194,7 +146,6 @@ describe("EndreStatusModal", () => {
         sakId="00000000-0000-4000-8000-000000000001"
         nåværendeSteg="UTREDES"
         nåværendeStatus={null}
-        nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
       />,
@@ -218,7 +169,6 @@ describe("EndreStatusModal", () => {
         sakId="00000000-0000-4000-8000-000000000001"
         nåværendeSteg="UTREDES"
         nåværendeStatus={null}
-        nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
       />,
@@ -238,44 +188,19 @@ describe("EndreStatusModal", () => {
     expect(screen.getByRole("radio", { name: "Politi" })).toBeDefined();
   });
 
-  it("viser feil ved henlagt uten henleggelsesårsak", async () => {
-    await renderMedRouter(
-      <EndreStatusModal
-        sakId="00000000-0000-4000-8000-000000000001"
-        nåværendeSteg="UTREDES"
-        nåværendeStatus={null}
-        nåværendeHenleggelsesarsak={null}
-        åpen={true}
-        onClose={() => {}}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole("radio", { name: "Henlagt" }));
-    await waitFor(() => {});
-    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
-    await waitFor(() => {});
-
-    expect(screen.getByText("Du må velge henleggelsesårsak.")).toBeDefined();
-    expect(submitMock).not.toHaveBeenCalled();
-  });
-
   it("sender inn samlet stegdialog med riktig payload", async () => {
     await renderMedRouter(
       <EndreStatusModal
         sakId="00000000-0000-4000-8000-000000000001"
         nåværendeSteg="UTREDES"
         nåværendeStatus={null}
-        nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
       />,
     );
 
-    fireEvent.click(screen.getByRole("radio", { name: "Henlagt" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Politi" }));
     await waitFor(() => {});
-    fireEvent.change(screen.getByLabelText("Henleggelsesårsak"), {
-      target: { value: "IKKE_KAPASITET" },
-    });
     fireEvent.click(screen.getByRole("radio", { name: "Venter på informasjon" }));
     await waitFor(() => {});
 
@@ -286,33 +211,9 @@ describe("EndreStatusModal", () => {
 
     expect(submitMock).toHaveBeenCalledOnce();
     const formData = submitMock.mock.calls[0][0] as FormData;
-    expect(formData.get("steg")).toBe("HENLAGT");
-    expect(formData.get("henleggelsesarsak")).toBe("IKKE_KAPASITET");
+    expect(formData.get("steg")).toBe("POLITI");
     expect(formData.get("handling")).toBe("endre_steg_dialog");
     expect(formData.get("status")).toBe("VENTER_PA_INFORMASJON");
-  });
-
-  it("tillater no-op for henlagt med eksisterende henleggelsesårsak", async () => {
-    await renderMedRouter(
-      <EndreStatusModal
-        sakId="00000000-0000-4000-8000-000000000001"
-        nåværendeSteg="HENLAGT"
-        nåværendeStatus={null}
-        nåværendeHenleggelsesarsak="IKKE_KAPASITET"
-        åpen={true}
-        onClose={() => {}}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
-    await waitFor(() => {});
-    fireEvent.click(screen.getByRole("button", { name: "Endre steg" }));
-    await waitFor(() => {});
-
-    expect(submitMock).toHaveBeenCalledOnce();
-    const formData = submitMock.mock.calls[0][0] as FormData;
-    expect(formData.get("steg")).toBe("HENLAGT");
-    expect(formData.get("henleggelsesarsak")).toBe("IKKE_KAPASITET");
   });
 
   it("viser suksesssteg med nytt steg etter vellykket innsending", async () => {
@@ -323,7 +224,6 @@ describe("EndreStatusModal", () => {
         sakId="00000000-0000-4000-8000-000000000001"
         nåværendeSteg="OPPRETTET"
         nåværendeStatus={null}
-        nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
       />,
@@ -352,7 +252,6 @@ describe("EndreStatusModal", () => {
           sakId="00000000-0000-4000-8000-000000000001"
           nåværendeSteg={steg}
           nåværendeStatus={null}
-          nåværendeHenleggelsesarsak={null}
           åpen={true}
           onClose={() => {}}
         />
@@ -394,7 +293,6 @@ describe("EndreStatusModal", () => {
         sakId="00000000-0000-4000-8000-000000000001"
         nåværendeSteg="UTREDES"
         nåværendeStatus={null}
-        nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
       />,
@@ -421,7 +319,6 @@ describe("EndreStatusModal", () => {
         sakId="00000000-0000-4000-8000-000000000001"
         nåværendeSteg="OPPRETTET"
         nåværendeStatus={null}
-        nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
       />,
@@ -452,7 +349,6 @@ describe("EndreStatusModal", () => {
         sakId="00000000-0000-4000-8000-000000000001"
         nåværendeSteg="UTREDES"
         nåværendeStatus={null}
-        nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
       />,
@@ -482,7 +378,6 @@ describe("EndreStatusModal", () => {
         sakId="00000000-0000-4000-8000-000000000001"
         nåværendeSteg="UTREDES"
         nåværendeStatus={null}
-        nåværendeHenleggelsesarsak={null}
         åpen={true}
         onClose={() => {}}
       />,

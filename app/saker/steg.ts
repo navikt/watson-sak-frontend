@@ -8,7 +8,6 @@ export const ALLE_STEG: KontrollsakSteg[] = [
   "FORVALTNING",
   "STRAFFERETTSLIG_VURDERING",
   "POLITI",
-  "HENLAGT",
   "AVSLUTTET",
 ];
 

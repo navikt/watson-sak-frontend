@@ -19,7 +19,6 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
     misbruktype: [],
     prioritet: "NORMAL",
     status: null,
-    henleggelsesarsak: null,
     ytelser: [
       {
         type: "Foreldrepenger",

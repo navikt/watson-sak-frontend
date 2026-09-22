@@ -106,19 +106,6 @@ test.describe("Sakdetalj", () => {
     await expect(page.locator(".aksel-tag", { hasText: "Venter på informasjon" })).toBeVisible();
   });
 
-  test("krever henleggelsesårsak når steg settes til henlagt", async ({ page }) => {
-    await page.getByRole("button", { name: "Endre steg" }).click();
-
-    const dialog = page.getByRole("dialog", { name: "Endre steg" });
-    await expect(dialog).toBeVisible();
-
-    await dialog.getByRole("radio", { name: "Henlagt" }).click();
-    await dialog.getByRole("button", { name: "Lagre" }).click();
-
-    await expect(dialog).toBeVisible();
-    await expect(dialog.getByLabel("Henleggelsesårsak")).toBeVisible();
-  });
-
   test("resetter datofelter etter avbryt og ny redigering", async ({ page }) => {
     await page.getByRole("button", { name: "Rediger saksinformasjon" }).click();
 

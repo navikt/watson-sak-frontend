@@ -13,6 +13,7 @@ const STATUSER: LederStatus[] = [
   "UTEN_STATUS",
   "VENTER_PA_INFORMASJON",
   "VENTER_PA_VEDTAK",
+  "VENTER_PA_RESULTAT",
   "I_BERO",
 ];
 

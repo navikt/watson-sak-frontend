@@ -1,5 +1,4 @@
 import type {
-  Henleggelsesarsak,
   KontrollsakKategori,
   KontrollsakKilde,
   KontrollsakMisbrukstype,
@@ -8,7 +7,6 @@ import type {
   KontrollsakSteg,
   KontrollsakYtelse,
 } from "./types.backend";
-import { henleggelsesarsakSchema } from "./types.backend";
 import {
   kontrollsakKategoriEtiketter,
   kontrollsakKildeEtiketter,
@@ -27,7 +25,6 @@ const stegEtiketter: Record<KontrollsakSteg, string> = {
   STRAFFERETTSLIG_VURDERING: "Strafferettslig vurdering",
   POLITI: "Politi",
   ANMELDT: "Politi",
-  HENLAGT: "Henlagt",
   AVSLUTTET: "Avsluttet",
 };
 
@@ -38,22 +35,14 @@ const stegVarianter: Record<KontrollsakSteg, StegVariant> = {
   STRAFFERETTSLIG_VURDERING: "warning",
   POLITI: "success",
   ANMELDT: "success",
-  HENLAGT: "neutral",
   AVSLUTTET: "neutral",
 };
 
 const statusEtiketter: Record<KontrollsakStatus, string> = {
   VENTER_PA_INFORMASJON: "Venter på informasjon",
   VENTER_PA_VEDTAK: "Venter på vedtak",
+  VENTER_PA_RESULTAT: "Venter på resultat",
   I_BERO: "I bero",
-};
-
-const henleggelsesarsakEtiketter: Record<Henleggelsesarsak, string> = {
-  IKKE_KAPASITET: "Ikke kapasitet",
-  IKKE_TILSTREKKELIG_BEVISGRUNNLAG: "Ikke tilstrekkelig bevisgrunnlag",
-  IKKE_TILSTREKKELIG_SKYLD: "Ikke tilstrekkelig skyld",
-  INGEN_UTREDNING: "Ingen utredning",
-  FORELDET: "Foreldet",
 };
 
 export function formaterSteg(steg: KontrollsakSteg | null | undefined): string {
@@ -69,15 +58,6 @@ export function hentStegVariant(steg: KontrollsakSteg | null | undefined): StegV
 export function formaterStatus(status: KontrollsakStatus): string {
   return statusEtiketter[status];
 }
-
-export function formaterHenleggelsesarsak(arsak: Henleggelsesarsak | null | undefined): string {
-  if (!arsak) return "Ukjent";
-  return henleggelsesarsakEtiketter[arsak] ?? "Ukjent";
-}
-
-export const henleggelsesarsakAlternativer: Henleggelsesarsak[] = [
-  ...henleggelsesarsakSchema.options,
-];
 
 export function formaterKategori(kategori: KontrollsakKategori | null | undefined): string | null {
   if (!kategori) {

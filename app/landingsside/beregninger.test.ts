@@ -19,7 +19,6 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
     misbruktype: [],
     prioritet: "NORMAL",
     status: null,
-    henleggelsesarsak: null,
     ytelser: [
       {
         type: "DAGPENGER",
@@ -44,11 +43,11 @@ function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): Kontr
 }
 
 describe("beregnNokkeltall", () => {
-  test("teller pågående saker (ekskluderer henlagte og avsluttede)", () => {
+  test("teller pågående saker (ekskluderer avsluttede)", () => {
     const saker = [
       lagKontrollsak({ id: 1, steg: "OPPRETTET" }),
       lagKontrollsak({ id: 2, steg: "UTREDES" }),
-      lagKontrollsak({ id: 3, steg: "HENLAGT" }),
+      lagKontrollsak({ id: 3, steg: "AVSLUTTET" }),
       lagKontrollsak({ id: 4, steg: "AVSLUTTET" }),
       lagKontrollsak({ id: 5, steg: "STRAFFERETTSLIG_VURDERING" }),
     ];
@@ -74,7 +73,7 @@ describe("beregnNokkeltall", () => {
     const saker = [
       lagKontrollsak({ id: 1, steg: "AVSLUTTET", opprettet: "2026-01-01T00:00:00Z" }),
       lagKontrollsak({ id: 2, steg: "AVSLUTTET", opprettet: "2026-01-01T00:00:00Z" }),
-      lagKontrollsak({ id: 3, steg: "HENLAGT", opprettet: "2026-01-01T00:00:00Z" }),
+      lagKontrollsak({ id: 3, steg: "AVSLUTTET", opprettet: "2026-01-01T00:00:00Z" }),
     ];
 
     const avslutningsdatoer: Avslutningsdatoer = {
@@ -92,7 +91,7 @@ describe("beregnNokkeltall", () => {
   test("beregner gjennomsnittlig saksbehandlingstid", () => {
     const saker = [
       lagKontrollsak({ id: 1, steg: "AVSLUTTET", opprettet: "2026-01-01T00:00:00Z" }),
-      lagKontrollsak({ id: 2, steg: "HENLAGT", opprettet: "2026-01-01T00:00:00Z" }),
+      lagKontrollsak({ id: 2, steg: "AVSLUTTET", opprettet: "2026-01-01T00:00:00Z" }),
     ];
 
     const avslutningsdatoer: Avslutningsdatoer = {
