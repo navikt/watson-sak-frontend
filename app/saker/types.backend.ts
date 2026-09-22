@@ -173,7 +173,19 @@ export const kontrollsakPageResponseSchema = z.object({
   totalPages: z.number(),
 });
 
-export const kontrollsakHendelseResponseSchema = z.object({
+export function normaliserHistoriskHendelseInput(input: unknown): unknown {
+  if (!input || typeof input !== "object") {
+    return input;
+  }
+
+  const hendelse = input as Record<string, unknown>;
+  return {
+    ...hendelse,
+    steg: hendelse.steg === "HENLAGT" ? "AVSLUTTET" : hendelse.steg,
+  };
+}
+
+export const kontrollsakHendelseResponseObjectSchema = z.object({
   hendelseId: z.string().uuid(),
   tidspunkt: z.string(),
   hendelsesType: z.string(),
@@ -188,6 +200,11 @@ export const kontrollsakHendelseResponseSchema = z.object({
   tittel: z.string().nullable().optional(),
   opprettetAvNavIdent: z.string().nullable().optional(),
 });
+
+export const kontrollsakHendelseResponseSchema = z.preprocess(
+  normaliserHistoriskHendelseInput,
+  kontrollsakHendelseResponseObjectSchema,
+);
 
 export type KontrollsakYtelse = z.infer<typeof kontrollsakYtelseSchema>;
 export type KontrollsakSaksbehandler = z.infer<typeof kontrollsakSaksbehandlerSchema>;

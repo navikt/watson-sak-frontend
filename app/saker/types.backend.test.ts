@@ -164,11 +164,22 @@ describe("kontrollsakHendelseResponseSchema – historikkfelt", () => {
       status: "VENTER_PA_INFORMASJON",
       beskrivelse: "Venter på svar fra bruker",
     });
+
     expect(resultat.success).toBe(true);
     if (resultat.success) {
       expect(resultat.data.status).toBe("VENTER_PA_INFORMASJON");
       expect(resultat.data.beskrivelse).toBe("Venter på svar fra bruker");
     }
+  });
+
+  it("normaliserer historisk HENLAGT-steg til AVSLUTTET", () => {
+    const resultat = kontrollsakHendelseResponseSchema.safeParse({
+      ...basisHendelse,
+      steg: "HENLAGT",
+    });
+
+    expect(resultat.success).toBe(true);
+    expect(resultat.data?.steg).toBe("AVSLUTTET");
   });
 
   it("parser hendelse uten status og beskrivelse", () => {

@@ -90,6 +90,7 @@ export function normaliserLegacyKontrollsak(sak: LegacyKontrollsak): Kontrollsak
     I_BERO: "OPPRETTET",
     VENTER_PA_INFORMASJON: "UTREDES",
     VENTER_PA_VEDTAK: "UTREDES",
+    VENTER_PA_RESULTAT: "UTREDES",
     ANMELDELSE_VURDERES: "STRAFFERETTSLIG_VURDERING",
     ANMELDT: "POLITI",
     STRAFFERETTSLIG_VURDERING: "STRAFFERETTSLIG_VURDERING",
@@ -99,6 +100,7 @@ export function normaliserLegacyKontrollsak(sak: LegacyKontrollsak): Kontrollsak
     I_BERO: "I_BERO",
     VENTER_PA_INFORMASJON: "VENTER_PA_INFORMASJON",
     VENTER_PA_VEDTAK: "VENTER_PA_VEDTAK",
+    VENTER_PA_RESULTAT: "VENTER_PA_RESULTAT",
   };
 
   const kildeMap: Record<string, KontrollsakResponse["kilde"]> = {
