@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
+import { GavelIcon } from "@navikt/aksel-icons";
 import type { SakHendelse } from "./typer";
-import { hendelseBeskrivelse, hendelseTittel, lagForrigeHendelseKart } from "./historikk-utils";
+import {
+  HendelseBullet,
+  hendelseBeskrivelse,
+  hendelseTittel,
+  lagForrigeHendelseKart,
+} from "./historikk-utils";
 
 function lagHendelse(overrides: Partial<SakHendelse>): SakHendelse {
   return {
@@ -69,6 +75,19 @@ describe("hendelseBeskrivelse", () => {
     const hendelse = lagHendelse({ hendelsesType: "SAKSINFORMASJON_ENDRET" });
 
     expect(hendelseBeskrivelse(hendelse)).toBe("Steg: Utredes");
+  });
+});
+
+describe("HendelseBullet", () => {
+  it("viser gavelikon for historisk ANMELDT-statusendring", () => {
+    const ikon = HendelseBullet({
+      hendelse: lagHendelse({
+        hendelsesType: "SAK_STATUS_ENDRET",
+        steg: "ANMELDT",
+      }),
+    });
+
+    expect(ikon.type).toBe(GavelIcon);
   });
 });
 

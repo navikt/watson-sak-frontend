@@ -357,7 +357,9 @@ export function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
       return <ArrowUndoIcon {...iconProps} />;
     case "SAK_STATUS_ENDRET":
       if (hendelse.steg === "HENLAGT") return <XMarkOctagonIcon {...iconProps} />;
-      if (hendelse.steg === "POLITI") return <GavelIcon {...iconProps} />;
+      if (hendelse.steg === "POLITI" || hendelse.steg === "ANMELDT") {
+        return <GavelIcon {...iconProps} />;
+      }
       if (hendelse.status) return <ClockDashedIcon {...iconProps} />;
       return <ClockIcon {...iconProps} />;
     case "NOTAT_SENDT":
