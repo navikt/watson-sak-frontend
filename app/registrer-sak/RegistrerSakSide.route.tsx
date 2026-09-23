@@ -28,6 +28,7 @@ import { sporHendelse } from "~/analytics/analytics";
 import { FødselsnummerSøkefelt } from "~/formaterte-inputfelt/FormaterteInputfelt";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
+import { useMiljø } from "~/miljø/useMiljø";
 import { RouteConfig } from "~/routeConfig";
 import { opprettSakSchema } from "~/registrer-sak/validering";
 import { merkingEtikett } from "~/saker/kategorier";
@@ -40,6 +41,7 @@ import {
 import type { PersonOppslagResultat } from "./person-oppslag.mock.server";
 import { action, loader } from "./RegistrerSakSide.server";
 import type { YtelseRadVerdier } from "./skjema-helpers";
+import { erStøttetMiljøForTilfeldigSak, lagTilfeldigSak } from "./tilfeldig-sak";
 import { YtelseRadFelt } from "./YtelseRadFelt";
 
 export { action, loader };
@@ -77,6 +79,7 @@ function PersonkortIkon() {
 export default function OpprettSakSide() {
   const { fnr: forhåndsutfyltFnr } = useLoaderData<typeof loader>();
   const kodeverk = useKodeverk();
+  const miljø = useMiljø();
   const lastResult = useActionData<typeof action>();
   const submit = useSubmit();
   const navigation = useNavigation();
@@ -106,6 +109,8 @@ export default function OpprettSakSide() {
   });
 
   const [valgtKategori, setValgtKategori] = useState(fields.kategori.initialValue ?? "");
+  const [valgtKilde, setValgtKilde] = useState(fields.kilde.initialValue ?? "");
+  const [valgtEnhet, setValgtEnhet] = useState(fields.enhet.initialValue ?? "");
 
   const [valgteMisbruktyper, setValgteMisbruktyper] = useState<string[]>(
     (fields.misbruktype.initialValue as string[]) ?? [],
@@ -221,6 +226,20 @@ export default function OpprettSakSide() {
     setYtelseRader((rader) =>
       rader.length === 1 ? [nyYtelseRad()] : rader.filter((rad) => rad.id !== id),
     );
+  }
+
+  function fyllUtTilfeldigSak() {
+    const tilfeldigSak = lagTilfeldigSak(kodeverk);
+    if (!tilfeldigSak) return;
+
+    form.reset();
+    setValgtKategori(tilfeldigSak.kategori);
+    setValgtKilde(tilfeldigSak.kilde);
+    setValgtEnhet(tilfeldigSak.enhet);
+    setValgteMisbruktyper(tilfeldigSak.misbruktyper);
+    setValgteMerkinger(tilfeldigSak.merkinger);
+    setValgteArbeidsgivere([]);
+    setYtelseRader(tilfeldigSak.ytelser.map((ytelse) => nyYtelseRad(ytelse)));
   }
 
   function håndterBekreftOpprettelse() {
@@ -456,6 +475,14 @@ export default function OpprettSakSide() {
                     Grunnleggende saksinformasjon
                   </Heading>
 
+                  {erStøttetMiljøForTilfeldigSak(miljø) && (
+                    <HStack>
+                      <Button type="button" variant="secondary" onClick={fyllUtTilfeldigSak}>
+                        Fyll ut en tilfeldig sak
+                      </Button>
+                    </HStack>
+                  )}
+
                   {/* Rad 1 (påkrevd): Kategori, Misbruktype */}
                   <HStack gap="space-24" align="start" wrap>
                     <Select
@@ -465,7 +492,7 @@ export default function OpprettSakSide() {
                       label="Kategori"
                       error={fields.kategori.errors?.[0]}
                       className="w-52"
-                      defaultValue={fields.kategori.initialValue ?? ""}
+                      value={valgtKategori}
                       onChange={(e) => {
                         setValgtKategori(e.target.value);
                         const nyligeGyldige = kodeverk.misbrukstyper
@@ -525,7 +552,8 @@ export default function OpprettSakSide() {
                       label="Kilde"
                       error={fields.kilde.errors?.[0]}
                       className="w-52"
-                      defaultValue={fields.kilde.initialValue ?? ""}
+                      value={valgtKilde}
+                      onChange={(event) => setValgtKilde(event.target.value)}
                     >
                       <option value="">Velg kilde</option>
                       {kodeverk.kilder.map((k) => (
@@ -541,7 +569,8 @@ export default function OpprettSakSide() {
                       label="Enhet"
                       error={fields.enhet.errors?.[0]}
                       className="w-44"
-                      defaultValue={(fields.enhet.initialValue ?? "") as string}
+                      value={valgtEnhet}
+                      onChange={(event) => setValgtEnhet(event.target.value)}
                     >
                       <option value="">Velg enhet</option>
                       {kodeverk.enheter.map((e) => (
