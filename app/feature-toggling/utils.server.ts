@@ -1,6 +1,5 @@
 import { startUnleash, type Unleash } from "unleash-client";
 import { env } from "~/config/env.server";
-import { logger } from "~/logging/logging";
 import { FeatureFlagg } from "./featureflagg";
 
 let unleashPromise: Promise<Unleash> | undefined;
@@ -59,7 +58,6 @@ export async function hentAlleFeatureFlagg(
   navIdent: string,
 ): Promise<Record<FeatureFlagg, boolean>> {
   if (env.ENVIRONMENT.startsWith("local")) {
-    logger.info("Returnerer alle feature flaggene som påskrudd");
     // Lokale miljøer får alle feature-flagg påskrudd for enkel utvikling
     return Promise.resolve(
       Object.values(FeatureFlagg).reduce(
