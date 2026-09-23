@@ -156,6 +156,7 @@ function hentMisbrukstypeAlternativer(
 export default function SakDetaljSide() {
   const {
     sak: loaderSak,
+    tillatteHandlinger,
     historikk,
     dokumenter,
     filer,
@@ -689,7 +690,13 @@ export default function SakDetaljSide() {
               kanTildeleSak={kanTildeleSak}
             />
 
-            <SakHandlingerKnapper sak={sak} erEier={erEier} filer={filer} dokumenter={dokumenter} />
+            <SakHandlingerKnapper
+              sak={sak}
+              tillatteHandlinger={tillatteHandlinger}
+              erEier={erEier}
+              filer={filer}
+              dokumenter={dokumenter}
+            />
 
             {historikkTilstand === "vis" ? (
               <SakHistorikk

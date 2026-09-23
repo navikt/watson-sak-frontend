@@ -70,8 +70,9 @@ export function SaksbehandlereKort({
   const tildelMegFetcher = useFetcher();
   const fjernSaksbehandlerFetcher = useFetcher();
   const stegregler = hentStegbaserteSaksregler(sak.steg);
-  const kanEndreTilgang = stegregler.erAktiv && sak.status === null;
-  const kanEndreDeltTilgang = stegregler.kanEndreDeltTilgang && sak.status === null;
+  const erAktivStatus = sak.status === null || sak.status === "AKTIV";
+  const kanEndreTilgang = stegregler.erAktiv && erAktivStatus;
+  const kanEndreDeltTilgang = stegregler.kanEndreDeltTilgang && erAktivStatus;
   const ansvarligSaksbehandler = ansvarligFraProps ?? sak.saksbehandlere.eier;
   const sakPath = RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id));
   const enhetskode = getSaksenhet(sak);

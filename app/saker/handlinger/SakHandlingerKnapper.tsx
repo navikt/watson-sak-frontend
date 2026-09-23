@@ -1,12 +1,8 @@
-import { ArrowRightIcon, DocPencilIcon, PencilIcon, TasklistIcon } from "@navikt/aksel-icons";
+import { DocPencilIcon, PencilIcon, TasklistIcon } from "@navikt/aksel-icons";
 import { Button, Heading, VStack } from "@navikt/ds-react";
 import { useState } from "react";
-import { useFetcher } from "react-router";
-import { sporHendelse } from "~/analytics/analytics";
-import { RouteConfig } from "~/routeConfig";
-import { getSaksreferanse } from "~/saker/id";
 import type { DokumentNode, FilResponse } from "~/saker/filer/typer";
-import type { KontrollsakResponse } from "~/saker/types.backend";
+import type { KontrollsakResponse, TillatteHandlingerResponse } from "~/saker/types.backend";
 import { EndreStatusModal } from "./EndreStatusModal";
 import { OpprettJournalpostModal } from "./OpprettJournalpostModal";
 import { OpprettOppgaveModal } from "./OpprettOppgaveModal";
@@ -14,31 +10,23 @@ import { hentTilgjengeligeSakshandlinger, type Sakshandling } from "./tilgjengel
 
 interface SakHandlingerKnapperProps {
   sak: KontrollsakResponse;
+  tillatteHandlinger: TillatteHandlingerResponse;
   erEier: boolean;
   filer: FilResponse[];
   dokumenter: DokumentNode[];
 }
 
-type ModalHandling = Exclude<Sakshandling, "gjenoppta">;
+type ModalHandling = Extract<Sakshandling, "opprett-journalpost" | "opprett-oppgave">;
+type Tilstandshandling = TillatteHandlingerResponse["handlinger"][number]["type"];
 
 const handlingsvisning: Record<
-  Sakshandling,
+  ModalHandling,
   {
     label: string;
     variant: "primary" | "secondary" | "secondary-neutral";
     icon: React.ReactNode;
   }
 > = {
-  "endre-status": {
-    label: "Endre steg",
-    variant: "primary",
-    icon: <PencilIcon aria-hidden />,
-  },
-  gjenoppta: {
-    label: "Gjenoppta",
-    variant: "primary",
-    icon: <ArrowRightIcon aria-hidden />,
-  },
   "opprett-journalpost": {
     label: "Opprett journalpost",
     variant: "secondary-neutral",
@@ -51,41 +39,32 @@ const handlingsvisning: Record<
   },
 };
 
-const sekundærhandlinger: Sakshandling[] = ["opprett-journalpost", "opprett-oppgave"];
+const sekundærhandlinger: ModalHandling[] = ["opprett-journalpost", "opprett-oppgave"];
 
 export function SakHandlingerKnapper({
   sak,
+  tillatteHandlinger,
   erEier,
   filer,
   dokumenter,
 }: SakHandlingerKnapperProps) {
-  const gjenopptaFetcher = useFetcher();
   const [åpenModal, setÅpenModal] = useState<ModalHandling | null>(null);
-  const handlinger = hentTilgjengeligeSakshandlinger(sak);
+  const [åpenTilstandshandling, setÅpenTilstandshandling] = useState<Tilstandshandling | null>(
+    null,
+  );
+  const handlinger = hentTilgjengeligeSakshandlinger(sak).filter(
+    (handling): handling is ModalHandling =>
+      handling === "opprett-journalpost" || handling === "opprett-oppgave",
+  );
   const primærhandlinger = handlinger.filter((handling) => !sekundærhandlinger.includes(handling));
   const visSekundærhandlinger = handlinger.some((h) => sekundærhandlinger.includes(h));
+  const tilstandshandlinger = tillatteHandlinger.handlinger;
 
-  if (!erEier || handlinger.length === 0) {
+  if (!erEier || (handlinger.length === 0 && tilstandshandlinger.length === 0)) {
     return null;
   }
 
-  function handleGjenoppta() {
-    sporHendelse("sak gjenopptatt");
-    gjenopptaFetcher.submit(
-      { handling: "gjenoppta" },
-      {
-        method: "post",
-        action: RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id)),
-      },
-    );
-  }
-
-  function handleKlikk(handling: Sakshandling) {
-    if (handling === "gjenoppta") {
-      handleGjenoppta();
-      return;
-    }
-
+  function handleKlikk(handling: ModalHandling) {
     setÅpenModal(handling);
   }
 
@@ -95,6 +74,29 @@ export function SakHandlingerKnapper({
         <Heading level="2" size="small">
           Handlinger
         </Heading>
+
+        {tilstandshandlinger.map((handling) => {
+          const etiketter: Record<Tilstandshandling, string> = {
+            FLYTT_TIL_NESTE_STEG: "Flytt til neste steg",
+            ENDRE_STATUS: "Endre status",
+            REGISTRER_RESULTAT: "Registrer resultat",
+            HENLEGG: "Registrer henleggelse",
+            SETT_I_BERO: "Sett i bero",
+            TA_UT_AV_BERO: "Ta ut av bero",
+          };
+          return (
+            <Button
+              key={handling.type}
+              variant="primary"
+              size="medium"
+              icon={<PencilIcon aria-hidden />}
+              data-color={handling.type === "HENLEGG" ? "danger" : undefined}
+              onClick={() => setÅpenTilstandshandling(handling.type)}
+            >
+              {etiketter[handling.type]}
+            </Button>
+          );
+        })}
 
         {primærhandlinger.map((handling) => {
           const visning = handlingsvisning[handling];
@@ -106,7 +108,6 @@ export function SakHandlingerKnapper({
               size="medium"
               icon={visning.icon}
               onClick={() => handleKlikk(handling)}
-              loading={handling === "gjenoppta" && gjenopptaFetcher.state !== "idle"}
             >
               {visning.label}
             </Button>
@@ -138,10 +139,9 @@ export function SakHandlingerKnapper({
 
       <EndreStatusModal
         sakId={String(sak.id)}
-        nåværendeSteg={sak.steg}
-        nåværendeStatus={sak.status}
-        åpen={åpenModal === "endre-status"}
-        onClose={() => setÅpenModal(null)}
+        tillatteHandlinger={tillatteHandlinger}
+        handling={åpenTilstandshandling}
+        onClose={() => setÅpenTilstandshandling(null)}
       />
       <OpprettJournalpostModal
         sakId={String(sak.id)}

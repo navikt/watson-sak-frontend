@@ -1,203 +1,317 @@
-import { getFormProps, useForm, useInputControl } from "@conform-to/react";
-import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
-import {
-  CheckmarkCircleFillIcon,
-  ExclamationmarkTriangleIcon,
-  PencilIcon,
-} from "@navikt/aksel-icons";
+import { useEffect, useRef, useState } from "react";
 import {
   BodyShort,
   Button,
-  HGrid,
-  InfoCard,
+  Checkbox,
   Modal,
   Radio,
   RadioGroup,
+  Select,
+  Switch,
   Textarea,
+  TextField,
   VStack,
 } from "@navikt/ds-react";
-import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
-import { z } from "zod";
-import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
-import type { KontrollsakStatus, KontrollsakSteg } from "~/saker/types.backend";
+import type {
+  KontrollsakSteg,
+  KontrollsakStatus,
+  TillatteHandlingerResponse,
+} from "~/saker/types.backend";
 import { formaterStatus, formaterSteg } from "~/saker/visning";
+import {
+  resultatFeltErAktivt,
+  resultatFeltErPaakrevd,
+  byggLagreResultatRequest,
+  hentTvangsverdierForResultat,
+  støttedeResultatfelter,
+} from "./resultat-request";
+
+type Handlingstype = TillatteHandlingerResponse["handlinger"][number]["type"];
+type ModalFase = "skjema" | "bekreft" | "suksess";
 
 interface EndreStatusModalProps {
   sakId: string;
-  nåværendeSteg: KontrollsakSteg;
-  nåværendeStatus: KontrollsakStatus | null;
-  åpen: boolean;
+  tillatteHandlinger: TillatteHandlingerResponse;
+  handling: Handlingstype | null;
   onClose: () => void;
 }
 
-const valgbareSteg: KontrollsakSteg[] = [
-  "OPPRETTET",
-  "UTREDES",
-  "FORVALTNING",
-  "STRAFFERETTSLIG_VURDERING",
-  "POLITI",
-  "AVSLUTTET",
-];
+const handlingsetiketter: Record<Handlingstype, string> = {
+  FLYTT_TIL_NESTE_STEG: "Flytt til neste steg",
+  ENDRE_STATUS: "Endre status",
+  REGISTRER_RESULTAT: "Registrer resultat",
+  HENLEGG: "Registrer henleggelse",
+  SETT_I_BERO: "Sett i bero",
+  TA_UT_AV_BERO: "Ta ut av bero",
+};
 
-const endreStatusSkjema = z.object({
-  steg: z.string({ error: "Velg et steg" }).min(1, "Velg et steg"),
-  status: z.string({ error: "Velg status" }).min(1, "Velg status"),
-  beskrivelse: z.string().optional(),
-});
-
-const statusValg: Array<{ value: "AKTIV" | KontrollsakStatus; label: string }> = [
-  { value: "AKTIV", label: "Aktiv" },
-  { value: "VENTER_PA_VEDTAK", label: formaterStatus("VENTER_PA_VEDTAK") },
-  {
-    value: "VENTER_PA_INFORMASJON",
-    label: formaterStatus("VENTER_PA_INFORMASJON"),
-  },
-  { value: "VENTER_PA_RESULTAT", label: formaterStatus("VENTER_PA_RESULTAT") },
-  { value: "I_BERO", label: formaterStatus("I_BERO") },
-];
-
-function formaterValgtStatus(verdi: "AKTIV" | KontrollsakStatus): string {
-  return statusValg.find((valg) => valg.value === verdi)?.label ?? verdi;
+function formaterValgtStatus(status: KontrollsakStatus | null): string {
+  return status === null ? "Ingen status" : formaterStatus(status);
 }
 
-function SammendragRad({ label, verdi }: { label: string; verdi: React.ReactNode }) {
+function statusverdi(status: KontrollsakStatus | null): string {
+  return status ?? "";
+}
+
+function lesStatus(verdi: string): KontrollsakStatus | null {
+  return (verdi || null) as KontrollsakStatus | null;
+}
+
+function hentSkjemastatus(
+  tillatteHandlinger: TillatteHandlingerResponse,
+  valgtStatus: string,
+): string {
+  if (tillatteHandlinger.tillatteStatuser.some((status) => statusverdi(status) === valgtStatus)) {
+    return valgtStatus;
+  }
+  return statusverdi(tillatteHandlinger.tillatteStatuser[0] ?? null);
+}
+
+function hentHandlingensApiType(handling: Handlingstype): string {
+  switch (handling) {
+    case "FLYTT_TIL_NESTE_STEG":
+      return "endre_steg_dialog";
+    case "ENDRE_STATUS":
+      return "endre_status";
+    case "REGISTRER_RESULTAT":
+      return "registrer_resultat";
+    case "HENLEGG":
+      return "henlegg";
+    case "SETT_I_BERO":
+      return "sett_i_bero";
+    case "TA_UT_AV_BERO":
+      return "ta_ut_av_bero";
+  }
+}
+
+function ResultatFelt({
+  felt,
+  tillatteHandlinger,
+  verdier,
+  onChange,
+  tvungetVerdi,
+  belopPaakrevd = false,
+}: {
+  felt: TillatteHandlingerResponse["feltskjema"][number];
+  tillatteHandlinger: TillatteHandlingerResponse;
+  verdier: Record<string, string>;
+  onChange: (felt: string, verdi: string) => void;
+  tvungetVerdi?: string;
+  belopPaakrevd?: boolean;
+}) {
+  if (felt.datatype === "belop") {
+    const nøkkel = felt.felt.endsWith(".endeligBelop") ? "endeligBelop" : "belop";
+    return tillatteHandlinger.tilstand.ytelser.map((ytelse, indeks) => {
+      const navn = `ytelse.${ytelse.id}.${nøkkel}`;
+      const lagretVerdi =
+        ytelse[nøkkel] === null
+          ? ""
+          : new Intl.NumberFormat("nb-NO", { useGrouping: false, maximumFractionDigits: 2 }).format(
+              ytelse[nøkkel],
+            );
+      const verdi = verdier[navn] ?? lagretVerdi;
+      return (
+        <TextField
+          key={`${felt.felt}-${ytelse.id}`}
+          label={`${felt.etikett} ${indeks + 1} (${ytelse.type})`}
+          name={navn}
+          value={verdi}
+          onChange={(event) => onChange(navn, event.target.value)}
+          inputMode="decimal"
+          required={belopPaakrevd}
+          type="text"
+        />
+      );
+    });
+  }
+
+  const erTypefelt = felt.felt.endsWith(".type");
+  const tvunget = erTypefelt ? tvungetVerdi : undefined;
+  const verdi = tvunget ?? verdier[felt.felt] ?? (felt.datatype === "boolsk" ? "false" : "");
+  const erPaakrevd = resultatFeltErPaakrevd(felt, verdier);
+  const name = `resultat.${felt.felt}`;
+
+  if (felt.datatype === "enum") {
+    const alternativer =
+      erTypefelt && tvunget
+        ? felt.verdier.filter((valg) => valg.verdi === tvunget)
+        : erTypefelt
+          ? felt.verdier.filter((valg) =>
+              tillatteHandlinger.tillatteResultater.some((resultat) => resultat === valg.verdi),
+            )
+          : felt.verdier;
+    return (
+      <>
+        {tvunget && <input type="hidden" name={name} value={tvunget} />}
+        <Select
+          label={felt.etikett}
+          name={tvunget ? undefined : name}
+          value={verdi}
+          onChange={(event) => onChange(felt.felt, event.target.value)}
+          aria-required={erPaakrevd || undefined}
+          disabled={Boolean(tvunget)}
+        >
+          <option value="">Velg {felt.etikett.toLowerCase()}</option>
+          {alternativer.map((valg) => (
+            <option key={valg.verdi} value={valg.verdi}>
+              {valg.etikett}
+            </option>
+          ))}
+        </Select>
+      </>
+    );
+  }
+
+  if (felt.datatype === "boolsk") {
+    return (
+      <>
+        <input type="hidden" name={name} value={verdi} />
+        <Switch
+          checked={verdi === "true"}
+          onChange={(event) => onChange(felt.felt, String(event.target.checked))}
+        >
+          {felt.etikett}
+        </Switch>
+      </>
+    );
+  }
+
   return (
-    <>
-      <BodyShort size="small" textColor="subtle">
-        {label}
-      </BodyShort>
-      <BodyShort size="small">{verdi}</BodyShort>
-    </>
+    <TextField
+      label={felt.etikett}
+      name={name}
+      value={verdi}
+      onChange={(event) => onChange(felt.felt, event.target.value)}
+      aria-required={erPaakrevd || undefined}
+      type="text"
+    />
   );
 }
 
-type BekreftetResultat = {
-  steg: KontrollsakSteg;
-  stegEndret: boolean;
-  status: "AKTIV" | KontrollsakStatus;
-  statusEndret: boolean;
-};
-
-function byggSuksessmelding(sakId: string, resultat: BekreftetResultat | null): string {
-  const saksreferanse = getSaksreferanse(sakId);
-  if (!resultat) {
-    return `Saken #${saksreferanse} er oppdatert.`;
-  }
-
-  const { steg, stegEndret, status, statusEndret } = resultat;
-
-  if (stegEndret && statusEndret) {
-    return `Steget på sak #${saksreferanse} er satt til ${formaterSteg(steg)}, og statusen er satt til ${formaterValgtStatus(status).toLowerCase()}.`;
-  }
-  if (stegEndret) {
-    return `Steget på sak #${saksreferanse} er satt til ${formaterSteg(steg)}.`;
-  }
-  if (statusEndret) {
-    return `Statusen på sak #${saksreferanse} er satt til ${formaterValgtStatus(status).toLowerCase()}.`;
-  }
-  return `Saken #${saksreferanse} er oppdatert.`;
-}
-
-type ModalFase = "skjema" | "bekreft" | "suksess";
-
 export function EndreStatusModal({
   sakId,
-  nåværendeSteg,
-  nåværendeStatus,
-  åpen,
+  tillatteHandlinger,
+  handling,
   onClose,
 }: EndreStatusModalProps) {
   const fetcher = useFetcher();
   const erSubmitting = fetcher.state !== "idle";
   const submitPågår = useRef(false);
-  const forrigeÅpen = useRef(false);
+  const forrigeHandling = useRef<Handlingstype | null>(null);
   const [fase, setFase] = useState<ModalFase>("skjema");
   const [innsendingFormData, setInnsendingFormData] = useState<FormData | null>(null);
   const [feilmelding, setFeilmelding] = useState<string | null>(null);
-  const [bekreftetResultat, setBekreftetResultat] = useState<BekreftetResultat | null>(null);
+  const [valgtSteg, setValgtSteg] = useState<KontrollsakSteg | "">("");
+  const [valgtStatus, setValgtStatus] = useState("");
+  const [registrerResultat, setRegistrerResultat] = useState(false);
+  const [resultatverdier, setResultatverdier] = useState<Record<string, string>>({});
+  const erÅpen = handling !== null;
+  const feltskjema = støttedeResultatfelter(tillatteHandlinger.feltskjema);
+  const henleggType =
+    handling === "HENLEGG"
+      ? (tillatteHandlinger.handlinger.find((valg) => valg.type === "HENLEGG")?.resultatType ??
+        "HENLAGT")
+      : undefined;
+  const tvungneResultatverdier = henleggType
+    ? hentTvangsverdierForResultat(feltskjema, henleggType)
+    : {};
 
-  const [form, fields] = useForm({
-    id: "endre-status",
-    lastResult: fetcher.state === "idle" ? fetcher.data : null,
-    constraint: getZodConstraint(endreStatusSkjema),
-    onValidate({ formData }) {
-      return parseWithZod(formData, { schema: endreStatusSkjema });
-    },
-    shouldValidate: "onBlur",
-    shouldRevalidate: "onInput",
-    onSubmit(event, { formData }) {
-      event.preventDefault();
-      formData.set("handling", "endre_steg_dialog");
-      const nyttSteg = formData.get("steg") as string;
-      const status = formData.get("status") as string;
-      if (nyttSteg !== "AVSLUTTET") {
-        formData.set("status", status);
-      }
-      const beskrivelse = (formData.get("beskrivelse") as string | null) ?? "";
-      formData.set("beskrivelse", beskrivelse.trim());
-      sporHendelse("endre status bekreftelse vist", {
-        fraSteg: nåværendeSteg,
-        tilSteg: nyttSteg,
-      });
+  useEffect(() => {
+    if (handling && handling !== forrigeHandling.current) {
+      setFase("skjema");
+      setInnsendingFormData(null);
       setFeilmelding(null);
-      setInnsendingFormData(formData);
-      setFase("bekreft");
-    },
-  });
+      setValgtSteg("");
+      setValgtStatus(statusverdi(tillatteHandlinger.tilstand.status));
+      setRegistrerResultat(false);
+      setResultatverdier(tvungneResultatverdier);
+    }
+    forrigeHandling.current = handling;
+  }, [handling, tillatteHandlinger.tilstand.status, feltskjema, henleggType]);
 
-  const stegControl = useInputControl(fields.steg);
-  const statusControl = useInputControl(fields.status);
-  const beskrivelseControl = useInputControl(fields.beskrivelse);
-  const valgtSteg = (stegControl.value as KontrollsakSteg | undefined) ?? nåværendeSteg;
-  const valgtStatus =
-    (statusControl.value as "AKTIV" | KontrollsakStatus | undefined) ?? nåværendeStatus ?? "AKTIV";
-  const erAvsluttet = valgtSteg === "AVSLUTTET";
-
-  const gammelStegLabel = formaterSteg(nåværendeSteg);
-  const nyttStegLabel = formaterSteg(valgtSteg);
-  const stegEndret = valgtSteg !== nåværendeSteg;
-
-  const gammelStatus = nåværendeStatus ?? "AKTIV";
-  const statusEndret = !erAvsluttet && valgtStatus !== gammelStatus;
-
-  const beskrivelseVerdi = (beskrivelseControl.value ?? "").trim();
+  const valgtHandlingLabel = handling ? handlingsetiketter[handling] : "";
+  const erStegskjema = handling === "FLYTT_TIL_NESTE_STEG";
+  const paakrevdeFelterForOvergang = valgtSteg
+    ? (tillatteHandlinger.paakrevdeRegistreringerPerSteg[valgtSteg] ?? [])
+    : [];
+  const overgangKreverBelop = paakrevdeFelterForOvergang.some((felt) =>
+    felt.startsWith("ytelser[]."),
+  );
+  const harResultatfelt = feltskjema.length > 0;
+  const visResultatfelt =
+    handling === "REGISTRER_RESULTAT" ||
+    handling === "HENLEGG" ||
+    (erStegskjema && (registrerResultat || overgangKreverBelop));
+  const visResultatfeltForSteg = registrerResultat;
 
   function nullstill() {
-    form.reset();
     setFase("skjema");
     setInnsendingFormData(null);
     setFeilmelding(null);
+    setResultatverdier({});
+    setRegistrerResultat(false);
   }
 
   function handleDismiss() {
     if (erSubmitting) return;
-    if (fase !== "suksess") {
-      sporHendelse("endre status dialog avbrutt");
-    }
     nullstill();
     onClose();
   }
 
-  function handleAvbrytBekreftelse() {
-    sporHendelse("endre status avbrutt i bekreftelse");
-    setFase("skjema");
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!handling) return;
+    const formData = new FormData(event.currentTarget);
+    formData.set("handling", hentHandlingensApiType(handling));
+    if (erStegskjema) {
+      if (!valgtSteg) {
+        setFeilmelding("Velg et steg.");
+        return;
+      }
+      formData.set("steg", valgtSteg);
+      formData.set("registrerResultat", String(registrerResultat));
+    }
+    if (handling === "ENDRE_STATUS") {
+      formData.set("status", valgtStatus);
+    } else if (handling === "SETT_I_BERO") {
+      formData.set("status", "I_BERO");
+    } else if (handling === "TA_UT_AV_BERO") {
+      formData.set("status", statusverdi(tillatteHandlinger.tilstand.statusFørBero));
+    }
+    if (handling === "REGISTRER_RESULTAT" || handling === "HENLEGG" || erStegskjema) {
+      try {
+        const resultat = byggLagreResultatRequest(
+          formData,
+          tillatteHandlinger.feltskjema,
+          tillatteHandlinger.tilstand.steg,
+          henleggType,
+          tillatteHandlinger.tilstand.ytelser,
+          !erStegskjema || registrerResultat,
+        );
+        if (
+          !resultat &&
+          (handling === "REGISTRER_RESULTAT" ||
+            handling === "HENLEGG" ||
+            (erStegskjema && registrerResultat))
+        ) {
+          setFeilmelding("Velg et resultat før du fortsetter.");
+          return;
+        }
+      } catch (feil) {
+        setFeilmelding(feil instanceof Error ? feil.message : "Kontroller resultatfeltene.");
+        return;
+      }
+    }
+    setFeilmelding(null);
+    setInnsendingFormData(formData);
+    setFase("bekreft");
   }
 
   function handleBekreft() {
     if (!innsendingFormData) return;
-    sporHendelse("endre status lagre klikket", {
-      fraSteg: nåværendeSteg,
-      tilSteg: valgtSteg,
-    });
-    setBekreftetResultat({
-      steg: valgtSteg,
-      stegEndret,
-      status: valgtStatus,
-      statusEndret,
-    });
     submitPågår.current = true;
     fetcher.submit(innsendingFormData, {
       method: "post",
@@ -206,198 +320,161 @@ export function EndreStatusModal({
   }
 
   useEffect(() => {
-    if (åpen && !forrigeÅpen.current) {
-      sporHendelse("endre status dialog åpnet");
-      stegControl.change(nåværendeSteg);
-      statusControl.change(nåværendeStatus ?? "AKTIV");
-      beskrivelseControl.change("");
-      setFase("skjema");
-      setInnsendingFormData(null);
-      setFeilmelding(null);
-      setBekreftetResultat(null);
-    }
-    forrigeÅpen.current = åpen;
-    // stegControl/statusControl/beskrivelseControl er bevisst utelatt: useInputControl
-    // returnerer nye objektreferanser ved hver render, så å inkludere dem ville trigget
-    // effekten på nytt hele tiden. Vi trenger kun de nyeste `.change`-funksjonene når
-    // modalen faktisk åpnes (styrt av åpen/forrigeÅpen.current), ikke ved hver render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [åpen, nåværendeStatus, nåværendeSteg]);
-
-  useEffect(() => {
-    if (!submitPågår.current || fetcher.state !== "idle") {
-      return;
-    }
-
+    if (!submitPågår.current || fetcher.state !== "idle") return;
     if (fetcher.data && "ok" in fetcher.data && fetcher.data.ok) {
-      sporHendelse("endre status lagret");
       setFeilmelding(null);
       setFase("suksess");
     } else {
-      sporHendelse("endre status lagring feilet");
-      setFeilmelding("Kunne ikke endre status. Prøv igjen.");
+      setFeilmelding("Kunne ikke lagre endringen. Prøv igjen.");
       setFase("bekreft");
     }
     submitPågår.current = false;
   }, [fetcher.data, fetcher.state]);
 
+  const aktiveResultatfelter = feltskjema.filter((felt) => {
+    if (erStegskjema && !visResultatfeltForSteg && felt.datatype !== "belop") return false;
+    return resultatFeltErAktivt(felt, { ...resultatverdier, ...tvungneResultatverdier });
+  });
+
+  const valgStatus = hentSkjemastatus(tillatteHandlinger, valgtStatus);
+
   return (
     <Modal
-      open={åpen}
+      open={erÅpen}
       onClose={handleDismiss}
-      header={
-        fase === "suksess" ? undefined : { heading: "Endre steg", icon: <PencilIcon aria-hidden /> }
-      }
-      aria-label={fase === "suksess" ? "Lagret" : "Endre steg"}
-      width={fase === "skjema" ? "medium" : "small"}
+      header={fase === "suksess" ? undefined : { heading: valgtHandlingLabel }}
+      aria-label={fase === "suksess" ? "Lagret" : valgtHandlingLabel}
+      width="medium"
     >
       {fase === "suksess" && <Modal.Header />}
-      <fetcher.Form method="post" {...getFormProps(form)}>
+      <fetcher.Form method="post" onSubmit={handleSubmit}>
         <Modal.Body>
           {fase === "skjema" && (
-            <VStack gap="space-4">
-              <VStack gap="space-8">
-                <input
-                  key={fields.steg.key}
-                  name={fields.steg.name}
-                  value={valgtSteg}
-                  readOnly
-                  hidden
-                  tabIndex={-1}
-                  onFocus={() => stegControl.focus()}
-                />
+            <VStack gap="space-16">
+              <input type="hidden" name="versjon" value={tillatteHandlinger.versjon} />
+              {erStegskjema && (
                 <RadioGroup
-                  legend="Steg"
+                  legend="Tillatte steg"
+                  name="steg"
                   value={valgtSteg}
-                  onChange={(value) => {
-                    stegControl.change(value);
-                    sporHendelse("endre status saksstatus valgt", { steg: value });
-                  }}
-                  onBlur={stegControl.blur}
-                  error={fields.steg.errors?.[0]}
+                  onChange={(verdi) => setValgtSteg(verdi as KontrollsakSteg)}
                 >
-                  {valgbareSteg.map((s) => (
-                    <Radio key={s} value={s}>
-                      {formaterSteg(s)}
+                  {tillatteHandlinger.tillatteSteg.map((steg) => (
+                    <Radio key={steg} value={steg}>
+                      {formaterSteg(steg)}
                     </Radio>
                   ))}
                 </RadioGroup>
-                <hr className="border-ax-border-neutral-subtle" />
-                <input
-                  key={fields.status.key}
-                  name={fields.status.name}
-                  value={valgtStatus}
-                  readOnly
-                  hidden
-                  tabIndex={-1}
-                  onFocus={() => statusControl.focus()}
-                />
-                {!erAvsluttet ? (
-                  <>
-                    <RadioGroup
-                      legend="Status"
-                      value={valgtStatus}
-                      onChange={(value) => {
-                        statusControl.change(value);
-                        sporHendelse("endre status arbeidsstatus valgt", { status: value });
+              )}
+
+              {handling === "ENDRE_STATUS" && (
+                <Select
+                  label="Status"
+                  value={valgStatus}
+                  onChange={(event) => setValgtStatus(event.target.value)}
+                >
+                  {tillatteHandlinger.tillatteStatuser.map((status, indeks) => (
+                    <option key={`${status ?? "null"}-${indeks}`} value={statusverdi(status)}>
+                      {status === null
+                        ? tillatteHandlinger.tilstand.status === "I_BERO"
+                          ? "Gjenoppta"
+                          : "Ingen status"
+                        : formaterValgtStatus(status)}
+                    </option>
+                  ))}
+                </Select>
+              )}
+
+              {erStegskjema && harResultatfelt && (
+                <Checkbox
+                  checked={registrerResultat}
+                  onChange={(event) => setRegistrerResultat(event.target.checked)}
+                >
+                  Registrer resultat fra gjeldende steg
+                </Checkbox>
+              )}
+
+              {visResultatfelt && (
+                <VStack gap="space-12">
+                  {aktiveResultatfelter.map((felt) => (
+                    <ResultatFelt
+                      key={felt.felt}
+                      felt={felt}
+                      tillatteHandlinger={tillatteHandlinger}
+                      verdier={{
+                        ...resultatverdier,
+                        ...tvungneResultatverdier,
                       }}
-                      onBlur={statusControl.blur}
-                      error={fields.status.errors?.[0]}
-                    >
-                      {statusValg.map((valg) => (
-                        <Radio key={valg.value} value={valg.value}>
-                          {valg.label}
-                        </Radio>
-                      ))}
-                    </RadioGroup>
-                    <hr className="border-ax-border-neutral-subtle" />
-                  </>
-                ) : null}
-              </VStack>
-              <Textarea
-                key={fields.beskrivelse.key}
-                name={fields.beskrivelse.name}
-                id={fields.beskrivelse.id}
-                value={beskrivelseControl.value ?? ""}
-                onChange={(event) => beskrivelseControl.change(event.target.value)}
-                onBlur={beskrivelseControl.blur}
-                label="Beskrivelse (valgfritt)"
-                minRows={2}
-                maxRows={5}
-                error={fields.beskrivelse.errors?.[0]}
-              />
+                      onChange={(navn, verdi) =>
+                        setResultatverdier((forrige) => ({ ...forrige, [navn]: verdi }))
+                      }
+                      tvungetVerdi={tvungneResultatverdier[felt.felt]}
+                      belopPaakrevd={
+                        overgangKreverBelop && paakrevdeFelterForOvergang.includes(felt.felt)
+                      }
+                    />
+                  ))}
+                </VStack>
+              )}
+
+              {handling === "TA_UT_AV_BERO" && (
+                <p>
+                  Når du gjenopptar saken, blir statusen{" "}
+                  {tillatteHandlinger.tilstand.statusFørBero
+                    ? formaterStatus(tillatteHandlinger.tilstand.statusFørBero)
+                    : "Ingen status"}
+                  .
+                </p>
+              )}
+
+              {(erStegskjema || handling === "ENDRE_STATUS") && (
+                <Textarea
+                  name="beskrivelse"
+                  label="Beskrivelse (valgfritt)"
+                  minRows={2}
+                  maxRows={5}
+                />
+              )}
+
+              {feilmelding && <p role="alert">{feilmelding}</p>}
             </VStack>
           )}
 
           {fase === "bekreft" && (
-            <VStack gap="space-16">
-              <BodyShort>Du endrer nå steg og status på saken:</BodyShort>
-              <div className="rounded-md bg-ax-bg-neutral-soft px-5 py-4">
-                <HGrid columns="auto 1fr" gap="space-4 space-16">
-                  <SammendragRad
-                    label="Steg"
-                    verdi={
-                      stegEndret
-                        ? `Fra «${gammelStegLabel}» til «${nyttStegLabel}»`
-                        : `«${nyttStegLabel}» (uendret)`
-                    }
-                  />
-                  {statusEndret && (
-                    <SammendragRad
-                      label="Status"
-                      verdi={`Fra «${formaterValgtStatus(gammelStatus)}» til «${formaterValgtStatus(valgtStatus)}»`}
-                    />
-                  )}
-                  {beskrivelseVerdi && (
-                    <SammendragRad label="Beskrivelse" verdi={beskrivelseVerdi} />
-                  )}
-                </HGrid>
-              </div>
-              {erAvsluttet && (
-                <InfoCard size="small" data-color="warning">
-                  <InfoCard.Message icon={<ExclamationmarkTriangleIcon aria-hidden />}>
-                    Avsluttet er en endelig status – du kan ikke endre tilbake
-                  </InfoCard.Message>
-                </InfoCard>
-              )}
-              {feilmelding && (
-                <InfoCard size="small" data-color="danger">
-                  <InfoCard.Message icon={<ExclamationmarkTriangleIcon aria-hidden />}>
-                    {feilmelding}
-                  </InfoCard.Message>
-                </InfoCard>
-              )}
+            <VStack gap="space-8">
+              <p>
+                {erStegskjema && valgtSteg
+                  ? `Saken flyttes til ${formaterSteg(valgtSteg)}.`
+                  : handling === "ENDRE_STATUS"
+                    ? `Statusen endres til ${formaterValgtStatus(lesStatus(valgtStatus))}.`
+                    : handling === "SETT_I_BERO"
+                      ? "Saken settes i bero."
+                      : handling === "TA_UT_AV_BERO"
+                        ? "Saken tas ut av bero."
+                        : handling === "HENLEGG"
+                          ? "Henleggelsesresultatet lagres i gjeldende steg. Flytt saken til Avsluttet etterpå."
+                          : "Resultatet registreres for gjeldende steg."}
+              </p>
+              {feilmelding && <p role="alert">{feilmelding}</p>}
             </VStack>
           )}
 
           {fase === "suksess" && (
-            <VStack gap="space-16" align="center" className="py-6 text-center">
-              <CheckmarkCircleFillIcon
-                aria-hidden
-                fontSize="3rem"
-                className="text-ax-bg-success-strong"
-              />
-              <VStack gap="space-4" align="center">
-                <BodyShort weight="semibold">Lagret</BodyShort>
-                <BodyShort textColor="subtle">
-                  {byggSuksessmelding(sakId, bekreftetResultat)}
-                </BodyShort>
-              </VStack>
+            <VStack gap="space-8" align="center" className="py-6 text-center">
+              <BodyShort weight="semibold">Lagret</BodyShort>
+              <BodyShort textColor="subtle">
+                Endringen på sak #{getSaksreferanse(sakId)} er lagret.
+              </BodyShort>
             </VStack>
           )}
         </Modal.Body>
         <Modal.Footer>
           {fase === "skjema" && (
             <>
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={erSubmitting}
-                loading={erSubmitting}
-              >
-                Lagre
+              <Button type="submit" variant="primary">
+                Fortsett
               </Button>
-              <Button variant="secondary" onClick={handleDismiss} disabled={erSubmitting}>
+              <Button type="button" variant="secondary" onClick={handleDismiss}>
                 Avbryt
               </Button>
             </>
@@ -409,17 +486,22 @@ export function EndreStatusModal({
                 variant="primary"
                 onClick={handleBekreft}
                 loading={erSubmitting}
-                disabled={erSubmitting}
+                disabled={erSubmitting || !innsendingFormData}
               >
-                Endre steg
+                {handling === "HENLEGG" ? "Lagre henleggelse" : "Bekreft"}
               </Button>
-              <Button variant="secondary" onClick={handleAvbrytBekreftelse} disabled={erSubmitting}>
-                Avbryt
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={erSubmitting}
+                onClick={() => setFase("skjema")}
+              >
+                Tilbake
               </Button>
             </>
           )}
           {fase === "suksess" && (
-            <Button variant="primary" onClick={handleDismiss}>
+            <Button type="button" variant="primary" onClick={handleDismiss}>
               Lukk
             </Button>
           )}

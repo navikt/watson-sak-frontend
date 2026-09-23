@@ -18,7 +18,7 @@ export function hentTilgjengeligeSakshandlinger(sak: KontrollsakResponse): Saksh
     return [];
   }
 
-  if (sak.status !== null) {
+  if (sak.status !== null && sak.status !== "AKTIV") {
     return regler.kanUtføreUtredningsarbeid
       ? ["gjenoppta", "opprett-journalpost", "opprett-oppgave"]
       : ["gjenoppta"];

@@ -13,6 +13,16 @@ const mockHentHendelser = vi.fn();
 const mockHentJournalposter = vi.fn();
 const mockHentSaksbehandlere = vi.fn();
 const mockHentFiler = vi.fn();
+const mockHentTillatteHandlinger = vi.fn().mockResolvedValue({
+  versjon: 1,
+  tilstand: { steg: "OPPRETTET", status: null, statusFørBero: null, resultat: null, ytelser: [] },
+  handlinger: [],
+  tillatteSteg: [],
+  tillatteStatuser: [],
+  tillatteResultater: [],
+  paakrevedeRegistreringer: [],
+  feltskjema: [],
+});
 const mockSøkKontrollsaker = vi.fn();
 
 class MockBackendFeilException extends Error {
@@ -51,6 +61,7 @@ vi.mock("~/saker/api.server", () => ({
   hentJournalposter: mockHentJournalposter,
   hentSaksbehandlere: mockHentSaksbehandlere,
   hentFiler: mockHentFiler,
+  hentTillatteHandlinger: mockHentTillatteHandlinger,
   søkKontrollsaker: mockSøkKontrollsaker,
 }));
 
@@ -65,6 +76,10 @@ function lagLoaderArgs(sakId = "1") {
 const grunnleggendeSak = {
   id: 1,
   personIdent: null,
+  steg: "OPPRETTET",
+  status: null,
+  resultat: null,
+  ytelser: [],
   dokumenter: [{ id: "doc-1", tittel: "Et dokument" }],
   saksbehandlere: {
     eier: { navIdent: "Z999999", navn: "Saks Behandlersen", enhet: "4812" },
@@ -76,6 +91,23 @@ const grunnleggendeSak = {
 describe("SakDetaljSide loader — backend-sti", () => {
   afterEach(() => {
     vi.clearAllMocks();
+    mockHentTillatteHandlinger.mockResolvedValue({
+      versjon: 1,
+      tilstand: {
+        steg: "OPPRETTET",
+        status: null,
+        statusFørBero: null,
+        resultat: null,
+        ytelser: [],
+      },
+      handlinger: [],
+      tillatteSteg: [],
+      tillatteStatuser: [],
+      tillatteResultater: [],
+      paakrevdeRegistreringer: [],
+      paakrevdeRegistreringerPerSteg: {},
+      feltskjema: [],
+    });
   });
 
   it("skjuler filområdet stille når hentFiler gir 403 (mangler fil-tilgang)", async () => {
@@ -107,6 +139,23 @@ describe("SakDetaljSide loader — backend-sti", () => {
 
     expect(resultat.harFilTilgang).toBe(true);
     expect(resultat.filer).toEqual(filer);
+  });
+
+  it("laster saken uten handlinger når tillatte handlinger gir 403", async () => {
+    mockHentKontrollsak.mockResolvedValue(grunnleggendeSak);
+    mockHentHendelser.mockResolvedValue([]);
+    mockHentJournalposter.mockResolvedValue([]);
+    mockHentSaksbehandlere.mockResolvedValue([]);
+    mockHentFiler.mockResolvedValue([]);
+    mockHentTillatteHandlinger.mockRejectedValue(
+      new MockBackendFeilException(403, "Ingen tilgang"),
+    );
+
+    const { loader } = await import("./SakDetaljSide.server");
+    const resultat = await loader(lagLoaderArgs());
+
+    expect(resultat.tillatteHandlinger.handlinger).toEqual([]);
+    expect(resultat.tillatteHandlinger.tillatteSteg).toEqual([]);
   });
 
   it("lar andre feil enn 403 fra hentFiler boble opp (kaster fortsatt loaderen)", async () => {

@@ -20,8 +20,11 @@ import {
   type KontrollsakPageResponse,
   type KontrollsakResponse,
   type KontrollsakSaksbehandler,
+  type LagreResultatRequest,
   type KontrollsakSteg,
   type KontrollsakStatus,
+  type TillatteHandlingerResponse,
+  tillatteHandlingerResponseSchema,
 } from "./types.backend";
 import { sakHendelseSchema } from "./historikk/typer";
 
@@ -205,6 +208,20 @@ export async function hentKontrollsak(token: string, sakId: string): Promise<Kon
   return parseEllerKastFeil(kontrollsakResponseSchema, await respons.json(), "hentKontrollsak");
 }
 
+export async function hentTillatteHandlinger(
+  token: string,
+  sakId: string,
+): Promise<TillatteHandlingerResponse> {
+  const sti = `/api/v1/kontrollsaker/${sakId}/tillatte-handlinger`;
+  const respons = await fetch(apiUrl(sti), { headers: authHeaders(token) });
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke hente tillatte handlinger");
+  return parseEllerKastFeil(
+    tillatteHandlingerResponseSchema,
+    await respons.json(),
+    "hentTillatteHandlinger",
+  );
+}
+
 /** Søker på internt saksnummer eller saksnummeret fra det gamle systemet. */
 export async function søkKontrollsakerPåSaksnummer(
   token: string,
@@ -303,16 +320,32 @@ export async function hentDokument(token: string, sakId: string, docId: string):
 export async function endreSteg(
   token: string,
   sakId: string,
+  versjon: number,
   steg: KontrollsakSteg,
+  resultat?: LagreResultatRequest,
   beskrivelse?: string,
 ): Promise<KontrollsakResponse> {
   const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/steg`), {
     method: "POST",
     headers: authHeaders(token),
-    body: JSON.stringify({ steg, beskrivelse }),
+    body: JSON.stringify({ versjon, steg, resultat, beskrivelse }),
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke endre steg");
   return parseEllerKastFeil(kontrollsakResponseSchema, await respons.json(), "endreSteg");
+}
+
+export async function lagreResultat(
+  token: string,
+  sakId: string,
+  resultat: LagreResultatRequest,
+): Promise<KontrollsakResponse> {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/resultat`), {
+    method: "PUT",
+    headers: authHeaders(token),
+    body: JSON.stringify(resultat),
+  });
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke lagre resultat");
+  return parseEllerKastFeil(kontrollsakResponseSchema, await respons.json(), "lagreResultat");
 }
 
 export async function endreStatus(

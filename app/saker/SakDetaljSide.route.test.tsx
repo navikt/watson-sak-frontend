@@ -3,7 +3,9 @@ import type { KontrollsakResponse } from "./types.backend";
 import { action } from "./SakDetaljSide.server";
 import { hentHistorikk } from "./historikk/mock-data.server";
 import { hentAlleSaker } from "./mock-alle-saker.server";
+import { hentMockTillatteHandlinger } from "./mock-tillatte-handlinger.server";
 import { resetDefaultSession } from "~/testing/mock-store/session.server";
+import { getSaksreferanse } from "./id";
 
 vi.mock("~/config/env.server", () => ({
   skalBrukeMockdata: true,
@@ -50,7 +52,7 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
 
   it("endre_steg oppdaterer sakens steg", async () => {
     const saker = hentAlleSaker(testRequest);
-    const sak = saker.find((s: KontrollsakResponse) => s.steg !== "AVSLUTTET" && s.status === null);
+    const sak = saker.find((s: KontrollsakResponse) => s.steg === "OPPRETTET");
     expect(sak).toBeDefined();
     if (!sak) return;
     settInnloggetSomEier(sak);
@@ -60,19 +62,20 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
 
     const resultat = await utforAction(sakId, {
       handling: "endre_steg",
-      steg: "POLITI",
+      steg: "UTREDNING",
     });
 
     expect(resultat).toEqual({ ok: true });
-    expect(sak.steg).toBe("POLITI");
+    expect(sak.steg).toBe("UTREDNING");
+    expect(sak.status).toBe("AKTIV");
 
     const historikk = hentHistorikk(testRequest, sak.id);
-    expect(historikk[0]?.hendelsesType).toBe("POLITIANMELDT");
+    expect(historikk[0]?.hendelsesType).toBe("STATUS_ENDRET");
   });
 
   it("endre_steg med beskrivelse lagrer hendelse med beskrivelse", async () => {
     const saker = hentAlleSaker(testRequest);
-    const sak = saker.find((s: KontrollsakResponse) => s.steg !== "AVSLUTTET" && s.status === null);
+    const sak = saker.find((s: KontrollsakResponse) => s.steg === "OPPRETTET");
     expect(sak).toBeDefined();
     if (!sak) return;
     settInnloggetSomEier(sak);
@@ -92,17 +95,23 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     expect(historikk[0]?.beskrivelse).toBe("Saken tas videre til utredning");
   });
 
-  it("endre_steg til AVSLUTTET nullstiller status", async () => {
+  it("henlegger saken før den flyttes til avsluttet", async () => {
     const saker = hentAlleSaker(testRequest);
     const sak = saker.find((s: KontrollsakResponse) => s.steg === "UTREDES");
     expect(sak).toBeDefined();
     if (!sak) return;
     settInnloggetSomEier(sak);
 
-    sak.status = "I_BERO";
-
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
+
+    await utforAction(sakId, {
+      handling: "henlegg",
+      "resultat.utredning.henleggelsesarsak": "IKKE_KAPASITET",
+    });
+
+    expect(sak.steg).toBe("UTREDES");
+    expect(sak.resultat?.utredning?.type).toBe("HENLAGT");
 
     await utforAction(sakId, {
       handling: "endre_steg",
@@ -111,15 +120,16 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
 
     expect(sak.status).toBeNull();
     expect(sak.steg).toBe("AVSLUTTET");
+    expect(sak.resultat?.utredning?.type).toBe("HENLAGT");
 
     const historikk = hentHistorikk(testRequest, sak.id);
     expect(historikk[0]?.hendelsesType).toBe("STATUS_ENDRET");
-    expect(historikk[0]?.status).toBe("I_BERO");
+    expect(historikk[0]?.status).toBeNull();
   });
 
   it("endre_status setter status på saken", async () => {
     const saker = hentAlleSaker(testRequest);
-    const sak = saker.find((s: KontrollsakResponse) => s.steg !== "AVSLUTTET" && s.status === null);
+    const sak = saker.find((s: KontrollsakResponse) => s.steg === "UTREDES" && s.status === null);
     expect(sak).toBeDefined();
     if (!sak) return;
     settInnloggetSomEier(sak);
@@ -142,7 +152,7 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
 
   it("endre_status med I_BERO logger bero-hendelse", async () => {
     const saker = hentAlleSaker(testRequest);
-    const sak = saker.find((s: KontrollsakResponse) => s.steg !== "AVSLUTTET" && s.status === null);
+    const sak = saker.find((s: KontrollsakResponse) => s.steg === "UTREDES" && s.status === null);
     expect(sak).toBeDefined();
     if (!sak) return;
     settInnloggetSomEier(sak);
@@ -151,8 +161,7 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     const sakId = getSaksreferanse(sak.id);
 
     const resultat = await utforAction(sakId, {
-      handling: "endre_status",
-      status: "I_BERO",
+      handling: "sett_i_bero",
     });
 
     expect(resultat).toEqual({ ok: true });
@@ -162,14 +171,72 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     expect(historikk[0]?.status).toBe("I_BERO");
   });
 
-  it("gjenoppta nullstiller status uten modaldata", async () => {
+  it("registrerer resultat fra feltene i mockskjemaet", async () => {
+    const sak = hentAlleSaker(testRequest).find(
+      (s: KontrollsakResponse) => s.steg === "UTREDES" && s.status !== "I_BERO",
+    );
+    expect(sak).toBeDefined();
+    if (!sak) return;
+    settInnloggetSomEier(sak);
+    const sakId = getSaksreferanse(sak.id);
+
+    await utforAction(sakId, {
+      handling: "registrer_resultat",
+      "resultat.utredning.type": "KONTROLLNOTAT",
+    });
+
+    expect(sak.resultat?.utredning?.type).toBe("KONTROLLNOTAT");
+  });
+
+  it("avviser resultatfelter som ikke finnes i mockskjemaet", async () => {
+    const sak = hentAlleSaker(testRequest).find((s: KontrollsakResponse) => s.steg === "UTREDES");
+    expect(sak).toBeDefined();
+    if (!sak) return;
+    settInnloggetSomEier(sak);
+    const sakId = getSaksreferanse(sak.id);
+
+    await expect(
+      utforAction(sakId, {
+        handling: "registrer_resultat",
+        "resultat.utredning.type": "KONTROLLNOTAT",
+        "resultat.admin.godkjent": "true",
+      }),
+    ).rejects.toMatchObject({ init: { status: 400 } });
+  });
+
+  it("henlegger saken med årsak fra mockskjemaet", async () => {
+    const sak = hentAlleSaker(testRequest).find(
+      (s: KontrollsakResponse) => s.steg === "UTREDES" && s.status !== "I_BERO",
+    );
+    expect(sak).toBeDefined();
+    if (!sak) return;
+    settInnloggetSomEier(sak);
+    const sakId = getSaksreferanse(sak.id);
+
+    await utforAction(sakId, {
+      handling: "henlegg",
+      "resultat.utredning.henleggelsesarsak": "IKKE_TILSTREKKELIG_SKYLD",
+    });
+
+    expect(sak.resultat?.utredning?.type).toBe("HENLAGT");
+    expect(sak.resultat?.utredning?.henleggelsesarsak).toBe("IKKE_TILSTREKKELIG_SKYLD");
+    expect(sak.steg).toBe("UTREDES");
+
+    await utforAction(sakId, {
+      handling: "endre_steg_dialog",
+      steg: "AVSLUTTET",
+    });
+    expect(sak.steg).toBe("AVSLUTTET");
+  });
+
+  it("gjenoppta gjenoppretter status før bero", async () => {
     const saker = hentAlleSaker(testRequest);
     const sak = saker.find((s: KontrollsakResponse) => s.steg === "UTREDES");
     expect(sak).toBeDefined();
     if (!sak) return;
     settInnloggetSomEier(sak);
 
-    sak.status = "VENTER_PA_VEDTAK";
+    sak.status = "I_BERO";
 
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
@@ -179,11 +246,11 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     });
 
     expect(resultat).toEqual({ ok: true });
-    expect(sak.status).toBeNull();
+    expect(sak.status).toBe("AKTIV");
 
     const historikk = hentHistorikk(testRequest, sak.id);
     expect(historikk[0]?.hendelsesType).toBe("SAK_GJENOPPTATT");
-    expect(historikk[0]?.status).toBe("VENTER_PA_VEDTAK");
+    expect(historikk[0]?.status).toBe("AKTIV");
   });
 
   it("endre_steg avviser ugyldig steg", async () => {
@@ -206,7 +273,7 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
 
   it("endre_steg avviser uendret steg", async () => {
     const saker = hentAlleSaker(testRequest);
-    const sak = saker.find((s: KontrollsakResponse) => s.steg === "UTREDES" && s.status === null);
+    const sak = saker.find((s: KontrollsakResponse) => s.steg === "OPPRETTET");
     expect(sak).toBeDefined();
     if (!sak) return;
     settInnloggetSomEier(sak);
@@ -222,9 +289,9 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     ).rejects.toBeDefined();
   });
 
-  it("endre_steg_dialog oppdaterer både steg og status", async () => {
+  it("endre_steg_dialog oppdaterer bare steget", async () => {
     const saker = hentAlleSaker(testRequest);
-    const sak = saker.find((s: KontrollsakResponse) => s.steg === "UTREDES" && s.status === null);
+    const sak = saker.find((s: KontrollsakResponse) => s.steg === "OPPRETTET");
     expect(sak).toBeDefined();
     if (!sak) return;
     settInnloggetSomEier(sak);
@@ -234,17 +301,16 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
 
     const resultat = await utforAction(sakId, {
       handling: "endre_steg_dialog",
-      steg: "POLITI",
-      status: "VENTER_PA_INFORMASJON",
+      steg: "UTREDNING",
       beskrivelse: "Oppdatert fra ny dialog",
     });
 
     expect(resultat).toEqual({ ok: true });
-    expect(sak.steg).toBe("POLITI");
-    expect(sak.status).toBe("VENTER_PA_INFORMASJON");
+    expect(sak.steg).toBe("UTREDNING");
+    expect(sak.status).toBe("AKTIV");
   });
 
-  it("endre_steg_dialog tillater no-op uten feil", async () => {
+  it("avviser et steg som ikke finnes i tillatte steg", async () => {
     const saker = hentAlleSaker(testRequest);
     const sak = saker.find((s: KontrollsakResponse) => s.steg === "UTREDES");
     expect(sak).toBeDefined();
@@ -255,15 +321,56 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
 
-    const resultat = await utforAction(sakId, {
-      handling: "endre_steg_dialog",
-      steg: "UTREDES",
-      status: "I_BERO",
-    });
-
-    expect(resultat).toEqual({ ok: true });
+    await expect(
+      utforAction(sakId, {
+        handling: "endre_steg_dialog",
+        steg: "UTREDES",
+        status: "I_BERO",
+      }),
+    ).rejects.toBeDefined();
     expect(sak.steg).toBe("UTREDES");
     expect(sak.status).toBe("I_BERO");
+  });
+
+  it("viser ikke stegbytte før utredningsresultatet er registrert", () => {
+    const sak = hentAlleSaker(testRequest).find((s: KontrollsakResponse) => s.steg === "UTREDES");
+    expect(sak).toBeDefined();
+    if (!sak) return;
+
+    const utenResultat: KontrollsakResponse = {
+      ...sak,
+      steg: "UTREDNING",
+      resultat: null,
+    };
+    const handlingerUtenResultat = hentMockTillatteHandlinger(utenResultat);
+    expect(handlingerUtenResultat.tillatteSteg).toEqual([]);
+    expect(handlingerUtenResultat.handlinger.map((handling) => handling.type)).not.toContain(
+      "FLYTT_TIL_NESTE_STEG",
+    );
+    expect(handlingerUtenResultat.handlinger.map((handling) => handling.type)).toContain(
+      "REGISTRER_RESULTAT",
+    );
+
+    const feilutbetaling: KontrollsakResponse = {
+      ...utenResultat,
+      resultat: {
+        utredning: {
+          type: "FEILUTBETALINGSSAK_ORDINAER",
+        },
+      },
+    };
+    expect(hentMockTillatteHandlinger(feilutbetaling).tillatteSteg).toEqual(["FORVALTNING"]);
+
+    const henlagt: KontrollsakResponse = {
+      ...utenResultat,
+      resultat: {
+        utredning: {
+          type: "HENLAGT",
+          henleggelsesarsak: "IKKE_KAPASITET",
+        },
+      },
+    };
+    expect(hentMockTillatteHandlinger(henlagt).tillatteSteg).toEqual(["AVSLUTTET"]);
   });
 
   it("endre_status avviser ugyldig verdi", async () => {
