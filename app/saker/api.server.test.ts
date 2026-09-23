@@ -218,6 +218,116 @@ describe("søkKontrollsakerOrganisasjon", () => {
   });
 });
 
+describe("tillatte handlinger og resultatkall", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  const tillatteHandlinger = {
+    versjon: 1,
+    tilstand: {
+      steg: "UTREDNING",
+      status: "AKTIV",
+      statusFørBero: null,
+      resultat: null,
+      ytelser: [],
+    },
+    handlinger: [
+      { type: "FLYTT_TIL_NESTE_STEG", metode: "POST", sti: "/api/v1/kontrollsaker/42/steg" },
+      { type: "REGISTRER_RESULTAT", metode: "PUT", sti: "/api/v1/kontrollsaker/42/resultat" },
+    ],
+    tillatteSteg: ["FORVALTNING"],
+    tillatteStatuser: ["AKTIV", "I_BERO"],
+    tillatteResultater: ["KONTROLLNOTAT"],
+    paakrevdeRegistreringer: ["utredning.type"],
+    paakrevdeRegistreringerPerSteg: { FORVALTNING: ["utredning.type", "ytelser[].belop"] },
+    feltskjema: [
+      {
+        felt: "utredning.type",
+        etikett: "Resultat fra utredningen",
+        datatype: "enum",
+        paakrevd: true,
+        verdier: [{ verdi: "KONTROLLNOTAT", etikett: "Kontrollnotat" }],
+      },
+    ],
+  };
+
+  const kontrollsak = {
+    id: 42,
+    kontrollobjekt: { personIdent: "12345678901", navn: "Ola Nordmann" },
+    saksbehandlere: {
+      ansvarlig: null,
+      deltMed: [],
+      opprettetAv: { navIdent: "Z123456", navn: "Ola Saksbehandler", enhet: null },
+    },
+    steg: "UTREDNING",
+    status: "AKTIV",
+    kategori: "ARBEID",
+    kilde: "NAV_KONTROLL",
+    misbruktype: [],
+    prioritet: "NORMAL",
+    ytelser: [],
+    merking: [],
+    oppgaver: [],
+    kobledeSaker: [],
+    opprettet: "2026-01-01T00:00:00Z",
+    oppdatert: null,
+  };
+
+  it("henter og validerer tillatte handlinger fra GET-endepunktet", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => tillatteHandlinger,
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { hentTillatteHandlinger } = await import("./api.server");
+    const resultat = await hentTillatteHandlinger("token-123", "42");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://backend.test/api/v1/kontrollsaker/42/tillatte-handlinger",
+      expect.objectContaining({ headers: expect.any(Object) }),
+    );
+    expect(resultat.handlinger[0]?.type).toBe("FLYTT_TIL_NESTE_STEG");
+    expect(resultat.feltskjema[0]?.verdier[0]?.etikett).toBe("Kontrollnotat");
+  });
+
+  it("sender versjonert stegrequest med valgfritt resultat og bruker POST", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => kontrollsak,
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { endreSteg } = await import("./api.server");
+    await endreSteg("token-123", "42", 1, "FORVALTNING", {
+      versjon: 1,
+      steg: "UTREDNING",
+      utredning: { type: "KONTROLLNOTAT" },
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://backend.test/api/v1/kontrollsaker/42/steg",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          versjon: 1,
+          steg: "FORVALTNING",
+          resultat: {
+            versjon: 1,
+            steg: "UTREDNING",
+            utredning: { type: "KONTROLLNOTAT" },
+          },
+          beskrivelse: undefined,
+        }),
+      }),
+    );
+  });
+});
+
 describe("opprettJournalpost", () => {
   afterEach(() => {
     vi.restoreAllMocks();

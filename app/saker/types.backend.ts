@@ -2,6 +2,8 @@ import { z } from "zod";
 
 const kontrollsakStegSchema = z.enum([
   "OPPRETTET",
+  "UTREDNING",
+  // Eldre mock- og historikkdata bruker fortsatt disse verdiene.
   "UTREDES",
   "FORVALTNING",
   "STRAFFERETTSLIG_VURDERING",
@@ -11,6 +13,7 @@ const kontrollsakStegSchema = z.enum([
 ]);
 
 export const kontrollsakStatusSchema = z.enum([
+  "AKTIV",
   "VENTER_PA_INFORMASJON",
   "VENTER_PA_VEDTAK",
   "VENTER_PA_RESULTAT",
@@ -21,6 +24,185 @@ const kontrollsakKategoriSchema = z.string();
 const kontrollsakKildeSchema = z.string();
 const kontrollsakMisbrukstypeSchema = z.string();
 const kontrollsakPrioritetSchema = z.enum(["LAV", "NORMAL", "HOY"]);
+
+const resultatTypeSchema = z.enum([
+  "KONTROLLNOTAT",
+  "FEILUTBETALINGSSAK_ORDINAER",
+  "FEILUTBETALINGSSAK_POTENSIELL_STRAFFESAK",
+  "HENLAGT",
+  "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE",
+  "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+  "ANMELDT",
+  "FORELEGG",
+  "BOT",
+  "PATALEUNNLATELSE",
+  "FRIFINNELSE",
+  "DOMFELLELSE",
+]);
+export type ResultatType = z.infer<typeof resultatTypeSchema>;
+
+const henleggelsesarsakSchema = z.string();
+
+const endeligUtfallResponseSchema = z.object({
+  type: z.string(),
+  henleggelsesarsak: z.string().nullable().optional(),
+});
+
+const resultatResponseSchema = z.object({
+  utredning: z
+    .object({
+      type: z.string(),
+      belop: z.number().nullable().optional(),
+      henleggelsesarsak: z.string().nullable().optional(),
+    })
+    .nullable()
+    .optional(),
+  forvaltning: z
+    .object({
+      type: z.string(),
+      endeligUtfall: endeligUtfallResponseSchema.nullable().optional(),
+    })
+    .nullable()
+    .optional(),
+  strafferettsligVurdering: z
+    .object({
+      type: z.string(),
+      henleggelsesarsak: z.string().nullable().optional(),
+    })
+    .nullable()
+    .optional(),
+  politi: z
+    .object({
+      type: z.string(),
+      begrunnelse: z.string().nullable().optional(),
+      detaljer: z.string().nullable().optional(),
+      domstype: z.string().nullable().optional(),
+      varighet: z.string().nullable().optional(),
+      redusertForEmkArtikkel6: z.boolean().nullable().optional(),
+      redusertForLangSaksbehandling: z.boolean().nullable().optional(),
+    })
+    .nullable()
+    .optional(),
+  endeligUtfall: endeligUtfallResponseSchema.nullable().optional(),
+});
+
+const lagreResultatRequestSchema = z.object({
+  versjon: z.literal(1),
+  steg: kontrollsakStegSchema,
+  utredning: z
+    .object({
+      type: z.enum([
+        "KONTROLLNOTAT",
+        "FEILUTBETALINGSSAK_ORDINAER",
+        "FEILUTBETALINGSSAK_POTENSIELL_STRAFFESAK",
+        "HENLAGT",
+      ]),
+      henleggelsesarsak: henleggelsesarsakSchema.optional(),
+    })
+    .optional(),
+  forvaltning: z
+    .object({
+      type: z.enum([
+        "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE",
+        "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+      ]),
+      endeligUtfall: z
+        .object({
+          type: z.enum(["FEILUTBETALINGSSAK_ORDINAER", "KONTROLLNOTAT", "HENLAGT"]),
+          henleggelsesarsak: henleggelsesarsakSchema.optional(),
+        })
+        .optional(),
+    })
+    .optional(),
+  strafferettsligVurdering: z
+    .object({
+      type: z.enum(["ANMELDT", "KONTROLLNOTAT", "FEILUTBETALINGSSAK_ORDINAER", "HENLAGT"]),
+      henleggelsesarsak: henleggelsesarsakSchema.optional(),
+    })
+    .optional(),
+  politi: z
+    .object({
+      type: z.enum([
+        "HENLAGT",
+        "FORELEGG",
+        "BOT",
+        "PATALEUNNLATELSE",
+        "FRIFINNELSE",
+        "DOMFELLELSE",
+      ]),
+      begrunnelse: z.string().optional(),
+      detaljer: z.string().optional(),
+      domstype: z.string().optional(),
+      varighet: z.string().optional(),
+      redusertForEmkArtikkel6: z.boolean().optional(),
+      redusertForLangSaksbehandling: z.boolean().optional(),
+    })
+    .optional(),
+  ytelser: z
+    .array(
+      z.object({
+        id: z.string().uuid(),
+        belop: z.number().nonnegative().optional(),
+        endeligBelop: z.number().nonnegative().optional(),
+      }),
+    )
+    .optional(),
+});
+
+export type LagreResultatRequest = z.infer<typeof lagreResultatRequestSchema>;
+
+export const tillatteHandlingerResponseSchema = z.object({
+  versjon: z.number(),
+  tilstand: z.object({
+    steg: kontrollsakStegSchema,
+    status: kontrollsakStatusSchema.nullable(),
+    statusFørBero: kontrollsakStatusSchema.nullable(),
+    resultat: resultatResponseSchema.nullable(),
+    ytelser: z.array(
+      z.object({
+        id: z.string().uuid(),
+        type: z.string(),
+        periodeFra: z.string().nullable(),
+        periodeTil: z.string().nullable(),
+        belop: z.number().nullable(),
+        endeligBelop: z.number().nullable(),
+      }),
+    ),
+  }),
+  handlinger: z.array(
+    z.object({
+      type: z.enum([
+        "FLYTT_TIL_NESTE_STEG",
+        "ENDRE_STATUS",
+        "REGISTRER_RESULTAT",
+        "HENLEGG",
+        "SETT_I_BERO",
+        "TA_UT_AV_BERO",
+      ]),
+      metode: z.enum(["POST", "PUT"]),
+      sti: z.string(),
+      resultatType: resultatTypeSchema.nullable().optional(),
+    }),
+  ),
+  tillatteSteg: z.array(kontrollsakStegSchema),
+  muligeNesteSteg: z.array(kontrollsakStegSchema).optional(),
+  tillatteStatuser: z.array(kontrollsakStatusSchema.nullable()),
+  tillatteResultater: z.array(resultatTypeSchema),
+  paakrevdeRegistreringer: z.array(z.string()),
+  paakrevdeRegistreringerPerSteg: z.record(z.string(), z.array(z.string())),
+  feltskjema: z.array(
+    z.object({
+      felt: z.string(),
+      etikett: z.string(),
+      datatype: z.enum(["enum", "tekst", "boolsk", "belop"]),
+      paakrevd: z.boolean(),
+      paakrevdNar: z.string().nullable().optional(),
+      verdier: z.array(z.object({ verdi: z.string(), etikett: z.string() })).default([]),
+    }),
+  ),
+});
+
+export type TillatteHandlingerResponse = z.infer<typeof tillatteHandlingerResponseSchema>;
 
 const saksbehandlerSchema = z.object({
   navIdent: z.string(),
@@ -41,6 +223,7 @@ const saksbehandlereSchema = z
   }));
 
 const kontrollsakYtelseSchema = z.object({
+  id: z.string().uuid().optional(),
   type: z.string(),
   periodeFra: z.string().nullable(),
   periodeTil: z.string().nullable(),
@@ -136,6 +319,8 @@ export const kontrollsakResponseSchema = z
       saksbehandlere: saksbehandlereSchema,
       steg: kontrollsakStegSchema,
       status: kontrollsakStatusSchema.nullable(),
+      statusFørBero: kontrollsakStatusSchema.nullable().optional(),
+      resultat: resultatResponseSchema.nullable().optional(),
       kategori: kontrollsakKategoriSchema,
       kilde: kontrollsakKildeSchema,
       misbruktype: z.array(kontrollsakMisbrukstypeSchema),

@@ -1,7 +1,7 @@
 import type { KontrollsakResponse, KontrollsakSteg } from "~/saker/types.backend";
 import { hentStegbaserteSaksregler } from "../stegregler";
 
-export type Sakshandling = "endre-status" | "gjenoppta" | "opprett-journalpost" | "opprett-oppgave";
+export type Sakshandling = "opprett-journalpost" | "opprett-oppgave";
 
 export function erAktivSakKontrollsak(steg: KontrollsakSteg): boolean {
   return hentStegbaserteSaksregler(steg).erAktiv;
@@ -18,15 +18,9 @@ export function hentTilgjengeligeSakshandlinger(sak: KontrollsakResponse): Saksh
     return [];
   }
 
-  if (sak.status !== null) {
-    return regler.kanUtføreUtredningsarbeid
-      ? ["gjenoppta", "opprett-journalpost", "opprett-oppgave"]
-      : ["gjenoppta"];
-  }
-
   if (!regler.kanUtføreUtredningsarbeid) {
-    return ["endre-status"];
+    return [];
   }
 
-  return ["endre-status", "opprett-journalpost", "opprett-oppgave"];
+  return ["opprett-journalpost", "opprett-oppgave"];
 }

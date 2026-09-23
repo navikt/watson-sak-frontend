@@ -83,27 +83,14 @@ test.describe("Sakdetalj", () => {
     await expect(page.getByText("Arbeid", { exact: true })).toHaveCount(0);
   });
 
-  test("kan endre steg og status i samlet dialog", async ({ page }) => {
-    await page.getByRole("button", { name: "Endre steg" }).click();
+  test("viser steg som backend tillater", async ({ page }) => {
+    await page.getByRole("button", { name: "Flytt til neste steg" }).click();
 
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
-
-    await dialog.getByRole("radio", { name: "Politi" }).click();
-    await dialog.getByRole("radio", { name: "Venter på informasjon" }).click();
-    await dialog.getByRole("button", { name: "Lagre" }).click();
-
-    // Viser bekreftelsessteg før innsending
-    await expect(dialog.getByText("Du endrer nå steg og status på saken:")).toBeVisible();
-    await dialog.getByRole("button", { name: "Endre steg" }).click();
-
-    // Viser suksesssteg, som må lukkes manuelt
-    await expect(dialog.getByText("Lagret")).toBeVisible();
-    await dialog.getByRole("button", { name: "Lukk" }).last().click();
-
+    await expect(dialog.getByRole("radio").first()).toBeVisible();
+    await dialog.getByRole("button", { name: "Avbryt" }).click();
     await expect(dialog).not.toBeVisible();
-    await expect(page.locator(".aksel-tag", { hasText: "Politi" })).toBeVisible();
-    await expect(page.locator(".aksel-tag", { hasText: "Venter på informasjon" })).toBeVisible();
   });
 
   test("resetter datofelter etter avbryt og ny redigering", async ({ page }) => {

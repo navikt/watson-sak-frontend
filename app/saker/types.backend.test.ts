@@ -3,6 +3,7 @@ import {
   kontrollsakStatusSchema,
   kontrollsakResponseSchema,
   kontrollsakHendelseResponseSchema,
+  tillatteHandlingerResponseSchema,
 } from "./types.backend";
 
 const basisSak = {
@@ -93,10 +94,87 @@ describe("kontrollsakResponseSchema – ny kontraktmodell", () => {
 
 describe("kontrollsakStatusSchema", () => {
   it("godtar alle fire statuser", () => {
+    expect(kontrollsakStatusSchema.safeParse("AKTIV").success).toBe(true);
     expect(kontrollsakStatusSchema.safeParse("VENTER_PA_INFORMASJON").success).toBe(true);
     expect(kontrollsakStatusSchema.safeParse("VENTER_PA_VEDTAK").success).toBe(true);
     expect(kontrollsakStatusSchema.safeParse("I_BERO").success).toBe(true);
     expect(kontrollsakStatusSchema.safeParse("VENTER_PA_RESULTAT").success).toBe(true);
+  });
+
+  describe("tillatteHandlingerResponseSchema", () => {
+    const svar = {
+      versjon: 1,
+      tilstand: {
+        steg: "UTREDNING",
+        status: "AKTIV",
+        statusFørBero: null,
+        resultat: null,
+        ytelser: [],
+      },
+      handlinger: [
+        {
+          type: "FLYTT_TIL_NESTE_STEG",
+          metode: "POST",
+          sti: "/api/v1/kontrollsaker/1/steg",
+        },
+        {
+          type: "REGISTRER_RESULTAT",
+          metode: "PUT",
+          sti: "/api/v1/kontrollsaker/1/resultat",
+        },
+      ],
+      tillatteSteg: ["FORVALTNING"],
+      tillatteStatuser: ["AKTIV", "I_BERO"],
+      tillatteResultater: ["HENLAGT"],
+      paakrevdeRegistreringer: ["utredning.type"],
+      paakrevdeRegistreringerPerSteg: { FORVALTNING: ["utredning.type", "ytelser[].belop"] },
+      feltskjema: [
+        {
+          felt: "utredning.type",
+          etikett: "Resultat fra utredningen",
+          datatype: "enum",
+          paakrevd: true,
+          verdier: [{ verdi: "HENLAGT", etikett: "Henlagt" }],
+        },
+        {
+          felt: "utredning.henleggelsesarsak",
+          etikett: "Årsak til henleggelse",
+          datatype: "enum",
+          paakrevd: false,
+          paakrevdNar: "utredning.type=HENLAGT",
+          verdier: [{ verdi: "IKKE_TILSTREKKELIG_SKYLD", etikett: "Ikke tilstrekkelig skyld" }],
+        },
+      ],
+    };
+
+    it("parser tillatte handlinger, steg, statuser og fasefelter", () => {
+      const resultat = tillatteHandlingerResponseSchema.safeParse(svar);
+
+      expect(resultat.success).toBe(true);
+      if (resultat.success) {
+        expect(resultat.data.tilstand.steg).toBe("UTREDNING");
+        expect(resultat.data.handlinger.map((handling) => handling.type)).toEqual([
+          "FLYTT_TIL_NESTE_STEG",
+          "REGISTRER_RESULTAT",
+        ]);
+        expect(resultat.data.feltskjema[0]?.verdier[0]?.etikett).toBe("Henlagt");
+      }
+    });
+
+    it("avviser ukjent feltdatatype og handlingstype", () => {
+      expect(
+        tillatteHandlingerResponseSchema.safeParse({
+          ...svar,
+          feltskjema: [{ felt: "x", etikett: "X", datatype: "dato", paakrevd: false }],
+        }).success,
+      ).toBe(false);
+      expect(
+        tillatteHandlingerResponseSchema.safeParse({
+          ...svar,
+          handlinger: [{ type: "KJOR_NOE", metode: "POST", sti: "/ukjent" }],
+        }).success,
+      ).toBe(false);
+    });
   });
 
   it("avviser ukjent status", () => {

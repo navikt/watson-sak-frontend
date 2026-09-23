@@ -71,12 +71,13 @@ export function getBelop(sak: KontrollsakResponse): number | null {
 }
 
 export function getMineSakerGruppeStatus(sak: KontrollsakResponse): MineSakerGruppeStatus {
-  if (sak.status !== null) {
+  if (sak.status !== null && sak.status !== "AKTIV") {
     return "ventende";
   }
 
   switch (sak.steg) {
     case "OPPRETTET":
+    case "UTREDNING":
     case "UTREDES":
     case "FORVALTNING":
     case "STRAFFERETTSLIG_VURDERING":

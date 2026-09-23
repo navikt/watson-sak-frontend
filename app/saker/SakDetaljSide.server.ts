@@ -18,6 +18,8 @@ import type {
   KontrollsakSaksbehandler,
   KontrollsakSteg,
   KontrollsakStatus,
+  LagreResultatRequest,
+  TillatteHandlingerResponse,
 } from "~/saker/types.backend";
 import type { FilResponse } from "~/saker/filer/typer";
 import { lagIsoTidspunktFraNorskDatoTid } from "~/utils/date-utils";
@@ -31,7 +33,18 @@ import {
 import { arkiverDokument } from "~/testing/mock-store/dokumenter.server";
 import { hentMockState } from "~/testing/mock-store/session.server";
 import { notatMalValg } from "./handlinger/notatValg";
+import { byggLagreResultatRequest, validerResultatFeltNavn } from "./handlinger/resultat-request";
 import { erAktivSakKontrollsak, erSakseier } from "./handlinger/tilgjengeligeHandlinger";
+import {
+  erGyldigMockStegovergang,
+  hentMockTillatteHandlinger,
+} from "./mock-tillatte-handlinger.server";
+import {
+  erHenlagtIGjeldendeSteg,
+  harLagretResultatForOvergang,
+  hentVisbareSteg,
+  manglerEndeligUtfallVedAvslutning,
+} from "./handlinger/tillatte-steg";
 import {
   hentHistorikk,
   leggTilHendelse,
@@ -170,32 +183,20 @@ type ActionResult =
 
 // --- Hjelpefunksjoner ---
 
-const gyldigeSteg = new Set<KontrollsakSteg>([
-  "OPPRETTET",
-  "UTREDES",
-  "FORVALTNING",
-  "STRAFFERETTSLIG_VURDERING",
-  "POLITI",
-  "AVSLUTTET",
-]);
-
 const gyldigeStatuser = new Set<KontrollsakStatus>([
+  "AKTIV",
   "VENTER_PA_INFORMASJON",
   "VENTER_PA_VEDTAK",
   "VENTER_PA_RESULTAT",
   "I_BERO",
 ]);
 
-function erGyldigSteg(verdi: string): verdi is KontrollsakSteg {
-  return gyldigeSteg.has(verdi as KontrollsakSteg);
-}
-
 function erGyldigStatus(verdi: string): verdi is KontrollsakStatus {
   return gyldigeStatuser.has(verdi as KontrollsakStatus);
 }
 
 function parseStatusFraDialog(verdi: string | undefined): KontrollsakStatus | null {
-  if (verdi === undefined || verdi === "" || verdi === "AKTIV") {
+  if (verdi === undefined || verdi === "" || verdi === "__NULL__") {
     return null;
   }
   if (!erGyldigStatus(verdi)) {
@@ -204,8 +205,22 @@ function parseStatusFraDialog(verdi: string | undefined): KontrollsakStatus | nu
   return verdi;
 }
 
+function krevTillattHandling(
+  tillatteHandlinger: TillatteHandlingerResponse,
+  type: TillatteHandlingerResponse["handlinger"][number]["type"],
+): void {
+  if (type === "HENLEGG" && erHenlagtIGjeldendeSteg(tillatteHandlinger.tilstand)) {
+    throw data("Saken er allerede henlagt i gjeldende steg", { status: 409 });
+  }
+  if (!tillatteHandlinger.handlinger.some((handling) => handling.type === type)) {
+    throw data("Handlingen er ikke tillatt for saken i gjeldende tilstand", { status: 409 });
+  }
+}
+
 function getHendelsestypeForStatusendring(status: KontrollsakStatus) {
-  return status === "I_BERO" ? "SAK_SATT_I_BERO" : "SAK_SATT_PA_VENT";
+  if (status === "I_BERO") return "SAK_SATT_I_BERO";
+  if (status === "AKTIV") return "SAK_GJENOPPTATT";
+  return "SAK_SATT_PA_VENT";
 }
 
 function getHendelsestypeForStegendring(steg: KontrollsakSteg) {
@@ -214,6 +229,31 @@ function getHendelsestypeForStegendring(steg: KontrollsakSteg) {
       return "POLITIANMELDT";
     default:
       return "STATUS_ENDRET";
+  }
+}
+
+function lagreMockResultat(sak: KontrollsakResponse, resultat: LagreResultatRequest): void {
+  sak.resultat = {
+    ...sak.resultat,
+    ...(resultat.utredning ? { utredning: resultat.utredning } : {}),
+    ...(resultat.forvaltning ? { forvaltning: resultat.forvaltning } : {}),
+    ...(resultat.strafferettsligVurdering
+      ? { strafferettsligVurdering: resultat.strafferettsligVurdering }
+      : {}),
+    ...(resultat.politi ? { politi: resultat.politi } : {}),
+  };
+  if (resultat.ytelser) {
+    const belopPerYtelse = new Map(resultat.ytelser.map((ytelse) => [ytelse.id, ytelse]));
+    sak.ytelser = sak.ytelser.map((ytelse) => {
+      const belop = ytelse.id ? belopPerYtelse.get(ytelse.id) : undefined;
+      return belop
+        ? {
+            ...ytelse,
+            ...(belop.belop !== undefined ? { belop: belop.belop } : {}),
+            ...(belop.endeligBelop !== undefined ? { endeligBelop: belop.endeligBelop } : {}),
+          }
+        : ytelse;
+    });
   }
 }
 
@@ -242,6 +282,7 @@ function finnNotatMalLabel(verdi: FormDataEntryValue | null): string | undefined
 /** Handlinger som tillates uten å være sakseier */
 const tildelingshandlinger = new Set([
   "TILDEL",
+  "TILDEL_MEG",
   "FRISTILL",
   "overfor_ansvarlig",
   "send_til_annen_enhet",
@@ -334,6 +375,44 @@ async function hentJournalposterMedTilgangskontroll(
   }
 }
 
+async function hentTillatteHandlingerMedTilgangskontroll(
+  token: string,
+  sakId: string,
+  sakPromise: Promise<KontrollsakResponse>,
+): Promise<TillatteHandlingerResponse> {
+  const sak = await sakPromise;
+  try {
+    return await backendApi.hentTillatteHandlinger(token, sakId);
+  } catch (feil) {
+    if (feil instanceof backendApi.BackendFeilException && feil.status === 403) {
+      logger.warn("Mangler tilgang til å hente tillatte handlinger", { sakId });
+      return {
+        versjon: 1,
+        tilstand: {
+          steg: sak.steg,
+          status: sak.status,
+          statusFørBero: null,
+          resultat: sak.resultat ?? null,
+          ytelser: sak.ytelser.map((ytelse, indeks) => ({
+            ...ytelse,
+            id:
+              ytelse.id ??
+              `00000000-0000-4000-8000-${(sak.id + indeks).toString(16).padStart(12, "0")}`,
+          })),
+        },
+        handlinger: [],
+        tillatteSteg: [],
+        tillatteStatuser: [],
+        tillatteResultater: [],
+        paakrevdeRegistreringer: [],
+        paakrevdeRegistreringerPerSteg: {},
+        feltskjema: [],
+      };
+    }
+    throw feil;
+  }
+}
+
 async function hentAndreSakerMedTilgangskontroll(
   token: string,
   sak: KontrollsakResponse,
@@ -358,16 +437,25 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
     const sakId = params.sakId;
+    const sakPromise = backendApi.hentKontrollsak(token, sakId);
 
-    const [sak, historikk, journalposter, saksbehandlerDetaljer, filerResultat, innlogget] =
-      await Promise.all([
-        backendApi.hentKontrollsak(token, sakId),
-        hentHistorikkMedTilgangskontroll(token, sakId),
-        hentJournalposterMedTilgangskontroll(token, sakId),
-        backendApi.hentSaksbehandlere(token),
-        hentFilerMedTilgangskontroll(token, sakId),
-        hentInnloggetBruker({ request }),
-      ]);
+    const [
+      sak,
+      historikk,
+      journalposter,
+      saksbehandlerDetaljer,
+      filerResultat,
+      tillatteHandlinger,
+      innlogget,
+    ] = await Promise.all([
+      sakPromise,
+      hentHistorikkMedTilgangskontroll(token, sakId),
+      hentJournalposterMedTilgangskontroll(token, sakId),
+      backendApi.hentSaksbehandlere(token),
+      hentFilerMedTilgangskontroll(token, sakId),
+      hentTillatteHandlingerMedTilgangskontroll(token, sakId, sakPromise),
+      hentInnloggetBruker({ request }),
+    ]);
 
     // Henter kun første side (maks 100 saker) — visningen på sakdetaljsiden er en enkel
     // liste over "andre saker for personen", ikke en fullstendig paginert visning.
@@ -389,6 +477,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
     return {
       sak: sakForRespons,
+      tillatteHandlinger,
       historikk,
       journalposter,
       dokumenter: harDirekteTilgang ? sak.dokumenter : [],
@@ -408,6 +497,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   }
   const innlogget = await hentInnloggetBruker({ request });
   const sak = medInnloggetEier(rawSak, innlogget.navIdent, innlogget.name);
+  const tillatteHandlinger = hentMockTillatteHandlinger(sak);
   const historikk = hentHistorikk(request, String(sak.id));
   const erEier = sak.saksbehandlere.eier?.navIdent === innlogget.navIdent;
   const harDeltTilgang = sak.saksbehandlere.deltMed.some((s) => s.navIdent === innlogget.navIdent);
@@ -429,6 +519,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   );
   return {
     sak,
+    tillatteHandlinger,
     historikk,
     journalposter: [],
     dokumenter,
@@ -495,6 +586,26 @@ async function backendAction(
   }
 
   switch (handling) {
+    case "TILDEL_MEG": {
+      const innlogget = await hentInnloggetBruker({ request });
+      const tillatte = await backendApi.hentTillatteHandlinger(token, sakId);
+      if (tillatte.tilstand.steg === "OPPRETTET" && !tillatte.tillatteSteg.includes("UTREDNING")) {
+        throw data("Saken kan ikke flyttes til Utredning i gjeldende tilstand", { status: 409 });
+      }
+      const tildelt = await backendApi.tildelKontrollsak(token, sakId, innlogget.navIdent);
+      if (tildelt.steg !== "OPPRETTET") return { ok: true, sak: tildelt };
+
+      try {
+        const sak = await backendApi.endreSteg(token, sakId, 1, "UTREDNING");
+        return { ok: true, sak };
+      } catch (feil) {
+        if (!(feil instanceof backendApi.BackendFeilException)) throw feil;
+        throw data(
+          "Saken ble tildelt deg, men kunne ikke flyttes til Utredning. Flytt saken manuelt før du fortsetter.",
+          { status: feil.status },
+        );
+      }
+    }
     case "TILDEL": {
       const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
       const sak = await backendApi.tildelKontrollsak(token, sakId, navIdent);
@@ -507,57 +618,79 @@ async function backendAction(
     case "endre_steg":
     case "endre_steg_dialog": {
       const nyttSteg = hentTekstfelt(formData, "steg", "Ugyldig steg");
-      if (!erGyldigSteg(nyttSteg)) {
-        throw data("Ugyldig steg", { status: 400 });
-      }
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
-      const råStatus = hentValgfriTekst(formData, "status");
-      const ønsketStatus = parseStatusFraDialog(råStatus);
-
-      const nåværendeSak =
-        sakFraTilgangskontroll ?? (await backendApi.hentKontrollsak(token, sakId));
-      if (handling === "endre_steg" && nyttSteg === nåværendeSak.steg) {
-        throw data("Steget er uendret", { status: 400 });
+      const tillatte = await backendApi.hentTillatteHandlinger(token, sakId);
+      krevTillattHandling(tillatte, "FLYTT_TIL_NESTE_STEG");
+      try {
+        validerResultatFeltNavn(formData, tillatte.feltskjema, tillatte.tilstand.ytelser);
+      } catch (feil) {
+        throw data(feil instanceof Error ? feil.message : "Ugyldige skjemafelter", {
+          status: 400,
+        });
       }
-      const skalEndreSteg = nyttSteg !== nåværendeSak.steg;
-      const skalEndreStatus =
-        nyttSteg !== "AVSLUTTET" &&
-        handling === "endre_steg_dialog" &&
-        ønsketStatus !== nåværendeSak.status;
-
-      if (!skalEndreSteg && !skalEndreStatus) {
-        return { ok: true, sak: nåværendeSak };
+      if (!hentVisbareSteg(tillatte).includes(nyttSteg as KontrollsakSteg)) {
+        throw data("Steget er ikke tillatt for saken i gjeldende tilstand", { status: 409 });
       }
 
-      let sak = nåværendeSak;
-      if (skalEndreSteg) {
-        sak = await backendApi.endreSteg(token, sakId, nyttSteg, beskrivelse ?? undefined);
+      let resultat: LagreResultatRequest | undefined;
+      const registrerResultat = formData.get("registrerResultat") === "true";
+      if (nyttSteg === "AVSLUTTET" && !registrerResultat) {
+        throw data("Registrer resultat før saken flyttes til Avsluttet", { status: 400 });
       }
-
-      if (skalEndreStatus) {
-        const sakEtterSteg = sak;
-        const sakEtterStatus = await backendApi.endreStatus(
-          token,
-          sakId,
-          ønsketStatus,
-          !skalEndreSteg ? (beskrivelse ?? undefined) : undefined,
+      if (
+        !harLagretResultatForOvergang(tillatte, nyttSteg as KontrollsakSteg) &&
+        !registrerResultat
+      ) {
+        throw data("Registrer resultat før saken flyttes til neste steg", { status: 400 });
+      }
+      try {
+        resultat = byggLagreResultatRequest(
+          formData,
+          tillatte.feltskjema,
+          tillatte.tilstand.steg,
+          undefined,
+          tillatte.tilstand.ytelser,
+          registrerResultat,
         );
-        sak = skalEndreSteg ? { ...sakEtterStatus, steg: sakEtterSteg.steg } : sakEtterStatus;
+      } catch (feil) {
+        throw data(feil instanceof Error ? feil.message : "Ugyldige resultatfelter", {
+          status: 400,
+        });
       }
-
+      if (registrerResultat && !resultat) {
+        throw data("Velg et resultat før du fortsetter", { status: 400 });
+      }
+      if (
+        manglerEndeligUtfallVedAvslutning(tillatte.tilstand, nyttSteg as KontrollsakSteg, resultat)
+      ) {
+        throw data("Velg endelig resultat før du flytter saken til Avsluttet", { status: 400 });
+      }
+      const sak = await backendApi.endreSteg(
+        token,
+        sakId,
+        tillatte.versjon,
+        nyttSteg as KontrollsakSteg,
+        resultat,
+        beskrivelse ?? undefined,
+      );
       return { ok: true, sak };
     }
     case "endre_status": {
-      const status = hentTekstfelt(formData, "status", "Ugyldig status");
-      if (!erGyldigStatus(status)) {
-        throw data("Ugyldig status", { status: 400 });
+      const tillatte = await backendApi.hentTillatteHandlinger(token, sakId);
+      krevTillattHandling(tillatte, "ENDRE_STATUS");
+      try {
+        validerResultatFeltNavn(formData, tillatte.feltskjema);
+      } catch (feil) {
+        throw data(feil instanceof Error ? feil.message : "Ugyldige skjemafelter", {
+          status: 400,
+        });
+      }
+      const status = parseStatusFraDialog(hentValgfriTekst(formData, "status"));
+      if (!tillatte.tillatteStatuser.includes(status)) {
+        throw data("Statusen er ikke tillatt for saken i gjeldende tilstand", { status: 409 });
       }
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
       const sak = await backendApi.endreStatus(token, sakId, status, beskrivelse ?? undefined);
-      return { ok: true, sak };
-    }
-    case "gjenoppta": {
-      const sak = await backendApi.endreStatus(token, sakId, null);
       return { ok: true, sak };
     }
     case "del_tilgang": {
@@ -877,15 +1010,13 @@ async function mockAction(
 
   if (
     sak.steg === "AVSLUTTET" &&
-    (handling === "endre_steg" ||
-      handling === "endre_steg_dialog" ||
-      handling === "endre_status" ||
-      handling === "gjenoppta")
+    (handling === "endre_steg" || handling === "endre_steg_dialog" || handling === "endre_status")
   ) {
     throw data("Kan ikke endre avsluttet sak", { status: 400 });
   }
 
   const saksbehandlere = sak.saksbehandlere;
+  const tillatte = hentMockTillatteHandlinger(sak);
 
   if (
     !hentStegbaserteSaksregler(sak.steg).kanUtføreUtredningsarbeid &&
@@ -895,6 +1026,31 @@ async function mockAction(
   }
 
   switch (handling) {
+    case "TILDEL_MEG": {
+      if (sak.saksbehandlere.eier) {
+        throw data("Saken har allerede en saksbehandler", { status: 409 });
+      }
+      if (sak.steg === "OPPRETTET" && !tillatte.tillatteSteg.includes("UTREDNING")) {
+        throw data("Saken kan ikke flyttes til Utredning i gjeldende tilstand", { status: 409 });
+      }
+      const innlogget = await hentInnloggetBruker({ request });
+      const valgtSaksbehandler = finnSaksbehandlerDetalj(
+        mockSaksbehandlerDetaljer,
+        innlogget.navIdent,
+      ) ?? {
+        navIdent: innlogget.navIdent,
+        navn: innlogget.name,
+        enhet: innlogget.enhet,
+      };
+      sak.saksbehandlere.eier = valgtSaksbehandler;
+      leggTilHendelse(request, sak, "SAK_TILDELT");
+      if (sak.steg === "OPPRETTET") {
+        sak.steg = "UTREDNING";
+        sak.status = "AKTIV";
+        leggTilHendelse(request, sak, "STATUS_ENDRET", undefined, { status: sak.status });
+      }
+      break;
+    }
     case "TILDEL": {
       const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
       const navn = hentValgfriTekst(formData, "navn") ?? navIdent;
@@ -915,82 +1071,102 @@ async function mockAction(
     case "endre_steg":
     case "endre_steg_dialog": {
       const nyttSteg = hentTekstfelt(formData, "steg", "Ugyldig steg");
-
-      if (!erGyldigSteg(nyttSteg)) {
-        throw data("Ugyldig steg", { status: 400 });
+      krevTillattHandling(tillatte, "FLYTT_TIL_NESTE_STEG");
+      if (!hentVisbareSteg(tillatte).includes(nyttSteg as KontrollsakSteg)) {
+        throw data("Steget er ikke tillatt for saken i gjeldende tilstand", { status: 409 });
       }
-
-      if (handling === "endre_steg" && nyttSteg === sak.steg) {
-        throw data("Steget er uendret", { status: 400 });
+      try {
+        validerResultatFeltNavn(formData, tillatte.feltskjema, tillatte.tilstand.ytelser);
+      } catch (feil) {
+        throw data(feil instanceof Error ? feil.message : "Ugyldige skjemafelter", {
+          status: 400,
+        });
       }
-
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
-      const råStatus = hentValgfriTekst(formData, "status");
-      const ønsketStatus = parseStatusFraDialog(råStatus);
       const forrigeStatus = sak.status;
-      const skalEndreSteg = nyttSteg !== sak.steg;
-      const skalEndreStatus =
-        nyttSteg !== "AVSLUTTET" && handling === "endre_steg_dialog" && ønsketStatus !== sak.status;
-
-      if (!skalEndreSteg && !skalEndreStatus) {
-        return { ok: true } satisfies ActionResult;
+      const registrerResultat = formData.get("registrerResultat") === "true";
+      if (nyttSteg === "AVSLUTTET" && !registrerResultat) {
+        throw data("Registrer resultat før saken flyttes til Avsluttet", { status: 400 });
       }
-
-      if (skalEndreSteg) {
-        sak.steg = nyttSteg;
-        if (nyttSteg === "AVSLUTTET") {
-          sak.status = null;
+      if (
+        !harLagretResultatForOvergang(tillatte, nyttSteg as KontrollsakSteg) &&
+        !registrerResultat
+      ) {
+        throw data("Registrer resultat før saken flyttes til neste steg", { status: 400 });
+      }
+      const kandidat = { ...sak };
+      try {
+        const resultat = byggLagreResultatRequest(
+          formData,
+          tillatte.feltskjema,
+          tillatte.tilstand.steg,
+          undefined,
+          tillatte.tilstand.ytelser,
+          registrerResultat,
+        );
+        if (registrerResultat && !resultat) throw new Error("Velg et resultat før du fortsetter");
+        if (
+          manglerEndeligUtfallVedAvslutning(
+            tillatte.tilstand,
+            nyttSteg as KontrollsakSteg,
+            resultat,
+          )
+        ) {
+          throw new Error("Velg endelig resultat før du flytter saken til Avsluttet");
         }
-        leggTilHendelse(request, sak, getHendelsestypeForStegendring(nyttSteg), undefined, {
-          beskrivelse,
-          status: nyttSteg === "AVSLUTTET" ? forrigeStatus : sak.status,
+        if (resultat) {
+          lagreMockResultat(kandidat, resultat);
+        }
+      } catch (feil) {
+        throw data(feil instanceof Error ? feil.message : "Ugyldige resultatfelter", {
+          status: 400,
         });
       }
 
-      if (skalEndreStatus) {
-        const forrigeStatusFraDialog = sak.status;
-        sak.status = ønsketStatus;
-        if (sak.status === null) {
-          if (forrigeStatusFraDialog !== null) {
-            leggTilHendelse(request, sak, "SAK_GJENOPPTATT", undefined, {
-              status: forrigeStatusFraDialog,
-              beskrivelse: !skalEndreSteg ? beskrivelse : undefined,
-            });
-          }
-        } else {
-          leggTilHendelse(request, sak, getHendelsestypeForStatusendring(sak.status), undefined, {
-            beskrivelse: !skalEndreSteg ? beskrivelse : undefined,
-          });
-        }
+      if (!erGyldigMockStegovergang(kandidat, nyttSteg as KontrollsakSteg)) {
+        throw data("Stegbyttet er ikke gyldig for registrert resultat", { status: 409 });
       }
+      sak.resultat = kandidat.resultat;
+      sak.ytelser = kandidat.ytelser;
+      sak.steg = nyttSteg as KontrollsakSteg;
+      sak.status = (
+        {
+          OPPRETTET: null,
+          UTREDNING: "AKTIV",
+          UTREDES: "AKTIV",
+          FORVALTNING: "VENTER_PA_VEDTAK",
+          STRAFFERETTSLIG_VURDERING: "AKTIV",
+          POLITI: "VENTER_PA_RESULTAT",
+          ANMELDT: "VENTER_PA_RESULTAT",
+          AVSLUTTET: null,
+        } satisfies Record<KontrollsakSteg, KontrollsakStatus | null>
+      )[nyttSteg as KontrollsakSteg];
+      leggTilHendelse(request, sak, getHendelsestypeForStegendring(sak.steg), undefined, {
+        beskrivelse,
+        status: nyttSteg === "AVSLUTTET" ? forrigeStatus : sak.status,
+      });
       break;
     }
     case "endre_status": {
-      const status = hentTekstfelt(formData, "status", "Ugyldig status");
-
-      if (!erGyldigStatus(status)) {
-        throw data("Ugyldig status", { status: 400 });
+      krevTillattHandling(tillatte, "ENDRE_STATUS");
+      const status = parseStatusFraDialog(hentValgfriTekst(formData, "status"));
+      if (!tillatte.tillatteStatuser.includes(status)) {
+        throw data("Statusen er ikke tillatt for saken i gjeldende tilstand", { status: 409 });
       }
-
+      validerResultatFeltNavn(formData, tillatte.feltskjema);
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
 
+      const varIBero = sak.status === "I_BERO";
+      if (status === "I_BERO") sak.statusFørBero = sak.status;
+      if (varIBero) sak.statusFørBero = null;
       sak.status = status;
-      leggTilHendelse(request, sak, getHendelsestypeForStatusendring(status), undefined, {
-        beskrivelse,
-      });
-      break;
-    }
-    case "gjenoppta": {
-      const forrigeStatus = sak.status;
-
-      if (forrigeStatus === null) {
-        throw data("Saken har ikke status", { status: 400 });
-      }
-
-      sak.status = null;
-      leggTilHendelse(request, sak, "SAK_GJENOPPTATT", undefined, {
-        status: forrigeStatus,
-      });
+      leggTilHendelse(
+        request,
+        sak,
+        varIBero || status === null ? "SAK_GJENOPPTATT" : getHendelsestypeForStatusendring(status),
+        undefined,
+        { beskrivelse },
+      );
       break;
     }
     case "overfor_ansvarlig": {
