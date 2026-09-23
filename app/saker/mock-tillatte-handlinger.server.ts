@@ -5,6 +5,7 @@ import type {
   ResultatType,
   TillatteHandlingerResponse,
 } from "./types.backend";
+import { kanAvsluttesFraForvaltning } from "./handlinger/tillatte-steg";
 
 export function erGyldigMockStegovergang(
   sak: KontrollsakResponse,
@@ -37,10 +38,7 @@ export function erGyldigMockStegovergang(
         );
       }
       return (
-        nyttSteg === "AVSLUTTET" &&
-        sak.resultat?.forvaltning?.type === "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE" &&
-        (sak.resultat.forvaltning.endeligUtfall ?? sak.resultat.endeligUtfall) != null &&
-        ytelserHarEndeligBelop
+        nyttSteg === "AVSLUTTET" && kanAvsluttesFraForvaltning(sak, feltskjemaFor("FORVALTNING"))
       );
     case "STRAFFERETTSLIG_VURDERING":
       if (nyttSteg === "POLITI") {

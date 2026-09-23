@@ -13,6 +13,7 @@ const mockHentHendelser = vi.fn();
 const mockHentJournalposter = vi.fn();
 const mockHentSaksbehandlere = vi.fn();
 const mockHentFiler = vi.fn();
+const mockEndreSteg = vi.fn();
 const mockHentTillatteHandlinger = vi.fn().mockResolvedValue({
   versjon: 1,
   tilstand: { steg: "OPPRETTET", status: null, statusFørBero: null, resultat: null, ytelser: [] },
@@ -62,6 +63,7 @@ vi.mock("~/saker/api.server", () => ({
   hentSaksbehandlere: mockHentSaksbehandlere,
   hentFiler: mockHentFiler,
   hentTillatteHandlinger: mockHentTillatteHandlinger,
+  endreSteg: mockEndreSteg,
   søkKontrollsaker: mockSøkKontrollsaker,
 }));
 
@@ -156,6 +158,51 @@ describe("SakDetaljSide loader — backend-sti", () => {
 
     expect(resultat.tillatteHandlinger.handlinger).toEqual([]);
     expect(resultat.tillatteHandlinger.tillatteSteg).toEqual([]);
+  });
+
+  it("avviser stegbytte til Avsluttet når forvaltningsresultatet ikke tillater det", async () => {
+    mockHentTillatteHandlinger.mockResolvedValue({
+      versjon: 1,
+      tilstand: {
+        steg: "FORVALTNING",
+        status: "VENTER_PA_VEDTAK",
+        statusFørBero: null,
+        resultat: {
+          forvaltning: {
+            type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+            endeligUtfall: { type: "ANMELDT" },
+          },
+        },
+        ytelser: [],
+      },
+      handlinger: [
+        { type: "FLYTT_TIL_NESTE_STEG", metode: "POST", sti: "/api/v1/kontrollsaker/1/steg" },
+      ],
+      tillatteSteg: ["AVSLUTTET"],
+      feltskjema: [
+        {
+          felt: "forvaltning.endeligUtfall.type",
+          etikett: "Endelig resultat",
+          datatype: "enum",
+          paakrevd: false,
+          verdier: [
+            { verdi: "HENLAGT", etikett: "Henlagt" },
+            { verdi: "KONTROLLNOTAT", etikett: "Kontrollnotat" },
+            { verdi: "FEILUTBETALINGSSAK_ORDINAER", etikett: "Feilutbetalingssak, ordinær" },
+          ],
+        },
+      ],
+    });
+    const formData = new FormData();
+    formData.set("handling", "endre_steg_dialog");
+    formData.set("steg", "AVSLUTTET");
+    const request = new Request("http://localhost/saker/1", { method: "POST", body: formData });
+    const { action } = await import("./SakDetaljSide.server");
+
+    await expect(
+      action({ request, params: { sakId: "1" }, context: {} } as Parameters<typeof action>[0]),
+    ).rejects.toMatchObject({ init: { status: 409 } });
+    expect(mockEndreSteg).not.toHaveBeenCalled();
   });
 
   it("lar andre feil enn 403 fra hentFiler boble opp (kaster fortsatt loaderen)", async () => {

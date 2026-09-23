@@ -28,6 +28,7 @@ import {
   hentTvangsverdierForResultat,
   støttedeResultatfelter,
 } from "./resultat-request";
+import { hentVisbareSteg } from "./tillatte-steg";
 
 type Handlingstype = TillatteHandlingerResponse["handlinger"][number]["type"];
 type ModalFase = "skjema" | "bekreft" | "suksess";
@@ -386,7 +387,7 @@ export function EndreStatusModal({
                   value={valgtSteg}
                   onChange={(verdi) => setValgtSteg(verdi as KontrollsakSteg)}
                 >
-                  {tillatteHandlinger.tillatteSteg.map((steg) => (
+                  {hentVisbareSteg(tillatteHandlinger).map((steg) => (
                     <Radio key={steg} value={steg}>
                       {formaterSteg(steg)}
                     </Radio>

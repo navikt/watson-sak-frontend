@@ -137,6 +137,38 @@ describe("EndreStatusModal", () => {
     expect(screen.queryByRole("option", { name: "I bero" })).toBeNull();
   });
 
+  it("viser ikke Avsluttet fra Forvaltning når endelig resultat ikke er tillatt", async () => {
+    await visModal("FLYTT_TIL_NESTE_STEG", {
+      ...basisHandlinger,
+      tilstand: {
+        ...basisHandlinger.tilstand,
+        steg: "FORVALTNING",
+        resultat: {
+          forvaltning: {
+            type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+            endeligUtfall: { type: "ANMELDT" },
+          },
+        },
+      },
+      tillatteSteg: ["AVSLUTTET"],
+      feltskjema: [
+        {
+          felt: "forvaltning.endeligUtfall.type",
+          etikett: "Endelig resultat",
+          datatype: "enum",
+          paakrevd: false,
+          verdier: [
+            { verdi: "HENLAGT", etikett: "Henlagt" },
+            { verdi: "KONTROLLNOTAT", etikett: "Kontrollnotat" },
+            { verdi: "FEILUTBETALINGSSAK_ORDINAER", etikett: "Feilutbetalingssak, ordinær" },
+          ],
+        },
+      ],
+    });
+
+    expect(screen.queryByRole("radio", { name: "Avsluttet" })).toBeNull();
+  });
+
   it("sender inn resultat med versjonert request og feltnavn fra schemaet", async () => {
     await visModal("REGISTRER_RESULTAT");
 

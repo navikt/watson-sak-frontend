@@ -99,6 +99,53 @@ function renderMedRouter(ui: React.ReactNode) {
 }
 
 describe("SakHandlingerKnapper", () => {
+  it("viser ikke stegbytte fra Forvaltning når sluttresultatet ikke er tillatt", () => {
+    const sak = lagKontrollsak({ steg: "FORVALTNING" });
+    const handlinger: TillatteHandlingerResponse = {
+      ...lagTillatteHandlinger(sak),
+      tilstand: {
+        ...lagTillatteHandlinger(sak).tilstand,
+        steg: "FORVALTNING",
+        resultat: {
+          forvaltning: {
+            type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+            endeligUtfall: { type: "ANMELDT" },
+          },
+        },
+        ytelser: lagTillatteHandlinger(sak).tilstand.ytelser.map((ytelse) => ({
+          ...ytelse,
+          endeligBelop: 0,
+        })),
+      },
+      tillatteSteg: ["AVSLUTTET"],
+      feltskjema: [
+        {
+          felt: "forvaltning.endeligUtfall.type",
+          etikett: "Endelig resultat",
+          datatype: "enum",
+          paakrevd: false,
+          verdier: [
+            { verdi: "HENLAGT", etikett: "Henlagt" },
+            { verdi: "KONTROLLNOTAT", etikett: "Kontrollnotat" },
+            { verdi: "FEILUTBETALINGSSAK_ORDINAER", etikett: "Feilutbetalingssak, ordinær" },
+          ],
+        },
+      ],
+    };
+
+    renderMedRouter(
+      <SakHandlingerKnapper
+        erEier={true}
+        sak={sak}
+        tillatteHandlinger={handlinger}
+        filer={[]}
+        dokumenter={[]}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Flytt til neste steg" })).toBeNull();
+  });
+
   it("viser ingen handlinger for AVSLUTTET sak", () => {
     renderMedRouter(
       <SakHandlingerKnapper

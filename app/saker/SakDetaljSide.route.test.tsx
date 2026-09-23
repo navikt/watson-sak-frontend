@@ -426,6 +426,50 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
         },
       }).tillatteSteg,
     ).toEqual(["AVSLUTTET"]);
+    expect(
+      hentMockTillatteHandlinger({
+        ...forvaltning,
+        resultat: {
+          forvaltning: {
+            type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+            endeligUtfall: { type: "ANMELDT" },
+          },
+        },
+      }).tillatteSteg,
+    ).toEqual([]);
+    expect(
+      hentMockTillatteHandlinger({
+        ...forvaltning,
+        resultat: {
+          forvaltning: {
+            type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+            endeligUtfall: { type: "HENLAGT" },
+          },
+        },
+      }).tillatteSteg,
+    ).toEqual([]);
+    expect(
+      hentMockTillatteHandlinger({
+        ...forvaltning,
+        resultat: {
+          forvaltning: {
+            type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+            endeligUtfall: { type: "HENLAGT", henleggelsesarsak: "IKKE_KAPASITET" },
+          },
+        },
+      }).tillatteSteg,
+    ).toEqual(["AVSLUTTET"]);
+    expect(
+      hentMockTillatteHandlinger({
+        ...forvaltning,
+        resultat: {
+          forvaltning: {
+            type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+            endeligUtfall: { type: "FEILUTBETALINGSSAK_ORDINAER" },
+          },
+        },
+      }).tillatteSteg,
+    ).toEqual(["AVSLUTTET"]);
     const vurdering: KontrollsakResponse = {
       ...sak,
       steg: "STRAFFERETTSLIG_VURDERING",

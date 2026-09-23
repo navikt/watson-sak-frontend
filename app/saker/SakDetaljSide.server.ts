@@ -39,6 +39,7 @@ import {
   erGyldigMockStegovergang,
   hentMockTillatteHandlinger,
 } from "./mock-tillatte-handlinger.server";
+import { hentVisbareSteg } from "./handlinger/tillatte-steg";
 import {
   hentHistorikk,
   leggTilHendelse,
@@ -598,7 +599,7 @@ async function backendAction(
           status: 400,
         });
       }
-      if (!tillatte.tillatteSteg.includes(nyttSteg as KontrollsakSteg)) {
+      if (!hentVisbareSteg(tillatte).includes(nyttSteg as KontrollsakSteg)) {
         throw data("Steget er ikke tillatt for saken i gjeldende tilstand", { status: 409 });
       }
 
@@ -1050,7 +1051,7 @@ async function mockAction(
     case "endre_steg_dialog": {
       const nyttSteg = hentTekstfelt(formData, "steg", "Ugyldig steg");
       krevTillattHandling(tillatte, "FLYTT_TIL_NESTE_STEG");
-      if (!tillatte.tillatteSteg.includes(nyttSteg as KontrollsakSteg)) {
+      if (!hentVisbareSteg(tillatte).includes(nyttSteg as KontrollsakSteg)) {
         throw data("Steget er ikke tillatt for saken i gjeldende tilstand", { status: 409 });
       }
       try {
