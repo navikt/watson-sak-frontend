@@ -25,18 +25,15 @@ import {
   resultatFeltErAktivt,
   resultatFeltErPaakrevd,
   byggLagreResultatRequest,
-  hentTvangsverdierForResultat,
   støttedeResultatfelter,
 } from "./resultat-request";
 import {
-  erHenlagtIGjeldendeSteg,
-  erNyHenleggelseVedAvslutning,
   harLagretResultatForOvergang,
   hentVisbareSteg,
   manglerEndeligUtfallVedAvslutning,
 } from "./tillatte-steg";
 
-type Handlingstype = TillatteHandlingerResponse["handlinger"][number]["type"];
+type Handlingstype = "FLYTT_TIL_NESTE_STEG" | "ENDRE_STATUS";
 type ModalFase = "skjema" | "bekreft" | "suksess";
 
 interface EndreStatusModalProps {
@@ -49,10 +46,6 @@ interface EndreStatusModalProps {
 const handlingsetiketter: Record<Handlingstype, string> = {
   FLYTT_TIL_NESTE_STEG: "Flytt til neste steg",
   ENDRE_STATUS: "Endre status",
-  REGISTRER_RESULTAT: "Registrer resultat",
-  HENLEGG: "Registrer henleggelse",
-  SETT_I_BERO: "Sett i bero",
-  TA_UT_AV_BERO: "Ta ut av bero",
 };
 
 function formaterValgtStatus(status: KontrollsakStatus | null): string {
@@ -75,23 +68,6 @@ function hentSkjemastatus(
     return valgtStatus;
   }
   return statusverdi(tillatteHandlinger.tillatteStatuser[0] ?? null);
-}
-
-function hentHandlingensApiType(handling: Handlingstype): string {
-  switch (handling) {
-    case "FLYTT_TIL_NESTE_STEG":
-      return "endre_steg_dialog";
-    case "ENDRE_STATUS":
-      return "endre_status";
-    case "REGISTRER_RESULTAT":
-      return "registrer_resultat";
-    case "HENLEGG":
-      return "henlegg";
-    case "SETT_I_BERO":
-      return "sett_i_bero";
-    case "TA_UT_AV_BERO":
-      return "ta_ut_av_bero";
-  }
 }
 
 function hentRegistrerteResultatverdier(
@@ -118,19 +94,7 @@ function hentRegistrerteResultatverdier(
   return verdier;
 }
 
-function passerTilMålsteg(
-  felt: string,
-  type: string,
-  tilSteg: KontrollsakSteg,
-  tillatteHandlinger: TillatteHandlingerResponse,
-): boolean {
-  if (
-    tilSteg === "AVSLUTTET" &&
-    type === "HENLAGT" &&
-    tillatteHandlinger.tilstand.steg !== "FORVALTNING" &&
-    !erHenlagtIGjeldendeSteg(tillatteHandlinger.tilstand)
-  )
-    return false;
+function passerTilMålsteg(felt: string, type: string, tilSteg: KontrollsakSteg): boolean {
   switch (felt) {
     case "utredning.type":
       return tilSteg === "FORVALTNING"
@@ -148,6 +112,33 @@ function passerTilMålsteg(
     default:
       return true;
   }
+}
+
+function registrerteVerdierForMålsteg(
+  tillatteHandlinger: TillatteHandlingerResponse,
+  tilSteg: KontrollsakSteg,
+): Record<string, string> {
+  const verdier = hentRegistrerteResultatverdier(tillatteHandlinger);
+  for (const felt of tillatteHandlinger.feltskjema) {
+    if (
+      felt.felt.endsWith(".type") &&
+      verdier[felt.felt] &&
+      (!passerTilMålsteg(felt.felt, verdier[felt.felt], tilSteg) ||
+        !felt.verdier.some((valg) => valg.verdi === verdier[felt.felt]))
+    ) {
+      delete verdier[felt.felt];
+      if (felt.felt === "forvaltning.endeligUtfall.type") {
+        delete verdier["forvaltning.endeligUtfall.henleggelsesarsak"];
+      } else {
+        delete verdier[`${felt.felt.slice(0, -".type".length)}.henleggelsesarsak`];
+      }
+    }
+  }
+  if (tilSteg !== "AVSLUTTET") {
+    delete verdier["forvaltning.endeligUtfall.type"];
+    delete verdier["forvaltning.endeligUtfall.henleggelsesarsak"];
+  }
+  return verdier;
 }
 
 function ResultatFelt({
@@ -207,7 +198,7 @@ function ResultatFelt({
           ? felt.verdier.filter(
               (valg) =>
                 tillatteHandlinger.tillatteResultater.some((resultat) => resultat === valg.verdi) &&
-                (!tilSteg || passerTilMålsteg(felt.felt, valg.verdi, tilSteg, tillatteHandlinger)),
+                (!tilSteg || passerTilMålsteg(felt.felt, valg.verdi, tilSteg)),
             )
           : felt.verdier;
     return (
@@ -277,30 +268,29 @@ export function EndreStatusModal({
   const [resultatverdier, setResultatverdier] = useState<Record<string, string>>({});
   const erÅpen = handling !== null;
   const feltskjema = støttedeResultatfelter(tillatteHandlinger.feltskjema);
-  const henleggType =
-    handling === "HENLEGG"
-      ? (tillatteHandlinger.handlinger.find((valg) => valg.type === "HENLEGG")?.resultatType ??
-        "HENLAGT")
-      : undefined;
-  const tvungneResultatverdier = henleggType
-    ? hentTvangsverdierForResultat(feltskjema, henleggType)
-    : {};
-
   useEffect(() => {
     if (handling && handling !== forrigeHandling.current) {
       setFase("skjema");
       setInnsendingFormData(null);
       setFeilmelding(null);
       setValgtSteg("");
-      setValgtStatus(statusverdi(tillatteHandlinger.tilstand.status));
+      setValgtStatus(
+        statusverdi(
+          tillatteHandlinger.tilstand.status === "I_BERO"
+            ? tillatteHandlinger.tilstand.statusFørBero
+            : tillatteHandlinger.tilstand.status,
+        ),
+      );
       setRegistrerResultat(false);
-      setResultatverdier({
-        ...hentRegistrerteResultatverdier(tillatteHandlinger),
-        ...tvungneResultatverdier,
-      });
+      setResultatverdier(hentRegistrerteResultatverdier(tillatteHandlinger));
     }
     forrigeHandling.current = handling;
-  }, [handling, tillatteHandlinger.tilstand.status, feltskjema, henleggType]);
+  }, [
+    handling,
+    tillatteHandlinger.tilstand.status,
+    tillatteHandlinger.tilstand.statusFørBero,
+    feltskjema,
+  ]);
 
   const valgtHandlingLabel = handling ? handlingsetiketter[handling] : "";
   const erStegskjema = handling === "FLYTT_TIL_NESTE_STEG";
@@ -317,7 +307,6 @@ export function EndreStatusModal({
     : {};
   const skjemaverdier = {
     ...resultatverdier,
-    ...tvungneResultatverdier,
     ...tvungneResultatverdierForSteg,
   };
   const skalViseEndeligBelop =
@@ -327,7 +316,7 @@ export function EndreStatusModal({
   const resultatPåkrevd =
     erStegskjema &&
     valgtSteg !== "" &&
-    !harLagretResultatForOvergang(tillatteHandlinger, valgtSteg);
+    (valgtSteg === "AVSLUTTET" || !harLagretResultatForOvergang(tillatteHandlinger, valgtSteg));
   const skalRegistrereResultat = registrerResultat || resultatPåkrevd;
   const paakrevdeFelterForOvergang = valgtSteg
     ? (tillatteHandlinger.paakrevdeRegistreringerPerSteg[valgtSteg] ?? [])
@@ -337,9 +326,7 @@ export function EndreStatusModal({
   );
   const harResultatfelt = feltskjema.length > 0;
   const visResultatfelt =
-    handling === "REGISTRER_RESULTAT" ||
-    handling === "HENLEGG" ||
-    (erStegskjema && (skalRegistrereResultat || (overgangKreverBelop && skalViseEndeligBelop)));
+    erStegskjema && (skalRegistrereResultat || (overgangKreverBelop && skalViseEndeligBelop));
   const visResultatfeltForSteg = skalRegistrereResultat;
 
   function nullstill() {
@@ -360,7 +347,7 @@ export function EndreStatusModal({
     event.preventDefault();
     if (!handling) return;
     const formData = new FormData(event.currentTarget);
-    formData.set("handling", hentHandlingensApiType(handling));
+    formData.set("handling", erStegskjema ? "endre_steg_dialog" : "endre_status");
     if (erStegskjema) {
       if (!valgtSteg) {
         setFeilmelding("Velg et steg.");
@@ -371,27 +358,18 @@ export function EndreStatusModal({
     }
     if (handling === "ENDRE_STATUS") {
       formData.set("status", valgtStatus);
-    } else if (handling === "SETT_I_BERO") {
-      formData.set("status", "I_BERO");
-    } else if (handling === "TA_UT_AV_BERO") {
-      formData.set("status", statusverdi(tillatteHandlinger.tilstand.statusFørBero));
     }
-    if (handling === "REGISTRER_RESULTAT" || handling === "HENLEGG" || erStegskjema) {
+    if (erStegskjema) {
       try {
         const resultat = byggLagreResultatRequest(
           formData,
           tillatteHandlinger.feltskjema,
           tillatteHandlinger.tilstand.steg,
-          henleggType,
+          undefined,
           tillatteHandlinger.tilstand.ytelser,
           !erStegskjema || skalRegistrereResultat,
         );
-        if (
-          !resultat &&
-          (handling === "REGISTRER_RESULTAT" ||
-            handling === "HENLEGG" ||
-            (erStegskjema && skalRegistrereResultat))
-        ) {
+        if (!resultat && skalRegistrereResultat) {
           setFeilmelding("Velg et resultat før du fortsetter.");
           return;
         }
@@ -404,17 +382,6 @@ export function EndreStatusModal({
           )
         ) {
           setFeilmelding("Velg endelig resultat før du flytter saken til Avsluttet.");
-          return;
-        }
-        if (
-          erStegskjema &&
-          erNyHenleggelseVedAvslutning(
-            tillatteHandlinger.tilstand,
-            valgtSteg as KontrollsakSteg,
-            resultat,
-          )
-        ) {
-          setFeilmelding("Registrer henleggelsen før du flytter saken til Avsluttet.");
           return;
         }
       } catch (feil) {
@@ -477,7 +444,9 @@ export function EndreStatusModal({
                   value={valgtSteg}
                   onChange={(verdi) => {
                     setValgtSteg(verdi as KontrollsakSteg);
-                    setResultatverdier(hentRegistrerteResultatverdier(tillatteHandlinger));
+                    setResultatverdier(
+                      registrerteVerdierForMålsteg(tillatteHandlinger, verdi as KontrollsakSteg),
+                    );
                   }}
                 >
                   {hentVisbareSteg(tillatteHandlinger).map((steg) => (
@@ -530,10 +499,7 @@ export function EndreStatusModal({
                       onChange={(navn, verdi) =>
                         setResultatverdier((forrige) => ({ ...forrige, [navn]: verdi }))
                       }
-                      tvungetVerdi={
-                        tvungneResultatverdierForSteg[felt.felt] ??
-                        tvungneResultatverdier[felt.felt]
-                      }
+                      tvungetVerdi={tvungneResultatverdierForSteg[felt.felt]}
                       belopPaakrevd={
                         overgangKreverBelop &&
                         skalViseEndeligBelop &&
@@ -543,16 +509,6 @@ export function EndreStatusModal({
                     />
                   ))}
                 </VStack>
-              )}
-
-              {handling === "TA_UT_AV_BERO" && (
-                <p>
-                  Når du gjenopptar saken, blir statusen{" "}
-                  {tillatteHandlinger.tilstand.statusFørBero
-                    ? formaterStatus(tillatteHandlinger.tilstand.statusFørBero)
-                    : "Ingen status"}
-                  .
-                </p>
               )}
 
               {(erStegskjema || handling === "ENDRE_STATUS") && (
@@ -573,15 +529,7 @@ export function EndreStatusModal({
               <p>
                 {erStegskjema && valgtSteg
                   ? `Saken flyttes til ${formaterSteg(valgtSteg)}.`
-                  : handling === "ENDRE_STATUS"
-                    ? `Statusen endres til ${formaterValgtStatus(lesStatus(valgtStatus))}.`
-                    : handling === "SETT_I_BERO"
-                      ? "Saken settes i bero."
-                      : handling === "TA_UT_AV_BERO"
-                        ? "Saken tas ut av bero."
-                        : handling === "HENLEGG"
-                          ? "Henleggelsesresultatet lagres i gjeldende steg. Flytt saken til Avsluttet etterpå."
-                          : "Resultatet registreres for gjeldende steg."}
+                  : `Statusen endres til ${formaterValgtStatus(lesStatus(valgtStatus))}.`}
               </p>
               {feilmelding && <p role="alert">{feilmelding}</p>}
             </VStack>
@@ -616,7 +564,7 @@ export function EndreStatusModal({
                 loading={erSubmitting}
                 disabled={erSubmitting || !innsendingFormData}
               >
-                {handling === "HENLEGG" ? "Lagre henleggelse" : "Bekreft"}
+                Bekreft
               </Button>
               <Button
                 type="button"

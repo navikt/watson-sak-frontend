@@ -123,7 +123,7 @@ function settFelt(
   gren[sti[sti.length - 1]] = verdi;
 }
 
-export function hentTvangsverdierForResultat(
+function hentTvangsverdierForResultat(
   skjema: TillatteHandlingerResponse["feltskjema"],
   resultatType: string,
 ): Record<string, string> {

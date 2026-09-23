@@ -334,20 +334,6 @@ export async function endreSteg(
   return parseEllerKastFeil(kontrollsakResponseSchema, await respons.json(), "endreSteg");
 }
 
-export async function lagreResultat(
-  token: string,
-  sakId: string,
-  resultat: LagreResultatRequest,
-): Promise<KontrollsakResponse> {
-  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/resultat`), {
-    method: "PUT",
-    headers: authHeaders(token),
-    body: JSON.stringify(resultat),
-  });
-  if (!respons.ok) await håndterFeil(respons, "Kunne ikke lagre resultat");
-  return parseEllerKastFeil(kontrollsakResponseSchema, await respons.json(), "lagreResultat");
-}
-
 export async function endreStatus(
   token: string,
   sakId: string,

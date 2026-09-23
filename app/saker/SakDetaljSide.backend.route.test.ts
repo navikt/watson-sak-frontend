@@ -251,7 +251,7 @@ describe("SakDetaljSide loader — backend-sti", () => {
     expect(resultat.tillatteHandlinger.tillatteSteg).toEqual([]);
   });
 
-  it("avviser stegbytte til Avsluttet når forvaltningsresultatet ikke tillater det", async () => {
+  it("krever nytt resultat ved stegbytte til Avsluttet når lagret resultat er uforenlig", async () => {
     mockHentTillatteHandlinger.mockResolvedValue({
       versjon: 1,
       tilstand: {
@@ -292,7 +292,7 @@ describe("SakDetaljSide loader — backend-sti", () => {
 
     await expect(
       action({ request, params: { sakId: "1" }, context: {} } as Parameters<typeof action>[0]),
-    ).rejects.toMatchObject({ init: { status: 409 } });
+    ).rejects.toMatchObject({ init: { status: 400 } });
     expect(mockEndreSteg).not.toHaveBeenCalled();
   });
 
@@ -449,7 +449,7 @@ describe("SakDetaljSide loader — backend-sti", () => {
     );
   });
 
-  it("avviser å henlegge og avslutte saken i ett stegbytte", async () => {
+  it("sender henleggelse og avslutning i samme backendkall", async () => {
     mockHentTillatteHandlinger.mockResolvedValue({
       versjon: 1,
       tilstand: { steg: "UTREDNING", status: "AKTIV", resultat: null, ytelser: [] },
@@ -484,13 +484,22 @@ describe("SakDetaljSide loader — backend-sti", () => {
     formData.set("resultat.utredning.henleggelsesarsak", "IKKE_KAPASITET");
     const { action } = await import("./SakDetaljSide.server");
 
-    await expect(
-      action({
-        request: new Request("http://localhost/saker/1", { method: "POST", body: formData }),
-        params: { sakId: "1" },
-      } as Parameters<typeof action>[0]),
-    ).rejects.toMatchObject({ init: { status: 400 } });
-    expect(mockEndreSteg).not.toHaveBeenCalled();
+    await action({
+      request: new Request("http://localhost/saker/1", { method: "POST", body: formData }),
+      params: { sakId: "1" },
+    } as Parameters<typeof action>[0]);
+    expect(mockEndreSteg).toHaveBeenCalledWith(
+      "mock-token",
+      "1",
+      1,
+      "AVSLUTTET",
+      {
+        versjon: 1,
+        steg: "UTREDNING",
+        utredning: { type: "HENLAGT", henleggelsesarsak: "IKKE_KAPASITET" },
+      },
+      undefined,
+    );
   });
 
   it("lar andre feil enn 403 fra hentFiler boble opp (kaster fortsatt loaderen)", async () => {

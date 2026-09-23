@@ -41,18 +41,9 @@ const basisHandlinger: TillatteHandlingerResponse = {
   handlinger: [
     { type: "FLYTT_TIL_NESTE_STEG", metode: "POST", sti: "/api/v1/kontrollsaker/1/steg" },
     { type: "ENDRE_STATUS", metode: "POST", sti: "/api/v1/kontrollsaker/1/status" },
-    { type: "REGISTRER_RESULTAT", metode: "PUT", sti: "/api/v1/kontrollsaker/1/resultat" },
-    {
-      type: "HENLEGG",
-      metode: "PUT",
-      sti: "/api/v1/kontrollsaker/1/resultat",
-      resultatType: "HENLAGT",
-    },
-    { type: "SETT_I_BERO", metode: "POST", sti: "/api/v1/kontrollsaker/1/status" },
-    { type: "TA_UT_AV_BERO", metode: "POST", sti: "/api/v1/kontrollsaker/1/status" },
   ],
   tillatteSteg: ["FORVALTNING"],
-  tillatteStatuser: ["VENTER_PA_INFORMASJON"],
+  tillatteStatuser: ["VENTER_PA_INFORMASJON", "I_BERO"],
   tillatteResultater: ["KONTROLLNOTAT", "HENLAGT"],
   paakrevdeRegistreringer: ["utredning.type"],
   paakrevdeRegistreringerPerSteg: { FORVALTNING: ["utredning.type", "ytelser[].belop"] },
@@ -165,7 +156,7 @@ function forvaltningHandlinger(
 }
 
 async function visModal(
-  handling: TillatteHandlingerResponse["handlinger"][number]["type"],
+  handling: "FLYTT_TIL_NESTE_STEG" | "ENDRE_STATUS",
   tillatteHandlinger = basisHandlinger,
 ) {
   const router = createMemoryRouter(
@@ -220,13 +211,13 @@ describe("EndreStatusModal", () => {
     const statusvalg = basisHandlinger.tillatteStatuser.map((status) =>
       status === null ? "Ingen status" : status,
     );
-    expect(statusvalg).toEqual(["VENTER_PA_INFORMASJON"]);
+    expect(statusvalg).toEqual(["VENTER_PA_INFORMASJON", "I_BERO"]);
 
     cleanup();
     await visModal("ENDRE_STATUS");
     expect(screen.getByRole("combobox", { name: "Status" })).toBeDefined();
     expect(screen.getByRole("option", { name: "Venter på informasjon" })).toBeDefined();
-    expect(screen.queryByRole("option", { name: "I bero" })).toBeNull();
+    expect(screen.getByRole("option", { name: "I bero" })).toBeDefined();
   });
 
   it("krever resultat og beløp i flyttemodalen når Utredning mangler lagret resultat", async () => {
@@ -310,6 +301,83 @@ describe("EndreStatusModal", () => {
     await waitFor(() => expect(submitMock).toHaveBeenCalledOnce());
     const formData = submitMock.mock.calls[0]?.[0] as FormData;
     expect(formData.get("registrerResultat")).toBe("false");
+  });
+
+  it("krever nytt utredningsresultat når lagret Kontrollnotat ikke passer til Forvaltning", async () => {
+    await visModal("FLYTT_TIL_NESTE_STEG", {
+      ...basisHandlinger,
+      muligeNesteSteg: ["FORVALTNING", "AVSLUTTET"],
+      tilstand: {
+        ...basisHandlinger.tilstand,
+        resultat: { utredning: { type: "KONTROLLNOTAT" } },
+      },
+      tillatteResultater: ["KONTROLLNOTAT", "FEILUTBETALINGSSAK_ORDINAER"],
+      feltskjema: [
+        {
+          ...basisHandlinger.feltskjema[0],
+          verdier: [
+            { verdi: "KONTROLLNOTAT", etikett: "Kontrollnotat" },
+            { verdi: "FEILUTBETALINGSSAK_ORDINAER", etikett: "Feilutbetalingssak, ordinær" },
+          ],
+        },
+      ],
+    });
+    fireEvent.click(screen.getByRole("radio", { name: "Forvaltning" }));
+    expect(screen.getByLabelText("Resultat fra utredningen")).toHaveProperty("value", "");
+    fireEvent.click(screen.getByRole("button", { name: "Fortsett" }));
+    expect(screen.getByRole("alert").textContent).toContain("Resultat fra utredningen");
+  });
+
+  it("krever nytt resultat ved avslutning fra Strafferettslig vurdering", async () => {
+    await visModal("FLYTT_TIL_NESTE_STEG", {
+      ...basisHandlinger,
+      tilstand: {
+        ...basisHandlinger.tilstand,
+        steg: "STRAFFERETTSLIG_VURDERING",
+        resultat: { strafferettsligVurdering: { type: "ANMELDT" } },
+      },
+      muligeNesteSteg: ["POLITI", "AVSLUTTET"],
+      tillatteResultater: ["ANMELDT", "HENLAGT"],
+      feltskjema: [
+        {
+          felt: "strafferettsligVurdering.type",
+          etikett: "Resultat av strafferettslig vurdering",
+          datatype: "enum",
+          paakrevd: true,
+          verdier: [
+            { verdi: "ANMELDT", etikett: "Anmeldt" },
+            { verdi: "HENLAGT", etikett: "Henlagt" },
+          ],
+        },
+        {
+          felt: "strafferettsligVurdering.henleggelsesarsak",
+          etikett: "Årsak til henleggelse",
+          datatype: "enum",
+          paakrevd: false,
+          paakrevdNar: "strafferettsligVurdering.type=HENLAGT",
+          verdier: [{ verdi: "IKKE_TILSTREKKELIG_SKYLD", etikett: "Ikke tilstrekkelig skyld" }],
+        },
+      ],
+    });
+    fireEvent.click(screen.getByRole("radio", { name: "Avsluttet" }));
+    expect(screen.getByLabelText("Resultat av strafferettslig vurdering")).toHaveProperty(
+      "value",
+      "",
+    );
+    fireEvent.change(screen.getByLabelText("Resultat av strafferettslig vurdering"), {
+      target: { value: "HENLAGT" },
+    });
+    fireEvent.change(screen.getByLabelText("Årsak til henleggelse"), {
+      target: { value: "IKKE_TILSTREKKELIG_SKYLD" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Fortsett" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bekreft" }));
+    await waitFor(() => expect(submitMock).toHaveBeenCalledOnce());
+    const formData = submitMock.mock.calls[0]?.[0] as FormData;
+    expect(formData.get("resultat.strafferettsligVurdering.type")).toBe("HENLAGT");
+    expect(formData.get("resultat.strafferettsligVurdering.henleggelsesarsak")).toBe(
+      "IKKE_TILSTREKKELIG_SKYLD",
+    );
   });
 
   it("krever endelig utfall når bare beslutningen i Forvaltning er lagret", async () => {
@@ -544,7 +612,7 @@ describe("EndreStatusModal", () => {
     expect(formData.get("registrerResultat")).toBe("false");
   });
 
-  it("viser ikke Avsluttet fra Forvaltning når endelig resultat ikke er tillatt", async () => {
+  it("viser Avsluttet og nullstiller et lagret resultat som ikke er tillatt", async () => {
     await visModal("FLYTT_TIL_NESTE_STEG", {
       ...basisHandlinger,
       tilstand: {
@@ -573,7 +641,9 @@ describe("EndreStatusModal", () => {
       ],
     });
 
-    expect(screen.queryByRole("radio", { name: "Avsluttet" })).toBeNull();
+    fireEvent.click(screen.getByRole("radio", { name: "Avsluttet" }));
+    expect(screen.getByRole("radio", { name: "Avsluttet" })).toBeDefined();
+    expect(screen.getByLabelText("Endelig resultat")).toHaveProperty("value", "");
   });
 
   it("viser bare Avsluttet fra Forvaltning etter henleggelse", async () => {
@@ -612,8 +682,12 @@ describe("EndreStatusModal", () => {
     expect(screen.queryByRole("radio", { name: "Strafferettslig vurdering" })).toBeNull();
   });
 
-  it("sender inn resultat med versjonert request og feltnavn fra schemaet", async () => {
-    await visModal("REGISTRER_RESULTAT");
+  it("sender inn henleggelse med stegbytte og feltnavn fra skjemaet", async () => {
+    await visModal("FLYTT_TIL_NESTE_STEG", {
+      ...basisHandlinger,
+      muligeNesteSteg: ["AVSLUTTET"],
+    });
+    fireEvent.click(screen.getByRole("radio", { name: "Avsluttet" }));
 
     fireEvent.change(screen.getByLabelText("Resultat fra utredningen"), {
       target: { value: "HENLAGT" },
@@ -622,14 +696,13 @@ describe("EndreStatusModal", () => {
       target: { value: "IKKE_TILSTREKKELIG_SKYLD" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Fortsett" }));
-    await waitFor(() => {});
-    expect(screen.getByText("Resultatet registreres for gjeldende steg.")).toBeDefined();
-
     fireEvent.click(screen.getByRole("button", { name: "Bekreft" }));
-    await waitFor(() => {});
+    await waitFor(() => expect(submitMock).toHaveBeenCalledOnce());
 
     const formData = submitMock.mock.calls[0]?.[0] as FormData;
-    expect(formData.get("handling")).toBe("registrer_resultat");
+    expect(formData.get("handling")).toBe("endre_steg_dialog");
+    expect(formData.get("steg")).toBe("AVSLUTTET");
+    expect(formData.get("registrerResultat")).toBe("true");
     expect(formData.get("resultat.utredning.type")).toBe("HENLAGT");
     expect(formData.get("resultat.utredning.henleggelsesarsak")).toBe("IKKE_TILSTREKKELIG_SKYLD");
     expect(
@@ -637,9 +710,10 @@ describe("EndreStatusModal", () => {
     ).toBeDefined();
   });
 
-  it("viser registrert resultat når det åpnes for endring", async () => {
-    await visModal("REGISTRER_RESULTAT", {
+  it("viser registrert resultat ved avslutning", async () => {
+    await visModal("FLYTT_TIL_NESTE_STEG", {
       ...basisHandlinger,
+      muligeNesteSteg: ["AVSLUTTET"],
       tilstand: {
         ...basisHandlinger.tilstand,
         resultat: {
@@ -651,6 +725,7 @@ describe("EndreStatusModal", () => {
       },
     });
 
+    fireEvent.click(screen.getByRole("radio", { name: "Avsluttet" }));
     expect(screen.getByLabelText("Resultat fra utredningen")).toHaveProperty("value", "HENLAGT");
     expect(screen.getByLabelText("Årsak til henleggelse")).toHaveProperty(
       "value",
@@ -659,14 +734,17 @@ describe("EndreStatusModal", () => {
   });
 
   it("viser lagret endelig utfall fra forvaltningen", async () => {
-    await visModal("REGISTRER_RESULTAT", {
+    await visModal("FLYTT_TIL_NESTE_STEG", {
       ...basisHandlinger,
+      muligeNesteSteg: ["AVSLUTTET"],
       tilstand: {
         ...basisHandlinger.tilstand,
         steg: "FORVALTNING",
         resultat: {
-          forvaltning: { type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE" },
-          endeligUtfall: { type: "KONTROLLNOTAT" },
+          forvaltning: {
+            type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+            endeligUtfall: { type: "KONTROLLNOTAT" },
+          },
         },
       },
       feltskjema: [
@@ -693,6 +771,7 @@ describe("EndreStatusModal", () => {
       ],
     });
 
+    fireEvent.click(screen.getByRole("radio", { name: "Avsluttet" }));
     expect(screen.getByLabelText("Endelig resultat")).toHaveProperty("value", "KONTROLLNOTAT");
   });
 
@@ -714,6 +793,7 @@ describe("EndreStatusModal", () => {
         ],
       },
       tillatteResultater: ["DOMFELLELSE"],
+      muligeNesteSteg: ["AVSLUTTET"],
       feltskjema: [
         {
           felt: "politi.type",
@@ -748,7 +828,8 @@ describe("EndreStatusModal", () => {
       ],
     };
 
-    await visModal("REGISTRER_RESULTAT", politiHandlinger);
+    await visModal("FLYTT_TIL_NESTE_STEG", politiHandlinger);
+    fireEvent.click(screen.getByRole("radio", { name: "Avsluttet" }));
     fireEvent.change(screen.getByLabelText("Resultat fra politiet"), {
       target: { value: "DOMFELLELSE" },
     });
@@ -758,24 +839,6 @@ describe("EndreStatusModal", () => {
       "value",
       "1250",
     );
-  });
-
-  it("tvinger HENLAGT når handlingen fra API-et er henleggelse", async () => {
-    await visModal("HENLEGG");
-    expect(screen.getByLabelText("Resultat fra utredningen")).toHaveProperty("value", "HENLAGT");
-    expect(screen.getByRole("dialog", { name: "Registrer henleggelse" })).toBeDefined();
-
-    fireEvent.change(screen.getByLabelText("Årsak til henleggelse"), {
-      target: { value: "IKKE_TILSTREKKELIG_SKYLD" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Fortsett" }));
-    fireEvent.click(screen.getByRole("button", { name: "Lagre henleggelse" }));
-    await waitFor(() => {});
-
-    const formData = submitMock.mock.calls[0]?.[0] as FormData;
-    expect(formData.get("handling")).toBe("henlegg");
-    expect(formData.get("resultat.utredning.type")).toBe("HENLAGT");
-    expect(formData.get("resultat.utredning.henleggelsesarsak")).toBe("IKKE_TILSTREKKELIG_SKYLD");
   });
 
   it("tilbyr statusen før bero når saken skal gjenopptas", async () => {
@@ -790,14 +853,27 @@ describe("EndreStatusModal", () => {
     } satisfies TillatteHandlingerResponse;
 
     cleanup();
-    await visModal("TA_UT_AV_BERO", beroHandlinger);
-    expect(screen.getByText("Når du gjenopptar saken, blir statusen Aktiv.")).toBeDefined();
+    await visModal("ENDRE_STATUS", beroHandlinger);
+    expect(screen.getByRole("combobox", { name: "Status" })).toHaveProperty("value", "AKTIV");
     fireEvent.click(screen.getByRole("button", { name: "Fortsett" }));
     fireEvent.click(screen.getByRole("button", { name: "Bekreft" }));
     await waitFor(() => {});
 
     const formData = submitMock.mock.calls[0]?.[0] as FormData;
-    expect(formData.get("handling")).toBe("ta_ut_av_bero");
+    expect(formData.get("handling")).toBe("endre_status");
     expect(formData.get("status")).toBe("AKTIV");
+  });
+
+  it("setter saken i bero gjennom Endre status", async () => {
+    await visModal("ENDRE_STATUS");
+    fireEvent.change(screen.getByRole("combobox", { name: "Status" }), {
+      target: { value: "I_BERO" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Fortsett" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bekreft" }));
+    await waitFor(() => expect(submitMock).toHaveBeenCalledOnce());
+    const formData = submitMock.mock.calls[0]?.[0] as FormData;
+    expect(formData.get("handling")).toBe("endre_status");
+    expect(formData.get("status")).toBe("I_BERO");
   });
 });

@@ -41,7 +41,6 @@ import {
 } from "./mock-tillatte-handlinger.server";
 import {
   erHenlagtIGjeldendeSteg,
-  erNyHenleggelseVedAvslutning,
   harLagretResultatForOvergang,
   hentVisbareSteg,
   manglerEndeligUtfallVedAvslutning,
@@ -635,6 +634,9 @@ async function backendAction(
 
       let resultat: LagreResultatRequest | undefined;
       const registrerResultat = formData.get("registrerResultat") === "true";
+      if (nyttSteg === "AVSLUTTET" && !registrerResultat) {
+        throw data("Registrer resultat før saken flyttes til Avsluttet", { status: 400 });
+      }
       if (
         !harLagretResultatForOvergang(tillatte, nyttSteg as KontrollsakSteg) &&
         !registrerResultat
@@ -663,9 +665,6 @@ async function backendAction(
       ) {
         throw data("Velg endelig resultat før du flytter saken til Avsluttet", { status: 400 });
       }
-      if (erNyHenleggelseVedAvslutning(tillatte.tilstand, nyttSteg as KontrollsakSteg, resultat)) {
-        throw data("Registrer henleggelsen før du flytter saken til Avsluttet", { status: 400 });
-      }
       const sak = await backendApi.endreSteg(
         token,
         sakId,
@@ -692,50 +691,6 @@ async function backendAction(
       }
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
       const sak = await backendApi.endreStatus(token, sakId, status, beskrivelse ?? undefined);
-      return { ok: true, sak };
-    }
-    case "sett_i_bero": {
-      const tillatte = await backendApi.hentTillatteHandlinger(token, sakId);
-      krevTillattHandling(tillatte, "SETT_I_BERO");
-      const sak = await backendApi.endreStatus(token, sakId, "I_BERO");
-      return { ok: true, sak };
-    }
-    case "ta_ut_av_bero": {
-      const tillatte = await backendApi.hentTillatteHandlinger(token, sakId);
-      krevTillattHandling(tillatte, "TA_UT_AV_BERO");
-      const sak = await backendApi.endreStatus(token, sakId, tillatte.tilstand.statusFørBero);
-      return { ok: true, sak };
-    }
-    case "registrer_resultat":
-    case "henlegg": {
-      const tillatte = await backendApi.hentTillatteHandlinger(token, sakId);
-      const type = handling === "henlegg" ? "HENLEGG" : "REGISTRER_RESULTAT";
-      krevTillattHandling(tillatte, type);
-      const resultatType = tillatte.handlinger.find((valg) => valg.type === type)?.resultatType;
-      let resultat: Awaited<ReturnType<typeof byggLagreResultatRequest>>;
-      try {
-        resultat = byggLagreResultatRequest(
-          formData,
-          tillatte.feltskjema,
-          tillatte.tilstand.steg,
-          type === "HENLEGG" ? (resultatType ?? "HENLAGT") : undefined,
-          tillatte.tilstand.ytelser,
-        );
-      } catch (feil) {
-        throw data(feil instanceof Error ? feil.message : "Ugyldige resultatfelter", {
-          status: 400,
-        });
-      }
-      if (!resultat) {
-        throw data("Velg et resultat før du lagrer", { status: 400 });
-      }
-      const sak = await backendApi.lagreResultat(token, sakId, resultat);
-      return { ok: true, sak };
-    }
-    case "gjenoppta": {
-      const tillatte = await backendApi.hentTillatteHandlinger(token, sakId);
-      krevTillattHandling(tillatte, "TA_UT_AV_BERO");
-      const sak = await backendApi.endreStatus(token, sakId, tillatte.tilstand.statusFørBero);
       return { ok: true, sak };
     }
     case "del_tilgang": {
@@ -1055,10 +1010,7 @@ async function mockAction(
 
   if (
     sak.steg === "AVSLUTTET" &&
-    (handling === "endre_steg" ||
-      handling === "endre_steg_dialog" ||
-      handling === "endre_status" ||
-      handling === "gjenoppta")
+    (handling === "endre_steg" || handling === "endre_steg_dialog" || handling === "endre_status")
   ) {
     throw data("Kan ikke endre avsluttet sak", { status: 400 });
   }
@@ -1133,6 +1085,9 @@ async function mockAction(
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
       const forrigeStatus = sak.status;
       const registrerResultat = formData.get("registrerResultat") === "true";
+      if (nyttSteg === "AVSLUTTET" && !registrerResultat) {
+        throw data("Registrer resultat før saken flyttes til Avsluttet", { status: 400 });
+      }
       if (
         !harLagretResultatForOvergang(tillatte, nyttSteg as KontrollsakSteg) &&
         !registrerResultat
@@ -1158,11 +1113,6 @@ async function mockAction(
           )
         ) {
           throw new Error("Velg endelig resultat før du flytter saken til Avsluttet");
-        }
-        if (
-          erNyHenleggelseVedAvslutning(tillatte.tilstand, nyttSteg as KontrollsakSteg, resultat)
-        ) {
-          throw new Error("Registrer henleggelsen før du flytter saken til Avsluttet");
         }
         if (resultat) {
           lagreMockResultat(kandidat, resultat);
@@ -1206,60 +1156,17 @@ async function mockAction(
       validerResultatFeltNavn(formData, tillatte.feltskjema);
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
 
+      const varIBero = sak.status === "I_BERO";
+      if (status === "I_BERO") sak.statusFørBero = sak.status;
+      if (varIBero) sak.statusFørBero = null;
       sak.status = status;
-      if (status === null) {
-        leggTilHendelse(request, sak, "SAK_GJENOPPTATT", undefined, { beskrivelse });
-      } else {
-        leggTilHendelse(request, sak, getHendelsestypeForStatusendring(status), undefined, {
-          beskrivelse,
-        });
-      }
-      break;
-    }
-    case "sett_i_bero": {
-      krevTillattHandling(tillatte, "SETT_I_BERO");
-      sak.statusFørBero = sak.status;
-      sak.status = "I_BERO";
-      leggTilHendelse(request, sak, "SAK_SATT_I_BERO");
-      break;
-    }
-    case "ta_ut_av_bero": {
-      krevTillattHandling(tillatte, "TA_UT_AV_BERO");
-      const status = tillatte.tilstand.statusFørBero;
-      sak.status = status;
-      sak.statusFørBero = null;
-      leggTilHendelse(request, sak, "SAK_GJENOPPTATT", undefined, { status });
-      break;
-    }
-    case "registrer_resultat":
-    case "henlegg": {
-      const type = handling === "henlegg" ? "HENLEGG" : "REGISTRER_RESULTAT";
-      krevTillattHandling(tillatte, type);
-      const resultatType = tillatte.handlinger.find((valg) => valg.type === type)?.resultatType;
-      try {
-        const resultat = byggLagreResultatRequest(
-          formData,
-          tillatte.feltskjema,
-          tillatte.tilstand.steg,
-          type === "HENLEGG" ? (resultatType ?? "HENLAGT") : undefined,
-          tillatte.tilstand.ytelser,
-        );
-        if (!resultat) throw new Error("Velg et resultat før du lagrer");
-        lagreMockResultat(sak, resultat);
-      } catch (feil) {
-        throw data(feil instanceof Error ? feil.message : "Ugyldige resultatfelter", {
-          status: 400,
-        });
-      }
-      break;
-    }
-    case "gjenoppta": {
-      krevTillattHandling(tillatte, "TA_UT_AV_BERO");
-      sak.status = tillatte.tilstand.statusFørBero;
-      sak.statusFørBero = null;
-      leggTilHendelse(request, sak, "SAK_GJENOPPTATT", undefined, {
-        status: tillatte.tilstand.statusFørBero ?? undefined,
-      });
+      leggTilHendelse(
+        request,
+        sak,
+        varIBero || status === null ? "SAK_GJENOPPTATT" : getHendelsestypeForStatusendring(status),
+        undefined,
+        { beskrivelse },
+      );
       break;
     }
     case "overfor_ansvarlig": {

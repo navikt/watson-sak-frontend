@@ -326,34 +326,6 @@ describe("tillatte handlinger og resultatkall", () => {
       }),
     );
   });
-
-  it("sender resultat til PUT-endepunktet", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => kontrollsak,
-    });
-    vi.stubGlobal("fetch", fetchMock);
-
-    const { lagreResultat } = await import("./api.server");
-    await lagreResultat("token-123", "42", {
-      versjon: 1,
-      steg: "UTREDNING",
-      utredning: { type: "KONTROLLNOTAT" },
-    });
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      "https://backend.test/api/v1/kontrollsaker/42/resultat",
-      expect.objectContaining({
-        method: "PUT",
-        body: JSON.stringify({
-          versjon: 1,
-          steg: "UTREDNING",
-          utredning: { type: "KONTROLLNOTAT" },
-        }),
-      }),
-    );
-  });
 });
 
 describe("opprettJournalpost", () => {

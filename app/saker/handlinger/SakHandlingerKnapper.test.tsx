@@ -119,7 +119,7 @@ describe("SakHandlingerKnapper", () => {
     expect(screen.getByRole("button", { name: "Flytt til neste steg" })).toBeDefined();
   });
 
-  it("viser bare stegbytte og resultatendring etter henleggelse i Forvaltning", () => {
+  it("viser bare stegbytte etter henleggelse i Forvaltning", () => {
     const sak = lagKontrollsak({ steg: "FORVALTNING", status: "VENTER_PA_VEDTAK" });
     const tillatte = lagTillatteHandlinger(sak);
     renderMedRouter(
@@ -170,11 +170,11 @@ describe("SakHandlingerKnapper", () => {
     );
 
     expect(screen.getByRole("button", { name: "Flytt til neste steg" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Registrer resultat" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Registrer resultat" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Registrer henleggelse" })).toBeNull();
   });
 
-  it("viser ikke stegbytte fra Forvaltning når sluttresultatet ikke er tillatt", () => {
+  it("viser stegbytte fra Forvaltning når resultat kan erstattes ved avslutning", () => {
     const sak = lagKontrollsak({ steg: "FORVALTNING" });
     const handlinger: TillatteHandlingerResponse = {
       ...lagTillatteHandlinger(sak),
@@ -218,7 +218,7 @@ describe("SakHandlingerKnapper", () => {
       />,
     );
 
-    expect(screen.queryByRole("button", { name: "Flytt til neste steg" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Flytt til neste steg" })).toBeDefined();
   });
 
   it("viser ingen handlinger for AVSLUTTET sak", () => {

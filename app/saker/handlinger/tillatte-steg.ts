@@ -66,20 +66,6 @@ export function erHenlagtIGjeldendeSteg(
   }
 }
 
-export function erNyHenleggelseVedAvslutning(
-  tilstand: TillatteHandlingerResponse["tilstand"],
-  tilSteg: KontrollsakSteg,
-  resultat?: LagreResultatRequest,
-): boolean {
-  return (
-    tilSteg === "AVSLUTTET" &&
-    !erHenlagtIGjeldendeSteg(tilstand) &&
-    ((tilstand.steg === "UTREDNING" && resultat?.utredning?.type === "HENLAGT") ||
-      (tilstand.steg === "STRAFFERETTSLIG_VURDERING" &&
-        resultat?.strafferettsligVurdering?.type === "HENLAGT"))
-  );
-}
-
 export function manglerEndeligUtfallVedAvslutning(
   tilstand: TillatteHandlingerResponse["tilstand"],
   tilSteg: KontrollsakSteg,
@@ -124,6 +110,10 @@ export function harLagretResultatForOvergang(
     case "UTREDNING":
       return (
         resultat?.utredning?.type != null &&
+        (tilSteg === "FORVALTNING"
+          ? resultat.utredning.type === "FEILUTBETALINGSSAK_ORDINAER" ||
+            resultat.utredning.type === "FEILUTBETALINGSSAK_POTENSIELL_STRAFFESAK"
+          : resultat.utredning.type === "KONTROLLNOTAT" || resultat.utredning.type === "HENLAGT") &&
         (resultat.utredning.type !== "HENLAGT" || resultat.utredning.henleggelsesarsak != null)
       );
     case "FORVALTNING":
@@ -161,20 +151,5 @@ export function hentVisbareSteg(
 ): TillatteHandlingerResponse["tillatteSteg"] {
   const henlagt = erHenlagtIGjeldendeSteg(tillatteHandlinger.tilstand);
   const kandidater = tillatteHandlinger.muligeNesteSteg ?? tillatteHandlinger.tillatteSteg;
-  return kandidater.filter((steg) => {
-    if (henlagt && steg !== "AVSLUTTET") return false;
-    if (steg === "AVSLUTTET" && tillatteHandlinger.tilstand.steg === "FORVALTNING") {
-      if (!tillatteHandlinger.tillatteSteg.includes(steg)) {
-        const resultat = tillatteHandlinger.tilstand.resultat;
-        const utfall = resultat && hentForvaltningensEndeligeUtfall(resultat);
-        if (!utfall) return true;
-        const resultatfelt = tillatteHandlinger.feltskjema.find(
-          (felt) => felt.felt === "forvaltning.endeligUtfall.type",
-        );
-        return resultatfelt?.verdier.some((verdi) => verdi.verdi === utfall.type) ?? false;
-      }
-      return kanAvsluttesFraForvaltning(tillatteHandlinger.tilstand, tillatteHandlinger.feltskjema);
-    }
-    return true;
-  });
+  return kandidater.filter((steg) => !henlagt || steg === "AVSLUTTET");
 }

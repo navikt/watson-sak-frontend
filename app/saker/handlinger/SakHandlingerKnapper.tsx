@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { DokumentNode, FilResponse } from "~/saker/filer/typer";
 import type { KontrollsakResponse, TillatteHandlingerResponse } from "~/saker/types.backend";
 import { EndreStatusModal } from "./EndreStatusModal";
-import { erHenlagtIGjeldendeSteg, hentVisbareSteg } from "./tillatte-steg";
+import { hentVisbareSteg } from "./tillatte-steg";
 import { OpprettJournalpostModal } from "./OpprettJournalpostModal";
 import { OpprettOppgaveModal } from "./OpprettOppgaveModal";
 import { hentTilgjengeligeSakshandlinger, type Sakshandling } from "./tilgjengeligeHandlinger";
@@ -17,8 +17,8 @@ interface SakHandlingerKnapperProps {
   dokumenter: DokumentNode[];
 }
 
-type ModalHandling = Extract<Sakshandling, "opprett-journalpost" | "opprett-oppgave">;
-type Tilstandshandling = TillatteHandlingerResponse["handlinger"][number]["type"];
+type ModalHandling = Sakshandling;
+type Tilstandshandling = "FLYTT_TIL_NESTE_STEG" | "ENDRE_STATUS";
 
 const handlingsvisning: Record<
   ModalHandling,
@@ -53,17 +53,18 @@ export function SakHandlingerKnapper({
   const [åpenTilstandshandling, setÅpenTilstandshandling] = useState<Tilstandshandling | null>(
     null,
   );
-  const handlinger = hentTilgjengeligeSakshandlinger(sak).filter(
-    (handling): handling is ModalHandling =>
-      handling === "opprett-journalpost" || handling === "opprett-oppgave",
-  );
+  const handlinger = hentTilgjengeligeSakshandlinger(sak);
   const primærhandlinger = handlinger.filter((handling) => !sekundærhandlinger.includes(handling));
   const visSekundærhandlinger = handlinger.some((h) => sekundærhandlinger.includes(h));
   const tilstandshandlinger = tillatteHandlinger.handlinger.filter(
-    (handling) =>
-      (handling.type !== "FLYTT_TIL_NESTE_STEG" ||
-        hentVisbareSteg(tillatteHandlinger).length > 0) &&
-      (handling.type !== "HENLEGG" || !erHenlagtIGjeldendeSteg(tillatteHandlinger.tilstand)),
+    (
+      handling,
+    ): handling is (typeof tillatteHandlinger.handlinger)[number] & {
+      type: Tilstandshandling;
+    } =>
+      (handling.type === "FLYTT_TIL_NESTE_STEG" &&
+        hentVisbareSteg(tillatteHandlinger).length > 0) ||
+      handling.type === "ENDRE_STATUS",
   );
 
   if (!erEier || (handlinger.length === 0 && tilstandshandlinger.length === 0)) {
@@ -85,17 +86,12 @@ export function SakHandlingerKnapper({
           const etiketter: Record<Tilstandshandling, string> = {
             FLYTT_TIL_NESTE_STEG: "Flytt til neste steg",
             ENDRE_STATUS: "Endre status",
-            REGISTRER_RESULTAT: "Registrer resultat",
-            HENLEGG: "Registrer henleggelse",
-            SETT_I_BERO: "Sett i bero",
-            TA_UT_AV_BERO: "Ta ut av bero",
           };
           return (
             <Button
               key={handling.type}
               variant={handling.type === "FLYTT_TIL_NESTE_STEG" ? "primary" : "secondary-neutral"}
               size="medium"
-              data-color={handling.type === "HENLEGG" ? "danger" : undefined}
               onClick={() => setÅpenTilstandshandling(handling.type)}
             >
               {etiketter[handling.type]}

@@ -269,26 +269,17 @@ export function hentMockTillatteHandlinger(sak: KontrollsakResponse): TillatteHa
             case "OPPRETTET":
               return ["UTREDNING", "STRAFFERETTSLIG_VURDERING"];
             case "UTREDNING":
-              switch (sak.resultat?.utredning?.type) {
-                case "FEILUTBETALINGSSAK_ORDINAER":
-                case "FEILUTBETALINGSSAK_POTENSIELL_STRAFFESAK":
-                  return ["FORVALTNING"];
-                case "KONTROLLNOTAT":
-                case "HENLAGT":
-                  return ["AVSLUTTET"];
-                default:
-                  return ["FORVALTNING", "AVSLUTTET"];
-              }
+              return sak.resultat?.utredning?.type === "HENLAGT"
+                ? ["AVSLUTTET"]
+                : ["FORVALTNING", "AVSLUTTET"];
             case "FORVALTNING":
               return erHenlagtIGjeldendeSteg({ steg, resultat: sak.resultat ?? null })
                 ? ["AVSLUTTET"]
                 : ["STRAFFERETTSLIG_VURDERING", "AVSLUTTET"];
             case "STRAFFERETTSLIG_VURDERING":
-              return sak.resultat?.strafferettsligVurdering?.type === "ANMELDT"
-                ? ["POLITI"]
-                : sak.resultat?.strafferettsligVurdering?.type
-                  ? ["AVSLUTTET"]
-                  : ["POLITI", "AVSLUTTET"];
+              return sak.resultat?.strafferettsligVurdering?.type === "HENLAGT"
+                ? ["AVSLUTTET"]
+                : ["POLITI", "AVSLUTTET"];
             case "POLITI":
               return ["AVSLUTTET"];
             default:
@@ -322,41 +313,12 @@ export function hentMockTillatteHandlinger(sak: KontrollsakResponse): TillatteHa
         sti: `/api/v1/kontrollsaker/${sak.id}/steg`,
       });
     }
-    if (statusvalg[steg].some((status) => status !== sak.status)) {
-      handlinger.push({
-        type: "ENDRE_STATUS",
-        metode: "POST",
-        sti: `/api/v1/kontrollsaker/${sak.id}/status`,
-      });
-    }
+  }
+  if (steg !== "AVSLUTTET") {
     handlinger.push({
-      type: "SETT_I_BERO",
+      type: "ENDRE_STATUS",
       metode: "POST",
       sti: `/api/v1/kontrollsaker/${sak.id}/status`,
-    });
-  } else if (steg !== "AVSLUTTET") {
-    handlinger.push({
-      type: "TA_UT_AV_BERO",
-      metode: "POST",
-      sti: `/api/v1/kontrollsaker/${sak.id}/status`,
-    });
-  }
-  if (resultater.length > 0) {
-    handlinger.push({
-      type: "REGISTRER_RESULTAT",
-      metode: "PUT",
-      sti: `/api/v1/kontrollsaker/${sak.id}/resultat`,
-    });
-  }
-  if (
-    resultater.includes("HENLAGT") &&
-    !erHenlagtIGjeldendeSteg({ steg, resultat: sak.resultat ?? null })
-  ) {
-    handlinger.push({
-      type: "HENLEGG",
-      metode: "PUT",
-      sti: `/api/v1/kontrollsaker/${sak.id}/resultat`,
-      resultatType: "HENLAGT",
     });
   }
 
@@ -373,7 +335,11 @@ export function hentMockTillatteHandlinger(sak: KontrollsakResponse): TillatteHa
     tillatteSteg: kanFlytteTil,
     muligeNesteSteg,
     tillatteStatuser:
-      steg === "AVSLUTTET" ? [] : sak.status === "I_BERO" ? [statusFørBero] : statusvalg[steg],
+      steg === "AVSLUTTET"
+        ? []
+        : sak.status === "I_BERO"
+          ? [statusFørBero]
+          : [...statusvalg[steg], "I_BERO"],
     tillatteResultater: resultater,
     paakrevdeRegistreringer: [],
     paakrevdeRegistreringerPerSteg: Object.fromEntries(

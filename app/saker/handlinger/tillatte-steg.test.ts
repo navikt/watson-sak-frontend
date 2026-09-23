@@ -136,7 +136,7 @@ describe("hentVisbareSteg", () => {
         endeligUtfall: { type: "HENLAGT" },
       },
     };
-    expect(hentVisbareSteg(svar)).toEqual([]);
+    expect(hentVisbareSteg(svar)).toEqual(["AVSLUTTET"]);
 
     svar.tilstand.resultat = {
       forvaltning: {
@@ -179,6 +179,6 @@ describe("hentVisbareSteg", () => {
       },
       ["STRAFFERETTSLIG_VURDERING", "AVSLUTTET"],
     );
-    expect(hentVisbareSteg(svar)).toEqual(["STRAFFERETTSLIG_VURDERING"]);
+    expect(hentVisbareSteg(svar)).toEqual(["STRAFFERETTSLIG_VURDERING", "AVSLUTTET"]);
   });
 });

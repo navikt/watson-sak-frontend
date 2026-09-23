@@ -95,7 +95,7 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     expect(historikk[0]?.beskrivelse).toBe("Saken tas videre til utredning");
   });
 
-  it("henlegger saken før den flyttes til avsluttet", async () => {
+  it("henlegger saken og flytter til Avsluttet i samme handling", async () => {
     const saker = hentAlleSaker(testRequest);
     const sak = saker.find((s: KontrollsakResponse) => s.steg === "UTREDES");
     expect(sak).toBeDefined();
@@ -106,29 +106,17 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     const sakId = getSaksreferanse(sak.id);
 
     await utforAction(sakId, {
-      handling: "henlegg",
-      "resultat.utredning.henleggelsesarsak": "IKKE_KAPASITET",
-    });
-
-    expect(sak.steg).toBe("UTREDES");
-    expect(sak.resultat?.utredning?.type).toBe("HENLAGT");
-
-    await expect(
-      utforAction(sakId, {
-        handling: "henlegg",
-        "resultat.utredning.henleggelsesarsak": "FORELDET",
-      }),
-    ).rejects.toMatchObject({ init: { status: 409 } });
-    expect(sak.resultat?.utredning?.henleggelsesarsak).toBe("IKKE_KAPASITET");
-
-    await utforAction(sakId, {
-      handling: "endre_steg",
+      handling: "endre_steg_dialog",
       steg: "AVSLUTTET",
+      registrerResultat: "true",
+      "resultat.utredning.type": "HENLAGT",
+      "resultat.utredning.henleggelsesarsak": "IKKE_KAPASITET",
     });
 
     expect(sak.status).toBeNull();
     expect(sak.steg).toBe("AVSLUTTET");
     expect(sak.resultat?.utredning?.type).toBe("HENLAGT");
+    expect(sak.resultat?.utredning?.henleggelsesarsak).toBe("IKKE_KAPASITET");
 
     const historikk = hentHistorikk(testRequest, sak.id);
     expect(historikk[0]?.hendelsesType).toBe("STATUS_ENDRET");
@@ -173,17 +161,26 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     sak.ytelser = sak.ytelser.map((ytelse) => ({ ...ytelse, endeligBelop: null }));
 
     const sakId = getSaksreferanse(sak.id);
-    await utforAction(sakId, {
-      handling: "henlegg",
-      "resultat.forvaltning.endeligUtfall.henleggelsesarsak": "IKKE_KAPASITET",
-    });
+    sak.resultat = {
+      forvaltning: {
+        type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+        endeligUtfall: { type: "HENLAGT", henleggelsesarsak: "IKKE_KAPASITET" },
+      },
+    };
 
     const handlinger = hentMockTillatteHandlinger(sak);
     expect(handlinger.tillatteSteg).toEqual(["AVSLUTTET"]);
     expect(handlinger.handlinger.map((handling) => handling.type)).not.toContain("HENLEGG");
     expect(sak.ytelser.every((ytelse) => ytelse.endeligBelop === null)).toBe(true);
 
-    await utforAction(sakId, { handling: "endre_steg", steg: "AVSLUTTET" });
+    await utforAction(sakId, {
+      handling: "endre_steg_dialog",
+      steg: "AVSLUTTET",
+      registrerResultat: "true",
+      "resultat.forvaltning.type": "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+      "resultat.forvaltning.endeligUtfall.type": "HENLAGT",
+      "resultat.forvaltning.endeligUtfall.henleggelsesarsak": "IKKE_KAPASITET",
+    });
     expect(sak.steg).toBe("AVSLUTTET");
   });
 
@@ -221,7 +218,8 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     const sakId = getSaksreferanse(sak.id);
 
     const resultat = await utforAction(sakId, {
-      handling: "sett_i_bero",
+      handling: "endre_status",
+      status: "I_BERO",
     });
 
     expect(resultat).toEqual({ ok: true });
@@ -241,15 +239,16 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     sak.status = "VENTER_PA_INFORMASJON";
     const sakId = getSaksreferanse(sak.id);
 
-    await utforAction(sakId, { handling: "sett_i_bero" });
+    await utforAction(sakId, { handling: "endre_status", status: "I_BERO" });
     expect(hentMockTillatteHandlinger(sak).tilstand.statusFørBero).toBe("VENTER_PA_INFORMASJON");
 
-    await utforAction(sakId, { handling: "ta_ut_av_bero" });
+    await utforAction(sakId, { handling: "endre_status", status: "VENTER_PA_INFORMASJON" });
     expect(sak.status).toBe("VENTER_PA_INFORMASJON");
     expect(sak.statusFørBero).toBeNull();
+    expect(hentHistorikk(testRequest, sak.id)[0]?.hendelsesType).toBe("SAK_GJENOPPTATT");
   });
 
-  it("registrerer resultat fra feltene i mockskjemaet", async () => {
+  it("registrerer resultat ved stegbytte fra mockskjemaet", async () => {
     const sak = hentAlleSaker(testRequest).find(
       (s: KontrollsakResponse) => s.steg === "UTREDES" && s.status !== "I_BERO",
     );
@@ -259,11 +258,14 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     const sakId = getSaksreferanse(sak.id);
 
     await utforAction(sakId, {
-      handling: "registrer_resultat",
+      handling: "endre_steg_dialog",
+      steg: "AVSLUTTET",
+      registrerResultat: "true",
       "resultat.utredning.type": "KONTROLLNOTAT",
     });
 
     expect(sak.resultat?.utredning?.type).toBe("KONTROLLNOTAT");
+    expect(sak.steg).toBe("AVSLUTTET");
   });
 
   it("avviser resultatfelter som ikke finnes i mockskjemaet", async () => {
@@ -275,14 +277,16 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
 
     await expect(
       utforAction(sakId, {
-        handling: "registrer_resultat",
+        handling: "endre_steg_dialog",
+        steg: "AVSLUTTET",
+        registrerResultat: "true",
         "resultat.utredning.type": "KONTROLLNOTAT",
         "resultat.admin.godkjent": "true",
       }),
     ).rejects.toMatchObject({ init: { status: 400 } });
   });
 
-  it("henlegger saken med årsak fra mockskjemaet", async () => {
+  it("henlegger saken ved avslutning fra mockskjemaet", async () => {
     const sak = hentAlleSaker(testRequest).find(
       (s: KontrollsakResponse) => s.steg === "UTREDES" && s.status !== "I_BERO",
     );
@@ -292,22 +296,33 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     const sakId = getSaksreferanse(sak.id);
 
     await utforAction(sakId, {
-      handling: "henlegg",
+      handling: "endre_steg_dialog",
+      steg: "AVSLUTTET",
+      registrerResultat: "true",
+      "resultat.utredning.type": "HENLAGT",
       "resultat.utredning.henleggelsesarsak": "IKKE_TILSTREKKELIG_SKYLD",
     });
 
     expect(sak.resultat?.utredning?.type).toBe("HENLAGT");
     expect(sak.resultat?.utredning?.henleggelsesarsak).toBe("IKKE_TILSTREKKELIG_SKYLD");
-    expect(sak.steg).toBe("UTREDES");
-
-    await utforAction(sakId, {
-      handling: "endre_steg_dialog",
-      steg: "AVSLUTTET",
-    });
     expect(sak.steg).toBe("AVSLUTTET");
   });
 
-  it("gjenoppta gjenoppretter status før bero", async () => {
+  it.each(["henlegg", "registrer_resultat"])("avviser separat handling %s", async (handling) => {
+    const sak = hentAlleSaker(testRequest).find((s: KontrollsakResponse) => s.steg === "UTREDES");
+    expect(sak).toBeDefined();
+    if (!sak) return;
+    settInnloggetSomEier(sak);
+    await expect(
+      utforAction(getSaksreferanse(sak.id), {
+        handling,
+        "resultat.utredning.type": "KONTROLLNOTAT",
+      }),
+    ).rejects.toMatchObject({ init: { status: 400 } });
+    expect(sak.resultat?.utredning?.type).not.toBe("KONTROLLNOTAT");
+  });
+
+  it("Endre status gjenoppretter status før bero", async () => {
     const saker = hentAlleSaker(testRequest);
     const sak = saker.find((s: KontrollsakResponse) => s.steg === "UTREDES");
     expect(sak).toBeDefined();
@@ -315,12 +330,14 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     settInnloggetSomEier(sak);
 
     sak.status = "I_BERO";
+    sak.statusFørBero = "AKTIV";
 
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
 
     const resultat = await utforAction(sakId, {
-      handling: "gjenoppta",
+      handling: "endre_status",
+      status: "AKTIV",
     });
 
     expect(resultat).toEqual({ ok: true });
@@ -426,7 +443,7 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     expect(handlingerUtenResultat.handlinger.map((handling) => handling.type)).toContain(
       "FLYTT_TIL_NESTE_STEG",
     );
-    expect(handlingerUtenResultat.handlinger.map((handling) => handling.type)).toContain(
+    expect(handlingerUtenResultat.handlinger.map((handling) => handling.type)).not.toContain(
       "REGISTRER_RESULTAT",
     );
 
@@ -562,7 +579,7 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     expect(henlagtUtenEndeligBelop.handlinger.map((handling) => handling.type)).not.toContain(
       "HENLEGG",
     );
-    expect(henlagtUtenEndeligBelop.handlinger.map((handling) => handling.type)).toContain(
+    expect(henlagtUtenEndeligBelop.handlinger.map((handling) => handling.type)).not.toContain(
       "REGISTRER_RESULTAT",
     );
     expect(henlagtUtenEndeligBelop.paakrevdeRegistreringerPerSteg.AVSLUTTET).not.toContain(
