@@ -525,6 +525,81 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(kontrollsak.saksbehandlere.eier?.navIdent).toBe("Z123456");
   });
 
+  it("flytter en sak fra Opprettet til Utredning når saksbehandleren velger Tildel meg", async () => {
+    const sak = hentFordelingssaker(state())[0];
+    const sakRef = getSaksreferanse(sak.id);
+    sak.steg = "OPPRETTET";
+    sak.status = null;
+    sak.saksbehandlere.eier = null;
+
+    const formData = new FormData();
+    formData.set("handling", "TILDEL_MEG");
+    formData.set("navIdent", "Z111111");
+
+    const resultat = await action({
+      request: new Request(`http://localhost/saker/${sakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: sakRef },
+    } as Route.ActionArgs);
+
+    expect(resultat).toMatchObject({ ok: true });
+    expect(sak.saksbehandlere.eier).toMatchObject({ navIdent: "Z999999" });
+    expect(sak.steg).toBe("UTREDNING");
+    expect(sak.status).toBe("AKTIV");
+    expect(
+      hentHistorikk(testRequest, sak.id)
+        .map((hendelse) => hendelse.hendelsesType)
+        .slice(0, 2),
+    ).toEqual(["STATUS_ENDRET", "SAK_TILDELT"]);
+  });
+
+  it("endrer ikke steg ved Tildel meg når saken allerede er i Utredning", async () => {
+    const sak = hentFordelingssaker(state())[0];
+    const sakRef = getSaksreferanse(sak.id);
+    sak.steg = "UTREDNING";
+    sak.status = "AKTIV";
+    sak.saksbehandlere.eier = null;
+
+    const formData = new FormData();
+    formData.set("handling", "TILDEL_MEG");
+    await action({
+      request: new Request(`http://localhost/saker/${sakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: sakRef },
+    } as Route.ActionArgs);
+
+    expect(sak.saksbehandlere.eier).toMatchObject({ navIdent: "Z999999" });
+    expect(sak.steg).toBe("UTREDNING");
+    expect(hentHistorikk(testRequest, sak.id)[0]?.hendelsesType).toBe("SAK_TILDELT");
+  });
+
+  it("avviser Tildel meg fra Opprettet når saken står i bero", async () => {
+    const sak = hentFordelingssaker(state())[0];
+    const sakRef = getSaksreferanse(sak.id);
+    sak.steg = "OPPRETTET";
+    sak.status = "I_BERO";
+    sak.saksbehandlere.eier = null;
+    const formData = new FormData();
+    formData.set("handling", "TILDEL_MEG");
+
+    await expect(
+      action({
+        request: new Request(`http://localhost/saker/${sakRef}`, {
+          method: "POST",
+          body: formData,
+        }),
+        params: { sakId: sakRef },
+      } as Route.ActionArgs),
+    ).rejects.toMatchObject({ init: { status: 409 } });
+
+    expect(sak.saksbehandlere.eier).toBeNull();
+    expect(sak.steg).toBe("OPPRETTET");
+  });
+
   it("tildeler ownerløs sak med konsistent saksbehandlerident", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);

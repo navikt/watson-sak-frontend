@@ -277,6 +277,7 @@ function finnNotatMalLabel(verdi: FormDataEntryValue | null): string | undefined
 /** Handlinger som tillates uten å være sakseier */
 const tildelingshandlinger = new Set([
   "TILDEL",
+  "TILDEL_MEG",
   "FRISTILL",
   "overfor_ansvarlig",
   "send_til_annen_enhet",
@@ -580,6 +581,26 @@ async function backendAction(
   }
 
   switch (handling) {
+    case "TILDEL_MEG": {
+      const innlogget = await hentInnloggetBruker({ request });
+      const tillatte = await backendApi.hentTillatteHandlinger(token, sakId);
+      if (tillatte.tilstand.steg === "OPPRETTET" && !tillatte.tillatteSteg.includes("UTREDNING")) {
+        throw data("Saken kan ikke flyttes til Utredning i gjeldende tilstand", { status: 409 });
+      }
+      const tildelt = await backendApi.tildelKontrollsak(token, sakId, innlogget.navIdent);
+      if (tildelt.steg !== "OPPRETTET") return { ok: true, sak: tildelt };
+
+      try {
+        const sak = await backendApi.endreSteg(token, sakId, 1, "UTREDNING");
+        return { ok: true, sak };
+      } catch (feil) {
+        if (!(feil instanceof backendApi.BackendFeilException)) throw feil;
+        throw data(
+          "Saken ble tildelt deg, men kunne ikke flyttes til Utredning. Flytt saken manuelt før du fortsetter.",
+          { status: feil.status },
+        );
+      }
+    }
     case "TILDEL": {
       const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
       const sak = await backendApi.tildelKontrollsak(token, sakId, navIdent);
@@ -1033,6 +1054,31 @@ async function mockAction(
   }
 
   switch (handling) {
+    case "TILDEL_MEG": {
+      if (sak.saksbehandlere.eier) {
+        throw data("Saken har allerede en saksbehandler", { status: 409 });
+      }
+      if (sak.steg === "OPPRETTET" && !tillatte.tillatteSteg.includes("UTREDNING")) {
+        throw data("Saken kan ikke flyttes til Utredning i gjeldende tilstand", { status: 409 });
+      }
+      const innlogget = await hentInnloggetBruker({ request });
+      const valgtSaksbehandler = finnSaksbehandlerDetalj(
+        mockSaksbehandlerDetaljer,
+        innlogget.navIdent,
+      ) ?? {
+        navIdent: innlogget.navIdent,
+        navn: innlogget.name,
+        enhet: innlogget.enhet,
+      };
+      sak.saksbehandlere.eier = valgtSaksbehandler;
+      leggTilHendelse(request, sak, "SAK_TILDELT");
+      if (sak.steg === "OPPRETTET") {
+        sak.steg = "UTREDNING";
+        sak.status = "AKTIV";
+        leggTilHendelse(request, sak, "STATUS_ENDRET", undefined, { status: sak.status });
+      }
+      break;
+    }
     case "TILDEL": {
       const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
       const navn = hentValgfriTekst(formData, "navn") ?? navIdent;

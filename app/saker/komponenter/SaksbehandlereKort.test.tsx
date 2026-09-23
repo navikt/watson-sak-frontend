@@ -104,6 +104,31 @@ describe("SaksbehandlereKort", () => {
     });
   });
 
+  it("sender egen handling når Tildel meg brukes", async () => {
+    const sak = lagKontrollsak({
+      steg: "OPPRETTET",
+      saksbehandlere: {
+        eier: null,
+        deltMed: [],
+        opprettetAv: lagSaksbehandler(),
+      },
+    });
+    await renderMedRouter(
+      <SaksbehandlereKort
+        erEier={false}
+        sak={sak}
+        saksbehandlerDetaljer={[]}
+        ansvarligSaksbehandler={null}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Tildel meg" }));
+    expect(submitMock).toHaveBeenCalledWith(
+      { handling: "TILDEL_MEG" },
+      { method: "post", action: expect.any(String) },
+    );
+  });
+
   it("viser Del tilgang i saksbehandler-boksen for aktiv sak med ansvarlig saksbehandler", async () => {
     await renderMedRouter(
       <SaksbehandlereKort

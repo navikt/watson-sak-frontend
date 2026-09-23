@@ -86,10 +86,7 @@ export function SaksbehandlereKort({
   }
 
   function handleTildelMeg() {
-    tildelMegFetcher.submit(
-      { handling: "TILDEL", navIdent: innloggetBruker.navIdent, navn: innloggetBruker.name },
-      { method: "post", action: sakPath },
-    );
+    tildelMegFetcher.submit({ handling: "TILDEL_MEG" }, { method: "post", action: sakPath });
   }
 
   function handleFjernSaksbehandler() {
