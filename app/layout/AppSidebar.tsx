@@ -13,6 +13,8 @@ import {
 import { Tooltip } from "@navikt/ds-react";
 import { useState, type ComponentType } from "react";
 import { NavLink } from "react-router";
+import { skalBrukeMockdataForMiljø } from "~/config/backend-config";
+import { useMiljø } from "~/miljø/useMiljø";
 import { usePreferences } from "~/preferanser/PreferencesContext";
 import { RouteConfig } from "~/routeConfig";
 import { InnstillingerModal } from "./InnstillingerModal";
@@ -42,6 +44,10 @@ export function AppSidebar() {
   const [erInnstillingerApne, setErInnstillingerApne] = useState(false);
 
   const erKollapset = preferences.sidebarKollapset;
+  const miljø = useMiljø();
+  const synligeLenker = lenker.filter(
+    (lenke) => lenke.to !== RouteConfig.MIGRERING || (miljø && skalBrukeMockdataForMiljø(miljø)),
+  );
 
   const toggleSidebar = () => {
     oppdaterPreference("sidebarKollapset", !preferences.sidebarKollapset);
@@ -57,7 +63,7 @@ export function AppSidebar() {
         }`}
       >
         <ul className="flex flex-col list-none m-0 p-0 pt-4 flex-1">
-          {lenker.map(({ to, label, icon: Icon }) => {
+          {synligeLenker.map(({ to, label, icon: Icon }) => {
             const lenkInnhold = (
               <NavLink
                 to={to}
