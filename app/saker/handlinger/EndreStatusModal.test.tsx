@@ -169,6 +169,42 @@ describe("EndreStatusModal", () => {
     expect(screen.queryByRole("radio", { name: "Avsluttet" })).toBeNull();
   });
 
+  it("viser bare Avsluttet fra Forvaltning etter henleggelse", async () => {
+    await visModal("FLYTT_TIL_NESTE_STEG", {
+      ...basisHandlinger,
+      tilstand: {
+        ...basisHandlinger.tilstand,
+        steg: "FORVALTNING",
+        resultat: {
+          forvaltning: {
+            type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+            endeligUtfall: { type: "HENLAGT", henleggelsesarsak: "IKKE_KAPASITET" },
+          },
+        },
+      },
+      tillatteSteg: ["STRAFFERETTSLIG_VURDERING", "AVSLUTTET"],
+      feltskjema: [
+        {
+          felt: "forvaltning.endeligUtfall.type",
+          etikett: "Endelig resultat",
+          datatype: "enum",
+          paakrevd: false,
+          verdier: [{ verdi: "HENLAGT", etikett: "Henlagt" }],
+        },
+        {
+          felt: "forvaltning.endeligUtfall.henleggelsesarsak",
+          etikett: "Årsak",
+          datatype: "enum",
+          paakrevd: false,
+          verdier: [{ verdi: "IKKE_KAPASITET", etikett: "Ikke kapasitet" }],
+        },
+      ],
+    });
+
+    expect(screen.getByRole("radio", { name: "Avsluttet" })).toBeDefined();
+    expect(screen.queryByRole("radio", { name: "Strafferettslig vurdering" })).toBeNull();
+  });
+
   it("sender inn resultat med versjonert request og feltnavn fra schemaet", async () => {
     await visModal("REGISTRER_RESULTAT");
 

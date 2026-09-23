@@ -205,6 +205,54 @@ describe("SakDetaljSide loader — backend-sti", () => {
     expect(mockEndreSteg).not.toHaveBeenCalled();
   });
 
+  it("avviser stegbytte fra henlagt Forvaltning til Strafferettslig vurdering", async () => {
+    mockHentTillatteHandlinger.mockResolvedValue({
+      versjon: 1,
+      tilstand: {
+        steg: "FORVALTNING",
+        status: "VENTER_PA_VEDTAK",
+        statusFørBero: null,
+        resultat: {
+          forvaltning: {
+            type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+            endeligUtfall: { type: "HENLAGT", henleggelsesarsak: "IKKE_KAPASITET" },
+          },
+        },
+        ytelser: [],
+      },
+      handlinger: [
+        { type: "FLYTT_TIL_NESTE_STEG", metode: "POST", sti: "/api/v1/kontrollsaker/1/steg" },
+      ],
+      tillatteSteg: ["STRAFFERETTSLIG_VURDERING", "AVSLUTTET"],
+      feltskjema: [
+        {
+          felt: "forvaltning.endeligUtfall.type",
+          etikett: "Endelig resultat",
+          datatype: "enum",
+          paakrevd: false,
+          verdier: [{ verdi: "HENLAGT", etikett: "Henlagt" }],
+        },
+        {
+          felt: "forvaltning.endeligUtfall.henleggelsesarsak",
+          etikett: "Årsak",
+          datatype: "enum",
+          paakrevd: false,
+          verdier: [{ verdi: "IKKE_KAPASITET", etikett: "Ikke kapasitet" }],
+        },
+      ],
+    });
+    const formData = new FormData();
+    formData.set("handling", "endre_steg_dialog");
+    formData.set("steg", "STRAFFERETTSLIG_VURDERING");
+    const request = new Request("http://localhost/saker/1", { method: "POST", body: formData });
+    const { action } = await import("./SakDetaljSide.server");
+
+    await expect(
+      action({ request, params: { sakId: "1" }, context: {} } as Parameters<typeof action>[0]),
+    ).rejects.toMatchObject({ init: { status: 409 } });
+    expect(mockEndreSteg).not.toHaveBeenCalled();
+  });
+
   it("lar andre feil enn 403 fra hentFiler boble opp (kaster fortsatt loaderen)", async () => {
     mockHentKontrollsak.mockResolvedValue(grunnleggendeSak);
     mockHentHendelser.mockResolvedValue([]);
