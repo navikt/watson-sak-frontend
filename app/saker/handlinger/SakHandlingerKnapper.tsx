@@ -1,4 +1,4 @@
-import { DocPencilIcon, PencilIcon, TasklistIcon } from "@navikt/aksel-icons";
+import { DocPencilIcon, TasklistIcon } from "@navikt/aksel-icons";
 import { Button, Heading, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import type { DokumentNode, FilResponse } from "~/saker/filer/typer";
@@ -87,9 +87,8 @@ export function SakHandlingerKnapper({
           return (
             <Button
               key={handling.type}
-              variant="primary"
+              variant={handling.type === "FLYTT_TIL_NESTE_STEG" ? "primary" : "secondary-neutral"}
               size="medium"
-              icon={<PencilIcon aria-hidden />}
               data-color={handling.type === "HENLEGG" ? "danger" : undefined}
               onClick={() => setÅpenTilstandshandling(handling.type)}
             >

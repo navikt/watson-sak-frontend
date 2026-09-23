@@ -35,7 +35,10 @@ import { hentMockState } from "~/testing/mock-store/session.server";
 import { notatMalValg } from "./handlinger/notatValg";
 import { byggLagreResultatRequest, validerResultatFeltNavn } from "./handlinger/resultat-request";
 import { erAktivSakKontrollsak, erSakseier } from "./handlinger/tilgjengeligeHandlinger";
-import { hentMockTillatteHandlinger } from "./mock-tillatte-handlinger.server";
+import {
+  erGyldigMockStegovergang,
+  hentMockTillatteHandlinger,
+} from "./mock-tillatte-handlinger.server";
 import {
   hentHistorikk,
   leggTilHendelse,
@@ -242,56 +245,6 @@ function lagreMockResultat(sak: KontrollsakResponse, resultat: LagreResultatRequ
           }
         : ytelse;
     });
-  }
-}
-
-function erGyldigMockStegovergang(sak: KontrollsakResponse, nyttSteg: KontrollsakSteg): boolean {
-  const steg = sak.steg === "UTREDES" ? "UTREDNING" : sak.steg;
-  const ytelserHarAntattBelop = sak.ytelser.every((ytelse) => ytelse.belop !== null);
-  const ytelserHarEndeligBelop = sak.ytelser.every((ytelse) => ytelse.endeligBelop !== null);
-  switch (steg) {
-    case "OPPRETTET":
-      return nyttSteg === "UTREDNING" || nyttSteg === "STRAFFERETTSLIG_VURDERING";
-    case "UTREDNING":
-      if (nyttSteg === "FORVALTNING") {
-        return (
-          ["FEILUTBETALINGSSAK_ORDINAER", "FEILUTBETALINGSSAK_POTENSIELL_STRAFFESAK"].includes(
-            sak.resultat?.utredning?.type ?? "",
-          ) && ytelserHarAntattBelop
-        );
-      }
-      return (
-        nyttSteg === "AVSLUTTET" &&
-        ["KONTROLLNOTAT", "HENLAGT"].includes(sak.resultat?.utredning?.type ?? "")
-      );
-    case "FORVALTNING":
-      if (nyttSteg === "STRAFFERETTSLIG_VURDERING") {
-        return (
-          sak.resultat?.forvaltning?.type === "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE" &&
-          ytelserHarEndeligBelop
-        );
-      }
-      return (
-        nyttSteg === "AVSLUTTET" &&
-        sak.resultat?.forvaltning?.type === "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE" &&
-        sak.resultat.forvaltning.endeligUtfall !== null &&
-        sak.resultat.forvaltning.endeligUtfall !== undefined &&
-        ytelserHarEndeligBelop
-      );
-    case "STRAFFERETTSLIG_VURDERING":
-      if (nyttSteg === "POLITI") {
-        return sak.resultat?.strafferettsligVurdering?.type === "ANMELDT";
-      }
-      return (
-        nyttSteg === "AVSLUTTET" &&
-        ["KONTROLLNOTAT", "FEILUTBETALINGSSAK_ORDINAER", "HENLAGT"].includes(
-          sak.resultat?.strafferettsligVurdering?.type ?? "",
-        )
-      );
-    case "POLITI":
-      return nyttSteg === "AVSLUTTET" && Boolean(sak.resultat?.politi);
-    default:
-      return false;
   }
 }
 
@@ -1110,6 +1063,7 @@ async function mockAction(
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
       const forrigeStatus = sak.status;
       const registrerResultat = formData.get("registrerResultat") === "true";
+      const kandidat = { ...sak };
       try {
         const resultat = byggLagreResultatRequest(
           formData,
@@ -1121,7 +1075,7 @@ async function mockAction(
         );
         if (registrerResultat && !resultat) throw new Error("Velg et resultat før du fortsetter");
         if (resultat) {
-          lagreMockResultat(sak, resultat);
+          lagreMockResultat(kandidat, resultat);
         }
       } catch (feil) {
         throw data(feil instanceof Error ? feil.message : "Ugyldige resultatfelter", {
@@ -1129,9 +1083,11 @@ async function mockAction(
         });
       }
 
-      if (!erGyldigMockStegovergang(sak, nyttSteg as KontrollsakSteg)) {
+      if (!erGyldigMockStegovergang(kandidat, nyttSteg as KontrollsakSteg)) {
         throw data("Stegbyttet er ikke gyldig for registrert resultat", { status: 409 });
       }
+      sak.resultat = kandidat.resultat;
+      sak.ytelser = kandidat.ytelser;
       sak.steg = nyttSteg as KontrollsakSteg;
       sak.status = (
         {
@@ -1172,6 +1128,7 @@ async function mockAction(
     }
     case "sett_i_bero": {
       krevTillattHandling(tillatte, "SETT_I_BERO");
+      sak.statusFørBero = sak.status;
       sak.status = "I_BERO";
       leggTilHendelse(request, sak, "SAK_SATT_I_BERO");
       break;
@@ -1180,6 +1137,7 @@ async function mockAction(
       krevTillattHandling(tillatte, "TA_UT_AV_BERO");
       const status = tillatte.tilstand.statusFørBero;
       sak.status = status;
+      sak.statusFørBero = null;
       leggTilHendelse(request, sak, "SAK_GJENOPPTATT", undefined, { status });
       break;
     }
@@ -1208,6 +1166,7 @@ async function mockAction(
     case "gjenoppta": {
       krevTillattHandling(tillatte, "TA_UT_AV_BERO");
       sak.status = tillatte.tilstand.statusFørBero;
+      sak.statusFørBero = null;
       leggTilHendelse(request, sak, "SAK_GJENOPPTATT", undefined, {
         status: tillatte.tilstand.statusFørBero ?? undefined,
       });

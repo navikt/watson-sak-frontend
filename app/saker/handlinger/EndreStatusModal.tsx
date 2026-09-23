@@ -87,6 +87,30 @@ function hentHandlingensApiType(handling: Handlingstype): string {
   }
 }
 
+function hentRegistrerteResultatverdier(
+  tillatteHandlinger: TillatteHandlingerResponse,
+): Record<string, string> {
+  const verdier: Record<string, string> = {};
+  for (const felt of tillatteHandlinger.feltskjema) {
+    if (felt.datatype === "belop") continue;
+    const erEndeligUtfall = felt.felt.startsWith("forvaltning.endeligUtfall.");
+    const resultat = tillatteHandlinger.tilstand.resultat;
+    let verdi: unknown = erEndeligUtfall
+      ? (resultat?.forvaltning?.endeligUtfall ?? resultat?.endeligUtfall)
+      : resultat;
+    for (const del of felt.felt.split(".").slice(erEndeligUtfall ? 2 : 0)) {
+      verdi =
+        verdi !== null && typeof verdi === "object" && del in verdi
+          ? (verdi as Record<string, unknown>)[del]
+          : undefined;
+    }
+    if (typeof verdi === "string" || typeof verdi === "boolean") {
+      verdier[felt.felt] = String(verdi);
+    }
+  }
+  return verdier;
+}
+
 function ResultatFelt({
   felt,
   tillatteHandlinger,
@@ -227,7 +251,10 @@ export function EndreStatusModal({
       setValgtSteg("");
       setValgtStatus(statusverdi(tillatteHandlinger.tilstand.status));
       setRegistrerResultat(false);
-      setResultatverdier(tvungneResultatverdier);
+      setResultatverdier({
+        ...hentRegistrerteResultatverdier(tillatteHandlinger),
+        ...tvungneResultatverdier,
+      });
     }
     forrigeHandling.current = handling;
   }, [handling, tillatteHandlinger.tilstand.status, feltskjema, henleggType]);

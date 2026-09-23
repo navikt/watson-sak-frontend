@@ -318,6 +318,7 @@ export const kontrollsakResponseSchema = z
       saksbehandlere: saksbehandlereSchema,
       steg: kontrollsakStegSchema,
       status: kontrollsakStatusSchema.nullable(),
+      statusFørBero: kontrollsakStatusSchema.nullable().optional(),
       resultat: resultatResponseSchema.nullable().optional(),
       kategori: kontrollsakKategoriSchema,
       kilde: kontrollsakKildeSchema,

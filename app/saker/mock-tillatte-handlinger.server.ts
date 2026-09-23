@@ -6,6 +6,59 @@ import type {
   TillatteHandlingerResponse,
 } from "./types.backend";
 
+export function erGyldigMockStegovergang(
+  sak: KontrollsakResponse,
+  nyttSteg: KontrollsakSteg,
+): boolean {
+  if (sak.status === "I_BERO") return false;
+  const steg = sak.steg === "UTREDES" ? "UTREDNING" : sak.steg;
+  const ytelserHarAntattBelop = sak.ytelser.every((ytelse) => ytelse.belop !== null);
+  const ytelserHarEndeligBelop = sak.ytelser.every((ytelse) => ytelse.endeligBelop !== null);
+  switch (steg) {
+    case "OPPRETTET":
+      return nyttSteg === "UTREDNING" || nyttSteg === "STRAFFERETTSLIG_VURDERING";
+    case "UTREDNING":
+      if (nyttSteg === "FORVALTNING") {
+        return (
+          ["FEILUTBETALINGSSAK_ORDINAER", "FEILUTBETALINGSSAK_POTENSIELL_STRAFFESAK"].includes(
+            sak.resultat?.utredning?.type ?? "",
+          ) && ytelserHarAntattBelop
+        );
+      }
+      return (
+        nyttSteg === "AVSLUTTET" &&
+        ["KONTROLLNOTAT", "HENLAGT"].includes(sak.resultat?.utredning?.type ?? "")
+      );
+    case "FORVALTNING":
+      if (nyttSteg === "STRAFFERETTSLIG_VURDERING") {
+        return (
+          sak.resultat?.forvaltning?.type === "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE" &&
+          ytelserHarEndeligBelop
+        );
+      }
+      return (
+        nyttSteg === "AVSLUTTET" &&
+        sak.resultat?.forvaltning?.type === "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE" &&
+        (sak.resultat.forvaltning.endeligUtfall ?? sak.resultat.endeligUtfall) != null &&
+        ytelserHarEndeligBelop
+      );
+    case "STRAFFERETTSLIG_VURDERING":
+      if (nyttSteg === "POLITI") {
+        return sak.resultat?.strafferettsligVurdering?.type === "ANMELDT";
+      }
+      return (
+        nyttSteg === "AVSLUTTET" &&
+        ["KONTROLLNOTAT", "FEILUTBETALINGSSAK_ORDINAER", "HENLAGT"].includes(
+          sak.resultat?.strafferettsligVurdering?.type ?? "",
+        )
+      );
+    case "POLITI":
+      return nyttSteg === "AVSLUTTET" && Boolean(sak.resultat?.politi);
+    default:
+      return false;
+  }
+}
+
 const resultatvalg: Partial<Record<KontrollsakSteg, ResultatType[]>> = {
   UTREDNING: [
     "KONTROLLNOTAT",
@@ -202,23 +255,12 @@ export function hentMockTillatteHandlinger(sak: KontrollsakResponse): TillatteHa
     ...ytelse,
     id: ytelse.id ?? `00000000-0000-4000-8000-${(sak.id + indeks).toString(16).padStart(12, "0")}`,
   }));
-  const kanFlytteTil: KontrollsakSteg[] = (() => {
+  const muligeNesteSteg: KontrollsakSteg[] = (() => {
     switch (steg) {
       case "OPPRETTET":
-        return ["UTREDNING", "STRAFFERETTSLIG_VURDERING"] as KontrollsakSteg[];
-      case "UTREDNING": {
-        const utredningsresultat = sak.resultat?.utredning?.type;
-        switch (utredningsresultat) {
-          case "KONTROLLNOTAT":
-          case "HENLAGT":
-            return ["AVSLUTTET"];
-          case "FEILUTBETALINGSSAK_ORDINAER":
-          case "FEILUTBETALINGSSAK_POTENSIELL_STRAFFESAK":
-            return ["FORVALTNING"];
-          default:
-            return [];
-        }
-      }
+        return ["UTREDNING", "STRAFFERETTSLIG_VURDERING"];
+      case "UTREDNING":
+        return ["FORVALTNING", "AVSLUTTET"];
       case "FORVALTNING":
         return ["STRAFFERETTSLIG_VURDERING", "AVSLUTTET"];
       case "STRAFFERETTSLIG_VURDERING":
@@ -229,6 +271,9 @@ export function hentMockTillatteHandlinger(sak: KontrollsakResponse): TillatteHa
         return [];
     }
   })();
+  const kanFlytteTil = muligeNesteSteg.filter((nesteSteg) =>
+    erGyldigMockStegovergang(sak, nesteSteg),
+  );
   const statusvalg: Record<KontrollsakSteg, (KontrollsakStatus | null)[]> = {
     OPPRETTET: [null],
     UTREDNING: ["AKTIV", "VENTER_PA_INFORMASJON"],
@@ -239,6 +284,12 @@ export function hentMockTillatteHandlinger(sak: KontrollsakResponse): TillatteHa
     ANMELDT: ["VENTER_PA_RESULTAT"],
     AVSLUTTET: [],
   };
+  const statusFørBero =
+    sak.status === "I_BERO"
+      ? sak.statusFørBero !== undefined
+        ? sak.statusFørBero
+        : (statusvalg[steg][0] ?? null)
+      : null;
   if (steg !== "AVSLUTTET" && sak.status !== "I_BERO") {
     if (kanFlytteTil.length > 0) {
       handlinger.push({
@@ -287,13 +338,14 @@ export function hentMockTillatteHandlinger(sak: KontrollsakResponse): TillatteHa
     tilstand: {
       steg,
       status: sak.status,
-      statusFørBero: sak.status === "I_BERO" ? "AKTIV" : null,
+      statusFørBero,
       resultat: sak.resultat ?? null,
       ytelser,
     },
     handlinger,
     tillatteSteg: kanFlytteTil,
-    tillatteStatuser: steg === "AVSLUTTET" ? [] : statusvalg[steg],
+    tillatteStatuser:
+      steg === "AVSLUTTET" ? [] : sak.status === "I_BERO" ? [statusFørBero] : statusvalg[steg],
     tillatteResultater: resultater,
     paakrevdeRegistreringer: [],
     paakrevdeRegistreringerPerSteg: Object.fromEntries(

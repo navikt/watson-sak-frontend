@@ -171,6 +171,24 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     expect(historikk[0]?.status).toBe("I_BERO");
   });
 
+  it("gjenoppretter statusen saken faktisk hadde før bero i mockflyten", async () => {
+    const sak = hentAlleSaker(testRequest).find(
+      (s: KontrollsakResponse) => s.steg === "UTREDES" && s.status !== "I_BERO",
+    );
+    expect(sak).toBeDefined();
+    if (!sak) return;
+    settInnloggetSomEier(sak);
+    sak.status = "VENTER_PA_INFORMASJON";
+    const sakId = getSaksreferanse(sak.id);
+
+    await utforAction(sakId, { handling: "sett_i_bero" });
+    expect(hentMockTillatteHandlinger(sak).tilstand.statusFørBero).toBe("VENTER_PA_INFORMASJON");
+
+    await utforAction(sakId, { handling: "ta_ut_av_bero" });
+    expect(sak.status).toBe("VENTER_PA_INFORMASJON");
+    expect(sak.statusFørBero).toBeNull();
+  });
+
   it("registrerer resultat fra feltene i mockskjemaet", async () => {
     const sak = hentAlleSaker(testRequest).find(
       (s: KontrollsakResponse) => s.steg === "UTREDES" && s.status !== "I_BERO",
@@ -353,13 +371,20 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
 
     const feilutbetaling: KontrollsakResponse = {
       ...utenResultat,
+      ytelser: utenResultat.ytelser.map((ytelse) => ({ ...ytelse, belop: null })),
       resultat: {
         utredning: {
           type: "FEILUTBETALINGSSAK_ORDINAER",
         },
       },
     };
-    expect(hentMockTillatteHandlinger(feilutbetaling).tillatteSteg).toEqual(["FORVALTNING"]);
+    expect(hentMockTillatteHandlinger(feilutbetaling).tillatteSteg).toEqual([]);
+    expect(
+      hentMockTillatteHandlinger({
+        ...feilutbetaling,
+        ytelser: feilutbetaling.ytelser.map((ytelse) => ({ ...ytelse, belop: 0 })),
+      }).tillatteSteg,
+    ).toEqual(["FORVALTNING"]);
 
     const henlagt: KontrollsakResponse = {
       ...utenResultat,
@@ -371,6 +396,72 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
       },
     };
     expect(hentMockTillatteHandlinger(henlagt).tillatteSteg).toEqual(["AVSLUTTET"]);
+  });
+
+  it("tilbyr bare steg som lagret forvaltnings- og strafferettslig resultat åpner", () => {
+    const sak = hentAlleSaker(testRequest).find((s: KontrollsakResponse) => s.steg === "UTREDES");
+    expect(sak).toBeDefined();
+    if (!sak) return;
+    const forvaltning: KontrollsakResponse = {
+      ...sak,
+      steg: "FORVALTNING",
+      resultat: null,
+      ytelser: sak.ytelser.map((ytelse) => ({ ...ytelse, endeligBelop: 0 })),
+    };
+    expect(hentMockTillatteHandlinger(forvaltning).tillatteSteg).toEqual([]);
+    expect(
+      hentMockTillatteHandlinger({
+        ...forvaltning,
+        resultat: { forvaltning: { type: "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE" } },
+      }).tillatteSteg,
+    ).toEqual(["STRAFFERETTSLIG_VURDERING"]);
+    expect(
+      hentMockTillatteHandlinger({
+        ...forvaltning,
+        resultat: {
+          forvaltning: {
+            type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+            endeligUtfall: { type: "KONTROLLNOTAT" },
+          },
+        },
+      }).tillatteSteg,
+    ).toEqual(["AVSLUTTET"]);
+    const vurdering: KontrollsakResponse = {
+      ...sak,
+      steg: "STRAFFERETTSLIG_VURDERING",
+      resultat: null,
+    };
+    expect(hentMockTillatteHandlinger(vurdering).tillatteSteg).toEqual([]);
+    expect(
+      hentMockTillatteHandlinger({
+        ...vurdering,
+        resultat: { strafferettsligVurdering: { type: "ANMELDT" } },
+      }).tillatteSteg,
+    ).toEqual(["POLITI"]);
+    expect(hentMockTillatteHandlinger({ ...vurdering, status: "I_BERO" }).tillatteSteg).toEqual([]);
+  });
+
+  it("beholder lagret resultat når stegbytte med nytt resultat avvises", async () => {
+    const sak = hentAlleSaker(testRequest).find(
+      (s: KontrollsakResponse) => s.steg === "UTREDES" && s.status !== "I_BERO",
+    );
+    expect(sak).toBeDefined();
+    if (!sak) return;
+    settInnloggetSomEier(sak);
+    sak.resultat = { utredning: { type: "FEILUTBETALINGSSAK_ORDINAER" } };
+    sak.ytelser = sak.ytelser.map((ytelse) => ({ ...ytelse, belop: 0 }));
+
+    await expect(
+      utforAction(getSaksreferanse(sak.id), {
+        handling: "endre_steg_dialog",
+        steg: "FORVALTNING",
+        registrerResultat: "true",
+        "resultat.utredning.type": "KONTROLLNOTAT",
+      }),
+    ).rejects.toMatchObject({ init: { status: 409 } });
+
+    expect(sak.steg).toBe("UTREDES");
+    expect(sak.resultat?.utredning?.type).toBe("FEILUTBETALINGSSAK_ORDINAER");
   });
 
   it("endre_status avviser ugyldig verdi", async () => {

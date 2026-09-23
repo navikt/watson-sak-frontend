@@ -162,6 +162,65 @@ describe("EndreStatusModal", () => {
     ).toBeDefined();
   });
 
+  it("viser registrert resultat når det åpnes for endring", async () => {
+    await visModal("REGISTRER_RESULTAT", {
+      ...basisHandlinger,
+      tilstand: {
+        ...basisHandlinger.tilstand,
+        resultat: {
+          utredning: {
+            type: "HENLAGT",
+            henleggelsesarsak: "IKKE_TILSTREKKELIG_SKYLD",
+          },
+        },
+      },
+    });
+
+    expect(screen.getByLabelText("Resultat fra utredningen")).toHaveProperty("value", "HENLAGT");
+    expect(screen.getByLabelText("Årsak til henleggelse")).toHaveProperty(
+      "value",
+      "IKKE_TILSTREKKELIG_SKYLD",
+    );
+  });
+
+  it("viser lagret endelig utfall fra forvaltningen", async () => {
+    await visModal("REGISTRER_RESULTAT", {
+      ...basisHandlinger,
+      tilstand: {
+        ...basisHandlinger.tilstand,
+        steg: "FORVALTNING",
+        resultat: {
+          forvaltning: { type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE" },
+          endeligUtfall: { type: "KONTROLLNOTAT" },
+        },
+      },
+      feltskjema: [
+        {
+          felt: "forvaltning.type",
+          etikett: "Forvaltningens vurdering",
+          datatype: "enum",
+          paakrevd: true,
+          verdier: [
+            {
+              verdi: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+              etikett: "Saken skal ikke vurderes for anmeldelse",
+            },
+          ],
+        },
+        {
+          felt: "forvaltning.endeligUtfall.type",
+          etikett: "Endelig resultat",
+          datatype: "enum",
+          paakrevd: false,
+          paakrevdNar: "forvaltning.type=SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+          verdier: [{ verdi: "KONTROLLNOTAT", etikett: "Kontrollnotat" }],
+        },
+      ],
+    });
+
+    expect(screen.getByLabelText("Endelig resultat")).toHaveProperty("value", "KONTROLLNOTAT");
+  });
+
   it("viser betingede tekst- og boolske felter og beløp fra ytelsene", async () => {
     const politiHandlinger: TillatteHandlingerResponse = {
       ...basisHandlinger,
