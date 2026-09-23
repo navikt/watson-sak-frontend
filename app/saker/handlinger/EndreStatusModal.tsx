@@ -513,7 +513,8 @@ export function EndreStatusModal({
                       }
                       tvungetVerdi={tvungneResultatverdier[felt.felt]}
                       belopPaakrevd={
-                        overgangKreverBelop && paakrevdeFelterForOvergang.includes(felt.felt)
+                        overgangKreverBelop &&
+                        paakrevdeFelterForOvergang.some((krav) => krav.startsWith(felt.felt))
                       }
                       tilSteg={erStegskjema && valgtSteg ? valgtSteg : undefined}
                     />

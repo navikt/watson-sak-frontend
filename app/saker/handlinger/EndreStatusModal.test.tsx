@@ -288,6 +288,71 @@ describe("EndreStatusModal", () => {
     expect(formData.get("resultat.forvaltning.endeligUtfall.type")).toBe("KONTROLLNOTAT");
   });
 
+  it("krever endelig beløp ved avslutning fra Forvaltning uten henleggelse", async () => {
+    const ytelseId = "00000000-0000-4000-8000-000000000001";
+    await visModal("FLYTT_TIL_NESTE_STEG", {
+      ...basisHandlinger,
+      tilstand: {
+        ...basisHandlinger.tilstand,
+        steg: "FORVALTNING",
+        resultat: {
+          forvaltning: {
+            type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+            endeligUtfall: { type: "KONTROLLNOTAT" },
+          },
+        },
+        ytelser: [
+          {
+            id: ytelseId,
+            type: "SYKEPENGER",
+            periodeFra: null,
+            periodeTil: null,
+            belop: null,
+            endeligBelop: null,
+          },
+        ],
+      },
+      tillatteSteg: [],
+      muligeNesteSteg: ["AVSLUTTET"],
+      paakrevdeRegistreringerPerSteg: {
+        AVSLUTTET: [
+          "forvaltning.type",
+          "forvaltning.endeligUtfall.type",
+          "ytelser[].endeligBelop ved annet enn HENLAGT",
+        ],
+      },
+      feltskjema: [
+        {
+          felt: "forvaltning.endeligUtfall.type",
+          etikett: "Endelig resultat",
+          datatype: "enum",
+          paakrevd: false,
+          verdier: [{ verdi: "KONTROLLNOTAT", etikett: "Kontrollnotat" }],
+        },
+        {
+          felt: "ytelser[].endeligBelop",
+          etikett: "Endelig beløp for ytelsen",
+          datatype: "belop",
+          paakrevd: false,
+          verdier: [],
+        },
+      ],
+    });
+
+    fireEvent.click(screen.getByRole("radio", { name: "Avsluttet" }));
+    const belop = screen.getByLabelText("Endelig beløp for ytelsen 1 (SYKEPENGER)");
+    expect(belop.hasAttribute("required")).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Fortsett" }));
+    expect(screen.queryByRole("button", { name: "Bekreft" })).toBeNull();
+    fireEvent.change(belop, { target: { value: "0" } });
+    fireEvent.click(screen.getByRole("button", { name: "Fortsett" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bekreft" }));
+    await waitFor(() => expect(submitMock).toHaveBeenCalledOnce());
+    expect((submitMock.mock.calls[0]?.[0] as FormData).get(`ytelse.${ytelseId}.endeligBelop`)).toBe(
+      "0",
+    );
+  });
+
   it("flytter fra Opprettet uten å kreve resultat", async () => {
     await visModal("FLYTT_TIL_NESTE_STEG", {
       ...basisHandlinger,

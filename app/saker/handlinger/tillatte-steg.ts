@@ -135,9 +135,12 @@ export function harLagretResultatForOvergang(
               hentForvaltningensEndeligeUtfall(resultat)?.henleggelsesarsak != null)))
       );
     case "STRAFFERETTSLIG_VURDERING":
+      if (tilSteg === "POLITI") return resultat?.strafferettsligVurdering?.type === "ANMELDT";
+      if (tilSteg !== "AVSLUTTET") return false;
       return (
-        resultat?.strafferettsligVurdering?.type != null &&
-        (resultat.strafferettsligVurdering.type !== "HENLAGT" ||
+        resultat?.strafferettsligVurdering?.type === "KONTROLLNOTAT" ||
+        resultat?.strafferettsligVurdering?.type === "FEILUTBETALINGSSAK_ORDINAER" ||
+        (resultat?.strafferettsligVurdering?.type === "HENLAGT" &&
           resultat.strafferettsligVurdering.henleggelsesarsak != null)
       );
     case "POLITI":
