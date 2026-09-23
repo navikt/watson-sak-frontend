@@ -1,5 +1,6 @@
 import {
   ArrowRightLeftIcon,
+  BarChartIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   CogIcon,
@@ -31,6 +32,7 @@ const lenker: Lenke[] = [
     label: "Opprett sak",
     icon: PlusCircleIcon,
   },
+  { to: RouteConfig.STATISTIKK, label: "Statistikk", icon: BarChartIcon },
 ];
 
 export function AppSidebar() {

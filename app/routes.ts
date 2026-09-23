@@ -14,6 +14,7 @@ export default [
     route(RouteConfig.PERSONVERN, "personvern/PersonvernSide.route.tsx"),
     route(RouteConfig.SØK, "søk/SøkSide.route.tsx"),
     route(RouteConfig.VARSLER, "varsler/VarslerSide.route.tsx"),
+    route(RouteConfig.STATISTIKK, "statistikk/StatistikkSide.route.tsx"),
   ]),
 
   // API routes

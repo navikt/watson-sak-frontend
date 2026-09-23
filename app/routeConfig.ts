@@ -13,6 +13,7 @@ export const RouteConfig = {
   PERSONVERN: "/personvern",
   SØK: "/søk",
   VARSLER: "/varsler",
+  STATISTIKK: "/statistikk",
 
   WELL_KNOWN: {
     SECURITY_TXT: "/.well-known/security.txt",
