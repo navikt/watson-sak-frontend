@@ -71,6 +71,46 @@ describe("hentVisbareSteg", () => {
     expect(hentVisbareSteg(svar)).toEqual(["AVSLUTTET"]);
   });
 
+  it("viser Avsluttet etter henlagt Forvaltning uten endelig beløp", () => {
+    const svar = handlinger(
+      "FORVALTNING",
+      {
+        forvaltning: {
+          type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+          endeligUtfall: { type: "HENLAGT", henleggelsesarsak: "IKKE_KAPASITET" },
+        },
+      },
+      ["AVSLUTTET"],
+    );
+    svar.tilstand.ytelser = [
+      {
+        id: "00000000-0000-4000-8000-000000000001",
+        type: "SYKEPENGER",
+        periodeFra: null,
+        periodeTil: null,
+        belop: 100,
+        endeligBelop: null,
+      },
+    ];
+    expect(hentVisbareSteg(svar)).toEqual(["AVSLUTTET"]);
+
+    svar.tilstand.resultat = {
+      forvaltning: {
+        type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+        endeligUtfall: { type: "HENLAGT" },
+      },
+    };
+    expect(hentVisbareSteg(svar)).toEqual([]);
+
+    svar.tilstand.resultat = {
+      forvaltning: {
+        type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+        endeligUtfall: { type: "KONTROLLNOTAT" },
+      },
+    };
+    expect(hentVisbareSteg(svar)).toEqual([]);
+  });
+
   it("viser bare Avsluttet etter henleggelse i Strafferettslig vurdering", () => {
     const svar = handlinger(
       "STRAFFERETTSLIG_VURDERING",

@@ -39,7 +39,7 @@ import {
   erGyldigMockStegovergang,
   hentMockTillatteHandlinger,
 } from "./mock-tillatte-handlinger.server";
-import { hentVisbareSteg } from "./handlinger/tillatte-steg";
+import { erHenlagtIGjeldendeSteg, hentVisbareSteg } from "./handlinger/tillatte-steg";
 import {
   hentHistorikk,
   leggTilHendelse,
@@ -204,6 +204,9 @@ function krevTillattHandling(
   tillatteHandlinger: TillatteHandlingerResponse,
   type: TillatteHandlingerResponse["handlinger"][number]["type"],
 ): void {
+  if (type === "HENLEGG" && erHenlagtIGjeldendeSteg(tillatteHandlinger.tilstand)) {
+    throw data("Saken er allerede henlagt i gjeldende steg", { status: 409 });
+  }
   if (!tillatteHandlinger.handlinger.some((handling) => handling.type === type)) {
     throw data("Handlingen er ikke tillatt for saken i gjeldende tilstand", { status: 409 });
   }

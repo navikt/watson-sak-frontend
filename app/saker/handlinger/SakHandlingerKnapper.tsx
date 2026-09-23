@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { DokumentNode, FilResponse } from "~/saker/filer/typer";
 import type { KontrollsakResponse, TillatteHandlingerResponse } from "~/saker/types.backend";
 import { EndreStatusModal } from "./EndreStatusModal";
-import { hentVisbareSteg } from "./tillatte-steg";
+import { erHenlagtIGjeldendeSteg, hentVisbareSteg } from "./tillatte-steg";
 import { OpprettJournalpostModal } from "./OpprettJournalpostModal";
 import { OpprettOppgaveModal } from "./OpprettOppgaveModal";
 import { hentTilgjengeligeSakshandlinger, type Sakshandling } from "./tilgjengeligeHandlinger";
@@ -61,7 +61,9 @@ export function SakHandlingerKnapper({
   const visSekundærhandlinger = handlinger.some((h) => sekundærhandlinger.includes(h));
   const tilstandshandlinger = tillatteHandlinger.handlinger.filter(
     (handling) =>
-      handling.type !== "FLYTT_TIL_NESTE_STEG" || hentVisbareSteg(tillatteHandlinger).length > 0,
+      (handling.type !== "FLYTT_TIL_NESTE_STEG" ||
+        hentVisbareSteg(tillatteHandlinger).length > 0) &&
+      (handling.type !== "HENLEGG" || !erHenlagtIGjeldendeSteg(tillatteHandlinger.tilstand)),
   );
 
   if (!erEier || (handlinger.length === 0 && tilstandshandlinger.length === 0)) {

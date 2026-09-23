@@ -18,7 +18,13 @@ export function kanAvsluttesFraForvaltning(
   if (resultat?.forvaltning?.type !== "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE") return false;
 
   const endeligUtfall = hentForvaltningensEndeligeUtfall(resultat);
-  if (!endeligUtfall || !sak.ytelser.every((ytelse) => ytelse.endeligBelop !== null)) return false;
+  if (
+    !endeligUtfall ||
+    (endeligUtfall.type !== "HENLAGT" &&
+      !sak.ytelser.every((ytelse) => ytelse.endeligBelop !== null))
+  ) {
+    return false;
+  }
 
   const resultatfelt = feltskjema.find((felt) => felt.felt === "forvaltning.endeligUtfall.type");
   if (!resultatfelt?.verdier.some((verdi) => verdi.verdi === endeligUtfall.type)) return false;
@@ -34,7 +40,9 @@ export function kanAvsluttesFraForvaltning(
   return endeligUtfall.henleggelsesarsak == null;
 }
 
-function erHenlagtIGjeldendeSteg(tilstand: TillatteHandlingerResponse["tilstand"]): boolean {
+export function erHenlagtIGjeldendeSteg(
+  tilstand: Pick<TillatteHandlingerResponse["tilstand"], "steg" | "resultat">,
+): boolean {
   const { resultat } = tilstand;
   switch (tilstand.steg) {
     case "UTREDNING":

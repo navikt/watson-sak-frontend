@@ -5,7 +5,7 @@ import type {
   ResultatType,
   TillatteHandlingerResponse,
 } from "./types.backend";
-import { kanAvsluttesFraForvaltning } from "./handlinger/tillatte-steg";
+import { erHenlagtIGjeldendeSteg, kanAvsluttesFraForvaltning } from "./handlinger/tillatte-steg";
 
 export function erGyldigMockStegovergang(
   sak: KontrollsakResponse,
@@ -322,7 +322,10 @@ export function hentMockTillatteHandlinger(sak: KontrollsakResponse): TillatteHa
       sti: `/api/v1/kontrollsaker/${sak.id}/resultat`,
     });
   }
-  if (resultater.includes("HENLAGT")) {
+  if (
+    resultater.includes("HENLAGT") &&
+    !erHenlagtIGjeldendeSteg({ steg, resultat: sak.resultat ?? null })
+  ) {
     handlinger.push({
       type: "HENLEGG",
       metode: "PUT",
@@ -360,7 +363,9 @@ export function hentMockTillatteHandlinger(sak: KontrollsakResponse): TillatteHa
           return [
             nesteSteg,
             nesteSteg === "AVSLUTTET"
-              ? ["forvaltning.type", "forvaltning.endeligUtfall.type", "ytelser[].endeligBelop"]
+              ? erHenlagtIGjeldendeSteg({ steg, resultat: sak.resultat ?? null })
+                ? ["forvaltning.type", "forvaltning.endeligUtfall.type"]
+                : ["forvaltning.type", "forvaltning.endeligUtfall.type", "ytelser[].endeligBelop"]
               : ["forvaltning.type", "ytelser[].endeligBelop"],
           ];
         }

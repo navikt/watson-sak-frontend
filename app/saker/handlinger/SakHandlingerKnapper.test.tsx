@@ -99,6 +99,61 @@ function renderMedRouter(ui: React.ReactNode) {
 }
 
 describe("SakHandlingerKnapper", () => {
+  it("viser bare stegbytte og resultatendring etter henleggelse i Forvaltning", () => {
+    const sak = lagKontrollsak({ steg: "FORVALTNING", status: "VENTER_PA_VEDTAK" });
+    const tillatte = lagTillatteHandlinger(sak);
+    renderMedRouter(
+      <SakHandlingerKnapper
+        erEier={true}
+        sak={sak}
+        tillatteHandlinger={{
+          ...tillatte,
+          tilstand: {
+            ...tillatte.tilstand,
+            resultat: {
+              forvaltning: {
+                type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+                endeligUtfall: { type: "HENLAGT", henleggelsesarsak: "IKKE_KAPASITET" },
+              },
+            },
+          },
+          tillatteSteg: ["AVSLUTTET"],
+          handlinger: [
+            ...tillatte.handlinger,
+            { type: "HENLEGG", metode: "PUT", sti: `/api/v1/kontrollsaker/${sak.id}/resultat` },
+            {
+              type: "REGISTRER_RESULTAT",
+              metode: "PUT",
+              sti: `/api/v1/kontrollsaker/${sak.id}/resultat`,
+            },
+          ],
+          feltskjema: [
+            {
+              felt: "forvaltning.endeligUtfall.type",
+              etikett: "Endelig resultat",
+              datatype: "enum",
+              paakrevd: false,
+              verdier: [{ verdi: "HENLAGT", etikett: "Henlagt" }],
+            },
+            {
+              felt: "forvaltning.endeligUtfall.henleggelsesarsak",
+              etikett: "Årsak",
+              datatype: "enum",
+              paakrevd: false,
+              verdier: [{ verdi: "IKKE_KAPASITET", etikett: "Ikke kapasitet" }],
+            },
+          ],
+        }}
+        filer={[]}
+        dokumenter={[]}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Flytt til neste steg" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Registrer resultat" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Registrer henleggelse" })).toBeNull();
+  });
+
   it("viser ikke stegbytte fra Forvaltning når sluttresultatet ikke er tillatt", () => {
     const sak = lagKontrollsak({ steg: "FORVALTNING" });
     const handlinger: TillatteHandlingerResponse = {
