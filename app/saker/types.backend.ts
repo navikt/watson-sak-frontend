@@ -185,6 +185,7 @@ export const tillatteHandlingerResponseSchema = z.object({
     }),
   ),
   tillatteSteg: z.array(kontrollsakStegSchema),
+  muligeNesteSteg: z.array(kontrollsakStegSchema).optional(),
   tillatteStatuser: z.array(kontrollsakStatusSchema.nullable()),
   tillatteResultater: z.array(resultatTypeSchema),
   paakrevdeRegistreringer: z.array(z.string()),

@@ -382,7 +382,7 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     expect(sak.status).toBe("I_BERO");
   });
 
-  it("viser ikke stegbytte før utredningsresultatet er registrert", () => {
+  it("viser kandidatoverganger, men ikke ferdige stegbytter, før utredningsresultatet er registrert", () => {
     const sak = hentAlleSaker(testRequest).find((s: KontrollsakResponse) => s.steg === "UTREDES");
     expect(sak).toBeDefined();
     if (!sak) return;
@@ -394,7 +394,8 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     };
     const handlingerUtenResultat = hentMockTillatteHandlinger(utenResultat);
     expect(handlingerUtenResultat.tillatteSteg).toEqual([]);
-    expect(handlingerUtenResultat.handlinger.map((handling) => handling.type)).not.toContain(
+    expect(handlingerUtenResultat.muligeNesteSteg).toEqual(["FORVALTNING", "AVSLUTTET"]);
+    expect(handlingerUtenResultat.handlinger.map((handling) => handling.type)).toContain(
       "FLYTT_TIL_NESTE_STEG",
     );
     expect(handlingerUtenResultat.handlinger.map((handling) => handling.type)).toContain(

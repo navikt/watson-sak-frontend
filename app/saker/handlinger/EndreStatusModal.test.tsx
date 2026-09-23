@@ -113,7 +113,13 @@ describe("EndreStatusModal", () => {
   });
 
   it("viser bare steg og statuser som backend har tillatt", async () => {
-    await visModal("FLYTT_TIL_NESTE_STEG");
+    await visModal("FLYTT_TIL_NESTE_STEG", {
+      ...basisHandlinger,
+      tilstand: {
+        ...basisHandlinger.tilstand,
+        resultat: { utredning: { type: "FEILUTBETALINGSSAK_ORDINAER" } },
+      },
+    });
     const tillattSteg = screen.getByRole("radio", { name: "Forvaltning" });
     expect(tillattSteg).toBeDefined();
     expect(tillattSteg.getAttribute("name")).toBe("steg");
@@ -135,6 +141,167 @@ describe("EndreStatusModal", () => {
     expect(screen.getByRole("combobox", { name: "Status" })).toBeDefined();
     expect(screen.getByRole("option", { name: "Venter på informasjon" })).toBeDefined();
     expect(screen.queryByRole("option", { name: "I bero" })).toBeNull();
+  });
+
+  it("krever resultat og beløp i flyttemodalen når Utredning mangler lagret resultat", async () => {
+    const ytelseId = "00000000-0000-4000-8000-000000000001";
+    await visModal("FLYTT_TIL_NESTE_STEG", {
+      ...basisHandlinger,
+      tilstand: {
+        ...basisHandlinger.tilstand,
+        ytelser: [
+          {
+            id: ytelseId,
+            type: "SYKEPENGER",
+            periodeFra: null,
+            periodeTil: null,
+            belop: null,
+            endeligBelop: null,
+          },
+        ],
+      },
+      tillatteSteg: [],
+      muligeNesteSteg: ["FORVALTNING"],
+      tillatteResultater: ["FEILUTBETALINGSSAK_ORDINAER"],
+      feltskjema: [
+        {
+          ...basisHandlinger.feltskjema[0],
+          verdier: [
+            { verdi: "FEILUTBETALINGSSAK_ORDINAER", etikett: "Feilutbetalingssak, ordinær" },
+          ],
+        },
+        {
+          felt: "ytelser[].belop",
+          etikett: "Antatt beløp",
+          datatype: "belop",
+          paakrevd: false,
+          verdier: [],
+        },
+      ],
+    });
+
+    fireEvent.click(screen.getByRole("radio", { name: "Forvaltning" }));
+    expect(
+      screen.queryByRole("checkbox", { name: "Registrer resultat fra gjeldende steg" }),
+    ).toBeNull();
+    expect(screen.getByLabelText("Resultat fra utredningen")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Fortsett" }));
+    expect(screen.queryByRole("button", { name: "Bekreft" })).toBeNull();
+    expect(submitMock).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText("Resultat fra utredningen"), {
+      target: { value: "FEILUTBETALINGSSAK_ORDINAER" },
+    });
+    fireEvent.change(screen.getByLabelText("Antatt beløp 1 (SYKEPENGER)"), {
+      target: { value: "100" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Fortsett" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bekreft" }));
+    await waitFor(() => expect(submitMock).toHaveBeenCalledOnce());
+
+    const formData = submitMock.mock.calls[0]?.[0] as FormData;
+    expect(formData.get("registrerResultat")).toBe("true");
+    expect(formData.get("steg")).toBe("FORVALTNING");
+    expect(formData.get("resultat.utredning.type")).toBe("FEILUTBETALINGSSAK_ORDINAER");
+    expect(formData.get(`ytelse.${ytelseId}.belop`)).toBe("100");
+  });
+
+  it("krever ikke nytt resultat når resultatet allerede er lagret", async () => {
+    await visModal("FLYTT_TIL_NESTE_STEG", {
+      ...basisHandlinger,
+      tilstand: {
+        ...basisHandlinger.tilstand,
+        resultat: { utredning: { type: "FEILUTBETALINGSSAK_ORDINAER" } },
+      },
+      tillatteResultater: ["FEILUTBETALINGSSAK_ORDINAER"],
+    });
+    fireEvent.click(screen.getByRole("radio", { name: "Forvaltning" }));
+    expect(
+      screen.getByRole("checkbox", { name: "Registrer resultat fra gjeldende steg" }),
+    ).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Fortsett" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bekreft" }));
+    await waitFor(() => expect(submitMock).toHaveBeenCalledOnce());
+    const formData = submitMock.mock.calls[0]?.[0] as FormData;
+    expect(formData.get("registrerResultat")).toBe("false");
+  });
+
+  it("krever endelig utfall når bare beslutningen i Forvaltning er lagret", async () => {
+    await visModal("FLYTT_TIL_NESTE_STEG", {
+      ...basisHandlinger,
+      tilstand: {
+        ...basisHandlinger.tilstand,
+        steg: "FORVALTNING",
+        resultat: { forvaltning: { type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE" } },
+      },
+      tillatteSteg: [],
+      muligeNesteSteg: ["AVSLUTTET"],
+      tillatteResultater: ["SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE", "KONTROLLNOTAT", "HENLAGT"],
+      feltskjema: [
+        {
+          felt: "forvaltning.type",
+          etikett: "Beslutning i forvaltningen",
+          datatype: "enum",
+          paakrevd: true,
+          verdier: [
+            {
+              verdi: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+              etikett: "Saken skal ikke vurderes for anmeldelse",
+            },
+          ],
+        },
+        {
+          felt: "forvaltning.endeligUtfall.type",
+          etikett: "Endelig resultat",
+          datatype: "enum",
+          paakrevd: false,
+          paakrevdNar: "forvaltning.type=SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+          verdier: [
+            { verdi: "KONTROLLNOTAT", etikett: "Kontrollnotat" },
+            { verdi: "HENLAGT", etikett: "Henlagt" },
+          ],
+        },
+      ],
+      paakrevdeRegistreringerPerSteg: {
+        AVSLUTTET: ["forvaltning.type", "forvaltning.endeligUtfall.type"],
+      },
+    });
+
+    fireEvent.click(screen.getByRole("radio", { name: "Avsluttet" }));
+    expect(
+      screen.queryByRole("checkbox", { name: "Registrer resultat fra gjeldende steg" }),
+    ).toBeNull();
+    expect(screen.getByLabelText("Endelig resultat")).toBeDefined();
+    expect(screen.queryByRole("option", { name: "Henlagt" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Fortsett" }));
+    expect(screen.getByRole("alert").textContent).toContain("Velg endelig resultat");
+    fireEvent.change(screen.getByLabelText("Endelig resultat"), {
+      target: { value: "KONTROLLNOTAT" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Fortsett" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bekreft" }));
+    await waitFor(() => expect(submitMock).toHaveBeenCalledOnce());
+    const formData = submitMock.mock.calls[0]?.[0] as FormData;
+    expect(formData.get("resultat.forvaltning.type")).toBe(
+      "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+    );
+    expect(formData.get("resultat.forvaltning.endeligUtfall.type")).toBe("KONTROLLNOTAT");
+  });
+
+  it("flytter fra Opprettet uten å kreve resultat", async () => {
+    await visModal("FLYTT_TIL_NESTE_STEG", {
+      ...basisHandlinger,
+      tilstand: { ...basisHandlinger.tilstand, steg: "OPPRETTET", status: null },
+      tillatteSteg: ["UTREDNING"],
+      muligeNesteSteg: ["UTREDNING"],
+      tillatteResultater: [],
+      feltskjema: [],
+    });
+    fireEvent.click(screen.getByRole("radio", { name: "Utredning" }));
+    fireEvent.click(screen.getByRole("button", { name: "Fortsett" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bekreft" }));
+    await waitFor(() => expect(submitMock).toHaveBeenCalledOnce());
+    expect((submitMock.mock.calls[0]?.[0] as FormData).get("registrerResultat")).toBe("false");
   });
 
   it("viser ikke Avsluttet fra Forvaltning når endelig resultat ikke er tillatt", async () => {

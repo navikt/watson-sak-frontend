@@ -28,7 +28,13 @@ import {
   hentTvangsverdierForResultat,
   støttedeResultatfelter,
 } from "./resultat-request";
-import { hentVisbareSteg } from "./tillatte-steg";
+import {
+  erHenlagtIGjeldendeSteg,
+  erNyHenleggelseVedAvslutning,
+  harLagretResultatForOvergang,
+  hentVisbareSteg,
+  manglerEndeligUtfallVedAvslutning,
+} from "./tillatte-steg";
 
 type Handlingstype = TillatteHandlingerResponse["handlinger"][number]["type"];
 type ModalFase = "skjema" | "bekreft" | "suksess";
@@ -112,6 +118,37 @@ function hentRegistrerteResultatverdier(
   return verdier;
 }
 
+function passerTilMålsteg(
+  felt: string,
+  type: string,
+  tilSteg: KontrollsakSteg,
+  tillatteHandlinger: TillatteHandlingerResponse,
+): boolean {
+  if (
+    tilSteg === "AVSLUTTET" &&
+    type === "HENLAGT" &&
+    !erHenlagtIGjeldendeSteg(tillatteHandlinger.tilstand)
+  )
+    return false;
+  switch (felt) {
+    case "utredning.type":
+      return tilSteg === "FORVALTNING"
+        ? type === "FEILUTBETALINGSSAK_ORDINAER" ||
+            type === "FEILUTBETALINGSSAK_POTENSIELL_STRAFFESAK"
+        : type === "KONTROLLNOTAT" || type === "HENLAGT";
+    case "forvaltning.type":
+      return tilSteg === "STRAFFERETTSLIG_VURDERING"
+        ? type === "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE"
+        : type === "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE";
+    case "strafferettsligVurdering.type":
+      return tilSteg === "POLITI"
+        ? type === "ANMELDT"
+        : type === "KONTROLLNOTAT" || type === "FEILUTBETALINGSSAK_ORDINAER" || type === "HENLAGT";
+    default:
+      return true;
+  }
+}
+
 function ResultatFelt({
   felt,
   tillatteHandlinger,
@@ -119,6 +156,7 @@ function ResultatFelt({
   onChange,
   tvungetVerdi,
   belopPaakrevd = false,
+  tilSteg,
 }: {
   felt: TillatteHandlingerResponse["feltskjema"][number];
   tillatteHandlinger: TillatteHandlingerResponse;
@@ -126,6 +164,7 @@ function ResultatFelt({
   onChange: (felt: string, verdi: string) => void;
   tvungetVerdi?: string;
   belopPaakrevd?: boolean;
+  tilSteg?: KontrollsakSteg;
 }) {
   if (felt.datatype === "belop") {
     const nøkkel = felt.felt.endsWith(".endeligBelop") ? "endeligBelop" : "belop";
@@ -164,8 +203,10 @@ function ResultatFelt({
       erTypefelt && tvunget
         ? felt.verdier.filter((valg) => valg.verdi === tvunget)
         : erTypefelt
-          ? felt.verdier.filter((valg) =>
-              tillatteHandlinger.tillatteResultater.some((resultat) => resultat === valg.verdi),
+          ? felt.verdier.filter(
+              (valg) =>
+                tillatteHandlinger.tillatteResultater.some((resultat) => resultat === valg.verdi) &&
+                (!tilSteg || passerTilMålsteg(felt.felt, valg.verdi, tilSteg, tillatteHandlinger)),
             )
           : felt.verdier;
     return (
@@ -262,6 +303,11 @@ export function EndreStatusModal({
 
   const valgtHandlingLabel = handling ? handlingsetiketter[handling] : "";
   const erStegskjema = handling === "FLYTT_TIL_NESTE_STEG";
+  const resultatPåkrevd =
+    erStegskjema &&
+    valgtSteg !== "" &&
+    !harLagretResultatForOvergang(tillatteHandlinger, valgtSteg);
+  const skalRegistrereResultat = registrerResultat || resultatPåkrevd;
   const paakrevdeFelterForOvergang = valgtSteg
     ? (tillatteHandlinger.paakrevdeRegistreringerPerSteg[valgtSteg] ?? [])
     : [];
@@ -272,8 +318,8 @@ export function EndreStatusModal({
   const visResultatfelt =
     handling === "REGISTRER_RESULTAT" ||
     handling === "HENLEGG" ||
-    (erStegskjema && (registrerResultat || overgangKreverBelop));
-  const visResultatfeltForSteg = registrerResultat;
+    (erStegskjema && (skalRegistrereResultat || overgangKreverBelop));
+  const visResultatfeltForSteg = skalRegistrereResultat;
 
   function nullstill() {
     setFase("skjema");
@@ -300,7 +346,7 @@ export function EndreStatusModal({
         return;
       }
       formData.set("steg", valgtSteg);
-      formData.set("registrerResultat", String(registrerResultat));
+      formData.set("registrerResultat", String(skalRegistrereResultat));
     }
     if (handling === "ENDRE_STATUS") {
       formData.set("status", valgtStatus);
@@ -317,15 +363,37 @@ export function EndreStatusModal({
           tillatteHandlinger.tilstand.steg,
           henleggType,
           tillatteHandlinger.tilstand.ytelser,
-          !erStegskjema || registrerResultat,
+          !erStegskjema || skalRegistrereResultat,
         );
         if (
           !resultat &&
           (handling === "REGISTRER_RESULTAT" ||
             handling === "HENLEGG" ||
-            (erStegskjema && registrerResultat))
+            (erStegskjema && skalRegistrereResultat))
         ) {
           setFeilmelding("Velg et resultat før du fortsetter.");
+          return;
+        }
+        if (
+          erStegskjema &&
+          manglerEndeligUtfallVedAvslutning(
+            tillatteHandlinger.tilstand,
+            valgtSteg as KontrollsakSteg,
+            resultat,
+          )
+        ) {
+          setFeilmelding("Velg endelig resultat før du flytter saken til Avsluttet.");
+          return;
+        }
+        if (
+          erStegskjema &&
+          erNyHenleggelseVedAvslutning(
+            tillatteHandlinger.tilstand,
+            valgtSteg as KontrollsakSteg,
+            resultat,
+          )
+        ) {
+          setFeilmelding("Registrer henleggelsen før du flytter saken til Avsluttet.");
           return;
         }
       } catch (feil) {
@@ -385,7 +453,10 @@ export function EndreStatusModal({
                   legend="Tillatte steg"
                   name="steg"
                   value={valgtSteg}
-                  onChange={(verdi) => setValgtSteg(verdi as KontrollsakSteg)}
+                  onChange={(verdi) => {
+                    setValgtSteg(verdi as KontrollsakSteg);
+                    setResultatverdier(hentRegistrerteResultatverdier(tillatteHandlinger));
+                  }}
                 >
                   {hentVisbareSteg(tillatteHandlinger).map((steg) => (
                     <Radio key={steg} value={steg}>
@@ -413,13 +484,17 @@ export function EndreStatusModal({
                 </Select>
               )}
 
-              {erStegskjema && harResultatfelt && (
+              {erStegskjema && harResultatfelt && !resultatPåkrevd && (
                 <Checkbox
                   checked={registrerResultat}
                   onChange={(event) => setRegistrerResultat(event.target.checked)}
                 >
                   Registrer resultat fra gjeldende steg
                 </Checkbox>
+              )}
+
+              {resultatPåkrevd && (
+                <BodyShort>Registrer resultat før saken flyttes videre.</BodyShort>
               )}
 
               {visResultatfelt && (
@@ -440,6 +515,7 @@ export function EndreStatusModal({
                       belopPaakrevd={
                         overgangKreverBelop && paakrevdeFelterForOvergang.includes(felt.felt)
                       }
+                      tilSteg={erStegskjema && valgtSteg ? valgtSteg : undefined}
                     />
                   ))}
                 </VStack>

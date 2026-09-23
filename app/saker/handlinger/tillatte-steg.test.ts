@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { KontrollsakSteg, TillatteHandlingerResponse } from "~/saker/types.backend";
-import { hentVisbareSteg } from "./tillatte-steg";
+import { harLagretResultatForOvergang, hentVisbareSteg } from "./tillatte-steg";
 
 const feltskjema: TillatteHandlingerResponse["feltskjema"] = [
   {
@@ -48,6 +48,42 @@ function handlinger(
 }
 
 describe("hentVisbareSteg", () => {
+  it("viser kandidatoverganger selv om gjeldende steg mangler resultat", () => {
+    const svar = handlinger(
+      "UTREDNING",
+      { forvaltning: { type: "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE" } },
+      [],
+    );
+    svar.muligeNesteSteg = ["FORVALTNING", "AVSLUTTET"];
+    expect(hentVisbareSteg(svar)).toEqual(["FORVALTNING", "AVSLUTTET"]);
+    expect(harLagretResultatForOvergang(svar, "FORVALTNING")).toBe(false);
+  });
+
+  it("krever komplettering av delvis lagret forvaltnings- og politiresultat", () => {
+    const forvaltning = handlinger(
+      "FORVALTNING",
+      { forvaltning: { type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE" } },
+      [],
+    );
+    forvaltning.muligeNesteSteg = ["AVSLUTTET"];
+    expect(hentVisbareSteg(forvaltning)).toEqual(["AVSLUTTET"]);
+    expect(harLagretResultatForOvergang(forvaltning, "AVSLUTTET")).toBe(false);
+
+    const politi = handlinger("POLITI", { politi: { type: "DOMFELLELSE" } }, []);
+    politi.muligeNesteSteg = ["AVSLUTTET"];
+    expect(harLagretResultatForOvergang(politi, "AVSLUTTET")).toBe(false);
+    politi.tilstand.resultat = {
+      politi: {
+        type: "DOMFELLELSE",
+        domstype: "Fengsel",
+        varighet: "To måneder",
+        redusertForEmkArtikkel6: false,
+        redusertForLangSaksbehandling: false,
+      },
+    };
+    expect(harLagretResultatForOvergang(politi, "AVSLUTTET")).toBe(true);
+  });
+
   it("viser bare Avsluttet etter henleggelse i Utredning", () => {
     const svar = handlinger(
       "UTREDNING",

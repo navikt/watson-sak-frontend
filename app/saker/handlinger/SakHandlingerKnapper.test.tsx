@@ -99,6 +99,26 @@ function renderMedRouter(ui: React.ReactNode) {
 }
 
 describe("SakHandlingerKnapper", () => {
+  it("viser stegbytte når resultatet kan registreres i flyttemodalen", () => {
+    const sak = lagKontrollsak({ steg: "UTREDNING", status: "AKTIV" });
+    const tillatte = lagTillatteHandlinger(sak);
+    renderMedRouter(
+      <SakHandlingerKnapper
+        erEier={true}
+        sak={sak}
+        tillatteHandlinger={{
+          ...tillatte,
+          tillatteSteg: [],
+          muligeNesteSteg: ["FORVALTNING"],
+          tilstand: { ...tillatte.tilstand, resultat: null },
+        }}
+        filer={[]}
+        dokumenter={[]}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Flytt til neste steg" })).toBeDefined();
+  });
+
   it("viser bare stegbytte og resultatendring etter henleggelse i Forvaltning", () => {
     const sak = lagKontrollsak({ steg: "FORVALTNING", status: "VENTER_PA_VEDTAK" });
     const tillatte = lagTillatteHandlinger(sak);

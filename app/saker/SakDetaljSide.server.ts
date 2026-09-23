@@ -39,7 +39,13 @@ import {
   erGyldigMockStegovergang,
   hentMockTillatteHandlinger,
 } from "./mock-tillatte-handlinger.server";
-import { erHenlagtIGjeldendeSteg, hentVisbareSteg } from "./handlinger/tillatte-steg";
+import {
+  erHenlagtIGjeldendeSteg,
+  erNyHenleggelseVedAvslutning,
+  harLagretResultatForOvergang,
+  hentVisbareSteg,
+  manglerEndeligUtfallVedAvslutning,
+} from "./handlinger/tillatte-steg";
 import {
   hentHistorikk,
   leggTilHendelse,
@@ -629,6 +635,12 @@ async function backendAction(
 
       let resultat: LagreResultatRequest | undefined;
       const registrerResultat = formData.get("registrerResultat") === "true";
+      if (
+        !harLagretResultatForOvergang(tillatte, nyttSteg as KontrollsakSteg) &&
+        !registrerResultat
+      ) {
+        throw data("Registrer resultat før saken flyttes til neste steg", { status: 400 });
+      }
       try {
         resultat = byggLagreResultatRequest(
           formData,
@@ -645,6 +657,14 @@ async function backendAction(
       }
       if (registrerResultat && !resultat) {
         throw data("Velg et resultat før du fortsetter", { status: 400 });
+      }
+      if (
+        manglerEndeligUtfallVedAvslutning(tillatte.tilstand, nyttSteg as KontrollsakSteg, resultat)
+      ) {
+        throw data("Velg endelig resultat før du flytter saken til Avsluttet", { status: 400 });
+      }
+      if (erNyHenleggelseVedAvslutning(tillatte.tilstand, nyttSteg as KontrollsakSteg, resultat)) {
+        throw data("Registrer henleggelsen før du flytter saken til Avsluttet", { status: 400 });
       }
       const sak = await backendApi.endreSteg(
         token,
@@ -1113,6 +1133,12 @@ async function mockAction(
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
       const forrigeStatus = sak.status;
       const registrerResultat = formData.get("registrerResultat") === "true";
+      if (
+        !harLagretResultatForOvergang(tillatte, nyttSteg as KontrollsakSteg) &&
+        !registrerResultat
+      ) {
+        throw data("Registrer resultat før saken flyttes til neste steg", { status: 400 });
+      }
       const kandidat = { ...sak };
       try {
         const resultat = byggLagreResultatRequest(
@@ -1124,6 +1150,20 @@ async function mockAction(
           registrerResultat,
         );
         if (registrerResultat && !resultat) throw new Error("Velg et resultat før du fortsetter");
+        if (
+          manglerEndeligUtfallVedAvslutning(
+            tillatte.tilstand,
+            nyttSteg as KontrollsakSteg,
+            resultat,
+          )
+        ) {
+          throw new Error("Velg endelig resultat før du flytter saken til Avsluttet");
+        }
+        if (
+          erNyHenleggelseVedAvslutning(tillatte.tilstand, nyttSteg as KontrollsakSteg, resultat)
+        ) {
+          throw new Error("Registrer henleggelsen før du flytter saken til Avsluttet");
+        }
         if (resultat) {
           lagreMockResultat(kandidat, resultat);
         }

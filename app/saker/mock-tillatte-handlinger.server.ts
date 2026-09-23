@@ -5,7 +5,11 @@ import type {
   ResultatType,
   TillatteHandlingerResponse,
 } from "./types.backend";
-import { erHenlagtIGjeldendeSteg, kanAvsluttesFraForvaltning } from "./handlinger/tillatte-steg";
+import {
+  erHenlagtIGjeldendeSteg,
+  erPolitiresultatKomplett,
+  kanAvsluttesFraForvaltning,
+} from "./handlinger/tillatte-steg";
 
 export function erGyldigMockStegovergang(
   sak: KontrollsakResponse,
@@ -28,7 +32,9 @@ export function erGyldigMockStegovergang(
       }
       return (
         nyttSteg === "AVSLUTTET" &&
-        ["KONTROLLNOTAT", "HENLAGT"].includes(sak.resultat?.utredning?.type ?? "")
+        ["KONTROLLNOTAT", "HENLAGT"].includes(sak.resultat?.utredning?.type ?? "") &&
+        (sak.resultat?.utredning?.type !== "HENLAGT" ||
+          sak.resultat.utredning.henleggelsesarsak != null)
       );
     case "FORVALTNING":
       if (nyttSteg === "STRAFFERETTSLIG_VURDERING") {
@@ -48,10 +54,12 @@ export function erGyldigMockStegovergang(
         nyttSteg === "AVSLUTTET" &&
         ["KONTROLLNOTAT", "FEILUTBETALINGSSAK_ORDINAER", "HENLAGT"].includes(
           sak.resultat?.strafferettsligVurdering?.type ?? "",
-        )
+        ) &&
+        (sak.resultat?.strafferettsligVurdering?.type !== "HENLAGT" ||
+          sak.resultat.strafferettsligVurdering.henleggelsesarsak != null)
       );
     case "POLITI":
-      return nyttSteg === "AVSLUTTET" && Boolean(sak.resultat?.politi);
+      return nyttSteg === "AVSLUTTET" && erPolitiresultatKomplett(sak.resultat?.politi);
     default:
       return false;
   }
@@ -253,22 +261,45 @@ export function hentMockTillatteHandlinger(sak: KontrollsakResponse): TillatteHa
     ...ytelse,
     id: ytelse.id ?? `00000000-0000-4000-8000-${(sak.id + indeks).toString(16).padStart(12, "0")}`,
   }));
-  const muligeNesteSteg: KontrollsakSteg[] = (() => {
-    switch (steg) {
-      case "OPPRETTET":
-        return ["UTREDNING", "STRAFFERETTSLIG_VURDERING"];
-      case "UTREDNING":
-        return ["FORVALTNING", "AVSLUTTET"];
-      case "FORVALTNING":
-        return ["STRAFFERETTSLIG_VURDERING", "AVSLUTTET"];
-      case "STRAFFERETTSLIG_VURDERING":
-        return ["POLITI", "AVSLUTTET"];
-      case "POLITI":
-        return ["AVSLUTTET"];
-      default:
-        return [];
-    }
-  })();
+  const muligeNesteSteg: KontrollsakSteg[] =
+    sak.status === "I_BERO"
+      ? []
+      : (() => {
+          switch (steg) {
+            case "OPPRETTET":
+              return ["UTREDNING", "STRAFFERETTSLIG_VURDERING"];
+            case "UTREDNING":
+              switch (sak.resultat?.utredning?.type) {
+                case "FEILUTBETALINGSSAK_ORDINAER":
+                case "FEILUTBETALINGSSAK_POTENSIELL_STRAFFESAK":
+                  return ["FORVALTNING"];
+                case "KONTROLLNOTAT":
+                case "HENLAGT":
+                  return ["AVSLUTTET"];
+                default:
+                  return ["FORVALTNING", "AVSLUTTET"];
+              }
+            case "FORVALTNING":
+              switch (sak.resultat?.forvaltning?.type) {
+                case "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE":
+                  return ["STRAFFERETTSLIG_VURDERING"];
+                case "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE":
+                  return ["AVSLUTTET"];
+                default:
+                  return ["STRAFFERETTSLIG_VURDERING", "AVSLUTTET"];
+              }
+            case "STRAFFERETTSLIG_VURDERING":
+              return sak.resultat?.strafferettsligVurdering?.type === "ANMELDT"
+                ? ["POLITI"]
+                : sak.resultat?.strafferettsligVurdering?.type
+                  ? ["AVSLUTTET"]
+                  : ["POLITI", "AVSLUTTET"];
+            case "POLITI":
+              return ["AVSLUTTET"];
+            default:
+              return [];
+          }
+        })();
   const kanFlytteTil = muligeNesteSteg.filter((nesteSteg) =>
     erGyldigMockStegovergang(sak, nesteSteg),
   );
@@ -289,7 +320,7 @@ export function hentMockTillatteHandlinger(sak: KontrollsakResponse): TillatteHa
         : (statusvalg[steg][0] ?? null)
       : null;
   if (steg !== "AVSLUTTET" && sak.status !== "I_BERO") {
-    if (kanFlytteTil.length > 0) {
+    if (muligeNesteSteg.length > 0) {
       handlinger.push({
         type: "FLYTT_TIL_NESTE_STEG",
         metode: "POST",
@@ -345,12 +376,13 @@ export function hentMockTillatteHandlinger(sak: KontrollsakResponse): TillatteHa
     },
     handlinger,
     tillatteSteg: kanFlytteTil,
+    muligeNesteSteg,
     tillatteStatuser:
       steg === "AVSLUTTET" ? [] : sak.status === "I_BERO" ? [statusFørBero] : statusvalg[steg],
     tillatteResultater: resultater,
     paakrevdeRegistreringer: [],
     paakrevdeRegistreringerPerSteg: Object.fromEntries(
-      kanFlytteTil.map((nesteSteg) => {
+      muligeNesteSteg.map((nesteSteg) => {
         if (steg === "UTREDNING") {
           return [
             nesteSteg,

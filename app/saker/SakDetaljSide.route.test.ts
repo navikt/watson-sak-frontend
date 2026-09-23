@@ -10,6 +10,7 @@ import { getSaksreferanse } from "~/saker/id";
 import { getBeskrivelse, getKildeText, getPersonIdent, getYtelseTyper } from "~/saker/visning";
 import type { Route } from "./+types/SakDetaljSide.route";
 import { action, loader } from "./SakDetaljSide.server";
+import { hentMockTillatteHandlinger } from "./mock-tillatte-handlinger.server";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 
 vi.mock("~/config/env.server", () => ({
@@ -575,6 +576,52 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(sak.saksbehandlere.eier).toMatchObject({ navIdent: "Z999999" });
     expect(sak.steg).toBe("UTREDNING");
     expect(hentHistorikk(testRequest, sak.id)[0]?.hendelsesType).toBe("SAK_TILDELT");
+  });
+
+  it("flytter saken fra Utredning når resultat og beløp registreres i flyttemodalen", async () => {
+    const sak = hentFordelingssaker(state())[0];
+    const sakRef = getSaksreferanse(sak.id);
+    const ytelseId = "00000000-0000-4000-8000-000000000001";
+    sak.steg = "UTREDNING";
+    sak.status = "AKTIV";
+    sak.resultat = null;
+    sak.ytelser = [
+      {
+        id: ytelseId,
+        type: "SYKEPENGER",
+        periodeFra: null,
+        periodeTil: null,
+        belop: null,
+        endeligBelop: null,
+      },
+    ];
+    sak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
+    const tillatte = hentMockTillatteHandlinger(sak);
+    expect(tillatte.tillatteSteg).toEqual([]);
+    expect(tillatte.muligeNesteSteg).toContain("FORVALTNING");
+    expect(tillatte.handlinger.map((valg) => valg.type)).toContain("FLYTT_TIL_NESTE_STEG");
+
+    const formData = new FormData();
+    formData.set("handling", "endre_steg_dialog");
+    formData.set("steg", "FORVALTNING");
+    formData.set("registrerResultat", "true");
+    formData.set("resultat.utredning.type", "FEILUTBETALINGSSAK_ORDINAER");
+    formData.set(`ytelse.${ytelseId}.belop`, "100");
+
+    await action({
+      request: new Request(`http://localhost/saker/${sakRef}`, { method: "POST", body: formData }),
+      params: { sakId: sakRef },
+    } as Route.ActionArgs);
+
+    expect(sak.steg).toBe("FORVALTNING");
+    expect(sak.resultat).toMatchObject({
+      utredning: { type: "FEILUTBETALINGSSAK_ORDINAER" },
+    });
+    expect(sak.ytelser[0]?.belop).toBe(100);
   });
 
   it("avviser Tildel meg fra Opprettet når saken står i bero", async () => {
