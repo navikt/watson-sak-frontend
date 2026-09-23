@@ -28,6 +28,18 @@ test.describe("Opprett sak", () => {
     ).toBeVisible();
   });
 
+  test("fyller ut en tilfeldig sak uten å opprette den", async ({ page }) => {
+    await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("12345678901");
+    await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
+
+    await page.getByRole("button", { name: "Fyll ut en tilfeldig sak" }).click();
+
+    await expect(page.getByLabel("Kategori")).not.toHaveValue("");
+    await expect(page.getByLabel("Kilde")).not.toHaveValue("");
+    await expect(page.getByLabel("Enhet")).not.toHaveValue("");
+    await expect(page.getByRole("button", { name: "Opprett sak" })).toBeVisible();
+  });
+
   test("viser advarsel i personkortet om historisk ident og oppretter saken på gjeldende ident", async ({
     page,
   }) => {
