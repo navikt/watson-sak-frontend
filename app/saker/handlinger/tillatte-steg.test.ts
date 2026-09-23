@@ -144,7 +144,7 @@ describe("hentVisbareSteg", () => {
         endeligUtfall: { type: "KONTROLLNOTAT" },
       },
     };
-    expect(hentVisbareSteg(svar)).toEqual([]);
+    expect(hentVisbareSteg(svar)).toEqual(["AVSLUTTET"]);
   });
 
   it("viser bare Avsluttet etter henleggelse i Strafferettslig vurdering", () => {

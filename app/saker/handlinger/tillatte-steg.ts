@@ -25,7 +25,7 @@ export function kanAvsluttesFraForvaltning(
   const endeligUtfall = hentForvaltningensEndeligeUtfall(resultat);
   if (
     !endeligUtfall ||
-    (endeligUtfall.type !== "HENLAGT" &&
+    (endeligUtfall.type === "FEILUTBETALINGSSAK_ORDINAER" &&
       !sak.ytelser.every((ytelse) => ytelse.endeligBelop !== null))
   ) {
     return false;
@@ -74,9 +74,9 @@ export function erNyHenleggelseVedAvslutning(
   return (
     tilSteg === "AVSLUTTET" &&
     !erHenlagtIGjeldendeSteg(tilstand) &&
-    (resultat?.utredning?.type === "HENLAGT" ||
-      resultat?.forvaltning?.endeligUtfall?.type === "HENLAGT" ||
-      resultat?.strafferettsligVurdering?.type === "HENLAGT")
+    ((tilstand.steg === "UTREDNING" && resultat?.utredning?.type === "HENLAGT") ||
+      (tilstand.steg === "STRAFFERETTSLIG_VURDERING" &&
+        resultat?.strafferettsligVurdering?.type === "HENLAGT"))
   );
 }
 
@@ -127,12 +127,18 @@ export function harLagretResultatForOvergang(
         (resultat.utredning.type !== "HENLAGT" || resultat.utredning.henleggelsesarsak != null)
       );
     case "FORVALTNING":
+      if (tilSteg === "STRAFFERETTSLIG_VURDERING") {
+        return resultat?.forvaltning?.type === "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE";
+      }
+      if (
+        tilSteg !== "AVSLUTTET" ||
+        resultat?.forvaltning?.type !== "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE"
+      ) {
+        return false;
+      }
+      const utfall = hentForvaltningensEndeligeUtfall(resultat);
       return (
-        resultat?.forvaltning?.type != null &&
-        (tilSteg !== "AVSLUTTET" ||
-          (hentForvaltningensEndeligeUtfall(resultat)?.type != null &&
-            (hentForvaltningensEndeligeUtfall(resultat)?.type !== "HENLAGT" ||
-              hentForvaltningensEndeligeUtfall(resultat)?.henleggelsesarsak != null)))
+        utfall?.type != null && (utfall.type !== "HENLAGT" || utfall.henleggelsesarsak != null)
       );
     case "STRAFFERETTSLIG_VURDERING":
       if (tilSteg === "POLITI") return resultat?.strafferettsligVurdering?.type === "ANMELDT";

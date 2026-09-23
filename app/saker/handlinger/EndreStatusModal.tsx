@@ -127,6 +127,7 @@ function passerTilMålsteg(
   if (
     tilSteg === "AVSLUTTET" &&
     type === "HENLAGT" &&
+    tillatteHandlinger.tilstand.steg !== "FORVALTNING" &&
     !erHenlagtIGjeldendeSteg(tillatteHandlinger.tilstand)
   )
     return false;
@@ -303,6 +304,26 @@ export function EndreStatusModal({
 
   const valgtHandlingLabel = handling ? handlingsetiketter[handling] : "";
   const erStegskjema = handling === "FLYTT_TIL_NESTE_STEG";
+  const tvungetForvaltningsutfall =
+    erStegskjema && tillatteHandlinger.tilstand.steg === "FORVALTNING"
+      ? valgtSteg === "AVSLUTTET"
+        ? "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE"
+        : valgtSteg === "STRAFFERETTSLIG_VURDERING"
+          ? "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE"
+          : undefined
+      : undefined;
+  const tvungneResultatverdierForSteg: Record<string, string> = tvungetForvaltningsutfall
+    ? { "forvaltning.type": tvungetForvaltningsutfall }
+    : {};
+  const skjemaverdier = {
+    ...resultatverdier,
+    ...tvungneResultatverdier,
+    ...tvungneResultatverdierForSteg,
+  };
+  const skalViseEndeligBelop =
+    tillatteHandlinger.tilstand.steg !== "FORVALTNING" ||
+    skjemaverdier["forvaltning.type"] === "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE" ||
+    skjemaverdier["forvaltning.endeligUtfall.type"] === "FEILUTBETALINGSSAK_ORDINAER";
   const resultatPåkrevd =
     erStegskjema &&
     valgtSteg !== "" &&
@@ -318,7 +339,7 @@ export function EndreStatusModal({
   const visResultatfelt =
     handling === "REGISTRER_RESULTAT" ||
     handling === "HENLEGG" ||
-    (erStegskjema && (skalRegistrereResultat || overgangKreverBelop));
+    (erStegskjema && (skalRegistrereResultat || (overgangKreverBelop && skalViseEndeligBelop)));
   const visResultatfeltForSteg = skalRegistrereResultat;
 
   function nullstill() {
@@ -428,8 +449,9 @@ export function EndreStatusModal({
   }, [fetcher.data, fetcher.state]);
 
   const aktiveResultatfelter = feltskjema.filter((felt) => {
+    if (felt.felt === "ytelser[].endeligBelop" && !skalViseEndeligBelop) return false;
     if (erStegskjema && !visResultatfeltForSteg && felt.datatype !== "belop") return false;
-    return resultatFeltErAktivt(felt, { ...resultatverdier, ...tvungneResultatverdier });
+    return resultatFeltErAktivt(felt, skjemaverdier);
   });
 
   const valgStatus = hentSkjemastatus(tillatteHandlinger, valgtStatus);
@@ -504,16 +526,17 @@ export function EndreStatusModal({
                       key={felt.felt}
                       felt={felt}
                       tillatteHandlinger={tillatteHandlinger}
-                      verdier={{
-                        ...resultatverdier,
-                        ...tvungneResultatverdier,
-                      }}
+                      verdier={skjemaverdier}
                       onChange={(navn, verdi) =>
                         setResultatverdier((forrige) => ({ ...forrige, [navn]: verdi }))
                       }
-                      tvungetVerdi={tvungneResultatverdier[felt.felt]}
+                      tvungetVerdi={
+                        tvungneResultatverdierForSteg[felt.felt] ??
+                        tvungneResultatverdier[felt.felt]
+                      }
                       belopPaakrevd={
                         overgangKreverBelop &&
+                        skalViseEndeligBelop &&
                         paakrevdeFelterForOvergang.some((krav) => krav.startsWith(felt.felt))
                       }
                       tilSteg={erStegskjema && valgtSteg ? valgtSteg : undefined}

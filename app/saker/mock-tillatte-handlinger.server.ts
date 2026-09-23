@@ -280,14 +280,9 @@ export function hentMockTillatteHandlinger(sak: KontrollsakResponse): TillatteHa
                   return ["FORVALTNING", "AVSLUTTET"];
               }
             case "FORVALTNING":
-              switch (sak.resultat?.forvaltning?.type) {
-                case "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE":
-                  return ["STRAFFERETTSLIG_VURDERING"];
-                case "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE":
-                  return ["AVSLUTTET"];
-                default:
-                  return ["STRAFFERETTSLIG_VURDERING", "AVSLUTTET"];
-              }
+              return erHenlagtIGjeldendeSteg({ steg, resultat: sak.resultat ?? null })
+                ? ["AVSLUTTET"]
+                : ["STRAFFERETTSLIG_VURDERING", "AVSLUTTET"];
             case "STRAFFERETTSLIG_VURDERING":
               return sak.resultat?.strafferettsligVurdering?.type === "ANMELDT"
                 ? ["POLITI"]
@@ -395,9 +390,19 @@ export function hentMockTillatteHandlinger(sak: KontrollsakResponse): TillatteHa
           return [
             nesteSteg,
             nesteSteg === "AVSLUTTET"
-              ? erHenlagtIGjeldendeSteg({ steg, resultat: sak.resultat ?? null })
-                ? ["forvaltning.type", "forvaltning.endeligUtfall.type"]
-                : ["forvaltning.type", "forvaltning.endeligUtfall.type", "ytelser[].endeligBelop"]
+              ? [
+                  "forvaltning.type",
+                  "forvaltning.endeligUtfall.type",
+                  ...(sak.resultat?.forvaltning?.endeligUtfall?.type === "HENLAGT" ||
+                  sak.resultat?.forvaltning?.endeligUtfall?.type === "KONTROLLNOTAT"
+                    ? []
+                    : [
+                        sak.resultat?.forvaltning?.endeligUtfall?.type ===
+                        "FEILUTBETALINGSSAK_ORDINAER"
+                          ? "ytelser[].endeligBelop"
+                          : "ytelser[].endeligBelop ved FEILUTBETALINGSSAK_ORDINAER",
+                      ]),
+                ]
               : ["forvaltning.type", "ytelser[].endeligBelop"],
           ];
         }

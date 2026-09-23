@@ -78,6 +78,92 @@ const basisHandlinger: TillatteHandlingerResponse = {
   ],
 };
 
+function forvaltningHandlinger(
+  resultat: TillatteHandlingerResponse["tilstand"]["resultat"] = null,
+): TillatteHandlingerResponse {
+  return {
+    ...basisHandlinger,
+    tilstand: {
+      ...basisHandlinger.tilstand,
+      steg: "FORVALTNING",
+      status: "VENTER_PA_VEDTAK",
+      resultat,
+      ytelser: [
+        {
+          id: "00000000-0000-4000-8000-000000000001",
+          type: "SYKEPENGER",
+          periodeFra: null,
+          periodeTil: null,
+          belop: 100,
+          endeligBelop: null,
+        },
+      ],
+    },
+    tillatteSteg: [],
+    muligeNesteSteg: ["STRAFFERETTSLIG_VURDERING", "AVSLUTTET"],
+    tillatteResultater: [
+      "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE",
+      "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+      "FEILUTBETALINGSSAK_ORDINAER",
+      "KONTROLLNOTAT",
+      "HENLAGT",
+    ],
+    paakrevdeRegistreringerPerSteg: {
+      STRAFFERETTSLIG_VURDERING: ["forvaltning.type", "ytelser[].endeligBelop"],
+      AVSLUTTET: [
+        "forvaltning.type",
+        "forvaltning.endeligUtfall.type",
+        "ytelser[].endeligBelop ved FEILUTBETALINGSSAK_ORDINAER",
+      ],
+    },
+    feltskjema: [
+      {
+        felt: "forvaltning.type",
+        etikett: "Beslutning i forvaltningen",
+        datatype: "enum",
+        paakrevd: true,
+        verdier: [
+          {
+            verdi: "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE",
+            etikett: "Saken skal vurderes for anmeldelse",
+          },
+          {
+            verdi: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+            etikett: "Saken skal ikke vurderes for anmeldelse",
+          },
+        ],
+      },
+      {
+        felt: "forvaltning.endeligUtfall.type",
+        etikett: "Endelig resultat",
+        datatype: "enum",
+        paakrevd: false,
+        paakrevdNar: "forvaltning.type=SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+        verdier: [
+          { verdi: "HENLAGT", etikett: "Henlagt" },
+          { verdi: "KONTROLLNOTAT", etikett: "Kontrollnotat" },
+          { verdi: "FEILUTBETALINGSSAK_ORDINAER", etikett: "Feilutbetalingssak, ordinær" },
+        ],
+      },
+      {
+        felt: "forvaltning.endeligUtfall.henleggelsesarsak",
+        etikett: "Årsak til henleggelse",
+        datatype: "enum",
+        paakrevd: false,
+        paakrevdNar: "forvaltning.endeligUtfall.type=HENLAGT",
+        verdier: [{ verdi: "IKKE_KAPASITET", etikett: "Ikke kapasitet" }],
+      },
+      {
+        felt: "ytelser[].endeligBelop",
+        etikett: "Endelig beløp for ytelsen",
+        datatype: "belop",
+        paakrevd: false,
+        verdier: [],
+      },
+    ],
+  };
+}
+
 async function visModal(
   handling: TillatteHandlingerResponse["handlinger"][number]["type"],
   tillatteHandlinger = basisHandlinger,
@@ -272,7 +358,7 @@ describe("EndreStatusModal", () => {
       screen.queryByRole("checkbox", { name: "Registrer resultat fra gjeldende steg" }),
     ).toBeNull();
     expect(screen.getByLabelText("Endelig resultat")).toBeDefined();
-    expect(screen.queryByRole("option", { name: "Henlagt" })).toBeNull();
+    expect(screen.getByRole("option", { name: "Henlagt" })).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: "Fortsett" }));
     expect(screen.getByRole("alert").textContent).toContain("Velg endelig resultat");
     fireEvent.change(screen.getByLabelText("Endelig resultat"), {
@@ -288,7 +374,94 @@ describe("EndreStatusModal", () => {
     expect(formData.get("resultat.forvaltning.endeligUtfall.type")).toBe("KONTROLLNOTAT");
   });
 
-  it("krever endelig beløp ved avslutning fra Forvaltning uten henleggelse", async () => {
+  it("tilbyr Avsluttet og registrerer henleggelse med årsak uten endelig beløp", async () => {
+    await visModal("FLYTT_TIL_NESTE_STEG", forvaltningHandlinger());
+    expect(screen.getByRole("radio", { name: "Strafferettslig vurdering" })).toBeDefined();
+    fireEvent.click(screen.getByRole("radio", { name: "Avsluttet" }));
+    expect(screen.getByLabelText("Beslutning i forvaltningen")).toHaveProperty(
+      "value",
+      "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+    );
+    expect(screen.queryByLabelText("Endelig beløp for ytelsen 1 (SYKEPENGER)")).toBeNull();
+    fireEvent.change(screen.getByLabelText("Endelig resultat"), {
+      target: { value: "HENLAGT" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Fortsett" }));
+    expect(screen.getByRole("alert").textContent).toContain("Årsak til henleggelse");
+    fireEvent.change(screen.getByLabelText("Årsak til henleggelse"), {
+      target: { value: "IKKE_KAPASITET" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Fortsett" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bekreft" }));
+    await waitFor(() => expect(submitMock).toHaveBeenCalledOnce());
+    const formData = submitMock.mock.calls[0]?.[0] as FormData;
+    expect(formData.get("resultat.forvaltning.type")).toBe(
+      "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+    );
+    expect(formData.get("resultat.forvaltning.endeligUtfall.type")).toBe("HENLAGT");
+    expect(formData.get("resultat.forvaltning.endeligUtfall.henleggelsesarsak")).toBe(
+      "IKKE_KAPASITET",
+    );
+    expect([...formData.keys()].some((key) => key.endsWith(".endeligBelop"))).toBe(false);
+  });
+
+  it("avslutter som Kontrollnotat uten endelig beløp", async () => {
+    await visModal("FLYTT_TIL_NESTE_STEG", forvaltningHandlinger());
+    fireEvent.click(screen.getByRole("radio", { name: "Avsluttet" }));
+    fireEvent.change(screen.getByLabelText("Endelig resultat"), {
+      target: { value: "KONTROLLNOTAT" },
+    });
+    expect(screen.queryByLabelText("Endelig beløp for ytelsen 1 (SYKEPENGER)")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Fortsett" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bekreft" }));
+    await waitFor(() => expect(submitMock).toHaveBeenCalledOnce());
+    const formData = submitMock.mock.calls[0]?.[0] as FormData;
+    expect(formData.get("resultat.forvaltning.endeligUtfall.type")).toBe("KONTROLLNOTAT");
+    expect([...formData.keys()].some((key) => key.endsWith(".endeligBelop"))).toBe(false);
+  });
+
+  it("lar en lagret beslutning endres når saksbehandleren velger Avsluttet", async () => {
+    await visModal(
+      "FLYTT_TIL_NESTE_STEG",
+      forvaltningHandlinger({
+        forvaltning: { type: "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE" },
+      }),
+    );
+    expect(screen.getByRole("radio", { name: "Strafferettslig vurdering" })).toBeDefined();
+    fireEvent.click(screen.getByRole("radio", { name: "Avsluttet" }));
+    expect(
+      screen.queryByRole("checkbox", { name: "Registrer resultat fra gjeldende steg" }),
+    ).toBeNull();
+    expect(screen.getByLabelText("Beslutning i forvaltningen")).toHaveProperty(
+      "value",
+      "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+    );
+    fireEvent.change(screen.getByLabelText("Endelig resultat"), {
+      target: { value: "KONTROLLNOTAT" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Fortsett" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bekreft" }));
+    await waitFor(() => expect(submitMock).toHaveBeenCalledOnce());
+    const formData = submitMock.mock.calls[0]?.[0] as FormData;
+    expect(formData.get("registrerResultat")).toBe("true");
+    expect(formData.get("resultat.forvaltning.type")).toBe(
+      "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+    );
+  });
+
+  it("krever endelig beløp når saken går til Strafferettslig vurdering", async () => {
+    await visModal("FLYTT_TIL_NESTE_STEG", forvaltningHandlinger());
+    fireEvent.click(screen.getByRole("radio", { name: "Strafferettslig vurdering" }));
+    expect(screen.queryByLabelText("Endelig resultat")).toBeNull();
+    expect(screen.getByLabelText("Beslutning i forvaltningen")).toHaveProperty(
+      "value",
+      "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE",
+    );
+    const belop = screen.getByLabelText("Endelig beløp for ytelsen 1 (SYKEPENGER)");
+    expect(belop.hasAttribute("required")).toBe(true);
+  });
+
+  it("krever endelig beløp når saken avsluttes som ordinær feilutbetalingssak", async () => {
     const ytelseId = "00000000-0000-4000-8000-000000000001";
     await visModal("FLYTT_TIL_NESTE_STEG", {
       ...basisHandlinger,
@@ -298,7 +471,7 @@ describe("EndreStatusModal", () => {
         resultat: {
           forvaltning: {
             type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
-            endeligUtfall: { type: "KONTROLLNOTAT" },
+            endeligUtfall: { type: "FEILUTBETALINGSSAK_ORDINAER" },
           },
         },
         ytelser: [
@@ -318,7 +491,7 @@ describe("EndreStatusModal", () => {
         AVSLUTTET: [
           "forvaltning.type",
           "forvaltning.endeligUtfall.type",
-          "ytelser[].endeligBelop ved annet enn HENLAGT",
+          "ytelser[].endeligBelop ved FEILUTBETALINGSSAK_ORDINAER",
         ],
       },
       feltskjema: [
@@ -327,7 +500,9 @@ describe("EndreStatusModal", () => {
           etikett: "Endelig resultat",
           datatype: "enum",
           paakrevd: false,
-          verdier: [{ verdi: "KONTROLLNOTAT", etikett: "Kontrollnotat" }],
+          verdier: [
+            { verdi: "FEILUTBETALINGSSAK_ORDINAER", etikett: "Feilutbetalingssak, ordinær" },
+          ],
         },
         {
           felt: "ytelser[].endeligBelop",
@@ -348,9 +523,8 @@ describe("EndreStatusModal", () => {
     fireEvent.click(screen.getByRole("button", { name: "Fortsett" }));
     fireEvent.click(screen.getByRole("button", { name: "Bekreft" }));
     await waitFor(() => expect(submitMock).toHaveBeenCalledOnce());
-    expect((submitMock.mock.calls[0]?.[0] as FormData).get(`ytelse.${ytelseId}.endeligBelop`)).toBe(
-      "0",
-    );
+    const formData = submitMock.mock.calls[0]?.[0] as FormData;
+    expect(formData.get(`ytelse.${ytelseId}.endeligBelop`)).toBe("0");
   });
 
   it("flytter fra Opprettet uten å kreve resultat", async () => {
@@ -366,7 +540,8 @@ describe("EndreStatusModal", () => {
     fireEvent.click(screen.getByRole("button", { name: "Fortsett" }));
     fireEvent.click(screen.getByRole("button", { name: "Bekreft" }));
     await waitFor(() => expect(submitMock).toHaveBeenCalledOnce());
-    expect((submitMock.mock.calls[0]?.[0] as FormData).get("registrerResultat")).toBe("false");
+    const formData = submitMock.mock.calls[0]?.[0] as FormData;
+    expect(formData.get("registrerResultat")).toBe("false");
   });
 
   it("viser ikke Avsluttet fra Forvaltning når endelig resultat ikke er tillatt", async () => {
