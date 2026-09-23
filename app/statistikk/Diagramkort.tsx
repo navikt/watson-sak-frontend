@@ -40,18 +40,22 @@ export function Legend({
   skjulte,
   onToggle,
 }: {
-  items: { navn: string; farge: string }[];
+  items: { navn: string; farge: string; verdi?: number }[];
   skjulte?: Set<string>;
   onToggle?: (navn: string) => void;
 }) {
+  const total = items.reduce((sum, item) => sum + (item.verdi ?? 0), 0);
   return (
     <HStack gap="space-8" wrap>
       {items.map((item) => {
         const skjult = skjulte?.has(item.navn);
+        const prosent =
+          item.verdi != null && total > 0 ? Math.round((item.verdi / total) * 100) : null;
         return (
           <button
             key={item.navn}
             type="button"
+            aria-pressed={onToggle ? Boolean(skjult) : undefined}
             className={`flex items-center gap-1 text-xs ${skjult ? "opacity-40 line-through" : ""}`}
             onClick={() => onToggle?.(item.navn)}
             disabled={!onToggle}
@@ -62,6 +66,7 @@ export function Legend({
               style={{ backgroundColor: `var(${item.farge})` }}
             />
             {item.navn}
+            {item.verdi != null && ` – ${item.verdi}${prosent != null ? ` (${prosent} %)` : ""}`}
           </button>
         );
       })}

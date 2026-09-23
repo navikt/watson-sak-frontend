@@ -6,7 +6,20 @@ import { lagMockStatistikk } from "./mock.server";
 import type { StatistikkSpørring } from "./types";
 
 const ISO_DATO = /^\d{4}-\d{2}-\d{2}$/;
-const gyldigDato = (verdi: string | null) => (verdi && ISO_DATO.test(verdi) ? verdi : null);
+
+/** Sjekker at datoen faktisk finnes i kalenderen, ikke bare at strengen har riktig format.
+ * `new Date` ruller f.eks. "2026-02-31" over til 3. mars, så vi sjekker at komponentene
+ * stemmer overens med det vi ba om. */
+function erGyldigDato(streng: string): boolean {
+  if (!ISO_DATO.test(streng)) return false;
+  const [år, måned, dag] = streng.split("-").map(Number);
+  const dato = new Date(Date.UTC(år, måned - 1, dag));
+  return (
+    dato.getUTCFullYear() === år && dato.getUTCMonth() === måned - 1 && dato.getUTCDate() === dag
+  );
+}
+
+const gyldigDato = (verdi: string | null) => (verdi && erGyldigDato(verdi) ? verdi : null);
 
 function lagStandardPeriode() {
   const nå = new Date();

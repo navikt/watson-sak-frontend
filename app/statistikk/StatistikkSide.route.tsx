@@ -11,7 +11,7 @@ import {
   VStack,
   useDatepicker,
 } from "@navikt/ds-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLoaderData, useNavigation, useSearchParams } from "react-router";
 import { formaterTilIsoDato } from "~/utils/date-utils";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
@@ -30,14 +30,27 @@ export default function StatistikkSide() {
   const [visEgendefinert, setVisEgendefinert] = useState(
     Boolean(searchParams.get("fra") || searchParams.get("til")),
   );
+  // Synkroniserer med URL-en ved tilbake/frem-navigering, slik at valgt periode
+  // og synlig datovelger alltid samsvarer med `fra`/`til` i adresselinjen.
+  useEffect(() => {
+    setVisEgendefinert(Boolean(searchParams.get("fra") || searchParams.get("til")));
+  }, [searchParams]);
   const omfang = searchParams.get("omfang") ?? data.valgtOmfang;
   const fra = searchParams.get("fra") ?? data.periode.fra;
   const til = searchParams.get("til") ?? data.periode.til;
-  const { datepickerProps: fraProps, inputProps: fraInputProps } = useDatepicker({
+  const {
+    datepickerProps: fraProps,
+    inputProps: fraInputProps,
+    setSelected: setFraValgt,
+  } = useDatepicker({
     defaultSelected: new Date(fra),
     onDateChange: (date) => date && oppdaterDato("fra", formaterTilIsoDato(date)),
   });
-  const { datepickerProps: tilProps, inputProps: tilInputProps } = useDatepicker({
+  const {
+    datepickerProps: tilProps,
+    inputProps: tilInputProps,
+    setSelected: setTilValgt,
+  } = useDatepicker({
     defaultSelected: new Date(til),
     onDateChange: (date) => date && oppdaterDato("til", formaterTilIsoDato(date)),
   });
@@ -53,6 +66,17 @@ export default function StatistikkSide() {
 
   function velgPeriode(verdi: string) {
     if (verdi === "custom") {
+      // `useDatepicker` viser bare sin `defaultSelected`-verdi fra første render, så
+      // vi må selv sette valgt dato på nytt hver gang brukeren går inn i egendefinert
+      // periode, og samtidig skrive gjeldende periode til URL-en i stedet for å la den
+      // stå igjen på forrige valg (år/måned).
+      const neste = new URLSearchParams(searchParams);
+      neste.delete("periode");
+      neste.set("fra", fra);
+      neste.set("til", til);
+      setSearchParams(neste);
+      setFraValgt(new Date(fra));
+      setTilValgt(new Date(til));
       setVisEgendefinert(true);
       return;
     }
@@ -155,7 +179,7 @@ function Periodevelger({
         value={visEgendefinert ? "custom" : (searchParams.get("periode") ?? "month")}
         onChange={onVelgPeriode}
       >
-        <ToggleGroup.Item value="year">2026</ToggleGroup.Item>
+        <ToggleGroup.Item value="year">{new Date().getFullYear()}</ToggleGroup.Item>
         <ToggleGroup.Item value="month">Denne måneden</ToggleGroup.Item>
         <ToggleGroup.Item value="custom">Egendefinert</ToggleGroup.Item>
       </ToggleGroup>

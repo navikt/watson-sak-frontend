@@ -6,21 +6,27 @@ import { Diagramkort, Legend } from "./Diagramkort";
 import type { Statistikk } from "./types";
 
 const formatter = new Intl.NumberFormat("nb-NO");
+const ALDER_GRENSE_MND = 12;
+
+/** Tolker nedre grense i månedsbøtter som «12–24» eller «>24», slik at vi kan
+ * summere antall saker over en gitt alder uten å hardkode tallet i UI-et. */
+function nedreAldersgrense(navn: string): number {
+  return Number.parseInt(navn.replace(">", "").split(/[–-]/)[0], 10) || 0;
+}
 
 function lagSaksfilterUrl(parametre: Record<string, string>) {
   const searchParams = new URLSearchParams(parametre);
   return `${RouteConfig.ALLE_SAKER}?${searchParams.toString()}`;
 }
 
-function LenkeTilSaker({ filter }: { filter: string }) {
+/** «Alle saker» støtter i dag bare filtrering på enhet, saksbehandler, kategori,
+ * misbrukstype, merking og steg. Varslene under er basert på behandlingstid, som
+ * ikke har noe tilsvarende filter der ennå. Vi lenker derfor kun videre til en
+ * usfiltrert saksoversikt i stedet for å love en filtrering vi ikke kan innfri. */
+function LenkeTilSaker() {
   return (
-    <Button
-      as={RouterLink}
-      to={`${RouteConfig.ALLE_SAKER}?statistikkFilter=${encodeURIComponent(filter)}`}
-      variant="tertiary"
-      size="small"
-    >
-      Se aktive saker →
+    <Button as={RouterLink} to={RouteConfig.ALLE_SAKER} variant="tertiary" size="small">
+      Se alle saker →
     </Button>
   );
 }
@@ -34,6 +40,9 @@ export function StatistikkDiagrammer({
 }) {
   const [skjulteStatuser, setSkjulteStatuser] = useState<Set<string>>(new Set());
   const totalKategorier = data.kategorifordeling.reduce((sum, item) => sum + item.verdi, 0);
+  const antallOverGrense = data.alderssammensetning
+    .filter((bucket) => nedreAldersgrense(bucket.navn) >= ALDER_GRENSE_MND)
+    .reduce((sum, bucket) => sum + bucket.verdi, 0);
 
   function toggleStatus(navn: string) {
     setSkjulteStatuser((forrige) => {
@@ -61,7 +70,7 @@ export function StatistikkDiagrammer({
           >
             <HStack justify="space-between" align="center" gap="space-8" wrap>
               <BodyShort size="small">{varsel.tekst}</BodyShort>
-              <LenkeTilSaker filter={varsel.filter} />
+              <LenkeTilSaker />
             </HStack>
           </Box>
         ))}
@@ -107,44 +116,50 @@ export function StatistikkDiagrammer({
           description="Klikk et segment for å åpne filtrert saksoversikt"
           className="min-h-[438px] lg:col-span-2"
         >
-          <Legend
-            items={data.sakstyper[0].deler.map(({ navn, farge }) => ({ navn, farge }))}
-            skjulte={skjulteStatuser}
-            onToggle={toggleStatus}
-          />
-          <VStack gap="space-8">
-            {data.sakstyper.map((rad) => {
-              const synlige = rad.deler.filter(({ navn }) => !skjulteStatuser.has(navn));
-              const total = synlige.reduce((sum, del) => sum + del.verdi, 0);
-              return (
-                <HStack key={rad.navn} gap="space-8" align="center" wrap={false}>
-                  <BodyShort size="small" className="w-20 shrink-0 text-right">
-                    {rad.navn}
-                  </BodyShort>
-                  <div
-                    className="flex h-6 min-w-0 flex-1 overflow-hidden rounded-sm"
-                    title={`${rad.navn}: ${formatter.format(total)} saker`}
-                  >
-                    {synlige.map((del) => (
-                      <RouterLink
-                        key={del.navn}
-                        to={lagSaksfilterUrl({
-                          kategori: rad.filterverdi,
-                          steg: del.filterverdi,
-                        })}
-                        aria-label={`${rad.navn}, ${del.navn}: ${formatter.format(del.verdi)} saker`}
-                        className="block h-full focus-visible:z-10"
-                        style={{
-                          width: `${(del.verdi / Math.max(total, 1)) * 100}%`,
-                          backgroundColor: `var(${del.farge})`,
-                        }}
-                      />
-                    ))}
-                  </div>
-                </HStack>
-              );
-            })}
-          </VStack>
+          {data.sakstyper.length === 0 ? (
+            <BodyShort size="small">Ingen sakstyper å vise for valgt periode.</BodyShort>
+          ) : (
+            <>
+              <Legend
+                items={data.sakstyper[0].deler.map(({ navn, farge }) => ({ navn, farge }))}
+                skjulte={skjulteStatuser}
+                onToggle={toggleStatus}
+              />
+              <VStack gap="space-8">
+                {data.sakstyper.map((rad) => {
+                  const synlige = rad.deler.filter(({ navn }) => !skjulteStatuser.has(navn));
+                  const total = synlige.reduce((sum, del) => sum + del.verdi, 0);
+                  return (
+                    <HStack key={rad.navn} gap="space-8" align="center" wrap={false}>
+                      <BodyShort size="small" className="w-20 shrink-0 text-right">
+                        {rad.navn}
+                      </BodyShort>
+                      <div
+                        className="flex h-6 min-w-0 flex-1 overflow-hidden rounded-sm"
+                        title={`${rad.navn}: ${formatter.format(total)} saker`}
+                      >
+                        {synlige.map((del) => (
+                          <RouterLink
+                            key={del.navn}
+                            to={lagSaksfilterUrl({
+                              kategori: rad.filterverdi,
+                              steg: del.filterverdi,
+                            })}
+                            aria-label={`${rad.navn}, ${del.navn}: ${formatter.format(del.verdi)} saker`}
+                            className="block h-full focus-visible:z-10"
+                            style={{
+                              width: `${(del.verdi / Math.max(total, 1)) * 100}%`,
+                              backgroundColor: `var(${del.farge})`,
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </HStack>
+                  );
+                })}
+              </VStack>
+            </>
+          )}
         </Diagramkort>
 
         <Diagramkort
@@ -153,13 +168,12 @@ export function StatistikkDiagrammer({
           className="min-h-[438px]"
         >
           <BodyShort size="small" className="text-ax-text-danger">
-            4 saker over 12 mnd
+            {formatter.format(antallOverGrense)} saker over 12 mnd
           </BodyShort>
           <div className="flex min-h-64 flex-1 items-end justify-around gap-2 border-b border-ax-border-neutral-subtle">
             {data.alderssammensetning.map((alder) => (
-              <RouterLink
+              <div
                 key={alder.navn}
-                to={`${RouteConfig.ALLE_SAKER}?statistikkFilter=alder:${encodeURIComponent(alder.navn)}`}
                 className="flex h-full flex-1 flex-col items-center justify-end gap-1 text-xs"
                 title={`${alder.navn}: ${alder.verdi} saker`}
               >
@@ -172,7 +186,7 @@ export function StatistikkDiagrammer({
                   }}
                 />
                 <span>{alder.navn}</span>
-              </RouterLink>
+              </div>
             ))}
           </div>
         </Diagramkort>
