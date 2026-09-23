@@ -232,7 +232,6 @@ export default function OpprettSakSide() {
     const tilfeldigSak = lagTilfeldigSak(kodeverk);
     if (!tilfeldigSak) return;
 
-    form.reset();
     setValgtKategori(tilfeldigSak.kategori);
     setValgtKilde(tilfeldigSak.kilde);
     setValgtEnhet(tilfeldigSak.enhet);
