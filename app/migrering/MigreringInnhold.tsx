@@ -2,6 +2,7 @@ import {
   Alert,
   BodyShort,
   Button,
+  Chips,
   Heading,
   Search,
   Select,
@@ -13,36 +14,90 @@ import { useState } from "react";
 import { MigreringGrunnlagModal } from "./MigreringGrunnlagModal";
 import { MigreringsAvklaringer } from "./MigreringsAvklaringer";
 import {
+  kategoriEtikett,
   kildeEtikett,
   vurderingEtikett,
   type MigreringKandidat,
+  type MigreringKategori,
   type MigreringLister,
 } from "./types";
 
+const alleKategorier: MigreringKategori[] = [
+  "TIPS_RESTANSE",
+  "TIPS_VENTER_RESULTAT",
+  "SV_RESTANSE",
+  "SV_VENTER_RESULTAT",
+  "REGISTER_DAGPENGER",
+  "REGISTER_AAP",
+];
+
 function Kandidatliste({
   kandidater,
+  valgtKategori,
+  onVelgKategori,
+  visEnhetOgKilde,
   onVisGrunnlag,
 }: {
   kandidater: MigreringKandidat[];
+  valgtKategori: MigreringKategori | "ALLE";
+  onVelgKategori: (kategori: MigreringKategori | "ALLE") => void;
+  visEnhetOgKilde?: boolean;
   onVisGrunnlag: (kandidat: MigreringKandidat) => void;
 }) {
   const [søk, setSøk] = useState("");
   const [vurdering, setVurdering] = useState("ALLE");
   const søkeord = søk.trim().toLocaleLowerCase("nb-NO");
-  const filtrerte = kandidater.filter(
-    (k) =>
-      (vurdering === "ALLE" || k.vurdering === vurdering) &&
-      `${k.pid} ${k.navn} ${kildeEtikett[k.kilde]} ${k.fase}`
-        .toLocaleLowerCase("nb-NO")
-        .includes(søkeord),
-  );
+
+  // Beregn antall per kategori for aktiv kandidatliste
+  const antallPerKat = alleKategorier.reduce<Record<string, number>>((acc, kat) => {
+    acc[kat] = kandidater.filter((k) => k.kategori === kat).length;
+    return acc;
+  }, {});
+
+  const filtrerte = kandidater.filter((k) => {
+    if (valgtKategori !== "ALLE" && k.kategori !== valgtKategori) {
+      return false;
+    }
+    if (vurdering !== "ALLE" && k.vurdering !== vurdering) {
+      return false;
+    }
+    if (søkeord) {
+      const matchTekst =
+        `${k.legacyPid} ${k.pid} ${k.navn} ${kildeEtikett[k.kilde]} ${k.fase} ${k.enhet ?? ""}`.toLocaleLowerCase(
+          "nb-NO",
+        );
+      return matchTekst.includes(søkeord);
+    }
+    return true;
+  });
 
   return (
     <div className="flex flex-col gap-4 pt-4">
-      <div className="flex flex-wrap items-end gap-4">
+      {/* 6 Kategorifaner/knapper med antall */}
+      <div className="flex flex-col gap-2">
+        <BodyShort size="small" weight="semibold">
+          Kategorier:
+        </BodyShort>
+        <Chips size="small">
+          <Chips.Toggle selected={valgtKategori === "ALLE"} onClick={() => onVelgKategori("ALLE")}>
+            {`Alle (${kandidater.length})`}
+          </Chips.Toggle>
+          {alleKategorier.map((kat) => (
+            <Chips.Toggle
+              key={kat}
+              selected={valgtKategori === kat}
+              onClick={() => onVelgKategori(kat)}
+            >
+              {`${kategoriEtikett[kat]} (${antallPerKat[kat] ?? 0})`}
+            </Chips.Toggle>
+          ))}
+        </Chips>
+      </div>
+
+      <div className="flex flex-wrap items-end gap-4 pt-2">
         <div className="w-full max-w-md">
           <Search
-            label="Søk i mocklisten på PID, navn, kilde eller fase"
+            label="Søk i mocklisten på PID, navn, kilde, enhet eller fase"
             variant="simple"
             value={søk}
             onChange={setSøk}
@@ -59,9 +114,11 @@ function Kandidatliste({
           <option value="MA_AVKLARES">Må avklares</option>
         </Select>
       </div>
+
       <BodyShort size="small" role="status">
         Viser {filtrerte.length} av {kandidater.length} syntetiske eksempler
       </BodyShort>
+
       <div className="overflow-x-auto">
         <Table>
           <caption className="sr-only">
@@ -70,6 +127,7 @@ function Kandidatliste({
           <Table.Header>
             <Table.Row>
               <Table.HeaderCell scope="col">Kilde / PID</Table.HeaderCell>
+              {visEnhetOgKilde && <Table.HeaderCell scope="col">Enhet</Table.HeaderCell>}
               <Table.HeaderCell scope="col">Navn</Table.HeaderCell>
               <Table.HeaderCell scope="col">Fase / kildestatus</Table.HeaderCell>
               <Table.HeaderCell scope="col">Foreløpig vurdering</Table.HeaderCell>
@@ -79,18 +137,30 @@ function Kandidatliste({
           <Table.Body>
             {filtrerte.length === 0 ? (
               <Table.Row>
-                <Table.DataCell colSpan={5}>
+                <Table.DataCell colSpan={visEnhetOgKilde ? 6 : 5}>
                   Ingen eksempler funnet. Prøv et annet søk eller filter.
                 </Table.DataCell>
               </Table.Row>
             ) : (
               filtrerte.map((k) => (
-                <Table.Row key={`${k.kilde}:${k.pid}`}>
+                <Table.Row key={`${k.kilde}:${k.legacyPid}`}>
                   <Table.HeaderCell scope="row">
                     <BodyShort size="small">{kildeEtikett[k.kilde]}</BodyShort>
-                    {k.pid}
+                    {k.legacyPid}
                   </Table.HeaderCell>
-                  <Table.DataCell>{k.navn}</Table.DataCell>
+                  {visEnhetOgKilde && (
+                    <Table.DataCell>
+                      <BodyShort size="small">{k.enhet ?? "–"}</BodyShort>
+                    </Table.DataCell>
+                  )}
+                  <Table.DataCell>
+                    <div>{k.navn}</div>
+                    {k.ekskluderFraStatistikk && (
+                      <Tag variant="neutral" size="xsmall" className="mt-1">
+                        Arbeidsgiveranmeldelse – holdes utenfor statistikk
+                      </Tag>
+                    )}
+                  </Table.DataCell>
                   <Table.DataCell>
                     <BodyShort>{k.fase}</BodyShort>
                     {k.ansvar.type !== "BEKREFTET" && (
@@ -112,7 +182,7 @@ function Kandidatliste({
                         type="button"
                         variant="secondary"
                         size="small"
-                        aria-label={`Se grunnlag for ${k.navn}, ${kildeEtikett[k.kilde]}, PID ${k.pid}`}
+                        aria-label={`Se grunnlag for ${k.navn}, ${kildeEtikett[k.kilde]}, PID ${k.legacyPid}`}
                         onClick={() => onVisGrunnlag(k)}
                       >
                         Se grunnlag
@@ -139,7 +209,8 @@ function Kandidatliste({
 }
 
 export function MigreringInnhold({ lister }: { lister: MigreringLister }) {
-  const [aktivFane, setAktivFane] = useState("mine");
+  const [aktivVisning, setAktivVisning] = useState<"mine" | "ukjent">("mine");
+  const [valgtKategori, setValgtKategori] = useState<MigreringKategori | "ALLE">("ALLE");
   const [valgt, setValgt] = useState<MigreringKandidat | null>(null);
 
   return (
@@ -156,7 +227,13 @@ export function MigreringInnhold({ lister }: { lister: MigreringLister }) {
         undersøke eksemplene. «Opprettet i Access» vises ikke før betydningen av datoen er avklart.
       </BodyShort>
       <MigreringsAvklaringer />
-      <Tabs value={aktivFane} onChange={setAktivFane}>
+      <Tabs
+        value={aktivVisning}
+        onChange={(val) => {
+          setAktivVisning(val as "mine" | "ukjent");
+          setValgtKategori("ALLE");
+        }}
+      >
         <Tabs.List>
           <Tabs.Tab value="mine" label={`Mine saker (${lister.mine.length})`} />
           <Tabs.Tab
@@ -165,24 +242,35 @@ export function MigreringInnhold({ lister }: { lister: MigreringLister }) {
           />
         </Tabs.List>
         <Tabs.Panel value="mine">
-          {aktivFane === "mine" && (
+          {aktivVisning === "mine" && (
             <>
               <BodyShort size="small" className="pt-4">
                 Ansvar er simulert som bekreftet for innlogget bruker. Tallene i fanene teller bare
                 mockeksempler.
               </BodyShort>
-              <Kandidatliste kandidater={lister.mine} onVisGrunnlag={setValgt} />
+              <Kandidatliste
+                kandidater={lister.mine}
+                valgtKategori={valgtKategori}
+                onVelgKategori={setValgtKategori}
+                onVisGrunnlag={setValgt}
+              />
             </>
           )}
         </Tabs.Panel>
         <Tabs.Panel value="ukjent">
-          {aktivFane === "ukjent" && (
+          {aktivVisning === "ukjent" && (
             <>
               <BodyShort className="pt-4">
                 Ukjent ansvar betyr ikke ufordelt sak. Søkeloggtreff bekrefter ikke eierskap.
-                Tilgang til en slik liste med ekte data må avklares og håndheves i backend.
+                Kandidater uten saksbehandler vises med kilde og enhet for lokal enhetstilgang.
               </BodyShort>
-              <Kandidatliste kandidater={lister.utenBekreftetAnsvarlig} onVisGrunnlag={setValgt} />
+              <Kandidatliste
+                kandidater={lister.utenBekreftetAnsvarlig}
+                valgtKategori={valgtKategori}
+                onVelgKategori={setValgtKategori}
+                visEnhetOgKilde={true}
+                onVisGrunnlag={setValgt}
+              />
             </>
           )}
         </Tabs.Panel>

@@ -122,17 +122,17 @@ describe("MigreringInnhold", () => {
     }
   });
 
-  it("skiller målte utvalg fra mockantall og viser ubesvarte spørsmål", () => {
+  it("viser målte utvalg og statusregler i informasjonskort", () => {
     renderSide();
-    const kort = screen.getByRole("region", { name: "Målte utvalg og åpne avklaringer" });
+    const kort = screen.getByRole("region", { name: "Målte utvalg og statusregler" });
     fireEvent.click(within(kort).getByRole("button", { name: "Vis mer" }));
-    const tabell = screen.getByRole("table", { name: "Målte delutvalg i KT_TABELLPERSON" });
-    expect(within(tabell).getByText("1 396 (674 + 722)")).not.toBeNull();
-    expect(within(tabell).getByText("580")).not.toBeNull();
-    expect(within(tabell).getByText("4")).not.toBeNull();
-    expect(
-      screen.getByRole("heading", { name: "Tre ubesvarte spørsmål til fagansvarlig" }),
-    ).not.toBeNull();
-    expect(screen.getByText(/Ingen av tallene er et godkjent migreringsvolum/)).not.toBeNull();
+    const tabell = screen.getByRole("table", { name: "Kategorier og forventet antall" });
+    expect(within(tabell).getByText("586")).not.toBeNull();
+    expect(within(tabell).getByText("612")).not.toBeNull();
+    expect(within(tabell).getByText("420 (434)")).not.toBeNull();
+    expect(within(tabell).getByText("637")).not.toBeNull();
+    expect(within(tabell).getByText("77")).not.toBeNull();
+    expect(within(tabell).getByText("60")).not.toBeNull();
+    expect(screen.getByRole("heading", { name: "Spesielle merknader" })).not.toBeNull();
   });
 });
