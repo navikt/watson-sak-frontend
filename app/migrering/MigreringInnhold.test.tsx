@@ -49,7 +49,7 @@ describe("MigreringInnhold", () => {
     renderSide();
     expect(lister.utenBekreftetAnsvarlig).toHaveLength(0);
 
-    const adaCelle = screen.getByText("11111111111");
+    const adaCelle = screen.getByText("12345678901");
     const adaRad = adaCelle.closest("tr");
     expect(adaRad).not.toBeNull();
     expect(within(adaRad!).getByText("100245")).not.toBeNull();
@@ -57,7 +57,7 @@ describe("MigreringInnhold", () => {
     const arnePidCelle = screen.getByText("800202");
     const arneRad = arnePidCelle.closest("tr");
     expect(arneRad).not.toBeNull();
-    expect(within(arneRad!).getByText("12121212121")).not.toBeNull();
+    expect(within(arneRad!).getByText("11223344556")).not.toBeNull();
   });
 
   it("sender fnr for alle kandidater når Opprett sak trykkes", () => {
