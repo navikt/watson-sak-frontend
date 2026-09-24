@@ -114,29 +114,38 @@ describe("MigreringInnhold", () => {
     expect(within(dialog).getByText(/SVMOTTATT og SVDATO er satt/)).not.toBeNull();
   });
 
-  it("har egne POST-skjema per kandidat som bare sender legacyPid og legacyKilde — aldri fnr", () => {
+  it("har egne POST-skjema per kandidat som bare sender legacyPid og legacyKilde — aldri fnr, og lar bare bekreftet ansvar opprette", () => {
     const { container } = renderSide();
-    for (const navn of [
-      `Mine saker (${lister.mine.length})`,
-      `Uten bekreftet ansvarlig (${lister.utenBekreftetAnsvarlig.length})`,
-    ]) {
-      fireEvent.click(screen.getByRole("tab", { name: navn }));
-      const knapper = screen.getAllByRole("button", { name: "Opprett sak" });
-      expect(knapper.length).toBeGreaterThan(0);
-      for (const knapp of knapper) {
-        expect((knapp as HTMLButtonElement).disabled).toBeFalsy();
-        expect(knapp.getAttribute("aria-describedby")).toBe("migrering-opprettelse-info");
-        const form = knapp.closest("form");
-        expect(form).not.toBeNull();
-        expect(form?.getAttribute("method")).toBe("post");
-        expect(form?.getAttribute("action")).toBe("/api/registrer-sak/forhåndsutfyll");
-        expect(form?.querySelector('input[name="legacyPid"]')).not.toBeNull();
-        expect(form?.querySelector('input[name="legacyKilde"]')).not.toBeNull();
-        expect(form?.querySelector('input[name="fnr"]')).toBeNull();
-      }
-      expect(container.querySelectorAll("form").length).toBe(knapper.length);
-      expect(screen.queryByText(/Overført til Watson/)).toBeNull();
+
+    fireEvent.click(screen.getByRole("tab", { name: `Mine saker (${lister.mine.length})` }));
+    const knapperMine = screen.getAllByRole("button", { name: "Opprett sak" });
+    expect(knapperMine.length).toBeGreaterThan(0);
+    for (const knapp of knapperMine) {
+      expect((knapp as HTMLButtonElement).disabled).toBeFalsy();
+      expect(knapp.getAttribute("aria-describedby")).toBe("migrering-opprettelse-info");
+      const form = knapp.closest("form");
+      expect(form).not.toBeNull();
+      expect(form?.getAttribute("method")).toBe("post");
+      expect(form?.getAttribute("action")).toBe("/api/registrer-sak/forhåndsutfyll");
+      expect(form?.querySelector('input[name="legacyPid"]')).not.toBeNull();
+      expect(form?.querySelector('input[name="legacyKilde"]')).not.toBeNull();
+      expect(form?.querySelector('input[name="fnr"]')).toBeNull();
     }
+    expect(container.querySelectorAll("form").length).toBe(knapperMine.length);
+
+    fireEvent.click(
+      screen.getByRole("tab", {
+        name: `Uten bekreftet ansvarlig (${lister.utenBekreftetAnsvarlig.length})`,
+      }),
+    );
+    const knapperUkjent = screen.getAllByRole("button", { name: "Opprett sak" });
+    expect(knapperUkjent.length).toBeGreaterThan(0);
+    for (const knapp of knapperUkjent) {
+      expect((knapp as HTMLButtonElement).disabled).toBe(true);
+      expect(knapp.getAttribute("aria-describedby")).toBe("migrering-opprettelse-krever-ansvar");
+    }
+
+    expect(screen.queryByText(/Overført til Watson/)).toBeNull();
   });
 
   it("viser målte utvalg og statusregler i informasjonskort", () => {

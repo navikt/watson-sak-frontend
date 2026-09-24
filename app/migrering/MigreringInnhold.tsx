@@ -203,7 +203,12 @@ function Kandidatliste({
                           type="submit"
                           size="small"
                           variant="tertiary"
-                          aria-describedby="migrering-opprettelse-info"
+                          disabled={k.ansvar.type !== "BEKREFTET"}
+                          aria-describedby={
+                            k.ansvar.type !== "BEKREFTET"
+                              ? "migrering-opprettelse-krever-ansvar"
+                              : "migrering-opprettelse-info"
+                          }
                         >
                           Opprett sak
                         </Button>
@@ -238,6 +243,10 @@ export function MigreringInnhold({ lister }: { lister: MigreringLister }) {
         «Opprett sak» sender bare kilde og PID videre — migreringslisten viser aldri fødselsnummer,
         så du må slå opp personen manuelt på /registrer-sak. «Opprettet i Access» vises ikke før
         betydningen av datoen er avklart.
+      </BodyShort>
+      <BodyShort id="migrering-opprettelse-krever-ansvar" size="small" textColor="subtle">
+        Opprettelse er sperret for kandidater uten bekreftet ansvar i denne leveransen — se
+        avklaring 4 (ansvar og tilgang) i migreringsnotatet. Fanen «Mine saker» kan opprettes fra.
       </BodyShort>
       <MigreringsAvklaringer />
       <Tabs

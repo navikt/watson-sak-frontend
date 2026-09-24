@@ -221,17 +221,18 @@ val legacyKilde: Migreringskilde? = null,
 
 ### Åpne
 
-| Nr. | Spørsmål                                                                                           | Påvirker                                    |
-| --- | -------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| A   | Hvilket datofelt gjelder for grensen «eldre enn 2020» i `SV_VENTER_RESULTAT`? Foreløpig `SVDATO`.  | Konstanten `SV_VENTER_REFERANSEDATOFELT`    |
-| B   | Gjelder registerkontroll alle kontrollister eller bare siste `KONTROLLISTE`? Foreløpig alle.       | Regel for `REGISTER_*`                      |
-| C   | Datakilde: hvordan kommer Access-data til backend (målmotor, skjema, lesetilgang, frysetidspunkt)? | `MigreringskildeClient`-implementasjon      |
-| D   | Er de 12 SV-restansene fra før 2021 henlagt i kilden (434 til 420)?                                | Bare volumkontroll, ikke kode               |
-| E   | Hvilken nøkkel og hvilket datofelt har `NKA_KONTROLL` og `NKA_KONTROLL_AAP`?                       | `legacyPid` og `referansedato` for register |
-| F   | Skal påklagede henleggelser etter 1.1.2024 tas med selv om `POLDOMDATO` er satt? Foreløpig nei.    | Regel for `SV_VENTER_RESULTAT`              |
-| G   | Hvem setter enhet på saker uten saksbehandler i kilden, og hvilken enhet brukes?                   | Dekning i `UTEN_ANSVARLIG`                  |
-| 5   | Database og kontrakt: målplattform, read-only-tilgang, oppdatering/frysing.                        | Se C                                        |
-| 6   | Ferdig migrert: hvilke felt, notater og vedlegg følger med? Er det bare FNR, PID og saksbehandler? | Opprettelsesflyt og kvittering              |
+| Nr. | Spørsmål                                                                                                                                                                                                                                                                                                                    | Påvirker                                                            |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| A   | Hvilket datofelt gjelder for grensen «eldre enn 2020» i `SV_VENTER_RESULTAT`? Foreløpig `SVDATO`.                                                                                                                                                                                                                           | Konstanten `SV_VENTER_REFERANSEDATOFELT`                            |
+| B   | Gjelder registerkontroll alle kontrollister eller bare siste `KONTROLLISTE`? Foreløpig alle.                                                                                                                                                                                                                                | Regel for `REGISTER_*`                                              |
+| C   | Datakilde: hvordan kommer Access-data til backend (målmotor, skjema, lesetilgang, frysetidspunkt)?                                                                                                                                                                                                                          | `MigreringskildeClient`-implementasjon                              |
+| D   | Er de 12 SV-restansene fra før 2021 henlagt i kilden (434 til 420)?                                                                                                                                                                                                                                                         | Bare volumkontroll, ikke kode                                       |
+| E   | Hvilken nøkkel og hvilket datofelt har `NKA_KONTROLL` og `NKA_KONTROLL_AAP`?                                                                                                                                                                                                                                                | `legacyPid` og `referansedato` for register                         |
+| F   | Skal påklagede henleggelser etter 1.1.2024 tas med selv om `POLDOMDATO` er satt? Foreløpig nei.                                                                                                                                                                                                                             | Regel for `SV_VENTER_RESULTAT`                                      |
+| G   | Hvem setter enhet på saker uten saksbehandler i kilden, og hvilken enhet brukes?                                                                                                                                                                                                                                            | Dekning i `UTEN_ANSVARLIG`                                          |
+| H   | Skal `UTEN_ANSVARLIG`-kandidater (enhetstilgang) kunne opprettes fra migreringslisten, eller er enhetstilgang i denne leveransen bare lesevisning? Avklaring 4 svarte at enheten _får tilgang_, men sa ingenting om opprettelse. Se avsnitt 8 (6.a-funn) — opprettelse er sperret for disse i kode inntil dette er avklart. | `KontrollsakService.validerLegacyMigrering`, `MigreringInnhold.tsx` |
+| 5   | Database og kontrakt: målplattform, read-only-tilgang, oppdatering/frysing.                                                                                                                                                                                                                                                 | Se C                                                                |
+| 6   | Ferdig migrert: hvilke felt, notater og vedlegg følger med? Er det bare FNR, PID og saksbehandler?                                                                                                                                                                                                                          | Opprettelsesflyt og kvittering                                      |
 
 ## 7. Verifisering
 
@@ -244,13 +245,52 @@ val legacyKilde: Migreringskilde? = null,
 
 ## Kjente tekniske risikoer
 
-- `SAK-67/migreringsveileder` i backend har duplikat Flyway-versjon V19
-  (`V19__chatbot_tabeller.sql` og `V19__dokumentkommentarer.sql`) og mangler
-  V24 og V25 fra `main`. Postgres-tester feiler til dette er løst.
+- Duplikat Flyway-versjon V19 i backend-branchen er løst ved å gi nytt navn til
+  chatbot-migreringen (`V19__chatbot_tabeller.sql` → `V27__chatbot_tabeller.sql`,
+  ren omdøping, ingen innholdsendring). Backend-branchen mangler fortsatt V24 og
+  V25 fra `main` — må håndteres i en egen synk-/rebase-oppgave før merge.
 - Begge brancher inneholder AI-chatbot-commits (backend `892b970`, frontend
   `f0fbdc3`). De må skilles fra migrerings-PR-ene.
 - Frontend-branchen er 52 commits bak `main`, blant annet i `app/registrer-sak/`
   og `app/saker/types.backend.ts`.
+- **Docker/Testcontainers er ikke tilgjengelig i denne sandkassen.** Alle
+  Postgres-/Spring-context-integrasjonstester (`MigreringControllerTest`,
+  `KontrollsakControllerTest`, `KontrollsakSpecificationPostgresTest`, m.fl.)
+  feiler med `DockerClientProviderStrategy`-årsak, ikke av kodefeil — bekreftet
+  ved å lese XML-testrapportene og se at samtlige har samme rotfeil. Disse må
+  kjøres på nytt i CI eller lokalt med Docker før merge. `./gradlew build -x
+test` er grønn; `./gradlew test` feiler bare på disse.
+
+## 8. 6.a-review og 7.a-avslutning (denne runden)
+
+**Rødsone-funn:** `KontrollsakService.validerLegacyMigrering` gjenbruker
+`MigreringService.hentKandidat`, som **bare** autoriserer bekreftet ansvar
+(fanen «Mine saker»). En saksbehandler med enhetstilgang til en
+`UTEN_ANSVARLIG`-kandidat kunne derfor trykke «Opprett sak» i UI-et og få en
+villedende 404 («Personen ble ikke funnet») i stedet for en presis forklaring.
+Backend feiler trygt (lukket, ikke åpent), men UI-et løy om årsaken. Rettet i
+denne runden: `MigreringInnhold.tsx` deaktiverer nå «Opprett sak» for
+kandidater der `ansvar.type !== "BEKREFTET"`, med en synlig forklaring i
+stedet. Se ny avklaring **H** over — om `UTEN_ANSVARLIG` noensinne skal kunne
+opprettes, må avgjøres før denne sperren fjernes.
+
+**Persondata-sjekk:** ingen ekte fødselsnummer i backend- eller
+frontend-mockdata/-tester — kun syntetiske, gjentatte siffer (`11111111111`
+osv.) i backend, og ingen FNR-felt i det hele tatt i frontendens
+`MigreringKandidat` (personIdent eksponeres bevisst aldri i API-responsen).
+
+**Verifisering kjørt denne runden:**
+
+- Frontend: `pnpm verify` grønn (118 filer, 1008+ tester, lint/format/
+  typecheck/knip alle 0).
+- Backend: `./gradlew build -x test` grønn. `./gradlew test` feiler bare på
+  Docker-avhengige integrasjonstester (se risikoliste over) — ingen
+  mock-baserte enhetstester feiler.
+
+**Ikke gjort i denne runden** (utenfor 6.a/7.a sitt mandat, krever egen
+beslutning): rebase av backend-branchen mot `main` (V24/V25), utskilling av
+chatbot-commits, kjøring av Postgres-tester i et miljø med Docker, og svar på
+avklaring H.
 
 ## Prøve prototypen
 
