@@ -19,11 +19,19 @@ vi.mock("./mock-data.server", () => ({ hentMockMigreringKandidater: mocks.kandid
 import { loader } from "./MigreringSide.server";
 
 const basis: MigreringKandidat = {
+  kandidatId: "UTREDNING:100245",
   kilde: "UTREDNING",
+  legacyKilde: "UTREDNING",
   pid: "100245",
+  legacyPid: "100245",
+  kategori: "TIPS_RESTANSE",
   navn: "Eksempel",
   ansvar: { type: "BEKREFTET", navIdent: "L999999" },
+  enhet: "4812",
   vurdering: "MULIG_KANDIDAT",
+  ekskluderFraStatistikk: false,
+  referansedato: "2023-01-01",
+  referansedatoFelt: "TIPSINNDATO",
   fase: "Utredning",
   begrunnelse: "Eksempel",
   kildefelter: [],
