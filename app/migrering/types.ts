@@ -10,12 +10,7 @@ export type MigreringKategori =
 
 export type MigreringVurdering = "MULIG_KANDIDAT" | "MA_AVKLARES";
 
-export interface MigreringAnsvar {
-  type: "BEKREFTET" | "LOGGTREFF" | "UKJENT";
-  navIdent?: string | null;
-}
-
-export interface MigreringGrunnlagsfelt {
+interface MigreringGrunnlagsfelt {
   felt: string;
   verdi: string | null;
 }
@@ -45,37 +40,6 @@ export interface MigreringKandidat {
   kildefelter: MigreringGrunnlagsfelt[];
   alleredeMigrertTilKontrollsakId?: number | null;
   hentetTidspunkt?: string;
-}
-
-/** API DTO response typer */
-export interface MigreringKandidatResponse {
-  kandidatId: string;
-  kilde: Migreringskilde;
-  legacyPid: string;
-  kategori: MigreringKategori;
-  ansvar: {
-    type: "BEKREFTET" | "LOGGTREFF" | "UKJENT";
-    navIdent?: string | null;
-  };
-  enhet?: string | null;
-  vurdering: MigreringVurdering;
-  ekskluderFraStatistikk: boolean;
-  referansedato?: string | null;
-  referansedatoFelt?: string | null;
-  fase: string;
-  begrunnelse: string;
-  grunnlag: MigreringGrunnlagsfelt[];
-  alleredeMigrertTilKontrollsakId?: number | null;
-  hentetTidspunkt: string;
-}
-
-export interface MigreringKandidatPageResponse {
-  items: MigreringKandidatResponse[];
-  page: number;
-  size: number;
-  totalItems: number;
-  totalPages: number;
-  antallPerKategori: Record<string, number>;
 }
 
 export interface MigreringLister {

@@ -11,6 +11,9 @@ import {
   Tag,
 } from "@navikt/ds-react";
 import { useState } from "react";
+import { Form } from "react-router";
+import { RouteConfig } from "~/routeConfig";
+import { sporHendelse } from "~/analytics/analytics";
 import { MigreringGrunnlagModal } from "./MigreringGrunnlagModal";
 import { MigreringsAvklaringer } from "./MigreringsAvklaringer";
 import {
@@ -187,15 +190,24 @@ function Kandidatliste({
                       >
                         Se grunnlag
                       </Button>
-                      <Button
-                        type="button"
-                        size="small"
-                        variant="tertiary"
-                        disabled
-                        aria-describedby="migrering-opprettelse-sperret"
+                      <Form
+                        method="post"
+                        action={RouteConfig.API.FORHÅNDSUTFYLL_REGISTRER_SAK}
+                        onSubmit={() =>
+                          sporHendelse("migrering opprett sak klikket", { kategori: k.kategori })
+                        }
                       >
-                        Opprett sak
-                      </Button>
+                        <input type="hidden" name="legacyPid" value={k.legacyPid} />
+                        <input type="hidden" name="legacyKilde" value={k.legacyKilde} />
+                        <Button
+                          type="submit"
+                          size="small"
+                          variant="tertiary"
+                          aria-describedby="migrering-opprettelse-info"
+                        >
+                          Opprett sak
+                        </Button>
+                      </Form>
                     </div>
                   </Table.DataCell>
                 </Table.Row>
@@ -222,9 +234,10 @@ export function MigreringInnhold({ lister }: { lister: MigreringLister }) {
         <BodyShort weight="semibold">Prototype – kun syntetiske eksempler</BodyShort>
         <BodyShort>Vurderingene er foreløpige. Ingen ekte saker hentes eller overføres.</BodyShort>
       </Alert>
-      <BodyShort id="migrering-opprettelse-sperret">
-        Opprettelse er sperret til migreringskoblingen og reglene er klare. Bruk «Se grunnlag» for å
-        undersøke eksemplene. «Opprettet i Access» vises ikke før betydningen av datoen er avklart.
+      <BodyShort id="migrering-opprettelse-info">
+        «Opprett sak» sender bare kilde og PID videre — migreringslisten viser aldri fødselsnummer,
+        så du må slå opp personen manuelt på /registrer-sak. «Opprettet i Access» vises ikke før
+        betydningen av datoen er avklart.
       </BodyShort>
       <MigreringsAvklaringer />
       <Tabs

@@ -9,7 +9,7 @@ import type { OpprettKontrollsakRequest } from "./api.server";
 import type { Route } from "./+types/RegistrerSakSide.route";
 import { lastOppFil, opprettKontrollsak } from "./api.server";
 import { INGEN_TILGANG_TIL_Å_OPPRETTE_SAK_MELDING } from "./feilmeldinger";
-import { pendingFnrCookie } from "./pending-fnr.server";
+import { pendingFnrCookie, type PendingSakData } from "./pending-fnr.server";
 import { opprettSakSchema, type OpprettSakSkjema } from "./validering";
 
 type OpprettSakSaksbehandler = NonNullable<OpprettKontrollsakRequest["saksbehandlere"]>["eier"];
@@ -42,20 +42,25 @@ export function byggOpprettKontrollsakPayload({
         periodeTil: rad.tilDato ?? "",
         belop: rad.beløp,
       })),
+    ...(skjema.legacyPid && skjema.legacyKilde
+      ? { legacyPid: skjema.legacyPid, legacyKilde: skjema.legacyKilde }
+      : {}),
   };
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
   const cookieHeader = request.headers.get("Cookie");
-  const pendingFnr = await pendingFnrCookie.parse(cookieHeader);
-  const fnr = pendingFnr && erFnr(pendingFnr) ? pendingFnr : null;
+  const pending = (await pendingFnrCookie.parse(cookieHeader)) as PendingSakData | null;
+  const fnr = pending?.fnr && erFnr(pending.fnr) ? pending.fnr : null;
+  const legacyPid = pending?.legacyPid && pending?.legacyKilde ? pending.legacyPid : null;
+  const legacyKilde = pending?.legacyPid && pending?.legacyKilde ? pending.legacyKilde : null;
 
   const headers = new Headers();
-  if (fnr) {
+  if (pending) {
     headers.set("Set-Cookie", await pendingFnrCookie.serialize("", { maxAge: 0 }));
   }
 
-  return data({ fnr }, { headers });
+  return data({ fnr, legacyPid, legacyKilde }, { headers });
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -76,6 +81,11 @@ export async function action({ request }: Route.ActionArgs) {
   });
 
   if (!resultat.ok) {
+    if ("kontrollsakId" in resultat) {
+      return submission.reply({
+        formErrors: [`Denne saken er allerede overført til kontrollsak ${resultat.kontrollsakId}.`],
+      });
+    }
     if (resultat.status === 404) {
       return submission.reply({
         formErrors: [

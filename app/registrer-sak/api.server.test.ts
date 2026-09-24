@@ -157,6 +157,130 @@ describe("opprettKontrollsak", () => {
     expect(logger.error).not.toHaveBeenCalled();
   });
 
+  it("sender legacyPid/legacyKilde når payload har dem satt", async () => {
+    vi.resetModules();
+    vi.doMock("~/config/env.server", () => ({
+      BACKEND_API_URL: "https://backend.test",
+      skalBrukeMockdata: false,
+    }));
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      json: async () => ({ id: 42 }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { opprettKontrollsak: opprettKontrollsakBackend } = await import("./api.server");
+
+    await opprettKontrollsakBackend({
+      request: testRequest,
+      token: "token-123",
+      payload: {
+        personIdent: "12345678901",
+        saksbehandlere: { eier: null, deltMed: [] },
+        kategori: "SAMLIV",
+        kilde: "NAV_KONTROLL",
+        prioritet: "NORMAL",
+        enhet: "ky153k",
+        misbruktype: ["SKJULT_SAMLIV"],
+        merking: [],
+        arbeidsgivere: [],
+        ytelser: [],
+        legacyPid: "100245",
+        legacyKilde: "UTREDNING",
+      },
+    });
+
+    const [, init] = fetchMock.mock.calls[0];
+    const sendtBody = JSON.parse((init as { body: string }).body);
+    expect(sendtBody).toMatchObject({ legacyPid: "100245", legacyKilde: "UTREDNING" });
+  });
+
+  it("utelater legacyPid/legacyKilde når de ikke er satt på payload", async () => {
+    vi.resetModules();
+    vi.doMock("~/config/env.server", () => ({
+      BACKEND_API_URL: "https://backend.test",
+      skalBrukeMockdata: false,
+    }));
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      json: async () => ({ id: 42 }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { opprettKontrollsak: opprettKontrollsakBackend } = await import("./api.server");
+
+    await opprettKontrollsakBackend({
+      request: testRequest,
+      token: "token-123",
+      payload: {
+        personIdent: "12345678901",
+        saksbehandlere: { eier: null, deltMed: [] },
+        kategori: "SAMLIV",
+        kilde: "NAV_KONTROLL",
+        prioritet: "NORMAL",
+        enhet: "ky153k",
+        misbruktype: ["SKJULT_SAMLIV"],
+        merking: [],
+        arbeidsgivere: [],
+        ytelser: [],
+      },
+    });
+
+    const [, init] = fetchMock.mock.calls[0];
+    const sendtBody = JSON.parse((init as { body: string }).body);
+    expect(sendtBody).not.toHaveProperty("legacyPid");
+    expect(sendtBody).not.toHaveProperty("legacyKilde");
+  });
+
+  it("returnerer status 409 med kontrollsakId og logger med warn når kandidaten allerede er migrert", async () => {
+    vi.resetModules();
+    vi.doMock("~/config/env.server", () => ({
+      BACKEND_API_URL: "https://backend.test",
+      skalBrukeMockdata: false,
+    }));
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 409,
+      json: async () => ({ kontrollsakId: 77 }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { opprettKontrollsak: opprettKontrollsakBackend } = await import("./api.server");
+    const { logger } = await import("~/logging/logging");
+
+    const resultat = await opprettKontrollsakBackend({
+      request: testRequest,
+      token: "token-123",
+      payload: {
+        personIdent: "12345678901",
+        saksbehandlere: { eier: null, deltMed: [] },
+        kategori: "SAMLIV",
+        kilde: "NAV_KONTROLL",
+        prioritet: "NORMAL",
+        enhet: "ky153k",
+        misbruktype: ["SKJULT_SAMLIV"],
+        merking: [],
+        arbeidsgivere: [],
+        ytelser: [],
+        legacyPid: "100245",
+        legacyKilde: "UTREDNING",
+      },
+    });
+
+    expect(resultat).toMatchObject({
+      ok: false,
+      status: 409,
+      kontrollsakId: 77,
+    });
+    expect(logger.warn).toHaveBeenCalledWith(
+      "Kontrollsak allerede migrert fra samme legacy-kandidat",
+      { status: 409, kontrollsakId: 77 },
+    );
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
   it("legger til ny mock-sak i fordeling slik at den blir søkbar og ownerløs", async () => {
     leggTilMockSakIFordeling(state(), {
       personIdent: "12345678901",

@@ -136,6 +136,17 @@ export const opprettSakSchema = z
       .optional()
       .default([]),
     ytelser: z.array(ytelseRadSchema).optional().default([]),
+    /**
+     * Fylles ut av `forhåndsutfyll.api.ts` når saken opprettes fra
+     * migreringsveilederen. Backend krever begge felt satt sammen (eller
+     * ingen av dem) og kobler dem mot samme migreringskandidat på nytt før
+     * opprettelse — se `KontrollsakService.validerLegacyMigrering`.
+     */
+    legacyPid: z
+      .string()
+      .regex(/^[0-9]{1,12}$/, "Ugyldig legacyPid")
+      .optional(),
+    legacyKilde: z.enum(["UTREDNING", "SV", "NKA_DAGPENGER", "NKA_AAP"]).optional(),
   })
   .transform((data) => ({
     ...data,

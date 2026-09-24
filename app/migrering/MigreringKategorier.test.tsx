@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { createRoutesStub } from "react-router";
 import { MigreringInnhold } from "./MigreringInnhold";
 import { hentMockMigreringKandidater } from "./mock-data.server";
 import type { MigreringLister } from "./types";
@@ -11,7 +12,17 @@ const lister: MigreringLister = {
 };
 
 function renderSide() {
-  return render(<MigreringInnhold lister={lister} />);
+  const Stub = createRoutesStub([
+    {
+      path: "/migrering",
+      Component: () => <MigreringInnhold lister={lister} />,
+    },
+    {
+      path: "/api/registrer-sak/forhåndsutfyll",
+      action: () => null,
+    },
+  ]);
+  return render(<Stub initialEntries={["/migrering"]} />);
 }
 
 describe("MigreringInnhold – seks kategorifaner og designkrav", () => {
@@ -59,11 +70,16 @@ describe("MigreringInnhold – seks kategorifaner og designkrav", () => {
     expect(enheter.length).toBeGreaterThan(0);
   });
 
-  it("holder opprettelse sperret i denne fasen", () => {
+  it("sender legacyPid og legacyKilde for opprettelse, ikke fnr, i denne fasen", () => {
     renderSide();
     const knapper = screen.getAllByRole("button", { name: "Opprett sak" });
+    expect(knapper.length).toBeGreaterThan(0);
     for (const knapp of knapper) {
-      expect((knapp as HTMLButtonElement).disabled).toBe(true);
+      expect((knapp as HTMLButtonElement).disabled).toBeFalsy();
+      const form = knapp.closest("form");
+      expect(form?.querySelector('input[name="legacyPid"]')).not.toBeNull();
+      expect(form?.querySelector('input[name="legacyKilde"]')).not.toBeNull();
+      expect(form?.querySelector('input[name="fnr"]')).toBeNull();
     }
   });
 });

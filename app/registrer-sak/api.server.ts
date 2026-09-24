@@ -31,6 +31,13 @@ export type OpprettKontrollsakRequest = {
     periodeTil: string;
     belop?: number;
   }>;
+  /**
+   * Satt når saken opprettes fra migreringsveilederen. Begge felt må være
+   * satt sammen — backend avviser med 400 hvis bare ett av dem er utfylt, og
+   * med 409 hvis kandidaten allerede er koblet til en annen kontrollsak.
+   */
+  legacyPid?: string;
+  legacyKilde?: string;
 };
 
 type OpprettKontrollsakArgs = {
@@ -45,6 +52,7 @@ type OpprettKontrollsakResultat = {
 
 export type OpprettKontrollsakSvar =
   | { ok: true; sak: OpprettKontrollsakResultat }
+  | { ok: false; status: 409; melding: string; kontrollsakId: number }
   | { ok: false; status: number; melding: string };
 
 type KontrollsakPrioritet = "LAV" | "NORMAL" | "HOY";
@@ -99,10 +107,28 @@ export async function opprettKontrollsak({
       ytelser: payload.ytelser,
       merking: payload.merking,
       arbeidsgivere: (payload.arbeidsgivere ?? []).map((orgnr) => ({ organisasjonsnummer: orgnr })),
+      ...(payload.legacyPid && payload.legacyKilde
+        ? { legacyPid: payload.legacyPid, legacyKilde: payload.legacyKilde }
+        : {}),
     }),
   });
 
   if (!response.ok) {
+    if (response.status === 409) {
+      const problem = (await response.json().catch(() => null)) as {
+        kontrollsakId?: number;
+      } | null;
+      logger.warn("Kontrollsak allerede migrert fra samme legacy-kandidat", {
+        status: 409,
+        kontrollsakId: problem?.kontrollsakId,
+      });
+      return {
+        ok: false,
+        status: 409,
+        melding: "Kandidaten er allerede overført til en kontrollsak.",
+        kontrollsakId: problem?.kontrollsakId ?? 0,
+      };
+    }
     if (response.status === 404) {
       logger.warn("Person ikke funnet ved opprettelse av kontrollsak", { status: 404 });
       return { ok: false, status: 404, melding: "Person ikke funnet." };

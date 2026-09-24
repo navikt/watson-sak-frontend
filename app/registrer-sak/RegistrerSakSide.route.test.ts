@@ -403,4 +403,98 @@ describe("byggOpprettKontrollsakPayload", () => {
       ],
     });
   });
+
+  it("tar med legacyPid/legacyKilde når begge er satt på skjemaet", async () => {
+    const { byggOpprettKontrollsakPayload } = await import("./RegistrerSakSide.server");
+
+    const payload = byggOpprettKontrollsakPayload({
+      skjema: {
+        personIdent: "12345678901",
+        kategori: "SAMLIV",
+        kilde: "NAV_KONTROLL",
+        misbruktype: [],
+        merking: [],
+        enhet: "ky153k",
+        arbeidsgivere: [],
+        ytelser: [],
+        legacyPid: "100245",
+        legacyKilde: "UTREDNING",
+      },
+    });
+
+    expect(payload).toMatchObject({ legacyPid: "100245", legacyKilde: "UTREDNING" });
+  });
+
+  it("utelater legacyPid/legacyKilde når de mangler på skjemaet", async () => {
+    const { byggOpprettKontrollsakPayload } = await import("./RegistrerSakSide.server");
+
+    const payload = byggOpprettKontrollsakPayload({
+      skjema: {
+        personIdent: "12345678901",
+        kategori: "SAMLIV",
+        kilde: "NAV_KONTROLL",
+        misbruktype: [],
+        merking: [],
+        enhet: "ky153k",
+        arbeidsgivere: [],
+        ytelser: [],
+      },
+    });
+
+    expect(payload).not.toHaveProperty("legacyPid");
+    expect(payload).not.toHaveProperty("legacyKilde");
+  });
+});
+
+describe("OpprettSakSide action — allerede migrert (409)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.resetModules();
+  });
+
+  it("returnerer skjemafeil med kontrollsakId når backend svarer 409", async () => {
+    vi.resetModules();
+    vi.doMock("./api.server", () => ({
+      opprettKontrollsak: vi.fn().mockResolvedValue({
+        ok: false,
+        status: 409,
+        melding: "Kandidaten er allerede overført til en kontrollsak.",
+        kontrollsakId: 77,
+      }),
+    }));
+    vi.doMock("~/saker/api.server", () => ({
+      slåOppPerson: vi.fn().mockResolvedValue({
+        type: "success",
+        person: { navn: "Ola Testesen", personIdent: "12345678901", alder: 30 },
+      }),
+    }));
+    vi.doMock("~/auth/access-token", () => ({
+      getBackendOboToken: vi.fn().mockResolvedValue("token-123"),
+    }));
+    vi.doMock("~/config/env.server", () => ({
+      skalBrukeMockdata: false,
+      env: { IDENT_SESSION_SECRET: "test-secret" },
+    }));
+
+    const { action } = await import("./RegistrerSakSide.server");
+
+    const formData = new FormData();
+    formData.set("personIdent", "12345678901");
+    formData.set("kategori", "SAMLIV");
+    formData.set("kilde", "NAV_KONTROLL");
+    formData.set("enhet", "ky153k");
+    formData.set("legacyPid", "100245");
+    formData.set("legacyKilde", "UTREDNING");
+
+    const request = new Request("http://localhost/registrer-sak", {
+      method: "POST",
+      body: formData,
+    });
+
+    const result = (await action({ request, params: {}, context: {} } as never)) as {
+      error?: { formErrors?: string[] };
+    };
+
+    expect(JSON.stringify(result)).toContain("77");
+  });
 });

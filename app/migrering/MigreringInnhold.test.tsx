@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { createRoutesStub } from "react-router";
 import { MigreringInnhold } from "./MigreringInnhold";
 import { hentMockMigreringKandidater } from "./mock-data.server";
 import type { MigreringLister } from "./types";
@@ -11,7 +12,17 @@ const lister: MigreringLister = {
 };
 
 function renderSide() {
-  return render(<MigreringInnhold lister={lister} />);
+  const Stub = createRoutesStub([
+    {
+      path: "/migrering",
+      Component: () => <MigreringInnhold lister={lister} />,
+    },
+    {
+      path: "/api/registrer-sak/forhåndsutfyll",
+      action: () => null,
+    },
+  ]);
+  return render(<Stub initialEntries={["/migrering"]} />);
 }
 
 describe("MigreringInnhold", () => {
@@ -103,7 +114,7 @@ describe("MigreringInnhold", () => {
     expect(within(dialog).getByText(/SVMOTTATT og SVDATO er satt/)).not.toBeNull();
   });
 
-  it("har ingen POST-flyt eller skjulte FNR og sperrer alle opprettelsesknapper", () => {
+  it("har egne POST-skjema per kandidat som bare sender legacyPid og legacyKilde — aldri fnr", () => {
     const { container } = renderSide();
     for (const navn of [
       `Mine saker (${lister.mine.length})`,
@@ -113,11 +124,17 @@ describe("MigreringInnhold", () => {
       const knapper = screen.getAllByRole("button", { name: "Opprett sak" });
       expect(knapper.length).toBeGreaterThan(0);
       for (const knapp of knapper) {
-        expect((knapp as HTMLButtonElement).disabled).toBe(true);
-        expect(knapp.getAttribute("aria-describedby")).toBe("migrering-opprettelse-sperret");
+        expect((knapp as HTMLButtonElement).disabled).toBeFalsy();
+        expect(knapp.getAttribute("aria-describedby")).toBe("migrering-opprettelse-info");
+        const form = knapp.closest("form");
+        expect(form).not.toBeNull();
+        expect(form?.getAttribute("method")).toBe("post");
+        expect(form?.getAttribute("action")).toBe("/api/registrer-sak/forhåndsutfyll");
+        expect(form?.querySelector('input[name="legacyPid"]')).not.toBeNull();
+        expect(form?.querySelector('input[name="legacyKilde"]')).not.toBeNull();
+        expect(form?.querySelector('input[name="fnr"]')).toBeNull();
       }
-      expect(container.querySelector("form")).toBeNull();
-      expect(container.querySelector('input[name="fnr"]')).toBeNull();
+      expect(container.querySelectorAll("form").length).toBe(knapper.length);
       expect(screen.queryByText(/Overført til Watson/)).toBeNull();
     }
   });

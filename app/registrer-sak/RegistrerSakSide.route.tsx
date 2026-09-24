@@ -77,7 +77,7 @@ function PersonkortIkon() {
 }
 
 export default function OpprettSakSide() {
-  const { fnr: forhåndsutfyltFnr } = useLoaderData<typeof loader>();
+  const { fnr: forhåndsutfyltFnr, legacyPid, legacyKilde } = useLoaderData<typeof loader>();
   const kodeverk = useKodeverk();
   const miljø = useMiljø();
   const lastResult = useActionData<typeof action>();
@@ -449,7 +449,23 @@ export default function OpprettSakSide() {
                   name="personIdent"
                   value={person.personnummer.replace(/\s/g, "")}
                 />
+                {legacyPid && legacyKilde && (
+                  <>
+                    <input type="hidden" name="legacyPid" value={legacyPid} />
+                    <input type="hidden" name="legacyKilde" value={legacyKilde} />
+                  </>
+                )}
                 <VStack gap="space-32">
+                  {legacyPid && legacyKilde && (
+                    <LocalAlert status="announcement" className="max-w-2xl">
+                      <LocalAlert.Content>
+                        Saken opprettes med kobling til migreringskandidat {legacyKilde}:{legacyPid}
+                        . Kontroller at fødselsnummeret over stemmer med kandidaten før du oppretter
+                        saken — dette bekreftes ikke automatisk.
+                      </LocalAlert.Content>
+                    </LocalAlert>
+                  )}
+
                   {/* ErrorSummary */}
                   {feilElementer.length > 0 && (
                     <ErrorSummary

@@ -109,4 +109,5 @@ type Hendelse =
   | "oppgave avbrutt i bekreftelse"
   | "søk opprett sak klikket"
   | "søk watson søk klikket"
-  | "søk se alle saker klikket";
+  | "søk se alle saker klikket"
+  | "migrering opprett sak klikket";
