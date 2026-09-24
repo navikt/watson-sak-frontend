@@ -221,17 +221,17 @@ val legacyKilde: Migreringskilde? = null,
 
 ### Åpne
 
-| Nr. | Spørsmål                                                                                                                                                                                                                                                                                                                    | Påvirker                                                            |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| A   | Hvilket datofelt gjelder for grensen «eldre enn 2020» i `SV_VENTER_RESULTAT`? Foreløpig `SVDATO`.                                                                                                                                                                                                                           | Konstanten `SV_VENTER_REFERANSEDATOFELT`                            |
-| B   | Gjelder registerkontroll alle kontrollister eller bare siste `KONTROLLISTE`? Foreløpig alle.                                                                                                                                                                                                                                | Regel for `REGISTER_*`                                              |
-| C   | Datakilde: hvordan kommer Access-data til backend (målmotor, skjema, lesetilgang, frysetidspunkt)?                                                                                                                                                                                                                          | `MigreringskildeClient`-implementasjon                              |
-| D   | Er de 12 SV-restansene fra før 2021 henlagt i kilden (434 til 420)?                                                                                                                                                                                                                                                         | Bare volumkontroll, ikke kode                                       |
-| E   | Hvilken nøkkel og hvilket datofelt har `NKA_KONTROLL` og `NKA_KONTROLL_AAP`?                                                                                                                                                                                                                                                | `legacyPid` og `referansedato` for register                         |
-| F   | Skal påklagede henleggelser etter 1.1.2024 tas med selv om `POLDOMDATO` er satt? Foreløpig nei.                                                                                                                                                                                                                             | Regel for `SV_VENTER_RESULTAT`                                      |
-| G   | Hvem setter enhet på saker uten saksbehandler i kilden, og hvilken enhet brukes?                                                                                                                                                                                                                                            | Dekning i `UTEN_ANSVARLIG`                                          |
-| 5   | Database og kontrakt: målplattform, read-only-tilgang, oppdatering/frysing.                                                                                                                                                                                                                                                 | Se C                                                                |
-| 6   | Ferdig migrert: hvilke felt, notater og vedlegg følger med? Er det bare FNR, PID og saksbehandler?                                                                                                                                                                                                                          | Opprettelsesflyt og kvittering                                      |
+| Nr. | Spørsmål                                                                                           | Påvirker                                    |
+| --- | -------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| A   | Hvilket datofelt gjelder for grensen «eldre enn 2020» i `SV_VENTER_RESULTAT`? Foreløpig `SVDATO`.  | Konstanten `SV_VENTER_REFERANSEDATOFELT`    |
+| B   | Gjelder registerkontroll alle kontrollister eller bare siste `KONTROLLISTE`? Foreløpig alle.       | Regel for `REGISTER_*`                      |
+| C   | Datakilde: hvordan kommer Access-data til backend (målmotor, skjema, lesetilgang, frysetidspunkt)? | `MigreringskildeClient`-implementasjon      |
+| D   | Er de 12 SV-restansene fra før 2021 henlagt i kilden (434 til 420)?                                | Bare volumkontroll, ikke kode               |
+| E   | Hvilken nøkkel og hvilket datofelt har `NKA_KONTROLL` og `NKA_KONTROLL_AAP`?                       | `legacyPid` og `referansedato` for register |
+| F   | Skal påklagede henleggelser etter 1.1.2024 tas med selv om `POLDOMDATO` er satt? Foreløpig nei.    | Regel for `SV_VENTER_RESULTAT`              |
+| G   | Hvem setter enhet på saker uten saksbehandler i kilden, og hvilken enhet brukes?                   | Dekning i `UTEN_ANSVARLIG`                  |
+| 5   | Database og kontrakt: målplattform, read-only-tilgang, oppdatering/frysing.                        | Se C                                        |
+| 6   | Ferdig migrert: hvilke felt, notater og vedlegg følger med? Er det bare FNR, PID og saksbehandler? | Opprettelsesflyt og kvittering              |
 
 ## 7. Verifisering
 
@@ -279,7 +279,7 @@ Begge branches er rebaset på oppdatert `main` og chatbot-commits er skilt ut:
   samtidig i `main`). `pnpm verify` grønn: test, lint, format, typecheck og
   unused alle `exited with code 0` (136 filer, 1243 tester).
 - Sikkerhetskopier av branchene før rebase: `backup/SAK-67-migreringsveileder-
-  før-rebase` i begge repoer.
+før-rebase` i begge repoer.
 - **Ikke gjort:** `chore/ai-veileder-chatbot`-branchene er ikke selv rebaset
   eller ryddet (backend-varianten har fortsatt sin egen `V19`-kollisjon med
   `V19__dokumentkommentarer.sql` på `main` og må få nytt versjonsnummer når

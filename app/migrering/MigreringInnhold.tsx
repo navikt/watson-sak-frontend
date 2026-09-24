@@ -245,9 +245,9 @@ export function MigreringInnhold({ lister }: { lister: MigreringLister }) {
         betydningen av datoen er avklart.
       </BodyShort>
       <BodyShort id="migrering-opprettelse-krever-ansvar" size="small" textColor="subtle">
-        Opprettelse krever bekreftet ansvar. Kandidater som bare er synlige via enhetstilgang
-        («Uten ansvarlig») kan ikke opprettes herfra — se avsnitt 4 og 6 (avklaring H) i
-        migreringsnotatet. Fanen «Mine saker» kan opprettes fra.
+        Opprettelse krever bekreftet ansvar. Kandidater som bare er synlige via enhetstilgang («Uten
+        ansvarlig») kan ikke opprettes herfra — se avsnitt 4 og 6 (avklaring H) i migreringsnotatet.
+        Fanen «Mine saker» kan opprettes fra.
       </BodyShort>
       <MigreringsAvklaringer />
       <Tabs
