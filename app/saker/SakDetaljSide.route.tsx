@@ -100,7 +100,7 @@ export default function SakDetaljSide() {
             xs: 1,
             md: "minmax(0, 1fr) 300px",
             lg: "minmax(0, 1fr) 260px",
-            xl: "minmax(0, 1fr) 300px",
+            xl: "minmax(0, 1fr) 400px",
           }}
           gap="space-16"
         >

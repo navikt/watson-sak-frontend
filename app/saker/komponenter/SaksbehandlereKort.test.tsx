@@ -202,6 +202,27 @@ describe("SaksbehandlereKort", () => {
     expect(screen.getByText("Legg til").className).toContain("hidden xl:inline");
   });
 
+  it("viser Fjern-tekst for delt tilgang kun fra xl-brekkpunktet", async () => {
+    const deltMed = lagSaksbehandler({ navIdent: "Z888888", navn: "Ada Larsen" });
+    await renderMedRouter(
+      <SaksbehandlereKort
+        erEier={true}
+        sak={lagKontrollsak({
+          saksbehandlere: {
+            eier: lagSaksbehandler(),
+            deltMed: [deltMed],
+            opprettetAv: lagSaksbehandler(),
+          },
+        })}
+        saksbehandlerDetaljer={[lagSaksbehandler(), deltMed]}
+        ansvarligSaksbehandler={lagSaksbehandler()}
+      />,
+    );
+
+    const fjernKnapp = screen.getByRole("button", { name: "Fjern deling med Ada Larsen" });
+    expect(fjernKnapp.querySelector(".hidden")?.className).toContain("xl:inline");
+  });
+
   it("viser Endre i enhetsseksjonen for aktiv sak", async () => {
     await renderMedRouter(
       <SaksbehandlereKort

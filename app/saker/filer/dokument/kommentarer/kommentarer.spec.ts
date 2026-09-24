@@ -15,7 +15,7 @@ test.describe("Dokumentkommentarer", () => {
     // Sak 102 har seedede dokumenter, og dokument 1-1 har seedede kommentarer.
     await page.goto("/saker/102", { waitUntil: "networkidle" });
     await page.getByRole("button", { name: "Tildel meg" }).click();
-    await expect(page.getByRole("button", { name: "Rediger saksinformasjon" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Endre saksinformasjon" })).toBeVisible();
 
     await page.goto("/saker/102/dokumenter/1-1?sidepanel=kommentarer", {
       waitUntil: "networkidle",

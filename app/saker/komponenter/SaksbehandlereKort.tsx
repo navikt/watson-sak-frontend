@@ -1,5 +1,15 @@
 import { PersonPencilIcon, PersonPlusIcon, XMarkIcon } from "@navikt/aksel-icons";
-import { BodyShort, Button, Detail, Heading, HStack, Tag, Tooltip, VStack } from "@navikt/ds-react";
+import {
+  BodyShort,
+  Box,
+  Button,
+  Detail,
+  Heading,
+  HStack,
+  Tag,
+  Tooltip,
+  VStack,
+} from "@navikt/ds-react";
 import { useState } from "react";
 import { useFetcher } from "react-router";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
@@ -22,7 +32,6 @@ import { SendTilAnnenEnhetModal } from "~/saker/handlinger/SendTilAnnenEnhetModa
 import { TildelSaksbehandlerModal } from "~/saker/handlinger/TildelSaksbehandlerModal";
 import { formaterStatus, formaterSteg, hentStegVariant } from "~/saker/visning";
 import { ResponsivEndreKnapp } from "./ResponsivEndreKnapp";
-import { Box } from "platejs/react";
 
 interface SaksbehandlereKortProps {
   sak: KontrollsakResponse;
@@ -276,16 +285,18 @@ export function SaksbehandlereKort({
                   saksbehandler={saksbehandler}
                   handling={
                     erEier && kanEndreDeltTilgang ? (
-                      <Button
-                        type="button"
-                        variant="tertiary"
-                        size="xsmall"
-                        icon={<XMarkIcon aria-hidden />}
-                        onClick={() => fjernDeltTilgang(saksbehandler.navIdent)}
-                        aria-label={`Fjern deling med ${saksbehandler.navn}`}
-                      >
-                        Fjern
-                      </Button>
+                      <Tooltip content={`Fjern deling med ${saksbehandler.navn}`}>
+                        <Button
+                          type="button"
+                          variant="tertiary"
+                          size="xsmall"
+                          icon={<XMarkIcon aria-hidden />}
+                          onClick={() => fjernDeltTilgang(saksbehandler.navIdent)}
+                          aria-label={`Fjern deling med ${saksbehandler.navn}`}
+                        >
+                          <span className="hidden xl:inline">Fjern</span>
+                        </Button>
+                      </Tooltip>
                     ) : null
                   }
                 />

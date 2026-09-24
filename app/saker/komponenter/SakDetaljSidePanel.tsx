@@ -10,7 +10,6 @@ import type {
 import type { DokumentNode, FilResponse } from "../filer/typer";
 import type { SakHendelse } from "../historikk/typer";
 import { SaksbehandlereKort } from "./SaksbehandlereKort";
-import { Box } from "platejs/react";
 
 interface SakDetaljSidePanelProps {
   sak: KontrollsakResponse;
