@@ -121,6 +121,7 @@ data class MigreringKandidatResponse(
     val grunnlag: List<MigreringGrunnlagsfeltResponse>,
     val alleredeMigrertTilKontrollsakId: Long?,
     val hentetTidspunkt: Instant,
+    val personIdent: String?,     // ✦ kun satt når ansvar er BEKREFTET
 )
 ```
 
@@ -133,8 +134,13 @@ Referansedato per kategori: `TIPSINNDATO` for tipskategoriene,
 `SV_VENTER_RESULTAT`. For registerkategoriene er feltet åpent. Til det er
 avklart er `referansedato` og `referansedatoFelt` `null`.
 
-`personIdent` returneres aldri i listen. Navn og ident hentes ved opprettelse
-gjennom ordinær personoppslagsflyt.
+`personIdent` returneres nå i listen, men **bare** når `ansvar.type ==
+BEKREFTET`. For `UTEN_ANSVARLIG` og `LOGGTREFF` er feltet alltid `null` —
+håndheves i `MigreringResponseMapper.toResponse()`, ikke bare i klienten (se
+avsnitt 9, revidert etter Figma-sammenligning). Dette gjør at «Opprett sak»
+fra migreringslisten kan forhåndsutfylle person i tråd med Figma-skjerm 2
+(«Opprett sak, Enhet forhåndsutfylt + PID») for kandidater saksbehandler
+allerede eier.
 
 ```kotlin
 enum class MigreringKategori {
@@ -317,6 +323,36 @@ H over): rebase av backend-branchen mot `main` (V24/V25), utskilling av
 chatbot-commits, og svar på avklaring H. Docker-testene må fortsatt kjøres av
 utvikleren i en vanlig terminal utenfor sandkassen (se avsnitt 9) — ikke
 bekreftet grønt her.
+
+## 10. Figma-sammenligning og PII-utvidelse (denne runden)
+
+**Funn:** implementasjonen hadde driftet fra Figma-skissen
+(`docs/migrering.jpeg`, 4 skjermer). Skjerm 1 («Migrering – liste») viser en
+flat tabell (PID, personnummer, opprettet i Access, «Opprett sak») uten faner
+eller kategorier — seks-kategori-visningen kom fra fagnotatet 23.09, _etter_
+denne skissen, og er ikke i konflikt i seg selv. Skjerm 2 («Opprett sak, Enhet
+forhåndsutfylt + PID») derimot viste en reell motsetning: personen/PID-en er
+allerede valgt når skjemaet åpnes, mens koden (bevisst, se § 3 før denne
+revisjonen) aldri sendte `personIdent` fra migreringslisten og krevde manuelt
+fnr-oppslag på nytt i `/registrer-sak`.
+
+**Beslutning (denne runden):** følg Figma. `personIdent` eksponeres nå i
+`MigreringKandidatResponse`, men **bare** når `ansvar.type == BEKREFTET` —
+håndhevet i `MigreringResponseMapper.toResponse()` på backend, ikke bare
+filtrert i klienten. `UTEN_ANSVARLIG`- og `LOGGTREFF`-kandidater får fortsatt
+aldri `personIdent`, i tråd med avklaring H (varig sperre).
+
+🔴 Rød sone: dette utvider hva slags persondata som forlater
+migrerings-APIet. Endringen er gjort med streng betingelse
+(`BEKREFTET`-ansvar only) og er dokumentert her, men er **ikke** egenhendig
+godkjent av fagansvarlig/personvern — bare valgt av utvikler i denne økten
+som svar på et reelt design-kode-avvik. Før merge bør personvernvurderingen
+for dette feltet bekreftes eksplisitt, på samme måte som avklaring H ble det.
+
+**Gjenstår i denne runden:** frontend (`types.ts`, mock-data,
+`MigreringInnhold.tsx`, `forhåndsutfyll.api.ts`, `RegistrerSakSide`) er ikke
+oppdatert til å faktisk bruke det nye feltet til å forhåndsutfylle person på
+skjerm 2 ennå. Backend-kontrakten er klar til det.
 
 ## Prøve prototypen
 

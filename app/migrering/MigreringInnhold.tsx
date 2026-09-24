@@ -199,6 +199,9 @@ function Kandidatliste({
                       >
                         <input type="hidden" name="legacyPid" value={k.legacyPid} />
                         <input type="hidden" name="legacyKilde" value={k.legacyKilde} />
+                        {k.ansvar.type === "BEKREFTET" && k.personIdent && (
+                          <input type="hidden" name="fnr" value={k.personIdent} />
+                        )}
                         <Button
                           type="submit"
                           size="small"

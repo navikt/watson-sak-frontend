@@ -40,6 +40,12 @@ export interface MigreringKandidat {
   kildefelter: MigreringGrunnlagsfelt[];
   alleredeMigrertTilKontrollsakId?: number | null;
   hentetTidspunkt?: string;
+  /**
+   * Kun satt når `ansvar.type === "BEKREFTET"` — backend haandhever dette i
+   * MigreringResponseMapper, ikke bare klienten. Aldri satt for
+   * UTEN_ANSVARLIG/LOGGTREFF (se avsnitt 10 i migrering-avklaringer.md).
+   */
+  personIdent?: string | null;
 }
 
 export interface MigreringLister {

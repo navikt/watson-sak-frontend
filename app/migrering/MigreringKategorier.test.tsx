@@ -70,7 +70,7 @@ describe("MigreringInnhold – seks kategorifaner og designkrav", () => {
     expect(enheter.length).toBeGreaterThan(0);
   });
 
-  it("sender legacyPid og legacyKilde for opprettelse, ikke fnr, i denne fasen", () => {
+  it("sender legacyPid og legacyKilde, pluss fnr for bekreftet ansvar", () => {
     renderSide();
     const knapper = screen.getAllByRole("button", { name: "Opprett sak" });
     expect(knapper.length).toBeGreaterThan(0);
@@ -79,7 +79,10 @@ describe("MigreringInnhold – seks kategorifaner og designkrav", () => {
       const form = knapp.closest("form");
       expect(form?.querySelector('input[name="legacyPid"]')).not.toBeNull();
       expect(form?.querySelector('input[name="legacyKilde"]')).not.toBeNull();
-      expect(form?.querySelector('input[name="fnr"]')).toBeNull();
+      // Alle knapper som er aktive her har bekreftet ansvar (se avsnitt 10 i
+      // migrering-avklaringer.md), så fnr sendes med for å forhåndsutfylle
+      // person på /registrer-sak.
+      expect(form?.querySelector('input[name="fnr"]')).not.toBeNull();
     }
   });
 });

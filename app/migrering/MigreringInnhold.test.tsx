@@ -114,7 +114,7 @@ describe("MigreringInnhold", () => {
     expect(within(dialog).getByText(/SVMOTTATT og SVDATO er satt/)).not.toBeNull();
   });
 
-  it("har egne POST-skjema per kandidat som bare sender legacyPid og legacyKilde — aldri fnr, og lar bare bekreftet ansvar opprette", () => {
+  it("har egne POST-skjema per kandidat som sender fnr for bekreftet ansvar, aldri for uten ansvarlig", () => {
     const { container } = renderSide();
 
     fireEvent.click(screen.getByRole("tab", { name: `Mine saker (${lister.mine.length})` }));
@@ -129,7 +129,10 @@ describe("MigreringInnhold", () => {
       expect(form?.getAttribute("action")).toBe("/api/registrer-sak/forhåndsutfyll");
       expect(form?.querySelector('input[name="legacyPid"]')).not.toBeNull();
       expect(form?.querySelector('input[name="legacyKilde"]')).not.toBeNull();
-      expect(form?.querySelector('input[name="fnr"]')).toBeNull();
+      // Bekreftet ansvar: kandidaten er allerede innloggede saksbehandlers egen
+      // sak, så fnr sendes med for å forhåndsutfylle person på /registrer-sak
+      // (Figma-skjerm 2). Se avsnitt 10 i migrering-avklaringer.md.
+      expect(form?.querySelector('input[name="fnr"]')).not.toBeNull();
     }
     expect(container.querySelectorAll("form").length).toBe(knapperMine.length);
 
