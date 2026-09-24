@@ -245,21 +245,47 @@ val legacyKilde: Migreringskilde? = null,
 
 ## Kjente tekniske risikoer
 
-- Duplikat Flyway-versjon V19 i backend-branchen er løst ved å gi nytt navn til
-  chatbot-migreringen (`V19__chatbot_tabeller.sql` → `V27__chatbot_tabeller.sql`,
-  ren omdøping, ingen innholdsendring). Backend-branchen mangler fortsatt V24 og
-  V25 fra `main` — må håndteres i en egen synk-/rebase-oppgave før merge.
-- Begge brancher inneholder AI-chatbot-commits (backend `892b970`, frontend
-  `f0fbdc3`). De må skilles fra migrerings-PR-ene.
-- Frontend-branchen er 52 commits bak `main`, blant annet i `app/registrer-sak/`
-  og `app/saker/types.backend.ts`.
-- **Docker/Testcontainers er ikke tilgjengelig i denne sandkassen.** Alle
-  Postgres-/Spring-context-integrasjonstester (`MigreringControllerTest`,
+- ~~Duplikat Flyway-versjon V19~~ løst: begge brancher er rebaset (se avsnitt 9).
+  Backend-branchen har nå V24 og V25 fra `main`, migreringskolonnen er `V26`,
+  ingen `V27`-kollisjon lenger.
+- ~~Begge brancher inneholder AI-chatbot-commits~~ løst: skilt ut til egne
+  branches (se avsnitt 9).
+- ~~Frontend-branchen er 52 commits bak `main`~~ løst: rebaset (se avsnitt 9).
+- **Docker/Testcontainers er fortsatt ikke tilgjengelig i denne sandkassen.**
+  Alle Postgres-/Spring-context-integrasjonstester (`MigreringControllerTest`,
   `KontrollsakControllerTest`, `KontrollsakSpecificationPostgresTest`, m.fl.)
   feiler med `DockerClientProviderStrategy`-årsak, ikke av kodefeil — bekreftet
-  ved å lese XML-testrapportene og se at samtlige har samme rotfeil. Disse må
-  kjøres på nytt i CI eller lokalt med Docker før merge. `./gradlew build -x
-test` er grønn; `./gradlew test` feiler bare på disse.
+  på nytt etter rebase ved å lese XML-testrapportene: samtlige 24 feilende
+  filer har samme rotfeil, 70 mock-baserte filer er grønne. Disse må kjøres på
+  nytt i CI eller lokalt med Docker før merge. `./gradlew build -x test` er
+  grønn; `./gradlew test` feiler bare på disse.
+
+## 9. Rebase og opprydding (denne runden)
+
+Begge branches er rebaset på oppdatert `main` og chatbot-commits er skilt ut:
+
+- **Backend** (`watson-admin-api`): rebaset `SAK-67/migreringsveileder` fra
+  `d20c121` (gammel merge med `origin/main`) til nyeste `main` (`f7730ee`,
+  tilstandsmaskin for kontrollsaker). Chatbot-commit `892b970` er flyttet til
+  egen branch `chore/ai-veileder-chatbot` og fjernet fra migreringsbranchen.
+  Tre konflikter, alle import-sammenslåinger i `GlobalExceptionHandler.kt` og
+  `KontrollsakService.kt`/-testen (ingen logikkendring), pluss ett `git rm` av
+  en `V27__chatbot_tabeller.sql`-omdøping som ikke lenger trengs når chatboten
+  ikke er på branchen. `./gradlew build -x test` grønn. `./gradlew test`
+  feiler bare på de kjente Docker-avhengige testene (se over).
+- **Frontend** (`watson-sak-frontend`): rebaset `SAK-67/migreringsveileder` fra
+  `f0fbdc3` (chatbot-commit) til nyeste `main`, 52 commits fremover. Chatbot-
+  commit skilt ut til `chore/ai-veileder-chatbot`. Én konflikt, sammenslåing av
+  ikon-importer i `AppSidebar.tsx` (migrering + statistikk-lenke lagt til
+  samtidig i `main`). `pnpm verify` grønn: test, lint, format, typecheck og
+  unused alle `exited with code 0` (136 filer, 1243 tester).
+- Sikkerhetskopier av branchene før rebase: `backup/SAK-67-migreringsveileder-
+  før-rebase` i begge repoer.
+- **Ikke gjort:** `chore/ai-veileder-chatbot`-branchene er ikke selv rebaset
+  eller ryddet (backend-varianten har fortsatt sin egen `V19`-kollisjon med
+  `V19__dokumentkommentarer.sql` på `main` og må få nytt versjonsnummer når
+  den tas videre). Ingen av branchene er pushet til `origin` fra denne
+  sandkassen (nettverkstilgang til GitHub er blokkert her).
 
 ## 8. 6.a-review og 7.a-avslutning (denne runden)
 
