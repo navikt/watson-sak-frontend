@@ -24,10 +24,13 @@ export function MigreringGrunnlagModal({
             <BodyShort>
               {kildeEtikett[kandidat.kilde]} · PID {kandidat.pid}
             </BodyShort>
-            <div>
+            <div className="flex flex-wrap gap-2">
               <Tag variant={kandidat.vurdering === "MA_AVKLARES" ? "warning" : "info"}>
                 {vurderingEtikett[kandidat.vurdering]}
               </Tag>
+              {kandidat.ekskluderFraStatistikk && (
+                <Tag variant="neutral">Arbeidsgiveranmeldelse – holdes utenfor statistikk</Tag>
+              )}
             </div>
             <BodyShort>{kandidat.begrunnelse}</BodyShort>
             <BodyShort>

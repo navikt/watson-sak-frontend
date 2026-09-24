@@ -26,72 +26,49 @@ function renderSide() {
 }
 
 describe("MigreringInnhold", () => {
-  it("merker siden som prototype med mockantall og riktige fanepaneler", () => {
+  it("merker siden som prototype og viser flat tabell iht Figma-skisse", () => {
     renderSide();
-    expect(screen.getByRole("heading", { name: "Migrering" })).not.toBeNull();
+    expect(screen.getByRole("heading", { name: "Migreringsveileder" })).not.toBeNull();
     expect(screen.getByText("Prototype – kun syntetiske eksempler")).not.toBeNull();
-    expect(
-      screen
-        .getByRole("tab", { name: `Mine saker (${lister.mine.length})` })
-        .getAttribute("aria-selected"),
-    ).toBe("true");
-    expect(
-      screen.getByRole("tabpanel", { name: `Mine saker (${lister.mine.length})` }),
-    ).not.toBeNull();
-    expect(screen.getByText("Ada Eksempel")).not.toBeNull();
-    expect(screen.queryByText("Fie Eksempel")).toBeNull();
+    expect(screen.getByRole("columnheader", { name: "PID" })).not.toBeNull();
+    expect(screen.getByRole("columnheader", { name: "Personnummer" })).not.toBeNull();
+    expect(screen.getByRole("columnheader", { name: "Opprettet i Access" })).not.toBeNull();
+  });
+
+  it("viser alle kandidater i én flat liste, uten faner eller kategorier", () => {
+    renderSide();
+    expect(screen.queryByRole("tab")).toBeNull();
+    expect(screen.queryByRole("searchbox")).toBeNull();
+    const antallForventet = lister.mine.length + lister.utenBekreftetAnsvarlig.length;
+    expect(screen.getAllByRole("row")).toHaveLength(antallForventet + 1); // +1 for header-raden
   });
 
   it("holder utredning og SV adskilt selv når PID er lik", () => {
     renderSide();
     expect(screen.getAllByText("100245")).toHaveLength(2);
-    expect(screen.getByText("Ada Eksempel")).not.toBeNull();
-    expect(screen.getByText("Ester Eksempel")).not.toBeNull();
   });
 
-  it("viser søkeloggtreff under ubekreftet ansvar, ikke Mine saker", () => {
+  it("viser personnummer bare for bekreftet ansvar, aldri for uten ansvarlig", () => {
     renderSide();
-    expect(screen.queryByText("Arne Arbeidsavklaring")).toBeNull();
-    fireEvent.click(
-      screen.getByRole("tab", {
-        name: `Uten bekreftet ansvarlig (${lister.utenBekreftetAnsvarlig.length})`,
-      }),
-    );
-    expect(screen.getByText("Arne Arbeidsavklaring")).not.toBeNull();
-    expect(screen.getByText("Kun søkeloggtreff – ansvar ubekreftet")).not.toBeNull();
-    expect(screen.queryByText("Ada Eksempel")).toBeNull();
-    expect(
-      screen.getByRole("tabpanel", {
-        name: `Uten bekreftet ansvarlig (${lister.utenBekreftetAnsvarlig.length})`,
-      }),
-    ).not.toBeNull();
-  });
+    // Ada Eksempel (UTREDNING:100245, BEKREFTET) har syntetisk personIdent i mockdata
+    const adaCelle = screen.getByText("111111 11111");
+    const adaRad = adaCelle.closest("tr");
+    expect(adaRad).not.toBeNull();
+    expect(within(adaRad!).getByText("100245")).not.toBeNull();
 
-  it("søker uten hensyn til store bokstaver og omkringliggende mellomrom", () => {
-    renderSide();
-    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "  ADA  " } });
-    expect(screen.getByText("Ada Eksempel")).not.toBeNull();
-    expect(screen.queryByText("Bente Eksempel")).toBeNull();
-    expect(screen.getByRole("status").textContent).toContain(`Viser 1 av ${lister.mine.length}`);
-    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "finnes ikke" } });
-    expect(screen.getByText(/Ingen eksempler funnet/)).not.toBeNull();
-  });
-
-  it("filtrerer på avklaringsbehov uten å merke resultatregistrering som avsluttet", () => {
-    renderSide();
-    fireEvent.change(screen.getByRole("combobox", { name: "Foreløpig vurdering" }), {
-      target: { value: "MA_AVKLARES" },
-    });
-    expect(screen.getByText("Bente Eksempel")).not.toBeNull();
-    expect(screen.getByText("Dag Eksempel")).not.toBeNull();
-    expect(screen.queryByText("Ada Eksempel")).toBeNull();
-    expect(screen.getByRole("status").textContent).toContain(`Viser 2 av ${lister.mine.length}`);
+    // Arne Arbeidsavklaring (NKA_AAP:800202, LOGGTREFF) har aldri personIdent
+    const arnePidCelle = screen.getByText("800202");
+    const arneRad = arnePidCelle.closest("tr");
+    expect(arneRad).not.toBeNull();
+    // Personnummer og referansedato er begge tomme for denne kandidaten
+    expect(within(arneRad!).getAllByText("–")).toHaveLength(2);
   });
 
   it("viser grunnlag for henlagt under avklaring uten utredningsresultat og kan lukke modal", () => {
     renderSide();
-    fireEvent.click(screen.getByRole("button", { name: /Se grunnlag for Bente Eksempel/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Se grunnlag for PID 100310" }));
     const dialog = screen.getByRole("dialog", { name: "Grunnlag for foreløpig vurdering" });
+    expect(within(dialog).getByText("Bente Eksempel")).not.toBeNull();
     expect(within(dialog).getByText(/TIPSAVKL er 'Henlagt'/)).not.toBeNull();
     expect(within(dialog).getByRole("row", { name: "UTREDRES Mangler (NULL)" })).not.toBeNull();
     expect(within(dialog).getByRole("row", { name: "FERDIGDATO 2023-03-01" })).not.toBeNull();
@@ -99,15 +76,11 @@ describe("MigreringInnhold", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("viser SV-felt og advarsel om dato uten resultat", () => {
+  it("viser SV-felt og advarsel om dato uten resultat for kandidat uten bekreftet ansvar", () => {
     renderSide();
-    fireEvent.click(
-      screen.getByRole("tab", {
-        name: `Uten bekreftet ansvarlig (${lister.utenBekreftetAnsvarlig.length})`,
-      }),
-    );
-    fireEvent.click(screen.getByRole("button", { name: /Se grunnlag for Geir Eksempel/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Se grunnlag for PID 100634" }));
     const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByText("Geir Eksempel")).not.toBeNull();
     expect(within(dialog).getByRole("row", { name: "SVMOTTATT 2022-04-10" })).not.toBeNull();
     expect(within(dialog).getByRole("row", { name: "SVDATO 2022-05-01" })).not.toBeNull();
     expect(within(dialog).getByRole("row", { name: "SVRES Mangler (NULL)" })).not.toBeNull();
@@ -117,38 +90,37 @@ describe("MigreringInnhold", () => {
   it("har egne POST-skjema per kandidat som sender fnr for bekreftet ansvar, aldri for uten ansvarlig", () => {
     const { container } = renderSide();
 
-    fireEvent.click(screen.getByRole("tab", { name: `Mine saker (${lister.mine.length})` }));
-    const knapperMine = screen.getAllByRole("button", { name: "Opprett sak" });
-    expect(knapperMine.length).toBeGreaterThan(0);
-    for (const knapp of knapperMine) {
-      expect((knapp as HTMLButtonElement).disabled).toBeFalsy();
-      expect(knapp.getAttribute("aria-describedby")).toBe("migrering-opprettelse-info");
+    const knapper = screen.getAllByRole("button", { name: "Opprett sak" });
+    expect(knapper.length).toBe(lister.mine.length + lister.utenBekreftetAnsvarlig.length);
+    expect(container.querySelectorAll("form").length).toBe(knapper.length);
+
+    let antallBekreftet = 0;
+    let antallIkkeBekreftet = 0;
+    for (const knapp of knapper) {
       const form = knapp.closest("form");
       expect(form).not.toBeNull();
       expect(form?.getAttribute("method")).toBe("post");
       expect(form?.getAttribute("action")).toBe("/api/registrer-sak/forhåndsutfyll");
       expect(form?.querySelector('input[name="legacyPid"]')).not.toBeNull();
       expect(form?.querySelector('input[name="legacyKilde"]')).not.toBeNull();
-      // Bekreftet ansvar: kandidaten er allerede innloggede saksbehandlers egen
-      // sak, så fnr sendes med for å forhåndsutfylle person på /registrer-sak
-      // (Figma-skjerm 2). Se avsnitt 10 i migrering-avklaringer.md.
-      expect(form?.querySelector('input[name="fnr"]')).not.toBeNull();
-    }
-    expect(container.querySelectorAll("form").length).toBe(knapperMine.length);
 
-    fireEvent.click(
-      screen.getByRole("tab", {
-        name: `Uten bekreftet ansvarlig (${lister.utenBekreftetAnsvarlig.length})`,
-      }),
-    );
-    const knapperUkjent = screen.getAllByRole("button", { name: "Opprett sak" });
-    expect(knapperUkjent.length).toBeGreaterThan(0);
-    for (const knapp of knapperUkjent) {
-      expect((knapp as HTMLButtonElement).disabled).toBe(true);
-      expect(knapp.getAttribute("aria-describedby")).toBe("migrering-opprettelse-krever-ansvar");
+      const erDeaktivert = (knapp as HTMLButtonElement).disabled;
+      const fnrFelt = form?.querySelector('input[name="fnr"]');
+      if (erDeaktivert) {
+        antallIkkeBekreftet++;
+        expect(knapp.getAttribute("aria-describedby")).toBe("migrering-opprettelse-krever-ansvar");
+        expect(fnrFelt).toBeNull();
+      } else {
+        antallBekreftet++;
+        expect(knapp.getAttribute("aria-describedby")).toBe("migrering-opprettelse-info");
+        // Bekreftet ansvar: kandidaten er allerede innloggede saksbehandlers egen
+        // sak, så fnr sendes med for å forhåndsutfylle person på /registrer-sak
+        // (Figma-skjerm 2). Se avsnitt 10 i migrering-avklaringer.md.
+        expect(fnrFelt).not.toBeNull();
+      }
     }
-
-    expect(screen.queryByText(/Overført til Watson/)).toBeNull();
+    expect(antallBekreftet).toBe(lister.mine.length);
+    expect(antallIkkeBekreftet).toBe(lister.utenBekreftetAnsvarlig.length);
   });
 
   it("viser målte utvalg og statusregler i informasjonskort", () => {

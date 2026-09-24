@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { createRoutesStub } from "react-router";
 import { MigreringInnhold } from "./MigreringInnhold";
@@ -25,64 +25,28 @@ function renderSide() {
   return render(<Stub initialEntries={["/migrering"]} />);
 }
 
-describe("MigreringInnhold – seks kategorifaner og designkrav", () => {
-  it("viser seks kategorifaner med oppsummerte antall og støtter veksling mellom MINE og UTEN_ANSVARLIG", () => {
+/**
+ * Kategoriene (§ 1 i kontrakten) og MINE/UTEN_ANSVARLIG-skillet (§ 4) finnes
+ * fortsatt i datamodellen og API-et, men er ikke del av selve listeskjermen
+ * etter at UI-et ble bygget om til å matche Figma («1. Migrering – liste»,
+ * docs/migrering.jpeg). De seks kategori-fanene som tidligere fantes her er
+ * fjernet — se MigreringInnhold.test.tsx for gjeldende oppførsel.
+ */
+describe("MigreringInnhold – kontraktskrav som overlever UI-forenklingen", () => {
+  it("viser synlig etikett for arbeidsgiveranmeldelse (ekskluderFraStatistikk) i grunnlagsmodalen", () => {
     renderSide();
 
-    // Sjekk at velger for liste (Mine saker / Uten bekreftet ansvarlig) finnes
-    expect(screen.getByRole("tab", { name: /Mine saker/i })).not.toBeNull();
-    expect(screen.getByRole("tab", { name: /Uten bekreftet ansvarlig/i })).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Se grunnlag for PID 100502" }));
+    const dialog = screen.getByRole("dialog");
 
-    // Sjekk at alle seks kategorifaner/knapper finnes med sine etiketter
-    expect(screen.getByRole("button", { name: /Tipsrestanser/i })).not.toBeNull();
-    expect(screen.getByRole("button", { name: /Tips venter resultat/i })).not.toBeNull();
-    expect(screen.getByRole("button", { name: /Straffesaker restanser/i })).not.toBeNull();
-    expect(screen.getByRole("button", { name: /Straffesaker venter på resultat/i })).not.toBeNull();
-    expect(screen.getByRole("button", { name: /Registersamkjøring dagpenger/i })).not.toBeNull();
-    expect(screen.getByRole("button", { name: /Registersamkjøring AAP/i })).not.toBeNull();
+    expect(within(dialog).getByText("Arbeidsgiver Anmeldt Eksempel")).not.toBeNull();
+    expect(
+      within(dialog).getByText("Arbeidsgiveranmeldelse – holdes utenfor statistikk"),
+    ).not.toBeNull();
   });
 
-  it("viser synlig advarsel/etikett for Arbeidsgiveranmeldelse (ekskluderFraStatistikk)", () => {
-    renderSide();
-
-    // Gå til "Uten bekreftet ansvarlig"
-    fireEvent.click(screen.getByRole("tab", { name: /Uten bekreftet ansvarlig/i }));
-
-    // Velg kategorien for Straffesaker venter på resultat
-    fireEvent.click(screen.getByRole("button", { name: /Straffesaker venter på resultat/i }));
-
-    // Sjekk at kandidaten med Anm. Agiver har taggen
-    expect(screen.getByText("Arbeidsgiver Anmeldt Eksempel")).not.toBeNull();
-    expect(screen.getByText("Arbeidsgiveranmeldelse – holdes utenfor statistikk")).not.toBeNull();
-  });
-
-  it("viser kilde og enhet i tabellen for kandidater uten bekreftet saksbehandler", () => {
-    renderSide();
-
-    fireEvent.click(screen.getByRole("tab", { name: /Uten bekreftet ansvarlig/i }));
-
-    // Sjekk tabellheadere for Kilde og Enhet
-    expect(screen.getByRole("columnheader", { name: /Kilde \/ PID/i })).not.toBeNull();
-    expect(screen.getByRole("columnheader", { name: /Enhet/i })).not.toBeNull();
-
-    // Sjekk at enhet 4812 vises for kandidatene
-    const enheter = screen.getAllByText("4812");
-    expect(enheter.length).toBeGreaterThan(0);
-  });
-
-  it("sender legacyPid og legacyKilde, pluss fnr for bekreftet ansvar", () => {
-    renderSide();
-    const knapper = screen.getAllByRole("button", { name: "Opprett sak" });
-    expect(knapper.length).toBeGreaterThan(0);
-    for (const knapp of knapper) {
-      expect((knapp as HTMLButtonElement).disabled).toBeFalsy();
-      const form = knapp.closest("form");
-      expect(form?.querySelector('input[name="legacyPid"]')).not.toBeNull();
-      expect(form?.querySelector('input[name="legacyKilde"]')).not.toBeNull();
-      // Alle knapper som er aktive her har bekreftet ansvar (se avsnitt 10 i
-      // migrering-avklaringer.md), så fnr sendes med for å forhåndsutfylle
-      // person på /registrer-sak.
-      expect(form?.querySelector('input[name="fnr"]')).not.toBeNull();
-    }
+  it("dekker alle seks kategorier i det underliggende datagrunnlaget, selv om de ikke vises som faner", () => {
+    const alleKategorier = new Set(kandidater.map((k) => k.kategori));
+    expect(alleKategorier.size).toBe(6);
   });
 });
