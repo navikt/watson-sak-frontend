@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it } from "vitest";
 import { useTilbakeLenke, type Tilbakemål } from "./tilbake";
@@ -19,10 +19,12 @@ function renderMedState(state: unknown) {
 }
 
 describe("useTilbakeLenke", () => {
-  it("bruker opphavet fra location.state når det finnes", () => {
+  it("bruker opphavet fra location.state etter hydrering", async () => {
     renderMedState({ tilbake: { to: "/alle-saker", label: "Alle saker" } });
 
-    expect(screen.getByTestId("resultat").textContent).toBe("Alle saker|/alle-saker");
+    await waitFor(() => {
+      expect(screen.getByTestId("resultat").textContent).toBe("Alle saker|/alle-saker");
+    });
   });
 
   it("faller tilbake til standard når state mangler", () => {

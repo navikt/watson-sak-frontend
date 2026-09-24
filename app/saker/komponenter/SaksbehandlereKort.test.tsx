@@ -2,7 +2,11 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mockKodeverk } from "~/testing/mock-store/kodeverk.server";
-import type { KontrollsakResponse, KontrollsakSaksbehandler } from "~/saker/types.backend";
+import type {
+  KontrollsakResponse,
+  KontrollsakSaksbehandler,
+  TillatteHandlingerResponse,
+} from "~/saker/types.backend";
 import { SaksbehandlereKort } from "./SaksbehandlereKort";
 
 const submitMock = vi.fn();
@@ -81,6 +85,37 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
   };
 }
 
+function lagTillatteHandlinger(sak: KontrollsakResponse): TillatteHandlingerResponse {
+  return {
+    versjon: 1,
+    tilstand: {
+      steg: sak.steg,
+      status: sak.status,
+      statusFørBero: null,
+      resultat: null,
+      ytelser: [],
+    },
+    handlinger: [
+      {
+        type: "FLYTT_TIL_NESTE_STEG",
+        metode: "POST",
+        sti: `/api/v1/kontrollsaker/${sak.id}/steg`,
+      },
+      {
+        type: "ENDRE_STATUS",
+        metode: "POST",
+        sti: `/api/v1/kontrollsaker/${sak.id}/status`,
+      },
+    ],
+    tillatteSteg: ["FORVALTNING"],
+    tillatteStatuser: ["AKTIV", "I_BERO"],
+    tillatteResultater: [],
+    paakrevdeRegistreringer: [],
+    paakrevdeRegistreringerPerSteg: {},
+    feltskjema: [],
+  };
+}
+
 async function renderMedRouter(ui: React.ReactNode) {
   const router = createMemoryRouter([{ path: "/", element: ui }], {
     initialEntries: ["/"],
@@ -102,6 +137,30 @@ describe("SaksbehandlereKort", () => {
       enhet: "4812",
       erLeder: false,
     });
+  });
+
+  it("viser steg og status med knapper for å endre begge", async () => {
+    const sak = lagKontrollsak({ status: null });
+    await renderMedRouter(
+      <SaksbehandlereKort
+        erEier={true}
+        sak={sak}
+        saksbehandlerDetaljer={[lagSaksbehandler()]}
+        ansvarligSaksbehandler={lagSaksbehandler()}
+        tillatteHandlinger={lagTillatteHandlinger(sak)}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Steg og status" })).toBeDefined();
+    expect(screen.getByText("Utredes")).toBeDefined();
+    expect(screen.getByText("Aktiv")).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: "Endre steg" }));
+    expect(await screen.findByRole("dialog", { name: "Endre steg" })).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Avbryt" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Endre status" }));
+    expect(await screen.findByRole("dialog", { name: "Endre status" })).toBeDefined();
   });
 
   it("sender egen handling når Tildel meg brukes", async () => {
@@ -129,7 +188,7 @@ describe("SaksbehandlereKort", () => {
     );
   });
 
-  it("viser Del tilgang i saksbehandler-boksen for aktiv sak med ansvarlig saksbehandler", async () => {
+  it("viser Legg til i delt tilgang-seksjonen for aktiv sak med ansvarlig saksbehandler", async () => {
     await renderMedRouter(
       <SaksbehandlereKort
         erEier={true}
@@ -139,10 +198,32 @@ describe("SaksbehandlereKort", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: "Del tilgang" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Legg til delt tilgang" })).toBeDefined();
+    expect(screen.getByText("Legg til").className).toContain("hidden xl:inline");
   });
 
-  it("viser Endre i enhetsseksjonen øverst for aktiv sak", async () => {
+  it("viser Fjern-tekst for delt tilgang kun fra xl-brekkpunktet", async () => {
+    const deltMed = lagSaksbehandler({ navIdent: "Z888888", navn: "Ada Larsen" });
+    await renderMedRouter(
+      <SaksbehandlereKort
+        erEier={true}
+        sak={lagKontrollsak({
+          saksbehandlere: {
+            eier: lagSaksbehandler(),
+            deltMed: [deltMed],
+            opprettetAv: lagSaksbehandler(),
+          },
+        })}
+        saksbehandlerDetaljer={[lagSaksbehandler(), deltMed]}
+        ansvarligSaksbehandler={lagSaksbehandler()}
+      />,
+    );
+
+    const fjernKnapp = screen.getByRole("button", { name: "Fjern deling med Ada Larsen" });
+    expect(fjernKnapp.querySelector(".hidden")?.className).toContain("xl:inline");
+  });
+
+  it("viser Endre i enhetsseksjonen for aktiv sak", async () => {
     await renderMedRouter(
       <SaksbehandlereKort
         erEier={true}
@@ -153,10 +234,10 @@ describe("SaksbehandlereKort", () => {
     );
 
     const knapper = screen.getAllByRole("button").map((knapp) => knapp.textContent);
-    expect(knapper.at(0)).toBe("Endre");
+    expect(knapper).toContain("Endre");
   });
 
-  it("viser enhetsseksjonen over saksbehandlerseksjonen", async () => {
+  it("viser status og tilhørighet før enhetsseksjonen", async () => {
     await renderMedRouter(
       <SaksbehandlereKort
         erEier={true}
@@ -167,7 +248,7 @@ describe("SaksbehandlereKort", () => {
     );
 
     const overskrifter = screen.getAllByRole("heading").map((overskrift) => overskrift.textContent);
-    expect(overskrifter.slice(0, 2)).toEqual(["Enhet", "Saksbehandler"]);
+    expect(overskrifter).toEqual(["Steg og status", "Tilhørighet"]);
     expect(screen.getAllByText("Øst").some((element) => element.tagName === "P")).toBe(true);
   });
 
@@ -188,7 +269,7 @@ describe("SaksbehandlereKort", () => {
       />,
     );
 
-    expect(screen.getByText("Ingen")).toBeDefined();
+    expect(screen.getAllByText("Ingen")).toHaveLength(2);
   });
 
   it("viser ikke Del tilgang for avsluttet sak", async () => {
@@ -406,7 +487,9 @@ describe("SaksbehandlereKort", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Fjern saksbehandler" }));
+    const fjernKnapp = screen.getByRole("button", { name: "Fjern saksbehandler" });
+    expect(screen.getByText("Fjern").className).toContain("hidden xl:inline");
+    fireEvent.click(fjernKnapp);
 
     expect(submitMock).toHaveBeenCalledTimes(1);
     const [payload, options] = submitMock.mock.calls[0];

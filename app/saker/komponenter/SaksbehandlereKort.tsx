@@ -1,20 +1,37 @@
-import { PersonPencilIcon, PersonPlusIcon } from "@navikt/aksel-icons";
-import { BodyShort, Button, HStack, Label, VStack } from "@navikt/ds-react";
+import { PersonPencilIcon, PersonPlusIcon, XMarkIcon } from "@navikt/aksel-icons";
+import {
+  BodyShort,
+  Box,
+  Button,
+  Detail,
+  Heading,
+  HStack,
+  Tag,
+  Tooltip,
+  VStack,
+} from "@navikt/ds-react";
 import { useState } from "react";
 import { useFetcher } from "react-router";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { finnEnhetsnavn } from "~/kodeverk/enheter";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
-import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { getSaksenhet } from "~/saker/selectors";
 import { hentStegbaserteSaksregler } from "~/saker/stegregler";
-import type { KontrollsakResponse, KontrollsakSaksbehandler } from "~/saker/types.backend";
+import type {
+  KontrollsakResponse,
+  KontrollsakSaksbehandler,
+  TillatteHandlingerResponse,
+} from "~/saker/types.backend";
 import { DelTilgangModal } from "~/saker/handlinger/DelTilgangModal";
+import { EndreStatusModal } from "~/saker/handlinger/EndreStatusModal";
+import { hentVisbareSteg } from "~/saker/handlinger/tillatte-steg";
 import { OverforAnsvarligModal } from "~/saker/handlinger/OverforAnsvarligModal";
 import { SendTilAnnenEnhetModal } from "~/saker/handlinger/SendTilAnnenEnhetModal";
 import { TildelSaksbehandlerModal } from "~/saker/handlinger/TildelSaksbehandlerModal";
+import { formaterStatus, formaterSteg, hentStegVariant } from "~/saker/visning";
+import { ResponsivEndreKnapp } from "./ResponsivEndreKnapp";
 
 interface SaksbehandlereKortProps {
   sak: KontrollsakResponse;
@@ -22,6 +39,7 @@ interface SaksbehandlereKortProps {
   ansvarligSaksbehandler: KontrollsakSaksbehandler | null;
   erEier: boolean;
   kanTildeleSak?: boolean;
+  tillatteHandlinger?: TillatteHandlingerResponse;
 }
 
 function hentInitialer(navn: string) {
@@ -46,7 +64,9 @@ function SaksbehandlerRad({
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-ax-bg-accent-moderate font-semibold text-ax-text-accent">
           {hentInitialer(saksbehandler.navn)}
         </div>
-        <BodyShort weight="semibold">{saksbehandler.navn}</BodyShort>
+        <BodyShort weight="semibold" size="small">
+          {saksbehandler.navn}
+        </BodyShort>
       </div>
       {handling}
     </HStack>
@@ -59,11 +79,15 @@ export function SaksbehandlereKort({
   ansvarligSaksbehandler: ansvarligFraProps,
   erEier,
   kanTildeleSak = true,
+  tillatteHandlinger,
 }: SaksbehandlereKortProps) {
   const [visOverforModal, setVisOverforModal] = useState(false);
   const [visDelTilgangModal, setVisDelTilgangModal] = useState(false);
   const [visTildelModal, setVisTildelModal] = useState(false);
   const [visSendTilAnnenEnhetModal, setVisSendTilAnnenEnhetModal] = useState(false);
+  const [åpenTilstandshandling, setÅpenTilstandshandling] = useState<
+    "FLYTT_TIL_NESTE_STEG" | "ENDRE_STATUS" | null
+  >(null);
   const innloggetBruker = useInnloggetBruker();
   const kodeverk = useKodeverk();
   const fetcher = useFetcher();
@@ -95,144 +119,230 @@ export function SaksbehandlereKort({
 
   // Kun sakens ansvarlige saksbehandler eller en leder kan fjerne ansvarlig saksbehandler.
   const kanFjerneSaksbehandler = kanEndreTilgang && (erEier || innloggetBruker.erLeder);
+  const kanEndreStatus =
+    erEier && tillatteHandlinger?.handlinger.some((handling) => handling.type === "ENDRE_STATUS");
+  const kanEndreSteg =
+    erEier &&
+    tillatteHandlinger?.handlinger.some((handling) => handling.type === "FLYTT_TIL_NESTE_STEG") &&
+    hentVisbareSteg(tillatteHandlinger).length > 0;
 
   return (
     <>
-      <Kort padding="space-6">
-        <VStack gap="space-4">
-          <VStack gap="space-4">
-            <Label as="h2" size="small">
-              Enhet
-            </Label>
+      <VStack gap="space-20">
+        <VStack gap="space-16" className="rounded-lg bg-ax-bg-neutral-soft p-4">
+          <Heading level="2" size="small">
+            Steg og status
+          </Heading>
 
-            <HStack justify="space-between" align="center">
-              <BodyShort>{enhetsnavn || "Ingen"}</BodyShort>
-
-              {kanEndreTilgang && (
-                <Button
-                  type="button"
-                  variant="tertiary"
-                  size="xsmall"
-                  onClick={() => setVisSendTilAnnenEnhetModal(true)}
-                  aria-label="Endre enhet"
-                >
-                  Endre
-                </Button>
+          <VStack gap="space-2">
+            <Detail className="text-ax-text-neutral-subtle" uppercase>
+              Steg
+            </Detail>
+            <HStack justify="space-between" align="center" gap="space-4">
+              <div>
+                <Tag variant="moderate" data-color={hentStegVariant(sak.steg)} size="medium">
+                  {formaterSteg(sak.steg)}
+                </Tag>
+              </div>
+              {kanEndreSteg && (
+                <ResponsivEndreKnapp
+                  ariaLabel="Endre steg"
+                  onClick={() => setÅpenTilstandshandling("FLYTT_TIL_NESTE_STEG")}
+                />
               )}
             </HStack>
           </VStack>
 
-          <hr className="my-4 border-ax-border-neutral-subtle" />
+          <hr className="border-ax-border-neutral-subtle" />
 
-          <Label as="h2" size="small">
-            Saksbehandler
-          </Label>
+          <VStack gap="space-2" className="mb-2">
+            <Detail className="text-ax-text-neutral-subtle" uppercase>
+              Status
+            </Detail>
+            <HStack justify="space-between" align="center" gap="space-4">
+              <div>
+                <Tag
+                  variant="moderate"
+                  data-color={!sak.status || sak.status === "AKTIV" ? "success" : "warning"}
+                  size="medium"
+                >
+                  {sak.status ? formaterStatus(sak.status) : "Aktiv"}
+                </Tag>
+              </div>
+              {kanEndreStatus && (
+                <ResponsivEndreKnapp
+                  ariaLabel="Endre status"
+                  onClick={() => setÅpenTilstandshandling("ENDRE_STATUS")}
+                />
+              )}
+            </HStack>
+          </VStack>
+        </VStack>
 
-          {ansvarligSaksbehandler ? (
-            <>
+        <VStack gap="space-12" className="rounded-lg bg-ax-bg-neutral-soft p-4">
+          <Heading level="2" size="small">
+            Tilhørighet
+          </Heading>
+
+          <VStack gap="space-2">
+            <Detail className="text-ax-text-neutral-subtle" uppercase>
+              Enhet
+            </Detail>
+
+            <HStack justify="space-between" align="center">
+              <BodyShort weight="semibold" size="small">
+                {enhetsnavn || "Ingen"}
+              </BodyShort>
+
+              {kanEndreTilgang && (
+                <ResponsivEndreKnapp
+                  ariaLabel="Endre enhet"
+                  onClick={() => setVisSendTilAnnenEnhetModal(true)}
+                />
+              )}
+            </HStack>
+          </VStack>
+
+          <hr className="border-ax-border-neutral-subtle" />
+
+          <VStack gap="space-2">
+            <Detail className="text-ax-text-neutral-subtle" uppercase>
+              Saksbehandler
+            </Detail>
+
+            {ansvarligSaksbehandler ? (
               <SaksbehandlerRad
                 saksbehandler={ansvarligSaksbehandler}
                 handling={
                   kanEndreTilgang ? (
-                    <Button
-                      type="button"
-                      variant="tertiary"
-                      size="xsmall"
-                      onClick={() => setVisOverforModal(true)}
-                      aria-label="Endre ansvarlig saksbehandler"
-                    >
-                      Endre
-                    </Button>
+                    <HStack gap="space-2" align="center">
+                      <ResponsivEndreKnapp
+                        ariaLabel="Endre ansvarlig saksbehandler"
+                        onClick={() => setVisOverforModal(true)}
+                      />
+                      {kanFjerneSaksbehandler && (
+                        <Tooltip content="Fjern saksbehandler">
+                          <Button
+                            type="button"
+                            variant="tertiary"
+                            size="xsmall"
+                            icon={<XMarkIcon aria-hidden />}
+                            aria-label="Fjern saksbehandler"
+                            onClick={handleFjernSaksbehandler}
+                            loading={fjernSaksbehandlerFetcher.state !== "idle"}
+                          >
+                            <span className="hidden xl:inline">Fjern</span>
+                          </Button>
+                        </Tooltip>
+                      )}
+                    </HStack>
                   ) : null
                 }
               />
-              {kanFjerneSaksbehandler && (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="small"
-                  onClick={handleFjernSaksbehandler}
-                  loading={fjernSaksbehandlerFetcher.state !== "idle"}
-                >
-                  Fjern saksbehandler
-                </Button>
-              )}
-            </>
-          ) : (
-            <>
-              <BodyShort className="text-ax-text-neutral-subtle">
+            ) : (
+              <BodyShort className="text-ax-text-neutral-subtle mb-2">
                 Ingen ansvarlig saksbehandler satt.
               </BodyShort>
-              {kanEndreTilgang && (
-                <VStack gap="space-2">
-                  {kanTildeleSak ? (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="small"
-                      icon={<PersonPlusIcon aria-hidden />}
-                      onClick={handleTildelMeg}
-                      loading={tildelMegFetcher.state !== "idle"}
-                    >
-                      Tildel meg
-                    </Button>
-                  ) : null}
+            )}
+
+            {kanEndreTilgang && !ansvarligSaksbehandler && (
+              <VStack gap="space-8">
+                {kanTildeleSak ? (
                   <Button
                     type="button"
                     variant="secondary"
                     size="small"
-                    icon={<PersonPencilIcon aria-hidden />}
-                    onClick={() => setVisTildelModal(true)}
+                    icon={<PersonPlusIcon aria-hidden />}
+                    onClick={handleTildelMeg}
+                    loading={tildelMegFetcher.state !== "idle"}
                   >
-                    Tildel saksbehandler
+                    Tildel meg
                   </Button>
-                </VStack>
-              )}
-            </>
-          )}
+                ) : null}
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="small"
+                  icon={<PersonPencilIcon aria-hidden />}
+                  onClick={() => setVisTildelModal(true)}
+                >
+                  Tildel saksbehandler
+                </Button>
+              </VStack>
+            )}
+          </VStack>
 
-          {sak.saksbehandlere.deltMed.length > 0 && (
-            <>
-              <hr className="my-4 border-ax-border-neutral-subtle" />
-              <VStack gap="space-2">
-                <Label as="h3" size="small">
-                  Delt med
-                </Label>
-                {sak.saksbehandlere.deltMed.map((saksbehandler) => (
-                  <SaksbehandlerRad
-                    key={saksbehandler.navIdent}
-                    saksbehandler={saksbehandler}
-                    handling={
-                      erEier && kanEndreDeltTilgang ? (
+          <hr className="border-ax-border-neutral-subtle" />
+
+          <VStack gap="space-2" className="mb-2">
+            <Detail className="text-ax-text-neutral-subtle" uppercase>
+              Delt tilgang
+            </Detail>
+            {sak.saksbehandlere.deltMed.length > 0 ? (
+              sak.saksbehandlere.deltMed.map((saksbehandler) => (
+                <SaksbehandlerRad
+                  key={saksbehandler.navIdent}
+                  saksbehandler={saksbehandler}
+                  handling={
+                    erEier && kanEndreDeltTilgang ? (
+                      <Tooltip content={`Fjern deling med ${saksbehandler.navn}`}>
                         <Button
                           type="button"
                           variant="tertiary"
                           size="xsmall"
+                          icon={<XMarkIcon aria-hidden />}
                           onClick={() => fjernDeltTilgang(saksbehandler.navIdent)}
                           aria-label={`Fjern deling med ${saksbehandler.navn}`}
                         >
-                          Fjern
+                          <span className="hidden xl:inline">Fjern</span>
                         </Button>
-                      ) : null
-                    }
-                  />
-                ))}
-              </VStack>
-            </>
-          )}
+                      </Tooltip>
+                    ) : null
+                  }
+                />
+              ))
+            ) : (
+              <HStack justify="space-between" align="center">
+                <BodyShort textColor="subtle">Ingen</BodyShort>
+                {erEier && kanEndreDeltTilgang && ansvarligSaksbehandler && (
+                  <Tooltip content="Legg til delt tilgang">
+                    <Button
+                      type="button"
+                      variant="tertiary"
+                      size="xsmall"
+                      icon={<PersonPlusIcon aria-hidden />}
+                      aria-label="Legg til delt tilgang"
+                      onClick={() => setVisDelTilgangModal(true)}
+                    >
+                      <span className="hidden xl:inline">Legg til</span>
+                    </Button>
+                  </Tooltip>
+                )}
+              </HStack>
+            )}
+          </VStack>
 
-          {erEier && kanEndreDeltTilgang && ansvarligSaksbehandler && (
-            <Button
-              type="button"
-              variant="secondary"
-              size="small"
-              onClick={() => setVisDelTilgangModal(true)}
-            >
-              Del tilgang
-            </Button>
-          )}
+          {erEier &&
+            kanEndreDeltTilgang &&
+            ansvarligSaksbehandler &&
+            sak.saksbehandlere.deltMed.length > 0 && (
+              <Box className="flex justify-start">
+                <Tooltip content="Legg til delt tilgang">
+                  <Button
+                    type="button"
+                    variant="tertiary"
+                    size="xsmall"
+                    icon={<PersonPlusIcon aria-hidden />}
+                    aria-label="Legg til delt tilgang"
+                    onClick={() => setVisDelTilgangModal(true)}
+                  >
+                    <span className="hidden xl:inline">Legg til</span>
+                  </Button>
+                </Tooltip>
+              </Box>
+            )}
         </VStack>
-      </Kort>
+      </VStack>
 
       <DelTilgangModal
         sakId={String(sak.id)}
@@ -261,6 +371,14 @@ export function SaksbehandlereKort({
         åpen={visSendTilAnnenEnhetModal}
         onClose={() => setVisSendTilAnnenEnhetModal(false)}
       />
+      {tillatteHandlinger && (
+        <EndreStatusModal
+          sakId={String(sak.id)}
+          tillatteHandlinger={tillatteHandlinger}
+          handling={åpenTilstandshandling}
+          onClose={() => setÅpenTilstandshandling(null)}
+        />
+      )}
     </>
   );
 }

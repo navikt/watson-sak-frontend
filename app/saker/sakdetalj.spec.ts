@@ -12,7 +12,7 @@ test.describe("Sakdetalj", () => {
     await expect(page.getByRole("heading", { name: /^Sak 101/ })).toBeVisible();
     // Tildel saken til innlogget bruker for å aktivere redigeringsknapper
     await page.getByRole("button", { name: "Tildel meg" }).click();
-    await expect(page.getByRole("button", { name: "Rediger saksinformasjon" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Endre saksinformasjon" })).toBeVisible();
   });
 
   test("kan åpne og lukke endre-ansvarlig-modal", async ({ page }) => {
@@ -34,7 +34,7 @@ test.describe("Sakdetalj", () => {
   });
 
   test("kan redigere saksinformasjon inline", async ({ page }) => {
-    await page.getByRole("button", { name: "Rediger saksinformasjon" }).click();
+    await page.getByRole("button", { name: "Endre saksinformasjon" }).click();
 
     await page.getByLabel("Kategori").selectOption("ARBEID");
 
@@ -59,7 +59,7 @@ test.describe("Sakdetalj", () => {
     await page.getByLabel("Til", { exact: true }).fill("28.02.2026");
 
     await page.getByRole("button", { name: "Lagre" }).click();
-    await expect(page.getByRole("button", { name: "Rediger saksinformasjon" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Endre saksinformasjon" })).toBeVisible();
 
     await expect(page.getByRole("combobox", { name: "Kategori" })).toHaveCount(0);
     await expect(page.getByText("Arbeid", { exact: true })).toBeVisible();
@@ -72,19 +72,19 @@ test.describe("Sakdetalj", () => {
   });
 
   test("kan avbryte redigering uten å lagre endringer", async ({ page }) => {
-    await page.getByRole("button", { name: "Rediger saksinformasjon" }).click();
+    await page.getByRole("button", { name: "Endre saksinformasjon" }).click();
 
     await page.getByLabel("Kategori").selectOption("ARBEID");
     await page.getByRole("button", { name: "Avbryt" }).click();
 
-    await expect(page.getByRole("button", { name: "Rediger saksinformasjon" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Endre saksinformasjon" })).toBeVisible();
     await expect(page.getByRole("combobox", { name: "Kategori" })).toHaveCount(0);
     await expect(page.getByText("Samliv", { exact: true })).toBeVisible();
     await expect(page.getByText("Arbeid", { exact: true })).toHaveCount(0);
   });
 
   test("viser steg som backend tillater", async ({ page }) => {
-    await page.getByRole("button", { name: "Flytt til neste steg" }).click();
+    await page.getByRole("button", { name: "Endre steg" }).click();
 
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
@@ -94,20 +94,20 @@ test.describe("Sakdetalj", () => {
   });
 
   test("resetter datofelter etter avbryt og ny redigering", async ({ page }) => {
-    await page.getByRole("button", { name: "Rediger saksinformasjon" }).click();
+    await page.getByRole("button", { name: "Endre saksinformasjon" }).click();
 
     await page.getByLabel("Fra", { exact: true }).fill("01.02.2026");
     await page.getByLabel("Til", { exact: true }).fill("28.02.2026");
     await page.getByRole("button", { name: "Avbryt" }).click();
 
-    await page.getByRole("button", { name: "Rediger saksinformasjon" }).click();
+    await page.getByRole("button", { name: "Endre saksinformasjon" }).click();
 
     await expect(page.getByLabel("Fra", { exact: true })).toHaveValue("13.01.2026");
     await expect(page.getByLabel("Til", { exact: true })).toHaveValue("13.01.2026");
   });
 
   test("viser ikke gamle valideringsfeil etter avbryt og ny redigering", async ({ page }) => {
-    await page.getByRole("button", { name: "Rediger saksinformasjon" }).click();
+    await page.getByRole("button", { name: "Endre saksinformasjon" }).click();
 
     await page.getByLabel("Kilde").selectOption("");
     await page.getByRole("button", { name: "Lagre" }).click();
@@ -115,20 +115,20 @@ test.describe("Sakdetalj", () => {
     await expect(page.locator(".aksel-error-message", { hasText: "Velg kilde" })).toBeVisible();
 
     await page.getByRole("button", { name: "Avbryt" }).click();
-    await page.getByRole("button", { name: "Rediger saksinformasjon" }).click();
+    await page.getByRole("button", { name: "Endre saksinformasjon" }).click();
 
     await expect(page.locator(".aksel-error-message", { hasText: "Velg kilde" })).toHaveCount(0);
   });
 
   test("viser ikke status og saksbehandler som redigerbare felt", async ({ page }) => {
-    await page.getByRole("button", { name: "Rediger saksinformasjon" }).click();
+    await page.getByRole("button", { name: "Endre saksinformasjon" }).click();
 
     await expect(page.getByRole("combobox", { name: "Status" })).toHaveCount(0);
     await expect(page.getByRole("combobox", { name: "Saksbehandler" })).toHaveCount(0);
   });
 
   test("varsler ved navigering bort med ulagrede endringer", async ({ page }) => {
-    await page.getByRole("button", { name: "Rediger saksinformasjon" }).click();
+    await page.getByRole("button", { name: "Endre saksinformasjon" }).click();
     await page.getByLabel("Kategori").selectOption("ARBEID");
 
     page.once("dialog", async (dialog) => {
@@ -141,7 +141,7 @@ test.describe("Sakdetalj", () => {
   });
 
   test("varsler ved refresh med ulagrede endringer", async ({ page }) => {
-    await page.getByRole("button", { name: "Rediger saksinformasjon" }).click();
+    await page.getByRole("button", { name: "Endre saksinformasjon" }).click();
     await page.getByLabel("Kategori").selectOption("ARBEID");
 
     const dialogPromise = page.waitForEvent("dialog");

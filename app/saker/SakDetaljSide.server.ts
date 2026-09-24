@@ -56,6 +56,10 @@ import { finnSakMedReferanse } from "./id";
 import { getSaksenhet } from "./selectors";
 import { hentStegbaserteSaksregler } from "./stegregler";
 import type { Route } from "./+types/SakDetaljSide.route";
+import type {
+  RedigerSaksinformasjonData,
+  RedigerSaksinformasjonResultat,
+} from "./komponenter/Saksinformasjon.types";
 
 type RedigerteSaksinformasjonsverdier = ReturnType<typeof redigerSaksinformasjonSchema.parse>;
 
@@ -166,20 +170,9 @@ function koblingsFeilmelding(feil: unknown): string {
 
 // --- Typer ---
 
-type Feltfeil = Record<string, string[]>;
-
-type RedigerSaksinformasjonData = {
-  kategori: string;
-  kilde: string;
-  misbruktype: string[];
-  merking: string[];
-  arbeidsgivere: string[];
-  ytelser: YtelseRadVerdier[];
-};
-
 type ActionResult =
   | { ok: true; sak?: Route.ComponentProps["loaderData"]["sak"] }
-  | { ok: false; feil: Feltfeil; verdier?: RedigerSaksinformasjonData };
+  | RedigerSaksinformasjonResultat;
 
 // --- Hjelpefunksjoner ---
 
