@@ -29,7 +29,7 @@ export function lagMockStatistikk(
         : "Egendefinert periode";
 
   return {
-    valgtOmfang: spørring.omfang,
+    valgtOmfang: spørring.nivaa,
     organisasjonsvalg: [
       { verdi: "meg", label: "Meg selv", type: "meg" },
       {

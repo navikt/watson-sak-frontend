@@ -82,4 +82,9 @@ export const statistikkResponseSchema = z.object({
 });
 
 export type Statistikk = z.infer<typeof statistikkResponseSchema>;
-export type StatistikkSpørring = { omfang: string; fra: string; til: string };
+export type StatistikkSpørring = {
+  nivaa: "meg" | "underavdeling" | "hovedavdeling" | "nav-kontroll";
+  fra: string;
+  til: string;
+  enhetId?: string;
+};

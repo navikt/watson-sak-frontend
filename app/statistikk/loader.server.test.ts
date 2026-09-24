@@ -34,7 +34,7 @@ describe("statistikk-loader", () => {
     await loader({ request });
 
     expect(lagMockStatistikkMock).toHaveBeenCalledWith(
-      { omfang: "enhet:ky153k", fra: "2026-09-01", til: "2026-09-30" },
+      { nivaa: "underavdeling", fra: "2026-09-01", til: "2026-09-30", enhetId: "ky153k" },
       "Øst",
       "ky153k",
     );
@@ -51,7 +51,7 @@ describe("statistikk-loader", () => {
     await loader({ request });
 
     expect(hentStatistikkMock).toHaveBeenCalledWith("token-123", {
-      omfang: "organisasjon",
+      nivaa: "nav-kontroll",
       fra: "2026-01-01",
       til: "2026-01-31",
     });
@@ -64,7 +64,7 @@ describe("statistikk-loader", () => {
 
     const år = new Date().getFullYear();
     expect(lagMockStatistikkMock).toHaveBeenCalledWith(
-      { omfang: "enhet:ky153k", fra: `${år}-01-01`, til: `${år}-12-31` },
+      { nivaa: "underavdeling", fra: `${år}-01-01`, til: `${år}-12-31`, enhetId: "ky153k" },
       "Øst",
       "ky153k",
     );
