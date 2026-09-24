@@ -56,11 +56,17 @@ export async function loader({ request }: { request: Request }) {
         : omfang.startsWith("enhet:")
           ? "underavdeling"
           : "meg";
+  const valgtEnhetId = omfang.startsWith("enhet:") ? omfang.slice("enhet:".length) : undefined;
   const spørring: StatistikkSpørring = {
     nivaa,
     fra: periode.fra,
     til: periode.til,
-    enhetId: nivaa === "underavdeling" ? (bruker.enhetId ?? undefined) : undefined,
+    enhetId:
+      nivaa === "underavdeling" || nivaa === "hovedavdeling"
+        ? valgtEnhetId && !["underavdeling", "hovedavdeling"].includes(valgtEnhetId)
+          ? valgtEnhetId
+          : (bruker.enhetId ?? undefined)
+        : undefined,
   };
   const data = skalBrukeMockdata
     ? lagMockStatistikk(spørring, bruker.enhet, bruker.enhetId)
