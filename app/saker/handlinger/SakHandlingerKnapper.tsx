@@ -3,8 +3,6 @@ import { Button, Heading, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import type { DokumentNode, FilResponse } from "~/saker/filer/typer";
 import type { KontrollsakResponse, TillatteHandlingerResponse } from "~/saker/types.backend";
-import { EndreStatusModal } from "./EndreStatusModal";
-import { hentVisbareSteg } from "./tillatte-steg";
 import { OpprettJournalpostModal } from "./OpprettJournalpostModal";
 import { OpprettOppgaveModal } from "./OpprettOppgaveModal";
 import { hentTilgjengeligeSakshandlinger, type Sakshandling } from "./tilgjengeligeHandlinger";
@@ -18,7 +16,6 @@ interface SakHandlingerKnapperProps {
 }
 
 type ModalHandling = Sakshandling;
-type Tilstandshandling = "FLYTT_TIL_NESTE_STEG" | "ENDRE_STATUS";
 
 const handlingsvisning: Record<
   ModalHandling,
@@ -44,27 +41,16 @@ const sekundærhandlinger: ModalHandling[] = ["opprett-journalpost", "opprett-op
 
 export function SakHandlingerKnapper({
   sak,
-  tillatteHandlinger,
   erEier,
   filer,
   dokumenter,
 }: SakHandlingerKnapperProps) {
   const [åpenModal, setÅpenModal] = useState<ModalHandling | null>(null);
-  const [åpenTilstandshandling, setÅpenTilstandshandling] = useState<Tilstandshandling | null>(
-    null,
-  );
   const handlinger = hentTilgjengeligeSakshandlinger(sak);
   const primærhandlinger = handlinger.filter((handling) => !sekundærhandlinger.includes(handling));
   const visSekundærhandlinger = handlinger.some((h) => sekundærhandlinger.includes(h));
-  const tilstandshandlinger = tillatteHandlinger.handlinger.filter(
-    (
-      handling,
-    ): handling is (typeof tillatteHandlinger.handlinger)[number] & {
-      type: Tilstandshandling;
-    } => handling.type === "FLYTT_TIL_NESTE_STEG" && hentVisbareSteg(tillatteHandlinger).length > 0,
-  );
 
-  if (!erEier || (handlinger.length === 0 && tilstandshandlinger.length === 0)) {
+  if (!erEier || handlinger.length === 0) {
     return null;
   }
 
@@ -78,23 +64,6 @@ export function SakHandlingerKnapper({
         <Heading level="2" size="small">
           Handlinger
         </Heading>
-
-        {tilstandshandlinger.map((handling) => {
-          const etiketter: Record<Tilstandshandling, string> = {
-            FLYTT_TIL_NESTE_STEG: "Flytt til neste steg",
-            ENDRE_STATUS: "Endre status",
-          };
-          return (
-            <Button
-              key={handling.type}
-              variant={handling.type === "FLYTT_TIL_NESTE_STEG" ? "primary" : "secondary-neutral"}
-              size="medium"
-              onClick={() => setÅpenTilstandshandling(handling.type)}
-            >
-              {etiketter[handling.type]}
-            </Button>
-          );
-        })}
 
         {primærhandlinger.map((handling) => {
           const visning = handlingsvisning[handling];
@@ -132,12 +101,6 @@ export function SakHandlingerKnapper({
           : null}
       </VStack>
 
-      <EndreStatusModal
-        sakId={String(sak.id)}
-        tillatteHandlinger={tillatteHandlinger}
-        handling={åpenTilstandshandling}
-        onClose={() => setÅpenTilstandshandling(null)}
-      />
       <OpprettJournalpostModal
         sakId={String(sak.id)}
         åpen={åpenModal === "opprett-journalpost"}

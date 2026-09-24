@@ -16,11 +16,13 @@ import type {
 } from "~/saker/types.backend";
 import { DelTilgangModal } from "~/saker/handlinger/DelTilgangModal";
 import { EndreStatusModal } from "~/saker/handlinger/EndreStatusModal";
+import { hentVisbareSteg } from "~/saker/handlinger/tillatte-steg";
 import { OverforAnsvarligModal } from "~/saker/handlinger/OverforAnsvarligModal";
 import { SendTilAnnenEnhetModal } from "~/saker/handlinger/SendTilAnnenEnhetModal";
 import { TildelSaksbehandlerModal } from "~/saker/handlinger/TildelSaksbehandlerModal";
 import { formaterStatus, formaterSteg, hentStegVariant } from "~/saker/visning";
 import { ResponsivEndreKnapp } from "./ResponsivEndreKnapp";
+import { Box } from "platejs/react";
 
 interface SaksbehandlereKortProps {
   sak: KontrollsakResponse;
@@ -53,7 +55,9 @@ function SaksbehandlerRad({
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-ax-bg-accent-moderate font-semibold text-ax-text-accent">
           {hentInitialer(saksbehandler.navn)}
         </div>
-        <BodyShort weight="semibold">{saksbehandler.navn}</BodyShort>
+        <BodyShort weight="semibold" size="small">
+          {saksbehandler.navn}
+        </BodyShort>
       </div>
       {handling}
     </HStack>
@@ -72,7 +76,9 @@ export function SaksbehandlereKort({
   const [visDelTilgangModal, setVisDelTilgangModal] = useState(false);
   const [visTildelModal, setVisTildelModal] = useState(false);
   const [visSendTilAnnenEnhetModal, setVisSendTilAnnenEnhetModal] = useState(false);
-  const [åpenTilstandshandling, setÅpenTilstandshandling] = useState<"ENDRE_STATUS" | null>(null);
+  const [åpenTilstandshandling, setÅpenTilstandshandling] = useState<
+    "FLYTT_TIL_NESTE_STEG" | "ENDRE_STATUS" | null
+  >(null);
   const innloggetBruker = useInnloggetBruker();
   const kodeverk = useKodeverk();
   const fetcher = useFetcher();
@@ -106,27 +112,41 @@ export function SaksbehandlereKort({
   const kanFjerneSaksbehandler = kanEndreTilgang && (erEier || innloggetBruker.erLeder);
   const kanEndreStatus =
     erEier && tillatteHandlinger?.handlinger.some((handling) => handling.type === "ENDRE_STATUS");
+  const kanEndreSteg =
+    erEier &&
+    tillatteHandlinger?.handlinger.some((handling) => handling.type === "FLYTT_TIL_NESTE_STEG") &&
+    hentVisbareSteg(tillatteHandlinger).length > 0;
 
   return (
     <>
-      <VStack gap="space-28">
-        <VStack gap="space-6">
+      <VStack gap="space-20">
+        <VStack gap="space-16" className="rounded-lg bg-ax-bg-neutral-soft p-4">
           <Heading level="2" size="small">
-            Status og resultat
+            Steg og status
           </Heading>
 
           <VStack gap="space-2">
             <Detail className="text-ax-text-neutral-subtle" uppercase>
               Steg
             </Detail>
-            <div>
-              <Tag variant="moderate" data-color={hentStegVariant(sak.steg)} size="medium">
-                {formaterSteg(sak.steg)}
-              </Tag>
-            </div>
+            <HStack justify="space-between" align="center" gap="space-4">
+              <div>
+                <Tag variant="moderate" data-color={hentStegVariant(sak.steg)} size="medium">
+                  {formaterSteg(sak.steg)}
+                </Tag>
+              </div>
+              {kanEndreSteg && (
+                <ResponsivEndreKnapp
+                  ariaLabel="Endre steg"
+                  onClick={() => setÅpenTilstandshandling("FLYTT_TIL_NESTE_STEG")}
+                />
+              )}
+            </HStack>
           </VStack>
 
-          <VStack gap="space-2">
+          <hr className="border-ax-border-neutral-subtle" />
+
+          <VStack gap="space-2" className="mb-2">
             <Detail className="text-ax-text-neutral-subtle" uppercase>
               Status
             </Detail>
@@ -150,7 +170,7 @@ export function SaksbehandlereKort({
           </VStack>
         </VStack>
 
-        <VStack gap="space-8">
+        <VStack gap="space-12" className="rounded-lg bg-ax-bg-neutral-soft p-4">
           <Heading level="2" size="small">
             Tilhørighet
           </Heading>
@@ -161,7 +181,9 @@ export function SaksbehandlereKort({
             </Detail>
 
             <HStack justify="space-between" align="center">
-              <BodyShort weight="semibold">{enhetsnavn || "Ingen"}</BodyShort>
+              <BodyShort weight="semibold" size="small">
+                {enhetsnavn || "Ingen"}
+              </BodyShort>
 
               {kanEndreTilgang && (
                 <ResponsivEndreKnapp
@@ -209,13 +231,13 @@ export function SaksbehandlereKort({
                 }
               />
             ) : (
-              <BodyShort className="text-ax-text-neutral-subtle">
+              <BodyShort className="text-ax-text-neutral-subtle mb-2">
                 Ingen ansvarlig saksbehandler satt.
               </BodyShort>
             )}
 
             {kanEndreTilgang && !ansvarligSaksbehandler && (
-              <VStack gap="space-2">
+              <VStack gap="space-8">
                 {kanTildeleSak ? (
                   <Button
                     type="button"
@@ -243,7 +265,7 @@ export function SaksbehandlereKort({
 
           <hr className="border-ax-border-neutral-subtle" />
 
-          <VStack gap="space-2">
+          <VStack gap="space-2" className="mb-2">
             <Detail className="text-ax-text-neutral-subtle" uppercase>
               Delt tilgang
             </Detail>
@@ -293,14 +315,20 @@ export function SaksbehandlereKort({
             kanEndreDeltTilgang &&
             ansvarligSaksbehandler &&
             sak.saksbehandlere.deltMed.length > 0 && (
-              <Button
-                type="button"
-                variant="secondary"
-                size="small"
-                onClick={() => setVisDelTilgangModal(true)}
-              >
-                Del tilgang
-              </Button>
+              <Box className="flex justify-start">
+                <Tooltip content="Legg til delt tilgang">
+                  <Button
+                    type="button"
+                    variant="tertiary"
+                    size="xsmall"
+                    icon={<PersonPlusIcon aria-hidden />}
+                    aria-label="Legg til delt tilgang"
+                    onClick={() => setVisDelTilgangModal(true)}
+                  >
+                    <span className="hidden xl:inline">Legg til</span>
+                  </Button>
+                </Tooltip>
+              </Box>
             )}
         </VStack>
       </VStack>

@@ -99,7 +99,7 @@ function renderMedRouter(ui: React.ReactNode) {
 }
 
 describe("SakHandlingerKnapper", () => {
-  it("viser stegbytte når resultatet kan registreres i flyttemodalen", () => {
+  it("viser ikke stegbytte når resultatet kan registreres i flyttemodalen", () => {
     const sak = lagKontrollsak({ steg: "UTREDNING", status: "AKTIV" });
     const tillatte = lagTillatteHandlinger(sak);
     renderMedRouter(
@@ -116,10 +116,10 @@ describe("SakHandlingerKnapper", () => {
         dokumenter={[]}
       />,
     );
-    expect(screen.getByRole("button", { name: "Flytt til neste steg" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Flytt til neste steg" })).toBeNull();
   });
 
-  it("viser bare stegbytte etter henleggelse i Forvaltning", () => {
+  it("viser ikke stegbytte etter henleggelse i Forvaltning", () => {
     const sak = lagKontrollsak({ steg: "FORVALTNING", status: "VENTER_PA_VEDTAK" });
     const tillatte = lagTillatteHandlinger(sak);
     renderMedRouter(
@@ -169,12 +169,12 @@ describe("SakHandlingerKnapper", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: "Flytt til neste steg" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Flytt til neste steg" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Registrer resultat" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Registrer henleggelse" })).toBeNull();
   });
 
-  it("viser stegbytte fra Forvaltning når resultat kan erstattes ved avslutning", () => {
+  it("viser ikke stegbytte fra Forvaltning når resultat kan erstattes ved avslutning", () => {
     const sak = lagKontrollsak({ steg: "FORVALTNING" });
     const handlinger: TillatteHandlingerResponse = {
       ...lagTillatteHandlinger(sak),
@@ -218,7 +218,7 @@ describe("SakHandlingerKnapper", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: "Flytt til neste steg" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Flytt til neste steg" })).toBeNull();
   });
 
   it("viser ingen handlinger for AVSLUTTET sak", () => {
@@ -248,7 +248,7 @@ describe("SakHandlingerKnapper", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: "Flytt til neste steg" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Flytt til neste steg" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Endre status" })).toBeNull();
     expect(screen.getByRole("button", { name: "Opprett journalpost" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Opprett oppgave" })).toBeDefined();
@@ -269,7 +269,7 @@ describe("SakHandlingerKnapper", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: "Flytt til neste steg" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Flytt til neste steg" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Opprett journalpost" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Opprett oppgave" })).toBeNull();
   });
@@ -290,7 +290,7 @@ describe("SakHandlingerKnapper", () => {
     expect(screen.queryByRole("button", { name: "Endre status" })).toBeNull();
     expect(screen.getByRole("button", { name: "Opprett journalpost" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Opprett oppgave" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Flytt til neste steg" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Flytt til neste steg" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Sett på vent" })).toBeNull();
   });
 

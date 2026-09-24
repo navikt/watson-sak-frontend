@@ -97,12 +97,17 @@ function lagTillatteHandlinger(sak: KontrollsakResponse): TillatteHandlingerResp
     },
     handlinger: [
       {
+        type: "FLYTT_TIL_NESTE_STEG",
+        metode: "POST",
+        sti: `/api/v1/kontrollsaker/${sak.id}/steg`,
+      },
+      {
         type: "ENDRE_STATUS",
         metode: "POST",
         sti: `/api/v1/kontrollsaker/${sak.id}/status`,
       },
     ],
-    tillatteSteg: [],
+    tillatteSteg: ["FORVALTNING"],
     tillatteStatuser: ["AKTIV", "I_BERO"],
     tillatteResultater: [],
     paakrevdeRegistreringer: [],
@@ -134,7 +139,7 @@ describe("SaksbehandlereKort", () => {
     });
   });
 
-  it("viser status og resultat med knapp for å endre status", async () => {
+  it("viser steg og status med knapper for å endre begge", async () => {
     const sak = lagKontrollsak({ status: null });
     await renderMedRouter(
       <SaksbehandlereKort
@@ -146,12 +151,15 @@ describe("SaksbehandlereKort", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Status og resultat" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Steg og status" })).toBeDefined();
     expect(screen.getByText("Utredes")).toBeDefined();
     expect(screen.getByText("Aktiv")).toBeDefined();
 
-    fireEvent.click(screen.getByRole("button", { name: "Endre status" }));
+    fireEvent.click(screen.getByRole("button", { name: "Endre steg" }));
+    expect(await screen.findByRole("dialog", { name: "Endre steg" })).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Avbryt" }));
 
+    fireEvent.click(screen.getByRole("button", { name: "Endre status" }));
     expect(await screen.findByRole("dialog", { name: "Endre status" })).toBeDefined();
   });
 
@@ -219,7 +227,7 @@ describe("SaksbehandlereKort", () => {
     );
 
     const overskrifter = screen.getAllByRole("heading").map((overskrift) => overskrift.textContent);
-    expect(overskrifter).toEqual(["Status og resultat", "Tilhørighet"]);
+    expect(overskrifter).toEqual(["Steg og status", "Tilhørighet"]);
     expect(screen.getAllByText("Øst").some((element) => element.tagName === "P")).toBe(true);
   });
 

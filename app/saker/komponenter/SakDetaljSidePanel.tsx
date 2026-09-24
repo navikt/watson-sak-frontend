@@ -10,6 +10,7 @@ import type {
 import type { DokumentNode, FilResponse } from "../filer/typer";
 import type { SakHendelse } from "../historikk/typer";
 import { SaksbehandlereKort } from "./SaksbehandlereKort";
+import { Box } from "platejs/react";
 
 interface SakDetaljSidePanelProps {
   sak: KontrollsakResponse;
@@ -41,7 +42,7 @@ export function SakDetaljSidePanel({
   historikkTilstand,
 }: SakDetaljSidePanelProps) {
   return (
-    <VStack gap="space-28" className="md:sticky md:top-4 md:self-start">
+    <VStack gap="space-20" className="md:sticky md:top-4 md:self-start">
       <SaksbehandlereKort
         sak={sak}
         saksbehandlerDetaljer={saksbehandlerDetaljer}

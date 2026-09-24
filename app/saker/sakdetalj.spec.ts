@@ -84,7 +84,7 @@ test.describe("Sakdetalj", () => {
   });
 
   test("viser steg som backend tillater", async ({ page }) => {
-    await page.getByRole("button", { name: "Flytt til neste steg" }).click();
+    await page.getByRole("button", { name: "Endre steg" }).click();
 
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();

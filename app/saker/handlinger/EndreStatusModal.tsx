@@ -44,7 +44,7 @@ interface EndreStatusModalProps {
 }
 
 const handlingsetiketter: Record<Handlingstype, string> = {
-  FLYTT_TIL_NESTE_STEG: "Flytt til neste steg",
+  FLYTT_TIL_NESTE_STEG: "Endre steg",
   ENDRE_STATUS: "Endre status",
 };
 
