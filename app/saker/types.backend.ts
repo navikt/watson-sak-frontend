@@ -334,6 +334,7 @@ export const kontrollsakResponseSchema = z
       opprettet: z.string(),
       oppdatert: z.string().nullable(),
       legacyPid: z.string().nullable().optional(),
+      legacyKilde: z.string().nullable().optional(),
       enhet: z.string().nullable().optional(),
     }),
   )
