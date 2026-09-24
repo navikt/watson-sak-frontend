@@ -45,8 +45,10 @@ describe("MigreringInnhold", () => {
     expect(screen.getAllByText("100245")).toHaveLength(2);
   });
 
-  it("viser personnummer bare for bekreftet ansvar, aldri for uten ansvarlig", () => {
+  it("viser personnummer for alle kandidater — vi har ikke uten_ansvarlig", () => {
     renderSide();
+    expect(lister.utenBekreftetAnsvarlig).toHaveLength(0);
+
     const adaCelle = screen.getByText("11111111111");
     const adaRad = adaCelle.closest("tr");
     expect(adaRad).not.toBeNull();
@@ -55,31 +57,21 @@ describe("MigreringInnhold", () => {
     const arnePidCelle = screen.getByText("800202");
     const arneRad = arnePidCelle.closest("tr");
     expect(arneRad).not.toBeNull();
-    expect(within(arneRad!).getAllByText("–")).toHaveLength(2);
+    expect(within(arneRad!).getByText("12121212121")).not.toBeNull();
   });
 
-  it("sender fnr for bekreftet ansvar, aldri for uten ansvarlig", () => {
+  it("sender fnr for alle kandidater når Opprett sak trykkes", () => {
     const { container } = renderSide();
     const knapper = screen.getAllByRole("button", { name: "Opprett sak" });
-    expect(knapper.length).toBe(lister.mine.length + lister.utenBekreftetAnsvarlig.length);
+    expect(knapper.length).toBe(kandidater.length);
     expect(container.querySelectorAll("form").length).toBe(knapper.length);
 
-    let antallBekreftet = 0;
-    let antallIkkeBekreftet = 0;
     for (const knapp of knapper) {
+      expect((knapp as HTMLButtonElement).disabled).toBe(false);
       const form = knapp.closest("form");
       expect(form?.querySelector('input[name="legacyPid"]')).not.toBeNull();
       expect(form?.querySelector('input[name="legacyKilde"]')).not.toBeNull();
-      const fnrFelt = form?.querySelector('input[name="fnr"]');
-      if ((knapp as HTMLButtonElement).disabled) {
-        antallIkkeBekreftet++;
-        expect(fnrFelt).toBeNull();
-      } else {
-        antallBekreftet++;
-        expect(fnrFelt).not.toBeNull();
-      }
+      expect(form?.querySelector('input[name="fnr"]')).not.toBeNull();
     }
-    expect(antallBekreftet).toBe(lister.mine.length);
-    expect(antallIkkeBekreftet).toBe(lister.utenBekreftetAnsvarlig.length);
   });
 });
