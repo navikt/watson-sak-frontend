@@ -10,6 +10,8 @@ const lister: MigreringLister = {
   mine: kandidater.filter((k) => k.ansvar.type === "BEKREFTET"),
   utenBekreftetAnsvarlig: kandidater.filter((k) => k.ansvar.type !== "BEKREFTET"),
 };
+const tilBehandling = kandidater.filter((k) => !k.alleredeMigrertTilKontrollsakId);
+const overført = kandidater.filter((k) => k.alleredeMigrertTilKontrollsakId);
 
 function renderSide() {
   const Stub = createRoutesStub([
@@ -21,6 +23,10 @@ function renderSide() {
       path: "/api/registrer-sak/forhåndsutfyll",
       action: () => null,
     },
+    {
+      path: "/saker/:sakId",
+      Component: () => <div>Saksdetaljer</div>,
+    },
   ]);
   return render(<Stub initialEntries={["/migrering"]} />);
 }
@@ -29,15 +35,18 @@ describe("MigreringInnhold", () => {
   it("viser tabell iht Figma-skisse: PID, Personnummer, Opprettet i Access", () => {
     renderSide();
     expect(screen.getByRole("heading", { name: "Migreringsveileder" })).not.toBeNull();
-    expect(screen.getByRole("columnheader", { name: "PID" })).not.toBeNull();
+    expect(screen.getAllByRole("columnheader", { name: "PID" })).not.toHaveLength(0);
     expect(screen.getByRole("columnheader", { name: "Personnummer" })).not.toBeNull();
-    expect(screen.getByRole("columnheader", { name: "Opprettet i Access" })).not.toBeNull();
+    expect(screen.getAllByRole("columnheader", { name: "Opprettet i Access" })).not.toHaveLength(0);
   });
 
-  it("viser alle kandidater i én flat liste", () => {
+  it("viser kandidater til behandling i hovedtabellen, overførte i egen seksjon", () => {
     renderSide();
-    const antallForventet = lister.mine.length + lister.utenBekreftetAnsvarlig.length;
-    expect(screen.getAllByRole("row")).toHaveLength(antallForventet + 1); // +1 for header-raden
+    expect(overført.length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { level: 2, name: "Overført til Watson" })).not.toBeNull();
+    expect(screen.getByRole("columnheader", { name: "Navn" })).not.toBeNull();
+    expect(screen.getByText("Ada Eksempel")).not.toBeNull();
+    expect(screen.getByRole("link", { name: "Overført til Watson" })).not.toBeNull();
   });
 
   it("holder utredning og SV adskilt selv når PID er lik", () => {
@@ -45,14 +54,9 @@ describe("MigreringInnhold", () => {
     expect(screen.getAllByText("100245")).toHaveLength(2);
   });
 
-  it("viser personnummer for alle kandidater — vi har ikke uten_ansvarlig", () => {
+  it("viser personnummer for alle kandidater til behandling — vi har ikke uten_ansvarlig", () => {
     renderSide();
     expect(lister.utenBekreftetAnsvarlig).toHaveLength(0);
-
-    const adaCelle = screen.getByText("12345678901");
-    const adaRad = adaCelle.closest("tr");
-    expect(adaRad).not.toBeNull();
-    expect(within(adaRad!).getByText("100245")).not.toBeNull();
 
     const arnePidCelle = screen.getByText("800202");
     const arneRad = arnePidCelle.closest("tr");
@@ -60,10 +64,10 @@ describe("MigreringInnhold", () => {
     expect(within(arneRad!).getByText("11223344556")).not.toBeNull();
   });
 
-  it("sender fnr for alle kandidater når Opprett sak trykkes", () => {
+  it("sender fnr for alle kandidater til behandling når Opprett sak trykkes", () => {
     const { container } = renderSide();
     const knapper = screen.getAllByRole("button", { name: "Opprett sak" });
-    expect(knapper.length).toBe(kandidater.length);
+    expect(knapper.length).toBe(tilBehandling.length);
     expect(container.querySelectorAll("form").length).toBe(knapper.length);
 
     for (const knapp of knapper) {

@@ -66,6 +66,7 @@ export function hentMockMigreringKandidater(navIdent: string): MigreringKandidat
       fase: "Utredning uten resultat",
       begrunnelse: "TIPSINNDATO er satt og UTREDRES mangler. Oppfyller regelen for tipsrestanse.",
       kildefelter: utredningsfelter(null),
+      alleredeMigrertTilKontrollsakId: 1181,
     },
     {
       kandidatId: "UTREDNING:100310",
