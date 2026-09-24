@@ -8,7 +8,7 @@ export type MigreringKategori =
   | "REGISTER_DAGPENGER"
   | "REGISTER_AAP";
 
-export type MigreringVurdering = "MULIG_KANDIDAT" | "MA_AVKLARES";
+type MigreringVurdering = "MULIG_KANDIDAT" | "MA_AVKLARES";
 
 interface MigreringGrunnlagsfelt {
   felt: string;
@@ -67,9 +67,4 @@ export const kategoriEtikett: Record<MigreringKategori, string> = {
   SV_VENTER_RESULTAT: "Straffesaker venter på resultat",
   REGISTER_DAGPENGER: "Registersamkjøring dagpenger",
   REGISTER_AAP: "Registersamkjøring AAP",
-};
-
-export const vurderingEtikett: Record<MigreringVurdering, string> = {
-  MULIG_KANDIDAT: "Mulig kandidat",
-  MA_AVKLARES: "Må avklares",
 };
