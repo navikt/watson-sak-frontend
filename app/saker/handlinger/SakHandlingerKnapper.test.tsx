@@ -235,7 +235,7 @@ describe("SakHandlingerKnapper", () => {
     expect(screen.queryByRole("button")).toBeNull();
   });
 
-  it("viser Endre steg for aktiv ikke-blokkert sak med eier", () => {
+  it("viser stegbytte for aktiv ikke-blokkert sak med eier", () => {
     renderMedRouter(
       <SakHandlingerKnapper
         erEier={true}
@@ -249,8 +249,7 @@ describe("SakHandlingerKnapper", () => {
     );
 
     expect(screen.getByRole("button", { name: "Flytt til neste steg" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Endre status" })).toBeDefined();
-    expect(screen.getByRole("separator")).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Endre status" })).toBeNull();
     expect(screen.getByRole("button", { name: "Opprett journalpost" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Opprett oppgave" })).toBeDefined();
     expect(screen.queryByRole("button", { name: "Stans ytelse" })).toBeNull();
@@ -275,7 +274,7 @@ describe("SakHandlingerKnapper", () => {
     expect(screen.queryByRole("button", { name: "Opprett oppgave" })).toBeNull();
   });
 
-  it("viser statusendring og øvrige handlinger for blokkert sak med eier", () => {
+  it("viser stegbytte og øvrige handlinger for blokkert sak med eier", () => {
     renderMedRouter(
       <SakHandlingerKnapper
         erEier={true}
@@ -288,8 +287,7 @@ describe("SakHandlingerKnapper", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: "Endre status" })).toBeDefined();
-    expect(screen.getByRole("separator")).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Endre status" })).toBeNull();
     expect(screen.getByRole("button", { name: "Opprett journalpost" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Opprett oppgave" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Flytt til neste steg" })).toBeDefined();

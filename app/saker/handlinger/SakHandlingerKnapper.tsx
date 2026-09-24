@@ -61,10 +61,7 @@ export function SakHandlingerKnapper({
       handling,
     ): handling is (typeof tillatteHandlinger.handlinger)[number] & {
       type: Tilstandshandling;
-    } =>
-      (handling.type === "FLYTT_TIL_NESTE_STEG" &&
-        hentVisbareSteg(tillatteHandlinger).length > 0) ||
-      handling.type === "ENDRE_STATUS",
+    } => handling.type === "FLYTT_TIL_NESTE_STEG" && hentVisbareSteg(tillatteHandlinger).length > 0,
   );
 
   if (!erEier || (handlinger.length === 0 && tilstandshandlinger.length === 0)) {
@@ -115,10 +112,8 @@ export function SakHandlingerKnapper({
           );
         })}
 
-        {visSekundærhandlinger ? (
-          <>
-            <hr className="my-4 border-ax-border-neutral-subtle" />
-            {sekundærhandlinger
+        {visSekundærhandlinger
+          ? sekundærhandlinger
               .filter((h) => handlinger.includes(h))
               .map((handling) => {
                 const visning = handlingsvisning[handling];
@@ -133,9 +128,8 @@ export function SakHandlingerKnapper({
                     {visning.label}
                   </Button>
                 );
-              })}
-          </>
-        ) : null}
+              })
+          : null}
       </VStack>
 
       <EndreStatusModal

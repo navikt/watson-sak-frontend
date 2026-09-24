@@ -66,7 +66,7 @@ describe("SakDetaljSide render", () => {
   it("viser lagre og avbryt i redigeringsmodus", async () => {
     renderDetaljside();
 
-    fireEvent.click(await screen.findByRole("button", { name: "Rediger saksinformasjon" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Endre saksinformasjon" }));
 
     expect(await screen.findByRole("button", { name: "Lagre" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Avbryt" })).toBeDefined();
@@ -76,7 +76,7 @@ describe("SakDetaljSide render", () => {
   it("viser misbruktype når kategori byttes til en kategori med misbrukstyper", async () => {
     renderDetaljside();
 
-    fireEvent.click(await screen.findByRole("button", { name: "Rediger saksinformasjon" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Endre saksinformasjon" }));
     fireEvent.change(await screen.findByLabelText("Kategori"), {
       target: { value: "ARBEID" },
     });
@@ -87,11 +87,9 @@ describe("SakDetaljSide render", () => {
   it("viser saksbehandler med delte brukere, men skjuler handlinger og fjern-knapper for ikke-eier", async () => {
     renderDetaljside(deltMedSakId);
 
-    const saksbehandlereHeading = await screen.findByRole("heading", { name: "Saksbehandler" });
-
-    expect(saksbehandlereHeading).toBeDefined();
+    expect((await screen.findAllByText("Saksbehandler")).length).toBeGreaterThan(0);
     expect(screen.queryByRole("heading", { name: "Handlinger" })).toBeNull();
-    expect(screen.getByRole("heading", { name: "Delt med" })).toBeDefined();
+    expect(screen.getByText("Delt tilgang")).toBeDefined();
     expect(screen.getByText("Ingen ansvarlig saksbehandler satt.")).toBeDefined();
     expect(screen.getAllByText("Kari Nordmann").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Ada Larsen").length).toBeGreaterThan(0);
@@ -237,7 +235,7 @@ describe("SakDetaljSide render", () => {
   it("viser organisasjonsnummer-felt i redigeringsmodus", async () => {
     renderDetaljside();
 
-    fireEvent.click(await screen.findByRole("button", { name: "Rediger saksinformasjon" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Endre saksinformasjon" }));
 
     expect(await screen.findByText("Organisasjonsnummer (valgfritt)")).toBeDefined();
   }, 15000);

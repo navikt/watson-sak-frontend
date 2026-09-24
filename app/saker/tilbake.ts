@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 
 /** Et navigasjonsmål for «tilbake»-knapper: hvor man skal, og hva det heter. */
@@ -23,5 +24,11 @@ function erTilbakemål(verdi: unknown): verdi is Tilbakemål {
 export function useTilbakeLenke(standard: Tilbakemål): Tilbakemål {
   const location = useLocation();
   const tilbake = (location.state as TilbakeState | null)?.tilbake;
-  return erTilbakemål(tilbake) ? tilbake : standard;
+  const [erHydrert, setErHydrert] = useState(false);
+
+  useEffect(() => {
+    setErHydrert(true);
+  }, []);
+
+  return erHydrert && erTilbakemål(tilbake) ? tilbake : standard;
 }

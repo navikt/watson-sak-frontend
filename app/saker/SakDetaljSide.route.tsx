@@ -1,61 +1,23 @@
-import { ArrowLeftIcon, PencilIcon, PlusIcon } from "@navikt/aksel-icons";
-import {
-  Alert,
-  Button,
-  Detail,
-  ErrorSummary,
-  Heading,
-  HGrid,
-  HStack,
-  Select,
-  Tag,
-  Tooltip,
-  UNSAFE_Combobox,
-  VStack,
-} from "@navikt/ds-react";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
-import {
-  useBeforeUnload,
-  useBlocker,
-  useFetcher,
-  useLoaderData,
-  useNavigate,
-  useRevalidator,
-} from "react-router";
-import { sporHendelse } from "~/analytics/analytics";
-import { Kort } from "~/komponenter/Kort";
-import { useKodeverk } from "~/kodeverk/useKodeverk";
-import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
-import {
-  ankerIdForFelt,
-  førsteFeilForFelt,
-  samleFeilElementer,
-  YtelseRadFelt,
-} from "~/registrer-sak/YtelseRadFelt";
-import type { YtelseRadVerdier } from "~/registrer-sak/skjema-helpers";
-import { merkingEtikett } from "~/saker/kategorier";
-import { formaterOrganisasjonsnummer } from "~/utils/string-utils";
+import { ArrowLeftIcon } from "@navikt/aksel-icons";
+import { Button, HGrid, VStack } from "@navikt/ds-react";
+import { useCallback, useEffect, useState } from "react";
+import { useLoaderData, useNavigate } from "react-router";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
-import type { Route } from "./+types/SakDetaljSide.route";
+import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
+import { RouteConfig } from "~/routeConfig";
 import { IngenFiltilgangKort } from "./filer/IngenFiltilgangKort";
 import { SakFilområde } from "./filer/SakFilområde";
-import { SakHandlingerKnapper } from "./handlinger/SakHandlingerKnapper";
 import { erSakseier } from "./handlinger/tilgjengeligeHandlinger";
-import { IngenHistorikktilgangKort } from "./historikk/IngenHistorikktilgangKort";
-import { SakHistorikk } from "./historikk/SakHistorikk";
 import { getSaksreferanse } from "./id";
-import { hentStegbaserteSaksregler } from "./stegregler";
 import { PersonIdentHistorikkModal } from "./komponenter/PersonIdentHistorikkModal";
-import { PersonIdentMedHistorikk } from "./komponenter/PersonIdentMedHistorikk";
-import { SakDetaljerFelter } from "./komponenter/SakDetaljerFelter";
+import { SakDetaljSidePanel } from "./komponenter/SakDetaljSidePanel";
 import { SakerPåSammePerson } from "./komponenter/SakerPåSammePerson";
-import { SaksbehandlereKort } from "./komponenter/SaksbehandlereKort";
+import { SaksinformasjonKort } from "./komponenter/SaksinformasjonKort";
 import { getAlder, getNavn } from "./selectors";
-import { formaterIsoTilNorskDato, formaterStatus, formaterSteg, getPersonIdent } from "./visning";
 import { action, loader } from "./SakDetaljSide.server";
-import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
-import { RouteConfig } from "~/routeConfig";
+import { hentStegbaserteSaksregler } from "./stegregler";
 import { useTilbakeLenke } from "./tilbake";
+import type { KontrollsakResponse, KontrollsakSaksbehandler } from "./types.backend";
 import { useDisclosure } from "~/utils/useDisclosure";
 
 export { action, loader };
@@ -73,86 +35,6 @@ function finnSaksbehandlerDetalj(
   );
 }
 
-type Feltfeil = Record<string, string[]>;
-
-type RedigerSaksinformasjonData = {
-  kategori: string;
-  kilde: string;
-  misbruktype: string[];
-  merking: string[];
-  arbeidsgivere: string[];
-  ytelser: YtelseRadVerdier[];
-};
-
-function lagYtelseRaderFraSak(sak: Route.ComponentProps["loaderData"]["sak"]): YtelseRadVerdier[] {
-  if (sak.ytelser.length === 0) {
-    return [{}];
-  }
-  return sak.ytelser.map((ytelse) => ({
-    type: ytelse.type || undefined,
-    fraDato: formaterIsoTilNorskDato(ytelse.periodeFra) || undefined,
-    tilDato: formaterIsoTilNorskDato(ytelse.periodeTil) || undefined,
-    beløp: ytelse.belop !== null && ytelse.belop !== undefined ? String(ytelse.belop) : undefined,
-    endeligBeløp:
-      ytelse.endeligBelop !== null && ytelse.endeligBelop !== undefined
-        ? String(ytelse.endeligBelop)
-        : undefined,
-  }));
-}
-
-function lagRedigeringsdata(
-  sak: Route.ComponentProps["loaderData"]["sak"],
-): RedigerSaksinformasjonData {
-  return {
-    kategori: sak.kategori,
-    kilde: sak.kilde,
-    misbruktype: [...sak.misbruktype],
-    merking: [...sak.merking],
-    arbeidsgivere: [...(sak.arbeidsgivere ?? [])],
-    ytelser: lagYtelseRaderFraSak(sak),
-  };
-}
-
-function erLikeRedigeringsdata(a: RedigerSaksinformasjonData, b: RedigerSaksinformasjonData) {
-  return (
-    a.kategori === b.kategori &&
-    a.kilde === b.kilde &&
-    erLikeStringArrays(a.arbeidsgivere, b.arbeidsgivere) &&
-    erLikeStringArrays(a.misbruktype, b.misbruktype) &&
-    erLikeStringArrays(a.merking, b.merking) &&
-    erLikeYtelser(a.ytelser, b.ytelser)
-  );
-}
-
-function erLikeStringArrays(a: string[], b: string[]): boolean {
-  if (a.length !== b.length) return false;
-  const sortA = [...a].sort();
-  const sortB = [...b].sort();
-  return sortA.every((val, i) => val === sortB[i]);
-}
-
-function erLikeYtelser(a: YtelseRadVerdier[], b: YtelseRadVerdier[]): boolean {
-  if (a.length !== b.length) return false;
-  return a.every(
-    (rad, i) =>
-      rad.type === b[i].type &&
-      rad.fraDato === b[i].fraDato &&
-      rad.tilDato === b[i].tilDato &&
-      rad.beløp === b[i].beløp &&
-      rad.endeligBeløp === b[i].endeligBeløp,
-  );
-}
-
-function hentMisbrukstypeAlternativer(
-  kategori: string,
-  misbrukstyper: { kode: string; kategori: string }[],
-): readonly string[] {
-  if (!kategori) {
-    return [];
-  }
-  return misbrukstyper.filter((m) => m.kategori === kategori).map((m) => m.kode);
-}
-
 export default function SakDetaljSide() {
   const {
     sak: loaderSak,
@@ -163,164 +45,39 @@ export default function SakDetaljSide() {
     andreSaker,
     saksbehandlerDetaljer,
   } = useLoaderData<typeof loader>();
-  const kodeverk = useKodeverk();
   const [sak, setSak] = useState(loaderSak);
-  const ytelseAlternativer = useMemo(
-    () => kodeverk.ytelseTyper.map((y) => ({ value: y.kode, label: y.beskrivelse })),
-    [kodeverk.ytelseTyper],
-  );
   const navigate = useNavigate();
   const tilbake = useTilbakeLenke({ to: RouteConfig.MINE_SAKER, label: "Mine saker" });
-  const fetcher = useFetcher<typeof action>();
-  const revalidator = useRevalidator();
-  const personIdent = getPersonIdent(sak);
-  const visPersonIdent = sak.gjeldendePersonIdent ?? personIdent;
-  const harHistoriskIdent = sak.historiskeIdenter.some((i) => i.historisk);
-  const identHistorikkModal = useDisclosure();
-  const stegTekst = formaterSteg(sak.steg);
-  const stegregler = hentStegbaserteSaksregler(sak.steg);
-  const erAktiv = stegregler.erAktiv;
-  const saksreferanse = getSaksreferanse(sak.id);
-  const navn = getNavn(sak);
-  const alder = getAlder(sak);
-  const ansvarligSaksbehandler = sak.saksbehandlere.eier
-    ? finnSaksbehandlerDetalj(saksbehandlerDetaljer, sak.saksbehandlere.eier.navIdent)
-    : null;
-  const delteSaksbehandlere = sak.saksbehandlere.deltMed;
   const innloggetBruker = useInnloggetBruker();
+  const identHistorikkModal = useDisclosure();
+  const stegregler = hentStegbaserteSaksregler(sak.steg);
   const erEier = erSakseier(sak, innloggetBruker.navIdent);
-  const harDeltTilgang = delteSaksbehandlere.some((s) => s.navIdent === innloggetBruker.navIdent);
+  const harDeltTilgang = sak.saksbehandlere.deltMed.some(
+    (saksbehandler) => saksbehandler.navIdent === innloggetBruker.navIdent,
+  );
   const harDirekteTilgang = erEier || harDeltTilgang || innloggetBruker.erLeder;
-  // Filområdet (dokumenter og vedlegg) vises for eier, delt-med eller leder.
-  // Andre roller (f.eks. ansvarlig på en koblet sak) kan ikke åpne enkeltdokumenter,
-  // så blokken skjules helt i stedet for å vise innhold man ikke får tilgang til.
-  const kanSeFilområde = harDirekteTilgang;
-  const kanRedigere = erEier && erAktiv;
-  // Historikk vises for eier, delt-med eller leder (samme regel som filområdet). I tillegg kan
-  // backend skjule historikk helt for adresseskjermede saker som krever utvidet tilgang
-  // (sak.tilgang.kanSeHistorikk). Begge tilfellene vises som informasjonskort i stedet for å
-  // skjule blokken helt, etter mønsteret fra IngenFiltilgangKort.
   const historikkTilstand: "vis" | "ikke-delt" | "skjermet" = !harDirekteTilgang
     ? "ikke-delt"
     : (sak.tilgang?.kanSeHistorikk ?? true)
       ? "vis"
       : "skjermet";
-  const kanTildeleSak = sak.tilgang?.kanTildeleSak ?? true;
-  const kanRedigereDokumenter = harDirekteTilgang && stegregler.kanRedigereDokumenter;
-  const kanLasteOppFiler = harDirekteTilgang && stegregler.kanLasteOppFiler;
-  const [redigerer, setRedigerer] = useState(false);
-  const [redigeringsøkt, setRedigeringsøkt] = useState(0);
-  const [visFeil, setVisFeil] = useState(false);
-  const [lokaleVerdier, setLokaleVerdier] = useState<RedigerSaksinformasjonData>(() =>
-    lagRedigeringsdata(sak),
-  );
-  const utgangspunkt = useMemo(() => lagRedigeringsdata(sak), [sak]);
-  const feil: Feltfeil | undefined =
-    visFeil && fetcher.data && !fetcher.data.ok ? fetcher.data.feil : undefined;
-  const misbrukstypeAlternativer = hentMisbrukstypeAlternativer(
-    lokaleVerdier.kategori,
-    kodeverk.misbrukstyper,
-  );
-  const misbrukstypeBeskrivelseMap = useMemo(
-    () => new Map(kodeverk.misbrukstyper.map((m) => [m.kode, m.beskrivelse])),
-    [kodeverk.misbrukstyper],
-  );
-  const harUlagredeEndringer = redigerer && !erLikeRedigeringsdata(lokaleVerdier, utgangspunkt);
-  const blocker = useBlocker(harUlagredeEndringer);
-  const errorSummaryId = useId();
-  const feilElementer = samleFeilElementer(feil);
-
+  const saksreferanse = getSaksreferanse(sak.id);
+  const navn = getNavn(sak);
+  const alder = getAlder(sak);
   const tittel = navn
     ? `Sak ${saksreferanse} – ${navn}${alder !== null ? ` (${alder})` : ""}`
     : `Sak ${saksreferanse}`;
-
-  const sisteBehandledeData = useRef<typeof fetcher.data>(undefined);
-
-  useEffect(() => {
-    if (fetcher.data === sisteBehandledeData.current) return;
-    sisteBehandledeData.current = fetcher.data;
-
-    if (fetcher.data?.ok) {
-      if (fetcher.data.sak) {
-        setSak(fetcher.data.sak);
-      }
-      setVisFeil(false);
-      setRedigerer(false);
-      void revalidator.revalidate();
-      return;
-    }
-
-    if (fetcher.data && !fetcher.data.ok) {
-      setVisFeil(true);
-      if (fetcher.data.verdier) {
-        setLokaleVerdier(fetcher.data.verdier);
-      }
-    }
-  }, [fetcher.data, revalidator]);
+  const ansvarligSaksbehandler = sak.saksbehandlere.eier
+    ? finnSaksbehandlerDetalj(saksbehandlerDetaljer, sak.saksbehandlere.eier.navIdent)
+    : null;
+  const kanRedigere = erEier && stegregler.erAktiv;
+  const onSakOppdatert = useCallback((oppdatertSak: KontrollsakResponse) => {
+    setSak(oppdatertSak);
+  }, []);
 
   useEffect(() => {
     setSak(loaderSak);
   }, [loaderSak]);
-
-  useEffect(() => {
-    if (blocker.state !== "blocked") {
-      return;
-    }
-
-    const skalForlateSiden = window.confirm(
-      "Du har ulagrede endringer. Er du sikker på at du vil forlate siden?",
-    );
-
-    if (skalForlateSiden) {
-      blocker.proceed();
-      return;
-    }
-
-    blocker.reset();
-  }, [blocker]);
-
-  useBeforeUnload((event) => {
-    if (!harUlagredeEndringer) {
-      return;
-    }
-
-    event.preventDefault();
-    event.returnValue = "";
-  });
-
-  function oppdaterLokaleVerdier<K extends keyof RedigerSaksinformasjonData>(
-    felt: K,
-    verdi: RedigerSaksinformasjonData[K],
-  ) {
-    setLokaleVerdier((gjeldende) => ({ ...gjeldende, [felt]: verdi }));
-  }
-
-  function leggTilYtelseRad() {
-    setLokaleVerdier((gjeldende) => ({
-      ...gjeldende,
-      ytelser: [...gjeldende.ytelser, {}],
-    }));
-  }
-
-  function fjernYtelseRad(indeks: number) {
-    setLokaleVerdier((gjeldende) => {
-      const nye = gjeldende.ytelser.filter((_, i) => i !== indeks);
-      return { ...gjeldende, ytelser: nye.length > 0 ? nye : [{}] };
-    });
-  }
-
-  function startRedigering() {
-    setRedigeringsøkt((gjeldende) => gjeldende + 1);
-    setVisFeil(false);
-    setRedigerer(true);
-    setLokaleVerdier(utgangspunkt);
-  }
-
-  function avbrytRedigering() {
-    setVisFeil(false);
-    setRedigerer(false);
-    setLokaleVerdier(utgangspunkt);
-  }
 
   return (
     <>
@@ -338,330 +95,31 @@ export default function SakDetaljSide() {
           </Button>
         </div>
 
-        <HGrid columns={{ xs: 1, md: "1fr 280px" }} gap="space-8">
+        <HGrid
+          columns={{
+            xs: 1,
+            md: "minmax(0, 1fr) 300px",
+            lg: "minmax(0, 1fr) 260px",
+            xl: "minmax(0, 1fr) 300px",
+          }}
+          gap="space-16"
+        >
           <VStack gap="space-8">
-            <Kort>
-              <VStack gap="space-4">
-                <HStack justify="space-between" align="start">
-                  <VStack gap="space-2">
-                    <Heading level="1" size="large">
-                      {tittel}
-                    </Heading>
-                  </VStack>
-                  <HStack gap="space-4">
-                    {sak.adresseskjermet && (
-                      <Tooltip content="Denne personen er skjermet">
-                        <Tag variant="strong" data-color="danger" size="medium">
-                          Diskresjon
-                        </Tag>
-                      </Tooltip>
-                    )}
-                    {sak.status && (
-                      <Tag variant="outline" data-color="warning" size="medium">
-                        {formaterStatus(sak.status)}
-                      </Tag>
-                    )}
-                    <Tag variant="outline" data-color="success" size="medium">
-                      {stegTekst}
-                    </Tag>
-                  </HStack>
-                </HStack>
+            <SaksinformasjonKort
+              sak={sak}
+              tittel={tittel}
+              kanRedigere={kanRedigere}
+              onVisIdentHistorikk={identHistorikkModal.onÅpne}
+              onSakOppdatert={onSakOppdatert}
+            />
 
-                <hr className="border-ax-border-neutral-subtle" />
-
-                {redigerer ? (
-                  <fetcher.Form
-                    method="post"
-                    key={redigeringsøkt}
-                    onSubmit={() =>
-                      sporHendelse("sak redigert", { kategori: lokaleVerdier.kategori })
-                    }
-                  >
-                    <input type="hidden" name="handling" value="rediger_saksinformasjon" />
-
-                    <VStack gap="space-6">
-                      {feilElementer.length > 0 && (
-                        <ErrorSummary
-                          id={errorSummaryId}
-                          heading="Du må rette følgende feil før du kan lagre:"
-                        >
-                          {feilElementer.map((element) => (
-                            <ErrorSummary.Item key={element.id} href={`#${element.id}`}>
-                              {element.melding}
-                            </ErrorSummary.Item>
-                          ))}
-                        </ErrorSummary>
-                      )}
-
-                      {feil?.skjema?.[0] && <Alert variant="error">{feil.skjema[0]}</Alert>}
-
-                      <VStack gap="space-1">
-                        <Detail className="text-ax-text-neutral-subtle" uppercase>
-                          Personnummer
-                        </Detail>
-                        <PersonIdentMedHistorikk
-                          personIdent={visPersonIdent}
-                          harHistorikk={harHistoriskIdent}
-                          onVisHistorikk={identHistorikkModal.onÅpne}
-                        />
-                        {sak.gjeldendePersonIdent &&
-                          sak.gjeldendePersonIdent !== sak.personIdent && (
-                            <Detail className="text-ax-text-neutral-subtle">
-                              Saken ble opprettet under {personIdent}
-                            </Detail>
-                          )}
-                      </VStack>
-
-                      <HGrid columns={{ xs: 1, md: 2, xl: 3 }} gap="space-4">
-                        <div className="w-fit">
-                          <Select
-                            id={ankerIdForFelt("kategori")}
-                            name="kategori"
-                            label="Kategori"
-                            size="small"
-                            value={lokaleVerdier.kategori}
-                            error={førsteFeilForFelt(feil, "kategori")}
-                            onChange={(event) => {
-                              const kategori = event.target.value;
-                              const gyldige = hentMisbrukstypeAlternativer(
-                                kategori,
-                                kodeverk.misbrukstyper,
-                              );
-                              setLokaleVerdier((gjeldende) => ({
-                                ...gjeldende,
-                                kategori,
-                                misbruktype: gjeldende.misbruktype.filter((type) =>
-                                  gyldige.includes(type),
-                                ),
-                              }));
-                            }}
-                          >
-                            <option value="">Velg kategori</option>
-                            {kodeverk.kategorier.map((k) => (
-                              <option key={k.kode} value={k.kode}>
-                                {k.beskrivelse}
-                              </option>
-                            ))}
-                          </Select>
-                        </div>
-
-                        <div className="w-fit">
-                          <Select
-                            id={ankerIdForFelt("kilde")}
-                            name="kilde"
-                            label="Kilde"
-                            size="small"
-                            value={lokaleVerdier.kilde}
-                            error={førsteFeilForFelt(feil, "kilde")}
-                            onChange={(event) => oppdaterLokaleVerdier("kilde", event.target.value)}
-                          >
-                            <option value="">Velg kilde</option>
-                            {kodeverk.kilder.map((k) => (
-                              <option key={k.kode} value={k.kode}>
-                                {k.beskrivelse}
-                              </option>
-                            ))}
-                          </Select>
-                        </div>
-
-                        <div aria-hidden className="hidden xl:block" />
-
-                        <div id={ankerIdForFelt("misbruktype")} className="w-fit">
-                          <UNSAFE_Combobox
-                            label="Misbruktype"
-                            size="small"
-                            options={misbrukstypeAlternativer.map((kode) => ({
-                              value: kode,
-                              label: misbrukstypeBeskrivelseMap.get(kode) ?? kode,
-                            }))}
-                            isMultiSelect
-                            disabled={misbrukstypeAlternativer.length === 0}
-                            selectedOptions={lokaleVerdier.misbruktype.map((kode) => ({
-                              value: kode,
-                              label: misbrukstypeBeskrivelseMap.get(kode) ?? kode,
-                            }))}
-                            onToggleSelected={(option, isSelected) => {
-                              setLokaleVerdier((gjeldende) => {
-                                const har = gjeldende.misbruktype.includes(option);
-                                if (isSelected && !har) {
-                                  return {
-                                    ...gjeldende,
-                                    misbruktype: [...gjeldende.misbruktype, option],
-                                  };
-                                }
-                                if (!isSelected) {
-                                  return {
-                                    ...gjeldende,
-                                    misbruktype: gjeldende.misbruktype.filter((v) => v !== option),
-                                  };
-                                }
-                                return gjeldende;
-                              });
-                            }}
-                            error={førsteFeilForFelt(feil, "misbruktype")}
-                          />
-                          {lokaleVerdier.misbruktype.map((type) => (
-                            <input key={type} type="hidden" name="misbruktype" value={type} />
-                          ))}
-                        </div>
-
-                        <div className="w-fit">
-                          <UNSAFE_Combobox
-                            id={ankerIdForFelt("arbeidsgivere")}
-                            label="Organisasjonsnummer (valgfritt)"
-                            size="small"
-                            isMultiSelect
-                            allowNewValues
-                            options={[]}
-                            selectedOptions={lokaleVerdier.arbeidsgivere.map((orgnr) => ({
-                              label: formaterOrganisasjonsnummer(orgnr),
-                              value: orgnr,
-                            }))}
-                            onToggleSelected={(option, isSelected) => {
-                              setLokaleVerdier((gjeldende) => {
-                                if (isSelected && !gjeldende.arbeidsgivere.includes(option)) {
-                                  return {
-                                    ...gjeldende,
-                                    arbeidsgivere: [...gjeldende.arbeidsgivere, option],
-                                  };
-                                }
-                                if (!isSelected) {
-                                  return {
-                                    ...gjeldende,
-                                    arbeidsgivere: gjeldende.arbeidsgivere.filter(
-                                      (v) => v !== option,
-                                    ),
-                                  };
-                                }
-                                return gjeldende;
-                              });
-                            }}
-                            error={førsteFeilForFelt(feil, "arbeidsgivere")}
-                          />
-                          {lokaleVerdier.arbeidsgivere.map((orgnr) => (
-                            <input key={orgnr} type="hidden" name="arbeidsgivere" value={orgnr} />
-                          ))}
-                        </div>
-
-                        <div aria-hidden className="hidden xl:block" />
-
-                        <div id={ankerIdForFelt("merking")} className="w-fit">
-                          <UNSAFE_Combobox
-                            label="Merking"
-                            size="small"
-                            options={kodeverk.merker.map((merke) => ({
-                              label: merkingEtikett(merke),
-                              value: merke,
-                            }))}
-                            isMultiSelect
-                            allowNewValues
-                            selectedOptions={lokaleVerdier.merking.map((merke) => ({
-                              label: merkingEtikett(merke),
-                              value: merke,
-                            }))}
-                            onToggleSelected={(option, isSelected) => {
-                              setLokaleVerdier((gjeldende) => {
-                                const har = gjeldende.merking.includes(option);
-                                if (isSelected && !har) {
-                                  return {
-                                    ...gjeldende,
-                                    merking: [...gjeldende.merking, option],
-                                  };
-                                }
-                                if (!isSelected) {
-                                  return {
-                                    ...gjeldende,
-                                    merking: gjeldende.merking.filter((v) => v !== option),
-                                  };
-                                }
-                                return gjeldende;
-                              });
-                            }}
-                            error={førsteFeilForFelt(feil, "merking")}
-                          />
-                          {lokaleVerdier.merking.map((merking) => (
-                            <input key={merking} type="hidden" name="merking" value={merking} />
-                          ))}
-                        </div>
-                      </HGrid>
-
-                      <hr className="my-4 border-ax-border-neutral-subtle" />
-
-                      <VStack gap="space-8">
-                        <Heading level="2" size="small">
-                          Ytelser
-                        </Heading>
-                        {lokaleVerdier.ytelser.map((rad, indeks) => (
-                          <YtelseRadFelt
-                            key={`${redigeringsøkt}-${indeks}`}
-                            indeks={indeks}
-                            ytelser={ytelseAlternativer}
-                            kanFjernes={lokaleVerdier.ytelser.length > 1}
-                            onFjern={() => fjernYtelseRad(indeks)}
-                            defaults={rad}
-                            feil={feil}
-                            size="small"
-                            endeligBeløpReadOnly={sak.steg !== "STRAFFERETTSLIG_VURDERING"}
-                          />
-                        ))}
-                        <div>
-                          <Button
-                            type="button"
-                            variant="tertiary"
-                            size="small"
-                            icon={<PlusIcon aria-hidden />}
-                            onClick={leggTilYtelseRad}
-                          >
-                            Legg til ytelse
-                          </Button>
-                        </div>
-                      </VStack>
-
-                      <HStack justify="end" gap="space-4">
-                        <Button
-                          size="small"
-                          type="button"
-                          variant="secondary"
-                          onClick={avbrytRedigering}
-                        >
-                          Avbryt
-                        </Button>
-                        <Button size="small" type="submit" loading={fetcher.state !== "idle"}>
-                          Lagre
-                        </Button>
-                      </HStack>
-                    </VStack>
-                  </fetcher.Form>
-                ) : (
-                  <VStack gap="space-4">
-                    <SakDetaljerFelter sak={sak} onVisIdentHistorikk={identHistorikkModal.onÅpne} />
-
-                    {kanRedigere && (
-                      <HStack justify="end">
-                        <Button
-                          type="button"
-                          variant="tertiary"
-                          size="xsmall"
-                          icon={<PencilIcon aria-hidden />}
-                          aria-label="Rediger saksinformasjon"
-                          onClick={startRedigering}
-                        >
-                          Rediger
-                        </Button>
-                      </HStack>
-                    )}
-                  </VStack>
-                )}
-              </VStack>
-            </Kort>
-
-            {kanSeFilområde ? (
+            {harDirekteTilgang ? (
               <SakFilområde
                 dokumenter={dokumenter}
                 filer={filer}
                 sakId={saksreferanse}
-                redigerbar={kanRedigereDokumenter}
-                kanLasteOppFiler={kanLasteOppFiler}
+                redigerbar={harDirekteTilgang && stegregler.kanRedigereDokumenter}
+                kanLasteOppFiler={harDirekteTilgang && stegregler.kanLasteOppFiler}
                 erSakseier={erEier}
               />
             ) : (
@@ -675,42 +133,23 @@ export default function SakDetaljSide() {
             />
           </VStack>
 
-          <VStack gap="space-6" className="md:sticky md:top-4 md:self-start">
-            <SaksbehandlereKort
-              sak={{
-                ...sak,
-                saksbehandlere: {
-                  ...sak.saksbehandlere,
-                  deltMed: delteSaksbehandlere,
-                },
-              }}
-              saksbehandlerDetaljer={saksbehandlerDetaljer}
-              ansvarligSaksbehandler={ansvarligSaksbehandler}
-              erEier={erEier}
-              kanTildeleSak={kanTildeleSak}
-            />
-
-            <SakHandlingerKnapper
-              sak={sak}
-              tillatteHandlinger={tillatteHandlinger}
-              erEier={erEier}
-              filer={filer}
-              dokumenter={dokumenter}
-            />
-
-            {historikkTilstand === "vis" ? (
-              <SakHistorikk
-                sakId={sak.id}
-                hendelser={historikk}
-                redigerbar={kanRedigere}
-                kanLeggeTil={erEier && stegregler.kanLeggeTilHistorikk}
-              />
-            ) : (
-              <IngenHistorikktilgangKort årsak={historikkTilstand} />
-            )}
-          </VStack>
+          <SakDetaljSidePanel
+            sak={sak}
+            saksbehandlerDetaljer={saksbehandlerDetaljer}
+            ansvarligSaksbehandler={ansvarligSaksbehandler}
+            tillatteHandlinger={tillatteHandlinger}
+            historikk={historikk}
+            dokumenter={dokumenter}
+            filer={filer}
+            erEier={erEier}
+            kanTildeleSak={sak.tilgang?.kanTildeleSak ?? true}
+            kanRedigere={kanRedigere}
+            kanLeggeTilHistorikk={erEier && stegregler.kanLeggeTilHistorikk}
+            historikkTilstand={historikkTilstand}
+          />
         </HGrid>
       </VStack>
+
       <PersonIdentHistorikkModal
         sak={sak}
         åpen={identHistorikkModal.erÅpen}
