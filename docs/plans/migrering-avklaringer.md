@@ -230,7 +230,6 @@ val legacyKilde: Migreringskilde? = null,
 | E   | Hvilken nøkkel og hvilket datofelt har `NKA_KONTROLL` og `NKA_KONTROLL_AAP`?                                                                                                                                                                                                                                                | `legacyPid` og `referansedato` for register                         |
 | F   | Skal påklagede henleggelser etter 1.1.2024 tas med selv om `POLDOMDATO` er satt? Foreløpig nei.                                                                                                                                                                                                                             | Regel for `SV_VENTER_RESULTAT`                                      |
 | G   | Hvem setter enhet på saker uten saksbehandler i kilden, og hvilken enhet brukes?                                                                                                                                                                                                                                            | Dekning i `UTEN_ANSVARLIG`                                          |
-| H   | Skal `UTEN_ANSVARLIG`-kandidater (enhetstilgang) kunne opprettes fra migreringslisten, eller er enhetstilgang i denne leveransen bare lesevisning? Avklaring 4 svarte at enheten _får tilgang_, men sa ingenting om opprettelse. Se avsnitt 8 (6.a-funn) — opprettelse er sperret for disse i kode inntil dette er avklart. | `KontrollsakService.validerLegacyMigrering`, `MigreringInnhold.tsx` |
 | 5   | Database og kontrakt: målplattform, read-only-tilgang, oppdatering/frysing.                                                                                                                                                                                                                                                 | Se C                                                                |
 | 6   | Ferdig migrert: hvilke felt, notater og vedlegg følger med? Er det bare FNR, PID og saksbehandler?                                                                                                                                                                                                                          | Opprettelsesflyt og kvittering                                      |
 
@@ -297,8 +296,8 @@ villedende 404 («Personen ble ikke funnet») i stedet for en presis forklaring.
 Backend feiler trygt (lukket, ikke åpent), men UI-et løy om årsaken. Rettet i
 denne runden: `MigreringInnhold.tsx` deaktiverer nå «Opprett sak» for
 kandidater der `ansvar.type !== "BEKREFTET"`, med en synlig forklaring i
-stedet. Se ny avklaring **H** over — om `UTEN_ANSVARLIG` noensinne skal kunne
-opprettes, må avgjøres før denne sperren fjernes.
+stedet. Avklaring **H** over er nå besvart: dette er en varig sperre, ikke en
+midlertidig — den skal ikke fjernes uten en ny, eksplisitt beslutning.
 
 **Persondata-sjekk:** ingen ekte fødselsnummer i backend- eller
 frontend-mockdata/-tester — kun syntetiske, gjentatte siffer (`11111111111`
@@ -313,10 +312,11 @@ osv.) i backend, og ingen FNR-felt i det hele tatt i frontendens
   Docker-avhengige integrasjonstester (se risikoliste over) — ingen
   mock-baserte enhetstester feiler.
 
-**Ikke gjort i denne runden** (utenfor 6.a/7.a sitt mandat, krever egen
-beslutning): rebase av backend-branchen mot `main` (V24/V25), utskilling av
-chatbot-commits, kjøring av Postgres-tester i et miljø med Docker, og svar på
-avklaring H.
+**Ikke gjort i forrige runde, løst i denne runden** (se avsnitt 9 og avklaring
+H over): rebase av backend-branchen mot `main` (V24/V25), utskilling av
+chatbot-commits, og svar på avklaring H. Docker-testene må fortsatt kjøres av
+utvikleren i en vanlig terminal utenfor sandkassen (se avsnitt 9) — ikke
+bekreftet grønt her.
 
 ## Prøve prototypen
 
