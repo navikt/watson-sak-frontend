@@ -5,6 +5,7 @@ import { RouteConfig } from "~/routeConfig";
 import { Diagramkort, Legend } from "./Diagramkort";
 import { fargeForKode } from "./farger";
 import type { Statistikk } from "./types";
+import { prosentFormatter, visningsnavn } from "./visning";
 
 const formatter = new Intl.NumberFormat("nb-NO");
 const ALDER_GRENSE_MND = 12;
@@ -123,7 +124,7 @@ export function StatistikkDiagrammer({
             <>
               <Legend
                 items={data.sakstyper[0].deler.map(({ navn, filterverdi }) => ({
-                  navn,
+                  navn: visningsnavn(navn),
                   farge: fargeForKode(filterverdi),
                 }))}
                 skjulte={skjulteStatuser}
@@ -136,7 +137,7 @@ export function StatistikkDiagrammer({
                   return (
                     <HStack key={rad.navn} gap="space-8" align="center" wrap={false}>
                       <BodyShort size="small" className="w-20 shrink-0 text-right">
-                        {rad.navn}
+                        {visningsnavn(rad.navn)}
                       </BodyShort>
                       <div
                         className="flex h-6 min-w-0 flex-1 overflow-hidden rounded-sm"
@@ -149,7 +150,7 @@ export function StatistikkDiagrammer({
                               kategori: rad.filterverdi,
                               steg: del.filterverdi,
                             })}
-                            aria-label={`${rad.navn}, ${del.navn}: ${formatter.format(del.verdi)} saker`}
+                            aria-label={`${visningsnavn(rad.navn)}, ${visningsnavn(del.navn)}: ${formatter.format(del.verdi)} saker`}
                             className="block h-full focus-visible:z-10"
                             style={{
                               width: `${(del.verdi / Math.max(total, 1)) * 100}%`,
@@ -254,22 +255,24 @@ export function StatistikkDiagrammer({
           <VStack gap="space-8">
             {data.statusfordeling.map((status) => (
               <HStack key={status.navn} align="center" gap="space-8" wrap={false}>
-                <BodyShort size="small" className="w-32 shrink-0 text-right">
-                  {status.navn}
-                </BodyShort>
-                <div className="min-w-0 flex-1">
-                  <RouterLink
-                    to={lagSaksfilterUrl({ steg: status.filterverdi })}
-                    className="flex h-8 items-center rounded-sm bg-ax-bg-accent-strong px-2 font-semibold text-ax-text-neutral-contrast no-underline"
-                    style={{ width: `${status.prosent}%` }}
-                    title={`${status.navn}: ${formatter.format(status.verdi)} saker`}
-                  >
-                    {status.verdi}
-                  </RouterLink>
+                <div className="grid min-w-0 flex-1 grid-cols-[minmax(8rem,auto)_minmax(0,1fr)_auto] items-center gap-2">
+                  <BodyShort size="small" className="min-w-0 break-words text-right">
+                    {visningsnavn(status.navn)}
+                  </BodyShort>
+                  <div className="min-w-0">
+                    <RouterLink
+                      to={lagSaksfilterUrl({ steg: status.filterverdi })}
+                      className="flex h-8 items-center rounded-sm bg-ax-bg-accent-strong px-2 font-semibold text-ax-text-neutral-contrast no-underline"
+                      style={{ width: `${status.prosent}%` }}
+                      title={`${visningsnavn(status.navn)}: ${formatter.format(status.verdi)} saker`}
+                    >
+                      {status.verdi}
+                    </RouterLink>
+                  </div>
+                  <BodyShort size="small" className="whitespace-nowrap">
+                    {prosentFormatter.format(status.prosent)} %
+                  </BodyShort>
                 </div>
-                <BodyShort size="small" className="w-10 shrink-0 whitespace-nowrap">
-                  {status.prosent} %
-                </BodyShort>
               </HStack>
             ))}
           </VStack>
@@ -310,8 +313,8 @@ export function StatistikkDiagrammer({
             {data.kontrollrapport.map((rad) => (
               <div key={rad.navn}>
                 <HStack justify="space-between">
-                  <BodyShort size="small">{rad.navn}</BodyShort>
-                  <BodyShort size="small">{rad.prosent}%</BodyShort>
+                  <BodyShort size="small">{visningsnavn(rad.navn)}</BodyShort>
+                  <BodyShort size="small">{prosentFormatter.format(rad.prosent)}%</BodyShort>
                 </HStack>
                 <div className="mt-1 h-4 overflow-hidden rounded-sm bg-ax-bg-neutral-moderate">
                   <div
