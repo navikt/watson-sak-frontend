@@ -69,4 +69,19 @@ describe("statistikk-loader", () => {
       "ky153k",
     );
   });
+
+  it("sender ikke enhets-ID for hovedavdeling", async () => {
+    testState.skalBrukeMockdata = false;
+    const { loader } = await import("./loader.server");
+
+    await loader({
+      request: new Request("http://localhost/statistikk?omfang=enhet:hovedavdeling"),
+    });
+
+    expect(hentStatistikkMock).toHaveBeenCalledWith("token-123", {
+      nivaa: "hovedavdeling",
+      fra: expect.any(String),
+      til: expect.any(String),
+    });
+  });
 });

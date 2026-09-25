@@ -62,7 +62,7 @@ export async function loader({ request }: { request: Request }) {
     fra: periode.fra,
     til: periode.til,
     enhetId:
-      nivaa === "underavdeling" || nivaa === "hovedavdeling"
+      nivaa === "underavdeling"
         ? valgtEnhetId && !["underavdeling", "hovedavdeling"].includes(valgtEnhetId)
           ? valgtEnhetId
           : (bruker.enhetId ?? undefined)
