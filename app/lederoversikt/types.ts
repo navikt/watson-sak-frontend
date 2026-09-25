@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const LEDERSTATISTIKK_STEG = [
   "OPPRETTET",
-  "UTREDES",
+  "UTREDNING",
   "FORVALTNING",
   "STRAFFERETTSLIG_VURDERING",
   "POLITI",
@@ -29,7 +29,7 @@ export const lederStatistikkResponseSchema = z.object({
   enhet: sakstallSchema.extend({
     perSteg: z.object({
       OPPRETTET: antallSchema,
-      UTREDES: antallSchema,
+      UTREDNING: antallSchema,
       FORVALTNING: antallSchema,
       STRAFFERETTSLIG_VURDERING: antallSchema,
       POLITI: antallSchema,

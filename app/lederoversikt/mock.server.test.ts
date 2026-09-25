@@ -40,7 +40,7 @@ describe("lagMockLederStatistikk", () => {
         ...grunnlag,
         id: 3,
         enhet: "ky153k",
-        steg: "UTREDES",
+        steg: "UTREDNING",
         status: "VENTER_PA_VEDTAK",
         oppdatert: null,
         saksbehandlere: {
