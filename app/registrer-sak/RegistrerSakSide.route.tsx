@@ -498,7 +498,7 @@ export default function OpprettSakSide() {
                     </HStack>
                   )}
 
-                  {/* Rad 1 (påkrevd): Kategori, Misbruktype */}
+                  {/* Rad 1 (påkrevd): Kategori, Misbruktype, Kilde — tre felt per rad iht Figma */}
                   <HStack gap="space-24" align="start" wrap>
                     <Select
                       key={fields.kategori.key}
@@ -557,10 +557,7 @@ export default function OpprettSakSide() {
                         <input key={m} type="hidden" name="misbruktype" value={m} />
                       ))}
                     </div>
-                  </HStack>
 
-                  {/* Rad 2 (påkrevd): Kilde, Enhet */}
-                  <HStack gap="space-24" align="start" wrap>
                     <Select
                       name={fields.kilde.name}
                       id={fields.kilde.id}
@@ -577,7 +574,10 @@ export default function OpprettSakSide() {
                         </option>
                       ))}
                     </Select>
+                  </HStack>
 
+                  {/* Rad 2 (Enhet påkrevd, resten valgfritt): Enhet, Merking, Organisasjonsnummer — tre felt per rad iht Figma */}
+                  <HStack gap="space-24" align="start" wrap>
                     <Select
                       name={fields.enhet.name}
                       id={fields.enhet.id}
@@ -594,10 +594,7 @@ export default function OpprettSakSide() {
                         </option>
                       ))}
                     </Select>
-                  </HStack>
 
-                  {/* Rad 3 (valgfritt): Merking, Organisasjonsnummer */}
-                  <HStack gap="space-24" align="start" wrap>
                     <div id={fields.merking.id} className="w-72">
                       <UNSAFE_Combobox
                         label="Merking (valgfritt)"
