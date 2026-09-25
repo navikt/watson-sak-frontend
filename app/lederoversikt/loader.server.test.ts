@@ -35,7 +35,7 @@ const respons = {
     antallOverFrist: 2,
     perSteg: {
       OPPRETTET: 1,
-      UTREDES: 2,
+      UTREDNING: 2,
       FORVALTNING: 0,
       STRAFFERETTSLIG_VURDERING: 1,
       POLITI: 2,

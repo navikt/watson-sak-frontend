@@ -5,7 +5,7 @@ describe("lagLederVelkomstOppsummering", () => {
   const fordelinger = {
     perSteg: {
       OPPRETTET: 0,
-      UTREDES: 0,
+      UTREDNING: 0,
       FORVALTNING: 0,
       STRAFFERETTSLIG_VURDERING: 0,
       POLITI: 0,

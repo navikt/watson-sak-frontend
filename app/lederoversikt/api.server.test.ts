@@ -18,7 +18,7 @@ const gyldigRespons = {
     antallOverFrist: 0,
     perSteg: {
       OPPRETTET: 1,
-      UTREDES: 0,
+      UTREDNING: 0,
       FORVALTNING: 0,
       STRAFFERETTSLIG_VURDERING: 0,
       POLITI: 0,

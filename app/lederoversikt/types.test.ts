@@ -10,7 +10,7 @@ const gyldigRespons = {
     antallUfordelte: 2,
     perSteg: {
       OPPRETTET: 1,
-      UTREDES: 1,
+      UTREDNING: 1,
       FORVALTNING: 0,
       STRAFFERETTSLIG_VURDERING: 1,
       POLITI: 1,
