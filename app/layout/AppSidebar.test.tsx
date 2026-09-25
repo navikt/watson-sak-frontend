@@ -20,7 +20,9 @@ describe("Migreringslenke i sidebar", () => {
   it.each<Miljø>(["local-mock", "demo"])("vises i %s", (miljø) => {
     state.miljø = miljø;
     visSidebar();
-    expect(screen.getByRole("link", { name: "Migrering" }).getAttribute("href")).toBe("/migrering");
+    const migreringslenke = screen.getByRole("link", { name: "Migrering" });
+    expect(migreringslenke.getAttribute("href")).toBe("/migrering");
+    expect(screen.getAllByRole("link").at(-1)).toBe(migreringslenke);
   });
 
   it.each<Miljø | undefined>(["prod", "dev", "local-dev", "local-backend", undefined])(
