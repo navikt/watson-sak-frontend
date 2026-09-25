@@ -82,6 +82,8 @@ export async function opprettKontrollsak({
       merking: payload.merking,
       arbeidsgivere: payload.arbeidsgivere ?? [],
       ytelser: payload.ytelser,
+      legacyPid: payload.legacyPid,
+      legacyKilde: payload.legacyKilde,
     });
     return { ok: true, sak: { id: String(kontrollsak.id) } };
   }

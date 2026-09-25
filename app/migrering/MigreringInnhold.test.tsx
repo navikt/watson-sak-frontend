@@ -35,18 +35,20 @@ describe("MigreringInnhold", () => {
   it("viser tabell iht Figma-skisse: PID, Personnummer, Opprettet i Access", () => {
     renderSide();
     expect(screen.getByRole("heading", { name: "Migreringsveileder" })).not.toBeNull();
-    expect(screen.getAllByRole("columnheader", { name: "PID" })).not.toHaveLength(0);
+    expect(screen.getByRole("columnheader", { name: "PID" })).not.toBeNull();
     expect(screen.getByRole("columnheader", { name: "Personnummer" })).not.toBeNull();
-    expect(screen.getAllByRole("columnheader", { name: "Opprettet i Access" })).not.toHaveLength(0);
+    expect(screen.getByRole("columnheader", { name: "Opprettet i Access" })).not.toBeNull();
   });
 
-  it("viser kandidater til behandling i hovedtabellen, overførte i egen seksjon", () => {
+  it("viser status i samme rad/kolonne som knappen for allerede overførte kandidater", () => {
     renderSide();
     expect(overført.length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { level: 2, name: "Overført til Watson" })).not.toBeNull();
-    expect(screen.getByRole("columnheader", { name: "Navn" })).not.toBeNull();
-    expect(screen.getByText("Ada Eksempel")).not.toBeNull();
-    expect(screen.getByRole("link", { name: "Overført til Watson" })).not.toBeNull();
+    const statusLenke = screen.getByRole("link", { name: "Overført til Watson" });
+    const rad = statusLenke.closest("tr");
+    expect(rad).not.toBeNull();
+    expect(within(rad!).getByText("100245")).not.toBeNull();
+    // Ingen «Opprett sak»-knapp i samme rad
+    expect(within(rad!).queryByRole("button", { name: "Opprett sak" })).toBeNull();
   });
 
   it("holder utredning og SV adskilt selv når PID er lik", () => {
