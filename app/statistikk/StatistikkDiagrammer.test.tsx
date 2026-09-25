@@ -61,6 +61,22 @@ describe("StatistikkDiagrammer", () => {
     expect(screen.getByText("Strafferettslig vurdering")).toBeDefined();
   });
 
+  it("formaterer beløp med mellomrom som tusenseparator", () => {
+    renderMedRouter((data) => ({
+      ...data,
+      periodeTall: {
+        ...data.periodeTall,
+        antattBeløp: "1234567",
+        vedtattBeløp: "9876543,21",
+        anmeldtBeløp: "2,4 mill",
+      },
+    }));
+
+    expect(screen.getByText("1 234 567")).toBeDefined();
+    expect(screen.getByText("9 876 543,21")).toBeDefined();
+    expect(screen.getByText("2,4 mill")).toBeDefined();
+  });
+
   it("gir statuslabels en egen wrappende layoutkolonne", () => {
     renderMedRouter((data) => ({
       ...data,

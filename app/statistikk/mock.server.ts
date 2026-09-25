@@ -105,9 +105,9 @@ export function lagMockStatistikk(
     periodeTall: {
       innkomne: 87,
       avsluttede: 156,
-      antattBeløp: "2,4 mill",
-      vedtattBeløp: "1,8 mill",
-      anmeldtBeløp: "0,6 mill",
+      antattBeløp: "2400000",
+      vedtattBeløp: "1800000",
+      anmeldtBeløp: "600000",
     },
     statusfordeling: [
       ["Tildelt", "OPPRETTET", 323, 100],

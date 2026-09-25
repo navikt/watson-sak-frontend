@@ -5,7 +5,7 @@ import { RouteConfig } from "~/routeConfig";
 import { Diagramkort, Legend } from "./Diagramkort";
 import { fargeForKode } from "./farger";
 import type { Statistikk } from "./types";
-import { prosentFormatter, visningsnavn } from "./visning";
+import { formaterBeløp, prosentFormatter, visningsnavn } from "./visning";
 
 const formatter = new Intl.NumberFormat("nb-NO");
 const ALDER_GRENSE_MND = 12;
@@ -226,19 +226,19 @@ export function StatistikkDiagrammer({
           <HGrid columns={3} gap="space-8">
             <Metric
               label="Antatt beløp"
-              value={data.periodeTall.antattBeløp}
+              value={formaterBeløp(data.periodeTall.antattBeløp)}
               suffix="kroner"
               tone="warning"
             />
             <Metric
               label="Vedtatt beløp"
-              value={data.periodeTall.vedtattBeløp}
+              value={formaterBeløp(data.periodeTall.vedtattBeløp)}
               suffix="kroner"
               tone="success"
             />
             <Metric
               label="Anmeldt beløp"
-              value={data.periodeTall.anmeldtBeløp}
+              value={formaterBeløp(data.periodeTall.anmeldtBeløp)}
               suffix="kroner"
               tone="danger"
             />

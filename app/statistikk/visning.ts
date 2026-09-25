@@ -36,3 +36,17 @@ export const prosentFormatter = new Intl.NumberFormat("nb-NO", {
   minimumFractionDigits: 1,
   maximumFractionDigits: 1,
 });
+
+const beløpFormatter = new Intl.NumberFormat("nb-NO", {
+  maximumFractionDigits: 2,
+});
+
+export function formaterBeløp(verdi: string | number): string {
+  if (typeof verdi === "number") {
+    return beløpFormatter.format(verdi);
+  }
+
+  const normalisert = verdi.replaceAll(/\s/g, "").replace(",", ".");
+  const tall = Number(normalisert);
+  return normalisert !== "" && Number.isFinite(tall) ? beløpFormatter.format(tall) : verdi;
+}
