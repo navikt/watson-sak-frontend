@@ -3,6 +3,7 @@ import { useState, type ReactNode } from "react";
 import { Link as RouterLink } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { Diagramkort, Legend } from "./Diagramkort";
+import { fargeForKode } from "./farger";
 import type { Statistikk } from "./types";
 
 const formatter = new Intl.NumberFormat("nb-NO");
@@ -121,7 +122,10 @@ export function StatistikkDiagrammer({
           ) : (
             <>
               <Legend
-                items={data.sakstyper[0].deler.map(({ navn, farge }) => ({ navn, farge }))}
+                items={data.sakstyper[0].deler.map(({ navn, filterverdi }) => ({
+                  navn,
+                  farge: fargeForKode(filterverdi),
+                }))}
                 skjulte={skjulteStatuser}
                 onToggle={toggleStatus}
               />
@@ -149,7 +153,7 @@ export function StatistikkDiagrammer({
                             className="block h-full focus-visible:z-10"
                             style={{
                               width: `${(del.verdi / Math.max(total, 1)) * 100}%`,
-                              backgroundColor: `var(${del.farge})`,
+                              backgroundColor: `var(${fargeForKode(del.filterverdi)})`,
                             }}
                           />
                         ))}
@@ -182,7 +186,7 @@ export function StatistikkDiagrammer({
                   className="w-full rounded-t-sm"
                   style={{
                     height: `${Math.max((alder.verdi / 49) * 82, 4)}%`,
-                    backgroundColor: `var(${alder.farge})`,
+                    backgroundColor: `var(${fargeForKode(alder.navn)})`,
                   }}
                 />
                 <span>{alder.navn}</span>
@@ -279,7 +283,7 @@ export function StatistikkDiagrammer({
                 .map((kategori, index, alle) => {
                   const start = alle.slice(0, index).reduce((sum, item) => sum + item.verdi, 0);
                   const slutt = start + kategori.verdi;
-                  return `var(${kategori.farge}) ${(start / totalKategorier) * 100}% ${(slutt / totalKategorier) * 100}%`;
+                  return `var(${fargeForKode(kategori.navn)}) ${(start / totalKategorier) * 100}% ${(slutt / totalKategorier) * 100}%`;
                 })
                 .join(", ")})`,
             }}
@@ -288,7 +292,12 @@ export function StatistikkDiagrammer({
               {formatter.format(totalKategorier)} saker
             </div>
           </div>
-          <Legend items={data.kategorifordeling} />
+          <Legend
+            items={data.kategorifordeling.map((kategori) => ({
+              ...kategori,
+              farge: fargeForKode(kategori.navn),
+            }))}
+          />
         </Diagramkort>
       </HGrid>
 
@@ -327,7 +336,7 @@ export function StatistikkDiagrammer({
                       .slice(0, index)
                       .reduce((sum, item) => sum + item.verdi, 0);
                     const slutt = start + rad.verdi;
-                    return `var(${rad.farge}) ${(start / 168) * 100}% ${(slutt / 168) * 100}%`;
+                    return `var(${fargeForKode(rad.navn)}) ${(start / 168) * 100}% ${(slutt / 168) * 100}%`;
                   })
                   .join(", ")})`,
               }}
@@ -338,7 +347,9 @@ export function StatistikkDiagrammer({
                 henlagt
               </div>
             </div>
-            <Legend items={data.henlagt} />
+            <Legend
+              items={data.henlagt.map((rad) => ({ ...rad, farge: fargeForKode(rad.navn) }))}
+            />
           </VStack>
         </Diagramkort>
       </HGrid>
