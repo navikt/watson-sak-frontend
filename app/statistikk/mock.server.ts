@@ -5,11 +5,11 @@ export function lagMockStatistikk(
   avdeling: string,
   avdelingId: string | null,
 ): Statistikk {
-  const statusfarger = [
-    ["Opprettet", "OPPRETTET", "--ax-brand-blue-600"],
-    ["Utredes", "UTREDES", "--ax-brand-magenta-600"],
-    ["Forvaltning", "FORVALTNING", "--ax-warning-600"],
-    ["Avsluttet", "AVSLUTTET", "--ax-success-700"],
+  const statuser = [
+    ["Opprettet", "OPPRETTET"],
+    ["Utredes", "UTREDES"],
+    ["Forvaltning", "FORVALTNING"],
+    ["Avsluttet", "AVSLUTTET"],
   ] as const;
   const sakstyper = [
     ["Samliv", "SAMLIV"],
@@ -29,7 +29,10 @@ export function lagMockStatistikk(
         : "Egendefinert periode";
 
   return {
-    valgtOmfang: spørring.omfang,
+    valgtOmfang:
+      spørring.enhetId || (spørring.nivaa === "underavdeling" && avdelingId)
+        ? `enhet:${spørring.enhetId ?? avdelingId}`
+        : spørring.nivaa,
     organisasjonsvalg: [
       { verdi: "meg", label: "Meg selv", type: "meg" },
       {
@@ -85,27 +88,26 @@ export function lagMockStatistikk(
     sakstyper: sakstyper.map(([navn, filterverdi], index) => ({
       navn,
       filterverdi,
-      deler: statusfarger.map(([status, statusfilter, farge], statusIndex) => ({
+      deler: statuser.map(([status, statusfilter], statusIndex) => ({
         navn: status,
         filterverdi: statusfilter,
         verdi: [8, 12, 6, 8][(index + statusIndex) % 4] + statusIndex * 2,
-        farge,
       })),
     })),
     alderssammensetning: [
-      ["0–3", 49, "--ax-success-700"],
-      ["3–6", 18, "--ax-success-600"],
-      ["6–9", 9, "--ax-warning-700"],
-      ["9–12", 7, "--ax-warning-600"],
-      ["12–24", 3, "--ax-danger-600"],
-      [">24", 1, "--ax-danger-700"],
-    ].map(([navn, verdi, farge]) => ({ navn, verdi, farge })) as Statistikk["alderssammensetning"],
+      ["0–3", 49],
+      ["3–6", 18],
+      ["6–9", 9],
+      ["9–12", 7],
+      ["12–24", 3],
+      [">24", 1],
+    ].map(([navn, verdi]) => ({ navn, verdi })) as Statistikk["alderssammensetning"],
     periodeTall: {
       innkomne: 87,
       avsluttede: 156,
-      antattBeløp: "2,4 mill",
-      vedtattBeløp: "1,8 mill",
-      anmeldtBeløp: "0,6 mill",
+      antattBeløp: "2400000",
+      vedtattBeløp: "1800000",
+      anmeldtBeløp: "600000",
     },
     statusfordeling: [
       ["Tildelt", "OPPRETTET", 323, 100],
@@ -121,22 +123,22 @@ export function lagMockStatistikk(
       prosent,
     })) as Statistikk["statusfordeling"],
     kategorifordeling: [
-      ["Samliv", 18, "--ax-brand-blue-600"],
-      ["Arbeid", 18, "--ax-brand-beige-700"],
-      ["Utland", 15, "--ax-warning-600"],
-      ["Identitet", 13, "--ax-meta-purple-600"],
-      ["Tiltak", 11, "--ax-brand-blue-800"],
-      ["Dokumentfalsk", 15, "--ax-danger-700"],
-      ["Annet", 13, "--ax-success-700"],
-      ["Behandler", 11, "--ax-brand-magenta-700"],
-    ].map(([navn, verdi, farge]) => ({ navn, verdi, farge })) as Statistikk["kategorifordeling"],
+      ["Samliv", 18],
+      ["Arbeid", 18],
+      ["Utland", 15],
+      ["Identitet", 13],
+      ["Tiltak", 11],
+      ["Dokumentfalsk", 15],
+      ["Annet", 13],
+      ["Behandler", 11],
+    ].map(([navn, verdi]) => ({ navn, verdi })) as Statistikk["kategorifordeling"],
     kontrollrapport: [
       ["Feilutbetaling", 78, 65],
       ["Potensiell straffesak", 42, 35],
     ].map(([navn, verdi, prosent]) => ({ navn, verdi, prosent })) as Statistikk["kontrollrapport"],
     henlagt: [
-      ["Etter utredning", 126, "--ax-success-700"],
-      ["Som straffesak", 42, "--ax-danger-600"],
-    ].map(([navn, verdi, farge]) => ({ navn, verdi, farge })) as Statistikk["henlagt"],
+      ["Etter utredning", 126],
+      ["Som straffesak", 42],
+    ].map(([navn, verdi]) => ({ navn, verdi })) as Statistikk["henlagt"],
   };
 }

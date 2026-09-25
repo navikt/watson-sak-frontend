@@ -49,14 +49,11 @@ export const statistikkResponseSchema = z.object({
           navn: z.string().min(1),
           filterverdi: z.string().min(1),
           verdi: antall,
-          farge: z.string().min(1),
         }),
       ),
     }),
   ),
-  alderssammensetning: z.array(
-    z.object({ navn: z.string().min(1), verdi: antall, farge: z.string().min(1) }),
-  ),
+  alderssammensetning: z.array(z.object({ navn: z.string().min(1), verdi: antall })),
   periodeTall: z.object({
     innkomne: antall,
     avsluttede: antall,
@@ -72,14 +69,17 @@ export const statistikkResponseSchema = z.object({
       prosent: z.number().min(0).max(100),
     }),
   ),
-  kategorifordeling: z.array(
-    z.object({ navn: z.string().min(1), verdi: antall, farge: z.string().min(1) }),
-  ),
+  kategorifordeling: z.array(z.object({ navn: z.string().min(1), verdi: antall })),
   kontrollrapport: z.array(
     z.object({ navn: z.string().min(1), verdi: antall, prosent: z.number().min(0).max(100) }),
   ),
-  henlagt: z.array(z.object({ navn: z.string().min(1), verdi: antall, farge: z.string().min(1) })),
+  henlagt: z.array(z.object({ navn: z.string().min(1), verdi: antall })),
 });
 
 export type Statistikk = z.infer<typeof statistikkResponseSchema>;
-export type StatistikkSpørring = { omfang: string; fra: string; til: string };
+export type StatistikkSpørring = {
+  nivaa: "meg" | "underavdeling" | "hovedavdeling" | "nav-kontroll";
+  fra: string;
+  til: string;
+  enhetId?: string;
+};

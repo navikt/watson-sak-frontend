@@ -4,7 +4,7 @@ import { lagMockStatistikk } from "./mock.server";
 describe("lagMockStatistikk", () => {
   it("lager alle datasett som statistikksiden trenger", () => {
     const resultat = lagMockStatistikk(
-      { omfang: "enhet:ky153k", fra: "2026-09-01", til: "2026-09-30" },
+      { nivaa: "underavdeling", fra: "2026-09-01", til: "2026-09-30" },
       "Øst",
       "ky153k",
     );
