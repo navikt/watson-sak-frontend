@@ -29,7 +29,10 @@ export function lagMockStatistikk(
         : "Egendefinert periode";
 
   return {
-    valgtOmfang: spørring.enhetId ? `enhet:${spørring.enhetId}` : spørring.nivaa,
+    valgtOmfang:
+      spørring.enhetId || (spørring.nivaa === "underavdeling" && avdelingId)
+        ? `enhet:${spørring.enhetId ?? avdelingId}`
+        : spørring.nivaa,
     organisasjonsvalg: [
       { verdi: "meg", label: "Meg selv", type: "meg" },
       {

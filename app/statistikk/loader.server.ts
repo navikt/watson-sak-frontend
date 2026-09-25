@@ -46,8 +46,7 @@ export async function loader({ request }: { request: Request }) {
   const bruker = await hentInnloggetBruker({ request });
   const url = new URL(request.url);
   const periode = lagPeriode(url);
-  const omfang =
-    url.searchParams.get("omfang") ?? (bruker.enhetId ? `enhet:${bruker.enhetId}` : "meg");
+  const omfang = url.searchParams.get("omfang") ?? (bruker.enhetId ? "enhet:underavdeling" : "meg");
   const nivaa =
     omfang === "organisasjon"
       ? "nav-kontroll"
@@ -62,10 +61,10 @@ export async function loader({ request }: { request: Request }) {
     fra: periode.fra,
     til: periode.til,
     enhetId:
-      nivaa === "underavdeling"
-        ? valgtEnhetId && !["underavdeling", "hovedavdeling"].includes(valgtEnhetId)
-          ? valgtEnhetId
-          : (bruker.enhetId ?? undefined)
+      nivaa === "underavdeling" &&
+      valgtEnhetId &&
+      !["underavdeling", "hovedavdeling"].includes(valgtEnhetId)
+        ? valgtEnhetId
         : undefined,
   };
   const data = skalBrukeMockdata

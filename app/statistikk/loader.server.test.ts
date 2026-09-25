@@ -34,7 +34,7 @@ describe("statistikk-loader", () => {
     await loader({ request });
 
     expect(lagMockStatistikkMock).toHaveBeenCalledWith(
-      { nivaa: "underavdeling", fra: "2026-09-01", til: "2026-09-30", enhetId: "ky153k" },
+      { nivaa: "underavdeling", fra: "2026-09-01", til: "2026-09-30" },
       "Øst",
       "ky153k",
     );
@@ -64,10 +64,26 @@ describe("statistikk-loader", () => {
 
     const år = new Date().getFullYear();
     expect(lagMockStatistikkMock).toHaveBeenCalledWith(
-      { nivaa: "underavdeling", fra: `${år}-01-01`, til: `${år}-12-31`, enhetId: "ky153k" },
+      { nivaa: "underavdeling", fra: `${år}-01-01`, til: `${år}-12-31` },
       "Øst",
       "ky153k",
     );
+  });
+
+  it("sender eksplisitt valgt enhet til backend", async () => {
+    testState.skalBrukeMockdata = false;
+    const { loader } = await import("./loader.server");
+
+    await loader({
+      request: new Request("http://localhost/statistikk?omfang=enhet:je679z"),
+    });
+
+    expect(hentStatistikkMock).toHaveBeenCalledWith("token-123", {
+      nivaa: "underavdeling",
+      fra: expect.any(String),
+      til: expect.any(String),
+      enhetId: "je679z",
+    });
   });
 
   it("sender ikke enhets-ID for hovedavdeling", async () => {

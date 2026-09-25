@@ -9,7 +9,7 @@ describe("lagMockStatistikk", () => {
       "ky153k",
     );
 
-    expect(resultat.valgtOmfang).toBe("underavdeling");
+    expect(resultat.valgtOmfang).toBe("enhet:ky153k");
     expect(resultat.organisasjonsvalg.map((valg) => valg.label)).toEqual([
       "Meg selv",
       "Min avdeling (Øst)",
