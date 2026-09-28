@@ -349,10 +349,10 @@ godkjent av fagansvarlig/personvern — bare valgt av utvikler i denne økten
 som svar på et reelt design-kode-avvik. Før merge bør personvernvurderingen
 for dette feltet bekreftes eksplisitt, på samme måte som avklaring H ble det.
 
-**Gjenstår i denne runden:** frontend (`types.ts`, mock-data,
-`MigreringInnhold.tsx`, `forhåndsutfyll.api.ts`, `RegistrerSakSide`) er ikke
-oppdatert til å faktisk bruke det nye feltet til å forhåndsutfylle person på
-skjerm 2 ennå. Backend-kontrakten er klar til det.
+Frontend kan nå sende `personIdent` fra en bekreftet kandidat til den
+etablerte forhåndsutfyllingen i både mockmodus og `local-backend`. Backend
+må fortsatt validere kandidaten på nytt ved opprettelse; skjulte skjemafelt
+er aldri et tillitsgrunnlag.
 
 ## Syntetisk prøve av manuell migreringsstatus
 
@@ -362,8 +362,12 @@ koblinger. Kandidatens status er knyttet til `(kilde, legacy_pid)`, slik at samm
 PID i to kilder kan ha ulik status. Engangsimport, kandidatinnsyn, kobling og
 statusendring er ikke implementert. Produksjonsklienten feiler fortsatt lukket.
 
-Frontend viser status i handlingskolonnen fra syntetiske mockdata. «Ferdig
-migrert» vises bare når kandidaten eksplisitt har status `FULLSTENDIG`;
+Frontend viser status i handlingskolonnen fra syntetiske mockdata. `local-backend`
+bruker nå det eksisterende, autoriserte GET-endepunktet i `watson-admin-api`
+med innlogget brukers token. Den lokale backend-kilden har kun syntetiske
+kandidater; V27-tabellen er ikke koblet til lese-API-et ennå. Prod og dev
+beholder migreringsruten stengt. En avkortet side vises ikke som fullstendig.
+«Ferdig migrert» vises bare når kandidaten eksplisitt har status `FULLSTENDIG`;
 «Under flytting» betyr at en sak finnes uten ferdigbekreftelse. Opprettet
 Watson-sak alene betyr ikke at migreringen er fullstendig.
 

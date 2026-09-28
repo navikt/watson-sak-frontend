@@ -5,16 +5,22 @@ import type { MigreringKandidat } from "./types";
 
 const mocks = vi.hoisted(() => ({
   mockmodus: true,
+  miljø: "local-mock" as Miljø,
   bruker: vi.fn(),
   kandidater: vi.fn(),
+  backend: vi.fn(),
 }));
 vi.mock("~/config/env.server", () => ({
   get skalBrukeMockdata() {
     return mocks.mockmodus;
   },
+  get env() {
+    return { ENVIRONMENT: mocks.miljø };
+  },
 }));
 vi.mock("~/auth/innlogget-bruker.server", () => ({ hentInnloggetBruker: mocks.bruker }));
 vi.mock("./mock-data.server", () => ({ hentMockMigreringKandidater: mocks.kandidater }));
+vi.mock("./api.server", () => ({ hentMigreringskandidater: mocks.backend }));
 
 import { loader } from "./MigreringSide.server";
 
@@ -47,6 +53,7 @@ function args() {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.mockmodus = true;
+  mocks.miljø = "local-mock";
   mocks.bruker.mockResolvedValue({ navIdent: "L999999" });
   mocks.kandidater.mockReturnValue([
     basis,
@@ -57,17 +64,32 @@ beforeEach(() => {
 });
 
 describe("Migreringsprototypens loader", () => {
-  it.each<Miljø>(["dev", "prod", "local-dev", "local-backend"])(
-    "avviser %s før mockdata hentes",
-    async (miljø) => {
-      mocks.mockmodus = skalBrukeMockdataForMiljø(miljø);
-      await expect(loader(args())).rejects.toMatchObject({ status: 404 });
-      expect(mocks.bruker).not.toHaveBeenCalled();
-      expect(mocks.kandidater).not.toHaveBeenCalled();
-    },
-  );
+  it.each<Miljø>(["dev", "prod", "local-dev"])("avviser %s før data hentes", async (miljø) => {
+    mocks.miljø = miljø;
+    mocks.mockmodus = skalBrukeMockdataForMiljø(miljø);
+    await expect(loader(args())).rejects.toMatchObject({ status: 404 });
+    expect(mocks.bruker).not.toHaveBeenCalled();
+    expect(mocks.kandidater).not.toHaveBeenCalled();
+    expect(mocks.backend).not.toHaveBeenCalled();
+  });
+
+  it("bruker beskyttet backend-API bare i local-backend", async () => {
+    mocks.miljø = "local-backend";
+    mocks.mockmodus = false;
+    mocks.backend.mockResolvedValue([basis]);
+    const argumenter = args();
+
+    const resultat = await loader(argumenter);
+
+    expect(mocks.backend).toHaveBeenCalledWith(argumenter.request);
+    expect(mocks.bruker).not.toHaveBeenCalled();
+    expect(mocks.kandidater).not.toHaveBeenCalled();
+    expect(resultat.mine.map((k) => k.kandidatId)).toEqual(["UTREDNING:100245"]);
+    expect(resultat.utenBekreftetAnsvarlig).toEqual([]);
+  });
 
   it.each<Miljø>(["local-mock", "demo"])("tillater prototypen i %s", async (miljø) => {
+    mocks.miljø = miljø;
     mocks.mockmodus = skalBrukeMockdataForMiljø(miljø);
     expect((await loader(args())).mine).toHaveLength(1);
   });

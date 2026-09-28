@@ -17,7 +17,7 @@ function visSidebar() {
 }
 
 describe("Migreringslenke i sidebar", () => {
-  it.each<Miljø>(["local-mock", "demo"])("vises i %s", (miljø) => {
+  it.each<Miljø>(["local-mock", "local-backend", "demo"])("vises i %s", (miljø) => {
     state.miljø = miljø;
     visSidebar();
     const migreringslenke = screen.getByRole("link", { name: "Migrering" });
@@ -25,13 +25,10 @@ describe("Migreringslenke i sidebar", () => {
     expect(screen.getAllByRole("link").at(-1)).toBe(migreringslenke);
   });
 
-  it.each<Miljø | undefined>(["prod", "dev", "local-dev", "local-backend", undefined])(
-    "skjules i %s",
-    (miljø) => {
-      state.miljø = miljø;
-      visSidebar();
-      expect(screen.queryByRole("link", { name: "Migrering" })).toBeNull();
-      expect(screen.getByRole("link", { name: "Mine saker" })).not.toBeNull();
-    },
-  );
+  it.each<Miljø | undefined>(["prod", "dev", "local-dev", undefined])("skjules i %s", (miljø) => {
+    state.miljø = miljø;
+    visSidebar();
+    expect(screen.queryByRole("link", { name: "Migrering" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Mine saker" })).not.toBeNull();
+  });
 });

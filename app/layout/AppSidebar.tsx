@@ -46,7 +46,9 @@ export function AppSidebar() {
   const erKollapset = preferences.sidebarKollapset;
   const miljø = useMiljø();
   const synligeLenker = lenker.filter(
-    (lenke) => lenke.to !== RouteConfig.MIGRERING || (miljø && skalBrukeMockdataForMiljø(miljø)),
+    (lenke) =>
+      lenke.to !== RouteConfig.MIGRERING ||
+      (miljø && (miljø === "local-backend" || skalBrukeMockdataForMiljø(miljø))),
   );
 
   const toggleSidebar = () => {

@@ -1,8 +1,9 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
-import { skalBrukeMockdata } from "~/config/env.server";
+import { env, skalBrukeMockdata } from "~/config/env.server";
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
 import { hentMockMigreringKandidater } from "./mock-data.server";
+import { hentMigreringskandidater } from "./api.server";
 import type { MigreringKandidat, MigreringLister } from "./types";
 
 /**
@@ -30,10 +31,13 @@ function merkAlleredeOverforte(
 }
 
 export async function loader({ request }: LoaderFunctionArgs): Promise<MigreringLister> {
-  // Prototypen skal ikke servere eksempelsaker i miljøer med ekte backend.
-  // En fremtidig integrasjon må autorisere og paginere i backend før uthenting.
+  // Produksjonsmiljøene er stengt til import/oppbevaring og tilgang er godkjent.
+  // Lokal backend kaller eksisterende beskyttet migrerings-API med brukertoken.
   if (!skalBrukeMockdata) {
-    throw new Response("Migreringsprototypen er bare tilgjengelig med mockdata", { status: 404 });
+    if (env.ENVIRONMENT !== "local-backend") {
+      throw new Response("Migreringslisten er ikke tilgjengelig", { status: 404 });
+    }
+    return { mine: await hentMigreringskandidater(request), utenBekreftetAnsvarlig: [] };
   }
 
   const bruker = await hentInnloggetBruker({ request });
