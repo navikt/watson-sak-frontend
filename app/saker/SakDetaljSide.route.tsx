@@ -12,6 +12,7 @@ import { getSaksreferanse } from "./id";
 import { PersonIdentHistorikkModal } from "./komponenter/PersonIdentHistorikkModal";
 import { SakDetaljSidePanel } from "./komponenter/SakDetaljSidePanel";
 import { SakerPåSammePerson } from "./komponenter/SakerPåSammePerson";
+import { SaksflytStepper } from "./komponenter/SaksflytStepper";
 import { SaksinformasjonKort } from "./komponenter/SaksinformasjonKort";
 import { getAlder, getNavn } from "./selectors";
 import { action, loader } from "./SakDetaljSide.server";
@@ -105,6 +106,8 @@ export default function SakDetaljSide() {
           gap="space-16"
         >
           <VStack gap="space-8">
+            <SaksflytStepper steg={sak.steg} />
+
             <SaksinformasjonKort
               sak={sak}
               tittel={tittel}
