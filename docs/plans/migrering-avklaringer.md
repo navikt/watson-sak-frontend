@@ -362,9 +362,16 @@ koblinger. Kandidatens status er knyttet til `(kilde, legacy_pid)`, slik at samm
 PID i to kilder kan ha ulik status. Engangsimport, kandidatinnsyn, kobling og
 statusendring er ikke implementert. Produksjonsklienten feiler fortsatt lukket.
 
-Frontend viser bare eksplisitt satt migreringsstatus fra syntetiske mockdata.
-Lenken «Åpne sak» betyr at en Watson-sak er opprettet; den betyr ikke at
-migreringen er fullstendig. Det finnes ingen statusknapp eller nytt endepunkt.
+Frontend viser status i handlingskolonnen fra syntetiske mockdata. «Ferdig
+migrert» vises bare når kandidaten eksplisitt har status `FULLSTENDIG`;
+«Under flytting» betyr at en sak finnes uten ferdigbekreftelse. Opprettet
+Watson-sak alene betyr ikke at migreringen er fullstendig.
+
+I `local-mock` vises migreringsnotat ved opprettelse, plasseringen under
+«Filer» og avkrysningen på saksdetaljene kun som forhåndsvisninger. Ingen
+av disse kan lagre et notat eller endre status. Backend har et endepunkt for
+ferdigmerking som svarer 503 inntil tilgang og overganger er implementert.
+Visningene skal ikke brukes som dokumentasjon på at overføringen fungerer.
 
 🔴 Rød sone: Teamet må implementere og teste autorisering for ansvarlig og
 leder, personinnsyn, koblingsregler og manuelle statusoverganger. Importerte

@@ -61,6 +61,8 @@ interface SakFilområdeProps {
   kanLasteOppFiler?: boolean;
   /** Om innlogget bruker er sakseier og kan slette vedlegg. Standard: `false` */
   erSakseier?: boolean;
+  /** Bare lokal mock: vis hvor migreringsnotatet skal ligge, uten å lagre innhold. */
+  visMigreringsnotatForhandsvisning?: boolean;
 }
 
 export function SakFilområde({
@@ -70,6 +72,7 @@ export function SakFilområde({
   redigerbar = true,
   kanLasteOppFiler = redigerbar,
   erSakseier = false,
+  visMigreringsnotatForhandsvisning = false,
 }: SakFilområdeProps) {
   // Filopplasting eies her, siden «Last opp fil»-knappen ligger i den felles headeren for hele
   // «Filer»-kortet, mens opplastingsstatus (spinner/feilmelding) vises nede i Opplastede filer.
@@ -146,6 +149,15 @@ export function SakFilområde({
             </HStack>
           )}
         </HStack>
+
+        {visMigreringsnotatForhandsvisning && (
+          <VStack gap="space-4">
+            <BodyShort size="small" weight="semibold">
+              Migreringsnotat (forhåndsvisning)
+            </BodyShort>
+            <BodyShort size="small">Notatet vises her når lagring er tilgjengelig.</BodyShort>
+          </VStack>
+        )}
 
         <VStack gap="space-4">
           <FilerSeksjonCaption

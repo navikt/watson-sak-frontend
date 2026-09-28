@@ -1,6 +1,6 @@
 export type Migreringskilde = "UTREDNING" | "SV" | "NKA_DAGPENGER" | "NKA_AAP";
 
-export type Migreringsstatus = "IKKE_PABEGYNT" | "UNDER_MIGRERING" | "FULLSTENDIG";
+type Migreringsstatus = "IKKE_PABEGYNT" | "UNDER_MIGRERING" | "FULLSTENDIG";
 
 export type MigreringKategori =
   | "TIPS_RESTANSE"
@@ -56,12 +56,6 @@ export interface MigreringLister {
   mine: MigreringKandidat[];
   utenBekreftetAnsvarlig: MigreringKandidat[];
 }
-
-export const migreringsstatusEtikett: Record<Migreringsstatus, string> = {
-  IKKE_PABEGYNT: "Ikke påbegynt",
-  UNDER_MIGRERING: "Under migrering",
-  FULLSTENDIG: "Fullstendig",
-};
 
 export const kildeEtikett: Record<Migreringskilde, string> = {
   UTREDNING: "Utredning",

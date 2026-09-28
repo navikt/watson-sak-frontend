@@ -10,6 +10,7 @@ import {
   HStack,
   Loader,
   Select,
+  Textarea,
   UNSAFE_Combobox,
   VStack,
 } from "@navikt/ds-react";
@@ -726,6 +727,15 @@ export default function OpprettSakSide() {
                       </VStack>
                     )}
                   </VStack>
+
+                  {legacyPid && legacyKilde && miljø === "local-mock" && (
+                    <Textarea
+                      label="Migreringsnotat"
+                      description="Forhåndsvisning. Notatet kan ikke lagres før backend er klar."
+                      className="max-w-2xl"
+                      disabled
+                    />
+                  )}
 
                   {/* Submit-rad */}
                   <HStack gap="space-12" justify="end">

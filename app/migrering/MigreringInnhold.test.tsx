@@ -38,32 +38,30 @@ describe("MigreringInnhold", () => {
     expect(screen.getByRole("columnheader", { name: "PID" })).not.toBeNull();
     expect(screen.getByRole("columnheader", { name: "Personnummer" })).not.toBeNull();
     expect(screen.getByRole("columnheader", { name: "Opprettet i Access" })).not.toBeNull();
-    expect(screen.getByRole("columnheader", { name: "Migreringsstatus" })).not.toBeNull();
-    expect(screen.getByRole("columnheader", { name: "Handling" })).not.toBeNull();
+    expect(screen.getByRole("columnheader", { name: "Status og handling" })).not.toBeNull();
   });
 
-  it("viser lenke til sak og eksplisitt migreringsstatus hver for seg", () => {
+  it("viser ferdigstatus i samme kolonne som handlingen i skissen", () => {
     renderSide();
     expect(overført.length).toBeGreaterThan(0);
-    const sakLenke = screen.getByRole("link", { name: "Åpne sak" });
-    const rad = sakLenke.closest("tr");
+    const lenke = screen.getByRole("link", { name: "Ferdig migrert" });
+    const rad = lenke.closest("tr");
     expect(rad).not.toBeNull();
-    if (!rad) throw new Error("Fant ikke raden for sak med kobling");
+    if (!rad) throw new Error("Fant ikke raden for ferdig migrert sak");
     expect(within(rad).getByText("100245")).not.toBeNull();
-    expect(within(rad).getByText("Fullstendig")).not.toBeNull();
     expect(within(rad).queryByRole("button", { name: "Opprett sak" })).toBeNull();
   });
 
-  it("holder utredning og SV adskilt med hver sin status selv når PID er lik", () => {
+  it("holder utredning og SV adskilt selv når PID er lik", () => {
     renderSide();
     const rader = screen.getAllByText("100245").map((celle) => celle.closest("tr"));
     expect(rader).toHaveLength(2);
     if (!rader[0] || !rader[1]) throw new Error("Fant ikke begge migreringsradene");
-    expect(within(rader[0]).getByText("Fullstendig")).not.toBeNull();
-    expect(within(rader[1]).getByText("Ikke påbegynt")).not.toBeNull();
+    expect(within(rader[0]).getByRole("link", { name: "Ferdig migrert" })).not.toBeNull();
+    expect(within(rader[1]).getByRole("button", { name: "Opprett sak" })).not.toBeNull();
   });
 
-  it("sakskobling betyr ikke at migrering er fullstendig", () => {
+  it("viser under flytting når sak finnes, men ikke er bekreftet ferdig", () => {
     const kandidat = { ...overført[0], migreringsstatus: "UNDER_MIGRERING" as const };
     const Stub = createRoutesStub([
       {
@@ -74,9 +72,8 @@ describe("MigreringInnhold", () => {
       },
     ]);
     render(<Stub initialEntries={["/migrering"]} />);
-    expect(screen.getByRole("link", { name: "Åpne sak" })).not.toBeNull();
-    expect(screen.getByText("Under migrering")).not.toBeNull();
-    expect(screen.queryByText("Fullstendig")).toBeNull();
+    expect(screen.getByRole("link", { name: "Under flytting" })).not.toBeNull();
+    expect(screen.queryByText("Ferdig migrert")).toBeNull();
   });
 
   it("skjuler statusendring inntil autorisasjon og faglige overganger er implementert", () => {

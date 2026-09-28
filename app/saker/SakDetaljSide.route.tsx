@@ -1,9 +1,10 @@
 import { ArrowLeftIcon } from "@navikt/aksel-icons";
-import { Button, HGrid, VStack } from "@navikt/ds-react";
+import { BodyShort, Button, Checkbox, HGrid, VStack } from "@navikt/ds-react";
 import { useCallback, useEffect, useState } from "react";
 import { useLoaderData, useNavigate } from "react-router";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
+import { useMiljø } from "~/miljø/useMiljø";
 import { RouteConfig } from "~/routeConfig";
 import { IngenFiltilgangKort } from "./filer/IngenFiltilgangKort";
 import { SakFilområde } from "./filer/SakFilområde";
@@ -50,6 +51,7 @@ export default function SakDetaljSide() {
   const tilbake = useTilbakeLenke({ to: RouteConfig.MINE_SAKER, label: "Mine saker" });
   const innloggetBruker = useInnloggetBruker();
   const identHistorikkModal = useDisclosure();
+  const miljø = useMiljø();
   const stegregler = hentStegbaserteSaksregler(sak.steg);
   const erEier = erSakseier(sak, innloggetBruker.navIdent);
   const harDeltTilgang = sak.saksbehandlere.deltMed.some(
@@ -113,6 +115,15 @@ export default function SakDetaljSide() {
               onSakOppdatert={onSakOppdatert}
             />
 
+            {sak.legacyPid && erEier && miljø === "local-mock" && (
+              <div>
+                <Checkbox disabled>Saken er ferdig flyttet</Checkbox>
+                <BodyShort size="small" textColor="subtle">
+                  Forhåndsvisning. Ferdigmerking kan ikke lagres før backend er klar.
+                </BodyShort>
+              </div>
+            )}
+
             {harDirekteTilgang ? (
               <SakFilområde
                 dokumenter={dokumenter}
@@ -121,6 +132,7 @@ export default function SakDetaljSide() {
                 redigerbar={harDirekteTilgang && stegregler.kanRedigereDokumenter}
                 kanLasteOppFiler={harDirekteTilgang && stegregler.kanLasteOppFiler}
                 erSakseier={erEier}
+                visMigreringsnotatForhandsvisning={Boolean(sak.legacyPid && miljø === "local-mock")}
               />
             ) : (
               <IngenFiltilgangKort />
