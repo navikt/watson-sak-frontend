@@ -50,6 +50,7 @@ export function hentMockMigreringKandidater(navIdent: string): MigreringKandidat
     // 1. TIPS_RESTANSE
     {
       kandidatId: "UTREDNING:100245",
+      migreringsstatus: "FULLSTENDIG",
       kilde: "UTREDNING",
       legacyKilde: "UTREDNING",
       pid: "100245",
@@ -70,6 +71,7 @@ export function hentMockMigreringKandidater(navIdent: string): MigreringKandidat
     },
     {
       kandidatId: "UTREDNING:100310",
+      migreringsstatus: "UNDER_MIGRERING",
       kilde: "UTREDNING",
       legacyKilde: "UTREDNING",
       pid: "100310",
@@ -135,6 +137,7 @@ export function hentMockMigreringKandidater(navIdent: string): MigreringKandidat
     // 3. SV_RESTANSE
     {
       kandidatId: "SV:100245",
+      migreringsstatus: "IKKE_PABEGYNT",
       kilde: "SV",
       legacyKilde: "SV",
       pid: "100245",

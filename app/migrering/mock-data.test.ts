@@ -53,6 +53,17 @@ describe("Migrering typer og mock-data", () => {
     }
   });
 
+  it("beholder separat status per kilde selv når PID er lik", () => {
+    const kandidater = hentMockMigreringKandidater("Z999999");
+    const utredning = kandidater.find((k) => k.kandidatId === "UTREDNING:100245");
+    const sv = kandidater.find((k) => k.kandidatId === "SV:100245");
+
+    expect(utredning?.migreringsstatus).toBe("FULLSTENDIG");
+    expect(sv?.migreringsstatus).toBe("IKKE_PABEGYNT");
+    expect(utredning?.alleredeMigrertTilKontrollsakId).toBe(1181);
+    expect(sv?.alleredeMigrertTilKontrollsakId).toBeUndefined();
+  });
+
   it("støtter alle fire migreringskilder i kildeEtikett", () => {
     const alleKilder: Migreringskilde[] = ["UTREDNING", "SV", "NKA_DAGPENGER", "NKA_AAP"];
     for (const kilde of alleKilder) {

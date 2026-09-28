@@ -354,6 +354,25 @@ for dette feltet bekreftes eksplisitt, på samme måte som avklaring H ble det.
 oppdatert til å faktisk bruke det nye feltet til å forhåndsutfylle person på
 skjerm 2 ennå. Backend-kontrakten er klar til det.
 
+## Syntetisk prøve av manuell migreringsstatus
+
+Dette er et tillegg til kontraktutkastet, ikke produksjonsgodkjenning. `watson-admin-api`
+har en additiv Flyway-migrasjon (`V27__migreringskandidater.sql`) for kandidater og
+koblinger. Kandidatens status er knyttet til `(kilde, legacy_pid)`, slik at samme
+PID i to kilder kan ha ulik status. Engangsimport, kandidatinnsyn, kobling og
+statusendring er ikke implementert. Produksjonsklienten feiler fortsatt lukket.
+
+Frontend viser bare eksplisitt satt migreringsstatus fra syntetiske mockdata.
+Lenken «Åpne sak» betyr at en Watson-sak er opprettet; den betyr ikke at
+migreringen er fullstendig. Det finnes ingen statusknapp eller nytt endepunkt.
+
+🔴 Rød sone: Teamet må implementere og teste autorisering for ansvarlig og
+leder, personinnsyn, koblingsregler og manuelle statusoverganger. Importerte
+rader med personident skal ikke brukes i produksjon før oppbevaring og sletting
+er godkjent. V26 begrenser fortsatt `kontrollsak.legacy_pid` til 12 sifre;
+V27 endrer ikke dette. Testfilen inneholder bare ugyldige, syntetiske
+11-sifrede personidenter for å prøve databasen uten reelle opplysninger.
+
 ## Prøve prototypen
 
 ```bash

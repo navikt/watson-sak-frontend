@@ -38,22 +38,51 @@ describe("MigreringInnhold", () => {
     expect(screen.getByRole("columnheader", { name: "PID" })).not.toBeNull();
     expect(screen.getByRole("columnheader", { name: "Personnummer" })).not.toBeNull();
     expect(screen.getByRole("columnheader", { name: "Opprettet i Access" })).not.toBeNull();
+    expect(screen.getByRole("columnheader", { name: "Migreringsstatus" })).not.toBeNull();
+    expect(screen.getByRole("columnheader", { name: "Handling" })).not.toBeNull();
   });
 
-  it("viser status i samme rad/kolonne som knappen for allerede overførte kandidater", () => {
+  it("viser lenke til sak og eksplisitt migreringsstatus hver for seg", () => {
     renderSide();
     expect(overført.length).toBeGreaterThan(0);
-    const statusLenke = screen.getByRole("link", { name: "Overført til Watson" });
-    const rad = statusLenke.closest("tr");
+    const sakLenke = screen.getByRole("link", { name: "Åpne sak" });
+    const rad = sakLenke.closest("tr");
     expect(rad).not.toBeNull();
-    expect(within(rad!).getByText("100245")).not.toBeNull();
-    // Ingen «Opprett sak»-knapp i samme rad
-    expect(within(rad!).queryByRole("button", { name: "Opprett sak" })).toBeNull();
+    if (!rad) throw new Error("Fant ikke raden for sak med kobling");
+    expect(within(rad).getByText("100245")).not.toBeNull();
+    expect(within(rad).getByText("Fullstendig")).not.toBeNull();
+    expect(within(rad).queryByRole("button", { name: "Opprett sak" })).toBeNull();
   });
 
-  it("holder utredning og SV adskilt selv når PID er lik", () => {
+  it("holder utredning og SV adskilt med hver sin status selv når PID er lik", () => {
     renderSide();
-    expect(screen.getAllByText("100245")).toHaveLength(2);
+    const rader = screen.getAllByText("100245").map((celle) => celle.closest("tr"));
+    expect(rader).toHaveLength(2);
+    if (!rader[0] || !rader[1]) throw new Error("Fant ikke begge migreringsradene");
+    expect(within(rader[0]).getByText("Fullstendig")).not.toBeNull();
+    expect(within(rader[1]).getByText("Ikke påbegynt")).not.toBeNull();
+  });
+
+  it("sakskobling betyr ikke at migrering er fullstendig", () => {
+    const kandidat = { ...overført[0], migreringsstatus: "UNDER_MIGRERING" as const };
+    const Stub = createRoutesStub([
+      {
+        path: "/migrering",
+        Component: () => (
+          <MigreringInnhold lister={{ mine: [kandidat], utenBekreftetAnsvarlig: [] }} />
+        ),
+      },
+    ]);
+    render(<Stub initialEntries={["/migrering"]} />);
+    expect(screen.getByRole("link", { name: "Åpne sak" })).not.toBeNull();
+    expect(screen.getByText("Under migrering")).not.toBeNull();
+    expect(screen.queryByText("Fullstendig")).toBeNull();
+  });
+
+  it("skjuler statusendring inntil autorisasjon og faglige overganger er implementert", () => {
+    // TODO SAK-67, rød sone: test autorisert manuell overgang når backend er klar.
+    renderSide();
+    expect(screen.queryByRole("button", { name: "Merk migrering fullstendig" })).toBeNull();
   });
 
   it("viser personnummer for alle kandidater til behandling — vi har ikke uten_ansvarlig", () => {

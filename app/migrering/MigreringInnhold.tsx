@@ -1,9 +1,9 @@
-import { Button, Heading, Table, Tag } from "@navikt/ds-react";
+import { Button, Heading, Table } from "@navikt/ds-react";
 import { Form, Link } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { sporHendelse } from "~/analytics/analytics";
-import type { MigreringLister } from "./types";
+import { migreringsstatusEtikett, type MigreringLister } from "./types";
 
 export function MigreringInnhold({ lister }: { lister: MigreringLister }) {
   const kandidater = [...lister.mine, ...lister.utenBekreftetAnsvarlig];
@@ -20,7 +20,8 @@ export function MigreringInnhold({ lister }: { lister: MigreringLister }) {
               <Table.HeaderCell scope="col">PID</Table.HeaderCell>
               <Table.HeaderCell scope="col">Personnummer</Table.HeaderCell>
               <Table.HeaderCell scope="col">Opprettet i Access</Table.HeaderCell>
-              <Table.HeaderCell scope="col" />
+              <Table.HeaderCell scope="col">Migreringsstatus</Table.HeaderCell>
+              <Table.HeaderCell scope="col">Handling</Table.HeaderCell>
             </Table.Row>
           </Table.Header>
           <Table.Body>
@@ -32,6 +33,9 @@ export function MigreringInnhold({ lister }: { lister: MigreringLister }) {
                 </Table.DataCell>
                 <Table.DataCell>{k.referansedato ?? "–"}</Table.DataCell>
                 <Table.DataCell>
+                  {k.migreringsstatus ? migreringsstatusEtikett[k.migreringsstatus] : "–"}
+                </Table.DataCell>
+                <Table.DataCell>
                   {k.alleredeMigrertTilKontrollsakId ? (
                     <Link
                       to={RouteConfig.SAKER_DETALJ.replace(
@@ -39,9 +43,7 @@ export function MigreringInnhold({ lister }: { lister: MigreringLister }) {
                         getSaksreferanse(k.alleredeMigrertTilKontrollsakId),
                       )}
                     >
-                      <Tag variant="success" size="small">
-                        Overført til Watson
-                      </Tag>
+                      Åpne sak
                     </Link>
                   ) : (
                     <Form
