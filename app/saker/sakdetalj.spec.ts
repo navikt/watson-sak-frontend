@@ -83,13 +83,15 @@ test.describe("Sakdetalj", () => {
     await expect(page.getByText("Arbeid", { exact: true })).toHaveCount(0);
   });
 
-  test("viser steg som backend tillater", async ({ page }) => {
+  test("viser handlinger som backend tillater", async ({ page }) => {
     await page.getByRole("button", { name: "Endre steg" }).click();
 
-    const dialog = page.getByRole("dialog");
+    const dialog = page.getByRole("dialog", { name: "Endre steg eller registrer resultat" });
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole("radio").first()).toBeVisible();
-    await dialog.getByRole("button", { name: "Avbryt" }).click();
+    await expect(
+      dialog.getByRole("region", { name: "Steg" }).getByRole("button").first(),
+    ).toBeVisible();
+    await dialog.getByRole("button", { name: "Lukk" }).click();
     await expect(dialog).not.toBeVisible();
   });
 

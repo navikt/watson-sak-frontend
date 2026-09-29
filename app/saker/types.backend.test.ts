@@ -165,7 +165,7 @@ describe("kontrollsakStatusSchema", () => {
       expect(
         tillatteHandlingerResponseSchema.safeParse({
           ...svar,
-          feltskjema: [{ felt: "x", etikett: "X", datatype: "dato", paakrevd: false }],
+          feltskjema: [{ felt: "x", etikett: "X", datatype: "ukjent", paakrevd: false }],
         }).success,
       ).toBe(false);
       expect(

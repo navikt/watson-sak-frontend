@@ -181,6 +181,7 @@ const gyldigeStatuser = new Set<KontrollsakStatus>([
   "VENTER_PA_INFORMASJON",
   "VENTER_PA_VEDTAK",
   "VENTER_PA_RESULTAT",
+  "PAAKLAGET",
   "I_BERO",
 ]);
 
@@ -210,6 +211,26 @@ function krevTillattHandling(
   }
 }
 
+/** Leser og validerer resultatet som lagres uten stegbytte. */
+function byggResultatForLagring(
+  formData: FormData,
+  tillatte: TillatteHandlingerResponse,
+): LagreResultatRequest {
+  try {
+    const resultat = byggLagreResultatRequest(
+      formData,
+      tillatte.feltskjema,
+      tillatte.tilstand.steg,
+      undefined,
+      tillatte.tilstand.ytelser,
+    );
+    if (!resultat) throw new Error("Velg et resultat før du fortsetter");
+    return resultat;
+  } catch (feil) {
+    throw data(feil instanceof Error ? feil.message : "Ugyldige resultatfelter", { status: 400 });
+  }
+}
+
 function getHendelsestypeForStatusendring(status: KontrollsakStatus) {
   if (status === "I_BERO") return "SAK_SATT_I_BERO";
   if (status === "AKTIV") return "SAK_GJENOPPTATT";
@@ -225,7 +246,18 @@ function getHendelsestypeForStegendring(steg: KontrollsakSteg) {
   }
 }
 
+/** Speiler `statusEtterResultat` i backend. */
+function statusEtterMockResultat(
+  sak: KontrollsakResponse,
+  resultat: LagreResultatRequest,
+): KontrollsakStatus | null {
+  if (resultat.paaklaget) return "PAAKLAGET";
+  if (sak.status === "PAAKLAGET" && resultat.politi) return "VENTER_PA_RESULTAT";
+  return sak.status;
+}
+
 function lagreMockResultat(sak: KontrollsakResponse, resultat: LagreResultatRequest): void {
+  sak.status = statusEtterMockResultat(sak, resultat);
   sak.resultat = {
     ...sak.resultat,
     ...(resultat.utredning ? { utredning: resultat.utredning } : {}),
@@ -532,11 +564,54 @@ export async function action({ request, params }: Route.ActionArgs) {
   const handling = hentTekstfelt(formData, "handling", "Ugyldig handling");
   const sakId = params.sakId;
 
-  if (!skalBrukeMockdata) {
-    return backendAction(request, sakId, handling, formData);
-  }
+  const utfør = () =>
+    skalBrukeMockdata
+      ? mockAction(request, sakId, handling, formData)
+      : backendAction(request, sakId, handling, formData);
 
-  return mockAction(request, sakId, handling, formData);
+  if (!saksflythandlinger.has(handling)) return utfør();
+  try {
+    return await utfør();
+  } catch (feil) {
+    return saksflytfeil(feil);
+  }
+}
+
+/** Handlingene fra saksflyt-modalen. Feil returneres slik at modalen beholder verdiene. */
+const saksflythandlinger = new Set(["endre_steg_dialog", "lagre_resultat", "endre_status"]);
+
+type SaksflytFeil = { ok: false; feil: string };
+
+function saksflytfeil(feil: unknown) {
+  if (feil instanceof Response) throw feil;
+  const konflikt =
+    "Endringen ble avvist. Saken kan være endret av noen andre. Last inn siden på nytt og prøv igjen.";
+  if (feil instanceof backendApi.BackendFeilException) {
+    const melding =
+      feil.status === 409
+        ? konflikt
+        : "Kunne ikke lagre endringen. Last inn siden på nytt og prøv igjen.";
+    return data<SaksflytFeil>({ ok: false, feil: melding }, { status: feil.status });
+  }
+  if (
+    feil &&
+    typeof feil === "object" &&
+    "init" in feil &&
+    "data" in feil &&
+    typeof feil.data === "string"
+  ) {
+    const status = (feil.init as ResponseInit | null)?.status ?? 400;
+    return data<SaksflytFeil>({ ok: false, feil: feil.data }, { status });
+  }
+  // fetch avviser med TypeError ved nettverks- og DNS-feil, før backend har svart.
+  if (feil instanceof TypeError) {
+    logger.error("Fikk ikke kontakt med backend fra saksflyt-modalen", { feil: feil.message });
+    return data<SaksflytFeil>(
+      { ok: false, feil: "Fikk ikke kontakt med baksystemet. Prøv igjen om litt." },
+      { status: 502 },
+    );
+  }
+  throw feil;
 }
 
 // --- Backend-action (ekte API-kall) ---
@@ -581,23 +656,8 @@ async function backendAction(
   switch (handling) {
     case "TILDEL_MEG": {
       const innlogget = await hentInnloggetBruker({ request });
-      const tillatte = await backendApi.hentTillatteHandlinger(token, sakId);
-      if (tillatte.tilstand.steg === "OPPRETTET" && !tillatte.tillatteSteg.includes("UTREDNING")) {
-        throw data("Saken kan ikke flyttes til Utredning i gjeldende tilstand", { status: 409 });
-      }
-      const tildelt = await backendApi.tildelKontrollsak(token, sakId, innlogget.navIdent);
-      if (tildelt.steg !== "OPPRETTET") return { ok: true, sak: tildelt };
-
-      try {
-        const sak = await backendApi.endreSteg(token, sakId, 1, "UTREDNING");
-        return { ok: true, sak };
-      } catch (feil) {
-        if (!(feil instanceof backendApi.BackendFeilException)) throw feil;
-        throw data(
-          "Saken ble tildelt deg, men kunne ikke flyttes til Utredning. Flytt saken manuelt før du fortsetter.",
-          { status: feil.status },
-        );
-      }
+      const sak = await backendApi.tildelKontrollsak(token, sakId, innlogget.navIdent);
+      return { ok: true, sak };
     }
     case "TILDEL": {
       const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
@@ -627,9 +687,6 @@ async function backendAction(
 
       let resultat: LagreResultatRequest | undefined;
       const registrerResultat = formData.get("registrerResultat") === "true";
-      if (nyttSteg === "AVSLUTTET" && !registrerResultat) {
-        throw data("Registrer resultat før saken flyttes til Avsluttet", { status: 400 });
-      }
       if (
         !harLagretResultatForOvergang(tillatte, nyttSteg as KontrollsakSteg) &&
         !registrerResultat
@@ -653,6 +710,9 @@ async function backendAction(
       if (registrerResultat && !resultat) {
         throw data("Velg et resultat før du fortsetter", { status: 400 });
       }
+      if (resultat?.paaklaget) {
+        throw data("En påklaget henleggelse lagres uten stegbytte", { status: 400 });
+      }
       if (
         manglerEndeligUtfallVedAvslutning(tillatte.tilstand, nyttSteg as KontrollsakSteg, resultat)
       ) {
@@ -666,6 +726,13 @@ async function backendAction(
         resultat,
         beskrivelse ?? undefined,
       );
+      return { ok: true, sak };
+    }
+    case "lagre_resultat": {
+      const tillatte = await backendApi.hentTillatteHandlinger(token, sakId);
+      krevTillattHandling(tillatte, "REGISTRER_RESULTAT");
+      const resultat = byggResultatForLagring(formData, tillatte);
+      const sak = await backendApi.lagreResultat(token, sakId, resultat);
       return { ok: true, sak };
     }
     case "endre_status": {
@@ -1023,9 +1090,6 @@ async function mockAction(
       if (sak.saksbehandlere.eier) {
         throw data("Saken har allerede en saksbehandler", { status: 409 });
       }
-      if (sak.steg === "OPPRETTET" && !tillatte.tillatteSteg.includes("UTREDNING")) {
-        throw data("Saken kan ikke flyttes til Utredning i gjeldende tilstand", { status: 409 });
-      }
       const innlogget = await hentInnloggetBruker({ request });
       const valgtSaksbehandler = finnSaksbehandlerDetalj(
         mockSaksbehandlerDetaljer,
@@ -1037,11 +1101,6 @@ async function mockAction(
       };
       sak.saksbehandlere.eier = valgtSaksbehandler;
       leggTilHendelse(request, sak, "SAK_TILDELT");
-      if (sak.steg === "OPPRETTET") {
-        sak.steg = "UTREDNING";
-        sak.status = "AKTIV";
-        leggTilHendelse(request, sak, "STATUS_ENDRET", undefined, { status: sak.status });
-      }
       break;
     }
     case "TILDEL": {
@@ -1078,9 +1137,6 @@ async function mockAction(
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
       const forrigeStatus = sak.status;
       const registrerResultat = formData.get("registrerResultat") === "true";
-      if (nyttSteg === "AVSLUTTET" && !registrerResultat) {
-        throw data("Registrer resultat før saken flyttes til Avsluttet", { status: 400 });
-      }
       if (
         !harLagretResultatForOvergang(tillatte, nyttSteg as KontrollsakSteg) &&
         !registrerResultat
@@ -1098,6 +1154,7 @@ async function mockAction(
           registrerResultat,
         );
         if (registrerResultat && !resultat) throw new Error("Velg et resultat før du fortsetter");
+        if (resultat?.paaklaget) throw new Error("En påklaget henleggelse lagres uten stegbytte");
         if (
           manglerEndeligUtfallVedAvslutning(
             tillatte.tilstand,
@@ -1109,6 +1166,9 @@ async function mockAction(
         }
         if (resultat) {
           lagreMockResultat(kandidat, resultat);
+          if (kandidat.status === "PAAKLAGET" && resultat.politi) {
+            kandidat.status = "VENTER_PA_RESULTAT";
+          }
         }
       } catch (feil) {
         throw data(feil instanceof Error ? feil.message : "Ugyldige resultatfelter", {
@@ -1138,6 +1198,11 @@ async function mockAction(
         beskrivelse,
         status: nyttSteg === "AVSLUTTET" ? forrigeStatus : sak.status,
       });
+      break;
+    }
+    case "lagre_resultat": {
+      krevTillattHandling(tillatte, "REGISTRER_RESULTAT");
+      lagreMockResultat(sak, byggResultatForLagring(formData, tillatte));
       break;
     }
     case "endre_status": {

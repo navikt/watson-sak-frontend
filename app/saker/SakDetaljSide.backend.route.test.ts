@@ -116,20 +116,16 @@ describe("SakDetaljSide loader — backend-sti", () => {
     });
   });
 
-  it("tildeler innlogget bruker og flytter Opprettet til Utredning", async () => {
+  it("tildeler innlogget bruker uten å endre steget", async () => {
     const sak = {
       ...grunnleggendeSak,
+      steg: "OPPRETTET",
       saksbehandlere: { ...grunnleggendeSak.saksbehandlere, eier: null },
     };
-    mockHentTillatteHandlinger.mockResolvedValue({
-      tilstand: { steg: "OPPRETTET" },
-      tillatteSteg: ["UTREDNING", "STRAFFERETTSLIG_VURDERING"],
-    });
     mockTildelKontrollsak.mockResolvedValue({
       ...sak,
       saksbehandlere: { ...sak.saksbehandlere, eier: grunnleggendeSak.saksbehandlere.eier },
     });
-    mockEndreSteg.mockResolvedValue({ ...sak, steg: "UTREDNING", status: "AKTIV" });
 
     const formData = new FormData();
     formData.set("handling", "TILDEL_MEG");
@@ -141,66 +137,8 @@ describe("SakDetaljSide loader — backend-sti", () => {
     >[0]);
 
     expect(mockTildelKontrollsak).toHaveBeenCalledWith("mock-token", "1", "Z999999");
-    expect(mockEndreSteg).toHaveBeenCalledWith("mock-token", "1", 1, "UTREDNING");
-    expect(resultat).toMatchObject({ ok: true, sak: { steg: "UTREDNING", status: "AKTIV" } });
-  });
-
-  it("avviser Tildel meg før tildeling dersom Utredning ikke er tillatt", async () => {
-    mockHentTillatteHandlinger.mockResolvedValue({
-      tilstand: { steg: "OPPRETTET" },
-      tillatteSteg: [],
-    });
-    const formData = new FormData();
-    formData.set("handling", "TILDEL_MEG");
-    const request = new Request("http://localhost/saker/1", { method: "POST", body: formData });
-    const { action } = await import("./SakDetaljSide.server");
-
-    await expect(
-      action({ request, params: { sakId: "1" } } as Parameters<typeof action>[0]),
-    ).rejects.toMatchObject({ init: { status: 409 } });
-    expect(mockTildelKontrollsak).not.toHaveBeenCalled();
     expect(mockEndreSteg).not.toHaveBeenCalled();
-  });
-
-  it("beholder steget når Tildel meg brukes etter Opprettet", async () => {
-    mockHentTillatteHandlinger.mockResolvedValue({
-      tilstand: { steg: "UTREDNING" },
-      tillatteSteg: [],
-    });
-    mockTildelKontrollsak.mockResolvedValue({ ...grunnleggendeSak, steg: "UTREDNING" });
-    const formData = new FormData();
-    formData.set("handling", "TILDEL_MEG");
-    const request = new Request("http://localhost/saker/1", { method: "POST", body: formData });
-    const { action } = await import("./SakDetaljSide.server");
-
-    const resultat = await action({ request, params: { sakId: "1" } } as Parameters<
-      typeof action
-    >[0]);
-
-    expect(resultat).toMatchObject({ ok: true, sak: { steg: "UTREDNING" } });
-    expect(mockEndreSteg).not.toHaveBeenCalled();
-  });
-
-  it("melder fra hvis stegbyttet feiler etter at saken er tildelt", async () => {
-    mockHentTillatteHandlinger.mockResolvedValue({
-      tilstand: { steg: "OPPRETTET" },
-      tillatteSteg: ["UTREDNING"],
-    });
-    mockTildelKontrollsak.mockResolvedValue(grunnleggendeSak);
-    mockEndreSteg.mockRejectedValue(new MockBackendFeilException(409, "Ugyldig stegbytte"));
-    const formData = new FormData();
-    formData.set("handling", "TILDEL_MEG");
-    const request = new Request("http://localhost/saker/1", { method: "POST", body: formData });
-    const { action } = await import("./SakDetaljSide.server");
-
-    await expect(
-      action({ request, params: { sakId: "1" } } as Parameters<typeof action>[0]),
-    ).rejects.toMatchObject({
-      data: expect.stringContaining("Saken ble tildelt deg, men kunne ikke flyttes"),
-      init: { status: 409 },
-    });
-    expect(mockTildelKontrollsak).toHaveBeenCalledOnce();
-    expect(mockEndreSteg).toHaveBeenCalledOnce();
+    expect(resultat).toMatchObject({ ok: true, sak: { steg: "OPPRETTET" } });
   });
 
   it("skjuler filområdet stille når hentFiler gir 403 (mangler fil-tilgang)", async () => {
@@ -290,9 +228,11 @@ describe("SakDetaljSide loader — backend-sti", () => {
     const request = new Request("http://localhost/saker/1", { method: "POST", body: formData });
     const { action } = await import("./SakDetaljSide.server");
 
-    await expect(
-      action({ request, params: { sakId: "1" }, context: {} } as Parameters<typeof action>[0]),
-    ).rejects.toMatchObject({ init: { status: 400 } });
+    expect(
+      await action({ request, params: { sakId: "1" }, context: {} } as Parameters<
+        typeof action
+      >[0]),
+    ).toMatchObject({ data: { ok: false }, init: { status: 400 } });
     expect(mockEndreSteg).not.toHaveBeenCalled();
   });
 
@@ -338,9 +278,11 @@ describe("SakDetaljSide loader — backend-sti", () => {
     const request = new Request("http://localhost/saker/1", { method: "POST", body: formData });
     const { action } = await import("./SakDetaljSide.server");
 
-    await expect(
-      action({ request, params: { sakId: "1" }, context: {} } as Parameters<typeof action>[0]),
-    ).rejects.toMatchObject({ init: { status: 409 } });
+    expect(
+      await action({ request, params: { sakId: "1" }, context: {} } as Parameters<
+        typeof action
+      >[0]),
+    ).toMatchObject({ data: { ok: false }, init: { status: 409 } });
     expect(mockEndreSteg).not.toHaveBeenCalled();
   });
 
@@ -371,9 +313,9 @@ describe("SakDetaljSide loader — backend-sti", () => {
     const { action } = await import("./SakDetaljSide.server");
     const request = new Request("http://localhost/saker/1", { method: "POST", body: formData });
 
-    await expect(
-      action({ request, params: { sakId: "1" } } as Parameters<typeof action>[0]),
-    ).rejects.toMatchObject({ init: { status: 400 } });
+    expect(
+      await action({ request, params: { sakId: "1" } } as Parameters<typeof action>[0]),
+    ).toMatchObject({ data: { ok: false }, init: { status: 400 } });
     expect(mockEndreSteg).not.toHaveBeenCalled();
   });
 
@@ -500,6 +442,71 @@ describe("SakDetaljSide loader — backend-sti", () => {
       },
       undefined,
     );
+  });
+
+  it("returnerer feil til saksflyt-modalen når backend ikke svarer", async () => {
+    mockHentTillatteHandlinger.mockRejectedValueOnce(new TypeError("fetch failed"));
+    const formData = new FormData();
+    formData.set("handling", "endre_status");
+    formData.set("status", "I_BERO");
+    const { action } = await import("./SakDetaljSide.server");
+
+    const resultat = await action({
+      request: new Request("http://localhost/saker/1", { method: "POST", body: formData }),
+      params: { sakId: "1" },
+    } as Parameters<typeof action>[0]);
+
+    expect(resultat).toMatchObject({
+      data: { ok: false, feil: expect.stringContaining("Fikk ikke kontakt") },
+      init: { status: 502 },
+    });
+  });
+
+  it("returnerer feil til saksflyt-modalen i stedet for å kaste når backend avviser", async () => {
+    mockHentTillatteHandlinger.mockResolvedValue({
+      versjon: 1,
+      tilstand: { steg: "UTREDNING", status: "AKTIV", resultat: null, ytelser: [] },
+      handlinger: [
+        { type: "FLYTT_TIL_NESTE_STEG", metode: "POST", sti: "/api/v1/kontrollsaker/1/steg" },
+      ],
+      tillatteSteg: [],
+      muligeNesteSteg: ["AVSLUTTET"],
+      feltskjema: [
+        {
+          felt: "utredning.type",
+          etikett: "Resultat fra utredningen",
+          datatype: "enum",
+          paakrevd: true,
+          verdier: [{ verdi: "HENLAGT", etikett: "Henlagt" }],
+        },
+        {
+          felt: "utredning.henleggelsesarsak",
+          etikett: "Årsak",
+          datatype: "enum",
+          paakrevd: false,
+          paakrevdNar: "utredning.type=HENLAGT",
+          verdier: [{ verdi: "IKKE_KAPASITET", etikett: "Ikke kapasitet" }],
+        },
+      ],
+    });
+    const formData = new FormData();
+    formData.set("handling", "endre_steg_dialog");
+    formData.set("steg", "AVSLUTTET");
+    formData.set("registrerResultat", "true");
+    formData.set("resultat.utredning.type", "HENLAGT");
+    formData.set("resultat.utredning.henleggelsesarsak", "IKKE_KAPASITET");
+    const { action } = await import("./SakDetaljSide.server");
+    mockEndreSteg.mockRejectedValueOnce(new MockBackendFeilException(409, "Versjonskonflikt"));
+
+    const resultat = await action({
+      request: new Request("http://localhost/saker/1", { method: "POST", body: formData }),
+      params: { sakId: "1" },
+    } as Parameters<typeof action>[0]);
+
+    expect(resultat).toMatchObject({
+      data: { ok: false, feil: expect.stringContaining("Last inn siden på nytt") },
+      init: { status: 409 },
+    });
   });
 
   it("lar andre feil enn 403 fra hentFiler boble opp (kaster fortsatt loaderen)", async () => {

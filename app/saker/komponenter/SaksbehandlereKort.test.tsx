@@ -109,10 +109,25 @@ function lagTillatteHandlinger(sak: KontrollsakResponse): TillatteHandlingerResp
     ],
     tillatteSteg: ["FORVALTNING"],
     tillatteStatuser: ["AKTIV", "I_BERO"],
-    tillatteResultater: [],
+    tillatteResultater: ["FEILUTBETALINGSSAK_ORDINAER"],
     paakrevdeRegistreringer: [],
     paakrevdeRegistreringerPerSteg: {},
-    feltskjema: [],
+    feltskjema: [
+      {
+        felt: "utredning.type",
+        etikett: "Resultat fra utredningen",
+        datatype: "enum",
+        paakrevd: true,
+        verdier: [{ verdi: "FEILUTBETALINGSSAK_ORDINAER", etikett: "Feilutbetalingssak, ordinær" }],
+      },
+      {
+        felt: "ytelser[].belop",
+        etikett: "Beløp",
+        datatype: "belop",
+        paakrevd: false,
+        verdier: [],
+      },
+    ],
   };
 }
 
@@ -156,11 +171,41 @@ describe("SaksbehandlereKort", () => {
     expect(screen.getByText("Aktiv")).toBeDefined();
 
     fireEvent.click(screen.getByRole("button", { name: "Endre steg" }));
-    expect(await screen.findByRole("dialog", { name: "Endre steg" })).toBeDefined();
-    fireEvent.click(screen.getByRole("button", { name: "Avbryt" }));
+    expect(
+      await screen.findByRole("dialog", { name: "Endre steg eller registrer resultat" }),
+    ).toBeDefined();
+    expect(screen.getByRole("button", { name: "Send til forvaltning" })).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Lukk" }));
 
     fireEvent.click(screen.getByRole("button", { name: "Endre status" }));
     expect(await screen.findByRole("dialog", { name: "Endre status" })).toBeDefined();
+  });
+
+  it("viser resultatet i stedet for status når saken er avsluttet", async () => {
+    const sak = lagKontrollsak({
+      steg: "AVSLUTTET",
+      status: null,
+      resultat: {
+        forvaltning: {
+          type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+          endeligUtfall: { type: "HENLAGT" },
+        },
+      },
+    });
+    await renderMedRouter(
+      <SaksbehandlereKort
+        erEier={true}
+        sak={sak}
+        saksbehandlerDetaljer={[lagSaksbehandler()]}
+        ansvarligSaksbehandler={lagSaksbehandler()}
+        tillatteHandlinger={lagTillatteHandlinger(sak)}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Steg og resultat" })).toBeDefined();
+    expect(screen.getByText("Henlagt")).toBeDefined();
+    expect(screen.queryByText("Aktiv")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Endre status" })).toBeNull();
   });
 
   it("sender egen handling når Tildel meg brukes", async () => {
