@@ -216,13 +216,15 @@ describe("SakDetaljSide render", () => {
     expect(
       screen.getByText("Eksempelnotat for migrering. Kun syntetisk testinnhold."),
     ).toBeDefined();
-    expect(screen.getByText("Saken er ferdig flyttet")).toBeDefined();
-    expect(screen.getByText(/Ingen ferdigmelding er lagret i backend/)).toBeDefined();
+    expect(screen.getByText("Saken er ferdig flyttet 🎉")).toBeDefined();
+    expect(screen.getByText("Saken er overført til Watson Sak.")).toBeDefined();
+    expect(screen.getByText(/ingen ferdigmelding er lagret i backend/i)).toBeDefined();
+    expect(screen.getByText(/Notat · Opprettet i Watson Sak/)).toBeDefined();
     expect(screen.queryByRole("checkbox", { name: "Saken er ferdig flyttet" })).toBeNull();
     expect(screen.queryByText("Migreringsnotat (forhåndsvisning)")).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Lukk bekreftelsen" }));
-    expect(screen.queryByText("Saken er ferdig flyttet")).toBeNull();
+    expect(screen.queryByText("Saken er ferdig flyttet 🎉")).toBeNull();
     expect(screen.getByRole("link", { name: "Notat fra opprettelse" })).toBeDefined();
   }, 15000);
 
@@ -235,7 +237,7 @@ describe("SakDetaljSide render", () => {
 
     renderDetaljside("1181");
     await screen.findByRole("heading", { name: /^Sak 1181/ });
-    expect(screen.queryByText("Saken er ferdig flyttet")).toBeNull();
+    expect(screen.queryByText("Saken er ferdig flyttet 🎉")).toBeNull();
     expect(screen.queryByRole("link", { name: "Notat fra opprettelse" })).toBeNull();
   }, 15000);
 
@@ -244,7 +246,7 @@ describe("SakDetaljSide render", () => {
 
     const kontroll = await screen.findByRole("checkbox", { name: "Saken er ferdig flyttet" });
     expect((kontroll as HTMLInputElement).checked).toBe(false);
-    expect(screen.queryByText(/Eksempel fra mockdata/)).toBeNull();
+    expect(screen.queryByText(/Syntetisk eksempel/)).toBeNull();
     expect(screen.getByText("Migreringsnotat (forhåndsvisning)")).toBeDefined();
   }, 15000);
 

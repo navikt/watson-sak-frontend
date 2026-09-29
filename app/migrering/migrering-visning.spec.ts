@@ -11,7 +11,7 @@ test.describe("Migreringsveileder med syntetiske saker", () => {
   }, testInfo) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/migrering");
-    await page.getByRole("link", { name: "Ferdig migrert" }).click();
+    await page.getByRole("link", { name: /Flyttet til Watson Sak/ }).click();
 
     await expect(page).toHaveURL(/\/saker\/1181$/);
     await expect(page.getByRole("heading", { name: "Filer" })).toBeVisible();

@@ -368,10 +368,10 @@ med innlogget brukers token. Standardprofilen `L999999` får sju syntetiske
 kandidater, også samme PID i to kilder. V27-tabellen er ikke koblet til
 lese-API-et ennå. Prod og dev
 beholder migreringsruten stengt. En avkortet side vises ikke som fullstendig.
-«Ferdig migrert» vises bare når kandidaten eksplisitt har status `FULLSTENDIG`;
+«Flyttet til Watson Sak 🎉» vises bare når kandidaten eksplisitt har status `FULLSTENDIG`;
 «Under flytting» betyr at en sak finnes uten ferdigbekreftelse. Opprettet
 Watson-sak alene betyr ikke at migreringen er fullstendig. I `local-mock`
-peker «Ferdig migrert» og «Under flytting» på to faktiske, syntetiske
+peker «Flyttet til Watson Sak 🎉» og «Under flytting» på to faktiske, syntetiske
 mock-saker. Saken som er ferdigmerket viser et syntetisk «Notat fra
 opprettelse» som et kort med tekstutdrag under Filer. En lys grønn
 bekreftelse vises i stedet for avkrysningen og kan lukkes uten å endre status.

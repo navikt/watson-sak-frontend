@@ -1,4 +1,4 @@
-import { FilePlusIcon, FileTextIcon, UploadIcon } from "@navikt/aksel-icons";
+import { FilePlusIcon, NotePencilIcon, UploadIcon } from "@navikt/aksel-icons";
 import { BodyShort, Box, Button, Heading, HStack, Link, Loader, VStack } from "@navikt/ds-react";
 import { useRef, useState } from "react";
 import { Link as RouterLink, useFetcher } from "react-router";
@@ -176,11 +176,11 @@ export function SakFilområde({
             borderColor="neutral-subtle"
             borderWidth="1"
             borderRadius="8"
-            padding="space-12"
+            padding="space-16"
           >
             <HStack gap="space-8" align="start">
-              <FileTextIcon fontSize="1.5rem" aria-hidden />
-              <VStack gap="space-4" className="min-w-0">
+              <NotePencilIcon fontSize="1.5rem" aria-hidden />
+              <VStack gap="space-4" className="min-w-0 flex-1">
                 <Link
                   as={RouterLink}
                   to={RouteConfig.SAKER_DOKUMENT.replace(":sakId", sakId).replace(
@@ -191,8 +191,10 @@ export function SakFilområde({
                   {migreringsnotatEksempel.tittel}
                 </Link>
                 <BodyShort size="small" textColor="subtle">
-                  Eksempelnotat opprettet {formaterDato(migreringsnotatEksempel.opprettetDato)}
+                  Notat · Opprettet i Watson Sak ·{" "}
+                  {formaterDato(migreringsnotatEksempel.opprettetDato)}
                 </BodyShort>
+                <hr className="w-full border-ax-border-neutral-subtle" />
                 <BodyShort size="small">{migreringsnotatEksempel.tekst}</BodyShort>
               </VStack>
             </HStack>

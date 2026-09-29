@@ -1,4 +1,5 @@
-import { Button, Heading, Table, Tag } from "@navikt/ds-react";
+import { ArrowsCirclepathIcon } from "@navikt/aksel-icons";
+import { Button, Heading, HStack, Table, Tag } from "@navikt/ds-react";
 import { Form, Link } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
@@ -10,9 +11,12 @@ export function MigreringInnhold({ lister }: { lister: MigreringLister }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <Heading level="1" size="large">
-        Migreringsveileder
-      </Heading>
+      <HStack align="center" gap="space-8">
+        <ArrowsCirclepathIcon fontSize="1.5rem" aria-hidden />
+        <Heading level="1" size="medium">
+          Migrering
+        </Heading>
+      </HStack>
       <div className="overflow-x-auto">
         <Table>
           <Table.Header>
@@ -20,12 +24,21 @@ export function MigreringInnhold({ lister }: { lister: MigreringLister }) {
               <Table.HeaderCell scope="col">PID</Table.HeaderCell>
               <Table.HeaderCell scope="col">Personnummer</Table.HeaderCell>
               <Table.HeaderCell scope="col">Opprettet i Access</Table.HeaderCell>
-              <Table.HeaderCell scope="col">Status og handling</Table.HeaderCell>
+              <Table.HeaderCell scope="col">
+                <span className="sr-only">Status og handling</span>
+              </Table.HeaderCell>
             </Table.Row>
           </Table.Header>
           <Table.Body>
             {kandidater.map((k) => (
-              <Table.Row key={`${k.kilde}:${k.legacyPid}`}>
+              <Table.Row
+                key={`${k.kilde}:${k.legacyPid}`}
+                className={
+                  k.alleredeMigrertTilKontrollsakId && k.migreringsstatus === "FULLSTENDIG"
+                    ? "bg-ax-bg-success-soft"
+                    : undefined
+                }
+              >
                 <Table.DataCell>{k.legacyPid}</Table.DataCell>
                 <Table.DataCell>
                   {k.ansvar.type === "BEKREFTET" && k.personIdent ? k.personIdent : "–"}
@@ -40,11 +53,21 @@ export function MigreringInnhold({ lister }: { lister: MigreringLister }) {
                       )}
                     >
                       {k.migreringsstatus === "FULLSTENDIG" ? (
-                        <Tag variant="success" size="small">
-                          Ferdig migrert
+                        <Tag
+                          variant="strong"
+                          data-color="success"
+                          size="small"
+                          className="rounded-full"
+                        >
+                          Flyttet til Watson Sak 🎉
                         </Tag>
                       ) : k.migreringsstatus === "UNDER_MIGRERING" ? (
-                        <Tag variant="warning" size="small">
+                        <Tag
+                          variant="strong"
+                          data-color="warning"
+                          size="small"
+                          className="rounded-full"
+                        >
                           Under flytting
                         </Tag>
                       ) : (
@@ -64,7 +87,12 @@ export function MigreringInnhold({ lister }: { lister: MigreringLister }) {
                       {k.ansvar.type === "BEKREFTET" && k.personIdent && (
                         <input type="hidden" name="fnr" value={k.personIdent} />
                       )}
-                      <Button type="submit" size="small" disabled={k.ansvar.type !== "BEKREFTET"}>
+                      <Button
+                        type="submit"
+                        variant="secondary"
+                        size="small"
+                        disabled={k.ansvar.type !== "BEKREFTET"}
+                      >
                         Opprett sak
                       </Button>
                     </Form>

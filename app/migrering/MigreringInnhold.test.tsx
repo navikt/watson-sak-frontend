@@ -34,7 +34,7 @@ function renderSide() {
 describe("MigreringInnhold", () => {
   it("viser tabell iht Figma-skisse: PID, Personnummer, Opprettet i Access", () => {
     renderSide();
-    expect(screen.getByRole("heading", { name: "Migreringsveileder" })).not.toBeNull();
+    expect(screen.getByRole("heading", { name: "Migrering" })).not.toBeNull();
     expect(screen.getByRole("columnheader", { name: "PID" })).not.toBeNull();
     expect(screen.getByRole("columnheader", { name: "Personnummer" })).not.toBeNull();
     expect(screen.getByRole("columnheader", { name: "Opprettet i Access" })).not.toBeNull();
@@ -44,17 +44,18 @@ describe("MigreringInnhold", () => {
   it("viser ferdigstatus i samme kolonne som handlingen i skissen", () => {
     renderSide();
     expect(overført.length).toBeGreaterThan(0);
-    const lenke = screen.getByRole("link", { name: "Ferdig migrert" });
+    const lenke = screen.getByRole("link", { name: /Flyttet til Watson Sak/ });
     const rad = lenke.closest("tr");
     expect(rad).not.toBeNull();
     if (!rad) throw new Error("Fant ikke raden for ferdig migrert sak");
     expect(within(rad).getByText("100245")).not.toBeNull();
+    expect(rad.classList.contains("bg-ax-bg-success-soft")).toBe(true);
     expect(within(rad).queryByRole("button", { name: "Opprett sak" })).toBeNull();
   });
 
   it("lenker de to syntetiske statusene til saker som finnes i mockdata", () => {
     renderSide();
-    expect(screen.getByRole("link", { name: "Ferdig migrert" }).getAttribute("href")).toBe(
+    expect(screen.getByRole("link", { name: /Flyttet til Watson Sak/ }).getAttribute("href")).toBe(
       "/saker/1181",
     );
     expect(screen.getByRole("link", { name: "Under flytting" }).getAttribute("href")).toBe(
@@ -67,7 +68,7 @@ describe("MigreringInnhold", () => {
     const rader = screen.getAllByText("100245").map((celle) => celle.closest("tr"));
     expect(rader).toHaveLength(2);
     if (!rader[0] || !rader[1]) throw new Error("Fant ikke begge migreringsradene");
-    expect(within(rader[0]).getByRole("link", { name: "Ferdig migrert" })).not.toBeNull();
+    expect(within(rader[0]).getByRole("link", { name: /Flyttet til Watson Sak/ })).not.toBeNull();
     expect(within(rader[1]).getByRole("button", { name: "Opprett sak" })).not.toBeNull();
   });
 
@@ -83,7 +84,7 @@ describe("MigreringInnhold", () => {
     ]);
     render(<Stub initialEntries={["/migrering"]} />);
     expect(screen.getByRole("link", { name: "Under flytting" })).not.toBeNull();
-    expect(screen.queryByText("Ferdig migrert")).toBeNull();
+    expect(screen.queryByText(/Flyttet til Watson Sak/)).toBeNull();
   });
 
   it("skjuler statusendring inntil autorisasjon og faglige overganger er implementert", () => {
@@ -110,6 +111,7 @@ describe("MigreringInnhold", () => {
 
     for (const knapp of knapper) {
       expect((knapp as HTMLButtonElement).disabled).toBe(false);
+      expect(knapp.getAttribute("data-variant")).toBe("secondary");
       const form = knapp.closest("form");
       expect(form?.querySelector('input[name="legacyPid"]')).not.toBeNull();
       expect(form?.querySelector('input[name="legacyKilde"]')).not.toBeNull();

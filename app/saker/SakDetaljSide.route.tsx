@@ -1,4 +1,4 @@
-import { ArrowLeftIcon, CheckmarkCircleFillIcon, XMarkIcon } from "@navikt/aksel-icons";
+import { ArrowLeftIcon, CheckmarkIcon, XMarkIcon } from "@navikt/aksel-icons";
 import { BodyShort, Box, Button, Checkbox, HGrid, HStack, VStack } from "@navikt/ds-react";
 import { useCallback, useEffect, useState } from "react";
 import { useLoaderData, useNavigate } from "react-router";
@@ -128,18 +128,25 @@ export default function SakDetaljSide() {
                 visEksempelBekreftelse && (
                   <Box
                     background="success-soft"
-                    borderColor="success-subtle"
+                    borderColor="success"
                     borderWidth="1"
                     borderRadius="8"
-                    padding="space-12"
+                    padding="space-16"
                     role="status"
                   >
                     <HStack align="start" gap="space-8">
-                      <CheckmarkCircleFillIcon fontSize="1.5rem" aria-hidden />
+                      <Box background="success-strong" borderRadius="4" padding="space-4">
+                        <CheckmarkIcon
+                          fontSize="1rem"
+                          className="text-ax-text-success-contrast"
+                          aria-hidden
+                        />
+                      </Box>
                       <VStack gap="space-4" className="min-w-0 flex-1">
-                        <BodyShort weight="semibold">Saken er ferdig flyttet</BodyShort>
-                        <BodyShort size="small">
-                          Eksempel fra mockdata. Ingen ferdigmelding er lagret i backend.
+                        <BodyShort weight="semibold">Saken er ferdig flyttet 🎉</BodyShort>
+                        <BodyShort size="small">Saken er overført til Watson Sak.</BodyShort>
+                        <BodyShort size="small" textColor="subtle">
+                          Syntetisk eksempel, ingen ferdigmelding er lagret i backend.
                         </BodyShort>
                       </VStack>
                       <Button
@@ -165,7 +172,11 @@ export default function SakDetaljSide() {
                     Saken er ferdig flyttet
                   </Checkbox>
                   <BodyShort size="small" textColor="subtle">
-                    Forhåndsvisning. Ferdigmerking kan ikke lagres før backend er klar.
+                    Marker saken som ferdig flyttet når alle dokumenter og detaljer er flyttet fra
+                    Access og filområdet til Watson Sak.
+                  </BodyShort>
+                  <BodyShort size="small" textColor="subtle">
+                    Forhåndsvisning. Ferdigmerking kan ikke lagres ennå.
                   </BodyShort>
                 </Box>
               ))}
