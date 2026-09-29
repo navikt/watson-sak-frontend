@@ -728,14 +728,16 @@ export default function OpprettSakSide() {
                     )}
                   </VStack>
 
-                  {(miljø === "local-mock" || miljø === "local-backend") && (
-                    <Textarea
-                      label="Notat"
-                      description="Forhåndsvisning. Notatet kan ikke lagres ennå."
-                      className="max-w-2xl"
-                      disabled
-                    />
-                  )}
+                  {legacyPid &&
+                    legacyKilde &&
+                    (miljø === "local-mock" || miljø === "local-backend") && (
+                      <Textarea
+                        label="Notat"
+                        description="Forhåndsvisning. Notatet kan ikke lagres ennå."
+                        className="max-w-2xl"
+                        disabled
+                      />
+                    )}
 
                   {/* Submit-rad */}
                   <HStack gap="space-12" justify="end">

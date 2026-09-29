@@ -377,20 +377,25 @@ opprettelse» som et kort med tekstutdrag under Filer. En lys grønn
 bekreftelse vises i stedet for avkrysningen og kan lukkes uten å endre status.
 Dette er forhåndsvisning, ikke en lagret statusovergang.
 
-I `local-mock` og `local-backend` vises «Notat» på Opprett sak etter at
-personen er slått opp, også om den kortlivede migreringscookien er brukt opp.
-Feltet vises foreløpig for alle lokale opprettelser, ikke bare migreringssaker.
-Notatplassen under «Filer» og avkrysningen på saksdetaljene er også
-forhåndsvisninger. Notat skrevet ved opprettelse lagres ikke, og avkrysningen
+I `local-mock` og `local-backend` vises «Notat» på Opprett sak bare når
+både `legacyKilde` og `legacyPid` er satt. Feltet er deaktivert inntil
+validering, tilgang og lagring er på plass. Under «Filer» vises notatplassen
+bare for migreringssaker. Avkrysningen på saksdetaljene er også en
+forhåndsvisning. Notat skrevet ved opprettelse lagres ikke, og avkrysningen
 endrer ingen status. Notatet i sak 1181 er en forhåndslagt, syntetisk fixture.
 Backend har et endepunkt for ferdigmerking som svarer 503 inntil tilgang og
-overganger er implementert.
+overganger er implementert. V28 legger til `dokument_type` og en unik indeks
+for høyst ett migreringsnotat per sak. Ingen notater opprettes av V28. Den
+åpner ikke dokumenttilgang for ansvarlig eller leder; kontroll av alle
+lese- og skriveveier må gjennomføres før notater lagres.
 Visningene skal ikke brukes som dokumentasjon på at overføringen fungerer.
 
-🔴 Rød sone: Teamet må implementere og teste autorisering for ansvarlig og
-leder, personinnsyn, koblingsregler og manuelle statusoverganger. Importerte
-rader med personident skal ikke brukes i produksjon før oppbevaring og sletting
-er godkjent. V26 begrenser fortsatt `kontrollsak.legacy_pid` til 12 sifre;
+🔴 Rød sone: Teamet må implementere og teste validering av notattekst,
+autorisering for ansvarlig og leder på alle dokumentveier, personinnsyn,
+koblingsregler og manuelle statusoverganger. Notater og ferdigmerking må
+forbli avslått til disse testene er gjennomført. Importerte rader med
+personident skal ikke brukes i produksjon før oppbevaring og sletting er
+godkjent. V26 begrenser fortsatt `kontrollsak.legacy_pid` til 12 sifre;
 V27 endrer ikke dette. Testfilen inneholder bare ugyldige, syntetiske
 11-sifrede personidenter for å prøve databasen uten reelle opplysninger.
 

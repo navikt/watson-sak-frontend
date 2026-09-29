@@ -122,6 +122,7 @@ export default function SakDetaljSide() {
             />
 
             {sak.legacyPid &&
+              sak.legacyKilde &&
               erEier &&
               (miljø === "local-mock" || miljø === "local-backend") &&
               (erFerdigMigrertEksempel ? (
@@ -192,6 +193,7 @@ export default function SakDetaljSide() {
                 migreringsnotatEksempel={migreringsnotatEksempel}
                 visMigreringsnotatForhandsvisning={Boolean(
                   sak.legacyPid &&
+                  sak.legacyKilde &&
                   (miljø === "local-mock" || miljø === "local-backend") &&
                   !migreringsnotatEksempel,
                 )}
