@@ -30,6 +30,7 @@ const resultatTypeSchema = z.enum([
   "FEILUTBETALINGSSAK_ORDINAER",
   "FEILUTBETALINGSSAK_POTENSIELL_STRAFFESAK",
   "HENLAGT",
+  "HENLAGT_PAAKLAGET",
   "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE",
   "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
   "ANMELDT",
@@ -74,12 +75,13 @@ const resultatResponseSchema = z.object({
   politi: z
     .object({
       type: z.string(),
+      henleggelsesarsak: z.string().nullable().optional(),
       begrunnelse: z.string().nullable().optional(),
       detaljer: z.string().nullable().optional(),
-      domstype: z.string().nullable().optional(),
-      varighet: z.string().nullable().optional(),
-      redusertForEmkArtikkel6: z.boolean().nullable().optional(),
-      redusertForLangSaksbehandling: z.boolean().nullable().optional(),
+      belopTilbakekrevd: z.number().nullable().optional(),
+      strafferabatt: z.boolean().nullable().optional(),
+      strafferabattProsent: z.number().nullable().optional(),
+      domsdato: z.string().nullable().optional(),
     })
     .nullable()
     .optional(),
@@ -124,18 +126,20 @@ const lagreResultatRequestSchema = z.object({
     .object({
       type: z.enum([
         "HENLAGT",
+        "HENLAGT_PAAKLAGET",
         "FORELEGG",
         "BOT",
         "PATALEUNNLATELSE",
         "FRIFINNELSE",
         "DOMFELLELSE",
       ]),
+      henleggelsesarsak: henleggelsesarsakSchema.optional(),
       begrunnelse: z.string().optional(),
       detaljer: z.string().optional(),
-      domstype: z.string().optional(),
-      varighet: z.string().optional(),
-      redusertForEmkArtikkel6: z.boolean().optional(),
-      redusertForLangSaksbehandling: z.boolean().optional(),
+      belopTilbakekrevd: z.number().nonnegative().optional(),
+      strafferabatt: z.boolean().optional(),
+      strafferabattProsent: z.number().min(0).max(100).optional(),
+      domsdato: z.string().optional(),
     })
     .optional(),
   ytelser: z
@@ -144,6 +148,7 @@ const lagreResultatRequestSchema = z.object({
         id: z.string().uuid(),
         belop: z.number().nonnegative().optional(),
         endeligBelop: z.number().nonnegative().optional(),
+        anmeldtBelop: z.number().nonnegative().optional(),
       }),
     )
     .optional(),
@@ -166,6 +171,7 @@ export const tillatteHandlingerResponseSchema = z.object({
         periodeTil: z.string().nullable(),
         belop: z.number().nullable(),
         endeligBelop: z.number().nullable(),
+        anmeldtBelop: z.number().nullable().optional(),
       }),
     ),
   }),
@@ -194,7 +200,7 @@ export const tillatteHandlingerResponseSchema = z.object({
     z.object({
       felt: z.string(),
       etikett: z.string(),
-      datatype: z.enum(["enum", "tekst", "boolsk", "belop"]),
+      datatype: z.enum(["enum", "tekst", "boolsk", "tall", "dato", "belop"]),
       paakrevd: z.boolean(),
       paakrevdNar: z.string().nullable().optional(),
       verdier: z.array(z.object({ verdi: z.string(), etikett: z.string() })).default([]),
@@ -229,6 +235,7 @@ const kontrollsakYtelseSchema = z.object({
   periodeTil: z.string().nullable(),
   belop: z.number().nullable(),
   endeligBelop: z.number().nullable(),
+  anmeldtBelop: z.number().nullable().optional(),
 });
 
 const kontrollsakSaksbehandlerSchema = z.object({

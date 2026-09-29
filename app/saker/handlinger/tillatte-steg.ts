@@ -60,7 +60,7 @@ export function erHenlagtIGjeldendeSteg(
     case "STRAFFERETTSLIG_VURDERING":
       return resultat?.strafferettsligVurdering?.type === "HENLAGT";
     case "POLITI":
-      return resultat?.politi?.type === "HENLAGT";
+      return resultat?.politi?.type === "HENLAGT" || resultat?.politi?.type === "HENLAGT_PAAKLAGET";
     default:
       return false;
   }
@@ -85,14 +85,16 @@ export function erPolitiresultatKomplett(
 ): boolean {
   switch (politi?.type) {
     case "HENLAGT":
+    case "HENLAGT_PAAKLAGET":
+      return politi.henleggelsesarsak != null;
     case "FRIFINNELSE":
       return Boolean(politi.begrunnelse?.trim());
     case "DOMFELLELSE":
       return (
-        Boolean(politi.domstype?.trim()) &&
-        Boolean(politi.varighet?.trim()) &&
-        typeof politi.redusertForEmkArtikkel6 === "boolean" &&
-        typeof politi.redusertForLangSaksbehandling === "boolean"
+        politi.belopTilbakekrevd != null &&
+        typeof politi.strafferabatt === "boolean" &&
+        (politi.strafferabatt === false || politi.strafferabattProsent != null) &&
+        Boolean(politi.domsdato)
       );
     default:
       return politi?.type != null;
@@ -128,7 +130,10 @@ export function harLagretResultatForOvergang(
       }
       const utfall = hentForvaltningensEndeligeUtfall(resultat);
       return (
-        utfall?.type != null && (utfall.type !== "HENLAGT" || utfall.henleggelsesarsak != null)
+        (utfall?.type === "FEILUTBETALINGSSAK_ORDINAER" ||
+          utfall?.type === "KONTROLLNOTAT" ||
+          utfall?.type === "HENLAGT") &&
+        (utfall.type !== "HENLAGT" || utfall.henleggelsesarsak != null)
       );
     case "STRAFFERETTSLIG_VURDERING":
       if (tilSteg === "POLITI") return resultat?.strafferettsligVurdering?.type === "ANMELDT";

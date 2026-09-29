@@ -110,13 +110,13 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
       steg: "AVSLUTTET",
       registrerResultat: "true",
       "resultat.utredning.type": "HENLAGT",
-      "resultat.utredning.henleggelsesarsak": "IKKE_KAPASITET",
+      "resultat.utredning.henleggelsesarsak": "BEVISETS_STILLING",
     });
 
     expect(sak.status).toBeNull();
     expect(sak.steg).toBe("AVSLUTTET");
     expect(sak.resultat?.utredning?.type).toBe("HENLAGT");
-    expect(sak.resultat?.utredning?.henleggelsesarsak).toBe("IKKE_KAPASITET");
+    expect(sak.resultat?.utredning?.henleggelsesarsak).toBe("BEVISETS_STILLING");
 
     const historikk = hentHistorikk(testRequest, sak.id);
     expect(historikk[0]?.hendelsesType).toBe("STATUS_ENDRET");
@@ -124,7 +124,7 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
   });
 
   it.each([
-    ["HENLAGT", "IKKE_KAPASITET"],
+    ["HENLAGT", "FORELDET"],
     ["KONTROLLNOTAT", null],
   ])("avslutter fra Forvaltning som %s uten endelig beløp", async (type, arsak) => {
     const sak = hentAlleSaker(testRequest).find((s: KontrollsakResponse) => s.steg === "UTREDES");
@@ -164,7 +164,7 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     sak.resultat = {
       forvaltning: {
         type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
-        endeligUtfall: { type: "HENLAGT", henleggelsesarsak: "IKKE_KAPASITET" },
+        endeligUtfall: { type: "HENLAGT", henleggelsesarsak: "FORELDET" },
       },
     };
 
@@ -179,7 +179,7 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
       registrerResultat: "true",
       "resultat.forvaltning.type": "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
       "resultat.forvaltning.endeligUtfall.type": "HENLAGT",
-      "resultat.forvaltning.endeligUtfall.henleggelsesarsak": "IKKE_KAPASITET",
+      "resultat.forvaltning.endeligUtfall.henleggelsesarsak": "FORELDET",
     });
     expect(sak.steg).toBe("AVSLUTTET");
   });
@@ -300,11 +300,11 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
       steg: "AVSLUTTET",
       registrerResultat: "true",
       "resultat.utredning.type": "HENLAGT",
-      "resultat.utredning.henleggelsesarsak": "IKKE_TILSTREKKELIG_SKYLD",
+      "resultat.utredning.henleggelsesarsak": "INTET_STRAFFBART_FORHOLD",
     });
 
     expect(sak.resultat?.utredning?.type).toBe("HENLAGT");
-    expect(sak.resultat?.utredning?.henleggelsesarsak).toBe("IKKE_TILSTREKKELIG_SKYLD");
+    expect(sak.resultat?.utredning?.henleggelsesarsak).toBe("INTET_STRAFFBART_FORHOLD");
     expect(sak.steg).toBe("AVSLUTTET");
   });
 
@@ -542,7 +542,7 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
         resultat: {
           forvaltning: {
             type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
-            endeligUtfall: { type: "HENLAGT", henleggelsesarsak: "IKKE_KAPASITET" },
+            endeligUtfall: { type: "HENLAGT", henleggelsesarsak: "FORELDET" },
           },
         },
       }).tillatteSteg,
@@ -553,7 +553,7 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
       resultat: {
         forvaltning: {
           type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
-          endeligUtfall: { type: "HENLAGT", henleggelsesarsak: "IKKE_KAPASITET" },
+          endeligUtfall: { type: "HENLAGT", henleggelsesarsak: "FORELDET" },
         },
       },
     });
@@ -602,10 +602,16 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
       resultat: null,
     };
     expect(hentMockTillatteHandlinger(vurdering).tillatteSteg).toEqual([]);
+    const anmeldt: KontrollsakResponse = {
+      ...vurdering,
+      resultat: { strafferettsligVurdering: { type: "ANMELDT" } },
+      ytelser: sak.ytelser.map((ytelse) => ({ ...ytelse, anmeldtBelop: null })),
+    };
+    expect(hentMockTillatteHandlinger(anmeldt).tillatteSteg).toEqual([]);
     expect(
       hentMockTillatteHandlinger({
-        ...vurdering,
-        resultat: { strafferettsligVurdering: { type: "ANMELDT" } },
+        ...anmeldt,
+        ytelser: sak.ytelser.map((ytelse) => ({ ...ytelse, anmeldtBelop: 1000 })),
       }).tillatteSteg,
     ).toEqual(["POLITI"]);
     expect(hentMockTillatteHandlinger({ ...vurdering, status: "I_BERO" }).tillatteSteg).toEqual([]);

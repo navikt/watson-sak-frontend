@@ -210,6 +210,26 @@ function krevTillattHandling(
   }
 }
 
+/** Leser og validerer resultatet som lagres uten stegbytte. */
+function byggResultatForLagring(
+  formData: FormData,
+  tillatte: TillatteHandlingerResponse,
+): LagreResultatRequest {
+  try {
+    const resultat = byggLagreResultatRequest(
+      formData,
+      tillatte.feltskjema,
+      tillatte.tilstand.steg,
+      undefined,
+      tillatte.tilstand.ytelser,
+    );
+    if (!resultat) throw new Error("Velg et resultat før du fortsetter");
+    return resultat;
+  } catch (feil) {
+    throw data(feil instanceof Error ? feil.message : "Ugyldige resultatfelter", { status: 400 });
+  }
+}
+
 function getHendelsestypeForStatusendring(status: KontrollsakStatus) {
   if (status === "I_BERO") return "SAK_SATT_I_BERO";
   if (status === "AKTIV") return "SAK_GJENOPPTATT";
@@ -244,6 +264,7 @@ function lagreMockResultat(sak: KontrollsakResponse, resultat: LagreResultatRequ
             ...ytelse,
             ...(belop.belop !== undefined ? { belop: belop.belop } : {}),
             ...(belop.endeligBelop !== undefined ? { endeligBelop: belop.endeligBelop } : {}),
+            ...(belop.anmeldtBelop !== undefined ? { anmeldtBelop: belop.anmeldtBelop } : {}),
           }
         : ytelse;
     });
@@ -627,9 +648,6 @@ async function backendAction(
 
       let resultat: LagreResultatRequest | undefined;
       const registrerResultat = formData.get("registrerResultat") === "true";
-      if (nyttSteg === "AVSLUTTET" && !registrerResultat) {
-        throw data("Registrer resultat før saken flyttes til Avsluttet", { status: 400 });
-      }
       if (
         !harLagretResultatForOvergang(tillatte, nyttSteg as KontrollsakSteg) &&
         !registrerResultat
@@ -666,6 +684,13 @@ async function backendAction(
         resultat,
         beskrivelse ?? undefined,
       );
+      return { ok: true, sak };
+    }
+    case "lagre_resultat": {
+      const tillatte = await backendApi.hentTillatteHandlinger(token, sakId);
+      krevTillattHandling(tillatte, "REGISTRER_RESULTAT");
+      const resultat = byggResultatForLagring(formData, tillatte);
+      const sak = await backendApi.lagreResultat(token, sakId, resultat);
       return { ok: true, sak };
     }
     case "endre_status": {
@@ -1078,9 +1103,6 @@ async function mockAction(
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
       const forrigeStatus = sak.status;
       const registrerResultat = formData.get("registrerResultat") === "true";
-      if (nyttSteg === "AVSLUTTET" && !registrerResultat) {
-        throw data("Registrer resultat før saken flyttes til Avsluttet", { status: 400 });
-      }
       if (
         !harLagretResultatForOvergang(tillatte, nyttSteg as KontrollsakSteg) &&
         !registrerResultat
@@ -1138,6 +1160,11 @@ async function mockAction(
         beskrivelse,
         status: nyttSteg === "AVSLUTTET" ? forrigeStatus : sak.status,
       });
+      break;
+    }
+    case "lagre_resultat": {
+      krevTillattHandling(tillatte, "REGISTRER_RESULTAT");
+      lagreMockResultat(sak, byggResultatForLagring(formData, tillatte));
       break;
     }
     case "endre_status": {
