@@ -1,11 +1,12 @@
-import { FilePlusIcon, UploadIcon } from "@navikt/aksel-icons";
-import { BodyShort, Button, Heading, HStack, Loader, VStack } from "@navikt/ds-react";
+import { FilePlusIcon, FileTextIcon, UploadIcon } from "@navikt/aksel-icons";
+import { BodyShort, Box, Button, Heading, HStack, Link, Loader, VStack } from "@navikt/ds-react";
 import { useRef, useState } from "react";
-import { useFetcher } from "react-router";
+import { Link as RouterLink, useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { Kort } from "~/komponenter/Kort";
 import type { MalId } from "~/saker/filer/dokument/maler";
 import { RouteConfig } from "~/routeConfig";
+import { formaterDato } from "~/utils/date-utils";
 import { ArkivertSeksjon } from "./ArkivertSeksjon";
 import { DokumentListe } from "./DokumentListe";
 import { FilerSeksjonCaption } from "./FilerRad";
@@ -63,6 +64,13 @@ interface SakFilområdeProps {
   erSakseier?: boolean;
   /** Bare lokal mock: vis hvor migreringsnotatet skal ligge, uten å lagre innhold. */
   visMigreringsnotatForhandsvisning?: boolean;
+  /** Bare lokal mock: syntetisk notat som vises som et dokumentkort under Filer. */
+  migreringsnotatEksempel?: {
+    id: string;
+    tittel: string;
+    tekst: string;
+    opprettetDato: string;
+  } | null;
 }
 
 export function SakFilområde({
@@ -73,6 +81,7 @@ export function SakFilområde({
   kanLasteOppFiler = redigerbar,
   erSakseier = false,
   visMigreringsnotatForhandsvisning = false,
+  migreringsnotatEksempel = null,
 }: SakFilområdeProps) {
   // Filopplasting eies her, siden «Last opp fil»-knappen ligger i den felles headeren for hele
   // «Filer»-kortet, mens opplastingsstatus (spinner/feilmelding) vises nede i Opplastede filer.
@@ -81,7 +90,9 @@ export function SakFilområde({
   const lasterOpp = opplastingFetcher.state !== "idle";
   const url = RouteConfig.API.SAK_FILER.replace(":sakId", sakId);
 
-  const redigerbareDokumenter = dokumenter.filter((dokument) => !dokument.arkivert);
+  const redigerbareDokumenter = dokumenter.filter(
+    (dokument) => !dokument.arkivert && dokument.id !== migreringsnotatEksempel?.id,
+  );
   const aktiveFiler = filer.filter((fil) => !fil.arkivert);
   const arkiverteFiler = filer.filter((fil) => fil.arkivert);
   const arkiverteDokumenterUtenFil = dokumenter.filter(
@@ -159,23 +170,54 @@ export function SakFilområde({
           </VStack>
         )}
 
-        <VStack gap="space-4">
-          <FilerSeksjonCaption
-            tittel="Redigerbare dokumenter"
-            undertekst="Opprettet i Watson Sak"
-          />
-          {redigerbareDokumenter.length === 0 ? (
-            <BodyShort size="small" className="text-ax-text-neutral-subtle">
-              Ingen redigerbare dokumenter ennå
-            </BodyShort>
-          ) : (
-            <DokumentListe
-              dokumenter={redigerbareDokumenter}
-              sakId={sakId}
-              redigerbar={redigerbar}
+        {migreringsnotatEksempel && (
+          <Box
+            background="default"
+            borderColor="neutral-subtle"
+            borderWidth="1"
+            borderRadius="8"
+            padding="space-12"
+          >
+            <HStack gap="space-8" align="start">
+              <FileTextIcon fontSize="1.5rem" aria-hidden />
+              <VStack gap="space-4" className="min-w-0">
+                <Link
+                  as={RouterLink}
+                  to={RouteConfig.SAKER_DOKUMENT.replace(":sakId", sakId).replace(
+                    ":docId",
+                    migreringsnotatEksempel.id,
+                  )}
+                >
+                  {migreringsnotatEksempel.tittel}
+                </Link>
+                <BodyShort size="small" textColor="subtle">
+                  Eksempelnotat opprettet {formaterDato(migreringsnotatEksempel.opprettetDato)}
+                </BodyShort>
+                <BodyShort size="small">{migreringsnotatEksempel.tekst}</BodyShort>
+              </VStack>
+            </HStack>
+          </Box>
+        )}
+
+        {(redigerbareDokumenter.length > 0 || !migreringsnotatEksempel) && (
+          <VStack gap="space-4">
+            <FilerSeksjonCaption
+              tittel="Redigerbare dokumenter"
+              undertekst="Opprettet i Watson Sak"
             />
-          )}
-        </VStack>
+            {redigerbareDokumenter.length === 0 ? (
+              <BodyShort size="small" className="text-ax-text-neutral-subtle">
+                Ingen redigerbare dokumenter ennå
+              </BodyShort>
+            ) : (
+              <DokumentListe
+                dokumenter={redigerbareDokumenter}
+                sakId={sakId}
+                redigerbar={redigerbar}
+              />
+            )}
+          </VStack>
+        )}
 
         <VedleggSeksjon
           filer={aktiveFiler}

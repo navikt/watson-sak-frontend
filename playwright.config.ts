@@ -1,5 +1,11 @@
 import { defineConfig, devices } from "@playwright/test";
 
+// Kjør E2E mot en eksisterende lokal mockserver uten å starte enda en Vite-prosess.
+const lokalBaseUrl = process.env.PLAYWRIGHT_BASE_URL;
+if (lokalBaseUrl && !/^http:\/\/localhost:\d+$/.test(lokalBaseUrl)) {
+  throw new Error("PLAYWRIGHT_BASE_URL må peke til en lokal utviklingsserver");
+}
+
 /**
  * Playwright-konfigurasjon for Watson Søk
  * Se https://playwright.dev/docs/test-configuration
@@ -31,7 +37,7 @@ export default defineConfig({
   /* Delte innstillinger for alle prosjektene nedenfor. Se https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base-URL å bruke i handlinger som `await page.goto('/')`. */
-    baseURL: "http://localhost:5174",
+    baseURL: lokalBaseUrl ?? "http://localhost:5174",
 
     /* Samle trace når feilende test prøves på nytt. Se https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
@@ -49,10 +55,12 @@ export default defineConfig({
   ],
 
   /* Kjør lokal dev-server før testene starter */
-  webServer: {
-    command:
-      'WATSON_ADMIN_API_URL=http://localhost:8089 ENVIRONMENT=local-mock NODE_ENV=development npx concurrently -k -n mock,dev "node playwright.backend.mock.cjs" "pnpm run dev"',
-    url: "http://localhost:5174",
-    reuseExistingServer: false,
-  },
+  webServer: lokalBaseUrl
+    ? undefined
+    : {
+        command:
+          'WATSON_ADMIN_API_URL=http://localhost:8089 ENVIRONMENT=local-mock NODE_ENV=development npx concurrently -k -n mock,dev "node playwright.backend.mock.cjs" "pnpm run dev"',
+        url: "http://localhost:5174",
+        reuseExistingServer: false,
+      },
 });

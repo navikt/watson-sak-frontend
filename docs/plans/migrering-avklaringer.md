@@ -372,16 +372,19 @@ beholder migreringsruten stengt. En avkortet side vises ikke som fullstendig.
 «Under flytting» betyr at en sak finnes uten ferdigbekreftelse. Opprettet
 Watson-sak alene betyr ikke at migreringen er fullstendig. I `local-mock`
 peker «Ferdig migrert» og «Under flytting» på to faktiske, syntetiske
-mock-saker. Saken som er ferdigmerket har et syntetisk «Notat fra
-opprettelse» under Filer og en grønn eksempelbekreftelse på saksdetaljene.
+mock-saker. Saken som er ferdigmerket viser et syntetisk «Notat fra
+opprettelse» som et kort med tekstutdrag under Filer. En lys grønn
+bekreftelse vises i stedet for avkrysningen og kan lukkes uten å endre status.
 Dette er forhåndsvisning, ikke en lagret statusovergang.
 
 I `local-mock` og `local-backend` vises «Notat» på Opprett sak etter at
 personen er slått opp, også om den kortlivede migreringscookien er brukt opp.
 Feltet vises foreløpig for alle lokale opprettelser, ikke bare migreringssaker.
 Notatplassen under «Filer» og avkrysningen på saksdetaljene er også
-forhåndsvisninger. Ingen av disse kan lagre et notat eller endre status. Backend har et endepunkt for
-ferdigmerking som svarer 503 inntil tilgang og overganger er implementert.
+forhåndsvisninger. Notat skrevet ved opprettelse lagres ikke, og avkrysningen
+endrer ingen status. Notatet i sak 1181 er en forhåndslagt, syntetisk fixture.
+Backend har et endepunkt for ferdigmerking som svarer 503 inntil tilgang og
+overganger er implementert.
 Visningene skal ikke brukes som dokumentasjon på at overføringen fungerer.
 
 🔴 Rød sone: Teamet må implementere og teste autorisering for ansvarlig og
@@ -397,4 +400,17 @@ V27 endrer ikke dette. Testfilen inneholder bare ugyldige, syntetiske
 ENVIRONMENT=local-mock pnpm run dev
 ```
 
-Åpne `http://localhost:5174/migrering`.
+Åpne `/migrering` på porten som Vite skriver ut (5175 hvis Tilt allerede bruker
+5174). Fra listen kan du åpne `/saker/1181` og `/saker/1182`.
+
+Playwright-testen sjekker listelenker, notatkort, grønn bekreftelse og
+lukkeknapp. Den tar også skjermbilder på desktop og mobil for manuell
+sammenligning med `watson-developer/docs/migrering2.png`. Når Chromium er installert, kan
+den kjøres i en vanlig terminal mot den eksisterende lokale mockserveren:
+
+```bash
+PLAYWRIGHT_BASE_URL=http://localhost:5175 pnpm exec playwright test app/migrering/migrering-visning.spec.ts --project=chromium
+```
+
+Playwright skriver skjermbilder som vedlegg til HTML-testrapporten. Testen er
+ikke kjørt i cplt-sandboxen fordi browseren ikke får tilgang til Crashpad-katalogen.

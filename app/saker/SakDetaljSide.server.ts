@@ -31,7 +31,7 @@ import {
   hentFilerForSak,
   opprettArkivertFilFraDokument,
 } from "./filer/mock-data-filer.server";
-import { arkiverDokument } from "~/testing/mock-store/dokumenter.server";
+import { arkiverDokument, migreringsnotatSeed } from "~/testing/mock-store/dokumenter.server";
 import { hentMockState } from "~/testing/mock-store/session.server";
 import { notatMalValg } from "./handlinger/notatValg";
 import { byggLagreResultatRequest, validerResultatFeltNavn } from "./handlinger/resultat-request";
@@ -472,6 +472,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     return {
       sak: sakForRespons,
       migreringsstatus: null,
+      migreringsnotatEksempel: null,
       tillatteHandlinger,
       historikk,
       journalposter,
@@ -520,6 +521,17 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   // dokument-/filmetadata skal eksponeres i loader-responsen.
   const harDirekteTilgang = erEier || harDeltTilgang || innlogget.erLeder;
   const dokumenter = harDirekteTilgang ? hentDokumenttreForSak(request, String(sak.id)) : [];
+  const migreringsnotatEksempel =
+    erEier &&
+    migreringsstatus === "FULLSTENDIG" &&
+    dokumenter.some((dokument) => dokument.id === migreringsnotatSeed.id && !dokument.arkivert)
+      ? {
+          id: migreringsnotatSeed.id,
+          tittel: migreringsnotatSeed.tittel,
+          tekst: migreringsnotatSeed.avsnitt.join(" "),
+          opprettetDato: migreringsnotatSeed.opprettetDato,
+        }
+      : null;
   const filer = harDirekteTilgang ? hentFilerForSak(request, String(sak.id)) : [];
   const andreSaker = alleSaker.filter(
     (annenSak) => annenSak.personIdent === sak.personIdent && annenSak.id !== sak.id,
@@ -527,6 +539,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   return {
     sak,
     migreringsstatus,
+    migreringsnotatEksempel,
     tillatteHandlinger,
     historikk,
     journalposter: [],

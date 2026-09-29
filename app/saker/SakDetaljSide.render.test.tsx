@@ -211,13 +211,19 @@ describe("SakDetaljSide render", () => {
   it("viser ferdig migrert mock-sak med notat under Filer og grønn eksempelbekreftelse", async () => {
     renderDetaljside("1181");
 
-    expect(await screen.findByText("Notat fra opprettelse")).toBeDefined();
-    expect(screen.getByRole("heading", { name: /Saken er ferdig flyttet/ })).toBeDefined();
+    const notatlenke = await screen.findByRole("link", { name: "Notat fra opprettelse" });
+    expect(notatlenke.getAttribute("href")).toBe("/saker/1181/dokumenter/1181-migrering");
+    expect(
+      screen.getByText("Eksempelnotat for migrering. Kun syntetisk testinnhold."),
+    ).toBeDefined();
+    expect(screen.getByText("Saken er ferdig flyttet")).toBeDefined();
     expect(screen.getByText(/Ingen ferdigmelding er lagret i backend/)).toBeDefined();
-    const kontroll = screen.getByRole("checkbox", { name: "Saken er ferdig flyttet" });
-    expect((kontroll as HTMLInputElement).checked).toBe(true);
-    expect((kontroll as HTMLInputElement).disabled).toBe(true);
+    expect(screen.queryByRole("checkbox", { name: "Saken er ferdig flyttet" })).toBeNull();
     expect(screen.queryByText("Migreringsnotat (forhåndsvisning)")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Lukk bekreftelsen" }));
+    expect(screen.queryByText("Saken er ferdig flyttet")).toBeNull();
+    expect(screen.getByRole("link", { name: "Notat fra opprettelse" })).toBeDefined();
   }, 15000);
 
   it("utleverer ikke mockstatus for migreringssak som eies av en annen", async () => {
@@ -229,8 +235,8 @@ describe("SakDetaljSide render", () => {
 
     renderDetaljside("1181");
     await screen.findByRole("heading", { name: /^Sak 1181/ });
-    expect(screen.queryByRole("heading", { name: /Saken er ferdig flyttet/ })).toBeNull();
-    expect(screen.queryByText("Notat fra opprettelse")).toBeNull();
+    expect(screen.queryByText("Saken er ferdig flyttet")).toBeNull();
+    expect(screen.queryByRole("link", { name: "Notat fra opprettelse" })).toBeNull();
   }, 15000);
 
   it("viser uferdig mock-sak uten grønn bekreftelse", async () => {
@@ -238,7 +244,7 @@ describe("SakDetaljSide render", () => {
 
     const kontroll = await screen.findByRole("checkbox", { name: "Saken er ferdig flyttet" });
     expect((kontroll as HTMLInputElement).checked).toBe(false);
-    expect(screen.queryByRole("heading", { name: /Saken er ferdig flyttet/ })).toBeNull();
+    expect(screen.queryByText(/Eksempel fra mockdata/)).toBeNull();
     expect(screen.getByText("Migreringsnotat (forhåndsvisning)")).toBeDefined();
   }, 15000);
 

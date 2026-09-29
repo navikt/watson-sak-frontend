@@ -102,7 +102,7 @@ const dokumentSeeds: DokumentSeed[] = [
   },
 ];
 
-const migreringsnotatSeed: DokumentSeed = {
+export const migreringsnotatSeed: DokumentSeed = {
   id: "1181-migrering",
   tittel: "Notat fra opprettelse",
   opprettetAv: "Saks Behandlersen",
