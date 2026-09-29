@@ -372,10 +372,11 @@ beholder migreringsruten stengt. En avkortet side vises ikke som fullstendig.
 «Under flytting» betyr at en sak finnes uten ferdigbekreftelse. Opprettet
 Watson-sak alene betyr ikke at migreringen er fullstendig.
 
-I `local-mock` og `local-backend` vises migreringsnotat ved opprettelse,
-plasseringen under «Filer» og avkrysningen på saksdetaljene kun som
-forhåndsvisninger. Ingen
-av disse kan lagre et notat eller endre status. Backend har et endepunkt for
+I `local-mock` og `local-backend` vises «Notat» på Opprett sak etter at
+personen er slått opp, også om den kortlivede migreringscookien er brukt opp.
+Feltet vises foreløpig for alle lokale opprettelser, ikke bare migreringssaker.
+Notatplassen under «Filer» og avkrysningen på saksdetaljene er også
+forhåndsvisninger. Ingen av disse kan lagre et notat eller endre status. Backend har et endepunkt for
 ferdigmerking som svarer 503 inntil tilgang og overganger er implementert.
 Visningene skal ikke brukes som dokumentasjon på at overføringen fungerer.
 
