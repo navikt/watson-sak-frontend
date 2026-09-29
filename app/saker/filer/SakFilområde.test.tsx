@@ -83,10 +83,54 @@ describe("SakFilområde", () => {
     expect(screen.getByRole("heading", { name: "Filer" })).toBeDefined();
   });
 
-  it("viser caption for 'Redigerbare dokumenter' og 'Opplastede filer'", () => {
+  it("viser caption 'Mapper' og knapp for å opprette mappe", () => {
     renderOmråde({ dokumenter: [], filer: [], sakId: "ABC-123" });
-    expect(screen.getByRole("heading", { name: "Redigerbare dokumenter" })).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Opplastede filer" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Mapper" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Opprett mappe" })).toBeDefined();
+  });
+
+  it("oppretter en undermappe i valgt mappe", async () => {
+    const mottatt: unknown[] = [];
+    const Stub = createRoutesStub([
+      {
+        path: "/saker/:sakId",
+        Component: () => (
+          <SakFilområde dokumenter={[]} filer={[]} mapper={["Bank"]} sakId="ABC-123" />
+        ),
+      },
+      {
+        path: "/api/saker/:sakId/mapper",
+        action: async ({ request }) => {
+          mottatt.push(await request.json());
+          return { ok: true };
+        },
+      },
+    ]);
+    render(<Stub initialEntries={["/saker/ABC-123"]} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Opprett mappe" }));
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { name: "Opprett mappe" })).toBeDefined();
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "Mappenavn" }), {
+      target: { value: " Kontoutskrifter " },
+    });
+    fireEvent.change(screen.getByRole("combobox", { name: "Plassering" }), {
+      target: { value: "Bank" },
+    });
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", { name: "Opprett mappe" }),
+    );
+
+    await waitFor(() => {
+      expect(mottatt).toEqual([{ handling: "opprett", sti: "Bank/Kontoutskrifter" }]);
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+  });
+
+  it("skjuler 'Opprett mappe' når brukeren ikke kan redigere", () => {
+    renderOmråde({ dokumenter: [], filer: [], sakId: "ABC-123", redigerbar: false });
+    expect(screen.queryByRole("button", { name: "Opprett mappe" })).toBeNull();
   });
 
   it("viser dokumenter i listen", () => {
@@ -110,9 +154,9 @@ describe("SakFilområde", () => {
     expect(screen.getByText("Last opp fil")).toBeDefined();
   });
 
-  it("viser tomtilstand for redigerbare dokumenter når det ikke er noen", () => {
+  it("viser tomtilstand når det ikke er noen dokumenter eller filer", () => {
     renderOmråde({ dokumenter: [], filer: [], sakId: "ABC-123" });
-    expect(screen.getByText("Ingen redigerbare dokumenter ennå")).toBeDefined();
+    expect(screen.getByText("Ingen dokumenter eller filer ennå")).toBeDefined();
   });
 
   it("skjuler 'Opprett dokument'- og 'Last opp fil'-knapp når redigerbar er false", () => {
@@ -228,7 +272,7 @@ describe("SakFilområde", () => {
     expect(screen.getByRole("button", { name: "Handlinger for Notat" })).toBeDefined();
   });
 
-  it("flytter arkiverte filer til Arkivert-seksjonen, ikke Opplastede filer-listen", () => {
+  it("flytter arkiverte filer til Arkivert-seksjonen, ikke mappetreet", () => {
     const arkivertFil: FilResponse = {
       ...mockFiler[0],
       id: "fil-arkivert",
@@ -241,7 +285,7 @@ describe("SakFilområde", () => {
 
     expect(screen.getByRole("heading", { name: "Arkivert" })).toBeDefined();
 
-    const opplastedeFiler = screen.getByRole("list", { name: "Opplastede filer" });
+    const opplastedeFiler = screen.getByRole("list", { name: "Dokumenter og filer" });
     const arkivertListe = screen.getByRole("list", { name: "Arkivert" });
 
     expect(within(opplastedeFiler).getByText("rapport.pdf")).toBeDefined();
@@ -256,7 +300,7 @@ describe("SakFilområde", () => {
     expect(screen.queryByRole("heading", { name: "Arkivert" })).toBeNull();
   });
 
-  it("viser arkiverte dokumenter kun i Arkivert-seksjonen, ikke i Redigerbare dokumenter", () => {
+  it("viser arkiverte dokumenter kun i Arkivert-seksjonen, ikke i mappetreet", () => {
     const arkivertDokument: DokumentNode = {
       ...mockDokumenter[0],
       id: "3",
@@ -271,7 +315,7 @@ describe("SakFilområde", () => {
       sakId: "ABC-123",
     });
 
-    const redigerbareDokumenter = screen.getByRole("list", { name: "Redigerbare dokumenter" });
+    const redigerbareDokumenter = screen.getByRole("list", { name: "Dokumenter og filer" });
     const arkivertListe = screen.getByRole("list", { name: "Arkivert" });
 
     expect(within(redigerbareDokumenter).queryByText("Arkivert dokument")).toBeNull();
@@ -335,5 +379,51 @@ describe("SakFilområde", () => {
       });
       expect(screen.queryByRole("button", { name: `Slett ${mockFiler[0].filnavn}` })).toBeNull();
     });
+  });
+});
+
+describe("Arkivert", () => {
+  const journalposter = [
+    {
+      journalpostId: "453912345",
+      journalposttype: "NOTAT",
+      tittel: "Notat om kontroll",
+      opprettet: "2026-03-01T10:00:00Z",
+    },
+  ];
+
+  it("grupperer arkiverte filer under journalposten de tilhører, med type som tag", () => {
+    const vedlegg: FilResponse = {
+      ...mockFiler[0],
+      id: "fil-arkivert",
+      filnavn: "kontoutskrift.pdf",
+      arkivert: "2026-03-01T10:00:00Z",
+      arkivertAv: "Z999999",
+      arkivertJournalpostId: "453912345",
+    };
+    const ukjent: FilResponse = {
+      ...vedlegg,
+      id: "fil-ukjent",
+      filnavn: "gammel.pdf",
+      arkivertJournalpostId: "999",
+    };
+
+    renderOmråde({ dokumenter: [], filer: [vedlegg, ukjent], journalposter, sakId: "ABC-123" });
+
+    expect(screen.getByText("Journalført i dokumentarkiv – koblet til journalpost")).toBeDefined();
+    const kort = screen.getByRole("list", { name: "Vedlegg i Notat om kontroll" });
+    expect(within(kort).getByText("kontoutskrift.pdf")).toBeDefined();
+    expect(within(kort).getByText(/Vedlegg · PDF ·/)).toBeDefined();
+    expect(screen.getByText("Notat")).toBeDefined();
+    expect(screen.getByText(/Journalpost 453912345 · Arkivert .* · 1 vedlegg/)).toBeDefined();
+
+    const reserve = screen.getByRole("list", { name: "Vedlegg i Journalpost 999" });
+    expect(within(reserve).getByText("gammel.pdf")).toBeDefined();
+  });
+
+  it("viser journalposter også når de ikke har arkiverte vedlegg", () => {
+    renderOmråde({ dokumenter: [], filer: [], journalposter, sakId: "ABC-123" });
+    expect(screen.getByText("Notat om kontroll")).toBeDefined();
+    expect(screen.getByText(/0 vedlegg/)).toBeDefined();
   });
 });

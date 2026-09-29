@@ -80,6 +80,7 @@ type LoaderData = Awaited<ReturnType<typeof loader>>;
 function DokumentRedigering({
   dokument,
   dokumenter,
+  mapper = [],
   dokumentHistorikk = [],
   kommentarliste,
   kommentarinnlastingFeilet,
@@ -92,6 +93,7 @@ function DokumentRedigering({
 }: {
   dokument: LoaderData["dokument"];
   dokumenter: LoaderData["dokumenter"];
+  mapper?: string[];
   dokumentHistorikk: LoaderData["dokumentHistorikk"];
   kommentarliste: LoaderData["kommentarliste"];
   kommentarinnlastingFeilet: LoaderData["kommentarinnlastingFeilet"];
@@ -331,6 +333,7 @@ function DokumentRedigering({
           dokumenter.length > 0 ? (
             <DokumentTre
               noder={dokumenter}
+              mapper={mapper}
               sakId={sakReferanse}
               redigerbar={kanRedigere}
               fremhevetId={dokument.id}
@@ -381,6 +384,7 @@ export default function DokumentSide() {
   const {
     dokument,
     dokumenter,
+    mapper,
     dokumentHistorikk,
     kommentarliste,
     kommentarinnlastingFeilet,
@@ -418,6 +422,7 @@ export default function DokumentSide() {
       key={dokument.id}
       dokument={dokument}
       dokumenter={dokumenter}
+      mapper={mapper}
       dokumentHistorikk={dokumentHistorikk}
       kommentarliste={kommentarliste}
       kommentarinnlastingFeilet={kommentarinnlastingFeilet}

@@ -1,8 +1,8 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { FilResponse } from "./typer";
-import { VedleggSeksjon } from "./VedleggSeksjon";
+import type { DokumentNode, FilResponse } from "../typer";
+import { FilTre } from "./FilTre";
 
 const mockFiler: FilResponse[] = [
   {
@@ -25,16 +25,49 @@ const mockFiler: FilResponse[] = [
   },
 ];
 
+const mockDokumenter: DokumentNode[] = [
+  {
+    id: "dok-1",
+    tittel: "Saksframlegg",
+    opprettetAv: "Ola Nordmann",
+    opprettetDato: "2026-02-01T10:00:00Z",
+    endretAv: "Ola Nordmann",
+    endretDato: "2026-06-12T10:00:00Z",
+    låsAv: null,
+    mappe: "Bank/Kontoutskrifter",
+  },
+];
+
+const mockMappeAction = vi.fn(async ({ request }: { request: Request }) => {
+  mottatteMappehandlinger.push(await request.json());
+  return { ok: true };
+});
+let mottatteMappehandlinger: unknown[] = [];
+
 const mockFilAction = vi.fn(async ({ request }: { request: Request }) => ({
   ok: true,
   body: await request.json(),
 }));
 
-async function renderSeksjon(props: Parameters<typeof VedleggSeksjon>[0]) {
+type TestProps = Omit<Parameters<typeof FilTre>[0], "mapper" | "dokumenter" | "redigerbar"> &
+  Partial<Pick<Parameters<typeof FilTre>[0], "mapper" | "dokumenter" | "redigerbar">>;
+
+async function renderSeksjon({
+  mapper = [],
+  dokumenter = [],
+  redigerbar = false,
+  ...props
+}: TestProps) {
   const Stub = createRoutesStub([
     {
       path: "/saker/:sakId",
-      Component: () => <VedleggSeksjon {...props} />,
+      Component: () => (
+        <FilTre mapper={mapper} dokumenter={dokumenter} redigerbar={redigerbar} {...props} />
+      ),
+    },
+    {
+      path: "/api/saker/:sakId/mapper",
+      action: mockMappeAction,
     },
     {
       path: "/api/saker/:sakId/filer/:filId",
@@ -46,19 +79,16 @@ async function renderSeksjon(props: Parameters<typeof VedleggSeksjon>[0]) {
   return resultat;
 }
 
-describe("VedleggSeksjon", () => {
+describe("FilTre", () => {
   beforeEach(() => {
     mockFilAction.mockClear();
-  });
-
-  it("viser caption 'Opplastede filer'", async () => {
-    await renderSeksjon({ filer: [], sakId: "SAK-1", erSakseier: false });
-    expect(screen.getByRole("heading", { name: "Opplastede filer" })).toBeDefined();
+    mockMappeAction.mockClear();
+    mottatteMappehandlinger = [];
   });
 
   it("viser tomtilstand når det ikke er noen filer", async () => {
     await renderSeksjon({ filer: [], sakId: "SAK-1", erSakseier: false });
-    expect(screen.getByText("Ingen opplastede filer ennå")).toBeDefined();
+    expect(screen.getByText("Ingen dokumenter eller filer ennå")).toBeDefined();
   });
 
   it("viser filnavn for hver fil", async () => {
@@ -69,14 +99,8 @@ describe("VedleggSeksjon", () => {
 
   it("viser størrelse og type i metadatalinjen", async () => {
     await renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: false });
-    expect(screen.getByText(/PDF · 200 KB/)).toBeDefined();
-    expect(screen.getByText(/Bilde · 50 KB/)).toBeDefined();
-  });
-
-  it("viser hvem som lastet opp", async () => {
-    await renderSeksjon({ filer: mockFiler, sakId: "SAK-1", erSakseier: false });
-    expect(screen.getByText(/Ola Nordmann/)).toBeDefined();
-    expect(screen.getByText(/Kari Hansen/)).toBeDefined();
+    expect(screen.getByText(/Opplastet · PDF · 200 KB · Lastet opp/)).toBeDefined();
+    expect(screen.getByText(/Opplastet · Bilde · 50 KB · Lastet opp/)).toBeDefined();
   });
 
   it("viser åpne-knapp for hver fil", async () => {
@@ -211,5 +235,229 @@ describe("VedleggSeksjon", () => {
     await waitFor(() => {});
 
     expect(screen.queryByText("Slette vedlegg?")).toBeNull();
+  });
+
+  describe("mapper", () => {
+    const mapper = ["Bank", "Bank/Kontoutskrifter", "Tom mappe"];
+
+    it("viser mapper lukket med antall filer, og dokumenter i undermapper teller med", async () => {
+      await renderSeksjon({
+        mapper,
+        dokumenter: mockDokumenter,
+        filer: [],
+        sakId: "SAK-1",
+        erSakseier: false,
+      });
+
+      const bank = screen.getByRole("button", { name: /Bank\s*1 fil/ });
+      expect(bank.getAttribute("aria-expanded")).toBe("false");
+      expect(screen.getByRole("button", { name: /Tom mappe\s*0 filer/ })).toBeDefined();
+      expect(screen.queryByText("Saksframlegg")).toBeNull();
+    });
+
+    it("åpner og lukker mapper, også nestede", async () => {
+      await renderSeksjon({
+        mapper,
+        dokumenter: mockDokumenter,
+        filer: [],
+        sakId: "SAK-1",
+        erSakseier: false,
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: /^Bank/ }));
+      fireEvent.click(screen.getByRole("button", { name: /^Kontoutskrifter/ }));
+      expect(screen.getByRole("link", { name: "Saksframlegg" })).toBeDefined();
+      expect(screen.getByText(/Redigerbart · Opprettet i Watson Sak · Sist endret/)).toBeDefined();
+
+      fireEvent.click(screen.getByRole("button", { name: /^Bank/ }));
+      expect(screen.queryByRole("link", { name: "Saksframlegg" })).toBeNull();
+    });
+
+    it("viser mapper før filer på rotnivå", async () => {
+      await renderSeksjon({
+        mapper: ["Zulu"],
+        filer: mockFiler,
+        sakId: "SAK-1",
+        erSakseier: false,
+      });
+      const elementer = screen.getAllByRole("listitem").map((li) => li.textContent ?? "");
+      expect(elementer[0]).toContain("Zulu");
+      expect(elementer[1]).toContain("anmeldelse.pdf");
+    });
+
+    it("viser ikke mappehandlinger eller flytteknapper når treet ikke er redigerbart", async () => {
+      await renderSeksjon({ mapper, filer: mockFiler, sakId: "SAK-1", erSakseier: true });
+      expect(screen.queryByLabelText("Handlinger for mappen Bank")).toBeNull();
+      expect(screen.queryByLabelText("Flytt anmeldelse.pdf til mappe")).toBeNull();
+    });
+
+    it("flytter en fil til en mappe via flyttedialogen", async () => {
+      await renderSeksjon({
+        mapper,
+        filer: mockFiler,
+        sakId: "SAK-1",
+        erSakseier: false,
+        redigerbar: true,
+      });
+
+      fireEvent.click(screen.getByLabelText("Flytt anmeldelse.pdf til mappe"));
+      await waitFor(() => {
+        expect(screen.getByRole("dialog", { name: "Flytt «anmeldelse.pdf»" })).toBeDefined();
+      });
+      fireEvent.change(screen.getByRole("combobox", { name: "Flytt til" }), {
+        target: { value: "Bank/Kontoutskrifter" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Flytt" }));
+
+      await waitFor(() => {
+        expect(mottatteMappehandlinger).toEqual([
+          { handling: "flytt-fil", id: "fil-1", mappe: "Bank/Kontoutskrifter" },
+        ]);
+        expect(screen.queryByRole("dialog")).toBeNull();
+      });
+    });
+
+    it("flytter en fil med dra og slipp", async () => {
+      await renderSeksjon({
+        mapper,
+        filer: mockFiler,
+        sakId: "SAK-1",
+        erSakseier: false,
+        redigerbar: true,
+      });
+
+      const dataTransfer = { setData: vi.fn(), effectAllowed: "", dropEffect: "" };
+      const fil = screen.getByText("anmeldelse.pdf").closest("li");
+      const mål = screen.getByRole("button", { name: /^Tom mappe/ }).closest("li");
+      if (!fil || !mål) throw new Error("Fant ikke elementene");
+
+      fireEvent.dragStart(fil, { dataTransfer });
+      fireEvent.dragOver(mål, { dataTransfer });
+      fireEvent.drop(mål, { dataTransfer });
+
+      await waitFor(() => {
+        expect(mottatteMappehandlinger).toEqual([
+          { handling: "flytt-fil", id: "fil-1", mappe: "Tom mappe" },
+        ]);
+      });
+    });
+
+    it("lar ikke en mappe slippes i sin egen undermappe", async () => {
+      await renderSeksjon({
+        mapper,
+        dokumenter: mockDokumenter,
+        filer: [],
+        sakId: "SAK-1",
+        erSakseier: false,
+        redigerbar: true,
+      });
+      fireEvent.click(screen.getByRole("button", { name: /^Bank/ }));
+
+      const dataTransfer = { setData: vi.fn(), effectAllowed: "", dropEffect: "" };
+      const bank = screen.getByRole("button", { name: /^Bank/ }).closest("li");
+      const under = screen.getByRole("button", { name: /^Kontoutskrifter/ }).closest("li");
+      if (!bank || !under) throw new Error("Fant ikke elementene");
+
+      fireEvent.dragStart(bank, { dataTransfer });
+      fireEvent.dragOver(under, { dataTransfer });
+      fireEvent.drop(under, { dataTransfer });
+
+      await waitFor(() => {});
+      expect(mockMappeAction).not.toHaveBeenCalled();
+    });
+
+    it("gir en mappe nytt navn, og sender ny sti for mappen", async () => {
+      await renderSeksjon({
+        mapper,
+        dokumenter: mockDokumenter,
+        filer: [],
+        sakId: "SAK-1",
+        erSakseier: false,
+        redigerbar: true,
+      });
+      fireEvent.click(screen.getByRole("button", { name: /^Bank/ }));
+
+      fireEvent.click(screen.getByLabelText("Handlinger for mappen Kontoutskrifter"));
+      fireEvent.click(await screen.findByRole("menuitem", { name: "Gi nytt navn" }));
+      await waitFor(() => {
+        expect(screen.getByRole("dialog", { name: "Gi mappen nytt navn" })).toBeDefined();
+      });
+      fireEvent.change(screen.getByRole("textbox", { name: "Mappenavn" }), {
+        target: { value: "Utskrifter" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Lagre navn" }));
+
+      await waitFor(() => {
+        expect(mottatteMappehandlinger).toEqual([
+          { handling: "endre", fraSti: "Bank/Kontoutskrifter", tilSti: "Bank/Utskrifter" },
+        ]);
+      });
+    });
+
+    it("avviser mappenavn som allerede finnes på samme nivå", async () => {
+      await renderSeksjon({
+        mapper,
+        filer: [],
+        sakId: "SAK-1",
+        erSakseier: false,
+        redigerbar: true,
+      });
+
+      fireEvent.click(screen.getByLabelText("Handlinger for mappen Bank"));
+      fireEvent.click(await screen.findByRole("menuitem", { name: "Gi nytt navn" }));
+      await waitFor(() => {
+        expect(screen.getByRole("dialog", { name: "Gi mappen nytt navn" })).toBeDefined();
+      });
+      fireEvent.change(screen.getByRole("textbox", { name: "Mappenavn" }), {
+        target: { value: "Tom mappe" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Lagre navn" }));
+
+      expect(screen.getByText("Det finnes allerede en mappe med dette navnet her")).toBeDefined();
+      expect(mockMappeAction).not.toHaveBeenCalled();
+    });
+
+    it("sletter bare tomme mapper", async () => {
+      await renderSeksjon({
+        mapper,
+        dokumenter: mockDokumenter,
+        filer: [],
+        sakId: "SAK-1",
+        erSakseier: false,
+        redigerbar: true,
+      });
+
+      fireEvent.click(screen.getByLabelText("Handlinger for mappen Bank"));
+      const slettBank = await screen.findByRole("menuitem", { name: /Slett mappe/ });
+      expect(
+        slettBank.getAttribute("aria-disabled") ?? slettBank.getAttribute("data-disabled"),
+      ).not.toBeNull();
+      fireEvent.keyDown(slettBank, { key: "Escape" });
+
+      fireEvent.click(screen.getByLabelText("Handlinger for mappen Tom mappe"));
+      fireEvent.click(await screen.findByRole("menuitem", { name: "Slett mappe" }));
+
+      await waitFor(() => {
+        expect(mottatteMappehandlinger).toEqual([{ handling: "slett", sti: "Tom mappe" }]);
+      });
+    });
+
+    it("viser feilmelding fra serveren når en mappehandling feiler", async () => {
+      mockMappeAction.mockImplementationOnce(
+        async () => ({ ok: false, melding: "Mappen finnes allerede" }) as never,
+      );
+      await renderSeksjon({
+        mapper,
+        filer: [],
+        sakId: "SAK-1",
+        erSakseier: false,
+        redigerbar: true,
+      });
+
+      fireEvent.click(screen.getByLabelText("Handlinger for mappen Tom mappe"));
+      fireEvent.click(await screen.findByRole("menuitem", { name: "Slett mappe" }));
+
+      expect(await screen.findByText("Mappen finnes allerede")).toBeDefined();
+    });
   });
 });

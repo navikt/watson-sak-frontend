@@ -1,5 +1,5 @@
 import { BodyShort, Detail, Heading, HStack } from "@navikt/ds-react";
-import type { ComponentType, ReactNode, SVGProps } from "react";
+import type { ComponentType, LiHTMLAttributes, ReactNode, SVGProps } from "react";
 
 type FilerRadType = "dokument" | "fil" | "arkivert";
 
@@ -21,16 +21,29 @@ interface FilerRadProps {
   metadata: ReactNode;
   /** Handlingsknapper til høyre i raden (åpne, slette, osv.). */
   handlinger?: ReactNode;
+  /** Ekstra attributter på `<li>`, f.eks. for dra og slipp i mappetreet. */
+  liProps?: LiHTMLAttributes<HTMLLIElement>;
 }
 
 /**
  * Kompakt rad for et dokument eller en fil i «Filer»-seksjonen på saksdetaljer: en farget
- * aksentstrek, et typeikon, tittel/tag og en grå metadatalinje. Brukes av `DokumentListe`,
- * `VedleggSeksjon` og `ArkivertSeksjon` for et konsistent utseende på tvers av underseksjonene.
+ * aksentstrek, et typeikon, tittel/tag og en grå metadatalinje. Brukes av `FilTre` og
+ * `ArkivertSeksjon` for et konsistent utseende på tvers av underseksjonene.
  */
-export function FilerRad({ type, ikon: Ikon, tittel, tag, metadata, handlinger }: FilerRadProps) {
+export function FilerRad({
+  type,
+  ikon: Ikon,
+  tittel,
+  tag,
+  metadata,
+  handlinger,
+  liProps,
+}: FilerRadProps) {
   return (
-    <li className="border-b border-ax-border-neutral-subtle last:border-b-0">
+    <li
+      {...liProps}
+      className={`border-b border-ax-border-neutral-subtle last:border-b-0 ${liProps?.className ?? ""}`}
+    >
       <HStack align="center" gap="space-8" wrap={false} className="py-[10px]">
         <span className={`h-10 w-1 shrink-0 rounded-full ${AKSENTFARGE[type]}`} aria-hidden />
         <Ikon aria-hidden className="size-5 shrink-0 text-ax-icon-neutral" />
@@ -51,7 +64,7 @@ export function FilerRad({ type, ikon: Ikon, tittel, tag, metadata, handlinger }
 
 /**
  * Liten «caption»-overskrift + forklarende undertekst over en av underseksjonene i «Filer»
- * (Redigerbare dokumenter / Opplastede filer / Arkivert). Fortsatt en semantisk overskrift
+ * (Mapper / Arkivert). Fortsatt en semantisk overskrift
  * (nivå 3) for skjermlesernavigasjon, men visuelt liten og grå for å matche skissen.
  */
 export function FilerSeksjonCaption({
@@ -59,7 +72,7 @@ export function FilerSeksjonCaption({
   undertekst,
 }: {
   tittel: string;
-  undertekst: string;
+  undertekst?: string;
 }) {
   return (
     <div>
@@ -70,7 +83,7 @@ export function FilerSeksjonCaption({
       >
         {tittel}
       </Heading>
-      <Detail className="text-ax-text-neutral-subtle">{undertekst}</Detail>
+      {undertekst && <Detail className="text-ax-text-neutral-subtle">{undertekst}</Detail>}
     </div>
   );
 }

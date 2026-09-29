@@ -1,5 +1,5 @@
-import { FilePlusIcon, UploadIcon } from "@navikt/aksel-icons";
-import { BodyShort, Button, Heading, HStack, Loader, VStack } from "@navikt/ds-react";
+import { FilePlusIcon, FolderPlusIcon, UploadIcon } from "@navikt/aksel-icons";
+import { Button, Heading, HStack, Loader, VStack } from "@navikt/ds-react";
 import { useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
@@ -7,11 +7,12 @@ import { Kort } from "~/komponenter/Kort";
 import type { MalId } from "~/saker/filer/dokument/maler";
 import { RouteConfig } from "~/routeConfig";
 import { ArkivertSeksjon } from "./ArkivertSeksjon";
-import { DokumentListe } from "./DokumentListe";
 import { FilerSeksjonCaption } from "./FilerRad";
+import { flatMappeliste, byggFilTre } from "./mapper/bygg-filtre";
+import { FilTre } from "./mapper/FilTre";
+import { OpprettMappeModal } from "./mapper/MappeModaler";
 import { OpprettDokumentModal } from "./OpprettDokumentModal";
-import type { DokumentNode, FilResponse } from "./typer";
-import { VedleggSeksjon } from "./VedleggSeksjon";
+import type { DokumentNode, FilResponse, JournalpostReferanse } from "./typer";
 
 function OpprettDokumentKnapp({ sakId }: { sakId: string }) {
   const action = RouteConfig.API.SAK_DOKUMENTER.replace(":sakId", sakId);
@@ -32,7 +33,7 @@ function OpprettDokumentKnapp({ sakId }: { sakId: string }) {
     <>
       <Button
         size="xsmall"
-        variant="tertiary"
+        variant="primary"
         icon={<FilePlusIcon aria-hidden />}
         onClick={() => settÅpen(true)}
       >
@@ -50,9 +51,31 @@ function OpprettDokumentKnapp({ sakId }: { sakId: string }) {
   );
 }
 
+function OpprettMappeKnapp({ sakId, mapper }: { sakId: string; mapper: string[] }) {
+  const [åpen, settÅpen] = useState(false);
+  return (
+    <>
+      <Button
+        type="button"
+        size="xsmall"
+        variant="tertiary"
+        icon={<FolderPlusIcon aria-hidden />}
+        onClick={() => settÅpen(true)}
+      >
+        Opprett mappe
+      </Button>
+      {åpen && <OpprettMappeModal sakId={sakId} mapper={mapper} onClose={() => settÅpen(false)} />}
+    </>
+  );
+}
+
 interface SakFilområdeProps {
   dokumenter: DokumentNode[];
   filer: FilResponse[];
+  /** Alle mappestier på saken, også tomme mapper. */
+  mapper?: string[];
+  /** Journalpostene på saken, brukt til å gruppere arkiverte elementer. */
+  journalposter?: JournalpostReferanse[];
   /** Saksreferansen, brukt til å bygge lenker og opprette-handlingen. */
   sakId: string;
   /** Om brukeren kan opprette og redigere dokumenter. Standard: `true` */
@@ -66,20 +89,21 @@ interface SakFilområdeProps {
 export function SakFilområde({
   dokumenter,
   filer,
+  mapper = [],
+  journalposter = [],
   sakId,
   redigerbar = true,
   kanLasteOppFiler = redigerbar,
   erSakseier = false,
 }: SakFilområdeProps) {
   // Filopplasting eies her, siden «Last opp fil»-knappen ligger i den felles headeren for hele
-  // «Filer»-kortet, mens opplastingsstatus (spinner/feilmelding) vises nede i Opplastede filer.
+  // «Filer»-kortet, mens opplastingsstatus (spinner/feilmelding) vises nede i mappetreet.
   const opplastingFetcher = useFetcher<FilResponse | { message: string }>();
   const inputRef = useRef<HTMLInputElement>(null);
   const lasterOpp = opplastingFetcher.state !== "idle";
   const url = RouteConfig.API.SAK_FILER.replace(":sakId", sakId);
 
-  const redigerbareDokumenter = dokumenter.filter((dokument) => !dokument.arkivert);
-  const aktiveFiler = filer.filter((fil) => !fil.arkivert);
+  const alleMapper = flatMappeliste(byggFilTre(mapper, dokumenter, filer)).map((m) => m.sti);
   const arkiverteFiler = filer.filter((fil) => fil.arkivert);
   const arkiverteDokumenterUtenFil = dokumenter.filter(
     (dokument) =>
@@ -118,7 +142,6 @@ export function SakFilområde({
           </Heading>
           {(redigerbar || kanLasteOppFiler) && (
             <HStack gap="space-2" align="center">
-              {redigerbar && <OpprettDokumentKnapp sakId={sakId} />}
               {kanLasteOppFiler && (
                 <>
                   <input
@@ -143,39 +166,30 @@ export function SakFilområde({
                   </Button>
                 </>
               )}
+              {redigerbar && <OpprettMappeKnapp sakId={sakId} mapper={alleMapper} />}
+              {redigerbar && <OpprettDokumentKnapp sakId={sakId} />}
             </HStack>
           )}
         </HStack>
 
         <VStack gap="space-4">
-          <FilerSeksjonCaption
-            tittel="Redigerbare dokumenter"
-            undertekst="Opprettet i Watson Sak"
+          <FilerSeksjonCaption tittel="Mapper" />
+          <FilTre
+            mapper={mapper}
+            dokumenter={dokumenter}
+            filer={filer}
+            sakId={sakId}
+            redigerbar={redigerbar}
+            erSakseier={erSakseier}
+            lasterOpp={lasterOpp}
+            feilFraServer={feilFraServer}
           />
-          {redigerbareDokumenter.length === 0 ? (
-            <BodyShort size="small" className="text-ax-text-neutral-subtle">
-              Ingen redigerbare dokumenter ennå
-            </BodyShort>
-          ) : (
-            <DokumentListe
-              dokumenter={redigerbareDokumenter}
-              sakId={sakId}
-              redigerbar={redigerbar}
-            />
-          )}
         </VStack>
-
-        <VedleggSeksjon
-          filer={aktiveFiler}
-          sakId={sakId}
-          erSakseier={erSakseier}
-          lasterOpp={lasterOpp}
-          feilFraServer={feilFraServer}
-        />
 
         <ArkivertSeksjon
           filer={arkiverteFiler}
           dokumenterUtenFil={arkiverteDokumenterUtenFil}
+          journalposter={journalposter}
           sakId={sakId}
         />
       </VStack>
