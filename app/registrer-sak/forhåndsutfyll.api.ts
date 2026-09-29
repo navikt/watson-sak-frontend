@@ -7,11 +7,10 @@ import { pendingFnrCookie, type PendingSakData } from "./pending-fnr.server";
 const gyldigeKilder: Migreringskilde[] = ["UTREDNING", "SV", "NKA_DAGPENGER", "NKA_AAP"];
 
 /**
- * `fnr` er valgfri her: migreringslistens API eksponerer aldri personIdent
- * (bevisst utelatt av personvernhensyn, se MigreringResponseMapper i
- * backend). Når "Opprett sak" trykkes fra migreringslisten sendes derfor kun
- * `legacyPid`/`legacyKilde`, og saksbehandler må slå opp personen manuelt med
- * fødselsnummer på /registrer-sak.
+ * `fnr` er valgfri her: backend eksponerer personIdent bare for bekreftet
+ * ansvar med personinnsyn. Da kan migreringslisten forhåndsutfylle personen.
+ * Uten bekreftet ansvar sendes kun `legacyPid`/`legacyKilde`, og saksbehandler
+ * må slå opp personen manuelt på /registrer-sak.
  */
 export async function action({ request }: { request: Request }) {
   const formData = await request.formData();

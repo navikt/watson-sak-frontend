@@ -115,7 +115,7 @@ export default function SakDetaljSide() {
               onSakOppdatert={onSakOppdatert}
             />
 
-            {sak.legacyPid && erEier && miljø === "local-mock" && (
+            {sak.legacyPid && erEier && (miljø === "local-mock" || miljø === "local-backend") && (
               <div>
                 <Checkbox disabled>Saken er ferdig flyttet</Checkbox>
                 <BodyShort size="small" textColor="subtle">
@@ -132,7 +132,9 @@ export default function SakDetaljSide() {
                 redigerbar={harDirekteTilgang && stegregler.kanRedigereDokumenter}
                 kanLasteOppFiler={harDirekteTilgang && stegregler.kanLasteOppFiler}
                 erSakseier={erEier}
-                visMigreringsnotatForhandsvisning={Boolean(sak.legacyPid && miljø === "local-mock")}
+                visMigreringsnotatForhandsvisning={Boolean(
+                  sak.legacyPid && (miljø === "local-mock" || miljø === "local-backend"),
+                )}
               />
             ) : (
               <IngenFiltilgangKort />

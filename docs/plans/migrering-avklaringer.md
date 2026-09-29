@@ -364,15 +364,17 @@ statusendring er ikke implementert. Produksjonsklienten feiler fortsatt lukket.
 
 Frontend viser status i handlingskolonnen fra syntetiske mockdata. `local-backend`
 bruker nå det eksisterende, autoriserte GET-endepunktet i `watson-admin-api`
-med innlogget brukers token. Den lokale backend-kilden har kun syntetiske
-kandidater; V27-tabellen er ikke koblet til lese-API-et ennå. Prod og dev
+med innlogget brukers token. Standardprofilen `L999999` får sju syntetiske
+kandidater, også samme PID i to kilder. V27-tabellen er ikke koblet til
+lese-API-et ennå. Prod og dev
 beholder migreringsruten stengt. En avkortet side vises ikke som fullstendig.
 «Ferdig migrert» vises bare når kandidaten eksplisitt har status `FULLSTENDIG`;
 «Under flytting» betyr at en sak finnes uten ferdigbekreftelse. Opprettet
 Watson-sak alene betyr ikke at migreringen er fullstendig.
 
-I `local-mock` vises migreringsnotat ved opprettelse, plasseringen under
-«Filer» og avkrysningen på saksdetaljene kun som forhåndsvisninger. Ingen
+I `local-mock` og `local-backend` vises migreringsnotat ved opprettelse,
+plasseringen under «Filer» og avkrysningen på saksdetaljene kun som
+forhåndsvisninger. Ingen
 av disse kan lagre et notat eller endre status. Backend har et endepunkt for
 ferdigmerking som svarer 503 inntil tilgang og overganger er implementert.
 Visningene skal ikke brukes som dokumentasjon på at overføringen fungerer.

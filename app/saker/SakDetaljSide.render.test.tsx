@@ -33,8 +33,9 @@ vi.mock("~/kodeverk/useKodeverk", () => ({
   useKodeverk: () => mockKodeverk,
 }));
 
+const visningsmiljø = vi.hoisted(() => ({ verdi: "local-mock" }));
 vi.mock("~/miljø/useMiljø", () => ({
-  useMiljø: () => "local-mock",
+  useMiljø: () => visningsmiljø.verdi,
 }));
 
 const testRequest = new Request("http://localhost");
@@ -65,6 +66,7 @@ describe("SakDetaljSide render", () => {
   beforeEach(() => {
     resetDefaultSession();
     erLeder = false;
+    visningsmiljø.verdi = "local-mock";
   });
 
   it("viser lagre og avbryt i redigeringsmodus", async () => {
@@ -186,20 +188,25 @@ describe("SakDetaljSide render", () => {
     expect(screen.queryByText("Organisasjonsnummer")).toBeNull();
   }, 15000);
 
-  it("viser ferdig-flyttet-kontroll kun som deaktivert forhåndsvisning for migreringssak", async () => {
-    const { hentMockState } = await import("~/testing/mock-store/session.server");
-    const { hentAlleSaker } = await import("~/testing/mock-store/alle-saker.server");
-    const sak = hentAlleSaker(hentMockState(testRequest)).find((s) => s.id === Number(testSakId));
-    if (!sak) throw new Error("Fant ikke testdata for migreringssak");
-    sak.legacyPid = "100245";
-    sak.legacyKilde = "UTREDNING";
+  it.each(["local-mock", "local-backend"])(
+    "viser deaktivert ferdigkontroll og notat i %s",
+    async (miljø) => {
+      visningsmiljø.verdi = miljø;
+      const { hentMockState } = await import("~/testing/mock-store/session.server");
+      const { hentAlleSaker } = await import("~/testing/mock-store/alle-saker.server");
+      const sak = hentAlleSaker(hentMockState(testRequest)).find((s) => s.id === Number(testSakId));
+      if (!sak) throw new Error("Fant ikke testdata for migreringssak");
+      sak.legacyPid = "100245";
+      sak.legacyKilde = "UTREDNING";
 
-    renderDetaljside();
-    const kontroll = await screen.findByRole("checkbox", { name: "Saken er ferdig flyttet" });
-    expect((kontroll as HTMLInputElement).disabled).toBe(true);
-    expect(screen.getByText(/Ferdigmerking kan ikke lagres/)).toBeDefined();
-    expect(screen.getByText("Migreringsnotat (forhåndsvisning)")).toBeDefined();
-  }, 15000);
+      renderDetaljside();
+      const kontroll = await screen.findByRole("checkbox", { name: "Saken er ferdig flyttet" });
+      expect((kontroll as HTMLInputElement).disabled).toBe(true);
+      expect(screen.getByText(/Ferdigmerking kan ikke lagres/)).toBeDefined();
+      expect(screen.getByText("Migreringsnotat (forhåndsvisning)")).toBeDefined();
+    },
+    15000,
+  );
 
   it("viser Filer-blokken for sak man er eier av", async () => {
     renderDetaljside();
