@@ -80,7 +80,7 @@ interface SakFilområdeProps {
   sakId: string;
   /** Om brukeren kan opprette og redigere dokumenter. Standard: `true` */
   redigerbar?: boolean;
-  /** Om brukeren kan laste opp filer. Standard: samme verdi som `redigerbar`. */
+  /** Om brukeren kan laste opp filer og endre mapper. Standard: samme verdi som `redigerbar`. */
   kanLasteOppFiler?: boolean;
   /** Om innlogget bruker er sakseier og kan slette vedlegg. Standard: `false` */
   erSakseier?: boolean;
@@ -166,7 +166,7 @@ export function SakFilområde({
                   </Button>
                 </>
               )}
-              {redigerbar && <OpprettMappeKnapp sakId={sakId} mapper={alleMapper} />}
+              {kanLasteOppFiler && <OpprettMappeKnapp sakId={sakId} mapper={alleMapper} />}
               {redigerbar && <OpprettDokumentKnapp sakId={sakId} />}
             </HStack>
           )}
@@ -180,6 +180,7 @@ export function SakFilområde({
             filer={filer}
             sakId={sakId}
             redigerbar={redigerbar}
+            kanEndreMapper={kanLasteOppFiler}
             erSakseier={erSakseier}
             lasterOpp={lasterOpp}
             feilFraServer={feilFraServer}

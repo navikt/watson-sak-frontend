@@ -59,8 +59,10 @@ interface FilTreProps {
   dokumenter: DokumentNode[];
   filer: FilResponse[];
   sakId: string;
-  /** Om brukeren kan redigere dokumenter, opprette mapper og flytte ting. */
+  /** Om brukeren kan slette dokumenter. */
   redigerbar: boolean;
+  /** Om brukeren kan endre mapper og flytte dokumenter og filer. Følger retten til å laste opp filer. */
+  kanEndreMapper: boolean;
   /** Om innlogget bruker er sakseier og kan gi nytt navn til og slette vedlegg. */
   erSakseier: boolean;
   /** Om en opplasting pågår (styrt av `SakFilområde`, som eier «Last opp fil»-knappen). */
@@ -71,7 +73,7 @@ interface FilTreProps {
 
 /**
  * Viser dokumenter og opplastede filer i en mappestruktur. Mappene er lukket når siden lastes.
- * Brukere som kan redigere, kan flytte mapper, dokumenter og filer med dra og slipp, eller med
+ * Brukere som kan endre mapper, kan flytte mapper, dokumenter og filer med dra og slipp, eller med
  * «Flytt til …» fra menyen når de bruker tastatur.
  */
 export function FilTre({
@@ -80,6 +82,7 @@ export function FilTre({
   filer,
   sakId,
   redigerbar,
+  kanEndreMapper,
   erSakseier,
   lasterOpp = false,
   feilFraServer = null,
@@ -150,7 +153,7 @@ export function FilTre({
 
   /** Props som gjør et element i treet flyttbart, og til et slippmål for mappen det ligger i. */
   function draProps(element: FlyttbartElement, mål: Slippmål) {
-    if (!redigerbar) return {};
+    if (!kanEndreMapper) return {};
     return {
       draggable: true,
       onDragStart: (event: DragEvent<HTMLElement>) => {
@@ -168,7 +171,7 @@ export function FilTre({
   }
 
   function slippProps(mål: Slippmål) {
-    if (!redigerbar) return {};
+    if (!kanEndreMapper) return {};
     return {
       onDragOver: (event: DragEvent<HTMLElement>) => {
         if (!dras) return;
@@ -236,7 +239,7 @@ export function FilTre({
               {åpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
             </span>
           </button>
-          {redigerbar && (
+          {kanEndreMapper && (
             <ActionMenu>
               <ActionMenu.Trigger>
                 <Button
@@ -298,7 +301,7 @@ export function FilTre({
   }
 
   function flyttKnapp(element: FlyttbartElement & { type: "dokument" | "fil" }) {
-    if (!redigerbar) return null;
+    if (!kanEndreMapper) return null;
     return (
       <Button
         type="button"

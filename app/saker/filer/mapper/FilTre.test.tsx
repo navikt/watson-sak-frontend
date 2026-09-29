@@ -49,20 +49,28 @@ const mockFilAction = vi.fn(async ({ request }: { request: Request }) => ({
   body: await request.json(),
 }));
 
-type TestProps = Omit<Parameters<typeof FilTre>[0], "mapper" | "dokumenter" | "redigerbar"> &
-  Partial<Pick<Parameters<typeof FilTre>[0], "mapper" | "dokumenter" | "redigerbar">>;
+type Valgfrie = "mapper" | "dokumenter" | "redigerbar" | "kanEndreMapper";
+type TestProps = Omit<Parameters<typeof FilTre>[0], Valgfrie> &
+  Partial<Pick<Parameters<typeof FilTre>[0], Valgfrie>>;
 
 async function renderSeksjon({
   mapper = [],
   dokumenter = [],
   redigerbar = false,
+  kanEndreMapper = redigerbar,
   ...props
 }: TestProps) {
   const Stub = createRoutesStub([
     {
       path: "/saker/:sakId",
       Component: () => (
-        <FilTre mapper={mapper} dokumenter={dokumenter} redigerbar={redigerbar} {...props} />
+        <FilTre
+          mapper={mapper}
+          dokumenter={dokumenter}
+          redigerbar={redigerbar}
+          kanEndreMapper={kanEndreMapper}
+          {...props}
+        />
       ),
     },
     {
@@ -289,6 +297,20 @@ describe("FilTre", () => {
       await renderSeksjon({ mapper, filer: mockFiler, sakId: "SAK-1", erSakseier: true });
       expect(screen.queryByLabelText("Handlinger for mappen Bank")).toBeNull();
       expect(screen.queryByLabelText("Flytt anmeldelse.pdf til mappe")).toBeNull();
+    });
+
+    it("lar brukeren endre mapper uten å kunne slette dokumenter", async () => {
+      await renderSeksjon({
+        mapper,
+        dokumenter: [{ ...mockDokumenter[0], mappe: null }],
+        filer: [],
+        sakId: "SAK-1",
+        erSakseier: false,
+        kanEndreMapper: true,
+      });
+      expect(screen.getByLabelText("Handlinger for mappen Bank")).toBeDefined();
+      expect(screen.getByLabelText("Flytt Saksframlegg til mappe")).toBeDefined();
+      expect(screen.queryByLabelText("Slett Saksframlegg")).toBeNull();
     });
 
     it("flytter en fil til en mappe via flyttedialogen", async () => {

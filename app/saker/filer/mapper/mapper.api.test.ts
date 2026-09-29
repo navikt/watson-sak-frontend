@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getSaksreferanse } from "~/saker/id";
-import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
+import type { KontrollsakSaksbehandler, KontrollsakSteg } from "~/saker/types.backend";
 import { hentFordelingssaker } from "~/testing/mock-store/alle-saker.server";
 import { hentFilerForSak, leggTilFil } from "~/testing/mock-store/filer.server";
 import { hentMapperForSak } from "~/testing/mock-store/mapper.server";
@@ -26,11 +26,11 @@ const state = () => hentMockState(testRequest);
 
 const meg: KontrollsakSaksbehandler = { navIdent: "Z999999", navn: "Test", enhet: "4812" };
 
-function settOppSak({ eier = true } = {}) {
+function settOppSak({ eier = true, steg = "UTREDES" as KontrollsakSteg } = {}) {
   const sak = hentFordelingssaker(state())[0];
   sak.saksbehandlere.eier = eier ? meg : { ...meg, navIdent: "Z111111" };
   sak.saksbehandlere.deltMed = [];
-  sak.steg = "UTREDES";
+  sak.steg = steg;
   return { sakId: String(sak.id), ref: getSaksreferanse(sak.id) };
 }
 
@@ -145,6 +145,19 @@ describe("mapper.api", () => {
     expect(
       await send(ref, { handling: "flytt-fil", id: fil.id, mappe: "Finnes ikke" }),
     ).toMatchObject({ ok: false, status: 404 });
+  });
+
+  it("lar brukeren opprette mapper mens saken er i steget Opprettet", async () => {
+    const { sakId, ref } = settOppSak({ steg: "OPPRETTET" });
+    expect(await send(ref, { handling: "opprett", sti: "Bank" })).toMatchObject({ ok: true });
+    expect(stier(sakId)).toContain("Bank");
+  });
+
+  it("gir 403 når saken er avsluttet", async () => {
+    const { ref } = settOppSak({ steg: "AVSLUTTET" });
+    await expect(send(ref, { handling: "opprett", sti: "Bank" })).rejects.toMatchObject({
+      init: { status: 403 },
+    });
   });
 
   it("gir 403 når brukeren ikke kan redigere dokumenter på saken", async () => {

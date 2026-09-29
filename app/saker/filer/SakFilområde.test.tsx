@@ -128,6 +128,18 @@ describe("SakFilområde", () => {
     });
   });
 
+  it("viser 'Opprett mappe' når brukeren kan laste opp filer, men ikke redigere dokumenter", () => {
+    renderOmråde({
+      dokumenter: [],
+      filer: [],
+      sakId: "ABC-123",
+      redigerbar: false,
+      kanLasteOppFiler: true,
+    });
+    expect(screen.getByRole("button", { name: "Opprett mappe" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Opprett dokument" })).toBeNull();
+  });
+
   it("skjuler 'Opprett mappe' når brukeren ikke kan redigere", () => {
     renderOmråde({ dokumenter: [], filer: [], sakId: "ABC-123", redigerbar: false });
     expect(screen.queryByRole("button", { name: "Opprett mappe" })).toBeNull();

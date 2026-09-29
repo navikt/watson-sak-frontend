@@ -43,8 +43,8 @@ async function utførMotBackend(
 ) {
   const token = await getBackendOboToken(request);
   const sak = await backendApi.hentKontrollsak(token, sakId);
-  if (!hentStegbaserteSaksregler(sak.steg).kanRedigereDokumenter) {
-    throw data("Mapper kan ikke endres i dette steget", { status: 403 });
+  if (!hentStegbaserteSaksregler(sak.steg).kanLasteOppFiler) {
+    throw data("Mapper kan ikke endres når saken er avsluttet", { status: 403 });
   }
 
   try {
@@ -86,7 +86,7 @@ async function utførMotMock(
   if (!tilgang) {
     throw data("Sak ikke funnet", { status: 404 });
   }
-  if (!tilgang.kanRedigereDokumenter) {
+  if (!tilgang.kanLasteOppFiler) {
     throw data("Ingen tilgang til å endre mapper", { status: 403 });
   }
 
