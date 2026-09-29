@@ -243,8 +243,8 @@ function feltskjemaFor(steg: KontrollsakSteg): TillatteHandlingerResponse["felts
         ),
         mockFelt(
           "politi.belopTilbakekrevd",
-          "Beløp tilbakekrevd (kr)",
-          "tall",
+          "Beløp tilbakekrevd",
+          "belop",
           false,
           [],
           "politi.type=DOMFELLELSE",

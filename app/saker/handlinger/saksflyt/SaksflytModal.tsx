@@ -155,7 +155,7 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
           </VStack>
         </Modal.Body>
         <Modal.Footer>
-          <Button type="button" variant="primary" onClick={onClose}>
+          <Button type="button" variant="primary" className="w-full" onClick={onClose}>
             Lukk
           </Button>
         </Modal.Footer>
@@ -227,6 +227,7 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
         <VStack gap="space-8" className="w-full">
           <Button
             type="button"
+            className="w-full"
             variant="primary"
             loading={erSubmitting}
             onClick={() =>
@@ -242,6 +243,7 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
           {visLagreUtenAvslutning && (
             <Button
               type="button"
+              className="w-full"
               variant="secondary"
               disabled={erSubmitting}
               onClick={() => fortsett(trinn, alleVerdier, { handling: "lagre_resultat" })}
@@ -250,13 +252,20 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
             </Button>
           )}
           {lukkerVedTilbake(trinn) ? (
-            <Button type="button" variant="secondary" disabled={erSubmitting} onClick={lukk}>
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full"
+              disabled={erSubmitting}
+              onClick={lukk}
+            >
               Tilbake til saksbildet
             </Button>
           ) : (
             kanGåTilbake && (
               <Button
                 type="button"
+                className="w-full"
                 variant="secondary"
                 disabled={erSubmitting}
                 onClick={() => dispatch({ type: "tilbake" })}

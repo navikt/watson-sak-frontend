@@ -229,9 +229,11 @@ describe("SaksflytModal", () => {
 
     await screen.findByRole("dialog", { name: "Registrer dom" });
     expect(screen.queryByLabelText("Strafferabatt (%)")).toBeNull();
-    fireEvent.change(screen.getByLabelText("Beløp tilbakekrevd (kr)"), {
-      target: { value: "15000" },
-    });
+    klikk("Registrer resultat, men ikke avslutt");
+    expect(screen.getByText("Beløp tilbakekrevd må fylles ut")).toBeDefined();
+    const tilbakekrevd = screen.getByLabelText("Beløp tilbakekrevd (kr)");
+    fireEvent.change(tilbakekrevd, { target: { value: "15000" } });
+    expect(tilbakekrevd).toHaveProperty("value", "15 000");
     fireEvent.click(screen.getByRole("radio", { name: "Ja" }));
     fireEvent.change(screen.getByLabelText("Strafferabatt (%)"), { target: { value: "120" } });
     klikk("Registrer resultat, men ikke avslutt");
