@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { TillatteHandlingerResponse } from "~/saker/types.backend";
-import { byggLagreResultatRequest, resultatFeltErAktivt } from "./resultat-request";
+import {
+  byggLagreResultatRequest,
+  erGyldigIsoDato,
+  resultatFeltErAktivt,
+} from "./resultat-request";
 
 const feltskjema: TillatteHandlingerResponse["feltskjema"] = [
   {
@@ -162,5 +166,15 @@ describe("resultatFeltErAktivt", () => {
 
     expect(resultatFeltErAktivt(betingetFelt, { "utredning.type": "KONTROLLNOTAT" })).toBe(false);
     expect(resultatFeltErAktivt(betingetFelt, { "utredning.type": "HENLAGT" })).toBe(true);
+  });
+});
+
+describe("erGyldigIsoDato", () => {
+  it.each(["2026-09-01", "2024-02-29"])("godtar %s", (dato) => {
+    expect(erGyldigIsoDato(dato)).toBe(true);
+  });
+
+  it.each(["2026-02-31", "2026-13-01", "2025-02-29", "01.09.2026", ""])("avviser %s", (dato) => {
+    expect(erGyldigIsoDato(dato)).toBe(false);
   });
 });

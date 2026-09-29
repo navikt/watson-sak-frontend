@@ -1,5 +1,10 @@
 import type { TillatteHandlingerResponse } from "~/saker/types.backend";
-import { lesBelop, resultatFeltErAktivt, resultatFeltErPaakrevd } from "../resultat-request";
+import {
+  erGyldigIsoDato,
+  lesBelop,
+  resultatFeltErAktivt,
+  resultatFeltErPaakrevd,
+} from "../resultat-request";
 import {
   aktiveVerdier,
   erBelopsfelt,
@@ -52,7 +57,7 @@ function validerFelt(felt: Skjemafelt, verdi: string, verdier: Verdier): string 
     }
   }
   if (felt.datatype === "dato") {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(verdi)) return `${felt.etikett} må være en gyldig dato`;
+    if (!erGyldigIsoDato(verdi)) return `${felt.etikett} må være en gyldig dato`;
     if (verdi > iDag()) return `${felt.etikett} kan ikke være fram i tid`;
   }
   return undefined;

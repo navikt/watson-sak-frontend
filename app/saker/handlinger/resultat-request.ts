@@ -108,11 +108,17 @@ function konverterVerdi(
     return lesBelop(verdi, felt.etikett);
   }
   if (felt.datatype === "dato") {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(verdi))
-      throw new Error(`${felt.etikett} må være en gyldig dato`);
+    if (!erGyldigIsoDato(verdi)) throw new Error(`${felt.etikett} må være en gyldig dato`);
     return verdi;
   }
   return undefined;
+}
+
+/** Sjekker at verdien er en dato på formen YYYY-MM-DD som finnes i kalenderen. */
+export function erGyldigIsoDato(verdi: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(verdi)) return false;
+  const dato = new Date(`${verdi}T00:00:00Z`);
+  return !Number.isNaN(dato.getTime()) && dato.toISOString().slice(0, 10) === verdi;
 }
 
 function settFelt(
