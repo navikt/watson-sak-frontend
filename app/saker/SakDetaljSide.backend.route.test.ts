@@ -444,6 +444,24 @@ describe("SakDetaljSide loader — backend-sti", () => {
     );
   });
 
+  it("returnerer feil til saksflyt-modalen når backend ikke svarer", async () => {
+    mockHentTillatteHandlinger.mockRejectedValueOnce(new TypeError("fetch failed"));
+    const formData = new FormData();
+    formData.set("handling", "endre_status");
+    formData.set("status", "I_BERO");
+    const { action } = await import("./SakDetaljSide.server");
+
+    const resultat = await action({
+      request: new Request("http://localhost/saker/1", { method: "POST", body: formData }),
+      params: { sakId: "1" },
+    } as Parameters<typeof action>[0]);
+
+    expect(resultat).toMatchObject({
+      data: { ok: false, feil: expect.stringContaining("Fikk ikke kontakt") },
+      init: { status: 502 },
+    });
+  });
+
   it("returnerer feil til saksflyt-modalen i stedet for å kaste når backend avviser", async () => {
     mockHentTillatteHandlinger.mockResolvedValue({
       versjon: 1,

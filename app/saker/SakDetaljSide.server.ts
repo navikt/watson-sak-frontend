@@ -603,6 +603,14 @@ function saksflytfeil(feil: unknown) {
     const status = (feil.init as ResponseInit | null)?.status ?? 400;
     return data<SaksflytFeil>({ ok: false, feil: feil.data }, { status });
   }
+  // fetch avviser med TypeError ved nettverks- og DNS-feil, før backend har svart.
+  if (feil instanceof TypeError) {
+    logger.error("Fikk ikke kontakt med backend fra saksflyt-modalen", { feil: feil.message });
+    return data<SaksflytFeil>(
+      { ok: false, feil: "Fikk ikke kontakt med baksystemet. Prøv igjen om litt." },
+      { status: 502 },
+    );
+  }
   throw feil;
 }
 
