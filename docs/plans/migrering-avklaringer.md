@@ -370,7 +370,11 @@ lese-API-et ennå. Prod og dev
 beholder migreringsruten stengt. En avkortet side vises ikke som fullstendig.
 «Ferdig migrert» vises bare når kandidaten eksplisitt har status `FULLSTENDIG`;
 «Under flytting» betyr at en sak finnes uten ferdigbekreftelse. Opprettet
-Watson-sak alene betyr ikke at migreringen er fullstendig.
+Watson-sak alene betyr ikke at migreringen er fullstendig. I `local-mock`
+peker «Ferdig migrert» og «Under flytting» på to faktiske, syntetiske
+mock-saker. Saken som er ferdigmerket har et syntetisk «Notat fra
+opprettelse» under Filer og en grønn eksempelbekreftelse på saksdetaljene.
+Dette er forhåndsvisning, ikke en lagret statusovergang.
 
 I `local-mock` og `local-backend` vises «Notat» på Opprett sak etter at
 personen er slått opp, også om den kortlivede migreringscookien er brukt opp.

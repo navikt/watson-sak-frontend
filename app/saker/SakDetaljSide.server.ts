@@ -3,6 +3,7 @@ import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
 import { logger } from "~/logging/logging";
+import { hentMockMigreringKandidater } from "~/migrering/mock-data.server";
 import { redigerSaksinformasjonSchema } from "~/registrer-sak/validering";
 import {
   bygFeilkartFraIssues,
@@ -470,6 +471,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
     return {
       sak: sakForRespons,
+      migreringsstatus: null,
       tillatteHandlinger,
       historikk,
       journalposter,
@@ -490,9 +492,21 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   }
   const innlogget = await hentInnloggetBruker({ request });
   const sak = medInnloggetEier(rawSak, innlogget.navIdent, innlogget.name);
+  const erEier = sak.saksbehandlere.eier?.navIdent === innlogget.navIdent;
+  // Kun syntetisk visning for sakseier: samsvar på kilde, PID, person og saks-ID.
+  // En opprettet sak betyr aldri i seg selv at migreringen er fullstendig.
+  const migreringsstatus =
+    erEier && sak.legacyPid && sak.legacyKilde
+      ? (hentMockMigreringKandidater(innlogget.navIdent).find(
+          (k) =>
+            k.legacyKilde === sak.legacyKilde &&
+            k.legacyPid === sak.legacyPid &&
+            k.personIdent === sak.personIdent &&
+            k.alleredeMigrertTilKontrollsakId === sak.id,
+        )?.migreringsstatus ?? null)
+      : null;
   const tillatteHandlinger = hentMockTillatteHandlinger(sak);
   const historikk = hentHistorikk(request, String(sak.id));
-  const erEier = sak.saksbehandlere.eier?.navIdent === innlogget.navIdent;
   const harDeltTilgang = sak.saksbehandlere.deltMed.some((s) => s.navIdent === innlogget.navIdent);
   const harTilgangViaKobling = sak.kobledeSaker.some(
     (kobletId) =>
@@ -512,6 +526,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   );
   return {
     sak,
+    migreringsstatus,
     tillatteHandlinger,
     historikk,
     journalposter: [],

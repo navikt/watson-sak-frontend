@@ -52,6 +52,16 @@ describe("MigreringInnhold", () => {
     expect(within(rad).queryByRole("button", { name: "Opprett sak" })).toBeNull();
   });
 
+  it("lenker de to syntetiske statusene til saker som finnes i mockdata", () => {
+    renderSide();
+    expect(screen.getByRole("link", { name: "Ferdig migrert" }).getAttribute("href")).toBe(
+      "/saker/1181",
+    );
+    expect(screen.getByRole("link", { name: "Under flytting" }).getAttribute("href")).toBe(
+      "/saker/1182",
+    );
+  });
+
   it("holder utredning og SV adskilt selv når PID er lik", () => {
     renderSide();
     const rader = screen.getAllByText("100245").map((celle) => celle.closest("tr"));

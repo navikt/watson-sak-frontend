@@ -426,8 +426,55 @@ function lagMockMineKontrollsaker() {
 /** Factory som brukes av session.server.ts for å bygge initial tilstand */
 export const lagInitialMineKontrollsaker = lagMockMineKontrollsaker;
 
-// Backend-genererte demo-saker (28 stk) i nytt format — parses direkte med kontrollsakResponseSchema
+// Backend-genererte demo-saker (inkludert to syntetiske migreringseksempler)
+// i nytt format — parses direkte med kontrollsakResponseSchema.
 const backendGenererteDemoSaker = [
+  {
+    id: 1181,
+    personIdent: "12345678901",
+    legacyPid: "100245",
+    legacyKilde: "UTREDNING",
+    saksbehandlere: {
+      ansvarlig: innloggetEier,
+      deltMed: [],
+      opprettetAv: innloggetEier,
+    },
+    steg: "OPPRETTET",
+    kategori: "ARBEID",
+    kilde: "NAV_KONTROLL",
+    misbruktype: [],
+    prioritet: "NORMAL",
+    ytelser: [],
+    merking: [],
+    status: null,
+    oppgaver: [],
+    kobledeSaker: [],
+    opprettet: "2026-09-20T09:00:00Z",
+    oppdatert: null,
+  },
+  {
+    id: 1182,
+    personIdent: "23456789012",
+    legacyPid: "100310",
+    legacyKilde: "UTREDNING",
+    saksbehandlere: {
+      ansvarlig: innloggetEier,
+      deltMed: [],
+      opprettetAv: innloggetEier,
+    },
+    steg: "OPPRETTET",
+    kategori: "ARBEID",
+    kilde: "NAV_KONTROLL",
+    misbruktype: [],
+    prioritet: "NORMAL",
+    ytelser: [],
+    merking: [],
+    status: null,
+    oppgaver: [],
+    kobledeSaker: [],
+    opprettet: "2026-09-20T10:00:00Z",
+    oppdatert: null,
+  },
   {
     id: 1001,
     personIdent: "12345678901",

@@ -1,5 +1,5 @@
 import { ArrowLeftIcon } from "@navikt/aksel-icons";
-import { BodyShort, Button, Checkbox, HGrid, VStack } from "@navikt/ds-react";
+import { BodyShort, Button, Checkbox, HGrid, LocalAlert, VStack } from "@navikt/ds-react";
 import { useCallback, useEffect, useState } from "react";
 import { useLoaderData, useNavigate } from "react-router";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
@@ -43,6 +43,7 @@ export default function SakDetaljSide() {
     historikk,
     dokumenter,
     filer,
+    migreringsstatus,
     andreSaker,
     saksbehandlerDetaljer,
   } = useLoaderData<typeof loader>();
@@ -54,6 +55,8 @@ export default function SakDetaljSide() {
   const miljø = useMiljø();
   const stegregler = hentStegbaserteSaksregler(sak.steg);
   const erEier = erSakseier(sak, innloggetBruker.navIdent);
+  const erFerdigMigrertEksempel =
+    miljø === "local-mock" && erEier && sak.legacyPid && migreringsstatus === "FULLSTENDIG";
   const harDeltTilgang = sak.saksbehandlere.deltMed.some(
     (saksbehandler) => saksbehandler.navIdent === innloggetBruker.navIdent,
   );
@@ -117,11 +120,24 @@ export default function SakDetaljSide() {
 
             {sak.legacyPid && erEier && (miljø === "local-mock" || miljø === "local-backend") && (
               <div>
-                <Checkbox disabled>Saken er ferdig flyttet</Checkbox>
+                <Checkbox disabled readOnly checked={Boolean(erFerdigMigrertEksempel)}>
+                  Saken er ferdig flyttet
+                </Checkbox>
                 <BodyShort size="small" textColor="subtle">
                   Forhåndsvisning. Ferdigmerking kan ikke lagres før backend er klar.
                 </BodyShort>
               </div>
+            )}
+
+            {erFerdigMigrertEksempel && (
+              <LocalAlert status="success">
+                <LocalAlert.Header>
+                  <LocalAlert.Title as="h2">Saken er ferdig flyttet</LocalAlert.Title>
+                </LocalAlert.Header>
+                <LocalAlert.Content>
+                  Eksempel fra lokale mockdata. Ingen ferdigmelding er lagret i backend.
+                </LocalAlert.Content>
+              </LocalAlert>
             )}
 
             {harDirekteTilgang ? (
@@ -133,7 +149,9 @@ export default function SakDetaljSide() {
                 kanLasteOppFiler={harDirekteTilgang && stegregler.kanLasteOppFiler}
                 erSakseier={erEier}
                 visMigreringsnotatForhandsvisning={Boolean(
-                  sak.legacyPid && (miljø === "local-mock" || miljø === "local-backend"),
+                  sak.legacyPid &&
+                  (miljø === "local-mock" || miljø === "local-backend") &&
+                  !dokumenter.some((dokument) => dokument.tittel === "Notat fra opprettelse"),
                 )}
               />
             ) : (

@@ -92,6 +92,7 @@ export function hentMockMigreringKandidater(navIdent: string): MigreringKandidat
         { felt: "UTREDRES", verdi: null },
         { felt: "FERDIGDATO", verdi: "2023-03-01" },
       ],
+      alleredeMigrertTilKontrollsakId: 1182,
     },
 
     // 2. TIPS_VENTER_RESULTAT
