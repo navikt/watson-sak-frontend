@@ -24,6 +24,7 @@ const filSeeds: { sakId: string; filer: FilResponse[] }[] = [
         opprettetAv: "Kari Hansen",
         opprettet: "2026-03-01T14:15:00Z",
         bruktIDokumenter: [],
+        mappe: "Dokumentasjon fra banken",
       },
     ],
   },

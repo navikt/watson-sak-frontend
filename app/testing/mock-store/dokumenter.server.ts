@@ -40,6 +40,8 @@ type DokumentSeed = {
   endretAv: string;
   endretDato: string;
   avsnitt: string[];
+  /** Mappen dokumentet ligger i, slik at mappevisningen har noe å vise lokalt. */
+  mappe?: string;
 };
 
 const dokumentSeeds: DokumentSeed[] = [
@@ -72,6 +74,7 @@ const dokumentSeeds: DokumentSeed[] = [
     endretAv: "Per Olsen",
     endretDato: "2026-03-01",
     avsnitt: ["Oppsummering fra et internt møte. Dette er dummytekst."],
+    mappe: "Møtereferater",
   },
   {
     id: "2-1",
@@ -90,6 +93,7 @@ const dokumentSeeds: DokumentSeed[] = [
     endretAv: "Per Olsen",
     endretDato: "2026-03-05",
     avsnitt: ["Punkter til en presentasjon. Dette er dummyinnhold."],
+    mappe: "Møtereferater/Ledelsen",
   },
   {
     id: "4",
@@ -113,6 +117,7 @@ function seedDokumenter(state: MockState, sakId: string): DokumentNode[] {
       endretAv: seed.endretAv,
       endretDato: seed.endretDato,
       låsAv: null,
+      mappe: seed.mappe ?? null,
     };
   });
   return noder;

@@ -13,6 +13,7 @@ import {
   opprettEllerOppdaterDokumentHistorikk,
 } from "../mock-data.server";
 import { hentStegbaserteSaksregler } from "../../stegregler";
+import { hentMapperstier, hentMapperstierFraMock } from "../mapper/mapper.server";
 import { getSaksenhet } from "~/saker/selectors";
 import { hentKommentarliste as hentKommentarlisteFraBackend } from "./kommentarer/kommentarer.api.server";
 import { hentKommentarliste as hentKommentarlisteFraMock } from "./kommentarer/mock-data.server";
@@ -57,21 +58,23 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     // Kommentarene hentes parallelt med dokument og historikk, slik at panelet er
     // fylt allerede ved første render. Feiler kommentarkallet, vil vi fortsatt vise
     // dokumentet – kommentarer skal ikke kunne blokkere saksbehandlingen.
-    const [sak, dokument, innlogget, dokumentHistorikk, kommentarresultat] = await Promise.all([
-      backendApi.hentKontrollsak(token, sakReferanse),
-      backendApi.hentDokument(token, sakReferanse, docId),
-      hentInnloggetBruker({ request }),
-      backendApi.hentDokumentHistorikk(token, sakReferanse, docId),
-      hentKommentarlisteFraBackend(token, sakReferanse, docId)
-        .then((liste) => ({ liste, feilet: false }))
-        .catch((feil: unknown): { liste: Kommentarliste | null; feilet: true } => {
-          if (erUtloggetFeil(feil)) throw feil;
-          logger.warn(`Kunne ikke hente kommentarer for dokument ${docId}`, {
-            feil: String(feil),
-          });
-          return { liste: null, feilet: true };
-        }),
-    ]);
+    const [sak, dokument, innlogget, dokumentHistorikk, kommentarresultat, mapper] =
+      await Promise.all([
+        backendApi.hentKontrollsak(token, sakReferanse),
+        backendApi.hentDokument(token, sakReferanse, docId),
+        hentInnloggetBruker({ request }),
+        backendApi.hentDokumentHistorikk(token, sakReferanse, docId),
+        hentKommentarlisteFraBackend(token, sakReferanse, docId)
+          .then((liste) => ({ liste, feilet: false }))
+          .catch((feil: unknown): { liste: Kommentarliste | null; feilet: true } => {
+            if (erUtloggetFeil(feil)) throw feil;
+            logger.warn(`Kunne ikke hente kommentarer for dokument ${docId}`, {
+              feil: String(feil),
+            });
+            return { liste: null, feilet: true };
+          }),
+        hentMapperstier(token, sakReferanse),
+      ]);
 
     const kanSe =
       sak.saksbehandlere.eier?.navIdent === innlogget.navIdent ||
@@ -86,6 +89,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     return {
       dokument,
       dokumenter: sak.dokumenter ?? [],
+      mapper,
       dokumentHistorikk: dokumentHistorikk.items,
       // Kommenterbarhet er backendens fasit (`kanKommentere` i GET-wrapperen).
       // Falt kallet ut, viser vi et skrivebeskyttet panel med tydelig retry.
@@ -125,6 +129,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   return {
     dokument,
     dokumenter: hentDokumenttreForSak(request, String(tilgang.sak.id)),
+    mapper: hentMapperstierFraMock(request, String(tilgang.sak.id)),
     dokumentHistorikk: hentDokumentHistorikk(request, String(tilgang.sak.id), params.docId),
     kommentarliste: hentKommentarlisteFraMock(request, String(tilgang.sak.id), params.docId, {
       innloggetIdent: innlogget.navIdent,

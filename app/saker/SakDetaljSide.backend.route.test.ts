@@ -13,6 +13,7 @@ const mockHentHendelser = vi.fn();
 const mockHentJournalposter = vi.fn();
 const mockHentSaksbehandlere = vi.fn();
 const mockHentFiler = vi.fn();
+const mockHentMapper = vi.fn().mockResolvedValue([]);
 const mockEndreSteg = vi.fn();
 const mockTildelKontrollsak = vi.fn();
 const mockHentTillatteHandlinger = vi.fn().mockResolvedValue({
@@ -63,6 +64,7 @@ vi.mock("~/saker/api.server", () => ({
   hentJournalposter: mockHentJournalposter,
   hentSaksbehandlere: mockHentSaksbehandlere,
   hentFiler: mockHentFiler,
+  hentMapper: mockHentMapper,
   hentTillatteHandlinger: mockHentTillatteHandlinger,
   endreSteg: mockEndreSteg,
   tildelKontrollsak: mockTildelKontrollsak,
@@ -545,6 +547,20 @@ describe("SakDetaljSide loader — backend-sti", () => {
     const resultat = await loader(lagLoaderArgs());
 
     expect(resultat.journalposter).toEqual([]);
+  });
+
+  it("degraderer mapper stille når hentMapper gir 403", async () => {
+    mockHentKontrollsak.mockResolvedValue(grunnleggendeSak);
+    mockHentHendelser.mockResolvedValue([]);
+    mockHentJournalposter.mockResolvedValue([]);
+    mockHentSaksbehandlere.mockResolvedValue([]);
+    mockHentFiler.mockResolvedValue([]);
+    mockHentMapper.mockRejectedValueOnce(new MockBackendFeilException(403, "Ingen tilgang"));
+
+    const { loader } = await import("./SakDetaljSide.server");
+    const resultat = await loader(lagLoaderArgs());
+
+    expect(resultat.mapper).toEqual([]);
   });
 
   it("skjuler dokumenter/filer i loader-responsen når bruker verken er eier eller delt med, selv om backend gir filtilgang", async () => {
