@@ -1,0 +1,263 @@
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { createMemoryRouter, RouterProvider } from "react-router";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { KontrollsakResponse } from "~/saker/types.backend";
+import { SaksflytModal, type SaksflytStart } from "./SaksflytModal";
+import { dagpengerId, lagTillatteHandlinger } from "./testdata";
+
+const submitMock = vi.fn();
+let mockSvar: unknown;
+
+vi.mock("react-router", async () => {
+  const actual = await vi.importActual<typeof import("react-router")>("react-router");
+  const react = await import("react");
+  return {
+    ...actual,
+    useFetcher: () => {
+      const [data, setData] = react.useState<unknown>(undefined);
+      return {
+        state: "idle",
+        submit: (formData: FormData, opts: unknown) => {
+          submitMock(formData, opts);
+          setData(mockSvar);
+        },
+        data,
+      };
+    },
+  };
+});
+
+function renderModal(sak: Partial<KontrollsakResponse> = {}, start: SaksflytStart = "meny") {
+  const onClose = vi.fn();
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/",
+        element: (
+          <SaksflytModal
+            sakId="101"
+            tillatteHandlinger={lagTillatteHandlinger(sak)}
+            start={start}
+            onClose={onClose}
+          />
+        ),
+      },
+    ],
+    { initialEntries: ["/"] },
+  );
+  render(<RouterProvider router={router} />);
+  return { onClose };
+}
+
+function sendtSkjema(): Record<string, FormDataEntryValue> {
+  expect(submitMock).toHaveBeenCalledTimes(1);
+  return Object.fromEntries(submitMock.mock.calls[0][0] as FormData);
+}
+
+function klikk(navn: string) {
+  fireEvent.click(screen.getByRole("button", { name: navn }));
+}
+
+describe("SaksflytModal", () => {
+  beforeEach(() => {
+    submitMock.mockClear();
+    mockSvar = { ok: true };
+  });
+
+  afterEach(cleanup);
+
+  it("viser handlingene for steget i seksjonene Steg og Resultat", async () => {
+    renderModal();
+    const dialog = await screen.findByRole("dialog", {
+      name: "Endre steg eller registrer resultat",
+    });
+    const steg = within(dialog).getByRole("region", { name: "Steg" });
+    const resultat = within(dialog).getByRole("region", { name: "Resultat" });
+    expect(within(steg).getByRole("button", { name: "Send til Forvaltning" })).toBeDefined();
+    expect(
+      within(resultat)
+        .getAllByRole("button")
+        .map((knapp) => knapp.textContent),
+    ).toEqual(["Registrer som informasjonssak", "Henlegg sak"]);
+  });
+
+  it("flytter saken direkte når handlingen ikke har trinn", async () => {
+    renderModal({ steg: "OPPRETTET", status: null });
+    klikk("Gå til Utredning");
+    expect(await screen.findByText("Lagret")).toBeDefined();
+    expect(sendtSkjema()).toEqual({
+      handling: "endre_steg_dialog",
+      versjon: "1",
+      steg: "UTREDNING",
+      registrerResultat: "false",
+    });
+  });
+
+  it("henlegger med årsak og advarer før saken avsluttes", async () => {
+    renderModal();
+    klikk("Henlegg sak");
+    expect(await screen.findByRole("dialog", { name: "Henlegg sak" })).toBeDefined();
+
+    klikk("Henlegg og avslutt sak");
+    expect(screen.getByText("Velg henleggelsesårsak")).toBeDefined();
+
+    fireEvent.click(screen.getByRole("radio", { name: "Bevisets stilling" }));
+    klikk("Henlegg og avslutt sak");
+    expect(await screen.findByRole("dialog", { name: "Avslutt sak" })).toBeDefined();
+    expect(screen.getByText("Tilgang til dokumenter og underlag")).toBeDefined();
+    expect(submitMock).not.toHaveBeenCalled();
+
+    klikk("Avslutt sak");
+    expect(await screen.findByText("Lagret")).toBeDefined();
+    expect(sendtSkjema()).toMatchObject({
+      steg: "AVSLUTTET",
+      registrerResultat: "true",
+      "resultat.utredning.type": "HENLAGT",
+      "resultat.utredning.henleggelsesarsak": "BEVISETS_STILLING",
+    });
+  });
+
+  it("går tilbake til menyen fra første trinn", async () => {
+    renderModal();
+    klikk("Henlegg sak");
+    await screen.findByRole("dialog", { name: "Henlegg sak" });
+    klikk("Tilbake");
+    expect(
+      await screen.findByRole("dialog", { name: "Endre steg eller registrer resultat" }),
+    ).toBeDefined();
+  });
+
+  it("lukker modalen fra advarselen før avslutning", async () => {
+    const { onClose } = renderModal();
+    klikk("Registrer som informasjonssak");
+    await screen.findByRole("dialog", { name: "Avslutt sak" });
+    klikk("Tilbake til saksbildet");
+    expect(onClose).toHaveBeenCalled();
+    expect(submitMock).not.toHaveBeenCalled();
+  });
+
+  it("krever beløp og full sjekkliste før saken sendes til forvaltning", async () => {
+    renderModal();
+    klikk("Send til Forvaltning");
+    await screen.findByRole("dialog", { name: "Send til Forvaltning" });
+    expect(screen.queryByRole("radio", { name: "Kontrollnotat" })).toBeNull();
+
+    klikk("Neste");
+    expect(screen.getByText("Resultat fra utredningen må fylles ut")).toBeDefined();
+    expect(screen.getByText("Fyll inn beløp")).toBeDefined();
+
+    fireEvent.click(screen.getByRole("radio", { name: "Feilutbetalingssak, ordinær" }));
+    fireEvent.change(screen.getByLabelText("Antatt beløp (kr)"), {
+      target: { value: "12 000" },
+    });
+    klikk("Neste");
+
+    expect(
+      await screen.findByRole("dialog", {
+        name: "Handlinger som må fullføres før saken kan sendes til forvaltning",
+      }),
+    ).toBeDefined();
+    klikk("Alt OK - gå til forvaltning");
+    expect(screen.getByText("Alle punktene må være fullført før du kan gå videre")).toBeDefined();
+
+    for (const punkt of screen.getAllByRole("checkbox")) fireEvent.click(punkt);
+    klikk("Alt OK - gå til forvaltning");
+
+    expect(await screen.findByText("Lagret")).toBeDefined();
+    expect(sendtSkjema()).toMatchObject({
+      steg: "FORVALTNING",
+      "resultat.utredning.type": "FEILUTBETALINGSSAK_ORDINAER",
+      [`ytelse.${dagpengerId}.belop`]: "12 000",
+    });
+  });
+
+  it("registrerer beløp som skal anmeldes før saken går til politiet", async () => {
+    renderModal({ steg: "STRAFFERETTSLIG_VURDERING" });
+    klikk("Gå til Politiet");
+    await screen.findByRole("dialog", { name: "Registrer beløp som skal anmeldes" });
+    fireEvent.change(screen.getByLabelText("Beløp som skal anmeldes (kr)"), {
+      target: { value: "45000" },
+    });
+    klikk("Gå til politiet");
+
+    expect(await screen.findByText("Lagret")).toBeDefined();
+    expect(sendtSkjema()).toMatchObject({
+      steg: "POLITI",
+      "resultat.strafferettsligVurdering.type": "ANMELDT",
+      [`ytelse.${dagpengerId}.anmeldtBelop`]: "45000",
+    });
+  });
+
+  it("registrerer dom uten å avslutte saken", async () => {
+    renderModal({ steg: "POLITI", status: "VENTER_PA_RESULTAT" });
+    klikk("Registrer avgjørelse");
+    await screen.findByRole("dialog", { name: "Registrer avgjørelse" });
+    fireEvent.click(screen.getByRole("radio", { name: "Domfellelse" }));
+    klikk("Neste");
+
+    await screen.findByRole("dialog", { name: "Registrer dom" });
+    expect(screen.queryByLabelText("Strafferabatt (%)")).toBeNull();
+    fireEvent.change(screen.getByLabelText("Beløp tilbakekrevd (kr)"), {
+      target: { value: "15000" },
+    });
+    fireEvent.click(screen.getByRole("radio", { name: "Ja" }));
+    fireEvent.change(screen.getByLabelText("Strafferabatt (%)"), { target: { value: "120" } });
+    klikk("Registrer resultat, men ikke avslutt");
+
+    expect(screen.getByText("Strafferabatt kan ikke være over 100 %")).toBeDefined();
+    expect(screen.getByText("Domsdato må fylles ut")).toBeDefined();
+    expect(submitMock).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText("Strafferabatt (%)"), { target: { value: "20" } });
+    const dato = screen.getByLabelText("Domsdato");
+    fireEvent.change(dato, { target: { value: "01.09.2026" } });
+    fireEvent.blur(dato);
+    klikk("Registrer resultat, men ikke avslutt");
+
+    expect(await screen.findByText("Lagret")).toBeDefined();
+    expect(sendtSkjema()).toEqual({
+      handling: "lagre_resultat",
+      versjon: "1",
+      "resultat.politi.type": "DOMFELLELSE",
+      "resultat.politi.belopTilbakekrevd": "15000",
+      "resultat.politi.strafferabatt": "true",
+      "resultat.politi.strafferabattProsent": "20",
+      "resultat.politi.domsdato": "2026-09-01",
+    });
+  });
+
+  it("endrer status og viser manglende status som Aktiv", async () => {
+    renderModal({ steg: "OPPRETTET", status: null }, "endre-status");
+    expect(await screen.findByRole("dialog", { name: "Endre status" })).toBeDefined();
+    expect(screen.getByRole("radio", { name: "Aktiv" })).toHaveProperty("checked", true);
+    expect(screen.queryByRole("button", { name: "Tilbake" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("radio", { name: "I bero" }));
+    klikk("Endre status");
+
+    expect(await screen.findByText("Lagret")).toBeDefined();
+    expect(sendtSkjema()).toEqual({ handling: "endre_status", versjon: "1", status: "I_BERO" });
+  });
+
+  it("tilbyr å gjenoppta saken fra bero", async () => {
+    renderModal({ status: "I_BERO", statusFørBero: "AKTIV" }, "endre-status");
+    await screen.findByRole("dialog", { name: "Endre status" });
+    expect(screen.getByRole("radio", { name: "Aktiv" })).toHaveProperty("checked", true);
+  });
+
+  it("viser feilmelding og beholder verdiene når lagringen feiler", async () => {
+    mockSvar = { ok: false };
+    renderModal();
+    klikk("Henlegg sak");
+    await screen.findByRole("dialog", { name: "Henlegg sak" });
+    fireEvent.click(screen.getByRole("radio", { name: "Bevisets stilling" }));
+    klikk("Henlegg og avslutt sak");
+    await screen.findByRole("dialog", { name: "Avslutt sak" });
+    klikk("Avslutt sak");
+
+    expect(
+      await screen.findByText("Kunne ikke lagre endringen. Last inn siden på nytt og prøv igjen."),
+    ).toBeDefined();
+    expect(screen.getByRole("dialog", { name: "Avslutt sak" })).toBeDefined();
+  });
+});
