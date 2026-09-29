@@ -25,8 +25,8 @@ import type {
   TillatteHandlingerResponse,
 } from "~/saker/types.backend";
 import { DelTilgangModal } from "~/saker/handlinger/DelTilgangModal";
-import { EndreStatusModal } from "~/saker/handlinger/EndreStatusModal";
-import { hentVisbareSteg } from "~/saker/handlinger/tillatte-steg";
+import { hentHandlinger } from "~/saker/handlinger/saksflyt/saksflyt";
+import { SaksflytModal, type SaksflytStart } from "~/saker/handlinger/saksflyt/SaksflytModal";
 import { OverforAnsvarligModal } from "~/saker/handlinger/OverforAnsvarligModal";
 import { SendTilAnnenEnhetModal } from "~/saker/handlinger/SendTilAnnenEnhetModal";
 import { TildelSaksbehandlerModal } from "~/saker/handlinger/TildelSaksbehandlerModal";
@@ -85,9 +85,7 @@ export function SaksbehandlereKort({
   const [visDelTilgangModal, setVisDelTilgangModal] = useState(false);
   const [visTildelModal, setVisTildelModal] = useState(false);
   const [visSendTilAnnenEnhetModal, setVisSendTilAnnenEnhetModal] = useState(false);
-  const [åpenTilstandshandling, setÅpenTilstandshandling] = useState<
-    "FLYTT_TIL_NESTE_STEG" | "ENDRE_STATUS" | null
-  >(null);
+  const [åpenSaksflyt, setÅpenSaksflyt] = useState<SaksflytStart | null>(null);
   const innloggetBruker = useInnloggetBruker();
   const kodeverk = useKodeverk();
   const fetcher = useFetcher();
@@ -122,9 +120,7 @@ export function SaksbehandlereKort({
   const kanEndreStatus =
     erEier && tillatteHandlinger?.handlinger.some((handling) => handling.type === "ENDRE_STATUS");
   const kanEndreSteg =
-    erEier &&
-    tillatteHandlinger?.handlinger.some((handling) => handling.type === "FLYTT_TIL_NESTE_STEG") &&
-    hentVisbareSteg(tillatteHandlinger).length > 0;
+    erEier && tillatteHandlinger && hentHandlinger(tillatteHandlinger).length > 0;
 
   return (
     <>
@@ -147,7 +143,7 @@ export function SaksbehandlereKort({
               {kanEndreSteg && (
                 <ResponsivEndreKnapp
                   ariaLabel="Endre steg"
-                  onClick={() => setÅpenTilstandshandling("FLYTT_TIL_NESTE_STEG")}
+                  onClick={() => setÅpenSaksflyt("meny")}
                 />
               )}
             </HStack>
@@ -172,7 +168,7 @@ export function SaksbehandlereKort({
               {kanEndreStatus && (
                 <ResponsivEndreKnapp
                   ariaLabel="Endre status"
-                  onClick={() => setÅpenTilstandshandling("ENDRE_STATUS")}
+                  onClick={() => setÅpenSaksflyt("endre-status")}
                 />
               )}
             </HStack>
@@ -371,12 +367,12 @@ export function SaksbehandlereKort({
         åpen={visSendTilAnnenEnhetModal}
         onClose={() => setVisSendTilAnnenEnhetModal(false)}
       />
-      {tillatteHandlinger && (
-        <EndreStatusModal
+      {tillatteHandlinger && åpenSaksflyt && (
+        <SaksflytModal
           sakId={String(sak.id)}
           tillatteHandlinger={tillatteHandlinger}
-          handling={åpenTilstandshandling}
-          onClose={() => setÅpenTilstandshandling(null)}
+          start={åpenSaksflyt}
+          onClose={() => setÅpenSaksflyt(null)}
         />
       )}
     </>
