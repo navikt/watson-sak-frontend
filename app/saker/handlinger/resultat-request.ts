@@ -8,6 +8,7 @@ const resultatFeltStier = {
   "utredning.type": ["utredning", "type"],
   "utredning.henleggelsesarsak": ["utredning", "henleggelsesarsak"],
   "forvaltning.type": ["forvaltning", "type"],
+  "forvaltning.tilbakekrevdBelop": ["forvaltning", "tilbakekrevdBelop"],
   "forvaltning.endeligUtfall.type": ["forvaltning", "endeligUtfall", "type"],
   "forvaltning.endeligUtfall.henleggelsesarsak": [
     "forvaltning",
@@ -16,6 +17,7 @@ const resultatFeltStier = {
   ],
   "strafferettsligVurdering.type": ["strafferettsligVurdering", "type"],
   "strafferettsligVurdering.henleggelsesarsak": ["strafferettsligVurdering", "henleggelsesarsak"],
+  "strafferettsligVurdering.anmeldtBelop": ["strafferettsligVurdering", "anmeldtBelop"],
   "politi.type": ["politi", "type"],
   "politi.henleggelsesarsak": ["politi", "henleggelsesarsak"],
   "politi.begrunnelse": ["politi", "begrunnelse"],
@@ -41,7 +43,7 @@ const fasteSkjemafelter = new Set([
   "versjon",
   "registrerResultat",
 ]);
-const belopFelt = new Set(["belop", "endeligBelop", "anmeldtBelop"]);
+const belopFelt = new Set(["belop", "endeligBelop"]);
 
 function erResultatfelt(felt: string): felt is Resultatfelt {
   return resultatFeltWhitelist.has(felt);
@@ -105,7 +107,7 @@ function konverterVerdi(
   if (felt.datatype === "tekst") {
     return verdi.trim() || undefined;
   }
-  if (felt.datatype === "tall") {
+  if (felt.datatype === "tall" || felt.datatype === "belop") {
     return lesBelop(verdi, felt.etikett);
   }
   if (felt.datatype === "dato") {
@@ -167,7 +169,7 @@ export function validerResultatFeltNavn(
         throw new Error("Skjemaet inneholder et ukjent resultatfelt");
       }
     } else if (navn.startsWith("ytelse.")) {
-      const match = /^ytelse\.([0-9a-f-]{36})\.(belop|endeligBelop|anmeldtBelop)$/.exec(navn);
+      const match = /^ytelse\.([0-9a-f-]{36})\.(belop|endeligBelop)$/.exec(navn);
       if (
         !match ||
         !ytelseIder.has(match[1] ?? "") ||
@@ -244,7 +246,7 @@ export function byggLagreResultatRequest(
   }
 
   const belopFelter = skjema
-    .filter((felt) => felt.datatype === "belop")
+    .filter((felt) => felt.datatype === "belop" && felt.felt.startsWith("ytelser[]."))
     .map((felt) => felt.felt.slice("ytelser[].".length));
   const ytelserRequest =
     belopFelter.length === 0

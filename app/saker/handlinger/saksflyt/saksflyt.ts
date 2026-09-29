@@ -36,6 +36,10 @@ export type Trinn =
       tillatteVerdier?: Readonly<Record<string, readonly string[]>>;
       /** Ledetekst for beløpsfeltene. Ytelsestypen legges til når saken har flere ytelser. */
       belopEtikett?: string;
+      /** Beløpene per ytelse kan stå tomme. */
+      belopValgfritt?: boolean;
+      /** Ledetekster som avhenger av valgte verdier, for eksempel årsak når politiet henlegger. */
+      etiketter?: (verdier: Verdier) => Readonly<Record<string, string>>;
       primær: string | ((verdier: Verdier) => string);
       /** Tilbyr «Registrer resultat, men ikke avslutt» når backend tillater det. */
       kanLagreUtenAvslutning?: (verdier: Verdier) => boolean;
@@ -160,9 +164,6 @@ const handlingstabell: Partial<Record<KontrollsakSteg, readonly Sakshandling[]>>
       ],
       innsending: { handling: "endre_steg_dialog", steg: "FORVALTNING" },
     },
-    avsluttMedResultat("informasjonssak", "Registrer som informasjonssak", {
-      "utredning.type": "KONTROLLNOTAT",
-    }),
     henlegg("utredning.henleggelsesarsak", { "utredning.type": "HENLAGT" }),
   ],
   FORVALTNING: [
@@ -176,8 +177,9 @@ const handlingstabell: Partial<Record<KontrollsakSteg, readonly Sakshandling[]>>
         {
           type: "skjema",
           tittel: "Endelig beløp",
-          felter: ["ytelser[].endeligBelop"],
+          felter: ["ytelser[].endeligBelop", "forvaltning.tilbakekrevdBelop"],
           belopEtikett: "Endelig beløp",
+          belopValgfritt: true,
           primær: "Til strafferettslig vurdering",
         },
       ],
@@ -195,15 +197,17 @@ const handlingstabell: Partial<Record<KontrollsakSteg, readonly Sakshandling[]>>
         {
           type: "skjema",
           tittel: "Registrer beløp som er feilutbetalt",
-          felter: ["ytelser[].endeligBelop"],
+          felter: ["ytelser[].endeligBelop", "forvaltning.tilbakekrevdBelop"],
           belopEtikett: "Beløp som er feilutbetalt",
+          belopValgfritt: true,
           primær: "Registrer feilutbetaling og avslutt saken",
         },
         bekreftAvslutning,
       ],
       innsending: { handling: "endre_steg_dialog", steg: "AVSLUTTET" },
     },
-    henlegg("forvaltning.endeligUtfall.henleggelsesarsak", {
+    // Henleggelse i forvaltningen har ingen årsak.
+    avsluttMedResultat("henlegg", "Henlegg sak", {
       "forvaltning.type": "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
       "forvaltning.endeligUtfall.type": "HENLAGT",
     }),
@@ -219,8 +223,7 @@ const handlingstabell: Partial<Record<KontrollsakSteg, readonly Sakshandling[]>>
         {
           type: "skjema",
           tittel: "Registrer beløp som skal anmeldes",
-          felter: ["ytelser[].anmeldtBelop"],
-          belopEtikett: "Beløp som skal anmeldes",
+          felter: ["strafferettsligVurdering.anmeldtBelop"],
           primær: "Gå til politiet",
         },
       ],
@@ -261,15 +264,18 @@ const handlingstabell: Partial<Record<KontrollsakSteg, readonly Sakshandling[]>>
           type: "skjema",
           tittel: registrerPolitiresultatTittel,
           felter: [
-            "politi.henleggelsesarsak",
+            "politi.begrunnelse",
             "paaklaget",
             "politi.belopTilbakekrevd",
             "politi.strafferabatt",
             "politi.strafferabattProsent",
             "politi.domsdato",
-            "politi.begrunnelse",
             "politi.detaljer",
           ],
+          etiketter: (verdier): Record<string, string> =>
+            erPolitietsHenleggelse(verdier)
+              ? { "politi.begrunnelse": "Årsak til henleggelse" }
+              : {},
           primær: politiavgjørelsePrimær,
           kanLagreUtenAvslutning: (verdier) => !erPolitietsHenleggelse(verdier),
           lagreUtenAvslutning: erPåklagetHenleggelse,
@@ -381,7 +387,7 @@ export const INGEN_STATUS = "__NULL__";
 
 const ytelsesfeltPrefiks = "ytelser[].";
 
-type Belopsfelt = "belop" | "endeligBelop" | "anmeldtBelop";
+type Belopsfelt = "belop" | "endeligBelop";
 
 export function erBelopsfelt(felt: string): boolean {
   return felt.startsWith(ytelsesfeltPrefiks);
@@ -401,7 +407,22 @@ function formaterTall(verdi: number): string {
   );
 }
 
-/** Startverdier: statusen saken har nå, og lagrede beløp per ytelse. */
+/** Lagret verdi for et beløpsfelt på resultatet, for eksempel `forvaltning.tilbakekrevdBelop`. */
+function lagretResultatbelop(
+  resultat: TillatteHandlingerResponse["tilstand"]["resultat"],
+  felt: string,
+): number | null | undefined {
+  if (felt === "forvaltning.tilbakekrevdBelop") return resultat?.forvaltning?.tilbakekrevdBelop;
+  if (felt === "strafferettsligVurdering.anmeldtBelop") {
+    return resultat?.strafferettsligVurdering?.anmeldtBelop;
+  }
+  return undefined;
+}
+
+/**
+ * Startverdier: statusen saken har nå, og lagrede beløp. Endelig beløp starter med antatt beløp
+ * når det ikke er registrert, siden de ofte er like.
+ */
 export function hentStartverdier(
   handling: Sakshandling,
   tillatteHandlinger: TillatteHandlingerResponse,
@@ -416,9 +437,15 @@ export function hentStartverdier(
   }
   for (const trinn of handling.trinn) {
     if (trinn.type !== "skjema") continue;
-    for (const felt of trinn.felter.filter(erBelopsfelt)) {
+    for (const felt of trinn.felter) {
+      if (!erBelopsfelt(felt)) {
+        const lagret = lagretResultatbelop(tilstand.resultat, felt);
+        if (lagret != null) verdier[felt] = formaterTall(lagret);
+        continue;
+      }
+      const nokkel = belopsnokkel(felt);
       for (const ytelse of tilstand.ytelser) {
-        const lagret = ytelse[belopsnokkel(felt)];
+        const lagret = ytelse[nokkel] ?? (nokkel === "endeligBelop" ? ytelse.belop : null);
         if (lagret != null) verdier[ytelseVerdiNavn(ytelse.id, felt)] = formaterTall(lagret);
       }
     }

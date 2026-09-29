@@ -306,7 +306,7 @@ describe("tillatte handlinger og resultatkall", () => {
     await endreSteg("token-123", "42", 1, "FORVALTNING", {
       versjon: 1,
       steg: "UTREDNING",
-      utredning: { type: "KONTROLLNOTAT" },
+      utredning: { type: "FEILUTBETALINGSSAK_ORDINAER" },
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
@@ -319,7 +319,7 @@ describe("tillatte handlinger og resultatkall", () => {
           resultat: {
             versjon: 1,
             steg: "UTREDNING",
-            utredning: { type: "KONTROLLNOTAT" },
+            utredning: { type: "FEILUTBETALINGSSAK_ORDINAER" },
           },
           beskrivelse: undefined,
         }),

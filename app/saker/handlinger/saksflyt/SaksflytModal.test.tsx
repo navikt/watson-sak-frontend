@@ -3,7 +3,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { SaksflytModal, type SaksflytStart } from "./SaksflytModal";
-import { dagpengerId, lagTillatteHandlinger } from "./testdata";
+import { dagpengerId, lagTillatteHandlinger, lagYtelse } from "./testdata";
 
 const submitMock = vi.fn();
 let mockSvar: unknown;
@@ -78,7 +78,7 @@ describe("SaksflytModal", () => {
       within(resultat)
         .getAllByRole("button")
         .map((knapp) => knapp.textContent),
-    ).toEqual(["Registrer som informasjonssak", "Henlegg sak"]);
+    ).toEqual(["Henlegg sak"]);
   });
 
   it("flytter saken direkte når handlingen ikke har trinn", async () => {
@@ -128,8 +128,8 @@ describe("SaksflytModal", () => {
   });
 
   it("lukker modalen fra advarselen før avslutning", async () => {
-    const { onClose } = renderModal();
-    klikk("Registrer som informasjonssak");
+    const { onClose } = renderModal({ steg: "FORVALTNING", status: "VENTER_PA_VEDTAK" });
+    klikk("Henlegg sak");
     await screen.findByRole("dialog", { name: "Avslutt sak" });
     klikk("Tilbake til saksbildet");
     expect(onClose).toHaveBeenCalled();
@@ -178,7 +178,10 @@ describe("SaksflytModal", () => {
     renderModal({ steg: "STRAFFERETTSLIG_VURDERING" });
     klikk("Gå til politiet");
     await screen.findByRole("dialog", { name: "Registrer beløp som skal anmeldes" });
-    fireEvent.change(screen.getByLabelText("Beløp som skal anmeldes (kr)"), {
+    expect(screen.getAllByLabelText(/\(kr\)/)).toHaveLength(1);
+    klikk("Gå til politiet");
+    expect(screen.getByText("Anmeldt beløp må fylles ut")).toBeDefined();
+    fireEvent.change(screen.getByLabelText("Anmeldt beløp (kr)"), {
       target: { value: "45000" },
     });
     klikk("Gå til politiet");
@@ -187,8 +190,34 @@ describe("SaksflytModal", () => {
     expect(sendtSkjema()).toMatchObject({
       steg: "POLITI",
       "resultat.strafferettsligVurdering.type": "ANMELDT",
-      [`ytelse.${dagpengerId}.anmeldtBelop`]: "45000",
+      "resultat.strafferettsligVurdering.anmeldtBelop": "45000",
     });
+  });
+
+  it("fyller inn antatt beløp og lar endelig og tilbakekrevd beløp være valgfrie", async () => {
+    renderModal({
+      steg: "FORVALTNING",
+      status: "VENTER_PA_VEDTAK",
+      ytelser: [lagYtelse({ belop: 12000 })],
+    });
+    klikk("Registrer feilutbetaling");
+    const endelig = await screen.findByLabelText("Beløp som er feilutbetalt (kr) (valgfritt)");
+    expect(endelig).toHaveProperty("value", "12 000");
+    fireEvent.change(endelig, { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("Tilbakekrevd beløp (kr) (valgfritt)"), {
+      target: { value: "8000" },
+    });
+    klikk("Registrer feilutbetaling og avslutt saken");
+    await screen.findByRole("dialog", { name: "Avslutt sak" });
+    klikk("Avslutt sak");
+
+    expect(await screen.findByText("Lagret")).toBeDefined();
+    const sendt = sendtSkjema();
+    expect(sendt).toMatchObject({
+      steg: "AVSLUTTET",
+      "resultat.forvaltning.tilbakekrevdBelop": "8000",
+    });
+    expect(sendt).not.toHaveProperty(`ytelse.${dagpengerId}.endeligBelop`);
   });
 
   it("registrerer dom uten å avslutte saken", async () => {
@@ -240,8 +269,12 @@ describe("SaksflytModal", () => {
     expect(
       screen.queryByRole("button", { name: "Registrer resultat, men ikke avslutt" }),
     ).toBeNull();
-    fireEvent.click(screen.getByRole("radio", { name: "Foreldet" }));
     fireEvent.click(screen.getByRole("radio", { name: "Ja" }));
+    klikk("Registrer påklaget henleggelse");
+    expect(screen.getByText("Årsak til henleggelse må fylles ut")).toBeDefined();
+    fireEvent.change(screen.getByLabelText("Årsak til henleggelse"), {
+      target: { value: "Bevisene holder ikke" },
+    });
     klikk("Registrer påklaget henleggelse");
 
     expect(await screen.findByText("Lagret")).toBeDefined();
@@ -249,7 +282,7 @@ describe("SaksflytModal", () => {
       handling: "lagre_resultat",
       versjon: "1",
       "resultat.politi.type": "HENLAGT",
-      "resultat.politi.henleggelsesarsak": "FORELDET",
+      "resultat.politi.begrunnelse": "Bevisene holder ikke",
       "resultat.paaklaget": "true",
     });
   });
@@ -264,7 +297,9 @@ describe("SaksflytModal", () => {
     klikk("Henlegg og avslutt sak");
     expect(screen.getByText("Påklager Nav Kontroll henleggelsen? må fylles ut")).toBeDefined();
 
-    fireEvent.click(screen.getByRole("radio", { name: "Foreldet" }));
+    fireEvent.change(screen.getByLabelText("Årsak til henleggelse"), {
+      target: { value: "Bevisene holder ikke" },
+    });
     fireEvent.click(screen.getByRole("radio", { name: "Nei" }));
     klikk("Henlegg og avslutt sak");
     await screen.findByRole("dialog", { name: "Avslutt sak" });

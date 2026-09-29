@@ -276,7 +276,6 @@ function lagreMockResultat(sak: KontrollsakResponse, resultat: LagreResultatRequ
             ...ytelse,
             ...(belop.belop !== undefined ? { belop: belop.belop } : {}),
             ...(belop.endeligBelop !== undefined ? { endeligBelop: belop.endeligBelop } : {}),
-            ...(belop.anmeldtBelop !== undefined ? { anmeldtBelop: belop.anmeldtBelop } : {}),
           }
         : ytelse;
     });

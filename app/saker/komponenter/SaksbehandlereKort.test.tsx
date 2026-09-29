@@ -181,6 +181,33 @@ describe("SaksbehandlereKort", () => {
     expect(await screen.findByRole("dialog", { name: "Endre status" })).toBeDefined();
   });
 
+  it("viser resultatet i stedet for status når saken er avsluttet", async () => {
+    const sak = lagKontrollsak({
+      steg: "AVSLUTTET",
+      status: null,
+      resultat: {
+        forvaltning: {
+          type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+          endeligUtfall: { type: "HENLAGT" },
+        },
+      },
+    });
+    await renderMedRouter(
+      <SaksbehandlereKort
+        erEier={true}
+        sak={sak}
+        saksbehandlerDetaljer={[lagSaksbehandler()]}
+        ansvarligSaksbehandler={lagSaksbehandler()}
+        tillatteHandlinger={lagTillatteHandlinger(sak)}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Steg og resultat" })).toBeDefined();
+    expect(screen.getByText("Henlagt")).toBeDefined();
+    expect(screen.queryByText("Aktiv")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Endre status" })).toBeNull();
+  });
+
   it("sender egen handling når Tildel meg brukes", async () => {
     const sak = lagKontrollsak({
       steg: "OPPRETTET",

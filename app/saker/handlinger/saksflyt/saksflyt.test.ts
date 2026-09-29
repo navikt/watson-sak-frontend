@@ -22,7 +22,7 @@ function finn(handlinger: Sakshandling[], id: string): Sakshandling {
 describe("hentHandlinger", () => {
   it.each([
     ["OPPRETTET", null, ["til-utredning", "til-strafferettslig-vurdering"]],
-    ["UTREDNING", "AKTIV", ["til-forvaltning", "informasjonssak", "henlegg"]],
+    ["UTREDNING", "AKTIV", ["til-forvaltning", "henlegg"]],
     [
       "FORVALTNING",
       "VENTER_PA_VEDTAK",
@@ -38,7 +38,6 @@ describe("hentHandlinger", () => {
     const handlinger = hentHandlinger(lagTillatteHandlinger({ steg: "UTREDNING" }));
     expect(handlinger.map((handling) => [handling.id, handling.seksjon])).toEqual([
       ["til-forvaltning", "steg"],
-      ["informasjonssak", "resultat"],
       ["henlegg", "resultat"],
     ]);
   });
@@ -111,6 +110,20 @@ describe("hentHandlinger", () => {
     });
     expect(ider(hentHandlinger(tillatte))).toEqual(["registrer-avgjorelse", "avslutt"]);
   });
+
+  it("henlegger fra Forvaltning uten å spørre om årsak", () => {
+    const tillatte = lagTillatteHandlinger({ steg: "FORVALTNING", status: "VENTER_PA_VEDTAK" });
+    const henlegg = finn(hentHandlinger(tillatte), "henlegg");
+    expect(henlegg.trinn.map((trinn) => trinn.type)).toEqual(["bekreftAvslutning"]);
+    expect(Object.fromEntries(byggInnsending(henlegg, {}, tillatte))).toEqual({
+      handling: "endre_steg_dialog",
+      versjon: "1",
+      steg: "AVSLUTTET",
+      registrerResultat: "true",
+      "resultat.forvaltning.type": "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+      "resultat.forvaltning.endeligUtfall.type": "HENLAGT",
+    });
+  });
 });
 
 describe("registrer avgjørelse fra politiet", () => {
@@ -155,6 +168,34 @@ describe("hentStartverdier", () => {
     const handling = finn(hentHandlinger(tillatte), "til-strafferettslig-vurdering");
     expect(hentStartverdier(handling, tillatte)).toEqual({
       [`ytelse.${dagpengerId}.endeligBelop`]: "1250,5",
+    });
+  });
+
+  it("fyller inn antatt beløp når endelig beløp ikke er satt", () => {
+    const tillatte = lagTillatteHandlinger({
+      steg: "FORVALTNING",
+      ytelser: [
+        lagYtelse({ belop: 1000, endeligBelop: null }),
+        lagYtelse({ id: aapId, type: "AAP", belop: null, endeligBelop: null }),
+      ],
+    });
+    const handling = finn(hentHandlinger(tillatte), "registrer-feilutbetaling");
+    expect(hentStartverdier(handling, tillatte)).toEqual({
+      [`ytelse.${dagpengerId}.endeligBelop`]: "1000",
+    });
+  });
+
+  it("fyller inn lagret tilbakekrevd beløp", () => {
+    const tillatte = lagTillatteHandlinger({
+      steg: "FORVALTNING",
+      ytelser: [lagYtelse({ belop: null, endeligBelop: null })],
+      resultat: {
+        forvaltning: { type: "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE", tilbakekrevdBelop: 800 },
+      },
+    });
+    const handling = finn(hentHandlinger(tillatte), "til-strafferettslig-vurdering");
+    expect(hentStartverdier(handling, tillatte)).toEqual({
+      "forvaltning.tilbakekrevdBelop": "800",
     });
   });
 
@@ -262,7 +303,7 @@ describe("byggInnsending", () => {
       finn(hentHandlinger(tillatte), "registrer-avgjorelse"),
       {
         "politi.type": "HENLAGT",
-        "politi.henleggelsesarsak": "FORELDET",
+        "politi.begrunnelse": "Bevisene holder ikke",
         paaklaget: "true",
       },
       tillatte,
@@ -272,9 +313,24 @@ describe("byggInnsending", () => {
       handling: "lagre_resultat",
       versjon: "1",
       "resultat.politi.type": "HENLAGT",
-      "resultat.politi.henleggelsesarsak": "FORELDET",
+      "resultat.politi.begrunnelse": "Bevisene holder ikke",
       "resultat.paaklaget": "true",
     });
+  });
+
+  it("sender tilbakekrevd beløp for saken og valgfritt endelig beløp", () => {
+    const tillatte = lagTillatteHandlinger({ steg: "FORVALTNING", status: "VENTER_PA_VEDTAK" });
+    const formData = byggInnsending(
+      finn(hentHandlinger(tillatte), "registrer-feilutbetaling"),
+      { "forvaltning.tilbakekrevdBelop": "12 500" },
+      tillatte,
+    );
+    expect(Object.fromEntries(formData)).toMatchObject({
+      steg: "AVSLUTTET",
+      "resultat.forvaltning.endeligUtfall.type": "FEILUTBETALINGSSAK_ORDINAER",
+      "resultat.forvaltning.tilbakekrevdBelop": "12 500",
+    });
+    expect([...formData.keys()].some((key) => key.endsWith(".endeligBelop"))).toBe(false);
   });
 
   it("dropper påklaging når utfallet ikke er henleggelse", () => {

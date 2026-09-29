@@ -123,32 +123,52 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     expect(historikk[0]?.status).toBeNull();
   });
 
-  it.each([
-    ["HENLAGT", "FORELDET"],
-    ["KONTROLLNOTAT", null],
-  ])("avslutter fra Forvaltning som %s uten endelig beløp", async (type, arsak) => {
+  it.each(["HENLAGT", "KONTROLLNOTAT"])(
+    "avslutter fra Forvaltning som %s uten endelig beløp",
+    async (type) => {
+      const sak = hentAlleSaker(testRequest).find((s: KontrollsakResponse) => s.steg === "UTREDES");
+      expect(sak).toBeDefined();
+      if (!sak) return;
+      settInnloggetSomEier(sak);
+      sak.steg = "FORVALTNING";
+      sak.status = "VENTER_PA_VEDTAK";
+      sak.resultat = null;
+      sak.ytelser = sak.ytelser.map((ytelse) => ({ ...ytelse, endeligBelop: null }));
+
+      const resultat = await utforAction(getSaksreferanse(sak.id), {
+        handling: "endre_steg_dialog",
+        steg: "AVSLUTTET",
+        registrerResultat: "true",
+        "resultat.forvaltning.type": "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+        "resultat.forvaltning.endeligUtfall.type": type,
+      });
+
+      expect(resultat).toEqual({ ok: true });
+      expect(sak.steg).toBe("AVSLUTTET");
+      expect(sak.resultat?.forvaltning?.endeligUtfall?.type).toBe(type);
+      expect(sak.ytelser.every((ytelse) => ytelse.endeligBelop === null)).toBe(true);
+    },
+  );
+
+  it("avviser henleggelsesårsak ved henleggelse fra Forvaltning", async () => {
     const sak = hentAlleSaker(testRequest).find((s: KontrollsakResponse) => s.steg === "UTREDES");
     expect(sak).toBeDefined();
     if (!sak) return;
     settInnloggetSomEier(sak);
     sak.steg = "FORVALTNING";
-    sak.status = "VENTER_PA_VEDTAK";
     sak.resultat = null;
-    sak.ytelser = sak.ytelser.map((ytelse) => ({ ...ytelse, endeligBelop: null }));
 
-    const resultat = await utforAction(getSaksreferanse(sak.id), {
-      handling: "endre_steg_dialog",
-      steg: "AVSLUTTET",
-      registrerResultat: "true",
-      "resultat.forvaltning.type": "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
-      "resultat.forvaltning.endeligUtfall.type": type,
-      ...(arsak ? { "resultat.forvaltning.endeligUtfall.henleggelsesarsak": arsak } : {}),
-    });
-
-    expect(resultat).toEqual({ ok: true });
-    expect(sak.steg).toBe("AVSLUTTET");
-    expect(sak.resultat?.forvaltning?.endeligUtfall?.type).toBe(type);
-    expect(sak.ytelser.every((ytelse) => ytelse.endeligBelop === null)).toBe(true);
+    await expect(
+      utforAction(getSaksreferanse(sak.id), {
+        handling: "endre_steg_dialog",
+        steg: "AVSLUTTET",
+        registrerResultat: "true",
+        "resultat.forvaltning.type": "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+        "resultat.forvaltning.endeligUtfall.type": "HENLAGT",
+        "resultat.forvaltning.endeligUtfall.henleggelsesarsak": "FORELDET",
+      }),
+    ).rejects.toMatchObject({ init: { status: 400 } });
+    expect(sak.steg).toBe("FORVALTNING");
   });
 
   it("avslutter henlagt Forvaltning uten endelig beløp", async () => {
@@ -164,7 +184,7 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     sak.resultat = {
       forvaltning: {
         type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
-        endeligUtfall: { type: "HENLAGT", henleggelsesarsak: "FORELDET" },
+        endeligUtfall: { type: "HENLAGT" },
       },
     };
 
@@ -179,7 +199,6 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
       registrerResultat: "true",
       "resultat.forvaltning.type": "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
       "resultat.forvaltning.endeligUtfall.type": "HENLAGT",
-      "resultat.forvaltning.endeligUtfall.henleggelsesarsak": "FORELDET",
     });
     expect(sak.steg).toBe("AVSLUTTET");
   });
@@ -256,16 +275,17 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     if (!sak) return;
     settInnloggetSomEier(sak);
     const sakId = getSaksreferanse(sak.id);
+    sak.ytelser = sak.ytelser.map((ytelse) => ({ ...ytelse, belop: 1000 }));
 
     await utforAction(sakId, {
       handling: "endre_steg_dialog",
-      steg: "AVSLUTTET",
+      steg: "FORVALTNING",
       registrerResultat: "true",
-      "resultat.utredning.type": "KONTROLLNOTAT",
+      "resultat.utredning.type": "FEILUTBETALINGSSAK_ORDINAER",
     });
 
-    expect(sak.resultat?.utredning?.type).toBe("KONTROLLNOTAT");
-    expect(sak.steg).toBe("AVSLUTTET");
+    expect(sak.resultat?.utredning?.type).toBe("FEILUTBETALINGSSAK_ORDINAER");
+    expect(sak.steg).toBe("FORVALTNING");
   });
 
   it("avviser resultatfelter som ikke finnes i mockskjemaet", async () => {
@@ -280,7 +300,8 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
         handling: "endre_steg_dialog",
         steg: "AVSLUTTET",
         registrerResultat: "true",
-        "resultat.utredning.type": "KONTROLLNOTAT",
+        "resultat.utredning.type": "HENLAGT",
+        "resultat.utredning.henleggelsesarsak": "BEVISETS_STILLING",
         "resultat.admin.godkjent": "true",
       }),
     ).rejects.toMatchObject({ init: { status: 400 } });
@@ -535,14 +556,14 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
           },
         },
       }).tillatteSteg,
-    ).toEqual([]);
+    ).toEqual(["AVSLUTTET"]);
     expect(
       hentMockTillatteHandlinger({
         ...forvaltning,
         resultat: {
           forvaltning: {
             type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
-            endeligUtfall: { type: "HENLAGT", henleggelsesarsak: "FORELDET" },
+            endeligUtfall: { type: "HENLAGT" },
           },
         },
       }).tillatteSteg,
@@ -553,7 +574,7 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
       resultat: {
         forvaltning: {
           type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
-          endeligUtfall: { type: "HENLAGT", henleggelsesarsak: "FORELDET" },
+          endeligUtfall: { type: "HENLAGT" },
         },
       },
     });
@@ -605,13 +626,12 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     const anmeldt: KontrollsakResponse = {
       ...vurdering,
       resultat: { strafferettsligVurdering: { type: "ANMELDT" } },
-      ytelser: sak.ytelser.map((ytelse) => ({ ...ytelse, anmeldtBelop: null })),
     };
     expect(hentMockTillatteHandlinger(anmeldt).tillatteSteg).toEqual([]);
     expect(
       hentMockTillatteHandlinger({
         ...anmeldt,
-        ytelser: sak.ytelser.map((ytelse) => ({ ...ytelse, anmeldtBelop: 1000 })),
+        resultat: { strafferettsligVurdering: { type: "ANMELDT", anmeldtBelop: 1000 } },
       }).tillatteSteg,
     ).toEqual(["POLITI"]);
     expect(hentMockTillatteHandlinger({ ...vurdering, status: "I_BERO" }).tillatteSteg).toEqual([]);
@@ -632,7 +652,8 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
         handling: "endre_steg_dialog",
         steg: "FORVALTNING",
         registrerResultat: "true",
-        "resultat.utredning.type": "KONTROLLNOTAT",
+        "resultat.utredning.type": "HENLAGT",
+        "resultat.utredning.henleggelsesarsak": "BEVISETS_STILLING",
       }),
     ).rejects.toMatchObject({ init: { status: 409 } });
 

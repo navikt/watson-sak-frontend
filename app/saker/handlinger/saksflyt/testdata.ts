@@ -16,7 +16,6 @@ export function lagYtelse(overstyr: Partial<KontrollsakYtelse> = {}): Kontrollsa
     periodeTil: "2025-06-30",
     belop: null,
     endeligBelop: null,
-    anmeldtBelop: null,
     ...overstyr,
   };
 }

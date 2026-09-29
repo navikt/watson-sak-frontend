@@ -62,6 +62,7 @@ const resultatResponseSchema = z.object({
     .object({
       type: z.string(),
       endeligUtfall: endeligUtfallResponseSchema.nullable().optional(),
+      tilbakekrevdBelop: z.number().nullable().optional(),
     })
     .nullable()
     .optional(),
@@ -69,6 +70,7 @@ const resultatResponseSchema = z.object({
     .object({
       type: z.string(),
       henleggelsesarsak: z.string().nullable().optional(),
+      anmeldtBelop: z.number().nullable().optional(),
     })
     .nullable()
     .optional(),
@@ -94,7 +96,6 @@ const lagreResultatRequestSchema = z.object({
   utredning: z
     .object({
       type: z.enum([
-        "KONTROLLNOTAT",
         "FEILUTBETALINGSSAK_ORDINAER",
         "FEILUTBETALINGSSAK_POTENSIELL_STRAFFESAK",
         "HENLAGT",
@@ -114,12 +115,14 @@ const lagreResultatRequestSchema = z.object({
           henleggelsesarsak: henleggelsesarsakSchema.optional(),
         })
         .optional(),
+      tilbakekrevdBelop: z.number().nonnegative().optional(),
     })
     .optional(),
   strafferettsligVurdering: z
     .object({
       type: z.enum(["ANMELDT", "FEILUTBETALINGSSAK_ORDINAER", "HENLAGT"]),
       henleggelsesarsak: henleggelsesarsakSchema.optional(),
+      anmeldtBelop: z.number().nonnegative().optional(),
     })
     .optional(),
   politi: z
@@ -147,7 +150,6 @@ const lagreResultatRequestSchema = z.object({
         id: z.string().uuid(),
         belop: z.number().nonnegative().optional(),
         endeligBelop: z.number().nonnegative().optional(),
-        anmeldtBelop: z.number().nonnegative().optional(),
       }),
     )
     .optional(),
@@ -172,7 +174,6 @@ export const tillatteHandlingerResponseSchema = z.object({
         periodeTil: z.string().nullable(),
         belop: z.number().nullable(),
         endeligBelop: z.number().nullable(),
-        anmeldtBelop: z.number().nullable().optional(),
       }),
     ),
   }),
@@ -236,7 +237,6 @@ const kontrollsakYtelseSchema = z.object({
   periodeTil: z.string().nullable(),
   belop: z.number().nullable(),
   endeligBelop: z.number().nullable(),
-  anmeldtBelop: z.number().nullable().optional(),
 });
 
 const kontrollsakSaksbehandlerSchema = z.object({

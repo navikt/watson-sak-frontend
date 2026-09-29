@@ -30,7 +30,7 @@ import { SaksflytModal, type SaksflytStart } from "~/saker/handlinger/saksflyt/S
 import { OverforAnsvarligModal } from "~/saker/handlinger/OverforAnsvarligModal";
 import { SendTilAnnenEnhetModal } from "~/saker/handlinger/SendTilAnnenEnhetModal";
 import { TildelSaksbehandlerModal } from "~/saker/handlinger/TildelSaksbehandlerModal";
-import { formaterStatus, formaterSteg, hentStegVariant } from "~/saker/visning";
+import { formaterStatus, formaterSteg, hentSluttresultat, hentStegVariant } from "~/saker/visning";
 import { ResponsivEndreKnapp } from "./ResponsivEndreKnapp";
 
 interface SaksbehandlereKortProps {
@@ -121,13 +121,14 @@ export function SaksbehandlereKort({
     erEier && tillatteHandlinger?.handlinger.some((handling) => handling.type === "ENDRE_STATUS");
   const kanEndreSteg =
     erEier && tillatteHandlinger && hentHandlinger(tillatteHandlinger).length > 0;
+  const erAvsluttet = sak.steg === "AVSLUTTET";
 
   return (
     <>
       <VStack gap="space-20">
         <VStack gap="space-16" className="rounded-lg bg-ax-bg-neutral-soft p-4">
           <Heading level="2" size="small">
-            Steg og status
+            {erAvsluttet ? "Steg og resultat" : "Steg og status"}
           </Heading>
 
           <VStack gap="space-2">
@@ -151,28 +152,41 @@ export function SaksbehandlereKort({
 
           <hr className="border-ax-border-neutral-subtle" />
 
-          <VStack gap="space-2" className="mb-2">
-            <Detail className="text-ax-text-neutral-subtle" uppercase>
-              Status
-            </Detail>
-            <HStack justify="space-between" align="center" gap="space-4">
+          {erAvsluttet ? (
+            <VStack gap="space-2" className="mb-2">
+              <Detail className="text-ax-text-neutral-subtle" uppercase>
+                Resultat
+              </Detail>
               <div>
-                <Tag
-                  variant="moderate"
-                  data-color={!sak.status || sak.status === "AKTIV" ? "success" : "warning"}
-                  size="medium"
-                >
-                  {sak.status ? formaterStatus(sak.status) : "Aktiv"}
+                <Tag variant="moderate" data-color="neutral" size="medium">
+                  {hentSluttresultat(sak.resultat) ?? "Ikke registrert"}
                 </Tag>
               </div>
-              {kanEndreStatus && (
-                <ResponsivEndreKnapp
-                  ariaLabel="Endre status"
-                  onClick={() => setÅpenSaksflyt("endre-status")}
-                />
-              )}
-            </HStack>
-          </VStack>
+            </VStack>
+          ) : (
+            <VStack gap="space-2" className="mb-2">
+              <Detail className="text-ax-text-neutral-subtle" uppercase>
+                Status
+              </Detail>
+              <HStack justify="space-between" align="center" gap="space-4">
+                <div>
+                  <Tag
+                    variant="moderate"
+                    data-color={!sak.status || sak.status === "AKTIV" ? "success" : "warning"}
+                    size="medium"
+                  >
+                    {sak.status ? formaterStatus(sak.status) : "Aktiv"}
+                  </Tag>
+                </div>
+                {kanEndreStatus && (
+                  <ResponsivEndreKnapp
+                    ariaLabel="Endre status"
+                    onClick={() => setÅpenSaksflyt("endre-status")}
+                  />
+                )}
+              </HStack>
+            </VStack>
+          )}
         </VStack>
 
         <VStack gap="space-12" className="rounded-lg bg-ax-bg-neutral-soft p-4">

@@ -10,6 +10,7 @@ import {
   erPolitiresultatKomplett,
   kanAvsluttesFraForvaltning,
 } from "./handlinger/tillatte-steg";
+import { resultatEtiketter } from "./visning";
 
 export function erGyldigMockStegovergang(
   sak: KontrollsakResponse,
@@ -18,7 +19,6 @@ export function erGyldigMockStegovergang(
   if (sak.status === "I_BERO") return false;
   const steg = sak.steg === "UTREDES" ? "UTREDNING" : sak.steg;
   const ytelserHarAntattBelop = sak.ytelser.every((ytelse) => ytelse.belop !== null);
-  const ytelserHarEndeligBelop = sak.ytelser.every((ytelse) => ytelse.endeligBelop !== null);
   switch (steg) {
     case "OPPRETTET":
       return nyttSteg === "UTREDNING" || nyttSteg === "STRAFFERETTSLIG_VURDERING";
@@ -38,10 +38,7 @@ export function erGyldigMockStegovergang(
       );
     case "FORVALTNING":
       if (nyttSteg === "STRAFFERETTSLIG_VURDERING") {
-        return (
-          sak.resultat?.forvaltning?.type === "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE" &&
-          ytelserHarEndeligBelop
-        );
+        return sak.resultat?.forvaltning?.type === "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE";
       }
       return (
         nyttSteg === "AVSLUTTET" && kanAvsluttesFraForvaltning(sak, feltskjemaFor("FORVALTNING"))
@@ -50,7 +47,7 @@ export function erGyldigMockStegovergang(
       if (nyttSteg === "POLITI") {
         return (
           sak.resultat?.strafferettsligVurdering?.type === "ANMELDT" &&
-          sak.ytelser.every((ytelse) => ytelse.anmeldtBelop != null)
+          sak.resultat.strafferettsligVurdering.anmeldtBelop != null
         );
       }
       return (
@@ -69,12 +66,7 @@ export function erGyldigMockStegovergang(
 }
 
 const resultatvalg: Partial<Record<KontrollsakSteg, ResultatType[]>> = {
-  UTREDNING: [
-    "KONTROLLNOTAT",
-    "FEILUTBETALINGSSAK_ORDINAER",
-    "FEILUTBETALINGSSAK_POTENSIELL_STRAFFESAK",
-    "HENLAGT",
-  ],
+  UTREDNING: ["FEILUTBETALINGSSAK_ORDINAER", "FEILUTBETALINGSSAK_POTENSIELL_STRAFFESAK", "HENLAGT"],
   FORVALTNING: [
     "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE",
     "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
@@ -84,21 +76,6 @@ const resultatvalg: Partial<Record<KontrollsakSteg, ResultatType[]>> = {
   ],
   STRAFFERETTSLIG_VURDERING: ["ANMELDT", "FEILUTBETALINGSSAK_ORDINAER", "HENLAGT"],
   POLITI: ["HENLAGT", "FORELEGG", "BOT", "PATALEUNNLATELSE", "FRIFINNELSE", "DOMFELLELSE"],
-};
-
-const resultatetiketter: Record<ResultatType, string> = {
-  KONTROLLNOTAT: "Kontrollnotat",
-  FEILUTBETALINGSSAK_ORDINAER: "Feilutbetalingssak, ordinær",
-  FEILUTBETALINGSSAK_POTENSIELL_STRAFFESAK: "Feilutbetalingssak, potensiell straffesak",
-  HENLAGT: "Henlagt",
-  SAKEN_SKAL_VURDERES_FOR_ANMELDELSE: "Saken skal vurderes for anmeldelse",
-  SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE: "Saken skal ikke vurderes for anmeldelse",
-  ANMELDT: "Anmeldt",
-  FORELEGG: "Forelegg",
-  BOT: "Bot",
-  PATALEUNNLATELSE: "Påtaleunnlatelse",
-  FRIFINNELSE: "Frifinnelse",
-  DOMFELLELSE: "Domfellelse",
 };
 
 const henleggelsesarsakEtiketter = {
@@ -122,20 +99,12 @@ const henleggelsesarsakerPerSteg: Partial<Record<KontrollsakSteg, Henleggelsesar
     "INTET_STRAFFBART_FORHOLD",
     "FEILREGISTRERT_DUBLETT",
   ],
-  FORVALTNING: [
-    "IKKE_GRUNNLAG_FOR_TILBAKEKREVING",
-    "BELOP_UNDER_BELOPSGRENSE",
-    "FORELDET",
-    "FEILREGISTRERT_DUBLETT",
-    "FEILUTBETALING",
-  ],
   STRAFFERETTSLIG_VURDERING: [
     "BEVISETS_STILLING",
     "INTET_STRAFFBART_FORHOLD",
     "FORELDET",
     "BELOP_UNDER_PATALEGRENSE",
   ],
-  POLITI: ["BEVISETS_STILLING", "FORELDET", "INTET_STRAFFBART_FORHOLD"],
 };
 
 function henleggelsesarsaker(steg: KontrollsakSteg) {
@@ -168,7 +137,7 @@ function feltskjemaFor(steg: KontrollsakSteg): TillatteHandlingerResponse["felts
           true,
           (resultatvalg.UTREDNING ?? []).map((verdi) => ({
             verdi,
-            etikett: resultatetiketter[verdi],
+            etikett: resultatEtiketter[verdi],
           })),
         ),
         mockFelt(
@@ -200,19 +169,12 @@ function feltskjemaFor(steg: KontrollsakSteg): TillatteHandlingerResponse["felts
           false,
           (["FEILUTBETALINGSSAK_ORDINAER", "KONTROLLNOTAT", "HENLAGT"] as const).map((verdi) => ({
             verdi,
-            etikett: resultatetiketter[verdi],
+            etikett: resultatEtiketter[verdi],
           })),
           "forvaltning.type=SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
         ),
-        mockFelt(
-          "forvaltning.endeligUtfall.henleggelsesarsak",
-          "Årsak til henleggelse",
-          "enum",
-          false,
-          henleggelsesarsaker("FORVALTNING"),
-          "forvaltning.endeligUtfall.type=HENLAGT",
-        ),
         mockFelt("ytelser[].endeligBelop", "Endelig beløp for ytelsen", "belop", false),
+        mockFelt("forvaltning.tilbakekrevdBelop", "Tilbakekrevd beløp", "belop", false),
       ];
     case "STRAFFERETTSLIG_VURDERING":
       return [
@@ -223,7 +185,7 @@ function feltskjemaFor(steg: KontrollsakSteg): TillatteHandlingerResponse["felts
           true,
           (resultatvalg.STRAFFERETTSLIG_VURDERING ?? []).map((verdi) => ({
             verdi,
-            etikett: resultatetiketter[verdi],
+            etikett: resultatEtiketter[verdi],
           })),
         ),
         mockFelt(
@@ -234,7 +196,14 @@ function feltskjemaFor(steg: KontrollsakSteg): TillatteHandlingerResponse["felts
           henleggelsesarsaker("STRAFFERETTSLIG_VURDERING"),
           "strafferettsligVurdering.type=HENLAGT",
         ),
-        mockFelt("ytelser[].anmeldtBelop", "Beløp som skal anmeldes", "belop", false),
+        mockFelt(
+          "strafferettsligVurdering.anmeldtBelop",
+          "Anmeldt beløp",
+          "belop",
+          false,
+          [],
+          "strafferettsligVurdering.type=ANMELDT",
+        ),
       ];
     case "POLITI":
       return [
@@ -245,16 +214,8 @@ function feltskjemaFor(steg: KontrollsakSteg): TillatteHandlingerResponse["felts
           true,
           (resultatvalg.POLITI ?? []).map((verdi) => ({
             verdi,
-            etikett: resultatetiketter[verdi],
+            etikett: resultatEtiketter[verdi],
           })),
-        ),
-        mockFelt(
-          "politi.henleggelsesarsak",
-          "Årsak til henleggelse",
-          "enum",
-          false,
-          henleggelsesarsaker("POLITI"),
-          "politi.type=HENLAGT",
         ),
         mockFelt(
           "paaklaget",
@@ -270,7 +231,7 @@ function feltskjemaFor(steg: KontrollsakSteg): TillatteHandlingerResponse["felts
           "tekst",
           false,
           [],
-          "politi.type=FRIFINNELSE",
+          "politi.type=HENLAGT eller FRIFINNELSE",
         ),
         mockFelt(
           "politi.detaljer",
@@ -429,27 +390,15 @@ export function hentMockTillatteHandlinger(sak: KontrollsakResponse): TillatteHa
           return [
             nesteSteg,
             nesteSteg === "AVSLUTTET"
-              ? [
-                  "forvaltning.type",
-                  "forvaltning.endeligUtfall.type",
-                  ...(sak.resultat?.forvaltning?.endeligUtfall?.type === "HENLAGT" ||
-                  sak.resultat?.forvaltning?.endeligUtfall?.type === "KONTROLLNOTAT"
-                    ? []
-                    : [
-                        sak.resultat?.forvaltning?.endeligUtfall?.type ===
-                        "FEILUTBETALINGSSAK_ORDINAER"
-                          ? "ytelser[].endeligBelop"
-                          : "ytelser[].endeligBelop ved FEILUTBETALINGSSAK_ORDINAER",
-                      ]),
-                ]
-              : ["forvaltning.type", "ytelser[].endeligBelop"],
+              ? ["forvaltning.type", "forvaltning.endeligUtfall.type"]
+              : ["forvaltning.type"],
           ];
         }
         if (steg === "STRAFFERETTSLIG_VURDERING") {
           return [
             nesteSteg,
             nesteSteg === "POLITI"
-              ? ["strafferettsligVurdering.type", "ytelser[].anmeldtBelop"]
+              ? ["strafferettsligVurdering.type", "strafferettsligVurdering.anmeldtBelop"]
               : ["strafferettsligVurdering.type"],
           ];
         }

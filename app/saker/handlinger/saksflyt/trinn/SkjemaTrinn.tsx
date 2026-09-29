@@ -102,6 +102,15 @@ function Resultatfelt({
       );
     case "dato":
       return <Datofelt felt={felt} verdier={verdier} feil={feil} onChange={onChange} />;
+    case "belop":
+      return (
+        <Beløpsfelt
+          label={`${felt.etikett} (kr)${valgfri ? " (valgfritt)" : ""}`}
+          value={verdi}
+          error={feil[felt.felt]}
+          onChange={(nyVerdi) => onChange(felt.felt, nyVerdi)}
+        />
+      );
     default:
       return null;
   }
@@ -110,20 +119,23 @@ function Resultatfelt({
 function Belopsfelter({
   felt,
   belopEtikett,
+  valgfritt,
   verdier,
   feil,
   onChange,
   ytelser,
 }: FeltProps & {
   belopEtikett: string;
+  valgfritt: boolean;
   ytelser: TillatteHandlingerResponse["tilstand"]["ytelser"];
 }) {
+  const tillegg = valgfritt ? " (valgfritt)" : "";
   return ytelser.map((ytelse) => {
     const navn = ytelseVerdiNavn(ytelse.id, felt.felt);
     const ledetekst =
       ytelser.length > 1
-        ? `${belopEtikett} - ${formaterYtelseType(ytelse.type)} (kr)`
-        : `${belopEtikett} (kr)`;
+        ? `${belopEtikett} - ${formaterYtelseType(ytelse.type)} (kr)${tillegg}`
+        : `${belopEtikett} (kr)${tillegg}`;
     return (
       <Beløpsfelt
         key={navn}
@@ -158,6 +170,7 @@ export function SkjemaTrinn({
             key={felt.felt}
             felt={felt}
             belopEtikett={trinn.belopEtikett ?? felt.etikett}
+            valgfritt={trinn.belopValgfritt === true}
             verdier={verdier}
             feil={feil}
             onChange={onChange}

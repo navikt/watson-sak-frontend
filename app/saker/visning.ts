@@ -6,6 +6,7 @@ import type {
   KontrollsakStatus,
   KontrollsakSteg,
   KontrollsakYtelse,
+  ResultatType,
 } from "./types.backend";
 import {
   kontrollsakKategoriEtiketter,
@@ -61,6 +62,43 @@ export function hentStegVariant(steg: KontrollsakSteg | null | undefined): StegV
 
 export function formaterStatus(status: KontrollsakStatus): string {
   return statusEtiketter[status];
+}
+
+export const resultatEtiketter: Record<ResultatType, string> = {
+  KONTROLLNOTAT: "Kontrollnotat",
+  FEILUTBETALINGSSAK_ORDINAER: "Feilutbetalingssak, ordinær",
+  FEILUTBETALINGSSAK_POTENSIELL_STRAFFESAK: "Feilutbetalingssak, potensiell straffesak",
+  HENLAGT: "Henlagt",
+  SAKEN_SKAL_VURDERES_FOR_ANMELDELSE: "Saken skal vurderes for anmeldelse",
+  SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE: "Saken skal ikke vurderes for anmeldelse",
+  ANMELDT: "Anmeldt",
+  FORELEGG: "Forelegg",
+  BOT: "Bot",
+  PATALEUNNLATELSE: "Påtaleunnlatelse",
+  FRIFINNELSE: "Frifinnelse",
+  DOMFELLELSE: "Domfellelse",
+};
+
+function formaterResultattype(type: string): string {
+  return resultatEtiketter[type as ResultatType] ?? type;
+}
+
+/**
+ * Resultatet saken ble avsluttet med: det siste steget som har et avsluttende resultat.
+ * Returnerer `null` når saken ikke har et slikt resultat.
+ */
+export function hentSluttresultat(resultat: KontrollsakResponse["resultat"]): string | null {
+  if (!resultat) return null;
+  if (resultat.politi?.type) return formaterResultattype(resultat.politi.type);
+  const sv = resultat.strafferettsligVurdering?.type;
+  if (sv && sv !== "ANMELDT") return formaterResultattype(sv);
+  const endeligUtfall = resultat.forvaltning?.endeligUtfall ?? resultat.endeligUtfall;
+  if (endeligUtfall?.type) return formaterResultattype(endeligUtfall.type);
+  const utredning = resultat.utredning?.type;
+  if (utredning === "HENLAGT" || utredning === "KONTROLLNOTAT") {
+    return formaterResultattype(utredning);
+  }
+  return null;
 }
 
 export function formaterKategori(kategori: KontrollsakKategori | null | undefined): string | null {

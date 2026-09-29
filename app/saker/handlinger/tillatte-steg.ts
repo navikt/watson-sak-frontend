@@ -16,33 +16,20 @@ function hentForvaltningensEndeligeUtfall(
 }
 
 export function kanAvsluttesFraForvaltning(
-  sak: Pick<KontrollsakResponse, "resultat" | "ytelser">,
+  sak: Pick<KontrollsakResponse, "resultat">,
   feltskjema: Feltskjema,
 ): boolean {
   const resultat = sak.resultat;
   if (resultat?.forvaltning?.type !== "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE") return false;
 
   const endeligUtfall = hentForvaltningensEndeligeUtfall(resultat);
-  if (
-    !endeligUtfall ||
-    (endeligUtfall.type === "FEILUTBETALINGSSAK_ORDINAER" &&
-      !sak.ytelser.every((ytelse) => ytelse.endeligBelop !== null))
-  ) {
-    return false;
-  }
+  if (!endeligUtfall) return false;
 
   const resultatfelt = feltskjema.find((felt) => felt.felt === "forvaltning.endeligUtfall.type");
   if (!resultatfelt?.verdier.some((verdi) => verdi.verdi === endeligUtfall.type)) return false;
 
-  if (endeligUtfall.type === "HENLAGT") {
-    const arsakfelt = feltskjema.find(
-      (felt) => felt.felt === "forvaltning.endeligUtfall.henleggelsesarsak",
-    );
-    return (
-      arsakfelt?.verdier.some((verdi) => verdi.verdi === endeligUtfall.henleggelsesarsak) ?? false
-    );
-  }
-  return endeligUtfall.henleggelsesarsak == null;
+  // Henleggelse i forvaltningen har ingen årsak. Eldre saker kan ha en lagret årsak.
+  return endeligUtfall.type === "HENLAGT" || endeligUtfall.henleggelsesarsak == null;
 }
 
 export function erHenlagtIGjeldendeSteg(
@@ -85,7 +72,7 @@ export function erPolitiresultatKomplett(
 ): boolean {
   switch (politi?.type) {
     case "HENLAGT":
-      return politi.henleggelsesarsak != null;
+      return politi.henleggelsesarsak != null || Boolean(politi.begrunnelse?.trim());
     case "FRIFINNELSE":
       return Boolean(politi.begrunnelse?.trim());
     case "DOMFELLELSE":
@@ -129,13 +116,17 @@ export function harLagretResultatForOvergang(
       }
       const utfall = hentForvaltningensEndeligeUtfall(resultat);
       return (
-        (utfall?.type === "FEILUTBETALINGSSAK_ORDINAER" ||
-          utfall?.type === "KONTROLLNOTAT" ||
-          utfall?.type === "HENLAGT") &&
-        (utfall.type !== "HENLAGT" || utfall.henleggelsesarsak != null)
+        utfall?.type === "FEILUTBETALINGSSAK_ORDINAER" ||
+        utfall?.type === "KONTROLLNOTAT" ||
+        utfall?.type === "HENLAGT"
       );
     case "STRAFFERETTSLIG_VURDERING":
-      if (tilSteg === "POLITI") return resultat?.strafferettsligVurdering?.type === "ANMELDT";
+      if (tilSteg === "POLITI") {
+        return (
+          resultat?.strafferettsligVurdering?.type === "ANMELDT" &&
+          resultat.strafferettsligVurdering.anmeldtBelop != null
+        );
+      }
       if (tilSteg !== "AVSLUTTET") return false;
       return (
         resultat?.strafferettsligVurdering?.type === "KONTROLLNOTAT" ||

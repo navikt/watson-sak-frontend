@@ -30,9 +30,11 @@ export function hentSynligeFelter(
   feltskjema: TillatteHandlingerResponse["feltskjema"],
 ): Skjemafelt[] {
   const aktive = aktiveVerdier(verdier, feltskjema);
+  const etiketter = trinn.etiketter?.(verdier) ?? {};
   return trinn.felter.flatMap((navn) => {
-    const felt = finnSkjemafelt(feltskjema, navn);
-    if (!felt) return [];
+    const skjemafelt = finnSkjemafelt(feltskjema, navn);
+    if (!skjemafelt) return [];
+    const felt = etiketter[navn] ? { ...skjemafelt, etikett: etiketter[navn] } : skjemafelt;
     if (erBelopsfelt(navn)) return [felt];
     return resultatFeltErAktivt(felt, aktive) ? [felt] : [];
   });
@@ -45,6 +47,13 @@ function iDag(): string {
 function validerFelt(felt: Skjemafelt, verdi: string, verdier: Verdier): string | undefined {
   if (verdi.trim() === "") {
     return resultatFeltErPaakrevd(felt, verdier) ? `${felt.etikett} må fylles ut` : undefined;
+  }
+  if (felt.datatype === "belop") {
+    try {
+      lesBelop(verdi, felt.etikett);
+    } catch {
+      return "Beløpet må være et tall med opptil to desimaler";
+    }
   }
   if (felt.datatype === "tall") {
     try {
@@ -91,7 +100,7 @@ export function validerTrinn(
             const navn = ytelseVerdiNavn(ytelse.id, felt.felt);
             const verdi = verdier[navn]?.trim() ?? "";
             if (verdi === "") {
-              feil[navn] = "Fyll inn beløp";
+              if (!trinn.belopValgfritt) feil[navn] = "Fyll inn beløp";
               continue;
             }
             try {
