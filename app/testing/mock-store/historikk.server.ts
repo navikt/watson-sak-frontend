@@ -115,7 +115,7 @@ export function leggTilManuellHendelse(
   tittel: string,
   beskrivelse: string,
   tidspunkt: string,
-  opprettetAvNavIdent?: string,
+  opprettetAvNavn?: string,
 ): SakHendelse {
   const sakIdKey = String(sak.id);
   const hendelse: SakHendelse = {
@@ -125,7 +125,7 @@ export function leggTilManuellHendelse(
     sakId: sak.id,
     tittel,
     beskrivelse,
-    opprettetAvNavIdent,
+    opprettetAvNavn,
     ...lagSnapshotFraKontrollsak(sak),
   };
 

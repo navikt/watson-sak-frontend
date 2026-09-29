@@ -2,12 +2,11 @@ import { PlusCircleIcon } from "@navikt/aksel-icons";
 import { Alert, BodyShort, Box, Button, Heading, HStack } from "@navikt/ds-react";
 import { useMemo, useState } from "react";
 import { useFetcher } from "react-router";
-import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { useDisclosure } from "~/utils/useDisclosure";
 import { HistorikkProsessListe } from "./HistorikkProsessListe";
-import { lagForrigeHendelseKart, skalVisesIHistorikk } from "./historikk-utils";
+import { lagForrigeHendelseKart } from "./historikk-utils";
 import { LeggTilHistorikkModal } from "./LeggTilHistorikkModal";
 import { RedigerHistorikkModal } from "./RedigerHistorikkModal";
 import { VisAllHistorikkModal } from "./VisAllHistorikkModal";
@@ -32,11 +31,8 @@ export function SakHistorikk({
   const { erÅpen: visAlleÅpen, onÅpne: onÅpneVisAlle, onLukk: onLukkVisAlle } = useDisclosure();
   const { erÅpen: redigerÅpen, onÅpne: onÅpneRediger, onLukk: onLukkRediger } = useDisclosure();
   const [valgtHendelse, setValgtHendelse] = useState<SakHendelse | null>(null);
-  const innloggetBruker = useInnloggetBruker();
   const fetcher = useFetcher();
-  // Kommentaraktivitet (opprettet/besvart/adressert/gjenåpnet) vises allerede
-  // i dokumentets kommentarpanel og skal ikke dukke opp i sakshistorikken.
-  const historikkHendelser = useMemo(() => hendelser.filter(skalVisesIHistorikk), [hendelser]);
+  const historikkHendelser = hendelser;
   const synligeHendelser = historikkHendelser.slice(0, MAKS_SYNLIGE_HENDELSER);
   const forrigeHendelseKart = useMemo(
     () => lagForrigeHendelseKart(historikkHendelser),
@@ -91,7 +87,6 @@ export function SakHistorikk({
           <HistorikkProsessListe
             hendelser={synligeHendelser}
             redigerbar={redigerbar}
-            innloggetNavIdent={innloggetBruker.navIdent}
             onRediger={åpneRediger}
             onSlett={slettHendelse}
             forrigeHendelseKart={forrigeHendelseKart}
@@ -117,7 +112,6 @@ export function SakHistorikk({
           onClose={onLukkVisAlle}
           redigerbar={redigerbar}
           kanLeggeTil={kanLeggeTil}
-          innloggetNavIdent={innloggetBruker.navIdent}
           onLeggTil={onÅpneLeggTil}
           onRediger={åpneRediger}
           onSlett={slettHendelse}

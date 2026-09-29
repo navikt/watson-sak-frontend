@@ -12,7 +12,6 @@ import type { SakHendelse } from "./typer";
 interface HistorikkProsessListeProps {
   hendelser: SakHendelse[];
   redigerbar: boolean;
-  innloggetNavIdent: string;
   onRediger: (hendelse: SakHendelse) => void;
   onSlett: (hendelse: SakHendelse) => void;
   className?: string;
@@ -30,7 +29,6 @@ interface HistorikkProsessListeProps {
 export function HistorikkProsessListe({
   hendelser,
   redigerbar,
-  innloggetNavIdent,
   onRediger,
   onSlett,
   className,
@@ -41,9 +39,7 @@ export function HistorikkProsessListe({
       {hendelser.map((hendelse) => {
         const forrigeHendelse = forrigeHendelseKart?.get(hendelse.hendelseId);
         const beskrivelse = hendelseBeskrivelse(hendelse, forrigeHendelse);
-        const erEgenManuellHendelse =
-          hendelse.hendelsesType === "MANUELL_HENDELSE" &&
-          hendelse.opprettetAvNavIdent === innloggetNavIdent;
+        const erEgenManuellHendelse = hendelse.hendelsesType === "MANUELL_HENDELSE";
 
         return (
           <Process.Event

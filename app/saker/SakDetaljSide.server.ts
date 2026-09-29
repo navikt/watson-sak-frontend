@@ -146,11 +146,9 @@ function normaliserArbeidsgiverFeil(feil: Record<string, string[]>): Record<stri
 /**
  * Oversetter en feil fra et manuelt historikk-kall (opprett/rediger/slett) til
  * en brukervennlig melding. Bruker backendens egen feilmelding når den finnes
- * OG statuskoden indikerer en forventet, klientrettet feil (f.eks. 409
- * Conflict ved BigQuerys streaming buffer, eller 400/403/404) — disse
- * meldingene er skrevet for sluttbruker. Ved 5xx (interne serverfeil) brukes
- * en generisk melding i stedet, siden slike feil kan inneholde tekniske
- * detaljer som ikke bør vises til saksbehandleren.
+ * og statuskoden indikerer en forventet, klientrettet feil (for eksempel
+ * 400/403/404). Ved 5xx brukes en generisk melding i stedet, siden slike feil
+ * kan inneholde tekniske detaljer som ikke bør vises til saksbehandleren.
  */
 export function historikkFeilmelding(feil: unknown): string {
   if (feil instanceof backendApi.BackendFeilException && feil.status < 500) {

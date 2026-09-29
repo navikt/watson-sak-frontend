@@ -11,7 +11,6 @@ interface VisAllHistorikkModalProps {
   onClose: () => void;
   redigerbar: boolean;
   kanLeggeTil?: boolean;
-  innloggetNavIdent: string;
   onLeggTil: () => void;
   onRediger: (hendelse: SakHendelse) => void;
   onSlett: (hendelse: SakHendelse) => void;
@@ -41,7 +40,6 @@ export function VisAllHistorikkModal({
   onClose,
   redigerbar,
   kanLeggeTil = redigerbar,
-  innloggetNavIdent,
   onLeggTil,
   onRediger,
   onSlett,
@@ -116,7 +114,6 @@ export function VisAllHistorikkModal({
           <HistorikkProsessListe
             hendelser={synligeHendelser}
             redigerbar={redigerbar}
-            innloggetNavIdent={innloggetNavIdent}
             onRediger={onRediger}
             onSlett={onSlett}
             className="pt-1"
