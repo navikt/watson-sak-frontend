@@ -73,7 +73,7 @@ describe("SaksflytModal", () => {
     });
     const steg = within(dialog).getByRole("region", { name: "Steg" });
     const resultat = within(dialog).getByRole("region", { name: "Resultat" });
-    expect(within(steg).getByRole("button", { name: "Send til Forvaltning" })).toBeDefined();
+    expect(within(steg).getByRole("button", { name: "Send til forvaltning" })).toBeDefined();
     expect(
       within(resultat)
         .getAllByRole("button")
@@ -83,7 +83,7 @@ describe("SaksflytModal", () => {
 
   it("flytter saken direkte når handlingen ikke har trinn", async () => {
     renderModal({ steg: "OPPRETTET", status: null });
-    klikk("Gå til Utredning");
+    klikk("Gå til utredning");
     expect(await screen.findByText("Lagret")).toBeDefined();
     expect(sendtSkjema()).toEqual({
       handling: "endre_steg_dialog",
@@ -138,8 +138,8 @@ describe("SaksflytModal", () => {
 
   it("krever beløp og full sjekkliste før saken sendes til forvaltning", async () => {
     renderModal();
-    klikk("Send til Forvaltning");
-    await screen.findByRole("dialog", { name: "Send til Forvaltning" });
+    klikk("Send til forvaltning");
+    await screen.findByRole("dialog", { name: "Send til forvaltning" });
     expect(screen.queryByRole("radio", { name: "Kontrollnotat" })).toBeNull();
 
     klikk("Neste");
@@ -147,15 +147,18 @@ describe("SaksflytModal", () => {
     expect(screen.getByText("Fyll inn beløp")).toBeDefined();
 
     fireEvent.click(screen.getByRole("radio", { name: "Feilutbetalingssak, ordinær" }));
-    fireEvent.change(screen.getByLabelText("Antatt beløp (kr)"), {
-      target: { value: "12 000" },
-    });
+    const antattBelop = screen.getByLabelText("Antatt beløp (kr)");
+    fireEvent.change(antattBelop, { target: { value: "12000" } });
+    expect(antattBelop).toHaveProperty("value", "12 000");
     klikk("Neste");
 
     expect(
       await screen.findByRole("dialog", {
-        name: "Handlinger som må fullføres før saken kan sendes til forvaltning",
+        name: "Sjekkliste",
       }),
+    ).toBeDefined();
+    expect(
+      screen.getByText("Disse handlingene må være fullført før saken kan sendes til forvaltning."),
     ).toBeDefined();
     klikk("Alt OK - gå til forvaltning");
     expect(screen.getByText("Alle punktene må være fullført før du kan gå videre")).toBeDefined();
@@ -167,13 +170,13 @@ describe("SaksflytModal", () => {
     expect(sendtSkjema()).toMatchObject({
       steg: "FORVALTNING",
       "resultat.utredning.type": "FEILUTBETALINGSSAK_ORDINAER",
-      [`ytelse.${dagpengerId}.belop`]: "12 000",
+      [`ytelse.${dagpengerId}.belop`]: "12000",
     });
   });
 
   it("registrerer beløp som skal anmeldes før saken går til politiet", async () => {
     renderModal({ steg: "STRAFFERETTSLIG_VURDERING" });
-    klikk("Gå til Politiet");
+    klikk("Gå til politiet");
     await screen.findByRole("dialog", { name: "Registrer beløp som skal anmeldes" });
     fireEvent.change(screen.getByLabelText("Beløp som skal anmeldes (kr)"), {
       target: { value: "45000" },
@@ -223,6 +226,56 @@ describe("SaksflytModal", () => {
       "resultat.politi.strafferabatt": "true",
       "resultat.politi.strafferabattProsent": "20",
       "resultat.politi.domsdato": "2026-09-01",
+    });
+  });
+
+  it("lagrer påklaget henleggelse fra politiet uten å avslutte saken", async () => {
+    renderModal({ steg: "POLITI", status: "VENTER_PA_RESULTAT" });
+    klikk("Registrer avgjørelse");
+    await screen.findByRole("dialog", { name: "Registrer avgjørelse" });
+    fireEvent.click(screen.getByRole("radio", { name: "Henlagt" }));
+    klikk("Neste");
+
+    await screen.findByRole("dialog", { name: "Registrer henleggelse" });
+    expect(
+      screen.queryByRole("button", { name: "Registrer resultat, men ikke avslutt" }),
+    ).toBeNull();
+    fireEvent.click(screen.getByRole("radio", { name: "Foreldet" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Ja" }));
+    klikk("Registrer påklaget henleggelse");
+
+    expect(await screen.findByText("Lagret")).toBeDefined();
+    expect(sendtSkjema()).toEqual({
+      handling: "lagre_resultat",
+      versjon: "1",
+      "resultat.politi.type": "HENLAGT",
+      "resultat.politi.henleggelsesarsak": "FORELDET",
+      "resultat.paaklaget": "true",
+    });
+  });
+
+  it("henlegger og avslutter når Nav Kontroll ikke påklager politiets henleggelse", async () => {
+    renderModal({ steg: "POLITI", status: "VENTER_PA_RESULTAT" });
+    klikk("Registrer avgjørelse");
+    fireEvent.click(await screen.findByRole("radio", { name: "Henlagt" }));
+    klikk("Neste");
+
+    await screen.findByRole("dialog", { name: "Registrer henleggelse" });
+    klikk("Henlegg og avslutt sak");
+    expect(screen.getByText("Påklager Nav Kontroll henleggelsen? må fylles ut")).toBeDefined();
+
+    fireEvent.click(screen.getByRole("radio", { name: "Foreldet" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Nei" }));
+    klikk("Henlegg og avslutt sak");
+    await screen.findByRole("dialog", { name: "Avslutt sak" });
+    klikk("Avslutt sak");
+
+    expect(await screen.findByText("Lagret")).toBeDefined();
+    expect(sendtSkjema()).toMatchObject({
+      handling: "endre_steg_dialog",
+      steg: "AVSLUTTET",
+      "resultat.politi.type": "HENLAGT",
+      "resultat.paaklaget": "false",
     });
   });
 

@@ -174,7 +174,7 @@ describe("SaksbehandlereKort", () => {
     expect(
       await screen.findByRole("dialog", { name: "Endre steg eller registrer resultat" }),
     ).toBeDefined();
-    expect(screen.getByRole("button", { name: "Send til Forvaltning" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Send til forvaltning" })).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: "Lukk" }));
 
     fireEvent.click(screen.getByRole("button", { name: "Endre status" }));

@@ -24,6 +24,7 @@ const resultatFeltStier = {
   "politi.strafferabatt": ["politi", "strafferabatt"],
   "politi.strafferabattProsent": ["politi", "strafferabattProsent"],
   "politi.domsdato": ["politi", "domsdato"],
+  paaklaget: ["paaklaget"],
 } as const;
 
 /** Valgfrie tekstfelt. Alle andre felt er påkrevd når vilkåret i `paakrevdNar` er oppfylt. */
@@ -47,7 +48,7 @@ function erResultatfelt(felt: string): felt is Resultatfelt {
 }
 
 /**
- * Tolker `paakrevdNar` fra backend, for eksempel `politi.type=HENLAGT eller HENLAGT_PAAKLAGET`
+ * Tolker `paakrevdNar` fra backend, for eksempel `politi.type=FORELEGG, BOT eller PATALEUNNLATELSE`
  * eller `politi.strafferabatt=true`. Et felt uten vilkår er alltid aktivt.
  */
 function erAktivt(

@@ -5,7 +5,8 @@
 export const sjekklister = {
   tilForvaltning: {
     type: "sjekkliste",
-    tittel: "Handlinger som må fullføres før saken kan sendes til forvaltning",
+    tittel: "Sjekkliste",
+    ingress: "Disse handlingene må være fullført før saken kan sendes til forvaltning.",
     beskrivelse:
       "Om ikke alle handlinger er gjort må du lukke modalen, gjøre de nødvendige handlingene og så endre status på nytt.",
     punkter: [

@@ -18,6 +18,7 @@ const ETIKETTER: Record<string, string> = {
   UTLAND: "Utland",
   UTREDES: "Utredes",
   VENTER_PA_INFORMASJON: "Venter på informasjon",
+  PAAKLAGET: "Påklaget",
   VENTER_PA_RESULTAT: "Venter på resultat",
   VENTER_PA_VEDTAK: "Venter på vedtak",
 };

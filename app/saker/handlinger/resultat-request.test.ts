@@ -36,6 +36,46 @@ function skjemaData(verdier: Record<string, string>, ekstra?: Record<string, str
 }
 
 describe("byggLagreResultatRequest", () => {
+  it("sender påklaging av politiets henleggelse på toppnivå", () => {
+    const politiskjema: TillatteHandlingerResponse["feltskjema"] = [
+      {
+        felt: "politi.type",
+        etikett: "Resultat fra politiet",
+        datatype: "enum",
+        paakrevd: true,
+        verdier: [{ verdi: "HENLAGT", etikett: "Henlagt" }],
+      },
+      {
+        felt: "politi.henleggelsesarsak",
+        etikett: "Årsak til henleggelse",
+        datatype: "enum",
+        paakrevd: false,
+        paakrevdNar: "politi.type=HENLAGT",
+        verdier: [{ verdi: "FORELDET", etikett: "Foreldet" }],
+      },
+      {
+        felt: "paaklaget",
+        etikett: "Påklager Nav Kontroll henleggelsen?",
+        datatype: "boolsk",
+        paakrevd: false,
+        paakrevdNar: "politi.type=HENLAGT",
+        verdier: [],
+      },
+    ];
+    const data = skjemaData({
+      "politi.type": "HENLAGT",
+      "politi.henleggelsesarsak": "FORELDET",
+      paaklaget: "true",
+    });
+
+    expect(byggLagreResultatRequest(data, politiskjema, "POLITI")).toEqual({
+      versjon: 1,
+      steg: "POLITI",
+      politi: { type: "HENLAGT", henleggelsesarsak: "FORELDET" },
+      paaklaget: true,
+    });
+  });
+
   it("lager versjonert resultatrequest med feltene fra backend-skjemaet", () => {
     const data = skjemaData({
       "utredning.type": "HENLAGT",

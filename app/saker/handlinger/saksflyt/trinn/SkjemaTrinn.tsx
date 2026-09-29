@@ -7,6 +7,7 @@ import {
   useDatepicker,
   VStack,
 } from "@navikt/ds-react";
+import { Beløpsfelt } from "~/formaterte-inputfelt/FormaterteInputfelt";
 import type { TillatteHandlingerResponse } from "~/saker/types.backend";
 import { formaterYtelseType } from "~/saker/visning";
 import { formaterTilIsoDato } from "~/utils/date-utils";
@@ -124,13 +125,12 @@ function Belopsfelter({
         ? `${belopEtikett} - ${formaterYtelseType(ytelse.type)} (kr)`
         : `${belopEtikett} (kr)`;
     return (
-      <TextField
+      <Beløpsfelt
         key={navn}
         label={ledetekst}
         value={verdier[navn] ?? ""}
         error={feil[navn]}
-        inputMode="decimal"
-        onChange={(event) => onChange(navn, event.target.value)}
+        onChange={(verdi) => onChange(navn, verdi)}
       />
     );
   });

@@ -28,12 +28,8 @@ describe("hentHandlinger", () => {
       "VENTER_PA_VEDTAK",
       ["til-strafferettslig-vurdering", "registrer-feilutbetaling", "henlegg"],
     ],
-    [
-      "STRAFFERETTSLIG_VURDERING",
-      "AKTIV",
-      ["til-politiet", "kontrollnotat", "feilutbetalingssak", "henlegg"],
-    ],
-    ["POLITI", "VENTER_PA_RESULTAT", ["registrer-avgjorelse", "henlegg", "henlagt-paaklaget"]],
+    ["STRAFFERETTSLIG_VURDERING", "AKTIV", ["til-politiet", "feilutbetalingssak", "henlegg"]],
+    ["POLITI", "VENTER_PA_RESULTAT", ["registrer-avgjorelse"]],
   ] as const)("viser handlingene for %s i fast rekkefølge", (steg, status, forventet) => {
     expect(ider(hentHandlinger(lagTillatteHandlinger({ steg, status })))).toEqual(forventet);
   });
@@ -91,11 +87,59 @@ describe("hentHandlinger", () => {
   });
 
   it("skjuler henleggelse når feltet for årsak mangler i feltskjemaet", () => {
-    const tillatte = lagTillatteHandlinger({ steg: "POLITI", status: "VENTER_PA_RESULTAT" });
+    const tillatte = lagTillatteHandlinger({ steg: "STRAFFERETTSLIG_VURDERING" });
     tillatte.feltskjema = tillatte.feltskjema.filter(
-      (felt) => felt.felt !== "politi.henleggelsesarsak",
+      (felt) => felt.felt !== "strafferettsligVurdering.henleggelsesarsak",
     );
-    expect(ider(hentHandlinger(tillatte))).toEqual(["registrer-avgjorelse"]);
+    expect(ider(hentHandlinger(tillatte))).toEqual(["til-politiet", "feilutbetalingssak"]);
+  });
+
+  it("tilbyr bare avslutning når politiet har henlagt saken uten påklaging", () => {
+    const tillatte = lagTillatteHandlinger({
+      steg: "POLITI",
+      status: "VENTER_PA_RESULTAT",
+      resultat: { politi: { type: "HENLAGT", henleggelsesarsak: "FORELDET" } },
+    });
+    expect(ider(hentHandlinger(tillatte))).toEqual(["avslutt"]);
+  });
+
+  it("tilbyr ny avgjørelse når henleggelsen er påklaget", () => {
+    const tillatte = lagTillatteHandlinger({
+      steg: "POLITI",
+      status: "PAAKLAGET",
+      resultat: { politi: { type: "HENLAGT", henleggelsesarsak: "FORELDET" } },
+    });
+    expect(ider(hentHandlinger(tillatte))).toEqual(["registrer-avgjorelse", "avslutt"]);
+  });
+});
+
+describe("registrer avgjørelse fra politiet", () => {
+  const tillatte = lagTillatteHandlinger({ steg: "POLITI", status: "VENTER_PA_RESULTAT" });
+  const handling = finn(hentHandlinger(tillatte), "registrer-avgjorelse");
+  const skjema = handling.trinn.find((trinn) => trinn.type === "skjema");
+  if (skjema?.type !== "skjema") throw new Error("Mangler skjematrinn");
+  const primær = (verdier: Record<string, string>) =>
+    typeof skjema.primær === "function" ? skjema.primær(verdier) : skjema.primær;
+
+  it("lagrer påklaget henleggelse uten å avslutte saken", () => {
+    const verdier = { "politi.type": "HENLAGT", paaklaget: "true" };
+    expect(primær(verdier)).toBe("Registrer påklaget henleggelse");
+    expect(skjema.lagreUtenAvslutning?.(verdier)).toBe(true);
+    expect(skjema.kanLagreUtenAvslutning?.(verdier)).toBe(false);
+  });
+
+  it("henlegger og avslutter når henleggelsen ikke påklages", () => {
+    const verdier = { "politi.type": "HENLAGT", paaklaget: "false" };
+    expect(primær(verdier)).toBe("Henlegg og avslutt sak");
+    expect(skjema.lagreUtenAvslutning?.(verdier)).toBe(false);
+    expect(skjema.kanLagreUtenAvslutning?.(verdier)).toBe(false);
+  });
+
+  it("avslutter eller lagrer andre utfall", () => {
+    const verdier = { "politi.type": "BOT", paaklaget: "true" };
+    expect(primær(verdier)).toBe("Registrer resultat og avslutt saken");
+    expect(skjema.lagreUtenAvslutning?.(verdier)).toBe(false);
+    expect(skjema.kanLagreUtenAvslutning?.(verdier)).toBe(true);
   });
 });
 
@@ -210,6 +254,37 @@ describe("byggInnsending", () => {
       versjon: "1",
       "resultat.politi.type": "FORELEGG",
     });
+  });
+
+  it("sender påklaging sammen med politiets henleggelse", () => {
+    const tillatte = lagTillatteHandlinger({ steg: "POLITI", status: "VENTER_PA_RESULTAT" });
+    const formData = byggInnsending(
+      finn(hentHandlinger(tillatte), "registrer-avgjorelse"),
+      {
+        "politi.type": "HENLAGT",
+        "politi.henleggelsesarsak": "FORELDET",
+        paaklaget: "true",
+      },
+      tillatte,
+      { handling: "lagre_resultat" },
+    );
+    expect(Object.fromEntries(formData)).toEqual({
+      handling: "lagre_resultat",
+      versjon: "1",
+      "resultat.politi.type": "HENLAGT",
+      "resultat.politi.henleggelsesarsak": "FORELDET",
+      "resultat.paaklaget": "true",
+    });
+  });
+
+  it("dropper påklaging når utfallet ikke er henleggelse", () => {
+    const tillatte = lagTillatteHandlinger({ steg: "POLITI", status: "VENTER_PA_RESULTAT" });
+    const formData = byggInnsending(
+      finn(hentHandlinger(tillatte), "registrer-avgjorelse"),
+      { "politi.type": "BOT", paaklaget: "true" },
+      tillatte,
+    );
+    expect(formData.has("resultat.paaklaget")).toBe(false);
   });
 
   it("sender valgt status", () => {

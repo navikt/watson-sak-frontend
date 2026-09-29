@@ -55,7 +55,7 @@ export function erGyldigMockStegovergang(
       }
       return (
         nyttSteg === "AVSLUTTET" &&
-        ["KONTROLLNOTAT", "FEILUTBETALINGSSAK_ORDINAER", "HENLAGT"].includes(
+        ["FEILUTBETALINGSSAK_ORDINAER", "HENLAGT"].includes(
           sak.resultat?.strafferettsligVurdering?.type ?? "",
         ) &&
         (sak.resultat?.strafferettsligVurdering?.type !== "HENLAGT" ||
@@ -82,16 +82,8 @@ const resultatvalg: Partial<Record<KontrollsakSteg, ResultatType[]>> = {
     "KONTROLLNOTAT",
     "HENLAGT",
   ],
-  STRAFFERETTSLIG_VURDERING: ["ANMELDT", "KONTROLLNOTAT", "FEILUTBETALINGSSAK_ORDINAER", "HENLAGT"],
-  POLITI: [
-    "HENLAGT",
-    "HENLAGT_PAAKLAGET",
-    "FORELEGG",
-    "BOT",
-    "PATALEUNNLATELSE",
-    "FRIFINNELSE",
-    "DOMFELLELSE",
-  ],
+  STRAFFERETTSLIG_VURDERING: ["ANMELDT", "FEILUTBETALINGSSAK_ORDINAER", "HENLAGT"],
+  POLITI: ["HENLAGT", "FORELEGG", "BOT", "PATALEUNNLATELSE", "FRIFINNELSE", "DOMFELLELSE"],
 };
 
 const resultatetiketter: Record<ResultatType, string> = {
@@ -99,7 +91,6 @@ const resultatetiketter: Record<ResultatType, string> = {
   FEILUTBETALINGSSAK_ORDINAER: "Feilutbetalingssak, ordinær",
   FEILUTBETALINGSSAK_POTENSIELL_STRAFFESAK: "Feilutbetalingssak, potensiell straffesak",
   HENLAGT: "Henlagt",
-  HENLAGT_PAAKLAGET: "Henlagt og påklaget fra Nav",
   SAKEN_SKAL_VURDERES_FOR_ANMELDELSE: "Saken skal vurderes for anmeldelse",
   SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE: "Saken skal ikke vurderes for anmeldelse",
   ANMELDT: "Anmeldt",
@@ -263,7 +254,15 @@ function feltskjemaFor(steg: KontrollsakSteg): TillatteHandlingerResponse["felts
           "enum",
           false,
           henleggelsesarsaker("POLITI"),
-          "politi.type=HENLAGT eller HENLAGT_PAAKLAGET",
+          "politi.type=HENLAGT",
+        ),
+        mockFelt(
+          "paaklaget",
+          "Påklager Nav Kontroll henleggelsen?",
+          "boolsk",
+          false,
+          [],
+          "politi.type=HENLAGT",
         ),
         mockFelt(
           "politi.begrunnelse",
@@ -377,7 +376,8 @@ export function hentMockTillatteHandlinger(sak: KontrollsakResponse): TillatteHa
   if (
     steg === "POLITI" &&
     sak.status !== "I_BERO" &&
-    !erHenlagtIGjeldendeSteg({ steg, resultat: sak.resultat ?? null })
+    (sak.status === "PAAKLAGET" ||
+      !erHenlagtIGjeldendeSteg({ steg, resultat: sak.resultat ?? null }))
   ) {
     handlinger.push({
       type: "REGISTRER_RESULTAT",
@@ -410,7 +410,9 @@ export function hentMockTillatteHandlinger(sak: KontrollsakResponse): TillatteHa
         ? []
         : sak.status === "I_BERO"
           ? [statusFørBero]
-          : [...statusvalg[steg], "I_BERO"],
+          : sak.status === "PAAKLAGET"
+            ? ["PAAKLAGET", "I_BERO"]
+            : [...statusvalg[steg], "I_BERO"],
     tillatteResultater: resultater,
     paakrevdeRegistreringer: [],
     paakrevdeRegistreringerPerSteg: Object.fromEntries(

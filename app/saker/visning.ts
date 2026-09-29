@@ -45,6 +45,7 @@ const statusEtiketter: Record<KontrollsakStatus, string> = {
   VENTER_PA_INFORMASJON: "Venter på informasjon",
   VENTER_PA_VEDTAK: "Venter på vedtak",
   VENTER_PA_RESULTAT: "Venter på resultat",
+  PAAKLAGET: "Påklaget",
   I_BERO: "I bero",
 };
 

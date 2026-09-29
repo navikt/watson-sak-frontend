@@ -1,4 +1,12 @@
-import { Checkbox, CheckboxGroup, Detail, Radio, RadioGroup } from "@navikt/ds-react";
+import {
+  BodyLong,
+  Checkbox,
+  CheckboxGroup,
+  Detail,
+  Radio,
+  RadioGroup,
+  VStack,
+} from "@navikt/ds-react";
 import type { KontrollsakStatus, TillatteHandlingerResponse } from "~/saker/types.backend";
 import { formaterStatus } from "~/saker/visning";
 import { finnSkjemafelt, INGEN_STATUS, type Trinn, type Verdier } from "../saksflyt";
@@ -17,26 +25,29 @@ export function SjekklisteTrinn({ trinn, verdier, feil, onChange }: TrinnProps<"
     .map((_, indeks) => sjekkpunktNavn(indeks))
     .filter((navn) => verdier[navn] === "true");
   return (
-    <CheckboxGroup
-      legend="Handlinger"
-      hideLegend
-      description={trinn.beskrivelse}
-      value={valgte}
-      error={feil.sjekkliste}
-      onChange={(nyeValg: string[]) => {
-        trinn.punkter.forEach((_, indeks) => {
-          const navn = sjekkpunktNavn(indeks);
-          const valgt = nyeValg.includes(navn);
-          if (valgt !== (verdier[navn] === "true")) onChange(navn, String(valgt));
-        });
-      }}
-    >
-      {trinn.punkter.map((punkt, indeks) => (
-        <Checkbox key={punkt} value={sjekkpunktNavn(indeks)}>
-          {punkt}
-        </Checkbox>
-      ))}
-    </CheckboxGroup>
+    <VStack gap="space-16">
+      <BodyLong>{trinn.ingress}</BodyLong>
+      <CheckboxGroup
+        legend="Handlinger"
+        hideLegend
+        description={trinn.beskrivelse}
+        value={valgte}
+        error={feil.sjekkliste}
+        onChange={(nyeValg: string[]) => {
+          trinn.punkter.forEach((_, indeks) => {
+            const navn = sjekkpunktNavn(indeks);
+            const valgt = nyeValg.includes(navn);
+            if (valgt !== (verdier[navn] === "true")) onChange(navn, String(valgt));
+          });
+        }}
+      >
+        {trinn.punkter.map((punkt, indeks) => (
+          <Checkbox key={punkt} value={sjekkpunktNavn(indeks)}>
+            {punkt}
+          </Checkbox>
+        ))}
+      </CheckboxGroup>
+    </VStack>
   );
 }
 

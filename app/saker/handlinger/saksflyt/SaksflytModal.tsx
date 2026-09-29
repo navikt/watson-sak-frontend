@@ -45,6 +45,10 @@ function trinntittel(
   return trinn.tittel;
 }
 
+function primærtekst(trinn: Trinn, verdier: Verdier): string {
+  return typeof trinn.primær === "function" ? trinn.primær(verdier) : trinn.primær;
+}
+
 /** Trinn som åpner en ny del av flyten viser «Tilbake til saksbildet» i stedet for «Tilbake». */
 function lukkerVedTilbake(trinn: Trinn): boolean {
   return trinn.type === "sjekkliste" || trinn.type === "bekreftAvslutning";
@@ -195,10 +199,11 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
     tillatteHandlinger,
   };
   const kanGåTilbake = trinnIndeks > 0 || tilstand.fraMeny;
+  const kanLagre = kanLagreUtenAvslutning(tillatteHandlinger);
   const visLagreUtenAvslutning =
-    trinn.type === "skjema" &&
-    trinn.kanLagreUtenAvslutning === true &&
-    kanLagreUtenAvslutning(tillatteHandlinger);
+    trinn.type === "skjema" && trinn.kanLagreUtenAvslutning?.(alleVerdier) === true && kanLagre;
+  const primærLagrerUtenAvslutning =
+    trinn.type === "skjema" && trinn.lagreUtenAvslutning?.(alleVerdier) === true;
 
   return (
     <Modal
@@ -224,15 +229,20 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
             type="button"
             variant="primary"
             loading={erSubmitting}
-            onClick={() => fortsett(trinn, alleVerdier)}
+            onClick={() =>
+              fortsett(
+                trinn,
+                alleVerdier,
+                primærLagrerUtenAvslutning ? { handling: "lagre_resultat" } : undefined,
+              )
+            }
           >
-            {trinn.primær}
+            {primærtekst(trinn, alleVerdier)}
           </Button>
           {visLagreUtenAvslutning && (
             <Button
               type="button"
-              variant="tertiary"
-              data-color="neutral"
+              variant="secondary"
               disabled={erSubmitting}
               onClick={() => fortsett(trinn, alleVerdier, { handling: "lagre_resultat" })}
             >
@@ -240,21 +250,14 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
             </Button>
           )}
           {lukkerVedTilbake(trinn) ? (
-            <Button
-              type="button"
-              variant="tertiary"
-              data-color="neutral"
-              disabled={erSubmitting}
-              onClick={lukk}
-            >
+            <Button type="button" variant="secondary" disabled={erSubmitting} onClick={lukk}>
               Tilbake til saksbildet
             </Button>
           ) : (
             kanGåTilbake && (
               <Button
                 type="button"
-                variant="tertiary"
-                data-color="neutral"
+                variant="secondary"
                 disabled={erSubmitting}
                 onClick={() => dispatch({ type: "tilbake" })}
               >

@@ -181,6 +181,7 @@ const gyldigeStatuser = new Set<KontrollsakStatus>([
   "VENTER_PA_INFORMASJON",
   "VENTER_PA_VEDTAK",
   "VENTER_PA_RESULTAT",
+  "PAAKLAGET",
   "I_BERO",
 ]);
 
@@ -245,7 +246,18 @@ function getHendelsestypeForStegendring(steg: KontrollsakSteg) {
   }
 }
 
+/** Speiler `statusEtterResultat` i backend. */
+function statusEtterMockResultat(
+  sak: KontrollsakResponse,
+  resultat: LagreResultatRequest,
+): KontrollsakStatus | null {
+  if (resultat.paaklaget) return "PAAKLAGET";
+  if (sak.status === "PAAKLAGET" && resultat.politi) return "VENTER_PA_RESULTAT";
+  return sak.status;
+}
+
 function lagreMockResultat(sak: KontrollsakResponse, resultat: LagreResultatRequest): void {
+  sak.status = statusEtterMockResultat(sak, resultat);
   sak.resultat = {
     ...sak.resultat,
     ...(resultat.utredning ? { utredning: resultat.utredning } : {}),
@@ -670,6 +682,9 @@ async function backendAction(
       }
       if (registrerResultat && !resultat) {
         throw data("Velg et resultat før du fortsetter", { status: 400 });
+      }
+      if (resultat?.paaklaget) {
+        throw data("En påklaget henleggelse lagres uten stegbytte", { status: 400 });
       }
       if (
         manglerEndeligUtfallVedAvslutning(tillatte.tilstand, nyttSteg as KontrollsakSteg, resultat)
@@ -1120,6 +1135,7 @@ async function mockAction(
           registrerResultat,
         );
         if (registrerResultat && !resultat) throw new Error("Velg et resultat før du fortsetter");
+        if (resultat?.paaklaget) throw new Error("En påklaget henleggelse lagres uten stegbytte");
         if (
           manglerEndeligUtfallVedAvslutning(
             tillatte.tilstand,

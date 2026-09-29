@@ -12,6 +12,8 @@ export type Trinn =
   | {
       type: "sjekkliste";
       tittel: string;
+      /** Brødtekst over sjekklisten. */
+      ingress: string;
       beskrivelse: string;
       punkter: readonly string[];
       primær: string;
@@ -34,9 +36,11 @@ export type Trinn =
       tillatteVerdier?: Readonly<Record<string, readonly string[]>>;
       /** Ledetekst for beløpsfeltene. Ytelsestypen legges til når saken har flere ytelser. */
       belopEtikett?: string;
-      primær: string;
+      primær: string | ((verdier: Verdier) => string);
       /** Tilbyr «Registrer resultat, men ikke avslutt» når backend tillater det. */
-      kanLagreUtenAvslutning?: boolean;
+      kanLagreUtenAvslutning?: (verdier: Verdier) => boolean;
+      /** Primærknappen lagrer resultatet uten stegbytte, for eksempel ved påklaget henleggelse. */
+      lagreUtenAvslutning?: (verdier: Verdier) => boolean;
     }
   | { type: "bekreftAvslutning"; primær: string };
 
@@ -93,10 +97,21 @@ function avsluttMedResultat(id: string, etikett: string, faste: Verdier): Saksha
 function registrerPolitiresultatTittel(verdier: Verdier, feltskjema: Feltskjema): string {
   const utfall = verdier["politi.type"];
   if (utfall === "DOMFELLELSE") return "Registrer dom";
+  if (utfall === "HENLAGT") return "Registrer henleggelse";
   const etikett = feltskjema
     .find((felt) => felt.felt === "politi.type")
     ?.verdier.find((valg) => valg.verdi === utfall)?.etikett;
   return etikett ? `Registrer ${etikett.toLowerCase()}` : "Registrer avgjørelse";
+}
+
+const erPolitietsHenleggelse = (verdier: Verdier) => verdier["politi.type"] === "HENLAGT";
+const erPåklagetHenleggelse = (verdier: Verdier) =>
+  erPolitietsHenleggelse(verdier) && verdier.paaklaget === "true";
+
+function politiavgjørelsePrimær(verdier: Verdier): string {
+  if (erPåklagetHenleggelse(verdier)) return "Registrer påklaget henleggelse";
+  if (erPolitietsHenleggelse(verdier)) return "Henlegg og avslutt sak";
+  return "Registrer resultat og avslutt saken";
 }
 
 /** Handlingene i hvert steg, i visningsrekkefølge. Backend avgjør hvilke som faktisk tilbys. */
@@ -105,7 +120,7 @@ const handlingstabell: Partial<Record<KontrollsakSteg, readonly Sakshandling[]>>
     {
       id: "til-utredning",
       seksjon: "steg",
-      etikett: "Gå til Utredning",
+      etikett: "Gå til utredning",
       erPrimær: true,
       faste: {},
       trinn: [],
@@ -124,13 +139,13 @@ const handlingstabell: Partial<Record<KontrollsakSteg, readonly Sakshandling[]>>
     {
       id: "til-forvaltning",
       seksjon: "steg",
-      etikett: "Send til Forvaltning",
+      etikett: "Send til forvaltning",
       erPrimær: true,
       faste: {},
       trinn: [
         {
           type: "skjema",
-          tittel: "Send til Forvaltning",
+          tittel: "Send til forvaltning",
           felter: ["utredning.type", "ytelser[].belop"],
           tillatteVerdier: {
             "utredning.type": [
@@ -154,15 +169,15 @@ const handlingstabell: Partial<Record<KontrollsakSteg, readonly Sakshandling[]>>
     {
       id: "til-strafferettslig-vurdering",
       seksjon: "steg",
-      etikett: "Gå til Strafferettslig vurdering",
+      etikett: "Gå til strafferettslig vurdering",
       erPrimær: true,
       faste: { "forvaltning.type": "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE" },
       trinn: [
         {
           type: "skjema",
-          tittel: "Registrer oppdatert beløp",
+          tittel: "Endelig beløp",
           felter: ["ytelser[].endeligBelop"],
-          belopEtikett: "Oppdatert beløp",
+          belopEtikett: "Endelig beløp",
           primær: "Til strafferettslig vurdering",
         },
       ],
@@ -197,7 +212,7 @@ const handlingstabell: Partial<Record<KontrollsakSteg, readonly Sakshandling[]>>
     {
       id: "til-politiet",
       seksjon: "steg",
-      etikett: "Gå til Politiet",
+      etikett: "Gå til politiet",
       erPrimær: true,
       faste: { "strafferettsligVurdering.type": "ANMELDT" },
       trinn: [
@@ -211,9 +226,6 @@ const handlingstabell: Partial<Record<KontrollsakSteg, readonly Sakshandling[]>>
       ],
       innsending: { handling: "endre_steg_dialog", steg: "POLITI" },
     },
-    avsluttMedResultat("kontrollnotat", "Registrer kontrollnotat", {
-      "strafferettsligVurdering.type": "KONTROLLNOTAT",
-    }),
     avsluttMedResultat("feilutbetalingssak", "Registrer feilutbetalingssak", {
       "strafferettsligVurdering.type": "FEILUTBETALINGSSAK_ORDINAER",
     }),
@@ -235,13 +247,22 @@ const handlingstabell: Partial<Record<KontrollsakSteg, readonly Sakshandling[]>>
           felt: "politi.type",
           legend: "Utfall",
           beskrivelse: "Velg utfallet av saken hos politiet",
-          tillatteVerdier: ["FORELEGG", "BOT", "PATALEUNNLATELSE", "FRIFINNELSE", "DOMFELLELSE"],
+          tillatteVerdier: [
+            "FORELEGG",
+            "BOT",
+            "PATALEUNNLATELSE",
+            "FRIFINNELSE",
+            "DOMFELLELSE",
+            "HENLAGT",
+          ],
           primær: "Neste",
         },
         {
           type: "skjema",
           tittel: registrerPolitiresultatTittel,
           felter: [
+            "politi.henleggelsesarsak",
+            "paaklaget",
             "politi.belopTilbakekrevd",
             "politi.strafferabatt",
             "politi.strafferabattProsent",
@@ -249,27 +270,9 @@ const handlingstabell: Partial<Record<KontrollsakSteg, readonly Sakshandling[]>>
             "politi.begrunnelse",
             "politi.detaljer",
           ],
-          primær: "Registrer resultat og avslutt saken",
-          kanLagreUtenAvslutning: true,
-        },
-        bekreftAvslutning,
-      ],
-      innsending: { handling: "endre_steg_dialog", steg: "AVSLUTTET" },
-    },
-    henlegg("politi.henleggelsesarsak", { "politi.type": "HENLAGT" }),
-    {
-      id: "henlagt-paaklaget",
-      seksjon: "resultat",
-      etikett: "Registrer sak som henlagt og påklaget fra Nav",
-      faste: { "politi.type": "HENLAGT_PAAKLAGET" },
-      trinn: [
-        {
-          type: "enkeltvalg",
-          tittel: "Henlagt og påklaget fra Nav",
-          felt: "politi.henleggelsesarsak",
-          legend: "Henleggelsesårsak",
-          beskrivelse: "Velg årsaken politiet oppga for henleggelsen",
-          primær: "Registrer og avslutt sak",
+          primær: politiavgjørelsePrimær,
+          kanLagreUtenAvslutning: (verdier) => !erPolitietsHenleggelse(verdier),
+          lagreUtenAvslutning: erPåklagetHenleggelse,
         },
         bekreftAvslutning,
       ],
@@ -358,7 +361,8 @@ export function hentHandlinger(tillatteHandlinger: TillatteHandlingerResponse): 
   const kanAvslutteMedLagretResultat =
     visbareSteg.includes("AVSLUTTET") && tillatteHandlinger.tillatteSteg.includes("AVSLUTTET");
 
-  if (erHenlagtIGjeldendeSteg(tilstand)) {
+  // En påklaget henleggelse kan erstattes av en ny avgjørelse fra politiet.
+  if (erHenlagtIGjeldendeSteg(tilstand) && tilstand.status !== "PAAKLAGET") {
     return kanAvslutteMedLagretResultat ? [avsluttSak] : [];
   }
 

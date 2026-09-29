@@ -40,12 +40,29 @@ type BeløpsfeltProps = Omit<
   TextFieldProps,
   "defaultValue" | "inputMode" | "name" | "onChange" | "type" | "value"
 > & {
-  name: string;
+  /** Navnet på det skjulte feltet med uformatert verdi. Utelates når verdien styres med `value`. */
+  name?: string;
   defaultValue?: string | number;
+  /** Uformatert verdi når feltet styres utenfra. */
+  value?: string;
+  onChange?: (verdi: string) => void;
 };
 
-export function Beløpsfelt({ name, defaultValue = "", ...props }: BeløpsfeltProps) {
-  const [verdi, setVerdi] = useState(() => fjernMellomrom(String(defaultValue)));
+export function Beløpsfelt({
+  name,
+  defaultValue = "",
+  value,
+  onChange,
+  ...props
+}: BeløpsfeltProps) {
+  const [internVerdi, setInternVerdi] = useState(() => fjernMellomrom(String(defaultValue)));
+  const verdi = value === undefined ? internVerdi : fjernMellomrom(value);
+
+  function oppdaterVerdi(nyVerdi: string) {
+    const uformatert = fjernMellomrom(nyVerdi);
+    if (value === undefined) setInternVerdi(uformatert);
+    onChange?.(uformatert);
+  }
 
   return (
     <>
@@ -53,9 +70,9 @@ export function Beløpsfelt({ name, defaultValue = "", ...props }: BeløpsfeltPr
         {...props}
         inputMode="numeric"
         value={formaterBeløpsverdi(verdi)}
-        onChange={(event) => setVerdi(fjernMellomrom(event.target.value))}
+        onChange={(event) => oppdaterVerdi(event.target.value)}
       />
-      <input type="hidden" name={name} value={verdi} />
+      {name && <input type="hidden" name={name} value={verdi} />}
     </>
   );
 }

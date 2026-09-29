@@ -60,7 +60,7 @@ export function erHenlagtIGjeldendeSteg(
     case "STRAFFERETTSLIG_VURDERING":
       return resultat?.strafferettsligVurdering?.type === "HENLAGT";
     case "POLITI":
-      return resultat?.politi?.type === "HENLAGT" || resultat?.politi?.type === "HENLAGT_PAAKLAGET";
+      return resultat?.politi?.type === "HENLAGT";
     default:
       return false;
   }
@@ -85,7 +85,6 @@ export function erPolitiresultatKomplett(
 ): boolean {
   switch (politi?.type) {
     case "HENLAGT":
-    case "HENLAGT_PAAKLAGET":
       return politi.henleggelsesarsak != null;
     case "FRIFINNELSE":
       return Boolean(politi.begrunnelse?.trim());

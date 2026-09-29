@@ -17,6 +17,7 @@ export const kontrollsakStatusSchema = z.enum([
   "VENTER_PA_INFORMASJON",
   "VENTER_PA_VEDTAK",
   "VENTER_PA_RESULTAT",
+  "PAAKLAGET",
   "I_BERO",
 ]);
 
@@ -30,7 +31,6 @@ const resultatTypeSchema = z.enum([
   "FEILUTBETALINGSSAK_ORDINAER",
   "FEILUTBETALINGSSAK_POTENSIELL_STRAFFESAK",
   "HENLAGT",
-  "HENLAGT_PAAKLAGET",
   "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE",
   "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
   "ANMELDT",
@@ -118,7 +118,7 @@ const lagreResultatRequestSchema = z.object({
     .optional(),
   strafferettsligVurdering: z
     .object({
-      type: z.enum(["ANMELDT", "KONTROLLNOTAT", "FEILUTBETALINGSSAK_ORDINAER", "HENLAGT"]),
+      type: z.enum(["ANMELDT", "FEILUTBETALINGSSAK_ORDINAER", "HENLAGT"]),
       henleggelsesarsak: henleggelsesarsakSchema.optional(),
     })
     .optional(),
@@ -126,7 +126,6 @@ const lagreResultatRequestSchema = z.object({
     .object({
       type: z.enum([
         "HENLAGT",
-        "HENLAGT_PAAKLAGET",
         "FORELEGG",
         "BOT",
         "PATALEUNNLATELSE",
@@ -152,6 +151,8 @@ const lagreResultatRequestSchema = z.object({
       }),
     )
     .optional(),
+  /** Nav Kontroll påklager politiets henleggelse. Saken får status PAAKLAGET og blir hos politiet. */
+  paaklaget: z.boolean().optional(),
 });
 
 export type LagreResultatRequest = z.infer<typeof lagreResultatRequestSchema>;
