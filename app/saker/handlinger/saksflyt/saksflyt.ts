@@ -364,8 +364,11 @@ export function hentHandlinger(tillatteHandlinger: TillatteHandlingerResponse): 
   if (tilstand.status === "I_BERO" || !kanFlytte) return [];
 
   const visbareSteg = hentVisbareSteg(tillatteHandlinger);
+  // En påklaget henleggelse må erstattes av en ny avgjørelse før saken kan avsluttes.
   const kanAvslutteMedLagretResultat =
-    visbareSteg.includes("AVSLUTTET") && tillatteHandlinger.tillatteSteg.includes("AVSLUTTET");
+    tilstand.status !== "PAAKLAGET" &&
+    visbareSteg.includes("AVSLUTTET") &&
+    tillatteHandlinger.tillatteSteg.includes("AVSLUTTET");
 
   // En påklaget henleggelse kan erstattes av en ny avgjørelse fra politiet.
   if (erHenlagtIGjeldendeSteg(tilstand) && tilstand.status !== "PAAKLAGET") {
@@ -451,6 +454,22 @@ export function hentStartverdier(
     }
   }
   return verdier;
+}
+
+/**
+ * Valgene for et enum-felt. Handlingen kan begrense valgene, og for resultattyper (`*.type`)
+ * vises bare verdier som backend tillater i `tillatteResultater`.
+ */
+export function hentValg(
+  felt: Feltskjema[number],
+  tillatteResultater: readonly string[],
+  begrensning?: readonly string[],
+): Feltskjema[number]["verdier"] {
+  return felt.verdier.filter(
+    (valg) =>
+      (!begrensning || begrensning.includes(valg.verdi)) &&
+      (!felt.felt.endsWith(".type") || tillatteResultater.includes(valg.verdi)),
+  );
 }
 
 /**

@@ -335,6 +335,40 @@ describe("SaksflytModal", () => {
     expect(screen.getByRole("radio", { name: "Aktiv" })).toHaveProperty("checked", true);
   });
 
+  it("avslutter med lagret avgjørelse fra politiet uten å sende resultatet på nytt", async () => {
+    renderModal({
+      steg: "POLITI",
+      status: "VENTER_PA_RESULTAT",
+      resultat: { politi: { type: "BOT" } } as KontrollsakResponse["resultat"],
+    });
+    klikk("Avslutt sak");
+    await screen.findByRole("dialog", { name: "Avslutt sak" });
+    klikk("Avslutt sak");
+
+    expect(await screen.findByText("Lagret")).toBeDefined();
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(sendtSkjema()).toEqual({
+      handling: "endre_steg_dialog",
+      versjon: "1",
+      steg: "AVSLUTTET",
+      registrerResultat: "false",
+    });
+  });
+
+  it("flytter fokus til dialogen når trinnet byttes", async () => {
+    renderModal();
+    klikk("Henlegg sak");
+    await screen.findByRole("dialog", { name: "Henlegg sak" });
+    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Henlegg sak" }));
+  });
+
+  it("viser feilmeldingen fra serveren", async () => {
+    mockSvar = { ok: false, feil: "Endringen ble avvist." };
+    renderModal({ steg: "OPPRETTET", status: null });
+    klikk("Gå til utredning");
+    expect(await screen.findByText("Endringen ble avvist.")).toBeDefined();
+  });
+
   it("viser feilmelding og beholder verdiene når lagringen feiler", async () => {
     mockSvar = { ok: false };
     renderModal();

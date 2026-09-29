@@ -1,9 +1,11 @@
 import type { TillatteHandlingerResponse } from "~/saker/types.backend";
 import {
+  dagensDatoIOslo,
   erGyldigIsoDato,
   lesBelop,
   resultatFeltErAktivt,
   resultatFeltErPaakrevd,
+  strafferabattOver100,
 } from "../resultat-request";
 import {
   aktiveVerdier,
@@ -40,10 +42,6 @@ export function hentSynligeFelter(
   });
 }
 
-function iDag(): string {
-  return new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Oslo" }).format(new Date());
-}
-
 function validerFelt(felt: Skjemafelt, verdi: string, verdier: Verdier): string | undefined {
   if (verdi.trim() === "") {
     return resultatFeltErPaakrevd(felt, verdier) ? `${felt.etikett} må fylles ut` : undefined;
@@ -59,7 +57,7 @@ function validerFelt(felt: Skjemafelt, verdi: string, verdier: Verdier): string 
     try {
       const tall = lesBelop(verdi, felt.etikett);
       if (felt.felt === "politi.strafferabattProsent" && tall > 100) {
-        return "Strafferabatt kan ikke være over 100 %";
+        return strafferabattOver100;
       }
     } catch {
       return `${felt.etikett} må være et gyldig tall`;
@@ -67,7 +65,7 @@ function validerFelt(felt: Skjemafelt, verdi: string, verdier: Verdier): string 
   }
   if (felt.datatype === "dato") {
     if (!erGyldigIsoDato(verdi)) return `${felt.etikett} må være en gyldig dato`;
-    if (verdi > iDag()) return `${felt.etikett} kan ikke være fram i tid`;
+    if (verdi > dagensDatoIOslo()) return `${felt.etikett} kan ikke være fram i tid`;
   }
   return undefined;
 }

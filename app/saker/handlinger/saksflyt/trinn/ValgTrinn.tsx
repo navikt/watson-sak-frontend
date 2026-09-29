@@ -9,7 +9,7 @@ import {
 } from "@navikt/ds-react";
 import type { KontrollsakStatus, TillatteHandlingerResponse } from "~/saker/types.backend";
 import { formaterStatus } from "~/saker/visning";
-import { finnSkjemafelt, INGEN_STATUS, type Trinn, type Verdier } from "../saksflyt";
+import { finnSkjemafelt, hentValg, INGEN_STATUS, type Trinn, type Verdier } from "../saksflyt";
 import { type Feil, sjekkpunktNavn } from "../validering";
 
 type TrinnProps<T extends Trinn["type"]> = {
@@ -67,9 +67,9 @@ export function EnkeltvalgTrinn({
   tillatteHandlinger,
 }: TrinnProps<"enkeltvalg">) {
   const felt = finnSkjemafelt(tillatteHandlinger.feltskjema, trinn.felt);
-  const valg = (felt?.verdier ?? []).filter(
-    (valg) => !trinn.tillatteVerdier || trinn.tillatteVerdier.includes(valg.verdi),
-  );
+  const valg = felt
+    ? hentValg(felt, tillatteHandlinger.tillatteResultater, trinn.tillatteVerdier)
+    : [];
   return (
     <RadioGroup
       legend={<Legend>{trinn.legend}</Legend>}

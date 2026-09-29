@@ -326,6 +326,41 @@ describe("tillatte handlinger og resultatkall", () => {
       }),
     );
   });
+
+  it("lagrer politiets resultat med PUT uten stegbytte", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => kontrollsak,
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { lagreResultat } = await import("./api.server");
+    const request = {
+      versjon: 1 as const,
+      steg: "POLITI" as const,
+      politi: { type: "HENLAGT" as const, begrunnelse: "Bevisene holder ikke" },
+      paaklaget: true,
+    };
+    await lagreResultat("token-123", "42", request);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://backend.test/api/v1/kontrollsaker/42/resultat",
+      expect.objectContaining({ method: "PUT", body: JSON.stringify(request) }),
+    );
+  });
+
+  it("kaster feil når backend avviser resultatet", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: false, status: 409, text: async () => "" }),
+    );
+
+    const { lagreResultat } = await import("./api.server");
+    await expect(
+      lagreResultat("token", "42", { versjon: 1, steg: "POLITI", politi: { type: "BOT" } }),
+    ).rejects.toThrow();
+  });
 });
 
 describe("opprettJournalpost", () => {

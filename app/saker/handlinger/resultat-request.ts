@@ -108,13 +108,25 @@ function konverterVerdi(
     return verdi.trim() || undefined;
   }
   if (felt.datatype === "tall" || felt.datatype === "belop") {
-    return lesBelop(verdi, felt.etikett);
+    const tall = lesBelop(verdi, felt.etikett);
+    if (felt.felt === "politi.strafferabattProsent" && tall > 100) {
+      throw new Error(strafferabattOver100);
+    }
+    return tall;
   }
   if (felt.datatype === "dato") {
     if (!erGyldigIsoDato(verdi)) throw new Error(`${felt.etikett} må være en gyldig dato`);
+    if (verdi > dagensDatoIOslo()) throw new Error(`${felt.etikett} kan ikke være fram i tid`);
     return verdi;
   }
   return undefined;
+}
+
+export const strafferabattOver100 = "Strafferabatt kan ikke være over 100 %";
+
+/** Dagens dato i norsk tid, på formen YYYY-MM-DD. */
+export function dagensDatoIOslo(): string {
+  return new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Oslo" }).format(new Date());
 }
 
 /** Sjekker at verdien er en dato på formen YYYY-MM-DD som finnes i kalenderen. */

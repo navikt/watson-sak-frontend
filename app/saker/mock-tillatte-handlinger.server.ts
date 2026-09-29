@@ -59,7 +59,12 @@ export function erGyldigMockStegovergang(
           sak.resultat.strafferettsligVurdering.henleggelsesarsak != null)
       );
     case "POLITI":
-      return nyttSteg === "AVSLUTTET" && erPolitiresultatKomplett(sak.resultat?.politi);
+      // En påklaget henleggelse må erstattes av en ny avgjørelse før saken kan avsluttes.
+      return (
+        nyttSteg === "AVSLUTTET" &&
+        sak.status !== "PAAKLAGET" &&
+        erPolitiresultatKomplett(sak.resultat?.politi)
+      );
     default:
       return false;
   }

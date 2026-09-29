@@ -3,6 +3,7 @@ import {
   byggInnsending,
   endreStatus,
   hentHandlinger,
+  hentValg,
   hentStartverdier,
   INGEN_STATUS,
   type Sakshandling,
@@ -102,13 +103,27 @@ describe("hentHandlinger", () => {
     expect(ider(hentHandlinger(tillatte))).toEqual(["avslutt"]);
   });
 
-  it("tilbyr ny avgjørelse når henleggelsen er påklaget", () => {
+  it("krever ny avgjørelse før en påklaget henleggelse kan avsluttes", () => {
     const tillatte = lagTillatteHandlinger({
       steg: "POLITI",
       status: "PAAKLAGET",
       resultat: { politi: { type: "HENLAGT", henleggelsesarsak: "FORELDET" } },
     });
-    expect(ider(hentHandlinger(tillatte))).toEqual(["registrer-avgjorelse", "avslutt"]);
+    expect(ider(hentHandlinger(tillatte))).toEqual(["registrer-avgjorelse"]);
+  });
+
+  it("viser bare resultattyper som backend tillater", () => {
+    const tillatte = lagTillatteHandlinger({ steg: "POLITI", status: "VENTER_PA_RESULTAT" });
+    tillatte.tillatteResultater = ["BOT", "HENLAGT"];
+    const felt = tillatte.feltskjema.find((f) => f.felt === "politi.type");
+    if (!felt) throw new Error("Mangler politi.type");
+    expect(hentValg(felt, tillatte.tillatteResultater).map((valg) => valg.verdi)).toEqual([
+      "HENLAGT",
+      "BOT",
+    ]);
+    expect(hentValg(felt, tillatte.tillatteResultater, ["BOT"]).map((v) => v.verdi)).toEqual([
+      "BOT",
+    ]);
   });
 
   it("henlegger fra Forvaltning uten å spørre om årsak", () => {

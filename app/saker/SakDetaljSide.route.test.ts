@@ -1157,15 +1157,15 @@ describe("SakDetaljSide tilgangskontroll", () => {
     formData.set("handling", "endre_status");
     formData.set("status", "POLITI");
 
-    await expect(
-      action({
+    expect(
+      await action({
         request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
           method: "POST",
           body: formData,
         }),
         params: { sakId: kontrollsakRef },
       } as Route.ActionArgs),
-    ).rejects.toSatisfy((thrown: { init?: { status?: number } }) => thrown.init?.status === 403);
+    ).toMatchObject({ data: { ok: false }, init: { status: 403 } });
   });
 
   it("avviser mutasjon på sak uten eier med 403", async () => {

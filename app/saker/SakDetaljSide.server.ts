@@ -564,11 +564,46 @@ export async function action({ request, params }: Route.ActionArgs) {
   const handling = hentTekstfelt(formData, "handling", "Ugyldig handling");
   const sakId = params.sakId;
 
-  if (!skalBrukeMockdata) {
-    return backendAction(request, sakId, handling, formData);
-  }
+  const utfør = () =>
+    skalBrukeMockdata
+      ? mockAction(request, sakId, handling, formData)
+      : backendAction(request, sakId, handling, formData);
 
-  return mockAction(request, sakId, handling, formData);
+  if (!saksflythandlinger.has(handling)) return utfør();
+  try {
+    return await utfør();
+  } catch (feil) {
+    return saksflytfeil(feil);
+  }
+}
+
+/** Handlingene fra saksflyt-modalen. Feil returneres slik at modalen beholder verdiene. */
+const saksflythandlinger = new Set(["endre_steg_dialog", "lagre_resultat", "endre_status"]);
+
+type SaksflytFeil = { ok: false; feil: string };
+
+function saksflytfeil(feil: unknown) {
+  if (feil instanceof Response) throw feil;
+  const konflikt =
+    "Endringen ble avvist. Saken kan være endret av noen andre. Last inn siden på nytt og prøv igjen.";
+  if (feil instanceof backendApi.BackendFeilException) {
+    const melding =
+      feil.status === 409
+        ? konflikt
+        : "Kunne ikke lagre endringen. Last inn siden på nytt og prøv igjen.";
+    return data<SaksflytFeil>({ ok: false, feil: melding }, { status: feil.status });
+  }
+  if (
+    feil &&
+    typeof feil === "object" &&
+    "init" in feil &&
+    "data" in feil &&
+    typeof feil.data === "string"
+  ) {
+    const status = (feil.init as ResponseInit | null)?.status ?? 400;
+    return data<SaksflytFeil>({ ok: false, feil: feil.data }, { status });
+  }
+  throw feil;
 }
 
 // --- Backend-action (ekte API-kall) ---
@@ -1146,6 +1181,9 @@ async function mockAction(
         }
         if (resultat) {
           lagreMockResultat(kandidat, resultat);
+          if (kandidat.status === "PAAKLAGET" && resultat.politi) {
+            kandidat.status = "VENTER_PA_RESULTAT";
+          }
         }
       } catch (feil) {
         throw data(feil instanceof Error ? feil.message : "Ugyldige resultatfelter", {

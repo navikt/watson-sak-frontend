@@ -72,6 +72,24 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
     lagStarttilstand,
   );
 
+  const modalRef = useRef<HTMLDialogElement>(null);
+  const aktivtTrinn = tilstand.fase === "trinn" ? tilstand.trinnIndeks : null;
+  const aktivHandling = tilstand.fase === "trinn" ? tilstand.handling.id : null;
+  // Knappen som ble trykket forsvinner når innholdet byttes. Flytt fokus til overskriften,
+  // slik at skjermlesere leser den opp og tastaturbrukere starter øverst i dialogen.
+  useEffect(() => {
+    const dialog = modalRef.current;
+    if (!dialog) return;
+    const overskriftId = dialog.getAttribute("aria-labelledby");
+    const overskrift = overskriftId ? document.getElementById(overskriftId) : null;
+    if (overskrift) {
+      overskrift.tabIndex = -1;
+      overskrift.focus();
+    } else {
+      dialog.focus();
+    }
+  }, [tilstand.fase, aktivtTrinn, aktivHandling]);
+
   useEffect(() => {
     if (!venterPåSvar.current || fetcher.state !== "idle") return;
     venterPåSvar.current = false;
@@ -83,7 +101,14 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
     ) {
       dispatch({ type: "lagret" });
     } else {
-      dispatch({ type: "settFeil", feil: { "": lagringsfeil } });
+      const melding =
+        fetcher.data &&
+        typeof fetcher.data === "object" &&
+        "feil" in fetcher.data &&
+        typeof fetcher.data.feil === "string"
+          ? fetcher.data.feil
+          : lagringsfeil;
+      dispatch({ type: "settFeil", feil: { "": melding } });
     }
   }, [fetcher.data, fetcher.state]);
 
@@ -102,6 +127,7 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
           tillatteHandlinger.tilstand.steg,
           undefined,
           tillatteHandlinger.tilstand.ytelser,
+          formData.get("registrerResultat") !== "false",
         );
       } catch (feil) {
         dispatch({
@@ -144,7 +170,7 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
 
   if (tilstand.fase === "kvittering") {
     return (
-      <Modal open onClose={onClose} aria-label="Lagret" width="small">
+      <Modal ref={modalRef} open onClose={onClose} aria-label="Lagret" width="small">
         <Modal.Header />
         <Modal.Body>
           <VStack gap="space-8" align="center" className="py-6 text-center">
@@ -168,6 +194,7 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
   if (tilstand.fase === "meny") {
     return (
       <Modal
+        ref={modalRef}
         open
         onClose={lukk}
         onBeforeClose={() => !erSubmitting}
@@ -207,6 +234,7 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
 
   return (
     <Modal
+      ref={modalRef}
       open
       onClose={lukk}
       onBeforeClose={() => !erSubmitting}

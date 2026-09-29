@@ -76,6 +76,49 @@ describe("byggLagreResultatRequest", () => {
     });
   });
 
+  describe("domfellelse", () => {
+    const domskjema: TillatteHandlingerResponse["feltskjema"] = [
+      {
+        felt: "politi.type",
+        etikett: "Resultat fra politiet",
+        datatype: "enum",
+        paakrevd: true,
+        verdier: [{ verdi: "DOMFELLELSE", etikett: "Domfellelse" }],
+      },
+      {
+        felt: "politi.strafferabattProsent",
+        etikett: "Strafferabatt (%)",
+        datatype: "tall",
+        paakrevd: false,
+        verdier: [],
+      },
+      {
+        felt: "politi.domsdato",
+        etikett: "Domsdato",
+        datatype: "dato",
+        paakrevd: false,
+        verdier: [],
+      },
+    ];
+
+    it("avviser strafferabatt over 100 %", () => {
+      const data = skjemaData({
+        "politi.type": "DOMFELLELSE",
+        "politi.strafferabattProsent": "120",
+      });
+      expect(() => byggLagreResultatRequest(data, domskjema, "POLITI")).toThrow(
+        "Strafferabatt kan ikke være over 100 %",
+      );
+    });
+
+    it("avviser domsdato fram i tid", () => {
+      const data = skjemaData({ "politi.type": "DOMFELLELSE", "politi.domsdato": "2999-01-01" });
+      expect(() => byggLagreResultatRequest(data, domskjema, "POLITI")).toThrow(
+        "Domsdato kan ikke være fram i tid",
+      );
+    });
+  });
+
   it("lager versjonert resultatrequest med feltene fra backend-skjemaet", () => {
     const data = skjemaData({
       "utredning.type": "HENLAGT",

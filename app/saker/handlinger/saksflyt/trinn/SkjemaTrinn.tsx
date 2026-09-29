@@ -12,7 +12,7 @@ import type { TillatteHandlingerResponse } from "~/saker/types.backend";
 import { formaterYtelseType } from "~/saker/visning";
 import { formaterTilIsoDato } from "~/utils/date-utils";
 import { resultatFeltErPaakrevd } from "../../resultat-request";
-import { erBelopsfelt, type Trinn, type Verdier, ytelseVerdiNavn } from "../saksflyt";
+import { erBelopsfelt, hentValg, type Trinn, type Verdier, ytelseVerdiNavn } from "../saksflyt";
 import { type Feil, hentSynligeFelter } from "../validering";
 
 type Skjemafelt = TillatteHandlingerResponse["feltskjema"][number];
@@ -44,7 +44,8 @@ function Resultatfelt({
   feil,
   onChange,
   tillatteVerdier,
-}: FeltProps & { tillatteVerdier?: readonly string[] }) {
+  tillatteResultater,
+}: FeltProps & { tillatteVerdier?: readonly string[]; tillatteResultater: readonly string[] }) {
   const verdi = verdier[felt.felt] ?? "";
   const valgfri = !resultatFeltErPaakrevd(felt, verdier);
   const etikett = valgfri ? `${felt.etikett} (valgfritt)` : felt.etikett;
@@ -58,13 +59,11 @@ function Resultatfelt({
           error={feil[felt.felt]}
           onChange={(nyVerdi: string) => onChange(felt.felt, nyVerdi)}
         >
-          {felt.verdier
-            .filter((valg) => !tillatteVerdier || tillatteVerdier.includes(valg.verdi))
-            .map((valg) => (
-              <Radio key={valg.verdi} value={valg.verdi}>
-                {valg.etikett}
-              </Radio>
-            ))}
+          {hentValg(felt, tillatteResultater, tillatteVerdier).map((valg) => (
+            <Radio key={valg.verdi} value={valg.verdi}>
+              {valg.etikett}
+            </Radio>
+          ))}
         </RadioGroup>
       );
     case "boolsk":
@@ -184,6 +183,7 @@ export function SkjemaTrinn({
             feil={feil}
             onChange={onChange}
             tillatteVerdier={trinn.tillatteVerdier?.[felt.felt]}
+            tillatteResultater={tillatteHandlinger.tillatteResultater}
           />
         ),
       )}

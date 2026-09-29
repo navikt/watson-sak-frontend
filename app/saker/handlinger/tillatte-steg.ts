@@ -135,7 +135,10 @@ export function harLagretResultatForOvergang(
           resultat.strafferettsligVurdering.henleggelsesarsak != null)
       );
     case "POLITI":
-      return erPolitiresultatKomplett(resultat?.politi);
+      return (
+        tillatteHandlinger.tilstand.status !== "PAAKLAGET" &&
+        erPolitiresultatKomplett(resultat?.politi)
+      );
     default:
       return false;
   }

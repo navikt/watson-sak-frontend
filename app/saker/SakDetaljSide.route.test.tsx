@@ -158,8 +158,8 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     sak.steg = "FORVALTNING";
     sak.resultat = null;
 
-    await expect(
-      utforAction(getSaksreferanse(sak.id), {
+    expect(
+      await utforAction(getSaksreferanse(sak.id), {
         handling: "endre_steg_dialog",
         steg: "AVSLUTTET",
         registrerResultat: "true",
@@ -167,7 +167,7 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
         "resultat.forvaltning.endeligUtfall.type": "HENLAGT",
         "resultat.forvaltning.endeligUtfall.henleggelsesarsak": "FORELDET",
       }),
-    ).rejects.toMatchObject({ init: { status: 400 } });
+    ).toMatchObject({ data: { ok: false }, init: { status: 400 } });
     expect(sak.steg).toBe("FORVALTNING");
   });
 
@@ -295,8 +295,8 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     settInnloggetSomEier(sak);
     const sakId = getSaksreferanse(sak.id);
 
-    await expect(
-      utforAction(sakId, {
+    expect(
+      await utforAction(sakId, {
         handling: "endre_steg_dialog",
         steg: "AVSLUTTET",
         registrerResultat: "true",
@@ -304,7 +304,46 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
         "resultat.utredning.henleggelsesarsak": "BEVISETS_STILLING",
         "resultat.admin.godkjent": "true",
       }),
-    ).rejects.toMatchObject({ init: { status: 400 } });
+    ).toMatchObject({ data: { ok: false }, init: { status: 400 } });
+  });
+
+  it("krever ny avgjørelse fra politiet før en påklaget henleggelse avsluttes", async () => {
+    const sak = hentAlleSaker(testRequest).find((s: KontrollsakResponse) => s.steg === "UTREDES");
+    expect(sak).toBeDefined();
+    if (!sak) return;
+    settInnloggetSomEier(sak);
+    sak.steg = "POLITI";
+    sak.status = "VENTER_PA_RESULTAT";
+    sak.resultat = null;
+    const sakId = getSaksreferanse(sak.id);
+
+    await utforAction(sakId, {
+      handling: "lagre_resultat",
+      "resultat.politi.type": "HENLAGT",
+      "resultat.politi.begrunnelse": "Bevisene holder ikke",
+      "resultat.paaklaget": "true",
+    });
+    expect(sak.status).toBe("PAAKLAGET");
+    expect(hentMockTillatteHandlinger(sak).tillatteSteg).not.toContain("AVSLUTTET");
+
+    expect(
+      await utforAction(sakId, {
+        handling: "endre_steg_dialog",
+        steg: "AVSLUTTET",
+        registrerResultat: "false",
+      }),
+    ).toMatchObject({ data: { ok: false } });
+    expect(sak.steg).toBe("POLITI");
+
+    await utforAction(sakId, {
+      handling: "endre_steg_dialog",
+      steg: "AVSLUTTET",
+      registrerResultat: "true",
+      "resultat.politi.type": "HENLAGT",
+      "resultat.politi.begrunnelse": "Bevisene holder ikke",
+      "resultat.paaklaget": "false",
+    });
+    expect(sak.steg).toBe("AVSLUTTET");
   });
 
   it("henlegger saken ved avslutning fra mockskjemaet", async () => {
@@ -437,13 +476,13 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
 
-    await expect(
-      utforAction(sakId, {
+    expect(
+      await utforAction(sakId, {
         handling: "endre_steg_dialog",
         steg: "UTREDES",
         status: "I_BERO",
       }),
-    ).rejects.toBeDefined();
+    ).toMatchObject({ data: { ok: false } });
     expect(sak.steg).toBe("UTREDES");
     expect(sak.status).toBe("I_BERO");
   });
@@ -647,15 +686,15 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     sak.resultat = { utredning: { type: "FEILUTBETALINGSSAK_ORDINAER" } };
     sak.ytelser = sak.ytelser.map((ytelse) => ({ ...ytelse, belop: 0 }));
 
-    await expect(
-      utforAction(getSaksreferanse(sak.id), {
+    expect(
+      await utforAction(getSaksreferanse(sak.id), {
         handling: "endre_steg_dialog",
         steg: "FORVALTNING",
         registrerResultat: "true",
         "resultat.utredning.type": "HENLAGT",
         "resultat.utredning.henleggelsesarsak": "BEVISETS_STILLING",
       }),
-    ).rejects.toMatchObject({ init: { status: 409 } });
+    ).toMatchObject({ data: { ok: false }, init: { status: 409 } });
 
     expect(sak.steg).toBe("UTREDES");
     expect(sak.resultat?.utredning?.type).toBe("FEILUTBETALINGSSAK_ORDINAER");
@@ -671,12 +710,12 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
 
-    await expect(
-      utforAction(sakId, {
+    expect(
+      await utforAction(sakId, {
         handling: "endre_status",
         status: "UGYLDIG_AARSAK",
       }),
-    ).rejects.toBeDefined();
+    ).toMatchObject({ data: { ok: false } });
   });
 
   it("legger til manuelt historikkinnslag", async () => {
@@ -770,12 +809,12 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
 
-    await expect(
-      utforAction(sakId, {
+    expect(
+      await utforAction(sakId, {
         handling: "endre_status",
         status: "I_BERO",
       }),
-    ).rejects.toBeDefined();
+    ).toMatchObject({ data: { ok: false } });
   });
 
   it("gjenoppta avviser for avsluttet sak", async () => {
