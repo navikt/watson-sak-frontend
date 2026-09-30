@@ -49,6 +49,14 @@ describe("hendelseBeskrivelse", () => {
   });
 });
 
+describe("hendelseTittel", () => {
+  it("viser lesbar tittel når saksdetaljer er redigert", () => {
+    const hendelse = lagHendelse({ hendelsesType: "SAK_REDIGERT" });
+
+    expect(hendelseTittel(hendelse)).toBe("Saksdetaljer oppdatert");
+  });
+});
+
 describe("snapshot av steg og status", () => {
   it.each([
     ["SAK_OPPRETTET", "Sak opprettet"],

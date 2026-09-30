@@ -134,6 +134,8 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
       return "Avklaring opprettet";
     case "SAK_TILDELT":
       return "Sak tildelt";
+    case "SAK_REDIGERT":
+      return "Saksdetaljer oppdatert";
     case "STATUS_ENDRET":
     case "SAK_STATUS_ENDRET":
       return stegOgStatusTittel(hendelse, forrigeHendelse);
@@ -379,8 +381,8 @@ export function HendelseInnhold({
 
   return (
     <VStack gap="space-1">
-      {aktør && <BodyShort size="small">Utført av: {aktør}</BodyShort>}
       {innhold}
+      {aktør && <BodyShort size="small">Utført av: {aktør}</BodyShort>}
     </VStack>
   );
 }

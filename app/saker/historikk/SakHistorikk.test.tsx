@@ -78,6 +78,29 @@ describe("SakHistorikk", () => {
     expect(screen.getByText(/Steg: Opprettet/)).toBeDefined();
   });
 
+  it("viser saksredigering med aktøren på nederste linje", async () => {
+    await renderMedRouter(
+      <SakHistorikk
+        redigerbar={true}
+        sakId={1}
+        hendelser={[
+          lagBackendHendelse({
+            hendelsesType: "SAK_REDIGERT",
+            beskrivelse: "Kategori og prioritet endret",
+            opprettetAvNavn: "Ola Nordmann",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Saksdetaljer oppdatert")).toBeDefined();
+    const beskrivelse = screen.getByText("Steg: Opprettet");
+    const aktør = screen.getByText("Utført av: Ola Nordmann");
+    expect(beskrivelse.compareDocumentPosition(aktør) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+
   it("viser historikktidspunkt i norsk tidssone", async () => {
     await renderMedRouter(
       <SakHistorikk
