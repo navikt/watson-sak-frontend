@@ -480,6 +480,15 @@ describe("DokumentTre med mapper", () => {
     expect(screen.getByText("Rapport")).toBeDefined();
   });
 
+  it("åpner ikke den gamle mappen til et arkivert dokument som er åpent", () => {
+    renderTre({ noder: dokumenter, mapper, sakId: "ABC-123", fremhevetId: "3" });
+
+    expect(screen.getByRole("button", { name: /Bank/ }).getAttribute("aria-expanded")).toBe(
+      "false",
+    );
+    expect(screen.getByText("Arkivert notat")).toBeDefined();
+  });
+
   it("viser arkiverte dokumenter på rotnivå, ikke i mappen de lå i", () => {
     renderTre({ noder: dokumenter, mapper, sakId: "ABC-123" });
 

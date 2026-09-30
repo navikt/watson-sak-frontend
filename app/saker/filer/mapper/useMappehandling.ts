@@ -5,7 +5,8 @@ import type { Mappehandling, MappehandlingSvar } from "./mapper.api";
 
 /**
  * Sender mappehandlinger (opprett, gi nytt navn, flytt, slett) til BFF-ruten for mapper.
- * `onFullført` kalles når serveren har svart `ok`. Feilmeldingen fra serveren ligger i `feil`.
+ * `onFullført` kalles når serveren har svart `ok`, sammen med en eventuell `vedSuksess` som ble
+ * sendt med akkurat denne handlingen. Feilmeldingen fra serveren ligger i `feil`.
  * Nye handlinger ignoreres mens en handling pågår, slik at to flyttinger ikke kan fullføres i
  * feil rekkefølge. `utfør` returnerer `false` når handlingen ble ignorert.
  */
@@ -15,11 +16,15 @@ export function useMappehandling(sakId: string, onFullført?: () => void) {
   const venterPåSvar = useRef(false);
   const onFullførtRef = useRef(onFullført);
   onFullførtRef.current = onFullført;
+  const vedSuksessRef = useRef<(() => void) | undefined>(undefined);
 
   useEffect(() => {
     if (!venterPåSvar.current || fetcher.state !== "idle") return;
     venterPåSvar.current = false;
+    const vedSuksess = vedSuksessRef.current;
+    vedSuksessRef.current = undefined;
     if (fetcher.data?.ok) {
+      vedSuksess?.();
       onFullførtRef.current?.();
     } else {
       settFeil(
@@ -28,10 +33,11 @@ export function useMappehandling(sakId: string, onFullført?: () => void) {
     }
   }, [fetcher.data, fetcher.state]);
 
-  function utfør(handling: Mappehandling): boolean {
+  function utfør(handling: Mappehandling, vedSuksess?: () => void): boolean {
     if (venterPåSvar.current || fetcher.state !== "idle") return false;
     settFeil(undefined);
     venterPåSvar.current = true;
+    vedSuksessRef.current = vedSuksess;
     fetcher.submit(handling, {
       method: "post",
       action: RouteConfig.API.SAK_MAPPER.replace(":sakId", sakId),

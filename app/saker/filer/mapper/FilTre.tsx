@@ -95,15 +95,8 @@ export function FilTre({
   const [slippmål, settSlippmål] = useState<Slippmål | undefined>(undefined);
   const [modal, settModal] = useState<ÅpenModal>(null);
   const treRef = useRef<HTMLDivElement>(null);
-  const slettetMappe = useRef<string | null>(null);
   const [statusmelding, settStatusmelding] = useState("");
-  const mappehandling = useMappehandling(sakId, () => {
-    const sti = slettetMappe.current;
-    if (sti === null) return;
-    slettetMappe.current = null;
-    settStatusmelding(`Mappen «${mappenavn(sti)}» er slettet`);
-    flyttFokusEtterSletting(forelder(sti));
-  });
+  const mappehandling = useMappehandling(sakId);
   const treId = useId();
   const sletting = useDokumentSletting({ sakId, kilde: "dokumentliste" });
   const filsletting = useFilSletting(sakId);
@@ -309,8 +302,11 @@ export function FilTre({
                 icon={<TrashIcon />}
                 disabled={!erTom}
                 onSelect={() => {
-                  if (mappehandling.utfør({ handling: "slett", sti: mappe.sti })) {
-                    slettetMappe.current = mappe.sti;
+                  const slettet = mappehandling.utfør({ handling: "slett", sti: mappe.sti }, () => {
+                    settStatusmelding(`Mappen «${mappenavn(mappe.sti)}» er slettet`);
+                    flyttFokusEtterSletting(forelder(mappe.sti));
+                  });
+                  if (slettet) {
                     sporHendelse("mappe slettet", { sakId });
                   }
                 }}

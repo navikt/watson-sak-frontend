@@ -563,6 +563,39 @@ describe("FilTre", () => {
       expect(screen.getByText("Filen er for stor")).toBeDefined();
     });
 
+    it("sier ikke fra om sletting når en avvist sletting følges av en vellykket flytting", async () => {
+      mockMappeAction.mockImplementationOnce(
+        async () => ({ ok: false, melding: "Mappen er ikke tom" }) as never,
+      );
+      await renderSeksjon({
+        mapper,
+        filer: mockFiler,
+        sakId: "SAK-1",
+        erSakseier: false,
+        redigerbar: true,
+      });
+
+      fireEvent.click(screen.getByLabelText("Handlinger for mappen Tom mappe"));
+      fireEvent.click(await screen.findByRole("menuitem", { name: "Slett mappe" }));
+      expect(await screen.findByText("Mappen er ikke tom")).toBeDefined();
+
+      const dataTransfer = { setData: vi.fn(), effectAllowed: "", dropEffect: "" };
+      const fil = screen.getByText("anmeldelse.pdf").closest("li");
+      const mål = screen.getByRole("button", { name: /^Tom mappe/ }).closest("li");
+      if (!fil || !mål) throw new Error("Fant ikke elementene");
+      fireEvent.dragStart(fil, { dataTransfer });
+      fireEvent.dragOver(mål, { dataTransfer });
+      fireEvent.drop(mål, { dataTransfer });
+
+      await waitFor(() => {
+        expect(mottatteMappehandlinger).toEqual([
+          { handling: "flytt-fil", id: "fil-1", mappe: "Tom mappe" },
+        ]);
+      });
+      await waitFor(() => expect(screen.queryByText("Mappen er ikke tom")).toBeNull());
+      expect(screen.queryByText(/er slettet/)).toBeNull();
+    });
+
     it("viser feilmelding fra serveren når en mappehandling feiler", async () => {
       mockMappeAction.mockImplementationOnce(
         async () => ({ ok: false, melding: "Mappen finnes allerede" }) as never,

@@ -235,7 +235,9 @@ export function DokumentTre({
 
   const tre = byggFilTre(mapper, noder, []);
   const arkiverte = noder.filter((node) => node.arkivert);
-  const fremhevetMappe = noder.find((node) => node.id === fremhevetId)?.mappe;
+  const fremhevet = noder.find((node) => node.id === fremhevetId);
+  // Arkiverte dokumenter vises utenfor mappene, så de skal ikke åpne sin gamle mappegren.
+  const fremhevetMappe = fremhevet?.arkivert ? undefined : fremhevet?.mappe;
   const startÅpen = (sti: string) => !!fremhevetMappe && erLikEllerUnder(fremhevetMappe, sti);
   const felles: RadFelles = {
     sakId,
