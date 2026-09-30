@@ -269,6 +269,7 @@ export const dokumentNodeSchema = z.object({
   arkivert: z.string().nullish(),
   arkivertAv: z.string().nullish(),
   arkivertJournalpostId: z.string().nullish(),
+  mappe: z.string().nullish(),
 });
 
 const historiskIdentSchema = z.object({

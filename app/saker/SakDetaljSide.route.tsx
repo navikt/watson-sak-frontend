@@ -43,6 +43,8 @@ export default function SakDetaljSide() {
     historikk,
     dokumenter,
     filer,
+    mapper,
+    journalposter,
     andreSaker,
     saksbehandlerDetaljer,
   } = useLoaderData<typeof loader>();
@@ -120,6 +122,8 @@ export default function SakDetaljSide() {
               <SakFilområde
                 dokumenter={dokumenter}
                 filer={filer}
+                mapper={mapper}
+                journalposter={journalposter}
                 sakId={saksreferanse}
                 redigerbar={harDirekteTilgang && stegregler.kanRedigereDokumenter}
                 kanLasteOppFiler={harDirekteTilgang && stegregler.kanLasteOppFiler}

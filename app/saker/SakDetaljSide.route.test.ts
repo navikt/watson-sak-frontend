@@ -1,4 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  hentJournalposterForSak,
+  leggTilJournalpost,
+} from "~/testing/mock-store/journalposter.server";
 import { hentMockState, resetDefaultSession } from "~/testing/mock-store/session.server";
 import { hentFordelingssaker } from "~/testing/mock-store/alle-saker.server";
 import { required } from "~/testing/required";
@@ -225,6 +229,9 @@ describe("SakDetaljSide action", () => {
         beskrivelse: "Vurderingen er dokumentert.\nMal: Vurdering av barnas beste",
       }),
     );
+    expect(hentJournalposterForSak(state(), String(kontrollsak.id))).toEqual([
+      expect.objectContaining({ journalposttype: "NOTAT", tittel: "Vurdering av barnas beste" }),
+    ]);
   });
 
   it("kobler og fjerner kobling mellom saker på samme person i mockdata", async () => {
@@ -1325,6 +1332,12 @@ describe("SakDetaljSide tilgangskontroll", () => {
       enhet: "4800",
     };
     kontrollsak.saksbehandlere.deltMed = [];
+    leggTilJournalpost(state(), String(kontrollsak.id), {
+      journalpostId: "JP-1",
+      journalposttype: "NOTAT",
+      tittel: "Hemmelig notat",
+      opprettet: "2026-03-01T10:00:00Z",
+    });
 
     const resultat = await loader({
       request: testRequest,
@@ -1332,6 +1345,8 @@ describe("SakDetaljSide tilgangskontroll", () => {
     } as unknown as Route.LoaderArgs);
 
     expect(resultat.dokumenter).toEqual([]);
+    expect(resultat.mapper).toEqual([]);
+    expect(resultat.journalposter).toEqual([]);
   });
 
   it("returnerer filer i loader for eier", async () => {

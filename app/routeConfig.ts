@@ -32,6 +32,7 @@ export const RouteConfig = {
     SAK_DOKUMENT_KOMMENTARER: "/api/saker/:sakId/dokumenter/:docId/kommentarer",
     SAK_FILER: "/api/saker/:sakId/filer",
     SAK_FIL: "/api/saker/:sakId/filer/:filId",
+    SAK_MAPPER: "/api/saker/:sakId/mapper",
     VARSLER_ULESTE: "/api/varsler/uleste",
     MARKER_VARSEL_LEST: "/api/varsler/lest",
     PDF_FORHÅNDSVISNING: "/api/saker/:sakId/dokumenter/:docId/forhandsvisning",

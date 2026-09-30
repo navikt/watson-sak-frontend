@@ -186,6 +186,8 @@ export function genererHistorikkForSaker(
     dokumentHistorikk: new Map(),
     dokumentKommentarer: new Map(),
     filer: new Map(),
+    mapper: new Map(),
+    journalposter: new Map(),
     varsler: [],
     nesteFordelingssakId: 0,
     nesteHistorikkId: nesteId,

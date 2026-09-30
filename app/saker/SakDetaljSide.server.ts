@@ -25,6 +25,11 @@ import type { FilResponse } from "~/saker/filer/typer";
 import { lagIsoTidspunktFraNorskDatoTid } from "~/utils/date-utils";
 import { hentTekstfelt, hentValgfriTekst } from "~/utils/form-data";
 import { hentDokumenttreForSak } from "./filer/mock-data.server";
+import { hentMapperstier, hentMapperstierFraMock } from "./filer/mapper/mapper.server";
+import {
+  hentJournalposterForSak,
+  leggTilJournalpost,
+} from "~/testing/mock-store/journalposter.server";
 import {
   arkiverFil,
   hentFilerForSak,
@@ -472,6 +477,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       filerResultat,
       tillatteHandlinger,
       innlogget,
+      mapper,
     ] = await Promise.all([
       sakPromise,
       hentHistorikkMedTilgangskontroll(token, sakId),
@@ -480,6 +486,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       hentFilerMedTilgangskontroll(token, sakId),
       hentTillatteHandlingerMedTilgangskontroll(token, sakId, sakPromise),
       hentInnloggetBruker({ request }),
+      hentMapperstier(token, sakId),
     ]);
 
     // Henter kun første side (maks 100 saker) — visningen på sakdetaljsiden er en enkel
@@ -504,9 +511,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       sak: sakForRespons,
       tillatteHandlinger,
       historikk,
-      journalposter,
+      journalposter: harDirekteTilgang ? journalposter : [],
       dokumenter: harDirekteTilgang ? sak.dokumenter : [],
       filer: harDirekteTilgang ? filerResultat.filer : [],
+      mapper: harDirekteTilgang ? mapper : [],
       harFilTilgang: filerResultat.harFilTilgang,
       andreSaker,
       saksbehandlere: saksbehandlerDetaljer.map((sb) => sb.navn),
@@ -539,6 +547,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const harDirekteTilgang = erEier || harDeltTilgang || innlogget.erLeder;
   const dokumenter = harDirekteTilgang ? hentDokumenttreForSak(request, String(sak.id)) : [];
   const filer = harDirekteTilgang ? hentFilerForSak(request, String(sak.id)) : [];
+  const mapper = harDirekteTilgang ? hentMapperstierFraMock(request, String(sak.id)) : [];
   const andreSaker = alleSaker.filter(
     (annenSak) => annenSak.personIdent === sak.personIdent && annenSak.id !== sak.id,
   );
@@ -546,9 +555,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     sak,
     tillatteHandlinger,
     historikk,
-    journalposter: [],
+    journalposter: harDirekteTilgang
+      ? hentJournalposterForSak(hentMockState(request), String(sak.id))
+      : [],
     dokumenter,
     filer,
+    mapper,
     harFilTilgang,
     andreSaker,
     saksbehandlere: mockSaksbehandlere,
@@ -1496,6 +1508,12 @@ async function mockAction(
         deler.push(`Knyttet til oppgave${oppgavetype ? `: ${oppgavetype}` : ""}`);
       }
 
+      leggTilJournalpost(hentMockState(request), String(sak.id), {
+        journalpostId: `demo-${crypto.randomUUID()}`,
+        journalposttype: "NOTAT",
+        tittel: malLabel ?? "Notat",
+        opprettet: new Date().toISOString(),
+      });
       leggTilHendelse(request, sak, "NOTAT_SENDT", undefined, {
         beskrivelse: deler.join("\n"),
       });
@@ -1537,6 +1555,13 @@ async function mockAction(
         if (frist) oppgaveDeler.push(`Frist: ${frist}`);
         deler.push(oppgaveDeler.join(", "));
       }
+
+      leggTilJournalpost(hentMockState(request), sakId, {
+        journalpostId,
+        journalposttype,
+        tittel: jpTittel,
+        opprettet: new Date().toISOString(),
+      });
 
       leggTilHendelse(request, sak, "JOURNALPOST_OPPRETTET", undefined, {
         tittel: `${formaterJournalposttype(journalposttype)}: ${jpTittel}`,

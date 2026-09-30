@@ -31,6 +31,11 @@ vi.mock("~/saker/api.server", () => ({
   hentDokumentHistorikk: mockHentDokumentHistorikk,
 }));
 
+vi.mock("../mapper/mapper.server", () => ({
+  hentMapperstier: async () => [],
+  hentMapperstierFraMock: () => [],
+}));
+
 vi.mock("./kommentarer/kommentarer.api.server", () => ({
   hentKommentarliste: mockHentKommentarliste,
 }));

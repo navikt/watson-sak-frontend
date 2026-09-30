@@ -28,6 +28,23 @@ export type FilResponse = {
   arkivertJournalpostId?: string | null;
   /** Satt hvis filen er en PDF generert fra et dokument ved arkivering — id til kildedokumentet. */
   arkivertFraDokumentId?: string | null;
+  /** Mappestien filen ligger i, f.eks. «Bank/Kontoutskrifter». Null/undefined betyr rotnivå. */
+  mappe?: string | null;
+};
+
+/** En mappe i Filer-området. Stien er full sti fra rot, med «/» mellom nivåene. */
+export type MappeResponse = {
+  sti: string;
+  opprettetAv: string;
+  opprettet: string;
+};
+
+/** Referanse til en journalpost opprettet fra saken. */
+export type JournalpostReferanse = {
+  journalpostId: string;
+  journalposttype: string;
+  tittel: string;
+  opprettet: string;
 };
 
 /** Node i dokumentlisten for en sak. */
@@ -42,6 +59,8 @@ export type DokumentNode = {
   arkivert?: string | null;
   arkivertAv?: string | null;
   arkivertJournalpostId?: string | null;
+  /** Mappestien dokumentet ligger i. Null/undefined betyr rotnivå. */
+  mappe?: string | null;
 };
 
 /** Et fullstendig dokument inkludert innhold, hentet for editoren. */
