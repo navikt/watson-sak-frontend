@@ -250,8 +250,40 @@ describe("SakHistorikk", () => {
     );
 
     expect(screen.getByText("Sak til utredning")).toBeDefined();
-    expect(screen.getByText(/Steg: Utredning/)).toBeDefined();
+    expect(screen.getByText("Steg: Utredning")).toBeDefined();
+    expect(screen.queryByText("Sakens status eller steg endret")).toBeNull();
     expect(screen.queryByText(/Status: Aktiv/)).toBeNull();
+  });
+
+  it("viser overgang til forvaltning med status og steg på hver sin linje", async () => {
+    await renderMedRouter(
+      <SakHistorikk
+        redigerbar={true}
+        sakId={1}
+        hendelser={[
+          lagBackendHendelse({
+            hendelseId: "00000000-0000-4000-8000-000000000002",
+            hendelsesType: "SAK_STATUS_ENDRET",
+            steg: "FORVALTNING",
+            status: "VENTER_PA_VEDTAK",
+            beskrivelse: "Sakens status eller steg endret",
+            tidspunkt: "2026-03-31T11:00:00Z",
+          }),
+          lagBackendHendelse({
+            hendelseId: "00000000-0000-4000-8000-000000000001",
+            hendelsesType: "SAK_STATUS_ENDRET",
+            steg: "UTREDNING",
+            status: "AKTIV",
+            tidspunkt: "2026-03-31T10:00:00Z",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Sak til forvaltning")).toBeDefined();
+    expect(screen.getByText("Status: Venter på vedtak")).toBeDefined();
+    expect(screen.getByText("Steg: Forvaltning")).toBeDefined();
+    expect(screen.queryByText("Sakens status eller steg endret")).toBeNull();
   });
 
   it("viser arbeidsstatusendring for SAK_STATUS_ENDRET når kun blokkering endres", async () => {
@@ -279,7 +311,8 @@ describe("SakHistorikk", () => {
     );
 
     expect(screen.getByText("Sak satt i bero")).toBeDefined();
-    expect(screen.getByText(/Status: I bero – Steg: Utredning/)).toBeDefined();
+    expect(screen.getByText("Status: I bero")).toBeDefined();
+    expect(screen.getAllByText("Steg: Utredning")).toHaveLength(2);
   });
 
   it("viser gjenopptak for SAK_STATUS_ENDRET når blokkering fjernes", async () => {
@@ -307,7 +340,8 @@ describe("SakHistorikk", () => {
     );
 
     expect(screen.getByText("Sak gjenopptatt")).toBeDefined();
-    expect(screen.getByText(/Status: Aktiv – Steg: Utredning/)).toBeDefined();
+    expect(screen.getByText("Status: Aktiv")).toBeDefined();
+    expect(screen.getAllByText("Steg: Utredning")).toHaveLength(2);
   });
 
   it("viser både status- og arbeidsstatusendring når begge endres samtidig for SAK_STATUS_ENDRET", async () => {
@@ -334,8 +368,9 @@ describe("SakHistorikk", () => {
       />,
     );
 
-    expect(screen.getByText("Sak avsluttet og tatt ut av bero")).toBeDefined();
-    expect(screen.getByText(/Status: Aktiv – Steg: Avsluttet/)).toBeDefined();
+    expect(screen.getByText("Sak avsluttet")).toBeDefined();
+    expect(screen.getByText("Status: Aktiv")).toBeDefined();
+    expect(screen.getByText("Steg: Avsluttet")).toBeDefined();
   });
 
   it("renderer fritekst for manuelt historikkinnslag", async () => {

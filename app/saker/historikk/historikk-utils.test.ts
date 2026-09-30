@@ -100,9 +100,7 @@ describe("SAK_STATUS_ENDRET (generisk hendelse fra backend for status- og arbeid
     const forrigeHendelse = lagForrigeHendelseKart(hendelser).get(hendelser[0].hendelseId);
 
     expect(hendelseTittel(hendelser[0], forrigeHendelse)).toBe("Sak til utredning");
-    expect(hendelseBeskrivelse(hendelser[0], forrigeHendelse)).toBe(
-      "Sakens status eller steg endret – Steg: Utredning",
-    );
+    expect(hendelseBeskrivelse(hendelser[0], forrigeHendelse)).toBe("Steg: Utredning");
   });
 
   it("hopper over hendelser uten snapshot ved sammenligning", () => {
@@ -157,7 +155,7 @@ describe("SAK_STATUS_ENDRET (generisk hendelse fra backend for status- og arbeid
 
     expect(hendelseTittel(hendelser[0], forrigeHendelse)).toBe("Sak satt i bero");
     expect(hendelseBeskrivelse(hendelser[0], forrigeHendelse)).toBe(
-      "Status: I bero – Steg: Utredning",
+      "Status: I bero\nSteg: Utredning",
     );
   });
 
@@ -188,7 +186,7 @@ describe("SAK_STATUS_ENDRET (generisk hendelse fra backend for status- og arbeid
     const kart = lagForrigeHendelseKart(hendelser);
     const forrigeHendelse = kart.get(hendelser[0].hendelseId);
 
-    expect(hendelseTittel(hendelser[0], forrigeHendelse)).toBe("Sak avsluttet og gjenopptatt");
+    expect(hendelseTittel(hendelser[0], forrigeHendelse)).toBe("Sak avsluttet");
   });
 
   it("viser ingen statusendring når kun steg endres", () => {
@@ -236,7 +234,33 @@ describe("SAK_STATUS_ENDRET (generisk hendelse fra backend for status- og arbeid
 
     expect(hendelseTittel(hendelser[0], forrigeHendelse)).toBe("Sak tatt ut av bero");
     expect(hendelseBeskrivelse(hendelser[0], forrigeHendelse)).toBe(
-      "Status: Aktiv – Steg: Utredning",
+      "Status: Aktiv\nSteg: Utredning",
+    );
+  });
+
+  it("viser overgang til forvaltning med status og steg på hver sin linje", () => {
+    const hendelser: SakHendelse[] = [
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000002",
+        hendelsesType: "SAK_STATUS_ENDRET",
+        steg: "FORVALTNING",
+        status: "VENTER_PA_VEDTAK",
+        beskrivelse: "Sakens status eller steg endret",
+        tidspunkt: "2025-01-02T12:00:00Z",
+      }),
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000001",
+        hendelsesType: "SAK_STATUS_ENDRET",
+        steg: "UTREDNING",
+        status: "AKTIV",
+        tidspunkt: "2025-01-01T12:00:00Z",
+      }),
+    ];
+    const forrigeHendelse = lagForrigeHendelseKart(hendelser).get(hendelser[0].hendelseId);
+
+    expect(hendelseTittel(hendelser[0], forrigeHendelse)).toBe("Sak til forvaltning");
+    expect(hendelseBeskrivelse(hendelser[0], forrigeHendelse)).toBe(
+      "Status: Venter på vedtak\nSteg: Forvaltning",
     );
   });
 });

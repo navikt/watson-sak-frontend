@@ -65,8 +65,8 @@ function diffStegOgStatus(hendelse: SakHendelse, forrigeHendelse?: SakHendelse) 
 }
 
 function stegTittel(steg: SakHendelse["steg"]): string {
-  if (steg === "UTREDNING") {
-    return "Sak til utredning";
+  if (steg === "UTREDNING" || steg === "FORVALTNING") {
+    return `Sak til ${formaterSteg(steg).toLocaleLowerCase("nb-NO")}`;
   }
   return `Sak ${formaterSteg(steg).toLocaleLowerCase("nb-NO")}`;
 }
@@ -84,8 +84,8 @@ function statusKortTittel(
 function stegOgStatusTittel(hendelse: SakHendelse, forrigeHendelse?: SakHendelse): string {
   const { stegEndret, statusEndret, forrigeStatus } = diffStegOgStatus(hendelse, forrigeHendelse);
 
-  if (stegEndret && statusEndret) {
-    return `${stegTittel(hendelse.steg)} og ${statusKortTittel(hendelse.status, forrigeStatus)}`;
+  if (stegEndret) {
+    return stegTittel(hendelse.steg);
   }
   if (statusEndret) {
     const kort = statusKortTittel(hendelse.status, forrigeStatus);
@@ -98,7 +98,7 @@ function stegOgStatusBeskrivelse(hendelse: SakHendelse, forrigeHendelse?: SakHen
   const { statusEndret } = diffStegOgStatus(hendelse, forrigeHendelse);
   const deler: string[] = [];
 
-  if (hendelse.beskrivelse) {
+  if (hendelse.hendelsesType !== "SAK_STATUS_ENDRET" && hendelse.beskrivelse) {
     deler.push(hendelse.beskrivelse);
   }
 
@@ -108,7 +108,7 @@ function stegOgStatusBeskrivelse(hendelse: SakHendelse, forrigeHendelse?: SakHen
 
   deler.push(`Steg: ${formaterSteg(hendelse.steg)}`);
 
-  return deler.join(" – ");
+  return deler.join(hendelse.hendelsesType === "SAK_STATUS_ENDRET" ? "\n" : " – ");
 }
 
 export function formaterTidspunkt(isoString: string): string {
@@ -366,7 +366,11 @@ export function HendelseInnhold({
 
     return (
       <VStack gap="space-1">
-        <BodyShort size="small">{beskrivelse}</BodyShort>
+        {beskrivelse.split("\n").map((linje) => (
+          <BodyShort key={linje} size="small">
+            {linje}
+          </BodyShort>
+        ))}
       </VStack>
     );
   })();
