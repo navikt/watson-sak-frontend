@@ -75,6 +75,17 @@ describe("hendelseTittel", () => {
 
     expect(hendelseTittel(hendelse)).toBe("Saksdetaljer oppdatert");
   });
+
+  it("viser redigering av historikkinnslag uten ukjent steg", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "MANUELL_HENDELSE_REDIGERT",
+      steg: null,
+      beskrivelse: "Historikkinnslag redigert",
+    });
+
+    expect(hendelseTittel(hendelse)).toBe("Historikkinnslag redigert");
+    expect(hendelseBeskrivelse(hendelse)).toBeNull();
+  });
 });
 
 describe("snapshot av steg og status", () => {

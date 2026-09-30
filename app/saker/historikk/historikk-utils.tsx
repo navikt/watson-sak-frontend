@@ -167,6 +167,8 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
       return hendelse.status === "I_BERO" ? "Sak tatt ut av bero" : "Sak gjenopptatt";
     case "MANUELL_HENDELSE":
       return hendelse.tittel ?? "Notat";
+    case "MANUELL_HENDELSE_REDIGERT":
+      return "Historikkinnslag redigert";
     case "NOTAT_SENDT":
       return "Notat opprettet i Gosys";
     case "JOURNALPOST_OPPRETTET":
@@ -194,6 +196,10 @@ export function hendelseBeskrivelse(
 ): string | null {
   if (hendelse.hendelsesType === "MANUELL_HENDELSE") {
     return hendelse.beskrivelse ?? null;
+  }
+
+  if (hendelse.hendelsesType === "MANUELL_HENDELSE_REDIGERT") {
+    return null;
   }
 
   if (hendelse.hendelsesType === "NOTAT_SENDT") {
