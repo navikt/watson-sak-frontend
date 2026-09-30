@@ -511,7 +511,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       sak: sakForRespons,
       tillatteHandlinger,
       historikk,
-      journalposter,
+      journalposter: harDirekteTilgang ? journalposter : [],
       dokumenter: harDirekteTilgang ? sak.dokumenter : [],
       filer: harDirekteTilgang ? filerResultat.filer : [],
       mapper: harDirekteTilgang ? mapper : [],
@@ -555,7 +555,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     sak,
     tillatteHandlinger,
     historikk,
-    journalposter: hentJournalposterForSak(hentMockState(request), String(sak.id)),
+    journalposter: harDirekteTilgang
+      ? hentJournalposterForSak(hentMockState(request), String(sak.id))
+      : [],
     dokumenter,
     filer,
     mapper,
@@ -1506,6 +1508,12 @@ async function mockAction(
         deler.push(`Knyttet til oppgave${oppgavetype ? `: ${oppgavetype}` : ""}`);
       }
 
+      leggTilJournalpost(hentMockState(request), String(sak.id), {
+        journalpostId: `demo-${crypto.randomUUID()}`,
+        journalposttype: "NOTAT",
+        tittel: malLabel ?? "Notat",
+        opprettet: new Date().toISOString(),
+      });
       leggTilHendelse(request, sak, "NOTAT_SENDT", undefined, {
         beskrivelse: deler.join("\n"),
       });
