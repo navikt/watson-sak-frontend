@@ -1,4 +1,4 @@
-import { BodyShort, Detail, Heading, HStack } from "@navikt/ds-react";
+import { BodyShort, Detail, HStack } from "@navikt/ds-react";
 import type { ComponentType, LiHTMLAttributes, ReactNode, SVGProps } from "react";
 
 type FilerRadType = "dokument" | "fil" | "arkivert";
@@ -40,12 +40,9 @@ export function FilerRad({
   liProps,
 }: FilerRadProps) {
   return (
-    <li
-      {...liProps}
-      className={`border-b border-ax-border-neutral-subtle last:border-b-0 ${liProps?.className ?? ""}`}
-    >
-      <HStack align="center" gap="space-8" wrap={false} className="py-[10px]">
-        <span className={`h-10 w-1 shrink-0 rounded-full ${AKSENTFARGE[type]}`} aria-hidden />
+    <li {...liProps} className={liProps?.className}>
+      <HStack align="center" gap="space-8" wrap={false} className="py-1">
+        <span className={`h-9 w-[3px] shrink-0 rounded-full ${AKSENTFARGE[type]}`} aria-hidden />
         <Ikon aria-hidden className="size-5 shrink-0 text-ax-icon-neutral" />
         <div className="min-w-0 flex-1">
           <HStack align="center" gap="space-2" wrap={false}>
@@ -76,13 +73,14 @@ export function FilerSeksjonCaption({
 }) {
   return (
     <div>
-      <Heading
-        level="3"
-        size="xsmall"
-        className="uppercase tracking-wide text-ax-text-neutral-subtle"
+      <Detail
+        as="h3"
+        weight="semibold"
+        uppercase
+        className="tracking-[0.04em] text-ax-text-neutral-subtle"
       >
         {tittel}
-      </Heading>
+      </Detail>
       {undertekst && <Detail className="text-ax-text-neutral-subtle">{undertekst}</Detail>}
     </div>
   );

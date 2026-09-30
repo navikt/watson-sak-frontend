@@ -229,13 +229,17 @@ export function FilTre({
             className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-sm py-[10px] text-left hover:bg-ax-bg-neutral-moderate-hover focus-visible:outline-2 focus-visible:outline-ax-border-focus"
           >
             <FolderIcon aria-hidden className="size-5 shrink-0 text-ax-icon-neutral" />
-            <BodyShort as="span" size="small" weight="semibold" className="truncate">
+            <BodyShort as="span" weight="semibold" className="truncate">
               {mappe.navn}
             </BodyShort>
-            <Detail as="span" className="shrink-0 text-ax-text-neutral-subtle">
+            <BodyShort
+              as="span"
+              size="small"
+              className="ml-auto shrink-0 pl-4 text-ax-text-neutral-subtle"
+            >
               {antallFilerTekst(mappe.antallFiler)}
-            </Detail>
-            <span className="ml-auto shrink-0 pr-1" aria-hidden>
+            </BodyShort>
+            <span className="shrink-0 pr-1" aria-hidden>
               {åpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
             </span>
           </button>
@@ -285,7 +289,7 @@ export function FilTre({
           <ul
             id={innholdId}
             aria-label={mappe.navn}
-            className="mb-2 ml-[9px] flex flex-col border-l border-ax-border-neutral-subtle pl-4"
+            className="mb-2 ml-[9px] flex flex-col border-l-2 border-ax-border-neutral-subtle pl-3"
           >
             {erTom ? (
               <li>

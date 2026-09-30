@@ -1,5 +1,12 @@
-import { ArchiveIcon } from "@navikt/aksel-icons";
+import {
+  ArchiveIcon,
+  FileTextIcon,
+  InboxDownIcon,
+  PaperplaneIcon,
+  PencilIcon,
+} from "@navikt/aksel-icons";
 import { BodyShort, Box, Detail, HStack, Link, Tag, VStack } from "@navikt/ds-react";
+import type { ReactNode } from "react";
 import { Link as RouterLink } from "react-router";
 import { formaterJournalposttype } from "~/saker/handlinger/opprett-formatering";
 import { RouteConfig } from "~/routeConfig";
@@ -97,6 +104,12 @@ function antallVedleggTekst(antall: number) {
   return antall === 1 ? "1 vedlegg" : `${antall} vedlegg`;
 }
 
+const JOURNALPOSTTYPE_IKON: Record<string, ReactNode> = {
+  INNGAAENDE: <InboxDownIcon aria-hidden />,
+  UTGAAENDE: <PaperplaneIcon aria-hidden />,
+  NOTAT: <PencilIcon aria-hidden />,
+};
+
 function JournalpostKort({ gruppe, sakId }: { gruppe: Journalpostgruppe; sakId: string }) {
   const undertekst = [
     gruppe.journalpostId && `Journalpost ${gruppe.journalpostId}`,
@@ -108,24 +121,36 @@ function JournalpostKort({ gruppe, sakId }: { gruppe: Journalpostgruppe; sakId: 
 
   return (
     <li>
-      <Box borderWidth="1" borderColor="neutral-subtle" borderRadius="8" paddingInline="space-12">
-        <HStack align="center" gap="space-8" wrap={false} className="py-3">
+      <Box
+        background="neutral-soft"
+        borderWidth="1"
+        borderColor="neutral-subtle"
+        borderRadius="8"
+        paddingInline="space-16"
+      >
+        <HStack align="center" gap="space-12" wrap={false} className="py-3">
           <ArchiveIcon aria-hidden className="size-5 shrink-0 text-ax-icon-neutral" />
           <div className="min-w-0 flex-1">
-            <BodyShort size="small" weight="semibold" className="truncate">
+            <BodyShort weight="semibold" className="truncate">
               {gruppe.tittel}
             </BodyShort>
             <Detail className="truncate text-ax-text-neutral-subtle">{undertekst}</Detail>
           </div>
           {gruppe.journalposttype && (
-            <Tag variant="neutral" size="xsmall" className="shrink-0">
+            <Tag
+              variant="moderate"
+              data-color="info"
+              size="small"
+              icon={JOURNALPOSTTYPE_IKON[gruppe.journalposttype] ?? <FileTextIcon aria-hidden />}
+              className="shrink-0"
+            >
               {formaterJournalposttype(gruppe.journalposttype)}
             </Tag>
           )}
         </HStack>
         {gruppe.vedlegg.length > 0 && (
           <ul
-            className="flex flex-col border-t border-ax-border-neutral-subtle"
+            className="flex flex-col border-t border-ax-border-neutral-subtle py-2"
             aria-label={`Vedlegg i ${gruppe.tittel}`}
           >
             {gruppe.vedlegg.map((vedlegg) =>
