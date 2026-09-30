@@ -17,7 +17,7 @@ import {
   Loader,
   Tooltip,
 } from "@navikt/ds-react";
-import { useEffect, useId, useMemo, useState, type DragEvent } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type DragEvent } from "react";
 import { Link as RouterLink } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
@@ -35,7 +35,7 @@ import type { DokumentNode, FilResponse } from "../typer";
 import { byggFilTre, flatMappeliste, type FilTreNode, type MappeTreNode } from "./bygg-filtre";
 import { Elementmeny, kontekstmeny } from "./Elementmeny";
 import { FlyttTilMappeModal, GiNyttNavnMappeModal, type FlyttbartElement } from "./MappeModaler";
-import { kanFlytteMappe, mappenavn, slåSammen } from "./mappesti";
+import { forelder, kanFlytteMappe, mappenavn, slåSammen } from "./mappesti";
 import { useMappehandling } from "./useMappehandling";
 
 /** Hvor noe slippes: en mappesti, eller `null` for rotnivå. */
@@ -94,7 +94,16 @@ export function FilTre({
   const [dras, settDras] = useState<FlyttbartElement | null>(null);
   const [slippmål, settSlippmål] = useState<Slippmål | undefined>(undefined);
   const [modal, settModal] = useState<ÅpenModal>(null);
-  const mappehandling = useMappehandling(sakId);
+  const treRef = useRef<HTMLDivElement>(null);
+  const slettetMappe = useRef<string | null>(null);
+  const [statusmelding, settStatusmelding] = useState("");
+  const mappehandling = useMappehandling(sakId, () => {
+    const sti = slettetMappe.current;
+    if (sti === null) return;
+    slettetMappe.current = null;
+    settStatusmelding(`Mappen «${mappenavn(sti)}» er slettet`);
+    flyttFokusEtterSletting(forelder(sti));
+  });
   const treId = useId();
   const sletting = useDokumentSletting({ sakId, kilde: "dokumentliste" });
   const filsletting = useFilSletting(sakId);
@@ -106,6 +115,19 @@ export function FilTre({
       åpen: åpenMeny === nøkkel,
       onOpenChange: (åpen: boolean) => settÅpenMeny(åpen ? nøkkel : null),
     };
+  }
+
+  /**
+   * Raden med den fokuserte menyknappen forsvinner når mappen slettes. Fokus flyttes til
+   * overordnet mappe, eller til listen hvis mappen lå på rotnivå.
+   */
+  function flyttFokusEtterSletting(forelderSti: string | null) {
+    const tre = treRef.current;
+    if (!tre) return;
+    const forelderKnapp = [...tre.querySelectorAll<HTMLElement>("[data-mappe-sti]")].find(
+      (knapp) => knapp.dataset.mappeSti === forelderSti,
+    );
+    (forelderKnapp ?? tre.querySelector<HTMLElement>("[data-tre-rot]") ?? tre).focus();
   }
 
   function settÅpen(sti: string, åpen: boolean) {
@@ -245,6 +267,7 @@ export function FilTre({
           <button
             type="button"
             aria-expanded={åpen}
+            data-mappe-sti={mappe.sti}
             aria-controls={åpen ? innholdId : undefined}
             onClick={() => settÅpen(mappe.sti, !åpen)}
             className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-sm py-[10px] text-left hover:bg-ax-bg-neutral-moderate-hover focus-visible:outline-2 focus-visible:outline-ax-border-focus"
@@ -286,8 +309,10 @@ export function FilTre({
                 icon={<TrashIcon />}
                 disabled={!erTom}
                 onSelect={() => {
-                  sporHendelse("mappe slettet", { sakId });
-                  mappehandling.utfør({ handling: "slett", sti: mappe.sti });
+                  if (mappehandling.utfør({ handling: "slett", sti: mappe.sti })) {
+                    slettetMappe.current = mappe.sti;
+                    sporHendelse("mappe slettet", { sakId });
+                  }
                 }}
               >
                 {erTom ? "Slett mappe" : "Slett mappe (må være tom)"}
@@ -436,14 +461,23 @@ export function FilTre({
     );
   }
 
-  const feilmelding = feilFraServer ?? mappehandling.feil;
   const rotErSlippmål = slippmål === null;
 
   return (
-    <div>
-      {feilmelding && (
+    <div ref={treRef} tabIndex={-1} className="outline-none">
+      <div aria-live="polite" className="sr-only">
+        {statusmelding}
+      </div>
+      {/* Feil fra opplasting og fra mappehandlinger vises hver for seg, så en gammel
+          opplastingsfeil ikke skjuler feilen fra handlingen som nettopp feilet. */}
+      {feilFraServer && (
         <Alert variant="error" size="small" className="mb-2">
-          {feilmelding}
+          {feilFraServer}
+        </Alert>
+      )}
+      {mappehandling.feil && (
+        <Alert variant="error" size="small" className="mb-2">
+          {mappehandling.feil}
         </Alert>
       )}
 
@@ -454,6 +488,8 @@ export function FilTre({
       ) : (
         <ul
           aria-label="Dokumenter og filer"
+          data-tre-rot
+          tabIndex={-1}
           className={`flex flex-col rounded-sm ${
             rotErSlippmål ? "outline-2 outline-offset-2 outline-ax-border-accent" : ""
           }`}

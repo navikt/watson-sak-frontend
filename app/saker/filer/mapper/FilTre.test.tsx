@@ -505,6 +505,64 @@ describe("FilTre", () => {
       });
     });
 
+    it("flytter fokus til overordnet mappe og sier fra når en undermappe er slettet", async () => {
+      await renderSeksjon({
+        mapper,
+        filer: [],
+        sakId: "SAK-1",
+        erSakseier: false,
+        redigerbar: true,
+      });
+      fireEvent.click(screen.getByRole("button", { name: /^Bank/ }));
+
+      fireEvent.click(screen.getByLabelText("Handlinger for mappen Kontoutskrifter"));
+      fireEvent.click(await screen.findByRole("menuitem", { name: "Slett mappe" }));
+
+      await waitFor(() => {
+        expect(document.activeElement).toBe(screen.getByRole("button", { name: /^Bank/ }));
+      });
+      expect(screen.getByText("Mappen «Kontoutskrifter» er slettet")).toBeDefined();
+    });
+
+    it("flytter fokus til listen når en mappe på rotnivå er slettet", async () => {
+      await renderSeksjon({
+        mapper,
+        filer: [],
+        sakId: "SAK-1",
+        erSakseier: false,
+        redigerbar: true,
+      });
+
+      fireEvent.click(screen.getByLabelText("Handlinger for mappen Tom mappe"));
+      fireEvent.click(await screen.findByRole("menuitem", { name: "Slett mappe" }));
+
+      await waitFor(() => {
+        expect(document.activeElement).toBe(
+          screen.getByRole("list", { name: "Dokumenter og filer" }),
+        );
+      });
+    });
+
+    it("viser feil fra mappehandlinger selv om en opplastingsfeil står fra før", async () => {
+      mockMappeAction.mockImplementationOnce(
+        async () => ({ ok: false, melding: "Mappen er ikke tom" }) as never,
+      );
+      await renderSeksjon({
+        mapper,
+        filer: [],
+        sakId: "SAK-1",
+        erSakseier: false,
+        redigerbar: true,
+        feilFraServer: "Filen er for stor",
+      });
+
+      fireEvent.click(screen.getByLabelText("Handlinger for mappen Tom mappe"));
+      fireEvent.click(await screen.findByRole("menuitem", { name: "Slett mappe" }));
+
+      expect(await screen.findByText("Mappen er ikke tom")).toBeDefined();
+      expect(screen.getByText("Filen er for stor")).toBeDefined();
+    });
+
     it("viser feilmelding fra serveren når en mappehandling feiler", async () => {
       mockMappeAction.mockImplementationOnce(
         async () => ({ ok: false, melding: "Mappen finnes allerede" }) as never,
