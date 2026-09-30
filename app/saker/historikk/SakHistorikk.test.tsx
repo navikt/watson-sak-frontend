@@ -233,21 +233,25 @@ describe("SakHistorikk", () => {
           lagBackendHendelse({
             hendelseId: "00000000-0000-4000-8000-000000000002",
             hendelsesType: "SAK_STATUS_ENDRET",
-            steg: "UTREDES",
+            steg: "UTREDNING",
+            status: "AKTIV",
+            beskrivelse: "Sakens status eller steg endret",
             tidspunkt: "2026-03-31T11:00:00Z",
           }),
           lagBackendHendelse({
             hendelseId: "00000000-0000-4000-8000-000000000001",
             hendelsesType: "SAK_OPPRETTET",
             steg: "OPPRETTET",
+            status: null,
             tidspunkt: "2026-03-31T10:00:00Z",
           }),
         ]}
       />,
     );
 
-    expect(screen.getByText("Sak utredes")).toBeDefined();
-    expect(screen.getByText(/Steg: Utredes/)).toBeDefined();
+    expect(screen.getByText("Sak til utredning")).toBeDefined();
+    expect(screen.getByText(/Steg: Utredning/)).toBeDefined();
+    expect(screen.queryByText(/Status: Aktiv/)).toBeNull();
   });
 
   it("viser arbeidsstatusendring for SAK_STATUS_ENDRET når kun blokkering endres", async () => {
@@ -259,15 +263,15 @@ describe("SakHistorikk", () => {
           lagBackendHendelse({
             hendelseId: "00000000-0000-4000-8000-000000000002",
             hendelsesType: "SAK_STATUS_ENDRET",
-            steg: "UTREDES",
+            steg: "UTREDNING",
             status: "I_BERO",
             tidspunkt: "2026-03-31T11:00:00Z",
           }),
           lagBackendHendelse({
             hendelseId: "00000000-0000-4000-8000-000000000001",
             hendelsesType: "SAK_STATUS_ENDRET",
-            steg: "UTREDES",
-            status: null,
+            steg: "UTREDNING",
+            status: "AKTIV",
             tidspunkt: "2026-03-31T10:00:00Z",
           }),
         ]}
@@ -275,7 +279,7 @@ describe("SakHistorikk", () => {
     );
 
     expect(screen.getByText("Sak satt i bero")).toBeDefined();
-    expect(screen.getByText(/Status: I bero – Steg: Utredes/)).toBeDefined();
+    expect(screen.getByText(/Status: I bero – Steg: Utredning/)).toBeDefined();
   });
 
   it("viser gjenopptak for SAK_STATUS_ENDRET når blokkering fjernes", async () => {
@@ -287,14 +291,14 @@ describe("SakHistorikk", () => {
           lagBackendHendelse({
             hendelseId: "00000000-0000-4000-8000-000000000002",
             hendelsesType: "SAK_STATUS_ENDRET",
-            steg: "UTREDES",
-            status: null,
+            steg: "UTREDNING",
+            status: "AKTIV",
             tidspunkt: "2026-03-31T11:00:00Z",
           }),
           lagBackendHendelse({
             hendelseId: "00000000-0000-4000-8000-000000000001",
             hendelsesType: "SAK_STATUS_ENDRET",
-            steg: "UTREDES",
+            steg: "UTREDNING",
             status: "VENTER_PA_VEDTAK",
             tidspunkt: "2026-03-31T10:00:00Z",
           }),
@@ -303,7 +307,7 @@ describe("SakHistorikk", () => {
     );
 
     expect(screen.getByText("Sak gjenopptatt")).toBeDefined();
-    expect(screen.getByText(/Status: Aktiv – Steg: Utredes/)).toBeDefined();
+    expect(screen.getByText(/Status: Aktiv – Steg: Utredning/)).toBeDefined();
   });
 
   it("viser både status- og arbeidsstatusendring når begge endres samtidig for SAK_STATUS_ENDRET", async () => {
@@ -316,13 +320,13 @@ describe("SakHistorikk", () => {
             hendelseId: "00000000-0000-4000-8000-000000000002",
             hendelsesType: "SAK_STATUS_ENDRET",
             steg: "AVSLUTTET",
-            status: null,
+            status: "AKTIV",
             tidspunkt: "2026-03-31T11:00:00Z",
           }),
           lagBackendHendelse({
             hendelseId: "00000000-0000-4000-8000-000000000001",
             hendelsesType: "SAK_STATUS_ENDRET",
-            steg: "UTREDES",
+            steg: "UTREDNING",
             status: "I_BERO",
             tidspunkt: "2026-03-31T10:00:00Z",
           }),

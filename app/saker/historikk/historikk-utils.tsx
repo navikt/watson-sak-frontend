@@ -39,22 +39,35 @@ export function erManuellHendelse(hendelse: SakHendelse): boolean {
  */
 export function lagForrigeHendelseKart(hendelser: SakHendelse[]): Map<string, SakHendelse> {
   const kart = new Map<string, SakHendelse>();
-  for (let i = 0; i < hendelser.length - 1; i++) {
-    kart.set(hendelser[i].hendelseId, hendelser[i + 1]);
+  let forrigeMedSnapshot: SakHendelse | undefined;
+
+  for (let i = hendelser.length - 1; i >= 0; i--) {
+    const hendelse = hendelser[i];
+    if (forrigeMedSnapshot) {
+      kart.set(hendelse.hendelseId, forrigeMedSnapshot);
+    }
+    if (hendelse.steg != null) {
+      forrigeMedSnapshot = hendelse;
+    }
   }
   return kart;
 }
 
 function diffStegOgStatus(hendelse: SakHendelse, forrigeHendelse?: SakHendelse) {
   const forrigeStatus = forrigeHendelse?.status ?? null;
+  const normalisertStatus = hendelse.status ?? "AKTIV";
+  const normalisertForrigeStatus = forrigeStatus ?? "AKTIV";
   return {
     stegEndret: !forrigeHendelse || hendelse.steg !== (forrigeHendelse.steg ?? null),
-    statusEndret: !!forrigeHendelse && (hendelse.status ?? null) !== forrigeStatus,
+    statusEndret: !!forrigeHendelse && normalisertStatus !== normalisertForrigeStatus,
     forrigeStatus,
   };
 }
 
 function stegTittel(steg: SakHendelse["steg"]): string {
+  if (steg === "UTREDNING") {
+    return "Sak til utredning";
+  }
   return `Sak ${formaterSteg(steg).toLocaleLowerCase("nb-NO")}`;
 }
 
@@ -62,7 +75,7 @@ function statusKortTittel(
   status: SakHendelse["status"],
   forrigeStatus: SakHendelse["status"],
 ): string {
-  if (!status) {
+  if (!status || status === "AKTIV") {
     return forrigeStatus === "I_BERO" ? "tatt ut av bero" : "gjenopptatt";
   }
   return status === "I_BERO" ? "satt i bero" : "satt på vent";
