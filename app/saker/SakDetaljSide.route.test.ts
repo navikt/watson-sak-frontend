@@ -948,7 +948,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(kontrollsak.kategori).not.toBe("ARBEID");
   });
 
-  it("opprett_journalpost logger hendelse med tittel og beskrivelse", async () => {
+  it("opprett_journalpost logger hendelse med journalposttype", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
     kontrollsak.steg = "UTREDES";
@@ -975,8 +975,8 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
 
     const historikk = hentHistorikk(testRequest, String(kontrollsak.id));
     expect(historikk[0]?.hendelsesType).toBe("JOURNALPOST_OPPRETTET");
-    expect(historikk[0]?.tittel).toBe("Inngående: Dokumentasjon mottatt");
-    expect(historikk[0]?.beskrivelse).toContain("Vedlagt kopi av arbeidsavtale");
+    expect(historikk[0]?.tittel).toBe("INNGAAENDE");
+    expect(historikk[0]?.beskrivelse).toBe("Journalpost opprettet");
   });
 
   it("arkiverer valgte redigerbare dokumenter ved opprettelse av journalpost", async () => {
@@ -1097,7 +1097,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     });
   });
 
-  it("opprett_oppgave logger hendelse med oppgavetype og beskrivelse", async () => {
+  it("opprett_oppgave logger hendelse med oppgavetype", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
     kontrollsak.steg = "UTREDES";
@@ -1126,9 +1126,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     const historikk = hentHistorikk(testRequest, String(kontrollsak.id));
     expect(historikk[0]?.hendelsesType).toBe("OPPGAVE_OPPRETTET");
     expect(historikk[0]?.tittel).toBe("VUR");
-    expect(historikk[0]?.beskrivelse).toContain("Prioritet: høy");
-    expect(historikk[0]?.beskrivelse).toContain("Frist: 2026-06-01");
-    expect(historikk[0]?.beskrivelse).toContain("Sjekk dokumentasjon");
+    expect(historikk[0]?.beskrivelse).toBe("Oppgave opprettet");
   });
 });
 

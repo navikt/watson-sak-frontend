@@ -1021,32 +1021,6 @@ async function backendAction(
   }
 }
 
-function formaterJournalposttype(type: string): string {
-  switch (type) {
-    case "INNGAAENDE":
-      return "Inngående";
-    case "UTGAAENDE":
-      return "Utgående";
-    case "NOTAT":
-      return "Notat";
-    default:
-      return type;
-  }
-}
-
-function formaterPrioritet(prioritet: string): string {
-  switch (prioritet) {
-    case "LAV":
-      return "lav";
-    case "NORMAL":
-      return "normal";
-    case "HOY":
-      return "høy";
-    default:
-      return prioritet.toLowerCase();
-  }
-}
-
 // --- Mock-action (lokal mock-tilstand) ---
 
 async function mockAction(
@@ -1468,8 +1442,8 @@ async function mockAction(
       const tid = hentTekstfelt(formData, "tid", "Tid er påkrevd");
 
       const tidspunkt = lagTidspunktFraSkjema(dato, tid);
-      const { navIdent } = await hentInnloggetBruker({ request });
-      leggTilManuellHendelse(request, sak, tittel, notat, tidspunkt, navIdent);
+      const { name } = await hentInnloggetBruker({ request });
+      leggTilManuellHendelse(request, sak, tittel, notat, tidspunkt, name);
       break;
     }
     case "rediger_historikk": {
@@ -1520,7 +1494,6 @@ async function mockAction(
     case "opprett_journalpost": {
       const journalposttype = hentValgfriTekst(formData, "journalposttype") ?? "NOTAT";
       const jpTittel = hentValgfriTekst(formData, "tittel") ?? "Journalpost";
-      const innhold = hentValgfriTekst(formData, "innhold") ?? "";
       const dokumentIds = formData.getAll("dokumentId").map(String);
       const vedleggIdsForArkivering = formData.getAll("vedleggId").map(String);
       const knyttTilOppgave = formData.get("knyttTilOppgave") === "true";
@@ -1543,17 +1516,6 @@ async function mockAction(
         antallArkiverteDokumenter += 1;
       }
 
-      const deler = [innhold];
-      if (knyttTilOppgave) {
-        const oppgavetype = hentValgfriTekst(formData, "oppgavetype") ?? "";
-        const prioritet = hentValgfriTekst(formData, "prioritet") ?? "";
-        const frist = hentValgfriTekst(formData, "frist") ?? "";
-        const oppgaveDeler = [`Knyttet til oppgave${oppgavetype ? `: ${oppgavetype}` : ""}`];
-        if (prioritet) oppgaveDeler.push(`Prioritet: ${formaterPrioritet(prioritet)}`);
-        if (frist) oppgaveDeler.push(`Frist: ${frist}`);
-        deler.push(oppgaveDeler.join(", "));
-      }
-
       leggTilJournalpost(hentMockState(request), sakId, {
         journalpostId,
         journalposttype,
@@ -1562,8 +1524,8 @@ async function mockAction(
       });
 
       leggTilHendelse(request, sak, "JOURNALPOST_OPPRETTET", undefined, {
-        tittel: `${formaterJournalposttype(journalposttype)}: ${jpTittel}`,
-        beskrivelse: deler.join("\n"),
+        tittel: journalposttype,
+        beskrivelse: "Journalpost opprettet",
       });
 
       for (let i = 0; i < antallArkiverteVedlegg; i += 1) {
@@ -1579,18 +1541,9 @@ async function mockAction(
 
       if (knyttTilOppgave) {
         const oppgavetype = hentValgfriTekst(formData, "oppgavetype") ?? "";
-        const prioritet = hentValgfriTekst(formData, "prioritet") ?? "";
-        const fristVerdi = hentValgfriTekst(formData, "frist") ?? "";
-        const behandlendeEnhet = hentValgfriTekst(formData, "behandlendeEnhet") ?? "";
-        const beskrivelse = hentValgfriTekst(formData, "beskrivelse") ?? "";
-        const oppgaveDeler: string[] = [];
-        if (prioritet) oppgaveDeler.push(`Prioritet: ${formaterPrioritet(prioritet)}`);
-        if (fristVerdi) oppgaveDeler.push(`Frist: ${fristVerdi}`);
-        if (behandlendeEnhet) oppgaveDeler.push(`Enhet: ${behandlendeEnhet}`);
-        if (beskrivelse) oppgaveDeler.push(beskrivelse);
         leggTilHendelse(request, sak, "OPPGAVE_OPPRETTET", undefined, {
           tittel: oppgavetype || "Oppgave",
-          beskrivelse: oppgaveDeler.join("\n"),
+          beskrivelse: "Oppgave opprettet",
         });
       }
 
@@ -1598,20 +1551,9 @@ async function mockAction(
     }
     case "opprett_oppgave": {
       const oppgavetype = hentValgfriTekst(formData, "oppgavetype") ?? "";
-      const prioritet = hentValgfriTekst(formData, "prioritet") ?? "";
-      const fristVerdi = hentValgfriTekst(formData, "frist") ?? "";
-      const behandlendeEnhet = hentValgfriTekst(formData, "behandlendeEnhet") ?? "";
-      const beskrivelse = hentValgfriTekst(formData, "beskrivelse") ?? "";
-
-      const deler: string[] = [];
-      if (prioritet) deler.push(`Prioritet: ${formaterPrioritet(prioritet)}`);
-      if (fristVerdi) deler.push(`Frist: ${fristVerdi}`);
-      if (behandlendeEnhet) deler.push(`Enhet: ${behandlendeEnhet}`);
-      if (beskrivelse) deler.push(beskrivelse);
-
       leggTilHendelse(request, sak, "OPPGAVE_OPPRETTET", undefined, {
         tittel: oppgavetype || "Oppgave",
-        beskrivelse: deler.join("\n"),
+        beskrivelse: "Oppgave opprettet",
       });
       break;
     }
