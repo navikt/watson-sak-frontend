@@ -20,11 +20,10 @@ interface HistorikkProsessListeProps {
 
 /**
  * Rendrer historikkhendelser som en Aksel `Process`-liste, med
- * Rediger/Slett-knapper for saksbehandlerens egne manuelle hendelser.
+ * Rediger/Slett-knapper for manuelle hendelser når historikken er redigerbar.
  *
  * Delt mellom `SakHistorikk` (kompakt visning) og `VisAllHistorikkModal`
- * (full visning med filter) for å unngå at rad-rendering og eierskapssjekk
- * driver fra hverandre i to kopier.
+ * (full visning med filter) for å unngå duplisert rad-rendering.
  */
 export function HistorikkProsessListe({
   hendelser,
