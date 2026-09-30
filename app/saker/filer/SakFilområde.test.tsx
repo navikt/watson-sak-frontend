@@ -188,7 +188,8 @@ describe("SakFilområde", () => {
 
     expect(screen.queryByText("Opprett dokument")).toBeNull();
     expect(screen.getByText("Last opp fil")).toBeDefined();
-    expect(screen.queryByRole("button", { name: "Slett Rapport" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Handlinger for Rapport" }));
+    expect(screen.queryByRole("menuitem", { name: "Slett" })).toBeNull();
   });
 
   it("viser modal med tomt dokument og alle malvalg", async () => {
@@ -332,7 +333,7 @@ describe("SakFilområde", () => {
 
     expect(within(redigerbareDokumenter).queryByText("Arkivert dokument")).toBeNull();
     expect(within(arkivertListe).getByText("Arkivert dokument")).toBeDefined();
-    expect(screen.queryByRole("button", { name: "Slett Arkivert dokument" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Handlinger for Arkivert dokument" })).toBeNull();
   });
 
   it("skjuler et arkivert dokument fra Arkivert-seksjonen når det allerede har en arkivert fil", () => {
@@ -381,7 +382,7 @@ describe("SakFilområde", () => {
       expect(screen.queryByText("Last opp fil")).toBeNull();
     });
 
-    it("skjuler slett-knapp per fil", () => {
+    it("skjuler handlingsmenyen per fil", () => {
       renderOmråde({
         dokumenter: [],
         filer: mockFiler,
@@ -389,7 +390,9 @@ describe("SakFilområde", () => {
         redigerbar: false,
         erSakseier: false,
       });
-      expect(screen.queryByRole("button", { name: `Slett ${mockFiler[0].filnavn}` })).toBeNull();
+      expect(
+        screen.queryByRole("button", { name: `Handlinger for ${mockFiler[0].filnavn}` }),
+      ).toBeNull();
     });
   });
 });

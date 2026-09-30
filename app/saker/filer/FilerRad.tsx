@@ -40,7 +40,7 @@ export function FilerRad({
   liProps,
 }: FilerRadProps) {
   return (
-    <li {...liProps} className={liProps?.className}>
+    <li {...liProps} className={`group/rad ${liProps?.className ?? ""}`}>
       <HStack align="center" gap="space-8" wrap={false} className="py-1">
         <span className={`h-9 w-[3px] shrink-0 rounded-full ${AKSENTFARGE[type]}`} aria-hidden />
         <Ikon aria-hidden className="size-5 shrink-0 text-ax-icon-neutral" />

@@ -1,13 +1,12 @@
-import { EyeIcon, PencilIcon, TrashIcon } from "@navikt/aksel-icons";
+import { EyeIcon } from "@navikt/aksel-icons";
 import { Button, Loader } from "@navikt/ds-react";
 import { useEffect, useState } from "react";
 import { useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { FilIBrukModal } from "./FilIBrukModal";
-import { OmdøpFilModal } from "./OmdøpFilModal";
 import { SlettFilModal } from "./SlettFilModal";
-import type { DokumentNode, DokumentReferanse } from "./typer";
+import type { DokumentNode, DokumentReferanse, FilResponse } from "./typer";
 
 /** Åpner en PDF-versjon av et redigerbart dokument i en ny fane. */
 export function DokumentPdfKnapp({ dokument, sakId }: { dokument: DokumentNode; sakId: string }) {
@@ -53,97 +52,69 @@ export function DokumentPdfKnapp({ dokument, sakId }: { dokument: DokumentNode; 
   );
 }
 
-interface SlettKnappProps {
-  filId: string;
-  filnavn: string;
-  sakId: string;
-  bruktIDokumenter: DokumentReferanse[];
-}
-
-export function SlettFilKnapp({ filId, filnavn, sakId, bruktIDokumenter }: SlettKnappProps) {
+/**
+ * Sletting av opplastede filer fra en meny: viser «i bruk»-dialog hvis filen er satt inn i et
+ * dokument, ellers en bekreftelsesdialog. `modaler` må rendres av kalleren.
+ */
+export function useFilSletting(sakId: string) {
   const fetcher = useFetcher<{ ok: boolean; dokumenter?: DokumentReferanse[] }>();
-  const [dokumenterIBruk, settDokumenterIBruk] = useState<DokumentReferanse[] | null>(null);
-  const [slettekandidat, settSlettekandidat] = useState<string | null>(null);
-  const sletter = fetcher.state !== "idle";
-  const url = RouteConfig.API.SAK_FIL.replace(":sakId", sakId).replace(":filId", filId);
+  const [iBruk, settIBruk] = useState<{ filnavn: string; dokumenter: DokumentReferanse[] } | null>(
+    null,
+  );
+  const [kandidat, settKandidat] = useState<FilResponse | null>(null);
+  const [sistSlettet, settSistSlettet] = useState<FilResponse | null>(null);
 
   // Backend kan avvise sletting (409) selv om filen ikke var kjent som «i bruk»
   // ved sidelasting (f.eks. hvis den ble satt inn i et dokument like før forsøket).
   useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data?.ok === false && fetcher.data.dokumenter) {
-      settDokumenterIBruk(fetcher.data.dokumenter);
+    if (
+      fetcher.state === "idle" &&
+      fetcher.data?.ok === false &&
+      fetcher.data.dokumenter &&
+      sistSlettet
+    ) {
+      settIBruk({ filnavn: sistSlettet.filnavn, dokumenter: fetcher.data.dokumenter });
+      settSistSlettet(null);
     }
-  }, [fetcher.state, fetcher.data]);
+  }, [fetcher.state, fetcher.data, sistSlettet]);
 
-  function håndterKlikk(event: React.MouseEvent<HTMLButtonElement>) {
-    event.preventDefault();
-    if (bruktIDokumenter.length > 0) {
-      settDokumenterIBruk(bruktIDokumenter);
+  function start(fil: FilResponse) {
+    if (fil.bruktIDokumenter.length > 0) {
+      settIBruk({ filnavn: fil.filnavn, dokumenter: fil.bruktIDokumenter });
       return;
     }
-    settSlettekandidat(filnavn);
+    settKandidat(fil);
   }
 
-  function bekreftSletting() {
-    settSlettekandidat(null);
+  function bekreft() {
+    if (!kandidat) return;
+    settKandidat(null);
+    settSistSlettet(kandidat);
     sporHendelse("vedlegg slettet", { sakId });
-    fetcher.submit(null, { method: "delete", action: url });
+    fetcher.submit(null, {
+      method: "delete",
+      action: RouteConfig.API.SAK_FIL.replace(":sakId", sakId).replace(":filId", kandidat.id),
+    });
   }
 
-  return (
+  const modaler = (
     <>
-      <fetcher.Form method="delete" action={url}>
-        <Button
-          type="submit"
-          variant="tertiary-neutral"
-          size="xsmall"
-          icon={sletter ? <Loader size="xsmall" aria-hidden /> : <TrashIcon aria-hidden />}
-          disabled={sletter}
-          aria-label={`Slett ${filnavn}`}
-          onClick={håndterKlikk}
-        />
-      </fetcher.Form>
       <FilIBrukModal
-        dokumenter={dokumenterIBruk}
-        filnavn={filnavn}
+        dokumenter={iBruk?.dokumenter ?? null}
+        filnavn={iBruk?.filnavn ?? ""}
         sakId={sakId}
-        onClose={() => settDokumenterIBruk(null)}
+        onClose={() => settIBruk(null)}
       />
-      {slettekandidat !== null && (
+      {kandidat && (
         <SlettFilModal
-          kandidat={slettekandidat}
-          sletter={sletter}
-          onBekreft={bekreftSletting}
-          onAvbryt={() => settSlettekandidat(null)}
+          kandidat={kandidat.filnavn}
+          sletter={fetcher.state !== "idle"}
+          onBekreft={bekreft}
+          onAvbryt={() => settKandidat(null)}
         />
       )}
     </>
   );
-}
 
-export function OmdøpFilKnapp({
-  filId,
-  filnavn,
-  sakId,
-}: Omit<SlettKnappProps, "bruktIDokumenter">) {
-  const [modalÅpen, setModalÅpen] = useState(false);
-  return (
-    <>
-      <Button
-        type="button"
-        variant="tertiary-neutral"
-        size="xsmall"
-        icon={<PencilIcon aria-hidden />}
-        aria-label={`Endre navn på ${filnavn}`}
-        onClick={() => setModalÅpen(true)}
-      />
-      <OmdøpFilModal
-        filId={filId}
-        filnavn={filnavn}
-        sakId={sakId}
-        åpen={modalÅpen}
-        onClose={() => setModalÅpen(false)}
-      />
-    </>
-  );
+  return { start, modaler };
 }

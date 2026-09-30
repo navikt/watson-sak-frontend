@@ -4,7 +4,6 @@ import {
   FolderFileIcon,
   FolderIcon,
   LinkIcon,
-  MenuElipsisVerticalIcon,
   PencilIcon,
   TrashIcon,
 } from "@navikt/aksel-icons";
@@ -12,7 +11,6 @@ import {
   ActionMenu,
   Alert,
   BodyShort,
-  Button,
   Detail,
   HStack,
   Link,
@@ -28,12 +26,14 @@ import { formaterStorrelse } from "~/utils/number-utils";
 import { SlettDokumentModal } from "../dokument/SlettDokumentModal";
 import { useDokumentSletting } from "../dokument/useDokumentSletting";
 import { DokumentIkon } from "../dokument-ikon";
-import { DokumentPdfKnapp, OmdøpFilKnapp, SlettFilKnapp } from "../element-handlinger";
+import { DokumentPdfKnapp, useFilSletting } from "../element-handlinger";
 import { filTypeIkon, filTypeTekst } from "../fil-type-utils";
 import { formaterDato, ÅpneFilKnapp } from "../fil-visning-utils";
 import { FilerRad } from "../FilerRad";
+import { OmdøpFilModal } from "../OmdøpFilModal";
 import type { DokumentNode, FilResponse } from "../typer";
 import { byggFilTre, flatMappeliste, type FilTreNode, type MappeTreNode } from "./bygg-filtre";
+import { Elementmeny, kontekstmeny } from "./Elementmeny";
 import { FlyttTilMappeModal, GiNyttNavnMappeModal, type FlyttbartElement } from "./MappeModaler";
 import { kanFlytteMappe, mappenavn, slåSammen } from "./mappesti";
 import { useMappehandling } from "./useMappehandling";
@@ -44,6 +44,7 @@ type Slippmål = string | null;
 type ÅpenModal =
   | { type: "gi-nytt-navn"; sti: string }
   | { type: "flytt"; element: FlyttbartElement }
+  | { type: "gi-nytt-navn-fil"; fil: FilResponse }
   | null;
 
 const AUTOÅPNE_ETTER_MS = 700;
@@ -95,6 +96,16 @@ export function FilTre({
   const [modal, settModal] = useState<ÅpenModal>(null);
   const mappehandling = useMappehandling(sakId);
   const sletting = useDokumentSletting({ sakId, kilde: "dokumentliste" });
+  const filsletting = useFilSletting(sakId);
+  /** Nøkkelen til elementet med åpen meny. Bare én meny kan være åpen om gangen. */
+  const [åpenMeny, settÅpenMeny] = useState<string | null>(null);
+
+  function menyProps(nøkkel: string) {
+    return {
+      åpen: åpenMeny === nøkkel,
+      onOpenChange: (åpen: boolean) => settÅpenMeny(åpen ? nøkkel : null),
+    };
+  }
 
   function settÅpen(sti: string, åpen: boolean) {
     settÅpneMapper((forrige) => {
@@ -211,6 +222,7 @@ export function FilTre({
     const erSlippmål = slippmål === mappe.sti;
     const erTom = mappe.barn.length === 0;
     const innholdId = `mappe-innhold-${mappe.sti}`;
+    const menynøkkel = `mappe:${mappe.sti}`;
 
     return (
       <li
@@ -220,7 +232,13 @@ export function FilTre({
         }`}
         {...draProps({ type: "mappe", sti: mappe.sti }, mappe.sti)}
       >
-        <HStack align="center" gap="space-4" wrap={false}>
+        <HStack
+          align="center"
+          gap="space-4"
+          wrap={false}
+          className="group/rad"
+          onContextMenu={kanEndreMapper ? kontekstmeny(() => settÅpenMeny(menynøkkel)) : undefined}
+        >
           <button
             type="button"
             aria-expanded={åpen}
@@ -244,45 +262,34 @@ export function FilTre({
             </span>
           </button>
           {kanEndreMapper && (
-            <ActionMenu>
-              <ActionMenu.Trigger>
-                <Button
-                  type="button"
-                  variant="tertiary-neutral"
-                  size="xsmall"
-                  icon={<MenuElipsisVerticalIcon aria-hidden />}
-                  aria-label={`Handlinger for mappen ${mappe.navn}`}
-                />
-              </ActionMenu.Trigger>
-              <ActionMenu.Content>
-                <ActionMenu.Item
-                  icon={<PencilIcon />}
-                  onSelect={() => settModal({ type: "gi-nytt-navn", sti: mappe.sti })}
-                >
-                  Gi nytt navn
-                </ActionMenu.Item>
-                <ActionMenu.Item
-                  icon={<FolderFileIcon />}
-                  onSelect={() =>
-                    settModal({ type: "flytt", element: { type: "mappe", sti: mappe.sti } })
-                  }
-                >
-                  Flytt til …
-                </ActionMenu.Item>
-                <ActionMenu.Divider />
-                <ActionMenu.Item
-                  variant="danger"
-                  icon={<TrashIcon />}
-                  disabled={!erTom}
-                  onSelect={() => {
-                    sporHendelse("mappe slettet", { sakId });
-                    mappehandling.utfør({ handling: "slett", sti: mappe.sti });
-                  }}
-                >
-                  {erTom ? "Slett mappe" : "Slett mappe (må være tom)"}
-                </ActionMenu.Item>
-              </ActionMenu.Content>
-            </ActionMenu>
+            <Elementmeny label={`Handlinger for mappen ${mappe.navn}`} {...menyProps(menynøkkel)}>
+              <ActionMenu.Item
+                icon={<PencilIcon />}
+                onSelect={() => settModal({ type: "gi-nytt-navn", sti: mappe.sti })}
+              >
+                Gi nytt navn
+              </ActionMenu.Item>
+              <ActionMenu.Item
+                icon={<FolderFileIcon />}
+                onSelect={() =>
+                  settModal({ type: "flytt", element: { type: "mappe", sti: mappe.sti } })
+                }
+              >
+                Flytt til …
+              </ActionMenu.Item>
+              <ActionMenu.Divider />
+              <ActionMenu.Item
+                variant="danger"
+                icon={<TrashIcon />}
+                disabled={!erTom}
+                onSelect={() => {
+                  sporHendelse("mappe slettet", { sakId });
+                  mappehandling.utfør({ handling: "slett", sti: mappe.sti });
+                }}
+              >
+                {erTom ? "Slett mappe" : "Slett mappe (må være tom)"}
+              </ActionMenu.Item>
+            </Elementmeny>
           )}
         </HStack>
         {åpen && (
@@ -304,18 +311,25 @@ export function FilTre({
     );
   }
 
-  function flyttKnapp(element: FlyttbartElement & { type: "dokument" | "fil" }) {
+  function flyttValg(element: FlyttbartElement) {
     if (!kanEndreMapper) return null;
     return (
-      <Button
-        type="button"
-        variant="tertiary-neutral"
-        size="xsmall"
-        icon={<FolderFileIcon aria-hidden />}
-        aria-label={`Flytt ${element.navn} til mappe`}
-        onClick={() => settModal({ type: "flytt", element })}
-      />
+      <ActionMenu.Item
+        icon={<FolderFileIcon />}
+        onSelect={() => settModal({ type: "flytt", element })}
+      >
+        Flytt til …
+      </ActionMenu.Item>
     );
+  }
+
+  /** Radattributter for dra og slipp, og høyreklikk når raden har en meny. */
+  function radProps(element: FlyttbartElement, mappe: Slippmål, harMeny: boolean) {
+    const nøkkel = `${element.type}:${element.type === "mappe" ? element.sti : element.id}`;
+    return {
+      ...draProps(element, mappe),
+      onContextMenu: harMeny ? kontekstmeny(() => settÅpenMeny(nøkkel)) : undefined,
+    };
   }
 
   function renderDokument(dokument: DokumentNode, mappe: Slippmål) {
@@ -325,6 +339,7 @@ export function FilTre({
       ":docId",
       dokument.id,
     );
+    const harMeny = kanEndreMapper || redigerbar;
     return (
       <FilerRad
         key={`dokument:${dokument.id}`}
@@ -336,20 +351,26 @@ export function FilTre({
           </Link>
         }
         metadata={`Redigerbart · Opprettet i Watson Sak · Sist endret ${formaterDokumentdato(dokument.endretDato)}`}
-        liProps={draProps(element, mappe)}
+        liProps={radProps(element, mappe, harMeny)}
         handlinger={
           <HStack gap="space-1" align="center" wrap={false}>
             <DokumentPdfKnapp dokument={dokument} sakId={sakId} />
-            {flyttKnapp(element)}
-            {redigerbar && (
-              <Button
-                type="button"
-                variant="tertiary-neutral"
-                size="xsmall"
-                icon={<TrashIcon aria-hidden />}
-                aria-label={`Slett ${tittel}`}
-                onClick={() => sletting.start(dokument)}
-              />
+            {harMeny && (
+              <Elementmeny
+                label={`Handlinger for ${tittel}`}
+                {...menyProps(`dokument:${dokument.id}`)}
+              >
+                {flyttValg(element)}
+                {redigerbar && (
+                  <ActionMenu.Item
+                    variant="danger"
+                    icon={<TrashIcon />}
+                    onSelect={() => sletting.start(dokument)}
+                  >
+                    Slett
+                  </ActionMenu.Item>
+                )}
+              </Elementmeny>
             )}
           </HStack>
         }
@@ -359,6 +380,7 @@ export function FilTre({
 
   function renderFil(fil: FilResponse, mappe: Slippmål) {
     const element = { type: "fil", id: fil.id, navn: fil.filnavn, mappe } as const;
+    const harMeny = kanEndreMapper || erSakseier;
     return (
       <FilerRad
         key={`fil:${fil.id}`}
@@ -378,21 +400,32 @@ export function FilTre({
           )
         }
         metadata={`Opplastet · ${filTypeTekst(fil.contentType)} · ${formaterStorrelse(fil.storrelse)} · Lastet opp ${formaterDato(fil.opprettet)}`}
-        liProps={draProps(element, mappe)}
+        liProps={radProps(element, mappe, harMeny)}
         handlinger={
           <HStack gap="space-1" align="center" wrap={false}>
             <ÅpneFilKnapp filId={fil.id} filnavn={fil.filnavn} sakId={sakId} />
-            {flyttKnapp(element)}
-            {erSakseier && (
-              <>
-                <OmdøpFilKnapp filId={fil.id} filnavn={fil.filnavn} sakId={sakId} />
-                <SlettFilKnapp
-                  filId={fil.id}
-                  filnavn={fil.filnavn}
-                  sakId={sakId}
-                  bruktIDokumenter={fil.bruktIDokumenter}
-                />
-              </>
+            {harMeny && (
+              <Elementmeny label={`Handlinger for ${fil.filnavn}`} {...menyProps(`fil:${fil.id}`)}>
+                {flyttValg(element)}
+                {erSakseier && (
+                  <>
+                    <ActionMenu.Item
+                      icon={<PencilIcon />}
+                      onSelect={() => settModal({ type: "gi-nytt-navn-fil", fil })}
+                    >
+                      Gi nytt navn
+                    </ActionMenu.Item>
+                    <ActionMenu.Divider />
+                    <ActionMenu.Item
+                      variant="danger"
+                      icon={<TrashIcon />}
+                      onSelect={() => filsletting.start(fil)}
+                    >
+                      Slett
+                    </ActionMenu.Item>
+                  </>
+                )}
+              </Elementmeny>
             )}
           </HStack>
         }
@@ -468,6 +501,16 @@ export function FilTre({
           onClose={() => settModal(null)}
         />
       )}
+      {modal?.type === "gi-nytt-navn-fil" && (
+        <OmdøpFilModal
+          åpen
+          filId={modal.fil.id}
+          filnavn={modal.fil.filnavn}
+          sakId={sakId}
+          onClose={() => settModal(null)}
+        />
+      )}
+      {filsletting.modaler}
       <SlettDokumentModal
         kandidat={sletting.kandidat}
         sletter={sletting.sletter}

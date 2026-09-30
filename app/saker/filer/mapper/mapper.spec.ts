@@ -59,6 +59,14 @@ test.describe("Mapper i Filer", () => {
     await expect(page.getByRole("list", { name: "Alfa" }).getByText("Mappen er tom")).toBeVisible();
   });
 
+  test("åpner mappemenyen med høyreklikk", async ({ page }) => {
+    await opprettMappe(page, "Alfa");
+
+    await page.getByRole("button", { name: /^Alfa/ }).click({ button: "right" });
+
+    await expect(page.getByRole("menuitem", { name: "Gi nytt navn" })).toBeVisible();
+  });
+
   test("er UU-compliant med mapper", async ({ page }) => {
     await opprettMappe(page, "Alfa");
     await page.getByRole("button", { name: /^Alfa/ }).click();
