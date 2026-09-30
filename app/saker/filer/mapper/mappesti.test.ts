@@ -22,6 +22,19 @@ describe("mappestiSchema", () => {
     },
   );
 
+  it("forklarer at kontrolltegn ikke er lov", () => {
+    const resultat = mappestiSchema.safeParse("Bank\nKonto");
+    expect(resultat.error?.issues[0]?.message).toBe(
+      "Mappenavnet kan ikke inneholde linjeskift, tabulator eller andre kontrolltegn",
+    );
+  });
+
+  it("forklarer at skråstrek ikke er lov", () => {
+    expect(mappestiSchema.safeParse("Bank\\Konto").error?.issues[0]?.message).toBe(
+      "Mappenavnet kan ikke inneholde / eller \\",
+    );
+  });
+
   it("tillater tegn som % og _", () => {
     expect(mappestiSchema.parse("100%_ferdig")).toBe("100%_ferdig");
   });

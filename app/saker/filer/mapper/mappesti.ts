@@ -18,8 +18,12 @@ export const mappenavnSchema = z
   .max(MAKS_SEGMENTLENGDE, `Mappenavnet kan ikke være lengre enn ${MAKS_SEGMENTLENGDE} tegn`)
   .refine((navn) => navn !== "." && navn !== "..", "Mappenavnet er ugyldig")
   .refine(
-    (navn) => !navn.includes("/") && !navn.includes("\\") && !KONTROLLTEGN.test(navn),
+    (navn) => !navn.includes("/") && !navn.includes("\\"),
     "Mappenavnet kan ikke inneholde / eller \\",
+  )
+  .refine(
+    (navn) => !KONTROLLTEGN.test(navn),
+    "Mappenavnet kan ikke inneholde linjeskift, tabulator eller andre kontrolltegn",
   );
 
 /** Validerer og normaliserer en hel mappesti (trimmer hvert nivå). */
