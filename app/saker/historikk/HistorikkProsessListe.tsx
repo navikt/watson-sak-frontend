@@ -39,7 +39,7 @@ export function HistorikkProsessListe({
       {hendelser.map((hendelse) => {
         const forrigeHendelse = forrigeHendelseKart?.get(hendelse.hendelseId);
         const beskrivelse = hendelseBeskrivelse(hendelse, forrigeHendelse);
-        const erEgenManuellHendelse = hendelse.hendelsesType === "MANUELL_HENDELSE";
+        const erManuellHendelse = hendelse.hendelsesType === "MANUELL_HENDELSE";
 
         return (
           <Process.Event
@@ -51,7 +51,7 @@ export function HistorikkProsessListe({
           >
             <VStack gap="space-2">
               <HendelseInnhold hendelse={hendelse} beskrivelse={beskrivelse} />
-              {redigerbar && erEgenManuellHendelse && (
+              {redigerbar && erManuellHendelse && (
                 <HStack gap="space-2">
                   <Button
                     variant="tertiary"

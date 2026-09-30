@@ -133,6 +133,19 @@ describe("HendelseBullet", () => {
 });
 
 describe("SAK_STATUS_ENDRET (generisk hendelse fra backend for status- og arbeidsstatusendring)", () => {
+  it("viser påklaget status med riktig tittel", () => {
+    const forrigeHendelse = lagHendelse({
+      hendelsesType: "SAK_STATUS_ENDRET",
+      status: "AKTIV",
+    });
+    const hendelse = lagHendelse({
+      hendelsesType: "SAK_STATUS_ENDRET",
+      status: "PAAKLAGET",
+    });
+
+    expect(hendelseTittel(hendelse, forrigeHendelse)).toBe("Sak påklaget");
+  });
+
   it("behandler manglende status og AKTIV som samme arbeidsstatus ved stegbytte", () => {
     const hendelser: SakHendelse[] = [
       lagHendelse({

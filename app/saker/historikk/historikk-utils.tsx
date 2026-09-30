@@ -82,6 +82,7 @@ function statusKortTittel(
   if (!status || status === "AKTIV") {
     return forrigeStatus === "I_BERO" ? "tatt ut av bero" : "gjenopptatt";
   }
+  if (status === "PAAKLAGET") return "påklaget";
   return status === "I_BERO" ? "satt i bero" : "satt på vent";
 }
 
