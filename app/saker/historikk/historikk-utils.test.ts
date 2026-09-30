@@ -271,6 +271,31 @@ describe("SAK_STATUS_ENDRET (generisk hendelse fra backend for status- og arbeid
       "Status: Venter på vedtak\nSteg: Forvaltning",
     );
   });
+
+  it("viser overgang til strafferettslig vurdering med riktig tittel", () => {
+    const hendelser: SakHendelse[] = [
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000002",
+        hendelsesType: "SAK_STATUS_ENDRET",
+        steg: "STRAFFERETTSLIG_VURDERING",
+        status: "AKTIV",
+        tidspunkt: "2025-01-02T12:00:00Z",
+      }),
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000001",
+        hendelsesType: "SAK_STATUS_ENDRET",
+        steg: "FORVALTNING",
+        status: "VENTER_PA_VEDTAK",
+        tidspunkt: "2025-01-01T12:00:00Z",
+      }),
+    ];
+    const forrigeHendelse = lagForrigeHendelseKart(hendelser).get(hendelser[0].hendelseId);
+
+    expect(hendelseTittel(hendelser[0], forrigeHendelse)).toBe("Sak til strafferettslig vurdering");
+    expect(hendelseBeskrivelse(hendelser[0], forrigeHendelse)).toBe(
+      "Status: Aktiv\nSteg: Strafferettslig vurdering",
+    );
+  });
 });
 
 describe("filhendelser", () => {
