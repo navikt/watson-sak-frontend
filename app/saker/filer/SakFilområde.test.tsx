@@ -442,3 +442,52 @@ describe("Arkivert", () => {
     expect(screen.getByText(/0 vedlegg/)).toBeDefined();
   });
 });
+
+describe("DokumentTre med mapper", () => {
+  const dokumenter: DokumentNode[] = [
+    { ...mockDokumenter[0], mappe: "Bank/Utskrifter" },
+    { ...mockDokumenter[1], mappe: "Møter" },
+    {
+      ...mockDokumenter[1],
+      id: "3",
+      tittel: "Arkivert notat",
+      mappe: "Bank",
+      arkivert: "2026-03-02T10:00:00Z",
+    },
+  ];
+  const mapper = ["Bank", "Bank/Utskrifter", "Møter"];
+
+  it("legger dokumenter i lukkede mapper når ingen er åpnet", () => {
+    renderTre({ noder: dokumenter, mapper, sakId: "ABC-123" });
+
+    expect(screen.getByRole("button", { name: /Bank/ }).getAttribute("aria-expanded")).toBe(
+      "false",
+    );
+    expect(screen.queryByText("Rapport")).toBeNull();
+    expect(screen.queryByText("Notat")).toBeNull();
+  });
+
+  it("åpner alle mappene over dokumentet som er åpent", () => {
+    renderTre({ noder: dokumenter, mapper, sakId: "ABC-123", fremhevetId: "1" });
+
+    expect(screen.getByRole("button", { name: /Bank/ }).getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByRole("button", { name: /Utskrifter/ }).getAttribute("aria-expanded")).toBe(
+      "true",
+    );
+    expect(screen.getByRole("button", { name: /Møter/ }).getAttribute("aria-expanded")).toBe(
+      "false",
+    );
+    expect(screen.getByText("Rapport")).toBeDefined();
+  });
+
+  it("viser arkiverte dokumenter på rotnivå, ikke i mappen de lå i", () => {
+    renderTre({ noder: dokumenter, mapper, sakId: "ABC-123" });
+
+    const rot = screen.getByRole("list", { name: "Dokumenter" });
+    const rotElementer = within(rot).getAllByRole("listitem", { hidden: false });
+    expect(rotElementer.at(-1)?.textContent).toContain("Arkivert notat");
+    expect(screen.getByRole("button", { name: /Bank/ }).getAttribute("aria-expanded")).toBe(
+      "false",
+    );
+  });
+});

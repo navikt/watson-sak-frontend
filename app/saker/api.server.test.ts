@@ -432,3 +432,102 @@ describe("søkKontrollsakerPåSaksnummer", () => {
     await expect(søkKontrollsakerPåSaksnummer("token", "01027")).rejects.toThrow();
   });
 });
+
+describe("mapper-adaptere", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  function stubFetch(svar: { ok: boolean; status: number; body?: unknown }) {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: svar.ok,
+      status: svar.status,
+      json: async () => svar.body ?? {},
+      text: async () => JSON.stringify(svar.body ?? {}),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    return fetchMock;
+  }
+
+  it("henter mapper", async () => {
+    const fetchMock = stubFetch({
+      ok: true,
+      status: 200,
+      body: [{ sti: "Bank", opprettetAv: "Z999999", opprettet: "2026-09-30T10:00:00Z" }],
+    });
+    const { hentMapper } = await import("./api.server");
+
+    const mapper = await hentMapper("token", "1");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://backend.test/api/v1/kontrollsaker/1/mapper",
+      expect.anything(),
+    );
+    expect(mapper.map((mappe) => mappe.sti)).toEqual(["Bank"]);
+  });
+
+  it.each([
+    [
+      "opprettMappe",
+      ["Bank"],
+      "https://backend.test/api/v1/kontrollsaker/1/mapper",
+      "POST",
+      { sti: "Bank" },
+    ],
+    [
+      "endreMappe",
+      ["Bank", "Arkiv/Bank"],
+      "https://backend.test/api/v1/kontrollsaker/1/mapper",
+      "PATCH",
+      { fraSti: "Bank", tilSti: "Arkiv/Bank" },
+    ],
+    [
+      "flyttDokumentTilMappe",
+      ["dok-1", "Bank"],
+      "https://backend.test/api/v1/kontrollsaker/1/dokumenter/dok-1/mappe",
+      "PUT",
+      { mappe: "Bank" },
+    ],
+    [
+      "flyttFilTilMappe",
+      ["fil-1", null],
+      "https://backend.test/api/v1/kontrollsaker/1/filer/fil-1/mappe",
+      "PUT",
+      { mappe: null },
+    ],
+  ] as const)("%s sender riktig metode og innhold", async (navn, argumenter, url, metode, body) => {
+    const fetchMock = stubFetch({ ok: true, status: 204 });
+    const api = await import("./api.server");
+
+    await (api[navn] as (...args: unknown[]) => Promise<void>)("token", "1", ...argumenter);
+
+    const [kalletUrl, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(kalletUrl).toBe(url);
+    expect(init.method).toBe(metode);
+    expect(JSON.parse(init.body as string)).toEqual(body);
+  });
+
+  it("sletter mappe med kodet sti i query", async () => {
+    const fetchMock = stubFetch({ ok: true, status: 204 });
+    const { slettMappe } = await import("./api.server");
+
+    await slettMappe("token", "1", "Bank/Tom mappe");
+
+    const [kalletUrl, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(kalletUrl).toBe(
+      "https://backend.test/api/v1/kontrollsaker/1/mapper?sti=Bank%2FTom+mappe",
+    );
+    expect(init.method).toBe("DELETE");
+  });
+
+  it.each([400, 404, 409])("kaster BackendFeilException med status %i", async (status) => {
+    stubFetch({ ok: false, status, body: { detail: "Finnes fra før" } });
+    const { opprettMappe, BackendFeilException } = await import("./api.server");
+
+    const feil = await opprettMappe("token", "1", "Bank").catch((e: unknown) => e);
+
+    expect(feil).toBeInstanceOf(BackendFeilException);
+    expect((feil as InstanceType<typeof BackendFeilException>).status).toBe(status);
+  });
+});
