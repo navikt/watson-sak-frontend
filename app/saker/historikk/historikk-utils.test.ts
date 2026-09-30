@@ -67,6 +67,21 @@ describe("hendelseBeskrivelse", () => {
 
     expect(hendelseBeskrivelse(hendelse)).toBe("Type: Vurder dokument");
   });
+
+  it("viser hvilke saksdetaljer som ble oppdatert", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "SAK_REDIGERT",
+      beskrivelse: "Endret: kategori, prioritet",
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe("Endret: kategori, prioritet");
+  });
+
+  it("viser ikke steg som fallback når saksdetaljer mangler beskrivelse", () => {
+    const hendelse = lagHendelse({ hendelsesType: "SAK_REDIGERT" });
+
+    expect(hendelseBeskrivelse(hendelse)).toBeNull();
+  });
 });
 
 describe("hendelseTittel", () => {

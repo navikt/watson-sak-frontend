@@ -94,7 +94,7 @@ describe("SakHistorikk", () => {
     );
 
     expect(screen.getByText("Saksdetaljer oppdatert")).toBeDefined();
-    const beskrivelse = screen.getByText("Steg: Opprettet");
+    const beskrivelse = screen.getByText("Kategori og prioritet endret");
     const aktør = screen.getByText("Utført av: Ola Nordmann");
     expect(beskrivelse.compareDocumentPosition(aktør) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,

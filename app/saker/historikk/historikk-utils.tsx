@@ -202,6 +202,10 @@ export function hendelseBeskrivelse(
     return null;
   }
 
+  if (hendelse.hendelsesType === "SAK_REDIGERT") {
+    return hendelse.beskrivelse ?? null;
+  }
+
   if (hendelse.hendelsesType === "NOTAT_SENDT") {
     return hendelse.beskrivelse ?? null;
   }
@@ -364,8 +368,8 @@ export function HendelseInnhold({
 
     return (
       <VStack gap="space-1">
-        {beskrivelse.split("\n").map((linje) => (
-          <BodyShort key={linje} size="small">
+        {beskrivelse.split("\n").map((linje, indeks) => (
+          <BodyShort key={`${indeks}-${linje}`} size="small">
             {linje}
           </BodyShort>
         ))}
