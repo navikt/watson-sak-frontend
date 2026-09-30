@@ -101,6 +101,31 @@ describe("SakHistorikk", () => {
     );
   });
 
+  it("viser oppgavetype og utførende saksbehandler", async () => {
+    await renderMedRouter(
+      <SakHistorikk
+        redigerbar={true}
+        sakId={1}
+        hendelser={[
+          lagBackendHendelse({
+            hendelsesType: "OPPGAVE_OPPRETTET",
+            tittel: "VUR",
+            beskrivelse: "OPPGAVE_OPPRETTET",
+            opprettetAvNavn: "Ola Nordmann",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Oppgave opprettet")).toBeDefined();
+    const type = screen.getByText("Type: Vurder dokument");
+    const aktør = screen.getByText("Utført av: Ola Nordmann");
+    expect(type.compareDocumentPosition(aktør) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(screen.queryByText("OPPGAVE_OPPRETTET")).toBeNull();
+  });
+
   it("viser historikktidspunkt i norsk tidssone", async () => {
     await renderMedRouter(
       <SakHistorikk

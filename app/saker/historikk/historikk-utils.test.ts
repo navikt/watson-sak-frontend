@@ -47,6 +47,26 @@ describe("hendelseBeskrivelse", () => {
 
     expect(hendelseBeskrivelse(hendelse)).toBe("Steg: Utredning");
   });
+
+  it("viser journalposttype i stedet for duplisert beskrivelse", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "JOURNALPOST_OPPRETTET",
+      tittel: "UTGAAENDE",
+      beskrivelse: "Journalpost opprettet",
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe("Type: Utgående");
+  });
+
+  it("viser lesbar oppgavetype i stedet for rå hendelsestype", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "OPPGAVE_OPPRETTET",
+      tittel: "VUR",
+      beskrivelse: "OPPGAVE_OPPRETTET",
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe("Type: Vurder dokument");
+  });
 });
 
 describe("hendelseTittel", () => {

@@ -19,6 +19,10 @@ import {
   XMarkOctagonIcon,
 } from "@navikt/aksel-icons";
 import { BodyShort, VStack } from "@navikt/ds-react";
+import {
+  formaterJournalposttype,
+  formaterOppgavetype,
+} from "~/saker/handlinger/opprett-formatering";
 import { formaterStatus } from "~/saker/visning";
 import { formaterSteg } from "~/saker/visning";
 import { NORSK_TIDSSONE } from "~/utils/date-utils";
@@ -196,11 +200,12 @@ export function hendelseBeskrivelse(
     return hendelse.beskrivelse ?? null;
   }
 
-  if (
-    hendelse.hendelsesType === "JOURNALPOST_OPPRETTET" ||
-    hendelse.hendelsesType === "OPPGAVE_OPPRETTET"
-  ) {
-    return hendelse.beskrivelse ?? null;
+  if (hendelse.hendelsesType === "JOURNALPOST_OPPRETTET") {
+    return hendelse.tittel ? `Type: ${formaterJournalposttype(hendelse.tittel)}` : null;
+  }
+
+  if (hendelse.hendelsesType === "OPPGAVE_OPPRETTET") {
+    return hendelse.tittel ? `Type: ${formaterOppgavetype(hendelse.tittel)}` : null;
   }
 
   if (hendelse.hendelsesType === "SAKSINFORMASJON_ENDRET") {
@@ -349,21 +354,6 @@ export function HendelseInnhold({
 }) {
   const aktør = hendelse.opprettetAvNavn === "SYSTEM" ? null : hendelse.opprettetAvNavn;
   const innhold = (() => {
-    if (
-      (hendelse.hendelsesType === "JOURNALPOST_OPPRETTET" ||
-        hendelse.hendelsesType === "OPPGAVE_OPPRETTET") &&
-      hendelse.tittel
-    ) {
-      return (
-        <VStack gap="space-1">
-          <BodyShort size="small" weight="semibold">
-            {hendelse.tittel}
-          </BodyShort>
-          {hendelse.beskrivelse && <BodyShort size="small">{hendelse.beskrivelse}</BodyShort>}
-        </VStack>
-      );
-    }
-
     if (!beskrivelse) return null;
 
     return (
