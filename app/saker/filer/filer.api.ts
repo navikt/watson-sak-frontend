@@ -92,6 +92,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const nyFil = leggTilFil(request, String(tilgang.sak.id), fil, innlogget.name);
   leggTilHendelse(request, tilgang.sak, "FIL_LASTET_OPP", undefined, {
     beskrivelse: nyFil.filnavn,
+    opprettetAvNavn: innlogget.name,
   });
   return nyFil;
 }

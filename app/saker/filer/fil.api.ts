@@ -111,7 +111,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
         { status: 404 },
       );
     }
-    leggTilHendelse(request, tilgang.sak, "FIL_OMDØPT");
+    leggTilHendelse(request, tilgang.sak, "FIL_OMDØPT", undefined, {
+      opprettetAvNavn: innlogget.name,
+    });
     return { ok: true as const, fil: omdøpt };
   }
 
@@ -122,6 +124,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   leggTilHendelse(request, tilgang.sak, "FIL_SLETTET", undefined, {
     beskrivelse: slettet.filnavn,
+    opprettetAvNavn: innlogget.name,
   });
 
   return { ok: true as const };

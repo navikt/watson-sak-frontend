@@ -1061,6 +1061,17 @@ async function mockAction(
 
   const saksbehandlere = sak.saksbehandlere;
   const tillatte = hentMockTillatteHandlinger(sak);
+  const innloggetBruker = await hentInnloggetBruker({ request });
+  const leggTilBrukerhendelse = (
+    hendelseSak: KontrollsakResponse,
+    type: Parameters<typeof leggTilHendelse>[2],
+    tidspunkt?: string,
+    metadata?: Parameters<typeof leggTilHendelse>[4],
+  ) =>
+    leggTilHendelse(request, hendelseSak, type, tidspunkt, {
+      opprettetAvNavn: innloggetBruker.name,
+      ...metadata,
+    });
 
   if (
     !hentStegbaserteSaksregler(sak.steg).kanUtføreUtredningsarbeid &&
@@ -1074,17 +1085,16 @@ async function mockAction(
       if (sak.saksbehandlere.eier) {
         throw data("Saken har allerede en saksbehandler", { status: 409 });
       }
-      const innlogget = await hentInnloggetBruker({ request });
       const valgtSaksbehandler = finnSaksbehandlerDetalj(
         mockSaksbehandlerDetaljer,
-        innlogget.navIdent,
+        innloggetBruker.navIdent,
       ) ?? {
-        navIdent: innlogget.navIdent,
-        navn: innlogget.name,
-        enhet: innlogget.enhet,
+        navIdent: innloggetBruker.navIdent,
+        navn: innloggetBruker.name,
+        enhet: innloggetBruker.enhet,
       };
       sak.saksbehandlere.eier = valgtSaksbehandler;
-      leggTilHendelse(request, sak, "SAK_TILDELT");
+      leggTilBrukerhendelse(sak, "SAK_TILDELT");
       break;
     }
     case "TILDEL": {
@@ -1097,7 +1107,7 @@ async function mockAction(
       };
 
       sak.saksbehandlere.eier = valgtSaksbehandler;
-      leggTilHendelse(request, sak, "SAK_TILDELT");
+      leggTilBrukerhendelse(sak, "SAK_TILDELT");
       break;
     }
     case "FRISTILL": {
@@ -1178,7 +1188,7 @@ async function mockAction(
           AVSLUTTET: null,
         } satisfies Record<KontrollsakSteg, KontrollsakStatus | null>
       )[nyttSteg as KontrollsakSteg];
-      leggTilHendelse(request, sak, getHendelsestypeForStegendring(sak.steg), undefined, {
+      leggTilBrukerhendelse(sak, getHendelsestypeForStegendring(sak.steg), undefined, {
         beskrivelse,
         status: nyttSteg === "AVSLUTTET" ? forrigeStatus : sak.status,
       });
@@ -1202,8 +1212,7 @@ async function mockAction(
       if (status === "I_BERO") sak.statusFørBero = sak.status;
       if (varIBero) sak.statusFørBero = null;
       sak.status = status;
-      leggTilHendelse(
-        request,
+      leggTilBrukerhendelse(
         sak,
         varIBero || status === null ? "SAK_GJENOPPTATT" : getHendelsestypeForStatusendring(status),
         undefined,
@@ -1227,7 +1236,7 @@ async function mockAction(
         (saksbehandler) => saksbehandler.navIdent !== valgtSaksbehandler.navIdent,
       );
 
-      leggTilHendelse(request, sak, "ANSVARLIG_SAKSBEHANDLER_ENDRET", undefined, {
+      leggTilBrukerhendelse(sak, "ANSVARLIG_SAKSBEHANDLER_ENDRET", undefined, {
         berortSaksbehandlerNavn: valgtSaksbehandler.navn,
         berortSaksbehandlerNavIdent: valgtSaksbehandler.navIdent,
         berortSaksbehandlerEnhet,
@@ -1248,7 +1257,7 @@ async function mockAction(
           enhet: nySeksjon,
         };
       }
-      leggTilHendelse(request, sak, "MOTTAKSENHET_ENDRET");
+      leggTilBrukerhendelse(sak, "MOTTAKSENHET_ENDRET");
       break;
     }
     case "send_til_annen_enhet": {
@@ -1263,7 +1272,7 @@ async function mockAction(
         enhet: nySeksjon,
       };
       sak.saksbehandlere.eier = null;
-      leggTilHendelse(request, sak, "MOTTAKSENHET_ENDRET");
+      leggTilBrukerhendelse(sak, "MOTTAKSENHET_ENDRET");
       break;
     }
     case "rediger_saksinformasjon": {
@@ -1325,7 +1334,7 @@ async function mockAction(
       sak.kilde = validert.kilde;
       sak.arbeidsgivere = [...validert.arbeidsgivere];
       sak.ytelser = nyeYtelser;
-      leggTilHendelse(request, sak, "SAKSINFORMASJON_ENDRET", undefined, {
+      leggTilBrukerhendelse(sak, "SAKSINFORMASJON_ENDRET", undefined, {
         beskrivelse: beskrivEndredeFelter(endredeFelter),
       });
       return { ok: true, sak } satisfies ActionResult;
@@ -1403,7 +1412,7 @@ async function mockAction(
 
       if (!erAnsvarlig && !erAlleredeDelt) {
         saksbehandlere.deltMed.push(valgtSaksbehandler);
-        leggTilHendelse(request, sak, "TILGANG_DELT", undefined, {
+        leggTilBrukerhendelse(sak, "TILGANG_DELT", undefined, {
           berortSaksbehandlerNavn: valgtSaksbehandler.navn,
           berortSaksbehandlerNavIdent: valgtSaksbehandler.navIdent,
           berortSaksbehandlerEnhet,
@@ -1426,7 +1435,7 @@ async function mockAction(
         const berortSaksbehandlerEnhet =
           saksbehandler.enhet === null ? undefined : saksbehandler.enhet;
 
-        leggTilHendelse(request, sak, "TILGANG_FJERNET", undefined, {
+        leggTilBrukerhendelse(sak, "TILGANG_FJERNET", undefined, {
           berortSaksbehandlerNavn: saksbehandler.navn,
           berortSaksbehandlerNavIdent: saksbehandler.navIdent,
           berortSaksbehandlerEnhet,
@@ -1442,8 +1451,7 @@ async function mockAction(
       const tid = hentTekstfelt(formData, "tid", "Tid er påkrevd");
 
       const tidspunkt = lagTidspunktFraSkjema(dato, tid);
-      const { name } = await hentInnloggetBruker({ request });
-      leggTilManuellHendelse(request, sak, tittel, notat, tidspunkt, name);
+      leggTilManuellHendelse(request, sak, tittel, notat, tidspunkt, innloggetBruker.name);
       break;
     }
     case "rediger_historikk": {
@@ -1486,7 +1494,7 @@ async function mockAction(
         tittel: malLabel ?? "Notat",
         opprettet: new Date().toISOString(),
       });
-      leggTilHendelse(request, sak, "NOTAT_SENDT", undefined, {
+      leggTilBrukerhendelse(sak, "NOTAT_SENDT", undefined, {
         beskrivelse: deler.join("\n"),
       });
       break;
@@ -1497,7 +1505,7 @@ async function mockAction(
       const dokumentIds = formData.getAll("dokumentId").map(String);
       const vedleggIdsForArkivering = formData.getAll("vedleggId").map(String);
       const knyttTilOppgave = formData.get("knyttTilOppgave") === "true";
-      const { navIdent } = await hentInnloggetBruker({ request });
+      const { navIdent } = innloggetBruker;
       const journalpostId = `demo-${crypto.randomUUID()}`;
 
       const antallArkiverteVedlegg = vedleggIdsForArkivering.filter(
@@ -1523,7 +1531,7 @@ async function mockAction(
         opprettet: new Date().toISOString(),
       });
 
-      leggTilHendelse(request, sak, "JOURNALPOST_OPPRETTET", undefined, {
+      leggTilBrukerhendelse(sak, "JOURNALPOST_OPPRETTET", undefined, {
         tittel: journalposttype,
         beskrivelse: "Journalpost opprettet",
       });
@@ -1541,7 +1549,7 @@ async function mockAction(
 
       if (knyttTilOppgave) {
         const oppgavetype = hentValgfriTekst(formData, "oppgavetype") ?? "";
-        leggTilHendelse(request, sak, "OPPGAVE_OPPRETTET", undefined, {
+        leggTilBrukerhendelse(sak, "OPPGAVE_OPPRETTET", undefined, {
           tittel: oppgavetype || "Oppgave",
           beskrivelse: "Oppgave opprettet",
         });
@@ -1551,7 +1559,7 @@ async function mockAction(
     }
     case "opprett_oppgave": {
       const oppgavetype = hentValgfriTekst(formData, "oppgavetype") ?? "";
-      leggTilHendelse(request, sak, "OPPGAVE_OPPRETTET", undefined, {
+      leggTilBrukerhendelse(sak, "OPPGAVE_OPPRETTET", undefined, {
         tittel: oppgavetype || "Oppgave",
         beskrivelse: "Oppgave opprettet",
       });

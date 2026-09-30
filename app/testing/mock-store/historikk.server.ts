@@ -95,6 +95,7 @@ export function leggTilHendelse(
     | "status"
     | "beskrivelse"
     | "tittel"
+    | "opprettetAvNavn"
   >,
 ) {
   return leggTilBackendHendelse(

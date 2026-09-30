@@ -531,6 +531,9 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
 
     expect(kontrollsak.steg).toBe("OPPRETTET");
     expect(kontrollsak.saksbehandlere.eier?.navIdent).toBe("Z123456");
+    expect(hentHistorikk(testRequest, kontrollsak.id)[0]?.opprettetAvNavn).toBe(
+      "Test Saksbehandler",
+    );
   });
 
   it("beholder Opprettet når saksbehandleren velger Tildel meg", async () => {
@@ -977,6 +980,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(historikk[0]?.hendelsesType).toBe("JOURNALPOST_OPPRETTET");
     expect(historikk[0]?.tittel).toBe("INNGAAENDE");
     expect(historikk[0]?.beskrivelse).toBe("Journalpost opprettet");
+    expect(historikk[0]?.opprettetAvNavn).toBe("Test Saksbehandler");
   });
 
   it("arkiverer valgte redigerbare dokumenter ved opprettelse av journalpost", async () => {
@@ -1127,6 +1131,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(historikk[0]?.hendelsesType).toBe("OPPGAVE_OPPRETTET");
     expect(historikk[0]?.tittel).toBe("VUR");
     expect(historikk[0]?.beskrivelse).toBe("Oppgave opprettet");
+    expect(historikk[0]?.opprettetAvNavn).toBe("Test Saksbehandler");
   });
 });
 
