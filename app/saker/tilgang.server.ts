@@ -16,6 +16,21 @@ export type Sakstilgang = {
 };
 
 /**
+ * Direkte tilgang til saken: eier, delt med eller leder. Gir rett til å se og endre filområdet.
+ * Tilgang via kontrollobjekt eller koblet sak regnes ikke med.
+ */
+export function harDirekteSakstilgang(
+  sak: KontrollsakResponse,
+  innlogget: { navIdent: string; erLeder: boolean },
+): boolean {
+  return (
+    erSakseier(sak, innlogget.navIdent) ||
+    sak.saksbehandlere.deltMed.some((s) => s.navIdent === innlogget.navIdent) ||
+    innlogget.erLeder
+  );
+}
+
+/**
  * Slår opp en sak i mockdata og avgjør tilgang for innlogget bruker.
  *
  * Tilgangsreglene speiler dem som brukes for filområdet i saksvisningen, og
@@ -35,9 +50,7 @@ export async function hentSakstilgangFraMock(
   const innlogget = await hentInnloggetBruker({ request });
   const sak = medInnloggetEier(rawSak, innlogget.navIdent, innlogget.name);
 
-  const erEier = erSakseier(sak, innlogget.navIdent);
-  const harDeltTilgang = sak.saksbehandlere.deltMed.some((s) => s.navIdent === innlogget.navIdent);
-  const kanSe = erEier || harDeltTilgang || innlogget.erLeder;
+  const kanSe = harDirekteSakstilgang(sak, innlogget);
   const stegregler = hentStegbaserteSaksregler(sak.steg);
 
   return {

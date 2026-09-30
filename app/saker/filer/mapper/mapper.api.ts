@@ -5,7 +5,7 @@ import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
 import * as backendApi from "~/saker/api.server";
 import { hentStegbaserteSaksregler } from "~/saker/stegregler";
-import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
+import { harDirekteSakstilgang, hentSakstilgangFraMock } from "~/saker/tilgang.server";
 import {
   endreMappe,
   flyttDokumentTilMappe,
@@ -42,7 +42,13 @@ async function utførMotBackend(
   handling: z.output<typeof mappehandlingSchema>,
 ) {
   const token = await getBackendOboToken(request);
-  const sak = await backendApi.hentKontrollsak(token, sakId);
+  const [sak, innlogget] = await Promise.all([
+    backendApi.hentKontrollsak(token, sakId),
+    hentInnloggetBruker({ request }),
+  ]);
+  if (!harDirekteSakstilgang(sak, innlogget)) {
+    throw data("Ingen tilgang til å endre mapper", { status: 403 });
+  }
   if (!hentStegbaserteSaksregler(sak.steg).kanLasteOppFiler) {
     throw data("Mapper kan ikke endres når saken er avsluttet", { status: 403 });
   }
