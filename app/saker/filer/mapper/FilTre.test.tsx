@@ -418,6 +418,17 @@ describe("FilTre", () => {
       expect(mockMappeAction).not.toHaveBeenCalled();
     });
 
+    it("kobler mappeknappen til innholdet med en gyldig id, også når navnet har mellomrom", async () => {
+      await renderSeksjon({ mapper, filer: [], sakId: "SAK-1", erSakseier: false });
+      const knapp = screen.getByRole("button", { name: /^Tom mappe/ });
+
+      fireEvent.click(knapp);
+
+      const id = knapp.getAttribute("aria-controls") ?? "";
+      expect(id).not.toMatch(/\s/);
+      expect(document.getElementById(id)?.getAttribute("aria-label")).toBe("Tom mappe");
+    });
+
     it("gir en mappe nytt navn, og sender ny sti for mappen", async () => {
       await renderSeksjon({
         mapper,

@@ -6,6 +6,8 @@ import type { Mappehandling, MappehandlingSvar } from "./mapper.api";
 /**
  * Sender mappehandlinger (opprett, gi nytt navn, flytt, slett) til BFF-ruten for mapper.
  * `onFullført` kalles når serveren har svart `ok`. Feilmeldingen fra serveren ligger i `feil`.
+ * Nye handlinger ignoreres mens en handling pågår, slik at to flyttinger ikke kan fullføres i
+ * feil rekkefølge. `utfør` returnerer `false` når handlingen ble ignorert.
  */
 export function useMappehandling(sakId: string, onFullført?: () => void) {
   const fetcher = useFetcher<MappehandlingSvar>();
@@ -26,7 +28,8 @@ export function useMappehandling(sakId: string, onFullført?: () => void) {
     }
   }, [fetcher.data, fetcher.state]);
 
-  function utfør(handling: Mappehandling) {
+  function utfør(handling: Mappehandling): boolean {
+    if (venterPåSvar.current || fetcher.state !== "idle") return false;
     settFeil(undefined);
     venterPåSvar.current = true;
     fetcher.submit(handling, {
@@ -34,6 +37,7 @@ export function useMappehandling(sakId: string, onFullført?: () => void) {
       action: RouteConfig.API.SAK_MAPPER.replace(":sakId", sakId),
       encType: "application/json",
     });
+    return true;
   }
 
   return {

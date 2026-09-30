@@ -17,7 +17,7 @@ import {
   Loader,
   Tooltip,
 } from "@navikt/ds-react";
-import { useEffect, useMemo, useState, type DragEvent } from "react";
+import { useEffect, useId, useMemo, useState, type DragEvent } from "react";
 import { Link as RouterLink } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
@@ -95,6 +95,7 @@ export function FilTre({
   const [slippmål, settSlippmål] = useState<Slippmål | undefined>(undefined);
   const [modal, settModal] = useState<ÅpenModal>(null);
   const mappehandling = useMappehandling(sakId);
+  const treId = useId();
   const sletting = useDokumentSletting({ sakId, kilde: "dokumentliste" });
   const filsletting = useFilSletting(sakId);
   /** Nøkkelen til elementet med åpen meny. Bare én meny kan være åpen om gangen. */
@@ -166,7 +167,8 @@ export function FilTre({
   function draProps(element: FlyttbartElement, mål: Slippmål) {
     if (!kanEndreMapper) return {};
     return {
-      draggable: true,
+      // Én mappehandling om gangen, så flyttinger ikke kan fullføres i feil rekkefølge.
+      draggable: !mappehandling.pågår,
       onDragStart: (event: DragEvent<HTMLElement>) => {
         event.stopPropagation();
         event.dataTransfer.effectAllowed = "move";
@@ -221,7 +223,8 @@ export function FilTre({
     const åpen = åpneMapper.has(mappe.sti);
     const erSlippmål = slippmål === mappe.sti;
     const erTom = mappe.barn.length === 0;
-    const innholdId = `mappe-innhold-${mappe.sti}`;
+    // Stien kan inneholde mellomrom, som ikke er lov i en id som `aria-controls` peker på.
+    const innholdId = `${treId}-mappe-${encodeURIComponent(mappe.sti)}`;
     const menynøkkel = `mappe:${mappe.sti}`;
 
     return (
