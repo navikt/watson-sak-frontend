@@ -392,7 +392,7 @@ export const kontrollsakHendelseResponseObjectSchema = z.object({
   status: kontrollsakStatusSchema.nullable().optional(),
   beskrivelse: z.string().nullable().optional(),
   tittel: z.string().nullable().optional(),
-  opprettetAvNavIdent: z.string().nullable().optional(),
+  opprettetAvNavn: z.string().nullable().optional(),
 });
 
 export const kontrollsakHendelseResponseSchema = z.preprocess(

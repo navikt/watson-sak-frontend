@@ -12,7 +12,6 @@ import type { SakHendelse } from "./typer";
 interface HistorikkProsessListeProps {
   hendelser: SakHendelse[];
   redigerbar: boolean;
-  innloggetNavIdent: string;
   onRediger: (hendelse: SakHendelse) => void;
   onSlett: (hendelse: SakHendelse) => void;
   className?: string;
@@ -21,16 +20,14 @@ interface HistorikkProsessListeProps {
 
 /**
  * Rendrer historikkhendelser som en Aksel `Process`-liste, med
- * Rediger/Slett-knapper for saksbehandlerens egne manuelle hendelser.
+ * Rediger/Slett-knapper for manuelle hendelser når historikken er redigerbar.
  *
  * Delt mellom `SakHistorikk` (kompakt visning) og `VisAllHistorikkModal`
- * (full visning med filter) for å unngå at rad-rendering og eierskapssjekk
- * driver fra hverandre i to kopier.
+ * (full visning med filter) for å unngå duplisert rad-rendering.
  */
 export function HistorikkProsessListe({
   hendelser,
   redigerbar,
-  innloggetNavIdent,
   onRediger,
   onSlett,
   className,
@@ -41,9 +38,7 @@ export function HistorikkProsessListe({
       {hendelser.map((hendelse) => {
         const forrigeHendelse = forrigeHendelseKart?.get(hendelse.hendelseId);
         const beskrivelse = hendelseBeskrivelse(hendelse, forrigeHendelse);
-        const erEgenManuellHendelse =
-          hendelse.hendelsesType === "MANUELL_HENDELSE" &&
-          hendelse.opprettetAvNavIdent === innloggetNavIdent;
+        const erManuellHendelse = hendelse.hendelsesType === "MANUELL_HENDELSE";
 
         return (
           <Process.Event
@@ -55,7 +50,7 @@ export function HistorikkProsessListe({
           >
             <VStack gap="space-2">
               <HendelseInnhold hendelse={hendelse} beskrivelse={beskrivelse} />
-              {redigerbar && erEgenManuellHendelse && (
+              {redigerbar && erManuellHendelse && (
                 <HStack gap="space-2">
                   <Button
                     variant="tertiary"

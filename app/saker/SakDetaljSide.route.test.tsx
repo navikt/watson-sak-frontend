@@ -742,6 +742,7 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     expect(historikk[0]?.hendelsesType).toBe("MANUELL_HENDELSE");
     expect(historikk[0]?.tittel).toBe("Ringte bruker");
     expect(historikk[0]?.beskrivelse).toBe("Avklarte dokumentasjon og neste steg.");
+    expect(historikk[0]?.opprettetAvNavn).toBe("Saks Behandlersen");
     expect(historikk[0]?.tidspunkt).toBe("2026-05-04T10:34:00.000Z");
   });
 
