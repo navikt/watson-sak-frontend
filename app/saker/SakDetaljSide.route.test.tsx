@@ -110,13 +110,13 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
       steg: "AVSLUTTET",
       registrerResultat: "true",
       "resultat.utredning.type": "HENLAGT",
-      "resultat.utredning.henleggelsesarsak": "BEVISETS_STILLING",
+      "resultat.utredning.henleggelsesarsak": "IKKE_KAPASITET",
     });
 
     expect(sak.status).toBeNull();
     expect(sak.steg).toBe("AVSLUTTET");
     expect(sak.resultat?.utredning?.type).toBe("HENLAGT");
-    expect(sak.resultat?.utredning?.henleggelsesarsak).toBe("BEVISETS_STILLING");
+    expect(sak.resultat?.utredning?.henleggelsesarsak).toBe("IKKE_KAPASITET");
 
     const historikk = hentHistorikk(testRequest, sak.id);
     expect(historikk[0]?.hendelsesType).toBe("STATUS_ENDRET");
@@ -301,7 +301,7 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
         steg: "AVSLUTTET",
         registrerResultat: "true",
         "resultat.utredning.type": "HENLAGT",
-        "resultat.utredning.henleggelsesarsak": "BEVISETS_STILLING",
+        "resultat.utredning.henleggelsesarsak": "IKKE_KAPASITET",
         "resultat.admin.godkjent": "true",
       }),
     ).toMatchObject({ data: { ok: false }, init: { status: 400 } });
@@ -360,11 +360,11 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
       steg: "AVSLUTTET",
       registrerResultat: "true",
       "resultat.utredning.type": "HENLAGT",
-      "resultat.utredning.henleggelsesarsak": "INTET_STRAFFBART_FORHOLD",
+      "resultat.utredning.henleggelsesarsak": "INGEN_UTREDNING",
     });
 
     expect(sak.resultat?.utredning?.type).toBe("HENLAGT");
-    expect(sak.resultat?.utredning?.henleggelsesarsak).toBe("INTET_STRAFFBART_FORHOLD");
+    expect(sak.resultat?.utredning?.henleggelsesarsak).toBe("INGEN_UTREDNING");
     expect(sak.steg).toBe("AVSLUTTET");
   });
 
@@ -692,7 +692,7 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
         steg: "FORVALTNING",
         registrerResultat: "true",
         "resultat.utredning.type": "HENLAGT",
-        "resultat.utredning.henleggelsesarsak": "BEVISETS_STILLING",
+        "resultat.utredning.henleggelsesarsak": "IKKE_KAPASITET",
       }),
     ).toMatchObject({ data: { ok: false }, init: { status: 409 } });
 

@@ -101,7 +101,7 @@ describe("SaksflytModal", () => {
     klikk("Henlegg og avslutt sak");
     expect(screen.getByText("Velg henleggelsesårsak")).toBeDefined();
 
-    fireEvent.click(screen.getByRole("radio", { name: "Bevisets stilling" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Ikke kapasitet" }));
     klikk("Henlegg og avslutt sak");
     expect(await screen.findByRole("dialog", { name: "Avslutt sak" })).toBeDefined();
     expect(screen.getByText("Tilgang til dokumenter og underlag")).toBeDefined();
@@ -113,7 +113,7 @@ describe("SaksflytModal", () => {
       steg: "AVSLUTTET",
       registrerResultat: "true",
       "resultat.utredning.type": "HENLAGT",
-      "resultat.utredning.henleggelsesarsak": "BEVISETS_STILLING",
+      "resultat.utredning.henleggelsesarsak": "IKKE_KAPASITET",
     });
   });
 
@@ -374,7 +374,7 @@ describe("SaksflytModal", () => {
     renderModal();
     klikk("Henlegg sak");
     await screen.findByRole("dialog", { name: "Henlegg sak" });
-    fireEvent.click(screen.getByRole("radio", { name: "Bevisets stilling" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Ikke kapasitet" }));
     klikk("Henlegg og avslutt sak");
     await screen.findByRole("dialog", { name: "Avslutt sak" });
     klikk("Avslutt sak");
