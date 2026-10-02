@@ -5,7 +5,7 @@ import { RouteConfig } from "~/routeConfig";
 import { Diagramkort, Legend } from "./Diagramkort";
 import { fargeForKode } from "./farger";
 import type { Statistikk } from "./types";
-import { formaterBeløp, prosentFormatter, visningsnavn } from "./visning";
+import { formaterAntallSaker, formaterBeløp, prosentFormatter, visningsnavn } from "./visning";
 
 const formatter = new Intl.NumberFormat("nb-NO");
 const ALDER_GRENSE_MND = 12;
@@ -14,6 +14,12 @@ const ALDER_GRENSE_MND = 12;
  * summere antall saker over en gitt alder uten å hardkode tallet i UI-et. */
 function nedreAldersgrense(navn: string): number {
   return Number.parseInt(navn.replace(">", "").split(/[–-]/)[0], 10) || 0;
+}
+
+/** Beløp kommer som streng fra backend. Tomme eller ugyldige verdier regnes ikke som null. */
+function erNull(beløp: string): boolean {
+  const tall = Number(beløp.replaceAll(/\s/g, "").replace(",", "."));
+  return Number.isFinite(tall) && tall === 0;
 }
 
 function lagSaksfilterUrl(parametre: Record<string, string>) {
@@ -47,7 +53,15 @@ export function StatistikkDiagrammer({
   const periodeErTom =
     data.periodeTall.innkomne === 0 &&
     data.periodeTall.avsluttede === 0 &&
-    data.statusfordeling.every((status) => status.verdi === 0);
+    [
+      data.periodeTall.antattBeløp,
+      data.periodeTall.vedtattBeløp,
+      data.periodeTall.anmeldtBeløp,
+    ].every((beløp) => erNull(beløp)) &&
+    data.statusfordeling.every((status) => status.verdi === 0) &&
+    totalKategorier === 0 &&
+    totalKontrollrapport === 0 &&
+    totalHenlagt === 0;
   const snittDagerAvsluttet = data.periodeTall.snittDagerAvsluttet;
   const maksAlder = Math.max(1, ...data.alderssammensetning.map((alder) => alder.verdi));
   const antallOverGrense = data.alderssammensetning
@@ -181,7 +195,7 @@ export function StatistikkDiagrammer({
           className="min-h-[438px]"
         >
           <BodyShort size="small" className="text-ax-text-danger">
-            {formatter.format(antallOverGrense)} saker over 12 mnd
+            {formaterAntallSaker(antallOverGrense)} over 12 mnd
           </BodyShort>
           <div className="flex min-h-64 flex-1 items-end justify-around gap-2 border-b border-ax-border-neutral-subtle">
             {data.alderssammensetning.map((alder) => (
@@ -308,7 +322,7 @@ export function StatistikkDiagrammer({
                 }}
               >
                 <div className="m-12 flex size-28 items-center justify-center rounded-full bg-ax-bg-default text-center text-sm">
-                  {formatter.format(totalKategorier)} saker
+                  {formaterAntallSaker(totalKategorier)}
                 </div>
               </div>
               <Legend
@@ -323,7 +337,7 @@ export function StatistikkDiagrammer({
           <HGrid columns={{ xs: 1, lg: 2 }} gap="space-12">
             <Diagramkort
               title="Fordeling av kontrollrapporttype"
-              description={`Av ${formatter.format(totalKontrollrapport)} saker med kontrollrapport`}
+              description={`Av ${formaterAntallSaker(totalKontrollrapport)} med kontrollrapport`}
             >
               <VStack gap="space-12">
                 {data.kontrollrapport.map((rad) => (
@@ -338,7 +352,7 @@ export function StatistikkDiagrammer({
                         style={{ width: `${rad.prosent}%` }}
                       />
                     </div>
-                    <BodyShort size="small">{rad.verdi} saker</BodyShort>
+                    <BodyShort size="small">{formaterAntallSaker(rad.verdi)}</BodyShort>
                   </div>
                 ))}
               </VStack>
@@ -346,7 +360,7 @@ export function StatistikkDiagrammer({
 
             <Diagramkort
               title="Henlagt – fordelt på grunn"
-              description={`Av totalt ${formatter.format(totalHenlagt)} henlagte saker`}
+              description={`Av totalt ${formatter.format(totalHenlagt)} ${totalHenlagt === 1 ? "henlagt sak" : "henlagte saker"}`}
             >
               <VStack align="center" gap="space-8">
                 <div

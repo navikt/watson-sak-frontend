@@ -115,16 +115,79 @@ describe("StatistikkDiagrammer", () => {
     expect(screen.getAllByText("i perioden")).toHaveLength(2);
   });
 
-  it("viser infomelding i periodedelen når perioden ikke har hendelser", () => {
-    renderMedRouter((data) => ({
+  function tomPeriode(data: ReturnType<typeof lagMockStatistikk>) {
+    return {
       ...data,
-      periodeTall: { ...data.periodeTall, innkomne: 0, avsluttede: 0 },
+      periodeTall: {
+        ...data.periodeTall,
+        innkomne: 0,
+        avsluttede: 0,
+        antattBeløp: "0",
+        vedtattBeløp: "0.00",
+        anmeldtBeløp: "0",
+      },
       statusfordeling: data.statusfordeling.map((status) => ({ ...status, verdi: 0, prosent: 0 })),
-    }));
+      kategorifordeling: data.kategorifordeling.map((kategori) => ({ ...kategori, verdi: 0 })),
+      kontrollrapport: data.kontrollrapport.map((rad) => ({ ...rad, verdi: 0, prosent: 0 })),
+      henlagt: data.henlagt.map((rad) => ({ ...rad, verdi: 0 })),
+    };
+  }
+
+  it("viser infomelding i periodedelen når perioden ikke har hendelser", () => {
+    renderMedRouter(tomPeriode);
 
     expect(screen.getByText("Ingen hendelser i valgt periode.")).toBeDefined();
     expect(screen.queryByText("Statusfordeling")).toBeNull();
     expect(screen.getByText("Øyeblikksbilde")).toBeDefined();
+  });
+
+  it.each([
+    [
+      "beløp",
+      (data: ReturnType<typeof tomPeriode>) => ({
+        ...data,
+        periodeTall: { ...data.periodeTall, antattBeløp: "1000" },
+      }),
+    ],
+    [
+      "kategorier",
+      (data: ReturnType<typeof tomPeriode>) => ({
+        ...data,
+        kategorifordeling: [{ navn: "SAMLIV", verdi: 1 }],
+      }),
+    ],
+    [
+      "kontrollrapport",
+      (data: ReturnType<typeof tomPeriode>) => ({
+        ...data,
+        kontrollrapport: [{ navn: "POTENSIELL_STRAFFESAK", verdi: 1, prosent: 100 }],
+      }),
+    ],
+    [
+      "henlagt",
+      (data: ReturnType<typeof tomPeriode>) => ({
+        ...data,
+        henlagt: [{ navn: "UTREDNING", verdi: 1 }],
+      }),
+    ],
+  ])("viser periodedata når bare %s har verdier", (_, medData) => {
+    renderMedRouter((data) => medData(tomPeriode(data)));
+
+    expect(screen.queryByText("Ingen hendelser i valgt periode.")).toBeNull();
+    expect(screen.getByText("Statusfordeling")).toBeDefined();
+  });
+
+  it("bruker entall når det er én sak", () => {
+    renderMedRouter((data) => ({
+      ...data,
+      kategorifordeling: [{ navn: "SAMLIV", verdi: 1 }],
+      kontrollrapport: [{ navn: "POTENSIELL_STRAFFESAK", verdi: 1, prosent: 100 }],
+      henlagt: [{ navn: "UTREDNING", verdi: 1 }],
+    }));
+
+    expect(screen.getByText("Av 1 sak med kontrollrapport")).toBeDefined();
+    expect(screen.getByText("Av totalt 1 henlagt sak")).toBeDefined();
+    expect(screen.getAllByText("1 sak").length).toBeGreaterThanOrEqual(2);
   });
 
   it("viser lesbart navn for traktsteget TILDELT", () => {

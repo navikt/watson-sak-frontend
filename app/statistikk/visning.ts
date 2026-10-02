@@ -59,6 +59,13 @@ const beløpFormatter = new Intl.NumberFormat("nb-NO", {
   maximumFractionDigits: 2,
 });
 
+const antallFormatter = new Intl.NumberFormat("nb-NO");
+
+/** «1 sak» eller «N saker», med tusenskille. */
+export function formaterAntallSaker(antall: number): string {
+  return `${antallFormatter.format(antall)} ${antall === 1 ? "sak" : "saker"}`;
+}
+
 export function formaterBeløp(verdi: string | number): string {
   if (typeof verdi === "number") {
     return beløpFormatter.format(verdi);
