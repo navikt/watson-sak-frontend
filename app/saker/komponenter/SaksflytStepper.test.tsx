@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import type { KontrollsakResponse } from "../types.backend";
 import { SaksflytStepper } from "./SaksflytStepper";
 
 function hentSteg() {
@@ -66,5 +67,91 @@ describe("SaksflytStepper", () => {
     expect(steg[5].querySelector('[aria-hidden="true"]')?.className).toContain(
       "bg-ax-border-neutral-subtle",
     );
+  });
+
+  it.each<{
+    fase: string;
+    resultat: KontrollsakResponse["resultat"];
+    sisteFullførte: number;
+  }>([
+    {
+      fase: "utredning",
+      resultat: { utredning: { type: "HENLAGT" } },
+      sisteFullførte: 1,
+    },
+    {
+      fase: "forvaltning",
+      resultat: {
+        utredning: { type: "FEILUTBETALINGSSAK_ORDINAER" },
+        forvaltning: {
+          type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+          endeligUtfall: { type: "HENLAGT" },
+        },
+      },
+      sisteFullførte: 2,
+    },
+    {
+      fase: "eldre forvaltningsdata",
+      resultat: {
+        forvaltning: { type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE" },
+        endeligUtfall: { type: "HENLAGT" },
+      },
+      sisteFullførte: 2,
+    },
+    {
+      fase: "strafferettslig vurdering",
+      resultat: {
+        forvaltning: { type: "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE" },
+        strafferettsligVurdering: { type: "HENLAGT" },
+      },
+      sisteFullførte: 3,
+    },
+    {
+      fase: "politiet",
+      resultat: {
+        strafferettsligVurdering: { type: "ANMELDT" },
+        politi: { type: "HENLAGT" },
+      },
+      sisteFullførte: 4,
+    },
+  ])("viser samme avslutningsmønster ved henleggelse fra $fase", ({ resultat, sisteFullførte }) => {
+    render(<SaksflytStepper steg="AVSLUTTET" resultat={resultat} />);
+
+    const steg = hentSteg();
+    expect(steg.map((element) => element.dataset.tilstand)).toEqual(
+      steg.map((_, indeks) =>
+        indeks === 5 ? "aktiv" : indeks <= sisteFullførte ? "fullført" : "kommende",
+      ),
+    );
+    expect(steg.filter((element) => element.hasAttribute("aria-current"))).toEqual([steg[5]]);
+    for (const element of steg.slice(sisteFullførte + 1, 5)) {
+      expect(element.textContent).toContain("ikke startet");
+    }
+    for (const element of steg.slice(sisteFullførte + 1)) {
+      expect(element.querySelector('[aria-hidden="true"]')?.className).toContain(
+        "bg-ax-border-neutral-subtle",
+      );
+    }
+  });
+
+  it("beholder politiet som aktivt steg ved en påklaget henleggelse", () => {
+    render(<SaksflytStepper steg="POLITI" resultat={{ politi: { type: "HENLAGT" } }} />);
+
+    expect(hentSteg()[4].getAttribute("aria-current")).toBe("step");
+    expect(hentSteg()[5].dataset.tilstand).toBe("kommende");
+  });
+
+  it("lar ikke en eldre henleggelse overstyre et senere politiresultat", () => {
+    render(
+      <SaksflytStepper
+        steg="AVSLUTTET"
+        resultat={{
+          utredning: { type: "HENLAGT" },
+          politi: { type: "DOMFELLELSE" },
+        }}
+      />,
+    );
+
+    expect(hentSteg().every((element) => element.dataset.tilstand === "fullført")).toBe(true);
   });
 });

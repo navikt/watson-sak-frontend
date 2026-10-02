@@ -13,10 +13,30 @@ const saksflytSteg: { etikett: string; steg: KontrollsakSteg[] }[] = [
   { etikett: "Avsluttet", steg: ["AVSLUTTET"] },
 ];
 
-const forvaltningIndeks = saksflytSteg.findIndex((flytSteg) =>
-  flytSteg.steg.includes("FORVALTNING"),
-);
 const avsluttetIndeks = saksflytSteg.findIndex((flytSteg) => flytSteg.steg.includes("AVSLUTTET"));
+
+function finnAvslutningssteg(
+  resultat: KontrollsakResponse["resultat"],
+): KontrollsakSteg | undefined {
+  if (resultat?.politi) {
+    return resultat.politi.type === "HENLAGT" ? "POLITI" : undefined;
+  }
+  if (resultat?.strafferettsligVurdering) {
+    return resultat.strafferettsligVurdering.type === "HENLAGT"
+      ? "STRAFFERETTSLIG_VURDERING"
+      : undefined;
+  }
+  if (resultat?.forvaltning) {
+    const endeligUtfall =
+      resultat.forvaltning.endeligUtfall === undefined
+        ? resultat.endeligUtfall
+        : resultat.forvaltning.endeligUtfall;
+    return resultat.forvaltning.type === "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE" && endeligUtfall
+      ? "FORVALTNING"
+      : undefined;
+  }
+  return resultat?.utredning?.type === "HENLAGT" ? "UTREDNING" : undefined;
+}
 
 const skjermleserTekst: Record<Stegtilstand, string> = {
   fullført: "fullført",
@@ -34,10 +54,10 @@ function finnTilstand(
   indeks: number,
   aktivIndeks: number,
   erAvsluttet: boolean,
-  erAvsluttetEtterForvaltning: boolean,
+  sisteFullførteIndeks: number,
 ): Stegtilstand {
-  if (erAvsluttetEtterForvaltning) {
-    if (indeks <= forvaltningIndeks) return "fullført";
+  if (erAvsluttet && sisteFullførteIndeks >= 0) {
+    if (indeks <= sisteFullførteIndeks) return "fullført";
     if (indeks === avsluttetIndeks) return "aktiv";
     return "kommende";
   }
@@ -74,22 +94,19 @@ type SaksflytStepperProps = {
 export function SaksflytStepper({ steg, resultat }: SaksflytStepperProps) {
   const aktivIndeks = saksflytSteg.findIndex((flytSteg) => flytSteg.steg.includes(steg));
   const erAvsluttet = steg === "AVSLUTTET";
-  const erAvsluttetEtterForvaltning =
-    erAvsluttet &&
-    resultat?.forvaltning?.type === "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE" &&
-    Boolean(resultat.forvaltning.endeligUtfall ?? resultat.endeligUtfall);
+  const avslutningssteg = finnAvslutningssteg(resultat);
+  const sisteFullførteIndeks = saksflytSteg.findIndex((flytSteg) =>
+    flytSteg.steg.some((steg) => steg === avslutningssteg),
+  );
 
   return (
     <ol aria-label="Saksflyt" className="m-0 flex list-none p-0">
       {saksflytSteg.map((flytSteg, indeks) => {
-        const tilstand = finnTilstand(
-          indeks,
-          aktivIndeks,
-          erAvsluttet,
-          erAvsluttetEtterForvaltning,
-        );
+        const tilstand = finnTilstand(indeks, aktivIndeks, erAvsluttet, sisteFullførteIndeks);
         const linjeTilstand =
-          erAvsluttetEtterForvaltning && indeks === avsluttetIndeks ? "kommende" : tilstand;
+          erAvsluttet && sisteFullførteIndeks >= 0 && indeks === avsluttetIndeks
+            ? "kommende"
+            : tilstand;
 
         return (
           <li
