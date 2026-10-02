@@ -1,11 +1,11 @@
-import { BodyShort, Box, Button, HGrid, HStack, VStack } from "@navikt/ds-react";
+import { Alert, BodyShort, Box, Button, HGrid, HStack, VStack } from "@navikt/ds-react";
 import { useState, type ReactNode } from "react";
 import { Link as RouterLink } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { Diagramkort, Legend } from "./Diagramkort";
 import { fargeForKode } from "./farger";
 import type { Statistikk } from "./types";
-import { formaterBeløp, prosentFormatter, visningsnavn } from "./visning";
+import { formaterAntallSaker, formaterBeløp, prosentFormatter, visningsnavn } from "./visning";
 
 const formatter = new Intl.NumberFormat("nb-NO");
 const ALDER_GRENSE_MND = 12;
@@ -14,6 +14,12 @@ const ALDER_GRENSE_MND = 12;
  * summere antall saker over en gitt alder uten å hardkode tallet i UI-et. */
 function nedreAldersgrense(navn: string): number {
   return Number.parseInt(navn.replace(">", "").split(/[–-]/)[0], 10) || 0;
+}
+
+/** Beløp kommer som streng fra backend. Tomme eller ugyldige verdier regnes ikke som null. */
+function erNull(beløp: string): boolean {
+  const tall = Number(beløp.replaceAll(/\s/g, "").replace(",", "."));
+  return Number.isFinite(tall) && tall === 0;
 }
 
 function lagSaksfilterUrl(parametre: Record<string, string>) {
@@ -42,6 +48,22 @@ export function StatistikkDiagrammer({
 }) {
   const [skjulteStatuser, setSkjulteStatuser] = useState<Set<string>>(new Set());
   const totalKategorier = data.kategorifordeling.reduce((sum, item) => sum + item.verdi, 0);
+  const totalHenlagt = data.henlagt.reduce((sum, item) => sum + item.verdi, 0);
+  const totalKontrollrapport = data.kontrollrapport.reduce((sum, item) => sum + item.verdi, 0);
+  const periodeErTom =
+    data.periodeTall.innkomne === 0 &&
+    data.periodeTall.avsluttede === 0 &&
+    [
+      data.periodeTall.antattBeløp,
+      data.periodeTall.vedtattBeløp,
+      data.periodeTall.anmeldtBeløp,
+    ].every((beløp) => erNull(beløp)) &&
+    data.statusfordeling.every((status) => status.verdi === 0) &&
+    totalKategorier === 0 &&
+    totalKontrollrapport === 0 &&
+    totalHenlagt === 0;
+  const snittDagerAvsluttet = data.periodeTall.snittDagerAvsluttet;
+  const maksAlder = Math.max(1, ...data.alderssammensetning.map((alder) => alder.verdi));
   const antallOverGrense = data.alderssammensetning
     .filter((bucket) => nedreAldersgrense(bucket.navn) >= ALDER_GRENSE_MND)
     .reduce((sum, bucket) => sum + bucket.verdi, 0);
@@ -173,7 +195,7 @@ export function StatistikkDiagrammer({
           className="min-h-[438px]"
         >
           <BodyShort size="small" className="text-ax-text-danger">
-            {formatter.format(antallOverGrense)} saker over 12 mnd
+            {formaterAntallSaker(antallOverGrense)} over 12 mnd
           </BodyShort>
           <div className="flex min-h-64 flex-1 items-end justify-around gap-2 border-b border-ax-border-neutral-subtle">
             {data.alderssammensetning.map((alder) => (
@@ -186,7 +208,7 @@ export function StatistikkDiagrammer({
                 <span
                   className="w-full rounded-t-sm"
                   style={{
-                    height: `${Math.max((alder.verdi / 49) * 82, 4)}%`,
+                    height: `${Math.max((alder.verdi / maksAlder) * 82, 4)}%`,
                     backgroundColor: `var(${fargeForKode(alder.navn)})`,
                   }}
                 />
@@ -199,163 +221,177 @@ export function StatistikkDiagrammer({
 
       {periodevelger}
 
-      <HGrid columns={{ xs: 1, lg: "2fr 3fr" }} gap={{ xs: "space-16", lg: "space-64" }}>
-        <VStack gap="space-8">
-          <BodyShort size="small" weight="semibold" className="text-ax-text-neutral-subtle">
-            Utvikling i perioden
-          </BodyShort>
-          <HGrid columns={2} gap="space-8">
-            <Metric
-              label="Innkomne"
-              value={data.periodeTall.innkomne}
-              suffix="i perioden"
-              tone="success"
-            />
-            <Metric
-              label="Avsluttet"
-              value={data.periodeTall.avsluttede}
-              suffix="Snitt 32 dager"
-              tone="neutral"
-            />
+      {periodeErTom ? (
+        <Alert variant="info">Ingen hendelser i valgt periode.</Alert>
+      ) : (
+        <>
+          <HGrid columns={{ xs: 1, lg: "2fr 3fr" }} gap={{ xs: "space-16", lg: "space-64" }}>
+            <VStack gap="space-8">
+              <BodyShort size="small" weight="semibold" className="text-ax-text-neutral-subtle">
+                Utvikling i perioden
+              </BodyShort>
+              <HGrid columns={2} gap="space-8">
+                <Metric
+                  label="Innkomne"
+                  value={data.periodeTall.innkomne}
+                  suffix="i perioden"
+                  tone="success"
+                />
+                <Metric
+                  label="Avsluttet"
+                  value={data.periodeTall.avsluttede}
+                  suffix={
+                    snittDagerAvsluttet == null
+                      ? "i perioden"
+                      : `Snitt ${snittDagerAvsluttet} dager`
+                  }
+                  tone="neutral"
+                />
+              </HGrid>
+            </VStack>
+            <VStack gap="space-8">
+              <BodyShort size="small" weight="semibold" className="text-ax-text-neutral-subtle">
+                Beløp i perioden
+              </BodyShort>
+              <HGrid columns={3} gap="space-8">
+                <Metric
+                  label="Antatt beløp"
+                  value={formaterBeløp(data.periodeTall.antattBeløp)}
+                  suffix="kroner"
+                  tone="warning"
+                />
+                <Metric
+                  label="Vedtatt beløp"
+                  value={formaterBeløp(data.periodeTall.vedtattBeløp)}
+                  suffix="kroner"
+                  tone="success"
+                />
+                <Metric
+                  label="Anmeldt beløp"
+                  value={formaterBeløp(data.periodeTall.anmeldtBeløp)}
+                  suffix="kroner"
+                  tone="danger"
+                />
+              </HGrid>
+            </VStack>
           </HGrid>
-        </VStack>
-        <VStack gap="space-8">
-          <BodyShort size="small" weight="semibold" className="text-ax-text-neutral-subtle">
-            Beløp i perioden
-          </BodyShort>
-          <HGrid columns={3} gap="space-8">
-            <Metric
-              label="Antatt beløp"
-              value={formaterBeløp(data.periodeTall.antattBeløp)}
-              suffix="kroner"
-              tone="warning"
-            />
-            <Metric
-              label="Vedtatt beløp"
-              value={formaterBeløp(data.periodeTall.vedtattBeløp)}
-              suffix="kroner"
-              tone="success"
-            />
-            <Metric
-              label="Anmeldt beløp"
-              value={formaterBeløp(data.periodeTall.anmeldtBeløp)}
-              suffix="kroner"
-              tone="danger"
-            />
-          </HGrid>
-        </VStack>
-      </HGrid>
 
-      <HGrid columns={{ xs: 1, lg: 3 }} gap="space-12">
-        <Diagramkort
-          title="Statusfordeling"
-          description="Saker fordelt på status"
-          className="lg:col-span-2"
-        >
-          <VStack gap="space-8">
-            {data.statusfordeling.map((status) => (
-              <HStack key={status.navn} align="center" gap="space-8" wrap={false}>
-                <div className="grid min-w-0 flex-1 grid-cols-[minmax(8rem,auto)_minmax(0,1fr)_auto] items-center gap-2">
-                  <BodyShort size="small" className="min-w-0 break-words text-right">
-                    {visningsnavn(status.navn)}
-                  </BodyShort>
-                  <div className="min-w-0">
-                    <RouterLink
-                      to={lagSaksfilterUrl({ steg: status.filterverdi })}
-                      className="flex h-8 items-center rounded-sm bg-ax-bg-accent-strong px-2 font-semibold text-ax-text-neutral-contrast no-underline"
-                      style={{ width: `${status.prosent}%` }}
-                      title={`${visningsnavn(status.navn)}: ${formatter.format(status.verdi)} saker`}
-                    >
-                      {status.verdi}
-                    </RouterLink>
-                  </div>
-                  <BodyShort size="small" className="whitespace-nowrap">
-                    {prosentFormatter.format(status.prosent)} %
-                  </BodyShort>
-                </div>
-              </HStack>
-            ))}
-          </VStack>
-        </Diagramkort>
-
-        <Diagramkort title="Sakskategorifordeling" description="Andel av totalt antall saker">
-          <div
-            className="mx-auto size-52 rounded-full"
-            style={{
-              background: `conic-gradient(${data.kategorifordeling
-                .map((kategori, index, alle) => {
-                  const start = alle.slice(0, index).reduce((sum, item) => sum + item.verdi, 0);
-                  const slutt = start + kategori.verdi;
-                  return `var(${fargeForKode(kategori.navn)}) ${(start / totalKategorier) * 100}% ${(slutt / totalKategorier) * 100}%`;
-                })
-                .join(", ")})`,
-            }}
-          >
-            <div className="m-12 flex size-28 items-center justify-center rounded-full bg-ax-bg-default text-center text-sm">
-              {formatter.format(totalKategorier)} saker
-            </div>
-          </div>
-          <Legend
-            items={data.kategorifordeling.map((kategori) => ({
-              ...kategori,
-              farge: fargeForKode(kategori.navn),
-            }))}
-          />
-        </Diagramkort>
-      </HGrid>
-
-      <HGrid columns={{ xs: 1, lg: 2 }} gap="space-12">
-        <Diagramkort
-          title="Fordeling av kontrollrapporttype"
-          description="Av 120 saker med kontrollrapport"
-        >
-          <VStack gap="space-12">
-            {data.kontrollrapport.map((rad) => (
-              <div key={rad.navn}>
-                <HStack justify="space-between">
-                  <BodyShort size="small">{visningsnavn(rad.navn)}</BodyShort>
-                  <BodyShort size="small">{prosentFormatter.format(rad.prosent)}%</BodyShort>
-                </HStack>
-                <div className="mt-1 h-4 overflow-hidden rounded-sm bg-ax-bg-neutral-moderate">
-                  <div
-                    className="h-full bg-ax-bg-accent-strong"
-                    style={{ width: `${rad.prosent}%` }}
-                  />
-                </div>
-                <BodyShort size="small">{rad.verdi} saker</BodyShort>
-              </div>
-            ))}
-          </VStack>
-        </Diagramkort>
-
-        <Diagramkort title="Henlagt – fordelt på grunn" description="Av totalt 168 henlagte saker">
-          <VStack align="center" gap="space-8">
-            <div
-              className="size-36 rounded-full"
-              style={{
-                background: `conic-gradient(${data.henlagt
-                  .map((rad, index) => {
-                    const start = data.henlagt
-                      .slice(0, index)
-                      .reduce((sum, item) => sum + item.verdi, 0);
-                    const slutt = start + rad.verdi;
-                    return `var(${fargeForKode(rad.navn)}) ${(start / 168) * 100}% ${(slutt / 168) * 100}%`;
-                  })
-                  .join(", ")})`,
-              }}
+          <HGrid columns={{ xs: 1, lg: 3 }} gap="space-12">
+            <Diagramkort
+              title="Statusfordeling"
+              description="Saker fordelt på status"
+              className="lg:col-span-2"
             >
-              <div className="m-8 flex size-20 items-center justify-center rounded-full bg-ax-bg-default text-center text-xs">
-                168
-                <br />
-                henlagt
+              <VStack gap="space-8">
+                {data.statusfordeling.map((status) => (
+                  <HStack key={status.navn} align="center" gap="space-8" wrap={false}>
+                    <div className="grid min-w-0 flex-1 grid-cols-[minmax(8rem,auto)_minmax(0,1fr)_auto] items-center gap-2">
+                      <BodyShort size="small" className="min-w-0 break-words text-right">
+                        {visningsnavn(status.navn)}
+                      </BodyShort>
+                      <div className="min-w-0">
+                        <RouterLink
+                          to={lagSaksfilterUrl({ steg: status.filterverdi })}
+                          className="flex h-8 items-center rounded-sm bg-ax-bg-accent-strong px-2 font-semibold text-ax-text-neutral-contrast no-underline"
+                          style={{ width: `${status.prosent}%` }}
+                          title={`${visningsnavn(status.navn)}: ${formatter.format(status.verdi)} saker`}
+                        >
+                          {status.verdi}
+                        </RouterLink>
+                      </div>
+                      <BodyShort size="small" className="whitespace-nowrap">
+                        {prosentFormatter.format(status.prosent)} %
+                      </BodyShort>
+                    </div>
+                  </HStack>
+                ))}
+              </VStack>
+            </Diagramkort>
+
+            <Diagramkort title="Sakskategorifordeling" description="Andel av totalt antall saker">
+              <div
+                className="mx-auto size-52 rounded-full"
+                style={{
+                  background: `conic-gradient(${data.kategorifordeling
+                    .map((kategori, index, alle) => {
+                      const start = alle.slice(0, index).reduce((sum, item) => sum + item.verdi, 0);
+                      const slutt = start + kategori.verdi;
+                      return `var(${fargeForKode(kategori.navn)}) ${(start / totalKategorier) * 100}% ${(slutt / totalKategorier) * 100}%`;
+                    })
+                    .join(", ")})`,
+                }}
+              >
+                <div className="m-12 flex size-28 items-center justify-center rounded-full bg-ax-bg-default text-center text-sm">
+                  {formaterAntallSaker(totalKategorier)}
+                </div>
               </div>
-            </div>
-            <Legend
-              items={data.henlagt.map((rad) => ({ ...rad, farge: fargeForKode(rad.navn) }))}
-            />
-          </VStack>
-        </Diagramkort>
-      </HGrid>
+              <Legend
+                items={data.kategorifordeling.map((kategori) => ({
+                  ...kategori,
+                  farge: fargeForKode(kategori.navn),
+                }))}
+              />
+            </Diagramkort>
+          </HGrid>
+
+          <HGrid columns={{ xs: 1, lg: 2 }} gap="space-12">
+            <Diagramkort
+              title="Fordeling av kontrollrapporttype"
+              description={`Av ${formaterAntallSaker(totalKontrollrapport)} med kontrollrapport`}
+            >
+              <VStack gap="space-12">
+                {data.kontrollrapport.map((rad) => (
+                  <div key={rad.navn}>
+                    <HStack justify="space-between">
+                      <BodyShort size="small">{visningsnavn(rad.navn)}</BodyShort>
+                      <BodyShort size="small">{prosentFormatter.format(rad.prosent)}%</BodyShort>
+                    </HStack>
+                    <div className="mt-1 h-4 overflow-hidden rounded-sm bg-ax-bg-neutral-moderate">
+                      <div
+                        className="h-full bg-ax-bg-accent-strong"
+                        style={{ width: `${rad.prosent}%` }}
+                      />
+                    </div>
+                    <BodyShort size="small">{formaterAntallSaker(rad.verdi)}</BodyShort>
+                  </div>
+                ))}
+              </VStack>
+            </Diagramkort>
+
+            <Diagramkort
+              title="Henlagt – fordelt på grunn"
+              description={`Av totalt ${formatter.format(totalHenlagt)} ${totalHenlagt === 1 ? "henlagt sak" : "henlagte saker"}`}
+            >
+              <VStack align="center" gap="space-8">
+                <div
+                  className="size-36 rounded-full"
+                  style={{
+                    background: `conic-gradient(${data.henlagt
+                      .map((rad, index) => {
+                        const start = data.henlagt
+                          .slice(0, index)
+                          .reduce((sum, item) => sum + item.verdi, 0);
+                        const slutt = start + rad.verdi;
+                        const nevner = Math.max(totalHenlagt, 1);
+                        return `var(${fargeForKode(rad.navn)}) ${(start / nevner) * 100}% ${(slutt / nevner) * 100}%`;
+                      })
+                      .join(", ")})`,
+                  }}
+                >
+                  <div className="m-8 flex size-20 items-center justify-center rounded-full bg-ax-bg-default text-center text-xs">
+                    {formatter.format(totalHenlagt)}
+                    <br />
+                    henlagt
+                  </div>
+                </div>
+                <Legend
+                  items={data.henlagt.map((rad) => ({ ...rad, farge: fargeForKode(rad.navn) }))}
+                />
+              </VStack>
+            </Diagramkort>
+          </HGrid>
+        </>
+      )}
     </VStack>
   );
 }

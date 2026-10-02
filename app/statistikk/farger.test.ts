@@ -24,4 +24,8 @@ describe("fargeForKode", () => {
   it("gir stabile farger også for ukjente koder", () => {
     expect(fargeForKode("NY_KATEGORI")).toBe(fargeForKode("NY_KATEGORI"));
   });
+
+  it("gir backendens UTREDNING samme farge som UTREDES", () => {
+    expect(fargeForKode("UTREDNING")).toBe(fargeForKode("UTREDES"));
+  });
 });

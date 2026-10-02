@@ -57,6 +57,7 @@ export const statistikkResponseSchema = z.object({
   periodeTall: z.object({
     innkomne: antall,
     avsluttede: antall,
+    snittDagerAvsluttet: antall.nullable().optional(),
     antattBeløp: z.string().min(1),
     vedtattBeløp: z.string().min(1),
     anmeldtBeløp: z.string().min(1),
