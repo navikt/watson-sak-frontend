@@ -92,6 +92,10 @@ const henleggelsesarsakEtiketter = {
   BELOP_UNDER_BELOPSGRENSE: "Beløp under beløpsgrense",
   FEILUTBETALING: "Feilutbetaling",
   FORELDET: "Foreldet",
+  IKKE_KAPASITET: "Ikke kapasitet",
+  IKKE_TILSTREKKELIG_BEVISGRUNNLAG: "Ikke tilstrekkelig bevisgrunnlag",
+  IKKE_TILSTREKKELIG_SKYLD: "Ikke tilstrekkelig skyld",
+  INGEN_UTREDNING: "Ingen utredning",
 } as const;
 
 type Henleggelsesarsak = keyof typeof henleggelsesarsakEtiketter;
@@ -99,10 +103,11 @@ type Henleggelsesarsak = keyof typeof henleggelsesarsakEtiketter;
 /** Speiler `Henleggelsesarsak.tillatteFor` i backend. */
 const henleggelsesarsakerPerSteg: Partial<Record<KontrollsakSteg, Henleggelsesarsak[]>> = {
   UTREDNING: [
-    "BEVISETS_STILLING",
-    "BELOP_UNDER_PATALEGRENSE",
-    "INTET_STRAFFBART_FORHOLD",
-    "FEILREGISTRERT_DUBLETT",
+    "IKKE_KAPASITET",
+    "IKKE_TILSTREKKELIG_BEVISGRUNNLAG",
+    "IKKE_TILSTREKKELIG_SKYLD",
+    "INGEN_UTREDNING",
+    "FORELDET",
   ],
   STRAFFERETTSLIG_VURDERING: [
     "BEVISETS_STILLING",

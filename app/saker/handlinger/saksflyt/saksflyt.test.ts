@@ -49,7 +49,7 @@ describe("hentHandlinger", () => {
 
   it("viser bare Avslutt sak når saken er henlagt i gjeldende steg", () => {
     const tillatte = lagTillatteHandlinger({
-      resultat: { utredning: { type: "HENLAGT", henleggelsesarsak: "BEVISETS_STILLING" } },
+      resultat: { utredning: { type: "HENLAGT", henleggelsesarsak: "IKKE_KAPASITET" } },
     });
     expect(ider(hentHandlinger(tillatte))).toEqual(["avslutt"]);
   });
@@ -234,7 +234,7 @@ describe("byggInnsending", () => {
     const henlegg = finn(hentHandlinger(tillatte), "henlegg");
     const formData = byggInnsending(
       henlegg,
-      { "utredning.henleggelsesarsak": "BEVISETS_STILLING" },
+      { "utredning.henleggelsesarsak": "IKKE_KAPASITET" },
       tillatte,
     );
     expect(Object.fromEntries(formData)).toEqual({
@@ -243,7 +243,7 @@ describe("byggInnsending", () => {
       steg: "AVSLUTTET",
       registrerResultat: "true",
       "resultat.utredning.type": "HENLAGT",
-      "resultat.utredning.henleggelsesarsak": "BEVISETS_STILLING",
+      "resultat.utredning.henleggelsesarsak": "IKKE_KAPASITET",
     });
   });
 
