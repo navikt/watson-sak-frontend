@@ -13,6 +13,11 @@ vi.mock("./api.server", () => ({
     .mockResolvedValue({ ok: true, sak: { id: "00000000-0000-4000-8000-000000301000" } }),
 }));
 
+const lagreNotatFraOpprettelseTryggMock = vi.fn().mockResolvedValue(true);
+vi.mock("./notat-fra-opprettelse.server", () => ({
+  lagreNotatFraOpprettelseTrygt: lagreNotatFraOpprettelseTryggMock,
+}));
+
 vi.mock("~/saker/api.server", () => ({
   slåOppPerson: vi.fn().mockResolvedValue({
     type: "success",
@@ -63,6 +68,7 @@ describe("OpprettSakSide action", () => {
     vi.clearAllMocks();
     testState.skalBrukeMockdata = true;
     getBackendOboTokenMock.mockResolvedValue("token-123");
+    lagreNotatFraOpprettelseTryggMock.mockResolvedValue(true);
   });
 
   it("godtar minimal payload med påkrevde felter og returnerer saksnummer", async () => {
@@ -101,6 +107,61 @@ describe("OpprettSakSide action", () => {
 
     expect(response).toMatchObject({
       data: { ok: true, sakId: "00000000-0000-4000-8000-000000301000" },
+    });
+  }, 15000);
+
+  it("lagrer ikke notat når notatfeltet er tomt", async () => {
+    const { action } = await import("./RegistrerSakSide.server");
+
+    await action({
+      request: new Request("http://localhost/registrer-sak", {
+        method: "POST",
+        body: lagFormDataMedMinimum(),
+      }),
+      params: {},
+      context: {},
+    } as Route.ActionArgs);
+
+    expect(lagreNotatFraOpprettelseTryggMock).not.toHaveBeenCalled();
+  }, 15000);
+
+  it("lagrer notat på den opprettede saken når notatfeltet er utfylt", async () => {
+    const { action } = await import("./RegistrerSakSide.server");
+
+    const response = await action({
+      request: new Request("http://localhost/registrer-sak", {
+        method: "POST",
+        body: lagFormDataMedMinimum({ notat: "Internt notat om saken." }),
+      }),
+      params: {},
+      context: {},
+    } as Route.ActionArgs);
+
+    expect(lagreNotatFraOpprettelseTryggMock).toHaveBeenCalledWith(
+      expect.any(Request),
+      "00000000-0000-4000-8000-000000301000",
+      "Internt notat om saken.",
+    );
+    expect(response).toMatchObject({
+      data: { ok: true, sakId: "00000000-0000-4000-8000-000000301000", notatFeil: false },
+    });
+  }, 15000);
+
+  it("beholder saken og markerer notatFeil når notatlagring feiler", async () => {
+    lagreNotatFraOpprettelseTryggMock.mockResolvedValueOnce(false);
+    const { action } = await import("./RegistrerSakSide.server");
+
+    const response = await action({
+      request: new Request("http://localhost/registrer-sak", {
+        method: "POST",
+        body: lagFormDataMedMinimum({ notat: "Internt notat om saken." }),
+      }),
+      params: {},
+      context: {},
+    } as Route.ActionArgs);
+
+    expect(response).toMatchObject({
+      data: { ok: true, sakId: "00000000-0000-4000-8000-000000301000", notatFeil: true },
     });
   }, 15000);
 

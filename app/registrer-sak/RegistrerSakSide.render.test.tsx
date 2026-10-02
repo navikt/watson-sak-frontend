@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mockKodeverk } from "~/testing/mock-store/kodeverk.server";
@@ -58,16 +58,16 @@ describe("Notat i Opprett sak", () => {
     state.legacyKilde = null;
   });
 
-  it.each(["local-backend", "local-mock"])(
-    "viser Notat bare for migreringssaker i %s",
+  it.each(["local-mock", "local-backend"])(
+    "viser et redigerbart Notat-felt for migreringssaker i %s",
     async (miljø) => {
       state.miljø = miljø;
       state.legacyPid = "100245";
       state.legacyKilde = "UTREDNING";
       renderSide();
       const notat = await screen.findByRole("textbox", { name: "Notat" });
-      expect((notat as HTMLTextAreaElement).disabled).toBe(true);
-      expect(screen.getByText("Forhåndsvisning. Notatet kan ikke lagres ennå.")).toBeDefined();
+      expect((notat as HTMLTextAreaElement).disabled).toBe(false);
+      expect((notat as HTMLTextAreaElement).name).toBe("notat");
     },
   );
 
@@ -91,12 +91,36 @@ describe("Notat i Opprett sak", () => {
     },
   );
 
-  it("viser ikke forhåndsvisningen i prod", async () => {
-    state.miljø = "prod";
-    state.legacyPid = "100245";
-    state.legacyKilde = "UTREDNING";
-    renderSide();
-    await screen.findByRole("heading", { name: "Grunnleggende saksinformasjon" });
-    expect(screen.queryByRole("textbox", { name: "Notat" })).toBeNull();
+  it("beholder Notat, PID og kobling når loaderen revalideres uten cookie", async () => {
+    // Cookien fra migreringslisten er engangs. Person-oppslaget revaliderer loaderen, og da kommer
+    // loaderen tilbake uten migreringsnøkkel. Notat-feltet skal likevel bli stående.
+    let kall = 0;
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/registrer-sak",
+          Component: OpprettSakSide,
+          loader: () => {
+            kall += 1;
+            return kall === 1
+              ? { fnr: null, legacyPid: "100245", legacyKilde: "UTREDNING" }
+              : { fnr: null, legacyPid: null, legacyKilde: null };
+          },
+        },
+      ],
+      { initialEntries: ["/registrer-sak"] },
+    );
+    const { container } = render(<RouterProvider router={router} />);
+    await screen.findByRole("textbox", { name: "Notat" });
+
+    await act(async () => {
+      await router.revalidate();
+    });
+
+    expect(kall).toBeGreaterThan(1);
+    expect(screen.getByRole("textbox", { name: "Notat" })).not.toBeNull();
+    expect(screen.getByText(/PID: 100245/)).not.toBeNull();
+    expect(container.querySelector('input[name="legacyPid"]')).not.toBeNull();
+    expect(container.querySelector('input[name="legacyKilde"]')).not.toBeNull();
   });
 });

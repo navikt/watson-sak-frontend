@@ -147,6 +147,13 @@ export const opprettSakSchema = z
       .regex(/^[0-9]{1,12}$/, "Ugyldig legacyPid")
       .optional(),
     legacyKilde: z.enum(["UTREDNING", "SV", "NKA_DAGPENGER", "NKA_AAP"]).optional(),
+    /**
+     * Internt notat om opprettelsen. Bare vist og brukt når skjemaet åpnes fra
+     * migreringsveilederen (`legacyPid`/`legacyKilde` satt) — se
+     * `docs/plans/migrering-avklaringer.md`. Lagres som et vanlig dokument på
+     * saken, ikke i migreringstabellen.
+     */
+    notat: z.string().trim().max(4000, "Notatet kan ikke være lengre enn 4000 tegn").optional(),
   })
   .transform((data) => ({
     ...data,
