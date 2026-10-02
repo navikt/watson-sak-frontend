@@ -77,6 +77,48 @@ describe("StatistikkDiagrammer", () => {
     expect(screen.getByText("2,4 mill")).toBeDefined();
   });
 
+  it("beregner totaler fra dataene i stedet for å bruke mocktall", () => {
+    renderMedRouter((data) => ({
+      ...data,
+      kontrollrapport: [
+        { navn: "KONTROLLNOTAT", verdi: 3, prosent: 60 },
+        { navn: "POTENSIELL_STRAFFESAK", verdi: 2, prosent: 40 },
+      ],
+      henlagt: [
+        { navn: "BEVISETS_STILLING", verdi: 4 },
+        { navn: "FORELDET", verdi: 1 },
+      ],
+    }));
+
+    expect(screen.getByText("Av 5 saker med kontrollrapport")).toBeDefined();
+    expect(screen.getByText("Av totalt 5 henlagte saker")).toBeDefined();
+    expect(screen.getByText("Kontrollnotat")).toBeDefined();
+    expect(screen.getByRole("button", { name: /Bevisets stilling/ })).toBeDefined();
+    expect(screen.queryByText("Snitt 32 dager")).toBeNull();
+  });
+
+  it("skalerer aldersstolpene etter største bøtte", () => {
+    renderMedRouter((data) => ({
+      ...data,
+      alderssammensetning: [
+        { navn: "0-3", verdi: 200 },
+        { navn: "3-6", verdi: 100 },
+      ],
+    }));
+
+    const stolper = [...document.querySelectorAll<HTMLElement>("span.rounded-t-sm")];
+    expect(stolper.map((stolpe) => stolpe.style.height)).toEqual(["82%", "41%"]);
+  });
+
+  it("viser lesbart navn for backendens stegkode UTREDNING", () => {
+    renderMedRouter((data) => ({
+      ...data,
+      statusfordeling: [{ navn: "UTREDNING", filterverdi: "UTREDNING", verdi: 3, prosent: 100 }],
+    }));
+
+    expect(screen.getByText("Utredning")).toBeDefined();
+  });
+
   it("gir statuslabels en egen wrappende layoutkolonne", () => {
     renderMedRouter((data) => ({
       ...data,

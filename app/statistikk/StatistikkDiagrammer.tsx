@@ -42,6 +42,9 @@ export function StatistikkDiagrammer({
 }) {
   const [skjulteStatuser, setSkjulteStatuser] = useState<Set<string>>(new Set());
   const totalKategorier = data.kategorifordeling.reduce((sum, item) => sum + item.verdi, 0);
+  const totalHenlagt = data.henlagt.reduce((sum, item) => sum + item.verdi, 0);
+  const totalKontrollrapport = data.kontrollrapport.reduce((sum, item) => sum + item.verdi, 0);
+  const maksAlder = Math.max(1, ...data.alderssammensetning.map((alder) => alder.verdi));
   const antallOverGrense = data.alderssammensetning
     .filter((bucket) => nedreAldersgrense(bucket.navn) >= ALDER_GRENSE_MND)
     .reduce((sum, bucket) => sum + bucket.verdi, 0);
@@ -186,7 +189,7 @@ export function StatistikkDiagrammer({
                 <span
                   className="w-full rounded-t-sm"
                   style={{
-                    height: `${Math.max((alder.verdi / 49) * 82, 4)}%`,
+                    height: `${Math.max((alder.verdi / maksAlder) * 82, 4)}%`,
                     backgroundColor: `var(${fargeForKode(alder.navn)})`,
                   }}
                 />
@@ -214,7 +217,7 @@ export function StatistikkDiagrammer({
             <Metric
               label="Avsluttet"
               value={data.periodeTall.avsluttede}
-              suffix="Snitt 32 dager"
+              suffix="i perioden"
               tone="neutral"
             />
           </HGrid>
@@ -307,7 +310,7 @@ export function StatistikkDiagrammer({
       <HGrid columns={{ xs: 1, lg: 2 }} gap="space-12">
         <Diagramkort
           title="Fordeling av kontrollrapporttype"
-          description="Av 120 saker med kontrollrapport"
+          description={`Av ${formatter.format(totalKontrollrapport)} saker med kontrollrapport`}
         >
           <VStack gap="space-12">
             {data.kontrollrapport.map((rad) => (
@@ -328,7 +331,10 @@ export function StatistikkDiagrammer({
           </VStack>
         </Diagramkort>
 
-        <Diagramkort title="Henlagt – fordelt på grunn" description="Av totalt 168 henlagte saker">
+        <Diagramkort
+          title="Henlagt – fordelt på grunn"
+          description={`Av totalt ${formatter.format(totalHenlagt)} henlagte saker`}
+        >
           <VStack align="center" gap="space-8">
             <div
               className="size-36 rounded-full"
@@ -339,13 +345,14 @@ export function StatistikkDiagrammer({
                       .slice(0, index)
                       .reduce((sum, item) => sum + item.verdi, 0);
                     const slutt = start + rad.verdi;
-                    return `var(${fargeForKode(rad.navn)}) ${(start / 168) * 100}% ${(slutt / 168) * 100}%`;
+                    const nevner = Math.max(totalHenlagt, 1);
+                    return `var(${fargeForKode(rad.navn)}) ${(start / nevner) * 100}% ${(slutt / nevner) * 100}%`;
                   })
                   .join(", ")})`,
               }}
             >
               <div className="m-8 flex size-20 items-center justify-center rounded-full bg-ax-bg-default text-center text-xs">
-                168
+                {formatter.format(totalHenlagt)}
                 <br />
                 henlagt
               </div>
