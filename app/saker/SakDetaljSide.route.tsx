@@ -108,7 +108,7 @@ export default function SakDetaljSide() {
           gap="space-16"
         >
           <VStack gap="space-8">
-            <SaksflytStepper steg={sak.steg} />
+            <SaksflytStepper steg={sak.steg} resultat={sak.resultat} />
 
             <SaksinformasjonKort
               sak={sak}

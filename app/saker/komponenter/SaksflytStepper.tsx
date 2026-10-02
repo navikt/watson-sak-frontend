@@ -1,6 +1,6 @@
 import { CheckmarkIcon } from "@navikt/aksel-icons";
 import { Detail } from "@navikt/ds-react";
-import type { KontrollsakSteg } from "../types.backend";
+import type { KontrollsakResponse, KontrollsakSteg } from "../types.backend";
 
 type Stegtilstand = "fullført" | "aktiv" | "kommende";
 
@@ -12,6 +12,11 @@ const saksflytSteg: { etikett: string; steg: KontrollsakSteg[] }[] = [
   { etikett: "Politiet", steg: ["POLITI", "ANMELDT"] },
   { etikett: "Avsluttet", steg: ["AVSLUTTET"] },
 ];
+
+const forvaltningIndeks = saksflytSteg.findIndex((flytSteg) =>
+  flytSteg.steg.includes("FORVALTNING"),
+);
+const avsluttetIndeks = saksflytSteg.findIndex((flytSteg) => flytSteg.steg.includes("AVSLUTTET"));
 
 const skjermleserTekst: Record<Stegtilstand, string> = {
   fullført: "fullført",
@@ -25,7 +30,17 @@ const linjeFarge: Record<Stegtilstand, string> = {
   kommende: "bg-ax-border-neutral-subtle h-px",
 };
 
-function finnTilstand(indeks: number, aktivIndeks: number, erAvsluttet: boolean): Stegtilstand {
+function finnTilstand(
+  indeks: number,
+  aktivIndeks: number,
+  erAvsluttet: boolean,
+  erAvsluttetEtterForvaltning: boolean,
+): Stegtilstand {
+  if (erAvsluttetEtterForvaltning) {
+    if (indeks <= forvaltningIndeks) return "fullført";
+    if (indeks === avsluttetIndeks) return "aktiv";
+    return "kommende";
+  }
   if (indeks < aktivIndeks || (erAvsluttet && indeks === aktivIndeks)) return "fullført";
   if (indeks === aktivIndeks) return "aktiv";
   return "kommende";
@@ -53,16 +68,28 @@ function Stegsirkel({ tilstand }: { tilstand: Stegtilstand }) {
 
 type SaksflytStepperProps = {
   steg: KontrollsakSteg;
+  resultat?: KontrollsakResponse["resultat"];
 };
 
-export function SaksflytStepper({ steg }: SaksflytStepperProps) {
+export function SaksflytStepper({ steg, resultat }: SaksflytStepperProps) {
   const aktivIndeks = saksflytSteg.findIndex((flytSteg) => flytSteg.steg.includes(steg));
   const erAvsluttet = steg === "AVSLUTTET";
+  const erAvsluttetEtterForvaltning =
+    erAvsluttet &&
+    resultat?.forvaltning?.type === "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE" &&
+    Boolean(resultat.forvaltning.endeligUtfall ?? resultat.endeligUtfall);
 
   return (
     <ol aria-label="Saksflyt" className="m-0 flex list-none p-0">
       {saksflytSteg.map((flytSteg, indeks) => {
-        const tilstand = finnTilstand(indeks, aktivIndeks, erAvsluttet);
+        const tilstand = finnTilstand(
+          indeks,
+          aktivIndeks,
+          erAvsluttet,
+          erAvsluttetEtterForvaltning,
+        );
+        const linjeTilstand =
+          erAvsluttetEtterForvaltning && indeks === avsluttetIndeks ? "kommende" : tilstand;
 
         return (
           <li
@@ -74,7 +101,7 @@ export function SaksflytStepper({ steg }: SaksflytStepperProps) {
             {indeks > 0 && (
               <span
                 aria-hidden
-                className={`absolute top-3 right-[calc(50%+14px)] left-[calc(-50%+14px)] -translate-y-1/2 ${linjeFarge[tilstand]}`}
+                className={`absolute top-3 right-[calc(50%+14px)] left-[calc(-50%+14px)] -translate-y-1/2 ${linjeFarge[linjeTilstand]}`}
               />
             )}
             <Stegsirkel tilstand={tilstand} />

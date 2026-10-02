@@ -39,4 +39,32 @@ describe("SaksflytStepper", () => {
 
     expect(hentSteg().every((s) => s.dataset.tilstand === "fullført")).toBe(true);
   });
+
+  it("viser avsluttet som aktivt steg når forvaltningen henlegger saken", () => {
+    render(
+      <SaksflytStepper
+        steg="AVSLUTTET"
+        resultat={{
+          forvaltning: {
+            type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+            endeligUtfall: { type: "HENLAGT" },
+          },
+        }}
+      />,
+    );
+
+    const steg = hentSteg();
+    expect(steg.map((element) => element.dataset.tilstand)).toEqual([
+      "fullført",
+      "fullført",
+      "fullført",
+      "kommende",
+      "kommende",
+      "aktiv",
+    ]);
+    expect(steg[5].getAttribute("aria-current")).toBe("step");
+    expect(steg[5].querySelector('[aria-hidden="true"]')?.className).toContain(
+      "bg-ax-border-neutral-subtle",
+    );
+  });
 });
