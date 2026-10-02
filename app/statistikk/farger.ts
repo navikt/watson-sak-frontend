@@ -14,6 +14,8 @@ const FARGER = [
 
 const FARGE_FOR_KODE: Record<string, (typeof FARGER)[number]> = {
   OPPRETTET: "--ax-bg-accent-strong",
+  TILDELT: "--ax-bg-accent-strong",
+  HENLAGT: "--ax-bg-warning-strong",
   UTREDES: "--ax-bg-brand-blue-strong",
   UTREDNING: "--ax-bg-brand-blue-strong",
   FORVALTNING: "--ax-bg-meta-purple-strong",

@@ -94,7 +94,46 @@ describe("StatistikkDiagrammer", () => {
     expect(screen.getByText("Av totalt 5 henlagte saker")).toBeDefined();
     expect(screen.getByText("Kontrollnotat")).toBeDefined();
     expect(screen.getByRole("button", { name: /Bevisets stilling/ })).toBeDefined();
-    expect(screen.queryByText("Snitt 32 dager")).toBeNull();
+  });
+
+  it("viser snitt dager for avsluttede saker når backend leverer det", () => {
+    renderMedRouter((data) => ({
+      ...data,
+      periodeTall: { ...data.periodeTall, snittDagerAvsluttet: 41 },
+    }));
+
+    expect(screen.getByText("Snitt 41 dager")).toBeDefined();
+  });
+
+  it("faller tilbake til «i perioden» uten snitt for avsluttede saker", () => {
+    renderMedRouter((data) => ({
+      ...data,
+      periodeTall: { ...data.periodeTall, snittDagerAvsluttet: null },
+    }));
+
+    expect(screen.queryByText(/^Snitt \d+ dager$/)).toBeNull();
+    expect(screen.getAllByText("i perioden")).toHaveLength(2);
+  });
+
+  it("viser infomelding i periodedelen når perioden ikke har hendelser", () => {
+    renderMedRouter((data) => ({
+      ...data,
+      periodeTall: { ...data.periodeTall, innkomne: 0, avsluttede: 0 },
+      statusfordeling: data.statusfordeling.map((status) => ({ ...status, verdi: 0, prosent: 0 })),
+    }));
+
+    expect(screen.getByText("Ingen hendelser i valgt periode.")).toBeDefined();
+    expect(screen.queryByText("Statusfordeling")).toBeNull();
+    expect(screen.getByText("Øyeblikksbilde")).toBeDefined();
+  });
+
+  it("viser lesbart navn for traktsteget TILDELT", () => {
+    renderMedRouter((data) => ({
+      ...data,
+      statusfordeling: [{ navn: "TILDELT", filterverdi: "OPPRETTET", verdi: 3, prosent: 100 }],
+    }));
+
+    expect(screen.getByText("Tildelt")).toBeDefined();
   });
 
   it("skalerer aldersstolpene etter største bøtte", () => {

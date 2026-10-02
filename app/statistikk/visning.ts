@@ -29,6 +29,7 @@ const ETIKETTER: Record<string, string> = {
   POLITI: "Politi",
   SAMLIV: "Samliv",
   STRAFFERETTSLIG_VURDERING: "Strafferettslig vurdering",
+  TILDELT: "Tildelt",
   TILTAK: "Tiltak",
   UTLAND: "Utland",
   UTREDES: "Utredes",

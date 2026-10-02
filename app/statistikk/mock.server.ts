@@ -105,6 +105,7 @@ export function lagMockStatistikk(
     periodeTall: {
       innkomne: 87,
       avsluttede: 156,
+      snittDagerAvsluttet: 32,
       antattBeløp: "2400000",
       vedtattBeløp: "1800000",
       anmeldtBeløp: "600000",
