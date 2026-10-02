@@ -11,6 +11,7 @@ import {
 
 const STATUSER: LederStatus[] = [
   "UTEN_STATUS",
+  "AKTIV",
   "VENTER_PA_INFORMASJON",
   "VENTER_PA_VEDTAK",
   "VENTER_PA_RESULTAT",
@@ -32,7 +33,10 @@ export function lagMockLederStatistikk(
     sak.oppdatert !== null && datoIOslo(new Date(sak.oppdatert)) <= grensedato;
 
   const perSteg = Object.fromEntries(
-    LEDERSTATISTIKK_STEG.map((steg) => [steg, saker.filter((sak) => sak.steg === steg).length]),
+    LEDERSTATISTIKK_STEG.map((steg) => [
+      steg === "UTREDES" ? "UTREDNING" : steg,
+      saker.filter((sak) => sak.steg === steg).length,
+    ]),
   ) as LederStatistikk["enhet"]["perSteg"];
   const perStatus = Object.fromEntries(
     STATUSER.map((status) => [

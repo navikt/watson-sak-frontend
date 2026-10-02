@@ -10,6 +10,7 @@ export const LEDERSTATISTIKK_STEG = [
 
 const lederStatusSchema = z.enum([
   "UTEN_STATUS",
+  "AKTIV",
   "VENTER_PA_INFORMASJON",
   "VENTER_PA_VEDTAK",
   "VENTER_PA_RESULTAT",
@@ -29,13 +30,14 @@ export const lederStatistikkResponseSchema = z.object({
   enhet: sakstallSchema.extend({
     perSteg: z.object({
       OPPRETTET: antallSchema,
-      UTREDES: antallSchema,
+      UTREDNING: antallSchema,
       FORVALTNING: antallSchema,
       STRAFFERETTSLIG_VURDERING: antallSchema,
       POLITI: antallSchema,
     }),
     perStatus: z.object({
       UTEN_STATUS: antallSchema,
+      AKTIV: antallSchema,
       VENTER_PA_INFORMASJON: antallSchema,
       VENTER_PA_VEDTAK: antallSchema,
       VENTER_PA_RESULTAT: antallSchema,

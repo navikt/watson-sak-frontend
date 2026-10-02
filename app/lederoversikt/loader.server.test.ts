@@ -35,13 +35,14 @@ const respons = {
     antallOverFrist: 2,
     perSteg: {
       OPPRETTET: 1,
-      UTREDES: 2,
+      UTREDNING: 2,
       FORVALTNING: 0,
       STRAFFERETTSLIG_VURDERING: 1,
       POLITI: 2,
     },
     perStatus: {
       UTEN_STATUS: 4,
+      AKTIV: 0,
       VENTER_PA_INFORMASJON: 1,
       VENTER_PA_VEDTAK: 1,
       VENTER_PA_RESULTAT: 0,

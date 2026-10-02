@@ -18,13 +18,14 @@ const gyldigRespons = {
     antallOverFrist: 0,
     perSteg: {
       OPPRETTET: 1,
-      UTREDES: 0,
+      UTREDNING: 0,
       FORVALTNING: 0,
       STRAFFERETTSLIG_VURDERING: 0,
       POLITI: 0,
     },
     perStatus: {
       UTEN_STATUS: 1,
+      AKTIV: 0,
       VENTER_PA_INFORMASJON: 0,
       VENTER_PA_VEDTAK: 0,
       VENTER_PA_RESULTAT: 0,
