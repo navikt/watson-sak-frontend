@@ -1,15 +1,12 @@
 import { data } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
-import { skalBrukeMockdata } from "~/config/env.server";
+import { env, skalBrukeMockdata } from "~/config/env.server";
 import { logger } from "~/logging/logging";
 import { hentMockMigreringKandidater } from "~/migrering/mock-data.server";
+import { ferdigstillMigreringskandidat, hentMigreringskandidat } from "~/migrering/api.server";
 import { redigerSaksinformasjonSchema } from "~/registrer-sak/validering";
-import {
-  bygFeilkartFraIssues,
-  parseYtelseRader,
-  type YtelseRadVerdier,
-} from "~/registrer-sak/skjema-helpers";
+import { bygFeilkartFraIssues, parseYtelseRader } from "~/registrer-sak/skjema-helpers";
 import * as backendApi from "~/saker/api.server";
 import { hentAlleSaker, medInnloggetEier } from "~/saker/mock-alle-saker.server";
 import { mockSaksbehandlere, mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
@@ -468,10 +465,24 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     );
     const harDirekteTilgang = erEier || harDeltTilgang || innlogget.erLeder;
     const sakForRespons = harDirekteTilgang ? sak : { ...sak, dokumenter: [] };
+    let kandidat = null;
+    if (env.ENVIRONMENT === "local-backend" && erEier && sak.legacyKilde && sak.legacyPid) {
+      try {
+        kandidat = await hentMigreringskandidat(request, `${sak.legacyKilde}:${sak.legacyPid}`);
+      } catch (feil) {
+        // Eldre saker kan ha PID uten at de er lastet inn i migreringstabellen ennå.
+        if (!(feil instanceof Response && feil.status === 404)) throw feil;
+      }
+    }
+    const migreringsstatus =
+      kandidat?.alleredeMigrertTilKontrollsakId === sak.id &&
+      kandidat.personIdent === sak.personIdent
+        ? (kandidat.migreringsstatus ?? null)
+        : null;
 
     return {
       sak: sakForRespons,
-      migreringsstatus: null,
+      migreringsstatus,
       migreringsnotatEksempel: null,
       tillatteHandlinger,
       historikk,
@@ -585,6 +596,21 @@ async function backendAction(
       throw data("Du må være tildelt saken for å utføre denne handlingen", { status: 403 });
     }
     sakFraTilgangskontroll = nåværendeSak;
+  }
+
+  if (handling === "MIGRERING_FERDIGSTILL") {
+    if (env.ENVIRONMENT !== "local-backend") {
+      throw data("Ferdigmerking er ikke tilgjengelig", { status: 404 });
+    }
+    if (formData.get("bekreftet") !== "ja") {
+      throw data("Du må bekrefte at innholdet er overført", { status: 400 });
+    }
+    const sak = sakFraTilgangskontroll;
+    if (!sak?.legacyKilde || !sak.legacyPid) {
+      throw data("Saken mangler migreringsnøkkel", { status: 400 });
+    }
+    await ferdigstillMigreringskandidat(request, `${sak.legacyKilde}:${sak.legacyPid}`);
+    return { ok: true };
   }
 
   if (

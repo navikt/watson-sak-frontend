@@ -1,7 +1,7 @@
 import { ArrowLeftIcon, CheckmarkIcon, XMarkIcon } from "@navikt/aksel-icons";
 import { BodyShort, Box, Button, Checkbox, HGrid, HStack, VStack } from "@navikt/ds-react";
 import { useCallback, useEffect, useState } from "react";
-import { useLoaderData, useNavigate } from "react-router";
+import { Form, useLoaderData, useNavigate } from "react-router";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { useMiljø } from "~/miljø/useMiljø";
@@ -36,6 +36,9 @@ function finnSaksbehandlerDetalj(
   );
 }
 
+const FERDIG_FLYTTET_BESKRIVELSE =
+  "Marker saken som ferdig flyttet når alle dokumenter og detaljer fra saken er flyttet fra Access og filområdet over til Watson Sak.";
+
 export default function SakDetaljSide() {
   const {
     sak: loaderSak,
@@ -57,8 +60,11 @@ export default function SakDetaljSide() {
   const miljø = useMiljø();
   const stegregler = hentStegbaserteSaksregler(sak.steg);
   const erEier = erSakseier(sak, innloggetBruker.navIdent);
-  const erFerdigMigrertEksempel =
-    miljø === "local-mock" && erEier && sak.legacyPid && migreringsstatus === "FULLSTENDIG";
+  const erFerdigMigrert =
+    (miljø === "local-mock" || miljø === "local-backend") &&
+    erEier &&
+    sak.legacyPid &&
+    migreringsstatus === "FULLSTENDIG";
   const harDeltTilgang = sak.saksbehandlere.deltMed.some(
     (saksbehandler) => saksbehandler.navIdent === innloggetBruker.navIdent,
   );
@@ -125,7 +131,7 @@ export default function SakDetaljSide() {
               sak.legacyKilde &&
               erEier &&
               (miljø === "local-mock" || miljø === "local-backend") &&
-              (erFerdigMigrertEksempel ? (
+              (erFerdigMigrert ? (
                 visEksempelBekreftelse && (
                   <Box
                     background="success-soft"
@@ -146,9 +152,11 @@ export default function SakDetaljSide() {
                       <VStack gap="space-4" className="min-w-0 flex-1">
                         <BodyShort weight="semibold">Saken er ferdig flyttet 🎉</BodyShort>
                         <BodyShort size="small">Saken er overført til Watson Sak.</BodyShort>
-                        <BodyShort size="small" textColor="subtle">
-                          Syntetisk eksempel, ingen ferdigmelding er lagret i backend.
-                        </BodyShort>
+                        {miljø === "local-mock" && (
+                          <BodyShort size="small" textColor="subtle">
+                            Syntetisk eksempel, ingen ferdigmelding er lagret i backend.
+                          </BodyShort>
+                        )}
                       </VStack>
                       <Button
                         type="button"
@@ -169,16 +177,32 @@ export default function SakDetaljSide() {
                   borderRadius="8"
                   padding="space-12"
                 >
-                  <Checkbox disabled readOnly>
-                    Saken er ferdig flyttet
-                  </Checkbox>
-                  <BodyShort size="small" textColor="subtle">
-                    Marker saken som ferdig flyttet når alle dokumenter og detaljer er flyttet fra
-                    Access og filområdet til Watson Sak.
-                  </BodyShort>
-                  <BodyShort size="small" textColor="subtle">
-                    Forhåndsvisning. Ferdigmerking kan ikke lagres ennå.
-                  </BodyShort>
+                  {miljø === "local-backend" && migreringsstatus === "UNDER_MIGRERING" ? (
+                    <Form method="post">
+                      <input type="hidden" name="handling" value="MIGRERING_FERDIGSTILL" />
+                      <Checkbox
+                        name="bekreftet"
+                        value="ja"
+                        description={FERDIG_FLYTTET_BESKRIVELSE}
+                        onChange={(event) => {
+                          // Figma 3–4: avkrysningen er selve ferdigmeldingen, ingen egen knapp.
+                          if (event.currentTarget.checked)
+                            event.currentTarget.form?.requestSubmit();
+                        }}
+                      >
+                        Saken er ferdig flyttet
+                      </Checkbox>
+                    </Form>
+                  ) : (
+                    <>
+                      <Checkbox disabled readOnly description={FERDIG_FLYTTET_BESKRIVELSE}>
+                        Saken er ferdig flyttet
+                      </Checkbox>
+                      <BodyShort size="small" textColor="subtle">
+                        Forhåndsvisning. Ferdigmerking kan ikke lagres ennå.
+                      </BodyShort>
+                    </>
+                  )}
                 </Box>
               ))}
 
@@ -194,7 +218,7 @@ export default function SakDetaljSide() {
                 visMigreringsnotatForhandsvisning={Boolean(
                   sak.legacyPid &&
                   sak.legacyKilde &&
-                  (miljø === "local-mock" || miljø === "local-backend") &&
+                  miljø === "local-mock" &&
                   !migreringsnotatEksempel,
                 )}
               />

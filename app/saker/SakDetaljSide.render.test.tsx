@@ -188,7 +188,7 @@ describe("SakDetaljSide render", () => {
     expect(screen.queryByText("Organisasjonsnummer")).toBeNull();
   }, 15000);
 
-  it.each(["local-mock", "local-backend"])(
+  it.each(["local-mock"])(
     "viser deaktivert ferdigkontroll og notat i %s",
     async (miljø) => {
       visningsmiljø.verdi = miljø;
@@ -207,6 +207,37 @@ describe("SakDetaljSide render", () => {
     },
     15000,
   );
+
+  it("viser avkrysning for ansvarlig i lokal backend uten migreringsnotat-placeholder", async () => {
+    visningsmiljø.verdi = "local-backend";
+    renderDetaljside("1182");
+
+    const kontroll = await screen.findByRole("checkbox", { name: "Saken er ferdig flyttet" });
+    expect((kontroll as HTMLInputElement).disabled).toBe(false);
+    expect((kontroll as HTMLInputElement).name).toBe("bekreftet");
+    expect(screen.getByText(/Marker saken som ferdig flyttet når alle dokumenter/)).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Merk som ferdig flyttet" })).toBeNull();
+    expect(screen.queryByText("Migreringsnotat (forhåndsvisning)")).toBeNull();
+  }, 15000);
+
+  it("sender ferdigmeldingen når avkrysningen slås på, og ikke når den slås av", async () => {
+    visningsmiljø.verdi = "local-backend";
+    const requestSubmit = vi.fn();
+    const original = HTMLFormElement.prototype.requestSubmit;
+    HTMLFormElement.prototype.requestSubmit = requestSubmit;
+    try {
+      renderDetaljside("1182");
+      const kontroll = await screen.findByRole("checkbox", { name: "Saken er ferdig flyttet" });
+
+      fireEvent.click(kontroll);
+      expect(requestSubmit).toHaveBeenCalledTimes(1);
+
+      fireEvent.click(kontroll);
+      expect(requestSubmit).toHaveBeenCalledTimes(1);
+    } finally {
+      HTMLFormElement.prototype.requestSubmit = original;
+    }
+  }, 15000);
 
   it("viser ferdig migrert mock-sak med notat under Filer og grønn eksempelbekreftelse", async () => {
     renderDetaljside("1181");

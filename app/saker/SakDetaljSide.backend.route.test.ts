@@ -7,6 +7,7 @@
  * filområdet. Se `hentFilerMedTilgangskontroll` i `SakDetaljSide.server.ts`.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { env } from "~/config/env.server";
 
 const mockHentKontrollsak = vi.fn();
 const mockHentHendelser = vi.fn();
@@ -26,6 +27,12 @@ const mockHentTillatteHandlinger = vi.fn().mockResolvedValue({
   feltskjema: [],
 });
 const mockSøkKontrollsaker = vi.fn();
+const mockFerdigstillMigreringskandidat = vi.fn();
+const mockHentMigreringskandidat = vi.fn();
+vi.mock("~/migrering/api.server", () => ({
+  ferdigstillMigreringskandidat: mockFerdigstillMigreringskandidat,
+  hentMigreringskandidat: mockHentMigreringskandidat,
+}));
 
 class MockBackendFeilException extends Error {
   constructor(
@@ -39,6 +46,7 @@ class MockBackendFeilException extends Error {
 
 vi.mock("~/config/env.server", () => ({
   skalBrukeMockdata: false,
+  env: { ENVIRONMENT: "local-dev" },
 }));
 
 const mockHentInnloggetBruker = vi.fn().mockResolvedValue({
@@ -94,6 +102,7 @@ const grunnleggendeSak = {
 
 describe("SakDetaljSide loader — backend-sti", () => {
   afterEach(() => {
+    env.ENVIRONMENT = "local-dev";
     vi.clearAllMocks();
     mockTildelKontrollsak.mockReset();
     mockEndreSteg.mockReset();
@@ -114,6 +123,49 @@ describe("SakDetaljSide loader — backend-sti", () => {
       paakrevdeRegistreringerPerSteg: {},
       feltskjema: [],
     });
+  });
+
+  it("ferdigmerker bare ansvarlig etter eksplisitt bekreftelse i lokal backend", async () => {
+    env.ENVIRONMENT = "local-backend";
+    mockHentKontrollsak.mockResolvedValue({
+      ...grunnleggendeSak,
+      legacyKilde: "UTREDNING",
+      legacyPid: "200001",
+    });
+    mockFerdigstillMigreringskandidat.mockResolvedValue(undefined);
+    const formData = new FormData();
+    formData.set("handling", "MIGRERING_FERDIGSTILL");
+    formData.set("bekreftet", "ja");
+    const request = new Request("http://localhost/saker/1", { method: "POST", body: formData });
+    const { action } = await import("./SakDetaljSide.server");
+
+    expect(
+      await action({ request, params: { sakId: "1" } } as Parameters<typeof action>[0]),
+    ).toEqual({ ok: true });
+    expect(mockFerdigstillMigreringskandidat).toHaveBeenCalledWith(request, "UTREDNING:200001");
+  });
+
+  it("avviser ferdigmerking når innlogget bruker ikke er ansvarlig", async () => {
+    env.ENVIRONMENT = "local-backend";
+    mockHentKontrollsak.mockResolvedValue({
+      ...grunnleggendeSak,
+      legacyKilde: "UTREDNING",
+      legacyPid: "200001",
+      saksbehandlere: {
+        ...grunnleggendeSak.saksbehandlere,
+        eier: { navIdent: "Z000001", navn: "Annen", enhet: "4812" },
+      },
+    });
+    const formData = new FormData();
+    formData.set("handling", "MIGRERING_FERDIGSTILL");
+    formData.set("bekreftet", "ja");
+    const request = new Request("http://localhost/saker/1", { method: "POST", body: formData });
+    const { action } = await import("./SakDetaljSide.server");
+
+    await expect(
+      action({ request, params: { sakId: "1" } } as Parameters<typeof action>[0]),
+    ).rejects.toMatchObject({ init: { status: 403 } });
+    expect(mockFerdigstillMigreringskandidat).not.toHaveBeenCalled();
   });
 
   it("tildeler innlogget bruker og flytter Opprettet til Utredning", async () => {

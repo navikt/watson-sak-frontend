@@ -99,11 +99,7 @@ export function SakDetaljerFelter({ sak, onVisIdentHistorikk }: SakDetaljerFelte
           </VStack>
         )}
 
-        {sak.legacyPid && (
-          <Felt label="PID">
-            {sak.legacyKilde ? `${sak.legacyKilde}:${sak.legacyPid}` : sak.legacyPid}
-          </Felt>
-        )}
+        {sak.legacyPid && <Felt label="PID">{sak.legacyPid}</Felt>}
 
         <Felt label="Kilde">{kildeTekst}</Felt>
 
