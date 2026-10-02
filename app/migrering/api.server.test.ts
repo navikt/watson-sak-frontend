@@ -10,7 +10,12 @@ vi.mock("~/auth/session-utløpt.server", () => ({ kastHvisUtlogget: mocks.kastHv
 vi.mock("~/config/env.server", () => ({ BACKEND_API_URL: "http://localhost:8080" }));
 vi.mock("~/logging/logging", () => ({ logger: { error: mocks.loggFeil } }));
 
-import { hentMigreringskandidater } from "./api.server";
+import {
+  ferdigstillMigreringskandidat,
+  hentMigreringskandidat,
+  hentMigreringsliste,
+  hentMigreringskandidater,
+} from "./api.server";
 
 const request = new Request("http://localhost/migrering?navIdent=ANNEN_BRUKER");
 const kandidat = {
@@ -38,6 +43,47 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
+describe("manuell migreringsstatus", () => {
+  it("henter lagret status med brukerens token", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue(Response.json({ ...kandidat, migreringsstatus: "UNDER_MIGRERING" })),
+    );
+
+    const resultat = await hentMigreringskandidat(request, "UTREDNING:200001");
+
+    expect(resultat.migreringsstatus).toBe("UNDER_MIGRERING");
+    expect(fetch).toHaveBeenCalledWith(
+      "http://localhost:8080/api/v1/migrering/kandidater/UTREDNING%3A200001",
+      { headers: { Authorization: "Bearer lokal-testtoken", Accept: "application/json" } },
+    );
+  });
+
+  it("lagrer kun ferdigmelding etter eksplisitt POST", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 204 })));
+
+    await ferdigstillMigreringskandidat(request, "UTREDNING:200001");
+
+    expect(fetch).toHaveBeenCalledWith(
+      "http://localhost:8080/api/v1/migrering/kandidater/UTREDNING%3A200001/ferdigstill",
+      { method: "POST", headers: { Authorization: "Bearer lokal-testtoken" } },
+    );
+  });
+
+  it("returnerer backend-avslag uten å logge personopplysninger", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 404 })));
+
+    await expect(ferdigstillMigreringskandidat(request, "SV:200001")).rejects.toMatchObject({
+      status: 404,
+    });
+    expect(mocks.loggFeil).toHaveBeenCalledWith("Kunne ikke ferdigmerke migreringskandidat", {
+      status: 404,
+    });
+  });
+});
+
 describe("hentMigreringskandidater fra lokal backend", () => {
   it("bruker OBO-token og henter allerede autorisert respons uten klientstyrt NAV-ident", async () => {
     const fetchMock = vi
@@ -49,12 +95,32 @@ describe("hentMigreringskandidater fra lokal backend", () => {
 
     expect(mocks.token).toHaveBeenCalledWith(request);
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://localhost:8080/api/v1/migrering/kandidater?page=1&size=100",
+      "http://localhost:8080/api/v1/migrering/kandidater?visning=MINE&page=1&size=100",
       { headers: { Authorization: "Bearer lokal-testtoken", Accept: "application/json" } },
     );
     expect(resultat).toMatchObject([
       { kandidatId: "UTREDNING:200001", legacyPid: "200001", personIdent: "11111111111" },
     ]);
+  });
+
+  it("henter ansattlisten med visning=ANSATTE og leser utilgjengelig-flagget", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      Response.json({
+        items: [{ ...kandidat, personIdent: null }],
+        totalItems: 1,
+        utilgjengelig: true,
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const resultat = await hentMigreringsliste(request, "ANSATTE");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:8080/api/v1/migrering/kandidater?visning=ANSATTE&page=1&size=100",
+      expect.anything(),
+    );
+    expect(resultat.utilgjengelig).toBe(true);
+    expect(resultat.kandidater[0]?.personIdent).toBeNull();
   });
 
   it("avviser feil og logger bare HTTP-status", async () => {
@@ -74,10 +140,29 @@ describe("hentMigreringskandidater fra lokal backend", () => {
     expect(mocks.loggFeil).toHaveBeenCalledWith("Ugyldig kontrakt fra migrerings-API");
   });
 
+  it("henter alle sider når flere kandidater finnes", async () => {
+    const andre = { ...kandidat, kandidatId: "SV:200002", kilde: "SV", legacyPid: "200002" };
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(Response.json({ items: [kandidat], totalItems: 2 }))
+        .mockResolvedValueOnce(Response.json({ items: [andre], totalItems: 2 })),
+    );
+
+    expect((await hentMigreringskandidater(request)).map((k) => k.kandidatId)).toEqual([
+      "UTREDNING:200001",
+      "SV:200002",
+    ]);
+  });
+
   it("viser ikke en avkortet liste som om den var fullstendig", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue(Response.json({ items: [kandidat], totalItems: 101 })),
+      vi
+        .fn()
+        .mockResolvedValueOnce(Response.json({ items: [kandidat], totalItems: 2 }))
+        .mockResolvedValueOnce(Response.json({ items: [], totalItems: 2 })),
     );
 
     await expect(hentMigreringskandidater(request)).rejects.toThrow("ikke fullstendig");

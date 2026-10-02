@@ -35,42 +35,76 @@ const kandidatSchema = z.object({
   begrunnelse: z.string(),
   grunnlag: z.array(z.object({ felt: z.string(), verdi: z.string().nullable() })),
   alleredeMigrertTilKontrollsakId: z.number().nullable(),
+  migreringsstatus: z.enum(["IKKE_PABEGYNT", "UNDER_MIGRERING", "FULLSTENDIG"]).nullish(),
   hentetTidspunkt: z.string(),
   personIdent: z.string().nullable(),
 });
 const sideSchema = z.object({
   items: z.array(kandidatSchema),
   totalItems: z.number(),
+  // Backend setter true når NOM eller tilgangsmaskinen ikke svarte og listen kan mangle kandidater.
+  utilgjengelig: z.boolean().optional(),
 });
 
-/** Bruker backendens eksisterende Azure-token og tilgangskontroller, aldri klientvalgt NAV-ident. */
+export type Migreringsvisning = "MINE" | "ANSATTE";
+
+export interface Migreringsliste {
+  kandidater: MigreringKandidat[];
+  utilgjengelig: boolean;
+}
+
+/** Innlogget saksbehandlers egne kandidater. */
 export async function hentMigreringskandidater(request: Request): Promise<MigreringKandidat[]> {
+  return (await hentMigreringsliste(request, "MINE")).kandidater;
+}
+
+/**
+ * Bruker backendens eksisterende Azure-token og tilgangskontroller, aldri klientvalgt NAV-ident.
+ * `ANSATTE` er bare for ledere. Backend skjuler personident i den visningen.
+ */
+export async function hentMigreringsliste(
+  request: Request,
+  visning: Migreringsvisning,
+): Promise<Migreringsliste> {
   if (!BACKEND_API_URL) {
     throw new Error("Mangler lokal backend-url for migreringslisten.");
   }
 
   const token = await getBackendOboToken(request);
-  const response = await fetch(`${BACKEND_API_URL}/api/v1/migrering/kandidater?page=1&size=100`, {
-    headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-  });
-  if (!response.ok) {
-    kastHvisUtlogget(response);
-    logger.error("Kunne ikke hente migreringskandidater fra Watson Admin API", {
-      status: response.status,
-    });
-    throw new Response("Migreringslisten er ikke tilgjengelig", { status: response.status });
-  }
-
-  const parsed = sideSchema.safeParse(await response.json());
-  if (!parsed.success) {
-    logger.error("Ugyldig kontrakt fra migrerings-API");
-    throw new Error("Ugyldig svar fra watson-admin-api (migreringskandidater)");
-  }
-  if (parsed.data.totalItems > parsed.data.items.length) {
+  const kandidater: z.infer<typeof kandidatSchema>[] = [];
+  let page = 1;
+  let totalItems = 0;
+  let utilgjengelig = false;
+  do {
+    const response = await fetch(
+      `${BACKEND_API_URL}/api/v1/migrering/kandidater?visning=${visning}&page=${page}&size=100`,
+      { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } },
+    );
+    if (!response.ok) {
+      kastHvisUtlogget(response);
+      logger.error("Kunne ikke hente migreringskandidater fra Watson Admin API", {
+        status: response.status,
+      });
+      throw new Response("Migreringslisten er ikke tilgjengelig", { status: response.status });
+    }
+    const parsed = sideSchema.safeParse(await response.json());
+    if (!parsed.success) {
+      logger.error("Ugyldig kontrakt fra migrerings-API");
+      throw new Error("Ugyldig svar fra watson-admin-api (migreringskandidater)");
+    }
+    totalItems = parsed.data.totalItems;
+    utilgjengelig = utilgjengelig || parsed.data.utilgjengelig === true;
+    if (page > 1 && parsed.data.items.length === 0 && kandidater.length < totalItems) {
+      throw new Error("Migreringslisten er ikke fullstendig i lokal forhåndsvisning");
+    }
+    kandidater.push(...parsed.data.items);
+    page++;
+  } while (kandidater.length < totalItems && page <= 100);
+  if (kandidater.length !== totalItems) {
     throw new Error("Migreringslisten er ikke fullstendig i lokal forhåndsvisning");
   }
 
-  return parsed.data.items.map(
+  const mapped = kandidater.map(
     (k): MigreringKandidat => ({
       kandidatId: k.kandidatId,
       kilde: k.kilde,
@@ -89,8 +123,41 @@ export async function hentMigreringskandidater(request: Request): Promise<Migrer
       begrunnelse: k.begrunnelse,
       kildefelter: k.grunnlag,
       alleredeMigrertTilKontrollsakId: k.alleredeMigrertTilKontrollsakId,
+      migreringsstatus: k.migreringsstatus ?? undefined,
       hentetTidspunkt: k.hentetTidspunkt,
       personIdent: k.personIdent,
     }),
   );
+  return { kandidater: mapped, utilgjengelig };
+}
+
+/** Henter lagret status for én kandidat, etter backendens egen tilgangskontroll. */
+export async function hentMigreringskandidat(request: Request, kandidatId: string) {
+  const token = await getBackendOboToken(request);
+  const response = await fetch(
+    `${BACKEND_API_URL}/api/v1/migrering/kandidater/${encodeURIComponent(kandidatId)}`,
+    { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } },
+  );
+  if (!response.ok) {
+    kastHvisUtlogget(response);
+    logger.error("Kunne ikke hente migreringsstatus", { status: response.status });
+    throw new Response("Migreringsstatus er ikke tilgjengelig", { status: response.status });
+  }
+  const parsed = kandidatSchema.safeParse(await response.json());
+  if (!parsed.success) throw new Error("Ugyldig svar fra watson-admin-api (migreringsstatus)");
+  return parsed.data;
+}
+
+/** Avsluttes kun ved uttrykkelig brukerhandling, aldri ved opplasting eller sakopprettelse. */
+export async function ferdigstillMigreringskandidat(request: Request, kandidatId: string) {
+  const token = await getBackendOboToken(request);
+  const response = await fetch(
+    `${BACKEND_API_URL}/api/v1/migrering/kandidater/${encodeURIComponent(kandidatId)}/ferdigstill`,
+    { method: "POST", headers: { Authorization: `Bearer ${token}` } },
+  );
+  if (!response.ok) {
+    kastHvisUtlogget(response);
+    logger.error("Kunne ikke ferdigmerke migreringskandidat", { status: response.status });
+    throw new Response("Kunne ikke merke saken ferdig flyttet", { status: response.status });
+  }
 }

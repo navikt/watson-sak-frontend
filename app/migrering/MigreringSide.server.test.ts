@@ -20,7 +20,7 @@ vi.mock("~/config/env.server", () => ({
 }));
 vi.mock("~/auth/innlogget-bruker.server", () => ({ hentInnloggetBruker: mocks.bruker }));
 vi.mock("./mock-data.server", () => ({ hentMockMigreringKandidater: mocks.kandidater }));
-vi.mock("./api.server", () => ({ hentMigreringskandidater: mocks.backend }));
+vi.mock("./api.server", () => ({ hentMigreringsliste: mocks.backend }));
 
 import { loader } from "./MigreringSide.server";
 
@@ -76,16 +76,47 @@ describe("Migreringsprototypens loader", () => {
   it("bruker beskyttet backend-API bare i local-backend", async () => {
     mocks.miljø = "local-backend";
     mocks.mockmodus = false;
-    mocks.backend.mockResolvedValue([basis]);
+    mocks.backend.mockResolvedValue({ kandidater: [basis], utilgjengelig: false });
+    mocks.bruker.mockResolvedValue({ navIdent: "L999999", erLeder: false });
     const argumenter = args();
 
     const resultat = await loader(argumenter);
 
-    expect(mocks.backend).toHaveBeenCalledWith(argumenter.request);
-    expect(mocks.bruker).not.toHaveBeenCalled();
+    expect(mocks.backend).toHaveBeenCalledTimes(1);
+    expect(mocks.backend).toHaveBeenCalledWith(argumenter.request, "MINE");
     expect(mocks.kandidater).not.toHaveBeenCalled();
     expect(resultat.mine.map((k) => k.kandidatId)).toEqual(["UTREDNING:100245"]);
-    expect(resultat.utenBekreftetAnsvarlig).toEqual([]);
+    expect(resultat.ansatte).toEqual([]);
+    expect(resultat.utilgjengelig).toBe(false);
+  });
+
+  it("henter ansattlisten bare for ledere i local-backend", async () => {
+    mocks.miljø = "local-backend";
+    mocks.mockmodus = false;
+    mocks.bruker.mockResolvedValue({ navIdent: "L999999", erLeder: true });
+    mocks.backend.mockImplementation(async (_request: Request, visning: string) =>
+      visning === "ANSATTE"
+        ? { kandidater: [{ ...basis, personIdent: null }], utilgjengelig: false }
+        : { kandidater: [], utilgjengelig: false },
+    );
+
+    const resultat = await loader(args());
+
+    expect(mocks.backend).toHaveBeenCalledWith(expect.anything(), "ANSATTE");
+    expect(resultat.ansatte).toHaveLength(1);
+  });
+
+  it("gir tom liste og utilgjengelig når backend feiler, men bevarer utløpt sesjon", async () => {
+    mocks.miljø = "local-backend";
+    mocks.mockmodus = false;
+    mocks.bruker.mockResolvedValue({ navIdent: "L999999", erLeder: false });
+    mocks.backend.mockRejectedValueOnce(new Response(null, { status: 502 }));
+
+    const resultat = await loader(args());
+    expect(resultat).toEqual({ mine: [], ansatte: [], utilgjengelig: true });
+
+    mocks.backend.mockRejectedValueOnce(new Response(null, { status: 401 }));
+    await expect(loader(args())).rejects.toMatchObject({ status: 401 });
   });
 
   it.each<Miljø>(["local-mock", "demo"])("tillater prototypen i %s", async (miljø) => {
@@ -103,8 +134,9 @@ describe("Migreringsprototypens loader", () => {
 
   it("søkeloggtreff er ikke eierskap, selv for innlogget bruker", async () => {
     const resultat = await loader(args());
-    expect(resultat.utenBekreftetAnsvarlig.map((k) => k.pid)).toEqual(["100247", "100248"]);
+    expect(resultat.mine.map((k) => k.pid)).toEqual(["100245"]);
     expect(resultat.mine.every((k) => k.ansvar.type === "BEKREFTET")).toBe(true);
+    expect(resultat.ansatte).toEqual([]);
   });
 
   it("bevarer autentiseringsfeil og henter ikke kandidater ved feil", async () => {

@@ -8,7 +8,8 @@ import type { MigreringLister } from "./types";
 const kandidater = hentMockMigreringKandidater("L999999");
 const lister: MigreringLister = {
   mine: kandidater.filter((k) => k.ansvar.type === "BEKREFTET"),
-  utenBekreftetAnsvarlig: kandidater.filter((k) => k.ansvar.type !== "BEKREFTET"),
+  ansatte: [],
+  utilgjengelig: false,
 };
 const tilBehandling = kandidater.filter((k) => !k.alleredeMigrertTilKontrollsakId);
 const overført = kandidater.filter((k) => k.alleredeMigrertTilKontrollsakId);
@@ -78,7 +79,7 @@ describe("MigreringInnhold", () => {
       {
         path: "/migrering",
         Component: () => (
-          <MigreringInnhold lister={{ mine: [kandidat], utenBekreftetAnsvarlig: [] }} />
+          <MigreringInnhold lister={{ mine: [kandidat], ansatte: [], utilgjengelig: false }} />
         ),
       },
     ]);
@@ -93,9 +94,9 @@ describe("MigreringInnhold", () => {
     expect(screen.queryByRole("button", { name: "Merk migrering fullstendig" })).toBeNull();
   });
 
-  it("viser personnummer for alle kandidater til behandling — vi har ikke uten_ansvarlig", () => {
+  it("viser personnummer for alle kandidater til behandling", () => {
     renderSide();
-    expect(lister.utenBekreftetAnsvarlig).toHaveLength(0);
+    expect(lister.ansatte).toHaveLength(0);
 
     const arnePidCelle = screen.getByText("800202");
     const arneRad = arnePidCelle.closest("tr");
@@ -117,5 +118,41 @@ describe("MigreringInnhold", () => {
       expect(form?.querySelector('input[name="legacyKilde"]')).not.toBeNull();
       expect(form?.querySelector('input[name="fnr"]')).not.toBeNull();
     }
+  });
+
+  it("viser feilmelding og tom liste når backend var utilgjengelig", () => {
+    const Stub = createRoutesStub([
+      {
+        path: "/migrering",
+        Component: () => (
+          <MigreringInnhold lister={{ mine: [], ansatte: [], utilgjengelig: true }} />
+        ),
+      },
+    ]);
+    render(<Stub initialEntries={["/migrering"]} />);
+    expect(screen.getByText(/Vi fikk ikke hentet hele migreringslisten/)).not.toBeNull();
+    expect(screen.queryByRole("button", { name: "Opprett sak" })).toBeNull();
+  });
+
+  it("viser leders ansattliste uten personnummer og uten Opprett sak", () => {
+    const ansatt = {
+      ...overført[0],
+      ansvar: { type: "BEKREFTET" as const, navIdent: "Z999001" },
+      personIdent: null,
+      migreringsstatus: "UNDER_MIGRERING" as const,
+    };
+    const Stub = createRoutesStub([
+      {
+        path: "/migrering",
+        Component: () => (
+          <MigreringInnhold lister={{ mine: [], ansatte: [ansatt], utilgjengelig: false }} />
+        ),
+      },
+    ]);
+    render(<Stub initialEntries={["/migrering"]} />);
+    const rad = screen.getByText("Z999001").closest("tr");
+    if (!rad) throw new Error("Fant ikke raden til ansatt");
+    expect(within(rad).getByText("Under flytting")).not.toBeNull();
+    expect(screen.queryByRole("button", { name: "Opprett sak" })).toBeNull();
   });
 });

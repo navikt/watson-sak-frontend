@@ -1,13 +1,13 @@
 import { ArrowsCirclepathIcon } from "@navikt/aksel-icons";
-import { Button, Heading, HStack, Table, Tag } from "@navikt/ds-react";
+import { Alert, Button, Heading, HStack, Table, Tag } from "@navikt/ds-react";
 import { Form, Link } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { sporHendelse } from "~/analytics/analytics";
-import type { MigreringLister } from "./types";
+import type { MigreringKandidat, MigreringLister } from "./types";
 
 export function MigreringInnhold({ lister }: { lister: MigreringLister }) {
-  const kandidater = [...lister.mine, ...lister.utenBekreftetAnsvarlig];
+  const kandidater = lister.mine;
 
   return (
     <div className="flex flex-col gap-6">
@@ -17,6 +17,11 @@ export function MigreringInnhold({ lister }: { lister: MigreringLister }) {
           Migrering
         </Heading>
       </HStack>
+      {lister.utilgjengelig && (
+        <Alert variant="warning" size="small">
+          Vi fikk ikke hentet hele migreringslisten. Det kan mangle saker. Prøv igjen om litt.
+        </Alert>
+      )}
       <div className="overflow-x-auto">
         <Table>
           <Table.Header>
@@ -103,6 +108,46 @@ export function MigreringInnhold({ lister }: { lister: MigreringLister }) {
           </Table.Body>
         </Table>
       </div>
+      {lister.ansatte.length > 0 && <AnsatteListe kandidater={lister.ansatte} />}
     </div>
   );
+}
+
+/** Lederens oversikt over ansattes kandidater. Viser verken personnummer eller handlinger. */
+function AnsatteListe({ kandidater }: { kandidater: MigreringKandidat[] }) {
+  return (
+    <section aria-labelledby="migrering-ansatte" className="flex flex-col gap-4">
+      <Heading level="2" size="small" id="migrering-ansatte">
+        Ansatte
+      </Heading>
+      <div className="overflow-x-auto">
+        <Table>
+          <Table.Header>
+            <Table.Row>
+              <Table.HeaderCell scope="col">PID</Table.HeaderCell>
+              <Table.HeaderCell scope="col">Ansvarlig</Table.HeaderCell>
+              <Table.HeaderCell scope="col">Opprettet i Access</Table.HeaderCell>
+              <Table.HeaderCell scope="col">Status</Table.HeaderCell>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            {kandidater.map((k) => (
+              <Table.Row key={`${k.kilde}:${k.legacyPid}`}>
+                <Table.DataCell>{k.legacyPid}</Table.DataCell>
+                <Table.DataCell>{k.ansvar.navIdent ?? "–"}</Table.DataCell>
+                <Table.DataCell>{k.referansedato ?? "–"}</Table.DataCell>
+                <Table.DataCell>{statusTekst(k)}</Table.DataCell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table>
+      </div>
+    </section>
+  );
+}
+
+function statusTekst(k: MigreringKandidat): string {
+  if (k.migreringsstatus === "FULLSTENDIG") return "Flyttet til Watson Sak";
+  if (k.migreringsstatus === "UNDER_MIGRERING") return "Under flytting";
+  return "Ikke påbegynt";
 }

@@ -1,12 +1,30 @@
 # Migreringsveileder: kontrakt, beslutningstabell og avklaringer
 
-Sist oppdatert etter fagnotatet «Overføring av saker til nytt
-saksbehandlingssystem» (23.09.2026) fra fagansvarlig. Dokumentet er
-**frosset kontrakt** for SAK-67 i `watson-admin-api` og `watson-sak-frontend`.
-Endringer i kontrakten krever oppdatering her før kode endres.
+Avsnitt 1–7 beskriver det opprinnelige utkastet fra fagnotatet «Overføring
+av saker til nytt saksbehandlingssystem» (23.09.2026). Beslutningene for
+den lokale implementeringen står under «Lokal flyt med lagret migreringsstatus».
+Ekte data lastes inn i en senere oppgave. Eldre avklaringer om direkte
+Access-integrasjon skal ikke brukes som spesifikasjon for denne leveransen.
 
 Ingen fødselsnumre, navn eller saksinnhold fra reelle saker skal inn i chat,
 mockdata, tester eller dokumentasjon. Del bare aggregater og faglig tolkning.
+
+**Oppdatering (SAK-67, leveranse uten import):** `UTEN_ANSVARLIG` er fjernet fra
+backend. Visningene er nå `MINE` og `ANSATTE`.
+
+- `ANSATTE` er bare for ledere (ledergruppe og lederansvar for enheten). Den viser
+  kandidater med bekreftet ansvar for andre ansatte i lederens enhet, uten personident
+  og uten «Opprett sak».
+- Responsen har `utilgjengelig: boolean`. Den er `true` når NOM eller tilgangsmaskinen
+  ikke svarte. Kandidater uten bekreftet personinnsyn utelates, og frontend viser en
+  kort feilmelding. Feil mot migreringstabellen gir fortsatt 502, og loaderen viser da
+  tom liste og feilmelding.
+- Notatet fra opprettelse er et vanlig dokument på saken. Det har ingen egne
+  tilgangsregler utover dokumenttilgangen på saken.
+- Migreringsfunksjonen og tabellen `migreringskandidat` er midlertidige. Se
+  `watson-developer/docs/arkitektur/migrering-fjerning.md`.
+
+Avsnittene under som nevner `UTEN_ANSVARLIG` beskriver det tidligere utkastet.
 
 Kilder:
 
@@ -354,50 +372,63 @@ etablerte forhåndsutfyllingen i både mockmodus og `local-backend`. Backend
 må fortsatt validere kandidaten på nytt ved opprettelse; skjulte skjemafelt
 er aldri et tillitsgrunnlag.
 
-## Syntetisk prøve av manuell migreringsstatus
+## Lokal flyt med lagret migreringsstatus
 
-Dette er et tillegg til kontraktutkastet, ikke produksjonsgodkjenning. `watson-admin-api`
-har en additiv Flyway-migrasjon (`V27__migreringskandidater.sql`) for kandidater og
-koblinger. Kandidatens status er knyttet til `(kilde, legacy_pid)`, slik at samme
-PID i to kilder kan ha ulik status. Engangsimport, kandidatinnsyn, kobling og
-statusendring er ikke implementert. Produksjonsklienten feiler fortsatt lukket.
+`watson-admin-api` oppretter tabellen `migreringskandidat` med Flyway V27.
+V29 legger til nye kolonner i lokale databaser der en eldre V27 allerede er
+kjørt. Flyways `repair()` kjører ikke tidligere SQL på nytt. V29 avviser gamle
+sakskoblinger og manglende kategori i stedet for å gjette på dataene.
+En rad identifiseres av `(kilde, legacy_pid)` og inneholder personident,
+ansvarlig Nav-ident, kategori, status og en eventuell kobling til én Watson-sak.
+Fullføring lagrer også hvem som bekreftet den og når. Notater og vedlegg
+lagres på Watson-saken gjennom den eksisterende dokument- og filflyten,
+ikke i migreringstabellen. Den separate V28-arbeidsfilen for en egen
+dokumenttype inngår ikke i denne leveransen.
 
-Frontend viser status i handlingskolonnen fra syntetiske mockdata. `local-backend`
-bruker nå det eksisterende, autoriserte GET-endepunktet i `watson-admin-api`
-med innlogget brukers token. Standardprofilen `L999999` får sju syntetiske
-kandidater, også samme PID i to kilder. V27-tabellen er ikke koblet til
-lese-API-et ennå. Prod og dev
-beholder migreringsruten stengt. En avkortet side vises ikke som fullstendig.
-«Flyttet til Watson Sak 🎉» vises bare når kandidaten eksplisitt har status `FULLSTENDIG`;
-«Under flytting» betyr at en sak finnes uten ferdigbekreftelse. Opprettet
-Watson-sak alene betyr ikke at migreringen er fullstendig. I `local-mock`
-peker «Flyttet til Watson Sak 🎉» og «Under flytting» på to faktiske, syntetiske
-mock-saker. Saken som er ferdigmerket viser et syntetisk «Notat fra
-opprettelse» som et kort med tekstutdrag under Filer. En lys grønn
-bekreftelse vises i stedet for avkrysningen og kan lukkes uten å endre status.
-Dette er forhåndsvisning, ikke en lagret statusovergang.
+I lokal backend-profil legges sju syntetiske rader inn uten å overskrive
+eksisterende rader. Testprofilen bruker fortsatt mockklienten. Utenfor
+testprofilen leser backend tabellen. Ingen ekte Access-data importeres her;
+det er en egen oppgave. Frontend holder migreringsruten stengt i dev og prod.
+`local-backend` henter alle sider fra kandidat-API-et med brukerens OBO-token.
+`local-mock` beholder sine syntetiske visninger som en uavhengig prototype.
 
-I `local-mock` og `local-backend` vises «Notat» på Opprett sak bare når
-både `legacyKilde` og `legacyPid` er satt. Feltet er deaktivert inntil
-validering, tilgang og lagring er på plass. Under «Filer» vises notatplassen
-bare for migreringssaker. Avkrysningen på saksdetaljene er også en
-forhåndsvisning. Notat skrevet ved opprettelse lagres ikke, og avkrysningen
-endrer ingen status. Notatet i sak 1181 er en forhåndslagt, syntetisk fixture.
-Backend har et endepunkt for ferdigmerking som svarer 503 inntil tilgang og
-overganger er implementert. V28 legger til `dokument_type` og en unik indeks
-for høyst ett migreringsnotat per sak. Ingen notater opprettes av V28. Den
-åpner ikke dokumenttilgang for ansvarlig eller leder; kontroll av alle
-lese- og skriveveier må gjennomføres før notater lagres.
-Visningene skal ikke brukes som dokumentasjon på at overføringen fungerer.
+Bare registrert ansvarlig kan lese en kandidat, opprette sak fra den eller
+bekrefte ferdig flyttet. Personinnsyn kontrolleres i tillegg i backend. Å
+være leder gir ingen ekstra rett i migreringsflyten; lederens øvrige
+rettigheter på en eksisterende Watson-sak endres ikke. Opprettelse kobler
+saken og setter `UNDER_MIGRERING` i samme transaksjon. Bare en egen,
+manuell POST til ferdigstill-endepunktet setter `FULLSTENDIG`. En opprettet
+sak eller opplastet fil betyr ikke at overføringen er ferdig. Gjentatt
+ferdigmelding beholder første bekreftelse.
 
-🔴 Rød sone: Teamet må implementere og teste validering av notattekst,
-autorisering for ansvarlig og leder på alle dokumentveier, personinnsyn,
-koblingsregler og manuelle statusoverganger. Notater og ferdigmerking må
-forbli avslått til disse testene er gjennomført. Importerte rader med
-personident skal ikke brukes i produksjon før oppbevaring og sletting er
-godkjent. V26 begrenser fortsatt `kontrollsak.legacy_pid` til 12 sifre;
-V27 endrer ikke dette. Testfilen inneholder bare ugyldige, syntetiske
-11-sifrede personidenter for å prøve databasen uten reelle opplysninger.
+Sakopprettelse fra migreringslisten setter den bekreftede ansvarlige
+(`KontrollsakFactory.opprettFraRequest`) som sakens ansvarlige — samme
+Nav-ident som allerede er validert mot kandidaten i
+`MigreringService.hentKandidat`. Vanlige nye saker får fortsatt ingen
+ansvarlig før fordeling.
+
+"Opprett sak"-skjemaet viser et valgfritt internt notatfelt bare når det
+åpnes fra migreringslisten. Utfylt tekst lagres som et vanlig dokument
+("Notat fra opprettelse") gjennom det eksisterende dokument-API-et
+(`opprettDokument`/`lagreDokument`), kalt direkte fra opprettelsen — ikke via
+den steg-sperrede `/api/saker/:sakId/dokumenter`-routen, som først tillater
+redigering fra steget Utredes. Feiler notatlagringen, beholdes saken som
+`UNDER_MIGRERING`, og bekreftelsesvisningen tilbyr å prøve å lagre notatet på
+nytt mot samme sak (`/api/registrer-sak/notat`).
+
+🔴 Rød sone: Teamet må gå gjennom tilgangsregelen, personinnsyn og
+statusovergangene før merge. Backendens Postgres-integrasjonstester må
+kjøres med Docker før endringen kan godkjennes. Oppbevaring og sletting av
+fødselsnummer må godkjennes før ekte rader lastes inn. Ingen personident
+skal logges i vanlige applikasjonslogger eller brukes som metrikketikett.
+
+Ved senere deployment må man kontrollere at Flyway V27 er kjørt, at bare
+ansvarlig får opp sine kandidater, og at status først endres etter en
+manuell bekreftelse. Mål antall rader per status og følg feilraten på
+migrerings-endepunktene uten personopplysninger i metrikker. Ved feil
+holdes frontend-ruten stengt; eksisterende rader slettes ikke ved rollback.
+
+Dette er lokal kode og tester, ikke en produksjonsgodkjenning.
 
 ## Prøve prototypen
 

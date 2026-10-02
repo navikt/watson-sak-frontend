@@ -54,7 +54,10 @@ export interface MigreringKandidat {
 
 export interface MigreringLister {
   mine: MigreringKandidat[];
-  utenBekreftetAnsvarlig: MigreringKandidat[];
+  /** Kandidater til ansatte i lederens enhet. Tom for andre enn ledere. Personident er aldri satt. */
+  ansatte: MigreringKandidat[];
+  /** NOM, tilgangsmaskinen eller migreringstabellen svarte ikke. Listene kan da mangle kandidater. */
+  utilgjengelig: boolean;
 }
 
 export const kildeEtikett: Record<Migreringskilde, string> = {

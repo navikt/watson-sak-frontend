@@ -3,7 +3,8 @@ import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { env, skalBrukeMockdata } from "~/config/env.server";
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
 import { hentMockMigreringKandidater } from "./mock-data.server";
-import { hentMigreringskandidater } from "./api.server";
+import { hentMigreringsliste, type Migreringsliste, type Migreringsvisning } from "./api.server";
+import { logger } from "~/logging/logging";
 import type { MigreringKandidat, MigreringLister } from "./types";
 
 /**
@@ -30,6 +31,24 @@ function merkAlleredeOverforte(
   });
 }
 
+/** Utløpt sesjon (401) skal bevares. Alle andre feil gir tom liste og en kort feilmelding. */
+function erUtlogget(feil: unknown): boolean {
+  if (typeof feil !== "object" || feil === null) return false;
+  const status =
+    (feil as { status?: number }).status ?? (feil as { init?: { status?: number } }).init?.status;
+  return status === 401;
+}
+
+async function hentListe(request: Request, visning: Migreringsvisning): Promise<Migreringsliste> {
+  try {
+    return await hentMigreringsliste(request, visning);
+  } catch (feil) {
+    if (erUtlogget(feil)) throw feil;
+    logger.error("Kunne ikke hente migreringsliste, viser tom liste", { visning });
+    return { kandidater: [], utilgjengelig: true };
+  }
+}
+
 export async function loader({ request }: LoaderFunctionArgs): Promise<MigreringLister> {
   // Produksjonsmiljøene er stengt til import/oppbevaring og tilgang er godkjent.
   // Lokal backend kaller eksisterende beskyttet migrerings-API med brukertoken.
@@ -37,7 +56,16 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<Migrering
     if (env.ENVIRONMENT !== "local-backend") {
       throw new Response("Migreringslisten er ikke tilgjengelig", { status: 404 });
     }
-    return { mine: await hentMigreringskandidater(request), utenBekreftetAnsvarlig: [] };
+    const bruker = await hentInnloggetBruker({ request });
+    const mine = await hentListe(request, "MINE");
+    const ansatte = bruker.erLeder
+      ? await hentListe(request, "ANSATTE")
+      : { kandidater: [], utilgjengelig: false };
+    return {
+      mine: mine.kandidater,
+      ansatte: ansatte.kandidater,
+      utilgjengelig: mine.utilgjengelig || ansatte.utilgjengelig,
+    };
   }
 
   const bruker = await hentInnloggetBruker({ request });
@@ -47,8 +75,8 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<Migrering
     mine: kandidater.filter(
       (k) => k.ansvar.type === "BEKREFTET" && k.ansvar.navIdent === bruker.navIdent,
     ),
-    // Dette er bare syntetiske eksempler. Ukjent ansvar skal ikke gi generell
-    // innsynsrett i ekte data; den tilgangsregelen er ennå ikke avklart.
-    utenBekreftetAnsvarlig: kandidater.filter((k) => k.ansvar.type !== "BEKREFTET"),
+    // Syntetiske eksempler har ingen andre ansvarlige. Ledervisningen er bare i ekte backend.
+    ansatte: [],
+    utilgjengelig: false,
   };
 }
