@@ -3,11 +3,12 @@ import { env } from "~/config/env.server";
 import type { Migreringskilde } from "~/migrering/types";
 
 /**
- * `fnr` er valgfritt fordi migreringskandidater aldri eksponerer
- * personIdent til klienten (bevisst utelatt i backend-responsen av
- * personvernhensyn). "Opprett sak" fra migreringslisten kan derfor bare
- * forhåndsutfylle `legacyPid`/`legacyKilde` — saksbehandler må fortsatt slå
- * opp personen manuelt med fødselsnummer på /registrer-sak.
+ * `fnr` er valgfritt. For en kandidat med bekreftet ansvar kan backend
+ * returnere `personIdent` til den ansvarlige, og da forhåndsutfylles `fnr`
+ * sammen med `legacyPid`/`legacyKilde`. Mangler `personIdent` (for eksempel
+ * rader uten fødselsnummer), må saksbehandler slå opp personen manuelt på
+ * /registrer-sak. Backend kontrollerer uansett at `personIdent` stemmer med
+ * kandidaten når saken opprettes.
  */
 export interface PendingSakData {
   fnr?: string;

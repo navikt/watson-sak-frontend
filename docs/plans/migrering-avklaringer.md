@@ -388,9 +388,10 @@ dokumenttype inngår ikke i denne leveransen.
 I lokal backend-profil legges sju syntetiske rader inn uten å overskrive
 eksisterende rader. Testprofilen bruker fortsatt mockklienten. Utenfor
 testprofilen leser backend tabellen. Ingen ekte Access-data importeres her;
-det er en egen oppgave. Frontend holder migreringsruten stengt i dev og prod.
-`local-backend` henter alle sider fra kandidat-API-et med brukerens OBO-token.
-`local-mock` beholder sine syntetiske visninger som en uavhengig prototype.
+det er en egen oppgave. Frontend holder migreringsruten stengt i prod og
+åpen i `dev` og `local-backend`, der den henter én side om gangen (20 per
+side) fra kandidat-API-et med brukerens OBO-token. `local-mock` og `demo`
+viser syntetiske eksempler som en uavhengig prototype uten backend-kall.
 
 Bare registrert ansvarlig kan lese en kandidat, opprette sak fra den eller
 bekrefte ferdig flyttet. Personinnsyn kontrolleres i tillegg i backend. Å

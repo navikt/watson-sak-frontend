@@ -482,8 +482,8 @@ export default function OpprettSakSide() {
                     <LocalAlert status="announcement" className="max-w-2xl">
                       <LocalAlert.Content>
                         Saken opprettes med kobling til migreringskandidat {legacyKilde}:{legacyPid}
-                        . Kontroller at fødselsnummeret over stemmer med kandidaten før du oppretter
-                        saken — dette bekreftes ikke automatisk.
+                        . Fødselsnummeret må stemme med kandidaten. Backend kontrollerer det når
+                        saken opprettes, og avviser opprettelsen hvis det ikke stemmer.
                       </LocalAlert.Content>
                     </LocalAlert>
                   )}

@@ -131,7 +131,7 @@ type OpprettSakBekreftelseModalProps = {
   onOpprettNySak: () => void;
   /** Satt hvis notatet fra opprettelsen ikke ble lagret — saken finnes likevel. */
   notatFeil?: boolean;
-  /** Teksten som skal lægges til på nytt, kun brukt når `notatFeil` er `true`. */
+  /** Teksten som skal legges til på nytt, kun brukt når `notatFeil` er `true`. */
   notatTekst?: string;
 };
 
