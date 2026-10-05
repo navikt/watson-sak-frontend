@@ -16,7 +16,7 @@ vi.mock("~/config/env.server", () => ({
 }));
 
 vi.mock("~/auth/innlogget-bruker.server", () => ({
-  hentInnloggetBruker: vi.fn(async () => ({ name: "Saks Behandlersen" })),
+  hentInnloggetBruker: vi.fn(async () => ({ name: "Saks Behandlersen", navIdent: "Z999999" })),
 }));
 
 vi.mock("~/logging/logging", () => ({
@@ -315,6 +315,57 @@ describe("opprettKontrollsak", () => {
     expect(
       (await søkSaker(testRequest, "12345678901")).resultater.some(
         (sak) => sak.personIdent === "12345678901",
+      ),
+    ).toBe(true);
+  });
+
+  it("setter innlogget bruker som eier når mock-saken opprettes fra migrering", async () => {
+    const svar = await opprettKontrollsak({
+      request: testRequest,
+      token: "",
+      payload: {
+        personIdent: "12345678901",
+        saksbehandlere: { eier: null, deltMed: [] },
+        kategori: "SAMLIV",
+        kilde: "NAV_KONTROLL",
+        prioritet: "NORMAL",
+        enhet: "4812",
+        misbruktype: ["SKJULT_SAMLIV"],
+        merking: [],
+        ytelser: [],
+        legacyPid: "200001",
+        legacyKilde: "UTREDNING",
+      },
+    });
+
+    expect(svar.ok).toBe(true);
+    const sak = hentMineSaker(state()).find((kandidat) => kandidat.legacyPid === "200001");
+    expect(sak?.saksbehandlere.eier).toMatchObject({
+      navIdent: "Z999999",
+      navn: "Saks Behandlersen",
+    });
+  });
+
+  it("lar vanlige mock-saker uten migrering forbli eierløse", async () => {
+    await opprettKontrollsak({
+      request: testRequest,
+      token: "",
+      payload: {
+        personIdent: "10987654321",
+        saksbehandlere: { eier: null, deltMed: [] },
+        kategori: "SAMLIV",
+        kilde: "NAV_KONTROLL",
+        prioritet: "NORMAL",
+        enhet: "4812",
+        misbruktype: ["SKJULT_SAMLIV"],
+        merking: [],
+        ytelser: [],
+      },
+    });
+
+    expect(
+      hentFordelingssaker(state()).some(
+        (sak) => sak.personIdent === "10987654321" && sak.saksbehandlere.eier === null,
       ),
     ).toBe(true);
   });

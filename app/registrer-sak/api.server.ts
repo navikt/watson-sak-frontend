@@ -71,9 +71,22 @@ export async function opprettKontrollsak({
       throw new Error("Ugyldig mock-payload for opprettelse av kontrollsak.");
     }
 
+    // Som i backend (`KontrollsakFactory.opprettFraRequest`): en sak opprettet fra
+    // migreringslisten får innlogget kandidatansvarlig som eier. Uten dette blir den
+    // eierløs i fordelingen, og detaljsiden skjuler migreringsstatus og dokumenter.
+    const erMigrering = Boolean(payload.legacyPid && payload.legacyKilde);
+    const innlogget = erMigrering ? await hentInnloggetBruker({ request }) : null;
+    const saksbehandlere =
+      innlogget && !payload.saksbehandlere?.eier
+        ? {
+            ...payload.saksbehandlere,
+            eier: { navIdent: innlogget.navIdent, navn: innlogget.name, enhet: payload.enhet },
+          }
+        : payload.saksbehandlere;
+
     const kontrollsak = leggTilMockSakIFordeling(request, {
       personIdent: payload.personIdent,
-      saksbehandlere: payload.saksbehandlere,
+      saksbehandlere,
       kategori: payload.kategori,
       kilde: payload.kilde,
       prioritet: payload.prioritet,
