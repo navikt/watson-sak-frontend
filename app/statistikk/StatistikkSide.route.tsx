@@ -118,19 +118,6 @@ export default function StatistikkSide() {
 
         {laster ? (
           <StatistikkSkeleton />
-        ) : data.nøkkeltall.length === 0 ? (
-          <>
-            <Periodevelger
-              visEgendefinert={visEgendefinert}
-              searchParams={searchParams}
-              onVelgPeriode={velgPeriode}
-              fraProps={fraProps}
-              fraInputProps={fraInputProps}
-              tilProps={tilProps}
-              tilInputProps={tilInputProps}
-            />
-            <Alert variant="info">Ingen statistikk finnes for valgt periode.</Alert>
-          </>
         ) : (
           <StatistikkDiagrammer
             data={data}

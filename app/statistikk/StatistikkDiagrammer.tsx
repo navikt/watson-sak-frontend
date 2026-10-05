@@ -1,9 +1,10 @@
-import { Alert, BodyShort, Box, Button, HGrid, HStack, VStack } from "@navikt/ds-react";
+import { BodyShort, Box, Button, Heading, HGrid, HStack, VStack } from "@navikt/ds-react";
 import { useState, type ReactNode } from "react";
 import { Link as RouterLink } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { Diagramkort, Legend } from "./Diagramkort";
 import { fargeForKode } from "./farger";
+import { Saksflyt } from "./Saksflyt";
 import type { Statistikk } from "./types";
 import { formaterAntallSaker, formaterBeløp, prosentFormatter, visningsnavn } from "./visning";
 
@@ -67,6 +68,11 @@ export function StatistikkDiagrammer({
   const antallOverGrense = data.alderssammensetning
     .filter((bucket) => nedreAldersgrense(bucket.navn) >= ALDER_GRENSE_MND)
     .reduce((sum, bucket) => sum + bucket.verdi, 0);
+  const øyeblikksbildeErTom =
+    data.varsler.length === 0 &&
+    data.nøkkeltall.every((tall) => !/[1-9]/.test(tall.verdi)) &&
+    data.sakstyper.every((rad) => rad.deler.every((del) => del.verdi === 0)) &&
+    data.alderssammensetning.every((alder) => alder.verdi === 0);
 
   function toggleStatus(navn: string) {
     setSkjulteStatuser((forrige) => {
@@ -78,6 +84,15 @@ export function StatistikkDiagrammer({
       }
       return neste;
     });
+  }
+
+  if (øyeblikksbildeErTom && periodeErTom) {
+    return (
+      <VStack gap="space-20">
+        {periodevelger}
+        <TomStatistikk />
+      </VStack>
+    );
   }
 
   return (
@@ -136,7 +151,7 @@ export function StatistikkDiagrammer({
 
       <HGrid columns={{ xs: 1, lg: 3 }} gap="space-12">
         <Diagramkort
-          title="Sakstype fordelt på status"
+          title="Sakstype fordelt på steg"
           description="Klikk et segment for å åpne filtrert saksoversikt"
           className="min-h-[438px] lg:col-span-2"
         >
@@ -222,7 +237,7 @@ export function StatistikkDiagrammer({
       {periodevelger}
 
       {periodeErTom ? (
-        <Alert variant="info">Ingen hendelser i valgt periode.</Alert>
+        <TomStatistikk />
       ) : (
         <>
           <HGrid columns={{ xs: 1, lg: "2fr 3fr" }} gap={{ xs: "space-16", lg: "space-64" }}>
@@ -277,36 +292,7 @@ export function StatistikkDiagrammer({
           </HGrid>
 
           <HGrid columns={{ xs: 1, lg: 3 }} gap="space-12">
-            <Diagramkort
-              title="Statusfordeling"
-              description="Saker fordelt på status"
-              className="lg:col-span-2"
-            >
-              <VStack gap="space-8">
-                {data.statusfordeling.map((status) => (
-                  <HStack key={status.navn} align="center" gap="space-8" wrap={false}>
-                    <div className="grid min-w-0 flex-1 grid-cols-[minmax(8rem,auto)_minmax(0,1fr)_auto] items-center gap-2">
-                      <BodyShort size="small" className="min-w-0 break-words text-right">
-                        {visningsnavn(status.navn)}
-                      </BodyShort>
-                      <div className="min-w-0">
-                        <RouterLink
-                          to={lagSaksfilterUrl({ steg: status.filterverdi })}
-                          className="flex h-8 items-center rounded-sm bg-ax-bg-accent-strong px-2 font-semibold text-ax-text-neutral-contrast no-underline"
-                          style={{ width: `${status.prosent}%` }}
-                          title={`${visningsnavn(status.navn)}: ${formatter.format(status.verdi)} saker`}
-                        >
-                          {status.verdi}
-                        </RouterLink>
-                      </div>
-                      <BodyShort size="small" className="whitespace-nowrap">
-                        {prosentFormatter.format(status.prosent)} %
-                      </BodyShort>
-                    </div>
-                  </HStack>
-                ))}
-              </VStack>
-            </Diagramkort>
+            <Saksflyt data={data.statusfordeling} />
 
             <Diagramkort title="Sakskategorifordeling" description="Andel av totalt antall saker">
               <div
@@ -392,6 +378,26 @@ export function StatistikkDiagrammer({
           </HGrid>
         </>
       )}
+    </VStack>
+  );
+}
+
+function TomStatistikk() {
+  return (
+    <VStack
+      as="section"
+      aria-label="Ingen statistikk å vise"
+      align="center"
+      gap="space-8"
+      paddingBlock="space-64"
+      paddingInline="space-16"
+      className="text-center"
+    >
+      <Heading level="2" size="medium">
+        Ingen statistikk å vise
+      </Heading>
+      <BodyShort>Det finnes ingen informasjon for utvalget og tidsperioden du har valgt.</BodyShort>
+      <BodyShort>Velg et annet utvalg eller en annen tidsperiode.</BodyShort>
     </VStack>
   );
 }
