@@ -3,6 +3,7 @@ import { BodyShort, Box, Button, Checkbox, HGrid, HStack, VStack } from "@navikt
 import { useCallback, useEffect, useState } from "react";
 import { Form, useLoaderData, useNavigate } from "react-router";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
+import { migreringErÅpen } from "~/migrering/miljo";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { useMiljø } from "~/miljø/useMiljø";
 import { RouteConfig } from "~/routeConfig";
@@ -61,7 +62,7 @@ export default function SakDetaljSide() {
   const stegregler = hentStegbaserteSaksregler(sak.steg);
   const erEier = erSakseier(sak, innloggetBruker.navIdent);
   const erFerdigMigrert =
-    (miljø === "local-mock" || miljø === "local-backend") &&
+    (miljø === "local-mock" || migreringErÅpen(miljø)) &&
     erEier &&
     sak.legacyPid &&
     migreringsstatus === "FULLSTENDIG";
@@ -130,7 +131,7 @@ export default function SakDetaljSide() {
             {sak.legacyPid &&
               sak.legacyKilde &&
               erEier &&
-              (miljø === "local-mock" || miljø === "local-backend") &&
+              (miljø === "local-mock" || migreringErÅpen(miljø)) &&
               (erFerdigMigrert ? (
                 visEksempelBekreftelse && (
                   <Box
@@ -177,7 +178,7 @@ export default function SakDetaljSide() {
                   borderRadius="8"
                   padding="space-12"
                 >
-                  {miljø === "local-backend" && migreringsstatus === "UNDER_MIGRERING" ? (
+                  {migreringErÅpen(miljø) && migreringsstatus === "UNDER_MIGRERING" ? (
                     <Form method="post">
                       <input type="hidden" name="handling" value="MIGRERING_FERDIGSTILL" />
                       <Checkbox

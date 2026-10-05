@@ -28,6 +28,7 @@ import {
   hentFilerForSak,
   opprettArkivertFilFraDokument,
 } from "./filer/mock-data-filer.server";
+import { migreringErÅpen } from "~/migrering/miljo";
 import { arkiverDokument, migreringsnotatSeed } from "~/testing/mock-store/dokumenter.server";
 import { hentMockState } from "~/testing/mock-store/session.server";
 import { notatMalValg } from "./handlinger/notatValg";
@@ -466,7 +467,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     const harDirekteTilgang = erEier || harDeltTilgang || innlogget.erLeder;
     const sakForRespons = harDirekteTilgang ? sak : { ...sak, dokumenter: [] };
     let kandidat = null;
-    if (env.ENVIRONMENT === "local-backend" && erEier && sak.legacyKilde && sak.legacyPid) {
+    if (migreringErÅpen(env.ENVIRONMENT) && erEier && sak.legacyKilde && sak.legacyPid) {
       try {
         kandidat = await hentMigreringskandidat(request, `${sak.legacyKilde}:${sak.legacyPid}`);
       } catch (feil) {
@@ -599,7 +600,7 @@ async function backendAction(
   }
 
   if (handling === "MIGRERING_FERDIGSTILL") {
-    if (env.ENVIRONMENT !== "local-backend") {
+    if (!migreringErÅpen(env.ENVIRONMENT)) {
       throw data("Ferdigmerking er ikke tilgjengelig", { status: 404 });
     }
     if (formData.get("bekreftet") !== "ja") {

@@ -13,6 +13,7 @@ import {
 import { Tooltip } from "@navikt/ds-react";
 import { useState, type ComponentType } from "react";
 import { NavLink } from "react-router";
+import { migreringErÅpen } from "~/migrering/miljo";
 import { skalBrukeMockdataForMiljø } from "~/config/backend-config";
 import { useMiljø } from "~/miljø/useMiljø";
 import { usePreferences } from "~/preferanser/PreferencesContext";
@@ -48,7 +49,7 @@ export function AppSidebar() {
   const synligeLenker = lenker.filter(
     (lenke) =>
       lenke.to !== RouteConfig.MIGRERING ||
-      (miljø && (miljø === "local-backend" || skalBrukeMockdataForMiljø(miljø))),
+      (miljø && (migreringErÅpen(miljø) || skalBrukeMockdataForMiljø(miljø))),
   );
 
   const toggleSidebar = () => {
