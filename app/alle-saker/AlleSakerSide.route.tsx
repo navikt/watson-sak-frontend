@@ -41,7 +41,8 @@ const BACKEND_SORT_FELT: Partial<Record<AlleSakerKolonne, string>> = {
   saksid: "id",
   opprettet: "opprettet",
   oppdatert: "oppdatert",
-  status: "steg",
+  status: "status",
+  steg: "steg",
   kategori: "kategori",
 };
 
@@ -217,6 +218,7 @@ export default function AlleSakerSide() {
                     "saksid",
                     "kategori",
                     "misbrukstype",
+                    "steg",
                     "status",
                     "opprettet",
                     "oppdatert",
@@ -235,6 +237,7 @@ export default function AlleSakerSide() {
                     kategori: { className: "min-w-[165px]" },
                     misbrukstype: { className: "min-w-[210px]" },
                     status: { className: "min-w-[200px]" },
+                    steg: { className: "min-w-[170px]" },
                     opprettet: { className: "min-w-[140px]" },
                     oppdatert: { className: "min-w-[140px]" },
                     saksbehandler: { className: "min-w-[165px]" },

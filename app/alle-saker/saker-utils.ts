@@ -5,7 +5,7 @@ import {
   getOpprettetDato,
 } from "~/saker/selectors";
 import type { KontrollsakResponse } from "~/saker/types.backend";
-import { getStegOgStatusTekst } from "~/saker/visning";
+import { formaterStatus, formaterSteg } from "~/saker/visning";
 import { getSaksreferanse } from "~/saker/id";
 
 export const sorteringskolonner = [
@@ -13,6 +13,7 @@ export const sorteringskolonner = [
   "kategori",
   "misbrukstype",
   "status",
+  "steg",
   "opprettet",
   "oppdatert",
   "saksbehandler",
@@ -71,7 +72,9 @@ function hentSorteringsverdi(sak: KontrollsakResponse, kolonne: AlleSakerKolonne
     case "misbrukstype":
       return getMisbrukstyper(sak).join(", ");
     case "status":
-      return getStegOgStatusTekst(sak);
+      return formaterStatus(sak.status ?? "AKTIV");
+    case "steg":
+      return formaterSteg(sak.steg);
     case "opprettet":
       return getOpprettetDato(sak);
     case "oppdatert":

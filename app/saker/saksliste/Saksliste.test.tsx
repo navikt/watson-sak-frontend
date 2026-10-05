@@ -19,8 +19,8 @@ const rader: SakslisteRad[] = [
     navn: "Ola Nordmann",
     kategori: "Samliv",
     misbrukstyper: ["Skjult samliv"],
-    steg: "Opprettet",
-    status: null,
+    steg: "Utredning",
+    status: "Aktiv",
     opprettet: "2026-02-03T10:11:12Z",
     oppdatert: "2026-02-03T10:11:12Z",
     saksbehandler: null,
@@ -36,8 +36,15 @@ describe("Saksliste", () => {
     expect(screen.getByRole("columnheader", { name: "Kategori" })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Misbrukstype" })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Status" })).toBeDefined();
+    expect(screen.getByRole("columnheader", { name: "Steg" })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Opprettet" })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Oppdatert" })).toBeDefined();
+    expect(screen.getByRole("cell", { name: "Aktiv" })).toBeDefined();
+    expect(screen.getByRole("cell", { name: "Utredning" })).toBeDefined();
+    const overskrifter = screen
+      .getAllByRole("columnheader")
+      .map((overskrift) => overskrift.textContent);
+    expect(overskrifter.indexOf("Steg")).toBeLessThan(overskrifter.indexOf("Status"));
     expect(screen.getByRole("link", { name: "#201" }).getAttribute("href")).toBe("/saker/201");
   });
 

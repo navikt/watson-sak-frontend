@@ -157,7 +157,7 @@ describe("ufordelte-saker", () => {
       saker[2].id,
       saker[1].id,
     ]);
-    expect(sorterUfordelteSaker(saker, "status", "stigende").map((sak) => sak.id)).toEqual([
+    expect(sorterUfordelteSaker(saker, "steg", "stigende").map((sak) => sak.id)).toEqual([
       saker[2].id,
       saker[1].id,
       saker[0].id,
@@ -174,6 +174,19 @@ describe("ufordelte-saker", () => {
 
     expect(sorterUfordelteSaker(saker, "saksid", "stigende").map((sak) => sak.id)).toEqual([
       10001, 10002, 10003,
+    ]);
+  });
+
+  it("sorterer null-status sammen med Aktiv", () => {
+    const saker = [
+      lagSak({ id: 3, status: "Aktiv" }),
+      lagSak({ id: 2, status: null }),
+      lagSak({ id: 4, status: "I bero" }),
+      lagSak({ id: 1, status: "Venter på informasjon" }),
+    ];
+
+    expect(sorterUfordelteSaker(saker, "status", "stigende").map((sak) => sak.id)).toEqual([
+      3, 2, 4, 1,
     ]);
   });
 });

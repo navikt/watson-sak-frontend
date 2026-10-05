@@ -93,6 +93,7 @@ describe("UfordelteSakerInnhold", () => {
     expect(screen.getByRole("columnheader", { name: "Kategori" })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Misbrukstype" })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: /Status/ })).toBeDefined();
+    expect(screen.getByRole("columnheader", { name: /Steg/ })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: /Opprettet/ })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Oppdatert" })).toBeDefined();
     expect(screen.getByRole("link", { name: "#301" })).toBeDefined();

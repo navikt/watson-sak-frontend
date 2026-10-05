@@ -233,4 +233,24 @@ describe("sorterSaker", () => {
 
     expect(sortert.map((s) => s.saksbehandlere.eier?.navn)).toEqual(["Anna", "Bjørn", "Øyvind"]);
   });
+
+  it("sorterer steg uavhengig av status", () => {
+    const saker = [
+      lagSak({ id: 1, steg: "UTREDES", status: "AKTIV" }),
+      lagSak({ id: 2, steg: "OPPRETTET", status: "I_BERO" }),
+    ];
+
+    expect(sorterSaker(saker, "steg", "asc").map((sak) => sak.id)).toEqual([2, 1]);
+  });
+
+  it("sorterer null-status sammen med AKTIV", () => {
+    const saker = [
+      lagSak({ id: 3, status: "AKTIV" }),
+      lagSak({ id: 2, status: null }),
+      lagSak({ id: 4, status: "I_BERO" }),
+      lagSak({ id: 1, status: "I_BERO" }),
+    ];
+
+    expect(sorterSaker(saker, "status", "asc").map((sak) => sak.id)).toEqual([3, 2, 4, 1]);
+  });
 });
