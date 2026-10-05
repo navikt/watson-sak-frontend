@@ -92,6 +92,7 @@ export function Saksflyt({ data }: { data: Statistikk["statusfordeling"] }) {
                     </Box>
                   )}
                   <BodyShort
+                    aria-hidden={rad.verdi > 0}
                     size="small"
                     className="absolute top-1/2 -translate-y-1/2 whitespace-nowrap text-ax-text-neutral-subtle"
                     style={{
