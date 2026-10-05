@@ -103,7 +103,7 @@ export function lagMockStatistikk(
       [">24", 1],
     ].map(([navn, verdi]) => ({ navn, verdi })) as Statistikk["alderssammensetning"],
     periodeTall: {
-      innkomne: 87,
+      innkomne: 323,
       avsluttede: 156,
       snittDagerAvsluttet: 32,
       antattBeløp: "2400000",
@@ -111,7 +111,7 @@ export function lagMockStatistikk(
       anmeldtBeløp: "600000",
     },
     statusfordeling: [
-      ["Tildelt", "OPPRETTET", 323, 100],
+      ["Opprettet", "OPPRETTET", 323, 100],
       ["Utredet", "UTREDES", 234, 72],
       ["Henlagt", "AVSLUTTET", 168, 52],
       ["Forvaltning", "FORVALTNING", 120, 37],
