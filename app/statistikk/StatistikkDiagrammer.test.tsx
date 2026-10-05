@@ -197,13 +197,18 @@ describe("StatistikkDiagrammer", () => {
     expect(screen.getAllByText("1 sak").length).toBeGreaterThanOrEqual(2);
   });
 
-  it("viser lesbart navn for traktsteget TILDELT", () => {
+  it("viser Opprettet og riktig stegfilter i saksflyten", () => {
     renderMedRouter((data) => ({
       ...data,
-      statusfordeling: [{ navn: "TILDELT", filterverdi: "OPPRETTET", verdi: 3, prosent: 100 }],
+      statusfordeling: [{ navn: "OPPRETTET", filterverdi: "OPPRETTET", verdi: 3, prosent: 100 }],
     }));
 
-    expect(screen.getByText("Tildelt")).toBeDefined();
+    const saksflyt = within(screen.getByRole("region", { name: "Saksflyt" }));
+    expect(saksflyt.getByText("Opprettet")).toBeDefined();
+    expect(saksflyt.queryByText("Tildelt")).toBeNull();
+    expect(saksflyt.getByRole("link", { name: "Opprettet: 3 saker" }).getAttribute("href")).toBe(
+      "/alle-saker?steg=OPPRETTET",
+    );
   });
 
   it("skalerer aldersstolpene etter største bøtte", () => {
@@ -268,7 +273,7 @@ describe("StatistikkDiagrammer", () => {
     renderMedRouter((data) => ({
       ...data,
       statusfordeling: [
-        { navn: "TILDELT", filterverdi: "OPPRETTET", verdi: 0, prosent: 0 },
+        { navn: "OPPRETTET", filterverdi: "OPPRETTET", verdi: 0, prosent: 0 },
         { navn: "UTREDNING", filterverdi: "UTREDNING", verdi: 1, prosent: 100 },
       ],
     }));
@@ -276,10 +281,29 @@ describe("StatistikkDiagrammer", () => {
     const saksflyt = within(screen.getByRole("region", { name: "Saksflyt" }));
     expect(saksflyt.getByText("0")).toBeDefined();
     expect(saksflyt.getByText("0,0 %")).toBeDefined();
-    expect(saksflyt.queryByRole("link", { name: /Tildelt/ })).toBeNull();
+    expect(saksflyt.queryByRole("link", { name: /Opprettet/ })).toBeNull();
     expect(saksflyt.getByText("0").parentElement?.getAttribute("style")).not.toContain(
       "background",
     );
+  });
+
+  it("skjuler prosentteksten for alle trinn på 100 prosent", () => {
+    renderMedRouter((data) => ({
+      ...data,
+      statusfordeling: [
+        { navn: "OPPRETTET", filterverdi: "OPPRETTET", verdi: 3, prosent: 100 },
+        { navn: "UTREDNING", filterverdi: "UTREDNING", verdi: 3, prosent: 100 },
+        { navn: "POLITI", filterverdi: "POLITI", verdi: 1, prosent: 100 / 3 },
+      ],
+    }));
+
+    const saksflyt = within(screen.getByRole("region", { name: "Saksflyt" }));
+    expect(saksflyt.queryByText("100,0 %")).toBeNull();
+    expect(saksflyt.getByRole("link", { name: "Opprettet: 3 saker" })).toBeDefined();
+    expect(saksflyt.getByRole("link", { name: "Utredet: 3 saker" })).toBeDefined();
+    expect(saksflyt.getAllByText("3")).toHaveLength(2);
+    expect(saksflyt.getByRole("link", { name: "Politiet: 1 sak, 33,3 %" })).toBeDefined();
+    expect(saksflyt.getByText("33,3 %")).toBeDefined();
   });
 
   it("viser en egen tomtilstand når alle verdier er null, selv med utfylte dataserier", () => {

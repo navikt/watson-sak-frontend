@@ -18,7 +18,6 @@ const FARGE_FOR_STEG: Record<string, ComponentProps<typeof Box>["background"]> =
 const formatter = new Intl.NumberFormat("nb-NO");
 
 const NAVN_FOR_STEG: Record<string, string> = {
-  TILDELT: "Tildelt",
   UTREDNING: "Utredet",
   UTREDES: "Utredet",
   UTREDET: "Utredet",
@@ -65,7 +64,7 @@ export function Saksflyt({ data }: { data: Statistikk["statusfordeling"] }) {
                     <Box
                       as={RouterLink}
                       to={`${RouteConfig.ALLE_SAKER}?${new URLSearchParams({ steg: rad.filterverdi })}`}
-                      aria-label={`${navn}: ${formaterAntallSaker(rad.verdi)}, ${prosentFormatter.format(rad.prosent)} %`}
+                      aria-label={`${navn}: ${formaterAntallSaker(rad.verdi)}${rad.prosent === 100 ? "" : `, ${prosentFormatter.format(rad.prosent)} %`}`}
                       background={FARGE_FOR_STEG[rad.filterverdi] ?? "accent-strong"}
                       width={`${rad.prosent}%`}
                       height="100%"
@@ -91,15 +90,17 @@ export function Saksflyt({ data }: { data: Statistikk["statusfordeling"] }) {
                       </BodyShort>
                     </Box>
                   )}
-                  <BodyShort
-                    size="small"
-                    className="absolute top-1/2 -translate-y-1/2 whitespace-nowrap text-ax-text-neutral-subtle"
-                    style={{
-                      left: `calc(${rad.verdi > 0 && rad.prosent < 10 ? 100 : 50 + rad.prosent / 2}% + var(--ax-space-8))`,
-                    }}
-                  >
-                    {prosentFormatter.format(rad.prosent)} %
-                  </BodyShort>
+                  {rad.prosent !== 100 && (
+                    <BodyShort
+                      size="small"
+                      className="absolute top-1/2 -translate-y-1/2 whitespace-nowrap text-ax-text-neutral-subtle"
+                      style={{
+                        left: `calc(${rad.verdi > 0 && rad.prosent < 10 ? 100 : 50 + rad.prosent / 2}% + var(--ax-space-8))`,
+                      }}
+                    >
+                      {prosentFormatter.format(rad.prosent)} %
+                    </BodyShort>
+                  )}
                 </Box>
               </Box>
             </Fragment>
