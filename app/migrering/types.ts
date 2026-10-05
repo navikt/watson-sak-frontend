@@ -52,10 +52,20 @@ export interface MigreringKandidat {
   personIdent?: string | null;
 }
 
+/** Én side med kandidater. `side` er 1-basert. */
+export interface MigreringSide {
+  kandidater: MigreringKandidat[];
+  side: number;
+  totalSider: number;
+  totalAntall: number;
+}
+
+export const MIGRERING_SIDESTORRELSE = 20;
+
 export interface MigreringLister {
-  mine: MigreringKandidat[];
+  mine: MigreringSide;
   /** Kandidater til ansatte i lederens enhet. Tom for andre enn ledere. Personident er aldri satt. */
-  ansatte: MigreringKandidat[];
+  ansatte: MigreringSide;
   /** NOM, tilgangsmaskinen eller migreringstabellen svarte ikke. Listene kan da mangle kandidater. */
   utilgjengelig: boolean;
 }

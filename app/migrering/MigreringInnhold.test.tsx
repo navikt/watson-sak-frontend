@@ -1,14 +1,23 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { createRoutesStub } from "react-router";
+import { createRoutesStub, useSearchParams } from "react-router";
 import { MigreringInnhold } from "./MigreringInnhold";
 import { hentMockMigreringKandidater } from "./mock-data.server";
-import type { MigreringLister } from "./types";
+import type { MigreringKandidat, MigreringLister, MigreringSide } from "./types";
 
 const kandidater = hentMockMigreringKandidater("L999999");
+function lagSide(
+  kandidater: MigreringKandidat[],
+  side = 1,
+  totalSider = kandidater.length > 0 ? 1 : 0,
+  totalAntall = kandidater.length,
+): MigreringSide {
+  return { kandidater, side, totalSider, totalAntall };
+}
+
 const lister: MigreringLister = {
-  mine: kandidater.filter((k) => k.ansvar.type === "BEKREFTET"),
-  ansatte: [],
+  mine: lagSide(kandidater.filter((k) => k.ansvar.type === "BEKREFTET")),
+  ansatte: lagSide([]),
   utilgjengelig: false,
 };
 const tilBehandling = kandidater.filter((k) => !k.alleredeMigrertTilKontrollsakId);
@@ -79,7 +88,9 @@ describe("MigreringInnhold", () => {
       {
         path: "/migrering",
         Component: () => (
-          <MigreringInnhold lister={{ mine: [kandidat], ansatte: [], utilgjengelig: false }} />
+          <MigreringInnhold
+            lister={{ mine: lagSide([kandidat]), ansatte: lagSide([]), utilgjengelig: false }}
+          />
         ),
       },
     ]);
@@ -96,7 +107,7 @@ describe("MigreringInnhold", () => {
 
   it("viser personnummer for alle kandidater til behandling", () => {
     renderSide();
-    expect(lister.ansatte).toHaveLength(0);
+    expect(lister.ansatte.kandidater).toHaveLength(0);
 
     const arnePidCelle = screen.getByText("800202");
     const arneRad = arnePidCelle.closest("tr");
@@ -125,7 +136,9 @@ describe("MigreringInnhold", () => {
       {
         path: "/migrering",
         Component: () => (
-          <MigreringInnhold lister={{ mine: [], ansatte: [], utilgjengelig: true }} />
+          <MigreringInnhold
+            lister={{ mine: lagSide([]), ansatte: lagSide([]), utilgjengelig: true }}
+          />
         ),
       },
     ]);
@@ -145,7 +158,9 @@ describe("MigreringInnhold", () => {
       {
         path: "/migrering",
         Component: () => (
-          <MigreringInnhold lister={{ mine: [], ansatte: [ansatt], utilgjengelig: false }} />
+          <MigreringInnhold
+            lister={{ mine: lagSide([]), ansatte: lagSide([ansatt]), utilgjengelig: false }}
+          />
         ),
       },
     ]);
@@ -154,5 +169,103 @@ describe("MigreringInnhold", () => {
     if (!rad) throw new Error("Fant ikke raden til ansatt");
     expect(within(rad).getByText("Under flytting")).not.toBeNull();
     expect(screen.queryByRole("button", { name: "Opprett sak" })).toBeNull();
+  });
+
+  describe("paginering", () => {
+    function SokParametere() {
+      const [params] = useSearchParams();
+      return <output data-testid="sok">{params.toString()}</output>;
+    }
+
+    function renderMedSider(lister: MigreringLister, url = "/migrering") {
+      const Stub = createRoutesStub([
+        {
+          path: "/migrering",
+          Component: () => (
+            <>
+              <MigreringInnhold lister={lister} />
+              <SokParametere />
+            </>
+          ),
+        },
+        { path: "/api/registrer-sak/forhåndsutfyll", action: () => null },
+      ]);
+      return render(<Stub initialEntries={[url]} />);
+    }
+
+    const femti = Array.from({ length: 20 }, (_, i) => ({
+      ...tilBehandling[0],
+      kandidatId: `UTREDNING:${300000 + i}`,
+      legacyPid: String(300000 + i),
+      pid: String(300000 + i),
+    }));
+
+    it("viser antall og sidevelger når det er flere sider", () => {
+      renderMedSider({
+        mine: lagSide(femti, 2, 3, 50),
+        ansatte: lagSide([]),
+        utilgjengelig: false,
+      });
+
+      expect(screen.getByText("Viser 21–40 av 50")).not.toBeNull();
+      expect(screen.getByRole("button", { name: /^3$/ })).not.toBeNull();
+    });
+
+    it("bytter side ved å sette side i URL-en, og fjerner den på side 1", () => {
+      renderMedSider(
+        { mine: lagSide(femti, 2, 3, 50), ansatte: lagSide([]), utilgjengelig: false },
+        "/migrering?side=2",
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /^3$/ }));
+      expect(screen.getByTestId("sok").textContent).toBe("side=3");
+
+      fireEvent.click(screen.getByRole("button", { name: /^1$/ }));
+      expect(screen.getByTestId("sok").textContent).toBe("");
+    });
+
+    it("beholder ansattesiden når hovedlisten bytter side", () => {
+      renderMedSider(
+        { mine: lagSide(femti, 1, 3, 50), ansatte: lagSide([]), utilgjengelig: false },
+        "/migrering?ansatteSide=4",
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /^2$/ }));
+      expect(screen.getByTestId("sok").textContent).toBe("ansatteSide=4&side=2");
+    });
+
+    it("viser antall, men ingen sidevelger når alt er på én side", () => {
+      renderMedSider({
+        mine: lagSide(femti, 1, 1, 20),
+        ansatte: lagSide([]),
+        utilgjengelig: false,
+      });
+
+      expect(screen.getByText("Viser 1–20 av 20")).not.toBeNull();
+      expect(screen.queryByRole("button", { name: /^2$/ })).toBeNull();
+    });
+
+    it("paginerer ansattlisten for leder med egen parameter", () => {
+      const ansatte = femti.map((k) => ({
+        ...k,
+        ansvar: { type: "BEKREFTET" as const, navIdent: "Z999001" },
+        personIdent: null,
+      }));
+      renderMedSider({
+        mine: lagSide([]),
+        ansatte: lagSide(ansatte, 1, 2, 30),
+        utilgjengelig: false,
+      });
+
+      expect(screen.getByText("Viser 1–20 av 30")).not.toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: /^2$/ }));
+      expect(screen.getByTestId("sok").textContent).toBe("ansatteSide=2");
+    });
+
+    it("viser ingen sidetekst når listen er tom", () => {
+      renderMedSider({ mine: lagSide([]), ansatte: lagSide([]), utilgjengelig: false });
+
+      expect(screen.queryByText(/^Viser /)).toBeNull();
+    });
   });
 });

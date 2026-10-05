@@ -1,13 +1,27 @@
 import { ArrowsCirclepathIcon } from "@navikt/aksel-icons";
-import { Alert, Button, Heading, HStack, Table, Tag } from "@navikt/ds-react";
-import { Form, Link } from "react-router";
+import {
+  Alert,
+  BodyShort,
+  Button,
+  Heading,
+  HStack,
+  Pagination,
+  Table,
+  Tag,
+} from "@navikt/ds-react";
+import { Form, Link, useSearchParams } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { sporHendelse } from "~/analytics/analytics";
-import type { MigreringKandidat, MigreringLister } from "./types";
+import {
+  MIGRERING_SIDESTORRELSE,
+  type MigreringKandidat,
+  type MigreringLister,
+  type MigreringSide,
+} from "./types";
 
 export function MigreringInnhold({ lister }: { lister: MigreringLister }) {
-  const kandidater = lister.mine;
+  const kandidater = lister.mine.kandidater;
 
   return (
     <div className="flex flex-col gap-6">
@@ -108,13 +122,14 @@ export function MigreringInnhold({ lister }: { lister: MigreringLister }) {
           </Table.Body>
         </Table>
       </div>
-      {lister.ansatte.length > 0 && <AnsatteListe kandidater={lister.ansatte} />}
+      <Sidevelger side={lister.mine} parameter="side" />
+      {lister.ansatte.kandidater.length > 0 && <AnsatteListe ansatte={lister.ansatte} />}
     </div>
   );
 }
 
 /** Lederens oversikt over ansattes kandidater. Viser verken personnummer eller handlinger. */
-function AnsatteListe({ kandidater }: { kandidater: MigreringKandidat[] }) {
+function AnsatteListe({ ansatte }: { ansatte: MigreringSide }) {
   return (
     <section aria-labelledby="migrering-ansatte" className="flex flex-col gap-4">
       <Heading level="2" size="small" id="migrering-ansatte">
@@ -131,7 +146,7 @@ function AnsatteListe({ kandidater }: { kandidater: MigreringKandidat[] }) {
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {kandidater.map((k) => (
+            {ansatte.kandidater.map((k) => (
               <Table.Row key={`${k.kilde}:${k.legacyPid}`}>
                 <Table.DataCell>{k.legacyPid}</Table.DataCell>
                 <Table.DataCell>{k.ansvar.navIdent ?? "–"}</Table.DataCell>
@@ -142,7 +157,46 @@ function AnsatteListe({ kandidater }: { kandidater: MigreringKandidat[] }) {
           </Table.Body>
         </Table>
       </div>
+      <Sidevelger side={ansatte} parameter="ansatteSide" />
     </section>
+  );
+}
+
+/**
+ * Sidenavigasjon med Aksel sin `Pagination`. Sidenummeret ligger i URL-en (`parameter`), så en side kan
+ * lenkes til og lastes på nytt, og de to listene har hver sin side.
+ */
+function Sidevelger({ side, parameter }: { side: MigreringSide; parameter: string }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  if (side.totalAntall === 0) return null;
+
+  const fra = (side.side - 1) * MIGRERING_SIDESTORRELSE + 1;
+  const til = fra + side.kandidater.length - 1;
+
+  function gåTilSide(ny: number) {
+    const neste = new URLSearchParams(searchParams);
+    if (ny <= 1) {
+      neste.delete(parameter);
+    } else {
+      neste.set(parameter, String(ny));
+    }
+    setSearchParams(neste, { preventScrollReset: true });
+  }
+
+  return (
+    <HStack justify="space-between" align="center" gap="space-16" wrap>
+      <BodyShort size="small" textColor="subtle">
+        Viser {fra}–{til} av {side.totalAntall}
+      </BodyShort>
+      {side.totalSider > 1 && (
+        <Pagination
+          page={side.side}
+          onPageChange={gåTilSide}
+          count={side.totalSider}
+          size="small"
+        />
+      )}
+    </HStack>
   );
 }
 

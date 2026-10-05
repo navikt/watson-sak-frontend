@@ -95,7 +95,7 @@ describe("hentMigreringskandidater fra lokal backend", () => {
 
     expect(mocks.token).toHaveBeenCalledWith(request);
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://localhost:8080/api/v1/migrering/kandidater?visning=MINE&page=1&size=100",
+      "http://localhost:8080/api/v1/migrering/kandidater?visning=MINE&page=1&size=20",
       { headers: { Authorization: "Bearer lokal-testtoken", Accept: "application/json" } },
     );
     expect(resultat).toMatchObject([
@@ -116,7 +116,7 @@ describe("hentMigreringskandidater fra lokal backend", () => {
     const resultat = await hentMigreringsliste(request, "ANSATTE");
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://localhost:8080/api/v1/migrering/kandidater?visning=ANSATTE&page=1&size=100",
+      "http://localhost:8080/api/v1/migrering/kandidater?visning=ANSATTE&page=1&size=20",
       expect.anything(),
     );
     expect(resultat.utilgjengelig).toBe(true);
@@ -140,31 +140,29 @@ describe("hentMigreringskandidater fra lokal backend", () => {
     expect(mocks.loggFeil).toHaveBeenCalledWith("Ugyldig kontrakt fra migrerings-API");
   });
 
-  it("henter alle sider når flere kandidater finnes", async () => {
-    const andre = { ...kandidat, kandidatId: "SV:200002", kilde: "SV", legacyPid: "200002" };
-    vi.stubGlobal(
-      "fetch",
-      vi
-        .fn()
-        .mockResolvedValueOnce(Response.json({ items: [kandidat], totalItems: 2 }))
-        .mockResolvedValueOnce(Response.json({ items: [andre], totalItems: 2 })),
-    );
+  it("henter bare den siden som er bedt om, og regner ut antall sider", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(Response.json({ items: [kandidat], totalItems: 45 }));
+    vi.stubGlobal("fetch", fetchMock);
 
-    expect((await hentMigreringskandidater(request)).map((k) => k.kandidatId)).toEqual([
-      "UTREDNING:200001",
-      "SV:200002",
-    ]);
+    const resultat = await hentMigreringsliste(request, "MINE", 3);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:8080/api/v1/migrering/kandidater?visning=MINE&page=3&size=20",
+      expect.anything(),
+    );
+    expect(resultat).toMatchObject({ side: 3, totalSider: 3, totalAntall: 45 });
+    expect(resultat.kandidater).toHaveLength(1);
   });
 
-  it("viser ikke en avkortet liste som om den var fullstendig", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi
-        .fn()
-        .mockResolvedValueOnce(Response.json({ items: [kandidat], totalItems: 2 }))
-        .mockResolvedValueOnce(Response.json({ items: [], totalItems: 2 })),
-    );
+  it("gir null sider når listen er tom", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ items: [], totalItems: 0 })));
 
-    await expect(hentMigreringskandidater(request)).rejects.toThrow("ikke fullstendig");
+    expect(await hentMigreringsliste(request, "MINE")).toMatchObject({
+      totalSider: 0,
+      totalAntall: 0,
+    });
   });
 });

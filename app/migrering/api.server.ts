@@ -3,7 +3,7 @@ import { getBackendOboToken } from "~/auth/access-token";
 import { kastHvisUtlogget } from "~/auth/session-utløpt.server";
 import { BACKEND_API_URL } from "~/config/env.server";
 import { logger } from "~/logging/logging";
-import type { MigreringKandidat } from "./types";
+import { MIGRERING_SIDESTORRELSE, type MigreringKandidat } from "./types";
 
 const kildeSchema = z.enum(["UTREDNING", "SV", "NKA_DAGPENGER", "NKA_AAP"]);
 const kategoriSchema = z.enum([
@@ -51,58 +51,53 @@ export type Migreringsvisning = "MINE" | "ANSATTE";
 export interface Migreringsliste {
   kandidater: MigreringKandidat[];
   utilgjengelig: boolean;
+  side: number;
+  totalSider: number;
+  totalAntall: number;
 }
 
-/** Innlogget saksbehandlers egne kandidater. */
+/** Første side med innlogget saksbehandlers egne kandidater. */
 export async function hentMigreringskandidater(request: Request): Promise<MigreringKandidat[]> {
   return (await hentMigreringsliste(request, "MINE")).kandidater;
 }
 
 /**
- * Bruker backendens eksisterende Azure-token og tilgangskontroller, aldri klientvalgt NAV-ident.
+ * Henter én side. Bruker backendens eksisterende Azure-token og tilgangskontroller, aldri klientvalgt NAV-ident.
  * `ANSATTE` er bare for ledere. Backend skjuler personident i den visningen.
+ *
+ * @param side 1-basert sidenummer
  */
 export async function hentMigreringsliste(
   request: Request,
   visning: Migreringsvisning,
+  side = 1,
+  størrelse = MIGRERING_SIDESTORRELSE,
 ): Promise<Migreringsliste> {
   if (!BACKEND_API_URL) {
     throw new Error("Mangler lokal backend-url for migreringslisten.");
   }
 
   const token = await getBackendOboToken(request);
-  const kandidater: z.infer<typeof kandidatSchema>[] = [];
-  let page = 1;
-  let totalItems = 0;
-  let utilgjengelig = false;
-  do {
-    const response = await fetch(
-      `${BACKEND_API_URL}/api/v1/migrering/kandidater?visning=${visning}&page=${page}&size=100`,
-      { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } },
-    );
-    if (!response.ok) {
-      kastHvisUtlogget(response);
-      logger.error("Kunne ikke hente migreringskandidater fra Watson Admin API", {
-        status: response.status,
-      });
-      throw new Response("Migreringslisten er ikke tilgjengelig", { status: response.status });
-    }
-    const parsed = sideSchema.safeParse(await response.json());
-    if (!parsed.success) {
-      logger.error("Ugyldig kontrakt fra migrerings-API");
-      throw new Error("Ugyldig svar fra watson-admin-api (migreringskandidater)");
-    }
-    totalItems = parsed.data.totalItems;
-    utilgjengelig = utilgjengelig || parsed.data.utilgjengelig === true;
-    if (page > 1 && parsed.data.items.length === 0 && kandidater.length < totalItems) {
-      throw new Error("Migreringslisten er ikke fullstendig i lokal forhåndsvisning");
-    }
-    kandidater.push(...parsed.data.items);
-    page++;
-  } while (kandidater.length < totalItems && page <= 100);
-  if (kandidater.length !== totalItems) {
-    throw new Error("Migreringslisten er ikke fullstendig i lokal forhåndsvisning");
+  const response = await fetch(
+    `${BACKEND_API_URL}/api/v1/migrering/kandidater?visning=${visning}&page=${side}&size=${størrelse}`,
+    { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } },
+  );
+  if (!response.ok) {
+    kastHvisUtlogget(response);
+    logger.error("Kunne ikke hente migreringskandidater fra Watson Admin API", {
+      status: response.status,
+    });
+    throw new Response("Migreringslisten er ikke tilgjengelig", { status: response.status });
   }
+  const parsed = sideSchema.safeParse(await response.json());
+  if (!parsed.success) {
+    logger.error("Ugyldig kontrakt fra migrerings-API");
+    throw new Error("Ugyldig svar fra watson-admin-api (migreringskandidater)");
+  }
+  const kandidater = parsed.data.items;
+  const utilgjengelig = parsed.data.utilgjengelig === true;
+  const totalAntall = parsed.data.totalItems;
+  const totalSider = Math.ceil(totalAntall / størrelse);
 
   const mapped = kandidater.map(
     (k): MigreringKandidat => ({
@@ -128,7 +123,7 @@ export async function hentMigreringsliste(
       personIdent: k.personIdent,
     }),
   );
-  return { kandidater: mapped, utilgjengelig };
+  return { kandidater: mapped, utilgjengelig, side, totalSider, totalAntall };
 }
 
 /** Henter lagret status for én kandidat, etter backendens egen tilgangskontroll. */
