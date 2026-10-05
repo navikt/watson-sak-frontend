@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
+import { erUtloggetFeil } from "~/auth/session-utløpt.server";
 import { env, skalBrukeMockdata } from "~/config/env.server";
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
 import { hentMockMigreringKandidater } from "./mock-data.server";
@@ -37,14 +38,6 @@ function merkAlleredeOverforte(
   });
 }
 
-/** Utløpt sesjon (401) skal bevares. Alle andre feil gir tom liste og en kort feilmelding. */
-function erUtlogget(feil: unknown): boolean {
-  if (typeof feil !== "object" || feil === null) return false;
-  const status =
-    (feil as { status?: number }).status ?? (feil as { init?: { status?: number } }).init?.status;
-  return status === 401;
-}
-
 const TOM_SIDE: MigreringSide = { kandidater: [], side: 1, totalSider: 0, totalAntall: 0 };
 
 /** Sidenummer fra URL-en. Ugyldige verdier gir side 1. */
@@ -73,7 +66,8 @@ async function hentListe(
       utilgjengelig: liste.utilgjengelig,
     };
   } catch (feil) {
-    if (erUtlogget(feil)) throw feil;
+    // Utløpt sesjon (401) skal bevares. Alle andre feil gir tom liste og en kort feilmelding.
+    if (erUtloggetFeil(feil)) throw feil;
     logger.error("Kunne ikke hente migreringsliste, viser tom liste", { visning });
     return { side: TOM_SIDE, utilgjengelig: true };
   }
@@ -97,17 +91,20 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<Migrering
   const side = lesSide(url, "side");
   const ansatteSide = lesSide(url, "ansatteSide");
 
-  // `prod` og `demo` er stengt til importen er godkjent. `local-backend` og `dev` kaller det beskyttede
-  // migrerings-API-et med brukertoken.
+  // `prod` er stengt til importen er godkjent. `local-backend` og `dev` kaller det beskyttede
+  // migrerings-API-et med brukertoken. `local-mock` og `demo` bruker syntetiske eksempler (se under).
   if (!skalBrukeMockdata) {
     if (!migreringErÅpen(env.ENVIRONMENT)) {
       throw new Response("Migreringslisten er ikke tilgjengelig", { status: 404 });
     }
     const bruker = await hentInnloggetBruker({ request });
-    const mine = await hentListe(request, "MINE", side);
-    const ansatte = bruker.erLeder
-      ? await hentListe(request, "ANSATTE", ansatteSide)
-      : { side: TOM_SIDE, utilgjengelig: false };
+    // Uavhengige, potensielt trege kall: hent parallelt så svartiden ikke blir summen.
+    const [mine, ansatte] = await Promise.all([
+      hentListe(request, "MINE", side),
+      bruker.erLeder
+        ? hentListe(request, "ANSATTE", ansatteSide)
+        : Promise.resolve({ side: TOM_SIDE, utilgjengelig: false }),
+    ]);
     return {
       mine: mine.side,
       ansatte: ansatte.side,

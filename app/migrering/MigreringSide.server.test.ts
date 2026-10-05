@@ -118,6 +118,29 @@ describe("Migreringsprototypens loader", () => {
     expect(resultat.ansatte.kandidater).toHaveLength(1);
   });
 
+  it("starter begge listekallene for ledere før noen av dem er ferdig", async () => {
+    mocks.miljø = "local-backend";
+    mocks.mockmodus = false;
+    mocks.bruker.mockResolvedValue({ navIdent: "L999999", erLeder: true });
+    let slippMine: () => void = () => {};
+    mocks.backend.mockImplementation((_request: Request, visning: string) =>
+      visning === "MINE"
+        ? new Promise((løs) => {
+            slippMine = () => løs(side([]));
+          })
+        : Promise.resolve(side([])),
+    );
+
+    const lastet = loader(args());
+    await Promise.resolve();
+    await Promise.resolve();
+
+    // ANSATTE er startet mens MINE fortsatt venter, så kallene kjører parallelt.
+    expect(mocks.backend).toHaveBeenCalledWith(expect.anything(), "ANSATTE", 1);
+    slippMine();
+    await lastet;
+  });
+
   it("henter siden fra URL-en, hver liste med sin egen parameter", async () => {
     mocks.miljø = "local-backend";
     mocks.mockmodus = false;
