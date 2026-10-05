@@ -9,6 +9,7 @@ import { IngenFiltilgangKort } from "./filer/IngenFiltilgangKort";
 import { SakFilområde } from "./filer/SakFilområde";
 import { erSakseier } from "./handlinger/tilgjengeligeHandlinger";
 import { getSaksreferanse } from "./id";
+import { harDirekteSakstilgang, kanLeseSaksinnhold } from "./sakstilgang";
 import { PersonIdentHistorikkModal } from "./komponenter/PersonIdentHistorikkModal";
 import { SakDetaljSidePanel } from "./komponenter/SakDetaljSidePanel";
 import { SakerPåSammePerson } from "./komponenter/SakerPåSammePerson";
@@ -55,11 +56,9 @@ export default function SakDetaljSide() {
   const identHistorikkModal = useDisclosure();
   const stegregler = hentStegbaserteSaksregler(sak.steg);
   const erEier = erSakseier(sak, innloggetBruker.navIdent);
-  const harDeltTilgang = sak.saksbehandlere.deltMed.some(
-    (saksbehandler) => saksbehandler.navIdent === innloggetBruker.navIdent,
-  );
-  const harDirekteTilgang = erEier || harDeltTilgang || innloggetBruker.erLeder;
-  const historikkTilstand: "vis" | "ikke-delt" | "skjermet" = !harDirekteTilgang
+  const harDirekteTilgang = harDirekteSakstilgang(sak, innloggetBruker);
+  const kanLese = kanLeseSaksinnhold(sak, innloggetBruker);
+  const historikkTilstand: "vis" | "ikke-delt" | "skjermet" = !kanLese
     ? "ikke-delt"
     : (sak.tilgang?.kanSeHistorikk ?? true)
       ? "vis"
@@ -118,7 +117,7 @@ export default function SakDetaljSide() {
               onSakOppdatert={onSakOppdatert}
             />
 
-            {harDirekteTilgang ? (
+            {kanLese ? (
               <SakFilområde
                 dokumenter={dokumenter}
                 filer={filer}

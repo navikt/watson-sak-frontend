@@ -4,6 +4,7 @@ import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { env, skalBrukeMockdata } from "~/config/env.server";
 import * as backendApi from "~/saker/api.server";
 import type { DokumentInnhold } from "~/saker/filer/typer";
+import { kanLeseSaksinnhold } from "~/saker/sakstilgang";
 import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
 import {
   hentDokument,
@@ -39,11 +40,15 @@ function byggVariabelVerdier(
 }
 
 function erUtloggetFeil(feil: unknown): boolean {
-  if (isRouteErrorResponse(feil)) return feil.status === 401;
-  if (feil instanceof Response) return feil.status === 401;
+  return harStatus(feil, 401);
+}
+
+function harStatus(feil: unknown, status: number): boolean {
+  if (isRouteErrorResponse(feil)) return feil.status === status;
+  if (feil instanceof Response) return feil.status === status;
   if (!feil || typeof feil !== "object" || !("init" in feil)) return false;
   const init = feil.init;
-  return !!init && typeof init === "object" && "status" in init && init.status === 401;
+  return !!init && typeof init === "object" && "status" in init && init.status === status;
 }
 
 export async function loader({ request, params }: Route.LoaderArgs) {
@@ -63,7 +68,11 @@ export async function loader({ request, params }: Route.LoaderArgs) {
         backendApi.hentKontrollsak(token, sakReferanse),
         backendApi.hentDokument(token, sakReferanse, docId),
         hentInnloggetBruker({ request }),
-        backendApi.hentDokumentHistorikk(token, sakReferanse, docId),
+        // Backend skjuler dokumenthistorikk (404) på avsluttede saker. Det skal ikke
+        // hindre visning av det arkiverte dokumentet.
+        backendApi
+          .hentDokumentHistorikk(token, sakReferanse, docId)
+          .catch((feil: unknown) => (harStatus(feil, 404) ? null : Promise.reject(feil))),
         hentKommentarlisteFraBackend(token, sakReferanse, docId)
           .then((liste) => ({ liste, feilet: false }))
           .catch((feil: unknown): { liste: Kommentarliste | null; feilet: true } => {
@@ -76,21 +85,20 @@ export async function loader({ request, params }: Route.LoaderArgs) {
         hentMapperstier(token, sakReferanse),
       ]);
 
-    const kanSe =
-      sak.saksbehandlere.eier?.navIdent === innlogget.navIdent ||
-      sak.saksbehandlere.deltMed.some(
-        (saksbehandler) => saksbehandler.navIdent === innlogget.navIdent,
-      );
+    const kanSe = kanLeseSaksinnhold(sak, innlogget);
 
     if (!kanSe) {
       throw data("Ingen tilgang til denne saken", { status: 403 });
+    }
+    if (!dokumentHistorikk && sak.steg !== "AVSLUTTET") {
+      throw data("Dokument ikke funnet", { status: 404 });
     }
 
     return {
       dokument,
       dokumenter: sak.dokumenter ?? [],
       mapper,
-      dokumentHistorikk: dokumentHistorikk.items,
+      dokumentHistorikk: dokumentHistorikk?.items ?? [],
       // Kommenterbarhet er backendens fasit (`kanKommentere` i GET-wrapperen).
       // Falt kallet ut, viser vi et skrivebeskyttet panel med tydelig retry.
       kommentarliste:

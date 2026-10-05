@@ -4,6 +4,7 @@ import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
 import * as backendApi from "~/saker/api.server";
+import { kanLeseSaksinnhold } from "~/saker/sakstilgang";
 import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
 import { hentDokument } from "../../mock-data.server";
 import * as kommentarApi from "./kommentarer.api.server";
@@ -126,12 +127,9 @@ async function krevLesetilgangIBackend(request: Request, sakReferanse: string) {
     hentInnloggetBruker({ request }),
   ]);
 
-  const kanSe =
-    sak.saksbehandlere.eier?.navIdent === innlogget.navIdent ||
-    sak.saksbehandlere.deltMed.some(
-      (saksbehandler) => saksbehandler.navIdent === innlogget.navIdent,
-    );
-  if (!kanSe) throw data("Ingen tilgang til denne saken", { status: 403 });
+  if (!kanLeseSaksinnhold(sak, innlogget)) {
+    throw data("Ingen tilgang til denne saken", { status: 403 });
+  }
 
   return { token };
 }

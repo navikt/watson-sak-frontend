@@ -94,6 +94,43 @@ describe("DokumentSide loader — kommentarfeil", () => {
   });
 });
 
+describe("DokumentSide loader — avsluttet sak", () => {
+  const avsluttetSak = {
+    ...sak,
+    steg: "AVSLUTTET",
+    saksbehandlere: { eier: null, deltMed: [] },
+  } as unknown as KontrollsakResponse;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockHentKontrollsak.mockResolvedValue(avsluttetSak);
+    mockHentDokument.mockResolvedValue({
+      id: "d1",
+      tittel: "Rapport",
+      innhold: [{ type: "p", children: [{ text: "Innhold" }] }],
+      arkivert: "2026-09-01T10:00:00",
+    });
+    mockHentKommentarliste.mockResolvedValue(lagListe());
+  });
+
+  it("viser arkivert dokument for saksbehandler uten direkte tilgang", async () => {
+    mockHentDokumentHistorikk.mockRejectedValue(data("Dokument ikke funnet", { status: 404 }));
+
+    const resultat = await hent();
+
+    expect(resultat.dokument.id).toBe("d1");
+    expect(resultat.dokumentHistorikk).toEqual([]);
+    expect(resultat.kanRedigere).toBe(false);
+  });
+
+  it("avviser saksbehandler uten direkte tilgang på aktiv sak", async () => {
+    mockHentKontrollsak.mockResolvedValue({ ...avsluttetSak, steg: "UTREDES" });
+    mockHentDokumentHistorikk.mockResolvedValue({ items: [] });
+
+    await expect(hent()).rejects.toMatchObject({ init: { status: 403 } });
+  });
+});
+
 async function hent() {
   const { loader } = await import("./DokumentSide.server");
   return loader({
