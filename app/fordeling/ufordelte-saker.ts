@@ -9,6 +9,7 @@ export const ufordelteSorteringskolonner = [
   "kategori",
   "misbrukstype",
   "status",
+  "steg",
   "opprettet",
   "oppdatert",
 ] as const;
@@ -108,6 +109,8 @@ function hentSorteringsverdi(sak: FordelingSak, kolonne: UfordeltSorteringskolon
     case "misbrukstype":
       return sak.misbrukstyper.join(", ");
     case "status":
+      return sak.status ?? "";
+    case "steg":
       return sak.steg;
     case "opprettet":
       return sak.opprettetDato;

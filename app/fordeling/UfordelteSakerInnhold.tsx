@@ -162,6 +162,7 @@ export function UfordelteSakerInnhold({
                     "saksid",
                     "kategori",
                     "misbrukstype",
+                    "steg",
                     "status",
                     "opprettet",
                     "oppdatert",

@@ -157,7 +157,7 @@ describe("ufordelte-saker", () => {
       saker[2].id,
       saker[1].id,
     ]);
-    expect(sorterUfordelteSaker(saker, "status", "stigende").map((sak) => sak.id)).toEqual([
+    expect(sorterUfordelteSaker(saker, "steg", "stigende").map((sak) => sak.id)).toEqual([
       saker[2].id,
       saker[1].id,
       saker[0].id,

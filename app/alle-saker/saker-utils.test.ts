@@ -233,4 +233,13 @@ describe("sorterSaker", () => {
 
     expect(sortert.map((s) => s.saksbehandlere.eier?.navn)).toEqual(["Anna", "Bjørn", "Øyvind"]);
   });
+
+  it("sorterer steg uavhengig av status", () => {
+    const saker = [
+      lagSak({ id: 1, steg: "UTREDES", status: "AKTIV" }),
+      lagSak({ id: 2, steg: "OPPRETTET", status: "I_BERO" }),
+    ];
+
+    expect(sorterSaker(saker, "steg", "asc").map((sak) => sak.id)).toEqual([2, 1]);
+  });
 });
