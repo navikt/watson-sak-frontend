@@ -4,6 +4,7 @@ import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { env, skalBrukeMockdata } from "~/config/env.server";
 import * as backendApi from "~/saker/api.server";
 import type { DokumentInnhold } from "~/saker/filer/typer";
+import { kanLeseSaksinnhold } from "~/saker/sakstilgang";
 import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
 import {
   hentDokument,
@@ -13,6 +14,7 @@ import {
   opprettEllerOppdaterDokumentHistorikk,
 } from "../mock-data.server";
 import { hentStegbaserteSaksregler } from "../../stegregler";
+import { hentMapperstier, hentMapperstierFraMock } from "../mapper/mapper.server";
 import { getSaksenhet } from "~/saker/selectors";
 import { hentKommentarliste as hentKommentarlisteFraBackend } from "./kommentarer/kommentarer.api.server";
 import { hentKommentarliste as hentKommentarlisteFraMock } from "./kommentarer/mock-data.server";
@@ -38,11 +40,15 @@ function byggVariabelVerdier(
 }
 
 function erUtloggetFeil(feil: unknown): boolean {
-  if (isRouteErrorResponse(feil)) return feil.status === 401;
-  if (feil instanceof Response) return feil.status === 401;
+  return harStatus(feil, 401);
+}
+
+function harStatus(feil: unknown, status: number): boolean {
+  if (isRouteErrorResponse(feil)) return feil.status === status;
+  if (feil instanceof Response) return feil.status === status;
   if (!feil || typeof feil !== "object" || !("init" in feil)) return false;
   const init = feil.init;
-  return !!init && typeof init === "object" && "status" in init && init.status === 401;
+  return !!init && typeof init === "object" && "status" in init && init.status === status;
 }
 
 export async function loader({ request, params }: Route.LoaderArgs) {
@@ -57,36 +63,42 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     // Kommentarene hentes parallelt med dokument og historikk, slik at panelet er
     // fylt allerede ved første render. Feiler kommentarkallet, vil vi fortsatt vise
     // dokumentet – kommentarer skal ikke kunne blokkere saksbehandlingen.
-    const [sak, dokument, innlogget, dokumentHistorikk, kommentarresultat] = await Promise.all([
-      backendApi.hentKontrollsak(token, sakReferanse),
-      backendApi.hentDokument(token, sakReferanse, docId),
-      hentInnloggetBruker({ request }),
-      backendApi.hentDokumentHistorikk(token, sakReferanse, docId),
-      hentKommentarlisteFraBackend(token, sakReferanse, docId)
-        .then((liste) => ({ liste, feilet: false }))
-        .catch((feil: unknown): { liste: Kommentarliste | null; feilet: true } => {
-          if (erUtloggetFeil(feil)) throw feil;
-          logger.warn(`Kunne ikke hente kommentarer for dokument ${docId}`, {
-            feil: String(feil),
-          });
-          return { liste: null, feilet: true };
-        }),
-    ]);
+    const [sak, dokument, innlogget, dokumentHistorikk, kommentarresultat, mapper] =
+      await Promise.all([
+        backendApi.hentKontrollsak(token, sakReferanse),
+        backendApi.hentDokument(token, sakReferanse, docId),
+        hentInnloggetBruker({ request }),
+        // Backend skjuler dokumenthistorikk (404) på avsluttede saker. Det skal ikke
+        // hindre visning av det arkiverte dokumentet.
+        backendApi
+          .hentDokumentHistorikk(token, sakReferanse, docId)
+          .catch((feil: unknown) => (harStatus(feil, 404) ? null : Promise.reject(feil))),
+        hentKommentarlisteFraBackend(token, sakReferanse, docId)
+          .then((liste) => ({ liste, feilet: false }))
+          .catch((feil: unknown): { liste: Kommentarliste | null; feilet: true } => {
+            if (erUtloggetFeil(feil)) throw feil;
+            logger.warn(`Kunne ikke hente kommentarer for dokument ${docId}`, {
+              feil: String(feil),
+            });
+            return { liste: null, feilet: true };
+          }),
+        hentMapperstier(token, sakReferanse),
+      ]);
 
-    const kanSe =
-      sak.saksbehandlere.eier?.navIdent === innlogget.navIdent ||
-      sak.saksbehandlere.deltMed.some(
-        (saksbehandler) => saksbehandler.navIdent === innlogget.navIdent,
-      );
+    const kanSe = kanLeseSaksinnhold(sak, innlogget);
 
     if (!kanSe) {
       throw data("Ingen tilgang til denne saken", { status: 403 });
+    }
+    if (!dokumentHistorikk && sak.steg !== "AVSLUTTET") {
+      throw data("Dokument ikke funnet", { status: 404 });
     }
 
     return {
       dokument,
       dokumenter: sak.dokumenter ?? [],
-      dokumentHistorikk: dokumentHistorikk.items,
+      mapper,
+      dokumentHistorikk: dokumentHistorikk?.items ?? [],
       // Kommenterbarhet er backendens fasit (`kanKommentere` i GET-wrapperen).
       // Falt kallet ut, viser vi et skrivebeskyttet panel med tydelig retry.
       kommentarliste:
@@ -125,6 +137,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   return {
     dokument,
     dokumenter: hentDokumenttreForSak(request, String(tilgang.sak.id)),
+    mapper: hentMapperstierFraMock(request, String(tilgang.sak.id)),
     dokumentHistorikk: hentDokumentHistorikk(request, String(tilgang.sak.id), params.docId),
     kommentarliste: hentKommentarlisteFraMock(request, String(tilgang.sak.id), params.docId, {
       innloggetIdent: innlogget.navIdent,

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const LEDERSTATISTIKK_STEG = [
   "OPPRETTET",
-  "UTREDES",
+  "UTREDNING",
   "FORVALTNING",
   "STRAFFERETTSLIG_VURDERING",
   "POLITI",

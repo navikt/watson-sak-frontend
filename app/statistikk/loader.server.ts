@@ -46,10 +46,26 @@ export async function loader({ request }: { request: Request }) {
   const bruker = await hentInnloggetBruker({ request });
   const url = new URL(request.url);
   const periode = lagPeriode(url);
+  const omfang = url.searchParams.get("omfang") ?? (bruker.enhetId ? "enhet:underavdeling" : "meg");
+  const nivaa =
+    omfang === "organisasjon"
+      ? "nav-kontroll"
+      : omfang === "enhet:hovedavdeling"
+        ? "hovedavdeling"
+        : omfang.startsWith("enhet:")
+          ? "underavdeling"
+          : "meg";
+  const valgtEnhetId = omfang.startsWith("enhet:") ? omfang.slice("enhet:".length) : undefined;
   const spørring: StatistikkSpørring = {
-    omfang: url.searchParams.get("omfang") || (bruker.enhetId ? `enhet:${bruker.enhetId}` : "meg"),
+    nivaa,
     fra: periode.fra,
     til: periode.til,
+    enhetId:
+      nivaa === "underavdeling" &&
+      valgtEnhetId &&
+      !["underavdeling", "hovedavdeling"].includes(valgtEnhetId)
+        ? valgtEnhetId
+        : undefined,
   };
   const data = skalBrukeMockdata
     ? lagMockStatistikk(spørring, bruker.enhet, bruker.enhetId)

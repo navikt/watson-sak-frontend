@@ -70,11 +70,9 @@ export function LeggTilHistorikkModal({ sakId, åpen, onClose }: LeggTilHistorik
     setVisFeilmelding(false);
   }, [åpen]);
 
-  // Lukk modalen kun når innsendingen faktisk lyktes — ikke optimistisk ved
-  // klikk på "Lagre". Ved feil (f.eks. 409 fordi hendelsen nylig ble
-  // opprettet og fortsatt ligger i BigQuerys streaming buffer) skal modalen
-  // forbli åpen og vise feilmeldingen, i stedet for å late som om alt gikk
-  // bra eller kræsje til en generisk feilside.
+  // Lukk modalen kun når innsendingen faktisk lyktes, ikke optimistisk ved
+  // klikk på "Lagre". Ved feil skal modalen forbli åpen og vise
+  // feilmeldingen i stedet for å late som om alt gikk bra.
   useEffect(() => {
     if (!submitPågår.current || fetcher.state !== "idle") return;
     submitPågår.current = false;

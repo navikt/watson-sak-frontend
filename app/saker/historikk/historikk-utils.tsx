@@ -1,6 +1,5 @@
 import {
   ArchiveIcon,
-  ChatIcon,
   CheckmarkCircleIcon,
   ArrowRightIcon,
   ArrowUndoIcon,
@@ -19,14 +18,15 @@ import {
   TrashIcon,
   XMarkOctagonIcon,
 } from "@navikt/aksel-icons";
-import { BodyShort, Link, VStack } from "@navikt/ds-react";
-import { Link as RouterLink } from "react-router";
-import { byggKommentarLenke } from "~/saker/filer/dokument/kommentarer/lenker";
-import { getSaksreferanse } from "~/saker/id";
+import { BodyShort, VStack } from "@navikt/ds-react";
+import {
+  formaterJournalposttype,
+  formaterOppgavetype,
+} from "~/saker/handlinger/opprett-formatering";
 import { formaterStatus } from "~/saker/visning";
 import { formaterSteg } from "~/saker/visning";
 import { NORSK_TIDSSONE } from "~/utils/date-utils";
-import type { KommentarAktivitet, SakHendelse } from "./typer";
+import type { SakHendelse } from "./typer";
 
 export function erManuellHendelse(hendelse: SakHendelse): boolean {
   return hendelse.hendelsesType === "MANUELL_HENDELSE";
@@ -43,22 +43,35 @@ export function erManuellHendelse(hendelse: SakHendelse): boolean {
  */
 export function lagForrigeHendelseKart(hendelser: SakHendelse[]): Map<string, SakHendelse> {
   const kart = new Map<string, SakHendelse>();
-  for (let i = 0; i < hendelser.length - 1; i++) {
-    kart.set(hendelser[i].hendelseId, hendelser[i + 1]);
+  let forrigeMedSnapshot: SakHendelse | undefined;
+
+  for (let i = hendelser.length - 1; i >= 0; i--) {
+    const hendelse = hendelser[i];
+    if (forrigeMedSnapshot) {
+      kart.set(hendelse.hendelseId, forrigeMedSnapshot);
+    }
+    if (hendelse.steg != null) {
+      forrigeMedSnapshot = hendelse;
+    }
   }
   return kart;
 }
 
 function diffStegOgStatus(hendelse: SakHendelse, forrigeHendelse?: SakHendelse) {
   const forrigeStatus = forrigeHendelse?.status ?? null;
+  const normalisertStatus = hendelse.status ?? "AKTIV";
+  const normalisertForrigeStatus = forrigeStatus ?? "AKTIV";
   return {
     stegEndret: !forrigeHendelse || hendelse.steg !== (forrigeHendelse.steg ?? null),
-    statusEndret: !!forrigeHendelse && (hendelse.status ?? null) !== forrigeStatus,
+    statusEndret: !!forrigeHendelse && normalisertStatus !== normalisertForrigeStatus,
     forrigeStatus,
   };
 }
 
 function stegTittel(steg: SakHendelse["steg"]): string {
+  if (steg === "UTREDNING" || steg === "FORVALTNING" || steg === "STRAFFERETTSLIG_VURDERING") {
+    return `Sak til ${formaterSteg(steg).toLocaleLowerCase("nb-NO")}`;
+  }
   return `Sak ${formaterSteg(steg).toLocaleLowerCase("nb-NO")}`;
 }
 
@@ -66,17 +79,18 @@ function statusKortTittel(
   status: SakHendelse["status"],
   forrigeStatus: SakHendelse["status"],
 ): string {
-  if (!status) {
+  if (!status || status === "AKTIV") {
     return forrigeStatus === "I_BERO" ? "tatt ut av bero" : "gjenopptatt";
   }
+  if (status === "PAAKLAGET") return "påklaget";
   return status === "I_BERO" ? "satt i bero" : "satt på vent";
 }
 
 function stegOgStatusTittel(hendelse: SakHendelse, forrigeHendelse?: SakHendelse): string {
   const { stegEndret, statusEndret, forrigeStatus } = diffStegOgStatus(hendelse, forrigeHendelse);
 
-  if (stegEndret && statusEndret) {
-    return `${stegTittel(hendelse.steg)} og ${statusKortTittel(hendelse.status, forrigeStatus)}`;
+  if (stegEndret) {
+    return stegTittel(hendelse.steg);
   }
   if (statusEndret) {
     const kort = statusKortTittel(hendelse.status, forrigeStatus);
@@ -89,7 +103,7 @@ function stegOgStatusBeskrivelse(hendelse: SakHendelse, forrigeHendelse?: SakHen
   const { statusEndret } = diffStegOgStatus(hendelse, forrigeHendelse);
   const deler: string[] = [];
 
-  if (hendelse.beskrivelse) {
+  if (hendelse.hendelsesType !== "SAK_STATUS_ENDRET" && hendelse.beskrivelse) {
     deler.push(hendelse.beskrivelse);
   }
 
@@ -99,7 +113,7 @@ function stegOgStatusBeskrivelse(hendelse: SakHendelse, forrigeHendelse?: SakHen
 
   deler.push(`Steg: ${formaterSteg(hendelse.steg)}`);
 
-  return deler.join(" – ");
+  return deler.join(hendelse.hendelsesType === "SAK_STATUS_ENDRET" ? "\n" : " – ");
 }
 
 export function formaterTidspunkt(isoString: string): string {
@@ -125,6 +139,8 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
       return "Avklaring opprettet";
     case "SAK_TILDELT":
       return "Sak tildelt";
+    case "SAK_REDIGERT":
+      return "Saksdetaljer oppdatert";
     case "STATUS_ENDRET":
     case "SAK_STATUS_ENDRET":
       return stegOgStatusTittel(hendelse, forrigeHendelse);
@@ -152,6 +168,8 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
       return hendelse.status === "I_BERO" ? "Sak tatt ut av bero" : "Sak gjenopptatt";
     case "MANUELL_HENDELSE":
       return hendelse.tittel ?? "Notat";
+    case "MANUELL_HENDELSE_REDIGERT":
+      return "Historikkinnslag redigert";
     case "NOTAT_SENDT":
       return "Notat opprettet i Gosys";
     case "JOURNALPOST_OPPRETTET":
@@ -168,55 +186,24 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
       return "Fil åpnet";
     case "FIL_ARKIVERT":
       return "Fil arkivert";
-    case "DOKUMENT_KOMMENTAR_OPPRETTET":
-      return "Kommenterte dokument";
-    case "DOKUMENT_KOMMENTAR_SVAR":
-      return "Svarte på kommentarer";
-    case "DOKUMENT_KOMMENTAR_ADRESSERT":
-      return "Adresserte kommentarer";
-    case "DOKUMENT_KOMMENTAR_GJENAAPNET":
-      return "Gjenåpnet kommentarer";
-    // Fanger en eventuell samlet gruppetype fra backend.
-    case "DOKUMENT_KOMMENTARER":
-    case "DOKUMENT_KOMMENTERT":
-      return "Kommentaraktivitet på dokument";
     default:
       return hendelse.hendelsesType;
   }
-}
-
-/**
- * Kommentarhendelser gjenkjennes på at backend har fylt `kommentarAktivitet`,
- * ikke på hendelsestypen. Da tåler frontend at backend legger til flere
- * kommentartyper uten at vi må endre koden.
- */
-function erKommentarhendelse(
-  hendelse: SakHendelse,
-): hendelse is SakHendelse & { kommentarAktivitet: KommentarAktivitet } {
-  return !!hendelse.kommentarAktivitet;
-}
-
-/**
- * Kommentar- og kommentarløsningsaktivitet logges som egne hendelser, men
- * skal ikke vises i sakshistorikken – de er allerede synlige der
- * kommentarene lever (dokumentets kommentarpanel), og gjør historikklisten
- * masete når saksbehandlere kommenterer/adresserer mye.
- */
-export function skalVisesIHistorikk(hendelse: SakHendelse): boolean {
-  return !erKommentarhendelse(hendelse);
 }
 
 export function hendelseBeskrivelse(
   hendelse: SakHendelse,
   forrigeHendelse?: SakHendelse,
 ): string | null {
-  if (erKommentarhendelse(hendelse)) {
-    // Backend har allerede formulert setningen, og den inneholder aldri
-    // kommentarinnhold. Vi viser den som den er i stedet for å bygge vår egen.
-    return hendelse.kommentarAktivitet.visningstekst;
+  if (hendelse.hendelsesType === "MANUELL_HENDELSE") {
+    return hendelse.beskrivelse ?? null;
   }
 
-  if (hendelse.hendelsesType === "MANUELL_HENDELSE") {
+  if (hendelse.hendelsesType === "MANUELL_HENDELSE_REDIGERT") {
+    return null;
+  }
+
+  if (hendelse.hendelsesType === "SAK_REDIGERT") {
     return hendelse.beskrivelse ?? null;
   }
 
@@ -224,11 +211,12 @@ export function hendelseBeskrivelse(
     return hendelse.beskrivelse ?? null;
   }
 
-  if (
-    hendelse.hendelsesType === "JOURNALPOST_OPPRETTET" ||
-    hendelse.hendelsesType === "OPPGAVE_OPPRETTET"
-  ) {
-    return hendelse.beskrivelse ?? null;
+  if (hendelse.hendelsesType === "JOURNALPOST_OPPRETTET") {
+    return hendelse.tittel ? `Type: ${formaterJournalposttype(hendelse.tittel)}` : null;
+  }
+
+  if (hendelse.hendelsesType === "OPPGAVE_OPPRETTET") {
+    return hendelse.tittel ? `Type: ${formaterOppgavetype(hendelse.tittel)}` : null;
   }
 
   if (hendelse.hendelsesType === "SAKSINFORMASJON_ENDRET") {
@@ -363,15 +351,6 @@ export function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
       return <DownloadIcon {...iconProps} />;
     case "FIL_ARKIVERT":
       return <ArchiveIcon {...iconProps} />;
-    case "DOKUMENT_KOMMENTAR_OPPRETTET":
-    case "DOKUMENT_KOMMENTAR_SVAR":
-    case "DOKUMENT_KOMMENTARER":
-    case "DOKUMENT_KOMMENTERT":
-      return <ChatIcon {...iconProps} />;
-    case "DOKUMENT_KOMMENTAR_ADRESSERT":
-      return <CheckmarkCircleIcon {...iconProps} />;
-    case "DOKUMENT_KOMMENTAR_GJENAAPNET":
-      return <ArrowUndoIcon {...iconProps} />;
     default:
       return <ClockIcon {...iconProps} />;
   }
@@ -384,45 +363,27 @@ export function HendelseInnhold({
   hendelse: SakHendelse;
   beskrivelse: string | null;
 }) {
-  if (erKommentarhendelse(hendelse) && hendelse.sakId) {
-    // Gruppert aktivitet har ingen trådId, så lenken åpner dokumentets
-    // kommentarpanel uten å peke på en enkelt tråd.
-    return (
-      <VStack gap="space-2">
-        {beskrivelse && <BodyShort size="small">{beskrivelse}</BodyShort>}
-        <Link
-          as={RouterLink}
-          to={byggKommentarLenke(
-            getSaksreferanse(hendelse.sakId),
-            hendelse.kommentarAktivitet.dokumentId,
-          )}
-        >
-          Åpne kommentarene
-        </Link>
-      </VStack>
-    );
-  }
+  const aktør = hendelse.opprettetAvNavn === "SYSTEM" ? null : hendelse.opprettetAvNavn;
+  const innhold = (() => {
+    if (!beskrivelse) return null;
 
-  if (
-    (hendelse.hendelsesType === "JOURNALPOST_OPPRETTET" ||
-      hendelse.hendelsesType === "OPPGAVE_OPPRETTET") &&
-    hendelse.tittel
-  ) {
     return (
       <VStack gap="space-1">
-        <BodyShort size="small" weight="semibold">
-          {hendelse.tittel}
-        </BodyShort>
-        {hendelse.beskrivelse && <BodyShort size="small">{hendelse.beskrivelse}</BodyShort>}
+        {beskrivelse.split("\n").map((linje, indeks) => (
+          <BodyShort key={`${indeks}-${linje}`} size="small">
+            {linje}
+          </BodyShort>
+        ))}
       </VStack>
     );
-  }
+  })();
 
-  if (!beskrivelse) return null;
+  if (!aktør && !innhold) return null;
 
   return (
     <VStack gap="space-1">
-      <BodyShort size="small">{beskrivelse}</BodyShort>
+      {innhold}
+      {aktør && <BodyShort size="small">Utført av: {aktør}</BodyShort>}
     </VStack>
   );
 }

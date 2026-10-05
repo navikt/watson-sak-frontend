@@ -11,6 +11,7 @@ import type {
   DokumentNode,
   DokumentReferanse,
   FilResponse,
+  MappeResponse,
 } from "~/saker/filer/typer";
 import {
   dokumentNodeSchema,
@@ -332,6 +333,20 @@ export async function endreSteg(
   });
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke endre steg");
   return parseEllerKastFeil(kontrollsakResponseSchema, await respons.json(), "endreSteg");
+}
+
+export async function lagreResultat(
+  token: string,
+  sakId: string,
+  resultat: LagreResultatRequest,
+): Promise<KontrollsakResponse> {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/resultat`), {
+    method: "PUT",
+    headers: authHeaders(token),
+    body: JSON.stringify(resultat),
+  });
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke lagre resultatet");
+  return parseEllerKastFeil(kontrollsakResponseSchema, await respons.json(), "lagreResultat");
 }
 
 export async function endreStatus(
@@ -727,6 +742,7 @@ const filResponseSchema = z.object({
   arkivertAv: z.string().nullish(),
   arkivertJournalpostId: z.string().nullish(),
   arkivertFraDokumentId: z.string().nullish(),
+  mappe: z.string().nullish(),
 });
 
 export async function hentFiler(token: string, sakId: string): Promise<FilResponse[]> {
@@ -780,6 +796,105 @@ export async function omdøpFil(
     await håndterFeil(respons, "Kunne ikke endre filnavn", { forventedeStatuser: [400, 409] });
   }
   return parseEllerKastFeil(filResponseSchema, await respons.json(), "omdøpFil");
+}
+
+// --- Mapper ---
+
+const mappeResponseSchema = z.object({
+  sti: z.string(),
+  opprettetAv: z.string(),
+  opprettet: z.string(),
+});
+
+const FORVENTEDE_MAPPEFEIL = [400, 404, 409];
+
+export async function hentMapper(token: string, sakId: string): Promise<MappeResponse[]> {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/mapper`), {
+    headers: authHeaders(token),
+  });
+  if (!respons.ok)
+    await håndterFeil(respons, "Kunne ikke hente mapper", { forventedeStatuser: [403] });
+  return parseEllerKastFeil(z.array(mappeResponseSchema), await respons.json(), "hentMapper");
+}
+
+export async function opprettMappe(token: string, sakId: string, sti: string): Promise<void> {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/mapper`), {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify({ sti }),
+  });
+  if (!respons.ok) {
+    await håndterFeil(respons, "Kunne ikke opprette mappe", {
+      forventedeStatuser: FORVENTEDE_MAPPEFEIL,
+    });
+  }
+}
+
+/** Gir en mappe nytt navn eller flytter den. Undermapper og innhold følger med. */
+export async function endreMappe(
+  token: string,
+  sakId: string,
+  fraSti: string,
+  tilSti: string,
+): Promise<void> {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/mapper`), {
+    method: "PATCH",
+    headers: authHeaders(token),
+    body: JSON.stringify({ fraSti, tilSti }),
+  });
+  if (!respons.ok) {
+    await håndterFeil(respons, "Kunne ikke endre mappe", {
+      forventedeStatuser: FORVENTEDE_MAPPEFEIL,
+    });
+  }
+}
+
+export async function slettMappe(token: string, sakId: string, sti: string): Promise<void> {
+  const url = apiUrl(
+    `/api/v1/kontrollsaker/${sakId}/mapper?${new URLSearchParams({ sti }).toString()}`,
+  );
+  const respons = await fetch(url, { method: "DELETE", headers: authHeaders(token) });
+  if (!respons.ok) {
+    await håndterFeil(respons, "Kunne ikke slette mappe", {
+      forventedeStatuser: FORVENTEDE_MAPPEFEIL,
+    });
+  }
+}
+
+export async function flyttDokumentTilMappe(
+  token: string,
+  sakId: string,
+  docId: string,
+  mappe: string | null,
+): Promise<void> {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/dokumenter/${docId}/mappe`), {
+    method: "PUT",
+    headers: authHeaders(token),
+    body: JSON.stringify({ mappe }),
+  });
+  if (!respons.ok) {
+    await håndterFeil(respons, "Kunne ikke flytte dokument", {
+      forventedeStatuser: FORVENTEDE_MAPPEFEIL,
+    });
+  }
+}
+
+export async function flyttFilTilMappe(
+  token: string,
+  sakId: string,
+  filId: string,
+  mappe: string | null,
+): Promise<void> {
+  const respons = await fetch(apiUrl(`/api/v1/kontrollsaker/${sakId}/filer/${filId}/mappe`), {
+    method: "PUT",
+    headers: authHeaders(token),
+    body: JSON.stringify({ mappe }),
+  });
+  if (!respons.ok) {
+    await håndterFeil(respons, "Kunne ikke flytte fil", {
+      forventedeStatuser: FORVENTEDE_MAPPEFEIL,
+    });
+  }
 }
 
 /**

@@ -9,9 +9,16 @@ export async function hentStatistikk(
 ): Promise<Statistikk> {
   if (!BACKEND_API_URL) throw new Error("Mangler backend-url for henting av statistikk.");
   const url = new URL(`${BACKEND_API_URL}/api/v1/statistikk`);
-  url.searchParams.set("omfang", spørring.omfang);
+  const backendNivaa = {
+    meg: "MEG",
+    underavdeling: "UNDERAVDELING",
+    hovedavdeling: "HOVEDAVDELING",
+    "nav-kontroll": "NAV_KONTROLL",
+  }[spørring.nivaa];
+  url.searchParams.set("nivaa", backendNivaa);
   url.searchParams.set("fra", spørring.fra);
   url.searchParams.set("til", spørring.til);
+  if (spørring.enhetId) url.searchParams.set("enhetId", spørring.enhetId);
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
   });

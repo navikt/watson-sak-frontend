@@ -1,13 +1,13 @@
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { hentAlleSaker, medInnloggetEier } from "~/saker/mock-alle-saker.server";
 import type { KontrollsakResponse } from "~/saker/types.backend";
-import { erSakseier } from "./handlinger/tilgjengeligeHandlinger";
 import { finnSakMedReferanse } from "./id";
+import { harDirekteSakstilgang, kanLeseSaksinnhold } from "./sakstilgang";
 import { hentStegbaserteSaksregler } from "./stegregler";
 
 export type Sakstilgang = {
   sak: KontrollsakResponse;
-  /** Eier, delt-med eller leder: kan se saken og dens dokumenter. */
+  /** Eier, delt-med eller leder, eller hvem som helst når saken er avsluttet. */
   kanSe: boolean;
   /** Kan redigere dokumenter: eier, delt-med eller leder etter at utredning er startet. */
   kanRedigereDokumenter: boolean;
@@ -35,15 +35,13 @@ export async function hentSakstilgangFraMock(
   const innlogget = await hentInnloggetBruker({ request });
   const sak = medInnloggetEier(rawSak, innlogget.navIdent, innlogget.name);
 
-  const erEier = erSakseier(sak, innlogget.navIdent);
-  const harDeltTilgang = sak.saksbehandlere.deltMed.some((s) => s.navIdent === innlogget.navIdent);
-  const kanSe = erEier || harDeltTilgang || innlogget.erLeder;
+  const harDirekteTilgang = harDirekteSakstilgang(sak, innlogget);
   const stegregler = hentStegbaserteSaksregler(sak.steg);
 
   return {
     sak,
-    kanSe,
-    kanRedigereDokumenter: kanSe && stegregler.kanRedigereDokumenter,
-    kanLasteOppFiler: kanSe && stegregler.kanLasteOppFiler,
+    kanSe: kanLeseSaksinnhold(sak, innlogget),
+    kanRedigereDokumenter: harDirekteTilgang && stegregler.kanRedigereDokumenter,
+    kanLasteOppFiler: harDirekteTilgang && stegregler.kanLasteOppFiler,
   };
 }

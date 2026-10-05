@@ -1,4 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  hentJournalposterForSak,
+  leggTilJournalpost,
+} from "~/testing/mock-store/journalposter.server";
 import { hentMockState, resetDefaultSession } from "~/testing/mock-store/session.server";
 import { hentFordelingssaker } from "~/testing/mock-store/alle-saker.server";
 import { required } from "~/testing/required";
@@ -225,6 +229,9 @@ describe("SakDetaljSide action", () => {
         beskrivelse: "Vurderingen er dokumentert.\nMal: Vurdering av barnas beste",
       }),
     );
+    expect(hentJournalposterForSak(state(), String(kontrollsak.id))).toEqual([
+      expect.objectContaining({ journalposttype: "NOTAT", tittel: "Vurdering av barnas beste" }),
+    ]);
   });
 
   it("kobler og fjerner kobling mellom saker på samme person i mockdata", async () => {
@@ -524,9 +531,12 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
 
     expect(kontrollsak.steg).toBe("OPPRETTET");
     expect(kontrollsak.saksbehandlere.eier?.navIdent).toBe("Z123456");
+    expect(hentHistorikk(testRequest, kontrollsak.id)[0]?.opprettetAvNavn).toBe(
+      "Test Saksbehandler",
+    );
   });
 
-  it("flytter en sak fra Opprettet til Utredning når saksbehandleren velger Tildel meg", async () => {
+  it("beholder Opprettet når saksbehandleren velger Tildel meg", async () => {
     const sak = hentFordelingssaker(state())[0];
     const sakRef = getSaksreferanse(sak.id);
     sak.steg = "OPPRETTET";
@@ -547,13 +557,9 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
 
     expect(resultat).toMatchObject({ ok: true });
     expect(sak.saksbehandlere.eier).toMatchObject({ navIdent: "Z999999" });
-    expect(sak.steg).toBe("UTREDNING");
-    expect(sak.status).toBe("AKTIV");
-    expect(
-      hentHistorikk(testRequest, sak.id)
-        .map((hendelse) => hendelse.hendelsesType)
-        .slice(0, 2),
-    ).toEqual(["STATUS_ENDRET", "SAK_TILDELT"]);
+    expect(sak.steg).toBe("OPPRETTET");
+    expect(sak.status).toBeNull();
+    expect(hentHistorikk(testRequest, sak.id)[0]?.hendelsesType).toBe("SAK_TILDELT");
   });
 
   it("endrer ikke steg ved Tildel meg når saken allerede er i Utredning", async () => {
@@ -624,7 +630,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(sak.ytelser[0]?.belop).toBe(100);
   });
 
-  it("avviser Tildel meg fra Opprettet når saken står i bero", async () => {
+  it("tildeler en sak i bero uten å endre steg eller status", async () => {
     const sak = hentFordelingssaker(state())[0];
     const sakRef = getSaksreferanse(sak.id);
     sak.steg = "OPPRETTET";
@@ -633,18 +639,17 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     const formData = new FormData();
     formData.set("handling", "TILDEL_MEG");
 
-    await expect(
-      action({
-        request: new Request(`http://localhost/saker/${sakRef}`, {
-          method: "POST",
-          body: formData,
-        }),
-        params: { sakId: sakRef },
-      } as Route.ActionArgs),
-    ).rejects.toMatchObject({ init: { status: 409 } });
+    await action({
+      request: new Request(`http://localhost/saker/${sakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: sakRef },
+    } as Route.ActionArgs);
 
-    expect(sak.saksbehandlere.eier).toBeNull();
+    expect(sak.saksbehandlere.eier).toMatchObject({ navIdent: "Z999999" });
     expect(sak.steg).toBe("OPPRETTET");
+    expect(sak.status).toBe("I_BERO");
   });
 
   it("tildeler ownerløs sak med konsistent saksbehandlerident", async () => {
@@ -946,7 +951,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(kontrollsak.kategori).not.toBe("ARBEID");
   });
 
-  it("opprett_journalpost logger hendelse med tittel og beskrivelse", async () => {
+  it("opprett_journalpost logger hendelse med journalposttype", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
     kontrollsak.steg = "UTREDES";
@@ -973,8 +978,9 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
 
     const historikk = hentHistorikk(testRequest, String(kontrollsak.id));
     expect(historikk[0]?.hendelsesType).toBe("JOURNALPOST_OPPRETTET");
-    expect(historikk[0]?.tittel).toBe("Inngående: Dokumentasjon mottatt");
-    expect(historikk[0]?.beskrivelse).toContain("Vedlagt kopi av arbeidsavtale");
+    expect(historikk[0]?.tittel).toBe("INNGAAENDE");
+    expect(historikk[0]?.beskrivelse).toBe("Journalpost opprettet");
+    expect(historikk[0]?.opprettetAvNavn).toBe("Test Saksbehandler");
   });
 
   it("arkiverer valgte redigerbare dokumenter ved opprettelse av journalpost", async () => {
@@ -1095,7 +1101,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     });
   });
 
-  it("opprett_oppgave logger hendelse med oppgavetype og beskrivelse", async () => {
+  it("opprett_oppgave logger hendelse med oppgavetype", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
     kontrollsak.steg = "UTREDES";
@@ -1124,9 +1130,8 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     const historikk = hentHistorikk(testRequest, String(kontrollsak.id));
     expect(historikk[0]?.hendelsesType).toBe("OPPGAVE_OPPRETTET");
     expect(historikk[0]?.tittel).toBe("VUR");
-    expect(historikk[0]?.beskrivelse).toContain("Prioritet: høy");
-    expect(historikk[0]?.beskrivelse).toContain("Frist: 2026-06-01");
-    expect(historikk[0]?.beskrivelse).toContain("Sjekk dokumentasjon");
+    expect(historikk[0]?.beskrivelse).toBe("Oppgave opprettet");
+    expect(historikk[0]?.opprettetAvNavn).toBe("Test Saksbehandler");
   });
 });
 
@@ -1157,15 +1162,15 @@ describe("SakDetaljSide tilgangskontroll", () => {
     formData.set("handling", "endre_status");
     formData.set("status", "POLITI");
 
-    await expect(
-      action({
+    expect(
+      await action({
         request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
           method: "POST",
           body: formData,
         }),
         params: { sakId: kontrollsakRef },
       } as Route.ActionArgs),
-    ).rejects.toSatisfy((thrown: { init?: { status?: number } }) => thrown.init?.status === 403);
+    ).toMatchObject({ data: { ok: false }, init: { status: 403 } });
   });
 
   it("avviser mutasjon på sak uten eier med 403", async () => {
@@ -1330,6 +1335,12 @@ describe("SakDetaljSide tilgangskontroll", () => {
       enhet: "4800",
     };
     kontrollsak.saksbehandlere.deltMed = [];
+    leggTilJournalpost(state(), String(kontrollsak.id), {
+      journalpostId: "JP-1",
+      journalposttype: "NOTAT",
+      tittel: "Hemmelig notat",
+      opprettet: "2026-03-01T10:00:00Z",
+    });
 
     const resultat = await loader({
       request: testRequest,
@@ -1337,6 +1348,8 @@ describe("SakDetaljSide tilgangskontroll", () => {
     } as unknown as Route.LoaderArgs);
 
     expect(resultat.dokumenter).toEqual([]);
+    expect(resultat.mapper).toEqual([]);
+    expect(resultat.journalposter).toEqual([]);
   });
 
   it("returnerer filer i loader for eier", async () => {

@@ -11,9 +11,11 @@ import { IngenFiltilgangKort } from "./filer/IngenFiltilgangKort";
 import { SakFilområde } from "./filer/SakFilområde";
 import { erSakseier } from "./handlinger/tilgjengeligeHandlinger";
 import { getSaksreferanse } from "./id";
+import { harDirekteSakstilgang, kanLeseSaksinnhold } from "./sakstilgang";
 import { PersonIdentHistorikkModal } from "./komponenter/PersonIdentHistorikkModal";
 import { SakDetaljSidePanel } from "./komponenter/SakDetaljSidePanel";
 import { SakerPåSammePerson } from "./komponenter/SakerPåSammePerson";
+import { SaksflytStepper } from "./komponenter/SaksflytStepper";
 import { SaksinformasjonKort } from "./komponenter/SaksinformasjonKort";
 import { getAlder, getNavn } from "./selectors";
 import { action, loader } from "./SakDetaljSide.server";
@@ -49,6 +51,8 @@ export default function SakDetaljSide() {
     filer,
     migreringsstatus,
     migreringsnotatEksempel,
+    mapper,
+    journalposter,
     andreSaker,
     saksbehandlerDetaljer,
   } = useLoaderData<typeof loader>();
@@ -66,11 +70,9 @@ export default function SakDetaljSide() {
     erEier &&
     sak.legacyPid &&
     migreringsstatus === "FULLSTENDIG";
-  const harDeltTilgang = sak.saksbehandlere.deltMed.some(
-    (saksbehandler) => saksbehandler.navIdent === innloggetBruker.navIdent,
-  );
-  const harDirekteTilgang = erEier || harDeltTilgang || innloggetBruker.erLeder;
-  const historikkTilstand: "vis" | "ikke-delt" | "skjermet" = !harDirekteTilgang
+  const harDirekteTilgang = harDirekteSakstilgang(sak, innloggetBruker);
+  const kanLese = kanLeseSaksinnhold(sak, innloggetBruker);
+  const historikkTilstand: "vis" | "ikke-delt" | "skjermet" = !kanLese
     ? "ikke-delt"
     : (sak.tilgang?.kanSeHistorikk ?? true)
       ? "vis"
@@ -120,6 +122,8 @@ export default function SakDetaljSide() {
           gap="space-16"
         >
           <VStack gap="space-8">
+            <SaksflytStepper steg={sak.steg} resultat={sak.resultat} />
+
             <SaksinformasjonKort
               sak={sak}
               tittel={tittel}
@@ -207,10 +211,12 @@ export default function SakDetaljSide() {
                 </Box>
               ))}
 
-            {harDirekteTilgang ? (
+            {kanLese ? (
               <SakFilområde
                 dokumenter={dokumenter}
                 filer={filer}
+                mapper={mapper}
+                journalposter={journalposter}
                 sakId={saksreferanse}
                 redigerbar={harDirekteTilgang && stegregler.kanRedigereDokumenter}
                 kanLasteOppFiler={harDirekteTilgang && stegregler.kanLasteOppFiler}

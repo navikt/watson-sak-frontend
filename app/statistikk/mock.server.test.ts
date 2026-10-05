@@ -4,7 +4,7 @@ import { lagMockStatistikk } from "./mock.server";
 describe("lagMockStatistikk", () => {
   it("lager alle datasett som statistikksiden trenger", () => {
     const resultat = lagMockStatistikk(
-      { omfang: "enhet:ky153k", fra: "2026-09-01", til: "2026-09-30" },
+      { nivaa: "underavdeling", fra: "2026-09-01", til: "2026-09-30" },
       "Øst",
       "ky153k",
     );
@@ -27,5 +27,11 @@ describe("lagMockStatistikk", () => {
     expect(resultat.sakstyper).toHaveLength(8);
     expect(resultat.kategorifordeling.length).toBeGreaterThan(1);
     expect(resultat.henlagt.reduce((sum, rad) => sum + rad.verdi, 0)).toBe(168);
+    expect(resultat.statusfordeling[0]).toEqual({
+      navn: "Opprettet",
+      filterverdi: "OPPRETTET",
+      verdi: resultat.periodeTall.innkomne,
+      prosent: 100,
+    });
   });
 });

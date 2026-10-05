@@ -13,6 +13,7 @@ export const ALLE_VENTESTATUSER: (KontrollsakStatus | "INGEN")[] = [
   "VENTER_PA_INFORMASJON",
   "VENTER_PA_VEDTAK",
   "VENTER_PA_RESULTAT",
+  "PAAKLAGET",
   "I_BERO",
 ];
 

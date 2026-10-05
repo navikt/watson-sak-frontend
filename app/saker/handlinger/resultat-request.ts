@@ -8,6 +8,7 @@ const resultatFeltStier = {
   "utredning.type": ["utredning", "type"],
   "utredning.henleggelsesarsak": ["utredning", "henleggelsesarsak"],
   "forvaltning.type": ["forvaltning", "type"],
+  "forvaltning.tilbakekrevdBelop": ["forvaltning", "tilbakekrevdBelop"],
   "forvaltning.endeligUtfall.type": ["forvaltning", "endeligUtfall", "type"],
   "forvaltning.endeligUtfall.henleggelsesarsak": [
     "forvaltning",
@@ -16,14 +17,20 @@ const resultatFeltStier = {
   ],
   "strafferettsligVurdering.type": ["strafferettsligVurdering", "type"],
   "strafferettsligVurdering.henleggelsesarsak": ["strafferettsligVurdering", "henleggelsesarsak"],
+  "strafferettsligVurdering.anmeldtBelop": ["strafferettsligVurdering", "anmeldtBelop"],
   "politi.type": ["politi", "type"],
+  "politi.henleggelsesarsak": ["politi", "henleggelsesarsak"],
   "politi.begrunnelse": ["politi", "begrunnelse"],
   "politi.detaljer": ["politi", "detaljer"],
-  "politi.domstype": ["politi", "domstype"],
-  "politi.varighet": ["politi", "varighet"],
-  "politi.redusertForEmkArtikkel6": ["politi", "redusertForEmkArtikkel6"],
-  "politi.redusertForLangSaksbehandling": ["politi", "redusertForLangSaksbehandling"],
+  "politi.belopTilbakekrevd": ["politi", "belopTilbakekrevd"],
+  "politi.strafferabatt": ["politi", "strafferabatt"],
+  "politi.strafferabattProsent": ["politi", "strafferabattProsent"],
+  "politi.domsdato": ["politi", "domsdato"],
+  paaklaget: ["paaklaget"],
 } as const;
+
+/** Valgfrie tekstfelt. Alle andre felt er påkrevd når vilkåret i `paakrevdNar` er oppfylt. */
+const valgfrieFelt = new Set(["politi.detaljer"]);
 
 type Resultatfelt = keyof typeof resultatFeltStier;
 
@@ -42,12 +49,16 @@ function erResultatfelt(felt: string): felt is Resultatfelt {
   return resultatFeltWhitelist.has(felt);
 }
 
+/**
+ * Tolker `paakrevdNar` fra backend, for eksempel `politi.type=FORELEGG, BOT eller PATALEUNNLATELSE`
+ * eller `politi.strafferabatt=true`. Et felt uten vilkår er alltid aktivt.
+ */
 function erAktivt(
   felt: TillatteHandlingerResponse["feltskjema"][number],
   verdier: Map<string, string>,
 ): boolean {
   if (!felt.paakrevdNar) return true;
-  const match = /^([A-Za-z.]+)=([A-Z_, ]+)$/.exec(felt.paakrevdNar);
+  const match = /^([A-Za-z.]+)=([A-Za-z_, ]+)$/.exec(felt.paakrevdNar);
   if (!match || !erResultatfelt(match[1])) return false;
 
   const valg = match[2].split(/\s+eller\s+|,\s*/).filter(Boolean);
@@ -59,19 +70,8 @@ function erPaakrevd(
   verdier: Map<string, string>,
 ): boolean {
   if (felt.paakrevd) return true;
-  const match = /^([A-Za-z.]+)=([A-Z_, ]+)$/.exec(felt.paakrevdNar ?? "");
-  if (!match || !erResultatfelt(match[1])) return false;
-  const valgtType = verdier.get(match[1]) ?? "";
-
-  if (felt.felt.endsWith(".henleggelsesarsak")) return valgtType === "HENLAGT";
-  if (felt.felt === "politi.begrunnelse") {
-    return valgtType === "HENLAGT" || valgtType === "FRIFINNELSE";
-  }
-  if (felt.felt === "politi.detaljer") return false;
-  if (felt.felt.startsWith("politi.") && felt.felt !== "politi.type") {
-    return valgtType === "DOMFELLELSE";
-  }
-  return false;
+  if (!felt.paakrevdNar || valgfrieFelt.has(felt.felt)) return false;
+  return erAktivt(felt, verdier);
 }
 
 export function resultatFeltErAktivt(
@@ -91,7 +91,7 @@ export function resultatFeltErPaakrevd(
 function konverterVerdi(
   felt: TillatteHandlingerResponse["feltskjema"][number],
   verdi: string,
-): string | boolean | undefined {
+): string | boolean | number | undefined {
   if (felt.datatype === "enum") {
     if (!felt.verdier.some((valg) => valg.verdi === verdi)) {
       throw new Error(`Ugyldig valg for ${felt.felt}`);
@@ -107,13 +107,39 @@ function konverterVerdi(
   if (felt.datatype === "tekst") {
     return verdi.trim() || undefined;
   }
+  if (felt.datatype === "tall" || felt.datatype === "belop") {
+    const tall = lesBelop(verdi, felt.etikett);
+    if (felt.felt === "politi.strafferabattProsent" && tall > 100) {
+      throw new Error(strafferabattOver100);
+    }
+    return tall;
+  }
+  if (felt.datatype === "dato") {
+    if (!erGyldigIsoDato(verdi)) throw new Error(`${felt.etikett} må være en gyldig dato`);
+    if (verdi > dagensDatoIOslo()) throw new Error(`${felt.etikett} kan ikke være fram i tid`);
+    return verdi;
+  }
   return undefined;
+}
+
+export const strafferabattOver100 = "Strafferabatt kan ikke være over 100 %";
+
+/** Dagens dato i norsk tid, på formen YYYY-MM-DD. */
+export function dagensDatoIOslo(): string {
+  return new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Oslo" }).format(new Date());
+}
+
+/** Sjekker at verdien er en dato på formen YYYY-MM-DD som finnes i kalenderen. */
+export function erGyldigIsoDato(verdi: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(verdi)) return false;
+  const dato = new Date(`${verdi}T00:00:00Z`);
+  return !Number.isNaN(dato.getTime()) && dato.toISOString().slice(0, 10) === verdi;
 }
 
 function settFelt(
   objekt: Record<string, unknown>,
   sti: readonly string[],
-  verdi: string | boolean,
+  verdi: string | boolean | number,
 ): void {
   let gren = objekt;
   for (const del of sti.slice(0, -1)) {
@@ -170,7 +196,7 @@ export function validerResultatFeltNavn(
   }
 }
 
-function lesBelop(verdi: string, felt: string): number {
+export function lesBelop(verdi: string, felt: string): number {
   const normalisert = verdi.replace(/[\s\u00a0\u202f]/g, "").replace(",", ".");
   if (!/^\d+(?:\.\d{1,2})?$/.test(normalisert)) {
     throw new Error(`${felt} må være et gyldig beløp`);
@@ -232,7 +258,7 @@ export function byggLagreResultatRequest(
   }
 
   const belopFelter = skjema
-    .filter((felt) => felt.datatype === "belop")
+    .filter((felt) => felt.datatype === "belop" && felt.felt.startsWith("ytelser[]."))
     .map((felt) => felt.felt.slice("ytelser[].".length));
   const ytelserRequest =
     belopFelter.length === 0
@@ -251,10 +277,4 @@ export function byggLagreResultatRequest(
   if (ytelserRequest.length > 0) resultat.ytelser = ytelserRequest;
   if (!harResultat && ytelserRequest.length === 0) return undefined;
   return resultat as LagreResultatRequest;
-}
-
-export function støttedeResultatfelter(
-  skjema: TillatteHandlingerResponse["feltskjema"],
-): TillatteHandlingerResponse["feltskjema"] {
-  return skjema.filter((felt) => erResultatfelt(felt.felt) || felt.datatype === "belop");
 }

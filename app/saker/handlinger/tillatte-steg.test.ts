@@ -75,11 +75,14 @@ describe("hentVisbareSteg", () => {
     politi.tilstand.resultat = {
       politi: {
         type: "DOMFELLELSE",
-        domstype: "Fengsel",
-        varighet: "To måneder",
-        redusertForEmkArtikkel6: false,
-        redusertForLangSaksbehandling: false,
+        belopTilbakekrevd: 12000,
+        strafferabatt: true,
+        domsdato: "2026-09-01",
       },
+    };
+    expect(harLagretResultatForOvergang(politi, "AVSLUTTET")).toBe(false);
+    politi.tilstand.resultat = {
+      politi: { ...politi.tilstand.resultat.politi, type: "DOMFELLELSE", strafferabattProsent: 20 },
     };
     expect(harLagretResultatForOvergang(politi, "AVSLUTTET")).toBe(true);
   });

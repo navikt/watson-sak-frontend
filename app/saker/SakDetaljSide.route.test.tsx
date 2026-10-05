@@ -123,32 +123,52 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     expect(historikk[0]?.status).toBeNull();
   });
 
-  it.each([
-    ["HENLAGT", "IKKE_KAPASITET"],
-    ["KONTROLLNOTAT", null],
-  ])("avslutter fra Forvaltning som %s uten endelig beløp", async (type, arsak) => {
+  it.each(["HENLAGT", "KONTROLLNOTAT"])(
+    "avslutter fra Forvaltning som %s uten endelig beløp",
+    async (type) => {
+      const sak = hentAlleSaker(testRequest).find((s: KontrollsakResponse) => s.steg === "UTREDES");
+      expect(sak).toBeDefined();
+      if (!sak) return;
+      settInnloggetSomEier(sak);
+      sak.steg = "FORVALTNING";
+      sak.status = "VENTER_PA_VEDTAK";
+      sak.resultat = null;
+      sak.ytelser = sak.ytelser.map((ytelse) => ({ ...ytelse, endeligBelop: null }));
+
+      const resultat = await utforAction(getSaksreferanse(sak.id), {
+        handling: "endre_steg_dialog",
+        steg: "AVSLUTTET",
+        registrerResultat: "true",
+        "resultat.forvaltning.type": "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+        "resultat.forvaltning.endeligUtfall.type": type,
+      });
+
+      expect(resultat).toEqual({ ok: true });
+      expect(sak.steg).toBe("AVSLUTTET");
+      expect(sak.resultat?.forvaltning?.endeligUtfall?.type).toBe(type);
+      expect(sak.ytelser.every((ytelse) => ytelse.endeligBelop === null)).toBe(true);
+    },
+  );
+
+  it("avviser henleggelsesårsak ved henleggelse fra Forvaltning", async () => {
     const sak = hentAlleSaker(testRequest).find((s: KontrollsakResponse) => s.steg === "UTREDES");
     expect(sak).toBeDefined();
     if (!sak) return;
     settInnloggetSomEier(sak);
     sak.steg = "FORVALTNING";
-    sak.status = "VENTER_PA_VEDTAK";
     sak.resultat = null;
-    sak.ytelser = sak.ytelser.map((ytelse) => ({ ...ytelse, endeligBelop: null }));
 
-    const resultat = await utforAction(getSaksreferanse(sak.id), {
-      handling: "endre_steg_dialog",
-      steg: "AVSLUTTET",
-      registrerResultat: "true",
-      "resultat.forvaltning.type": "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
-      "resultat.forvaltning.endeligUtfall.type": type,
-      ...(arsak ? { "resultat.forvaltning.endeligUtfall.henleggelsesarsak": arsak } : {}),
-    });
-
-    expect(resultat).toEqual({ ok: true });
-    expect(sak.steg).toBe("AVSLUTTET");
-    expect(sak.resultat?.forvaltning?.endeligUtfall?.type).toBe(type);
-    expect(sak.ytelser.every((ytelse) => ytelse.endeligBelop === null)).toBe(true);
+    expect(
+      await utforAction(getSaksreferanse(sak.id), {
+        handling: "endre_steg_dialog",
+        steg: "AVSLUTTET",
+        registrerResultat: "true",
+        "resultat.forvaltning.type": "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+        "resultat.forvaltning.endeligUtfall.type": "HENLAGT",
+        "resultat.forvaltning.endeligUtfall.henleggelsesarsak": "FORELDET",
+      }),
+    ).toMatchObject({ data: { ok: false }, init: { status: 400 } });
+    expect(sak.steg).toBe("FORVALTNING");
   });
 
   it("avslutter henlagt Forvaltning uten endelig beløp", async () => {
@@ -164,7 +184,7 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     sak.resultat = {
       forvaltning: {
         type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
-        endeligUtfall: { type: "HENLAGT", henleggelsesarsak: "IKKE_KAPASITET" },
+        endeligUtfall: { type: "HENLAGT" },
       },
     };
 
@@ -179,7 +199,6 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
       registrerResultat: "true",
       "resultat.forvaltning.type": "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
       "resultat.forvaltning.endeligUtfall.type": "HENLAGT",
-      "resultat.forvaltning.endeligUtfall.henleggelsesarsak": "IKKE_KAPASITET",
     });
     expect(sak.steg).toBe("AVSLUTTET");
   });
@@ -256,16 +275,17 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     if (!sak) return;
     settInnloggetSomEier(sak);
     const sakId = getSaksreferanse(sak.id);
+    sak.ytelser = sak.ytelser.map((ytelse) => ({ ...ytelse, belop: 1000 }));
 
     await utforAction(sakId, {
       handling: "endre_steg_dialog",
-      steg: "AVSLUTTET",
+      steg: "FORVALTNING",
       registrerResultat: "true",
-      "resultat.utredning.type": "KONTROLLNOTAT",
+      "resultat.utredning.type": "FEILUTBETALINGSSAK_ORDINAER",
     });
 
-    expect(sak.resultat?.utredning?.type).toBe("KONTROLLNOTAT");
-    expect(sak.steg).toBe("AVSLUTTET");
+    expect(sak.resultat?.utredning?.type).toBe("FEILUTBETALINGSSAK_ORDINAER");
+    expect(sak.steg).toBe("FORVALTNING");
   });
 
   it("avviser resultatfelter som ikke finnes i mockskjemaet", async () => {
@@ -275,15 +295,55 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     settInnloggetSomEier(sak);
     const sakId = getSaksreferanse(sak.id);
 
-    await expect(
-      utforAction(sakId, {
+    expect(
+      await utforAction(sakId, {
         handling: "endre_steg_dialog",
         steg: "AVSLUTTET",
         registrerResultat: "true",
-        "resultat.utredning.type": "KONTROLLNOTAT",
+        "resultat.utredning.type": "HENLAGT",
+        "resultat.utredning.henleggelsesarsak": "IKKE_KAPASITET",
         "resultat.admin.godkjent": "true",
       }),
-    ).rejects.toMatchObject({ init: { status: 400 } });
+    ).toMatchObject({ data: { ok: false }, init: { status: 400 } });
+  });
+
+  it("krever ny avgjørelse fra politiet før en påklaget henleggelse avsluttes", async () => {
+    const sak = hentAlleSaker(testRequest).find((s: KontrollsakResponse) => s.steg === "UTREDES");
+    expect(sak).toBeDefined();
+    if (!sak) return;
+    settInnloggetSomEier(sak);
+    sak.steg = "POLITI";
+    sak.status = "VENTER_PA_RESULTAT";
+    sak.resultat = null;
+    const sakId = getSaksreferanse(sak.id);
+
+    await utforAction(sakId, {
+      handling: "lagre_resultat",
+      "resultat.politi.type": "HENLAGT",
+      "resultat.politi.begrunnelse": "Bevisene holder ikke",
+      "resultat.paaklaget": "true",
+    });
+    expect(sak.status).toBe("PAAKLAGET");
+    expect(hentMockTillatteHandlinger(sak).tillatteSteg).not.toContain("AVSLUTTET");
+
+    expect(
+      await utforAction(sakId, {
+        handling: "endre_steg_dialog",
+        steg: "AVSLUTTET",
+        registrerResultat: "false",
+      }),
+    ).toMatchObject({ data: { ok: false } });
+    expect(sak.steg).toBe("POLITI");
+
+    await utforAction(sakId, {
+      handling: "endre_steg_dialog",
+      steg: "AVSLUTTET",
+      registrerResultat: "true",
+      "resultat.politi.type": "HENLAGT",
+      "resultat.politi.begrunnelse": "Bevisene holder ikke",
+      "resultat.paaklaget": "false",
+    });
+    expect(sak.steg).toBe("AVSLUTTET");
   });
 
   it("henlegger saken ved avslutning fra mockskjemaet", async () => {
@@ -300,11 +360,11 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
       steg: "AVSLUTTET",
       registrerResultat: "true",
       "resultat.utredning.type": "HENLAGT",
-      "resultat.utredning.henleggelsesarsak": "IKKE_TILSTREKKELIG_SKYLD",
+      "resultat.utredning.henleggelsesarsak": "INGEN_UTREDNING",
     });
 
     expect(sak.resultat?.utredning?.type).toBe("HENLAGT");
-    expect(sak.resultat?.utredning?.henleggelsesarsak).toBe("IKKE_TILSTREKKELIG_SKYLD");
+    expect(sak.resultat?.utredning?.henleggelsesarsak).toBe("INGEN_UTREDNING");
     expect(sak.steg).toBe("AVSLUTTET");
   });
 
@@ -416,13 +476,13 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
 
-    await expect(
-      utforAction(sakId, {
+    expect(
+      await utforAction(sakId, {
         handling: "endre_steg_dialog",
         steg: "UTREDES",
         status: "I_BERO",
       }),
-    ).rejects.toBeDefined();
+    ).toMatchObject({ data: { ok: false } });
     expect(sak.steg).toBe("UTREDES");
     expect(sak.status).toBe("I_BERO");
   });
@@ -535,14 +595,14 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
           },
         },
       }).tillatteSteg,
-    ).toEqual([]);
+    ).toEqual(["AVSLUTTET"]);
     expect(
       hentMockTillatteHandlinger({
         ...forvaltning,
         resultat: {
           forvaltning: {
             type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
-            endeligUtfall: { type: "HENLAGT", henleggelsesarsak: "IKKE_KAPASITET" },
+            endeligUtfall: { type: "HENLAGT" },
           },
         },
       }).tillatteSteg,
@@ -553,7 +613,7 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
       resultat: {
         forvaltning: {
           type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
-          endeligUtfall: { type: "HENLAGT", henleggelsesarsak: "IKKE_KAPASITET" },
+          endeligUtfall: { type: "HENLAGT" },
         },
       },
     });
@@ -602,10 +662,15 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
       resultat: null,
     };
     expect(hentMockTillatteHandlinger(vurdering).tillatteSteg).toEqual([]);
+    const anmeldt: KontrollsakResponse = {
+      ...vurdering,
+      resultat: { strafferettsligVurdering: { type: "ANMELDT" } },
+    };
+    expect(hentMockTillatteHandlinger(anmeldt).tillatteSteg).toEqual([]);
     expect(
       hentMockTillatteHandlinger({
-        ...vurdering,
-        resultat: { strafferettsligVurdering: { type: "ANMELDT" } },
+        ...anmeldt,
+        resultat: { strafferettsligVurdering: { type: "ANMELDT", anmeldtBelop: 1000 } },
       }).tillatteSteg,
     ).toEqual(["POLITI"]);
     expect(hentMockTillatteHandlinger({ ...vurdering, status: "I_BERO" }).tillatteSteg).toEqual([]);
@@ -621,14 +686,15 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     sak.resultat = { utredning: { type: "FEILUTBETALINGSSAK_ORDINAER" } };
     sak.ytelser = sak.ytelser.map((ytelse) => ({ ...ytelse, belop: 0 }));
 
-    await expect(
-      utforAction(getSaksreferanse(sak.id), {
+    expect(
+      await utforAction(getSaksreferanse(sak.id), {
         handling: "endre_steg_dialog",
         steg: "FORVALTNING",
         registrerResultat: "true",
-        "resultat.utredning.type": "KONTROLLNOTAT",
+        "resultat.utredning.type": "HENLAGT",
+        "resultat.utredning.henleggelsesarsak": "IKKE_KAPASITET",
       }),
-    ).rejects.toMatchObject({ init: { status: 409 } });
+    ).toMatchObject({ data: { ok: false }, init: { status: 409 } });
 
     expect(sak.steg).toBe("UTREDES");
     expect(sak.resultat?.utredning?.type).toBe("FEILUTBETALINGSSAK_ORDINAER");
@@ -644,12 +710,12 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
 
-    await expect(
-      utforAction(sakId, {
+    expect(
+      await utforAction(sakId, {
         handling: "endre_status",
         status: "UGYLDIG_AARSAK",
       }),
-    ).rejects.toBeDefined();
+    ).toMatchObject({ data: { ok: false } });
   });
 
   it("legger til manuelt historikkinnslag", async () => {
@@ -676,6 +742,7 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     expect(historikk[0]?.hendelsesType).toBe("MANUELL_HENDELSE");
     expect(historikk[0]?.tittel).toBe("Ringte bruker");
     expect(historikk[0]?.beskrivelse).toBe("Avklarte dokumentasjon og neste steg.");
+    expect(historikk[0]?.opprettetAvNavn).toBe("Saks Behandlersen");
     expect(historikk[0]?.tidspunkt).toBe("2026-05-04T10:34:00.000Z");
   });
 
@@ -743,12 +810,12 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     const { getSaksreferanse } = await import("./id");
     const sakId = getSaksreferanse(sak.id);
 
-    await expect(
-      utforAction(sakId, {
+    expect(
+      await utforAction(sakId, {
         handling: "endre_status",
         status: "I_BERO",
       }),
-    ).rejects.toBeDefined();
+    ).toMatchObject({ data: { ok: false } });
   });
 
   it("gjenoppta avviser for avsluttet sak", async () => {

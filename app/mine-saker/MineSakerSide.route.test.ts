@@ -73,7 +73,7 @@ describe("MineSakerSide loader", () => {
     const resultat = await loader(loaderArgs);
 
     expect(resultat.filterAlternativer.steg.length).toBe(6);
-    expect(resultat.filterAlternativer.status.length).toBe(5);
+    expect(resultat.filterAlternativer.status.length).toBe(6);
     expect(resultat.filterAlternativer.status).toContainEqual({
       verdi: "INGEN",
       etikett: "Aktiv",

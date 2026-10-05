@@ -80,6 +80,7 @@ describe("fil.api PATCH", () => {
     expect(hentHistorikk(testRequest, sak.id)).toHaveLength(antallFør + 1);
     expect(hentHistorikk(testRequest, sak.id)[0]).toMatchObject({
       hendelsesType: "FIL_OMDØPT",
+      opprettetAvNavn: "Test Saksbehandler",
     });
   });
 
@@ -146,6 +147,7 @@ describe("fil.api DELETE", () => {
     expect(historikk[0]).toMatchObject({
       hendelsesType: "FIL_SLETTET",
       beskrivelse: "bevis.pdf",
+      opprettetAvNavn: "Test Saksbehandler",
     });
   });
 });

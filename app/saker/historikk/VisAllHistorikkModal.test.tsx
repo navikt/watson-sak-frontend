@@ -17,8 +17,6 @@ function lagHendelse(overrides: Partial<SakHendelse> = {}): SakHendelse {
   };
 }
 
-const INNLOGGET_NAV_IDENT = "Z999999";
-
 async function renderModal(props: Partial<React.ComponentProps<typeof VisAllHistorikkModal>> = {}) {
   const resultat = render(
     <VisAllHistorikkModal
@@ -26,7 +24,6 @@ async function renderModal(props: Partial<React.ComponentProps<typeof VisAllHist
       hendelser={[]}
       åpen={true}
       onClose={() => {}}
-      innloggetNavIdent={INNLOGGET_NAV_IDENT}
       onLeggTil={vi.fn()}
       onRediger={vi.fn()}
       onSlett={vi.fn()}
@@ -61,7 +58,6 @@ describe("VisAllHistorikkModal", () => {
         hendelsesType: "MANUELL_HENDELSE",
         tittel: "Mitt notat",
         beskrivelse: "En beskrivelse",
-        opprettetAvNavIdent: INNLOGGET_NAV_IDENT,
       }),
     ];
 
@@ -77,7 +73,6 @@ describe("VisAllHistorikkModal", () => {
         hendelsesType: "MANUELL_HENDELSE",
         tittel: "Mitt notat",
         beskrivelse: "En beskrivelse",
-        opprettetAvNavIdent: INNLOGGET_NAV_IDENT,
       }),
     ];
 
@@ -86,36 +81,36 @@ describe("VisAllHistorikkModal", () => {
     expect(screen.getByRole("button", { name: "Slett" })).toBeDefined();
   });
 
-  it("viser ikke 'Slett'-knapp for andres manuelle notater", async () => {
+  it("viser 'Slett'-knapp for manuelle notater uavhengig av oppretter", async () => {
     const hendelser = [
       lagHendelse({
         hendelseId: "00000000-0000-4000-8000-000000000001",
         hendelsesType: "MANUELL_HENDELSE",
         tittel: "Andres notat",
         beskrivelse: "En beskrivelse",
-        opprettetAvNavIdent: "Z111111",
+        opprettetAvNavn: "Ola Nordmann",
       }),
     ];
 
     await renderModal({ hendelser });
 
-    expect(screen.queryByRole("button", { name: "Slett" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Slett" })).toBeDefined();
   });
 
-  it("viser ikke 'Rediger'-knapp for andres manuelle notater", async () => {
+  it("viser 'Rediger'-knapp for manuelle notater uavhengig av oppretter", async () => {
     const hendelser = [
       lagHendelse({
         hendelseId: "00000000-0000-4000-8000-000000000001",
         hendelsesType: "MANUELL_HENDELSE",
         tittel: "Andres notat",
         beskrivelse: "En beskrivelse",
-        opprettetAvNavIdent: "Z111111",
+        opprettetAvNavn: "Ola Nordmann",
       }),
     ];
 
     await renderModal({ hendelser });
 
-    expect(screen.queryByRole("button", { name: "Rediger" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Rediger" })).toBeDefined();
   });
 
   it("viser ikke 'Rediger'-knapp for ikke-manuelle hendelser", async () => {
@@ -144,7 +139,7 @@ describe("VisAllHistorikkModal", () => {
         hendelsesType: "MANUELL_HENDELSE",
         tittel: "Mitt notat",
         beskrivelse: "En beskrivelse",
-        opprettetAvNavIdent: INNLOGGET_NAV_IDENT,
+        opprettetAvNavn: "Ola Nordmann",
       }),
     ];
 
@@ -167,7 +162,7 @@ describe("VisAllHistorikkModal", () => {
         hendelsesType: "MANUELL_HENDELSE",
         tittel: "Mitt notat",
         beskrivelse: "En beskrivelse",
-        opprettetAvNavIdent: INNLOGGET_NAV_IDENT,
+        opprettetAvNavn: "Ola Nordmann",
       }),
     ];
 
@@ -189,7 +184,7 @@ describe("VisAllHistorikkModal", () => {
         hendelsesType: "MANUELL_HENDELSE",
         tittel: "Mitt notat",
         beskrivelse: "En beskrivelse",
-        opprettetAvNavIdent: INNLOGGET_NAV_IDENT,
+        opprettetAvNavn: "Ola Nordmann",
       }),
     ];
 
@@ -221,7 +216,7 @@ describe("VisAllHistorikkModal", () => {
         hendelsesType: "MANUELL_HENDELSE",
         tittel: "Mitt notat",
         beskrivelse: "En beskrivelse",
-        opprettetAvNavIdent: INNLOGGET_NAV_IDENT,
+        opprettetAvNavn: "Ola Nordmann",
       }),
     ];
 
@@ -257,7 +252,7 @@ describe("VisAllHistorikkModal", () => {
       hendelseId: "00000000-0000-4000-8000-000000000001",
       hendelsesType: "MANUELL_HENDELSE",
       tittel: "Mitt notat",
-      opprettetAvNavIdent: INNLOGGET_NAV_IDENT,
+      opprettetAvNavn: "Ola Nordmann",
     });
 
     await renderModal({ hendelser: [hendelse], onRediger });
@@ -273,7 +268,7 @@ describe("VisAllHistorikkModal", () => {
       hendelseId: "00000000-0000-4000-8000-000000000001",
       hendelsesType: "MANUELL_HENDELSE",
       tittel: "Mitt notat",
-      opprettetAvNavIdent: INNLOGGET_NAV_IDENT,
+      opprettetAvNavn: "Ola Nordmann",
     });
 
     await renderModal({ hendelser: [hendelse], onSlett });

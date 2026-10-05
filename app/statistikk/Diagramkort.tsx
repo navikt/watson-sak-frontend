@@ -1,5 +1,6 @@
 import { BodyShort, Box, Heading, HStack, VStack } from "@navikt/ds-react";
 import type { ReactNode } from "react";
+import { prosentFormatter, visningsnavn } from "./visning";
 
 export function Diagramkort({
   title,
@@ -65,8 +66,9 @@ export function Legend({
               className="size-2 rounded-sm"
               style={{ backgroundColor: `var(${item.farge})` }}
             />
-            {item.navn}
-            {item.verdi != null && ` – ${item.verdi}${prosent != null ? ` (${prosent} %)` : ""}`}
+            {visningsnavn(item.navn)}
+            {item.verdi != null &&
+              ` – ${item.verdi}${prosent != null ? ` (${prosentFormatter.format(prosent)} %)` : ""}`}
           </button>
         );
       })}

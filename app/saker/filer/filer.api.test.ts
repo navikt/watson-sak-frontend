@@ -85,6 +85,7 @@ describe("filer.api POST", () => {
     expect(historikk[0]).toMatchObject({
       hendelsesType: "FIL_LASTET_OPP",
       beskrivelse: "bevis.pdf",
+      opprettetAvNavn: "Test Saksbehandler",
     });
   });
 

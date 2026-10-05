@@ -138,47 +138,6 @@ describe("søkKontrollsaker", () => {
   });
 });
 
-describe("hentHendelser", () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-    vi.unstubAllGlobals();
-  });
-
-  it("beholder gruppert kommentaraktivitet fra backend", async () => {
-    const kommentarAktivitet = {
-      handling: "KOMMENTERTE",
-      dokumentId: "dokument-1",
-      dokumentTittel: "Rapport",
-      utfortAvIdent: "Z999999",
-      utfortAvNavn: "Test Saksbehandler",
-      antall: 2,
-      dato: "2026-09-17",
-      visningstekst: "Test Saksbehandler kommenterte to ganger i Rapport.",
-    };
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => [
-          {
-            hendelseId: "11111111-1111-4111-8111-111111111111",
-            tidspunkt: "2026-09-17T12:00:00Z",
-            hendelsesType: "DOKUMENT_KOMMENTERT",
-            sakId: 42,
-            kommentarAktivitet,
-          },
-        ],
-      }),
-    );
-
-    const { hentHendelser } = await import("./api.server");
-    const resultat = await hentHendelser("token", "42");
-
-    expect(resultat[0].kommentarAktivitet).toEqual(kommentarAktivitet);
-  });
-});
-
 describe("søkKontrollsakerOrganisasjon", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -306,7 +265,7 @@ describe("tillatte handlinger og resultatkall", () => {
     await endreSteg("token-123", "42", 1, "FORVALTNING", {
       versjon: 1,
       steg: "UTREDNING",
-      utredning: { type: "KONTROLLNOTAT" },
+      utredning: { type: "FEILUTBETALINGSSAK_ORDINAER" },
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
@@ -319,12 +278,47 @@ describe("tillatte handlinger og resultatkall", () => {
           resultat: {
             versjon: 1,
             steg: "UTREDNING",
-            utredning: { type: "KONTROLLNOTAT" },
+            utredning: { type: "FEILUTBETALINGSSAK_ORDINAER" },
           },
           beskrivelse: undefined,
         }),
       }),
     );
+  });
+
+  it("lagrer politiets resultat med PUT uten stegbytte", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => kontrollsak,
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { lagreResultat } = await import("./api.server");
+    const request = {
+      versjon: 1 as const,
+      steg: "POLITI" as const,
+      politi: { type: "HENLAGT" as const, begrunnelse: "Bevisene holder ikke" },
+      paaklaget: true,
+    };
+    await lagreResultat("token-123", "42", request);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://backend.test/api/v1/kontrollsaker/42/resultat",
+      expect.objectContaining({ method: "PUT", body: JSON.stringify(request) }),
+    );
+  });
+
+  it("kaster feil når backend avviser resultatet", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: false, status: 409, text: async () => "" }),
+    );
+
+    const { lagreResultat } = await import("./api.server");
+    await expect(
+      lagreResultat("token", "42", { versjon: 1, steg: "POLITI", politi: { type: "BOT" } }),
+    ).rejects.toThrow();
   });
 });
 
@@ -395,5 +389,104 @@ describe("søkKontrollsakerPåSaksnummer", () => {
     const { søkKontrollsakerPåSaksnummer } = await import("./api.server");
 
     await expect(søkKontrollsakerPåSaksnummer("token", "01027")).rejects.toThrow();
+  });
+});
+
+describe("mapper-adaptere", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  function stubFetch(svar: { ok: boolean; status: number; body?: unknown }) {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: svar.ok,
+      status: svar.status,
+      json: async () => svar.body ?? {},
+      text: async () => JSON.stringify(svar.body ?? {}),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    return fetchMock;
+  }
+
+  it("henter mapper", async () => {
+    const fetchMock = stubFetch({
+      ok: true,
+      status: 200,
+      body: [{ sti: "Bank", opprettetAv: "Z999999", opprettet: "2026-09-30T10:00:00Z" }],
+    });
+    const { hentMapper } = await import("./api.server");
+
+    const mapper = await hentMapper("token", "1");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://backend.test/api/v1/kontrollsaker/1/mapper",
+      expect.anything(),
+    );
+    expect(mapper.map((mappe) => mappe.sti)).toEqual(["Bank"]);
+  });
+
+  it.each([
+    [
+      "opprettMappe",
+      ["Bank"],
+      "https://backend.test/api/v1/kontrollsaker/1/mapper",
+      "POST",
+      { sti: "Bank" },
+    ],
+    [
+      "endreMappe",
+      ["Bank", "Arkiv/Bank"],
+      "https://backend.test/api/v1/kontrollsaker/1/mapper",
+      "PATCH",
+      { fraSti: "Bank", tilSti: "Arkiv/Bank" },
+    ],
+    [
+      "flyttDokumentTilMappe",
+      ["dok-1", "Bank"],
+      "https://backend.test/api/v1/kontrollsaker/1/dokumenter/dok-1/mappe",
+      "PUT",
+      { mappe: "Bank" },
+    ],
+    [
+      "flyttFilTilMappe",
+      ["fil-1", null],
+      "https://backend.test/api/v1/kontrollsaker/1/filer/fil-1/mappe",
+      "PUT",
+      { mappe: null },
+    ],
+  ] as const)("%s sender riktig metode og innhold", async (navn, argumenter, url, metode, body) => {
+    const fetchMock = stubFetch({ ok: true, status: 204 });
+    const api = await import("./api.server");
+
+    await (api[navn] as (...args: unknown[]) => Promise<void>)("token", "1", ...argumenter);
+
+    const [kalletUrl, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(kalletUrl).toBe(url);
+    expect(init.method).toBe(metode);
+    expect(JSON.parse(init.body as string)).toEqual(body);
+  });
+
+  it("sletter mappe med kodet sti i query", async () => {
+    const fetchMock = stubFetch({ ok: true, status: 204 });
+    const { slettMappe } = await import("./api.server");
+
+    await slettMappe("token", "1", "Bank/Tom mappe");
+
+    const [kalletUrl, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(kalletUrl).toBe(
+      "https://backend.test/api/v1/kontrollsaker/1/mapper?sti=Bank%2FTom+mappe",
+    );
+    expect(init.method).toBe("DELETE");
+  });
+
+  it.each([400, 404, 409])("kaster BackendFeilException med status %i", async (status) => {
+    stubFetch({ ok: false, status, body: { detail: "Finnes fra før" } });
+    const { opprettMappe, BackendFeilException } = await import("./api.server");
+
+    const feil = await opprettMappe("token", "1", "Bank").catch((e: unknown) => e);
+
+    expect(feil).toBeInstanceOf(BackendFeilException);
+    expect((feil as InstanceType<typeof BackendFeilException>).status).toBe(status);
   });
 });

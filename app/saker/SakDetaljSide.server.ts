@@ -23,6 +23,11 @@ import type { FilResponse } from "~/saker/filer/typer";
 import { lagIsoTidspunktFraNorskDatoTid } from "~/utils/date-utils";
 import { hentTekstfelt, hentValgfriTekst } from "~/utils/form-data";
 import { hentDokumenttreForSak } from "./filer/mock-data.server";
+import { hentMapperstier, hentMapperstierFraMock } from "./filer/mapper/mapper.server";
+import {
+  hentJournalposterForSak,
+  leggTilJournalpost,
+} from "~/testing/mock-store/journalposter.server";
 import {
   arkiverFil,
   hentFilerForSak,
@@ -52,6 +57,7 @@ import {
   slettManuellHendelse,
 } from "./historikk/mock-data.server";
 import { finnSakMedReferanse } from "./id";
+import { kanLeseSaksinnhold } from "./sakstilgang";
 import { getSaksenhet } from "./selectors";
 import { hentStegbaserteSaksregler } from "./stegregler";
 import type { Route } from "./+types/SakDetaljSide.route";
@@ -140,11 +146,9 @@ function normaliserArbeidsgiverFeil(feil: Record<string, string[]>): Record<stri
 /**
  * Oversetter en feil fra et manuelt historikk-kall (opprett/rediger/slett) til
  * en brukervennlig melding. Bruker backendens egen feilmelding når den finnes
- * OG statuskoden indikerer en forventet, klientrettet feil (f.eks. 409
- * Conflict ved BigQuerys streaming buffer, eller 400/403/404) — disse
- * meldingene er skrevet for sluttbruker. Ved 5xx (interne serverfeil) brukes
- * en generisk melding i stedet, siden slike feil kan inneholde tekniske
- * detaljer som ikke bør vises til saksbehandleren.
+ * og statuskoden indikerer en forventet, klientrettet feil (for eksempel
+ * 400/403/404). Ved 5xx brukes en generisk melding i stedet, siden slike feil
+ * kan inneholde tekniske detaljer som ikke bør vises til saksbehandleren.
  */
 export function historikkFeilmelding(feil: unknown): string {
   if (feil instanceof backendApi.BackendFeilException && feil.status < 500) {
@@ -180,6 +184,7 @@ const gyldigeStatuser = new Set<KontrollsakStatus>([
   "VENTER_PA_INFORMASJON",
   "VENTER_PA_VEDTAK",
   "VENTER_PA_RESULTAT",
+  "PAAKLAGET",
   "I_BERO",
 ]);
 
@@ -209,6 +214,26 @@ function krevTillattHandling(
   }
 }
 
+/** Leser og validerer resultatet som lagres uten stegbytte. */
+function byggResultatForLagring(
+  formData: FormData,
+  tillatte: TillatteHandlingerResponse,
+): LagreResultatRequest {
+  try {
+    const resultat = byggLagreResultatRequest(
+      formData,
+      tillatte.feltskjema,
+      tillatte.tilstand.steg,
+      undefined,
+      tillatte.tilstand.ytelser,
+    );
+    if (!resultat) throw new Error("Velg et resultat før du fortsetter");
+    return resultat;
+  } catch (feil) {
+    throw data(feil instanceof Error ? feil.message : "Ugyldige resultatfelter", { status: 400 });
+  }
+}
+
 function getHendelsestypeForStatusendring(status: KontrollsakStatus) {
   if (status === "I_BERO") return "SAK_SATT_I_BERO";
   if (status === "AKTIV") return "SAK_GJENOPPTATT";
@@ -224,7 +249,18 @@ function getHendelsestypeForStegendring(steg: KontrollsakSteg) {
   }
 }
 
+/** Speiler `statusEtterResultat` i backend. */
+function statusEtterMockResultat(
+  sak: KontrollsakResponse,
+  resultat: LagreResultatRequest,
+): KontrollsakStatus | null {
+  if (resultat.paaklaget) return "PAAKLAGET";
+  if (sak.status === "PAAKLAGET" && resultat.politi) return "VENTER_PA_RESULTAT";
+  return sak.status;
+}
+
 function lagreMockResultat(sak: KontrollsakResponse, resultat: LagreResultatRequest): void {
+  sak.status = statusEtterMockResultat(sak, resultat);
   sak.resultat = {
     ...sak.resultat,
     ...(resultat.utredning ? { utredning: resultat.utredning } : {}),
@@ -439,6 +475,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       filerResultat,
       tillatteHandlinger,
       innlogget,
+      mapper,
     ] = await Promise.all([
       sakPromise,
       hentHistorikkMedTilgangskontroll(token, sakId),
@@ -447,6 +484,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       hentFilerMedTilgangskontroll(token, sakId),
       hentTillatteHandlingerMedTilgangskontroll(token, sakId, sakPromise),
       hentInnloggetBruker({ request }),
+      hentMapperstier(token, sakId),
     ]);
 
     // Henter kun første side (maks 100 saker) — visningen på sakdetaljsiden er en enkel
@@ -454,17 +492,14 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     const andreSaker = await hentAndreSakerMedTilgangskontroll(token, sak);
 
     // Dokumenter/filer skal kun eksponeres i loader-responsen (og dermed nås av klienten)
-    // for saksbehandlere med direkte tilgang (eier/delt-med/leder) — se `kanSeFilområde` i
-    // SakDetaljSide.route.tsx, som styrer UI-visningen. Uten denne sperren ville
+    // for saksbehandlere med lesetilgang — se `kanLeseSaksinnhold`, som også styrer
+    // UI-visningen i SakDetaljSide.route.tsx. Uten denne sperren ville
     // metadata om dokumenter/filer likevel bli sendt til klienten i SSR-payloaden
     // selv om komponenten ikke rendrer dem. Sperren må gjelde både det dedikerte
     // `dokumenter`-feltet og `sak.dokumenter` (samme metadata nøstet i sak-objektet),
     // ellers lekker dokumentmetadata likevel via `sak` i loader-responsen.
     const erEier = erSakseier(sak, innlogget.navIdent);
-    const harDeltTilgang = sak.saksbehandlere.deltMed.some(
-      (s) => s.navIdent === innlogget.navIdent,
-    );
-    const harDirekteTilgang = erEier || harDeltTilgang || innlogget.erLeder;
+    const harDirekteTilgang = kanLeseSaksinnhold(sak, innlogget);
     const sakForRespons = harDirekteTilgang ? sak : { ...sak, dokumenter: [] };
     let kandidat = null;
     if (migreringErÅpen(env.ENVIRONMENT) && erEier && sak.legacyKilde && sak.legacyPid) {
@@ -487,9 +522,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       migreringsnotatEksempel: null,
       tillatteHandlinger,
       historikk,
-      journalposter,
+      journalposter: harDirekteTilgang ? journalposter : [],
       dokumenter: harDirekteTilgang ? sak.dokumenter : [],
       filer: harDirekteTilgang ? filerResultat.filer : [],
+      mapper: harDirekteTilgang ? mapper : [],
       harFilTilgang: filerResultat.harFilTilgang,
       andreSaker,
       saksbehandlere: saksbehandlerDetaljer.map((sb) => sb.navn),
@@ -527,11 +563,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       innlogget.navIdent,
   );
   const harFilTilgang = erEier || harDeltTilgang || harTilgangViaKobling;
-  // Kun direkte tilgang (eier/delt-med) gir rett til å se dokumenter/filer i UI-en
-  // (se `kanSeFilområde` i SakDetaljSide.route.tsx). `harFilTilgang` er bredere
-  // (inkluderer tilgang via koblet sak) og brukes ikke til å avgjøre om
-  // dokument-/filmetadata skal eksponeres i loader-responsen.
-  const harDirekteTilgang = erEier || harDeltTilgang || innlogget.erLeder;
+  // Lesetilgang (eier/delt-med/leder, eller avsluttet sak) gir rett til å se dokumenter/filer.
+  // `harFilTilgang` er bredere (inkluderer tilgang via koblet sak) og brukes ikke til å
+  // avgjøre om dokument-/filmetadata skal eksponeres i loader-responsen.
+  const harDirekteTilgang = kanLeseSaksinnhold(sak, innlogget);
   const dokumenter = harDirekteTilgang ? hentDokumenttreForSak(request, String(sak.id)) : [];
   const migreringsnotatEksempel =
     erEier &&
@@ -545,6 +580,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
         }
       : null;
   const filer = harDirekteTilgang ? hentFilerForSak(request, String(sak.id)) : [];
+  const mapper = harDirekteTilgang ? hentMapperstierFraMock(request, String(sak.id)) : [];
   const andreSaker = alleSaker.filter(
     (annenSak) => annenSak.personIdent === sak.personIdent && annenSak.id !== sak.id,
   );
@@ -554,9 +590,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     migreringsnotatEksempel,
     tillatteHandlinger,
     historikk,
-    journalposter: [],
+    journalposter: harDirekteTilgang
+      ? hentJournalposterForSak(hentMockState(request), String(sak.id))
+      : [],
     dokumenter,
     filer,
+    mapper,
     harFilTilgang,
     andreSaker,
     saksbehandlere: mockSaksbehandlere,
@@ -572,11 +611,54 @@ export async function action({ request, params }: Route.ActionArgs) {
   const handling = hentTekstfelt(formData, "handling", "Ugyldig handling");
   const sakId = params.sakId;
 
-  if (!skalBrukeMockdata) {
-    return backendAction(request, sakId, handling, formData);
-  }
+  const utfør = () =>
+    skalBrukeMockdata
+      ? mockAction(request, sakId, handling, formData)
+      : backendAction(request, sakId, handling, formData);
 
-  return mockAction(request, sakId, handling, formData);
+  if (!saksflythandlinger.has(handling)) return utfør();
+  try {
+    return await utfør();
+  } catch (feil) {
+    return saksflytfeil(feil);
+  }
+}
+
+/** Handlingene fra saksflyt-modalen. Feil returneres slik at modalen beholder verdiene. */
+const saksflythandlinger = new Set(["endre_steg_dialog", "lagre_resultat", "endre_status"]);
+
+type SaksflytFeil = { ok: false; feil: string };
+
+function saksflytfeil(feil: unknown) {
+  if (feil instanceof Response) throw feil;
+  const konflikt =
+    "Endringen ble avvist. Saken kan være endret av noen andre. Last inn siden på nytt og prøv igjen.";
+  if (feil instanceof backendApi.BackendFeilException) {
+    const melding =
+      feil.status === 409
+        ? konflikt
+        : "Kunne ikke lagre endringen. Last inn siden på nytt og prøv igjen.";
+    return data<SaksflytFeil>({ ok: false, feil: melding }, { status: feil.status });
+  }
+  if (
+    feil &&
+    typeof feil === "object" &&
+    "init" in feil &&
+    "data" in feil &&
+    typeof feil.data === "string"
+  ) {
+    const status = (feil.init as ResponseInit | null)?.status ?? 400;
+    return data<SaksflytFeil>({ ok: false, feil: feil.data }, { status });
+  }
+  // fetch avviser med TypeError ved nettverks- og DNS-feil, før backend har svart.
+  if (feil instanceof TypeError) {
+    logger.error("Fikk ikke kontakt med backend fra saksflyt-modalen", { feil: feil.message });
+    return data<SaksflytFeil>(
+      { ok: false, feil: "Fikk ikke kontakt med baksystemet. Prøv igjen om litt." },
+      { status: 502 },
+    );
+  }
+  throw feil;
 }
 
 // --- Backend-action (ekte API-kall) ---
@@ -636,23 +718,8 @@ async function backendAction(
   switch (handling) {
     case "TILDEL_MEG": {
       const innlogget = await hentInnloggetBruker({ request });
-      const tillatte = await backendApi.hentTillatteHandlinger(token, sakId);
-      if (tillatte.tilstand.steg === "OPPRETTET" && !tillatte.tillatteSteg.includes("UTREDNING")) {
-        throw data("Saken kan ikke flyttes til Utredning i gjeldende tilstand", { status: 409 });
-      }
-      const tildelt = await backendApi.tildelKontrollsak(token, sakId, innlogget.navIdent);
-      if (tildelt.steg !== "OPPRETTET") return { ok: true, sak: tildelt };
-
-      try {
-        const sak = await backendApi.endreSteg(token, sakId, 1, "UTREDNING");
-        return { ok: true, sak };
-      } catch (feil) {
-        if (!(feil instanceof backendApi.BackendFeilException)) throw feil;
-        throw data(
-          "Saken ble tildelt deg, men kunne ikke flyttes til Utredning. Flytt saken manuelt før du fortsetter.",
-          { status: feil.status },
-        );
-      }
+      const sak = await backendApi.tildelKontrollsak(token, sakId, innlogget.navIdent);
+      return { ok: true, sak };
     }
     case "TILDEL": {
       const navIdent = hentTekstfelt(formData, "navIdent", "Ugyldig saksbehandler");
@@ -682,9 +749,6 @@ async function backendAction(
 
       let resultat: LagreResultatRequest | undefined;
       const registrerResultat = formData.get("registrerResultat") === "true";
-      if (nyttSteg === "AVSLUTTET" && !registrerResultat) {
-        throw data("Registrer resultat før saken flyttes til Avsluttet", { status: 400 });
-      }
       if (
         !harLagretResultatForOvergang(tillatte, nyttSteg as KontrollsakSteg) &&
         !registrerResultat
@@ -708,6 +772,9 @@ async function backendAction(
       if (registrerResultat && !resultat) {
         throw data("Velg et resultat før du fortsetter", { status: 400 });
       }
+      if (resultat?.paaklaget) {
+        throw data("En påklaget henleggelse lagres uten stegbytte", { status: 400 });
+      }
       if (
         manglerEndeligUtfallVedAvslutning(tillatte.tilstand, nyttSteg as KontrollsakSteg, resultat)
       ) {
@@ -721,6 +788,13 @@ async function backendAction(
         resultat,
         beskrivelse ?? undefined,
       );
+      return { ok: true, sak };
+    }
+    case "lagre_resultat": {
+      const tillatte = await backendApi.hentTillatteHandlinger(token, sakId);
+      krevTillattHandling(tillatte, "REGISTRER_RESULTAT");
+      const resultat = byggResultatForLagring(formData, tillatte);
+      const sak = await backendApi.lagreResultat(token, sakId, resultat);
       return { ok: true, sak };
     }
     case "endre_status": {
@@ -999,32 +1073,6 @@ async function backendAction(
   }
 }
 
-function formaterJournalposttype(type: string): string {
-  switch (type) {
-    case "INNGAAENDE":
-      return "Inngående";
-    case "UTGAAENDE":
-      return "Utgående";
-    case "NOTAT":
-      return "Notat";
-    default:
-      return type;
-  }
-}
-
-function formaterPrioritet(prioritet: string): string {
-  switch (prioritet) {
-    case "LAV":
-      return "lav";
-    case "NORMAL":
-      return "normal";
-    case "HOY":
-      return "høy";
-    default:
-      return prioritet.toLowerCase();
-  }
-}
-
 // --- Mock-action (lokal mock-tilstand) ---
 
 async function mockAction(
@@ -1065,6 +1113,17 @@ async function mockAction(
 
   const saksbehandlere = sak.saksbehandlere;
   const tillatte = hentMockTillatteHandlinger(sak);
+  const innloggetBruker = await hentInnloggetBruker({ request });
+  const leggTilBrukerhendelse = (
+    hendelseSak: KontrollsakResponse,
+    type: Parameters<typeof leggTilHendelse>[2],
+    tidspunkt?: string,
+    metadata?: Parameters<typeof leggTilHendelse>[4],
+  ) =>
+    leggTilHendelse(request, hendelseSak, type, tidspunkt, {
+      opprettetAvNavn: innloggetBruker.name,
+      ...metadata,
+    });
 
   if (
     !hentStegbaserteSaksregler(sak.steg).kanUtføreUtredningsarbeid &&
@@ -1078,25 +1137,16 @@ async function mockAction(
       if (sak.saksbehandlere.eier) {
         throw data("Saken har allerede en saksbehandler", { status: 409 });
       }
-      if (sak.steg === "OPPRETTET" && !tillatte.tillatteSteg.includes("UTREDNING")) {
-        throw data("Saken kan ikke flyttes til Utredning i gjeldende tilstand", { status: 409 });
-      }
-      const innlogget = await hentInnloggetBruker({ request });
       const valgtSaksbehandler = finnSaksbehandlerDetalj(
         mockSaksbehandlerDetaljer,
-        innlogget.navIdent,
+        innloggetBruker.navIdent,
       ) ?? {
-        navIdent: innlogget.navIdent,
-        navn: innlogget.name,
-        enhet: innlogget.enhet,
+        navIdent: innloggetBruker.navIdent,
+        navn: innloggetBruker.name,
+        enhet: innloggetBruker.enhet,
       };
       sak.saksbehandlere.eier = valgtSaksbehandler;
-      leggTilHendelse(request, sak, "SAK_TILDELT");
-      if (sak.steg === "OPPRETTET") {
-        sak.steg = "UTREDNING";
-        sak.status = "AKTIV";
-        leggTilHendelse(request, sak, "STATUS_ENDRET", undefined, { status: sak.status });
-      }
+      leggTilBrukerhendelse(sak, "SAK_TILDELT");
       break;
     }
     case "TILDEL": {
@@ -1109,7 +1159,7 @@ async function mockAction(
       };
 
       sak.saksbehandlere.eier = valgtSaksbehandler;
-      leggTilHendelse(request, sak, "SAK_TILDELT");
+      leggTilBrukerhendelse(sak, "SAK_TILDELT");
       break;
     }
     case "FRISTILL": {
@@ -1133,9 +1183,6 @@ async function mockAction(
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
       const forrigeStatus = sak.status;
       const registrerResultat = formData.get("registrerResultat") === "true";
-      if (nyttSteg === "AVSLUTTET" && !registrerResultat) {
-        throw data("Registrer resultat før saken flyttes til Avsluttet", { status: 400 });
-      }
       if (
         !harLagretResultatForOvergang(tillatte, nyttSteg as KontrollsakSteg) &&
         !registrerResultat
@@ -1153,6 +1200,7 @@ async function mockAction(
           registrerResultat,
         );
         if (registrerResultat && !resultat) throw new Error("Velg et resultat før du fortsetter");
+        if (resultat?.paaklaget) throw new Error("En påklaget henleggelse lagres uten stegbytte");
         if (
           manglerEndeligUtfallVedAvslutning(
             tillatte.tilstand,
@@ -1164,6 +1212,9 @@ async function mockAction(
         }
         if (resultat) {
           lagreMockResultat(kandidat, resultat);
+          if (kandidat.status === "PAAKLAGET" && resultat.politi) {
+            kandidat.status = "VENTER_PA_RESULTAT";
+          }
         }
       } catch (feil) {
         throw data(feil instanceof Error ? feil.message : "Ugyldige resultatfelter", {
@@ -1189,10 +1240,15 @@ async function mockAction(
           AVSLUTTET: null,
         } satisfies Record<KontrollsakSteg, KontrollsakStatus | null>
       )[nyttSteg as KontrollsakSteg];
-      leggTilHendelse(request, sak, getHendelsestypeForStegendring(sak.steg), undefined, {
+      leggTilBrukerhendelse(sak, getHendelsestypeForStegendring(sak.steg), undefined, {
         beskrivelse,
         status: nyttSteg === "AVSLUTTET" ? forrigeStatus : sak.status,
       });
+      break;
+    }
+    case "lagre_resultat": {
+      krevTillattHandling(tillatte, "REGISTRER_RESULTAT");
+      lagreMockResultat(sak, byggResultatForLagring(formData, tillatte));
       break;
     }
     case "endre_status": {
@@ -1208,8 +1264,7 @@ async function mockAction(
       if (status === "I_BERO") sak.statusFørBero = sak.status;
       if (varIBero) sak.statusFørBero = null;
       sak.status = status;
-      leggTilHendelse(
-        request,
+      leggTilBrukerhendelse(
         sak,
         varIBero || status === null ? "SAK_GJENOPPTATT" : getHendelsestypeForStatusendring(status),
         undefined,
@@ -1233,7 +1288,7 @@ async function mockAction(
         (saksbehandler) => saksbehandler.navIdent !== valgtSaksbehandler.navIdent,
       );
 
-      leggTilHendelse(request, sak, "ANSVARLIG_SAKSBEHANDLER_ENDRET", undefined, {
+      leggTilBrukerhendelse(sak, "ANSVARLIG_SAKSBEHANDLER_ENDRET", undefined, {
         berortSaksbehandlerNavn: valgtSaksbehandler.navn,
         berortSaksbehandlerNavIdent: valgtSaksbehandler.navIdent,
         berortSaksbehandlerEnhet,
@@ -1254,7 +1309,7 @@ async function mockAction(
           enhet: nySeksjon,
         };
       }
-      leggTilHendelse(request, sak, "MOTTAKSENHET_ENDRET");
+      leggTilBrukerhendelse(sak, "MOTTAKSENHET_ENDRET");
       break;
     }
     case "send_til_annen_enhet": {
@@ -1269,7 +1324,7 @@ async function mockAction(
         enhet: nySeksjon,
       };
       sak.saksbehandlere.eier = null;
-      leggTilHendelse(request, sak, "MOTTAKSENHET_ENDRET");
+      leggTilBrukerhendelse(sak, "MOTTAKSENHET_ENDRET");
       break;
     }
     case "rediger_saksinformasjon": {
@@ -1331,7 +1386,7 @@ async function mockAction(
       sak.kilde = validert.kilde;
       sak.arbeidsgivere = [...validert.arbeidsgivere];
       sak.ytelser = nyeYtelser;
-      leggTilHendelse(request, sak, "SAKSINFORMASJON_ENDRET", undefined, {
+      leggTilBrukerhendelse(sak, "SAKSINFORMASJON_ENDRET", undefined, {
         beskrivelse: beskrivEndredeFelter(endredeFelter),
       });
       return { ok: true, sak } satisfies ActionResult;
@@ -1409,7 +1464,7 @@ async function mockAction(
 
       if (!erAnsvarlig && !erAlleredeDelt) {
         saksbehandlere.deltMed.push(valgtSaksbehandler);
-        leggTilHendelse(request, sak, "TILGANG_DELT", undefined, {
+        leggTilBrukerhendelse(sak, "TILGANG_DELT", undefined, {
           berortSaksbehandlerNavn: valgtSaksbehandler.navn,
           berortSaksbehandlerNavIdent: valgtSaksbehandler.navIdent,
           berortSaksbehandlerEnhet,
@@ -1432,7 +1487,7 @@ async function mockAction(
         const berortSaksbehandlerEnhet =
           saksbehandler.enhet === null ? undefined : saksbehandler.enhet;
 
-        leggTilHendelse(request, sak, "TILGANG_FJERNET", undefined, {
+        leggTilBrukerhendelse(sak, "TILGANG_FJERNET", undefined, {
           berortSaksbehandlerNavn: saksbehandler.navn,
           berortSaksbehandlerNavIdent: saksbehandler.navIdent,
           berortSaksbehandlerEnhet,
@@ -1448,8 +1503,7 @@ async function mockAction(
       const tid = hentTekstfelt(formData, "tid", "Tid er påkrevd");
 
       const tidspunkt = lagTidspunktFraSkjema(dato, tid);
-      const { navIdent } = await hentInnloggetBruker({ request });
-      leggTilManuellHendelse(request, sak, tittel, notat, tidspunkt, navIdent);
+      leggTilManuellHendelse(request, sak, tittel, notat, tidspunkt, innloggetBruker.name);
       break;
     }
     case "rediger_historikk": {
@@ -1486,7 +1540,13 @@ async function mockAction(
         deler.push(`Knyttet til oppgave${oppgavetype ? `: ${oppgavetype}` : ""}`);
       }
 
-      leggTilHendelse(request, sak, "NOTAT_SENDT", undefined, {
+      leggTilJournalpost(hentMockState(request), String(sak.id), {
+        journalpostId: `demo-${crypto.randomUUID()}`,
+        journalposttype: "NOTAT",
+        tittel: malLabel ?? "Notat",
+        opprettet: new Date().toISOString(),
+      });
+      leggTilBrukerhendelse(sak, "NOTAT_SENDT", undefined, {
         beskrivelse: deler.join("\n"),
       });
       break;
@@ -1494,11 +1554,10 @@ async function mockAction(
     case "opprett_journalpost": {
       const journalposttype = hentValgfriTekst(formData, "journalposttype") ?? "NOTAT";
       const jpTittel = hentValgfriTekst(formData, "tittel") ?? "Journalpost";
-      const innhold = hentValgfriTekst(formData, "innhold") ?? "";
       const dokumentIds = formData.getAll("dokumentId").map(String);
       const vedleggIdsForArkivering = formData.getAll("vedleggId").map(String);
       const knyttTilOppgave = formData.get("knyttTilOppgave") === "true";
-      const { navIdent } = await hentInnloggetBruker({ request });
+      const { navIdent } = innloggetBruker;
       const journalpostId = `demo-${crypto.randomUUID()}`;
 
       const antallArkiverteVedlegg = vedleggIdsForArkivering.filter(
@@ -1517,20 +1576,16 @@ async function mockAction(
         antallArkiverteDokumenter += 1;
       }
 
-      const deler = [innhold];
-      if (knyttTilOppgave) {
-        const oppgavetype = hentValgfriTekst(formData, "oppgavetype") ?? "";
-        const prioritet = hentValgfriTekst(formData, "prioritet") ?? "";
-        const frist = hentValgfriTekst(formData, "frist") ?? "";
-        const oppgaveDeler = [`Knyttet til oppgave${oppgavetype ? `: ${oppgavetype}` : ""}`];
-        if (prioritet) oppgaveDeler.push(`Prioritet: ${formaterPrioritet(prioritet)}`);
-        if (frist) oppgaveDeler.push(`Frist: ${frist}`);
-        deler.push(oppgaveDeler.join(", "));
-      }
+      leggTilJournalpost(hentMockState(request), sakId, {
+        journalpostId,
+        journalposttype,
+        tittel: jpTittel,
+        opprettet: new Date().toISOString(),
+      });
 
-      leggTilHendelse(request, sak, "JOURNALPOST_OPPRETTET", undefined, {
-        tittel: `${formaterJournalposttype(journalposttype)}: ${jpTittel}`,
-        beskrivelse: deler.join("\n"),
+      leggTilBrukerhendelse(sak, "JOURNALPOST_OPPRETTET", undefined, {
+        tittel: journalposttype,
+        beskrivelse: "Journalpost opprettet",
       });
 
       for (let i = 0; i < antallArkiverteVedlegg; i += 1) {
@@ -1546,18 +1601,9 @@ async function mockAction(
 
       if (knyttTilOppgave) {
         const oppgavetype = hentValgfriTekst(formData, "oppgavetype") ?? "";
-        const prioritet = hentValgfriTekst(formData, "prioritet") ?? "";
-        const fristVerdi = hentValgfriTekst(formData, "frist") ?? "";
-        const behandlendeEnhet = hentValgfriTekst(formData, "behandlendeEnhet") ?? "";
-        const beskrivelse = hentValgfriTekst(formData, "beskrivelse") ?? "";
-        const oppgaveDeler: string[] = [];
-        if (prioritet) oppgaveDeler.push(`Prioritet: ${formaterPrioritet(prioritet)}`);
-        if (fristVerdi) oppgaveDeler.push(`Frist: ${fristVerdi}`);
-        if (behandlendeEnhet) oppgaveDeler.push(`Enhet: ${behandlendeEnhet}`);
-        if (beskrivelse) oppgaveDeler.push(beskrivelse);
-        leggTilHendelse(request, sak, "OPPGAVE_OPPRETTET", undefined, {
+        leggTilBrukerhendelse(sak, "OPPGAVE_OPPRETTET", undefined, {
           tittel: oppgavetype || "Oppgave",
-          beskrivelse: oppgaveDeler.join("\n"),
+          beskrivelse: "Oppgave opprettet",
         });
       }
 
@@ -1565,20 +1611,9 @@ async function mockAction(
     }
     case "opprett_oppgave": {
       const oppgavetype = hentValgfriTekst(formData, "oppgavetype") ?? "";
-      const prioritet = hentValgfriTekst(formData, "prioritet") ?? "";
-      const fristVerdi = hentValgfriTekst(formData, "frist") ?? "";
-      const behandlendeEnhet = hentValgfriTekst(formData, "behandlendeEnhet") ?? "";
-      const beskrivelse = hentValgfriTekst(formData, "beskrivelse") ?? "";
-
-      const deler: string[] = [];
-      if (prioritet) deler.push(`Prioritet: ${formaterPrioritet(prioritet)}`);
-      if (fristVerdi) deler.push(`Frist: ${fristVerdi}`);
-      if (behandlendeEnhet) deler.push(`Enhet: ${behandlendeEnhet}`);
-      if (beskrivelse) deler.push(beskrivelse);
-
-      leggTilHendelse(request, sak, "OPPGAVE_OPPRETTET", undefined, {
+      leggTilBrukerhendelse(sak, "OPPGAVE_OPPRETTET", undefined, {
         tittel: oppgavetype || "Oppgave",
-        beskrivelse: deler.join("\n"),
+        beskrivelse: "Oppgave opprettet",
       });
       break;
     }

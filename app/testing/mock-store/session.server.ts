@@ -5,6 +5,8 @@ import type {
   DokumentInnhold,
   DokumentNode,
   FilResponse,
+  JournalpostReferanse,
+  MappeResponse,
 } from "~/saker/filer/typer";
 import type { Varsel } from "~/varsler/typer";
 import { lagInitialKontrollsaker } from "./saker/fordeling.server";
@@ -26,6 +28,10 @@ export interface MockState {
    */
   dokumentKommentarer: Map<string, unknown[]>;
   filer: Map<string, FilResponse[]>;
+  /** Mapper per sak. Tomme mapper lagres også her. */
+  mapper: Map<string, MappeResponse[]>;
+  /** Journalposter opprettet fra saken, per sak. */
+  journalposter: Map<string, JournalpostReferanse[]>;
   varsler: Varsel[];
   nesteFordelingssakId: number;
   nesteHistorikkId: number;
@@ -51,6 +57,8 @@ function lagFreshState(): MockState {
     dokumentHistorikk: new Map(),
     dokumentKommentarer: new Map(),
     filer: new Map(),
+    mapper: new Map(),
+    journalposter: new Map(),
     varsler: lagInitialeVarsler(),
     nesteFordelingssakId: 10000,
     nesteHistorikkId,

@@ -10,6 +10,7 @@ import {
   getKontaktinformasjon,
   getPersonIdent,
   getStegOgStatusTekst,
+  hentSluttresultat,
   getYtelseTyper,
   hentStegVariant,
 } from "./visning";
@@ -140,4 +141,36 @@ describe("sak-visning", () => {
   it("returnerer standardtekst når kilde mangler", () => {
     expect(getKildeText(lagKontrollsak({ kilde: undefined as never }))).toBe("Ukjent kilde");
   });
+});
+
+describe("hentSluttresultat", () => {
+  it.each([
+    [null, null],
+    [{ utredning: { type: "HENLAGT" } }, "Henlagt"],
+    [{ utredning: { type: "FEILUTBETALINGSSAK_ORDINAER" } }, null],
+    [
+      {
+        utredning: { type: "FEILUTBETALINGSSAK_ORDINAER" },
+        forvaltning: {
+          type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+          endeligUtfall: { type: "FEILUTBETALINGSSAK_ORDINAER" },
+        },
+      },
+      "Feilutbetalingssak, ordinær",
+    ],
+    [
+      {
+        forvaltning: { type: "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE" },
+        strafferettsligVurdering: { type: "ANMELDT" },
+        politi: { type: "BOT" },
+      },
+      "Bot",
+    ],
+    [{ strafferettsligVurdering: { type: "HENLAGT" } }, "Henlagt"],
+  ] as [KontrollsakResponse["resultat"], string | null][])(
+    "viser resultatet saken ble avsluttet med",
+    (resultat, forventet) => {
+      expect(hentSluttresultat(resultat)).toBe(forventet);
+    },
+  );
 });

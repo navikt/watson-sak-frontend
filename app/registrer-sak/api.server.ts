@@ -176,7 +176,7 @@ export async function lastOppFil(
   }
 
   if (!BACKEND_API_URL) {
-    logger.error("Mangler backend-url for filopplasting", { sakId, filnavn: fil.name });
+    logger.error("Mangler backend-url for filopplasting", { sakId });
     return;
   }
 
@@ -198,6 +198,6 @@ export async function lastOppFil(
       });
     }
   } catch (err) {
-    logger.error("Nettverksfeil ved filopplasting", { sakId, filnavn: fil.name, err });
+    logger.error("Nettverksfeil ved filopplasting", { sakId, err });
   }
 }
