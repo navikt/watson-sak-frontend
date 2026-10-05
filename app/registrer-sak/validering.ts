@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+/** Maks lengde på det interne notatet ved opprettelse fra migrering. Håndheves også i retry-ruten. */
+export const NOTAT_MAKS_TEGN = 4000;
+
 /**
  * conform sin parseWithZod normaliserer tomme skjemafelt (f.eks. et <select>
  * uten valgt verdi) til `undefined` før Zod validerer. For påkrevde
@@ -153,7 +156,11 @@ export const opprettSakSchema = z
      * `docs/plans/migrering-avklaringer.md`. Lagres som et vanlig dokument på
      * saken, ikke i migreringstabellen.
      */
-    notat: z.string().trim().max(4000, "Notatet kan ikke være lengre enn 4000 tegn").optional(),
+    notat: z
+      .string()
+      .trim()
+      .max(NOTAT_MAKS_TEGN, `Notatet kan ikke være lengre enn ${NOTAT_MAKS_TEGN} tegn`)
+      .optional(),
   })
   .transform((data) => ({
     ...data,
