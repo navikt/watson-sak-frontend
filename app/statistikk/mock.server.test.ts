@@ -27,5 +27,11 @@ describe("lagMockStatistikk", () => {
     expect(resultat.sakstyper).toHaveLength(8);
     expect(resultat.kategorifordeling.length).toBeGreaterThan(1);
     expect(resultat.henlagt.reduce((sum, rad) => sum + rad.verdi, 0)).toBe(168);
+    expect(resultat.statusfordeling[0]).toEqual({
+      navn: "Opprettet",
+      filterverdi: "OPPRETTET",
+      verdi: resultat.periodeTall.innkomne,
+      prosent: 100,
+    });
   });
 });
