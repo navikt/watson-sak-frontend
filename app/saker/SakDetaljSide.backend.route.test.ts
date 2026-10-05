@@ -614,6 +614,30 @@ describe("SakDetaljSide loader — backend-sti", () => {
     expect(resultat.sak.dokumenter.length).toBe(1);
   });
 
+  it("eksponerer dokumenter/filer for vanlig saksbehandler når saken er avsluttet", async () => {
+    const filer = [{ id: "f1", filnavn: "vedlegg.pdf" }];
+    mockHentKontrollsak.mockResolvedValue({
+      ...grunnleggendeSak,
+      steg: "AVSLUTTET",
+      saksbehandlere: {
+        eier: null,
+        deltMed: [],
+        opprettetAv: { navIdent: "Z111111", navn: "Annen Saksbehandler", enhet: "4812" },
+      },
+    });
+    mockHentHendelser.mockResolvedValue([]);
+    mockHentJournalposter.mockResolvedValue([]);
+    mockHentSaksbehandlere.mockResolvedValue([]);
+    mockHentFiler.mockResolvedValue(filer);
+
+    const { loader } = await import("./SakDetaljSide.server");
+    const resultat = await loader(lagLoaderArgs());
+
+    expect(resultat.dokumenter.length).toBe(1);
+    expect(resultat.filer).toEqual(filer);
+    expect(resultat.sak.dokumenter.length).toBe(1);
+  });
+
   it("eksponerer dokumenter/filer i loader-responsen når innlogget bruker er leder", async () => {
     const filer = [{ id: "f1", filnavn: "vedlegg.pdf" }];
     mockHentInnloggetBruker.mockResolvedValueOnce({

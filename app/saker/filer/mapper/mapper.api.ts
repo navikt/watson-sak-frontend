@@ -5,7 +5,8 @@ import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
 import * as backendApi from "~/saker/api.server";
 import { hentStegbaserteSaksregler } from "~/saker/stegregler";
-import { harDirekteSakstilgang, hentSakstilgangFraMock } from "~/saker/tilgang.server";
+import { harDirekteSakstilgang } from "~/saker/sakstilgang";
+import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
 import {
   endreMappe,
   flyttDokumentTilMappe,

@@ -58,6 +58,7 @@ import {
   slettManuellHendelse,
 } from "./historikk/mock-data.server";
 import { finnSakMedReferanse } from "./id";
+import { kanLeseSaksinnhold } from "./sakstilgang";
 import { getSaksenhet } from "./selectors";
 import { hentStegbaserteSaksregler } from "./stegregler";
 import type { Route } from "./+types/SakDetaljSide.route";
@@ -492,17 +493,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     const andreSaker = await hentAndreSakerMedTilgangskontroll(token, sak);
 
     // Dokumenter/filer skal kun eksponeres i loader-responsen (og dermed nås av klienten)
-    // for saksbehandlere med direkte tilgang (eier/delt-med/leder) — se `kanSeFilområde` i
-    // SakDetaljSide.route.tsx, som styrer UI-visningen. Uten denne sperren ville
+    // for saksbehandlere med lesetilgang — se `kanLeseSaksinnhold`, som også styrer
+    // UI-visningen i SakDetaljSide.route.tsx. Uten denne sperren ville
     // metadata om dokumenter/filer likevel bli sendt til klienten i SSR-payloaden
     // selv om komponenten ikke rendrer dem. Sperren må gjelde både det dedikerte
     // `dokumenter`-feltet og `sak.dokumenter` (samme metadata nøstet i sak-objektet),
     // ellers lekker dokumentmetadata likevel via `sak` i loader-responsen.
-    const erEier = erSakseier(sak, innlogget.navIdent);
-    const harDeltTilgang = sak.saksbehandlere.deltMed.some(
-      (s) => s.navIdent === innlogget.navIdent,
-    );
-    const harDirekteTilgang = erEier || harDeltTilgang || innlogget.erLeder;
+    const harDirekteTilgang = kanLeseSaksinnhold(sak, innlogget);
     const sakForRespons = harDirekteTilgang ? sak : { ...sak, dokumenter: [] };
 
     return {
@@ -538,11 +535,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       innlogget.navIdent,
   );
   const harFilTilgang = erEier || harDeltTilgang || harTilgangViaKobling;
-  // Kun direkte tilgang (eier/delt-med) gir rett til å se dokumenter/filer i UI-en
-  // (se `kanSeFilområde` i SakDetaljSide.route.tsx). `harFilTilgang` er bredere
-  // (inkluderer tilgang via koblet sak) og brukes ikke til å avgjøre om
-  // dokument-/filmetadata skal eksponeres i loader-responsen.
-  const harDirekteTilgang = erEier || harDeltTilgang || innlogget.erLeder;
+  // Lesetilgang (eier/delt-med/leder, eller avsluttet sak) gir rett til å se dokumenter/filer.
+  // `harFilTilgang` er bredere (inkluderer tilgang via koblet sak) og brukes ikke til å
+  // avgjøre om dokument-/filmetadata skal eksponeres i loader-responsen.
+  const harDirekteTilgang = kanLeseSaksinnhold(sak, innlogget);
   const dokumenter = harDirekteTilgang ? hentDokumenttreForSak(request, String(sak.id)) : [];
   const filer = harDirekteTilgang ? hentFilerForSak(request, String(sak.id)) : [];
   const mapper = harDirekteTilgang ? hentMapperstierFraMock(request, String(sak.id)) : [];
