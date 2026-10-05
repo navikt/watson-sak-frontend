@@ -109,7 +109,7 @@ function hentSorteringsverdi(sak: FordelingSak, kolonne: UfordeltSorteringskolon
     case "misbrukstype":
       return sak.misbrukstyper.join(", ");
     case "status":
-      return sak.status ?? "";
+      return sak.status ?? "Aktiv";
     case "steg":
       return sak.steg;
     case "opprettet":

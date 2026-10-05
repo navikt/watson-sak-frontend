@@ -72,7 +72,7 @@ function hentSorteringsverdi(sak: KontrollsakResponse, kolonne: AlleSakerKolonne
     case "misbrukstype":
       return getMisbrukstyper(sak).join(", ");
     case "status":
-      return sak.status ? formaterStatus(sak.status) : "";
+      return formaterStatus(sak.status ?? "AKTIV");
     case "steg":
       return formaterSteg(sak.steg);
     case "opprettet":
