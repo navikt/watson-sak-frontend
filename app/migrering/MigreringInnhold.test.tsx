@@ -112,7 +112,7 @@ describe("MigreringInnhold", () => {
     const arnePidCelle = screen.getByText("800202");
     const arneRad = arnePidCelle.closest("tr");
     expect(arneRad).not.toBeNull();
-    expect(within(arneRad!).getByText("11223344556")).not.toBeNull();
+    expect(within(arneRad!).getByText("112233 44556")).not.toBeNull();
   });
 
   it("sender fnr for alle kandidater til behandling når Opprett sak trykkes", () => {

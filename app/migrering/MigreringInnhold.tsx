@@ -1,4 +1,3 @@
-import { ArrowsCirclepathIcon } from "@navikt/aksel-icons";
 import {
   Alert,
   BodyShort,
@@ -12,6 +11,7 @@ import {
 import { Form, Link, useSearchParams } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
+import { formaterFødselsnummer } from "~/utils/string-utils";
 import { sporHendelse } from "~/analytics/analytics";
 import {
   MIGRERING_SIDESTORRELSE,
@@ -24,13 +24,10 @@ export function MigreringInnhold({ lister }: { lister: MigreringLister }) {
   const kandidater = lister.mine.kandidater;
 
   return (
-    <div className="flex flex-col gap-6">
-      <HStack align="center" gap="space-8">
-        <ArrowsCirclepathIcon fontSize="1.5rem" aria-hidden />
-        <Heading level="1" size="medium">
-          Migrering
-        </Heading>
-      </HStack>
+    <div className="mt-4 mb-8 flex flex-col gap-6">
+      <Heading level="1" size="large">
+        Migrering
+      </Heading>
       {lister.utilgjengelig && (
         <Alert variant="warning" size="small">
           Vi fikk ikke hentet hele migreringslisten. Det kan mangle saker. Prøv igjen om litt.
@@ -60,7 +57,9 @@ export function MigreringInnhold({ lister }: { lister: MigreringLister }) {
               >
                 <Table.DataCell>{k.legacyPid}</Table.DataCell>
                 <Table.DataCell>
-                  {k.ansvar.type === "BEKREFTET" && k.personIdent ? k.personIdent : "–"}
+                  {k.ansvar.type === "BEKREFTET" && k.personIdent
+                    ? formaterFødselsnummer(k.personIdent)
+                    : "–"}
                 </Table.DataCell>
                 <Table.DataCell>{k.referansedato ?? "–"}</Table.DataCell>
                 <Table.DataCell>
