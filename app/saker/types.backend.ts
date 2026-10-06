@@ -216,6 +216,7 @@ const saksbehandlerSchema = z.object({
   navIdent: z.string(),
   navn: z.string(),
   enhet: z.string().nullable(),
+  enhetId: z.string().nullable().optional(),
 });
 
 const saksbehandlereSchema = z

@@ -33,11 +33,74 @@ describe("StatistikkDiagrammer", () => {
   it("viser nøkkeltall og diagramtitler", () => {
     renderMedRouter();
 
-    expect(screen.getByText("Øyeblikksbilde")).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Øyeblikksbilde" })).toBeDefined();
     expect(screen.getByText("Sakstype fordelt på steg")).toBeDefined();
     expect(screen.getByRole("heading", { name: "Saksflyt" })).toBeDefined();
     expect(screen.queryByText("Statusfordeling")).toBeNull();
     expect(screen.getByText("Sakskategorifordeling")).toBeDefined();
+  });
+
+  it("lenker åpne, aktive og ventende nøkkeltall til riktig saksfilter", () => {
+    renderMedRouter();
+
+    const lenkekort = screen.getAllByRole("link").filter((lenke) => {
+      return lenke.querySelector('svg[aria-hidden="true"]') !== null;
+    });
+    expect(lenkekort).toHaveLength(5);
+
+    const totalKort = screen.getByRole("link", { name: /Totalt/ }).firstElementChild;
+    expect(totalKort?.className).toContain("relative");
+    const ikonKlasser = totalKort?.querySelector("svg")?.parentElement?.className;
+    expect(ikonKlasser).toContain("absolute");
+    expect(ikonKlasser).toContain("top-[var(--ax-space-12)]");
+    expect(ikonKlasser).not.toContain("bottom-");
+    expect(totalKort?.querySelector("p[style]")?.getAttribute("style")).toContain(
+      "max-width: calc(100% - var(--ax-space-32))",
+    );
+    const tekster = totalKort?.querySelectorAll("p");
+    expect(tekster?.[0].textContent).toBe("87");
+    expect(tekster?.[1].textContent).toBe("Totalt");
+    expect(tekster?.[2].textContent).toBe("Antall åpne saker");
+    expect(tekster?.[2].getAttribute("style")).toBeNull();
+    expect(
+      screen
+        .getByRole("link", { name: /Venter på andre/ })
+        .firstElementChild?.getAttribute("data-color"),
+    ).toBe("meta-purple");
+    expect(screen.getByText("Saksbehandlingstid").closest("[data-color='info']")).not.toBeNull();
+
+    expect(screen.getByRole("link", { name: /Totalt/ }).getAttribute("href")).toBe(
+      "/alle-saker?steg=OPPRETTET&steg=UTREDNING&steg=FORVALTNING&steg=STRAFFERETTSLIG_VURDERING&steg=POLITI&enhet=ky153k",
+    );
+    expect(screen.getByRole("link", { name: /Aktive/ }).getAttribute("href")).toBe(
+      "/alle-saker?steg=UTREDNING&steg=STRAFFERETTSLIG_VURDERING&status=AKTIV&enhet=ky153k",
+    );
+    expect(screen.getByRole("link", { name: /Venter på andre/ }).getAttribute("href")).toBe(
+      "/alle-saker?steg=OPPRETTET&steg=UTREDNING&steg=FORVALTNING&steg=STRAFFERETTSLIG_VURDERING&steg=POLITI&status=VENTER_PA_INFORMASJON&status=I_BERO&status=HOS_FORVALTNING&status=HOS_POLITI&enhet=ky153k",
+    );
+    expect(screen.getByRole("link", { name: /Ikke fordelt/ }).getAttribute("href")).toBe(
+      "/fordeling",
+    );
+    expect(screen.getByRole("link", { name: /Eldste åpne/ }).getAttribute("href")).toBe(
+      "/saker/102",
+    );
+    expect(screen.queryByRole("link", { name: /Saksbehandlingstid/ })).toBeNull();
+    expect(screen.getByText("Info/I bero/Forvaltning/Politi")).toBeDefined();
+  });
+
+  it("viderefører enheter og saksbehandler fra det valgte statistikkomfanget", () => {
+    renderMedRouter((data) => ({
+      ...data,
+      omfangEnheter: ["ky153k", "je679z"],
+      omfangAnsvarligNavIdent: "Z123456",
+    }));
+
+    expect(screen.getByRole("link", { name: /Totalt/ }).getAttribute("href")).toBe(
+      "/alle-saker?steg=OPPRETTET&steg=UTREDNING&steg=FORVALTNING&steg=STRAFFERETTSLIG_VURDERING&steg=POLITI&enhet=ky153k&enhet=je679z&saksbehandler=Z123456",
+    );
+    expect(screen.getByRole("link", { name: /Aktive/ }).getAttribute("href")).toBe(
+      "/alle-saker?steg=UTREDNING&steg=STRAFFERETTSLIG_VURDERING&status=AKTIV&enhet=ky153k&enhet=je679z&saksbehandler=Z123456",
+    );
   });
 
   it("lar brukeren skjule et steg i stablede stolper", () => {

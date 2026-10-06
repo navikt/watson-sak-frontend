@@ -74,6 +74,18 @@ describe("Fordeling api.server", () => {
     expect(url).toContain("steg=UTREDES");
   }, 15000);
 
+  it("sender status som gjentatte query-parametre", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(tomSideSvar);
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { hentKontrollsaker } = await import("./api.server");
+
+    await hentKontrollsaker({ token: "t", page: 1, size: 20, status: ["AKTIV"] });
+
+    const url = fetchMock.mock.calls[0][0] as string;
+    expect(url).toContain("status=AKTIV");
+  }, 15000);
+
   it("sender utenAnsvarlig=true for fordeling", async () => {
     const fetchMock = vi.fn().mockResolvedValue(tomSideSvar);
     vi.stubGlobal("fetch", fetchMock);
@@ -84,6 +96,27 @@ describe("Fordeling api.server", () => {
 
     const url = fetchMock.mock.calls[0][0] as string;
     expect(url).toContain("utenAnsvarlig=true");
+  }, 15000);
+
+  it("sender status og statussteg som gjentatte query-parametre", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(tomSideSvar);
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { hentKontrollsaker } = await import("./api.server");
+
+    await hentKontrollsaker({
+      token: "t",
+      page: 1,
+      size: 20,
+      status: ["VENTER_PA_INFORMASJON", "I_BERO"],
+      statusSteg: ["FORVALTNING", "POLITI"],
+    });
+
+    const url = fetchMock.mock.calls[0][0] as string;
+    const params = new URL(url).searchParams;
+    expect(params.getAll("status")).toEqual(["VENTER_PA_INFORMASJON", "I_BERO"]);
+    expect(params.getAll("statusSteg")).toEqual(["FORVALTNING", "POLITI"]);
+    expect(params.has("arbeidsfilter")).toBe(false);
   }, 15000);
 
   it("sender kategori, misbruktype og merking som gjentatte query-parametre", async () => {

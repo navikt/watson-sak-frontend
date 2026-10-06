@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router";
 import { useLocation } from "react-router";
 import { Filtre } from "./Filtre";
+import { STATUSFILTER_VALG } from "./statusfilter";
 
 const ALTERNATIVER = {
   saksbehandler: [],
+  status: [],
   enhet: [],
   merking: [],
   steg: [],
@@ -21,6 +23,33 @@ const ALTERNATIVER = {
 };
 
 describe("Filtre – koblet kategori/misbrukstype", () => {
+  it("viser vanlige statusvalg og lar brukeren endre dem uten saksutvalg", () => {
+    function LocationSearch() {
+      return <div data-testid="search">{useLocation().search}</div>;
+    }
+    render(
+      <MemoryRouter initialEntries={["/?status=I_BERO&status=HOS_POLITI&steg=UTREDNING&side=3"]}>
+        <Filtre alternativer={{ ...ALTERNATIVER, status: STATUSFILTER_VALG }} />
+        <LocationSearch />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("Status")).toBeDefined();
+    expect(screen.queryByText("Saksutvalg")).toBeNull();
+    expect(screen.getByRole("button", { name: "I bero" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+    expect(screen.getByRole("button", { name: "Hos politiet" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "I bero" }));
+    fireEvent.click(screen.getByRole("button", { name: "Venter på informasjon" }));
+    const params = new URLSearchParams(screen.getByTestId("search").textContent ?? "");
+    expect(params.getAll("status")).toEqual(["HOS_POLITI", "VENTER_PA_INFORMASJON"]);
+    expect(params.getAll("steg")).toEqual(["UTREDNING"]);
+    expect(params.has("side")).toBe(false);
+    expect(params.has("arbeidsfilter")).toBe(false);
+  });
+
   it("viser alle misbrukstyper når ingen kategori er valgt", () => {
     render(
       <MemoryRouter initialEntries={["/"]}>

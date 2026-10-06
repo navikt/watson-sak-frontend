@@ -68,7 +68,7 @@ export async function loader({ request }: { request: Request }) {
         : undefined,
   };
   const data = skalBrukeMockdata
-    ? lagMockStatistikk(spørring, bruker.enhet, bruker.enhetId)
+    ? lagMockStatistikk(spørring, bruker.enhet, bruker.enhetId, bruker.navIdent)
     : await hentStatistikk(await getBackendOboToken(request), spørring);
   return { data, spørring, bruker };
 }

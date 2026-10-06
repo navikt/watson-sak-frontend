@@ -9,6 +9,7 @@ import type { KontrollsakSteg } from "~/saker/types.backend";
 import { matcherSteg } from "~/saker/steg";
 import { formaterStatus, formaterSteg } from "~/saker/visning";
 import { getSaksreferanse } from "~/saker/id";
+import { matcherStatusfilter, type Statusfilter } from "./statusfilter";
 
 export const sorteringskolonner = [
   "saksid",
@@ -31,6 +32,7 @@ type FilterState = {
   misbrukstype: string[];
   merking: string[];
   steg: KontrollsakSteg[];
+  status?: Statusfilter[];
 };
 
 export function normaliserFilterVerdier(verdier: string[]): string[] {
@@ -46,7 +48,12 @@ export function filtrerSaker(
   filter: FilterState,
 ): KontrollsakResponse[] {
   return saker.filter((sak) => {
-    if (filter.enhet.length > 0 && !filter.enhet.includes(sak.enhet ?? "")) return false;
+    if (
+      filter.enhet.length > 0 &&
+      !filter.enhet.includes(sak.enhet ?? "") &&
+      !filter.enhet.includes(sak.saksbehandlere.eier?.enhetId ?? "")
+    )
+      return false;
     if (
       filter.saksbehandler.length > 0 &&
       !filter.saksbehandler.includes(sak.saksbehandlere.eier?.navIdent ?? "")
@@ -61,6 +68,7 @@ export function filtrerSaker(
     if (filter.merking.length > 0 && !sak.merking.some((m) => filter.merking.includes(m)))
       return false;
     if (!matcherSteg(sak.steg, filter.steg)) return false;
+    if (!matcherStatusfilter(sak, filter.status ?? [])) return false;
     return true;
   });
 }

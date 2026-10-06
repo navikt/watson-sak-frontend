@@ -4,6 +4,7 @@ export function lagMockStatistikk(
   spørring: StatistikkSpørring,
   avdeling: string,
   avdelingId: string | null,
+  navIdent?: string,
 ): Statistikk {
   const statuser = [
     ["Opprettet", "OPPRETTET"],
@@ -27,12 +28,20 @@ export function lagMockStatistikk(
       : spørring.fra === spørring.til
         ? spørring.fra
         : "Egendefinert periode";
+  const omfangEnheter =
+    spørring.nivaa === "underavdeling"
+      ? [spørring.enhetId ?? avdelingId].filter((enhetId): enhetId is string => enhetId !== null)
+      : spørring.nivaa === "hovedavdeling" && avdelingId
+        ? [avdelingId]
+        : [];
 
   return {
     valgtOmfang:
       spørring.enhetId || (spørring.nivaa === "underavdeling" && avdelingId)
         ? `enhet:${spørring.enhetId ?? avdelingId}`
         : spørring.nivaa,
+    omfangEnheter,
+    omfangAnsvarligNavIdent: spørring.nivaa === "meg" ? (navIdent ?? null) : null,
     organisasjonsvalg: [
       { verdi: "meg", label: "Meg selv", type: "meg" },
       {
@@ -68,16 +77,21 @@ export function lagMockStatistikk(
       },
     ],
     nøkkeltall: [
-      { label: "Totalt", verdi: "87", forklaring: "Antall saker", tone: "accent" },
-      { label: "Aktive", verdi: "60", forklaring: "Utrede + straffevurd.", tone: "warning" },
+      { label: "Totalt", verdi: "87", forklaring: "Antall åpne saker", tone: "accent" },
+      {
+        label: "Aktive",
+        verdi: "60",
+        forklaring: "Aktiv i utredning eller strafferettslig vurdering",
+        tone: "warning",
+      },
       {
         label: "Venter på andre",
         verdi: "15",
-        forklaring: "Info/berostilling/politi",
+        forklaring: "Info/I bero/Forvaltning/Politi",
         tone: "accent",
       },
       { label: "Ikke fordelt", verdi: "12", forklaring: "Saker", tone: "danger" },
-      { label: "Eldste åpne", verdi: "27 mnd", forklaring: "Sak 102", tone: "neutral" },
+      { label: "Eldste åpne sak", verdi: "27 mnd", forklaring: "Sak 102", tone: "neutral" },
       {
         label: "Saksbehandlingstid",
         verdi: "4 mnd",
