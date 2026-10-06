@@ -27,6 +27,7 @@ import {
   sorterSaker,
 } from "./saker-utils";
 import { Filtre } from "./Filtre";
+import { parseStatusfilter, STATUSFILTER_VALG, tilBackendStatusfilter } from "./statusfilter";
 
 const RADER_PER_SIDE = 20;
 const STANDARD_KOLONNE: AlleSakerKolonne = "opprettet";
@@ -73,6 +74,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const filterSteg = parseSteg(
     normaliserFilterVerdier(parseMultiValueParam(url.searchParams, "steg")),
   );
+  const filterStatus = parseStatusfilter(parseMultiValueParam(url.searchParams, "status"));
 
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
@@ -87,6 +89,7 @@ export async function loader({ request }: Route.LoaderArgs) {
         merking: filterMerking.length > 0 ? filterMerking : undefined,
         enhet: filterEnhet.length > 0 ? filterEnhet : undefined,
         steg: filterSteg.length > 0 ? filterSteg : undefined,
+        ...tilBackendStatusfilter(filterStatus),
         sortering: lagSorteringParam(sorterKolonne, sorterRetning),
       }),
       backendApi.hentSaksbehandlere(token),
@@ -115,6 +118,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     misbrukstype: filterMisbrukstype,
     merking: filterMerking,
     steg: filterSteg,
+    status: filterStatus,
   });
 
   const sorterteSaker = sorterSaker(filtrerteSaker, sorterKolonne, sorterRetning);
@@ -171,6 +175,7 @@ export default function AlleSakerSide() {
     "misbrukstype",
     "merking",
     "steg",
+    "status",
   ].some((nøkkel) => searchParams.getAll(nøkkel).some((verdi) => verdi.trim() !== ""));
   const tomTekst = harAktiveFiltre ? "Endre filtrering for å finne saker" : "Ingen saker funnet.";
 
@@ -265,7 +270,11 @@ export default function AlleSakerSide() {
                   kategori: kategoriAlternativer,
                   misbrukstype: misbrukstypeAlternativer,
                   merking: merker,
-                  steg: ALLE_STEG.map((s) => ({ label: formaterSteg(s), value: s })),
+                  steg: [...ALLE_STEG, "AVSLUTTET" as const].map((s) => ({
+                    label: formaterSteg(s),
+                    value: s,
+                  })),
+                  status: STATUSFILTER_VALG,
                 }}
               />
             </aside>

@@ -4,6 +4,8 @@ const antall = z.number().int().nonnegative();
 
 export const statistikkResponseSchema = z.object({
   valgtOmfang: z.string().min(1),
+  omfangEnheter: z.array(z.string()).default([]),
+  omfangAnsvarligNavIdent: z.string().nullable().optional(),
   organisasjonsvalg: z.array(
     z.discriminatedUnion("type", [
       z.object({

@@ -10,6 +10,7 @@ describe("lagMockStatistikk", () => {
     );
 
     expect(resultat.valgtOmfang).toBe("enhet:ky153k");
+    expect(resultat.omfangEnheter).toEqual(["ky153k"]);
     expect(resultat.organisasjonsvalg.map((valg) => valg.label)).toEqual([
       "Meg selv",
       "Min avdeling (Øst)",
@@ -33,5 +34,17 @@ describe("lagMockStatistikk", () => {
       verdi: resultat.periodeTall.innkomne,
       prosent: 100,
     });
+  });
+
+  it("binder «meg»-omfanget til innlogget NAV-ident", () => {
+    const resultat = lagMockStatistikk(
+      { nivaa: "meg", fra: "2026-09-01", til: "2026-09-30" },
+      "Øst",
+      "ky153k",
+      "Z123456",
+    );
+
+    expect(resultat.omfangEnheter).toEqual([]);
+    expect(resultat.omfangAnsvarligNavIdent).toBe("Z123456");
   });
 });

@@ -15,6 +15,7 @@ type KontrollsakerFilter = {
   ytelseType?: string[];
   merking?: string[];
   status?: string[];
+  statusSteg?: string[];
   enhet?: string[];
   utenAnsvarlig?: boolean;
   utenStatus?: boolean;
@@ -39,6 +40,7 @@ function byggKontrollsakerParams(args: HentKontrollsakerArgs): URLSearchParams {
   for (const v of args.ytelseType ?? []) params.append("ytelseType", v);
   for (const v of args.merking ?? []) params.append("merking", v);
   for (const v of args.status ?? []) params.append("status", v);
+  for (const v of args.statusSteg ?? []) params.append("statusSteg", v);
   for (const v of args.enhet ?? []) params.append("enhet", v);
   if (args.sortering) params.set("sortering", args.sortering);
   return params;

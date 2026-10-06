@@ -26,6 +26,7 @@ export function parseSteg(verdier: string[]): KontrollsakSteg[] {
 export function matcherSteg(sakSteg: KontrollsakSteg, filterSteg: KontrollsakSteg[]): boolean {
   if (filterSteg.length === 0) return true;
 
-  const normalisertSakSteg = sakSteg === "UTREDES" ? "UTREDNING" : sakSteg;
+  const normalisertSakSteg =
+    sakSteg === "UTREDES" ? "UTREDNING" : sakSteg === "ANMELDT" ? "POLITI" : sakSteg;
   return filterSteg.includes(normalisertSakSteg);
 }

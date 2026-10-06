@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const testState = vi.hoisted(() => ({ skalBrukeMockdata: true }));
 const getBackendOboTokenMock = vi.hoisted(() => vi.fn().mockResolvedValue("token-123"));
 const hentInnloggetBrukerMock = vi.hoisted(() =>
-  vi.fn().mockResolvedValue({ enhet: "Øst", enhetId: "ky153k" }),
+  vi.fn().mockResolvedValue({ enhet: "Øst", enhetId: "ky153k", navIdent: "Z123456" }),
 );
 const hentStatistikkMock = vi.hoisted(() => vi.fn());
 const lagMockStatistikkMock = vi.hoisted(() => vi.fn());
@@ -37,6 +37,7 @@ describe("statistikk-loader", () => {
       { nivaa: "underavdeling", fra: "2026-09-01", til: "2026-09-30" },
       "Øst",
       "ky153k",
+      "Z123456",
     );
     expect(getBackendOboTokenMock).not.toHaveBeenCalled();
   });
@@ -67,6 +68,7 @@ describe("statistikk-loader", () => {
       { nivaa: "underavdeling", fra: `${år}-01-01`, til: `${år}-12-31` },
       "Øst",
       "ky153k",
+      "Z123456",
     );
   });
 

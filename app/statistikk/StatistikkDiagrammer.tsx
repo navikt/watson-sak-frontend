@@ -1,7 +1,10 @@
-import { BodyShort, Box, Button, Heading, HGrid, HStack, VStack } from "@navikt/ds-react";
+import { BodyShort, Box, Button, Detail, Heading, HGrid, HStack, VStack } from "@navikt/ds-react";
+import { ChevronRightCircleIcon } from "@navikt/aksel-icons";
 import { useState, type ReactNode } from "react";
 import { Link as RouterLink } from "react-router";
 import { RouteConfig } from "~/routeConfig";
+import { getSaksreferanse } from "~/saker/id";
+import { ALLE_STEG } from "~/saker/steg";
 import { Diagramkort, Legend } from "./Diagramkort";
 import { fargeForKode } from "./farger";
 import { Saksflyt } from "./Saksflyt";
@@ -28,10 +31,46 @@ function lagSaksfilterUrl(parametre: Record<string, string>) {
   return `${RouteConfig.ALLE_SAKER}?${searchParams.toString()}`;
 }
 
-/** «Alle saker» støtter i dag bare filtrering på enhet, saksbehandler, kategori,
- * misbrukstype, merking og steg. Varslene under er basert på behandlingstid, som
- * ikke har noe tilsvarende filter der ennå. Vi lenker derfor kun videre til en
- * usfiltrert saksoversikt i stedet for å love en filtrering vi ikke kan innfri. */
+function lagStegfilterUrl(steg: string[], data: Statistikk, status?: string[]): string {
+  const searchParams = new URLSearchParams();
+  steg.forEach((verdi) => searchParams.append("steg", verdi));
+  status?.forEach((verdi) => searchParams.append("status", verdi));
+  data.omfangEnheter.forEach((enhet) => searchParams.append("enhet", enhet));
+  if (data.omfangAnsvarligNavIdent) {
+    searchParams.set("saksbehandler", data.omfangAnsvarligNavIdent);
+  }
+  return `${RouteConfig.ALLE_SAKER}?${searchParams.toString()}`;
+}
+
+function lenkeForNøkkeltall(
+  tall: Statistikk["nøkkeltall"][number],
+  data: Statistikk,
+): string | null {
+  switch (tall.label) {
+    case "Totalt":
+      return lagStegfilterUrl(ALLE_STEG, data);
+    case "Aktive":
+      return lagStegfilterUrl(["UTREDNING", "STRAFFERETTSLIG_VURDERING"], data, ["AKTIV"]);
+    case "Venter på andre":
+      return lagStegfilterUrl(ALLE_STEG, data, [
+        "VENTER_PA_INFORMASJON",
+        "I_BERO",
+        "HOS_FORVALTNING",
+        "HOS_POLITI",
+      ]);
+    case "Ikke fordelt":
+      return RouteConfig.FORDELING;
+    case "Eldste åpne sak": {
+      const sakId = /^Sak (\d+)$/.exec(tall.forklaring)?.[1];
+      return sakId ? RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sakId)) : null;
+    }
+    default:
+      return null;
+  }
+}
+
+/** Varslene er basert på behandlingstid, som ikke har et tilsvarende saksfilter ennå.
+ * Vi lenker derfor til saksoversikten uten filter i stedet for å love en filtrering vi ikke kan innfri. */
 function LenkeTilSaker() {
   return (
     <Button as={RouterLink} to={RouteConfig.ALLE_SAKER} variant="tertiary" size="small">
@@ -116,35 +155,12 @@ export function StatistikkDiagrammer({
       </HGrid>
 
       <Box as="section" aria-label="Nøkkeltall">
-        <BodyShort size="small" weight="semibold">
+        <Heading level="2" size="small">
           Øyeblikksbilde
-        </BodyShort>
-        <HGrid columns={{ xs: 2, sm: 3, xl: 6 }} gap="space-8" className="mt-2">
+        </Heading>
+        <HGrid columns={{ xs: 2, sm: 3, xl: 6 }} gap="space-12" className="mt-2">
           {data.nøkkeltall.map((tall) => (
-            <Box
-              key={tall.label}
-              borderColor="neutral-subtle"
-              borderWidth="1"
-              borderRadius="4"
-              padding="space-12"
-              className={`border-t-4 ${
-                tall.tone === "danger"
-                  ? "border-t-ax-border-danger"
-                  : tall.tone === "warning"
-                    ? "border-t-ax-border-warning"
-                    : tall.tone === "success"
-                      ? "border-t-ax-border-success"
-                      : tall.tone === "accent"
-                        ? "border-t-ax-border-accent"
-                        : "border-t-ax-border-neutral"
-              }`}
-            >
-              <BodyShort size="small">{tall.label}</BodyShort>
-              <BodyShort size="large" weight="semibold">
-                {tall.verdi}
-              </BodyShort>
-              <BodyShort size="small">{tall.forklaring}</BodyShort>
-            </Box>
+            <NøkkeltallKort key={tall.label} tall={tall} data={data} />
           ))}
         </HGrid>
       </Box>
@@ -379,6 +395,73 @@ export function StatistikkDiagrammer({
         </>
       )}
     </VStack>
+  );
+}
+
+function NøkkeltallKort({
+  tall,
+  data,
+}: {
+  tall: Statistikk["nøkkeltall"][number];
+  data: Statistikk;
+}) {
+  const lenke = lenkeForNøkkeltall(tall, data);
+  const farge =
+    tall.label === "Venter på andre"
+      ? "meta-purple"
+      : tall.label === "Saksbehandlingstid"
+        ? "info"
+        : tall.tone;
+  const kort = (
+    <Box
+      background="default"
+      data-color={farge}
+      borderColor="neutral-subtle"
+      borderWidth="1"
+      borderRadius="8"
+      paddingInline="space-16"
+      paddingBlock="space-12"
+      style={{ borderTopColor: `var(--ax-border-${farge})` }}
+      className={`relative h-full border-t-4 ${
+        lenke ? "transition-colors hover:border-ax-border-accent" : ""
+      }`}
+    >
+      <VStack gap="space-12">
+        <Heading
+          as="p"
+          size="medium"
+          textColor="subtle"
+          data-color={farge}
+          style={lenke ? { maxWidth: "calc(100% - var(--ax-space-32))" } : undefined}
+        >
+          {tall.verdi}
+        </Heading>
+        <div>
+          <Detail weight="semibold" data-color="neutral">
+            {tall.label}
+          </Detail>
+          <Detail textColor="subtle" data-color="neutral">
+            {tall.forklaring}
+          </Detail>
+        </div>
+      </VStack>
+      {lenke && (
+        <span className="absolute top-[var(--ax-space-12)] right-[var(--ax-space-16)] text-ax-text-neutral">
+          <ChevronRightCircleIcon fontSize="1.5rem" aria-hidden="true" />
+        </span>
+      )}
+    </Box>
+  );
+
+  return lenke ? (
+    <RouterLink
+      to={lenke}
+      className="block h-full rounded-[var(--ax-radius-8)] text-ax-text-neutral no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-focus"
+    >
+      {kort}
+    </RouterLink>
+  ) : (
+    kort
   );
 }
 
