@@ -8,8 +8,8 @@ import {
   formaterYtelseType,
 } from "~/saker/visning";
 
-export function erEierlosKontrollsak(kontrollsak: KontrollsakResponse) {
-  return kontrollsak.saksbehandlere.eier === null;
+export function erKlarForFordeling(kontrollsak: KontrollsakResponse) {
+  return kontrollsak.saksbehandlere.eier === null && kontrollsak.steg !== "AVSLUTTET";
 }
 
 export function mapKontrollsakTilFordelingSak(kontrollsak: KontrollsakResponse): FordelingSak {

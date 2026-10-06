@@ -72,7 +72,15 @@ describe("MineSakerSide loader", () => {
   it("returnerer filteralternativer for steg og status", async () => {
     const resultat = await loader(loaderArgs);
 
-    expect(resultat.filterAlternativer.steg.length).toBe(6);
+    expect(resultat.filterAlternativer.steg).toContainEqual({
+      verdi: "UTREDNING",
+      etikett: "Utredning",
+    });
+    expect(resultat.filterAlternativer.steg).toHaveLength(5);
+    expect(resultat.filterAlternativer.steg).not.toContainEqual({
+      verdi: "AVSLUTTET",
+      etikett: "Avsluttet",
+    });
     expect(resultat.filterAlternativer.status.length).toBe(6);
     expect(resultat.filterAlternativer.status).toContainEqual({
       verdi: "INGEN",
@@ -89,6 +97,19 @@ describe("MineSakerSide loader", () => {
 
   it("bruker URL-parametere for filtrering når de er satt", async () => {
     const args = {
+      request: new Request("http://localhost/mine-saker?steg=UTREDES"),
+      params: {},
+      context: {},
+    } as Parameters<typeof loader>[0];
+
+    const resultat = await loader(args);
+
+    expect(resultat.aktivtFilter.steg).toEqual(["UTREDNING"]);
+    expect(resultat.aktivtFilter.status).toEqual([]);
+  });
+
+  it("beholder avsluttet i eksisterende filterlenker selv om det ikke vises som valg", async () => {
+    const args = {
       request: new Request("http://localhost/mine-saker?steg=AVSLUTTET"),
       params: {},
       context: {},
@@ -97,7 +118,6 @@ describe("MineSakerSide loader", () => {
     const resultat = await loader(args);
 
     expect(resultat.aktivtFilter.steg).toEqual(["AVSLUTTET"]);
-    expect(resultat.aktivtFilter.status).toEqual([]);
   });
 });
 
@@ -108,6 +128,16 @@ describe("filtrerMineSaker", () => {
     const resultat = filtrerMineSaker(saker, ["OPPRETTET"], []);
     expect(resultat).toHaveLength(1);
     expect(resultat[0].steg).toBe("OPPRETTET");
+  });
+
+  it("matcher gamle UTREDES-saker når filteret bruker UTREDNING", () => {
+    const saker = [
+      lagKontrollsak({ steg: "UTREDES" }),
+      lagKontrollsak({ id: 10, steg: "UTREDNING" }),
+      lagKontrollsak({ id: 11, steg: "OPPRETTET" }),
+    ];
+
+    expect(filtrerMineSaker(saker, ["UTREDNING"], []).map((sak) => sak.id)).toEqual([9, 10]);
   });
 
   it("filtrerer på ventestatus INGEN (ikke blokkert)", () => {

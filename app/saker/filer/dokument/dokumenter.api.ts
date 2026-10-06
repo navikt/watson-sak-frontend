@@ -58,7 +58,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
     const token = await getBackendOboToken(request);
     const sak = await backendApi.hentKontrollsak(token, sakReferanse);
     if (!hentStegbaserteSaksregler(sak.steg).kanRedigereDokumenter) {
-      throw data("Dokumenter kan ikke endres før saken er satt til Utredes", { status: 403 });
+      throw data("Dokumenter kan ikke endres før saken er satt til Utredning", { status: 403 });
     }
 
     if (request.method === "DELETE") {

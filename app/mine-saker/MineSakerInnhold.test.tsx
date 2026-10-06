@@ -47,11 +47,10 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
 const standardFilterAlternativer = {
   steg: [
     { verdi: "OPPRETTET", etikett: "Opprettet" },
-    { verdi: "UTREDES", etikett: "Utredes" },
+    { verdi: "UTREDNING", etikett: "Utredning" },
     { verdi: "FORVALTNING", etikett: "Forvaltning" },
     { verdi: "STRAFFERETTSLIG_VURDERING", etikett: "Strafferettslig vurdering" },
     { verdi: "POLITI", etikett: "Politi" },
-    { verdi: "AVSLUTTET", etikett: "Avsluttet" },
   ],
   status: [
     { verdi: "INGEN", etikett: "Aktiv" },
@@ -65,7 +64,7 @@ const standardFilterAlternativer = {
 const standardAktivtFilter = {
   steg: [
     "OPPRETTET" as const,
-    "UTREDES" as const,
+    "UTREDNING" as const,
     "FORVALTNING" as const,
     "STRAFFERETTSLIG_VURDERING" as const,
   ],
@@ -131,7 +130,8 @@ describe("MineSakerInnhold", () => {
       within(screen.getByRole("group", { name: "Filtrer saker" })).getByText("Status"),
     ).toBeDefined();
     expect(screen.getByRole("button", { name: "Opprettet" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Utredes" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Utredning" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Avsluttet" })).toBeNull();
     expect(screen.getByRole("button", { name: "Aktiv" })).toBeDefined();
     expect(screen.getByRole("button", { name: "I bero" })).toBeDefined();
   });
@@ -181,8 +181,7 @@ describe("MineSakerInnhold", () => {
     const opprettetChip = screen.getByRole("button", { name: "Opprettet" });
     expect(opprettetChip.getAttribute("aria-pressed")).toBe("true");
 
-    const avsluttetChip = screen.getByRole("button", { name: "Avsluttet" });
-    expect(avsluttetChip.getAttribute("aria-pressed")).toBe("false");
+    expect(screen.queryByRole("button", { name: "Avsluttet" })).toBeNull();
   });
 
   it("viser 'Delt med meg'-seksjon når det finnes delt-med-saker", () => {

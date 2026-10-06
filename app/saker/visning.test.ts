@@ -64,7 +64,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
 
 describe("sak-visning", () => {
   it("formaterer backend-steg til visningstekst", () => {
-    expect(formaterSteg("UTREDES")).toBe("Utredes");
+    expect(formaterSteg("UTREDES")).toBe("Utredning");
   });
 
   it("formaterer OPPRETTET-steg til «Opprettet»", () => {
@@ -107,19 +107,19 @@ describe("sak-visning", () => {
   it("henter formatert steg og status fra kontrollsak", () => {
     expect(
       getStegOgStatusTekst(lagKontrollsak({ steg: "UTREDES", status: "VENTER_PA_VEDTAK" })),
-    ).toBe("Venter på vedtak · Utredes");
+    ).toBe("Venter på vedtak · Utredning");
   });
 
   it("viser status med underliggende steg", () => {
     expect(getStegOgStatusTekst(lagKontrollsak({ steg: "UTREDES", status: "I_BERO" }))).toBe(
-      "I bero · Utredes",
+      "I bero · Utredning",
     );
   });
 
   it("formaterer VENTER_PA_RESULTAT-status til «Venter på resultat»", () => {
     expect(
       getStegOgStatusTekst(lagKontrollsak({ steg: "UTREDES", status: "VENTER_PA_RESULTAT" })),
-    ).toBe("Venter på resultat · Utredes");
+    ).toBe("Venter på resultat · Utredning");
   });
 
   it("henter ytelsestyper fra kontrollsak", () => {

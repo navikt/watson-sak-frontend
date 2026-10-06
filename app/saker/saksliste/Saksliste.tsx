@@ -14,6 +14,7 @@ type SakslisteKolonne =
   | "kategori"
   | "misbrukstype"
   | "status"
+  | "steg"
   | "opprettet"
   | "oppdatert"
   | "saksbehandler";
@@ -63,6 +64,7 @@ const standardKolonner: SakslisteKolonne[] = [
   "navn",
   "kategori",
   "misbrukstype",
+  "steg",
   "status",
   "opprettet",
   "oppdatert",
@@ -74,6 +76,7 @@ const standardTitler: Record<SakslisteKolonne, string> = {
   kategori: "Kategori",
   misbrukstype: "Misbrukstype",
   status: "Status",
+  steg: "Steg",
   opprettet: "Opprettet",
   oppdatert: "Oppdatert",
   saksbehandler: "Saksbehandler",
@@ -231,7 +234,11 @@ function renderCelle(
         <Tag variant="outline" data-color="warning" size="small">
           {rad.status}
         </Tag>
-      ) : rad.steg ? (
+      ) : (
+        <BodyShort size="small">–</BodyShort>
+      );
+    case "steg":
+      return rad.steg ? (
         <Tag variant="outline" data-color="success" size="small">
           {rad.steg}
         </Tag>

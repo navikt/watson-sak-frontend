@@ -5,7 +5,9 @@ import {
   getOpprettetDato,
 } from "~/saker/selectors";
 import type { KontrollsakResponse } from "~/saker/types.backend";
-import { getStegOgStatusTekst } from "~/saker/visning";
+import type { KontrollsakSteg } from "~/saker/types.backend";
+import { matcherSteg } from "~/saker/steg";
+import { formaterStatus, formaterSteg } from "~/saker/visning";
 import { getSaksreferanse } from "~/saker/id";
 
 export const sorteringskolonner = [
@@ -13,6 +15,7 @@ export const sorteringskolonner = [
   "kategori",
   "misbrukstype",
   "status",
+  "steg",
   "opprettet",
   "oppdatert",
   "saksbehandler",
@@ -27,7 +30,7 @@ type FilterState = {
   kategori: string[];
   misbrukstype: string[];
   merking: string[];
-  steg: string[];
+  steg: KontrollsakSteg[];
 };
 
 export function normaliserFilterVerdier(verdier: string[]): string[] {
@@ -57,7 +60,7 @@ export function filtrerSaker(
       return false;
     if (filter.merking.length > 0 && !sak.merking.some((m) => filter.merking.includes(m)))
       return false;
-    if (filter.steg.length > 0 && !filter.steg.includes(sak.steg)) return false;
+    if (!matcherSteg(sak.steg, filter.steg)) return false;
     return true;
   });
 }
@@ -71,7 +74,9 @@ function hentSorteringsverdi(sak: KontrollsakResponse, kolonne: AlleSakerKolonne
     case "misbrukstype":
       return getMisbrukstyper(sak).join(", ");
     case "status":
-      return getStegOgStatusTekst(sak);
+      return formaterStatus(sak.status ?? "AKTIV");
+    case "steg":
+      return formaterSteg(sak.steg);
     case "opprettet":
       return getOpprettetDato(sak);
     case "oppdatert":

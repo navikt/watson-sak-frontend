@@ -4,7 +4,7 @@ import type {
   KontrollsakSteg,
 } from "~/saker/types.backend";
 import { formaterStatus } from "~/saker/visning";
-import { ALLE_STEG, parseSteg } from "~/saker/steg";
+import { ALLE_STEG, matcherSteg, parseSteg } from "~/saker/steg";
 
 export { ALLE_STEG, parseSteg };
 
@@ -27,7 +27,7 @@ export function filtrerMineSaker(
   ventestatuser: (KontrollsakStatus | "INGEN")[],
 ): KontrollsakResponse[] {
   return saker.filter((sak) => {
-    if (steg.length > 0 && !steg.includes(sak.steg)) return false;
+    if (!matcherSteg(sak.steg, steg)) return false;
     if (ventestatuser.length > 0) {
       const sakVentestatus: KontrollsakStatus | "INGEN" = sak.status ?? "INGEN";
       if (!ventestatuser.includes(sakVentestatus)) return false;

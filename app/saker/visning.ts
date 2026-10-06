@@ -22,7 +22,7 @@ type StegVariant = "info" | "warning" | "success" | "neutral";
 const stegEtiketter: Record<KontrollsakSteg, string> = {
   OPPRETTET: "Opprettet",
   UTREDNING: "Utredning",
-  UTREDES: "Utredes",
+  UTREDES: "Utredning",
   FORVALTNING: "Forvaltning",
   STRAFFERETTSLIG_VURDERING: "Strafferettslig vurdering",
   POLITI: "Politi",

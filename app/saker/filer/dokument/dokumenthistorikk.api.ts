@@ -43,7 +43,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
     }
     const sak = await backendApi.hentKontrollsak(token, sakReferanse);
     if (!hentStegbaserteSaksregler(sak.steg).kanRedigereDokumenter) {
-      throw data("Dokumenter kan ikke redigeres før saken er satt til Utredes", { status: 403 });
+      throw data("Dokumenter kan ikke redigeres før saken er satt til Utredning", { status: 403 });
     }
     const dokument = await backendApi.gjenopprettDokumentHistorikk(
       token,

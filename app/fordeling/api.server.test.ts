@@ -146,6 +146,9 @@ describe("Fordeling api.server", () => {
     const url = fetchMock.mock.calls[0][0] as string;
     expect(url).toContain("utenAnsvarlig=true");
     expect(url).toContain("enhet=4812");
+    expect(url).toContain("steg=OPPRETTET");
+    expect(url).toContain("steg=UTREDNING");
+    expect(url).not.toContain("steg=AVSLUTTET");
     expect(url).not.toContain("enhet=9999");
     expect(url).not.toContain("utenAnsvarlig=false");
   }, 15000);

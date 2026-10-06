@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { formaterMisbrukstype, formaterYtelseType } from "~/saker/visning";
+import { hentKontrollsakerForFordeling } from "./api.server";
 import { RouteConfig } from "~/routeConfig";
 import { hentMockState, resetDefaultSession } from "~/testing/mock-store/session.server";
 import { hentFordelingssaker } from "~/testing/mock-store/alle-saker.server";
@@ -199,10 +200,11 @@ describe("FordelingSide loader", () => {
 
     const mockKontrollsaker = hentFordelingssaker(state());
     const forventedeSaker = mockKontrollsaker
-      .filter((sak) => sak.saksbehandlere.eier === null)
+      .filter((sak) => sak.saksbehandlere.eier === null && sak.steg !== "AVSLUTTET")
       .map((sak) => sak.id);
 
     expect(resultat.map((sak) => sak.id)).toEqual(forventedeSaker);
+    expect(resultat.every((sak) => sak.stegKode !== "AVSLUTTET")).toBe(true);
     expect(resultat[0]).toMatchObject({
       navn: mockKontrollsaker[0].personNavn ?? null,
       opprettetDato: mockKontrollsaker[0].opprettet.slice(0, 10),
@@ -234,6 +236,31 @@ describe("FordelingSide loader", () => {
     } as Route.LoaderArgs);
 
     expect(hentKontrollsakerForFordeling).toHaveBeenCalledWith(expect.any(Request), "4812");
+  });
+
+  it("skjuler avsluttede saker fra backend-resultatet", async () => {
+    testState.skalBrukeMockdata = false;
+    const kontrollsaker = hentFordelingssaker(state()).slice(0, 2);
+    kontrollsaker[0].saksbehandlere.eier = null;
+    kontrollsaker[0].steg = "OPPRETTET";
+    kontrollsaker[1].saksbehandlere.eier = null;
+    kontrollsaker[1].steg = "AVSLUTTET";
+    vi.mocked(hentKontrollsakerForFordeling).mockResolvedValue({
+      items: kontrollsaker,
+      page: 1,
+      size: 2,
+      totalItems: 2,
+      totalPages: 1,
+    });
+
+    const { loader } = await import("./FordelingSide.server");
+    const resultat = await loader({
+      request: new Request("http://localhost/fordeling"),
+      params: {},
+      context: {},
+    } as Route.LoaderArgs);
+
+    expect(resultat.map((sak) => sak.stegKode)).toEqual(["OPPRETTET"]);
   });
 
   it("feiler tydelig når innlogget bruker ikke kan knyttes til en konfigurert enhet", async () => {

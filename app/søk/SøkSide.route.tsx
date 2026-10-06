@@ -234,7 +234,15 @@ export default function SøkSide() {
                 >
                   <Saksliste
                     rader={resultater.map((sak) => mapKontrollsakTilSakslisteRad(sak))}
-                    kolonner={["saksid", "navn", "kategori", "misbrukstype", "status", "opprettet"]}
+                    kolonner={[
+                      "saksid",
+                      "navn",
+                      "kategori",
+                      "misbrukstype",
+                      "steg",
+                      "status",
+                      "opprettet",
+                    ]}
                     tomTekst="Ingen saker funnet."
                     tilbake={{ to: RouteConfig.SØK, label: "Søk" }}
                   />
