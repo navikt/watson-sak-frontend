@@ -239,7 +239,7 @@ function renderCelle(
       );
     case "steg":
       return rad.steg ? (
-        <Tag variant="outline" data-color="success" size="small">
+        <Tag variant="outline" data-color="info" size="small">
           {rad.steg}
         </Tag>
       ) : (
