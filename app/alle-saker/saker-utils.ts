@@ -7,7 +7,7 @@ import {
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import type { KontrollsakSteg } from "~/saker/types.backend";
 import { matcherSteg } from "~/saker/steg";
-import { formaterStatus, formaterSteg } from "~/saker/visning";
+import { formaterSteg, hentStatusTag } from "~/saker/visning";
 import { getSaksreferanse } from "~/saker/id";
 
 export const sorteringskolonner = [
@@ -74,7 +74,7 @@ function hentSorteringsverdi(sak: KontrollsakResponse, kolonne: AlleSakerKolonne
     case "misbrukstype":
       return getMisbrukstyper(sak).join(", ");
     case "status":
-      return formaterStatus(sak.status ?? "AKTIV");
+      return hentStatusTag(sak).tekst;
     case "steg":
       return formaterSteg(sak.steg);
     case "opprettet":
