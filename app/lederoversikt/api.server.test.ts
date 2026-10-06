@@ -25,6 +25,7 @@ const gyldigRespons = {
     },
     perStatus: {
       UTEN_STATUS: 1,
+      AKTIV: 0,
       VENTER_PA_INFORMASJON: 0,
       VENTER_PA_VEDTAK: 0,
       VENTER_PA_RESULTAT: 0,

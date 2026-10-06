@@ -10,6 +10,7 @@ import {
   HStack,
   Loader,
   Select,
+  Textarea,
   UNSAFE_Combobox,
   VStack,
 } from "@navikt/ds-react";
@@ -26,6 +27,7 @@ import {
 } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { FødselsnummerSøkefelt } from "~/formaterte-inputfelt/FormaterteInputfelt";
+import { useInnloggetBrukerValgfri } from "~/auth/innlogget-bruker";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { useMiljø } from "~/miljø/useMiljø";
@@ -77,7 +79,19 @@ function PersonkortIkon() {
 }
 
 export default function OpprettSakSide() {
-  const { fnr: forhåndsutfyltFnr } = useLoaderData<typeof loader>();
+  const {
+    fnr: forhåndsutfyltFnr,
+    legacyPid: loaderLegacyPid,
+    legacyKilde: loaderLegacyKilde,
+  } = useLoaderData<typeof loader>();
+  // Cookien fra migreringslisten er engangs: loaderen sletter den ved første kall. Person-oppslaget
+  // (fetcher-POST) revaliderer loaderen, og da er migreringsnøkkelen borte. Uten denne tilstanden
+  // forsvinner Notat-feltet og koblingen til kandidaten like etter at personen er funnet.
+  const [{ legacyPid, legacyKilde }] = useState({
+    legacyPid: loaderLegacyPid,
+    legacyKilde: loaderLegacyKilde,
+  });
+  const innloggetBruker = useInnloggetBrukerValgfri();
   const kodeverk = useKodeverk();
   const miljø = useMiljø();
   const lastResult = useActionData<typeof action>();
@@ -110,7 +124,12 @@ export default function OpprettSakSide() {
 
   const [valgtKategori, setValgtKategori] = useState(fields.kategori.initialValue ?? "");
   const [valgtKilde, setValgtKilde] = useState(fields.kilde.initialValue ?? "");
-  const [valgtEnhet, setValgtEnhet] = useState(fields.enhet.initialValue ?? "");
+  // Fra migreringslisten forhåndsutfylles enheten med innlogget brukers egen enhet (Figma, skjerm 2).
+  const egenEnhet =
+    legacyPid && legacyKilde && kodeverk.enheter.some((e) => e.kode === innloggetBruker?.enhetId)
+      ? (innloggetBruker?.enhetId ?? "")
+      : "";
+  const [valgtEnhet, setValgtEnhet] = useState(fields.enhet.initialValue ?? egenEnhet);
 
   const [valgteMisbruktyper, setValgteMisbruktyper] = useState<string[]>(
     (fields.misbruktype.initialValue as string[]) ?? [],
@@ -348,6 +367,7 @@ export default function OpprettSakSide() {
                   </BodyShort>
                   <BodyShort size="small" className="text-ax-text-neutral-subtle">
                     Personnummer: {person.personnummer} · {person.alder} år
+                    {legacyPid && ` · PID: ${legacyPid}`}
                   </BodyShort>
                 </VStack>
               </HStack>
@@ -449,7 +469,23 @@ export default function OpprettSakSide() {
                   name="personIdent"
                   value={person.personnummer.replace(/\s/g, "")}
                 />
+                {legacyPid && legacyKilde && (
+                  <>
+                    <input type="hidden" name="legacyPid" value={legacyPid} />
+                    <input type="hidden" name="legacyKilde" value={legacyKilde} />
+                  </>
+                )}
                 <VStack gap="space-32">
+                  {legacyPid && legacyKilde && (
+                    <LocalAlert status="announcement" className="max-w-2xl">
+                      <LocalAlert.Content>
+                        Saken opprettes med kobling til migreringskandidat {legacyKilde}:{legacyPid}
+                        . Fødselsnummeret må stemme med kandidaten. Backend kontrollerer det når
+                        saken opprettes, og avviser opprettelsen hvis det ikke stemmer.
+                      </LocalAlert.Content>
+                    </LocalAlert>
+                  )}
+
                   {/* ErrorSummary */}
                   {feilElementer.length > 0 && (
                     <ErrorSummary
@@ -482,7 +518,7 @@ export default function OpprettSakSide() {
                     </HStack>
                   )}
 
-                  {/* Rad 1 (påkrevd): Kategori, Misbruktype */}
+                  {/* Rad 1 (påkrevd): Kategori, Misbruktype, Kilde — tre felt per rad iht Figma */}
                   <HStack gap="space-24" align="start" wrap>
                     <Select
                       key={fields.kategori.key}
@@ -541,10 +577,7 @@ export default function OpprettSakSide() {
                         <input key={m} type="hidden" name="misbruktype" value={m} />
                       ))}
                     </div>
-                  </HStack>
 
-                  {/* Rad 2 (påkrevd): Kilde, Enhet */}
-                  <HStack gap="space-24" align="start" wrap>
                     <Select
                       name={fields.kilde.name}
                       id={fields.kilde.id}
@@ -561,7 +594,10 @@ export default function OpprettSakSide() {
                         </option>
                       ))}
                     </Select>
+                  </HStack>
 
+                  {/* Rad 2 (Enhet påkrevd, resten valgfritt): Enhet, Merking, Organisasjonsnummer — tre felt per rad iht Figma */}
+                  <HStack gap="space-24" align="start" wrap>
                     <Select
                       name={fields.enhet.name}
                       id={fields.enhet.id}
@@ -578,10 +614,7 @@ export default function OpprettSakSide() {
                         </option>
                       ))}
                     </Select>
-                  </HStack>
 
-                  {/* Rad 3 (valgfritt): Merking, Organisasjonsnummer */}
-                  <HStack gap="space-24" align="start" wrap>
                     <div id={fields.merking.id} className="w-72">
                       <UNSAFE_Combobox
                         label="Merking (valgfritt)"
@@ -713,6 +746,19 @@ export default function OpprettSakSide() {
                       </VStack>
                     )}
                   </VStack>
+
+                  {legacyPid && legacyKilde && (
+                    <Textarea
+                      key={fields.notat.key}
+                      name={fields.notat.name}
+                      id={fields.notat.id}
+                      label="Notat"
+                      description="Åpent notatfelt – lagres som eget notat på saken ved opprettelse"
+                      className="max-w-2xl"
+                      defaultValue={fields.notat.initialValue}
+                      error={fields.notat.errors?.[0]}
+                    />
+                  )}
 
                   {/* Submit-rad */}
                   <HStack gap="space-12" justify="end">

@@ -106,8 +106,22 @@ const dokumentSeeds: DokumentSeed[] = [
   },
 ];
 
-function seedDokumenter(state: MockState, sakId: string): DokumentNode[] {
-  const noder = dokumentSeeds.map((seed) => {
+export const migreringsnotatSeed: DokumentSeed = {
+  id: "1181-migrering",
+  tittel: "Notat fra opprettelse",
+  opprettetAv: "Saks Behandlersen",
+  opprettetDato: "2026-09-20",
+  endretAv: "Saks Behandlersen",
+  endretDato: "2026-09-20",
+  avsnitt: ["Eksempelnotat for migrering. Kun syntetisk testinnhold."],
+};
+
+function seedDokumenter(
+  state: MockState,
+  sakId: string,
+  seeds: DokumentSeed[] = dokumentSeeds,
+): DokumentNode[] {
+  const noder = seeds.map((seed) => {
     state.dokumentInnhold.set(innholdsnøkkel(sakId, seed.id), lagDummyInnhold(seed.avsnitt));
     return {
       id: seed.id,
@@ -131,10 +145,14 @@ function hentEllerSeed(state: MockState, sakId: string): DokumentNode[] {
 
   let dokumenter: DokumentNode[] = [];
   if (!state.tommeDokumentområder.has(sakId)) {
-    const sisteTegn = sakId.at(-1) ?? "0";
-    const harDokumenter = Number.parseInt(sisteTegn, 36) % 2 === 0;
-    if (harDokumenter) {
-      dokumenter = seedDokumenter(state, sakId);
+    if (sakId === "1181") {
+      dokumenter = seedDokumenter(state, sakId, [migreringsnotatSeed]);
+    } else if (sakId !== "1182") {
+      const sisteTegn = sakId.at(-1) ?? "0";
+      const harDokumenter = Number.parseInt(sisteTegn, 36) % 2 === 0;
+      if (harDokumenter) {
+        dokumenter = seedDokumenter(state, sakId);
+      }
     }
   }
 

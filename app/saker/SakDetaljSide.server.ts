@@ -1,14 +1,12 @@
 import { data } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
-import { skalBrukeMockdata } from "~/config/env.server";
+import { env, skalBrukeMockdata } from "~/config/env.server";
 import { logger } from "~/logging/logging";
+import { hentMockMigreringKandidater } from "~/migrering/mock-data.server";
+import { ferdigstillMigreringskandidat, hentMigreringskandidat } from "~/migrering/api.server";
 import { redigerSaksinformasjonSchema } from "~/registrer-sak/validering";
-import {
-  bygFeilkartFraIssues,
-  parseYtelseRader,
-  type YtelseRadVerdier,
-} from "~/registrer-sak/skjema-helpers";
+import { bygFeilkartFraIssues, parseYtelseRader } from "~/registrer-sak/skjema-helpers";
 import * as backendApi from "~/saker/api.server";
 import { hentAlleSaker, medInnloggetEier } from "~/saker/mock-alle-saker.server";
 import { mockSaksbehandlere, mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
@@ -35,7 +33,8 @@ import {
   hentFilerForSak,
   opprettArkivertFilFraDokument,
 } from "./filer/mock-data-filer.server";
-import { arkiverDokument } from "~/testing/mock-store/dokumenter.server";
+import { migreringErÅpen } from "~/migrering/miljo";
+import { arkiverDokument, migreringsnotatSeed } from "~/testing/mock-store/dokumenter.server";
 import { hentMockState } from "~/testing/mock-store/session.server";
 import { notatMalValg } from "./handlinger/notatValg";
 import { byggLagreResultatRequest, validerResultatFeltNavn } from "./handlinger/resultat-request";
@@ -499,11 +498,28 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     // selv om komponenten ikke rendrer dem. Sperren må gjelde både det dedikerte
     // `dokumenter`-feltet og `sak.dokumenter` (samme metadata nøstet i sak-objektet),
     // ellers lekker dokumentmetadata likevel via `sak` i loader-responsen.
+    const erEier = erSakseier(sak, innlogget.navIdent);
     const harDirekteTilgang = kanLeseSaksinnhold(sak, innlogget);
     const sakForRespons = harDirekteTilgang ? sak : { ...sak, dokumenter: [] };
+    let kandidat = null;
+    if (migreringErÅpen(env.ENVIRONMENT) && erEier && sak.legacyKilde && sak.legacyPid) {
+      try {
+        kandidat = await hentMigreringskandidat(request, `${sak.legacyKilde}:${sak.legacyPid}`);
+      } catch (feil) {
+        // Eldre saker kan ha PID uten at de er lastet inn i migreringstabellen ennå.
+        if (!(feil instanceof Response && feil.status === 404)) throw feil;
+      }
+    }
+    const migreringsstatus =
+      kandidat?.alleredeMigrertTilKontrollsakId === sak.id &&
+      kandidat.personIdent === sak.personIdent
+        ? (kandidat.migreringsstatus ?? null)
+        : null;
 
     return {
       sak: sakForRespons,
+      migreringsstatus,
+      migreringsnotatEksempel: null,
       tillatteHandlinger,
       historikk,
       journalposter: harDirekteTilgang ? journalposter : [],
@@ -525,9 +541,21 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   }
   const innlogget = await hentInnloggetBruker({ request });
   const sak = medInnloggetEier(rawSak, innlogget.navIdent, innlogget.name);
+  const erEier = sak.saksbehandlere.eier?.navIdent === innlogget.navIdent;
+  // Kun syntetisk visning for sakseier: samsvar på kilde, PID, person og saks-ID.
+  // En opprettet sak betyr aldri i seg selv at migreringen er fullstendig.
+  const migreringsstatus =
+    erEier && sak.legacyPid && sak.legacyKilde
+      ? (hentMockMigreringKandidater(innlogget.navIdent).find(
+          (k) =>
+            k.legacyKilde === sak.legacyKilde &&
+            k.legacyPid === sak.legacyPid &&
+            k.personIdent === sak.personIdent &&
+            k.alleredeMigrertTilKontrollsakId === sak.id,
+        )?.migreringsstatus ?? null)
+      : null;
   const tillatteHandlinger = hentMockTillatteHandlinger(sak);
   const historikk = hentHistorikk(request, String(sak.id));
-  const erEier = sak.saksbehandlere.eier?.navIdent === innlogget.navIdent;
   const harDeltTilgang = sak.saksbehandlere.deltMed.some((s) => s.navIdent === innlogget.navIdent);
   const harTilgangViaKobling = sak.kobledeSaker.some(
     (kobletId) =>
@@ -540,6 +568,17 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   // avgjøre om dokument-/filmetadata skal eksponeres i loader-responsen.
   const harDirekteTilgang = kanLeseSaksinnhold(sak, innlogget);
   const dokumenter = harDirekteTilgang ? hentDokumenttreForSak(request, String(sak.id)) : [];
+  const migreringsnotatEksempel =
+    erEier &&
+    migreringsstatus === "FULLSTENDIG" &&
+    dokumenter.some((dokument) => dokument.id === migreringsnotatSeed.id && !dokument.arkivert)
+      ? {
+          id: migreringsnotatSeed.id,
+          tittel: migreringsnotatSeed.tittel,
+          tekst: migreringsnotatSeed.avsnitt.join(" "),
+          opprettetDato: migreringsnotatSeed.opprettetDato,
+        }
+      : null;
   const filer = harDirekteTilgang ? hentFilerForSak(request, String(sak.id)) : [];
   const mapper = harDirekteTilgang ? hentMapperstierFraMock(request, String(sak.id)) : [];
   const andreSaker = alleSaker.filter(
@@ -547,6 +586,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   );
   return {
     sak,
+    migreringsstatus,
+    migreringsnotatEksempel,
     tillatteHandlinger,
     historikk,
     journalposter: harDirekteTilgang
@@ -638,6 +679,21 @@ async function backendAction(
       throw data("Du må være tildelt saken for å utføre denne handlingen", { status: 403 });
     }
     sakFraTilgangskontroll = nåværendeSak;
+  }
+
+  if (handling === "MIGRERING_FERDIGSTILL") {
+    if (!migreringErÅpen(env.ENVIRONMENT)) {
+      throw data("Ferdigmerking er ikke tilgjengelig", { status: 404 });
+    }
+    if (formData.get("bekreftet") !== "ja") {
+      throw data("Du må bekrefte at innholdet er overført", { status: 400 });
+    }
+    const sak = sakFraTilgangskontroll;
+    if (!sak?.legacyKilde || !sak.legacyPid) {
+      throw data("Saken mangler migreringsnøkkel", { status: 400 });
+    }
+    await ferdigstillMigreringskandidat(request, `${sak.legacyKilde}:${sak.legacyPid}`);
+    return { ok: true };
   }
 
   if (

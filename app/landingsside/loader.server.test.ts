@@ -75,6 +75,6 @@ describe("landingsside-loader", () => {
     const data = await loader(loaderArgs);
     if (data.type !== "saksbehandler") throw new Error("Forventet saksbehandler-data");
 
-    expect(data.velkomstOppsummering).toBe("Akkurat nå har du 28 aktive saker og 1 sak på vent.");
+    expect(data.velkomstOppsummering).toBe("Akkurat nå har du 30 aktive saker og 1 sak på vent.");
   });
 });

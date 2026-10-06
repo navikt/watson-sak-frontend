@@ -33,6 +33,11 @@ vi.mock("~/kodeverk/useKodeverk", () => ({
   useKodeverk: () => mockKodeverk,
 }));
 
+const visningsmiljø = vi.hoisted(() => ({ verdi: "local-mock" }));
+vi.mock("~/miljø/useMiljø", () => ({
+  useMiljø: () => visningsmiljø.verdi,
+}));
+
 const testRequest = new Request("http://localhost");
 const testSakId = "201";
 const deltMedSakId = "101";
@@ -61,6 +66,7 @@ describe("SakDetaljSide render", () => {
   beforeEach(() => {
     resetDefaultSession();
     erLeder = false;
+    visningsmiljø.verdi = "local-mock";
   });
 
   it("viser lagre og avbryt i redigeringsmodus", async () => {
@@ -180,6 +186,99 @@ describe("SakDetaljSide render", () => {
 
     await screen.findByRole("heading", { level: 1 });
     expect(screen.queryByText("Organisasjonsnummer")).toBeNull();
+  }, 15000);
+
+  it.each(["local-mock"])(
+    "viser deaktivert ferdigkontroll og notat i %s",
+    async (miljø) => {
+      visningsmiljø.verdi = miljø;
+      const { hentMockState } = await import("~/testing/mock-store/session.server");
+      const { hentAlleSaker } = await import("~/testing/mock-store/alle-saker.server");
+      const sak = hentAlleSaker(hentMockState(testRequest)).find((s) => s.id === Number(testSakId));
+      if (!sak) throw new Error("Fant ikke testdata for migreringssak");
+      sak.legacyPid = "100245";
+      sak.legacyKilde = "UTREDNING";
+
+      renderDetaljside();
+      const kontroll = await screen.findByRole("checkbox", { name: "Saken er ferdig flyttet" });
+      expect((kontroll as HTMLInputElement).disabled).toBe(true);
+      expect(screen.getByText(/Ferdigmerking kan ikke lagres/)).toBeDefined();
+      expect(screen.getByText("Migreringsnotat (forhåndsvisning)")).toBeDefined();
+    },
+    15000,
+  );
+
+  it("viser avkrysning for ansvarlig i lokal backend uten migreringsnotat-placeholder", async () => {
+    visningsmiljø.verdi = "local-backend";
+    renderDetaljside("1182");
+
+    const kontroll = await screen.findByRole("checkbox", { name: "Saken er ferdig flyttet" });
+    expect((kontroll as HTMLInputElement).disabled).toBe(false);
+    expect((kontroll as HTMLInputElement).name).toBe("bekreftet");
+    expect(screen.getByText(/Marker saken som ferdig flyttet når alle dokumenter/)).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Merk som ferdig flyttet" })).toBeNull();
+    expect(screen.queryByText("Migreringsnotat (forhåndsvisning)")).toBeNull();
+  }, 15000);
+
+  it("sender ferdigmeldingen når avkrysningen slås på, og ikke når den slås av", async () => {
+    visningsmiljø.verdi = "local-backend";
+    const requestSubmit = vi.fn();
+    const original = HTMLFormElement.prototype.requestSubmit;
+    HTMLFormElement.prototype.requestSubmit = requestSubmit;
+    try {
+      renderDetaljside("1182");
+      const kontroll = await screen.findByRole("checkbox", { name: "Saken er ferdig flyttet" });
+
+      fireEvent.click(kontroll);
+      expect(requestSubmit).toHaveBeenCalledTimes(1);
+
+      fireEvent.click(kontroll);
+      expect(requestSubmit).toHaveBeenCalledTimes(1);
+    } finally {
+      HTMLFormElement.prototype.requestSubmit = original;
+    }
+  }, 15000);
+
+  it("viser ferdig migrert mock-sak med notat under Filer og grønn eksempelbekreftelse", async () => {
+    renderDetaljside("1181");
+
+    const notatlenke = await screen.findByRole("link", { name: "Notat fra opprettelse" });
+    expect(notatlenke.getAttribute("href")).toBe("/saker/1181/dokumenter/1181-migrering");
+    expect(
+      screen.getByText("Eksempelnotat for migrering. Kun syntetisk testinnhold."),
+    ).toBeDefined();
+    expect(screen.getByText("Saken er ferdig flyttet 🎉")).toBeDefined();
+    expect(screen.getByText("Saken er overført til Watson Sak.")).toBeDefined();
+    expect(screen.getByText(/ingen ferdigmelding er lagret i backend/i)).toBeDefined();
+    expect(screen.getByText(/Notat · Opprettet i Watson Sak/)).toBeDefined();
+    expect(screen.queryByRole("checkbox", { name: "Saken er ferdig flyttet" })).toBeNull();
+    expect(screen.queryByText("Migreringsnotat (forhåndsvisning)")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Lukk bekreftelsen" }));
+    expect(screen.queryByText("Saken er ferdig flyttet 🎉")).toBeNull();
+    expect(screen.getByRole("link", { name: "Notat fra opprettelse" })).toBeDefined();
+  }, 15000);
+
+  it("utleverer ikke mockstatus for migreringssak som eies av en annen", async () => {
+    const { hentMockState } = await import("~/testing/mock-store/session.server");
+    const { hentAlleSaker } = await import("~/testing/mock-store/alle-saker.server");
+    const sak = hentAlleSaker(hentMockState(testRequest)).find((s) => s.id === 1181);
+    if (!sak) throw new Error("Fant ikke syntetisk migreringssak");
+    sak.saksbehandlere.eier = { navIdent: "Z000001", navn: "Annen saksbehandler", enhet: "4812" };
+
+    renderDetaljside("1181");
+    await screen.findByRole("heading", { name: /^Sak 1181/ });
+    expect(screen.queryByText("Saken er ferdig flyttet 🎉")).toBeNull();
+    expect(screen.queryByRole("link", { name: "Notat fra opprettelse" })).toBeNull();
+  }, 15000);
+
+  it("viser uferdig mock-sak uten grønn bekreftelse", async () => {
+    renderDetaljside("1182");
+
+    const kontroll = await screen.findByRole("checkbox", { name: "Saken er ferdig flyttet" });
+    expect((kontroll as HTMLInputElement).checked).toBe(false);
+    expect(screen.queryByText(/Syntetisk eksempel/)).toBeNull();
+    expect(screen.getByText("Migreringsnotat (forhåndsvisning)")).toBeDefined();
   }, 15000);
 
   it("viser Filer-blokken for sak man er eier av", async () => {

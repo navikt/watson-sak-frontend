@@ -99,6 +99,8 @@ export function SakDetaljerFelter({ sak, onVisIdentHistorikk }: SakDetaljerFelte
           </VStack>
         )}
 
+        {sak.legacyPid && <Felt label="PID">{sak.legacyPid}</Felt>}
+
         <Felt label="Kilde">{kildeTekst}</Felt>
 
         {sak.arbeidsgivere && sak.arbeidsgivere.length > 0 && (

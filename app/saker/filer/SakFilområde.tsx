@@ -1,11 +1,12 @@
-import { FilePlusIcon, FolderPlusIcon, UploadIcon } from "@navikt/aksel-icons";
-import { Button, Heading, HStack, Loader, VStack } from "@navikt/ds-react";
+import { FilePlusIcon, FolderPlusIcon, NotePencilIcon, UploadIcon } from "@navikt/aksel-icons";
+import { BodyShort, Box, Button, Heading, HStack, Link, Loader, VStack } from "@navikt/ds-react";
 import { useRef, useState } from "react";
-import { useFetcher } from "react-router";
+import { Link as RouterLink, useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { Kort } from "~/komponenter/Kort";
 import type { MalId } from "~/saker/filer/dokument/maler";
 import { RouteConfig } from "~/routeConfig";
+import { formaterDato } from "~/utils/date-utils";
 import { ArkivertSeksjon } from "./ArkivertSeksjon";
 import { FilerSeksjonCaption } from "./FilerRad";
 import { flatMappeliste, byggFilTre } from "./mapper/bygg-filtre";
@@ -84,6 +85,15 @@ interface SakFilområdeProps {
   kanLasteOppFiler?: boolean;
   /** Om innlogget bruker er sakseier og kan slette vedlegg. Standard: `false` */
   erSakseier?: boolean;
+  /** Bare lokal mock: vis hvor migreringsnotatet skal ligge, uten å lagre innhold. */
+  visMigreringsnotatForhandsvisning?: boolean;
+  /** Bare lokal mock: syntetisk notat som vises som et dokumentkort under Filer. */
+  migreringsnotatEksempel?: {
+    id: string;
+    tittel: string;
+    tekst: string;
+    opprettetDato: string;
+  } | null;
 }
 
 export function SakFilområde({
@@ -95,6 +105,8 @@ export function SakFilområde({
   redigerbar = true,
   kanLasteOppFiler = redigerbar,
   erSakseier = false,
+  visMigreringsnotatForhandsvisning = false,
+  migreringsnotatEksempel = null,
 }: SakFilområdeProps) {
   // Filopplasting eies her, siden «Last opp fil»-knappen ligger i den felles headeren for hele
   // «Filer»-kortet, mens opplastingsstatus (spinner/feilmelding) vises nede i mappetreet.
@@ -103,7 +115,11 @@ export function SakFilområde({
   const lasterOpp = opplastingFetcher.state !== "idle";
   const url = RouteConfig.API.SAK_FILER.replace(":sakId", sakId);
 
-  const alleMapper = flatMappeliste(byggFilTre(mapper, dokumenter, filer)).map((m) => m.sti);
+  // Det syntetiske migreringsnotatet vises som eget kort (kun i lokal mock), ikke også i mappetreet.
+  const synligeDokumenter = dokumenter.filter(
+    (dokument) => dokument.id !== migreringsnotatEksempel?.id,
+  );
+  const alleMapper = flatMappeliste(byggFilTre(mapper, synligeDokumenter, filer)).map((m) => m.sti);
   const arkiverteFiler = filer.filter((fil) => fil.arkivert);
   const arkiverteDokumenterUtenFil = dokumenter.filter(
     (dokument) =>
@@ -172,11 +188,51 @@ export function SakFilområde({
           )}
         </HStack>
 
+        {visMigreringsnotatForhandsvisning && (
+          <VStack gap="space-4">
+            <BodyShort size="small" weight="semibold">
+              Migreringsnotat (forhåndsvisning)
+            </BodyShort>
+            <BodyShort size="small">Notatet vises her når lagring er tilgjengelig.</BodyShort>
+          </VStack>
+        )}
+
+        {migreringsnotatEksempel && (
+          <Box
+            background="default"
+            borderColor="neutral-subtle"
+            borderWidth="1"
+            borderRadius="8"
+            padding="space-16"
+          >
+            <HStack gap="space-8" align="start">
+              <NotePencilIcon fontSize="1.5rem" aria-hidden />
+              <VStack gap="space-4" className="min-w-0 flex-1">
+                <Link
+                  as={RouterLink}
+                  to={RouteConfig.SAKER_DOKUMENT.replace(":sakId", sakId).replace(
+                    ":docId",
+                    migreringsnotatEksempel.id,
+                  )}
+                >
+                  {migreringsnotatEksempel.tittel}
+                </Link>
+                <BodyShort size="small" textColor="subtle">
+                  Notat · Opprettet i Watson Sak ·{" "}
+                  {formaterDato(migreringsnotatEksempel.opprettetDato)}
+                </BodyShort>
+                <hr className="w-full border-ax-border-neutral-subtle" />
+                <BodyShort size="small">{migreringsnotatEksempel.tekst}</BodyShort>
+              </VStack>
+            </HStack>
+          </Box>
+        )}
+
         <VStack gap="space-4">
           <FilerSeksjonCaption tittel="Mapper" />
           <FilTre
             mapper={mapper}
-            dokumenter={dokumenter}
+            dokumenter={synligeDokumenter}
             filer={filer}
             sakId={sakId}
             redigerbar={redigerbar}

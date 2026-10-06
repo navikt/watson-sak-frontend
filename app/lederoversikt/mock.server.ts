@@ -11,6 +11,7 @@ import {
 
 const STATUSER: LederStatus[] = [
   "UTEN_STATUS",
+  "AKTIV",
   "VENTER_PA_INFORMASJON",
   "VENTER_PA_VEDTAK",
   "VENTER_PA_RESULTAT",

@@ -13,3 +13,15 @@ export function kastHvisUtlogget(respons: Response): void {
     throw data("Sesjonen er utløpt. Logg inn på nytt.", { status: 401 });
   }
 }
+
+/**
+ * Sant når en fanget feil er en utløpt sesjon (401), enten som `Response`
+ * eller som `data()`-feil. Brukes i `catch` der andre feil gjøres om til en
+ * vennlig feilmelding, men 401 må bevares slik at innloggingssiden vises.
+ */
+export function erUtloggetFeil(feil: unknown): boolean {
+  if (typeof feil !== "object" || feil === null) return false;
+  const status =
+    (feil as { status?: number }).status ?? (feil as { init?: { status?: number } }).init?.status;
+  return status === 401;
+}

@@ -2,6 +2,10 @@ import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { BACKEND_API_URL, skalBrukeMockdata } from "~/config/env.server";
 import { logger } from "~/logging/logging";
 import { leggTilFil } from "~/saker/filer/mock-data-filer.server";
+import {
+  opprettDokument as opprettMockDokument,
+  lagreDokument as lagreMockDokument,
+} from "~/saker/filer/mock-data.server";
 import { leggTilMockSakIFordeling } from "~/saker/mock-alle-saker.server";
 
 export type OpprettKontrollsakRequest = {
@@ -31,6 +35,14 @@ export type OpprettKontrollsakRequest = {
     periodeTil: string;
     belop?: number;
   }>;
+  /**
+   * Satt når saken opprettes fra migreringsveilederen. Begge felt må være
+   * satt sammen — backend avviser med 400 hvis bare ett av dem er utfylt, og
+   * med 409 hvis kandidaten allerede er koblet til en annen kontrollsak.
+   */
+  legacyPid?: string;
+  legacyKilde?: string;
+  notat?: string;
 };
 
 type OpprettKontrollsakArgs = {
@@ -45,6 +57,7 @@ type OpprettKontrollsakResultat = {
 
 export type OpprettKontrollsakSvar =
   | { ok: true; sak: OpprettKontrollsakResultat }
+  | { ok: false; status: 409; melding: string; kontrollsakId: number }
   | { ok: false; status: number; melding: string };
 
 type KontrollsakPrioritet = "LAV" | "NORMAL" | "HOY";
@@ -63,9 +76,22 @@ export async function opprettKontrollsak({
       throw new Error("Ugyldig mock-payload for opprettelse av kontrollsak.");
     }
 
+    // Som i backend (`KontrollsakFactory.opprettFraRequest`): en sak opprettet fra
+    // migreringslisten får innlogget kandidatansvarlig som eier. Uten dette blir den
+    // eierløs i fordelingen, og detaljsiden skjuler migreringsstatus og dokumenter.
+    const erMigrering = Boolean(payload.legacyPid && payload.legacyKilde);
+    const innlogget = erMigrering ? await hentInnloggetBruker({ request }) : null;
+    const saksbehandlere =
+      innlogget && !payload.saksbehandlere?.eier
+        ? {
+            ...payload.saksbehandlere,
+            eier: { navIdent: innlogget.navIdent, navn: innlogget.name, enhet: payload.enhet },
+          }
+        : payload.saksbehandlere;
+
     const kontrollsak = leggTilMockSakIFordeling(request, {
       personIdent: payload.personIdent,
-      saksbehandlere: payload.saksbehandlere,
+      saksbehandlere,
       kategori: payload.kategori,
       kilde: payload.kilde,
       prioritet: payload.prioritet,
@@ -74,7 +100,18 @@ export async function opprettKontrollsak({
       merking: payload.merking,
       arbeidsgivere: payload.arbeidsgivere ?? [],
       ytelser: payload.ytelser,
+      legacyPid: payload.legacyPid,
+      legacyKilde: payload.legacyKilde,
     });
+    if (payload.notat && erMigrering && innlogget) {
+      const sakId = String(kontrollsak.id);
+      const dokumentId = opprettMockDokument(request, sakId, innlogget.name).id;
+      lagreMockDokument(request, sakId, dokumentId, {
+        tittel: "Notat fra opprettelse",
+        innhold: [{ type: "p", children: [{ text: payload.notat }] }],
+        endretAv: innlogget.name,
+      });
+    }
     return { ok: true, sak: { id: String(kontrollsak.id) } };
   }
 
@@ -99,10 +136,28 @@ export async function opprettKontrollsak({
       ytelser: payload.ytelser,
       merking: payload.merking,
       arbeidsgivere: (payload.arbeidsgivere ?? []).map((orgnr) => ({ organisasjonsnummer: orgnr })),
+      ...(payload.legacyPid && payload.legacyKilde
+        ? { legacyPid: payload.legacyPid, legacyKilde: payload.legacyKilde, notat: payload.notat }
+        : {}),
     }),
   });
 
   if (!response.ok) {
+    if (response.status === 409) {
+      const problem = (await response.json().catch(() => null)) as {
+        kontrollsakId?: number;
+      } | null;
+      logger.warn("Kontrollsak allerede migrert fra samme legacy-kandidat", {
+        status: 409,
+        kontrollsakId: problem?.kontrollsakId,
+      });
+      return {
+        ok: false,
+        status: 409,
+        melding: "Kandidaten er allerede overført til en kontrollsak.",
+        kontrollsakId: problem?.kontrollsakId ?? 0,
+      };
+    }
     if (response.status === 404) {
       logger.warn("Person ikke funnet ved opprettelse av kontrollsak", { status: 404 });
       return { ok: false, status: 404, melding: "Person ikke funnet." };

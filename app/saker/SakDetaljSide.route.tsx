@@ -1,9 +1,11 @@
-import { ArrowLeftIcon } from "@navikt/aksel-icons";
-import { Button, HGrid, VStack } from "@navikt/ds-react";
+import { ArrowLeftIcon, CheckmarkIcon, XMarkIcon } from "@navikt/aksel-icons";
+import { BodyShort, Box, Button, Checkbox, HGrid, HStack, VStack } from "@navikt/ds-react";
 import { useCallback, useEffect, useState } from "react";
-import { useLoaderData, useNavigate } from "react-router";
+import { Form, useLoaderData, useNavigate } from "react-router";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
+import { migreringErÅpen } from "~/migrering/miljo";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
+import { useMiljø } from "~/miljø/useMiljø";
 import { RouteConfig } from "~/routeConfig";
 import { IngenFiltilgangKort } from "./filer/IngenFiltilgangKort";
 import { SakFilområde } from "./filer/SakFilområde";
@@ -37,6 +39,9 @@ function finnSaksbehandlerDetalj(
   );
 }
 
+const FERDIG_FLYTTET_BESKRIVELSE =
+  "Marker saken som ferdig flyttet når alle dokumenter og detaljer fra saken er flyttet fra Access og filområdet over til Watson Sak.";
+
 export default function SakDetaljSide() {
   const {
     sak: loaderSak,
@@ -44,18 +49,27 @@ export default function SakDetaljSide() {
     historikk,
     dokumenter,
     filer,
+    migreringsstatus,
+    migreringsnotatEksempel,
     mapper,
     journalposter,
     andreSaker,
     saksbehandlerDetaljer,
   } = useLoaderData<typeof loader>();
   const [sak, setSak] = useState(loaderSak);
+  const [visEksempelBekreftelse, setVisEksempelBekreftelse] = useState(true);
   const navigate = useNavigate();
   const tilbake = useTilbakeLenke({ to: RouteConfig.MINE_SAKER, label: "Mine saker" });
   const innloggetBruker = useInnloggetBruker();
   const identHistorikkModal = useDisclosure();
+  const miljø = useMiljø();
   const stegregler = hentStegbaserteSaksregler(sak.steg);
   const erEier = erSakseier(sak, innloggetBruker.navIdent);
+  const erFerdigMigrert =
+    (miljø === "local-mock" || migreringErÅpen(miljø)) &&
+    erEier &&
+    sak.legacyPid &&
+    migreringsstatus === "FULLSTENDIG";
   const harDirekteTilgang = harDirekteSakstilgang(sak, innloggetBruker);
   const kanLese = kanLeseSaksinnhold(sak, innloggetBruker);
   const historikkTilstand: "vis" | "ikke-delt" | "skjermet" = !kanLese
@@ -79,6 +93,7 @@ export default function SakDetaljSide() {
 
   useEffect(() => {
     setSak(loaderSak);
+    setVisEksempelBekreftelse(true);
   }, [loaderSak]);
 
   return (
@@ -117,6 +132,85 @@ export default function SakDetaljSide() {
               onSakOppdatert={onSakOppdatert}
             />
 
+            {sak.legacyPid &&
+              sak.legacyKilde &&
+              erEier &&
+              (miljø === "local-mock" || migreringErÅpen(miljø)) &&
+              (erFerdigMigrert ? (
+                visEksempelBekreftelse && (
+                  <Box
+                    background="success-soft"
+                    borderColor="success"
+                    borderWidth="1"
+                    borderRadius="8"
+                    padding="space-16"
+                    role="status"
+                  >
+                    <HStack align="start" gap="space-8">
+                      <Box background="success-strong" borderRadius="4" padding="space-4">
+                        <CheckmarkIcon
+                          fontSize="1rem"
+                          className="text-ax-text-success-contrast"
+                          aria-hidden
+                        />
+                      </Box>
+                      <VStack gap="space-4" className="min-w-0 flex-1">
+                        <BodyShort weight="semibold">Saken er ferdig flyttet 🎉</BodyShort>
+                        <BodyShort size="small">Saken er overført til Watson Sak.</BodyShort>
+                        {miljø === "local-mock" && (
+                          <BodyShort size="small" textColor="subtle">
+                            Syntetisk eksempel, ingen ferdigmelding er lagret i backend.
+                          </BodyShort>
+                        )}
+                      </VStack>
+                      <Button
+                        type="button"
+                        variant="tertiary"
+                        size="xsmall"
+                        icon={<XMarkIcon aria-hidden />}
+                        aria-label="Lukk bekreftelsen"
+                        onClick={() => setVisEksempelBekreftelse(false)}
+                      />
+                    </HStack>
+                  </Box>
+                )
+              ) : (
+                <Box
+                  background="info-soft"
+                  borderColor="info-subtle"
+                  borderWidth="1"
+                  borderRadius="8"
+                  padding="space-12"
+                >
+                  {migreringErÅpen(miljø) && migreringsstatus === "UNDER_MIGRERING" ? (
+                    <Form method="post">
+                      <input type="hidden" name="handling" value="MIGRERING_FERDIGSTILL" />
+                      <Checkbox
+                        name="bekreftet"
+                        value="ja"
+                        description={FERDIG_FLYTTET_BESKRIVELSE}
+                        onChange={(event) => {
+                          // Figma 3–4: avkrysningen er selve ferdigmeldingen, ingen egen knapp.
+                          if (event.currentTarget.checked)
+                            event.currentTarget.form?.requestSubmit();
+                        }}
+                      >
+                        Saken er ferdig flyttet
+                      </Checkbox>
+                    </Form>
+                  ) : (
+                    <>
+                      <Checkbox disabled readOnly description={FERDIG_FLYTTET_BESKRIVELSE}>
+                        Saken er ferdig flyttet
+                      </Checkbox>
+                      <BodyShort size="small" textColor="subtle">
+                        Forhåndsvisning. Ferdigmerking kan ikke lagres ennå.
+                      </BodyShort>
+                    </>
+                  )}
+                </Box>
+              ))}
+
             {kanLese ? (
               <SakFilområde
                 dokumenter={dokumenter}
@@ -127,6 +221,13 @@ export default function SakDetaljSide() {
                 redigerbar={harDirekteTilgang && stegregler.kanRedigereDokumenter}
                 kanLasteOppFiler={harDirekteTilgang && stegregler.kanLasteOppFiler}
                 erSakseier={erEier}
+                migreringsnotatEksempel={migreringsnotatEksempel}
+                visMigreringsnotatForhandsvisning={Boolean(
+                  sak.legacyPid &&
+                  sak.legacyKilde &&
+                  miljø === "local-mock" &&
+                  !migreringsnotatEksempel,
+                )}
               />
             ) : (
               <IngenFiltilgangKort />

@@ -1,4 +1,6 @@
 import { render, screen } from "@testing-library/react";
+import type { ComponentProps } from "react";
+import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { OpprettSakBekreftelseModal, byggOpprettSakSammendrag } from "./OpprettSakBekreftelseModal";
 
@@ -20,6 +22,13 @@ const tomtSammendrag = {
   ytelser: [],
   vedlegg: [],
 };
+
+function renderModal(props: ComponentProps<typeof OpprettSakBekreftelseModal>) {
+  const router = createMemoryRouter([
+    { path: "/", Component: () => <OpprettSakBekreftelseModal {...props} /> },
+  ]);
+  return render(<RouterProvider router={router} />);
+}
 
 describe("OpprettSakBekreftelseModal", () => {
   it("henter filnavn fra opplastede filer i sammendraget", () => {
@@ -73,5 +82,24 @@ describe("OpprettSakBekreftelseModal", () => {
     );
 
     expect(screen.getByText("Ingen")).toBeDefined();
+  });
+
+  it("viser ingen feilvarsel når notatet ble lagret", () => {
+    renderModal({
+      steg: "suksess",
+      åpen: true,
+      onClose: vi.fn(),
+      personNavn: "Ola Testesen",
+      personnummer: "12345678901",
+      alder: 30,
+      sammendrag: tomtSammendrag,
+      senderInn: false,
+      onBekreft: vi.fn(),
+      onAvbryt: vi.fn(),
+      sakId: "12345",
+      onOpprettNySak: vi.fn(),
+    });
+
+    expect(screen.queryByText("Saken ble opprettet, men notatet kunne ikke lagres.")).toBeNull();
   });
 });

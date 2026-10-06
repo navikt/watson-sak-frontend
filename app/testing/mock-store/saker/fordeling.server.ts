@@ -510,6 +510,8 @@ type NyMockFordelingssak = {
     belop?: number;
     endeligBelop?: number;
   }>;
+  legacyPid?: string;
+  legacyKilde?: string;
 };
 
 export function leggTilMockSakIFordeling(
@@ -566,6 +568,8 @@ export function leggTilMockSakIFordeling(
     kobledeSaker: [],
     opprettet,
     oppdatert: null,
+    legacyPid: nySak.legacyPid ?? null,
+    legacyKilde: nySak.legacyKilde ?? null,
   });
 
   const kontrollsakMedHandlinger = oppdaterTilgjengeligeHandlinger(kontrollsak);

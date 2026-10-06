@@ -42,6 +42,7 @@ const respons = {
     },
     perStatus: {
       UTEN_STATUS: 4,
+      AKTIV: 0,
       VENTER_PA_INFORMASJON: 1,
       VENTER_PA_VEDTAK: 1,
       VENTER_PA_RESULTAT: 0,

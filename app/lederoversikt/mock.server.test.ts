@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { hentMockState, resetDefaultSession } from "~/testing/mock-store/session.server";
 import { lagMockLederStatistikk } from "./mock.server";
+import { lederStatistikkResponseSchema } from "./types";
 
 const request = new Request("http://localhost");
 
@@ -69,7 +70,10 @@ describe("lagMockLederStatistikk", () => {
     expect(resultat.enhet.antallOverFrist).toBe(1);
     expect(resultat.enhet.perSteg.POLITI).toBe(1);
     expect(resultat.enhet.perSteg.FORVALTNING).toBe(1);
+    expect(resultat.enhet.perSteg.UTREDNING).toBe(1);
     expect(resultat.enhet.perStatus.UTEN_STATUS).toBe(1);
+    expect(resultat.enhet.perStatus.AKTIV).toBe(0);
+    expect(lederStatistikkResponseSchema.safeParse(resultat).success).toBe(true);
     expect(resultat.enhet.perStatus.I_BERO).toBe(1);
     expect(resultat.enhet.perStatus.VENTER_PA_VEDTAK).toBe(1);
     expect(resultat.ansatte.liste.find((ansatt) => ansatt.navIdent === "Z234567")).toEqual(
