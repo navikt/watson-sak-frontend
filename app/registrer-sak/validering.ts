@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /** Maks lengde på det interne notatet ved opprettelse fra migrering. Håndheves også i retry-ruten. */
-export const NOTAT_MAKS_TEGN = 4000;
+const NOTAT_MAKS_TEGN = 4000;
 
 /**
  * conform sin parseWithZod normaliserer tomme skjemafelt (f.eks. et <select>

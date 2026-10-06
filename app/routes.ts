@@ -26,7 +26,6 @@ export default [
   route(RouteConfig.API.RESET_MOCK_DATA, "testing/reset-api.ts"),
   route(RouteConfig.API.PERSON_OPPSLAG, "registrer-sak/person-oppslag.api.ts"),
   route(RouteConfig.API.FORHÅNDSUTFYLL_REGISTRER_SAK, "registrer-sak/forhåndsutfyll.api.ts"),
-  route(RouteConfig.API.REGISTRER_SAK_NOTAT, "registrer-sak/notat.api.ts"),
   route(RouteConfig.API.SAK_DOKUMENTER, "saker/filer/dokument/dokumenter.api.ts"),
   route(RouteConfig.API.SAK_DOKUMENT_HISTORIKK, "saker/filer/dokument/dokumenthistorikk.api.ts"),
   route(

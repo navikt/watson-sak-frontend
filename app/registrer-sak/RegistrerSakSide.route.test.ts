@@ -13,11 +13,6 @@ vi.mock("./api.server", () => ({
     .mockResolvedValue({ ok: true, sak: { id: "00000000-0000-4000-8000-000000301000" } }),
 }));
 
-const lagreNotatFraOpprettelseTryggMock = vi.fn().mockResolvedValue(true);
-vi.mock("./notat-fra-opprettelse.server", () => ({
-  lagreNotatFraOpprettelseTrygt: lagreNotatFraOpprettelseTryggMock,
-}));
-
 vi.mock("~/saker/api.server", () => ({
   slåOppPerson: vi.fn().mockResolvedValue({
     type: "success",
@@ -68,7 +63,6 @@ describe("OpprettSakSide action", () => {
     vi.clearAllMocks();
     testState.skalBrukeMockdata = true;
     getBackendOboTokenMock.mockResolvedValue("token-123");
-    lagreNotatFraOpprettelseTryggMock.mockResolvedValue(true);
   });
 
   it("godtar minimal payload med påkrevde felter og returnerer saksnummer", async () => {
@@ -110,59 +104,62 @@ describe("OpprettSakSide action", () => {
     });
   }, 15000);
 
-  it("lagrer ikke notat når notatfeltet er tomt", async () => {
+  it("sender notat bare sammen med migreringsnøkkel i opprett-kallet", async () => {
     const { action } = await import("./RegistrerSakSide.server");
+    const { opprettKontrollsak } = await import("./api.server");
+    const args = (data: FormData) =>
+      ({
+        request: new Request("http://localhost/registrer-sak", { method: "POST", body: data }),
+        params: {},
+        context: {},
+      }) as Route.ActionArgs;
 
-    await action({
-      request: new Request("http://localhost/registrer-sak", {
-        method: "POST",
-        body: lagFormDataMedMinimum(),
+    await action(args(lagFormDataMedMinimum({ notat: "Notat uten migrering" })));
+    expect(opprettKontrollsak).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.not.objectContaining({ notat: expect.any(String) }),
       }),
-      params: {},
-      context: {},
-    } as Route.ActionArgs);
-
-    expect(lagreNotatFraOpprettelseTryggMock).not.toHaveBeenCalled();
-  }, 15000);
-
-  it("lagrer notat på den opprettede saken når notatfeltet er utfylt", async () => {
-    const { action } = await import("./RegistrerSakSide.server");
-
-    const response = await action({
-      request: new Request("http://localhost/registrer-sak", {
-        method: "POST",
-        body: lagFormDataMedMinimum({ notat: "Internt notat om saken." }),
-      }),
-      params: {},
-      context: {},
-    } as Route.ActionArgs);
-
-    expect(lagreNotatFraOpprettelseTryggMock).toHaveBeenCalledWith(
-      expect.any(Request),
-      "00000000-0000-4000-8000-000000301000",
-      "Internt notat om saken.",
     );
-    expect(response).toMatchObject({
-      data: { ok: true, sakId: "00000000-0000-4000-8000-000000301000", notatFeil: false },
-    });
+
+    await action(
+      args(
+        lagFormDataMedMinimum({
+          legacyPid: "100245",
+          legacyKilde: "UTREDNING",
+          notat: "Internt notat om saken.",
+        }),
+      ),
+    );
+    expect(opprettKontrollsak).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({ notat: "Internt notat om saken." }),
+      }),
+    );
   }, 15000);
 
-  it("beholder saken og markerer notatFeil når notatlagring feiler", async () => {
-    lagreNotatFraOpprettelseTryggMock.mockResolvedValueOnce(false);
+  it("viser ikke suksess når backend ikke fikk lagret notatet", async () => {
     const { action } = await import("./RegistrerSakSide.server");
-
-    const response = await action({
-      request: new Request("http://localhost/registrer-sak", {
-        method: "POST",
-        body: lagFormDataMedMinimum({ notat: "Internt notat om saken." }),
-      }),
-      params: {},
-      context: {},
-    } as Route.ActionArgs);
-
-    expect(response).toMatchObject({
-      data: { ok: true, sakId: "00000000-0000-4000-8000-000000301000", notatFeil: true },
+    const { opprettKontrollsak } = await import("./api.server");
+    vi.mocked(opprettKontrollsak).mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      melding: "Kunne ikke opprette kontrollsak.",
     });
+
+    await expect(
+      action({
+        request: new Request("http://localhost/registrer-sak", {
+          method: "POST",
+          body: lagFormDataMedMinimum({
+            legacyPid: "100245",
+            legacyKilde: "UTREDNING",
+            notat: "Notat",
+          }),
+        }),
+        params: {},
+        context: {},
+      } as Route.ActionArgs),
+    ).rejects.toThrow("Kunne ikke opprette kontrollsak.");
   }, 15000);
 
   it("parser flere ytelse-rader fra indekserte felt", async () => {

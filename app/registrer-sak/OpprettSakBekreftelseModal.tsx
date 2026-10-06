@@ -1,6 +1,6 @@
-import { CheckmarkCircleFillIcon, ExclamationmarkTriangleFillIcon } from "@navikt/aksel-icons";
-import { BodyShort, Button, HGrid, HStack, Modal, VStack } from "@navikt/ds-react";
-import { Link, useFetcher } from "react-router";
+import { CheckmarkCircleFillIcon } from "@navikt/aksel-icons";
+import { BodyShort, Button, HGrid, Modal, VStack } from "@navikt/ds-react";
+import { Link } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { formaterBelop } from "~/saker/visning";
 import type { Kodeverk } from "~/saker/api.server";
@@ -129,52 +129,7 @@ type OpprettSakBekreftelseModalProps = {
   onAvbryt: () => void;
   sakId: string | null;
   onOpprettNySak: () => void;
-  /** Satt hvis notatet fra opprettelsen ikke ble lagret — saken finnes likevel. */
-  notatFeil?: boolean;
-  /** Teksten som skal legges til på nytt, kun brukt når `notatFeil` er `true`. */
-  notatTekst?: string;
 };
-
-/** Viser en liten «prøv igjen»-boks for notatet når sakopprettelsen lyktes, men notatlagringen feilet. */
-function NotatFeilVarsel({ sakId, notatTekst }: { sakId: string; notatTekst: string }) {
-  const fetcher = useFetcher<{ ok: boolean }>();
-  const lagret = fetcher.state === "idle" && fetcher.data?.ok === true;
-  const feilet = fetcher.state === "idle" && fetcher.data?.ok === false;
-
-  if (lagret) {
-    return (
-      <BodyShort size="small" className="text-ax-text-success-decoration">
-        Notatet ble lagret på saken.
-      </BodyShort>
-    );
-  }
-
-  return (
-    <VStack
-      gap="space-8"
-      className="rounded-md border border-ax-border-warning bg-ax-bg-warning-soft px-4 py-3 text-left"
-    >
-      <HStack gap="space-8" align="start">
-        <ExclamationmarkTriangleFillIcon
-          aria-hidden
-          fontSize="1.25rem"
-          className="text-ax-text-warning-decoration shrink-0"
-        />
-        <BodyShort size="small">
-          Saken ble opprettet, men notatet kunne ikke lagres.
-          {feilet ? " Prøv igjen, eller legg det til på saken når den er satt til Utredes." : ""}
-        </BodyShort>
-      </HStack>
-      <fetcher.Form method="post" action={RouteConfig.API.REGISTRER_SAK_NOTAT}>
-        <input type="hidden" name="sakId" value={sakId} />
-        <input type="hidden" name="notat" value={notatTekst} />
-        <Button type="submit" size="small" variant="secondary" loading={fetcher.state !== "idle"}>
-          Prøv å lagre notatet igjen
-        </Button>
-      </fetcher.Form>
-    </VStack>
-  );
-}
 
 export function OpprettSakBekreftelseModal({
   steg,
@@ -189,8 +144,6 @@ export function OpprettSakBekreftelseModal({
   onAvbryt,
   sakId,
   onOpprettNySak,
-  notatFeil = false,
-  notatTekst = "",
 }: OpprettSakBekreftelseModalProps) {
   return (
     <Modal
@@ -257,7 +210,6 @@ export function OpprettSakBekreftelseModal({
                 saker.
               </BodyShort>
             </VStack>
-            {notatFeil && sakId && <NotatFeilVarsel sakId={sakId} notatTekst={notatTekst} />}
           </VStack>
         )}
       </Modal.Body>

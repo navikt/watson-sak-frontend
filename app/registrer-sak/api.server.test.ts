@@ -319,6 +319,45 @@ describe("opprettKontrollsak", () => {
     ).toBe(true);
   });
 
+  it("sender notatet i samme backend-kall som migreringssaken", async () => {
+    vi.resetModules();
+    vi.doMock("~/config/env.server", () => ({
+      BACKEND_API_URL: "https://backend.test",
+      skalBrukeMockdata: false,
+    }));
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({ ok: true, status: 201, json: async () => ({ id: 42 }) });
+    vi.stubGlobal("fetch", fetchMock);
+    const { opprettKontrollsak: opprettBackend } = await import("./api.server");
+
+    await opprettBackend({
+      request: testRequest,
+      token: "token-123",
+      payload: {
+        personIdent: "12345678901",
+        kategori: "SAMLIV",
+        kilde: "NAV_KONTROLL",
+        prioritet: "NORMAL",
+        enhet: "4812",
+        misbruktype: [],
+        merking: [],
+        ytelser: [],
+        legacyPid: "200001",
+        legacyKilde: "UTREDNING",
+        notat: "Internt notat",
+      },
+    });
+
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    expect(JSON.parse(String(init.body))).toMatchObject({
+      legacyPid: "200001",
+      legacyKilde: "UTREDNING",
+      notat: "Internt notat",
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("setter innlogget bruker som eier når mock-saken opprettes fra migrering", async () => {
     const svar = await opprettKontrollsak({
       request: testRequest,
@@ -335,6 +374,7 @@ describe("opprettKontrollsak", () => {
         ytelser: [],
         legacyPid: "200001",
         legacyKilde: "UTREDNING",
+        notat: "Internt notat om saken.",
       },
     });
 
@@ -344,6 +384,9 @@ describe("opprettKontrollsak", () => {
       navIdent: "Z999999",
       navn: "Saks Behandlersen",
     });
+    expect(hentDokumenttreForSak(state(), String(sak?.id))).toEqual(
+      expect.arrayContaining([expect.objectContaining({ tittel: "Notat fra opprettelse" })]),
+    );
   });
 
   it("lar vanlige mock-saker uten migrering forbli eierløse", async () => {

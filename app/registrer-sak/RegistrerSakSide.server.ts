@@ -9,7 +9,6 @@ import type { OpprettKontrollsakRequest } from "./api.server";
 import type { Route } from "./+types/RegistrerSakSide.route";
 import { lastOppFil, opprettKontrollsak } from "./api.server";
 import { INGEN_TILGANG_TIL_Å_OPPRETTE_SAK_MELDING } from "./feilmeldinger";
-import { lagreNotatFraOpprettelseTrygt } from "./notat-fra-opprettelse.server";
 import { pendingFnrCookie, type PendingSakData } from "./pending-fnr.server";
 import { opprettSakSchema, type OpprettSakSkjema } from "./validering";
 
@@ -44,7 +43,11 @@ export function byggOpprettKontrollsakPayload({
         belop: rad.beløp,
       })),
     ...(skjema.legacyPid && skjema.legacyKilde
-      ? { legacyPid: skjema.legacyPid, legacyKilde: skjema.legacyKilde }
+      ? {
+          legacyPid: skjema.legacyPid,
+          legacyKilde: skjema.legacyKilde,
+          notat: skjema.notat || undefined,
+        }
       : {}),
   };
 }
@@ -121,14 +124,8 @@ export async function action({ request }: Route.ActionArgs) {
     }
   }
 
-  const notatTekst = skjemaData.notat;
-  const notatLagret = notatTekst
-    ? await lagreNotatFraOpprettelseTrygt(request, resultat.sak.id, notatTekst)
-    : true;
-
   return data({
     ok: true as const,
     sakId: getSaksreferanse(resultat.sak.id),
-    notatFeil: !notatLagret,
   });
 }

@@ -28,7 +28,6 @@ export const RouteConfig = {
     RESET_MOCK_DATA: "/api/reset-mock-data",
     PERSON_OPPSLAG: "/api/registrer-sak/person-oppslag",
     FORHÅNDSUTFYLL_REGISTRER_SAK: "/api/registrer-sak/forhåndsutfyll",
-    REGISTRER_SAK_NOTAT: "/api/registrer-sak/notat",
     SAK_DOKUMENTER: "/api/saker/:sakId/dokumenter",
     SAK_DOKUMENT_HISTORIKK: "/api/saker/:sakId/dokumenter/:docId/historikk",
     SAK_DOKUMENT_KOMMENTARER: "/api/saker/:sakId/dokumenter/:docId/kommentarer",

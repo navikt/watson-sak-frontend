@@ -206,8 +206,6 @@ export default function OpprettSakSide() {
   );
 
   const suksessSakId = lastResult && "ok" in lastResult && lastResult.ok ? lastResult.sakId : null;
-  const notatFeilVedOpprettelse =
-    lastResult && "ok" in lastResult && lastResult.ok ? lastResult.notatFeil : false;
 
   // Følger overgangen fra innsending (navigation.state !== "idle") til ferdig,
   // slik at bekreftelsesmodalen kan bytte til suksess-steget — eller lukkes
@@ -792,12 +790,6 @@ export default function OpprettSakSide() {
           onAvbryt={håndterLukkBekreftelsesmodal}
           sakId={suksessSakId}
           onOpprettNySak={håndterOpprettNySak}
-          notatFeil={notatFeilVedOpprettelse}
-          notatTekst={
-            typeof pendingFormData?.get("notat") === "string"
-              ? String(pendingFormData.get("notat"))
-              : ""
-          }
         />
       )}
     </>

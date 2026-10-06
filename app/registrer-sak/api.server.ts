@@ -2,6 +2,10 @@ import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { BACKEND_API_URL, skalBrukeMockdata } from "~/config/env.server";
 import { logger } from "~/logging/logging";
 import { leggTilFil } from "~/saker/filer/mock-data-filer.server";
+import {
+  opprettDokument as opprettMockDokument,
+  lagreDokument as lagreMockDokument,
+} from "~/saker/filer/mock-data.server";
 import { leggTilMockSakIFordeling } from "~/saker/mock-alle-saker.server";
 
 export type OpprettKontrollsakRequest = {
@@ -38,6 +42,7 @@ export type OpprettKontrollsakRequest = {
    */
   legacyPid?: string;
   legacyKilde?: string;
+  notat?: string;
 };
 
 type OpprettKontrollsakArgs = {
@@ -98,6 +103,15 @@ export async function opprettKontrollsak({
       legacyPid: payload.legacyPid,
       legacyKilde: payload.legacyKilde,
     });
+    if (payload.notat && erMigrering && innlogget) {
+      const sakId = String(kontrollsak.id);
+      const dokumentId = opprettMockDokument(request, sakId, innlogget.name).id;
+      lagreMockDokument(request, sakId, dokumentId, {
+        tittel: "Notat fra opprettelse",
+        innhold: [{ type: "p", children: [{ text: payload.notat }] }],
+        endretAv: innlogget.name,
+      });
+    }
     return { ok: true, sak: { id: String(kontrollsak.id) } };
   }
 
@@ -123,7 +137,7 @@ export async function opprettKontrollsak({
       merking: payload.merking,
       arbeidsgivere: (payload.arbeidsgivere ?? []).map((orgnr) => ({ organisasjonsnummer: orgnr })),
       ...(payload.legacyPid && payload.legacyKilde
-        ? { legacyPid: payload.legacyPid, legacyKilde: payload.legacyKilde }
+        ? { legacyPid: payload.legacyPid, legacyKilde: payload.legacyKilde, notat: payload.notat }
         : {}),
     }),
   });
