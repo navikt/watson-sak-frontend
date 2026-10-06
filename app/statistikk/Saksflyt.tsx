@@ -1,19 +1,11 @@
 import { BodyShort, Box, HGrid } from "@navikt/ds-react";
-import { Fragment, type ComponentProps } from "react";
+import { Fragment } from "react";
 import { Link as RouterLink } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { Diagramkort } from "./Diagramkort";
+import { fargeForKode } from "./farger";
 import type { Statistikk } from "./types";
 import { formaterAntallSaker, prosentFormatter, visningsnavn } from "./visning";
-
-const FARGE_FOR_STEG: Record<string, ComponentProps<typeof Box>["background"]> = {
-  OPPRETTET: "accent-strong",
-  UTREDES: "brand-blue-strong",
-  UTREDNING: "brand-blue-strong",
-  FORVALTNING: "info-strong",
-  STRAFFERETTSLIG_VURDERING: "brand-magenta-strong",
-  POLITI: "brand-beige-strong",
-};
 
 const formatter = new Intl.NumberFormat("nb-NO");
 
@@ -65,11 +57,11 @@ export function Saksflyt({ data }: { data: Statistikk["statusfordeling"] }) {
                       as={RouterLink}
                       to={`${RouteConfig.ALLE_SAKER}?${new URLSearchParams({ steg: rad.filterverdi })}`}
                       aria-label={`${navn}: ${formaterAntallSaker(rad.verdi)}${rad.prosent === 100 ? "" : `, ${prosentFormatter.format(rad.prosent)} %`}`}
-                      background={FARGE_FOR_STEG[rad.filterverdi] ?? "accent-strong"}
                       width={`${rad.prosent}%`}
                       height="100%"
                       marginInline="auto"
                       className="flex items-center justify-center no-underline"
+                      style={{ backgroundColor: `var(${fargeForKode(rad.filterverdi)})` }}
                     >
                       <BodyShort
                         as="span"

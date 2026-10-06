@@ -3,7 +3,7 @@ import { useState, type ReactNode } from "react";
 import { Link as RouterLink } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { Diagramkort, Legend } from "./Diagramkort";
-import { fargeForKode } from "./farger";
+import { fargeForKode, kakeGradient } from "./farger";
 import { Saksflyt } from "./Saksflyt";
 import type { Statistikk } from "./types";
 import { formaterAntallSaker, formaterBeløp, prosentFormatter, visningsnavn } from "./visning";
@@ -169,7 +169,9 @@ export function StatistikkDiagrammer({
               />
               <VStack gap="space-8">
                 {data.sakstyper.map((rad) => {
-                  const synlige = rad.deler.filter(({ navn }) => !skjulteStatuser.has(navn));
+                  const synlige = rad.deler.filter(
+                    ({ navn, verdi }) => verdi > 0 && !skjulteStatuser.has(navn),
+                  );
                   const total = synlige.reduce((sum, del) => sum + del.verdi, 0);
                   return (
                     <HStack key={rad.navn} gap="space-8" align="center" wrap={false}>
@@ -177,7 +179,7 @@ export function StatistikkDiagrammer({
                         {visningsnavn(rad.navn)}
                       </BodyShort>
                       <div
-                        className="flex h-6 min-w-0 flex-1 overflow-hidden rounded-sm"
+                        className="flex h-6 min-w-0 flex-1 gap-0.5 overflow-hidden rounded-sm"
                         title={`${rad.navn}: ${formatter.format(total)} saker`}
                       >
                         {synlige.map((del) => (
@@ -188,9 +190,9 @@ export function StatistikkDiagrammer({
                               steg: del.filterverdi,
                             })}
                             aria-label={`${visningsnavn(rad.navn)}, ${visningsnavn(del.navn)}: ${formatter.format(del.verdi)} saker`}
-                            className="block h-full focus-visible:z-10"
+                            className="block h-full min-w-0 basis-0 focus-visible:z-10"
                             style={{
-                              width: `${(del.verdi / Math.max(total, 1)) * 100}%`,
+                              flexGrow: del.verdi,
                               backgroundColor: `var(${fargeForKode(del.filterverdi)})`,
                             }}
                           />
@@ -224,7 +226,10 @@ export function StatistikkDiagrammer({
                   className="w-full rounded-t-sm"
                   style={{
                     height: `${Math.max((alder.verdi / maksAlder) * 82, 4)}%`,
-                    backgroundColor: `var(${fargeForKode(alder.navn)})`,
+                    backgroundColor:
+                      nedreAldersgrense(alder.navn) >= ALDER_GRENSE_MND
+                        ? "var(--ax-bg-danger-strong)"
+                        : "var(--ax-bg-accent-strong)",
                   }}
                 />
                 <span>{alder.navn}</span>
@@ -298,13 +303,12 @@ export function StatistikkDiagrammer({
               <div
                 className="mx-auto size-52 rounded-full"
                 style={{
-                  background: `conic-gradient(${data.kategorifordeling
-                    .map((kategori, index, alle) => {
-                      const start = alle.slice(0, index).reduce((sum, item) => sum + item.verdi, 0);
-                      const slutt = start + kategori.verdi;
-                      return `var(${fargeForKode(kategori.navn)}) ${(start / totalKategorier) * 100}% ${(slutt / totalKategorier) * 100}%`;
-                    })
-                    .join(", ")})`,
+                  background: kakeGradient(
+                    data.kategorifordeling.map((kategori) => ({
+                      farge: fargeForKode(kategori.navn),
+                      verdi: kategori.verdi,
+                    })),
+                  ),
                 }}
               >
                 <div className="m-12 flex size-28 items-center justify-center rounded-full bg-ax-bg-default text-center text-sm">
@@ -352,16 +356,12 @@ export function StatistikkDiagrammer({
                 <div
                   className="size-36 rounded-full"
                   style={{
-                    background: `conic-gradient(${data.henlagt
-                      .map((rad, index) => {
-                        const start = data.henlagt
-                          .slice(0, index)
-                          .reduce((sum, item) => sum + item.verdi, 0);
-                        const slutt = start + rad.verdi;
-                        const nevner = Math.max(totalHenlagt, 1);
-                        return `var(${fargeForKode(rad.navn)}) ${(start / nevner) * 100}% ${(slutt / nevner) * 100}%`;
-                      })
-                      .join(", ")})`,
+                    background: kakeGradient(
+                      data.henlagt.map((rad) => ({
+                        farge: fargeForKode(rad.navn),
+                        verdi: rad.verdi,
+                      })),
+                    ),
                   }}
                 >
                   <div className="m-8 flex size-20 items-center justify-center rounded-full bg-ax-bg-default text-center text-xs">
