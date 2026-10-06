@@ -17,8 +17,6 @@ import {
 
 export type { KontrollsakSteg };
 
-type StegVariant = "info" | "warning" | "success" | "neutral";
-
 const stegEtiketter: Record<KontrollsakSteg, string> = {
   OPPRETTET: "Opprettet",
   UTREDNING: "Utredning",
@@ -28,17 +26,6 @@ const stegEtiketter: Record<KontrollsakSteg, string> = {
   POLITI: "Politi",
   ANMELDT: "Politi",
   AVSLUTTET: "Avsluttet",
-};
-
-const stegVarianter: Record<KontrollsakSteg, StegVariant> = {
-  OPPRETTET: "info",
-  UTREDNING: "warning",
-  UTREDES: "warning",
-  FORVALTNING: "warning",
-  STRAFFERETTSLIG_VURDERING: "warning",
-  POLITI: "success",
-  ANMELDT: "success",
-  AVSLUTTET: "neutral",
 };
 
 const statusEtiketter: Record<KontrollsakStatus, string> = {
@@ -55,9 +42,14 @@ export function formaterSteg(steg: KontrollsakSteg | null | undefined): string {
   return stegEtiketter[steg];
 }
 
-export function hentStegVariant(steg: KontrollsakSteg | null | undefined): StegVariant {
-  if (!steg) return "neutral";
-  return stegVarianter[steg];
+/** Tag-farge for steg. Alle steg har samme farge overalt i løsningen. */
+export const STEG_FARGE = "info";
+
+/** Tag-farge for status: «Aktiv» (eller ingen status) er success, alle ventestatuser er warning. */
+export function hentStatusFarge(
+  status: KontrollsakStatus | null | undefined,
+): "success" | "warning" {
+  return !status || status === "AKTIV" ? "success" : "warning";
 }
 
 export function formaterStatus(status: KontrollsakStatus): string {

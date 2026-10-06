@@ -30,7 +30,13 @@ import { SaksflytModal, type SaksflytStart } from "~/saker/handlinger/saksflyt/S
 import { OverforAnsvarligModal } from "~/saker/handlinger/OverforAnsvarligModal";
 import { SendTilAnnenEnhetModal } from "~/saker/handlinger/SendTilAnnenEnhetModal";
 import { TildelSaksbehandlerModal } from "~/saker/handlinger/TildelSaksbehandlerModal";
-import { formaterStatus, formaterSteg, hentSluttresultat, hentStegVariant } from "~/saker/visning";
+import {
+  formaterStatus,
+  formaterSteg,
+  hentSluttresultat,
+  hentStatusFarge,
+  STEG_FARGE,
+} from "~/saker/visning";
 import { ResponsivEndreKnapp } from "./ResponsivEndreKnapp";
 
 interface SaksbehandlereKortProps {
@@ -137,7 +143,7 @@ export function SaksbehandlereKort({
             </Detail>
             <HStack justify="space-between" align="center" gap="space-4">
               <div>
-                <Tag variant="moderate" data-color={hentStegVariant(sak.steg)} size="medium">
+                <Tag variant="moderate" data-color={STEG_FARGE} size="medium">
                   {formaterSteg(sak.steg)}
                 </Tag>
               </div>
@@ -170,11 +176,7 @@ export function SaksbehandlereKort({
               </Detail>
               <HStack justify="space-between" align="center" gap="space-4">
                 <div>
-                  <Tag
-                    variant="moderate"
-                    data-color={!sak.status || sak.status === "AKTIV" ? "success" : "warning"}
-                    size="medium"
-                  >
+                  <Tag variant="moderate" data-color={hentStatusFarge(sak.status)} size="medium">
                     {sak.status ? formaterStatus(sak.status) : "Aktiv"}
                   </Tag>
                 </div>

@@ -22,6 +22,8 @@ import {
   formaterMisbrukstype,
   formaterPrioritet,
   formaterStatus,
+  hentStatusFarge,
+  STEG_FARGE,
   getBeskrivelse,
   getKildeText,
   getPersonIdent,
@@ -105,11 +107,11 @@ export function SøkSakOppsummering({ sak }: SøkSakOppsummeringProps) {
 
           <HStack gap="space-2">
             {sak.status && (
-              <Tag variant="outline" data-color="warning" size="medium">
+              <Tag variant="outline" data-color={hentStatusFarge(sak.status)} size="medium">
                 {formaterStatus(sak.status)}
               </Tag>
             )}
-            <Tag variant="outline" data-color="success" size="medium">
+            <Tag variant="outline" data-color={STEG_FARGE} size="medium">
               {getStegOgStatusTekst(sak)}
             </Tag>
           </HStack>

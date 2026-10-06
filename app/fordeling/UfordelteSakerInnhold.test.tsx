@@ -20,6 +20,7 @@ const lagSak = (overstyringer: Partial<FordelingSak> = {}): FordelingSak => ({
   ytelser: ["Dagpenger"],
   merking: [],
   status: null,
+  statusKode: null,
   steg: "Opprettet",
   stegKode: "OPPRETTET",
   ...overstyringer,

@@ -64,6 +64,7 @@ function lagFordelingSak(overrides: Partial<FordelingSak> = {}): FordelingSak {
     steg: "Opprettet",
     stegKode: "OPPRETTET",
     status: null,
+    statusKode: null,
     ...overrides,
   };
 }
@@ -82,6 +83,7 @@ describe("sakslisteadaptere", () => {
       misbrukstyper: ["Skjult samliv"],
       steg: "Opprettet",
       status: "Aktiv",
+      statusKode: null,
       saksbehandler: "Saks Behandler",
       opprettet: "2026-02-03T10:11:12Z",
       oppdatert: "2026-02-03T10:11:12Z",
@@ -104,6 +106,7 @@ describe("sakslisteadaptere", () => {
       misbrukstyper: ["Skjult samliv"],
       steg: "Opprettet",
       status: "Aktiv",
+      statusKode: null,
       saksbehandler: null,
       opprettet: "2026-03-20",
       oppdatert: "2026-03-21",

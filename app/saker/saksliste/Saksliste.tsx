@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import { Link as RouterLink, useNavigate } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import type { Tilbakemål } from "~/saker/tilbake";
+import type { KontrollsakStatus } from "~/saker/types.backend";
+import { hentStatusFarge, STEG_FARGE } from "~/saker/visning";
 import { formaterDato } from "~/utils/date-utils";
 import { storFørsteBokstavPerOrd } from "~/utils/string-utils";
 import { KolonneHeading, type Sorteringsretning } from "./KolonneHeading";
@@ -28,6 +30,8 @@ export type SakslisteRad = {
   misbrukstyper: string[];
   steg: string | null;
   status: string | null;
+  /** Rå statuskode, brukes til å velge tag-farge. Mangler den, regnes saken som aktiv. */
+  statusKode?: KontrollsakStatus | null;
   opprettet: string;
   oppdatert: string | null;
   saksbehandler: string | null;
@@ -231,7 +235,7 @@ function renderCelle(
       );
     case "status":
       return rad.status ? (
-        <Tag variant="outline" data-color="warning" size="small">
+        <Tag variant="outline" data-color={hentStatusFarge(rad.statusKode)} size="small">
           {rad.status}
         </Tag>
       ) : (
@@ -239,7 +243,7 @@ function renderCelle(
       );
     case "steg":
       return rad.steg ? (
-        <Tag variant="outline" data-color="info" size="small">
+        <Tag variant="outline" data-color={STEG_FARGE} size="small">
           {rad.steg}
         </Tag>
       ) : (

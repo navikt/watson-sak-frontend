@@ -12,7 +12,7 @@ import {
   getStegOgStatusTekst,
   hentSluttresultat,
   getYtelseTyper,
-  hentStegVariant,
+  hentStatusFarge,
 } from "./visning";
 
 function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
@@ -77,9 +77,14 @@ describe("sak-visning", () => {
     expect(formaterBelop(1234567)).toBe("1\u00a0234\u00a0567");
   });
 
-  it("maper backend-steg til riktig tag-variant", () => {
-    expect(hentStegVariant("POLITI")).toBe("success");
-    expect(hentStegVariant("ANMELDT")).toBe("success");
+  it("gir success-farge til aktive saker og warning til ventestatuser", () => {
+    expect(hentStatusFarge(null)).toBe("success");
+    expect(hentStatusFarge("AKTIV")).toBe("success");
+    expect(hentStatusFarge("VENTER_PA_INFORMASJON")).toBe("warning");
+    expect(hentStatusFarge("VENTER_PA_VEDTAK")).toBe("warning");
+    expect(hentStatusFarge("VENTER_PA_RESULTAT")).toBe("warning");
+    expect(hentStatusFarge("I_BERO")).toBe("warning");
+    expect(hentStatusFarge("PAAKLAGET")).toBe("warning");
   });
 
   it("formaterer backend-kategori til visningstekst", () => {

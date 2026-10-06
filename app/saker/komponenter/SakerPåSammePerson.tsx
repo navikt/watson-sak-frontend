@@ -21,7 +21,13 @@ import type { KontrollsakResponse } from "~/saker/types.backend";
 import { storFørsteBokstavPerOrd } from "~/utils/string-utils";
 import { PersonIdentHistorikkModal } from "./PersonIdentHistorikkModal";
 import { SakDetaljerFelter } from "./SakDetaljerFelter";
-import { formaterStatus, getPersonIdent, getStegOgStatusTekst } from "~/saker/visning";
+import {
+  formaterStatus,
+  getPersonIdent,
+  getStegOgStatusTekst,
+  hentStatusFarge,
+  STEG_FARGE,
+} from "~/saker/visning";
 
 interface SakerPåSammePersonProps {
   saker: KontrollsakResponse[];
@@ -75,11 +81,11 @@ function SakKort({
                 Saksbehandler: <strong>{storFørsteBokstavPerOrd(saksbehandler)}</strong>
               </BodyShort>
               {sak.status ? (
-                <Tag variant="outline" data-color="warning" size="small">
+                <Tag variant="outline" data-color={hentStatusFarge(sak.status)} size="small">
                   {formaterStatus(sak.status)}
                 </Tag>
               ) : (
-                <Tag variant="outline" data-color="success" size="small">
+                <Tag variant="outline" data-color={STEG_FARGE} size="small">
                   {stegOgStatusTekst}
                 </Tag>
               )}

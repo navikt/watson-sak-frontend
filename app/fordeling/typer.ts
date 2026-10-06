@@ -1,4 +1,4 @@
-import type { KontrollsakSteg } from "~/saker/types.backend";
+import type { KontrollsakStatus, KontrollsakSteg } from "~/saker/types.backend";
 
 export interface FordelingSak {
   id: number;
@@ -12,4 +12,5 @@ export interface FordelingSak {
   steg: string;
   stegKode: KontrollsakSteg;
   status: string | null;
+  statusKode: KontrollsakStatus | null;
 }

@@ -11,7 +11,6 @@ import {
   getOpprettetDato,
   getPeriodeText,
   getSaksenhet,
-  getStegVariantForSak,
   getTags,
 } from "./selectors";
 
@@ -93,7 +92,6 @@ describe("saker-selectors", () => {
     const sak = lagKontrollsak();
 
     expect(getKategoriText(sak)).toBe("Arbeid");
-    expect(getStegVariantForSak(sak)).toBe("warning");
   });
 
   it("bruker sak.enhet som saksenhet og skjuler legacy-only metadata for kontrollsak", () => {
