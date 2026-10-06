@@ -159,20 +159,23 @@ describe("Migreringsprototypens loader", () => {
     expect(mocks.backend).toHaveBeenCalledWith(expect.anything(), "ANSATTE", 2);
   });
 
-  it.each(["0", "-4", "abc", ""])("ugyldig sideparameter «%s» gir side 1", async (verdi) => {
-    mocks.miljø = "local-backend";
-    mocks.mockmodus = false;
-    mocks.bruker.mockResolvedValue({ navIdent: "L999999", erLeder: false });
-    mocks.backend.mockResolvedValue(side([basis]));
+  it.each(["0", "-4", "abc", "", "3abc", "99999999999999999999"])(
+    "ugyldig sideparameter «%s» gir side 1",
+    async (verdi) => {
+      mocks.miljø = "local-backend";
+      mocks.mockmodus = false;
+      mocks.bruker.mockResolvedValue({ navIdent: "L999999", erLeder: false });
+      mocks.backend.mockResolvedValue(side([basis]));
 
-    await loader({
-      request: new Request(`http://localhost/migrering?side=${verdi}`),
-      params: {},
-      context: {},
-    } as LoaderFunctionArgs);
+      await loader({
+        request: new Request(`http://localhost/migrering?side=${verdi}`),
+        params: {},
+        context: {},
+      } as LoaderFunctionArgs);
 
-    expect(mocks.backend).toHaveBeenCalledWith(expect.anything(), "MINE", 1);
-  });
+      expect(mocks.backend).toHaveBeenCalledWith(expect.anything(), "MINE", 1);
+    },
+  );
 
   it("viser siste side når siden i URL-en er forbi siste side", async () => {
     mocks.miljø = "local-backend";

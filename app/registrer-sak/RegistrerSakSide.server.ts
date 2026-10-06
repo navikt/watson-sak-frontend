@@ -87,7 +87,11 @@ export async function action({ request }: Route.ActionArgs) {
   if (!resultat.ok) {
     if ("kontrollsakId" in resultat) {
       return submission.reply({
-        formErrors: [`Denne saken er allerede overført til kontrollsak ${resultat.kontrollsakId}.`],
+        formErrors: [
+          resultat.kontrollsakId > 0
+            ? `Denne saken er allerede overført til kontrollsak ${resultat.kontrollsakId}.`
+            : "Denne saken er allerede overført til en kontrollsak.",
+        ],
       });
     }
     if (resultat.status === 404) {

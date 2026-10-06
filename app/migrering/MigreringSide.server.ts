@@ -42,7 +42,10 @@ const TOM_SIDE: MigreringSide = { kandidater: [], side: 1, totalSider: 0, totalA
 
 /** Sidenummer fra URL-en. Ugyldige verdier gir side 1. */
 function lesSide(url: URL, navn: string): number {
-  return Math.max(1, Number.parseInt(url.searchParams.get(navn) ?? "1", 10) || 1);
+  const verdi = url.searchParams.get(navn) ?? "";
+  if (!/^\d+$/.test(verdi)) return 1;
+  const side = Number(verdi);
+  return Number.isSafeInteger(side) && side >= 1 ? side : 1;
 }
 
 /** Henter én side. Hvis siden er forbi siste side (for eksempel etter at saker er flyttet), vises siste side. */
