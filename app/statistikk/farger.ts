@@ -86,8 +86,10 @@ export function kakeGradient(segmenter: { farge: string; verdi: number }[]): str
   const skille = synlige.length > 1 ? SKILLE_GRADER : 0;
   let start = 0;
   const stopp = synlige.flatMap((segment) => {
-    const slutt = start + (segment.verdi / total) * 360;
-    const fargeSlutt = Math.max(start, slutt - skille);
+    const vinkel = (segment.verdi / total) * 360;
+    const slutt = start + vinkel;
+    // Små segmenter får en smalere strek, slik at de aldri blir helt borte.
+    const fargeSlutt = slutt - Math.min(skille, vinkel / 2);
     const deler = [`var(${segment.farge}) ${start}deg ${fargeSlutt}deg`];
     if (skille > 0) {
       deler.push(`${SKILLEFARGE} ${fargeSlutt}deg ${slutt}deg`);

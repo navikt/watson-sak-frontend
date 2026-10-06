@@ -59,6 +59,17 @@ describe("kakeGradient", () => {
     );
   });
 
+  it("lar små segmenter beholde en farget del", () => {
+    const gradient = kakeGradient([
+      { farge: "--a", verdi: 1 },
+      { farge: "--b", verdi: 999 },
+    ]);
+
+    expect(gradient).toMatch(
+      /^conic-gradient\(var\(--a\) 0deg 0\.18deg, var\(--ax-bg-default\) 0\.18deg 0\.36deg/,
+    );
+  });
+
   it("dropper skillestreken når det bare er ett segment", () => {
     expect(kakeGradient([{ farge: "--a", verdi: 5 }])).toBe("conic-gradient(var(--a) 0deg 360deg)");
   });
