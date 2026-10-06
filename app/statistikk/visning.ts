@@ -32,7 +32,7 @@ const ETIKETTER: Record<string, string> = {
   TILDELT: "Tildelt",
   TILTAK: "Tiltak",
   UTLAND: "Utland",
-  UTREDES: "Utredes",
+  UTREDES: "Utredning",
   UTREDNING: "Utredning",
   VENTER_PA_INFORMASJON: "Venter på informasjon",
   PAAKLAGET: "Påklaget",

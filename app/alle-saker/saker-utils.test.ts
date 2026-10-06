@@ -175,7 +175,11 @@ describe("filtrerSaker", () => {
   });
 
   it("filtrerer på steg", () => {
-    const sakerMedUliktSteg = [...saker, lagSak({ id: 300, steg: "UTREDES" })];
+    const sakerMedUliktSteg = [
+      ...saker,
+      lagSak({ id: 300, steg: "UTREDES" }),
+      lagSak({ id: 301, steg: "UTREDNING" }),
+    ];
 
     const resultat = filtrerSaker(sakerMedUliktSteg, {
       enhet: [],
@@ -183,11 +187,10 @@ describe("filtrerSaker", () => {
       kategori: [],
       misbrukstype: [],
       merking: [],
-      steg: ["UTREDES"],
+      steg: ["UTREDNING"],
     });
 
-    expect(resultat).toHaveLength(1);
-    expect(resultat[0].id).toBe(300);
+    expect(resultat.map((sak) => sak.id)).toEqual([300, 301]);
   });
 });
 

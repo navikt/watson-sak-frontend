@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { erEierlosKontrollsak, mapKontrollsakTilFordelingSak } from "./mapper";
+import { erKlarForFordeling, mapKontrollsakTilFordelingSak } from "./mapper";
 import type { KontrollsakResponse } from "./types.backend";
 
 function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
@@ -47,16 +47,20 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
 
 describe("Fordeling mapper", () => {
   it("behandler eierløs sak som klar for fordeling", () => {
-    expect(erEierlosKontrollsak(lagKontrollsak({ steg: "OPPRETTET" }))).toBe(true);
+    expect(erKlarForFordeling(lagKontrollsak({ steg: "OPPRETTET" }))).toBe(true);
   });
 
   it("behandler eierløs sak under utredning som klar for fordeling", () => {
-    expect(erEierlosKontrollsak(lagKontrollsak({ steg: "UTREDES" }))).toBe(true);
+    expect(erKlarForFordeling(lagKontrollsak({ steg: "UTREDES" }))).toBe(true);
+  });
+
+  it("behandler ikke avsluttet eierløs sak som klar for fordeling", () => {
+    expect(erKlarForFordeling(lagKontrollsak({ steg: "AVSLUTTET" }))).toBe(false);
   });
 
   it("behandler eid sak som ikke klar for fordeling", () => {
     expect(
-      erEierlosKontrollsak(
+      erKlarForFordeling(
         lagKontrollsak({
           saksbehandlere: {
             eier: { navIdent: "Z999999", navn: "Eier", enhet: "4812" },

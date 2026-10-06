@@ -167,7 +167,7 @@ describe("SaksbehandlereKort", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Steg og status" })).toBeDefined();
-    expect(screen.getByText("Utredes")).toBeDefined();
+    expect(screen.getByText("Utredning")).toBeDefined();
     expect(screen.getByText("Aktiv")).toBeDefined();
 
     fireEvent.click(screen.getByRole("button", { name: "Endre steg" }));

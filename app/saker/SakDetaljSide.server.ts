@@ -645,7 +645,7 @@ async function backendAction(
     !hentStegbaserteSaksregler(sakFraTilgangskontroll.steg).kanUtføreUtredningsarbeid &&
     handlingerSomKreverUtredning.has(handling)
   ) {
-    throw data("Handlingen krever at saken har steg Utredes", { status: 400 });
+    throw data("Handlingen krever at saken har steg Utredning", { status: 400 });
   }
 
   if (handling === "FRISTILL") {
@@ -1073,7 +1073,7 @@ async function mockAction(
     !hentStegbaserteSaksregler(sak.steg).kanUtføreUtredningsarbeid &&
     handlingerSomKreverUtredning.has(handling)
   ) {
-    throw data("Handlingen krever at saken har steg Utredes", { status: 400 });
+    throw data("Handlingen krever at saken har steg Utredning", { status: 400 });
   }
 
   switch (handling) {

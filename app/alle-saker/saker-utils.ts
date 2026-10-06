@@ -5,6 +5,8 @@ import {
   getOpprettetDato,
 } from "~/saker/selectors";
 import type { KontrollsakResponse } from "~/saker/types.backend";
+import type { KontrollsakSteg } from "~/saker/types.backend";
+import { matcherSteg } from "~/saker/steg";
 import { formaterStatus, formaterSteg } from "~/saker/visning";
 import { getSaksreferanse } from "~/saker/id";
 
@@ -28,7 +30,7 @@ type FilterState = {
   kategori: string[];
   misbrukstype: string[];
   merking: string[];
-  steg: string[];
+  steg: KontrollsakSteg[];
 };
 
 export function normaliserFilterVerdier(verdier: string[]): string[] {
@@ -58,7 +60,7 @@ export function filtrerSaker(
       return false;
     if (filter.merking.length > 0 && !sak.merking.some((m) => filter.merking.includes(m)))
       return false;
-    if (filter.steg.length > 0 && !filter.steg.includes(sak.steg)) return false;
+    if (!matcherSteg(sak.steg, filter.steg)) return false;
     return true;
   });
 }

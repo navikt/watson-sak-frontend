@@ -235,7 +235,7 @@ describe("SakHistorikk", () => {
     );
 
     expect(screen.getByText("Sak satt på vent")).toBeDefined();
-    expect(screen.getByText(/På vent: Venter på vedtak – Steg: Utredes/)).toBeDefined();
+    expect(screen.getByText(/På vent: Venter på vedtak – Steg: Utredning/)).toBeDefined();
   });
 
   it("renderer gjenoppta som vanlig gjenopptak for ventesaker", async () => {

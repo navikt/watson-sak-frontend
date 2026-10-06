@@ -3,6 +3,7 @@ import { getSaksreferanse } from "~/saker/id";
 export { paginerElementer } from "~/utils/paginering";
 import type { FordelingSak } from "./typer";
 import type { KontrollsakSteg } from "~/saker/types.backend";
+import { matcherSteg } from "~/saker/steg";
 
 export const ufordelteSorteringskolonner = [
   "saksid",
@@ -47,9 +48,9 @@ export function filtrerUfordelteSaker(
     const matcherMerking =
       filtre.merkinger.length === 0 ||
       sak.merking.some((merking) => filtre.merkinger.includes(merking));
-    const matcherSteg = filtre.steg.length === 0 || filtre.steg.includes(sak.stegKode);
+    const matcherValgtSteg = matcherSteg(sak.stegKode, filtre.steg);
 
-    return matcherKategori && matcherMisbrukstype && matcherMerking && matcherSteg;
+    return matcherKategori && matcherMisbrukstype && matcherMerking && matcherValgtSteg;
   });
 }
 

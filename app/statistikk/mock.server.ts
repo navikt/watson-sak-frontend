@@ -7,7 +7,7 @@ export function lagMockStatistikk(
 ): Statistikk {
   const statuser = [
     ["Opprettet", "OPPRETTET"],
-    ["Utredes", "UTREDES"],
+    ["Utredning", "UTREDNING"],
     ["Forvaltning", "FORVALTNING"],
     ["Avsluttet", "AVSLUTTET"],
   ] as const;
@@ -112,7 +112,7 @@ export function lagMockStatistikk(
     },
     statusfordeling: [
       ["Opprettet", "OPPRETTET", 323, 100],
-      ["Utredet", "UTREDES", 234, 72],
+      ["Utredet", "UTREDNING", 234, 72],
       ["Henlagt", "AVSLUTTET", 168, 52],
       ["Forvaltning", "FORVALTNING", 120, 37],
       ["Strafferettslig vurdert", "STRAFFERETTSLIG_VURDERING", 89, 28],
