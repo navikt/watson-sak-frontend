@@ -7,7 +7,7 @@ import { mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import { hentFordelingssaker } from "~/saker/mock-alle-saker.server";
 import type { Route } from "./+types/FordelingSide.route";
 import { hentKontrollsakerForFordeling, tildelKontrollsak } from "./api.server";
-import { mapKontrollsakTilFordelingSak, erEierlosKontrollsak } from "./mapper";
+import { mapKontrollsakTilFordelingSak, erKlarForFordeling } from "./mapper";
 
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
@@ -64,7 +64,7 @@ export async function action({ request }: Route.ActionArgs) {
 export async function loader({ request }: Route.LoaderArgs) {
   if (skalBrukeMockdata) {
     return hentFordelingssaker(request)
-      .filter(erEierlosKontrollsak)
+      .filter(erKlarForFordeling)
       .map(mapKontrollsakTilFordelingSak);
   }
 
@@ -79,5 +79,5 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   // Backend returnerer kun saker uten ansvarlig i saksbehandlerens enhet
   // (utenAnsvarlig=true og enhet=<innlogget enhet> er sendt).
-  return kontrollsaker.items.map(mapKontrollsakTilFordelingSak);
+  return kontrollsaker.items.filter(erKlarForFordeling).map(mapKontrollsakTilFordelingSak);
 }

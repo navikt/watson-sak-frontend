@@ -43,15 +43,15 @@ describe("StatistikkDiagrammer", () => {
   it("lar brukeren skjule et steg i stablede stolper", () => {
     renderMedRouter();
 
-    fireEvent.click(screen.getByRole("button", { name: "Utredes" }));
-    expect(screen.getByRole("button", { name: "Utredes" }).className).toContain("line-through");
+    fireEvent.click(screen.getByRole("button", { name: "Utredning" }));
+    expect(screen.getByRole("button", { name: "Utredning" }).className).toContain("line-through");
   });
 
   it("lenker et segment til støttede kategori- og stegfiltre", () => {
     renderMedRouter();
 
-    const lenke = screen.getByRole("link", { name: /Arbeid, Utredes/ });
-    expect(lenke.getAttribute("href")).toBe("/alle-saker?kategori=ARBEID&steg=UTREDES");
+    const lenke = screen.getByRole("link", { name: /Arbeid, Utredning/ });
+    expect(lenke.getAttribute("href")).toBe("/alle-saker?kategori=ARBEID&steg=UTREDNING");
   });
 
   it("viser prosenter med én desimal og humaniserer tekniske koder", () => {
@@ -264,7 +264,7 @@ describe("StatistikkDiagrammer", () => {
 
     const saksflyt = within(screen.getByRole("region", { name: "Saksflyt" }));
     const utredet = saksflyt.getByRole("link", { name: "Utredet: 234 saker, 72,0 %" });
-    expect(utredet.getAttribute("href")).toBe("/alle-saker?steg=UTREDES");
+    expect(utredet.getAttribute("href")).toBe("/alle-saker?steg=UTREDNING");
     expect(utredet.getAttribute("style")).toContain("72%");
     expect(utredet.getAttribute("style")).toContain("auto");
   });

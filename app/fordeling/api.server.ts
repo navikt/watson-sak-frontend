@@ -3,6 +3,7 @@ import { kastHvisUtlogget } from "~/auth/session-utløpt.server";
 import { BACKEND_API_URL, skalBrukeMockdata } from "~/config/env.server";
 import { logger } from "~/logging/logging";
 import { kontrollsakPageResponseSchema } from "~/saker/types.backend";
+import { ALLE_STEG } from "~/saker/steg";
 import type { KontrollsakPageResponse } from "./types.backend";
 
 type KontrollsakerFilter = {
@@ -86,7 +87,14 @@ export async function hentKontrollsakerForFordeling(request: Request, enhet: str
   }
 
   const token = await getBackendOboToken(request);
-  return hentKontrollsaker({ token, page: 1, size: 100, utenAnsvarlig: true, enhet: [enhet] });
+  return hentKontrollsaker({
+    token,
+    page: 1,
+    size: 100,
+    utenAnsvarlig: true,
+    enhet: [enhet],
+    steg: ALLE_STEG,
+  });
 }
 
 type TildelKontrollsakArgs = {

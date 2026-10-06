@@ -68,6 +68,7 @@ describe("ufordelte-saker", () => {
     const saker = [
       lagSak({ id: 1, stegKode: "OPPRETTET" }),
       lagSak({ id: 2, stegKode: "UTREDES" }),
+      lagSak({ id: 3, stegKode: "UTREDNING" }),
     ];
 
     expect(
@@ -75,9 +76,9 @@ describe("ufordelte-saker", () => {
         kategorier: [],
         misbrukstyper: [],
         merkinger: [],
-        steg: ["UTREDES"],
+        steg: ["UTREDNING"],
       }).map((sak) => sak.id),
-    ).toEqual([2]);
+    ).toEqual([2, 3]);
   });
 
   it("lager oppsummering med antall saker, eldste liggetid og relevante ytelser", () => {
