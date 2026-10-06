@@ -45,10 +45,10 @@ export function formaterSteg(steg: KontrollsakSteg | null | undefined): string {
 /** Tag-farge for steg. Alle steg har samme farge overalt i løsningen. */
 export const STEG_FARGE = "info";
 
+export type StatusFarge = "success" | "warning" | "neutral";
+
 /** Tag-farge for status: «Aktiv» (eller ingen status) er success, alle ventestatuser er warning. */
-export function hentStatusFarge(
-  status: KontrollsakStatus | null | undefined,
-): "success" | "warning" {
+export function hentStatusFarge(status: KontrollsakStatus | null | undefined): StatusFarge {
   return !status || status === "AKTIV" ? "success" : "warning";
 }
 
@@ -91,6 +91,20 @@ export function hentSluttresultat(resultat: KontrollsakResponse["resultat"]): st
     return formaterResultattype(utredning);
   }
   return null;
+}
+
+/**
+ * Tekst og farge for status-taggen til en sak. Avsluttede saker viser resultatet i stedet
+ * for status, i nøytral farge.
+ */
+export function hentStatusTag(sak: Pick<KontrollsakResponse, "steg" | "status" | "resultat">): {
+  tekst: string;
+  farge: StatusFarge;
+} {
+  if (sak.steg === "AVSLUTTET") {
+    return { tekst: hentSluttresultat(sak.resultat) ?? "Ikke registrert", farge: "neutral" };
+  }
+  return { tekst: formaterStatus(sak.status ?? "AKTIV"), farge: hentStatusFarge(sak.status) };
 }
 
 export function formaterKategori(kategori: KontrollsakKategori | null | undefined): string | null {

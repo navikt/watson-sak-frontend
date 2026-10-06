@@ -21,8 +21,7 @@ import type { KontrollsakResponse } from "~/saker/types.backend";
 import {
   formaterMisbrukstype,
   formaterPrioritet,
-  formaterStatus,
-  hentStatusFarge,
+  hentStatusTag,
   STEG_FARGE,
   getBeskrivelse,
   getKildeText,
@@ -71,6 +70,7 @@ export function SøkSakOppsummering({ sak }: SøkSakOppsummeringProps) {
   const tilbakeState = { tilbake: { to: RouteConfig.SØK, label: "Søk" } };
   const eier = sak.saksbehandlere.eier;
   const misbrukstyper = sak.misbruktype;
+  const statusTag = hentStatusTag(sak);
   const kategoriText = getKategoriText(sak);
   const beskrivelse = getBeskrivelse(sak);
 
@@ -106,9 +106,9 @@ export function SøkSakOppsummering({ sak }: SøkSakOppsummeringProps) {
           </VStack>
 
           <HStack gap="space-2">
-            {sak.status && (
-              <Tag variant="outline" data-color={hentStatusFarge(sak.status)} size="medium">
-                {formaterStatus(sak.status)}
+            {(sak.status || sak.steg === "AVSLUTTET") && (
+              <Tag variant="outline" data-color={statusTag.farge} size="medium">
+                {statusTag.tekst}
               </Tag>
             )}
             <Tag variant="outline" data-color={STEG_FARGE} size="medium">

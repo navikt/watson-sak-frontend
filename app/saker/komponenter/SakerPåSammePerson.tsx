@@ -21,13 +21,7 @@ import type { KontrollsakResponse } from "~/saker/types.backend";
 import { storFørsteBokstavPerOrd } from "~/utils/string-utils";
 import { PersonIdentHistorikkModal } from "./PersonIdentHistorikkModal";
 import { SakDetaljerFelter } from "./SakDetaljerFelter";
-import {
-  formaterStatus,
-  getPersonIdent,
-  getStegOgStatusTekst,
-  hentStatusFarge,
-  STEG_FARGE,
-} from "~/saker/visning";
+import { getPersonIdent, getStegOgStatusTekst, hentStatusTag, STEG_FARGE } from "~/saker/visning";
 
 interface SakerPåSammePersonProps {
   saker: KontrollsakResponse[];
@@ -58,6 +52,7 @@ function SakKort({
   const saksreferanse = getSaksreferanse(sak.id);
   const personIdent = getPersonIdent(sak);
   const stegOgStatusTekst = getStegOgStatusTekst(sak);
+  const statusTag = hentStatusTag(sak);
   const enhetskode = getSaksenhet(sak);
   const enhet = enhetskode ? finnEnhetsnavn(kodeverk.enheter, enhetskode) : "Ukjent";
   const saksbehandler = sak.saksbehandlere.eier?.navn ?? sak.saksbehandlere.opprettetAv.navn;
@@ -80,9 +75,9 @@ function SakKort({
               <BodyShort size="small">
                 Saksbehandler: <strong>{storFørsteBokstavPerOrd(saksbehandler)}</strong>
               </BodyShort>
-              {sak.status ? (
-                <Tag variant="outline" data-color={hentStatusFarge(sak.status)} size="small">
-                  {formaterStatus(sak.status)}
+              {sak.status || sak.steg === "AVSLUTTET" ? (
+                <Tag variant="outline" data-color={statusTag.farge} size="small">
+                  {statusTag.tekst}
                 </Tag>
               ) : (
                 <Tag variant="outline" data-color={STEG_FARGE} size="small">

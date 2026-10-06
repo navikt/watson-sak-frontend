@@ -9,7 +9,7 @@ import {
   getOpprettetDato,
 } from "~/saker/selectors";
 import type { KontrollsakResponse } from "~/saker/types.backend";
-import { formaterSteg, formaterStatus } from "~/saker/visning";
+import { formaterSteg, hentStatusFarge, hentStatusTag } from "~/saker/visning";
 import type { SakslisteRad } from "./Saksliste";
 
 export function mapKontrollsakTilSakslisteRad(
@@ -17,6 +17,7 @@ export function mapKontrollsakTilSakslisteRad(
   detaljSti = RouteConfig.SAKER_DETALJ.replace("/:sakId", ""),
 ): SakslisteRad {
   const saksreferanse = getSaksreferanse(sak.id);
+  const statusTag = hentStatusTag(sak);
 
   return {
     id: sak.id,
@@ -26,8 +27,8 @@ export function mapKontrollsakTilSakslisteRad(
     kategori: getKategoriText(sak),
     misbrukstyper: getMisbrukstyper(sak),
     steg: formaterSteg(sak.steg),
-    status: formaterStatus(sak.status ?? "AKTIV"),
-    statusKode: sak.status ?? null,
+    status: statusTag.tekst,
+    statusFarge: statusTag.farge,
     opprettet: getOpprettetDato(sak),
     oppdatert: getOppdatertDato(sak),
     saksbehandler: sak.saksbehandlere.eier?.navn ?? null,
@@ -49,7 +50,7 @@ export function mapFordelingSakTilSakslisteRad(
     misbrukstyper: sak.misbrukstyper,
     steg: sak.steg,
     status: sak.status ?? "Aktiv",
-    statusKode: sak.statusKode,
+    statusFarge: hentStatusFarge(sak.statusKode),
     opprettet: sak.opprettetDato,
     oppdatert: sak.oppdatertDato,
     saksbehandler: null,

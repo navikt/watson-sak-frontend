@@ -13,6 +13,7 @@ import {
   hentSluttresultat,
   getYtelseTyper,
   hentStatusFarge,
+  hentStatusTag,
 } from "./visning";
 
 function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
@@ -178,4 +179,31 @@ describe("hentSluttresultat", () => {
       expect(hentSluttresultat(resultat)).toBe(forventet);
     },
   );
+});
+
+describe("hentStatusTag", () => {
+  it("viser status med statusfarge for saker som ikke er avsluttet", () => {
+    expect(hentStatusTag({ steg: "UTREDNING", status: null, resultat: null })).toEqual({
+      tekst: "Aktiv",
+      farge: "success",
+    });
+    expect(hentStatusTag({ steg: "UTREDNING", status: "I_BERO", resultat: null })).toEqual({
+      tekst: "I bero",
+      farge: "warning",
+    });
+  });
+
+  it("viser resultatet i nøytral farge for avsluttede saker", () => {
+    expect(
+      hentStatusTag({
+        steg: "AVSLUTTET",
+        status: "AKTIV",
+        resultat: { utredning: { type: "HENLAGT" } } as KontrollsakResponse["resultat"],
+      }),
+    ).toEqual({ tekst: "Henlagt", farge: "neutral" });
+    expect(hentStatusTag({ steg: "AVSLUTTET", status: null, resultat: null })).toEqual({
+      tekst: "Ikke registrert",
+      farge: "neutral",
+    });
+  });
 });
