@@ -409,13 +409,13 @@ Nav-ident som allerede er validert mot kandidaten i
 ansvarlig før fordeling.
 
 "Opprett sak"-skjemaet viser et valgfritt internt notatfelt bare når det
-åpnes fra migreringslisten. Utfylt tekst lagres som et vanlig dokument
-("Notat fra opprettelse") gjennom det eksisterende dokument-API-et
-(`opprettDokument`/`lagreDokument`), kalt direkte fra opprettelsen — ikke via
-den steg-sperrede `/api/saker/:sakId/dokumenter`-routen, som først tillater
-redigering fra steget Utredes. Feiler notatlagringen, beholdes saken som
-`UNDER_MIGRERING`, og bekreftelsesvisningen tilbyr å prøve å lagre notatet på
-nytt mot samme sak (`/api/registrer-sak/notat`).
+åpnes fra migreringslisten. Frontend sender teksten som `notat` i samme kall
+som opprettelsen (`POST /api/v1/kontrollsaker`, sammen med `legacyPid` og
+`legacyKilde`). Backend lagrer notatet som dokumentet "Notat fra opprettelse"
+(type `MIGRERINGSNOTAT`) i samme transaksjon som saken og koblingen til
+kandidaten. Saken, koblingen og notatet lagres derfor alle eller ingen, og
+frontend har ingen egen retry-flyt for notatet. Notatet er maks 4000 tegn og
+godtas bare sammen med migreringsnøkkelen.
 
 🔴 Rød sone: Teamet må gå gjennom tilgangsregelen, personinnsyn og
 statusovergangene før merge. Backendens Postgres-integrasjonstester må
