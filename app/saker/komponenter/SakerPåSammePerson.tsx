@@ -1,19 +1,10 @@
 import { ChevronDownIcon, ChevronUpIcon, LinkBrokenIcon, LinkIcon } from "@navikt/aksel-icons";
-import {
-  Alert,
-  BodyShort,
-  Box,
-  Button,
-  Heading,
-  HStack,
-  Modal,
-  Tag,
-  VStack,
-} from "@navikt/ds-react";
+import { Alert, BodyShort, Box, Button, Heading, HStack, Modal, VStack } from "@navikt/ds-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useFetcher } from "react-router";
 import { finnEnhetsnavn } from "~/kodeverk/enheter";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
+import { AvkortetTag } from "~/komponenter/AvkortetTag";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { getKategoriText, getSaksenhet } from "~/saker/selectors";
@@ -76,13 +67,13 @@ function SakKort({
                 Saksbehandler: <strong>{storFørsteBokstavPerOrd(saksbehandler)}</strong>
               </BodyShort>
               {sak.status || sak.steg === "AVSLUTTET" ? (
-                <Tag variant="outline" data-color={statusTag.farge} size="small">
+                <AvkortetTag variant="outline" data-color={statusTag.farge} size="small">
                   {statusTag.tekst}
-                </Tag>
+                </AvkortetTag>
               ) : (
-                <Tag variant="outline" data-color={STEG_FARGE} size="small">
+                <AvkortetTag variant="outline" data-color={STEG_FARGE} size="small">
                   {stegOgStatusTekst}
-                </Tag>
+                </AvkortetTag>
               )}
             </HStack>
             <Button

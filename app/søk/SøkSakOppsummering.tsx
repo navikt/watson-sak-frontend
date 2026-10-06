@@ -12,6 +12,7 @@ import {
   VStack,
 } from "@navikt/ds-react";
 import { Link } from "react-router";
+import { AvkortetTag } from "~/komponenter/AvkortetTag";
 import { sporHendelse } from "~/analytics/analytics";
 import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
@@ -105,15 +106,15 @@ export function SøkSakOppsummering({ sak }: SøkSakOppsummeringProps) {
             </HStack>
           </VStack>
 
-          <HStack gap="space-2">
+          <HStack gap="space-2" className="min-w-0">
             {(sak.status || sak.steg === "AVSLUTTET") && (
-              <Tag variant="outline" data-color={statusTag.farge} size="medium">
+              <AvkortetTag variant="outline" data-color={statusTag.farge} size="medium">
                 {statusTag.tekst}
-              </Tag>
+              </AvkortetTag>
             )}
-            <Tag variant="outline" data-color={STEG_FARGE} size="medium">
+            <AvkortetTag variant="outline" data-color={STEG_FARGE} size="medium">
               {getStegOgStatusTekst(sak)}
-            </Tag>
+            </AvkortetTag>
           </HStack>
         </HStack>
 

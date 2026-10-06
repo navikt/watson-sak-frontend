@@ -1,6 +1,7 @@
 import { BodyShort, Link, Table, Tag } from "@navikt/ds-react";
 import type { ReactNode } from "react";
 import { Link as RouterLink, useNavigate } from "react-router";
+import { AvkortetTag } from "~/komponenter/AvkortetTag";
 import { sporHendelse } from "~/analytics/analytics";
 import type { Tilbakemål } from "~/saker/tilbake";
 import { STEG_FARGE, type StatusFarge } from "~/saker/visning";
@@ -234,17 +235,22 @@ function renderCelle(
       );
     case "status":
       return rad.status ? (
-        <Tag variant="outline" data-color={rad.statusFarge ?? "success"} size="small">
+        <AvkortetTag
+          variant="outline"
+          data-color={rad.statusFarge ?? "success"}
+          size="small"
+          className="max-w-48"
+        >
           {rad.status}
-        </Tag>
+        </AvkortetTag>
       ) : (
         <BodyShort size="small">–</BodyShort>
       );
     case "steg":
       return rad.steg ? (
-        <Tag variant="outline" data-color={STEG_FARGE} size="small">
+        <AvkortetTag variant="outline" data-color={STEG_FARGE} size="small" className="max-w-48">
           {rad.steg}
-        </Tag>
+        </AvkortetTag>
       ) : (
         <BodyShort size="small">–</BodyShort>
       );

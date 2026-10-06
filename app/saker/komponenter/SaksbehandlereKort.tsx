@@ -1,20 +1,11 @@
 import { PersonPencilIcon, PersonPlusIcon, XMarkIcon } from "@navikt/aksel-icons";
-import {
-  BodyShort,
-  Box,
-  Button,
-  Detail,
-  Heading,
-  HStack,
-  Tag,
-  Tooltip,
-  VStack,
-} from "@navikt/ds-react";
+import { BodyShort, Box, Button, Detail, Heading, HStack, Tooltip, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import { useFetcher } from "react-router";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { finnEnhetsnavn } from "~/kodeverk/enheter";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
+import { AvkortetTag } from "~/komponenter/AvkortetTag";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { getSaksenhet } from "~/saker/selectors";
@@ -137,10 +128,10 @@ export function SaksbehandlereKort({
               Steg
             </Detail>
             <HStack justify="space-between" align="center" gap="space-4">
-              <div>
-                <Tag variant="moderate" data-color={STEG_FARGE} size="medium">
+              <div className="min-w-0">
+                <AvkortetTag variant="moderate" data-color={STEG_FARGE} size="medium">
                   {formaterSteg(sak.steg)}
-                </Tag>
+                </AvkortetTag>
               </div>
               {kanEndreSteg && (
                 <ResponsivEndreKnapp
@@ -158,10 +149,10 @@ export function SaksbehandlereKort({
               <Detail className="text-ax-text-neutral-subtle" uppercase>
                 Resultat
               </Detail>
-              <div>
-                <Tag variant="moderate" data-color={statusTag.farge} size="medium">
+              <div className="min-w-0">
+                <AvkortetTag variant="moderate" data-color={statusTag.farge} size="medium">
                   {statusTag.tekst}
-                </Tag>
+                </AvkortetTag>
               </div>
             </VStack>
           ) : (
@@ -170,10 +161,10 @@ export function SaksbehandlereKort({
                 Status
               </Detail>
               <HStack justify="space-between" align="center" gap="space-4">
-                <div>
-                  <Tag variant="moderate" data-color={statusTag.farge} size="medium">
+                <div className="min-w-0">
+                  <AvkortetTag variant="moderate" data-color={statusTag.farge} size="medium">
                     {statusTag.tekst}
-                  </Tag>
+                  </AvkortetTag>
                 </div>
                 {kanEndreStatus && (
                   <ResponsivEndreKnapp
