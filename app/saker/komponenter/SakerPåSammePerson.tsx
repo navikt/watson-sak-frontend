@@ -1,19 +1,10 @@
 import { ChevronDownIcon, ChevronUpIcon, LinkBrokenIcon, LinkIcon } from "@navikt/aksel-icons";
-import {
-  Alert,
-  BodyShort,
-  Box,
-  Button,
-  Heading,
-  HStack,
-  Modal,
-  Tag,
-  VStack,
-} from "@navikt/ds-react";
+import { Alert, BodyShort, Box, Button, Heading, HStack, Modal, VStack } from "@navikt/ds-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useFetcher } from "react-router";
 import { finnEnhetsnavn } from "~/kodeverk/enheter";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
+import { AvkortetTag } from "~/komponenter/AvkortetTag";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { getKategoriText, getSaksenhet } from "~/saker/selectors";
@@ -21,7 +12,7 @@ import type { KontrollsakResponse } from "~/saker/types.backend";
 import { storFørsteBokstavPerOrd } from "~/utils/string-utils";
 import { PersonIdentHistorikkModal } from "./PersonIdentHistorikkModal";
 import { SakDetaljerFelter } from "./SakDetaljerFelter";
-import { formaterStatus, getPersonIdent, getStegOgStatusTekst } from "~/saker/visning";
+import { getPersonIdent, getStegOgStatusTekst, hentStatusTag, STEG_FARGE } from "~/saker/visning";
 
 interface SakerPåSammePersonProps {
   saker: KontrollsakResponse[];
@@ -52,6 +43,7 @@ function SakKort({
   const saksreferanse = getSaksreferanse(sak.id);
   const personIdent = getPersonIdent(sak);
   const stegOgStatusTekst = getStegOgStatusTekst(sak);
+  const statusTag = hentStatusTag(sak);
   const enhetskode = getSaksenhet(sak);
   const enhet = enhetskode ? finnEnhetsnavn(kodeverk.enheter, enhetskode) : "Ukjent";
   const saksbehandler = sak.saksbehandlere.eier?.navn ?? sak.saksbehandlere.opprettetAv.navn;
@@ -74,14 +66,14 @@ function SakKort({
               <BodyShort size="small">
                 Saksbehandler: <strong>{storFørsteBokstavPerOrd(saksbehandler)}</strong>
               </BodyShort>
-              {sak.status ? (
-                <Tag variant="outline" data-color="warning" size="small">
-                  {formaterStatus(sak.status)}
-                </Tag>
+              {sak.status || sak.steg === "AVSLUTTET" ? (
+                <AvkortetTag variant="outline" data-color={statusTag.farge} size="small">
+                  {statusTag.tekst}
+                </AvkortetTag>
               ) : (
-                <Tag variant="outline" data-color="success" size="small">
+                <AvkortetTag variant="outline" data-color={STEG_FARGE} size="small">
                   {stegOgStatusTekst}
-                </Tag>
+                </AvkortetTag>
               )}
             </HStack>
             <Button

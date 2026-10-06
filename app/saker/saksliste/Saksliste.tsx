@@ -1,8 +1,10 @@
 import { BodyShort, Link, Table, Tag } from "@navikt/ds-react";
 import type { ReactNode } from "react";
 import { Link as RouterLink, useNavigate } from "react-router";
+import { AvkortetTag } from "~/komponenter/AvkortetTag";
 import { sporHendelse } from "~/analytics/analytics";
 import type { Tilbakemål } from "~/saker/tilbake";
+import { STEG_FARGE, type StatusFarge } from "~/saker/visning";
 import { formaterDato } from "~/utils/date-utils";
 import { storFørsteBokstavPerOrd } from "~/utils/string-utils";
 import { KolonneHeading, type Sorteringsretning } from "./KolonneHeading";
@@ -28,6 +30,8 @@ export type SakslisteRad = {
   misbrukstyper: string[];
   steg: string | null;
   status: string | null;
+  /** Tag-farge for status. Mangler den, regnes saken som aktiv. */
+  statusFarge?: StatusFarge;
   opprettet: string;
   oppdatert: string | null;
   saksbehandler: string | null;
@@ -231,17 +235,22 @@ function renderCelle(
       );
     case "status":
       return rad.status ? (
-        <Tag variant="outline" data-color="warning" size="small">
+        <AvkortetTag
+          variant="outline"
+          data-color={rad.statusFarge ?? "success"}
+          size="small"
+          className="max-w-48"
+        >
           {rad.status}
-        </Tag>
+        </AvkortetTag>
       ) : (
         <BodyShort size="small">–</BodyShort>
       );
     case "steg":
       return rad.steg ? (
-        <Tag variant="outline" data-color="success" size="small">
+        <AvkortetTag variant="outline" data-color={STEG_FARGE} size="small" className="max-w-48">
           {rad.steg}
-        </Tag>
+        </AvkortetTag>
       ) : (
         <BodyShort size="small">–</BodyShort>
       );

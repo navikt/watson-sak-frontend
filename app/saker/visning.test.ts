@@ -12,7 +12,8 @@ import {
   getStegOgStatusTekst,
   hentSluttresultat,
   getYtelseTyper,
-  hentStegVariant,
+  hentStatusFarge,
+  hentStatusTag,
 } from "./visning";
 
 function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
@@ -77,9 +78,14 @@ describe("sak-visning", () => {
     expect(formaterBelop(1234567)).toBe("1\u00a0234\u00a0567");
   });
 
-  it("maper backend-steg til riktig tag-variant", () => {
-    expect(hentStegVariant("POLITI")).toBe("success");
-    expect(hentStegVariant("ANMELDT")).toBe("success");
+  it("gir success-farge til aktive saker og warning til ventestatuser", () => {
+    expect(hentStatusFarge(null)).toBe("success");
+    expect(hentStatusFarge("AKTIV")).toBe("success");
+    expect(hentStatusFarge("VENTER_PA_INFORMASJON")).toBe("warning");
+    expect(hentStatusFarge("VENTER_PA_VEDTAK")).toBe("warning");
+    expect(hentStatusFarge("VENTER_PA_RESULTAT")).toBe("warning");
+    expect(hentStatusFarge("I_BERO")).toBe("warning");
+    expect(hentStatusFarge("PAAKLAGET")).toBe("warning");
   });
 
   it("formaterer backend-kategori til visningstekst", () => {
@@ -173,4 +179,31 @@ describe("hentSluttresultat", () => {
       expect(hentSluttresultat(resultat)).toBe(forventet);
     },
   );
+});
+
+describe("hentStatusTag", () => {
+  it("viser status med statusfarge for saker som ikke er avsluttet", () => {
+    expect(hentStatusTag({ steg: "UTREDNING", status: null, resultat: null })).toEqual({
+      tekst: "Aktiv",
+      farge: "success",
+    });
+    expect(hentStatusTag({ steg: "UTREDNING", status: "I_BERO", resultat: null })).toEqual({
+      tekst: "I bero",
+      farge: "warning",
+    });
+  });
+
+  it("viser resultatet i nøytral farge for avsluttede saker", () => {
+    expect(
+      hentStatusTag({
+        steg: "AVSLUTTET",
+        status: "AKTIV",
+        resultat: { utredning: { type: "HENLAGT" } } as KontrollsakResponse["resultat"],
+      }),
+    ).toEqual({ tekst: "Henlagt", farge: "neutral" });
+    expect(hentStatusTag({ steg: "AVSLUTTET", status: null, resultat: null })).toEqual({
+      tekst: "Ikke registrert",
+      farge: "neutral",
+    });
+  });
 });

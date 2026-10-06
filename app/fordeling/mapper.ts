@@ -25,6 +25,7 @@ export function mapKontrollsakTilFordelingSak(kontrollsak: KontrollsakResponse):
     steg: formaterSteg(kontrollsak.steg),
     stegKode: kontrollsak.steg,
     status: kontrollsak.status ? formaterStatus(kontrollsak.status) : null,
+    statusKode: kontrollsak.status ?? null,
   };
 }
 

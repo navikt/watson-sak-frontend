@@ -12,6 +12,7 @@ import {
   VStack,
 } from "@navikt/ds-react";
 import { Link } from "react-router";
+import { AvkortetTag } from "~/komponenter/AvkortetTag";
 import { sporHendelse } from "~/analytics/analytics";
 import { Kort } from "~/komponenter/Kort";
 import { RouteConfig } from "~/routeConfig";
@@ -21,7 +22,8 @@ import type { KontrollsakResponse } from "~/saker/types.backend";
 import {
   formaterMisbrukstype,
   formaterPrioritet,
-  formaterStatus,
+  hentStatusTag,
+  STEG_FARGE,
   getBeskrivelse,
   getKildeText,
   getPersonIdent,
@@ -69,6 +71,7 @@ export function SøkSakOppsummering({ sak }: SøkSakOppsummeringProps) {
   const tilbakeState = { tilbake: { to: RouteConfig.SØK, label: "Søk" } };
   const eier = sak.saksbehandlere.eier;
   const misbrukstyper = sak.misbruktype;
+  const statusTag = hentStatusTag(sak);
   const kategoriText = getKategoriText(sak);
   const beskrivelse = getBeskrivelse(sak);
 
@@ -103,15 +106,15 @@ export function SøkSakOppsummering({ sak }: SøkSakOppsummeringProps) {
             </HStack>
           </VStack>
 
-          <HStack gap="space-2">
-            {sak.status && (
-              <Tag variant="outline" data-color="warning" size="medium">
-                {formaterStatus(sak.status)}
-              </Tag>
+          <HStack gap="space-2" className="min-w-0">
+            {(sak.status || sak.steg === "AVSLUTTET") && (
+              <AvkortetTag variant="outline" data-color={statusTag.farge} size="medium">
+                {statusTag.tekst}
+              </AvkortetTag>
             )}
-            <Tag variant="outline" data-color="success" size="medium">
+            <AvkortetTag variant="outline" data-color={STEG_FARGE} size="medium">
               {getStegOgStatusTekst(sak)}
-            </Tag>
+            </AvkortetTag>
           </HStack>
         </HStack>
 

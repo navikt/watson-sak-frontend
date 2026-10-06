@@ -5,7 +5,6 @@ import {
   formaterMisbrukstype,
   formaterPeriodeForYtelser,
   getYtelseTyper,
-  hentStegVariant as hentKontrollsakStegVariant,
 } from "./visning";
 
 type MineSakerGruppeStatus = "aktive" | "ventende" | "fullførte";
@@ -36,10 +35,6 @@ export function getPeriodeText(sak: KontrollsakResponse): string | null {
 
 export function getKategoriText(sak: KontrollsakResponse): string | null {
   return formaterKategori(sak.kategori);
-}
-
-export function getStegVariantForSak(sak: KontrollsakResponse) {
-  return hentKontrollsakStegVariant(sak.steg);
 }
 
 export function getSaksenhet(sak: KontrollsakResponse): string {

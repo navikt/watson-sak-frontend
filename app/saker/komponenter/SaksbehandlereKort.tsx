@@ -1,20 +1,11 @@
 import { PersonPencilIcon, PersonPlusIcon, XMarkIcon } from "@navikt/aksel-icons";
-import {
-  BodyShort,
-  Box,
-  Button,
-  Detail,
-  Heading,
-  HStack,
-  Tag,
-  Tooltip,
-  VStack,
-} from "@navikt/ds-react";
+import { BodyShort, Box, Button, Detail, Heading, HStack, Tooltip, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import { useFetcher } from "react-router";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { finnEnhetsnavn } from "~/kodeverk/enheter";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
+import { AvkortetTag } from "~/komponenter/AvkortetTag";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { getSaksenhet } from "~/saker/selectors";
@@ -30,7 +21,7 @@ import { SaksflytModal, type SaksflytStart } from "~/saker/handlinger/saksflyt/S
 import { OverforAnsvarligModal } from "~/saker/handlinger/OverforAnsvarligModal";
 import { SendTilAnnenEnhetModal } from "~/saker/handlinger/SendTilAnnenEnhetModal";
 import { TildelSaksbehandlerModal } from "~/saker/handlinger/TildelSaksbehandlerModal";
-import { formaterStatus, formaterSteg, hentSluttresultat, hentStegVariant } from "~/saker/visning";
+import { formaterSteg, hentStatusTag, STEG_FARGE } from "~/saker/visning";
 import { ResponsivEndreKnapp } from "./ResponsivEndreKnapp";
 
 interface SaksbehandlereKortProps {
@@ -122,6 +113,7 @@ export function SaksbehandlereKort({
   const kanEndreSteg =
     erEier && tillatteHandlinger && hentHandlinger(tillatteHandlinger).length > 0;
   const erAvsluttet = sak.steg === "AVSLUTTET";
+  const statusTag = hentStatusTag(sak);
 
   return (
     <>
@@ -136,10 +128,10 @@ export function SaksbehandlereKort({
               Steg
             </Detail>
             <HStack justify="space-between" align="center" gap="space-4">
-              <div>
-                <Tag variant="moderate" data-color={hentStegVariant(sak.steg)} size="medium">
+              <div className="min-w-0">
+                <AvkortetTag variant="moderate" data-color={STEG_FARGE} size="medium">
                   {formaterSteg(sak.steg)}
-                </Tag>
+                </AvkortetTag>
               </div>
               {kanEndreSteg && (
                 <ResponsivEndreKnapp
@@ -157,10 +149,10 @@ export function SaksbehandlereKort({
               <Detail className="text-ax-text-neutral-subtle" uppercase>
                 Resultat
               </Detail>
-              <div>
-                <Tag variant="moderate" data-color="neutral" size="medium">
-                  {hentSluttresultat(sak.resultat) ?? "Ikke registrert"}
-                </Tag>
+              <div className="min-w-0">
+                <AvkortetTag variant="moderate" data-color={statusTag.farge} size="medium">
+                  {statusTag.tekst}
+                </AvkortetTag>
               </div>
             </VStack>
           ) : (
@@ -169,14 +161,10 @@ export function SaksbehandlereKort({
                 Status
               </Detail>
               <HStack justify="space-between" align="center" gap="space-4">
-                <div>
-                  <Tag
-                    variant="moderate"
-                    data-color={!sak.status || sak.status === "AKTIV" ? "success" : "warning"}
-                    size="medium"
-                  >
-                    {sak.status ? formaterStatus(sak.status) : "Aktiv"}
-                  </Tag>
+                <div className="min-w-0">
+                  <AvkortetTag variant="moderate" data-color={statusTag.farge} size="medium">
+                    {statusTag.tekst}
+                  </AvkortetTag>
                 </div>
                 {kanEndreStatus && (
                   <ResponsivEndreKnapp

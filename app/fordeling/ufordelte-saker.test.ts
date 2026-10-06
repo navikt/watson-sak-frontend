@@ -20,6 +20,7 @@ const lagSak = (overstyringer: Partial<FordelingSak>): FordelingSak => ({
   steg: "Opprettet",
   stegKode: "OPPRETTET",
   status: null,
+  statusKode: null,
   ...overstyringer,
 });
 

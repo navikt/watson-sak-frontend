@@ -85,6 +85,7 @@ describe("Fordeling mapper", () => {
       steg: "Opprettet",
       stegKode: "OPPRETTET",
       status: null,
+      statusKode: null,
     });
   });
 
@@ -105,6 +106,7 @@ describe("Fordeling mapper", () => {
       steg: "Opprettet",
       stegKode: "OPPRETTET",
       status: null,
+      statusKode: null,
     });
   });
 });

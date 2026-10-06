@@ -64,6 +64,7 @@ function lagFordelingSak(overrides: Partial<FordelingSak> = {}): FordelingSak {
     steg: "Opprettet",
     stegKode: "OPPRETTET",
     status: null,
+    statusKode: null,
     ...overrides,
   };
 }
@@ -82,10 +83,22 @@ describe("sakslisteadaptere", () => {
       misbrukstyper: ["Skjult samliv"],
       steg: "Opprettet",
       status: "Aktiv",
+      statusFarge: "success",
       saksbehandler: "Saks Behandler",
       opprettet: "2026-02-03T10:11:12Z",
       oppdatert: "2026-02-03T10:11:12Z",
     });
+  });
+
+  it("viser resultatet i nøytral farge som status for avsluttede saker", () => {
+    expect(
+      mapKontrollsakTilSakslisteRad(
+        lagKontrollsak({
+          steg: "AVSLUTTET",
+          resultat: { utredning: { type: "HENLAGT" } } as KontrollsakResponse["resultat"],
+        }),
+      ),
+    ).toMatchObject({ status: "Henlagt", statusFarge: "neutral" });
   });
 
   it("kan bruke egendefinert detaljsti for kontrollsak", () => {
@@ -104,6 +117,7 @@ describe("sakslisteadaptere", () => {
       misbrukstyper: ["Skjult samliv"],
       steg: "Opprettet",
       status: "Aktiv",
+      statusFarge: "success",
       saksbehandler: null,
       opprettet: "2026-03-20",
       oppdatert: "2026-03-21",
