@@ -1,12 +1,14 @@
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { BACKEND_API_URL, skalBrukeMockdata } from "~/config/env.server";
 import { logger } from "~/logging/logging";
+import { hentMockMigreringKandidater } from "~/migrering/mock-data.server";
 import { leggTilFil } from "~/saker/filer/mock-data-filer.server";
 import {
   opprettDokument as opprettMockDokument,
   lagreDokument as lagreMockDokument,
 } from "~/saker/filer/mock-data.server";
 import { leggTilMockSakIFordeling } from "~/saker/mock-alle-saker.server";
+import { lagIsoTidspunktFraNorskDatoTid } from "~/utils/date-utils";
 
 export type OpprettKontrollsakRequest = {
   personIdent: string;
@@ -89,6 +91,13 @@ export async function opprettKontrollsak({
           }
         : payload.saksbehandlere;
 
+    // Som i backend: saken får opprettet-datoen fra Access (midnatt norsk tid), ellers nåtid.
+    const referansedato = innlogget
+      ? hentMockMigreringKandidater(innlogget.navIdent).find(
+          (k) => k.legacyKilde === payload.legacyKilde && k.legacyPid === payload.legacyPid,
+        )?.referansedato
+      : null;
+
     const kontrollsak = leggTilMockSakIFordeling(request, {
       personIdent: payload.personIdent,
       saksbehandlere,
@@ -102,6 +111,7 @@ export async function opprettKontrollsak({
       ytelser: payload.ytelser,
       legacyPid: payload.legacyPid,
       legacyKilde: payload.legacyKilde,
+      opprettet: referansedato ? lagIsoTidspunktFraNorskDatoTid(referansedato) : undefined,
     });
     if (payload.notat && erMigrering && innlogget) {
       const sakId = String(kontrollsak.id);

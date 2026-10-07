@@ -512,13 +512,15 @@ type NyMockFordelingssak = {
   }>;
   legacyPid?: string;
   legacyKilde?: string;
+  /** ISO-tidspunkt. Mangler det, brukes nåtid. */
+  opprettet?: string;
 };
 
 export function leggTilMockSakIFordeling(
   state: MockState,
   nySak: NyMockFordelingssak,
 ): KontrollsakResponse {
-  const opprettet = new Date().toISOString();
+  const opprettet = nySak.opprettet ?? new Date().toISOString();
 
   const kontrollsak = kontrollsakResponseSchema.parse({
     id: state.nesteFordelingssakId++,
