@@ -125,3 +125,65 @@ describe("Notat i Opprett sak", () => {
     expect(container.querySelector('input[name="legacyKilde"]')).not.toBeNull();
   });
 });
+
+async function velgISelect(select: HTMLSelectElement, verdi: string) {
+  // Som i nettleseren: input-eventet kommer før change, med mikrooppgaver imellom.
+  await act(async () => {
+    select.value = verdi;
+    select.dispatchEvent(new Event("input", { bubbles: true }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+}
+
+describe("Nedtrekksfelt i Opprett sak", () => {
+  beforeEach(() => {
+    state.miljø = "local-backend";
+    state.legacyPid = null;
+    state.legacyKilde = null;
+  });
+
+  it("lar saksbehandler velge verdier etter en valideringsfeil", async () => {
+    renderSide();
+    await screen.findByRole("heading", { name: "Grunnleggende saksinformasjon" });
+
+    await act(async () => {
+      screen.getByRole("button", { name: "Opprett sak" }).click();
+    });
+    await screen.findByText("Du må rette disse feilene før du kan gå videre");
+
+    const kategori = screen.getByRole("combobox", { name: "Kategori" }) as HTMLSelectElement;
+    const kilde = screen.getByRole("combobox", { name: "Kilde" }) as HTMLSelectElement;
+    const enhet = screen.getByRole("combobox", { name: "Enhet" }) as HTMLSelectElement;
+
+    const [valgtKategori] = mockKodeverk.kategorier;
+    const [valgtKilde] = mockKodeverk.kilder;
+    const [valgtEnhet] = mockKodeverk.enheter;
+    if (!valgtKategori || !valgtKilde || !valgtEnhet) throw new Error("Mangler kodeverk");
+
+    await velgISelect(kategori, valgtKategori.kode);
+    expect(
+      (screen.getByRole("combobox", { name: "Misbruktype" }) as HTMLInputElement).disabled,
+    ).toBe(false);
+    await velgISelect(kilde, valgtKilde.kode);
+    await velgISelect(enhet, valgtEnhet.kode);
+
+    expect(kategori.value).toBe(valgtKategori.kode);
+    expect(kilde.value).toBe(valgtKilde.kode);
+    expect(enhet.value).toBe(valgtEnhet.kode);
+  });
+
+  it("fyller ut nedtrekksfeltene med en tilfeldig sak", async () => {
+    renderSide();
+    const knapp = await screen.findByRole("button", { name: "Fyll ut en tilfeldig sak" });
+
+    await act(async () => {
+      knapp.click();
+    });
+
+    for (const navn of ["Kategori", "Kilde", "Enhet"]) {
+      const select = screen.getByRole("combobox", { name: navn }) as HTMLSelectElement;
+      expect(select.value).not.toBe("");
+    }
+  });
+});

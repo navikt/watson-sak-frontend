@@ -115,9 +115,18 @@ export default function OpprettSakSide() {
   const forrigeNavigasjonstilstand = useRef(navigation.state);
   const senderInn = navigation.state !== "idle" && innsendingPågår.current;
 
+  // Fra migreringslisten forhåndsutfylles enheten med innlogget brukers egen enhet (Figma, skjerm 2).
+  const egenEnhet =
+    legacyPid && legacyKilde && kodeverk.enheter.some((e) => e.kode === innloggetBruker?.enhetId)
+      ? (innloggetBruker?.enhetId ?? "")
+      : "";
+
+  // Select-feltene er ukontrollerte og eies av Conform. Kontrollerte felt ble tilbakestilt
+  // når revalideringen på input-eventet rendret på nytt før React rakk å lese change-eventet.
   const [form, fields] = useForm({
     id: "opprett-sak",
     lastResult: lastResult && "status" in lastResult ? lastResult : undefined,
+    defaultValue: { enhet: egenEnhet },
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: opprettSakSchema });
     },
@@ -125,14 +134,7 @@ export default function OpprettSakSide() {
     shouldRevalidate: "onInput",
   });
 
-  const [valgtKategori, setValgtKategori] = useState(fields.kategori.initialValue ?? "");
-  const [valgtKilde, setValgtKilde] = useState(fields.kilde.initialValue ?? "");
-  // Fra migreringslisten forhåndsutfylles enheten med innlogget brukers egen enhet (Figma, skjerm 2).
-  const egenEnhet =
-    legacyPid && legacyKilde && kodeverk.enheter.some((e) => e.kode === innloggetBruker?.enhetId)
-      ? (innloggetBruker?.enhetId ?? "")
-      : "";
-  const [valgtEnhet, setValgtEnhet] = useState(fields.enhet.initialValue ?? egenEnhet);
+  const valgtKategori = fields.kategori.value ?? "";
 
   const [valgteMisbruktyper, setValgteMisbruktyper] = useState<string[]>(
     (fields.misbruktype.initialValue as string[]) ?? [],
@@ -254,9 +256,9 @@ export default function OpprettSakSide() {
     const tilfeldigSak = lagTilfeldigSak(kodeverk);
     if (!tilfeldigSak) return;
 
-    setValgtKategori(tilfeldigSak.kategori);
-    setValgtKilde(tilfeldigSak.kilde);
-    setValgtEnhet(tilfeldigSak.enhet);
+    form.update({ name: fields.kategori.name, value: tilfeldigSak.kategori });
+    form.update({ name: fields.kilde.name, value: tilfeldigSak.kilde });
+    form.update({ name: fields.enhet.name, value: tilfeldigSak.enhet });
     setValgteMisbruktyper(tilfeldigSak.misbruktyper);
     setValgteMerkinger(tilfeldigSak.merkinger);
     setValgteArbeidsgivere([]);
@@ -520,9 +522,8 @@ export default function OpprettSakSide() {
                       label="Kategori"
                       error={fields.kategori.errors?.[0]}
                       className="w-52"
-                      value={valgtKategori}
+                      defaultValue={fields.kategori.initialValue}
                       onChange={(e) => {
-                        setValgtKategori(e.target.value);
                         const nyligeGyldige = kodeverk.misbrukstyper
                           .filter((m) => m.kategori === e.target.value)
                           .map((m) => m.kode);
@@ -572,13 +573,13 @@ export default function OpprettSakSide() {
                     </div>
 
                     <Select
+                      key={fields.kilde.key}
                       name={fields.kilde.name}
                       id={fields.kilde.id}
                       label="Kilde"
                       error={fields.kilde.errors?.[0]}
                       className="w-52"
-                      value={valgtKilde}
-                      onChange={(event) => setValgtKilde(event.target.value)}
+                      defaultValue={fields.kilde.initialValue}
                     >
                       <option value="">Velg kilde</option>
                       {kodeverk.kilder.map((k) => (
@@ -592,13 +593,13 @@ export default function OpprettSakSide() {
                   {/* Rad 2 (Enhet påkrevd, resten valgfritt): Enhet, Merking, Organisasjonsnummer — tre felt per rad iht Figma */}
                   <HStack gap="space-24" align="start" wrap>
                     <Select
+                      key={fields.enhet.key}
                       name={fields.enhet.name}
                       id={fields.enhet.id}
                       label="Enhet"
                       error={fields.enhet.errors?.[0]}
                       className="w-44"
-                      value={valgtEnhet}
-                      onChange={(event) => setValgtEnhet(event.target.value)}
+                      defaultValue={fields.enhet.initialValue}
                     >
                       <option value="">Velg enhet</option>
                       {kodeverk.enheter.map((e) => (
