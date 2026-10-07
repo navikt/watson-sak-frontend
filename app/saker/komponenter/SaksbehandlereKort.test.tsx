@@ -560,9 +560,10 @@ describe("SaksbehandlereKort", () => {
     );
 
     expect(screen.getByRole("button", { name: "Fjern saksbehandler" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Endre ansvarlig saksbehandler" })).toBeDefined();
   });
 
-  it("skjuler Fjern saksbehandler for en saksbehandler uten eierskap eller lederrolle", async () => {
+  it("skjuler Endre og Fjern saksbehandler for en saksbehandler uten eierskap eller lederrolle", async () => {
     await renderMedRouter(
       <SaksbehandlereKort
         erEier={false}
@@ -573,5 +574,6 @@ describe("SaksbehandlereKort", () => {
     );
 
     expect(screen.queryByRole("button", { name: "Fjern saksbehandler" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Endre ansvarlig saksbehandler" })).toBeNull();
   });
 });
