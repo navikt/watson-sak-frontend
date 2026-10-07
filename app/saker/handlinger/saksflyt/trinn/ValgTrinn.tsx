@@ -5,6 +5,7 @@ import {
   Detail,
   Radio,
   RadioGroup,
+  UNSAFE_Combobox,
   VStack,
 } from "@navikt/ds-react";
 import type { KontrollsakStatus, TillatteHandlingerResponse } from "~/saker/types.backend";
@@ -59,6 +60,9 @@ function Legend({ children }: { children: string }) {
   );
 }
 
+/** Flere valg enn dette vises som en søkbar combobox i stedet for radioknapper. */
+const MAKS_ANTALL_RADIOKNAPPER = 8;
+
 export function EnkeltvalgTrinn({
   trinn,
   verdier,
@@ -70,11 +74,27 @@ export function EnkeltvalgTrinn({
   const valg = felt
     ? hentValg(felt, tillatteHandlinger.tillatteResultater, trinn.tillatteVerdier)
     : [];
+  const valgt = verdier[trinn.felt] ?? "";
+  if (valg.length > MAKS_ANTALL_RADIOKNAPPER) {
+    const valgtAlternativ = valg.find((alternativ) => alternativ.verdi === valgt);
+    return (
+      <UNSAFE_Combobox
+        label={<Legend>{trinn.legend}</Legend>}
+        description={trinn.beskrivelse}
+        options={valg.map((alternativ) => ({ value: alternativ.verdi, label: alternativ.etikett }))}
+        selectedOptions={
+          valgtAlternativ ? [{ value: valgtAlternativ.verdi, label: valgtAlternativ.etikett }] : []
+        }
+        error={feil[trinn.felt]}
+        onToggleSelected={(verdi, erValgt) => onChange(trinn.felt, erValgt ? verdi : "")}
+      />
+    );
+  }
   return (
     <RadioGroup
       legend={<Legend>{trinn.legend}</Legend>}
       description={trinn.beskrivelse}
-      value={verdier[trinn.felt] ?? ""}
+      value={valgt}
       error={feil[trinn.felt]}
       onChange={(verdi: string) => onChange(trinn.felt, verdi)}
     >

@@ -117,6 +117,28 @@ describe("SaksflytModal", () => {
     });
   });
 
+  it("velger henleggelsesårsak fra combobox i strafferettslig vurdering", async () => {
+    renderModal({ steg: "STRAFFERETTSLIG_VURDERING" });
+    klikk("Henlegg sak");
+    await screen.findByRole("dialog", { name: "Henlegg sak" });
+
+    expect(screen.queryAllByRole("radio")).toHaveLength(0);
+    const combobox = screen.getByRole("combobox", { name: /Henleggelsesårsak/ });
+    fireEvent.focus(combobox);
+    fireEvent.change(combobox, { target: { value: "NFP: Gammel" } });
+    fireEvent.pointerUp(await screen.findByRole("option", { name: "NFP: Gammel sak" }));
+    klikk("Henlegg og avslutt sak");
+    await screen.findByRole("dialog", { name: "Avslutt sak" });
+
+    klikk("Avslutt sak");
+    expect(await screen.findByText("Lagret")).toBeDefined();
+    expect(sendtSkjema()).toMatchObject({
+      steg: "AVSLUTTET",
+      "resultat.strafferettsligVurdering.type": "HENLAGT",
+      "resultat.strafferettsligVurdering.henleggelsesarsak": "NFP_GAMMEL_SAK",
+    });
+  });
+
   it("går tilbake til menyen fra første trinn", async () => {
     renderModal();
     klikk("Henlegg sak");
