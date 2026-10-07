@@ -1,7 +1,7 @@
 name: Deploy til dev-miljø
+# Automatisk deploy ved push til main er skrudd av under brukertesting i dev.
+# Deploy manuelt med «Run workflow».
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
