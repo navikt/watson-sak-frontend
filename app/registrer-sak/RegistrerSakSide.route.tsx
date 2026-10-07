@@ -476,16 +476,6 @@ export default function OpprettSakSide() {
                   </>
                 )}
                 <VStack gap="space-32">
-                  {legacyPid && legacyKilde && (
-                    <LocalAlert status="announcement" className="max-w-2xl">
-                      <LocalAlert.Content>
-                        Saken opprettes med kobling til migreringskandidat {legacyKilde}:{legacyPid}
-                        . Fødselsnummeret må stemme med kandidaten. Backend kontrollerer det når
-                        saken opprettes, og avviser opprettelsen hvis det ikke stemmer.
-                      </LocalAlert.Content>
-                    </LocalAlert>
-                  )}
-
                   {/* ErrorSummary */}
                   {feilElementer.length > 0 && (
                     <ErrorSummary
