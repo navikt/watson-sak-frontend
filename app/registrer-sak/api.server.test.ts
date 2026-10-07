@@ -389,6 +389,29 @@ describe("opprettKontrollsak", () => {
     );
   });
 
+  it("gir mock-sak fra migrering opprettet-dato fra Access, midnatt norsk tid", async () => {
+    await opprettKontrollsak({
+      request: testRequest,
+      token: "",
+      payload: {
+        personIdent: "12345678901",
+        saksbehandlere: { eier: null, deltMed: [] },
+        kategori: "SAMLIV",
+        kilde: "NAV_KONTROLL",
+        prioritet: "NORMAL",
+        enhet: "4812",
+        misbruktype: ["SKJULT_SAMLIV"],
+        merking: [],
+        ytelser: [],
+        legacyPid: "100310",
+        legacyKilde: "UTREDNING",
+      },
+    });
+
+    const sak = hentMineSaker(state()).find((kandidat) => kandidat.legacyPid === "100310");
+    expect(sak?.opprettet).toBe("2023-02-19T23:00:00.000Z");
+  });
+
   it("lar vanlige mock-saker uten migrering forbli eierløse", async () => {
     await opprettKontrollsak({
       request: testRequest,

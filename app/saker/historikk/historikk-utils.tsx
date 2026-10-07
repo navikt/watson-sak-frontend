@@ -187,6 +187,10 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
       return "Fil åpnet";
     case "FIL_ARKIVERT":
       return "Fil arkivert";
+    case "MIGRERING_PABEGYNT":
+      return "Migrering påbegynt";
+    case "MIGRERING_FULLFORT":
+      return "Migrering fullført";
     default:
       return hendelse.hendelsesType;
   }
@@ -200,7 +204,11 @@ export function hendelseBeskrivelse(
     return hendelse.beskrivelse ?? null;
   }
 
-  if (hendelse.hendelsesType === "MANUELL_HENDELSE_REDIGERT") {
+  if (
+    hendelse.hendelsesType === "MANUELL_HENDELSE_REDIGERT" ||
+    hendelse.hendelsesType === "MIGRERING_PABEGYNT" ||
+    hendelse.hendelsesType === "MIGRERING_FULLFORT"
+  ) {
     return null;
   }
 
@@ -352,6 +360,10 @@ export function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
       return <DownloadIcon {...iconProps} />;
     case "FIL_ARKIVERT":
       return <ArchiveIcon {...iconProps} />;
+    case "MIGRERING_PABEGYNT":
+      return <FilesIcon {...iconProps} />;
+    case "MIGRERING_FULLFORT":
+      return <CheckmarkCircleIcon {...iconProps} />;
     default:
       return <ClockIcon {...iconProps} />;
   }

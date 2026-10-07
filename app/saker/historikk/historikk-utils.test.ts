@@ -101,6 +101,16 @@ describe("hendelseTittel", () => {
     expect(hendelseTittel(hendelse)).toBe("Historikkinnslag redigert");
     expect(hendelseBeskrivelse(hendelse)).toBeNull();
   });
+
+  it.each([
+    ["MIGRERING_PABEGYNT", "Migrering påbegynt"],
+    ["MIGRERING_FULLFORT", "Migrering fullført"],
+  ])("viser %s som «%s» uten steg", (hendelsesType, tittel) => {
+    const hendelse = lagHendelse({ hendelsesType, beskrivelse: tittel });
+
+    expect(hendelseTittel(hendelse)).toBe(tittel);
+    expect(hendelseBeskrivelse(hendelse)).toBeNull();
+  });
 });
 
 describe("snapshot av steg og status", () => {
