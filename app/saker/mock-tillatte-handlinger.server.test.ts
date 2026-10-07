@@ -16,17 +16,19 @@ describe("hentMockTillatteHandlinger", () => {
     ]);
   });
 
-  it("beholder henleggelsesårsakene for strafferettslig vurdering", () => {
-    expect(
-      henleggelsesarsakerFor(
-        "strafferettsligVurdering.henleggelsesarsak",
-        "STRAFFERETTSLIG_VURDERING",
-      ),
-    ).toEqual([
-      { verdi: "BEVISETS_STILLING", etikett: "Bevisets stilling" },
-      { verdi: "INTET_STRAFFBART_FORHOLD", etikett: "Intet straffbart forhold" },
-      { verdi: "FORELDET", etikett: "Foreldet" },
-      { verdi: "BELOP_UNDER_PATALEGRENSE", etikett: "Beløp under påtalegrense" },
+  it("har egne NAY- og NFP-årsaker for strafferettslig vurdering", () => {
+    const årsaker = henleggelsesarsakerFor(
+      "strafferettsligVurdering.henleggelsesarsak",
+      "STRAFFERETTSLIG_VURDERING",
+    );
+    expect(årsaker).toHaveLength(18);
+    expect(årsaker?.slice(0, 2)).toEqual([
+      { verdi: "NAY_MANGLER_I_SAKSBEHANDLINGEN", etikett: "NAY: Mangler i saksbehandlingen" },
+      { verdi: "NFP_MANGLER_I_SAKSBEHANDLINGEN", etikett: "NFP: Mangler i saksbehandlingen" },
     ]);
+    expect(årsaker?.at(-1)).toEqual({
+      verdi: "MANGLER_SUBJEKTIV_SKYLD",
+      etikett: "Mangler subjektiv skyld",
+    });
   });
 });
