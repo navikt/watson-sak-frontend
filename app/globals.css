@@ -191,3 +191,135 @@
     url("/sherlock-hatt-cursor.svg") 16 21,
     auto !important;
 }
+
+/*
+ * Rulletekst for søket på "end credits" (se app/layout/EndCredits.tsx).
+ * Teksten starter under skjermkanten og ruller sakte opp og ut på toppen.
+ */
+@keyframes end-credits-rull {
+  from {
+    transform: translateY(100vh);
+  }
+  to {
+    transform: translateY(-100%);
+  }
+}
+
+@keyframes end-credits-inn {
+  from {
+    opacity: 0;
+  }
+}
+
+.end-credits {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  overflow: hidden;
+  cursor: pointer;
+  background: #000;
+  color: #fff;
+  text-align: center;
+  animation: end-credits-inn 1s ease-out;
+}
+
+.end-credits-rull {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 0 1rem 4rem;
+  animation: end-credits-rull 75s linear forwards;
+}
+
+.end-credits-tittel {
+  font-size: clamp(2rem, 10vw, 3.5rem);
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+.end-credits-undertittel {
+  margin-top: 0.5rem;
+  font-size: 1.25rem;
+  font-style: italic;
+  opacity: 0.8;
+}
+
+.end-credits-seksjon {
+  margin-top: 6rem;
+}
+
+.end-credits-overskrift {
+  margin-bottom: 2rem;
+  font-size: 0.875rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.end-credits-rolle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 1.25rem;
+  font-size: 1.125rem;
+}
+
+.end-credits-rolletittel {
+  text-align: right;
+  opacity: 0.7;
+}
+
+.end-credits-navn {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  font-weight: 600;
+}
+
+.end-credits-tekst {
+  max-width: 32rem;
+  margin: 0 auto 1rem;
+  font-size: 1.125rem;
+}
+
+.end-credits-slutt {
+  margin-top: 12rem;
+  font-size: 2rem;
+  font-style: italic;
+}
+
+.end-credits-lukk {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid currentColor;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  opacity: 0.6;
+  cursor: pointer;
+}
+
+.end-credits-lukk:hover,
+.end-credits-lukk:focus-visible {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .end-credits {
+    overflow-y: auto;
+    animation: none;
+  }
+
+  .end-credits-rull {
+    padding-top: 4rem;
+    animation: none;
+  }
+}
