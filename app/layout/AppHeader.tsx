@@ -1,6 +1,6 @@
 import { BooksIcon, LeaveIcon, LightBulbIcon, MenuGridIcon, PersonIcon } from "@navikt/aksel-icons";
 import { ActionMenu, InternalHeader, Spacer, Tag } from "@navikt/ds-react";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Form, Link, useLocation } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { IdentifikatorSøkefelt } from "~/formaterte-inputfelt/FormaterteInputfelt";
@@ -12,6 +12,7 @@ import { SØK_RESULTATLENKE_SELECTOR } from "~/søk/sok-navigasjon";
 import { useGlitch } from "~/utils/useGlitch";
 import { useSherlockCursor } from "~/utils/useSherlockCursor";
 import { VarselBjelle } from "~/varsler/VarselBjelle";
+import { EndCredits } from "./EndCredits";
 
 // Easter egg: søk på "Moriarty" trigger en kortvarig glitch-effekt før
 // søket gjennomføres helt normalt (Moriarty kan tross alt være et reelt
@@ -22,12 +23,18 @@ const MORIARTY_EASTER_EGG = "moriarty";
 // 30 sekunder, eller til brukeren trykker Escape.
 const SHERLOCK_EASTER_EGG = "sherlock";
 
+// Easter egg: søk på "end credits" viser en rulletekst over alle som har
+// vært med på å lage Watson. Her utføres ikke selve søket.
+const END_CREDITS_EASTER_EGG = "end credits";
+
 export function AppHeader() {
   const innloggetBruker = useInnloggetBrukerValgfri();
   const skjemaRef = useRef<HTMLFormElement>(null);
   const location = useLocation();
   const triggerGlitch = useGlitch();
   const triggerSherlockCursor = useSherlockCursor();
+  const [visEndCredits, setVisEndCredits] = useState(false);
+  const lukkEndCredits = useCallback(() => setVisEndCredits(false), []);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -85,6 +92,11 @@ export function AppHeader() {
         onSubmit={(event) => {
           const formData = new FormData(event.currentTarget);
           const søketekst = formData.get("søketekst")?.toString().trim();
+          if (søketekst?.toLowerCase() === END_CREDITS_EASTER_EGG) {
+            event.preventDefault();
+            setVisEndCredits(true);
+            return;
+          }
           if (søketekst) {
             sporHendelse("søk utført", { kilde: "hurtigsøk" });
           }
@@ -153,6 +165,7 @@ export function AppHeader() {
       </ActionMenu>
 
       <InternalHeader.User name={innloggetBruker?.name ?? "Saksbehandler"} />
+      {visEndCredits && <EndCredits onLukk={lukkEndCredits} />}
     </InternalHeader>
   );
 }
