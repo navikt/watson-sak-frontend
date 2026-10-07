@@ -1,17 +1,24 @@
 import { describe, expect, it } from "vitest";
 import { mockKodeverk } from "~/testing/mock-store/kodeverk.server";
-import { erStøttetMiljøForTilfeldigSak, lagTilfeldigSak } from "./tilfeldig-sak";
+import { lagTilfeldigSak, skalViseTilfeldigSak } from "./tilfeldig-sak";
 
-describe("erStøttetMiljøForTilfeldigSak", () => {
-  it.each(["local-backend", "local-dev", "local-mock", "demo", "dev"])(
-    "tillater tilfeldig sak i %s",
+describe("skalViseTilfeldigSak", () => {
+  it.each(["local-backend", "local-dev", "local-mock", "demo"])(
+    "viser alltid tilfeldig sak i %s",
     (miljø) => {
-      expect(erStøttetMiljøForTilfeldigSak(miljø)).toBe(true);
+      expect(skalViseTilfeldigSak(miljø, false)).toBe(true);
+      expect(skalViseTilfeldigSak(miljø, true)).toBe(true);
     },
   );
 
-  it("tillater ikke tilfeldig sak i prod", () => {
-    expect(erStøttetMiljøForTilfeldigSak("prod")).toBe(false);
+  it("viser tilfeldig sak i dev bare når feature-flagget er påskrudd", () => {
+    expect(skalViseTilfeldigSak("dev", true)).toBe(true);
+    expect(skalViseTilfeldigSak("dev", false)).toBe(false);
+  });
+
+  it("viser aldri tilfeldig sak i prod", () => {
+    expect(skalViseTilfeldigSak("prod", true)).toBe(false);
+    expect(skalViseTilfeldigSak("prod", false)).toBe(false);
   });
 });
 

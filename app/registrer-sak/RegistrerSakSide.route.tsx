@@ -28,6 +28,8 @@ import {
 import { sporHendelse } from "~/analytics/analytics";
 import { FødselsnummerSøkefelt } from "~/formaterte-inputfelt/FormaterteInputfelt";
 import { useInnloggetBrukerValgfri } from "~/auth/innlogget-bruker";
+import { FeatureFlagg } from "~/feature-toggling/featureflagg";
+import { useEnkeltFeatureFlagg } from "~/feature-toggling/useFeatureFlagg";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { useMiljø } from "~/miljø/useMiljø";
@@ -43,7 +45,7 @@ import {
 import type { PersonOppslagResultat } from "./person-oppslag.mock.server";
 import { action, loader } from "./RegistrerSakSide.server";
 import type { YtelseRadVerdier } from "./skjema-helpers";
-import { erStøttetMiljøForTilfeldigSak, lagTilfeldigSak } from "./tilfeldig-sak";
+import { lagTilfeldigSak, skalViseTilfeldigSak } from "./tilfeldig-sak";
 import { YtelseRadFelt } from "./YtelseRadFelt";
 
 export { action, loader };
@@ -94,6 +96,7 @@ export default function OpprettSakSide() {
   const innloggetBruker = useInnloggetBrukerValgfri();
   const kodeverk = useKodeverk();
   const miljø = useMiljø();
+  const erTilfeldigSakFlaggPåskrudd = useEnkeltFeatureFlagg(FeatureFlagg.TILFELDIG_SAK_I_DEV);
   const lastResult = useActionData<typeof action>();
   const submit = useSubmit();
   const navigation = useNavigation();
@@ -500,7 +503,7 @@ export default function OpprettSakSide() {
                     Grunnleggende saksinformasjon
                   </Heading>
 
-                  {erStøttetMiljøForTilfeldigSak(miljø) && (
+                  {skalViseTilfeldigSak(miljø, erTilfeldigSakFlaggPåskrudd) && (
                     <HStack>
                       <Button type="button" variant="secondary" onClick={fyllUtTilfeldigSak}>
                         Fyll ut en tilfeldig sak

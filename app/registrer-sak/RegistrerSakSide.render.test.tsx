@@ -11,6 +11,7 @@ const state = vi.hoisted(() => ({
 }));
 vi.mock("~/miljø/useMiljø", () => ({ useMiljø: () => state.miljø }));
 vi.mock("~/kodeverk/useKodeverk", () => ({ useKodeverk: () => mockKodeverk }));
+vi.mock("~/feature-toggling/useFeatureFlagg", () => ({ useEnkeltFeatureFlagg: () => false }));
 vi.mock("./RegistrerSakSide.server", () => ({
   loader: () => ({ fnr: null, legacyPid: null, legacyKilde: null }),
   action: vi.fn(),
