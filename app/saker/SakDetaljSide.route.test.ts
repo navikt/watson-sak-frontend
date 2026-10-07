@@ -171,6 +171,11 @@ describe("SakDetaljSide action", () => {
   it("overfører ansvarlig saksbehandler, fjerner vedkommende fra delt med og logger historikk", async () => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
 
     const formData = new FormData();
     formData.set("handling", "overfor_ansvarlig");
@@ -1277,7 +1282,41 @@ describe("SakDetaljSide tilgangskontroll", () => {
     expect(resultat).toMatchObject({ ok: true });
   });
 
-  it("tillater overfor_ansvarlig for ikke-eier", async () => {
+  it("avviser overfor_ansvarlig for ikke-eier uten lederrolle", async () => {
+    const kontrollsak = hentFordelingssaker(hentMockState(testRequest))[0];
+    const kontrollsakRef = getSaksreferanse(kontrollsak.id);
+    kontrollsak.saksbehandlere.eier = {
+      navIdent: "Z111111",
+      navn: "Annen Saksbehandler",
+      enhet: "4800",
+    };
+
+    const formData = new FormData();
+    formData.set("handling", "overfor_ansvarlig");
+    formData.set("navIdent", "Z123456");
+
+    await expect(
+      action({
+        request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+          method: "POST",
+          body: formData,
+        }),
+        params: { sakId: kontrollsakRef },
+      } as Route.ActionArgs),
+    ).rejects.toMatchObject({ init: { status: 403 } });
+    expect(kontrollsak.saksbehandlere.eier?.navIdent).toBe("Z111111");
+  });
+
+  it("tillater overfor_ansvarlig for leder som ikke er eier", async () => {
+    vi.mocked(hentInnloggetBruker).mockResolvedValue({
+      navIdent: "Z999999",
+      name: "Leder Lederesen",
+      preferredUsername: "leder@nav.no",
+      enhet: "4812",
+      enhetId: "by295h",
+      erLeder: true,
+    });
+
     const kontrollsak = hentFordelingssaker(hentMockState(testRequest))[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
     kontrollsak.saksbehandlere.eier = {

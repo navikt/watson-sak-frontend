@@ -326,6 +326,28 @@ const handlingerSomKreverUtredning = new Set([
   "legg_til_historikk",
 ]);
 
+/** Tildelingshandlinger som bare sakens eier eller en leder kan utføre */
+const eierEllerLederFeilmeldinger: Record<string, string> = {
+  FRISTILL: "Du må være sakens saksbehandler eller leder for å fjerne saksbehandler",
+  overfor_ansvarlig:
+    "Du må være sakens saksbehandler eller leder for å endre ansvarlig saksbehandler",
+};
+
+function krevEierEllerLeder(handling: string): boolean {
+  return handling in eierEllerLederFeilmeldinger;
+}
+
+function sjekkEierEllerLeder(
+  handling: string,
+  sak: KontrollsakResponse,
+  innlogget: { navIdent: string; erLeder: boolean },
+) {
+  const erEier = sak.saksbehandlere.eier?.navIdent === innlogget.navIdent;
+  if (!erEier && !innlogget.erLeder) {
+    throw data(eierEllerLederFeilmeldinger[handling], { status: 403 });
+  }
+}
+
 function erTildelingshandling(handling: string): boolean {
   return tildelingshandlinger.has(handling);
 }
@@ -704,15 +726,10 @@ async function backendAction(
     throw data("Handlingen krever at saken har steg Utredning", { status: 400 });
   }
 
-  if (handling === "FRISTILL") {
+  if (krevEierEllerLeder(handling)) {
     const innlogget = await hentInnloggetBruker({ request });
     const nåværendeSak = sakFraTilgangskontroll ?? (await backendApi.hentKontrollsak(token, sakId));
-    const erEier = nåværendeSak.saksbehandlere.eier?.navIdent === innlogget.navIdent;
-    if (!erEier && !innlogget.erLeder) {
-      throw data("Du må være sakens saksbehandler eller leder for å fjerne saksbehandler", {
-        status: 403,
-      });
-    }
+    sjekkEierEllerLeder(handling, nåværendeSak, innlogget);
   }
 
   switch (handling) {
@@ -1094,14 +1111,9 @@ async function mockAction(
     }
   }
 
-  if (handling === "FRISTILL") {
+  if (krevEierEllerLeder(handling)) {
     const innlogget = await hentInnloggetBruker({ request });
-    const erEier = sak.saksbehandlere.eier?.navIdent === innlogget.navIdent;
-    if (!erEier && !innlogget.erLeder) {
-      throw data("Du må være sakens saksbehandler eller leder for å fjerne saksbehandler", {
-        status: 403,
-      });
-    }
+    sjekkEierEllerLeder(handling, sak, innlogget);
   }
 
   if (
