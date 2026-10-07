@@ -106,8 +106,8 @@ export function SaksbehandlereKort({
     fjernSaksbehandlerFetcher.submit({ handling: "FRISTILL" }, { method: "post", action: sakPath });
   }
 
-  // Kun sakens ansvarlige saksbehandler eller en leder kan fjerne ansvarlig saksbehandler.
-  const kanFjerneSaksbehandler = kanEndreTilgang && (erEier || innloggetBruker.erLeder);
+  // Kun sakens ansvarlige saksbehandler eller en leder kan endre eller fjerne ansvarlig saksbehandler.
+  const kanEndreAnsvarlig = kanEndreTilgang && (erEier || innloggetBruker.erLeder);
   const kanEndreStatus =
     erEier && tillatteHandlinger?.handlinger.some((handling) => handling.type === "ENDRE_STATUS");
   const kanEndreSteg =
@@ -212,27 +212,25 @@ export function SaksbehandlereKort({
               <SaksbehandlerRad
                 saksbehandler={ansvarligSaksbehandler}
                 handling={
-                  kanEndreTilgang ? (
+                  kanEndreAnsvarlig ? (
                     <HStack gap="space-2" align="center">
                       <ResponsivEndreKnapp
                         ariaLabel="Endre ansvarlig saksbehandler"
                         onClick={() => setVisOverforModal(true)}
                       />
-                      {kanFjerneSaksbehandler && (
-                        <Tooltip content="Fjern saksbehandler">
-                          <Button
-                            type="button"
-                            variant="tertiary"
-                            size="xsmall"
-                            icon={<XMarkIcon aria-hidden />}
-                            aria-label="Fjern saksbehandler"
-                            onClick={handleFjernSaksbehandler}
-                            loading={fjernSaksbehandlerFetcher.state !== "idle"}
-                          >
-                            <span className="hidden xl:inline">Fjern</span>
-                          </Button>
-                        </Tooltip>
-                      )}
+                      <Tooltip content="Fjern saksbehandler">
+                        <Button
+                          type="button"
+                          variant="tertiary"
+                          size="xsmall"
+                          icon={<XMarkIcon aria-hidden />}
+                          aria-label="Fjern saksbehandler"
+                          onClick={handleFjernSaksbehandler}
+                          loading={fjernSaksbehandlerFetcher.state !== "idle"}
+                        >
+                          <span className="hidden xl:inline">Fjern</span>
+                        </Button>
+                      </Tooltip>
                     </HStack>
                   ) : null
                 }
