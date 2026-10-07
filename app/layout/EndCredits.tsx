@@ -1,5 +1,4 @@
-import { useEffect } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useRef } from "react";
 
 type Rolle = { tittel: string; navn: string[] };
 type Seksjon = { overskrift: string; roller?: Rolle[]; tekst?: string[] };
@@ -12,7 +11,10 @@ const SEKSJONER: Seksjon[] = [
       { tittel: "Prosessleder", navn: ["Hans Dragnes"] },
       { tittel: "Tech lead", navn: ["Snorri Hansson Engen"] },
       { tittel: "Frontendutvikler", navn: ["Kristofer Giltvedt Selbekk"] },
-      { tittel: "Backendutviklere", navn: ["Alem Basic", "Hans Jacob Aslaksrud Melby"] },
+      {
+        tittel: "Backendutviklere",
+        navn: ["Alem Basic", "Hans Jacob Aslaksrud Melby", "Sturle Helland"],
+      },
       { tittel: "Designere", navn: ["Nora Helgheim Holte", "Katinka Odner", "Julia Kuhley"] },
       { tittel: "Jurist", navn: ["Kari Steinseth"] },
     ],
@@ -20,10 +22,19 @@ const SEKSJONER: Seksjon[] = [
   {
     overskrift: "Utøvende produsenter",
     roller: [
+      { tittel: "Direktør, Nav Kontroll", navn: ["Ole Johan Heir"] },
       { tittel: "Seksjonsleder, Kontroll og Internasjonalt", navn: ["Espen Nord Eidene"] },
       { tittel: "Produktlead, SKI", navn: ["Tor Halle"] },
-      { tittel: "Avdelingsleder, Nav Kontroll", navn: ["TBD"] },
-      { tittel: "Head of Access", navn: ["Bjørn"] },
+      { tittel: "Head of Access", navn: ["Bjørn Holsen"] },
+    ],
+  },
+  {
+    overskrift: "Med støtte fra Nav Kontroll",
+    tekst: [
+      "Eystein Emberland",
+      "Sidsel Torp",
+      "Katrine Waaktaar-Slokvik",
+      "Cathrine Ødegård Petersen",
     ],
   },
   {
@@ -61,21 +72,31 @@ type EndCreditsProps = {
  * Med `prefers-reduced-motion` vises teksten statisk og kan scrolles manuelt.
  */
 export function EndCredits({ onLukk }: EndCreditsProps) {
-  useEffect(() => {
-    function håndterEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") onLukk();
-    }
-    document.addEventListener("keydown", håndterEscape);
-    return () => document.removeEventListener("keydown", håndterEscape);
-  }, [onLukk]);
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
-  return createPortal(
-    <div
-      role="dialog"
-      aria-modal="true"
+  // showModal() legger rulleteksten i top layer, flytter fokus inn i den og
+  // gjør resten av siden inert. Fokus gis tilbake til forrige element ved lukking.
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    const forrigeFokus = document.activeElement;
+    dialog?.showModal();
+    return () => {
+      dialog?.close();
+      if (forrigeFokus instanceof HTMLElement) forrigeFokus.focus();
+    };
+  }, []);
+
+  return (
+    <dialog
+      ref={dialogRef}
       aria-label="Rulletekst"
       className="end-credits"
       onClick={onLukk}
+      onCancel={(event) => {
+        // Escape: la React-tilstanden styre lukkingen.
+        event.preventDefault();
+        onLukk();
+      }}
     >
       <div className="end-credits-rull" onAnimationEnd={onLukk}>
         <h2 className="end-credits-tittel">Watson</h2>
@@ -103,7 +124,6 @@ export function EndCredits({ onLukk }: EndCreditsProps) {
         <p className="end-credits-slutt">Slutt</p>
       </div>
       <p className="end-credits-hint">Trykk Escape eller klikk for å lukke</p>
-    </div>,
-    document.body,
+    </dialog>
   );
 }

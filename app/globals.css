@@ -214,7 +214,14 @@
 .end-credits {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
   overflow: hidden;
   cursor: pointer;
   background: #000;
@@ -231,7 +238,7 @@
 }
 
 .end-credits-tittel {
-  font-size: 3.5rem;
+  font-size: clamp(2rem, 10vw, 3.5rem);
   font-weight: 600;
   letter-spacing: 0.3em;
   text-transform: uppercase;
