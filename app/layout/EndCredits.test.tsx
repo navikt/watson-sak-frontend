@@ -42,6 +42,15 @@ describe("EndCredits", () => {
     expect(onLukk).toHaveBeenCalledOnce();
   });
 
+  it("lukkes med lukkeknappen", () => {
+    const onLukk = vi.fn();
+    render(<EndCredits onLukk={onLukk} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Lukk (Esc)" }));
+
+    expect(onLukk).toHaveBeenCalledOnce();
+  });
+
   it("lukkes når teksten har rullet ferdig", () => {
     const onLukk = vi.fn();
     render(<EndCredits onLukk={onLukk} />);

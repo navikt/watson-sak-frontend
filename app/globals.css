@@ -295,12 +295,21 @@
   font-style: italic;
 }
 
-.end-credits-hint {
+.end-credits-lukk {
   position: fixed;
   right: 1.5rem;
   bottom: 1rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid currentColor;
+  border-radius: 0.25rem;
   font-size: 0.75rem;
-  opacity: 0.5;
+  opacity: 0.6;
+  cursor: pointer;
+}
+
+.end-credits-lukk:hover,
+.end-credits-lukk:focus-visible {
+  opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -123,7 +123,16 @@ export function EndCredits({ onLukk }: EndCreditsProps) {
         ))}
         <p className="end-credits-slutt">Slutt</p>
       </div>
-      <p className="end-credits-hint">Trykk Escape eller klikk for å lukke</p>
+      <button
+        type="button"
+        className="end-credits-lukk"
+        onClick={(event) => {
+          event.stopPropagation();
+          onLukk();
+        }}
+      >
+        Lukk (Esc)
+      </button>
     </dialog>
   );
 }
