@@ -1,5 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
+import { erUtloggetFeil } from "~/auth/session-utløpt.server";
+import { logger } from "~/logging/logging";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
 import { hentKontrollsaker } from "~/fordeling/api.server";
@@ -12,12 +14,28 @@ import type { KontrollsakResponse } from "~/saker/types.backend";
 import { hentMineSakerOppsummering, type MineSakerOppsummering } from "./api.server";
 import { lagVelkomstOppsummering } from "./velkomst";
 
+/**
+ * Oppsummeringen er bare til velkomstteksten. Feil her skal ikke felle forsiden,
+ * så hilsenen vises uten oppsummering. Utløpt sesjon (401) sendes videre.
+ */
+async function hentOppsummeringUtenAaFelleSiden(
+  token: string,
+): Promise<MineSakerOppsummering | null> {
+  try {
+    return await hentMineSakerOppsummering(token);
+  } catch (feil) {
+    if (erUtloggetFeil(feil)) throw feil;
+    logger.warn("Viser velkomst uten oppsummering fordi oppsummeringen ikke kunne hentes");
+    return null;
+  }
+}
+
 async function lastSaksbehandlerData(
   request: Request,
   innloggetBruker: { navIdent: string; name: string },
 ) {
   let mineSakerHosInnloggetBruker: KontrollsakResponse[];
-  let oppsummering: MineSakerOppsummering;
+  let oppsummering: MineSakerOppsummering | null;
 
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
@@ -28,7 +46,7 @@ async function lastSaksbehandlerData(
         size: 200,
         ansvarligNavIdent: innloggetBruker.navIdent,
       }),
-      hentMineSakerOppsummering(token),
+      hentOppsummeringUtenAaFelleSiden(token),
     ]);
     mineSakerHosInnloggetBruker = resultat.items;
     oppsummering = hentetOppsummering;
@@ -49,7 +67,7 @@ async function lastSaksbehandlerData(
     .sort((a, b) => getOpprettetDato(b).localeCompare(getOpprettetDato(a)))
     .slice(0, 10);
 
-  const velkomstOppsummering = lagVelkomstOppsummering(oppsummering);
+  const velkomstOppsummering = oppsummering ? lagVelkomstOppsummering(oppsummering) : null;
 
   return { type: "saksbehandler" as const, mineSaker, velkomstOppsummering };
 }
