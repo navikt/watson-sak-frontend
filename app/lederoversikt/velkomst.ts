@@ -1,36 +1,33 @@
 import type { LederEnhetStatistikk } from "./types";
 
-function formaterSakTekst(antall: number, entall: string, flertall: string) {
-  return `${antall} ${antall === 1 ? entall : flertall}`;
-}
-
 function sammenstill(deler: string[]): string {
   if (deler.length === 1) return deler[0];
   return `${deler.slice(0, -1).join(", ")} og ${deler[deler.length - 1]}`;
 }
 
-/** Bygger velkomstteksten for lederoversikten, aggregert på enhetsnivå. */
+/**
+ * Bygger velkomstteksten for lederoversikten fra øyeblikksbildet backend beregner.
+ * Tallene er de samme som de fire første nøkkeltallene på statistikksiden.
+ */
 export function lagLederVelkomstOppsummering(
-  oppsummering: LederEnhetStatistikk,
+  enhet: LederEnhetStatistikk,
   enhetNavn: string,
 ): string {
-  if (oppsummering.totaltAntallIkkeAvsluttede === 0) {
-    return `Enheten ${enhetNavn} har ingen aktive saker akkurat nå.`;
+  const { totalt, aktive, venterPåAndre, ikkeFordelt } = enhet.oyeblikksbilde;
+
+  if (totalt === 0) {
+    return `Enheten ${enhetNavn} har ingen åpne saker akkurat nå.`;
   }
 
+  const innledning = `Enheten ${enhetNavn} har ${totalt} ${totalt === 1 ? "åpen sak" : "åpne saker"}.`;
   const deler = [
-    formaterSakTekst(oppsummering.totaltAntallIkkeAvsluttede, "aktiv sak", "aktive saker"),
-  ];
+    aktive > 0 ? `${aktive} ${aktive === 1 ? "er aktiv" : "er aktive"}` : null,
+    venterPåAndre > 0 ? `${venterPåAndre} venter på andre` : null,
+    ikkeFordelt > 0 ? `${ikkeFordelt} er ikke fordelt` : null,
+  ].filter((del): del is string => del !== null);
 
-  if (oppsummering.antallOverFrist > 0) {
-    deler.push(
-      formaterSakTekst(oppsummering.antallOverFrist, "sak over frist", "saker over frist"),
-    );
-  }
+  if (deler.length === 0) return innledning;
 
-  if (oppsummering.antallUfordelte > 0) {
-    deler.push(formaterSakTekst(oppsummering.antallUfordelte, "ufordelt sak", "ufordelte saker"));
-  }
-
-  return `Enheten ${enhetNavn} har ${sammenstill(deler)} akkurat nå.`;
+  const detaljer = sammenstill(deler);
+  return `${innledning} ${detaljer.charAt(0).toUpperCase()}${detaljer.slice(1)}.`;
 }

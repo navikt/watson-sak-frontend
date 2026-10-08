@@ -1,79 +1,32 @@
-import type { KontrollsakResponse } from "~/saker/types.backend";
+import type { MineSakerOppsummering } from "./api.server";
 
-interface Oppsummeringsdel {
-  antall: number;
-  tekst: string;
-}
-
-function formaterSakTekst(antall: number, entall: string, flertall: string) {
-  return `${antall} ${antall === 1 ? entall : flertall}`;
-}
-
-const aktiveSteg: KontrollsakResponse["steg"][] = [
-  "OPPRETTET",
-  "UTREDES",
-  "FORVALTNING",
-  "STRAFFERETTSLIG_VURDERING",
-  "POLITI",
+const kategorier: {
+  nøkkel: keyof MineSakerOppsummering;
+  entall: string;
+  flertall: string;
+}[] = [
+  { nøkkel: "aktive", entall: "aktiv sak", flertall: "aktive saker" },
+  { nøkkel: "nye", entall: "ny sak", flertall: "nye saker" },
+  { nøkkel: "venter", entall: "sak på vent", flertall: "saker på vent" },
+  { nøkkel: "iBero", entall: "sak i bero", flertall: "saker i bero" },
 ];
 
-function erAktivSak(sak: KontrollsakResponse) {
-  return (
-    aktiveSteg.includes(sak.steg) &&
-    sak.status !== "VENTER_PA_INFORMASJON" &&
-    sak.status !== "VENTER_PA_VEDTAK" &&
-    sak.status !== "VENTER_PA_RESULTAT"
-  );
-}
-
-function erVentende(sak: KontrollsakResponse) {
-  return (
-    sak.status === "VENTER_PA_INFORMASJON" ||
-    sak.status === "VENTER_PA_VEDTAK" ||
-    sak.status === "VENTER_PA_RESULTAT"
-  );
-}
-
-function velgMestRelevantArbeid(saker: KontrollsakResponse[]): Oppsummeringsdel[] {
-  const antallAktiveSaker = saker.filter((sak) => erAktivSak(sak)).length;
-  const antallVentendeSaker = saker.filter((sak) => erVentende(sak)).length;
-  const antallSakerIBero = saker.filter((sak) => sak.status === "I_BERO").length;
-
-  const oppsummeringer: Oppsummeringsdel[] = [
-    {
-      antall: antallAktiveSaker,
-      tekst: formaterSakTekst(antallAktiveSaker, "aktiv sak", "aktive saker"),
-    },
-    {
-      antall: antallVentendeSaker,
-      tekst: formaterSakTekst(antallVentendeSaker, "sak på vent", "saker på vent"),
-    },
-    {
-      antall: antallSakerIBero,
-      tekst: formaterSakTekst(antallSakerIBero, "sak i bero", "saker i bero"),
-    },
-  ];
-
-  return oppsummeringer
-    .filter((oppsummering) => oppsummering.antall > 0)
+/** Viser de to største kategoriene fra oppsummeringen backend teller. */
+export function lagVelkomstOppsummering(oppsummering: MineSakerOppsummering) {
+  const deler = kategorier
+    .map(({ nøkkel, entall, flertall }) => {
+      const antall = oppsummering[nøkkel];
+      return { antall, tekst: `${antall} ${antall === 1 ? entall : flertall}` };
+    })
+    .filter((del) => del.antall > 0)
     .sort((a, b) => b.antall - a.antall)
     .slice(0, 2);
-}
 
-function sammenstillOppsummering(oppsummeringer: Oppsummeringsdel[]) {
-  if (oppsummeringer.length === 0) {
+  if (deler.length === 0) {
     return "Er du klar for nye oppgaver? Du har ingen saker hos deg akkurat nå.";
   }
-
-  if (oppsummeringer.length === 1) {
-    return `Akkurat nå har du ${oppsummeringer[0].tekst}.`;
+  if (deler.length === 1) {
+    return `Akkurat nå har du ${deler[0].tekst}.`;
   }
-
-  return `Akkurat nå har du ${oppsummeringer[0].tekst} og ${oppsummeringer[1].tekst}.`;
-}
-
-export function lagVelkomstOppsummering(saker: KontrollsakResponse[]) {
-  const oppsummeringer = velgMestRelevantArbeid(saker);
-
-  return sammenstillOppsummering(oppsummeringer);
+  return `Akkurat nå har du ${deler[0].tekst} og ${deler[1].tekst}.`;
 }

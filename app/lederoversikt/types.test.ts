@@ -8,6 +8,7 @@ const gyldigRespons = {
     totaltAntallIkkeAvsluttede: 5,
     antallOverFrist: 1,
     antallUfordelte: 2,
+    oyeblikksbilde: { totalt: 0, aktive: 0, venterPåAndre: 0, ikkeFordelt: 0 },
     perSteg: {
       OPPRETTET: 1,
       UTREDNING: 1,
@@ -21,6 +22,7 @@ const gyldigRespons = {
       VENTER_PA_INFORMASJON: 1,
       VENTER_PA_VEDTAK: 1,
       VENTER_PA_RESULTAT: 0,
+      PAAKLAGET: 0,
       I_BERO: 1,
     },
   },

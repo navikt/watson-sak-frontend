@@ -2,7 +2,7 @@ import { BodyShort, Box, Heading, VStack } from "@navikt/ds-react";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { hentFornavn, hentHilsen } from "~/utils/hilsen";
 
-export function Velkomst({ oppsummering }: { oppsummering: string }) {
+export function Velkomst({ oppsummering }: { oppsummering: string | null }) {
   const bruker = useInnloggetBruker();
   const fornavn = hentFornavn(bruker.name);
   const { tekst, Ikon } = hentHilsen();
@@ -18,9 +18,11 @@ export function Velkomst({ oppsummering }: { oppsummering: string }) {
         <Heading level="1" size="small">
           {tekst}, {fornavn} <Ikon aria-hidden className="inline" />
         </Heading>
-        <BodyShort size="medium" className="max-w-3xl text-ax-text-neutral">
-          {oppsummering}
-        </BodyShort>
+        {oppsummering ? (
+          <BodyShort size="medium" className="max-w-3xl text-ax-text-neutral">
+            {oppsummering}
+          </BodyShort>
+        ) : null}
       </VStack>
     </Box>
   );

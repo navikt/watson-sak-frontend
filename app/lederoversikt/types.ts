@@ -14,6 +14,7 @@ const lederStatusSchema = z.enum([
   "VENTER_PA_INFORMASJON",
   "VENTER_PA_VEDTAK",
   "VENTER_PA_RESULTAT",
+  "PAAKLAGET",
   "I_BERO",
 ]);
 
@@ -41,9 +42,17 @@ export const lederStatistikkResponseSchema = z.object({
       VENTER_PA_INFORMASJON: antallSchema,
       VENTER_PA_VEDTAK: antallSchema,
       VENTER_PA_RESULTAT: antallSchema,
+      PAAKLAGET: antallSchema,
       I_BERO: antallSchema,
     }),
     antallUfordelte: antallSchema,
+    /** Samme tall som de fire første nøkkeltallene i øyeblikksbildet på statistikksiden. */
+    oyeblikksbilde: z.object({
+      totalt: antallSchema,
+      aktive: antallSchema,
+      venterPåAndre: antallSchema,
+      ikkeFordelt: antallSchema,
+    }),
   }),
   ansatte: z.object({
     tilgjengelig: z.boolean(),

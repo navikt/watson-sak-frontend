@@ -21,7 +21,7 @@ test.describe("Landingsside", () => {
 
   test("viser en dynamisk oppsummeringslinje i velkomstseksjonen", async ({ page }) => {
     await expect(
-      page.getByText("Akkurat nå har du 30 aktive saker og 1 sak på vent."),
+      page.getByText("Akkurat nå har du 15 nye saker og 14 aktive saker."),
     ).toBeVisible();
   });
 

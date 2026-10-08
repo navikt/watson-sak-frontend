@@ -1,113 +1,28 @@
 import { describe, expect, test } from "vitest";
-import type { KontrollsakResponse } from "~/saker/types.backend";
 import { lagVelkomstOppsummering } from "./velkomst";
 
-function lagKontrollsak(overstyringer: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
-  return {
-    id: 3,
-    personIdent: "12345678901",
-    personNavn: "Ola Nordmann",
-    saksbehandlere: {
-      eier: { navIdent: "Z123456", navn: "Ola Saksbehandler", enhet: "4812" },
-      deltMed: [],
-      opprettetAv: { navIdent: "Z654321", navn: "Kari Oppretter", enhet: "4812" },
-    },
-    steg: "OPPRETTET",
-    kategori: "ANNET",
-    kilde: "NAV_KONTROLL",
-    misbruktype: [],
-    prioritet: "NORMAL",
-    status: null,
-    ytelser: [],
-    merking: [],
-    arbeidsgivere: [],
-    opprettet: "2026-03-01T00:00:00Z",
-    oppdatert: null,
-    oppgaver: [],
-    kobledeSaker: [],
-    dokumenter: [],
-    adresseskjermet: false,
-    gjeldendePersonIdent: null,
-    historiskeIdenter: [],
-    ...overstyringer,
-  };
-}
+const tom = { nye: 0, aktive: 0, venter: 0, iBero: 0 };
 
 describe("lagVelkomstOppsummering", () => {
-  test("oppsummerer de to mest relevante arbeidstypene", () => {
-    const saker = [
-      lagKontrollsak({ id: 101, steg: "OPPRETTET" }),
-      lagKontrollsak({ id: 102, steg: "OPPRETTET" }),
-      lagKontrollsak({ id: 103, steg: "UTREDES" }),
-      lagKontrollsak({ id: 104, steg: "UTREDES" }),
-      lagKontrollsak({ id: 105, steg: "UTREDES", status: "VENTER_PA_VEDTAK" }),
-    ];
-
-    expect(lagVelkomstOppsummering(saker)).toBe(
-      "Akkurat nå har du 4 aktive saker og 1 sak på vent.",
+  test("viser de to største kategoriene, størst først", () => {
+    expect(lagVelkomstOppsummering({ nye: 1, aktive: 2, venter: 3, iBero: 0 })).toBe(
+      "Akkurat nå har du 3 saker på vent og 2 aktive saker.",
     );
   });
 
-  test("viser en oppmuntrende tekst når brukeren ikke har aktive saker", () => {
-    const saker = [
-      lagKontrollsak({ id: 106, steg: "AVSLUTTET" }),
-      lagKontrollsak({ id: 107, steg: "AVSLUTTET" }),
-      lagKontrollsak({ id: 108, steg: "AVSLUTTET" }),
-    ];
+  test("bruker entall og utelater kategorier uten saker", () => {
+    expect(lagVelkomstOppsummering({ ...tom, nye: 1 })).toBe("Akkurat nå har du 1 ny sak.");
+  });
 
-    expect(lagVelkomstOppsummering(saker)).toBe(
+  test("viser saker i bero", () => {
+    expect(lagVelkomstOppsummering({ ...tom, aktive: 1, iBero: 2 })).toBe(
+      "Akkurat nå har du 2 saker i bero og 1 aktiv sak.",
+    );
+  });
+
+  test("viser en oppmuntrende tekst når brukeren ikke har åpne saker", () => {
+    expect(lagVelkomstOppsummering(tom)).toBe(
       "Er du klar for nye oppgaver? Du har ingen saker hos deg akkurat nå.",
     );
-  });
-
-  test("tar med ventende saker når de utgjør en større del av arbeidsbildet", () => {
-    const saker = [
-      lagKontrollsak({ id: 109, steg: "UTREDES", status: "VENTER_PA_VEDTAK" }),
-      lagKontrollsak({ id: 110, steg: "UTREDES", status: "VENTER_PA_VEDTAK" }),
-      lagKontrollsak({ id: 111, steg: "UTREDES", status: "VENTER_PA_VEDTAK" }),
-      lagKontrollsak({ id: 112, steg: "UTREDES" }),
-    ];
-
-    expect(lagVelkomstOppsummering(saker)).toBe(
-      "Akkurat nå har du 3 saker på vent og 1 aktiv sak.",
-    );
-  });
-
-  test("oppsummerer backend-steg med samme arbeidsbilde", () => {
-    const saker = [
-      lagKontrollsak({ id: 113, steg: "OPPRETTET" }),
-      lagKontrollsak({ id: 114, steg: "OPPRETTET" }),
-      lagKontrollsak({ id: 115, steg: "UTREDES" }),
-      lagKontrollsak({ id: 116, steg: "UTREDES" }),
-      lagKontrollsak({ id: 117, steg: "UTREDES", status: "VENTER_PA_VEDTAK" }),
-    ];
-
-    expect(lagVelkomstOppsummering(saker)).toBe(
-      "Akkurat nå har du 4 aktive saker og 1 sak på vent.",
-    );
-  });
-
-  test("behandler saker i bero som egen oppsummeringskategori", () => {
-    const saker = [
-      lagKontrollsak({ id: 118, steg: "OPPRETTET", status: "I_BERO" }),
-      lagKontrollsak({ id: 119, steg: "UTREDES", status: "I_BERO" }),
-      lagKontrollsak({ id: 120, steg: "OPPRETTET" }),
-    ];
-
-    expect(lagVelkomstOppsummering(saker)).toBe(
-      "Akkurat nå har du 3 aktive saker og 2 saker i bero.",
-    );
-  });
-
-  test("behandler opprettede saker som aktive i velkomstoppsummeringen", () => {
-    const saker = [lagKontrollsak({ id: 121, steg: "OPPRETTET" })];
-
-    expect(lagVelkomstOppsummering(saker)).toBe("Akkurat nå har du 1 aktiv sak.");
-  });
-
-  test("behandler anmeldte saker som aktive i velkomstoppsummeringen", () => {
-    const saker = [lagKontrollsak({ id: 122, steg: "POLITI" })];
-
-    expect(lagVelkomstOppsummering(saker)).toBe("Akkurat nå har du 1 aktiv sak.");
   });
 });
