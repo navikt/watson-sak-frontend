@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { visningsnavn } from "~/auth/visningsnavn";
 
 const kontrollsakStegSchema = z.enum([
   "OPPRETTET",
@@ -212,12 +213,17 @@ export const tillatteHandlingerResponseSchema = z.object({
 
 export type TillatteHandlingerResponse = z.infer<typeof tillatteHandlingerResponseSchema>;
 
-const saksbehandlerSchema = z.object({
-  navIdent: z.string(),
-  navn: z.string(),
-  enhet: z.string().nullable(),
-  enhetId: z.string().nullable().optional(),
-});
+const saksbehandlerSchema = z
+  .object({
+    navIdent: z.string(),
+    navn: z.string(),
+    enhet: z.string().nullable(),
+    enhetId: z.string().nullable().optional(),
+  })
+  .transform((saksbehandler) => ({
+    ...saksbehandler,
+    navn: visningsnavn(saksbehandler.navIdent, saksbehandler.navn),
+  }));
 
 const saksbehandlereSchema = z
   .object({
