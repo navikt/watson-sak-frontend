@@ -83,11 +83,9 @@ export function VisAllHistorikkModal({
               label="Filtrer historikk"
             >
               <ToggleGroup.Item value="ALLE">Alle ({hendelser.length})</ToggleGroup.Item>
-              {/* @ts-expect-error - ds-react sin type for ToggleGroup.Item mangler `disabled`, selv om komponenten støtter det */}
               <ToggleGroup.Item value="AUTOMATISK" disabled={antallAutomatiske === 0}>
                 Automatiske ({antallAutomatiske})
               </ToggleGroup.Item>
-              {/* @ts-expect-error - ds-react sin type for ToggleGroup.Item mangler `disabled`, selv om komponenten støtter det */}
               <ToggleGroup.Item value="MANUELL" disabled={antallManuelle === 0}>
                 Manuelle ({antallManuelle})
               </ToggleGroup.Item>
