@@ -4,6 +4,7 @@ import { env } from "~/config/env.server";
 import { logger } from "~/logging/logging";
 import { getBackendOboToken, getValidToken } from "./access-token";
 import { hentSaksbehandlerInfo } from "./api.server";
+import { visningsnavn } from "./visningsnavn";
 
 export interface InnloggetBruker {
   preferredUsername: string;
@@ -133,7 +134,7 @@ export async function hentInnloggetBruker({
     // teksten "Ukjent" i stedet for en gyldig enhet.
     return {
       preferredUsername: parseResult.preferred_username,
-      name: parseResult.name,
+      name: visningsnavn(parseResult.NAVident, parseResult.name),
       navIdent: parseResult.NAVident,
       enhet: "4812",
       enhetId: "4812",
@@ -147,7 +148,7 @@ export async function hentInnloggetBruker({
 
   return {
     preferredUsername: parseResult.preferred_username,
-    name: parseResult.name,
+    name: visningsnavn(parseResult.NAVident, parseResult.name),
     navIdent: parseResult.NAVident,
     enhet: saksbehandlerInfo.enhet ?? "Ukjent",
     enhetId: saksbehandlerInfo.enhetId,

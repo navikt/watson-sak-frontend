@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { visningsnavn } from "~/auth/visningsnavn";
 
 /** Maks lengde på en kommentartekst. Speiler KOMMENTAR_MAKS_LENGDE i watson-admin-api. */
 export const MAKS_KOMMENTARLENGDE = 5000;
@@ -87,19 +88,24 @@ export function tilBackendAnker(anker: Anker): {
  * `erEgen`, `erRot`) også internt, slik at det ikke oppstår to sannheter om
  * hva et felt heter.
  */
-const kommentarSchema = z.object({
-  id: z.string(),
-  traadId: z.string(),
-  erRot: z.boolean().default(false),
-  tekst: z.string().default(""),
-  forfatterIdent: z.string().default(""),
-  forfatterNavn: z.string().default(""),
-  opprettet: z.string(),
-  endret: z.string(),
-  versjon: z.number().default(0),
-  /** Backend avgjør om innlogget saksbehandler kan redigere/slette kommentaren. */
-  erEgen: z.boolean().default(false),
-});
+const kommentarSchema = z
+  .object({
+    id: z.string(),
+    traadId: z.string(),
+    erRot: z.boolean().default(false),
+    tekst: z.string().default(""),
+    forfatterIdent: z.string().default(""),
+    forfatterNavn: z.string().default(""),
+    opprettet: z.string(),
+    endret: z.string(),
+    versjon: z.number().default(0),
+    /** Backend avgjør om innlogget saksbehandler kan redigere/slette kommentaren. */
+    erEgen: z.boolean().default(false),
+  })
+  .transform((kommentar) => ({
+    ...kommentar,
+    forfatterNavn: visningsnavn(kommentar.forfatterIdent, kommentar.forfatterNavn),
+  }));
 
 export type Kommentar = z.infer<typeof kommentarSchema>;
 
@@ -163,13 +169,13 @@ export const kommentartraadSchema = z
       ankerVersjon: rå.ankerVersjon,
       opprinneligSitat: rå.opprinneligSitat ?? null,
       opprettetAvIdent: rå.opprettetAvIdent,
-      opprettetAvNavn: rå.opprettetAvNavn,
+      opprettetAvNavn: visningsnavn(rå.opprettetAvIdent, rå.opprettetAvNavn),
       opprettet: rå.opprettet,
       resolved: rå.resolved ?? null,
       /** Avledet av `resolved`: en adressert tråd er skrivebeskyttet til den gjenåpnes. */
       adressert: (rå.resolved ?? null) !== null,
       resolvedAvIdent: rå.resolvedAvIdent ?? null,
-      resolvedAvNavn: rå.resolvedAvNavn ?? null,
+      resolvedAvNavn: visningsnavn(rå.resolvedAvIdent, rå.resolvedAvNavn) ?? null,
       versjon: rå.versjon,
       synlig: rå.synlig,
       kommentarer: rå.kommentarer,

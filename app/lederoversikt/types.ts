@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { visningsnavn } from "~/auth/visningsnavn";
 
 export const LEDERSTATISTIKK_STEG = [
   "OPPRETTET",
@@ -48,10 +49,12 @@ export const lederStatistikkResponseSchema = z.object({
   ansatte: z.object({
     tilgjengelig: z.boolean(),
     liste: z.array(
-      sakstallSchema.extend({
-        navn: z.string().min(1),
-        navIdent: z.string().min(1),
-      }),
+      sakstallSchema
+        .extend({
+          navn: z.string().min(1),
+          navIdent: z.string().min(1),
+        })
+        .transform((ansatt) => ({ ...ansatt, navn: visningsnavn(ansatt.navIdent, ansatt.navn) })),
     ),
     ufordelt: sakstallSchema,
   }),
