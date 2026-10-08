@@ -1,8 +1,12 @@
 import { describe, expect, test } from "vitest";
+import type { LederEnhetStatistikk } from "./types";
 import { lagLederVelkomstOppsummering } from "./velkomst";
 
-describe("lagLederVelkomstOppsummering", () => {
-  const fordelinger = {
+function lagEnhet(oyeblikksbilde: LederEnhetStatistikk["oyeblikksbilde"]): LederEnhetStatistikk {
+  return {
+    totaltAntallIkkeAvsluttede: oyeblikksbilde.totalt,
+    antallOverFrist: 5,
+    antallUfordelte: oyeblikksbilde.ikkeFordelt,
     perSteg: {
       OPPRETTET: 0,
       UTREDNING: 0,
@@ -16,63 +20,56 @@ describe("lagLederVelkomstOppsummering", () => {
       VENTER_PA_INFORMASJON: 0,
       VENTER_PA_VEDTAK: 0,
       VENTER_PA_RESULTAT: 0,
+      PAAKLAGET: 0,
       I_BERO: 0,
     },
+    oyeblikksbilde,
   };
+}
 
-  test("viser en oppmuntrende tekst når enheten ikke har aktive saker", () => {
+describe("lagLederVelkomstOppsummering", () => {
+  test("viser egen tekst når enheten ikke har åpne saker", () => {
     expect(
       lagLederVelkomstOppsummering(
-        {
-          totaltAntallIkkeAvsluttede: 0,
-          antallOverFrist: 0,
-          antallUfordelte: 0,
-          ...fordelinger,
-        },
+        lagEnhet({ totalt: 0, aktive: 0, venterPåAndre: 0, ikkeFordelt: 0 }),
         "Nord",
       ),
-    ).toBe("Enheten Nord har ingen aktive saker akkurat nå.");
+    ).toBe("Enheten Nord har ingen åpne saker akkurat nå.");
   });
 
-  test("oppsummerer kun aktive saker når ingenting er over frist eller ufordelt", () => {
+  test("viser alle tre deltall fra øyeblikksbildet", () => {
     expect(
       lagLederVelkomstOppsummering(
-        {
-          totaltAntallIkkeAvsluttede: 12,
-          antallOverFrist: 0,
-          antallUfordelte: 0,
-          ...fordelinger,
-        },
-        "Nord",
+        lagEnhet({ totalt: 42, aktive: 18, venterPåAndre: 12, ikkeFordelt: 3 }),
+        "Øst",
       ),
-    ).toBe("Enheten Nord har 12 aktive saker akkurat nå.");
+    ).toBe("Enheten Øst har 42 åpne saker. 18 er aktive, 12 venter på andre og 3 er ikke fordelt.");
   });
 
-  test("inkluderer over frist og ufordelte saker når det finnes", () => {
+  test("utelater deltall som er 0 og bruker entall", () => {
     expect(
       lagLederVelkomstOppsummering(
-        {
-          totaltAntallIkkeAvsluttede: 12,
-          antallOverFrist: 3,
-          antallUfordelte: 2,
-          ...fordelinger,
-        },
-        "Nord",
+        lagEnhet({ totalt: 1, aktive: 1, venterPåAndre: 0, ikkeFordelt: 0 }),
+        "Vest",
       ),
-    ).toBe("Enheten Nord har 12 aktive saker, 3 saker over frist og 2 ufordelte saker akkurat nå.");
+    ).toBe("Enheten Vest har 1 åpen sak. 1 er aktiv.");
   });
 
-  test("bruker entallsform når det kun er én av hver kategori", () => {
+  test("viser bare totalen når ingen deltall er over 0", () => {
     expect(
       lagLederVelkomstOppsummering(
-        {
-          totaltAntallIkkeAvsluttede: 1,
-          antallOverFrist: 1,
-          antallUfordelte: 1,
-          ...fordelinger,
-        },
+        lagEnhet({ totalt: 4, aktive: 0, venterPåAndre: 0, ikkeFordelt: 0 }),
+        "Sør",
+      ),
+    ).toBe("Enheten Sør har 4 åpne saker.");
+  });
+
+  test("viser ikke saker over frist", () => {
+    expect(
+      lagLederVelkomstOppsummering(
+        lagEnhet({ totalt: 2, aktive: 0, venterPåAndre: 2, ikkeFordelt: 0 }),
         "Nord",
       ),
-    ).toBe("Enheten Nord har 1 aktiv sak, 1 sak over frist og 1 ufordelt sak akkurat nå.");
+    ).not.toContain("frist");
   });
 });

@@ -6,8 +6,10 @@ import { hentKontrollsaker } from "~/fordeling/api.server";
 import { hentLederOversiktData } from "~/lederoversikt/loader.server";
 import { lagLederVelkomstOppsummering } from "~/lederoversikt/velkomst";
 import { hentMineSaker } from "~/saker/mock-alle-saker.server";
+import { lagMockMineSakerOppsummering } from "~/saker/mock-oppsummering.server";
 import { getOpprettetDato } from "~/saker/selectors";
 import type { KontrollsakResponse } from "~/saker/types.backend";
+import { hentMineSakerOppsummering, type MineSakerOppsummering } from "./api.server";
 import { lagVelkomstOppsummering } from "./velkomst";
 
 async function lastSaksbehandlerData(
@@ -15,37 +17,39 @@ async function lastSaksbehandlerData(
   innloggetBruker: { navIdent: string; name: string },
 ) {
   let mineSakerHosInnloggetBruker: KontrollsakResponse[];
+  let oppsummering: MineSakerOppsummering;
 
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
-    const resultat = await hentKontrollsaker({
-      token,
-      page: 1,
-      size: 200,
-      ansvarligNavIdent: innloggetBruker.navIdent,
-    });
+    const [resultat, hentetOppsummering] = await Promise.all([
+      hentKontrollsaker({
+        token,
+        page: 1,
+        size: 200,
+        ansvarligNavIdent: innloggetBruker.navIdent,
+      }),
+      hentMineSakerOppsummering(token),
+    ]);
     mineSakerHosInnloggetBruker = resultat.items;
+    oppsummering = hentetOppsummering;
   } else {
     mineSakerHosInnloggetBruker = hentMineSaker(
       request,
       innloggetBruker.navIdent,
       innloggetBruker.name,
     );
+    oppsummering = lagMockMineSakerOppsummering(mineSakerHosInnloggetBruker);
   }
 
   const aktiveMineSaker = mineSakerHosInnloggetBruker.filter(
     (sak) => sak.steg !== "POLITI" && sak.steg !== "ANMELDT" && sak.steg !== "AVSLUTTET",
   );
 
-  const sakerForVelkomstOppsummering = mineSakerHosInnloggetBruker.filter(
-    (sak) => sak.steg !== "AVSLUTTET",
-  );
-
   const mineSaker = [...aktiveMineSaker]
     .sort((a, b) => getOpprettetDato(b).localeCompare(getOpprettetDato(a)))
     .slice(0, 10);
 
-  const velkomstOppsummering = lagVelkomstOppsummering(sakerForVelkomstOppsummering);
+  const velkomstOppsummering = lagVelkomstOppsummering(oppsummering);
 
   return { type: "saksbehandler" as const, mineSaker, velkomstOppsummering };
 }

@@ -46,9 +46,11 @@ const respons = {
       VENTER_PA_INFORMASJON: 1,
       VENTER_PA_VEDTAK: 1,
       VENTER_PA_RESULTAT: 0,
+      PAAKLAGET: 0,
       I_BERO: 1,
     },
     antallUfordelte: 1,
+    oyeblikksbilde: { totalt: 0, aktive: 0, venterPåAndre: 0, ikkeFordelt: 0 },
   },
   ansatte: {
     tilgjengelig: true,

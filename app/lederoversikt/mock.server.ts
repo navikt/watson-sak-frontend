@@ -1,4 +1,5 @@
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
+import { lagMockOyeblikksbilde } from "~/saker/mock-oppsummering.server";
 import { mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import { getSaksenhet } from "~/saker/selectors";
 import type { KontrollsakResponse } from "~/saker/types.backend";
@@ -15,6 +16,7 @@ const STATUSER: LederStatus[] = [
   "VENTER_PA_INFORMASJON",
   "VENTER_PA_VEDTAK",
   "VENTER_PA_RESULTAT",
+  "PAAKLAGET",
   "I_BERO",
 ];
 
@@ -68,6 +70,7 @@ export function lagMockLederStatistikk(
       perSteg,
       perStatus,
       antallUfordelte: ufordelte.length,
+      oyeblikksbilde: lagMockOyeblikksbilde(saker),
     },
     ansatte: {
       tilgjengelig: true,
