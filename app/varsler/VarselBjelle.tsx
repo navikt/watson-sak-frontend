@@ -1,5 +1,14 @@
 import { BellIcon } from "@navikt/aksel-icons";
-import { BodyShort, Button, Heading, HStack, Popover, VStack } from "@navikt/ds-react";
+import {
+  Badge,
+  BodyShort,
+  Button,
+  Heading,
+  HStack,
+  InternalHeader,
+  Popover,
+  VStack,
+} from "@navikt/ds-react";
 import { useEffect, useRef, useState } from "react";
 import { Link as RouterLink, useFetcher, useNavigate } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
@@ -58,33 +67,27 @@ export function VarselBjelle() {
 
   return (
     <>
-      <div className="relative">
-        <button
-          ref={knappRef}
-          type="button"
-          aria-label={
-            antallUleste > 0 ? `Varsler, ${antallUleste} uleste` : "Varsler, ingen uleste"
-          }
-          aria-expanded={erÅpen}
-          onClick={() => {
-            setErÅpen((prev) => {
-              if (!prev) sporHendelse("varsler åpnet", { kilde: "bjelle" });
-              return !prev;
-            });
-          }}
-          className="flex items-center justify-center h-full px-3 text-ax-text-on-inverted hover:bg-surface-neutral-subtle-hover transition-colors"
-        >
+      <InternalHeader.Button
+        ref={knappRef}
+        type="button"
+        isActive={erÅpen}
+        aria-label={antallUleste > 0 ? `Varsler, ${antallUleste} uleste` : "Varsler, ingen uleste"}
+        aria-expanded={erÅpen}
+        onClick={() => {
+          setErÅpen((prev) => {
+            if (!prev) sporHendelse("varsler åpnet", { kilde: "bjelle" });
+            return !prev;
+          });
+        }}
+      >
+        {antallUleste > 0 ? (
+          <Badge count={antallUleste}>
+            <BellIcon fontSize="1.5rem" aria-hidden />
+          </Badge>
+        ) : (
           <BellIcon fontSize="1.5rem" aria-hidden />
-        </button>
-        {antallUleste > 0 && (
-          <span
-            aria-hidden
-            className="absolute top-2 right-1 min-w-[1.1rem] h-[1.1rem] bg-surface-danger text-text-on-danger text-[0.65rem] font-bold rounded-full flex items-center justify-center px-1 pointer-events-none"
-          >
-            {antallUleste > 99 ? "99+" : antallUleste}
-          </span>
         )}
-      </div>
+      </InternalHeader.Button>
 
       <Popover
         open={erÅpen}

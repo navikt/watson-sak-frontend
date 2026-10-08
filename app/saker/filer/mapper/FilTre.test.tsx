@@ -496,6 +496,9 @@ describe("FilTre", () => {
         slettBank.getAttribute("aria-disabled") ?? slettBank.getAttribute("data-disabled"),
       ).not.toBeNull();
       fireEvent.keyDown(slettBank, { key: "Escape" });
+      await waitFor(() => {
+        expect(document.activeElement).toBe(screen.getByLabelText("Handlinger for mappen Bank"));
+      });
 
       fireEvent.click(screen.getByLabelText("Handlinger for mappen Tom mappe"));
       fireEvent.click(await screen.findByRole("menuitem", { name: "Slett mappe" }));
