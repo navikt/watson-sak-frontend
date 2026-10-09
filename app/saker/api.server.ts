@@ -28,13 +28,19 @@ import {
   tillatteHandlingerResponseSchema,
 } from "./types.backend";
 import { sakHendelseSchema } from "./historikk/typer";
+import { visningsnavn } from "~/auth/visningsnavn";
 
 const saksbehandlerListeSchema = z.array(
-  z.object({
-    navIdent: z.string(),
-    navn: z.string(),
-    enhet: z.string().nullable(),
-  }),
+  z
+    .object({
+      navIdent: z.string(),
+      navn: z.string(),
+      enhet: z.string().nullable(),
+    })
+    .transform((saksbehandler) => ({
+      ...saksbehandler,
+      navn: visningsnavn(saksbehandler.navIdent, saksbehandler.navn),
+    })),
 );
 
 const journalpostReferanseSchema = z.object({
@@ -60,12 +66,20 @@ const dokumentHistorikkNodeSchema = z.object({
   endretTidspunkt: z.string(),
 });
 
-const dokumentHistorikkResponseSchema = dokumentHistorikkNodeSchema.extend({
-  innhold: dokumentInnholdSchema,
-});
+function medEndretAvVisningsnavn<T extends { endretAvIdent: string; endretAvNavn: string }>(
+  node: T,
+): T {
+  return { ...node, endretAvNavn: visningsnavn(node.endretAvIdent, node.endretAvNavn) };
+}
+
+const dokumentHistorikkResponseSchema = dokumentHistorikkNodeSchema
+  .extend({
+    innhold: dokumentInnholdSchema,
+  })
+  .transform(medEndretAvVisningsnavn);
 
 const dokumentHistorikkSideSchema: z.ZodType<DokumentHistorikkSide> = z.object({
-  items: z.array(dokumentHistorikkNodeSchema),
+  items: z.array(dokumentHistorikkNodeSchema.transform(medEndretAvVisningsnavn)),
   page: z.number(),
   size: z.number(),
   totalItems: z.number(),
