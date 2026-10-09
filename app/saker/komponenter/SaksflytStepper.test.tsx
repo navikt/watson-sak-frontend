@@ -1,5 +1,5 @@
-import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import type { KontrollsakResponse } from "../types.backend";
 import { SaksflytStepper } from "./SaksflytStepper";
 
@@ -8,6 +8,77 @@ function hentSteg() {
 }
 
 describe("SaksflytStepper", () => {
+  it("viser ingen knapper uten onEndreSteg", () => {
+    render(<SaksflytStepper steg="FORVALTNING" />);
+
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
+  });
+
+  it("gjør bare kommende steg klikkbare når onEndreSteg er satt", () => {
+    render(
+      <SaksflytStepper
+        steg="FORVALTNING"
+        tilgjengeligeSteg={["STRAFFERETTSLIG_VURDERING", "POLITI", "AVSLUTTET"]}
+        onEndreSteg={() => {}}
+      />,
+    );
+
+    expect(screen.getAllByRole("button")).toHaveLength(3);
+    expect(
+      screen.getByRole("button", {
+        name: "Strafferettslig vurdering, ikke startet, endre steg",
+      }),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Politiet, ikke startet, endre steg" })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Avsluttet, ikke startet, endre steg" }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Opprettet/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Utredning/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Forvaltning/ })).toBeNull();
+  });
+
+  it("åpner valgt kommende steg med onEndreSteg", () => {
+    const onEndreSteg = vi.fn();
+    render(
+      <SaksflytStepper
+        steg="FORVALTNING"
+        tilgjengeligeSteg={["STRAFFERETTSLIG_VURDERING"]}
+        onEndreSteg={onEndreSteg}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Strafferettslig vurdering, ikke startet, endre steg" }),
+    );
+
+    expect(onEndreSteg).toHaveBeenCalledOnce();
+  });
+
+  it("gjør bare tilgjengelige kommende steg klikkbare fra opprettet", () => {
+    render(
+      <SaksflytStepper
+        steg="OPPRETTET"
+        tilgjengeligeSteg={["UTREDNING", "STRAFFERETTSLIG_VURDERING"]}
+        onEndreSteg={() => {}}
+      />,
+    );
+
+    expect(screen.getAllByRole("button").map((knapp) => knapp.textContent)).toEqual([
+      "Utredning, ikke startet, endre steg",
+      "Strafferettslig vurdering, ikke startet, endre steg",
+    ]);
+    expect(screen.queryByRole("button", { name: /Forvaltning/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Politiet/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Avsluttet/ })).toBeNull();
+  });
+
+  it("viser ingen knapper når ingen kommende steg er tilgjengelige", () => {
+    render(<SaksflytStepper steg="FORVALTNING" tilgjengeligeSteg={[]} onEndreSteg={() => {}} />);
+
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
+  });
+
   it("viser alle stegene i saksflyten med status for skjermlesere", () => {
     render(
       <SaksflytStepper

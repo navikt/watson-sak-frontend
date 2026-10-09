@@ -10,6 +10,8 @@ import { RouteConfig } from "~/routeConfig";
 import { IngenFiltilgangKort } from "./filer/IngenFiltilgangKort";
 import { SakFilområde } from "./filer/SakFilområde";
 import { erSakseier } from "./handlinger/tilgjengeligeHandlinger";
+import { hentHandlinger } from "./handlinger/saksflyt/saksflyt";
+import { SaksflytModal } from "./handlinger/saksflyt/SaksflytModal";
 import { getSaksreferanse } from "./id";
 import { harDirekteSakstilgang, kanLeseSaksinnhold } from "./sakstilgang";
 import { PersonIdentHistorikkModal } from "./komponenter/PersonIdentHistorikkModal";
@@ -58,6 +60,7 @@ export default function SakDetaljSide() {
   } = useLoaderData<typeof loader>();
   const [sak, setSak] = useState(loaderSak);
   const [visEksempelBekreftelse, setVisEksempelBekreftelse] = useState(true);
+  const [visSaksflytModal, setVisSaksflytModal] = useState(false);
   const navigate = useNavigate();
   const tilbake = useTilbakeLenke({ to: RouteConfig.MINE_SAKER, label: "Mine saker" });
   const innloggetBruker = useInnloggetBruker();
@@ -65,6 +68,12 @@ export default function SakDetaljSide() {
   const miljø = useMiljø();
   const stegregler = hentStegbaserteSaksregler(sak.steg);
   const erEier = erSakseier(sak, innloggetBruker.navIdent);
+  const tilgjengeligeSteg =
+    erEier && tillatteHandlinger
+      ? hentHandlinger(tillatteHandlinger).flatMap((handling) =>
+          handling.innsending.handling === "endre_steg_dialog" ? [handling.innsending.steg] : [],
+        )
+      : [];
   const erFerdigMigrert =
     (miljø === "local-mock" || migreringErÅpen(miljø)) &&
     erEier &&
@@ -122,7 +131,14 @@ export default function SakDetaljSide() {
           gap="space-16"
         >
           <VStack gap="space-8">
-            <SaksflytStepper steg={sak.steg} resultat={sak.resultat} />
+            <SaksflytStepper
+              steg={sak.steg}
+              resultat={sak.resultat}
+              tilgjengeligeSteg={tilgjengeligeSteg}
+              onEndreSteg={
+                tilgjengeligeSteg.length > 0 ? () => setVisSaksflytModal(true) : undefined
+              }
+            />
 
             <SaksinformasjonKort
               sak={sak}
@@ -262,6 +278,14 @@ export default function SakDetaljSide() {
         åpen={identHistorikkModal.erÅpen}
         onClose={identHistorikkModal.onLukk}
       />
+      {tillatteHandlinger && visSaksflytModal && (
+        <SaksflytModal
+          sakId={String(sak.id)}
+          tillatteHandlinger={tillatteHandlinger}
+          start="meny"
+          onClose={() => setVisSaksflytModal(false)}
+        />
+      )}
     </>
   );
 }

@@ -115,9 +115,16 @@ function Stegsirkel({ tilstand }: { tilstand: Stegtilstand }) {
 type SaksflytStepperProps = {
   steg: KontrollsakSteg;
   resultat?: KontrollsakResponse["resultat"];
+  onEndreSteg?: () => void;
+  tilgjengeligeSteg?: readonly KontrollsakSteg[];
 };
 
-export function SaksflytStepper({ steg, resultat }: SaksflytStepperProps) {
+export function SaksflytStepper({
+  steg,
+  resultat,
+  onEndreSteg,
+  tilgjengeligeSteg = [],
+}: SaksflytStepperProps) {
   const aktivIndeks = saksflytSteg.findIndex((flytSteg) => flytSteg.steg.includes(steg));
   const erAvsluttet = steg === "AVSLUTTET";
   const avslutningssteg = finnAvslutningssteg(resultat);
@@ -153,21 +160,45 @@ export function SaksflytStepper({ steg, resultat }: SaksflytStepperProps) {
                 className={`absolute top-3 right-[calc(50%+14px)] left-[calc(-50%+14px)] -translate-y-1/2 ${linjeFarge[linjeTilstand]}`}
               />
             )}
-            <Stegsirkel tilstand={tilstand} />
-            <Detail
-              as="span"
-              weight={tilstand === "kommende" || tilstand === "hoppetOver" ? "regular" : "semibold"}
-              className={
-                tilstand === "aktiv"
-                  ? "font-bold text-ax-text-accent"
-                  : tilstand === "fullført"
-                    ? "text-ax-text-neutral"
-                    : "text-ax-text-neutral-subtle"
-              }
-            >
-              {flytSteg.etikett}
-              <span className="sr-only">, {skjermleserTekst[tilstand]}</span>
-            </Detail>
+            {onEndreSteg &&
+            tilstand === "kommende" &&
+            flytSteg.steg.some((steg) => tilgjengeligeSteg.includes(steg)) ? (
+              <button
+                type="button"
+                onClick={onEndreSteg}
+                className="group flex w-full cursor-pointer flex-col items-center gap-1 rounded border-0 bg-transparent p-0 focus-visible:outline-2 focus-visible:outline-ax-border-focus"
+              >
+                <Stegsirkel tilstand={tilstand} />
+                <Detail
+                  as="span"
+                  weight="regular"
+                  className="text-ax-text-neutral-subtle group-hover:underline"
+                >
+                  {flytSteg.etikett}
+                  <span className="sr-only">, {skjermleserTekst[tilstand]}, endre steg</span>
+                </Detail>
+              </button>
+            ) : (
+              <>
+                <Stegsirkel tilstand={tilstand} />
+                <Detail
+                  as="span"
+                  weight={
+                    tilstand === "kommende" || tilstand === "hoppetOver" ? "regular" : "semibold"
+                  }
+                  className={
+                    tilstand === "aktiv"
+                      ? "font-bold text-ax-text-accent"
+                      : tilstand === "fullført"
+                        ? "text-ax-text-neutral"
+                        : "text-ax-text-neutral-subtle"
+                  }
+                >
+                  {flytSteg.etikett}
+                  <span className="sr-only">, {skjermleserTekst[tilstand]}</span>
+                </Detail>
+              </>
+            )}
           </li>
         );
       })}
