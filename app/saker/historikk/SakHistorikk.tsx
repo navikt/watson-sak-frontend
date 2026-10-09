@@ -6,7 +6,11 @@ import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { useDisclosure } from "~/utils/useDisclosure";
 import { HistorikkProsessListe } from "./HistorikkProsessListe";
-import { lagForrigeHendelseKart } from "./historikk-utils";
+import {
+  erMigreringssakMedTilbakedatertOpprettelse,
+  grupperHistorikkHendelser,
+  lagForrigeHendelseKart,
+} from "./historikk-utils";
 import { LeggTilHistorikkModal } from "./LeggTilHistorikkModal";
 import { RedigerHistorikkModal } from "./RedigerHistorikkModal";
 import { VisAllHistorikkModal } from "./VisAllHistorikkModal";
@@ -33,7 +37,12 @@ export function SakHistorikk({
   const [valgtHendelse, setValgtHendelse] = useState<SakHendelse | null>(null);
   const fetcher = useFetcher();
   const historikkHendelser = hendelser;
-  const synligeHendelser = historikkHendelser.slice(0, MAKS_SYNLIGE_HENDELSER);
+  const historikkGrupper = useMemo(
+    () => grupperHistorikkHendelser(historikkHendelser),
+    [historikkHendelser],
+  );
+  const synligeHendelsesgrupper = historikkGrupper.slice(0, MAKS_SYNLIGE_HENDELSER);
+  const erMigreringssak = erMigreringssakMedTilbakedatertOpprettelse(historikkHendelser);
   const forrigeHendelseKart = useMemo(
     () => lagForrigeHendelseKart(historikkHendelser),
     [historikkHendelser],
@@ -80,19 +89,21 @@ export function SakHistorikk({
           {slettFeilmelding}
         </Alert>
       )}
-      {historikkHendelser.length === 0 ? (
+      {historikkGrupper.length === 0 ? (
         <BodyShort>Ingen historikk for denne saken.</BodyShort>
       ) : (
         <>
           <HistorikkProsessListe
-            hendelser={synligeHendelser}
+            hendelser={historikkHendelser}
+            hendelsesgrupper={synligeHendelsesgrupper}
             redigerbar={redigerbar}
             onRediger={åpneRediger}
             onSlett={slettHendelse}
             forrigeHendelseKart={forrigeHendelseKart}
+            erMigreringssak={erMigreringssak}
           />
           <Button variant="tertiary" size="small" onClick={onÅpneVisAlle} className="mt-2">
-            Vis all historikk ({historikkHendelser.length})
+            Vis all historikk ({historikkGrupper.length})
           </Button>
         </>
       )}
@@ -117,6 +128,7 @@ export function SakHistorikk({
           onSlett={slettHendelse}
           slettFeilmelding={slettFeilmelding}
           forrigeHendelseKart={forrigeHendelseKart}
+          erMigreringssak={erMigreringssak}
         />
       )}
     </Box>

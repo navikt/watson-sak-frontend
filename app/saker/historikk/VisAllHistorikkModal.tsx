@@ -2,8 +2,12 @@ import { ClockIcon, PlusCircleIcon } from "@navikt/aksel-icons";
 import { Alert, BodyShort, Button, HStack, Modal, ToggleGroup } from "@navikt/ds-react";
 import { useMemo, useRef, useState } from "react";
 import { HistorikkProsessListe } from "./HistorikkProsessListe";
+import {
+  erMigreringssakMedTilbakedatertOpprettelse,
+  erManuellHendelse,
+  grupperHistorikkHendelser,
+} from "./historikk-utils";
 import type { SakHendelse } from "./typer";
-import { erManuellHendelse } from "./historikk-utils";
 
 interface VisAllHistorikkModalProps {
   hendelser: SakHendelse[];
@@ -16,6 +20,7 @@ interface VisAllHistorikkModalProps {
   onSlett: (hendelse: SakHendelse) => void;
   slettFeilmelding?: string;
   forrigeHendelseKart?: Map<string, SakHendelse>;
+  erMigreringssak?: boolean;
 }
 
 type HistorikkFilter = "ALLE" | "AUTOMATISK" | "MANUELL";
@@ -45,18 +50,28 @@ export function VisAllHistorikkModal({
   onSlett,
   slettFeilmelding,
   forrigeHendelseKart,
+  erMigreringssak,
 }: VisAllHistorikkModalProps) {
   const modalRef = useRef<HTMLDialogElement>(null);
   const [filter, setFilter] = useState<HistorikkFilter>("ALLE");
 
-  const antallManuelle = useMemo(() => hendelser.filter(erManuellHendelse).length, [hendelser]);
-  const antallAutomatiske = hendelser.length - antallManuelle;
+  const erMigreringssakMedHendelser =
+    erMigreringssak ?? erMigreringssakMedTilbakedatertOpprettelse(hendelser);
+  const alleHendelsesgrupper = useMemo(() => grupperHistorikkHendelser(hendelser), [hendelser]);
+  const antallManuelle = alleHendelsesgrupper.filter(([hendelse]) =>
+    erManuellHendelse(hendelse),
+  ).length;
+  const antallAutomatiske = alleHendelsesgrupper.length - antallManuelle;
 
   const synligeHendelser = useMemo(() => {
     if (filter === "MANUELL") return hendelser.filter(erManuellHendelse);
     if (filter === "AUTOMATISK") return hendelser.filter((h) => !erManuellHendelse(h));
     return hendelser;
   }, [hendelser, filter]);
+  const synligeHendelsesgrupper = useMemo(
+    () => grupperHistorikkHendelser(synligeHendelser),
+    [synligeHendelser],
+  );
 
   return (
     <Modal
@@ -82,7 +97,7 @@ export function VisAllHistorikkModal({
               }}
               label="Filtrer historikk"
             >
-              <ToggleGroup.Item value="ALLE">Alle ({hendelser.length})</ToggleGroup.Item>
+              <ToggleGroup.Item value="ALLE">Alle ({alleHendelsesgrupper.length})</ToggleGroup.Item>
               <ToggleGroup.Item value="AUTOMATISK" disabled={antallAutomatiske === 0}>
                 Automatiske ({antallAutomatiske})
               </ToggleGroup.Item>
@@ -106,7 +121,7 @@ export function VisAllHistorikkModal({
         </HStack>
         {hendelser.length === 0 ? (
           <BodyShort>Ingen historikk for denne saken.</BodyShort>
-        ) : synligeHendelser.length === 0 ? (
+        ) : synligeHendelsesgrupper.length === 0 ? (
           <BodyShort>Ingen hendelser matcher det valgte filteret.</BodyShort>
         ) : (
           <HistorikkProsessListe
@@ -116,6 +131,8 @@ export function VisAllHistorikkModal({
             onSlett={onSlett}
             className="pt-1"
             forrigeHendelseKart={forrigeHendelseKart}
+            hendelsesgrupper={synligeHendelsesgrupper}
+            erMigreringssak={erMigreringssakMedHendelser}
           />
         )}
       </Modal.Body>

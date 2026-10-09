@@ -57,6 +57,56 @@ export function lagForrigeHendelseKart(hendelser: SakHendelse[]): Map<string, Sa
   return kart;
 }
 
+/** Samler påfølgende filopplastinger når de står rett før sakens opprettelseshendelse. */
+export function grupperHistorikkHendelser(hendelser: SakHendelse[]): SakHendelse[][] {
+  const grupper: SakHendelse[][] = [];
+  let indeks = 0;
+
+  while (indeks < hendelser.length) {
+    const hendelse = hendelser[indeks];
+    if (hendelse.hendelsesType === "FIL_LASTET_OPP") {
+      let slutt = indeks + 1;
+      while (
+        slutt < hendelser.length &&
+        hendelser[slutt].hendelsesType === "FIL_LASTET_OPP" &&
+        hendelser[slutt].opprettetAvNavn === hendelse.opprettetAvNavn
+      ) {
+        slutt++;
+      }
+
+      const erRettVedSaksopprettelse =
+        hendelser[slutt]?.hendelsesType === "SAK_OPPRETTET" ||
+        hendelser[slutt]?.hendelsesType === "MIGRERING_PABEGYNT";
+      if (slutt - indeks > 1 && erRettVedSaksopprettelse) {
+        grupper.push(hendelser.slice(indeks, slutt));
+        indeks = slutt;
+        continue;
+      }
+    }
+
+    grupper.push([hendelse]);
+    indeks++;
+  }
+
+  return grupper;
+}
+
+export function erMigreringssakMedTilbakedatertOpprettelse(hendelser: SakHendelse[]): boolean {
+  const opprettelseshendelse = hendelser.find(
+    (hendelse) => hendelse.hendelsesType === "SAK_OPPRETTET",
+  );
+  if (!opprettelseshendelse) return false;
+
+  const opprettelsestidspunkt = Date.parse(opprettelseshendelse.tidspunkt);
+  if (Number.isNaN(opprettelsestidspunkt)) return false;
+
+  return hendelser.some(
+    (hendelse) =>
+      hendelse.hendelsesType === "MIGRERING_PABEGYNT" &&
+      Date.parse(hendelse.tidspunkt) > opprettelsestidspunkt,
+  );
+}
+
 function diffStegOgStatus(hendelse: SakHendelse, forrigeHendelse?: SakHendelse) {
   const forrigeStatus = forrigeHendelse?.status ?? null;
   const normalisertStatus = hendelse.status ?? "AKTIV";
@@ -179,6 +229,10 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
       return "Oppgave opprettet";
     case "FIL_LASTET_OPP":
       return "Fil lastet opp";
+    case "SAK_FRISTILT":
+      return "Sak fristilt";
+    case "SAK_DELT":
+      return "Sak delt";
     case "FIL_SLETTET":
       return "Fil slettet";
     case "FIL_OMDØPT":
@@ -372,11 +426,14 @@ export function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
 export function HendelseInnhold({
   hendelse,
   beskrivelse,
+  skjulAktør = false,
 }: {
   hendelse: SakHendelse;
   beskrivelse: string | null;
+  skjulAktør?: boolean;
 }) {
-  const aktør = hendelse.opprettetAvNavn === "SYSTEM" ? null : hendelse.opprettetAvNavn;
+  const aktør =
+    skjulAktør || hendelse.opprettetAvNavn === "SYSTEM" ? null : hendelse.opprettetAvNavn;
   const innhold = (() => {
     if (!beskrivelse) return null;
 

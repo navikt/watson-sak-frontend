@@ -4,6 +4,7 @@ import {
   formaterTidspunkt,
   hendelseBeskrivelse,
   hendelseTittel,
+  grupperHistorikkHendelser,
   HendelseBullet,
   HendelseInnhold,
 } from "./historikk-utils";
@@ -16,6 +17,8 @@ interface HistorikkProsessListeProps {
   onSlett: (hendelse: SakHendelse) => void;
   className?: string;
   forrigeHendelseKart?: Map<string, SakHendelse>;
+  hendelsesgrupper?: SakHendelse[][];
+  erMigreringssak?: boolean;
 }
 
 /**
@@ -32,24 +35,36 @@ export function HistorikkProsessListe({
   onSlett,
   className,
   forrigeHendelseKart,
+  hendelsesgrupper,
+  erMigreringssak = false,
 }: HistorikkProsessListeProps) {
+  const grupper = hendelsesgrupper ?? grupperHistorikkHendelser(hendelser);
+
   return (
     <Process className={className}>
-      {hendelser.map((hendelse) => {
+      {grupper.map((gruppe) => {
+        const hendelse = gruppe[0];
         const forrigeHendelse = forrigeHendelseKart?.get(hendelse.hendelseId);
-        const beskrivelse = hendelseBeskrivelse(hendelse, forrigeHendelse);
+        const beskrivelse =
+          gruppe.length > 1 ? null : hendelseBeskrivelse(hendelse, forrigeHendelse);
         const erManuellHendelse = hendelse.hendelsesType === "MANUELL_HENDELSE";
 
         return (
           <Process.Event
             key={hendelse.hendelseId}
-            title={hendelseTittel(hendelse, forrigeHendelse)}
+            title={
+              gruppe.length > 1 ? "Filer lastet opp" : hendelseTittel(hendelse, forrigeHendelse)
+            }
             timestamp={formaterTidspunkt(hendelse.tidspunkt)}
             status="completed"
             bullet={<HendelseBullet hendelse={hendelse} />}
           >
             <VStack gap="space-2">
-              <HendelseInnhold hendelse={hendelse} beskrivelse={beskrivelse} />
+              <HendelseInnhold
+                hendelse={hendelse}
+                beskrivelse={beskrivelse}
+                skjulAktør={erMigreringssak && hendelse.hendelsesType === "SAK_OPPRETTET"}
+              />
               {redigerbar && erManuellHendelse && (
                 <HStack gap="space-2">
                   <Button

@@ -51,6 +51,31 @@ describe("VisAllHistorikkModal", () => {
     expect(screen.getByText("Sak utredes")).toBeDefined();
   });
 
+  it("grupperer filer som ble lastet opp da saken ble opprettet", async () => {
+    const hendelser = [
+      lagHendelse({
+        hendelseId: "00000000-0000-4000-8000-000000000003",
+        hendelsesType: "FIL_LASTET_OPP",
+        opprettetAvNavn: "Ola Nordmann",
+      }),
+      lagHendelse({
+        hendelseId: "00000000-0000-4000-8000-000000000002",
+        hendelsesType: "FIL_LASTET_OPP",
+        opprettetAvNavn: "Ola Nordmann",
+      }),
+      lagHendelse({
+        hendelseId: "00000000-0000-4000-8000-000000000001",
+        hendelsesType: "SAK_OPPRETTET",
+      }),
+    ];
+
+    await renderModal({ hendelser });
+
+    expect(screen.getByRole("radio", { name: "Alle (2)" })).toBeDefined();
+    expect(screen.getByText("Filer lastet opp")).toBeDefined();
+    expect(screen.queryByText("Fil lastet opp")).toBeNull();
+  });
+
   it("viser 'Rediger'-knapp for egne manuelle notater", async () => {
     const hendelser = [
       lagHendelse({
