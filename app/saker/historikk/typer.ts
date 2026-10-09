@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { visningsnavn } from "~/auth/visningsnavn";
+import { visningsnavn, visningsnavnFraNavn } from "~/auth/visningsnavn";
 import {
   kontrollsakHendelseResponseObjectSchema,
   normaliserHistoriskHendelseInput,
@@ -14,16 +14,18 @@ export const sakHendelseSchema = z
       berortSaksbehandlerEnhet: z.string().optional(),
     }),
   )
-  .transform((hendelse) =>
-    hendelse.berortSaksbehandlerNavn === undefined
-      ? hendelse
-      : {
-          ...hendelse,
-          berortSaksbehandlerNavn: visningsnavn(
-            hendelse.berortSaksbehandlerNavIdent,
-            hendelse.berortSaksbehandlerNavn,
-          ),
-        },
-  );
+  .transform((hendelse) => {
+    const resultat = { ...hendelse };
+    if (resultat.berortSaksbehandlerNavn !== undefined) {
+      resultat.berortSaksbehandlerNavn = visningsnavn(
+        resultat.berortSaksbehandlerNavIdent,
+        resultat.berortSaksbehandlerNavn,
+      );
+    }
+    if (resultat.opprettetAvNavn) {
+      resultat.opprettetAvNavn = visningsnavnFraNavn(resultat.opprettetAvNavn);
+    }
+    return resultat;
+  });
 
 export type SakHendelse = z.infer<typeof sakHendelseSchema>;
