@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 import { visningsnavn } from "./visningsnavn";
 
 describe("visningsnavn", () => {
-  it("overstyrer navnet til brukertest-identen", () => {
-    expect(visningsnavn("Z993376", "Ekte Navn")).toBe("Line Skalle");
-    expect(visningsnavn("z993376", "Ekte Navn")).toBe("Line Skalle");
+  it("overstyrer navnet til brukertest-identene", () => {
+    expect(visningsnavn("Z993376", "Ekte Navn")).toBe("Petter Saksbehandlersen");
+    expect(visningsnavn("z993376", "Ekte Navn")).toBe("Petter Saksbehandlersen");
+    expect(visningsnavn("Z990778", "Ekte Navn")).toBe("Kari Ledersen");
   });
 
   it("beholder navnet til andre identer", () => {

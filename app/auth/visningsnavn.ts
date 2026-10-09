@@ -5,7 +5,8 @@
  * fiktivt navn i stedet for navnet som er registrert på NAV-identen.
  */
 const OVERSTYRTE_VISNINGSNAVN: Record<string, string> = {
-  Z993376: "Line Skalle",
+  Z993376: "Petter Saksbehandlersen",
+  Z990778: "Kari Ledersen",
 };
 
 export function visningsnavn(navIdent: string | null | undefined, navn: string): string;
