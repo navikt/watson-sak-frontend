@@ -401,6 +401,7 @@ export const kontrollsakHendelseResponseObjectSchema = z.object({
   beskrivelse: z.string().nullable().optional(),
   tittel: z.string().nullable().optional(),
   opprettetAvNavn: z.string().nullable().optional(),
+  opprettetVedSaksopprettelse: z.boolean().optional(),
 });
 
 export const kontrollsakHendelseResponseSchema = z.preprocess(

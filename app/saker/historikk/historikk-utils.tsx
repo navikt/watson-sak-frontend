@@ -57,6 +57,46 @@ export function lagForrigeHendelseKart(hendelser: SakHendelse[]): Map<string, Sa
   return kart;
 }
 
+/** Samler filopplastinger som backend har merket som del av saksopprettelsen. */
+export function grupperHistorikkHendelser(hendelser: SakHendelse[]): SakHendelse[][] {
+  const grupper: SakHendelse[][] = [];
+  let opplastingerVedOpprettelseLagtTil = false;
+
+  for (const hendelse of hendelser) {
+    if (hendelse.hendelsesType === "FIL_LASTET_OPP" && hendelse.opprettetVedSaksopprettelse) {
+      if (!opplastingerVedOpprettelseLagtTil) {
+        grupper.push(
+          hendelser.filter(
+            (kandidat) =>
+              kandidat.hendelsesType === "FIL_LASTET_OPP" && kandidat.opprettetVedSaksopprettelse,
+          ),
+        );
+        opplastingerVedOpprettelseLagtTil = true;
+      }
+      continue;
+    }
+    grupper.push([hendelse]);
+  }
+
+  return grupper;
+}
+
+export function erMigreringssakMedTilbakedatertOpprettelse(hendelser: SakHendelse[]): boolean {
+  const opprettelseshendelse = hendelser.find(
+    (hendelse) => hendelse.hendelsesType === "SAK_OPPRETTET",
+  );
+  if (!opprettelseshendelse) return false;
+
+  const opprettelsestidspunkt = Date.parse(opprettelseshendelse.tidspunkt);
+  if (Number.isNaN(opprettelsestidspunkt)) return false;
+
+  return hendelser.some(
+    (hendelse) =>
+      hendelse.hendelsesType === "MIGRERING_PABEGYNT" &&
+      Date.parse(hendelse.tidspunkt) > opprettelsestidspunkt,
+  );
+}
+
 function diffStegOgStatus(hendelse: SakHendelse, forrigeHendelse?: SakHendelse) {
   const forrigeStatus = forrigeHendelse?.status ?? null;
   const normalisertStatus = hendelse.status ?? "AKTIV";
@@ -179,6 +219,10 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
       return "Oppgave opprettet";
     case "FIL_LASTET_OPP":
       return "Fil lastet opp";
+    case "SAK_FRISTILT":
+      return "Sak fristilt";
+    case "SAK_DELT":
+      return "Sak delt";
     case "FIL_SLETTET":
       return "Fil slettet";
     case "FIL_OMDØPT":
@@ -207,7 +251,9 @@ export function hendelseBeskrivelse(
   if (
     hendelse.hendelsesType === "MANUELL_HENDELSE_REDIGERT" ||
     hendelse.hendelsesType === "MIGRERING_PABEGYNT" ||
-    hendelse.hendelsesType === "MIGRERING_FULLFORT"
+    hendelse.hendelsesType === "MIGRERING_FULLFORT" ||
+    hendelse.hendelsesType === "SAK_FRISTILT" ||
+    hendelse.hendelsesType === "SAK_DELT"
   ) {
     return null;
   }
@@ -372,11 +418,14 @@ export function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
 export function HendelseInnhold({
   hendelse,
   beskrivelse,
+  skjulAktør = false,
 }: {
   hendelse: SakHendelse;
   beskrivelse: string | null;
+  skjulAktør?: boolean;
 }) {
-  const aktør = hendelse.opprettetAvNavn === "SYSTEM" ? null : hendelse.opprettetAvNavn;
+  const aktør =
+    skjulAktør || hendelse.opprettetAvNavn === "SYSTEM" ? null : hendelse.opprettetAvNavn;
   const innhold = (() => {
     if (!beskrivelse) return null;
 

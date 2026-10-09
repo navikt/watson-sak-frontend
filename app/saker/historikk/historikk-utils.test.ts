@@ -3,8 +3,10 @@ import { GavelIcon } from "@navikt/aksel-icons";
 import type { SakHendelse } from "./typer";
 import {
   HendelseBullet,
+  erMigreringssakMedTilbakedatertOpprettelse,
   hendelseBeskrivelse,
   hendelseTittel,
+  grupperHistorikkHendelser,
   lagForrigeHendelseKart,
 } from "./historikk-utils";
 
@@ -105,11 +107,125 @@ describe("hendelseTittel", () => {
   it.each([
     ["MIGRERING_PABEGYNT", "Migrering påbegynt"],
     ["MIGRERING_FULLFORT", "Migrering fullført"],
+    ["SAK_FRISTILT", "Sak fristilt"],
+    ["SAK_DELT", "Sak delt"],
   ])("viser %s som «%s» uten steg", (hendelsesType, tittel) => {
     const hendelse = lagHendelse({ hendelsesType, beskrivelse: tittel });
 
     expect(hendelseTittel(hendelse)).toBe(tittel);
     expect(hendelseBeskrivelse(hendelse)).toBeNull();
+  });
+});
+
+describe("grupperHistorikkHendelser", () => {
+  it("samler filer som ble lastet opp da saken ble opprettet", () => {
+    const hendelser = [
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000003",
+        hendelsesType: "FIL_LASTET_OPP",
+        opprettetAvNavn: "Ola Nordmann",
+        opprettetVedSaksopprettelse: true,
+      }),
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000002",
+        hendelsesType: "FIL_LASTET_OPP",
+        opprettetAvNavn: "Ola Nordmann",
+        opprettetVedSaksopprettelse: true,
+      }),
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000001",
+        hendelsesType: "SAK_OPPRETTET",
+      }),
+    ];
+
+    const grupper = grupperHistorikkHendelser(hendelser);
+
+    expect(grupper).toHaveLength(2);
+    expect(grupper[0]).toEqual(hendelser.slice(0, 2));
+    expect(grupper[1]).toEqual([hendelser[2]]);
+  });
+
+  it("lar filopplastinger etter opprettelsen stå som egne historikkinnslag", () => {
+    const hendelser = [
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000003",
+        hendelsesType: "FIL_LASTET_OPP",
+        opprettetAvNavn: "Ola Nordmann",
+      }),
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000002",
+        hendelsesType: "FIL_LASTET_OPP",
+        opprettetAvNavn: "Ola Nordmann",
+      }),
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000001",
+        hendelsesType: "SAK_OPPRETTET",
+      }),
+    ];
+
+    expect(grupperHistorikkHendelser(hendelser)).toEqual(hendelser.map((h) => [h]));
+  });
+
+  it("samler merkede opplastinger selv om en annen hendelse ligger mellom dem", () => {
+    const hendelser = [
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000004",
+        hendelsesType: "FIL_LASTET_OPP",
+        opprettetVedSaksopprettelse: true,
+      }),
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000003",
+        hendelsesType: "MIGRERING_PABEGYNT",
+      }),
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000002",
+        hendelsesType: "FIL_LASTET_OPP",
+        opprettetVedSaksopprettelse: true,
+      }),
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000001",
+        hendelsesType: "SAK_OPPRETTET",
+      }),
+    ];
+
+    const grupper = grupperHistorikkHendelser(hendelser);
+
+    expect(grupper).toHaveLength(3);
+    expect(grupper[0]).toEqual([hendelser[0], hendelser[2]]);
+    expect(grupper[1]).toEqual([hendelser[1]]);
+    expect(grupper[2]).toEqual([hendelser[3]]);
+  });
+});
+
+describe("erMigreringssakMedTilbakedatertOpprettelse", () => {
+  it("finner en migreringssak når migreringen startet etter den historiske opprettelsen", () => {
+    const hendelser = [
+      lagHendelse({
+        hendelsesType: "MIGRERING_PABEGYNT",
+        tidspunkt: "2026-03-31T10:15:00Z",
+      }),
+      lagHendelse({
+        hendelsesType: "SAK_OPPRETTET",
+        tidspunkt: "2020-03-31T10:15:00Z",
+      }),
+    ];
+
+    expect(erMigreringssakMedTilbakedatertOpprettelse(hendelser)).toBe(true);
+  });
+
+  it("behandler ikke en sak som migreringssak når opprettelsestidspunktet ikke er eldre", () => {
+    const hendelser = [
+      lagHendelse({
+        hendelsesType: "MIGRERING_PABEGYNT",
+        tidspunkt: "2020-03-31T10:15:00Z",
+      }),
+      lagHendelse({
+        hendelsesType: "SAK_OPPRETTET",
+        tidspunkt: "2026-03-31T10:15:00Z",
+      }),
+    ];
+
+    expect(erMigreringssakMedTilbakedatertOpprettelse(hendelser)).toBe(false);
   });
 });
 

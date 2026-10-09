@@ -358,6 +358,29 @@ describe("opprettKontrollsak", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("merker filopplasting ved saksopprettelse til backend", async () => {
+    vi.resetModules();
+    vi.doMock("~/config/env.server", () => ({
+      BACKEND_API_URL: "https://backend.test",
+      skalBrukeMockdata: false,
+    }));
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 201 });
+    vi.stubGlobal("fetch", fetchMock);
+    const { lastOppFil: lastOppFilBackend } = await import("./api.server");
+
+    await lastOppFilBackend(
+      testRequest,
+      "token-123",
+      "42",
+      new File(["innhold"], "vedlegg.pdf", { type: "application/pdf" }),
+      true,
+    );
+
+    expect(String(fetchMock.mock.calls[0]?.[0])).toBe(
+      "https://backend.test/api/v1/kontrollsaker/42/filer?opprettetVedSaksopprettelse=true",
+    );
+  });
+
   it("setter innlogget bruker som eier når mock-saken opprettes fra migrering", async () => {
     const svar = await opprettKontrollsak({
       request: testRequest,

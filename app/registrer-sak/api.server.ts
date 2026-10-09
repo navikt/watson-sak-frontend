@@ -192,6 +192,7 @@ export async function lastOppFil(
   token: string,
   sakId: string,
   fil: File,
+  opprettetVedSaksopprettelse = false,
 ): Promise<void> {
   if (skalBrukeMockdata) {
     try {
@@ -221,7 +222,11 @@ export async function lastOppFil(
   formData.append("fil", fil);
 
   try {
-    const respons = await fetch(`${BACKEND_API_URL}/api/v1/kontrollsaker/${sakId}/filer`, {
+    const url = new URL(`${BACKEND_API_URL}/api/v1/kontrollsaker/${sakId}/filer`);
+    if (opprettetVedSaksopprettelse) {
+      url.searchParams.set("opprettetVedSaksopprettelse", "true");
+    }
+    const respons = await fetch(url, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
       body: formData,

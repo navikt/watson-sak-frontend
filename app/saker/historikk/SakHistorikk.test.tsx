@@ -78,6 +78,61 @@ describe("SakHistorikk", () => {
     expect(screen.getByText(/Steg: Opprettet/)).toBeDefined();
   });
 
+  it("skjuler utførende på opprettelseshendelsen for migreringssaker", async () => {
+    await renderMedRouter(
+      <SakHistorikk
+        redigerbar={true}
+        sakId={1}
+        hendelser={[
+          lagBackendHendelse({
+            hendelsesType: "MIGRERING_PABEGYNT",
+            tidspunkt: "2026-03-31T10:16:00Z",
+          }),
+          lagBackendHendelse({
+            hendelsesType: "SAK_OPPRETTET",
+            tidspunkt: "2020-03-31T10:15:00Z",
+            opprettetAvNavn: "Ola Nordmann",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.queryByText("Utført av: Ola Nordmann")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Vis all historikk (2)" }));
+    expect(screen.queryByText("Utført av: Ola Nordmann")).toBeNull();
+  });
+
+  it("viser flere filer lastet opp ved opprettelse som ett historikkinnslag", async () => {
+    await renderMedRouter(
+      <SakHistorikk
+        redigerbar={true}
+        sakId={1}
+        hendelser={[
+          lagBackendHendelse({
+            hendelseId: "00000000-0000-4000-8000-000000000003",
+            hendelsesType: "FIL_LASTET_OPP",
+            opprettetAvNavn: "Ola Nordmann",
+            opprettetVedSaksopprettelse: true,
+          }),
+          lagBackendHendelse({
+            hendelseId: "00000000-0000-4000-8000-000000000002",
+            hendelsesType: "FIL_LASTET_OPP",
+            opprettetAvNavn: "Ola Nordmann",
+            opprettetVedSaksopprettelse: true,
+          }),
+          lagBackendHendelse({
+            hendelseId: "00000000-0000-4000-8000-000000000001",
+            hendelsesType: "SAK_OPPRETTET",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Filer lastet opp")).toBeDefined();
+    expect(screen.queryByText("Fil lastet opp")).toBeNull();
+    expect(screen.getByRole("button", { name: "Vis all historikk (2)" })).toBeDefined();
+  });
+
   it("viser saksredigering med aktøren på nederste linje", async () => {
     await renderMedRouter(
       <SakHistorikk
