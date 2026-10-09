@@ -441,5 +441,3 @@ export async function backendAction(
     }
   }
 }
-
-// --- Mock-action (lokal mock-tilstand) ---

@@ -32,7 +32,7 @@ export async function hentFiler(token: string, sakId: string): Promise<FilRespon
     headers: authHeaders(token),
   });
   // 403 er en forventet tilstand her — saksbehandleren mangler fil-tilgang på
-  // saken, se hentFilerMedTilgangskontroll i SakDetaljSide.server.ts.
+  // saken, se hentFilerMedTilgangskontroll i SakDetaljSide.loader.server.ts.
   if (!respons.ok)
     await håndterFeil(respons, "Kunne ikke hente filer", { forventedeStatuser: [403] });
   return parseEllerKastFeil(z.array(filResponseSchema), await respons.json(), "hentFiler");

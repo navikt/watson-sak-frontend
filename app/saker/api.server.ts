@@ -1,4 +1,4 @@
-export * from "~/saker/api-core.server";
+export { BackendFeilException, FilIBrukFeilException } from "~/saker/api-core.server";
 export * from "~/saker/kontrollsak.api.server";
 export * from "~/saker/dokument.api.server";
 export * from "~/saker/fil-og-mappe.api.server";
