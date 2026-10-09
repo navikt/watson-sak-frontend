@@ -118,13 +118,15 @@ export async function action({ request }: Route.ActionArgs) {
     .filter((f: FormDataEntryValue): f is File => f instanceof File && f.size > 0);
   if (filer.length > 0) {
     if (skalBrukeMockdata) {
-      await Promise.all(filer.map((fil: File) => lastOppFil(request, token, resultat.sak.id, fil)));
-    } else {
-      Promise.all(filer.map((fil: File) => lastOppFil(request, token, resultat.sak.id, fil))).catch(
-        (err) => {
-          logger.error("Uventet feil ved filopplasting etter sak-opprettelse", { err });
-        },
+      await Promise.all(
+        filer.map((fil: File) => lastOppFil(request, token, resultat.sak.id, fil, true)),
       );
+    } else {
+      Promise.all(
+        filer.map((fil: File) => lastOppFil(request, token, resultat.sak.id, fil, true)),
+      ).catch((err) => {
+        logger.error("Uventet feil ved filopplasting etter sak-opprettelse", { err });
+      });
     }
   }
 

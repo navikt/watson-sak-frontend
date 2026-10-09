@@ -124,11 +124,13 @@ describe("grupperHistorikkHendelser", () => {
         hendelseId: "00000000-0000-0000-0000-000000000003",
         hendelsesType: "FIL_LASTET_OPP",
         opprettetAvNavn: "Ola Nordmann",
+        opprettetVedSaksopprettelse: true,
       }),
       lagHendelse({
         hendelseId: "00000000-0000-0000-0000-000000000002",
         hendelsesType: "FIL_LASTET_OPP",
         opprettetAvNavn: "Ola Nordmann",
+        opprettetVedSaksopprettelse: true,
       }),
       lagHendelse({
         hendelseId: "00000000-0000-0000-0000-000000000001",
@@ -157,11 +159,41 @@ describe("grupperHistorikkHendelser", () => {
       }),
       lagHendelse({
         hendelseId: "00000000-0000-0000-0000-000000000001",
-        hendelsesType: "SAK_REDIGERT",
+        hendelsesType: "SAK_OPPRETTET",
       }),
     ];
 
     expect(grupperHistorikkHendelser(hendelser)).toEqual(hendelser.map((h) => [h]));
+  });
+
+  it("samler merkede opplastinger selv om en annen hendelse ligger mellom dem", () => {
+    const hendelser = [
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000004",
+        hendelsesType: "FIL_LASTET_OPP",
+        opprettetVedSaksopprettelse: true,
+      }),
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000003",
+        hendelsesType: "MIGRERING_PABEGYNT",
+      }),
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000002",
+        hendelsesType: "FIL_LASTET_OPP",
+        opprettetVedSaksopprettelse: true,
+      }),
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000001",
+        hendelsesType: "SAK_OPPRETTET",
+      }),
+    ];
+
+    const grupper = grupperHistorikkHendelser(hendelser);
+
+    expect(grupper).toHaveLength(3);
+    expect(grupper[0]).toEqual([hendelser[0], hendelser[2]]);
+    expect(grupper[1]).toEqual([hendelser[1]]);
+    expect(grupper[2]).toEqual([hendelser[3]]);
   });
 });
 

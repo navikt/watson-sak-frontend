@@ -57,35 +57,25 @@ export function lagForrigeHendelseKart(hendelser: SakHendelse[]): Map<string, Sa
   return kart;
 }
 
-/** Samler påfølgende filopplastinger når de står rett før sakens opprettelseshendelse. */
+/** Samler filopplastinger som backend har merket som del av saksopprettelsen. */
 export function grupperHistorikkHendelser(hendelser: SakHendelse[]): SakHendelse[][] {
   const grupper: SakHendelse[][] = [];
-  let indeks = 0;
+  let opplastingerVedOpprettelseLagtTil = false;
 
-  while (indeks < hendelser.length) {
-    const hendelse = hendelser[indeks];
-    if (hendelse.hendelsesType === "FIL_LASTET_OPP") {
-      let slutt = indeks + 1;
-      while (
-        slutt < hendelser.length &&
-        hendelser[slutt].hendelsesType === "FIL_LASTET_OPP" &&
-        hendelser[slutt].opprettetAvNavn === hendelse.opprettetAvNavn
-      ) {
-        slutt++;
+  for (const hendelse of hendelser) {
+    if (hendelse.hendelsesType === "FIL_LASTET_OPP" && hendelse.opprettetVedSaksopprettelse) {
+      if (!opplastingerVedOpprettelseLagtTil) {
+        grupper.push(
+          hendelser.filter(
+            (kandidat) =>
+              kandidat.hendelsesType === "FIL_LASTET_OPP" && kandidat.opprettetVedSaksopprettelse,
+          ),
+        );
+        opplastingerVedOpprettelseLagtTil = true;
       }
-
-      const erRettVedSaksopprettelse =
-        hendelser[slutt]?.hendelsesType === "SAK_OPPRETTET" ||
-        hendelser[slutt]?.hendelsesType === "MIGRERING_PABEGYNT";
-      if (slutt - indeks > 1 && erRettVedSaksopprettelse) {
-        grupper.push(hendelser.slice(indeks, slutt));
-        indeks = slutt;
-        continue;
-      }
+      continue;
     }
-
     grupper.push([hendelse]);
-    indeks++;
   }
 
   return grupper;
@@ -261,7 +251,9 @@ export function hendelseBeskrivelse(
   if (
     hendelse.hendelsesType === "MANUELL_HENDELSE_REDIGERT" ||
     hendelse.hendelsesType === "MIGRERING_PABEGYNT" ||
-    hendelse.hendelsesType === "MIGRERING_FULLFORT"
+    hendelse.hendelsesType === "MIGRERING_FULLFORT" ||
+    hendelse.hendelsesType === "SAK_FRISTILT" ||
+    hendelse.hendelsesType === "SAK_DELT"
   ) {
     return null;
   }

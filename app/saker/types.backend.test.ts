@@ -250,6 +250,19 @@ describe("kontrollsakHendelseResponseSchema – historikkfelt", () => {
     }
   });
 
+  it("parser markering for filopplasting ved saksopprettelse", () => {
+    const resultat = kontrollsakHendelseResponseSchema.safeParse({
+      ...basisHendelse,
+      hendelsesType: "FIL_LASTET_OPP",
+      opprettetVedSaksopprettelse: true,
+    });
+
+    expect(resultat.success).toBe(true);
+    if (resultat.success) {
+      expect(resultat.data.opprettetVedSaksopprettelse).toBe(true);
+    }
+  });
+
   it("normaliserer historisk HENLAGT-steg til AVSLUTTET", () => {
     const resultat = kontrollsakHendelseResponseSchema.safeParse({
       ...basisHendelse,

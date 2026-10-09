@@ -57,11 +57,13 @@ describe("VisAllHistorikkModal", () => {
         hendelseId: "00000000-0000-4000-8000-000000000003",
         hendelsesType: "FIL_LASTET_OPP",
         opprettetAvNavn: "Ola Nordmann",
+        opprettetVedSaksopprettelse: true,
       }),
       lagHendelse({
         hendelseId: "00000000-0000-4000-8000-000000000002",
         hendelsesType: "FIL_LASTET_OPP",
         opprettetAvNavn: "Ola Nordmann",
+        opprettetVedSaksopprettelse: true,
       }),
       lagHendelse({
         hendelseId: "00000000-0000-4000-8000-000000000001",
