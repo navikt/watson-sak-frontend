@@ -109,17 +109,19 @@ export function MineSakerInnhold({
         <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:gap-8">
           <div className="min-w-0 flex-1 xl:order-first">
             <AntallTreffEtikett antall={sorterteSaker.length} />
-            <Saksliste
-              rader={sorterteSaker.map((sak) => mapKontrollsakTilSakslisteRad(sak, detaljSti))}
-              tomTekst={tomTekst}
-              tilbake={{ to: RouteConfig.MINE_SAKER, label: "Mine saker" }}
-              sortering={{
-                kolonne: sorteringskolonne,
-                retning: sorteringsretning === "asc" ? "stigende" : "synkende",
-                onSort: (kolonne) => sorterPåKolonne(kolonne as AlleSakerKolonne),
-                sorterbare: [...sorteringskolonner],
-              }}
-            />
+            <div className="overflow-x-auto [&_table]:w-full">
+              <Saksliste
+                rader={sorterteSaker.map((sak) => mapKontrollsakTilSakslisteRad(sak, detaljSti))}
+                tomTekst={tomTekst}
+                tilbake={{ to: RouteConfig.MINE_SAKER, label: "Mine saker" }}
+                sortering={{
+                  kolonne: sorteringskolonne,
+                  retning: sorteringsretning === "asc" ? "stigende" : "synkende",
+                  onSort: (kolonne) => sorterPåKolonne(kolonne as AlleSakerKolonne),
+                  sorterbare: [...sorteringskolonner],
+                }}
+              />
+            </div>
           </div>
 
           <div
