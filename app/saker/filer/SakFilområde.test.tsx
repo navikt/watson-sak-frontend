@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { RouteConfig } from "~/routeConfig";
 import { DokumentTre } from "./DokumentTre";
 import { SakFilområde } from "./SakFilområde";
@@ -67,12 +67,23 @@ function renderOmrådeMedAction(
   return render(<Stub initialEntries={["/saker/ABC-123"]} />);
 }
 
-function renderTre(props: Parameters<typeof DokumentTre>[0]) {
+function renderTre(
+  props: Parameters<typeof DokumentTre>[0],
+  mappehandling?: (request: Request) => unknown,
+) {
   const Stub = createRoutesStub([
     {
       path: "/saker/:sakId",
       Component: () => <DokumentTre {...props} />,
     },
+    ...(mappehandling
+      ? [
+          {
+            path: RouteConfig.API.SAK_MAPPER,
+            action: async ({ request }: { request: Request }) => mappehandling(request),
+          },
+        ]
+      : []),
   ]);
   return render(<Stub initialEntries={["/saker/ABC-123"]} />);
 }
@@ -514,5 +525,58 @@ describe("DokumentTre med mapper", () => {
     expect(screen.getByRole("button", { name: /Bank/ }).getAttribute("aria-expanded")).toBe(
       "false",
     );
+  });
+
+  it("flytter dokument til mappe med dra og slipp", async () => {
+    const handlinger: unknown[] = [];
+    renderTre(
+      { noder: dokumenter, mapper, sakId: "ABC-123", kanEndreMapper: true, fremhevetId: "1" },
+      async (request) => {
+        handlinger.push(await request.json());
+        return { ok: true };
+      },
+    );
+
+    const dataTransfer = { setData: vi.fn(), effectAllowed: "", dropEffect: "" };
+    const dokument = screen.getByText("Rapport").closest("li");
+    const mål = screen.getByRole("button", { name: /^Møter/ }).closest("li");
+    if (!dokument || !mål) throw new Error("Fant ikke elementene");
+
+    fireEvent.dragStart(dokument, { dataTransfer });
+    fireEvent.dragOver(mål, { dataTransfer });
+    fireEvent.drop(mål, { dataTransfer });
+
+    await waitFor(() => {
+      expect(handlinger).toEqual([{ handling: "flytt-dokument", id: "1", mappe: "Møter" }]);
+    });
+  });
+
+  it("lar ikke en mappe slippes i sin egen undermappe", () => {
+    const handling = vi.fn();
+    renderTre({ noder: dokumenter, mapper, sakId: "ABC-123", kanEndreMapper: true }, handling);
+    fireEvent.click(screen.getByRole("button", { name: /^Bank/ }));
+
+    const dataTransfer = { setData: vi.fn(), effectAllowed: "", dropEffect: "" };
+    const bank = screen.getByRole("button", { name: /^Bank/ }).closest("li");
+    const under = screen.getByRole("button", { name: /^Utskrifter/ }).closest("li");
+    if (!bank || !under) throw new Error("Fant ikke elementene");
+
+    fireEvent.dragStart(bank, { dataTransfer });
+    fireEvent.dragOver(under, { dataTransfer });
+    fireEvent.drop(under, { dataTransfer });
+
+    expect(handling).not.toHaveBeenCalled();
+  });
+
+  it("har ingen draggable-elementer uten tilgang til å endre mapper", () => {
+    renderTre({ noder: dokumenter, mapper, sakId: "ABC-123" });
+
+    expect(document.querySelectorAll("[draggable='true']")).toHaveLength(0);
+  });
+
+  it("gjør ikke arkiverte dokumenter draggable", () => {
+    renderTre({ noder: dokumenter, mapper, sakId: "ABC-123", kanEndreMapper: true });
+
+    expect(screen.getByText("Arkivert notat").closest("li")?.getAttribute("draggable")).toBeNull();
   });
 });
