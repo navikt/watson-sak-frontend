@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
 import { getSaksreferanse } from "~/saker/id";
@@ -211,5 +211,85 @@ describe("MineSakerInnhold", () => {
     );
 
     expect(screen.queryByRole("heading", { name: "Delt med meg" })).toBeNull();
+  });
+
+  describe("sidedeling", () => {
+    // 25 saker der sak 1 er nyest, slik at standardsorteringen (opprettet, synkende) gir id 1–25.
+    const mangeSaker = Array.from({ length: 25 }, (_, indeks) =>
+      lagKontrollsak({
+        id: indeks + 1,
+        opprettet: new Date(Date.UTC(2026, 0, 31 - indeks)).toISOString(),
+      }),
+    );
+
+    function renderMedSider(søkestreng = "") {
+      const router = createMemoryRouter(
+        [
+          {
+            path: "/",
+            element: (
+              <MineSakerInnhold
+                saker={mangeSaker}
+                deltMedSaker={[]}
+                detaljSti="/saker"
+                filterAlternativer={standardFilterAlternativer}
+                aktivtFilter={standardAktivtFilter}
+              />
+            ),
+          },
+        ],
+        { initialEntries: [`/${søkestreng}`] },
+      );
+      render(<RouterProvider router={router} />);
+      return router;
+    }
+
+    function synligeSakslenker() {
+      return screen.getAllByRole("link", { name: /^#\d+$/ });
+    }
+
+    it("viser 20 saker på første side", () => {
+      renderMedSider();
+
+      const lenker = synligeSakslenker();
+      expect(lenker).toHaveLength(20);
+      expect(lenker[0].textContent).toBe("#1");
+      expect(lenker[19].textContent).toBe("#20");
+    });
+
+    it("viser resten av sakene når side=2", () => {
+      renderMedSider("?side=2");
+
+      const lenker = synligeSakslenker();
+      expect(lenker).toHaveLength(5);
+      expect(lenker[0].textContent).toBe("#21");
+    });
+
+    it("oppdaterer side i URL-en ved sidebytte", () => {
+      const router = renderMedSider();
+
+      fireEvent.click(screen.getByRole("button", { name: "2" }));
+
+      expect(router.state.location.search).toContain("side=2");
+      expect(synligeSakslenker()[0].textContent).toBe("#21");
+    });
+
+    it("går tilbake til første side ved sortering", () => {
+      const router = renderMedSider("?side=2");
+
+      fireEvent.click(
+        within(screen.getByRole("columnheader", { name: "Saksid" })).getByRole("button"),
+      );
+
+      expect(new URLSearchParams(router.state.location.search).has("side")).toBe(false);
+    });
+
+    it("går tilbake til første side ved filtrering", () => {
+      const router = renderMedSider("?side=2");
+
+      fireEvent.click(screen.getByRole("button", { name: "Utredning" }));
+
+      expect(new URLSearchParams(router.state.location.search).has("side")).toBe(false);
+    });
   });
 });

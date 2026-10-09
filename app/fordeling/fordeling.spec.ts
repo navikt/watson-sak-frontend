@@ -24,7 +24,8 @@ test.describe("Ufordelte saker", () => {
     ).toHaveCount(0);
   });
 
-  test("kan sortere, paginere, filtrere og tildele en sak fra tabellen", async ({ page }) => {
+  // Sidedelingen dekkes av UfordelteSakerInnhold.test.tsx: mockdataene har færre saker enn én side.
+  test("kan sortere, filtrere og tildele en sak fra tabellen", async ({ page }) => {
     const rader = page.locator("tbody tr");
 
     await expect(async () => {
@@ -37,9 +38,6 @@ test.describe("Ufordelte saker", () => {
     }).toPass({ timeout: 10000 });
     await expect(rader.nth(0)).toContainText("Annet");
 
-    await page.getByRole("button", { name: "2" }).click();
-
-    await expect(page.getByRole("button", { name: "2" })).toHaveAttribute("aria-current", "true");
     const tiltakRad = page.locator("tbody tr").filter({ hasText: "Tiltak" });
     await expect(tiltakRad).toHaveCount(1);
     await expect(tiltakRad).toContainText("Misbruk av tiltaksplass");

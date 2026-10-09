@@ -10,7 +10,7 @@ import { AntallTreffEtikett } from "~/saker/saksliste/AntallTreffEtikett";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
 import { RouteConfig } from "~/routeConfig";
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
-import { paginerElementer } from "~/utils/paginering";
+import { ANTALL_PER_SIDE as RADER_PER_SIDE, paginerElementer } from "~/utils/paginering";
 import * as backendApi from "~/saker/api.server";
 import { mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import type { KontrollsakResponse } from "~/saker/types.backend";
@@ -29,7 +29,6 @@ import {
 import { Filtre } from "./Filtre";
 import { parseStatusfilter, STATUSFILTER_VALG, tilBackendStatusfilter } from "./statusfilter";
 
-const RADER_PER_SIDE = 20;
 const STANDARD_KOLONNE: AlleSakerKolonne = "opprettet";
 const STANDARD_RETNING: Sorteringsretning = "desc";
 

@@ -2,9 +2,8 @@ import type { LoaderFunctionArgs } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { skalBrukeMockdata } from "~/config/env.server";
 import { hentAlleVarsler } from "~/varsler/api.server";
+import { ANTALL_PER_SIDE as SIDE_STØRRELSE } from "~/utils/paginering";
 import { hentVarsler as hentVarslerFraMock } from "~/varsler/mock-data.server";
-
-const SIDE_STØRRELSE = 20;
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);

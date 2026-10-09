@@ -4,12 +4,10 @@ import * as backendApi from "~/saker/api.server";
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { getPersonIdent } from "~/saker/visning";
-import { paginerElementer } from "~/utils/paginering";
+import { ANTALL_PER_SIDE as SØK_RADER_PER_SIDE, paginerElementer } from "~/utils/paginering";
 import { erFnr, erOrganisasjonsnummer, erSaksnummer } from "~/utils/string-utils";
 
 type Søksak = KontrollsakResponse;
-
-const SØK_RADER_PER_SIDE = 20;
 
 export type SøkeType = "saksnummer" | "personIdent" | "organisasjonsnummer" | "ukjent";
 
