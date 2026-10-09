@@ -2,11 +2,12 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
   FilePdfIcon,
+  FolderFileIcon,
   FolderIcon,
   MenuElipsisVerticalIcon,
   TrashIcon,
 } from "@navikt/aksel-icons";
-import { ActionMenu, BodyShort, Button, Detail, Tag } from "@navikt/ds-react";
+import { ActionMenu, Alert, BodyShort, Button, Detail, Tag } from "@navikt/ds-react";
 import { useCallback, useState, type HTMLAttributes } from "react";
 import { Link } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
@@ -16,6 +17,7 @@ import { DokumentIkon } from "./dokument-ikon";
 import { SlettDokumentModal } from "./dokument/SlettDokumentModal";
 import { useDokumentSletting } from "./dokument/useDokumentSletting";
 import { byggFilTre, flatMappeliste, type FilTreNode } from "./mapper/bygg-filtre";
+import { FlyttTilMappeModal, type FlyttbartElement } from "./mapper/MappeModaler";
 import { erLikEllerUnder } from "./mapper/mappesti";
 import { useDraOgSlipp } from "./mapper/useDraOgSlipp";
 import { useMappehandling } from "./mapper/useMappehandling";
@@ -25,12 +27,16 @@ function DokumentHandlinger({
   dokument,
   sakId,
   redigerbar,
+  kanEndreMapper,
   onSlett,
+  onFlytt,
 }: {
   dokument: DokumentNode;
   sakId: string;
   redigerbar: boolean;
+  kanEndreMapper: boolean;
   onSlett: (dokument: DokumentNode) => void;
+  onFlytt: (element: FlyttbartElement) => void;
 }) {
   return (
     <ActionMenu>
@@ -55,6 +61,21 @@ function DokumentHandlinger({
         >
           Last ned som PDF
         </ActionMenu.Item>
+        {kanEndreMapper && !dokument.arkivert && (
+          <ActionMenu.Item
+            icon={<FolderFileIcon aria-hidden />}
+            onSelect={() =>
+              onFlytt({
+                type: "dokument",
+                id: dokument.id,
+                navn: dokument.tittel || "Uten tittel",
+                mappe: dokument.mappe ?? null,
+              })
+            }
+          >
+            Flytt til …
+          </ActionMenu.Item>
+        )}
         {redigerbar && !dokument.arkivert && (
           <>
             <ActionMenu.Divider />
@@ -77,16 +98,20 @@ function DokumentRad({
   sakId,
   fremhevetId,
   redigerbar,
+  kanEndreMapper,
   kompakt,
   onSlett,
+  onFlytt,
   liProps,
 }: {
   node: DokumentNode;
   sakId: string;
   fremhevetId?: string;
   redigerbar: boolean;
+  kanEndreMapper: boolean;
   kompakt: boolean;
   onSlett: (dokument: DokumentNode) => void;
+  onFlytt: (element: FlyttbartElement) => void;
   liProps?: HTMLAttributes<HTMLLIElement>;
 }) {
   const dokumentUrl = RouteConfig.SAKER_DOKUMENT.replace(":sakId", sakId).replace(
@@ -134,7 +159,9 @@ function DokumentRad({
           dokument={node}
           sakId={sakId}
           redigerbar={redigerbar}
+          kanEndreMapper={kanEndreMapper}
           onSlett={onSlett}
+          onFlytt={onFlytt}
         />
       </div>
     </li>
@@ -145,8 +172,10 @@ type RadFelles = {
   sakId: string;
   fremhevetId?: string;
   redigerbar: boolean;
+  kanEndreMapper: boolean;
   kompakt: boolean;
   onSlett: (dokument: DokumentNode) => void;
+  onFlytt: (element: FlyttbartElement) => void;
 };
 
 function MappeGren({
@@ -156,6 +185,8 @@ function MappeGren({
   settÅpen,
   draProps,
   slippmål,
+  kanEndreMapper,
+  onFlytt,
 }: {
   node: Extract<FilTreNode, { type: "mappe" }>;
   felles: RadFelles;
@@ -163,6 +194,8 @@ function MappeGren({
   settÅpen: (sti: string, åpen: boolean) => void;
   draProps: ReturnType<typeof useDraOgSlipp>["draProps"];
   slippmål: string | null | undefined;
+  kanEndreMapper: boolean;
+  onFlytt: (element: FlyttbartElement) => void;
 }) {
   const åpen = åpneMapper.has(node.sti);
   const Chevron = åpen ? ChevronDownIcon : ChevronRightIcon;
@@ -175,19 +208,41 @@ function MappeGren({
       }
       {...draProps({ type: "mappe", sti: node.sti }, node.sti)}
     >
-      <button
-        type="button"
-        aria-expanded={åpen}
-        onClick={() => settÅpen(node.sti, !åpen)}
-        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-ax-text-default hover:bg-ax-bg-neutral-moderate-hover"
-      >
-        <Chevron aria-hidden className="shrink-0 text-ax-icon-neutral" />
-        <FolderIcon aria-hidden className="shrink-0 text-ax-icon-neutral" />
-        <BodyShort size="small" className="truncate flex-1">
-          {node.navn}
-        </BodyShort>
-        <Detail className="shrink-0 text-ax-text-neutral-subtle">{node.antallFiler}</Detail>
-      </button>
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          aria-expanded={åpen}
+          onClick={() => settÅpen(node.sti, !åpen)}
+          className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left text-ax-text-default hover:bg-ax-bg-neutral-moderate-hover"
+        >
+          <Chevron aria-hidden className="shrink-0 text-ax-icon-neutral" />
+          <FolderIcon aria-hidden className="shrink-0 text-ax-icon-neutral" />
+          <BodyShort size="small" className="truncate flex-1">
+            {node.navn}
+          </BodyShort>
+          <Detail className="shrink-0 text-ax-text-neutral-subtle">{node.antallFiler}</Detail>
+        </button>
+        {kanEndreMapper && (
+          <ActionMenu>
+            <ActionMenu.Trigger>
+              <Button
+                variant="tertiary"
+                size="small"
+                icon={<MenuElipsisVerticalIcon aria-hidden />}
+                aria-label={`Handlinger for mappen ${node.navn}`}
+              />
+            </ActionMenu.Trigger>
+            <ActionMenu.Content>
+              <ActionMenu.Item
+                icon={<FolderFileIcon aria-hidden />}
+                onSelect={() => onFlytt({ type: "mappe", sti: node.sti })}
+              >
+                Flytt til …
+              </ActionMenu.Item>
+            </ActionMenu.Content>
+          </ActionMenu>
+        )}
+      </div>
       {åpen && (
         <ul className="ml-4 flex flex-col border-l border-ax-border-neutral-subtle pl-2">
           <TreNoder
@@ -230,6 +285,8 @@ function TreNoder({
           settÅpen={settÅpen}
           draProps={draProps}
           slippmål={slippmål}
+          kanEndreMapper={felles.kanEndreMapper}
+          onFlytt={felles.onFlytt}
         />
       );
     }
@@ -298,6 +355,7 @@ export function DokumentTre({
     () =>
       new Set(alleMapper.filter((sti) => !!fremhevetMappe && erLikEllerUnder(fremhevetMappe, sti))),
   );
+  const [flytteElement, settFlytteElement] = useState<FlyttbartElement | null>(null);
   const settÅpen = useCallback((sti: string, åpen: boolean) => {
     settÅpneMapper((forrige) => {
       if (forrige.has(sti) === åpen) return forrige;
@@ -319,12 +377,19 @@ export function DokumentTre({
     sakId,
     fremhevetId,
     redigerbar,
+    kanEndreMapper,
     kompakt,
     onSlett: sletting.start,
+    onFlytt: settFlytteElement,
   };
 
   return (
     <>
+      {mappehandling.feil && (
+        <Alert variant="error" size="small" className="mb-2">
+          {mappehandling.feil}
+        </Alert>
+      )}
       <ul
         className={`flex flex-col rounded-sm ${slippmål === null ? "outline-2 outline-offset-2 outline-ax-border-accent" : ""}`}
         aria-label="Dokumenter"
@@ -365,6 +430,14 @@ export function DokumentTre({
         onBekreft={sletting.bekreft}
         onAvbryt={sletting.avbryt}
       />
+      {flytteElement && (
+        <FlyttTilMappeModal
+          sakId={sakId}
+          element={flytteElement}
+          mapper={alleMapper}
+          onClose={() => settFlytteElement(null)}
+        />
+      )}
     </>
   );
 }

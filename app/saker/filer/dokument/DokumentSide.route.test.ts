@@ -79,6 +79,7 @@ describe("DokumentSide loader", () => {
 
     expect(resultat.dokument.id).toBe(docId);
     expect(resultat.kanRedigere).toBe(true);
+    expect(resultat.kanEndreMapper).toBe(true);
     // Dokumentlista følger med slik at «Se andre dokumenter»-skuffen kan gjenbruke treet.
     expect(resultat.dokumenter.some((node) => node.id === docId)).toBe(true);
     expect(resultat.variabelVerdier).toEqual({
@@ -128,6 +129,7 @@ describe("DokumentSide loader", () => {
 
     expect(resultat.dokument.id).toBe(docId);
     expect(resultat.kanRedigere).toBe(false);
+    expect(resultat.kanEndreMapper).toBe(false);
   });
 
   it("gir kun lesetilgang når saken har steg Opprettet", async () => {

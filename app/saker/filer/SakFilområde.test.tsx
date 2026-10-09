@@ -312,6 +312,83 @@ describe("SakFilområde", () => {
     expect(screen.getByRole("button", { name: "Handlinger for Notat" })).toBeDefined();
   });
 
+  it("flytter dokument til mappe via flyttedialogen", async () => {
+    const handlinger: unknown[] = [];
+    renderTre(
+      {
+        noder: mockDokumenter,
+        mapper: ["Bank"],
+        sakId: "ABC-123",
+        kanEndreMapper: true,
+      },
+      async (request) => {
+        handlinger.push(await request.json());
+        return { ok: true };
+      },
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Handlinger for Rapport" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Flytt til …" }));
+    expect(await screen.findByRole("dialog", { name: "Flytt «Rapport»" })).toBeDefined();
+    fireEvent.change(screen.getByRole("combobox", { name: "Flytt til" }), {
+      target: { value: "Bank" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Flytt" }));
+
+    await waitFor(() => {
+      expect(handlinger).toEqual([{ handling: "flytt-dokument", id: "1", mappe: "Bank" }]);
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+  });
+
+  it("flytter mappe fra menyen", async () => {
+    const handlinger: unknown[] = [];
+    renderTre(
+      { noder: mockDokumenter, mapper: ["Bank", "Møter"], sakId: "ABC-123", kanEndreMapper: true },
+      async (request) => {
+        handlinger.push(await request.json());
+        return { ok: true };
+      },
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Handlinger for mappen Bank" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Flytt til …" }));
+    expect(await screen.findByRole("dialog", { name: "Flytt «Bank»" })).toBeDefined();
+    fireEvent.change(screen.getByRole("combobox", { name: "Flytt til" }), {
+      target: { value: "Møter" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Flytt" }));
+
+    await waitFor(() => {
+      expect(handlinger).toEqual([{ handling: "endre", fraSti: "Bank", tilSti: "Møter/Bank" }]);
+    });
+  });
+
+  it("viser ikke flyttevalg når brukeren ikke kan endre mapper", () => {
+    renderTre({ noder: mockDokumenter, mapper: ["Bank"], sakId: "ABC-123" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Handlinger for Rapport" }));
+    expect(screen.queryByRole("menuitem", { name: "Flytt til …" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Handlinger for mappen Bank" })).toBeNull();
+  });
+
+  it("viser feilmelding når mappehandlingen feiler", async () => {
+    renderTre(
+      { noder: mockDokumenter, mapper: ["Bank"], sakId: "ABC-123", kanEndreMapper: true },
+      async () => ({ ok: false, melding: "Kunne ikke flytte elementet" }),
+    );
+
+    const dataTransfer = { setData: vi.fn(), effectAllowed: "", dropEffect: "" };
+    const dokument = screen.getByText("Rapport").closest("li");
+    const mål = screen.getByRole("button", { name: /^Bank/ }).closest("li");
+    if (!dokument || !mål) throw new Error("Fant ikke elementene");
+    fireEvent.dragStart(dokument, { dataTransfer });
+    fireEvent.dragOver(mål, { dataTransfer });
+    fireEvent.drop(mål, { dataTransfer });
+
+    expect(await screen.findByText("Kunne ikke flytte elementet")).toBeDefined();
+  });
+
   it("flytter arkiverte filer til Arkivert-seksjonen, ikke mappetreet", () => {
     const arkivertFil: FilResponse = {
       ...mockFiler[0],
