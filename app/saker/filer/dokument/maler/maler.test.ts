@@ -3,6 +3,7 @@ import type { DokumentInnhold } from "~/saker/filer/typer";
 import { arbeidRapportmal } from "./arbeid";
 import { ensligForsørgerRapportmal } from "./enslig-forsørger";
 import { byggMalInnhold, type MalId } from "./index";
+import { innhentingsbrevmal } from "./innhentingsbrev";
 import { utlandRapportmal } from "./utland";
 
 function variabelIder(innhold: DokumentInnhold): string[] {
@@ -99,11 +100,56 @@ describe("rapportmaler", () => {
     ]);
   });
 
+  it("byggMalInnhold delegerer til innhentingsbrevet uavhengig av straffesak", () => {
+    const straffesak = byggMalInnhold({ malId: "innhentingsbrev", erStraffesak: true });
+    const ikkeStraffesak = byggMalInnhold({ malId: "innhentingsbrev", erStraffesak: false });
+
+    expect(JSON.stringify(straffesak)).toBe(JSON.stringify(innhentingsbrevmal()));
+    expect(JSON.stringify(ikkeStraffesak)).toBe(JSON.stringify(innhentingsbrevmal()));
+  });
+
   it("byggMalInnhold delegerer til riktig mal basert på malId", () => {
     const arbeid = byggMalInnhold({ malId: "arbeid", erStraffesak: false });
     const utland = byggMalInnhold({ malId: "utland", erStraffesak: false });
 
     expect(JSON.stringify(arbeid)).toBe(JSON.stringify(arbeidRapportmal({ erStraffesak: false })));
     expect(JSON.stringify(utland)).toBe(JSON.stringify(utlandRapportmal({ erStraffesak: false })));
+  });
+});
+
+describe("innhentingsbrev", () => {
+  const innhold = innhentingsbrevmal();
+
+  it("bygger gyldig dokumentinnhold", () => {
+    expect(innhold.length).toBeGreaterThan(0);
+    for (const node of innhold) {
+      expect(node).toHaveProperty("type");
+      expect(node).toHaveProperty("children");
+    }
+  });
+
+  it("har tittel «Innhentingsbrev» etter logo-headeren", () => {
+    expect(innhold[0]).toHaveProperty("type", "table");
+    expect(innhold[1]).toEqual({ type: "h1", children: [{ text: "Innhentingsbrev" }] });
+  });
+
+  it("setter inn relevante standardvariabler", () => {
+    expect(variabelIder(innhold)).toEqual(
+      expect.arrayContaining([
+        "navn",
+        "fødselsnummer",
+        "saksnummer",
+        "dagens-dato",
+        "saksbehandler",
+        "avdeling",
+      ]),
+    );
+  });
+
+  it("tar med lovtekstene som vedlegg", () => {
+    const tekst = JSON.stringify(innhold);
+    expect(tekst).toContain("Vedlegg: Lovtekster");
+    expect(tekst).toContain("Folketrygdloven § 21-4 første, tredje og sjette ledd");
+    expect(tekst).toContain("Forvaltningsloven § 14");
   });
 });

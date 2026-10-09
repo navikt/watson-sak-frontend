@@ -219,6 +219,22 @@ describe("SakFilområde", () => {
     expect(
       screen.getByRole("button", { name: "Kontrollrapport – Utland Straffesak" }),
     ).toBeDefined();
+    expect(screen.getAllByRole("button", { name: /^Innhentingsbrev/ })).toHaveLength(1);
+    expect(screen.getByText("Hente inn opplysninger fra eksterne parter")).toBeDefined();
+  });
+
+  it("sender innhentingsbrev som malId uten straffesak-variant", async () => {
+    const mottatt: FormData[] = [];
+    renderOmrådeMedAction({ dokumenter: [], filer: [], sakId: "ABC-123" }, (formData) => {
+      mottatt.push(formData);
+      return null;
+    });
+
+    fireEvent.click(screen.getByText("Opprett dokument"));
+    fireEvent.click(await screen.findByRole("button", { name: "Innhentingsbrev" }));
+
+    await waitFor(() => expect(mottatt).toHaveLength(1));
+    expect(mottatt[0].get("malId")).toBe("innhentingsbrev");
   });
 
   it("sender ingen malId når 'Blankt dokument' velges", async () => {

@@ -84,6 +84,11 @@ export function metadataTabell(): Node {
 }
 
 export function kontrollrapportHeader(): Node[] {
+  return dokumentHeader("Kontrollrapport");
+}
+
+/** Nav-logo, «Unntatt offentlighet»-merking og dokumentets hovedtittel. */
+export function dokumentHeader(tittel: string): Node[] {
   return [
     tabell(
       rad(
@@ -105,7 +110,7 @@ export function kontrollrapportHeader(): Node[] {
         }),
       ),
     ),
-    h1("Kontrollrapport"),
+    h1(tittel),
   ];
 }
 
