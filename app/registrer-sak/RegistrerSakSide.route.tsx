@@ -1,20 +1,14 @@
 import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod/v4";
 import {
-  LocalAlert,
-  BodyShort,
   Button,
   ErrorSummary,
-  FileUpload,
   Heading,
   HStack,
-  Loader,
-  Select,
+  LocalAlert,
   Textarea,
-  UNSAFE_Combobox,
   VStack,
 } from "@navikt/ds-react";
-import { MagnifyingGlassIcon, PlusIcon } from "@navikt/aksel-icons";
 import { useMemo, useRef, useState, useEffect } from "react";
 import {
   Form,
@@ -26,7 +20,6 @@ import {
   useSubmit,
 } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
-import { FødselsnummerSøkefelt } from "~/formaterte-inputfelt/FormaterteInputfelt";
 import { useInnloggetBrukerValgfri } from "~/auth/innlogget-bruker";
 import { FeatureFlagg } from "~/feature-toggling/featureflagg";
 import { useEnkeltFeatureFlagg } from "~/feature-toggling/useFeatureFlagg";
@@ -35,49 +28,24 @@ import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { useMiljø } from "~/miljø/useMiljø";
 import { RouteConfig } from "~/routeConfig";
 import { opprettSakSchema } from "~/registrer-sak/validering";
-import { merkingEtikett } from "~/saker/kategorier";
-import { INGEN_TILGANG_TIL_Å_OPPRETTE_SAK_MELDING } from "./feilmeldinger";
+import { GrunnleggendeSaksfelter } from "./GrunnleggendeSaksfelter";
 import {
   byggOpprettSakSammendrag,
   OpprettSakBekreftelseModal,
   type OpprettSakSammendrag,
 } from "./OpprettSakBekreftelseModal";
 import type { PersonOppslagResultat } from "./person-oppslag.mock.server";
+import { PersonOppslag } from "./PersonOppslag";
 import { action, loader } from "./RegistrerSakSide.server";
 import type { YtelseRadVerdier } from "./skjema-helpers";
+import { Saksvedlegg } from "./Saksvedlegg";
 import { lagTilfeldigSak, skalViseTilfeldigSak } from "./tilfeldig-sak";
-import { YtelseRadFelt } from "./YtelseRadFelt";
+import { YtelserSkjema, type YtelseRadState } from "./YtelserSkjema";
 
 export { action, loader };
 
-type YtelseRadState = {
-  id: string;
-  defaults: YtelseRadVerdier;
-};
-
 function nyYtelseRad(defaults: YtelseRadVerdier = {}): YtelseRadState {
   return { id: crypto.randomUUID(), defaults };
-}
-
-function PersonkortIkon() {
-  return (
-    <svg
-      aria-hidden
-      className="shrink-0"
-      fill="none"
-      focusable="false"
-      height="24"
-      viewBox="0 0 24 24"
-      width="24"
-    >
-      <circle cx="12" cy="12" className="fill-ax-bg-info-strong" r="12" />
-      <path
-        d="M4.06152 3.30859L4.96387 3.31543C6.21626 3.38517 7.57007 4.3105 7.57031 5.58008C7.56956 5.63708 7.56934 5.81577 7.56934 5.84277V9.89258C7.56909 10.219 7.27804 10.4824 6.91895 10.4824C6.55964 10.4822 6.2688 10.2189 6.26855 9.89258V6.53516C6.26835 6.38308 6.14468 6.25977 5.99219 6.25977C5.84643 6.25983 5.72992 6.37347 5.71973 6.5166C5.71785 6.52373 5.71191 6.52863 5.71191 6.53613V17.2109C5.71191 17.668 5.34247 18.0381 4.88574 18.0381C4.42899 18.0381 4.05762 17.6677 4.05762 17.2109V10.4434C4.05759 10.2935 3.93605 10.1715 3.78516 10.1709C3.63367 10.1709 3.51175 10.2934 3.51172 10.4434V17.2109C3.51157 17.6679 3.14063 18.0381 2.68359 18.0381C2.22698 18.038 1.85757 17.6675 1.85742 17.2109V6.53516C1.85722 6.52796 1.85118 6.52311 1.84961 6.5166C1.83949 6.37338 1.72299 6.25883 1.57715 6.25879C1.4249 6.25879 1.30079 6.38253 1.30078 6.53516V9.8916C1.30078 10.2181 1.00987 10.4823 0.650391 10.4824C0.290766 10.4824 0 10.2182 0 9.8916V5.58008C0.000238766 4.3105 1.35368 3.38555 2.60645 3.31543L3.50879 3.30859V3.30566L3.78516 3.30762L4.06152 3.30566V3.30859ZM3.78418 0C4.58617 0 5.23806 0.649835 5.23828 1.45215C5.23828 2.25465 4.58593 2.90527 3.78418 2.90527C2.98212 2.9052 2.33203 2.25423 2.33203 1.45215C2.33225 0.650255 2.98225 7.3021e-05 3.78418 0Z"
-        className="fill-ax-text-info-contrast"
-        transform="translate(8.215 2.981)"
-      />
-    </svg>
-  );
 }
 
 export default function OpprettSakSide() {
@@ -295,479 +263,143 @@ export default function OpprettSakSide() {
           Opprett sak
         </Heading>
 
-        {/* Personoppslag */}
-        <personFetcher.Form
-          method="post"
-          action={RouteConfig.API.PERSON_OPPSLAG}
-          aria-label="Søk etter person"
-          className="mb-6"
-          onSubmit={() => sporHendelse("person oppslag")}
+        <PersonOppslag
+          personFetcher={personFetcher}
+          søkeFnr={søkeFnr}
+          setSøkeFnr={setSøkeFnr}
+          lasterPerson={lasterPerson}
+          harSøkt={harSøkt}
+          oppslagFeil={oppslagFeil}
+          person={person}
+          søktMedHistoriskIdent={søktMedHistoriskIdent}
+          legacyPid={legacyPid ?? undefined}
+          skjemaSperret={skjemaSperret}
+          sisteSak={sisteSak}
+          formaterDato={formaterDato}
+          onPersonOppslag={() => sporHendelse("person oppslag")}
         >
-          <FødselsnummerSøkefelt
-            label="Fødsels- eller d-nummer"
-            hideLabel={false}
-            name="fnr"
-            value={søkeFnr}
-            onChange={setSøkeFnr}
-            onClear={() => setSøkeFnr("")}
-            htmlSize={20}
-            autoComplete="off"
-            inputMode="numeric"
-            disabled={lasterPerson}
-          >
-            <Button
-              type="submit"
-              variant="primary"
-              size="medium"
-              disabled={lasterPerson}
-              aria-label={lasterPerson ? "Søker..." : "Søk"}
-              icon={
-                lasterPerson ? (
-                  <Loader size="xsmall" title="Søker..." />
-                ) : (
-                  <MagnifyingGlassIcon aria-hidden />
-                )
-              }
-              className="aksel-search__button-search"
-            />
-          </FødselsnummerSøkefelt>
-        </personFetcher.Form>
-
-        {/* Feil fra personoppslag */}
-        {harSøkt && oppslagFeil && (
-          <LocalAlert status="announcement" className="max-w-xl">
-            <LocalAlert.Header>
-              <LocalAlert.Title as="h2">Feil ved personoppslag</LocalAlert.Title>
-            </LocalAlert.Header>
-            <LocalAlert.Content>{oppslagFeil}</LocalAlert.Content>
-          </LocalAlert>
-        )}
-
-        {/* Person ikke funnet */}
-        {harSøkt && !person && !oppslagFeil && (
-          <LocalAlert status="announcement" className="max-w-xl">
-            <LocalAlert.Header>
-              <LocalAlert.Title as="h2">Personen ble ikke funnet</LocalAlert.Title>
-            </LocalAlert.Header>
-            <LocalAlert.Content>Sjekk at fødselsnummeret er riktig.</LocalAlert.Content>
-          </LocalAlert>
-        )}
-
-        {/* Person funnet */}
-        {person && (
-          <VStack gap="space-32">
-            <VStack
-              aria-label="Personinformasjon"
-              className="max-w-[472px] rounded-lg border-l-4 border-ax-border-info bg-ax-bg-info-soft px-6 py-3.5"
-              gap="space-12"
+          {person && !skjemaSperret && (
+            <Form
+              method="post"
+              aria-label="Grunnleggende saksinformasjon"
+              id={form.id}
+              onSubmit={(event) => {
+                form.onSubmit(event);
+                if (!event.defaultPrevented) {
+                  event.preventDefault();
+                  const formData = new FormData(event.currentTarget);
+                  filer.forEach((fil) => formData.append("filer", fil));
+                  setPendingFormData(formData);
+                  setSammendrag(
+                    byggOpprettSakSammendrag(
+                      formData,
+                      kodeverk,
+                      ytelseLabelMap,
+                      misbrukstypeBeskrivelseMap,
+                    ),
+                  );
+                  setModalSteg("bekreft");
+                  sporHendelse("opprett sak bekreftelse vist");
+                }
+              }}
+              noValidate
             >
-              <HStack align="center" gap="space-16">
-                <PersonkortIkon />
-                <VStack gap="space-0">
-                  <span className="text-[11px] font-semibold tracking-[0.6px] text-ax-text-info-subtle">
-                    SAKEN OPPRETTES PÅ
-                  </span>
-                  <BodyShort size="medium" className="font-bold">
-                    {person.navn}
-                  </BodyShort>
-                  <BodyShort size="small" className="text-ax-text-neutral-subtle">
-                    Personnummer: {person.personnummer} · {person.alder} år
-                    {legacyPid && ` · PID: ${legacyPid}`}
-                  </BodyShort>
-                </VStack>
-              </HStack>
-              {søktMedHistoriskIdent && (
-                <LocalAlert status="warning">
-                  <LocalAlert.Content>
-                    Fødsels- eller d-nummeret du søkte med er historisk. Saken opprettes på
-                    gjeldende identifikator: <strong>{person.personnummer}</strong>.
-                  </LocalAlert.Content>
-                </LocalAlert>
+              <input
+                type="hidden"
+                name="personIdent"
+                value={person.personnummer.replace(/\s/g, "")}
+              />
+              {legacyPid && legacyKilde && (
+                <>
+                  <input type="hidden" name="legacyPid" value={legacyPid} />
+                  <input type="hidden" name="legacyKilde" value={legacyKilde} />
+                </>
               )}
-              {person.adresseskjermet && (
-                <LocalAlert status="warning">
-                  <LocalAlert.Content>Denne personen er skjermet.</LocalAlert.Content>
-                </LocalAlert>
-              )}
-            </VStack>
-
-            {/* Skjema sperret: saksbehandler mangler Utvidet tilgang til skjermet person.
-                Skjemaet rendres bevisst ikke i det hele tatt — se RAILS-9. */}
-            {skjemaSperret && (
-              <LocalAlert status="warning" className="max-w-2xl">
-                <LocalAlert.Header>
-                  <LocalAlert.Title as="h2">
-                    Du kan ikke opprette sak på denne personen
-                  </LocalAlert.Title>
-                </LocalAlert.Header>
-                <LocalAlert.Content>
-                  {INGEN_TILGANG_TIL_Å_OPPRETTE_SAK_MELDING}. Ta kontakt dersom du mener dette er
-                  feil.
-                </LocalAlert.Content>
-              </LocalAlert>
-            )}
-
-            {/* Eksisterende sak-advarsel (info, ikke-blokkerende) */}
-            {sisteSak && (
-              <LocalAlert status="announcement" className="max-w-2xl">
-                <LocalAlert.Header>
-                  <LocalAlert.Title as="h2">
-                    Det er allerede registrert en sak på personen
-                  </LocalAlert.Title>
-                </LocalAlert.Header>
-                <LocalAlert.Content>
-                  <VStack gap="space-12">
-                    <BodyShort>
-                      {formaterDato(sisteSak.opprettetDato)} ble det opprettet en sak på{" "}
-                      {sisteSak.personNavn}. Kanskje gjelder dette samme sak?
-                    </BodyShort>
-                    {sisteSak.sakId ? (
-                      <HStack gap="space-8">
-                        <Button
-                          as={Link}
-                          to={RouteConfig.SAKER_DETALJ.replace(":sakId", sisteSak.sakId)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          variant="secondary"
-                          size="small"
-                        >
-                          Se sak <span className="sr-only">(åpnes i ny fane)</span>
-                        </Button>
-                      </HStack>
-                    ) : null}
-                  </VStack>
-                </LocalAlert.Content>
-              </LocalAlert>
-            )}
-
-            {/* Skjema — rendres kun når saksbehandler har rett til å opprette sak.
-                For skjermet person uten Utvidet tilgang sperres skjemaet proaktivt
-                ved at det ikke rendres i det hele tatt, se RAILS-9. */}
-            {!skjemaSperret && (
-              <Form
-                method="post"
-                aria-label="Grunnleggende saksinformasjon"
-                id={form.id}
-                onSubmit={(event) => {
-                  form.onSubmit(event);
-                  if (!event.defaultPrevented) {
-                    event.preventDefault();
-                    const formData = new FormData(event.currentTarget);
-                    filer.forEach((fil) => formData.append("filer", fil));
-                    setPendingFormData(formData);
-                    setSammendrag(
-                      byggOpprettSakSammendrag(
-                        formData,
-                        kodeverk,
-                        ytelseLabelMap,
-                        misbrukstypeBeskrivelseMap,
-                      ),
-                    );
-                    setModalSteg("bekreft");
-                    sporHendelse("opprett sak bekreftelse vist");
-                  }
-                }}
-                noValidate
-              >
-                <input
-                  type="hidden"
-                  name="personIdent"
-                  value={person.personnummer.replace(/\s/g, "")}
-                />
-                {legacyPid && legacyKilde && (
-                  <>
-                    <input type="hidden" name="legacyPid" value={legacyPid} />
-                    <input type="hidden" name="legacyKilde" value={legacyKilde} />
-                  </>
+              <VStack gap="space-32">
+                {/* ErrorSummary */}
+                {feilElementer.length > 0 && (
+                  <ErrorSummary
+                    heading="Du må rette disse feilene før du kan gå videre"
+                    className="max-w-2xl"
+                  >
+                    {feilElementer.map((f) => (
+                      <ErrorSummary.Item key={f.id} href={`#${f.id}`}>
+                        {f.melding}
+                      </ErrorSummary.Item>
+                    ))}
+                  </ErrorSummary>
                 )}
-                <VStack gap="space-32">
-                  {/* ErrorSummary */}
-                  {feilElementer.length > 0 && (
-                    <ErrorSummary
-                      heading="Du må rette disse feilene før du kan gå videre"
-                      className="max-w-2xl"
-                    >
-                      {feilElementer.map((f) => (
-                        <ErrorSummary.Item key={f.id} href={`#${f.id}`}>
-                          {f.melding}
-                        </ErrorSummary.Item>
-                      ))}
-                    </ErrorSummary>
-                  )}
 
-                  {form.errors && form.errors.length > 0 && (
-                    <LocalAlert status="error" className="max-w-2xl">
-                      <LocalAlert.Content>{form.errors[0]}</LocalAlert.Content>
-                    </LocalAlert>
-                  )}
+                {form.errors && form.errors.length > 0 && (
+                  <LocalAlert status="error" className="max-w-2xl">
+                    <LocalAlert.Content>{form.errors[0]}</LocalAlert.Content>
+                  </LocalAlert>
+                )}
 
-                  <Heading level="2" size="medium">
-                    Grunnleggende saksinformasjon
-                  </Heading>
+                <Heading level="2" size="medium">
+                  Grunnleggende saksinformasjon
+                </Heading>
 
-                  {skalViseTilfeldigSak(miljø, erTilfeldigSakFlaggPåskrudd) && (
-                    <HStack>
-                      <Button type="button" variant="secondary" onClick={fyllUtTilfeldigSak}>
-                        Fyll ut en tilfeldig sak
-                      </Button>
-                    </HStack>
-                  )}
-
-                  {/* Rad 1 (påkrevd): Kategori, Misbruktype, Kilde — tre felt per rad iht Figma */}
-                  <HStack gap="space-24" align="start" wrap>
-                    <Select
-                      key={fields.kategori.key}
-                      name={fields.kategori.name}
-                      id={fields.kategori.id}
-                      label="Kategori"
-                      error={fields.kategori.errors?.[0]}
-                      className="w-52"
-                      defaultValue={fields.kategori.initialValue}
-                      onChange={(e) => {
-                        const nyligeGyldige = kodeverk.misbrukstyper
-                          .filter((m) => m.kategori === e.target.value)
-                          .map((m) => m.kode);
-                        if (nyligeGyldige && nyligeGyldige.length > 0) {
-                          setValgteMisbruktyper((prev) =>
-                            prev.filter((m) => nyligeGyldige.includes(m)),
-                          );
-                        } else {
-                          setValgteMisbruktyper([]);
-                        }
-                      }}
-                    >
-                      <option value="">Velg kategori</option>
-                      {kodeverk.kategorier.map((k) => (
-                        <option key={k.kode} value={k.kode}>
-                          {k.beskrivelse}
-                        </option>
-                      ))}
-                    </Select>
-
-                    <div id={fields.misbruktype.id} className="w-72">
-                      <UNSAFE_Combobox
-                        label="Misbruktype"
-                        options={tilgjengeligeMisbruktyper.map((kode) => ({
-                          value: kode,
-                          label: misbrukstypeBeskrivelseMap.get(kode) ?? kode,
-                        }))}
-                        isMultiSelect
-                        disabled={tilgjengeligeMisbruktyper.length === 0}
-                        selectedOptions={valgteMisbruktyper.map((kode) => ({
-                          value: kode,
-                          label: misbrukstypeBeskrivelseMap.get(kode) ?? kode,
-                        }))}
-                        onToggleSelected={(option, isSelected) => {
-                          setValgteMisbruktyper((prev) => {
-                            if (isSelected) {
-                              return prev.includes(option) ? prev : [...prev, option];
-                            }
-                            return prev.filter((m) => m !== option);
-                          });
-                        }}
-                        error={fields.misbruktype.errors?.[0]}
-                      />
-                      {valgteMisbruktyper.map((m) => (
-                        <input key={m} type="hidden" name="misbruktype" value={m} />
-                      ))}
-                    </div>
-
-                    <Select
-                      key={fields.kilde.key}
-                      name={fields.kilde.name}
-                      id={fields.kilde.id}
-                      label="Kilde"
-                      error={fields.kilde.errors?.[0]}
-                      className="w-52"
-                      defaultValue={fields.kilde.initialValue}
-                    >
-                      <option value="">Velg kilde</option>
-                      {kodeverk.kilder.map((k) => (
-                        <option key={k.kode} value={k.kode}>
-                          {k.beskrivelse}
-                        </option>
-                      ))}
-                    </Select>
-                  </HStack>
-
-                  {/* Rad 2 (Enhet påkrevd, resten valgfritt): Enhet, Merking, Organisasjonsnummer — tre felt per rad iht Figma */}
-                  <HStack gap="space-24" align="start" wrap>
-                    <Select
-                      key={fields.enhet.key}
-                      name={fields.enhet.name}
-                      id={fields.enhet.id}
-                      label="Enhet"
-                      error={fields.enhet.errors?.[0]}
-                      className="w-44"
-                      defaultValue={fields.enhet.initialValue}
-                    >
-                      <option value="">Velg enhet</option>
-                      {kodeverk.enheter.map((e) => (
-                        <option key={e.kode} value={e.kode}>
-                          {e.beskrivelse}
-                        </option>
-                      ))}
-                    </Select>
-
-                    <div id={fields.merking.id} className="w-72">
-                      <UNSAFE_Combobox
-                        label="Merking (valgfritt)"
-                        options={kodeverk.merker.map((merke) => ({
-                          value: merke,
-                          label: merkingEtikett(merke),
-                        }))}
-                        isMultiSelect
-                        allowNewValues
-                        selectedOptions={valgteMerkinger.map((merke) => ({
-                          value: merke,
-                          label: merkingEtikett(merke),
-                        }))}
-                        onToggleSelected={(option, isSelected) => {
-                          setValgteMerkinger((prev) => {
-                            if (isSelected) {
-                              return prev.includes(option) ? prev : [...prev, option];
-                            }
-                            return prev.filter((m) => m !== option);
-                          });
-                        }}
-                        error={fields.merking.errors?.[0]}
-                      />
-                      {valgteMerkinger.map((m) => (
-                        <input key={m} type="hidden" name="merking" value={m} />
-                      ))}
-                    </div>
-
-                    <div>
-                      <UNSAFE_Combobox
-                        id={fields.arbeidsgivere.id}
-                        label="Organisasjonsnummer (valgfritt)"
-                        isMultiSelect
-                        allowNewValues
-                        options={[]}
-                        selectedOptions={valgteArbeidsgivere.map((orgnr) => ({
-                          label: orgnr,
-                          value: orgnr,
-                        }))}
-                        onToggleSelected={(option, isSelected) => {
-                          setValgteArbeidsgivere((prev) => {
-                            if (isSelected && !prev.includes(option)) {
-                              return [...prev, option];
-                            }
-                            if (!isSelected) {
-                              return prev.filter((v) => v !== option);
-                            }
-                            return prev;
-                          });
-                        }}
-                        error={fields.arbeidsgivere.errors?.[0]}
-                      />
-                      {valgteArbeidsgivere.map((orgnr) => (
-                        <input key={orgnr} type="hidden" name="arbeidsgivere" value={orgnr} />
-                      ))}
-                    </div>
-                  </HStack>
-
-                  <hr className="border-ax-border-neutral-subtle max-w-2xl" />
-
-                  {/* Ytelser */}
-                  <VStack gap="space-16">
-                    <VStack gap="space-4">
-                      <Heading level="2" size="medium">
-                        Ytelser med mulig misbruk
-                      </Heading>
-                      <BodyShort textColor="subtle">
-                        Legg til én eller flere ytelser med tilhørende periode og beløp. Alle
-                        feltene er valgfrie.
-                      </BodyShort>
-                    </VStack>
-
-                    <VStack gap="space-16">
-                      {ytelseRader.map((rad, indeks) => (
-                        <YtelseRadFelt
-                          key={rad.id}
-                          indeks={indeks}
-                          ytelser={ytelseAlternativer}
-                          kanFjernes={ytelseRader.length > 1}
-                          onFjern={() => fjernYtelseRad(rad.id)}
-                          defaults={rad.defaults}
-                          feil={form.allErrors}
-                          visEndeligBeløp={false}
-                        />
-                      ))}
-                    </VStack>
-
-                    <HStack>
-                      <Button
-                        type="button"
-                        variant="tertiary"
-                        size="small"
-                        icon={<PlusIcon aria-hidden />}
-                        onClick={leggTilYtelseRad}
-                      >
-                        Legg til ytelse
-                      </Button>
-                    </HStack>
-                  </VStack>
-
-                  <hr className="border-ax-border-neutral-subtle max-w-2xl" />
-
-                  {/* Filopplasting */}
-                  <VStack gap="space-12" className="max-w-2xl">
-                    <FileUpload.Dropzone
-                      label="Last opp dokumenter (valgfritt)"
-                      description="Legg ved filer som dokumenterer saken. Maks 50 MB per fil."
-                      accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx"
-                      onSelect={(_, partitioned) =>
-                        setFiler((eksisterende) => [...eksisterende, ...partitioned.accepted])
-                      }
-                    />
-                    {filer.length > 0 && (
-                      <VStack gap="space-4" as="ul" aria-label="Opplastede filer">
-                        {filer.map((fil, indeks) => (
-                          <FileUpload.Item
-                            key={`${fil.name}-${indeks}`}
-                            as="li"
-                            file={fil}
-                            button={{
-                              action: "delete",
-                              onClick: () =>
-                                setFiler((eksisterende) =>
-                                  eksisterende.filter((_, i) => i !== indeks),
-                                ),
-                            }}
-                          />
-                        ))}
-                      </VStack>
-                    )}
-                  </VStack>
-
-                  {legacyPid && legacyKilde && (
-                    <Textarea
-                      key={fields.notat.key}
-                      name={fields.notat.name}
-                      id={fields.notat.id}
-                      label="Notat"
-                      description="Åpent notatfelt – lagres som eget notat på saken ved opprettelse"
-                      className="max-w-2xl"
-                      defaultValue={fields.notat.initialValue}
-                      error={fields.notat.errors?.[0]}
-                    />
-                  )}
-
-                  {/* Submit-rad */}
-                  <HStack gap="space-12" justify="end">
-                    <Button as={Link} to={RouteConfig.INDEX} variant="tertiary">
-                      Avbryt
-                    </Button>
-                    <Button type="submit" variant="primary">
-                      Opprett sak
+                {skalViseTilfeldigSak(miljø, erTilfeldigSakFlaggPåskrudd) && (
+                  <HStack>
+                    <Button type="button" variant="secondary" onClick={fyllUtTilfeldigSak}>
+                      Fyll ut en tilfeldig sak
                     </Button>
                   </HStack>
-                </VStack>
-              </Form>
-            )}
-          </VStack>
-        )}
+                )}
+
+                <GrunnleggendeSaksfelter
+                  fields={fields}
+                  kodeverk={kodeverk}
+                  tilgjengeligeMisbruktyper={tilgjengeligeMisbruktyper}
+                  misbrukstypeBeskrivelseMap={misbrukstypeBeskrivelseMap}
+                  valgteMisbruktyper={valgteMisbruktyper}
+                  setValgteMisbruktyper={setValgteMisbruktyper}
+                  valgteMerkinger={valgteMerkinger}
+                  setValgteMerkinger={setValgteMerkinger}
+                  valgteArbeidsgivere={valgteArbeidsgivere}
+                  setValgteArbeidsgivere={setValgteArbeidsgivere}
+                />
+                <hr className="border-ax-border-neutral-subtle max-w-2xl" />
+
+                <YtelserSkjema
+                  ytelseRader={ytelseRader}
+                  ytelseAlternativer={ytelseAlternativer}
+                  feil={form.allErrors}
+                  onFjern={fjernYtelseRad}
+                  onLeggTil={leggTilYtelseRad}
+                />
+
+                <hr className="border-ax-border-neutral-subtle max-w-2xl" />
+
+                <Saksvedlegg filer={filer} setFiler={setFiler} />
+
+                {legacyPid && legacyKilde && (
+                  <Textarea
+                    key={fields.notat.key}
+                    name={fields.notat.name}
+                    id={fields.notat.id}
+                    label="Notat"
+                    description="Åpent notatfelt – lagres som eget notat på saken ved opprettelse"
+                    className="max-w-2xl"
+                    defaultValue={fields.notat.initialValue}
+                    error={fields.notat.errors?.[0]}
+                  />
+                )}
+
+                {/* Submit-rad */}
+                <HStack gap="space-12" justify="end">
+                  <Button as={Link} to={RouteConfig.INDEX} variant="tertiary">
+                    Avbryt
+                  </Button>
+                  <Button type="submit" variant="primary">
+                    Opprett sak
+                  </Button>
+                </HStack>
+              </VStack>
+            </Form>
+          )}
+        </PersonOppslag>
       </VStack>
 
       {person && (
