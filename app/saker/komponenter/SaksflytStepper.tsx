@@ -61,7 +61,8 @@ const linjeFarge: Record<Stegtilstand, string> = {
   fullført: "bg-ax-bg-success-strong h-0.5",
   aktiv: "bg-ax-text-accent h-0.5",
   kommende: "bg-ax-border-neutral-subtle h-px",
-  hoppetOver: "bg-ax-border-neutral-subtle h-px",
+  // Saken har passert steget, så linjen frem til det er en del av den gjennomførte flyten.
+  hoppetOver: "bg-ax-bg-success-strong h-0.5",
 };
 
 function finnPosisjonstilstand(

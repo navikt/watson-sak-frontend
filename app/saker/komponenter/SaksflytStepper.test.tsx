@@ -32,7 +32,8 @@ describe("SaksflytStepper", () => {
   it("viser steg uten resultat som hoppet over når saken går rett fra opprettet", () => {
     render(<SaksflytStepper steg="STRAFFERETTSLIG_VURDERING" resultat={null} />);
 
-    expect(hentSteg().map((steg) => steg.textContent)).toEqual([
+    const steg = hentSteg();
+    expect(steg.map((element) => element.textContent)).toEqual([
       "Opprettet, fullført",
       "Utredning, hoppet over",
       "Forvaltning, hoppet over",
@@ -40,6 +41,11 @@ describe("SaksflytStepper", () => {
       "Politiet, ikke startet",
       "Avsluttet, ikke startet",
     ]);
+    for (const element of steg.slice(1, 3)) {
+      expect(element.querySelector('[aria-hidden="true"]')?.className).toContain(
+        "bg-ax-bg-success-strong",
+      );
+    }
   });
 
   it("markerer gjeldende steg med aria-current", () => {
