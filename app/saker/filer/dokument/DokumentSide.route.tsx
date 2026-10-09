@@ -86,6 +86,7 @@ function DokumentRedigering({
   kommentarinnlastingFeilet,
   sakReferanse,
   kanRedigere,
+  kanEndreMapper,
   variabelVerdier,
   erDemo,
   startSidepanel,
@@ -99,6 +100,7 @@ function DokumentRedigering({
   kommentarinnlastingFeilet: LoaderData["kommentarinnlastingFeilet"];
   sakReferanse: string;
   kanRedigere: boolean;
+  kanEndreMapper?: boolean;
   variabelVerdier: LoaderData["variabelVerdier"];
   erDemo: boolean;
   startSidepanel?: SidepanelValg;
@@ -335,6 +337,7 @@ function DokumentRedigering({
               noder={dokumenter}
               mapper={mapper}
               sakId={sakReferanse}
+              kanEndreMapper={kanEndreMapper ?? false}
               redigerbar={kanRedigere}
               fremhevetId={dokument.id}
               kompakt
@@ -390,6 +393,7 @@ export default function DokumentSide() {
     kommentarinnlastingFeilet,
     sakReferanse,
     kanRedigere,
+    kanEndreMapper,
     variabelVerdier,
     miljø,
   } = useLoaderData<typeof loader>();
@@ -428,6 +432,7 @@ export default function DokumentSide() {
       kommentarinnlastingFeilet={kommentarinnlastingFeilet}
       sakReferanse={sakReferanse}
       kanRedigere={kanRedigere}
+      kanEndreMapper={kanEndreMapper}
       variabelVerdier={variablerTilVisning}
       erDemo={miljø === "demo"}
       startSidepanel={startSidepanel}

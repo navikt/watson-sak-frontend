@@ -22,6 +22,7 @@ vi.mock("~/auth/innlogget-bruker.server", () => ({
   hentInnloggetBruker: vi.fn().mockResolvedValue({
     navIdent: "Z999999",
     name: "Test Saksbehandler",
+    erLeder: false,
   }),
 }));
 
@@ -121,6 +122,7 @@ describe("DokumentSide loader — avsluttet sak", () => {
     expect(resultat.dokument.id).toBe("d1");
     expect(resultat.dokumentHistorikk).toEqual([]);
     expect(resultat.kanRedigere).toBe(false);
+    expect(resultat.kanEndreMapper).toBe(false);
   });
 
   it("avviser saksbehandler uten direkte tilgang på aktiv sak", async () => {
@@ -128,6 +130,36 @@ describe("DokumentSide loader — avsluttet sak", () => {
     mockHentDokumentHistorikk.mockResolvedValue({ items: [] });
 
     await expect(hent()).rejects.toMatchObject({ init: { status: 403 } });
+  });
+});
+
+describe("DokumentSide loader — kanEndreMapper", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockHentDokument.mockResolvedValue({
+      id: "d1",
+      tittel: "Rapport",
+      innhold: [{ type: "p", children: [{ text: "Innhold" }] }],
+      arkivert: null,
+    });
+    mockHentDokumentHistorikk.mockResolvedValue({ items: [] });
+    mockHentKommentarliste.mockResolvedValue(lagListe());
+  });
+
+  it("er sann for saksbehandler med direkte tilgang på aktiv sak", async () => {
+    mockHentKontrollsak.mockResolvedValue({ ...sak, steg: "UTREDES" });
+
+    const resultat = await hent();
+
+    expect(resultat.kanEndreMapper).toBe(true);
+  });
+
+  it("er usann når saken er avsluttet", async () => {
+    mockHentKontrollsak.mockResolvedValue({ ...sak, steg: "AVSLUTTET" });
+
+    const resultat = await hent();
+
+    expect(resultat.kanEndreMapper).toBe(false);
   });
 });
 

@@ -4,7 +4,7 @@ import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { env, skalBrukeMockdata } from "~/config/env.server";
 import * as backendApi from "~/saker/api.server";
 import type { DokumentInnhold } from "~/saker/filer/typer";
-import { kanLeseSaksinnhold } from "~/saker/sakstilgang";
+import { harDirekteSakstilgang, kanLeseSaksinnhold } from "~/saker/sakstilgang";
 import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
 import {
   hentDokument,
@@ -113,6 +113,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       sakReferanse,
       kanRedigere:
         kanSe && hentStegbaserteSaksregler(sak.steg).kanRedigereDokumenter && !dokument.arkivert,
+      // Styrer bare visningen. `mapper.api.ts` sjekker samme regel på serveren.
+      kanEndreMapper:
+        harDirekteSakstilgang(sak, innlogget) &&
+        hentStegbaserteSaksregler(sak.steg).kanLasteOppFiler,
       variabelVerdier: byggVariabelVerdier(sak, innlogget),
       miljø: env.ENVIRONMENT,
     };
@@ -146,6 +150,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     kommentarinnlastingFeilet: false,
     sakReferanse: params.sakId,
     kanRedigere: tilgang.kanRedigereDokumenter && !dokument.arkivert,
+    kanEndreMapper: tilgang.kanLasteOppFiler,
     variabelVerdier: byggVariabelVerdier(tilgang.sak, innlogget),
     miljø: env.ENVIRONMENT,
   };

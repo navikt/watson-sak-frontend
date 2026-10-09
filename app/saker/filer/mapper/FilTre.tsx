@@ -17,7 +17,7 @@ import {
   Loader,
   Tooltip,
 } from "@navikt/ds-react";
-import { useEffect, useId, useMemo, useRef, useState, type DragEvent } from "react";
+import { useCallback, useId, useMemo, useRef, useState } from "react";
 import { Link as RouterLink } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
@@ -35,8 +35,9 @@ import type { DokumentNode, FilResponse } from "../typer";
 import { byggFilTre, flatMappeliste, type FilTreNode, type MappeTreNode } from "./bygg-filtre";
 import { Elementmeny, kontekstmeny } from "./Elementmeny";
 import { FlyttTilMappeModal, GiNyttNavnMappeModal, type FlyttbartElement } from "./MappeModaler";
-import { forelder, kanFlytteMappe, mappenavn, slåSammen } from "./mappesti";
+import { forelder, mappenavn } from "./mappesti";
 import { useMappehandling } from "./useMappehandling";
+import { useDraOgSlipp } from "./useDraOgSlipp";
 
 /** Hvor noe slippes: en mappesti, eller `null` for rotnivå. */
 type Slippmål = string | null;
@@ -46,8 +47,6 @@ type ÅpenModal =
   | { type: "flytt"; element: FlyttbartElement }
   | { type: "gi-nytt-navn-fil"; fil: FilResponse }
   | null;
-
-const AUTOÅPNE_ETTER_MS = 700;
 
 function antallFilerTekst(antall: number) {
   return antall === 1 ? "1 fil" : `${antall} filer`;
@@ -91,12 +90,26 @@ export function FilTre({
   const tre = useMemo(() => byggFilTre(mapper, dokumenter, filer), [mapper, dokumenter, filer]);
   const alleMapper = useMemo(() => flatMappeliste(tre).map((mappe) => mappe.sti), [tre]);
   const [åpneMapper, settÅpneMapper] = useState<Set<string>>(() => new Set());
-  const [dras, settDras] = useState<FlyttbartElement | null>(null);
-  const [slippmål, settSlippmål] = useState<Slippmål | undefined>(undefined);
   const [modal, settModal] = useState<ÅpenModal>(null);
   const treRef = useRef<HTMLDivElement>(null);
   const [statusmelding, settStatusmelding] = useState("");
+  const settÅpen = useCallback((sti: string, åpen: boolean) => {
+    settÅpneMapper((forrige) => {
+      if (forrige.has(sti) === åpen) return forrige;
+      const neste = new Set(forrige);
+      if (åpen) neste.add(sti);
+      else neste.delete(sti);
+      return neste;
+    });
+  }, []);
   const mappehandling = useMappehandling(sakId);
+  const { dras, slippmål, draProps, slippProps, kanSlippe, fjernSlippmål } = useDraOgSlipp({
+    sakId,
+    alleMapper,
+    kanEndreMapper,
+    mappehandling,
+    settÅpen,
+  });
   const treId = useId();
   const sletting = useDokumentSletting({ sakId, kilde: "dokumentliste" });
   const filsletting = useFilSletting(sakId);
@@ -123,106 +136,7 @@ export function FilTre({
     (forelderKnapp ?? tre.querySelector<HTMLElement>("[data-tre-rot]") ?? tre).focus();
   }
 
-  function settÅpen(sti: string, åpen: boolean) {
-    settÅpneMapper((forrige) => {
-      if (forrige.has(sti) === åpen) return forrige;
-      const neste = new Set(forrige);
-      if (åpen) neste.add(sti);
-      else neste.delete(sti);
-      return neste;
-    });
-  }
-
-  // Åpner en lukket mappe når brukeren holder et element over den en liten stund.
-  useEffect(() => {
-    if (typeof slippmål !== "string" || åpneMapper.has(slippmål)) return;
-    const tidtaker = setTimeout(() => settÅpen(slippmål, true), AUTOÅPNE_ETTER_MS);
-    return () => clearTimeout(tidtaker);
-  }, [slippmål, åpneMapper]);
-
-  function kanSlippe(element: FlyttbartElement | null, mål: Slippmål): boolean {
-    if (!element) return false;
-    if (element.type === "mappe") {
-      return (
-        kanFlytteMappe(element.sti, mål) &&
-        !alleMapper.includes(slåSammen(mål, mappenavn(element.sti)))
-      );
-    }
-    return element.mappe !== mål;
-  }
-
-  function flytt(element: FlyttbartElement, mål: Slippmål) {
-    if (element.type === "mappe") {
-      sporHendelse("mappe flyttet", { sakId, metode: "dra og slipp" });
-      mappehandling.utfør({
-        handling: "endre",
-        fraSti: element.sti,
-        tilSti: slåSammen(mål, mappenavn(element.sti)),
-      });
-    } else {
-      sporHendelse(element.type === "dokument" ? "dokument flyttet" : "vedlegg flyttet", {
-        sakId,
-        metode: "dra og slipp",
-      });
-      mappehandling.utfør({
-        handling: element.type === "dokument" ? "flytt-dokument" : "flytt-fil",
-        id: element.id,
-        mappe: mål,
-      });
-    }
-    if (mål) settÅpen(mål, true);
-  }
-
-  function avsluttDra() {
-    settDras(null);
-    settSlippmål(undefined);
-  }
-
-  /** Props som gjør et element i treet flyttbart, og til et slippmål for mappen det ligger i. */
-  function draProps(element: FlyttbartElement, mål: Slippmål) {
-    if (!kanEndreMapper) return {};
-    return {
-      // Én mappehandling om gangen, så flyttinger ikke kan fullføres i feil rekkefølge.
-      draggable: !mappehandling.pågår,
-      onDragStart: (event: DragEvent<HTMLElement>) => {
-        event.stopPropagation();
-        event.dataTransfer.effectAllowed = "move";
-        event.dataTransfer.setData(
-          "text/plain",
-          element.type === "mappe" ? mappenavn(element.sti) : element.navn,
-        );
-        settDras(element);
-      },
-      onDragEnd: avsluttDra,
-      ...slippProps(mål),
-    };
-  }
-
-  function slippProps(mål: Slippmål) {
-    if (!kanEndreMapper) return {};
-    return {
-      onDragOver: (event: DragEvent<HTMLElement>) => {
-        if (!dras) return;
-        event.stopPropagation();
-        if (!kanSlippe(dras, mål)) {
-          event.dataTransfer.dropEffect = "none";
-          settSlippmål(undefined);
-          return;
-        }
-        event.preventDefault();
-        event.dataTransfer.dropEffect = "move";
-        settSlippmål(mål);
-      },
-      onDrop: (event: DragEvent<HTMLElement>) => {
-        event.preventDefault();
-        event.stopPropagation();
-        if (dras && kanSlippe(dras, mål)) flytt(dras, mål);
-        avsluttDra();
-      },
-    };
-  }
-
-  function renderNoder(noder: FilTreNode[], mappe: Slippmål) {
+  function renderNoder(noder: FilTreNode[], mappe: string | null) {
     return noder.map((node) => {
       if (node.type === "mappe") {
         return renderMappe(node);
@@ -492,7 +406,7 @@ export function FilTre({
           {...slippProps(null)}
           onDragLeave={(event) => {
             if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-              settSlippmål(undefined);
+              fjernSlippmål();
             }
           }}
         >
