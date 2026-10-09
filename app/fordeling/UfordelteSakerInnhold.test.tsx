@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { MemoryRouter } from "react-router";
+import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import { UfordelteSakerInnhold } from "./UfordelteSakerInnhold";
@@ -99,5 +99,61 @@ describe("UfordelteSakerInnhold", () => {
     expect(screen.getByRole("columnheader", { name: "Oppdatert" })).toBeDefined();
     expect(screen.getByRole("link", { name: "#301" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Tildel" })).toBeDefined();
+  });
+
+  describe("sidedeling", () => {
+    const mangeSaker = Array.from({ length: 25 }, (_, indeks) => lagSak({ id: 1 + indeks }));
+
+    function renderMedSider(søkestreng = "") {
+      const router = createMemoryRouter(
+        [
+          {
+            path: "/",
+            element: (
+              <UfordelteSakerInnhold
+                saker={mangeSaker}
+                saksbehandlere={["Kari Nordmann"]}
+                saksbehandlerDetaljer={mockSaksbehandlerDetaljer}
+                submitPath={RouteConfig.FORDELING}
+              />
+            ),
+          },
+        ],
+        { initialEntries: [`/${søkestreng}`] },
+      );
+      render(<RouterProvider router={router} />);
+      return router;
+    }
+
+    function synligeSakslenker() {
+      return screen.getAllByRole("link", { name: /^#\d+$/ });
+    }
+
+    it("viser 20 saker på første side", () => {
+      renderMedSider();
+
+      const lenker = synligeSakslenker();
+      expect(lenker).toHaveLength(20);
+      expect(lenker[0].textContent).toBe("#1");
+    });
+
+    it("bytter side og oppdaterer URL-en", () => {
+      const router = renderMedSider();
+
+      fireEvent.click(screen.getByRole("button", { name: "2" }));
+
+      expect(router.state.location.search).toContain("side=2");
+      const lenker = synligeSakslenker();
+      expect(lenker).toHaveLength(5);
+      expect(lenker[0].textContent).toBe("#21");
+    });
+
+    it("går tilbake til første side ved sortering", () => {
+      const router = renderMedSider("?side=2");
+
+      fireEvent.click(screen.getByRole("button", { name: "Sorter på kategori" }));
+
+      expect(new URLSearchParams(router.state.location.search).has("side")).toBe(false);
+    });
   });
 });
