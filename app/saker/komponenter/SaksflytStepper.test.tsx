@@ -9,7 +9,15 @@ function hentSteg() {
 
 describe("SaksflytStepper", () => {
   it("viser alle stegene i saksflyten med status for skjermlesere", () => {
-    render(<SaksflytStepper steg="STRAFFERETTSLIG_VURDERING" />);
+    render(
+      <SaksflytStepper
+        steg="STRAFFERETTSLIG_VURDERING"
+        resultat={{
+          utredning: { type: "FEILUTBETALINGSSAK_ORDINAER" },
+          forvaltning: { type: "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE" },
+        }}
+      />,
+    );
 
     expect(hentSteg().map((steg) => steg.textContent)).toEqual([
       "Opprettet, fullført",
@@ -19,6 +27,25 @@ describe("SaksflytStepper", () => {
       "Politiet, ikke startet",
       "Avsluttet, ikke startet",
     ]);
+  });
+
+  it("viser steg uten resultat som hoppet over når saken går rett fra opprettet", () => {
+    render(<SaksflytStepper steg="STRAFFERETTSLIG_VURDERING" resultat={null} />);
+
+    const steg = hentSteg();
+    expect(steg.map((element) => element.textContent)).toEqual([
+      "Opprettet, fullført",
+      "Utredning, hoppet over",
+      "Forvaltning, hoppet over",
+      "Strafferettslig vurdering, gjeldende steg",
+      "Politiet, ikke startet",
+      "Avsluttet, ikke startet",
+    ]);
+    for (const element of steg.slice(1, 3)) {
+      expect(element.querySelector('[aria-hidden="true"]')?.className).toContain(
+        "bg-ax-bg-success-strong",
+      );
+    }
   });
 
   it("markerer gjeldende steg med aria-current", () => {
@@ -35,8 +62,18 @@ describe("SaksflytStepper", () => {
     expect(hentSteg()[4].getAttribute("aria-current")).toBe("step");
   });
 
-  it("markerer alle steg som fullført når saken er avsluttet", () => {
-    render(<SaksflytStepper steg="AVSLUTTET" />);
+  it("markerer alle gjennomførte steg som fullført når saken er avsluttet", () => {
+    render(
+      <SaksflytStepper
+        steg="AVSLUTTET"
+        resultat={{
+          utredning: { type: "FEILUTBETALINGSSAK_ORDINAER" },
+          forvaltning: { type: "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE" },
+          strafferettsligVurdering: { type: "ANMELDT" },
+          politi: { type: "DOMFELLELSE" },
+        }}
+      />,
+    );
 
     expect(hentSteg().every((s) => s.dataset.tilstand === "fullført")).toBe(true);
   });
@@ -46,6 +83,7 @@ describe("SaksflytStepper", () => {
       <SaksflytStepper
         steg="AVSLUTTET"
         resultat={{
+          utredning: { type: "FEILUTBETALINGSSAK_ORDINAER" },
           forvaltning: {
             type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
             endeligUtfall: { type: "HENLAGT" },
@@ -93,6 +131,7 @@ describe("SaksflytStepper", () => {
     {
       fase: "eldre forvaltningsdata",
       resultat: {
+        utredning: { type: "FEILUTBETALINGSSAK_ORDINAER" },
         forvaltning: { type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE" },
         endeligUtfall: { type: "HENLAGT" },
       },
@@ -101,6 +140,7 @@ describe("SaksflytStepper", () => {
     {
       fase: "strafferettslig vurdering",
       resultat: {
+        utredning: { type: "FEILUTBETALINGSSAK_ORDINAER" },
         forvaltning: { type: "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE" },
         strafferettsligVurdering: { type: "HENLAGT" },
       },
@@ -109,6 +149,8 @@ describe("SaksflytStepper", () => {
     {
       fase: "politiet",
       resultat: {
+        utredning: { type: "FEILUTBETALINGSSAK_ORDINAER" },
+        forvaltning: { type: "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE" },
         strafferettsligVurdering: { type: "ANMELDT" },
         politi: { type: "HENLAGT" },
       },
@@ -147,6 +189,8 @@ describe("SaksflytStepper", () => {
         steg="AVSLUTTET"
         resultat={{
           utredning: { type: "HENLAGT" },
+          forvaltning: { type: "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE" },
+          strafferettsligVurdering: { type: "ANMELDT" },
           politi: { type: "DOMFELLELSE" },
         }}
       />,

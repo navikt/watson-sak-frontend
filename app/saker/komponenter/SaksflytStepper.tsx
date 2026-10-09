@@ -2,16 +2,28 @@ import { CheckmarkIcon } from "@navikt/aksel-icons";
 import { Detail } from "@navikt/ds-react";
 import type { KontrollsakResponse, KontrollsakSteg } from "../types.backend";
 
-type Stegtilstand = "fullført" | "aktiv" | "kommende";
+type Stegtilstand = "fullført" | "aktiv" | "kommende" | "hoppetOver";
 
-const saksflytSteg: { etikett: string; steg: KontrollsakSteg[] }[] = [
+type Resultatfase = keyof NonNullable<KontrollsakResponse["resultat"]>;
+
+const saksflytSteg: { etikett: string; steg: KontrollsakSteg[]; resultatfase?: Resultatfase }[] = [
   { etikett: "Opprettet", steg: ["OPPRETTET"] },
-  { etikett: "Utredning", steg: ["UTREDNING", "UTREDES"] },
-  { etikett: "Forvaltning", steg: ["FORVALTNING"] },
-  { etikett: "Strafferettslig vurdering", steg: ["STRAFFERETTSLIG_VURDERING"] },
-  { etikett: "Politiet", steg: ["POLITI", "ANMELDT"] },
+  { etikett: "Utredning", steg: ["UTREDNING", "UTREDES"], resultatfase: "utredning" },
+  { etikett: "Forvaltning", steg: ["FORVALTNING"], resultatfase: "forvaltning" },
+  {
+    etikett: "Strafferettslig vurdering",
+    steg: ["STRAFFERETTSLIG_VURDERING"],
+    resultatfase: "strafferettsligVurdering",
+  },
+  { etikett: "Politiet", steg: ["POLITI", "ANMELDT"], resultatfase: "politi" },
   { etikett: "Avsluttet", steg: ["AVSLUTTET"] },
 ];
+
+/** Et passert steg uten registrert resultat ble hoppet over, f.eks. Opprettet → Strafferettslig vurdering. */
+function erHoppetOver(indeks: number, resultat: KontrollsakResponse["resultat"]): boolean {
+  const resultatfase = saksflytSteg[indeks].resultatfase;
+  return resultatfase !== undefined && !resultat?.[resultatfase];
+}
 
 const avsluttetIndeks = saksflytSteg.findIndex((flytSteg) => flytSteg.steg.includes("AVSLUTTET"));
 
@@ -42,15 +54,18 @@ const skjermleserTekst: Record<Stegtilstand, string> = {
   fullført: "fullført",
   aktiv: "gjeldende steg",
   kommende: "ikke startet",
+  hoppetOver: "hoppet over",
 };
 
 const linjeFarge: Record<Stegtilstand, string> = {
   fullført: "bg-ax-bg-success-strong h-0.5",
   aktiv: "bg-ax-text-accent h-0.5",
   kommende: "bg-ax-border-neutral-subtle h-px",
+  // Saken har passert steget, så linjen frem til det er en del av den gjennomførte flyten.
+  hoppetOver: "bg-ax-bg-success-strong h-0.5",
 };
 
-function finnTilstand(
+function finnPosisjonstilstand(
   indeks: number,
   aktivIndeks: number,
   erAvsluttet: boolean,
@@ -64,6 +79,17 @@ function finnTilstand(
   if (indeks < aktivIndeks || (erAvsluttet && indeks === aktivIndeks)) return "fullført";
   if (indeks === aktivIndeks) return "aktiv";
   return "kommende";
+}
+
+function finnTilstand(
+  indeks: number,
+  aktivIndeks: number,
+  erAvsluttet: boolean,
+  sisteFullførteIndeks: number,
+  resultat: KontrollsakResponse["resultat"],
+): Stegtilstand {
+  const tilstand = finnPosisjonstilstand(indeks, aktivIndeks, erAvsluttet, sisteFullførteIndeks);
+  return tilstand === "fullført" && erHoppetOver(indeks, resultat) ? "hoppetOver" : tilstand;
 }
 
 function Stegsirkel({ tilstand }: { tilstand: Stegtilstand }) {
@@ -102,7 +128,13 @@ export function SaksflytStepper({ steg, resultat }: SaksflytStepperProps) {
   return (
     <ol aria-label="Saksflyt" className="m-0 flex list-none p-0">
       {saksflytSteg.map((flytSteg, indeks) => {
-        const tilstand = finnTilstand(indeks, aktivIndeks, erAvsluttet, sisteFullførteIndeks);
+        const tilstand = finnTilstand(
+          indeks,
+          aktivIndeks,
+          erAvsluttet,
+          sisteFullførteIndeks,
+          resultat,
+        );
         const linjeTilstand =
           erAvsluttet && sisteFullførteIndeks >= 0 && indeks === avsluttetIndeks
             ? "kommende"
@@ -124,7 +156,7 @@ export function SaksflytStepper({ steg, resultat }: SaksflytStepperProps) {
             <Stegsirkel tilstand={tilstand} />
             <Detail
               as="span"
-              weight={tilstand === "kommende" ? "regular" : "semibold"}
+              weight={tilstand === "kommende" || tilstand === "hoppetOver" ? "regular" : "semibold"}
               className={
                 tilstand === "aktiv"
                   ? "font-bold text-ax-text-accent"
