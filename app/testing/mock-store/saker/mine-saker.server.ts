@@ -4,11 +4,10 @@ import { berikLegacySakMedPerson, hentMockPersonNavn } from "~/testing/mock-stor
 import {
   backendGenererteDemoSaker,
   initialeMockMineKontrollsaker,
-  innloggetEier,
   mockMineSakerInnloggetNavIdent,
 } from "~/testing/mock-store/saker/mine-saker.fixtures.server";
 
-export { innloggetEier, mockMineSakerInnloggetNavIdent };
+export { mockMineSakerInnloggetNavIdent };
 
 function lagMockMineKontrollsaker() {
   const legacySaker = initialeMockMineKontrollsaker.map((sak) =>

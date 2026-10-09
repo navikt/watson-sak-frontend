@@ -1,6 +1,6 @@
 export const mockMineSakerInnloggetNavIdent = "Z999999";
 
-export const innloggetEier = {
+const innloggetEier = {
   navIdent: mockMineSakerInnloggetNavIdent,
   navn: "Saks Behandlersen",
   enhet: "hu424t",
