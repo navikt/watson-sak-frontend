@@ -1,4 +1,4 @@
-import { Heading, VStack } from "@navikt/ds-react";
+import { Heading, HStack, Pagination, VStack } from "@navikt/ds-react";
 import { useMemo } from "react";
 import { useSearchParams } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
@@ -13,6 +13,7 @@ import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
 import { AntallTreffEtikett } from "~/saker/saksliste/AntallTreffEtikett";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
 import { RouteConfig } from "~/routeConfig";
+import { ANTALL_PER_SIDE, paginerElementer } from "~/utils/paginering";
 import {
   type AlleSakerKolonne,
   type Sorteringsretning,
@@ -60,6 +61,20 @@ export function MineSakerInnhold({
     [saker, sorteringskolonne, sorteringsretning],
   );
 
+  const valgtSide = Number.parseInt(searchParams.get("side") ?? "1", 10) || 1;
+  const paginerteSaker = useMemo(
+    () => paginerElementer(sorterteSaker, valgtSide, ANTALL_PER_SIDE),
+    [sorterteSaker, valgtSide],
+  );
+
+  function gåTilSide(side: number) {
+    setSearchParams((forrige) => {
+      const neste = new URLSearchParams(forrige);
+      neste.set("side", String(side));
+      return neste;
+    });
+  }
+
   const harAktiveFiltre = aktivtFilter.steg.length > 0 || aktivtFilter.status.length > 0;
   const tomTekst = harAktiveFiltre ? "Endre filtrering for å finne saker" : "Du har ingen saker.";
 
@@ -70,6 +85,7 @@ export function MineSakerInnhold({
 
       const gjeldende = neste.getAll(key);
       neste.delete(key);
+      neste.delete("side");
 
       if (gjeldende.includes(verdi)) {
         for (const v of gjeldende.filter((v) => v !== verdi)) {
@@ -95,6 +111,7 @@ export function MineSakerInnhold({
           : standardRetningForKolonne(kolonne);
       neste.set("sorter", kolonne);
       neste.set("retning", nesteRetning);
+      neste.delete("side");
       return neste;
     });
   }
@@ -111,7 +128,9 @@ export function MineSakerInnhold({
             <AntallTreffEtikett antall={sorterteSaker.length} />
             <div className="overflow-x-auto [&_table]:w-full">
               <Saksliste
-                rader={sorterteSaker.map((sak) => mapKontrollsakTilSakslisteRad(sak, detaljSti))}
+                rader={paginerteSaker.elementer.map((sak) =>
+                  mapKontrollsakTilSakslisteRad(sak, detaljSti),
+                )}
                 tomTekst={tomTekst}
                 tilbake={{ to: RouteConfig.MINE_SAKER, label: "Mine saker" }}
                 sortering={{
@@ -122,6 +141,16 @@ export function MineSakerInnhold({
                 }}
               />
             </div>
+            {paginerteSaker.totalSider > 1 && (
+              <HStack justify="center" className="mt-6">
+                <Pagination
+                  page={paginerteSaker.aktivSide}
+                  onPageChange={gåTilSide}
+                  count={paginerteSaker.totalSider}
+                  size="small"
+                />
+              </HStack>
+            )}
           </div>
 
           <div

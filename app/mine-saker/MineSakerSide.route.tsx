@@ -45,7 +45,8 @@ export async function loader({ request }: Route.LoaderArgs) {
     const felles = {
       token,
       page: 1,
-      // TODO: Legg til paginering (se RAILS-2-1). size=200 er en midlertidig øvre grense.
+      // Sorteringen og sidedelingen skjer i klienten, så vi henter alle saker på én gang.
+      // TODO: Flytt sidedeling og sortering til backend (se RAILS-2-1). size=200 er en midlertidig øvre grense.
       size: 200,
       steg: stegFilter.length > 0 ? stegFilter : undefined,
       status: blokkerendeStatus.length > 0 ? blokkerendeStatus : undefined,

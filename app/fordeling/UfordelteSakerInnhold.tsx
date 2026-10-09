@@ -24,9 +24,9 @@ import {
 import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
 import { ALLE_STEG, parseSteg } from "~/saker/steg";
 import { formaterSteg } from "~/saker/visning";
+import { ANTALL_PER_SIDE } from "~/utils/paginering";
 import type { FordelingSak } from "./typer";
 
-const antallPerSide = 6;
 const RESET_KEYS = ["side"];
 
 interface UfordelteSakerInnholdProps {
@@ -88,7 +88,7 @@ export function UfordelteSakerInnhold({
     return sorterUfordelteSaker(filtrerteSaker, sorteringskolonne, sorteringsretning);
   }, [filtrerteSaker, sorteringskolonne, sorteringsretning]);
   const paginerteSaker = useMemo(
-    () => paginerElementer(sorterteSaker, valgtSide, antallPerSide),
+    () => paginerElementer(sorterteSaker, valgtSide, ANTALL_PER_SIDE),
     [sorterteSaker, valgtSide],
   );
   const oppsummering = useMemo(() => lagUfordelteOppsummering(filtrerteSaker), [filtrerteSaker]);
