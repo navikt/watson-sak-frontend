@@ -121,6 +121,29 @@ describe("Onboarding", () => {
     });
   });
 
+  it("kan startes på nytt i samme mount etter at den er fullført", async () => {
+    const innhold = () => (
+      <>
+        <nav id="sidebar-nav">
+          <a href="/">Oversikt</a>
+        </nav>
+        <Onboarding />
+      </>
+    );
+    const { rerender, container } = render(innhold());
+    await screen.findByRole("heading", { name: /Velkommen til Watson\sSak/ });
+    fireEvent.click(screen.getByRole("button", { name: "Hopp over" }));
+    await waitFor(() => expect(state.fullført).toBe(true));
+    rerender(innhold());
+    await waitFor(() => expect(container.querySelector("dialog")).toBeNull());
+
+    // Som «Vis introduksjonen på nytt» i innstillinger.
+    state.fullført = false;
+    rerender(innhold());
+    expect(await screen.findByRole("heading", { name: /Velkommen til Watson\sSak/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Vis meg rundt" })).toBeTruthy();
+  });
+
   it("hopper over steg med mål som ikke finnes", async () => {
     visOnboarding(false);
     fireEvent.click(await screen.findByRole("button", { name: /^(Neste|Vis meg rundt)$/ }));

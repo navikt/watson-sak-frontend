@@ -121,6 +121,20 @@ export function Onboarding() {
     };
   }, [aktivtSteg, klar, oppdaterSpotlight, stegnummer]);
 
+  // Kalles når dialogen er ferdig lukket. Nullstiller all tilstand, slik at
+  // «Vis introduksjonen på nytt» kan starte en ny runde i samme mount.
+  const nullstill = () => {
+    startetRef.current = false;
+    avslutterRef.current = false;
+    sistSporteStegRef.current = null;
+    setKlar(false);
+    setAvslutter(false);
+    setStegnummer(0);
+    setSteg([]);
+    setRect(null);
+    setStilleStegId(null);
+  };
+
   const avsluttOnboarding = async (fullført: boolean) => {
     if (!aktivtSteg || avslutterRef.current) return;
     avslutterRef.current = true;
@@ -134,7 +148,7 @@ export function Onboarding() {
     }
     await oppdaterPreference("onboardingFullført", true);
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setKlar(false);
+      nullstill();
     } else {
       setAvslutter(true);
     }
@@ -230,7 +244,7 @@ export function Onboarding() {
             void avsluttOnboarding(false);
           }}
           onAnimationEnd={(event) => {
-            if (event.target === event.currentTarget && avslutter) setKlar(false);
+            if (event.target === event.currentTarget && avslutter) nullstill();
           }}
         >
           <div className="onboarding-hero">{heroInnhold}</div>
@@ -251,7 +265,7 @@ export function Onboarding() {
           void avsluttOnboarding(false);
         }}
         onAnimationEnd={(event) => {
-          if (event.target === event.currentTarget && avslutter) setKlar(false);
+          if (event.target === event.currentTarget && avslutter) nullstill();
         }}
       >
         <div className="onboarding-scene">
