@@ -10,6 +10,7 @@ import { AppFooter } from "./AppFooter";
 import { AppHeader } from "./AppHeader";
 import { AppSidebar } from "./AppSidebar";
 import { InfoBanner } from "./InfoBanner";
+import { Onboarding } from "~/onboarding/Onboarding";
 
 // Ikke revalider layout-loaderen etter fetcher-actions til varsel-API-ruter.
 // Varsler oppdateres via polling (useFetcher + setInterval i VarselBjelle).
@@ -67,6 +68,7 @@ export default function RootLayout() {
       <InfoBanner />
       <div className="flex flex-1">
         <AppSidebar />
+        <Onboarding />
         <main id="maincontent" className="min-w-0 flex-1">
           {fullbredde ? (
             <Outlet />
