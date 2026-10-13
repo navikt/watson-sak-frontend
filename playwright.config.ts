@@ -59,7 +59,7 @@ export default defineConfig({
     ? undefined
     : {
         command:
-          'WATSON_ADMIN_API_URL=http://localhost:8089 ENVIRONMENT=local-mock NODE_ENV=development npx concurrently -k -n mock,dev "node playwright.backend.mock.cjs" "pnpm run dev"',
+          'WATSON_ADMIN_API_URL=http://localhost:8089 ENVIRONMENT=local-mock LOKALT_AVSKRUDDE_FEATURE_FLAGG=watson-sak-onboarding NODE_ENV=development npx concurrently -k -n mock,dev "node playwright.backend.mock.cjs" "pnpm run dev"',
         url: "http://localhost:5174",
         reuseExistingServer: false,
       },

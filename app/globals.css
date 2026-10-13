@@ -194,6 +194,223 @@
   }
 }
 
+/* Førstegangsveiledning med native dialog, spotlight og trinnvis innhold. */
+@keyframes onboarding-dialog-inn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes onboarding-dialog-ut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes onboarding-kortinnhold-inn {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.onboarding-dialog {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  color: var(--ax-text-neutral);
+  animation: onboarding-dialog-inn 350ms ease-out both;
+}
+
+.onboarding-dialog::backdrop {
+  background: transparent;
+}
+.onboarding-dialog-ut {
+  animation: onboarding-dialog-ut 250ms ease-in both;
+}
+.onboarding-scene {
+  position: fixed;
+  inset: 0;
+}
+.onboarding-slør {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+}
+
+.onboarding-spotlight {
+  position: fixed;
+  z-index: 1;
+  border-radius: 0.75rem;
+  background: transparent;
+  box-shadow:
+    0 0 0 9999px rgba(0, 0, 0, 0.6),
+    0 0 0 2px var(--ax-border-accent),
+    0 0 28px var(--ax-border-accent);
+  transition:
+    top 450ms cubic-bezier(0.22, 1, 0.36, 1),
+    left 450ms cubic-bezier(0.22, 1, 0.36, 1),
+    width 450ms cubic-bezier(0.22, 1, 0.36, 1),
+    height 450ms cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+.onboarding-hopp-over {
+  position: fixed;
+  z-index: 3;
+  top: var(--ax-space-16);
+  right: var(--ax-space-24);
+  background: var(--ax-bg-default);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+.onboarding-kort {
+  position: fixed;
+  z-index: 2;
+  width: min(35rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  padding: var(--ax-space-48);
+  border: 1px solid var(--ax-border-neutral-subtle);
+  border-radius: 1.25rem;
+  background: var(--ax-bg-default);
+  color: var(--ax-text-neutral);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.3);
+}
+
+.onboarding-kort-sentrert {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+.onboarding-kort-spotlight {
+  width: min(35rem, calc(100vw - 2rem));
+}
+/* Overskriften får fokus programmatisk for skjermlesere; ingen synlig fokusring. */
+.onboarding-dialog [tabindex="-1"]:focus {
+  outline: none;
+}
+.onboarding-hero {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: safe center;
+  overflow-y: auto;
+  padding: clamp(var(--ax-space-16), 5vw, var(--ax-space-48));
+  color: var(--ax-text-neutral);
+  background:
+    radial-gradient(60rem 40rem at 15% 10%, var(--ax-bg-accent-moderate), transparent 70%),
+    radial-gradient(
+      50rem 40rem at 90% 90%,
+      var(--ax-bg-brand-magenta-moderate, var(--ax-bg-accent-soft)),
+      transparent 70%
+    ),
+    var(--ax-bg-default);
+}
+.onboarding-hero-innhold {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ax-space-24);
+  max-width: 60rem;
+  text-align: center;
+  align-items: center;
+  animation: onboarding-hero-inn 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.onboarding-hero-overlinje {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ax-text-accent);
+}
+.onboarding-hero-tittel {
+  font-size: clamp(2.75rem, 7vw, 6rem);
+  line-height: 1.02;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+.onboarding-hero-tekst {
+  font-size: clamp(1.125rem, 2vw, 1.5rem);
+  line-height: 1.5;
+  max-width: 40rem;
+  color: var(--ax-text-neutral-subtle);
+}
+.onboarding-hero-handling {
+  flex-wrap: wrap;
+  margin-top: var(--ax-space-16);
+}
+@keyframes onboarding-hero-inn {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem) scale(0.98);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+.onboarding-kortinnhold {
+  animation: onboarding-kortinnhold-inn 350ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.onboarding-fremdrift {
+  color: var(--ax-text-neutral-subtle);
+  font-size: 0.875rem;
+}
+.onboarding-prikker {
+  display: flex;
+  gap: var(--ax-space-4);
+}
+.onboarding-prikk {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--ax-bg-neutral-moderate);
+}
+.onboarding-prikk.aktiv {
+  width: 1.25rem;
+  border-radius: 1rem;
+  background: var(--ax-bg-accent-strong);
+}
+.onboarding-kontroller {
+  justify-content: flex-end;
+}
+.onboarding-idéportal {
+  color: var(--ax-text-accent);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-dialog,
+  .onboarding-dialog-ut,
+  .onboarding-kortinnhold,
+  .onboarding-hero-innhold {
+    animation: none;
+  }
+  .onboarding-spotlight {
+    transition: none;
+  }
+}
+
 /*
  * Sherlock-hatt-pekeren for søket på "sherlock" (se
  * app/utils/useSherlockCursor.ts). `!important` sikrer at hatten vises selv
@@ -336,4 +553,57 @@
     padding-top: 4rem;
     animation: none;
   }
+}
+
+/* Server-rendret dekke med hero-bakgrunn til dialogen er åpnet på klienten. */
+.onboarding-forhåndsdekke {
+  z-index: 9999;
+}
+/* Hero-bakgrunnen skal være der fra første bilde; bare innholdet animeres inn. */
+.onboarding-dialog-hero {
+  animation: none;
+}
+
+/*
+ * View transition fra velkomstbildet til første spotlight-steg.
+ * Gjelder bare mens .onboarding-vt står på <html> (se startOmvisning).
+ */
+.onboarding-vt .onboarding-kort {
+  view-transition-name: onboarding-kort;
+}
+.onboarding-vt .onboarding-spotlight {
+  view-transition-name: onboarding-spotlight;
+}
+.onboarding-kortinnhold-stille {
+  animation: none;
+}
+@keyframes onboarding-vt-hero-ut {
+  to {
+    opacity: 0;
+    transform: scale(1.06);
+    filter: blur(8px);
+  }
+}
+@keyframes onboarding-vt-inn {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes onboarding-vt-kort-inn {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem) scale(0.97);
+  }
+}
+.onboarding-vt::view-transition-old(root) {
+  animation: onboarding-vt-hero-ut 550ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.onboarding-vt::view-transition-new(root) {
+  animation: onboarding-vt-inn 450ms 150ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.onboarding-vt::view-transition-new(onboarding-spotlight) {
+  animation: onboarding-vt-inn 400ms 300ms ease-out both;
+}
+.onboarding-vt::view-transition-new(onboarding-kort) {
+  animation: onboarding-vt-kort-inn 550ms 350ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }

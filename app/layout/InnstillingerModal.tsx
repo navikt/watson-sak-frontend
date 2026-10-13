@@ -1,6 +1,9 @@
 import { CogIcon } from "@navikt/aksel-icons";
 import { BodyLong, Button, Modal, Radio, RadioGroup, Switch, VStack } from "@navikt/ds-react";
+import { useState } from "react";
 import { sporHendelse } from "~/analytics/analytics";
+import { useEnkeltFeatureFlagg } from "~/feature-toggling/useFeatureFlagg";
+import { FeatureFlagg } from "~/feature-toggling/featureflagg";
 import type { Preferences } from "~/preferanser/PreferencesCookie";
 
 interface InnstillingerModalProps {
@@ -19,6 +22,9 @@ export function InnstillingerModal({
   preferences,
   onPreferenceChange,
 }: InnstillingerModalProps) {
+  const visOnboarding = useEnkeltFeatureFlagg(FeatureFlagg.ONBOARDING);
+  const [lagrerOnboarding, setLagrerOnboarding] = useState(false);
+
   function sporOgEndrePreferanse<K extends keyof Preferences>(key: K, value: Preferences[K]) {
     sporHendelse("innstillinger endret", { innstilling: key, verdi: value });
     onPreferenceChange(key, value);
@@ -37,10 +43,6 @@ export function InnstillingerModal({
     >
       <Modal.Body>
         <VStack gap="space-6">
-          <BodyLong className="text-ax-text-neutral-subtle">
-            Endringer lagres automatisk og gjelder med en gang.
-          </BodyLong>
-
           <RadioGroup
             legend="Tema"
             value={preferences.tema}
@@ -69,6 +71,36 @@ export function InnstillingerModal({
               Få veiledning om funksjoner du møter i Watson Sak.
             </BodyLong>
           </VStack>
+
+          {visOnboarding && (
+            <VStack gap="space-2" align="start">
+              <BodyLong weight="semibold">Introduksjon</BodyLong>
+              <BodyLong size="small" className="text-ax-text-neutral-subtle">
+                Se gjennomgangen av Watson Sak på nytt.
+              </BodyLong>
+              <Button
+                variant="secondary"
+                size="small"
+                loading={lagrerOnboarding}
+                onClick={async () => {
+                  setLagrerOnboarding(true);
+                  sporHendelse("onboarding startet på nytt");
+                  try {
+                    await onPreferenceChange("onboardingFullført", false);
+                    onClose();
+                  } finally {
+                    setLagrerOnboarding(false);
+                  }
+                }}
+              >
+                Vis introduksjonen på nytt
+              </Button>
+            </VStack>
+          )}
+
+          <BodyLong className="text-ax-text-neutral-subtle">
+            Endringer lagres automatisk og gjelder med en gang.
+          </BodyLong>
         </VStack>
       </Modal.Body>
       <Modal.Footer>

@@ -116,4 +116,10 @@ type Hendelse =
   | "søk opprett sak klikket"
   | "søk watson søk klikket"
   | "søk se alle saker klikket"
-  | "migrering opprett sak klikket";
+  | "migrering opprett sak klikket"
+  | "onboarding startet"
+  | "onboarding steg vist"
+  | "onboarding hoppet over"
+  | "onboarding fullført"
+  | "onboarding idéportal klikket"
+  | "onboarding startet på nytt";

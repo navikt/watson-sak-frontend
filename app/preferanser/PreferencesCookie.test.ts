@@ -8,6 +8,7 @@ describe("PreferencesCookie", () => {
       tema: "system",
       visVelkomstmelding: false,
       visInfopaneler: false,
+      onboardingFullført: false,
     });
 
     expect(preferences).toEqual({
@@ -15,6 +16,7 @@ describe("PreferencesCookie", () => {
       tema: "system",
       visVelkomstmelding: false,
       visInfopaneler: false,
+      onboardingFullført: false,
     });
   });
 
@@ -24,6 +26,7 @@ describe("PreferencesCookie", () => {
       tema: "system",
       visVelkomstmelding: true,
       visInfopaneler: true,
+      onboardingFullført: false,
     });
   });
 
@@ -35,5 +38,22 @@ describe("PreferencesCookie", () => {
     });
 
     expect(preferences.visInfopaneler).toBe(true);
+  });
+
+  test("setter onboardingFullført til false for eksisterende preferansecookies", () => {
+    const preferences = parsePreferences({
+      sidebarKollapset: true,
+      tema: "dark",
+      visVelkomstmelding: false,
+      visInfopaneler: false,
+    });
+
+    expect(preferences.onboardingFullført).toBe(false);
+  });
+
+  test("bevarer true for onboardingFullført", () => {
+    const preferences = parsePreferences({ ...defaultPreferences, onboardingFullført: true });
+
+    expect(preferences.onboardingFullført).toBe(true);
   });
 });

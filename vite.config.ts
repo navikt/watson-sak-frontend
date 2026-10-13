@@ -16,4 +16,9 @@ export default defineConfig({
       host: "localhost",
     },
   },
+  // Skann alle klientfiler ved oppstart, så Vite ikke oppdager nye avhengigheter
+  // underveis og laster siden på nytt (gir ustabile E2E-tester med kald cache).
+  optimizeDeps: {
+    entries: ["app/**/*.tsx", "!app/**/*.{test,spec}.tsx"],
+  },
 });

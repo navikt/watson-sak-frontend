@@ -14,6 +14,7 @@ const preferencesSchema = z.object({
   tema: z.enum(["light", "dark", "system"]).default("system"),
   visVelkomstmelding: z.boolean().default(true),
   visInfopaneler: z.boolean().default(true),
+  onboardingFullført: z.boolean().default(false),
 });
 
 export type Preferences = z.infer<typeof preferencesSchema>;
@@ -23,6 +24,7 @@ export const defaultPreferences: Preferences = {
   tema: "system",
   visVelkomstmelding: true,
   visInfopaneler: true,
+  onboardingFullført: false,
 };
 
 export function parsePreferences(value: unknown): Preferences {
