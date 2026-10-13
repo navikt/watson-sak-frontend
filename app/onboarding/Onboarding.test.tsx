@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Onboarding } from "./Onboarding";
 
@@ -91,6 +91,22 @@ describe("Onboarding", () => {
       steg: "velkomst",
       stegnummer: 1,
     });
+  });
+
+  it("lukker onboarding mens lagring av preferansen fortsatt venter", async () => {
+    let løsOppdatering: (() => void) | undefined;
+    state.oppdaterPreference.mockImplementation((_key, value) => {
+      state.fullført = value;
+      return new Promise<void>((resolve) => (løsOppdatering = resolve));
+    });
+    visOnboarding();
+    await screen.findByRole("heading", { name: /Velkommen til Watson\sSak/ });
+
+    fireEvent.click(screen.getByRole("button", { name: "Hopp over" }));
+
+    await waitFor(() => expect(document.querySelector("dialog")).toBeNull());
+    expect(state.oppdaterPreference).toHaveBeenCalledWith("onboardingFullført", true);
+    await act(async () => løsOppdatering?.());
   });
 
   it("viser Idéportalen på siste steg og fullfører onboarding", async () => {

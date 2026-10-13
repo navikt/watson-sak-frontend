@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FeatureFlagg } from "~/feature-toggling/featureflagg";
 import { defaultPreferences } from "~/preferanser/PreferencesCookie";
@@ -51,11 +51,36 @@ describe("InnstillingerModal – introduksjon", () => {
     expect(screen.queryByRole("button", { name: "Vis introduksjonen på nytt" })).toBeNull();
   });
 
-  it("starter introduksjonen på nytt når flagget er på", () => {
+  it("starter introduksjonen på nytt når flagget er på", async () => {
     const { onClose, onPreferenceChange } = visModal();
     fireEvent.click(screen.getByRole("button", { name: "Vis introduksjonen på nytt" }));
     expect(onPreferenceChange).toHaveBeenCalledWith("onboardingFullført", false);
-    expect(onClose).toHaveBeenCalled();
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(state.sporHendelse).toHaveBeenCalledWith("onboarding startet på nytt");
+  });
+
+  it("lukker først etter at oppdateringen av preferansen er fullført", async () => {
+    const onClose = vi.fn();
+    let løsOppdatering: (() => void) | undefined;
+    const onPreferenceChange = vi.fn(
+      () => new Promise<void>((resolve) => (løsOppdatering = resolve)),
+    );
+    render(
+      <InnstillingerModal
+        erApen
+        onClose={onClose}
+        preferences={{ ...defaultPreferences, onboardingFullført: true }}
+        onPreferenceChange={onPreferenceChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Vis introduksjonen på nytt" }));
+    expect(onClose).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("button", { name: /Vis introduksjonen på nytt/ }).hasAttribute("disabled"),
+    ).toBe(true);
+
+    await act(async () => løsOppdatering?.());
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
   });
 });

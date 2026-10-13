@@ -91,7 +91,9 @@ export function Onboarding() {
         16,
         Math.min(målRect.left + målRect.width / 2 - bredde / 2, window.innerWidth - bredde - 16),
       );
-      setKortplassering({ top: målRect.top + målRect.height + 24, left, width: bredde });
+      const top = målRect.top + målRect.height + 24;
+      const maxHeight = Math.max(160, window.innerHeight - top - 16);
+      setKortplassering({ top, left, width: bredde, maxHeight });
       return;
     }
     const left = Math.max(
@@ -135,7 +137,7 @@ export function Onboarding() {
     setStilleStegId(null);
   };
 
-  const avsluttOnboarding = async (fullført: boolean) => {
+  const avsluttOnboarding = (fullført: boolean) => {
     if (!aktivtSteg || avslutterRef.current) return;
     avslutterRef.current = true;
     if (fullført) {
@@ -146,12 +148,12 @@ export function Onboarding() {
         stegnummer: stegnummer + 1,
       });
     }
-    await oppdaterPreference("onboardingFullført", true);
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       nullstill();
     } else {
       setAvslutter(true);
     }
+    void oppdaterPreference("onboardingFullført", true).catch(() => {});
   };
 
   useEffect(() => {

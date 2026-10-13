@@ -1,5 +1,6 @@
 import { CogIcon } from "@navikt/aksel-icons";
 import { BodyLong, Button, Modal, Radio, RadioGroup, Switch, VStack } from "@navikt/ds-react";
+import { useState } from "react";
 import { sporHendelse } from "~/analytics/analytics";
 import { useEnkeltFeatureFlagg } from "~/feature-toggling/useFeatureFlagg";
 import { FeatureFlagg } from "~/feature-toggling/featureflagg";
@@ -22,6 +23,7 @@ export function InnstillingerModal({
   onPreferenceChange,
 }: InnstillingerModalProps) {
   const visOnboarding = useEnkeltFeatureFlagg(FeatureFlagg.ONBOARDING);
+  const [lagrerOnboarding, setLagrerOnboarding] = useState(false);
 
   function sporOgEndrePreferanse<K extends keyof Preferences>(key: K, value: Preferences[K]) {
     sporHendelse("innstillinger endret", { innstilling: key, verdi: value });
@@ -79,10 +81,16 @@ export function InnstillingerModal({
               <Button
                 variant="secondary"
                 size="small"
-                onClick={() => {
+                loading={lagrerOnboarding}
+                onClick={async () => {
+                  setLagrerOnboarding(true);
                   sporHendelse("onboarding startet på nytt");
-                  onPreferenceChange("onboardingFullført", false);
-                  onClose();
+                  try {
+                    await onPreferenceChange("onboardingFullført", false);
+                    onClose();
+                  } finally {
+                    setLagrerOnboarding(false);
+                  }
                 }}
               >
                 Vis introduksjonen på nytt
