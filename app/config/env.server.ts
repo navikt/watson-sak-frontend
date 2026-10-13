@@ -69,6 +69,12 @@ const envSchema = z.object({
     .string()
     .describe("The URL of the Unleash instance")
     .default("https://holmes-unleash-api.nav.cloud.nais.io"),
+  LOKALT_AVSKRUDDE_FEATURE_FLAGG: z
+    .string()
+    .optional()
+    .describe(
+      "Kommaseparert liste med feature-flagg som skal være avskrudd i lokale miljøer, der alle flagg ellers er påskrudd. Brukes av E2E-testene.",
+    ),
   APP_VERSION: z.string().describe("The version of the app").default("ukjent"),
 });
 

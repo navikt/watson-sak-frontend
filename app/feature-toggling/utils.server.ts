@@ -58,11 +58,15 @@ export async function hentAlleFeatureFlagg(
   navIdent: string,
 ): Promise<Record<FeatureFlagg, boolean>> {
   if (env.ENVIRONMENT.startsWith("local")) {
-    // Lokale miljøer får alle feature-flagg påskrudd for enkel utvikling
+    // Lokale miljøer får alle feature-flagg påskrudd for enkel utvikling,
+    // unntatt de som skrus eksplisitt av (f.eks. onboarding i E2E-testene).
+    const avskrudde = (env.LOKALT_AVSKRUDDE_FEATURE_FLAGG ?? "")
+      .split(",")
+      .map((flagg) => flagg.trim());
     return Promise.resolve(
       Object.values(FeatureFlagg).reduce(
         (acc, key) => {
-          acc[key as FeatureFlagg] = true;
+          acc[key as FeatureFlagg] = !avskrudde.includes(key);
           return acc;
         },
         {} as Record<FeatureFlagg, boolean>,
