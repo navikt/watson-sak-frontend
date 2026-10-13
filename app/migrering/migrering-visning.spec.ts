@@ -10,7 +10,7 @@ test.describe("Migreringsveileder med syntetiske saker", () => {
     page,
   }, testInfo) => {
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto("/migrering");
+    await page.goto("/migrering", { waitUntil: "networkidle" });
     await page.getByRole("link", { name: /Flyttet til Watson Sak/ }).click();
 
     await expect(page).toHaveURL(/\/saker\/1181$/);
@@ -33,7 +33,7 @@ test.describe("Migreringsveileder med syntetiske saker", () => {
   });
 
   test("uferdig eksempel viser avkrysning uten grønn bekreftelse", async ({ page }) => {
-    await page.goto("/migrering");
+    await page.goto("/migrering", { waitUntil: "networkidle" });
     await page.getByRole("link", { name: "Under flytting" }).click();
 
     await expect(page).toHaveURL(/\/saker\/1182$/);

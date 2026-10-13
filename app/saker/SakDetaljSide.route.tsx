@@ -102,8 +102,12 @@ export default function SakDetaljSide() {
 
   useEffect(() => {
     setSak(loaderSak);
-    setVisEksempelBekreftelse(true);
   }, [loaderSak]);
+
+  // Vis bekreftelsen på nytt kun ved bytte av sak, ikke ved hver revalidering.
+  useEffect(() => {
+    setVisEksempelBekreftelse(true);
+  }, [loaderSak.id]);
 
   return (
     <>
