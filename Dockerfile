@@ -1,4 +1,4 @@
-FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/node:24-dev AS dependencies
+FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/node:26-dev AS dependencies
 # Chainguard-imaget kjører som nonroot som standard, og corepack må skrive til
 # /usr/bin. Kun i denne (kasserte) byggefasen — sluttimaget forblir nonroot.
 USER root
@@ -19,7 +19,7 @@ RUN --mount=type=secret,id=NODE_AUTH_TOKEN sh -c \
 FROM dependencies AS prod-dependencies
 RUN pnpm prune --prod
 
-FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/node:24-dev AS builder
+FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/node:26-dev AS builder
 USER root
 WORKDIR /app
 COPY . .
@@ -27,7 +27,7 @@ COPY --from=dependencies /app/node_modules ./node_modules
 RUN corepack enable && corepack prepare --activate
 RUN pnpm run build
 
-FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/node:24-slim
+FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/node:26-slim
 WORKDIR /app
 COPY package.json ./
 COPY --from=prod-dependencies /app/node_modules ./node_modules
