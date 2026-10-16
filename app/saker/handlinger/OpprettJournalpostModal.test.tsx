@@ -4,6 +4,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { OpprettJournalpostModal } from "./OpprettJournalpostModal";
 import type { DokumentNode, FilResponse } from "~/saker/filer/typer";
 
+vi.mock("~/kodeverk/useKodeverk", () => ({
+  useKodeverk: () => ({
+    temaer: [
+      { kode: "KTR", beskrivelse: "Kontroll" },
+      { kode: "KTA", beskrivelse: "Kontroll anmeldelse" },
+    ],
+  }),
+}));
+
 const submitMock = vi.fn();
 let fetcherData: unknown;
 

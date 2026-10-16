@@ -69,4 +69,8 @@ export const mockKodeverk: Kodeverk = {
     { kode: "by295h", beskrivelse: "Analyse" },
     { kode: "tipsmottak", beskrivelse: "Tipsmottak" },
   ],
+  temaer: [
+    { kode: "KTR", beskrivelse: "Kontroll" },
+    { kode: "KTA", beskrivelse: "Kontroll anmeldelse" },
+  ],
 };

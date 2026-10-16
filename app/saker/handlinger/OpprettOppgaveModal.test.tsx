@@ -3,6 +3,15 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { OpprettOppgaveModal } from "./OpprettOppgaveModal";
 
+vi.mock("~/kodeverk/useKodeverk", () => ({
+  useKodeverk: () => ({
+    temaer: [
+      { kode: "KTR", beskrivelse: "Kontroll" },
+      { kode: "KTA", beskrivelse: "Kontroll anmeldelse" },
+    ],
+  }),
+}));
+
 const submitMock = vi.fn();
 
 vi.mock("react-router", async () => {

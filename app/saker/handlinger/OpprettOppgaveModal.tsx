@@ -12,6 +12,7 @@ import { z } from "zod";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
+import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { formaterDato } from "~/utils/date-utils";
 import { OppgaveSkjema } from "./OppgaveSkjema";
 import {
@@ -40,6 +41,7 @@ interface OpprettOppgaveModalProps {
 }
 
 export function OpprettOppgaveModal({ sakId, åpen, onClose }: OpprettOppgaveModalProps) {
+  const { temaer } = useKodeverk();
   const fetcher = useFetcher();
   const submitPågår = useRef(false);
   const forrigeÅpen = useRef(false);
@@ -152,7 +154,10 @@ export function OpprettOppgaveModal({ sakId, åpen, onClose }: OpprettOppgaveMod
                 <HGrid columns="auto 1fr" gap="space-4 space-16">
                   <SammendragRad
                     label="Tema"
-                    verdi={formaterTemavalg(innsendingFormData.get("tema")?.toString() ?? "")}
+                    verdi={formaterTemavalg(
+                      innsendingFormData.get("tema")?.toString() ?? "",
+                      temaer,
+                    )}
                   />
                   <SammendragRad
                     label="Type"
