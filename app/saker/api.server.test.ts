@@ -19,6 +19,7 @@ describe("hentKodeverk", () => {
       ytelseTyper: [{ kode: "DAGPENGER", beskrivelse: "Dagpenger" }],
       kilder: [{ kode: "PUBLIKUM", beskrivelse: "Publikum" }],
       enheter: [{ kode: "ky153k", beskrivelse: "Øst" }],
+      temaer: [],
     };
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -50,6 +51,7 @@ describe("hentKodeverk", () => {
         ytelseTyper: [],
         kilder: [],
         enheter: [],
+        temaer: [],
       }),
     });
     vi.stubGlobal("fetch", fetchMock);

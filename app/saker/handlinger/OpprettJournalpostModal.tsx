@@ -27,6 +27,7 @@ import { z } from "zod";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
+import { useKodeverk } from "~/kodeverk/useKodeverk";
 import type { OpprettetJournalpost } from "~/saker/arkiv/typer";
 import type { DokumentNode, FilResponse } from "~/saker/filer/typer";
 import { JOURNALFØRBARE_CONTENT_TYPES } from "~/saker/filer/fil-type-utils";
@@ -109,6 +110,7 @@ export function OpprettJournalpostModal({
   filer,
   dokumenter,
 }: OpprettJournalpostModalProps) {
+  const { temaer } = useKodeverk();
   const fetcher = useFetcher();
   const [knyttTilOppgave, setKnyttTilOppgave] = useState(false);
   const [valgteNøkler, setValgteNøkler] = useState<string[]>([]);
@@ -391,7 +393,10 @@ export function OpprettJournalpostModal({
                     />
                     <SammendragRad
                       label="Tema"
-                      verdi={formaterTemavalg(journalpostFormData.get("tema")?.toString() ?? "")}
+                      verdi={formaterTemavalg(
+                        journalpostFormData.get("tema")?.toString() ?? "",
+                        temaer,
+                      )}
                     />
                     <SammendragRad
                       label="Tittel"
@@ -412,7 +417,10 @@ export function OpprettJournalpostModal({
                     <HGrid columns="auto 1fr" gap="space-4 space-16">
                       <SammendragRad
                         label="Tema"
-                        verdi={formaterTemavalg(oppgaveFormData.get("tema")?.toString() ?? "")}
+                        verdi={formaterTemavalg(
+                          oppgaveFormData.get("tema")?.toString() ?? "",
+                          temaer,
+                        )}
                       />
                       <SammendragRad
                         label="Type"

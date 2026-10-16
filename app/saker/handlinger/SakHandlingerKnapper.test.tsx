@@ -4,6 +4,15 @@ import { describe, expect, it, vi } from "vitest";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { SakHandlingerKnapper } from "./SakHandlingerKnapper";
 
+vi.mock("~/kodeverk/useKodeverk", () => ({
+  useKodeverk: () => ({
+    temaer: [
+      { kode: "KTR", beskrivelse: "Kontroll" },
+      { kode: "KTA", beskrivelse: "Kontroll anmeldelse" },
+    ],
+  }),
+}));
+
 vi.mock("~/auth/innlogget-bruker", () => ({
   useInnloggetBruker: () => ({
     navIdent: "Z999999",

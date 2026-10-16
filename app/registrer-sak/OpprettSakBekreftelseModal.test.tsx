@@ -11,6 +11,7 @@ const kodeverk = {
   ytelseTyper: [],
   kilder: [{ kode: "KILDE", beskrivelse: "Kilde" }],
   enheter: [{ kode: "ENHET", beskrivelse: "Enhet" }],
+  temaer: [],
 };
 
 const tomtSammendrag = {
