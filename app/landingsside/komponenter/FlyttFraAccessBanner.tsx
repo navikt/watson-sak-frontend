@@ -21,8 +21,7 @@ export function FlyttFraAccessBanner() {
               Du har saker i Access som skal flyttes!
             </Heading>
             <BodyShort size="small">
-              Flytt sakene dine og alle tilhørende filer fra Access og S-området over til Watson Sak
-              – så samler du alt på ett sted.
+              Flytt sakene dine og alle tilhørende filer fra Access og S-området over til Watson Sak.
             </BodyShort>
           </VStack>
         </HStack>
