@@ -70,6 +70,7 @@ describe("SakDetaljerFelter", () => {
               type: "ANMELDT",
               anmeldtBelop: 12500.5,
               politidistrikt: "Øst",
+              politietsSaksreferanse: "2026/12345",
             },
           },
         })}
@@ -80,6 +81,7 @@ describe("SakDetaljerFelter", () => {
     const kilde = screen.getByText("Kilde", { exact: true });
     const anmeldtBelop = screen.getByText("Anmeldt beløp", { exact: true });
     const politidistrikt = screen.getByText("Politidistrikt", { exact: true });
+    const saksreferanse = screen.getByText("Politiets saksreferanse", { exact: true });
     expect(
       kilde.compareDocumentPosition(anmeldtBelop) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
@@ -87,9 +89,13 @@ describe("SakDetaljerFelter", () => {
       anmeldtBelop.compareDocumentPosition(politidistrikt) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(
+      politidistrikt.compareDocumentPosition(saksreferanse) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
       screen.getByText((tekst) => tekst.replaceAll("\u00a0", " ") === "12 500,5"),
     ).toBeDefined();
     expect(screen.getByText("Øst")).toBeDefined();
+    expect(screen.getByText("2026/12345")).toBeDefined();
   });
 
   it("viser Ikke oppgitt når anmeldt sak mangler politidistrikt", () => {
@@ -106,7 +112,8 @@ describe("SakDetaljerFelter", () => {
     );
 
     expect(screen.getByText("Politidistrikt", { exact: true })).toBeDefined();
-    expect(screen.getByText("Ikke oppgitt")).toBeDefined();
+    expect(screen.getByText("Politiets saksreferanse", { exact: true })).toBeDefined();
+    expect(screen.getAllByText("Ikke oppgitt")).toHaveLength(2);
   });
 
   it.each([

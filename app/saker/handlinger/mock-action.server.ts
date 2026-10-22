@@ -408,7 +408,11 @@ export async function mockAction(
       sak.ytelser = nyeYtelser;
       const vurdering = sak.resultat?.strafferettsligVurdering;
       if (anmeldelse.sendt && anmeldelse.resultat.success && sak.resultat && vurdering) {
-        sak.resultat.strafferettsligVurdering = { ...vurdering, ...anmeldelse.resultat.data };
+        sak.resultat.strafferettsligVurdering = {
+          ...vurdering,
+          ...anmeldelse.resultat.data,
+          politietsSaksreferanse: anmeldelse.resultat.data.politietsSaksreferanse || null,
+        };
       }
       leggTilBrukerhendelse(sak, "SAKSINFORMASJON_ENDRET", undefined, {
         beskrivelse: beskrivEndredeFelter(endredeFelter),

@@ -374,6 +374,7 @@ export async function redigerKontrollsak(
     }[];
     anmeldtBelop?: number;
     politidistrikt?: string;
+    politietsSaksreferanse?: string;
   },
 ): Promise<void> {
   const respons = await fetch(apiUrl(byggSti`/api/v1/kontrollsaker/${sakId}`), {

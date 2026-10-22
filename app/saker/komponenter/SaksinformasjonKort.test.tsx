@@ -41,6 +41,7 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
         type: "ANMELDT",
         anmeldtBelop: 12500,
         politidistrikt: "Øst politidistrikt",
+        politietsSaksreferanse: "2026/12345",
       },
     },
     ...overrides,
@@ -79,6 +80,8 @@ describe("SaksinformasjonKort anmeldelsesfelter", () => {
     expect((screen.getByLabelText("Anmeldt beløp (kr)") as HTMLInputElement).value).toBe("12 500");
     const politidistrikt = screen.getByLabelText("Politidistrikt") as HTMLInputElement;
     expect(politidistrikt.value).toBe("Øst politidistrikt");
+    const saksreferanse = screen.getByLabelText("Politiets saksreferanse") as HTMLInputElement;
+    expect(saksreferanse.value).toBe("2026/12345");
   });
 
   it.each([

@@ -18,12 +18,18 @@ function lagSak(
 }
 
 describe("hentAnmeldelseForVisning", () => {
-  const anmeldt = { type: "ANMELDT", anmeldtBelop: 5000, politidistrikt: "Øst politidistrikt" };
+  const anmeldt = {
+    type: "ANMELDT",
+    anmeldtBelop: 5000,
+    politidistrikt: "Øst politidistrikt",
+    politietsSaksreferanse: "2026/12345",
+  };
 
   it("viser anmeldelsen hos politiet og etter avslutning", () => {
     expect(hentAnmeldelseForVisning(lagSak("POLITI", anmeldt))).toEqual({
       anmeldtBelop: 5000,
       politidistrikt: "Øst politidistrikt",
+      politietsSaksreferanse: "2026/12345",
     });
     expect(hentAnmeldelseForVisning(lagSak("AVSLUTTET", anmeldt))).not.toBeNull();
   });
@@ -46,6 +52,13 @@ describe("hentAnmeldelseForVisning", () => {
         ?.politidistrikt,
     ).toBeNull();
   });
+
+  it("viser ikke en blank saksreferanse", () => {
+    expect(
+      hentAnmeldelseForVisning(lagSak("POLITI", { ...anmeldt, politietsSaksreferanse: "  " }))
+        ?.politietsSaksreferanse,
+    ).toBeNull();
+  });
 });
 
 describe("kanRedigereAnmeldelse", () => {
@@ -61,13 +74,36 @@ describe("kanRedigereAnmeldelse", () => {
 });
 
 describe("redigerAnmeldelseSchema", () => {
-  const gyldig = { anmeldtBelop: "12 500,50", politidistrikt: "  Øst politidistrikt " };
+  const gyldig = {
+    anmeldtBelop: "12 500,50",
+    politidistrikt: "  Øst politidistrikt ",
+    politietsSaksreferanse: "  2026/12345  ",
+  };
 
   it("trimmer politidistrikt og tolker norsk beløp", () => {
     expect(redigerAnmeldelseSchema.parse(gyldig)).toEqual({
       anmeldtBelop: 12500.5,
       politidistrikt: "Øst politidistrikt",
+      politietsSaksreferanse: "2026/12345",
     });
+  });
+
+  it("tillater tom saksreferanse og avviser kontrolltegn og for lange verdier", () => {
+    expect(
+      redigerAnmeldelseSchema.safeParse({ ...gyldig, politietsSaksreferanse: "  " }).success,
+    ).toBe(true);
+    expect(
+      redigerAnmeldelseSchema.safeParse({
+        ...gyldig,
+        politietsSaksreferanse: "R\u202E",
+      }).success,
+    ).toBe(false);
+    expect(
+      redigerAnmeldelseSchema.safeParse({
+        ...gyldig,
+        politietsSaksreferanse: "R".repeat(101),
+      }).success,
+    ).toBe(false);
   });
 
   it("måler lengden i tegn, ikke UTF-16-enheter", () => {
@@ -93,18 +129,35 @@ describe("redigerAnmeldelseSchema", () => {
 });
 
 describe("finnEndredeAnmeldelsesfelter", () => {
-  const sak = lagSak("POLITI", { type: "ANMELDT", anmeldtBelop: 5000, politidistrikt: "Øst" });
+  const sak = lagSak("POLITI", {
+    type: "ANMELDT",
+    anmeldtBelop: 5000,
+    politidistrikt: "Øst",
+    politietsSaksreferanse: "2026/12345",
+  });
 
   it("finner bare feltene som faktisk endres", () => {
     expect(
-      finnEndredeAnmeldelsesfelter(sak, { anmeldtBelop: 5000, politidistrikt: "Øst" }),
+      finnEndredeAnmeldelsesfelter(sak, {
+        anmeldtBelop: 5000,
+        politidistrikt: "Øst",
+        politietsSaksreferanse: "2026/12345",
+      }),
     ).toEqual([]);
     expect(
-      finnEndredeAnmeldelsesfelter(sak, { anmeldtBelop: 5000, politidistrikt: "Vest" }),
+      finnEndredeAnmeldelsesfelter(sak, {
+        anmeldtBelop: 5000,
+        politidistrikt: "Vest",
+        politietsSaksreferanse: "2026/12345",
+      }),
     ).toEqual(["politidistrikt"]);
     expect(
-      finnEndredeAnmeldelsesfelter(sak, { anmeldtBelop: 6000, politidistrikt: "Vest" }),
-    ).toEqual(["anmeldt beløp", "politidistrikt"]);
+      finnEndredeAnmeldelsesfelter(sak, {
+        anmeldtBelop: 6000,
+        politidistrikt: "Vest",
+        politietsSaksreferanse: "",
+      }),
+    ).toEqual(["anmeldt beløp", "politidistrikt", "politiets saksreferanse"]);
   });
 });
 

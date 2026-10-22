@@ -83,6 +83,8 @@ function lagRedigeringsdata(sak: KontrollsakResponse): RedigerSaksinformasjonDat
               sak.resultat?.strafferettsligVurdering?.anmeldtBelop,
             ),
             politidistrikt: sak.resultat?.strafferettsligVurdering?.politidistrikt ?? "",
+            politietsSaksreferanse:
+              sak.resultat?.strafferettsligVurdering?.politietsSaksreferanse ?? "",
           },
         }
       : {}),
@@ -117,7 +119,8 @@ function erLikeRedigeringsdata(a: RedigerSaksinformasjonData, b: RedigerSaksinfo
     erLikeStringArrays(a.merking, b.merking) &&
     erLikeYtelser(a.ytelser, b.ytelser) &&
     a.anmeldelse?.anmeldtBelop === b.anmeldelse?.anmeldtBelop &&
-    a.anmeldelse?.politidistrikt === b.anmeldelse?.politidistrikt
+    a.anmeldelse?.politidistrikt === b.anmeldelse?.politidistrikt &&
+    a.anmeldelse?.politietsSaksreferanse === b.anmeldelse?.politietsSaksreferanse
   );
 }
 
@@ -522,6 +525,8 @@ export function SaksinformasjonKort({
                               ...gjeldende,
                               anmeldelse: {
                                 politidistrikt: gjeldende.anmeldelse?.politidistrikt ?? "",
+                                politietsSaksreferanse:
+                                  gjeldende.anmeldelse?.politietsSaksreferanse ?? "",
                                 anmeldtBelop,
                               },
                             }))
@@ -544,6 +549,30 @@ export function SaksinformasjonKort({
                             anmeldelse: {
                               anmeldtBelop: gjeldende.anmeldelse?.anmeldtBelop ?? "",
                               politidistrikt,
+                              politietsSaksreferanse:
+                                gjeldende.anmeldelse?.politietsSaksreferanse ?? "",
+                            },
+                          }));
+                        }}
+                      />
+                      <TextField
+                        id={ankerIdForFelt("politietsSaksreferanse")}
+                        name="politietsSaksreferanse"
+                        label="Politiets saksreferanse"
+                        description="Skriv inn referansenummeret politiet har gitt saken."
+                        size="small"
+                        maxLength={100}
+                        autoComplete="off"
+                        value={lokaleVerdier.anmeldelse.politietsSaksreferanse}
+                        error={førsteFeilForFelt(feil, "politietsSaksreferanse")}
+                        onChange={(event) => {
+                          const politietsSaksreferanse = event.target.value;
+                          setLokaleVerdier((gjeldende) => ({
+                            ...gjeldende,
+                            anmeldelse: {
+                              anmeldtBelop: gjeldende.anmeldelse?.anmeldtBelop ?? "",
+                              politidistrikt: gjeldende.anmeldelse?.politidistrikt ?? "",
+                              politietsSaksreferanse,
                             },
                           }));
                         }}

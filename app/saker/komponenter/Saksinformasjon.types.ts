@@ -9,7 +9,11 @@ export type RedigerSaksinformasjonData = {
   arbeidsgivere: string[];
   ytelser: YtelseRadVerdier[];
   /** Finnes bare når anmeldelsen kan redigeres, se `kanRedigereAnmeldelse`. */
-  anmeldelse?: { anmeldtBelop: string; politidistrikt: string };
+  anmeldelse?: {
+    anmeldtBelop: string;
+    politidistrikt: string;
+    politietsSaksreferanse: string;
+  };
 };
 
 export type RedigerSaksinformasjonResultat =

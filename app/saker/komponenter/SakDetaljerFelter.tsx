@@ -167,6 +167,9 @@ export function SakDetaljerFelter({ sak, onVisIdentHistorikk }: SakDetaljerFelte
           <>
             <Felt label="Anmeldt beløp">{formaterBelop(anmeldelse.anmeldtBelop)}</Felt>
             <Felt label="Politidistrikt">{anmeldelse.politidistrikt ?? "Ikke oppgitt"}</Felt>
+            <Felt label="Politiets saksreferanse">
+              {anmeldelse.politietsSaksreferanse ?? "Ikke oppgitt"}
+            </Felt>
           </>
         )}
       </VStack>

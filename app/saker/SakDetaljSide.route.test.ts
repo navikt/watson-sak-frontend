@@ -897,13 +897,14 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
       } as Route.ActionArgs);
     }
 
-    it("lagrer trimmet politidistrikt og nytt beløp hos politiet", async () => {
+    it("lagrer anmeldelsesopplysninger hos politiet", async () => {
       const kontrollsak = lagAnmeldtSak();
       const resultat = await utfør(
         kontrollsak,
         redigeringsskjema(kontrollsak, {
           anmeldtBelop: "7500",
           politidistrikt: "  Vest politidistrikt ",
+          politietsSaksreferanse: "  2026/12345 ",
         }),
       );
 
@@ -912,9 +913,10 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
         type: "ANMELDT",
         anmeldtBelop: 7500,
         politidistrikt: "Vest politidistrikt",
+        politietsSaksreferanse: "2026/12345",
       });
-      expect(hentHistorikk(testRequest, String(kontrollsak.id))[0]?.beskrivelse).toMatch(
-        /anmeldt beløp og politidistrikt\.$/,
+      expect(hentHistorikk(testRequest, String(kontrollsak.id))[0]?.beskrivelse).toContain(
+        "politiets saksreferanse",
       );
     });
 
