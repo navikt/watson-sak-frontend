@@ -70,18 +70,8 @@ describe("redigerAnmeldelseSchema", () => {
     });
   });
 
-  it("måler lengden i tegn, ikke UTF-16-enheter", () => {
-    const hundreEmoji = "🚓".repeat(100);
-    expect(
-      redigerAnmeldelseSchema.safeParse({ ...gyldig, politidistrikt: hundreEmoji }).success,
-    ).toBe(true);
-    expect(
-      redigerAnmeldelseSchema.safeParse({ ...gyldig, politidistrikt: "a".repeat(101) }).success,
-    ).toBe(false);
-  });
-
-  it.each(["", "   ", "Øst\u202Epolitidistrikt", "Øst\u200Bpolitidistrikt", "Øst\npolitidistrikt"])(
-    "avviser ugyldig politidistrikt %j",
+  it.each(["", "   ", "Øst", "Oslo\npolitidistrikt", "Ukjent politidistrikt"])(
+    "avviser politidistrikt som ikke er i listen %j",
     (politidistrikt) => {
       expect(redigerAnmeldelseSchema.safeParse({ ...gyldig, politidistrikt }).success).toBe(false);
     },

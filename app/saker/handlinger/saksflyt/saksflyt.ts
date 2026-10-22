@@ -1,3 +1,4 @@
+import { POLITIDISTRIKTER } from "~/saker/politidistrikter";
 import { type KontrollsakSteg, type TillatteHandlingerResponse } from "~/saker/types.backend";
 import { resultatFeltErAktivt } from "../resultat-request";
 import { erHenlagtIGjeldendeSteg, hentVisbareSteg } from "../tillatte-steg";
@@ -87,22 +88,7 @@ export type Feltvisning = {
 export const feltvisning: Readonly<Record<string, Feltvisning>> = {
   "strafferettsligVurdering.politidistrikt": {
     beskrivelse: "Velg politidistriktet saken anmeldes til.",
-    valg: [
-      "Agder politidistrikt",
-      "Finnmark politidistrikt",
-      "Innlandet politidistrikt",
-      "Kripos",
-      "Møre og Romsdal politidistrikt",
-      "Nordland politidistrikt",
-      "Oslo politidistrikt",
-      "Sør-Vest politidistrikt",
-      "Sør-Øst politidistrikt",
-      "Troms politidistrikt",
-      "Trøndelag politidistrikt",
-      "Vest politidistrikt",
-      "Økokrim",
-      "Øst politidistrikt",
-    ],
+    valg: POLITIDISTRIKTER,
   },
   "politi.begrunnelse": { maksLengde: 200 },
   "politi.ubetingetFengselMaaneder": { enhet: "mnd" },

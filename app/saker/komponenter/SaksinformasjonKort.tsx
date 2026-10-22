@@ -27,6 +27,7 @@ import {
 } from "~/registrer-sak/YtelseRadFelt";
 import type { YtelseRadVerdier } from "~/registrer-sak/skjema-helpers";
 import { kanRedigereAnmeldelse } from "~/saker/anmeldelse";
+import { erGyldigPolitidistrikt, POLITIDISTRIKTER } from "~/saker/politidistrikter";
 import { Beløpsfelt } from "~/formaterte-inputfelt/FormaterteInputfelt";
 import { merkingEtikett } from "~/saker/kategorier";
 import type { KontrollsakResponse } from "~/saker/types.backend";
@@ -68,6 +69,12 @@ function formaterAnmeldtBelop(belop: number | null | undefined): string {
   return belop === null || belop === undefined ? "" : String(belop);
 }
 
+/** Lagrede verdier som ikke finnes i listen (eldre fritekst) gir tomt valg, så brukeren må velge på nytt. */
+function forhåndsvalgtPolitidistrikt(politidistrikt: string | null | undefined): string {
+  const verdi = politidistrikt?.trim() ?? "";
+  return erGyldigPolitidistrikt(verdi) ? verdi : "";
+}
+
 function lagRedigeringsdata(sak: KontrollsakResponse): RedigerSaksinformasjonData {
   return {
     kategori: sak.kategori,
@@ -82,7 +89,9 @@ function lagRedigeringsdata(sak: KontrollsakResponse): RedigerSaksinformasjonDat
             anmeldtBelop: formaterAnmeldtBelop(
               sak.resultat?.strafferettsligVurdering?.anmeldtBelop,
             ),
-            politidistrikt: sak.resultat?.strafferettsligVurdering?.politidistrikt ?? "",
+            politidistrikt: forhåndsvalgtPolitidistrikt(
+              sak.resultat?.strafferettsligVurdering?.politidistrikt,
+            ),
           },
         }
       : {}),
@@ -528,13 +537,12 @@ export function SaksinformasjonKort({
                           }
                         />
                       </div>
-                      <TextField
+                      <Select
                         id={ankerIdForFelt("politidistrikt")}
                         name="politidistrikt"
                         label="Politidistrikt"
-                        description="Skriv inn politidistriktet som saken er anmeldt til."
+                        description="Velg politidistriktet saken er anmeldt til."
                         size="small"
-                        autoComplete="off"
                         value={lokaleVerdier.anmeldelse.politidistrikt}
                         error={førsteFeilForFelt(feil, "politidistrikt")}
                         onChange={(event) => {
@@ -547,7 +555,14 @@ export function SaksinformasjonKort({
                             },
                           }));
                         }}
-                      />
+                      >
+                        <option value="">Velg politidistrikt</option>
+                        {POLITIDISTRIKTER.map((politidistrikt) => (
+                          <option key={politidistrikt} value={politidistrikt}>
+                            {politidistrikt}
+                          </option>
+                        ))}
+                      </Select>
                     </HGrid>
                   </VStack>
                 </>

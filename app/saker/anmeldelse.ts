@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { lesBelop } from "./handlinger/resultat-request";
-import { type KontrollsakResponse, POLITIDISTRIKT_MAKS_LENGDE } from "./types.backend";
+import { erGyldigPolitidistrikt } from "./politidistrikter";
+import { type KontrollsakResponse } from "./types.backend";
 
 /** Anmeldt beløp og politidistrikt slik de vises på saken. */
 export type Anmeldelse = { anmeldtBelop: number; politidistrikt: string | null };
@@ -24,19 +25,12 @@ export function kanRedigereAnmeldelse(sak: KontrollsakResponse): boolean {
   return sak.steg === "POLITI" && sak.resultat?.strafferettsligVurdering?.type === "ANMELDT";
 }
 
-const kontrolltegn = /[\p{Cc}\p{Cf}\u2028\u2029]/u;
-
-/** Samme regler som backend: trimmet, ikke tomt, maks 100 tegn og ingen kontrolltegn eller linjeskift. */
+/** Politidistriktet må velges fra den faste listen, samme som i saksflyten. */
 const politidistriktSchema = z
   .string({ message: "Politidistrikt må fylles ut" })
   .trim()
   .min(1, "Politidistrikt må fylles ut")
-  .refine((verdi) => [...verdi].length <= POLITIDISTRIKT_MAKS_LENGDE, {
-    message: `Politidistrikt kan ha opptil ${POLITIDISTRIKT_MAKS_LENGDE} tegn`,
-  })
-  .refine((verdi) => !kontrolltegn.test(verdi), {
-    message: "Politidistrikt kan ikke inneholde linjeskift eller usynlige tegn",
-  });
+  .refine(erGyldigPolitidistrikt, { message: "Velg et politidistrikt fra listen" });
 
 export const redigerAnmeldelseSchema = z.object({
   anmeldtBelop: z
