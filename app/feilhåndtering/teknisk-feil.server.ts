@@ -25,7 +25,7 @@ function erDataSvar(feil: unknown): feil is { init: ResponseInit | null; data: u
   return !!feil && typeof feil === "object" && "init" in feil && "data" in feil;
 }
 
-export function lagFeilId(): string {
+function lagFeilId(): string {
   return crypto.randomUUID().slice(0, 8);
 }
 
@@ -72,7 +72,7 @@ function statusFra(feil: unknown): number | undefined {
 /** Svarformatet actions bruker for tekniske feil. Skjemaet viser `<Feilmelding>` ved knappen. */
 export type TekniskFeilSvar = { ok: false; feil: string; feilId: string; teknisk: true };
 
-export const TEKNISK_FEIL_ACTION =
+const TEKNISK_FEIL_ACTION =
   "Vi fikk ikke lagret endringen på grunn av en teknisk feil. Sjekk om endringen ble lagret før du prøver igjen.";
 
 /**
