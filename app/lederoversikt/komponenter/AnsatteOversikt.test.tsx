@@ -47,6 +47,36 @@ function lagAnsatte(
 }
 
 describe("AnsatteOversikt", () => {
+  it("viser andre saksbehandlere bare når det finnes aktive saker der", () => {
+    const andre = {
+      totaltAntallIkkeAvsluttede: 4,
+      antallOverFrist: 0,
+      antallAktive: 2,
+      antallAktiveOverFrist: 0,
+    };
+    const { unmount } = renderMedRouter(
+      <AnsatteOversikt
+        ansatte={lagAnsatte([lagAnsatt()], { andreSaksbehandlere: andre })}
+        enhetId="hu424t"
+      />,
+    );
+    expect(screen.getByText("Andre saksbehandlere")).toBeDefined();
+    expect(
+      screen.getByRole("img", {
+        name: "2 innenfor frist og 0 over frist, av totalt 2 aktive saker",
+      }),
+    ).toBeDefined();
+    unmount();
+
+    renderMedRouter(
+      <AnsatteOversikt
+        ansatte={lagAnsatte([lagAnsatt()], { andreSaksbehandlere: { ...andre, antallAktive: 0 } })}
+        enhetId="hu424t"
+      />,
+    );
+    expect(screen.queryByText("Andre saksbehandlere")).toBeNull();
+  });
+
   it("viser navn og navigerer til saker filtrert på enhet og saksbehandler når raden klikkes", () => {
     const ansatte = lagAnsatte([
       lagAnsatt({ navIdent: "Z1", navn: "Ada Larsen", antallAktive: 5 }),

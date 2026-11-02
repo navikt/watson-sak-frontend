@@ -73,6 +73,11 @@ export function lagMockLederStatistikk(
 
   const ufordelte = saker.filter((sak) => !sak.saksbehandlere.eier);
   const aktiveUfordelte = ufordelte.filter((sak) => velgSakKategori(sak) === "aktive");
+  const visteIdenter = new Set(ansatte.map((ansatt) => ansatt.navIdent));
+  const andre = saker.filter(
+    (sak) => sak.saksbehandlere.eier && !visteIdenter.has(sak.saksbehandlere.eier.navIdent),
+  );
+  const aktiveAndre = andre.filter((sak) => velgSakKategori(sak) === "aktive");
 
   return {
     enhetId,
@@ -94,6 +99,12 @@ export function lagMockLederStatistikk(
         antallOverFrist: ufordelte.filter(erOverFrist).length,
         antallAktive: aktiveUfordelte.length,
         antallAktiveOverFrist: aktiveUfordelte.filter(erOverFrist).length,
+      },
+      andreSaksbehandlere: {
+        totaltAntallIkkeAvsluttede: andre.length,
+        antallOverFrist: andre.filter(erOverFrist).length,
+        antallAktive: aktiveAndre.length,
+        antallAktiveOverFrist: aktiveAndre.filter(erOverFrist).length,
       },
     },
   };

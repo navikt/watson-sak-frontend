@@ -6,7 +6,12 @@ import type { KontrollsakResponse } from "~/saker/types.backend";
 import type { Statistikk, StatistikkSpørring } from "./types";
 
 /** Mock-sakene varslene telles i, og innlogget bruker for «Meg selv»-omfanget. */
-type Aldersgrunnlag = { saker: KontrollsakResponse[]; navIdent: string };
+/** `mineSaker` er samme utvalg som forsiden teller (hentMineSaker), med demosakene som eies av innlogget bruker. */
+type Aldersgrunnlag = {
+  saker: KontrollsakResponse[];
+  navIdent: string;
+  mineSaker?: KontrollsakResponse[];
+};
 
 /**
  * Teller med samme filter som «Alle saker» bruker i mockmodus, så tallet i varslet blir det
@@ -103,9 +108,10 @@ export function lagMockStatistikk(
       : omfangEnheter;
   const nøkkeltallSaker =
     spørring.nivaa === "meg"
-      ? aldersgrunnlag.saker.filter(
+      ? (aldersgrunnlag.mineSaker ??
+        aldersgrunnlag.saker.filter(
           (sak) => sak.saksbehandlere.eier?.navIdent === aldersgrunnlag.navIdent,
-        )
+        ))
       : nøkkeltallEnheter.length > 0
         ? aldersgrunnlag.saker.filter(
             (sak) =>

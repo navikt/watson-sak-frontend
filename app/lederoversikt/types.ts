@@ -72,6 +72,8 @@ export const lederStatistikkResponseSchema = z.object({
         .transform((ansatt) => ({ ...ansatt, navn: visningsnavn(ansatt.navIdent, ansatt.navn) })),
     ),
     ufordelt: ansattSakstallSchema,
+    /** Saker med ansvarlig som ikke er i ansattlista, for eksempel etter enhetsbytte. */
+    andreSaksbehandlere: ansattSakstallSchema.optional(),
   }),
   /** Enhetene lederen kan velge mellom. Har mer enn ett element når lederen leder flere enheter. */
   ledetEnheter: z.array(z.object({ id: z.string().min(1), navn: z.string().min(1) })).default([]),

@@ -124,4 +124,42 @@ describe("lagMockLederStatistikk", () => {
       resultat.ansatte.liste.find((ansatt) => ansatt.navIdent === "Z234567")?.antallAktive,
     ).toBe(0);
   });
+
+  it("teller aktive saker med eier utenfor ansattlista i andre saksbehandlere, så tabellen går opp", () => {
+    const state = hentMockState(request);
+    const grunnlag = state.kontrollsaker[0];
+    if (!grunnlag) throw new Error("Mangler kontrollsak i mockgrunnlaget");
+    state.mineKontrollsaker = [];
+    state.kontrollsaker = [
+      {
+        ...grunnlag,
+        id: 1,
+        enhet: "ky153k",
+        steg: "UTREDNING",
+        status: "AKTIV",
+        saksbehandlere: {
+          ...grunnlag.saksbehandlere,
+          eier: { navIdent: "X999999", navn: "Byttet Enhet", enhet: "annen" },
+        },
+      },
+      {
+        ...grunnlag,
+        id: 2,
+        enhet: "ky153k",
+        steg: "UTREDNING",
+        status: "AKTIV",
+        saksbehandlere: { ...grunnlag.saksbehandlere, eier: null },
+      },
+    ];
+
+    const resultat = lagMockLederStatistikk(request, "ky153k", "Øst");
+    const { liste, ufordelt, andreSaksbehandlere } = resultat.ansatte;
+
+    expect(andreSaksbehandlere?.antallAktive).toBe(1);
+    expect(
+      liste.reduce((sum, ansatt) => sum + ansatt.antallAktive, 0) +
+        ufordelt.antallAktive +
+        (andreSaksbehandlere?.antallAktive ?? 0),
+    ).toBe(resultat.enhet.oyeblikksbilde.aktive);
+  });
 });

@@ -76,6 +76,7 @@ export function AnsatteOversikt({
   const maksAntall = Math.max(
     1,
     ansatte.ufordelt.antallAktive,
+    ansatte.andreSaksbehandlere?.antallAktive ?? 0,
     ...ansatte.liste.map((ansatt) => ansatt.antallAktive),
   );
   const kanViseFærre = ansatte.liste.length > STANDARD_ANTALL_SYNLIGE;
@@ -202,6 +203,14 @@ export function AnsatteOversikt({
                     <AnsattStolpe ansatt={ansatte.ufordelt} maksAntall={maksAntall} />
                   </Table.DataCell>
                 </Table.Row>
+                {ansatte.andreSaksbehandlere && ansatte.andreSaksbehandlere.antallAktive > 0 && (
+                  <Table.Row>
+                    <Table.DataCell>Andre saksbehandlere</Table.DataCell>
+                    <Table.DataCell>
+                      <AnsattStolpe ansatt={ansatte.andreSaksbehandlere} maksAntall={maksAntall} />
+                    </Table.DataCell>
+                  </Table.Row>
+                )}
               </Table.Body>
             </Table>
 

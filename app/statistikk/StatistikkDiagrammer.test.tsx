@@ -74,10 +74,10 @@ describe("StatistikkDiagrammer", () => {
       "/alle-saker?steg=OPPRETTET&steg=UTREDNING&steg=FORVALTNING&steg=STRAFFERETTSLIG_VURDERING&steg=POLITI&enhet=ky153k",
     );
     expect(screen.getByRole("link", { name: /Aktive/ }).getAttribute("href")).toBe(
-      "/alle-saker?steg=UTREDNING&steg=STRAFFERETTSLIG_VURDERING&status=AKTIV&enhet=ky153k",
+      "/alle-saker?steg=UTREDNING&steg=STRAFFERETTSLIG_VURDERING&status=AKTIV&status=PAAKLAGET&status=UTEN_STATUS&enhet=ky153k",
     );
     expect(screen.getByRole("link", { name: /Venter på andre/ }).getAttribute("href")).toBe(
-      "/alle-saker?steg=OPPRETTET&steg=UTREDNING&steg=FORVALTNING&steg=STRAFFERETTSLIG_VURDERING&steg=POLITI&status=VENTER_PA_INFORMASJON&status=I_BERO&status=HOS_FORVALTNING&status=HOS_POLITI&enhet=ky153k",
+      "/alle-saker?steg=OPPRETTET&steg=UTREDNING&steg=FORVALTNING&steg=STRAFFERETTSLIG_VURDERING&steg=POLITI&status=VENTER_PA_INFORMASJON&status=VENTER_PA_VEDTAK&status=VENTER_PA_RESULTAT&status=I_BERO&status=HOS_FORVALTNING&status=HOS_POLITI&enhet=ky153k",
     );
     expect(screen.getByRole("link", { name: /Ikke fordelt/ }).getAttribute("href")).toBe(
       "/fordeling",
@@ -104,7 +104,7 @@ describe("StatistikkDiagrammer", () => {
       "/alle-saker?steg=OPPRETTET&steg=UTREDNING&steg=FORVALTNING&steg=STRAFFERETTSLIG_VURDERING&steg=POLITI&enhet=ky153k&enhet=je679z&ansvarlig=MEG",
     );
     expect(screen.getByRole("link", { name: /Aktive/ }).getAttribute("href")).toBe(
-      "/alle-saker?steg=UTREDNING&steg=STRAFFERETTSLIG_VURDERING&status=AKTIV&enhet=ky153k&enhet=je679z&ansvarlig=MEG",
+      "/alle-saker?steg=UTREDNING&steg=STRAFFERETTSLIG_VURDERING&status=AKTIV&status=PAAKLAGET&status=UTEN_STATUS&enhet=ky153k&enhet=je679z&ansvarlig=MEG",
     );
     expect(
       screen.getAllByRole("link").every((link) => !link.getAttribute("href")?.includes("Z123456")),
