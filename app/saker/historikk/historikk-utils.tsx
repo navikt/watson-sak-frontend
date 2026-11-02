@@ -223,6 +223,8 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
       return "Sak fristilt";
     case "SAK_DELT":
       return "Sak delt";
+    case "SAK_OVERFORT":
+      return "Sak overført";
     case "FIL_SLETTET":
       return "Fil slettet";
     case "FIL_OMDØPT":
@@ -253,7 +255,8 @@ export function hendelseBeskrivelse(
     hendelse.hendelsesType === "MIGRERING_PABEGYNT" ||
     hendelse.hendelsesType === "MIGRERING_FULLFORT" ||
     hendelse.hendelsesType === "SAK_FRISTILT" ||
-    hendelse.hendelsesType === "SAK_DELT"
+    hendelse.hendelsesType === "SAK_DELT" ||
+    hendelse.hendelsesType === "SAK_OVERFORT"
   ) {
     return null;
   }
@@ -366,6 +369,7 @@ export function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
     case "SAKSINFORMASJON_ENDRET":
       return <PencilIcon {...iconProps} />;
     case "MOTTAKSENHET_ENDRET":
+    case "SAK_OVERFORT":
       return <ArrowRightIcon {...iconProps} />;
     case "VIDERESENDT_TIL_NAY_NFP":
       return <PaperplaneIcon {...iconProps} />;
