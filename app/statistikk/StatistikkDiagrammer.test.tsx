@@ -86,7 +86,7 @@ describe("StatistikkDiagrammer", () => {
       "/saker/102",
     );
     expect(screen.queryByRole("link", { name: /Saksbehandlingstid/ })).toBeNull();
-    expect(screen.getByText("Info/I bero/Forvaltning/Politi")).toBeDefined();
+    expect(screen.getByText("Venter på informasjon/I bero/Forvaltning/Politi")).toBeDefined();
   });
 
   it("viderefører enheter og bruker MEG i stedet for saksbehandlerident", () => {

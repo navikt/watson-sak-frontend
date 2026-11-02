@@ -126,7 +126,7 @@ export function lagMockStatistikk(
       {
         label: "Venter på andre",
         verdi: "15",
-        forklaring: "Info/I bero/Forvaltning/Politi",
+        forklaring: "Venter på informasjon/I bero/Forvaltning/Politi",
         tone: "accent",
       },
       { label: "Ikke fordelt", verdi: "12", forklaring: "Saker", tone: "danger" },
