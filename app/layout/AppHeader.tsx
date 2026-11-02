@@ -113,7 +113,8 @@ export function AppHeader() {
           name="søketekst"
           variant="secondary"
           size="small"
-          htmlSize={24}
+          placeholder="Søk på fødsels-/D-nummer, organisasjonsnummer, saksnummer og PID"
+          className="w-[495px]"
           aria-keyshortcuts="Meta+K"
           onKeyDown={handleSøkefeltKeyDown}
         />
