@@ -38,7 +38,7 @@ export function AppHeader() {
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "k" && event.metaKey) {
+      if (event.key.toLowerCase() === "k" && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
         sporHendelse("hurtigsøk aktivert");
         skjemaRef.current?.querySelector("input")?.focus();
@@ -86,7 +86,7 @@ export function AppHeader() {
         action={RouteConfig.SØK}
         role="search"
         aria-label="Hurtigsøk"
-        className="flex items-center self-stretch"
+        className="flex min-w-0 max-w-[495px] flex-1 items-center self-stretch"
         ref={skjemaRef}
         data-hurtigsøk-skjema
         onSubmit={(event) => {
@@ -113,8 +113,10 @@ export function AppHeader() {
           name="søketekst"
           variant="secondary"
           size="small"
-          htmlSize={24}
-          aria-keyshortcuts="Meta+K"
+          placeholder="Søk på fødsels-/D-nummer, organisasjonsnummer, saksnummer og PID"
+          className="w-full"
+          autoComplete="off"
+          aria-keyshortcuts="Meta+K Control+K"
           onKeyDown={handleSøkefeltKeyDown}
         />
       </Form>
