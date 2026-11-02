@@ -72,8 +72,10 @@ test.describe("Landingsside", () => {
   });
 
   test("viser mine saker-oversikt", async ({ page }) => {
-    await expect(page.getByRole("heading", { name: "Sist aktive saker" }).first()).toBeVisible();
-    await expect(page.getByRole("link", { name: "Se alle saker" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Mine saker - siste oppdaterte" }).first(),
+    ).toBeVisible();
+    await expect(page.getByRole("link", { name: "Se mine saker" })).toBeVisible();
   });
 
   test("kan markere et varsel som lest", async ({ page }) => {
@@ -120,7 +122,7 @@ test.describe("Landingsside", () => {
       .getByRole("heading", { name: "Siste varsler" })
       .locator("xpath=ancestor::section[1]");
     const sisteSakerSeksjon = page
-      .getByRole("heading", { name: "Sist aktive saker" })
+      .getByRole("heading", { name: "Mine saker - siste oppdaterte" })
       .locator("xpath=ancestor::section[1]");
 
     const [varslerHandle, sisteSakerHandle] = await Promise.all([
