@@ -1,7 +1,7 @@
 import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
-import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
+import { hentAlleSaker, hentMineSaker } from "~/saker/mock-alle-saker.server";
 import { hentStatistikk } from "./api.server";
 import { lagMockStatistikk } from "./mock.server";
 import type { StatistikkSpørring } from "./types";
@@ -72,6 +72,7 @@ export async function loader({ request }: { request: Request }) {
     ? lagMockStatistikk(spørring, bruker.enhet, bruker.enhetId, {
         saker: hentAlleSaker(request),
         navIdent: bruker.navIdent,
+        mineSaker: hentMineSaker(request, bruker.navIdent, bruker.name),
       })
     : await hentStatistikk(await getBackendOboToken(request), spørring);
   return { data, spørring, bruker };

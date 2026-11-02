@@ -9,10 +9,11 @@ const mineSakerOppsummeringSchema = z.object({
   nye: antallSchema,
   aktive: antallSchema,
   venter: antallSchema,
-  iBero: antallSchema,
+  // Utfases i backend: saker i bero telles nå i venter. Feltet er alltid 0 og brukes ikke.
+  iBero: antallSchema.optional(),
 });
 
-export type MineSakerOppsummering = z.infer<typeof mineSakerOppsummeringSchema>;
+export type MineSakerOppsummering = Omit<z.infer<typeof mineSakerOppsummeringSchema>, "iBero">;
 
 /** Henter antall av innlogget saksbehandlers åpne saker per kategori. Backend utleder identen fra tokenet. */
 export async function hentMineSakerOppsummering(token: string): Promise<MineSakerOppsummering> {
@@ -43,5 +44,6 @@ export async function hentMineSakerOppsummering(token: string): Promise<MineSake
     throw new Error("Ugyldig svar fra watson-admin-api (oppsummering av egne saker)");
   }
 
-  return resultat.data;
+  const { nye, aktive, venter } = resultat.data;
+  return { nye, aktive, venter };
 }

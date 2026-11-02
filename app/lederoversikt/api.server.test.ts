@@ -33,12 +33,17 @@ const gyldigRespons = {
       I_BERO: 0,
     },
     antallUfordelte: 1,
-    oyeblikksbilde: { totalt: 0, aktive: 0, venterPåAndre: 0, ikkeFordelt: 0 },
+    oyeblikksbilde: { totalt: 0, nye: 0, aktive: 0, venterPåAndre: 0, ikkeFordelt: 0 },
   },
   ansatte: {
     tilgjengelig: true,
     liste: [],
-    ufordelt: { totaltAntallIkkeAvsluttede: 1, antallOverFrist: 0 },
+    ufordelt: {
+      totaltAntallIkkeAvsluttede: 1,
+      antallOverFrist: 0,
+      antallAktive: 0,
+      antallAktiveOverFrist: 0,
+    },
   },
 };
 
