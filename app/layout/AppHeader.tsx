@@ -86,7 +86,7 @@ export function AppHeader() {
         action={RouteConfig.SØK}
         role="search"
         aria-label="Hurtigsøk"
-        className="flex min-w-0 max-w-[495px] flex-1 items-center self-stretch"
+        className="flex w-[495px] min-w-0 shrink items-center self-stretch"
         ref={skjemaRef}
         data-hurtigsøk-skjema
         onSubmit={(event) => {
