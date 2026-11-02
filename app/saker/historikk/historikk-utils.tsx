@@ -9,6 +9,7 @@ import {
   DownloadIcon,
   FilesIcon,
   GavelIcon,
+  LinkIcon,
   PaperplaneIcon,
   PencilIcon,
   PersonGroupIcon,
@@ -225,6 +226,8 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
       return "Sak delt";
     case "SAK_OVERFORT":
       return "Sak overført";
+    case "SAK_KOBLET":
+      return "Sak koblet";
     case "FIL_SLETTET":
       return "Fil slettet";
     case "FIL_OMDØPT":
@@ -261,7 +264,7 @@ export function hendelseBeskrivelse(
     return null;
   }
 
-  if (hendelse.hendelsesType === "SAK_REDIGERT") {
+  if (hendelse.hendelsesType === "SAK_REDIGERT" || hendelse.hendelsesType === "SAK_KOBLET") {
     return hendelse.beskrivelse ?? null;
   }
 
@@ -366,6 +369,8 @@ export function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
       return <CheckmarkCircleIcon {...iconProps} />;
     case "SAK_TILDELT":
       return <PersonIcon {...iconProps} />;
+    case "SAK_KOBLET":
+      return <LinkIcon {...iconProps} />;
     case "SAKSINFORMASJON_ENDRET":
       return <PencilIcon {...iconProps} />;
     case "MOTTAKSENHET_ENDRET":

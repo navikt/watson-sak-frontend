@@ -87,6 +87,13 @@ describe("hendelseBeskrivelse", () => {
 });
 
 describe("hendelseTittel", () => {
+  it("viser SAK_KOBLET som «Sak koblet» med beskrivelsen fra hendelsen", () => {
+    const hendelse = lagHendelse({ hendelsesType: "SAK_KOBLET", beskrivelse: "Koblet til sak 42" });
+
+    expect(hendelseTittel(hendelse)).toBe("Sak koblet");
+    expect(hendelseBeskrivelse(hendelse)).toBe("Koblet til sak 42");
+  });
+
   it("viser lesbar tittel når saksdetaljer er redigert", () => {
     const hendelse = lagHendelse({ hendelsesType: "SAK_REDIGERT" });
 
