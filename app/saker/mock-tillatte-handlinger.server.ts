@@ -288,7 +288,14 @@ function feltskjemaFor(steg: KontrollsakSteg): TillatteHandlingerResponse["felts
           ],
           DOMFELLELSE,
         ),
-        mockFelt("politi.emkBrudd", "Brudd på EMK art. 6?", "boolsk", true, [], DOMFELLELSE),
+        mockFelt(
+          "politi.emkBrudd",
+          "Brudd på EMK art. 6?",
+          "boolsk",
+          false,
+          [],
+          "politi.strafferabattLiggetid=NAV, POLITIET eller BEGGE",
+        ),
       ];
     default:
       return [];

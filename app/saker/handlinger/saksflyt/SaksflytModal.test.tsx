@@ -291,9 +291,13 @@ describe("SaksflytModal", () => {
     ).toHaveProperty("checked", true);
     expect(screen.getByRole("radiogroup", { name: "Medvirker? (påkrevd)" })).toBeDefined();
     expect(screen.getByRole("radiogroup", { name: /Strafferabatt\? \(påkrevd\)/ })).toBeDefined();
+    expect(screen.queryByRole("radiogroup", { name: /Brudd på EMK art\. 6\?/ })).toBeNull();
+    fireEvent.click(screen.getByRole("radio", { name: "Liggetid hos Nav" }));
     expect(
       screen.getByRole("radiogroup", { name: "Brudd på EMK art. 6? (påkrevd)" }),
     ).toBeDefined();
+    fireEvent.click(screen.getByRole("radio", { name: "Ingen strafferabatt" }));
+    expect(screen.queryByRole("radiogroup", { name: /Brudd på EMK art\. 6\?/ })).toBeNull();
     expect(screen.getByRole("radio", { name: "Ingen strafferabatt" })).toHaveProperty(
       "checked",
       true,
@@ -302,6 +306,7 @@ describe("SaksflytModal", () => {
       target: { value: "1,5" },
     });
     fireEvent.change(screen.getByLabelText("Bot (kr)"), { target: { value: "2500" } });
+    fireEvent.click(screen.getByRole("radio", { name: "Liggetid hos Nav" }));
     fireEvent.click(
       within(screen.getByRole("radiogroup", { name: "Medvirker? (påkrevd)" })).getByRole("radio", {
         name: "Ja",
