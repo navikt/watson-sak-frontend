@@ -16,12 +16,21 @@ function hentFeilmelding(data: unknown): string | null {
  */
 export function useModalInnsending(fetcher: FetcherMedData, onSuksess: () => void) {
   const venterPåSvar = useRef(false);
+  // Svaret behandles først når vi har sett fetcheren i gang. Ellers kan en render rett etter
+  // `markerSendt` (mens fetcheren ennå er «idle») behandle det gamle svaret og overse det nye.
+  const harSettInnsending = useRef(false);
   const [feilmelding, setFeilmelding] = useState<string | null>(null);
   const [tekniskFeil, setTekniskFeil] = useState<{ teknisk: true; feilId: string } | null>(null);
 
   useEffect(() => {
-    if (!venterPåSvar.current || fetcher.state !== "idle") return;
+    if (!venterPåSvar.current) return;
+    if (fetcher.state !== "idle") {
+      harSettInnsending.current = true;
+      return;
+    }
+    if (!harSettInnsending.current) return;
     venterPåSvar.current = false;
+    harSettInnsending.current = false;
     const tekniskSvar = erTekniskFeilSvar(fetcher.data) ? fetcher.data : null;
     setTekniskFeil(tekniskSvar ? { teknisk: true, feilId: tekniskSvar.feilId } : null);
     const melding = tekniskSvar ? null : hentFeilmelding(fetcher.data);
@@ -34,6 +43,7 @@ export function useModalInnsending(fetcher: FetcherMedData, onSuksess: () => voi
     tekniskFeil,
     markerSendt: () => {
       venterPåSvar.current = true;
+      harSettInnsending.current = false;
       setFeilmelding(null);
       setTekniskFeil(null);
     },

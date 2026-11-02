@@ -118,7 +118,8 @@ function DokumentRedigering({
   const historikkData = useRef<Autolagringsdata | null>(null);
   const [editorVersjon, settEditorVersjon] = useState(0);
   const [historikkFeil, settHistorikkFeil] = useState<string | null>(null);
-  const [lagringsfeilId, settLagringsfeilId] = useState<string | undefined>();
+  // Satt når siste lagring feilet. feilId finnes bare når serveren svarte med teknisk feil.
+  const [lagringsfeil, settLagringsfeil] = useState<{ feilId?: string } | null>(null);
   const revalidator = useRevalidator();
   const revalidatorRef = useRef(revalidator);
 
@@ -135,7 +136,7 @@ function DokumentRedigering({
     redirectTo: () => sakUrl,
   });
 
-  const lagreUrl = RouteConfig.SAKER_DOKUMENT.replace(":sakId", sakReferanse).replace(
+  const lagreUrl = RouteConfig.API.SAK_DOKUMENT_LAGRE.replace(":sakId", sakReferanse).replace(
     ":docId",
     dokument.id,
   );
@@ -165,11 +166,10 @@ function DokumentRedigering({
         keepalive: forlater,
       });
       if (!respons.ok) {
-        const feilId = await hentTekniskFeilId(respons);
-        if (feilId) settLagringsfeilId(feilId);
+        settLagringsfeil({ feilId: await hentTekniskFeilId(respons) });
         throw new Error("Lagring feilet");
       }
-      settLagringsfeilId(undefined);
+      settLagringsfeil(null);
     },
     [lagreUrl],
   );
@@ -378,8 +378,8 @@ function DokumentRedigering({
         lagreStatus={
           <VStack gap="space-4">
             <LagreStatusVisning status={status} sistLagret={sistLagret} />
-            {lagringsfeilId !== undefined && (
-              <Feilmelding tittel="Vi fikk ikke lagret dokumentet" feilId={lagringsfeilId}>
+            {lagringsfeil && (
+              <Feilmelding tittel="Vi fikk ikke lagret dokumentet" feilId={lagringsfeil.feilId}>
                 Det du har skrevet, ligger fortsatt her. Sjekk at du er på nett, og prøv å lagre på
                 nytt om litt.
               </Feilmelding>
@@ -396,6 +396,7 @@ function DokumentRedigering({
         sletter={sletting.sletter}
         onBekreft={sletting.bekreft}
         onAvbryt={sletting.avbryt}
+        feil={sletting.feil}
       />
     </>
   );

@@ -30,6 +30,7 @@ export const RouteConfig = {
     FORHÅNDSUTFYLL_REGISTRER_SAK: "/api/registrer-sak/forhåndsutfyll",
     SAK_DOKUMENTER: "/api/saker/:sakId/dokumenter",
     SAK_DOKUMENT_HISTORIKK: "/api/saker/:sakId/dokumenter/:docId/historikk",
+    SAK_DOKUMENT_LAGRE: "/api/saker/:sakId/dokumenter/:docId/lagre",
     SAK_DOKUMENT_KOMMENTARER: "/api/saker/:sakId/dokumenter/:docId/kommentarer",
     SAK_FILER: "/api/saker/:sakId/filer",
     SAK_FIL: "/api/saker/:sakId/filer/:filId",

@@ -1,4 +1,5 @@
 import { data } from "react-router";
+import { erTekniskFeil } from "~/feilhåndtering/teknisk-feil.server";
 import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { env } from "~/config/env.server";
@@ -415,6 +416,7 @@ export async function backendAction(
         );
         return { ok: true };
       } catch (feil) {
+        if (erTekniskFeil(feil)) throw feil;
         return {
           ok: false,
           feil: { skjema: [koblingsFeilmelding(feil)] },
@@ -437,6 +439,7 @@ export async function backendAction(
         );
         return { ok: true };
       } catch (feil) {
+        if (erTekniskFeil(feil)) throw feil;
         return { ok: false, feil: { skjema: [historikkFeilmelding(feil)] } } satisfies ActionResult;
       }
     }
@@ -458,6 +461,7 @@ export async function backendAction(
         );
         return { ok: true };
       } catch (feil) {
+        if (erTekniskFeil(feil)) throw feil;
         return { ok: false, feil: { skjema: [historikkFeilmelding(feil)] } } satisfies ActionResult;
       }
     }
@@ -467,6 +471,7 @@ export async function backendAction(
         await backendApi.slettManuellHendelse(token, sakId, hendelseId);
         return { ok: true };
       } catch (feil) {
+        if (erTekniskFeil(feil)) throw feil;
         return { ok: false, feil: { skjema: [historikkFeilmelding(feil)] } } satisfies ActionResult;
       }
     }

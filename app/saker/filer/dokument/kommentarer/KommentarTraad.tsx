@@ -69,6 +69,27 @@ function Ankerbeskrivelse({
   );
 }
 
+type Feilhandling = "lagre" | "slette" | "løse" | "gjenåpne";
+
+const TEKNISKE_FEIL: Record<Feilhandling, { tittel: string; tekst: string }> = {
+  lagre: {
+    tittel: "Vi fikk ikke lagret kommentaren",
+    tekst: "Teksten ligger fortsatt i feltet. Prøv igjen om litt.",
+  },
+  slette: {
+    tittel: "Vi fikk ikke slettet kommentaren",
+    tekst: "Sjekk om kommentaren fortsatt vises før du prøver igjen.",
+  },
+  løse: {
+    tittel: "Vi fikk ikke markert kommentaren som løst",
+    tekst: "Prøv igjen om litt.",
+  },
+  gjenåpne: {
+    tittel: "Vi fikk ikke gjenåpnet kommentaren",
+    tekst: "Prøv igjen om litt.",
+  },
+};
+
 function KommentarRad({
   kommentar,
   kanEndre,
@@ -195,6 +216,7 @@ export function KommentarTraad({
 }: KommentarTraadProps) {
   const [svarer, settSvarer] = useState(false);
   const [feil, settFeil] = useState<{
+    handling: Feilhandling;
     melding: string;
     teknisk?: true;
     feilId?: string;
@@ -203,7 +225,7 @@ export function KommentarTraad({
   function håndterResultat(
     resultat: MutasjonResultat,
     suksessmelding: string,
-    visTekniskFeil = true,
+    handling: Feilhandling,
   ): boolean {
     if (resultat.ok) {
       settFeil(null);
@@ -211,9 +233,10 @@ export function KommentarTraad({
       return true;
     }
     settFeil({
+      handling,
       melding: resultat.melding,
-      ...(visTekniskFeil && resultat.teknisk && { teknisk: true }),
-      ...(visTekniskFeil && resultat.teknisk && resultat.feilId && { feilId: resultat.feilId }),
+      ...(resultat.teknisk && { teknisk: true }),
+      ...(resultat.teknisk && resultat.feilId && { feilId: resultat.feilId }),
     });
     return false;
   }
@@ -299,21 +322,21 @@ export function KommentarTraad({
               const resultat = await handlinger.rediger(kommentar, tekst);
               if (resultat.ok) kommentarAnalytics.redigert(traad.ankertype);
               else kommentarAnalytics.redigeringFeilet(traad.ankertype, resultatkode(resultat));
-              return håndterResultat(resultat, "Kommentaren er endret.");
+              return håndterResultat(resultat, "Kommentaren er endret.", "lagre");
             }}
             onSlett={async () => {
               const resultat = await handlinger.slett(kommentar);
               if (resultat.ok) kommentarAnalytics.slettet(traad.ankertype);
               else kommentarAnalytics.slettingFeilet(traad.ankertype, resultatkode(resultat));
-              håndterResultat(resultat, "Kommentaren er slettet.");
+              håndterResultat(resultat, "Kommentaren er slettet.", "slette");
             }}
           />
         ))}
       </VStack>
 
       {feil?.teknisk ? (
-        <Feilmelding tittel="Vi fikk ikke lagret kommentaren" feilId={feil.feilId}>
-          Teksten ligger fortsatt i feltet. Prøv igjen om litt.
+        <Feilmelding tittel={TEKNISKE_FEIL[feil.handling].tittel} feilId={feil.feilId}>
+          {TEKNISKE_FEIL[feil.handling].tekst}
         </Feilmelding>
       ) : (
         feil && (
@@ -335,7 +358,7 @@ export function KommentarTraad({
                 const resultat = await handlinger.svar(traad, tekst);
                 if (resultat.ok) kommentarAnalytics.svarOpprettet(traad.ankertype);
                 else kommentarAnalytics.svarFeilet(traad.ankertype, resultatkode(resultat));
-                const ok = håndterResultat(resultat, "Svaret er lagt til.");
+                const ok = håndterResultat(resultat, "Svaret er lagt til.", "lagre");
                 if (ok) settSvarer(false);
                 return ok;
               }}
@@ -367,7 +390,7 @@ export function KommentarTraad({
                       "løs",
                       resultatkode(resultat),
                     );
-                  håndterResultat(resultat, "Kommentaren er markert som løst.", false);
+                  håndterResultat(resultat, "Kommentaren er markert som løst.", "løse");
                 }}
               >
                 Marker som løst
@@ -394,7 +417,7 @@ export function KommentarTraad({
                 "gjenåpne",
                 resultatkode(resultat),
               );
-            håndterResultat(resultat, "Kommentaren er gjenåpnet.", false);
+            håndterResultat(resultat, "Kommentaren er gjenåpnet.", "gjenåpne");
           }}
         >
           Gjenåpne

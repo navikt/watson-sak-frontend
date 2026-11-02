@@ -330,9 +330,9 @@ describe("KommentarPanel", () => {
 
     await waitFor(() => expect(handlinger.slett).toHaveBeenCalled());
     expect(
-      screen.getAllByText("Teksten ligger fortsatt i feltet. Prøv igjen om litt."),
-    ).toHaveLength(2);
-    expect(screen.getAllByText("Vi fikk ikke lagret kommentaren")).toHaveLength(2);
+      screen.getByText("Sjekk om kommentaren fortsatt vises før du prøver igjen."),
+    ).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Vi fikk ikke slettet kommentaren" })).toBeDefined();
   });
 
   it("lar deg svare på en tråd", async () => {

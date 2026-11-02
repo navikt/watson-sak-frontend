@@ -17,6 +17,7 @@ describe("useModalInnsending", () => {
     );
 
     act(() => result.current.markerSendt());
+    rerender({ fetcher: { state: "submitting" } as Fetcher });
     rerender({ fetcher: { state: "idle", data: { ok: true } } });
 
     expect(onSuksess).toHaveBeenCalledOnce();
@@ -32,6 +33,7 @@ describe("useModalInnsending", () => {
     );
 
     act(() => result.current.markerSendt());
+    rerender({ fetcher: { state: "submitting" } as Fetcher });
     rerender({ fetcher: { state: "idle", data: { ok: false, feil: "Saken er avsluttet" } } });
 
     expect(onSuksess).not.toHaveBeenCalled();
@@ -48,6 +50,7 @@ describe("useModalInnsending", () => {
     );
 
     act(() => result.current.markerSendt());
+    rerender({ fetcher: { state: "submitting" } as Fetcher });
     rerender({
       fetcher: {
         state: "idle",
@@ -62,5 +65,29 @@ describe("useModalInnsending", () => {
       "Vi fikk ikke lagret endringen",
     );
     expect(screen.getByText("feil-123").textContent).toBe("feil-123");
+  });
+
+  it("behandler svaret på nytt forsøk, ikke det gamle, etter en teknisk feil", () => {
+    const tekniskFeil = { ok: false, feil: "Intern feil", feilId: "feil-1", teknisk: true };
+    const { result, rerender } = renderHook(
+      ({ fetcher, onSuksess }) => useModalInnsending(fetcher, onSuksess),
+      { initialProps: { fetcher: { state: "idle" } as Fetcher, onSuksess: vi.fn() } },
+    );
+
+    act(() => result.current.markerSendt());
+    rerender({ fetcher: { state: "submitting" }, onSuksess: vi.fn() });
+    rerender({ fetcher: { state: "idle", data: tekniskFeil }, onSuksess: vi.fn() });
+    expect(result.current.tekniskFeil?.feilId).toBe("feil-1");
+
+    // Nytt forsøk: render med det gamle svaret og ny onSuksess før fetcheren starter.
+    const onSuksess = vi.fn();
+    act(() => result.current.markerSendt());
+    rerender({ fetcher: { state: "idle", data: tekniskFeil }, onSuksess });
+    expect(onSuksess).not.toHaveBeenCalled();
+
+    rerender({ fetcher: { state: "submitting", data: tekniskFeil }, onSuksess });
+    rerender({ fetcher: { state: "idle", data: { ok: true } }, onSuksess });
+    expect(onSuksess).toHaveBeenCalledOnce();
+    expect(result.current.tekniskFeil).toBeNull();
   });
 });

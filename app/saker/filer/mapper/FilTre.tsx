@@ -529,6 +529,7 @@ export function FilTre({
         sletter={sletting.sletter}
         onBekreft={sletting.bekreft}
         onAvbryt={sletting.avbryt}
+        feil={sletting.feil}
       />
     </div>
   );

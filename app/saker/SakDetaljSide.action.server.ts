@@ -11,6 +11,15 @@ import { erTildelingshandling } from "~/saker/SakDetaljSide.felles.server";
 
 // --- Action ---
 
+/**
+ * `handling` kommer fra skjemaet og kan være hva som helst. Bare kjente handlingsnavn
+ * (bokstaver og understrek) havner i loggen, ellers en fast tekst. Da kan ikke en
+ * innsendt verdi med persondata havne i loggen.
+ */
+function loggkontekstFor(handling: string): string {
+  return /^[A-Za-z_]{1,40}$/.test(handling) ? `utføre ${handling}` : "utføre ukjent handling";
+}
+
 export async function action({ request, params }: Route.ActionArgs) {
   const sakId = parseSakId(params.sakId);
   const formData = await request.formData();
@@ -31,13 +40,13 @@ export async function action({ request, params }: Route.ActionArgs) {
       if (erTildelingshandling(handling) && erTilgangsfeil(feil)) {
         return data<SaksflytFeil>({ ok: false, feil: tilgangsfeilmelding(feil) }, { status: 403 });
       }
-      return tekniskFeilSvar(feil, { kontekst: `utføre ${handling}`, sakId, request });
+      return tekniskFeilSvar(feil, { kontekst: loggkontekstFor(handling), sakId, request });
     }
   }
   try {
     return await utfør();
   } catch (feil) {
-    return saksflytfeil(feil, { kontekst: `utføre ${handling}`, sakId, request });
+    return saksflytfeil(feil, { kontekst: loggkontekstFor(handling), sakId, request });
   }
 }
 

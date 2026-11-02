@@ -35,7 +35,22 @@ describe("fjernPersondata", () => {
     expect(vasket).not.toContain("Ola");
     expect(vasket).not.toContain("Kari");
     expect(vasket).toContain("Request failed: https://watson.example/sok (status 500)");
-    expect(vasket).toContain("Feil ved /saker/1, prøv igjen");
+    expect(vasket).toContain("Feil ved /saker/1 prøv igjen");
+  });
+
+  it("fjerner hele queryen også når den inneholder komma og parenteser", () => {
+    const item = {
+      payload: {
+        value: "Request failed: https://watson.example/sok?navn=Ola,Nordmann&x=(Kari) status 500",
+        url: "https://watson.example/sok?navn=Ola,Nordmann",
+      },
+    } as unknown as TransportItem;
+
+    const vasket = JSON.stringify(fjernPersondata(item));
+
+    expect(vasket).not.toContain("Nordmann");
+    expect(vasket).not.toContain("Kari");
+    expect(vasket).toContain("Request failed: https://watson.example/sok status 500");
   });
 
   it("lar tall som ikke er 11 siffer stå", () => {

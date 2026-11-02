@@ -392,6 +392,9 @@ export function SaksbehandlereKort({
                 )}
               </HStack>
             )}
+            <Innsendingsfeil svar={fetcher.data} tittel="Vi fikk ikke fjernet tilgangen">
+              Sjekk om tilgangen er fjernet før du prøver igjen.
+            </Innsendingsfeil>
           </VStack>
 
           {erEier &&

@@ -824,7 +824,7 @@ describe("SaksbehandlereKort", () => {
     ).toBeDefined();
   });
 
-  it("viser kontekstuell feilmelding ved teknisk feil i saksbehandlerkortet", async () => {
+  it("viser kontekstuell feilmelding når fjerning av delt tilgang feiler teknisk", async () => {
     fetcherData = {
       ok: false,
       feil: "Intern feil",
@@ -835,14 +835,24 @@ describe("SaksbehandlereKort", () => {
     await renderMedRouter(
       <SaksbehandlereKort
         erEier={true}
-        sak={lagKontrollsak()}
-        saksbehandlerDetaljer={[lagSaksbehandler()]}
+        sak={lagKontrollsak({
+          saksbehandlere: {
+            eier: lagSaksbehandler(),
+            deltMed: [lagSaksbehandler({ navIdent: "Z888888", navn: "Ada Larsen" })],
+            opprettetAv: lagSaksbehandler(),
+          },
+        })}
+        saksbehandlerDetaljer={[
+          lagSaksbehandler(),
+          lagSaksbehandler({ navIdent: "Z888888", navn: "Ada Larsen" }),
+        ]}
         ansvarligSaksbehandler={lagSaksbehandler()}
       />,
     );
 
-    expect(screen.getByText("Vi fikk ikke lagret endringen")).toBeDefined();
-    expect(screen.getByText("ERR-456")).toBeDefined();
+    expect(screen.getByText("Vi fikk ikke fjernet tilgangen")).toBeDefined();
+    expect(screen.getByText("Sjekk om tilgangen er fjernet før du prøver igjen.")).toBeDefined();
+    expect(screen.getAllByText("ERR-456").length).toBeGreaterThan(0);
   });
 
   it("viser Tildel meg for ufordelt sak i bero", async () => {
