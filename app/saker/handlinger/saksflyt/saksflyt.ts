@@ -30,9 +30,7 @@ export type Trinn =
       grupper?: readonly { tittel: string; verdier: readonly string[] }[];
       /** Viser «Avbryt», som lukker modalen, i stedet for «Tilbake». */
       avbryt?: boolean;
-      primær: string | ((verdier: Verdier) => string);
-      /** Sender det valgte resultatet direkte uten å åpne skjematrinnet. */
-      lagreValgUtenNeste?: (verdier: Verdier) => boolean;
+      primær: string;
     }
   | { type: "status"; tittel: string; primær: string }
   | {
@@ -100,6 +98,7 @@ export const feltvisning: Readonly<Record<string, Feltvisning>> = {
   "politi.samfunnsstraffTimer": { enhet: "timer" },
   "politi.domfeltBelop": { enhet: "kr" },
   "politi.siviltRettskrav": { enhet: "kr" },
+  "politi.bot": { enhet: "kr" },
   "politi.strafferabattLiggetid": {
     beskrivelse:
       "Lang liggetid (saksbehandlingstid) hos Nav og/eller politiet kan gi redusert straff.",
@@ -297,9 +296,7 @@ const handlingstabell: Partial<Record<KontrollsakSteg, readonly Sakshandling[]>>
             { tittel: "Domstolen", verdier: ["FRIFINNELSE", "DOMFELLELSE"] },
           ],
           avbryt: true,
-          primær: (verdier) =>
-            verdier["politi.type"] === "PATALEUNNLATELSE" ? "Lagre resultat" : "Neste",
-          lagreValgUtenNeste: (verdier) => verdier["politi.type"] === "PATALEUNNLATELSE",
+          primær: "Neste",
         },
         {
           type: "skjema",
