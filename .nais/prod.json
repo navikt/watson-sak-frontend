@@ -2,7 +2,7 @@
   "MIN_REPLICAS": 2,
   "MAX_REPLICAS": 2,
   "INGRESS_URLS": ["https://watson-sak.ansatt.nav.no", "https://watson-sak.intern.nav.no"],
-  "CLAIM_GROUPS": ["a1d74637-a6fc-41a9-9277-f368ee6745b3", "206f49eb-51fb-4afe-b1b1-33cf2165aa23"],
+  "CLAIM_GROUPS": ["3d001f08-dde6-4093-b10d-da4569b9d178", "450df3a0-0fc2-4b4c-a7f3-d9caa48fd0fd"],
   "CLUSTER": "prod-gcp",
   "TENANT": "nav.no",
   "FARO_URL": "https://telemetry.nav.no/collect",
