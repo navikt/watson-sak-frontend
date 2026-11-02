@@ -305,7 +305,7 @@ describe("SaksflytModal", () => {
     fireEvent.change(screen.getByLabelText("Ubetinget fengsel (dager)"), {
       target: { value: "1,5" },
     });
-    fireEvent.change(screen.getByLabelText("Bot (kr)"), { target: { value: "2500" } });
+    fireEvent.change(screen.getByLabelText("Bot (kroner)"), { target: { value: "2500" } });
     fireEvent.click(screen.getByRole("radio", { name: "Liggetid hos Nav" }));
     fireEvent.click(
       within(screen.getByRole("radiogroup", { name: "Medvirker? (påkrevd)" })).getByRole("radio", {
@@ -354,20 +354,26 @@ describe("SaksflytModal", () => {
     });
   });
 
-  it("lagrer påtaleunnlatelse direkte uten årsak", async () => {
+  it("avslutter saken med påtaleunnlatelse uten årsak etter varsel om tilgang", async () => {
     renderModal({ steg: "POLITI", status: "VENTER_PA_RESULTAT" });
     klikk("Registrer resultat");
     await screen.findByRole("dialog", { name: "Registrer resultat" });
     fireEvent.click(screen.getByRole("radio", { name: "Påtaleunnlatelse" }));
-    klikk("Lagre resultat");
+    klikk("Neste");
+
+    expect(await screen.findByRole("heading", { name: "Påtaleunnlatelse" })).toBeDefined();
+    expect(screen.getByText("Tilgang til dokumenter og underlag")).toBeDefined();
+    expect(screen.queryByLabelText(/Årsak/)).toBeNull();
+    klikk("Lagre og avslutt");
 
     expect(await screen.findByText("Lagret")).toBeDefined();
     expect(sendtSkjema()).toEqual({
-      handling: "lagre_resultat",
+      handling: "endre_steg_dialog",
       versjon: "1",
+      steg: "AVSLUTTET",
+      registrerResultat: "true",
       "resultat.politi.type": "PATALEUNNLATELSE",
     });
-    expect(sendtSkjema()).not.toHaveProperty("resultat.politi.begrunnelse");
   });
 
   it("lukker modalen med Avbryt fra valget av resultat", async () => {
