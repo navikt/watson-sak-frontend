@@ -134,7 +134,7 @@ export function lagMockStatistikk(
       {
         label: "Saksbehandlingstid",
         verdi: "4 mnd",
-        forklaring: "Utredning (snitt)",
+        forklaring: "Utredes til avsluttet (snitt)",
         tone: "success",
       },
     ],
