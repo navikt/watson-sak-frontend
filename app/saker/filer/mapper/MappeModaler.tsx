@@ -2,6 +2,7 @@ import { FolderFileIcon, FolderPlusIcon, PencilIcon } from "@navikt/aksel-icons"
 import { Alert, Button, Modal, Select, TextField, VStack } from "@navikt/ds-react";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { sporHendelse } from "~/analytics/analytics";
+import { Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
 import { erLikEllerUnder, forelder, mappenavn, mappenavnSchema, slåSammen } from "./mappesti";
 import { useMappehandling } from "./useMappehandling";
 
@@ -22,6 +23,7 @@ interface MappeskjemaModalProps {
   lagreTekst: string;
   lagrer: boolean;
   serverfeil?: string;
+  tekniskFeilSvar?: unknown;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onClose: () => void;
   children: ReactNode;
@@ -33,6 +35,7 @@ function MappeskjemaModal({
   lagreTekst,
   lagrer,
   serverfeil,
+  tekniskFeilSvar,
   onSubmit,
   onClose,
   children,
@@ -48,6 +51,7 @@ function MappeskjemaModal({
       <form onSubmit={onSubmit}>
         <Modal.Body>
           <VStack gap="space-16">
+            <Innsendingsfeil svar={tekniskFeilSvar} />
             {serverfeil && (
               <Alert variant="error" size="small">
                 {serverfeil}
@@ -122,7 +126,7 @@ interface OpprettMappeModalProps {
 }
 
 export function OpprettMappeModal({ sakId, mapper, onClose }: OpprettMappeModalProps) {
-  const { utfør, pågår, feil } = useMappehandling(sakId, onClose);
+  const { utfør, pågår, feil, tekniskFeilSvar } = useMappehandling(sakId, onClose);
   const [navn, settNavn] = useState("");
   const [plassering, settPlassering] = useState(ROTNIVÅ);
   const [valideringsfeil, settValideringsfeil] = useState<string>();
@@ -146,6 +150,7 @@ export function OpprettMappeModal({ sakId, mapper, onClose }: OpprettMappeModalP
       lagreTekst="Opprett mappe"
       lagrer={pågår}
       serverfeil={feil}
+      tekniskFeilSvar={tekniskFeilSvar}
       onSubmit={lagre}
       onClose={onClose}
     >
@@ -176,7 +181,7 @@ interface GiNyttNavnMappeModalProps {
 }
 
 export function GiNyttNavnMappeModal({ sakId, sti, mapper, onClose }: GiNyttNavnMappeModalProps) {
-  const { utfør, pågår, feil } = useMappehandling(sakId, onClose);
+  const { utfør, pågår, feil, tekniskFeilSvar } = useMappehandling(sakId, onClose);
   const [navn, settNavn] = useState(mappenavn(sti));
   const [valideringsfeil, settValideringsfeil] = useState<string>();
 
@@ -203,6 +208,7 @@ export function GiNyttNavnMappeModal({ sakId, sti, mapper, onClose }: GiNyttNavn
       lagreTekst="Lagre navn"
       lagrer={pågår}
       serverfeil={feil}
+      tekniskFeilSvar={tekniskFeilSvar}
       onSubmit={lagre}
       onClose={onClose}
     >
@@ -227,7 +233,7 @@ interface FlyttTilMappeModalProps {
 
 /** Tastaturvennlig alternativ til dra og slipp: velg hvilken mappe elementet skal flyttes til. */
 export function FlyttTilMappeModal({ sakId, element, mapper, onClose }: FlyttTilMappeModalProps) {
-  const { utfør, pågår, feil } = useMappehandling(sakId, onClose);
+  const { utfør, pågår, feil, tekniskFeilSvar } = useMappehandling(sakId, onClose);
   const nåværende = element.type === "mappe" ? forelder(element.sti) : element.mappe;
   const [mål, settMål] = useState(nåværende ?? ROTNIVÅ);
   const [valideringsfeil, settValideringsfeil] = useState<string>();
@@ -271,6 +277,7 @@ export function FlyttTilMappeModal({ sakId, element, mapper, onClose }: FlyttTil
       lagreTekst="Flytt"
       lagrer={pågår}
       serverfeil={feil}
+      tekniskFeilSvar={tekniskFeilSvar}
       onSubmit={lagre}
       onClose={onClose}
     >

@@ -117,3 +117,9 @@ export async function hentEllerFeil<T>(
     return { status: "feil", feilId: loggTekniskFeil(feil, loggkontekst) };
   }
 }
+
+/** Som `tekniskFeilSvar`, men som `Response` for ressursruter som svarer med `Response.json`. */
+export function tekniskFeilResponse(feil: unknown, loggkontekst: Loggkontekst): Response {
+  const svar = tekniskFeilSvar(feil, loggkontekst);
+  return Response.json(svar.data, svar.init ?? { status: 500 });
+}

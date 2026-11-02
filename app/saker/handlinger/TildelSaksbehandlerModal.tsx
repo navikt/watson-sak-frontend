@@ -132,7 +132,9 @@ export function TildelSaksbehandlerModal({
           </VStack>
         </Modal.Body>
         <Modal.Footer>
-          <Innsendingsfeil svar={innsending.tekniskFeil} />
+          <Innsendingsfeil svar={innsending.tekniskFeil} tittel="Vi fikk ikke fordelt saken">
+            Sjekk om saken er fordelt før du prøver igjen.
+          </Innsendingsfeil>
           <Button type="submit" disabled={erSubmitting || !navIdentControl.value}>
             Tildel
           </Button>

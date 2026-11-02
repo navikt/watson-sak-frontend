@@ -40,9 +40,10 @@ const mockDokumenter: DokumentNode[] = [
 
 const mockMappeAction = vi.fn(async ({ request }: { request: Request }) => {
   mottatteMappehandlinger.push(await request.json());
-  return { ok: true };
+  return svarFraMappehandling;
 });
 let mottatteMappehandlinger: unknown[] = [];
+let svarFraMappehandling: unknown = { ok: true };
 
 const mockFilAction = vi.fn(async ({ request }: { request: Request }) => ({
   ok: true,
@@ -99,6 +100,7 @@ describe("FilTre", () => {
     mockFilAction.mockClear();
     mockMappeAction.mockClear();
     mottatteMappehandlinger = [];
+    svarFraMappehandling = { ok: true };
   });
 
   it("viser tomtilstand når det ikke er noen filer", async () => {
@@ -190,6 +192,30 @@ describe("FilTre", () => {
       "anmeldelse",
     );
     expect(screen.getByText("Filendelsen .pdf beholdes.")).toBeDefined();
+  });
+
+  it("viser teknisk feilmelding ved endring av mappenavn uten å lukke modal eller tømme navnet", async () => {
+    svarFraMappehandling = { ok: false, teknisk: true, feilId: "feil-123" };
+    await renderSeksjon({
+      mapper: ["Bank"],
+      filer: [],
+      sakId: "SAK-1",
+      kanEndreMapper: true,
+    });
+
+    await velgIMeny("mappen Bank", "Gi nytt navn");
+    fireEvent.change(screen.getByRole("textbox", { name: "Mappenavn" }), {
+      target: { value: "Ny Bank" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Lagre navn" }));
+
+    expect(await screen.findByText("Vi fikk ikke lagret endringen")).toBeDefined();
+    expect(screen.getByText("feil-123")).toBeDefined();
+    expect(screen.queryByText("Kunne ikke oppdatere mappene")).toBeNull();
+    expect(screen.getByRole("textbox", { name: "Mappenavn" }).getAttribute("value")).toBeNull();
+    expect((screen.getByRole("textbox", { name: "Mappenavn" }) as HTMLInputElement).value).toBe(
+      "Ny Bank",
+    );
   });
 
   it("viser valideringsfeil for ugyldig navn", async () => {

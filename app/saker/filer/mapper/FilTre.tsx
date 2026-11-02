@@ -20,6 +20,7 @@ import {
 import { useCallback, useId, useMemo, useRef, useState } from "react";
 import { Link as RouterLink } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
+import { Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
 import { RouteConfig } from "~/routeConfig";
 import { formaterDato as formaterDokumentdato } from "~/utils/date-utils";
 import { formaterStorrelse } from "~/utils/number-utils";
@@ -81,6 +82,8 @@ interface FilTreProps {
   lasterOpp?: boolean;
   /** Feilmelding fra en mislykket opplasting (styrt av `SakFilområde`). */
   feilFraServer?: string | null;
+  /** Teknisk svar fra en mislykket opplasting (styrt av `SakFilområde`). */
+  tekniskFeilSvar?: unknown;
 }
 
 /**
@@ -98,6 +101,7 @@ export function FilTre({
   kanEndreFiler,
   lasterOpp = false,
   feilFraServer = null,
+  tekniskFeilSvar,
 }: FilTreProps) {
   const tre = useMemo(() => byggFilTre(mapper, dokumenter, filer), [mapper, dokumenter, filer]);
   const alleMapper = useMemo(() => flatMappeliste(tre).map((mappe) => mappe.sti), [tre]);
@@ -402,11 +406,15 @@ export function FilTre({
       </div>
       {/* Feil fra opplasting og fra mappehandlinger vises hver for seg, så en gammel
           opplastingsfeil ikke skjuler feilen fra handlingen som nettopp feilet. */}
+      <Innsendingsfeil svar={tekniskFeilSvar} tittel="Vi fikk ikke lastet opp filen">
+        Sjekk om filen ligger i listen før du prøver igjen.
+      </Innsendingsfeil>
       {feilFraServer && (
         <Alert variant="error" size="small" className="mb-2">
           {feilFraServer}
         </Alert>
       )}
+      <Innsendingsfeil svar={mappehandling.tekniskFeilSvar} />
       {mappehandling.feil && (
         <Alert variant="error" size="small" className="mb-2">
           {mappehandling.feil}

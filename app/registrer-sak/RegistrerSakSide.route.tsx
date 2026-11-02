@@ -30,6 +30,7 @@ import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { useMiljø } from "~/miljø/useMiljø";
 import { RouteConfig } from "~/routeConfig";
+import { Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
 import { opprettSakSchema } from "~/registrer-sak/validering";
 import { GrunnleggendeSaksfelter } from "./GrunnleggendeSaksfelter";
 import {
@@ -446,6 +447,10 @@ export default function OpprettSakSide() {
 
                 {/* Submit-rad */}
                 <HStack gap="space-12" justify="end">
+                  <Innsendingsfeil svar={lastResult} tittel="Vi fikk ikke registrert saken">
+                    Det du har fylt inn, ligger fortsatt i skjemaet. Sjekk Mine saker om saken ble
+                    opprettet før du prøver igjen.
+                  </Innsendingsfeil>
                   <Button as={Link} to={RouteConfig.INDEX} variant="tertiary">
                     Avbryt
                   </Button>

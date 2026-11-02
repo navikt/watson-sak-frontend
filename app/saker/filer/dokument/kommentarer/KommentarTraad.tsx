@@ -8,6 +8,7 @@ import {
 } from "@navikt/aksel-icons";
 import { Alert, BodyLong, BodyShort, Button, Detail, HStack, Tag, VStack } from "@navikt/ds-react";
 import { useState } from "react";
+import { Feilmelding } from "~/feilhåndtering/Feilmelding";
 import { NORSK_TIDSSONE } from "~/utils/date-utils";
 import { elementEtikett, type AnkerTreff } from "./anker";
 import { KommentarSkjema } from "./KommentarSkjema";
@@ -193,15 +194,27 @@ export function KommentarTraad({
   onMelding,
 }: KommentarTraadProps) {
   const [svarer, settSvarer] = useState(false);
-  const [feil, settFeil] = useState<string | null>(null);
+  const [feil, settFeil] = useState<{
+    melding: string;
+    teknisk?: true;
+    feilId?: string;
+  } | null>(null);
 
-  function håndterResultat(resultat: MutasjonResultat, suksessmelding: string): boolean {
+  function håndterResultat(
+    resultat: MutasjonResultat,
+    suksessmelding: string,
+    visTekniskFeil = true,
+  ): boolean {
     if (resultat.ok) {
       settFeil(null);
       onMelding(suksessmelding);
       return true;
     }
-    settFeil(resultat.melding);
+    settFeil({
+      melding: resultat.melding,
+      ...(visTekniskFeil && resultat.teknisk && { teknisk: true }),
+      ...(visTekniskFeil && resultat.teknisk && resultat.feilId && { feilId: resultat.feilId }),
+    });
     return false;
   }
 
@@ -298,10 +311,16 @@ export function KommentarTraad({
         ))}
       </VStack>
 
-      {feil && (
-        <Alert variant="warning" size="small" inline>
-          {feil}
-        </Alert>
+      {feil?.teknisk ? (
+        <Feilmelding tittel="Vi fikk ikke lagret kommentaren" feilId={feil.feilId}>
+          Teksten ligger fortsatt i feltet. Prøv igjen om litt.
+        </Feilmelding>
+      ) : (
+        feil && (
+          <Alert variant="warning" size="small" inline>
+            {feil.melding}
+          </Alert>
+        )
       )}
 
       {kanEndreTråden && (
@@ -348,7 +367,7 @@ export function KommentarTraad({
                       "løs",
                       resultatkode(resultat),
                     );
-                  håndterResultat(resultat, "Kommentaren er markert som løst.");
+                  håndterResultat(resultat, "Kommentaren er markert som løst.", false);
                 }}
               >
                 Marker som løst
@@ -375,7 +394,7 @@ export function KommentarTraad({
                 "gjenåpne",
                 resultatkode(resultat),
               );
-            håndterResultat(resultat, "Kommentaren er gjenåpnet.");
+            håndterResultat(resultat, "Kommentaren er gjenåpnet.", false);
           }}
         >
           Gjenåpne

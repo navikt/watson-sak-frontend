@@ -1,6 +1,7 @@
 import { ChatIcon, PlusCircleIcon } from "@navikt/aksel-icons";
 import { Alert, BodyShort, Button, Detail, HStack, Switch, VStack } from "@navikt/ds-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Feilmelding } from "~/feilhåndtering/Feilmelding";
 import { elementEtikett, kategoriserElement, type AnkerTreff } from "./anker";
 import { KommentarSkjema } from "./KommentarSkjema";
 import { KommentarTraad } from "./KommentarTraad";
@@ -63,7 +64,11 @@ export function KommentarPanel({
 }: KommentarPanelProps) {
   const [visLoste, settVisLoste] = useState(false);
   const [statusmelding, settStatusmelding] = useState("");
-  const [utkastfeil, settUtkastfeil] = useState<string | null>(null);
+  const [utkastfeil, settUtkastfeil] = useState<{
+    melding: string;
+    teknisk?: true;
+    feilId?: string;
+  } | null>(null);
   const traadRefs = useRef(new Map<string, HTMLDivElement>());
 
   const sortert = useMemo(() => sorterTraader(traader, treffPerTraad), [traader, treffPerTraad]);
@@ -113,7 +118,11 @@ export function KommentarPanel({
       ...analyticsdata,
       resultat: resultat.konflikt ? "konflikt" : "feil",
     });
-    settUtkastfeil(resultat.melding);
+    settUtkastfeil({
+      melding: resultat.melding,
+      ...(resultat.teknisk && { teknisk: true }),
+      ...(resultat.feilId && { feilId: resultat.feilId }),
+    });
     return false;
   }
 
@@ -183,10 +192,16 @@ export function KommentarPanel({
               {utkast.opprinneligSitat}
             </BodyShort>
           )}
-          {utkastfeil && (
-            <Alert variant="warning" size="small" inline>
-              {utkastfeil}
-            </Alert>
+          {utkastfeil?.teknisk ? (
+            <Feilmelding tittel="Vi fikk ikke lagret kommentaren" feilId={utkastfeil.feilId}>
+              Teksten ligger fortsatt i feltet. Prøv igjen om litt.
+            </Feilmelding>
+          ) : (
+            utkastfeil && (
+              <Alert variant="warning" size="small" inline>
+                {utkastfeil.melding}
+              </Alert>
+            )
           )}
           <KommentarSkjema
             etikett="Kommentar"

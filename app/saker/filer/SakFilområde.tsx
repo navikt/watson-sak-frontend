@@ -8,6 +8,7 @@ import type { MalId } from "~/saker/filer/dokument/maler";
 import type { KontrollsakSteg } from "~/saker/types.backend";
 import { RouteConfig } from "~/routeConfig";
 import { formaterDato } from "~/utils/date-utils";
+import { erTekniskFeilSvar } from "~/feilhåndtering/Innsendingsfeil";
 import { TILLATTE_FILTYPER } from "./fil-type-utils";
 import { FilerSeksjonCaption } from "./FilerRad";
 import { flatMappeliste, byggFilTre } from "./mapper/bygg-filtre";
@@ -115,7 +116,9 @@ export function SakFilområde({
 }: SakFilområdeProps) {
   // Filopplasting eies her, siden «Last opp fil»-knappen ligger i den felles headeren for hele
   // «Filer»-kortet, mens opplastingsstatus (spinner/feilmelding) vises nede i mappetreet.
-  const opplastingFetcher = useFetcher<FilResponse | { message: string }>();
+  const opplastingFetcher = useFetcher<
+    FilResponse | { message: string } | { ok: false; feil?: string; feilId: string; teknisk: true }
+  >();
   const inputRef = useRef<HTMLInputElement>(null);
   const lasterOpp = opplastingFetcher.state !== "idle";
   const url = RouteConfig.API.SAK_FILER.replace(":sakId", sakId);
@@ -131,6 +134,7 @@ export function SakFilområde({
     klientfeil ??
     (opplastingFetcher.state === "idle" &&
     opplastingFetcher.data &&
+    !erTekniskFeilSvar(opplastingFetcher.data) &&
     "message" in opplastingFetcher.data
       ? opplastingFetcher.data.message
       : null);
@@ -250,6 +254,7 @@ export function SakFilområde({
             kanEndreFiler={kanEndreFiler}
             lasterOpp={lasterOpp}
             feilFraServer={feilFraServer}
+            tekniskFeilSvar={opplastingFetcher.data}
           />
         </VStack>
       </VStack>

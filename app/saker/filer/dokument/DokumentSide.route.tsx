@@ -10,6 +10,8 @@ import {
   useSearchParams,
 } from "react-router";
 import { DokumentIkkeFunnet } from "~/feilhåndtering/DokumentIkkeFunnet";
+import { Feilmelding } from "~/feilhåndtering/Feilmelding";
+import { hentTekniskFeilId } from "./lagringsfeil";
 import { finnEnhetsnavn } from "~/kodeverk/enheter";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
@@ -116,6 +118,7 @@ function DokumentRedigering({
   const historikkData = useRef<Autolagringsdata | null>(null);
   const [editorVersjon, settEditorVersjon] = useState(0);
   const [historikkFeil, settHistorikkFeil] = useState<string | null>(null);
+  const [lagringsfeilId, settLagringsfeilId] = useState<string | undefined>();
   const revalidator = useRevalidator();
   const revalidatorRef = useRef(revalidator);
 
@@ -162,8 +165,11 @@ function DokumentRedigering({
         keepalive: forlater,
       });
       if (!respons.ok) {
+        const feilId = await hentTekniskFeilId(respons);
+        if (feilId) settLagringsfeilId(feilId);
         throw new Error("Lagring feilet");
       }
+      settLagringsfeilId(undefined);
     },
     [lagreUrl],
   );
@@ -369,7 +375,17 @@ function DokumentRedigering({
             {historikkFeil && <Detail className="text-ax-text-danger">{historikkFeil}</Detail>}
           </>
         }
-        lagreStatus={<LagreStatusVisning status={status} sistLagret={sistLagret} />}
+        lagreStatus={
+          <VStack gap="space-4">
+            <LagreStatusVisning status={status} sistLagret={sistLagret} />
+            {lagringsfeilId !== undefined && (
+              <Feilmelding tittel="Vi fikk ikke lagret dokumentet" feilId={lagringsfeilId}>
+                Det du har skrevet, ligger fortsatt her. Sjekk at du er på nett, og prøv å lagre
+                igjen om litt.
+              </Feilmelding>
+            )}
+          </VStack>
+        }
         renderForhåndsvisning={() => (
           <PdfForhåndsvisning url={pdfForhåndsvisningUrl} sistLagret={sistLagret} erDemo={erDemo} />
         )}
