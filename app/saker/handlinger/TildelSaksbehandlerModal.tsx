@@ -5,6 +5,7 @@ import { Alert, BodyShort, Button, Modal, UNSAFE_Combobox, VStack } from "@navik
 import { useFetcher } from "react-router";
 import { z } from "zod";
 import { sporHendelse } from "~/analytics/analytics";
+import { Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
 import { useModalInnsending } from "~/saker/handlinger/useModalInnsending";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
@@ -131,6 +132,7 @@ export function TildelSaksbehandlerModal({
           </VStack>
         </Modal.Body>
         <Modal.Footer>
+          <Innsendingsfeil svar={innsending.tekniskFeil} />
           <Button type="submit" disabled={erSubmitting || !navIdentControl.value}>
             Tildel
           </Button>

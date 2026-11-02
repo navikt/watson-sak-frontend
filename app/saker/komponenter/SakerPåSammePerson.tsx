@@ -22,6 +22,7 @@ import {
 } from "@navikt/ds-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { Link, useFetcher, useSearchParams } from "react-router";
+import { erTekniskFeilSvar, Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
 import { finnEnhetsnavn } from "~/kodeverk/enheter";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { AvkortetTag } from "~/komponenter/AvkortetTag";
@@ -72,7 +73,11 @@ interface SakKortProps {
 }
 
 type Koblingshandling = "koble" | "fjerne";
-type KobleSakActionResult = { ok: true } | { ok: false; feil: { skjema?: string[] } };
+type TekniskFeilSvar = { ok: false; feil: string; feilId: string; teknisk: true };
+type KobleSakActionResult =
+  | { ok: true }
+  | { ok: false; feil: { skjema?: string[] } }
+  | TekniskFeilSvar;
 
 function SakDetaljfelt({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -384,6 +389,7 @@ export function SakerPåSammePerson({
       setValgtSak(null);
       return;
     }
+    if (erTekniskFeilSvar(fetcher.data)) return;
     setFeilmelding(fetcher.data?.feil.skjema?.[0] ?? "Kunne ikke endre koblingen. Prøv igjen.");
   }, [fetcher.data, fetcher.state]);
 
@@ -475,6 +481,7 @@ export function SakerPåSammePerson({
               )}
 
               {feilmelding && <Alert variant="error">{feilmelding}</Alert>}
+              <Innsendingsfeil svar={fetcher.data} />
             </VStack>
           </Modal.Body>
           <Modal.Footer>

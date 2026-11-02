@@ -30,11 +30,11 @@ class Logger {
     const serialisert: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(data)) {
       if (value instanceof Error) {
-        serialisert[key] = {
-          message: value.message,
-          stack: value.stack,
-          name: value.name,
-        };
+        // Feilmeldinger og stack kan inneholde persondata fra backend. Bare navn utenfor lokal utvikling.
+        serialisert[key] =
+          process.env.NODE_ENV === "development"
+            ? { name: value.name, message: value.message, stack: value.stack }
+            : { name: value.name };
       } else {
         serialisert[key] = value;
       }

@@ -23,7 +23,13 @@ import {
 
 export type MutasjonResultat =
   | { ok: true; traad: Kommentartraad }
-  | { ok: false; melding: string; konflikt: boolean };
+  | {
+      ok: false;
+      melding: string;
+      konflikt: boolean;
+      teknisk?: true;
+      feilId?: string;
+    };
 
 type Handling =
   | {
@@ -114,8 +120,27 @@ export function useKommentarer({ url, startListe }: { url: string; startListe: K
         }
 
         if (!respons.ok) {
-          const melding = await respons.text().catch(() => "");
-          return { ok: false, konflikt: false, melding: melding.trim() || GENERELL_FEIL };
+          const svartekst = await respons.text().catch(() => "");
+          let feilsvar: { feil?: unknown; teknisk?: unknown; feilId?: unknown } | null = null;
+          try {
+            feilsvar = JSON.parse(svartekst) as {
+              feil?: unknown;
+              teknisk?: unknown;
+              feilId?: unknown;
+            };
+          } catch {
+            // Andre feilsvar kan fortsatt være ren tekst.
+          }
+          return {
+            ok: false,
+            konflikt: false,
+            melding:
+              (typeof feilsvar?.feil === "string" && feilsvar.feil) ||
+              svartekst.trim() ||
+              GENERELL_FEIL,
+            ...(feilsvar?.teknisk === true && { teknisk: true as const }),
+            ...(typeof feilsvar?.feilId === "string" && { feilId: feilsvar.feilId }),
+          };
         }
 
         const svar = (await respons.json()) as { traad?: unknown };

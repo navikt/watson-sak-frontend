@@ -1,5 +1,6 @@
-import { BodyShort, Box, HGrid, Heading, Link, List, Page, VStack } from "@navikt/ds-react";
+import { BodyShort, Box, Button, HGrid, Heading, List, Page, VStack } from "@navikt/ds-react";
 import { ListItem } from "@navikt/ds-react/List";
+import { FEILEN_ER_REGISTRERT } from "~/feilhåndtering/Feilmelding";
 import { AppFooter } from "~/layout/AppFooter";
 import { AppHeader } from "~/layout/AppHeader";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
@@ -15,45 +16,56 @@ export function InternalServerError() {
             <VStack gap="space-16">
               <VStack gap="space-12" align="start">
                 <div>
-                  <BodyShort textColor="subtle" size="small">
-                    Statuskode 500
-                  </BodyShort>
                   <Heading level="1" size="large" spacing>
-                    Beklager, noe gikk galt.
+                    Vi fikk ikke vist siden
                   </Heading>
                   <BodyShort spacing>
-                    En teknisk feil på våre servere gjør at siden er utilgjengelig. Dette skyldes
-                    ikke noe du gjorde.
+                    Det skyldes en teknisk feil hos oss, ikke noe du gjorde.
                   </BodyShort>
                   <BodyShort>Du kan prøve å</BodyShort>
                   <Box marginBlock="space-16" asChild>
                     <List>
                       <ListItem>
                         vente noen minutter og{" "}
-                        <Link href="#" onClick={() => location.reload()}>
+                        <Button
+                          type="button"
+                          size="small"
+                          variant="tertiary"
+                          onClick={() => location.reload()}
+                        >
                           laste siden på nytt
-                        </Link>
+                        </Button>
                       </ListItem>
                       <ListItem>
-                        <Link href="#" onClick={() => history.back()}>
+                        <Button
+                          type="button"
+                          size="small"
+                          variant="tertiary"
+                          onClick={() => history.back()}
+                        >
                           gå tilbake til forrige side
-                        </Link>
+                        </Button>
                       </ListItem>
                     </List>
                   </Box>
-                  <BodyShort>Hvis problemet vedvarer, kan du melde inn feil i Porten.</BodyShort>
+                  <BodyShort>
+                    {FEILEN_ER_REGISTRERT} Hvis problemet fortsetter, kan du melde feilen i Porten.
+                  </BodyShort>
                 </div>
               </VStack>
 
               <div>
                 <Heading level="1" size="large" spacing>
-                  Something went wrong
+                  We could not show the page
                 </Heading>
                 <BodyShort spacing>
-                  This was caused by a technical fault on our servers. Please refresh this page or
-                  try again in a few minutes.{" "}
+                  This is due to a technical error on our end, not anything you did.
                 </BodyShort>
-                <BodyShort>If the problem persists, you can report the error in Porten.</BodyShort>
+                <BodyShort>Try again in a few minutes or go back to the previous page.</BodyShort>
+                <BodyShort>
+                  The error has been registered. If the problem persists, you can report the error
+                  in Porten.
+                </BodyShort>
               </div>
             </VStack>
           </HGrid>

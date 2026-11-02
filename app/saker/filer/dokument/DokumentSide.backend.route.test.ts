@@ -1,5 +1,6 @@
 import { data } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { BackendFeilException } from "~/saker/api-core.server";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import type { Route } from "./+types/DokumentSide.route";
 import { lagListe } from "./kommentarer/kommentar-fixtures";
@@ -8,6 +9,7 @@ const mockHentKontrollsak = vi.fn();
 const mockHentDokument = vi.fn();
 const mockHentDokumentHistorikk = vi.fn();
 const mockHentKommentarliste = vi.fn();
+const mockLagreDokument = vi.fn();
 
 vi.mock("~/config/env.server", () => ({
   skalBrukeMockdata: false,
@@ -30,6 +32,7 @@ vi.mock("~/saker/api.server", () => ({
   hentKontrollsak: mockHentKontrollsak,
   hentDokument: mockHentDokument,
   hentDokumentHistorikk: mockHentDokumentHistorikk,
+  lagreDokument: mockLagreDokument,
 }));
 
 vi.mock("../mapper/mapper.server", () => ({
@@ -163,6 +166,29 @@ describe("DokumentSide loader — kanEndreMapper", () => {
   });
 });
 
+describe("DokumentSide action — tekniske feil", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockHentKontrollsak.mockResolvedValue({ ...sak, steg: "UTREDES" });
+  });
+
+  it("returnerer teknisk feilsvar ved backendfeil uten å sende dokumentinnhold tilbake", async () => {
+    mockLagreDokument.mockRejectedValue(new BackendFeilException(500, "utilgjengelig"));
+
+    const resultat = await lagre();
+
+    expect(resultat).toMatchObject({
+      init: { status: 500 },
+      data: {
+        ok: false,
+        teknisk: true,
+        feilId: expect.stringMatching(/^[0-9a-f]{8}$/),
+      },
+    });
+    expect(JSON.stringify(resultat)).not.toContain("sensitivt dokumentinnhold");
+  });
+});
+
 async function hent() {
   const { loader } = await import("./DokumentSide.server");
   return loader({
@@ -171,4 +197,22 @@ async function hent() {
     ),
     params: { sakId: "42", docId: "3f2504e0-4f89-41d3-9a0c-0305e82c3301" },
   } as Route.LoaderArgs);
+}
+
+async function lagre() {
+  const { action } = await import("./DokumentSide.server");
+  return action({
+    request: new Request(
+      "http://localhost/saker/42/dokumenter/3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tittel: "Rapport",
+          innhold: [{ type: "p", children: [{ text: "sensitivt dokumentinnhold" }] }],
+        }),
+      },
+    ),
+    params: { sakId: "42", docId: "3f2504e0-4f89-41d3-9a0c-0305e82c3301" },
+  } as Route.ActionArgs);
 }

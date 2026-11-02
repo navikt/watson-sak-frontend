@@ -4,15 +4,21 @@ import { createReadableStreamFromReadable } from "@react-router/node";
 import { isbot } from "isbot";
 import type { RenderToPipeableStreamOptions } from "react-dom/server";
 import { renderToPipeableStream } from "react-dom/server";
-import type { EntryContext } from "react-router";
+import type { EntryContext, HandleErrorFunction } from "react-router";
 import { ServerRouter } from "react-router";
 import { env } from "~/config/env.server";
+import { loggTekniskFeil } from "~/feilhåndtering/teknisk-feil.server";
 import { logger } from "~/logging/logging";
 import { lagContentSecurityPolicy } from "~/sikkerhet/headers";
 import { NonceProvider } from "~/sikkerhet/nonce";
 import { lagNonce } from "~/sikkerhet/nonce.server";
 
 export const streamTimeout = 60_000;
+
+export const handleError: HandleErrorFunction = (error, { request }) => {
+  if (request.signal.aborted) return;
+  loggTekniskFeil(error, { kontekst: "server-rendering eller loader", request });
+};
 
 export default function handleRequest(
   request: Request,
@@ -78,7 +84,9 @@ export default function handleRequest(
         onError(error: unknown) {
           responseStatusCode = 500;
           if (shellRendered) {
-            logger.error("Error rendering shell", { error });
+            logger.error("Error rendering shell", {
+              feiltype: error instanceof Error ? error.name : typeof error,
+            });
           }
         },
       },

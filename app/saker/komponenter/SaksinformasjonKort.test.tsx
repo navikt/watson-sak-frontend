@@ -48,11 +48,12 @@ function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): Kontrolls
   };
 }
 
-function renderKort(sak: KontrollsakResponse) {
+function renderKort(sak: KontrollsakResponse, action?: () => unknown) {
   const router = createMemoryRouter(
     [
       {
         path: "/",
+        action,
         element: (
           <SaksinformasjonKort
             sak={sak}
@@ -140,5 +141,22 @@ describe("SaksinformasjonKort anmeldelsesfelter", () => {
     expect(screen.queryByRole("heading", { name: "Anmeldelse" })).toBeNull();
     expect(screen.queryByLabelText("Anmeldt beløp (kr)")).toBeNull();
     expect(screen.queryByLabelText("Politidistrikt")).toBeNull();
+  });
+
+  it("viser kontekstuell feilmelding og beholder skjemaet ved teknisk feil", async () => {
+    renderKort(lagKontrollsak(), () => ({
+      ok: false,
+      feil: "intern feil",
+      feilId: "feil-456",
+      teknisk: true,
+    }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Endre saksinformasjon" }));
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+
+    expect(await screen.findByText("Vi fikk ikke lagret endringen")).toBeDefined();
+    expect(screen.getByText("feil-456")).toBeDefined();
+    expect(screen.queryByText("intern feil")).toBeNull();
+    expect(screen.getByRole("heading", { name: "Anmeldelse" })).toBeDefined();
   });
 });

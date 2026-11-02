@@ -4,6 +4,7 @@ import { useFetcher } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import type { TillatteHandlingerResponse } from "~/saker/types.backend";
+import { erTekniskFeilSvar, Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
 import { byggLagreResultatRequest } from "../resultat-request";
 import {
   byggInnsending,
@@ -99,6 +100,8 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
       fetcher.data.ok
     ) {
       dispatch({ type: "lagret" });
+    } else if (erTekniskFeilSvar(fetcher.data)) {
+      dispatch({ type: "settFeil", feil: {} });
     } else {
       const melding =
         fetcher.data &&
@@ -207,6 +210,7 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
               onVelg={velgHandling}
               deaktivert={erSubmitting}
             />
+            <Innsendingsfeil svar={fetcher.data} />
             {generellFeil && <ErrorMessage showIcon>{generellFeil}</ErrorMessage>}
           </VStack>
         </Modal.Body>
@@ -278,6 +282,7 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
             (trinn.type === "skjema" && trinn.visAvslutningsvarsel?.(alleVerdier))) && (
             <Avslutningsvarsel />
           )}
+          <Innsendingsfeil svar={fetcher.data} />
           {generellFeil && <ErrorMessage showIcon>{generellFeil}</ErrorMessage>}
         </VStack>
       </Modal.Body>

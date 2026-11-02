@@ -12,7 +12,9 @@ import { SaksbehandlereKort } from "./SaksbehandlereKort";
 
 const submitMock = vi.fn();
 const navigateMock = vi.fn();
-let fetcherData: { ok: boolean; feil?: string } | undefined;
+let fetcherData:
+  | { ok: boolean; feil?: string | { skjema?: string[] }; feilId?: string; teknisk?: boolean }
+  | undefined;
 
 vi.mock("react-router", async () => {
   const actual = await vi.importActual<typeof import("react-router")>("react-router");
@@ -820,6 +822,27 @@ describe("SaksbehandlereKort", () => {
         "Ansvarlig saksbehandler kan bare fjernes i steget Opprettet eller Strafferettslig vurdering",
       ),
     ).toBeDefined();
+  });
+
+  it("viser kontekstuell feilmelding ved teknisk feil i saksbehandlerkortet", async () => {
+    fetcherData = {
+      ok: false,
+      feil: "Intern feil",
+      feilId: "ERR-456",
+      teknisk: true,
+    };
+
+    await renderMedRouter(
+      <SaksbehandlereKort
+        erEier={true}
+        sak={lagKontrollsak()}
+        saksbehandlerDetaljer={[lagSaksbehandler()]}
+        ansvarligSaksbehandler={lagSaksbehandler()}
+      />,
+    );
+
+    expect(screen.getByText("Vi fikk ikke lagret endringen")).toBeDefined();
+    expect(screen.getByText("ERR-456")).toBeDefined();
   });
 
   it("viser Tildel meg for ufordelt sak i bero", async () => {

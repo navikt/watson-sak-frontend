@@ -51,16 +51,19 @@ function lagKontrollsak(
   };
 }
 
-async function renderMedRouter(ui: React.ReactNode) {
+async function renderMedRouter(ui: React.ReactNode, tekniskFeil = false) {
   const router = createMemoryRouter(
     [
       {
         path: "/",
         element: ui,
-        action: async () => ({
-          ok: false as const,
-          feil: { skjema: ["Denne funksjonen er ikke tilgjengelig ennå."] },
-        }),
+        action: async () =>
+          tekniskFeil
+            ? { ok: false as const, feil: "Intern feil", feilId: "ERR-123", teknisk: true as const }
+            : {
+                ok: false as const,
+                feil: { skjema: ["Denne funksjonen er ikke tilgjengelig ennå."] },
+              },
       },
     ],
     {
@@ -305,6 +308,25 @@ describe("SakerPåSammePerson", () => {
     await waitFor(() => {});
 
     expect(await screen.findByText("Denne funksjonen er ikke tilgjengelig ennå.")).toBeDefined();
+  });
+
+  it("viser kontekstuell feilmelding ved teknisk feil i koblingen", async () => {
+    await renderMedRouter(
+      <SakerPåSammePerson
+        saker={[lagKontrollsak("203")]}
+        gjeldendeSak={lagKontrollsak("105")}
+        innloggetNavIdent="Z999999"
+      />,
+      true,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Vis detaljer for sak 203" }));
+    fireEvent.click(screen.getByRole("button", { name: "Koble til sak" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "Koble til sak" })[1]);
+
+    expect(await screen.findByText("Vi fikk ikke lagret endringen")).toBeDefined();
+    expect(screen.getByText("ERR-123")).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Koble til sak" })).toBeDefined();
   });
 
   it("viser frakoblingsmodal for koblede saker", async () => {

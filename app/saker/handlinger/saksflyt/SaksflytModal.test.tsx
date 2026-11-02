@@ -501,4 +501,17 @@ describe("SaksflytModal", () => {
     ).toBeDefined();
     expect(screen.getByRole("dialog", { name: "Avslutt sak" })).toBeDefined();
   });
+
+  it("viser kontekstuell feilmelding ved teknisk feil", async () => {
+    mockSvar = { ok: false, feil: "intern feil", feilId: "feil-123", teknisk: true };
+    renderModal({ steg: "OPPRETTET", status: null });
+    klikk("Gå til utredning");
+
+    expect(await screen.findByText("Vi fikk ikke lagret endringen")).toBeDefined();
+    expect(screen.getByText("feil-123")).toBeDefined();
+    expect(screen.queryByText("intern feil")).toBeNull();
+    expect(
+      screen.getByRole("dialog", { name: "Endre steg eller registrer resultat" }),
+    ).toBeDefined();
+  });
 });

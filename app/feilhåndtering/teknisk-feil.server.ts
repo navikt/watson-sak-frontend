@@ -49,9 +49,18 @@ export function loggTekniskFeil(feil: unknown, { kontekst, sakId, request }: Log
     feiltype: feil instanceof Error ? feil.name : typeof feil,
     status: statusFra(feil),
     ...(sakId !== undefined && { sakId: String(sakId) }),
-    ...(request && { sti: new URL(request.url).pathname }),
+    ...(request && { sti: stiFra(request) }),
   });
   return feilId;
+}
+
+/** Bare pathname, aldri query (kan inneholde fnr). Logging skal aldri kaste. */
+function stiFra(request: Request): string | undefined {
+  try {
+    return new URL(request.url).pathname;
+  } catch {
+    return undefined;
+  }
 }
 
 function statusFra(feil: unknown): number | undefined {

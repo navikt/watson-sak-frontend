@@ -29,6 +29,7 @@ import type { YtelseRadVerdier } from "~/registrer-sak/skjema-helpers";
 import { kanRedigereAnmeldelse } from "~/saker/anmeldelse";
 import { erGyldigPolitidistrikt, POLITIDISTRIKTER } from "~/saker/politidistrikter";
 import { Beløpsfelt } from "~/formaterte-inputfelt/FormaterteInputfelt";
+import { erTekniskFeilSvar, Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
 import { merkingEtikett } from "~/saker/kategorier";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { formaterIsoTilNorskDato, getPersonIdent } from "~/saker/visning";
@@ -185,7 +186,9 @@ export function SaksinformasjonKort({
     [kodeverk.misbrukstyper],
   );
   const feil: Record<string, string[]> | undefined =
-    visFeil && fetcher.data && !fetcher.data.ok ? fetcher.data.feil : undefined;
+    visFeil && fetcher.data && !fetcher.data.ok && !erTekniskFeilSvar(fetcher.data)
+      ? fetcher.data.feil
+      : undefined;
   const feilElementer = samleFeilElementer(feil);
   const errorSummaryId = useId();
   const harUlagredeEndringer = redigerer && !erLikeRedigeringsdata(lokaleVerdier, utgangspunkt);
@@ -215,7 +218,7 @@ export function SaksinformasjonKort({
 
     if (fetcher.data && !fetcher.data.ok) {
       setVisFeil(true);
-      if (fetcher.data.verdier) {
+      if ("verdier" in fetcher.data && fetcher.data.verdier) {
         setLokaleVerdier(fetcher.data.verdier);
       }
     }
@@ -322,6 +325,7 @@ export function SaksinformasjonKort({
                 </ErrorSummary>
               )}
 
+              <Innsendingsfeil svar={fetcher.data} />
               {feil?.skjema?.[0] && <Alert variant="error">{feil.skjema[0]}</Alert>}
 
               <VStack gap="space-1">

@@ -33,7 +33,6 @@ export function Feilmelding({
   size = "small",
   headingLevel = "3",
 }: Props) {
-  const revalidator = useRevalidator();
   return (
     <Alert variant="error" size={size} role="alert">
       <VStack gap="space-8" align="start">
@@ -50,18 +49,24 @@ export function Feilmelding({
             </>
           )}
         </BodyShort>
-        {kanPrøveIgjen && (
-          <Button
-            type="button"
-            size="small"
-            variant="secondary"
-            loading={revalidator.state === "loading"}
-            onClick={() => revalidator.revalidate()}
-          >
-            Prøv igjen
-          </Button>
-        )}
+        {kanPrøveIgjen && <PrøvIgjenKnapp />}
       </VStack>
     </Alert>
+  );
+}
+
+/** Egen komponent, så `useRevalidator` bare kalles når knappen vises (krever data router). */
+function PrøvIgjenKnapp() {
+  const revalidator = useRevalidator();
+  return (
+    <Button
+      type="button"
+      size="small"
+      variant="secondary"
+      loading={revalidator.state === "loading"}
+      onClick={() => revalidator.revalidate()}
+    >
+      Prøv igjen
+    </Button>
   );
 }
