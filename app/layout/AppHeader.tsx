@@ -1,5 +1,5 @@
 import { BooksIcon, LeaveIcon, LightBulbIcon, MenuGridIcon, PersonIcon } from "@navikt/aksel-icons";
-import { ActionMenu, InternalHeader, Spacer, Tag } from "@navikt/ds-react";
+import { ActionMenu, BodyShort, HelpText, InternalHeader, Spacer, Tag } from "@navikt/ds-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Form, Link, useLocation } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
@@ -118,6 +118,16 @@ export function AppHeader() {
           onKeyDown={handleSøkefeltKeyDown}
         />
       </Form>
+      <HelpText title="Hva kan du søke på?" placement="bottom" wrapperClassName="self-center ml-2">
+        <BodyShort spacing>Du kan søke på:</BodyShort>
+        <ul className="m-0 mb-3 list-disc pl-5">
+          <li>Saksnummer</li>
+          <li>PID (bare saker opprettet i Watson Sak)</li>
+          <li>Fødsels- eller d-nummer (11 siffer)</li>
+          <li>Organisasjonsnummer (9 siffer)</li>
+        </ul>
+        <BodyShort>Mellomrom spiller ingen rolle.</BodyShort>
+      </HelpText>
       <Spacer />
       <VarselBjelle />
       <ActionMenu>
