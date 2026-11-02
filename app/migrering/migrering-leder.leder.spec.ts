@@ -16,7 +16,7 @@ test.describe("Flytt fra Access for leder", () => {
     await expect(page.getByRole("table")).toHaveCount(1);
     for (const kolonne of [
       "PID",
-      "Fødsels- eller D-nummer",
+      "Fødsels- eller d-nummer",
       "Opprettet i Access",
       "Status",
       "Saksbehandler",

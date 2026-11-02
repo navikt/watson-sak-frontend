@@ -15,7 +15,7 @@ export async function action({ request }: { request: Request }) {
   const fnr = (hentValgfriTekst(formData, "fnr") ?? "").replace(/\s/g, "");
 
   if (!fnr || !/^\d{11}$/.test(fnr)) {
-    return Response.json({ feil: "Ugyldig fødsels- eller D-nummer" }, { status: 400 });
+    return Response.json({ feil: "Ugyldig fødsels- eller d-nummer" }, { status: 400 });
   }
 
   if (skalBrukeMockdata) {
