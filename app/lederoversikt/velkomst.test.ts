@@ -31,7 +31,7 @@ describe("lagLederVelkomstOppsummering", () => {
   test("viser egen tekst når enheten ikke har åpne saker", () => {
     expect(
       lagLederVelkomstOppsummering(
-        lagEnhet({ totalt: 0, aktive: 0, venterPåAndre: 0, ikkeFordelt: 0 }),
+        lagEnhet({ totalt: 0, nye: 0, aktive: 0, venterPåAndre: 0, ikkeFordelt: 0 }),
         "Nord",
       ),
     ).toBe("Enheten Nord har ingen åpne saker akkurat nå.");
@@ -40,7 +40,7 @@ describe("lagLederVelkomstOppsummering", () => {
   test("viser alle tre deltall fra øyeblikksbildet", () => {
     expect(
       lagLederVelkomstOppsummering(
-        lagEnhet({ totalt: 42, aktive: 18, venterPåAndre: 12, ikkeFordelt: 3 }),
+        lagEnhet({ totalt: 42, nye: 0, aktive: 18, venterPåAndre: 12, ikkeFordelt: 3 }),
         "Øst",
       ),
     ).toBe("Enheten Øst har 42 åpne saker. 18 er aktive, 12 venter på andre og 3 er ikke fordelt.");
@@ -49,7 +49,7 @@ describe("lagLederVelkomstOppsummering", () => {
   test("utelater deltall som er 0 og bruker entall", () => {
     expect(
       lagLederVelkomstOppsummering(
-        lagEnhet({ totalt: 1, aktive: 1, venterPåAndre: 0, ikkeFordelt: 0 }),
+        lagEnhet({ totalt: 1, nye: 0, aktive: 1, venterPåAndre: 0, ikkeFordelt: 0 }),
         "Vest",
       ),
     ).toBe("Enheten Vest har 1 åpen sak. 1 er aktiv.");
@@ -58,7 +58,7 @@ describe("lagLederVelkomstOppsummering", () => {
   test("viser bare totalen når ingen deltall er over 0", () => {
     expect(
       lagLederVelkomstOppsummering(
-        lagEnhet({ totalt: 4, aktive: 0, venterPåAndre: 0, ikkeFordelt: 0 }),
+        lagEnhet({ totalt: 4, nye: 0, aktive: 0, venterPåAndre: 0, ikkeFordelt: 0 }),
         "Sør",
       ),
     ).toBe("Enheten Sør har 4 åpne saker.");
@@ -67,7 +67,7 @@ describe("lagLederVelkomstOppsummering", () => {
   test("viser ikke saker over frist", () => {
     expect(
       lagLederVelkomstOppsummering(
-        lagEnhet({ totalt: 2, aktive: 0, venterPåAndre: 2, ikkeFordelt: 0 }),
+        lagEnhet({ totalt: 2, nye: 0, aktive: 0, venterPåAndre: 2, ikkeFordelt: 0 }),
         "Nord",
       ),
     ).not.toContain("frist");

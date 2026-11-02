@@ -26,6 +26,11 @@ const sakstallSchema = z.object({
   antallOverFrist: antallSchema,
 });
 
+const ansattSakstallSchema = sakstallSchema.extend({
+  antallAktive: antallSchema,
+  antallAktiveOverFrist: antallSchema,
+});
+
 export const lederStatistikkResponseSchema = z.object({
   enhetId: z.string().min(1),
   enhetNavn: z.string().min(1),
@@ -50,6 +55,7 @@ export const lederStatistikkResponseSchema = z.object({
     /** Samme tall som de fire første nøkkeltallene i øyeblikksbildet på statistikksiden. */
     oyeblikksbilde: z.object({
       totalt: antallSchema,
+      nye: antallSchema,
       aktive: antallSchema,
       venterPåAndre: antallSchema,
       ikkeFordelt: antallSchema,
@@ -58,14 +64,14 @@ export const lederStatistikkResponseSchema = z.object({
   ansatte: z.object({
     tilgjengelig: z.boolean(),
     liste: z.array(
-      sakstallSchema
+      ansattSakstallSchema
         .extend({
           navn: z.string().min(1),
           navIdent: z.string().min(1),
         })
         .transform((ansatt) => ({ ...ansatt, navn: visningsnavn(ansatt.navIdent, ansatt.navn) })),
     ),
-    ufordelt: sakstallSchema,
+    ufordelt: ansattSakstallSchema,
   }),
   /** Enhetene lederen kan velge mellom. Har mer enn ett element når lederen leder flere enheter. */
   ledetEnheter: z.array(z.object({ id: z.string().min(1), navn: z.string().min(1) })).default([]),

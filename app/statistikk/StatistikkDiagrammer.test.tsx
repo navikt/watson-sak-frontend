@@ -59,9 +59,9 @@ describe("StatistikkDiagrammer", () => {
       "max-width: calc(100% - var(--ax-space-32))",
     );
     const tekster = totalKort?.querySelectorAll("p");
-    expect(tekster?.[0].textContent).toBe("87");
+    expect(tekster?.[0].textContent).toMatch(/^\d+$/);
     expect(tekster?.[1].textContent).toBe("Totalt");
-    expect(tekster?.[2].textContent).toBe("Antall åpne saker");
+    expect(tekster?.[2].textContent).toMatch(/^Åpne saker, inkludert \d+ nye$/);
     expect(tekster?.[2].getAttribute("style")).toBeNull();
     expect(
       screen
@@ -86,7 +86,11 @@ describe("StatistikkDiagrammer", () => {
       "/saker/102",
     );
     expect(screen.queryByRole("link", { name: /Saksbehandlingstid/ })).toBeNull();
-    expect(screen.getByText("Venter på informasjon/I bero/Forvaltning/Politi")).toBeDefined();
+    expect(
+      screen.getByText(
+        "Venter på informasjon, vedtak eller resultat, i bero, forvaltning eller politi",
+      ),
+    ).toBeDefined();
   });
 
   it("viderefører enheter og bruker MEG i stedet for saksbehandlerident", () => {

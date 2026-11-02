@@ -23,6 +23,8 @@ function lagAnsatt(overstyringer: Partial<LederAnsattStatistikk> = {}): LederAns
     navn: "Test Testesen",
     totaltAntallIkkeAvsluttede: 0,
     antallOverFrist: 0,
+    antallAktive: 0,
+    antallAktiveOverFrist: 0,
     ...overstyringer,
   };
 }
@@ -34,7 +36,12 @@ function lagAnsatte(
   return {
     tilgjengelig: true,
     liste,
-    ufordelt: { totaltAntallIkkeAvsluttede: 0, antallOverFrist: 0 },
+    ufordelt: {
+      totaltAntallIkkeAvsluttede: 0,
+      antallOverFrist: 0,
+      antallAktive: 0,
+      antallAktiveOverFrist: 0,
+    },
     ...overstyringer,
   };
 }
@@ -42,7 +49,7 @@ function lagAnsatte(
 describe("AnsatteOversikt", () => {
   it("viser navn og navigerer til saker filtrert på enhet og saksbehandler når raden klikkes", () => {
     const ansatte = lagAnsatte([
-      lagAnsatt({ navIdent: "Z1", navn: "Ada Larsen", totaltAntallIkkeAvsluttede: 5 }),
+      lagAnsatt({ navIdent: "Z1", navn: "Ada Larsen", antallAktive: 5 }),
     ]);
 
     renderMedRouter(<AnsatteOversikt ansatte={ansatte} enhetId="hu424t" />);
@@ -68,15 +75,17 @@ describe("AnsatteOversikt", () => {
       lagAnsatt({
         navIdent: "Z1",
         navn: "Ada Larsen",
-        totaltAntallIkkeAvsluttede: 5,
-        antallOverFrist: 2,
+        antallAktive: 5,
+        antallAktiveOverFrist: 2,
       }),
     ]);
 
     renderMedRouter(<AnsatteOversikt ansatte={ansatte} enhetId="hu424t" />);
 
     expect(
-      screen.getByRole("img", { name: "3 innenfor frist og 2 over frist, av totalt 5 saker" }),
+      screen.getByRole("img", {
+        name: "3 innenfor frist og 2 over frist, av totalt 5 aktive saker",
+      }),
     ).toBeDefined();
     expect(screen.getByText("5")).toBeDefined();
   });
@@ -91,7 +100,12 @@ describe("AnsatteOversikt", () => {
     renderMedRouter(
       <AnsatteOversikt
         ansatte={lagAnsatte([], {
-          ufordelt: { totaltAntallIkkeAvsluttede: 3, antallOverFrist: 1 },
+          ufordelt: {
+            totaltAntallIkkeAvsluttede: 3,
+            antallOverFrist: 1,
+            antallAktive: 3,
+            antallAktiveOverFrist: 1,
+          },
         })}
         enhetId="hu424t"
       />,
@@ -101,7 +115,9 @@ describe("AnsatteOversikt", () => {
     expect(rad?.getAttribute("tabindex")).toBe("0");
     expect(rad?.querySelector("a")).toBeNull();
     expect(
-      screen.getByRole("img", { name: "2 innenfor frist og 1 over frist, av totalt 3 saker" }),
+      screen.getByRole("img", {
+        name: "2 innenfor frist og 1 over frist, av totalt 3 aktive saker",
+      }),
     ).toBeDefined();
 
     if (rad === null) {
@@ -149,8 +165,8 @@ describe("AnsatteOversikt", () => {
 
   it("kan sortere på navn og saker", () => {
     const ansatte = lagAnsatte([
-      lagAnsatt({ navIdent: "Z1", navn: "Bjørn", totaltAntallIkkeAvsluttede: 8 }),
-      lagAnsatt({ navIdent: "Z2", navn: "Ada", totaltAntallIkkeAvsluttede: 2 }),
+      lagAnsatt({ navIdent: "Z1", navn: "Bjørn", antallAktive: 8 }),
+      lagAnsatt({ navIdent: "Z2", navn: "Ada", antallAktive: 2 }),
     ]);
 
     renderMedRouter(<AnsatteOversikt ansatte={ansatte} enhetId="hu424t" />);

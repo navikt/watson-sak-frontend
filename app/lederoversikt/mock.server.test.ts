@@ -42,7 +42,7 @@ describe("lagMockLederStatistikk", () => {
         id: 3,
         enhet: "ky153k",
         steg: "UTREDNING",
-        status: "VENTER_PA_VEDTAK",
+        status: null,
         oppdatert: null,
         saksbehandlere: {
           ...grunnlag.saksbehandlere,
@@ -71,15 +71,17 @@ describe("lagMockLederStatistikk", () => {
     expect(resultat.enhet.perSteg.POLITI).toBe(1);
     expect(resultat.enhet.perSteg.FORVALTNING).toBe(1);
     expect(resultat.enhet.perSteg.UTREDNING).toBe(1);
-    expect(resultat.enhet.perStatus.UTEN_STATUS).toBe(1);
+    expect(resultat.enhet.perStatus.UTEN_STATUS).toBe(2);
     expect(resultat.enhet.perStatus.AKTIV).toBe(0);
     expect(lederStatistikkResponseSchema.safeParse(resultat).success).toBe(true);
     expect(resultat.enhet.perStatus.I_BERO).toBe(1);
-    expect(resultat.enhet.perStatus.VENTER_PA_VEDTAK).toBe(1);
+    expect(resultat.enhet.perStatus.VENTER_PA_VEDTAK).toBe(0);
     expect(resultat.ansatte.liste.find((ansatt) => ansatt.navIdent === "Z234567")).toEqual(
       expect.objectContaining({
         totaltAntallIkkeAvsluttede: 2,
         antallOverFrist: 0,
+        antallAktive: 1,
+        antallAktiveOverFrist: 0,
       }),
     );
     expect(resultat.ansatte.liste.some((ansatt) => ansatt.totaltAntallIkkeAvsluttede === 0)).toBe(
@@ -88,6 +90,38 @@ describe("lagMockLederStatistikk", () => {
     expect(resultat.ansatte.ufordelt).toEqual({
       totaltAntallIkkeAvsluttede: 1,
       antallOverFrist: 1,
+      antallAktive: 0,
+      antallAktiveOverFrist: 0,
     });
+    expect(
+      resultat.ansatte.liste.reduce((sum, ansatt) => sum + ansatt.antallAktive, 0) +
+        resultat.ansatte.ufordelt.antallAktive,
+    ).toBe(resultat.enhet.oyeblikksbilde.aktive);
+  });
+
+  it("teller ikke saker som bare venter som aktive for en ansatt", () => {
+    const state = hentMockState(request);
+    const grunnlag = state.kontrollsaker[0];
+    if (!grunnlag) throw new Error("Mangler kontrollsak i mockgrunnlaget");
+    state.mineKontrollsaker = [];
+    state.kontrollsaker = [
+      {
+        ...grunnlag,
+        id: 1,
+        enhet: "ky153k",
+        steg: "FORVALTNING",
+        status: null,
+        saksbehandlere: {
+          ...grunnlag.saksbehandlere,
+          eier: { navIdent: "Z234567", navn: "Ada Larsen", enhet: "ky153k" },
+        },
+      },
+    ];
+
+    const resultat = lagMockLederStatistikk(request, "ky153k", "Øst");
+
+    expect(
+      resultat.ansatte.liste.find((ansatt) => ansatt.navIdent === "Z234567")?.antallAktive,
+    ).toBe(0);
   });
 });
