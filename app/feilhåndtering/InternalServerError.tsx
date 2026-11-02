@@ -20,7 +20,7 @@ export function InternalServerError() {
                     Vi fikk ikke vist siden
                   </Heading>
                   <BodyShort spacing>
-                    Det skyldes en teknisk feil hos oss, ikke noe du gjorde.
+                    Dette er en teknisk feil hos oss, ikke noe du har gjort.
                   </BodyShort>
                   <BodyShort>Du kan prøve å</BodyShort>
                   <Box marginBlock="space-16" asChild>

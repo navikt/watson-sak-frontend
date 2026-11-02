@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { createRoutesStub } from "react-router";
+import { createRoutesStub, data } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { DokumentNode, FilResponse } from "../typer";
 import { FilTre } from "./FilTre";
@@ -45,10 +45,15 @@ const mockMappeAction = vi.fn(async ({ request }: { request: Request }) => {
 let mottatteMappehandlinger: unknown[] = [];
 let svarFraMappehandling: unknown = { ok: true };
 
-const mockFilAction = vi.fn(async ({ request }: { request: Request }) => ({
-  ok: true,
-  body: await request.json(),
-}));
+const mockFilAction = vi.fn(async ({ request }: { request: Request }) => {
+  const svar = {
+    ...svarFraFilhandling,
+    body: request.method === "PATCH" ? await request.json() : undefined,
+  };
+  // Som i appen: teknisk feil svarer 500, så React Router ikke revaliderer.
+  return svarFraFilhandling.teknisk ? data(svar, { status: 500 }) : svar;
+});
+let svarFraFilhandling: Record<string, unknown> = { ok: true };
 
 type Valgfrie = "mapper" | "dokumenter" | "redigerbar" | "kanEndreMapper" | "kanEndreFiler";
 type TestProps = Omit<Parameters<typeof FilTre>[0], Valgfrie> &
@@ -98,6 +103,7 @@ async function renderSeksjon({
 describe("FilTre", () => {
   beforeEach(() => {
     mockFilAction.mockClear();
+    svarFraFilhandling = { ok: true };
     mockMappeAction.mockClear();
     mottatteMappehandlinger = [];
     svarFraMappehandling = { ok: true };
@@ -212,7 +218,6 @@ describe("FilTre", () => {
     expect(await screen.findByText("Vi fikk ikke lagret endringen")).toBeDefined();
     expect(screen.getByText("feil-123")).toBeDefined();
     expect(screen.queryByText("Kunne ikke oppdatere mappene")).toBeNull();
-    expect(screen.getByRole("textbox", { name: "Mappenavn" }).getAttribute("value")).toBeNull();
     expect((screen.getByRole("textbox", { name: "Mappenavn" }) as HTMLInputElement).value).toBe(
       "Ny Bank",
     );
@@ -323,6 +328,21 @@ describe("FilTre", () => {
     await waitFor(() => {});
 
     expect(screen.queryByText("Slette vedlegg?")).toBeNull();
+  });
+
+  it("viser teknisk feilmelding ved sletting uten å lukke bekreftelsesdialogen", async () => {
+    svarFraFilhandling = { ok: false, teknisk: true, feilId: "feil-456" };
+    await renderSeksjon({ filer: mockFiler, sakId: "SAK-1", kanEndreFiler: true });
+
+    await velgIMeny("screenshot.png", "Slett");
+    fireEvent.click(await screen.findByRole("button", { name: "Slett vedlegg" }));
+
+    expect(await screen.findByText("Vi fikk ikke slettet filen")).toBeDefined();
+    expect(screen.getByText("feil-456")).toBeDefined();
+    expect(
+      screen.getByText("Sjekk om filen fortsatt ligger i listen før du prøver igjen."),
+    ).toBeDefined();
+    expect(screen.getByText("Slette vedlegg?")).toBeDefined();
   });
 
   describe("mapper", () => {

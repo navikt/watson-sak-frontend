@@ -68,6 +68,25 @@ export type Seksjonsfeil = Partial<
   Record<"historikk" | "filer" | "saksbehandlere" | "tillatteHandlinger" | "andreSaker", string>
 >;
 
+const SEKSJONER = [
+  "historikk",
+  "filer",
+  "saksbehandlere",
+  "tillatteHandlinger",
+  "andreSaker",
+] as const;
+
+/**
+ * Bare i mock-modus: `?mockFeil=historikk&mockFeil=filer` simulerer teknisk feil i seksjonene,
+ * så Playwright kan teste feilmeldingene. Kalles aldri i backend-grenen.
+ */
+function mockSeksjonsfeil(request: Request): Seksjonsfeil {
+  const ønsket = new URL(request.url).searchParams.getAll("mockFeil");
+  return Object.fromEntries(
+    SEKSJONER.filter((seksjon) => ønsket.includes(seksjon)).map((seksjon) => [seksjon, "mock0001"]),
+  );
+}
+
 export async function loader({ request, params }: Route.LoaderArgs) {
   const sakId = parseSakId(params.sakId);
   const relaterteSakerSide = hentRelaterteSakerSide(request);
@@ -234,7 +253,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
             k.alleredeMigrertTilKontrollsakId === sak.id,
         )?.migreringsstatus ?? null)
       : null;
-  const tillatteHandlinger = hentMockTillatteHandlinger(sak);
+  const seksjonsfeil = mockSeksjonsfeil(request);
+  const tillatteHandlinger = seksjonsfeil.tillatteHandlinger
+    ? ingenTillatteHandlinger(sak)
+    : hentMockTillatteHandlinger(sak);
   const historikk = hentHistorikk(request, String(sak.id));
   const harDeltTilgang = sak.saksbehandlere.deltMed.some((s) => s.navIdent === innlogget.navIdent);
   const harTilgangViaKobling = sak.kobledeSaker.some(
@@ -304,6 +326,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     saksbehandlere: mockSaksbehandlere,
     saksbehandlerDetaljer: mockSaksbehandlerDetaljer,
     seksjoner: mockSeksjoner,
-    seksjonsfeil: {} as Seksjonsfeil,
+    seksjonsfeil,
   };
 }

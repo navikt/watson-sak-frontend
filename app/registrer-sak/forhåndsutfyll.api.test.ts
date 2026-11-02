@@ -1,13 +1,16 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("~/config/env.server", () => ({
   env: { IDENT_SESSION_SECRET: "test-secret" },
 }));
 
+import { RouteConfig } from "~/routeConfig";
 import { action } from "./forhåndsutfyll.api";
 import { pendingFnrCookie } from "./pending-fnr.server";
 
 describe("forhåndsutfyll.api", () => {
+  afterEach(() => vi.restoreAllMocks());
+
   it("lagrer fnr i cookie og omdirigerer", async () => {
     const formData = new FormData();
     formData.set("fnr", "12345678901");
@@ -103,6 +106,22 @@ describe("forhåndsutfyll.api", () => {
 
     const response = await action({ request });
     expect(response.status).toBe(302);
+    expect(response.headers.get("Set-Cookie")).toBeNull();
+  });
+
+  it("sender til tomt skjema når cookie ikke kan serialiseres", async () => {
+    vi.spyOn(pendingFnrCookie, "serialize").mockRejectedValue(new Error("Teknisk feil"));
+    const formData = new FormData();
+    formData.set("fnr", "12345678901");
+    const request = new Request("http://localhost/api/registrer-sak/forhåndsutfyll", {
+      method: "POST",
+      body: formData,
+    });
+
+    const response = await action({ request });
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get("Location")).toBe(RouteConfig.REGISTRER_SAK);
     expect(response.headers.get("Set-Cookie")).toBeNull();
   });
 });

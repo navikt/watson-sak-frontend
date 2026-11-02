@@ -42,11 +42,12 @@ export function SakDetaljSidePanel({
     <VStack gap="space-20" className="md:sticky md:top-4 md:self-start">
       {seksjonsfeil.saksbehandlere && (
         <Feilmelding
+          headingLevel="2"
           tittel="Vi fikk ikke hentet saksbehandlerne"
           feilId={seksjonsfeil.saksbehandlere}
           kanPrøveIgjen
         >
-          Navn og enhet kan mangle. Prøv igjen om litt.
+          Navn og enhet kan mangle i saken. Prøv igjen om litt.
         </Feilmelding>
       )}
       <SaksbehandlereKort
@@ -60,6 +61,7 @@ export function SakDetaljSidePanel({
 
       {historikkTilstand === "vis" && seksjonsfeil.historikk ? (
         <Feilmelding
+          headingLevel="2"
           tittel="Vi fikk ikke hentet historikken for saken"
           feilId={seksjonsfeil.historikk}
           kanPrøveIgjen

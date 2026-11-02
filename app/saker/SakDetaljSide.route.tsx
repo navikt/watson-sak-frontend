@@ -143,11 +143,12 @@ export default function SakDetaljSide() {
           <VStack gap="space-8">
             {seksjonsfeil.tillatteHandlinger && (
               <Feilmelding
-                tittel="Vi fikk ikke hentet hva du kan gjøre på saken"
+                headingLevel="2"
+                tittel="Vi fikk ikke hentet handlingene du kan gjøre på saken"
                 feilId={seksjonsfeil.tillatteHandlinger}
                 kanPrøveIgjen
               >
-                Du kan lese saken, men ikke endre steg, status eller resultat før vi har hentet
+                Du kan lese saken, men ikke endre steg, status eller resultat før vi får hentet
                 dette. Prøv igjen om litt.
               </Feilmelding>
             )}
@@ -218,6 +219,7 @@ export default function SakDetaljSide() {
 
             {filTilstand === "vis" && seksjonsfeil.filer ? (
               <Feilmelding
+                headingLevel="2"
                 tittel="Vi fikk ikke hentet filene på saken"
                 feilId={seksjonsfeil.filer}
                 kanPrøveIgjen
@@ -267,7 +269,8 @@ export default function SakDetaljSide() {
 
             {seksjonsfeil.andreSaker && (
               <Feilmelding
-                tittel="Vi fikk ikke hentet andre saker på samme person"
+                headingLevel="2"
+                tittel="Vi fikk ikke hentet andre saker på personen"
                 feilId={seksjonsfeil.andreSaker}
                 kanPrøveIgjen
               >
@@ -329,7 +332,7 @@ export function ErrorBoundary() {
     <VStack gap="space-12" className="mt-4 mb-8">
       <MiljøtilpassetTittel>Feil – Watson Sak</MiljøtilpassetTittel>
       <Feilmelding tittel="Vi fikk ikke hentet saken" size="medium" headingLevel="2" kanPrøveIgjen>
-        Det skyldes en teknisk feil hos oss, ikke noe du gjorde. Prøv igjen om litt.
+        Dette er en teknisk feil hos oss, ikke noe du har gjort. Prøv igjen om litt.
       </Feilmelding>
     </VStack>
   );

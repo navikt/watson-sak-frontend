@@ -380,8 +380,8 @@ function DokumentRedigering({
             <LagreStatusVisning status={status} sistLagret={sistLagret} />
             {lagringsfeilId !== undefined && (
               <Feilmelding tittel="Vi fikk ikke lagret dokumentet" feilId={lagringsfeilId}>
-                Det du har skrevet, ligger fortsatt her. Sjekk at du er på nett, og prøv å lagre
-                igjen om litt.
+                Det du har skrevet, ligger fortsatt her. Sjekk at du er på nett, og prøv å lagre på
+                nytt om litt.
               </Feilmelding>
             )}
           </VStack>

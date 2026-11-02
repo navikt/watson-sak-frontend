@@ -1,4 +1,5 @@
 import { redirectDocument } from "react-router";
+import { loggTekniskFeil } from "~/feilhåndtering/teknisk-feil.server";
 import { RouteConfig } from "~/routeConfig";
 import { erFnr } from "~/utils/string-utils";
 import type { Migreringskilde } from "~/migrering/types";
@@ -35,7 +36,14 @@ export async function action({ request }: { request: Request }) {
     ...(legacyPid && legacyKilde ? { legacyPid, legacyKilde } : {}),
   };
 
-  return redirectDocument(RouteConfig.REGISTRER_SAK, {
-    headers: { "Set-Cookie": await pendingFnrCookie.serialize(cookieData) },
-  });
+  try {
+    return redirectDocument(RouteConfig.REGISTRER_SAK, {
+      headers: { "Set-Cookie": await pendingFnrCookie.serialize(cookieData) },
+    });
+  } catch (feil) {
+    // Skjemaet postes som dokument fra watson-sok, så et JSON-svar ville vist en rå side.
+    // Brukeren kommer heller til et tomt skjema og kan fylle det ut selv.
+    loggTekniskFeil(feil, { kontekst: "forhåndsutfylle sak", request });
+    return redirectDocument(RouteConfig.REGISTRER_SAK);
+  }
 }

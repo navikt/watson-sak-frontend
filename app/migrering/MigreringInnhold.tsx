@@ -21,6 +21,7 @@ import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { formaterFødselsnummer } from "~/utils/string-utils";
 import { sporHendelse } from "~/analytics/analytics";
+import { erTekniskFeilSvar, Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
 import type { TildelingsSvar } from "./MigreringSide.server";
 import {
   hentMigreringsstatus,
@@ -304,10 +305,17 @@ function EndreTildelingModal({
                 </option>
               ))}
             </Select>
-            {fetcher.data && !fetcher.data.ok && (
-              <Alert variant="error" size="small">
-                {fetcher.data.feil}
-              </Alert>
+            {erTekniskFeilSvar(fetcher.data) ? (
+              <Innsendingsfeil svar={fetcher.data} tittel="Vi fikk ikke tildelt saken">
+                Sjekk om saken er tildelt før du prøver igjen.
+              </Innsendingsfeil>
+            ) : (
+              fetcher.data &&
+              !fetcher.data.ok && (
+                <Alert variant="error" size="small">
+                  {fetcher.data.feil}
+                </Alert>
+              )
             )}
           </VStack>
         </Modal.Body>

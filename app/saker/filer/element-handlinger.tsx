@@ -1,8 +1,9 @@
 import { EyeIcon } from "@navikt/aksel-icons";
 import { Button, Loader } from "@navikt/ds-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
+import { erTekniskFeilSvar, Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
 import { RouteConfig } from "~/routeConfig";
 import { FilIBrukModal } from "./FilIBrukModal";
 import { SlettFilModal } from "./SlettFilModal";
@@ -57,7 +58,12 @@ export function DokumentPdfKnapp({ dokument, sakId }: { dokument: DokumentNode; 
  * dokument, ellers en bekreftelsesdialog. `modaler` må rendres av kalleren.
  */
 export function useFilSletting(sakId: string) {
-  const fetcher = useFetcher<{ ok: boolean; dokumenter?: DokumentReferanse[] }>();
+  const fetcher = useFetcher<{
+    ok: boolean;
+    dokumenter?: DokumentReferanse[];
+    teknisk?: boolean;
+    feilId?: string;
+  }>();
   const [iBruk, settIBruk] = useState<{ filnavn: string; dokumenter: DokumentReferanse[] } | null>(
     null,
   );
@@ -66,16 +72,20 @@ export function useFilSletting(sakId: string) {
 
   // Backend kan avvise sletting (409) selv om filen ikke var kjent som «i bruk»
   // ved sidelasting (f.eks. hvis den ble satt inn i et dokument like før forsøket).
+  // Reager bare når en innsending er ferdig (overgang fra ikke-idle til idle),
+  // ikke på «idle» i renderen rett etter at brukeren bekreftet.
+  const forrigeState = useRef(fetcher.state);
   useEffect(() => {
-    if (
-      fetcher.state === "idle" &&
-      fetcher.data?.ok === false &&
-      fetcher.data.dokumenter &&
-      sistSlettet
-    ) {
+    const varIgang = forrigeState.current !== "idle";
+    forrigeState.current = fetcher.state;
+    if (!varIgang || fetcher.state !== "idle" || !sistSlettet) return;
+    // Teknisk feil: dialogen blir stående med feilmelding, så brukeren kan prøve igjen.
+    if (erTekniskFeilSvar(fetcher.data)) return;
+    if (fetcher.data?.ok === false && fetcher.data.dokumenter) {
       settIBruk({ filnavn: sistSlettet.filnavn, dokumenter: fetcher.data.dokumenter });
-      settSistSlettet(null);
     }
+    settKandidat(null);
+    settSistSlettet(null);
   }, [fetcher.state, fetcher.data, sistSlettet]);
 
   function start(fil: FilResponse) {
@@ -88,7 +98,6 @@ export function useFilSletting(sakId: string) {
 
   function bekreft() {
     if (!kandidat) return;
-    settKandidat(null);
     settSistSlettet(kandidat);
     sporHendelse("vedlegg slettet");
     fetcher.submit(null, {
@@ -110,7 +119,17 @@ export function useFilSletting(sakId: string) {
           kandidat={kandidat.filnavn}
           sletter={fetcher.state !== "idle"}
           onBekreft={bekreft}
-          onAvbryt={() => settKandidat(null)}
+          onAvbryt={() => {
+            settKandidat(null);
+            settSistSlettet(null);
+          }}
+          feil={
+            sistSlettet && (
+              <Innsendingsfeil svar={fetcher.data} tittel="Vi fikk ikke slettet filen">
+                Sjekk om filen fortsatt ligger i listen før du prøver igjen.
+              </Innsendingsfeil>
+            )
+          }
         />
       )}
     </>
