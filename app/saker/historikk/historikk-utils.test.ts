@@ -109,6 +109,7 @@ describe("hendelseTittel", () => {
     ["MIGRERING_FULLFORT", "Migrering fullført"],
     ["SAK_FRISTILT", "Sak fristilt"],
     ["SAK_DELT", "Sak delt"],
+    ["SAK_OVERFORT", "Sak overført"],
   ])("viser %s som «%s» uten steg", (hendelsesType, tittel) => {
     const hendelse = lagHendelse({ hendelsesType, beskrivelse: tittel });
 
