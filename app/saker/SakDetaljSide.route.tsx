@@ -1,7 +1,8 @@
 import { ArrowLeftIcon, CheckmarkIcon, XMarkIcon } from "@navikt/aksel-icons";
 import { BodyShort, Box, Button, HGrid, HStack, VStack } from "@navikt/ds-react";
 import { useCallback, useEffect, useState } from "react";
-import { useLoaderData, useNavigate } from "react-router";
+import { isRouteErrorResponse, useLoaderData, useNavigate, useRouteError } from "react-router";
+import { Feilmelding } from "~/feilhåndtering/Feilmelding";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { migreringErÅpen } from "~/migrering/miljo";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
@@ -58,6 +59,7 @@ export default function SakDetaljSide() {
     andreSaker,
     andreSakerSide,
     saksbehandlerDetaljer,
+    seksjonsfeil,
   } = useLoaderData<typeof loader>();
   const [sak, setSak] = useState(loaderSak);
   const { vis: visEksempelBekreftelse, lukk: lukkBekreftelse } = useLukketBekreftelse(loaderSak.id);
@@ -139,6 +141,16 @@ export default function SakDetaljSide() {
           gap="space-16"
         >
           <VStack gap="space-8">
+            {seksjonsfeil.tillatteHandlinger && (
+              <Feilmelding
+                tittel="Vi fikk ikke hentet hva du kan gjøre på saken"
+                feilId={seksjonsfeil.tillatteHandlinger}
+                kanPrøveIgjen
+              >
+                Du kan lese saken, men ikke endre steg, status eller resultat før vi har hentet
+                dette. Prøv igjen om litt.
+              </Feilmelding>
+            )}
             <SaksflytStepper
               steg={sak.steg}
               resultat={sak.resultat}
@@ -204,7 +216,15 @@ export default function SakDetaljSide() {
                 />
               ))}
 
-            {filTilstand === "vis" ? (
+            {filTilstand === "vis" && seksjonsfeil.filer ? (
+              <Feilmelding
+                tittel="Vi fikk ikke hentet filene på saken"
+                feilId={seksjonsfeil.filer}
+                kanPrøveIgjen
+              >
+                Resten av saken kan du bruke som vanlig. Prøv igjen om litt.
+              </Feilmelding>
+            ) : filTilstand === "vis" ? (
               <SakFilområde
                 dokumenter={dokumenter}
                 filer={filer}
@@ -245,6 +265,15 @@ export default function SakDetaljSide() {
               )}
             />
 
+            {seksjonsfeil.andreSaker && (
+              <Feilmelding
+                tittel="Vi fikk ikke hentet andre saker på samme person"
+                feilId={seksjonsfeil.andreSaker}
+                kanPrøveIgjen
+              >
+                Resten av saken kan du bruke som vanlig. Prøv igjen om litt.
+              </Feilmelding>
+            )}
             <SakerPåSammePerson
               saker={andreSaker}
               side={andreSakerSide.side}
@@ -265,6 +294,7 @@ export default function SakDetaljSide() {
             kanRedigere={kanRedigere}
             kanLeggeTilHistorikk={erEier && stegregler.kanLeggeTilHistorikk}
             historikkTilstand={historikkTilstand}
+            seksjonsfeil={seksjonsfeil}
           />
         </HGrid>
       </VStack>
@@ -283,5 +313,24 @@ export default function SakDetaljSide() {
         />
       )}
     </>
+  );
+}
+
+/**
+ * Vises når saken eller innlogget bruker ikke kunne hentes. Siden gir ikke mening uten dem,
+ * men menyen og headeren står igjen. 401, 403, 404 og 429 går videre til rot-boundary som før.
+ */
+export function ErrorBoundary() {
+  const error = useRouteError();
+  if (isRouteErrorResponse(error) && error.status < 500) {
+    throw error;
+  }
+  return (
+    <VStack gap="space-12" className="mt-4 mb-8">
+      <MiljøtilpassetTittel>Feil – Watson Sak</MiljøtilpassetTittel>
+      <Feilmelding tittel="Vi fikk ikke hentet saken" size="medium" headingLevel="2" kanPrøveIgjen>
+        Det skyldes en teknisk feil hos oss, ikke noe du gjorde. Prøv igjen om litt.
+      </Feilmelding>
+    </VStack>
   );
 }

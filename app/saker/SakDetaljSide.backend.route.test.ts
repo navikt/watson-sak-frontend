@@ -841,15 +841,19 @@ describe("SakDetaljSide loader — backend-sti", () => {
     });
   });
 
-  it("lar andre feil enn 403 fra hentFiler boble opp (kaster fortsatt loaderen)", async () => {
+  it("viser feil i filområdet når hentFiler gir 500, uten å skjule det som manglende tilgang", async () => {
     mockHentKontrollsak.mockResolvedValue(grunnleggendeSak);
     mockHentHendelser.mockResolvedValue([]);
     mockHentSaksbehandlere.mockResolvedValue([]);
     mockHentFiler.mockRejectedValue(new MockBackendFeilException(500, "Intern feil"));
 
     const { loader } = await import("./SakDetaljSide.server");
+    const resultat = await loader(lagLoaderArgs());
 
-    await expect(loader(lagLoaderArgs())).rejects.toThrow("Intern feil");
+    expect(resultat.seksjonsfeil.filer).toMatch(/^[0-9a-f]{8}$/);
+    // 500 er ikke manglende tilgang: filområdet skal vise feil, ikke «ingen tilgang».
+    expect(resultat.harFilTilgang).toBe(true);
+    expect(resultat.sak).toEqual(grunnleggendeSak);
   });
 
   it("degraderer historikk stille når hentHendelser gir 403", async () => {

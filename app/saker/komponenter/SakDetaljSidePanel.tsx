@@ -1,4 +1,6 @@
 import { VStack } from "@navikt/ds-react";
+import { Feilmelding } from "~/feilhåndtering/Feilmelding";
+import type { Seksjonsfeil } from "~/saker/SakDetaljSide.loader.server";
 import { IngenHistorikktilgangKort } from "~/saker/historikk/IngenHistorikktilgangKort";
 import { SakHistorikk } from "~/saker/historikk/SakHistorikk";
 import type {
@@ -20,6 +22,7 @@ interface SakDetaljSidePanelProps {
   kanRedigere: boolean;
   kanLeggeTilHistorikk: boolean;
   historikkTilstand: "vis" | "ikke-delt" | "ingen-persontilgang";
+  seksjonsfeil?: Seksjonsfeil;
 }
 
 export function SakDetaljSidePanel({
@@ -33,9 +36,19 @@ export function SakDetaljSidePanel({
   kanRedigere,
   kanLeggeTilHistorikk,
   historikkTilstand,
+  seksjonsfeil = {},
 }: SakDetaljSidePanelProps) {
   return (
     <VStack gap="space-20" className="md:sticky md:top-4 md:self-start">
+      {seksjonsfeil.saksbehandlere && (
+        <Feilmelding
+          tittel="Vi fikk ikke hentet saksbehandlerne"
+          feilId={seksjonsfeil.saksbehandlere}
+          kanPrøveIgjen
+        >
+          Navn og enhet kan mangle. Prøv igjen om litt.
+        </Feilmelding>
+      )}
       <SaksbehandlereKort
         sak={sak}
         saksbehandlerDetaljer={saksbehandlerDetaljer}
@@ -45,7 +58,15 @@ export function SakDetaljSidePanel({
         tillatteHandlinger={tillatteHandlinger}
       />
 
-      {historikkTilstand === "vis" ? (
+      {historikkTilstand === "vis" && seksjonsfeil.historikk ? (
+        <Feilmelding
+          tittel="Vi fikk ikke hentet historikken for saken"
+          feilId={seksjonsfeil.historikk}
+          kanPrøveIgjen
+        >
+          Resten av saken kan du bruke som vanlig. Prøv igjen om litt.
+        </Feilmelding>
+      ) : historikkTilstand === "vis" ? (
         <SakHistorikk
           sakId={sak.id}
           hendelser={historikk}

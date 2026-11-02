@@ -2,6 +2,7 @@ import { data } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { env, skalBrukeMockdata } from "~/config/env.server";
+import { hentEllerFeil } from "~/feilhåndtering/teknisk-feil.server";
 import { logger } from "~/logging/logging";
 import { hentMockMigreringKandidater } from "~/migrering/mock-data.server";
 import { hentMigreringskandidat } from "~/migrering/api.server";
@@ -10,7 +11,6 @@ import { hentAlleSaker, medInnloggetEier } from "~/saker/mock-alle-saker.server"
 import { mockSaksbehandlere, mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import { mockSeksjoner } from "~/saker/mock-seksjoner.server";
 import type { KontrollsakResponse, TillatteHandlingerResponse } from "~/saker/types.backend";
-import type { FilResponse } from "~/saker/filer/typer";
 import { hentDokumenttreForSak } from "./filer/mock-data.server";
 import { hentMapperstier, hentMapperstierFraMock } from "./filer/mapper/mapper.server";
 import { hentFilerForSak } from "./filer/mock-data-filer.server";
@@ -35,152 +35,136 @@ function hentRelaterteSakerSide(request: Request): number {
 }
 
 /**
- * Henter filer for saken, men behandler manglende fil-tilgang som en gyldig tilstand
- * i stedet for en feil.
- *
- * Backend (`FilTilgangService`) svarer 403 når saken er fordelt og innlogget ikke er
- * eier eller delt med, og 404 når innlogget mangler tilgang til personen (så svaret ikke
- * avslører at saken finnes). Begge betyr «ingen filer å vise». Hvem som ser filområdet,
- * styres av `kanSeFilområdet` i `sakstilgang.ts`.
- *
- * Kalles fra `Promise.all` i loaderen — dersom `hentFiler` hadde kastet uhåndtert
- * herfra, ville hele loaderen (og dermed hele sakssiden) feilet for enhver
- * saksbehandler uten fil-tilgang.
- *
- * Andre feil (5xx, nettverksfeil o.l.) kastes videre som reelle feil.
+ * Uten tillatte handlinger viser vi ingen handlinger (fail closed). Brukes både ved 403
+ * og ved teknisk feil, så en feil aldri gir flere handlinger enn tilgangen tillater.
  */
-async function hentFilerMedTilgangskontroll(
-  token: string,
-  sakId: string,
-): Promise<{ filer: FilResponse[]; harFilTilgang: boolean }> {
-  try {
-    const filer = await backendApi.hentFiler(token, sakId);
-    return { filer, harFilTilgang: true };
-  } catch (feil) {
-    if (
-      feil instanceof backendApi.BackendFeilException &&
-      (feil.status === 403 || feil.status === 404)
-    ) {
-      return { filer: [], harFilTilgang: false };
-    }
-    throw feil;
-  }
+function ingenTillatteHandlinger(sak: KontrollsakResponse): TillatteHandlingerResponse {
+  return {
+    versjon: 1,
+    tilstand: {
+      steg: sak.steg,
+      status: sak.status,
+      statusFørBero: null,
+      resultat: sak.resultat ?? null,
+      ytelser: sak.ytelser.map((ytelse, indeks) => ({
+        ...ytelse,
+        id:
+          ytelse.id ??
+          `00000000-0000-4000-8000-${(sak.id + indeks).toString(16).padStart(12, "0")}`,
+      })),
+    },
+    handlinger: [],
+    tillatteSteg: [],
+    tillatteStatuser: [],
+    tillatteResultater: [],
+    paakrevdeRegistreringer: [],
+    paakrevdeRegistreringerPerSteg: {},
+    feltskjema: [],
+  };
 }
 
-async function hentHistorikkMedTilgangskontroll(
-  token: string,
-  sakId: string,
-): Promise<Awaited<ReturnType<typeof backendApi.hentHendelser>>> {
-  try {
-    return await backendApi.hentHendelser(token, sakId);
-  } catch (feil) {
-    if (feil instanceof backendApi.BackendFeilException && feil.status === 403) {
-      return [];
-    }
-    throw feil;
-  }
-}
-
-async function hentTillatteHandlingerMedTilgangskontroll(
-  token: string,
-  sakId: string,
-  sakPromise: Promise<KontrollsakResponse>,
-): Promise<TillatteHandlingerResponse> {
-  const sak = await sakPromise;
-  try {
-    return await backendApi.hentTillatteHandlinger(token, sakId);
-  } catch (feil) {
-    if (feil instanceof backendApi.BackendFeilException && feil.status === 403) {
-      logger.warn("Mangler tilgang til å hente tillatte handlinger", { sakId });
-      return {
-        versjon: 1,
-        tilstand: {
-          steg: sak.steg,
-          status: sak.status,
-          statusFørBero: null,
-          resultat: sak.resultat ?? null,
-          ytelser: sak.ytelser.map((ytelse, indeks) => ({
-            ...ytelse,
-            id:
-              ytelse.id ??
-              `00000000-0000-4000-8000-${(sak.id + indeks).toString(16).padStart(12, "0")}`,
-          })),
-        },
-        handlinger: [],
-        tillatteSteg: [],
-        tillatteStatuser: [],
-        tillatteResultater: [],
-        paakrevdeRegistreringer: [],
-        paakrevdeRegistreringerPerSteg: {},
-        feltskjema: [],
-      };
-    }
-    throw feil;
-  }
-}
-
-async function hentAndreSakerMedTilgangskontroll(
-  token: string,
-  sak: KontrollsakResponse,
-  side: number,
-): Promise<{
-  andreSaker: KontrollsakResponse[];
-  andreSakerSide: { side: number; totalSider: number };
-}> {
-  if (!sak.personIdent || sak.tilgang?.kanSeRelaterteSaker === false) {
-    return { andreSaker: [], andreSakerSide: { side, totalSider: 0 } };
-  }
-
-  try {
-    const søkeresultat = await backendApi.søkKontrollsaker(
-      token,
-      sak.personIdent,
-      side,
-      RELATERTE_SAKER_SIDESTORRELSE,
-    );
-    return {
-      andreSaker: søkeresultat.items.filter((annenSak) => annenSak.id !== sak.id),
-      andreSakerSide: { side, totalSider: søkeresultat.totalPages },
-    };
-  } catch (feil) {
-    if (feil instanceof backendApi.BackendFeilException && feil.status === 403) {
-      logger.warn("Mangler tilgang til å hente relaterte saker", { sakId: sak.id });
-      return { andreSaker: [], andreSakerSide: { side, totalSider: 0 } };
-    }
-    throw feil;
-  }
-}
+/** Feil-ID per seksjon som ikke kunne hentes. Seksjonen viser `<Feilmelding>` i stedet for tom data. */
+export type Seksjonsfeil = Partial<
+  Record<"historikk" | "filer" | "saksbehandlere" | "tillatteHandlinger" | "andreSaker", string>
+>;
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const sakId = parseSakId(params.sakId);
   const relaterteSakerSide = hentRelaterteSakerSide(request);
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
-    const sakPromise = backendApi.hentKontrollsak(token, sakId);
+    const logg = { sakId, request };
 
+    // 🔴 Sak og innlogget bruker er kritiske: uten dem gir siden ikke mening, og vi kan ikke
+    // avgjøre tilgang. Feiler de, tar route-ErrorBoundary over (inne i sideoppsettet).
+    // Resten er seksjoner som feiler hver for seg.
     const [
       sak,
-      historikk,
-      saksbehandlerDetaljer,
-      filerResultat,
-      tillatteHandlinger,
       innlogget,
-      mapper,
+      historikkUtfall,
+      saksbehandlereUtfall,
+      filerUtfall,
+      mapperUtfall,
+      tillatteHandlingerUtfall,
     ] = await Promise.all([
-      sakPromise,
-      hentHistorikkMedTilgangskontroll(token, sakId),
-      backendApi.hentSaksbehandlere(token),
-      hentFilerMedTilgangskontroll(token, sakId),
-      hentTillatteHandlingerMedTilgangskontroll(token, sakId, sakPromise),
+      backendApi.hentKontrollsak(token, sakId),
       hentInnloggetBruker({ request }),
-      hentMapperstier(token, sakId),
+      hentEllerFeil(() => backendApi.hentHendelser(token, sakId), {
+        ...logg,
+        kontekst: "hente historikk",
+      }),
+      hentEllerFeil(() => backendApi.hentSaksbehandlere(token), {
+        ...logg,
+        kontekst: "hente saksbehandlere",
+      }),
+      // Backend (`FilTilgangService`) svarer 403 når saken er fordelt og innlogget ikke er
+      // eier eller delt med, og 404 når innlogget mangler tilgang til personen (så svaret
+      // ikke avslører at saken finnes). Begge betyr «ingen filer å vise».
+      hentEllerFeil(() => backendApi.hentFiler(token, sakId), {
+        ...logg,
+        kontekst: "hente filer",
+        ingenTilgangStatuser: [403, 404],
+      }),
+      hentEllerFeil(() => hentMapperstier(token, sakId), { ...logg, kontekst: "hente mapper" }),
+      hentEllerFeil(() => backendApi.hentTillatteHandlinger(token, sakId), {
+        ...logg,
+        kontekst: "hente tillatte handlinger",
+      }),
     ]);
 
-    const { andreSaker, andreSakerSide } = await hentAndreSakerMedTilgangskontroll(
-      token,
-      sak,
-      relaterteSakerSide,
-    );
+    if (tillatteHandlingerUtfall.status === "ingenTilgang") {
+      logger.warn("Mangler tilgang til å hente tillatte handlinger", { sakId });
+    }
+    const tillatteHandlinger =
+      tillatteHandlingerUtfall.status === "ok"
+        ? tillatteHandlingerUtfall.data
+        : ingenTillatteHandlinger(sak);
+
+    // Uten persontilgang eller tilgang til relaterte saker henter vi ingenting. Ved feil viser
+    // vi feilmelding, aldri en ufiltrert liste. Tilgangsmaskinen filtrerer i backend.
+    const personIdent = sak.personIdent;
+    const andreSakerUtfall =
+      !personIdent || sak.tilgang?.kanSeRelaterteSaker === false
+        ? ({ status: "ikkeHentet" } as const)
+        : await hentEllerFeil(
+            () =>
+              backendApi.søkKontrollsaker(
+                token,
+                personIdent,
+                relaterteSakerSide,
+                RELATERTE_SAKER_SIDESTORRELSE,
+              ),
+            { ...logg, kontekst: "hente andre saker på samme person" },
+          );
+    if (andreSakerUtfall.status === "ingenTilgang") {
+      logger.warn("Mangler tilgang til å hente relaterte saker", { sakId: sak.id });
+    }
+    const andreSaker =
+      andreSakerUtfall.status === "ok"
+        ? andreSakerUtfall.data.items.filter((annenSak) => annenSak.id !== sak.id)
+        : [];
+    const andreSakerSide = {
+      side: relaterteSakerSide,
+      totalSider: andreSakerUtfall.status === "ok" ? andreSakerUtfall.data.totalPages : 0,
+    };
+
+    const historikk = historikkUtfall.status === "ok" ? historikkUtfall.data : [];
+    const saksbehandlerDetaljer =
+      saksbehandlereUtfall.status === "ok" ? saksbehandlereUtfall.data : [];
+    const filerResultat = {
+      filer: filerUtfall.status === "ok" ? filerUtfall.data : [],
+      harFilTilgang: filerUtfall.status !== "ingenTilgang",
+    };
+    const mapper = mapperUtfall.status === "ok" ? mapperUtfall.data : [];
+    const feilFra = (utfall: { status: string; feilId?: string }) =>
+      utfall.status === "feil" ? utfall.feilId : undefined;
+    const seksjonsfeil: Seksjonsfeil = {
+      historikk: feilFra(historikkUtfall),
+      saksbehandlere: feilFra(saksbehandlereUtfall),
+      filer: feilFra(filerUtfall) ?? feilFra(mapperUtfall),
+      tillatteHandlinger: feilFra(tillatteHandlingerUtfall),
+      andreSaker: feilFra(andreSakerUtfall),
+    };
 
     // Dokumenter/filer skal kun eksponeres i loader-responsen (og dermed nås av klienten)
     // for saksbehandlere med lesetilgang — se `kanLeseSaksinnhold`, som også styrer
@@ -226,6 +210,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       saksbehandlere: saksbehandlerDetaljer.map((sb) => sb.navn),
       saksbehandlerDetaljer,
       seksjoner: mockSeksjoner,
+      seksjonsfeil,
     };
   }
 
@@ -319,5 +304,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     saksbehandlere: mockSaksbehandlere,
     saksbehandlerDetaljer: mockSaksbehandlerDetaljer,
     seksjoner: mockSeksjoner,
+    seksjonsfeil: {} as Seksjonsfeil,
   };
 }
