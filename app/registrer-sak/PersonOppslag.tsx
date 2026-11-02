@@ -81,7 +81,7 @@ export function PersonOppslag({
         onSubmit={onPersonOppslag}
       >
         <FødselsnummerSøkefelt
-          label="Fødsels- eller D-nummer"
+          label="Fødsels- eller d-nummer"
           hideLabel={false}
           name="fnr"
           value={søkeFnr}
@@ -126,7 +126,7 @@ export function PersonOppslag({
           <LocalAlert.Header>
             <LocalAlert.Title as="h2">Personen ble ikke funnet</LocalAlert.Title>
           </LocalAlert.Header>
-          <LocalAlert.Content>Sjekk at fødsels- eller D-nummeret er riktig.</LocalAlert.Content>
+          <LocalAlert.Content>Sjekk at fødsels- eller d-nummeret er riktig.</LocalAlert.Content>
         </LocalAlert>
       )}
 
@@ -156,7 +156,7 @@ export function PersonOppslag({
             {søktMedHistoriskIdent && (
               <LocalAlert status="warning">
                 <LocalAlert.Content>
-                  Fødsels- eller D-nummeret du søkte med er historisk. Saken opprettes på gjeldende
+                  Fødsels- eller d-nummeret du søkte med er historisk. Saken opprettes på gjeldende
                   identifikator: <strong>{person.personnummer}</strong>.
                 </LocalAlert.Content>
               </LocalAlert>

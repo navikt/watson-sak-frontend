@@ -10,14 +10,14 @@ test.describe("Opprett sak", () => {
   });
 
   test("viser feilmelding ved ugyldig person", async ({ page }) => {
-    await page.getByRole("searchbox", { name: "Fødsels- eller D-nummer" }).fill("99999999999");
+    await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("99999999999");
     await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
 
     await expect(page.getByText("Personen ble ikke funnet")).toBeVisible();
   });
 
   test("viser personinfo og skjema etter vellykket oppslag", async ({ page }) => {
-    await page.getByRole("searchbox", { name: "Fødsels- eller D-nummer" }).fill("12345678901");
+    await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("12345678901");
     await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
 
     await expect(
@@ -29,7 +29,7 @@ test.describe("Opprett sak", () => {
   });
 
   test("fyller ut en tilfeldig sak uten å opprette den", async ({ page }) => {
-    await page.getByRole("searchbox", { name: "Fødsels- eller D-nummer" }).fill("12345678901");
+    await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("12345678901");
     await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
 
     await page.getByRole("button", { name: "Fyll ut en tilfeldig sak" }).click();
@@ -43,13 +43,13 @@ test.describe("Opprett sak", () => {
   test("viser advarsel i personkortet om historisk ident og oppretter saken på gjeldende ident", async ({
     page,
   }) => {
-    await page.getByRole("searchbox", { name: "Fødsels- eller D-nummer" }).fill("10987654321");
+    await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("10987654321");
     await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
 
     await expect(
       page
         .getByLabel("Personinformasjon")
-        .getByText("Fødsels- eller D-nummeret du søkte med er historisk."),
+        .getByText("Fødsels- eller d-nummeret du søkte med er historisk."),
     ).toBeVisible();
     await expect(
       page.getByLabel("Personinformasjon").getByText("Ola Testesen", { exact: true }),
@@ -61,7 +61,7 @@ test.describe("Opprett sak", () => {
   });
 
   test("viser advarsel om eksisterende sak", async ({ page }) => {
-    await page.getByRole("searchbox", { name: "Fødsels- eller D-nummer" }).fill("12345678901");
+    await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("12345678901");
     await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
 
     await expect(page.getByText("Det er allerede registrert en sak på personen")).toBeVisible();
@@ -73,7 +73,7 @@ test.describe("Opprett sak", () => {
   });
 
   test("sperrer skjemaet for skjermet person uten tilgang til å opprette sak", async ({ page }) => {
-    await page.getByRole("searchbox", { name: "Fødsels- eller D-nummer" }).fill("44556677001");
+    await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("44556677001");
     await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
 
     await expect(
@@ -91,7 +91,7 @@ test.describe("Opprett sak", () => {
   });
 
   test("viser ErrorSummary når påkrevde felter mangler", async ({ page }) => {
-    await page.getByRole("searchbox", { name: "Fødsels- eller D-nummer" }).fill("12345678901");
+    await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("12345678901");
     await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
 
     await expect(
@@ -134,7 +134,7 @@ test.describe("Opprett sak", () => {
   });
 
   test("kan endre kategori etter valideringsfeil på kategori og kilde", async ({ page }) => {
-    await page.getByRole("searchbox", { name: "Fødsels- eller D-nummer" }).fill("12345678901");
+    await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("12345678901");
     await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
 
     await page.getByRole("button", { name: "Opprett sak" }).click();
@@ -150,7 +150,7 @@ test.describe("Opprett sak", () => {
   });
 
   test("kan legge til og fjerne ytelse-rader", async ({ page }) => {
-    await page.getByRole("searchbox", { name: "Fødsels- eller D-nummer" }).fill("12345678901");
+    await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("12345678901");
     await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
 
     await expect(page.getByRole("heading", { name: "Ytelser med mulig misbruk" })).toBeVisible();
@@ -163,7 +163,7 @@ test.describe("Opprett sak", () => {
   });
 
   test("Avbryt-knappen lenker til landingssiden", async ({ page }) => {
-    await page.getByRole("searchbox", { name: "Fødsels- eller D-nummer" }).fill("12345678901");
+    await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("12345678901");
     await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
 
     await expect(

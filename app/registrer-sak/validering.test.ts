@@ -350,7 +350,7 @@ describe("feilmeldinger ved manglende obligatoriske felter (via ekte skjemainnse
     const submission = parseWithZod(formData, { schema: opprettSakSchema });
     expect(submission.status).toBe("error");
     if (submission.status === "error") {
-      expect(submission.error?.personIdent).toEqual(["Fødsels- eller D-nummer er påkrevd"]);
+      expect(submission.error?.personIdent).toEqual(["Fødsels- eller d-nummer er påkrevd"]);
     }
   });
 
