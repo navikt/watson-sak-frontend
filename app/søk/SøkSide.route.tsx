@@ -80,7 +80,7 @@ function SøkeVeiledning() {
         <MagnifyingGlassIcon aria-hidden fontSize="2rem" className="text-ax-icon-neutral-subtle" />
       }
       tittel="Finn en sak"
-      beskrivelse="Bruk søkefeltet i toppmenyen for å søke etter saksnummer, PID, fødsels- eller D-nummer eller organisasjonsnummer."
+      beskrivelse="Bruk søkefeltet i toppmenyen for å søke etter saksnummer, PID, fødsels- eller d-nummer eller organisasjonsnummer."
     >
       <HStack gap="space-8" justify="center" wrap>
         <Tag variant="neutral" size="small">
@@ -90,7 +90,7 @@ function SøkeVeiledning() {
           PID
         </Tag>
         <Tag variant="neutral" size="small">
-          Fødsels- eller D-nummer
+          Fødsels- eller d-nummer
         </Tag>
         <Tag variant="neutral" size="small">
           Organisasjonsnummer
@@ -129,7 +129,7 @@ function tomTreffTekst(
       return {
         tittel: `Fant ingen sak med saksnummer eller PID «${søketekst}»`,
         beskrivelse:
-          "Sjekk at saksnummeret eller PID-en er riktig, eller søk på fødsels- eller D-nummer eller organisasjonsnummer.",
+          "Sjekk at saksnummeret eller PID-en er riktig, eller søk på fødsels- eller d-nummer eller organisasjonsnummer.",
       };
     case "organisasjonsnummer":
       return {
@@ -139,13 +139,13 @@ function tomTreffTekst(
     case "personIdent":
       return {
         tittel: `Ingen treff for «${søketekst}»`,
-        beskrivelse: "Fant ingen kontrollsaker for dette fødsels- eller D-nummeret.",
+        beskrivelse: "Fant ingen kontrollsaker for dette fødsels- eller d-nummeret.",
       };
     default:
       return {
         tittel: "Ugyldig søk",
         beskrivelse:
-          "Søket må være et fødsels- eller D-nummer (11 sifre), organisasjonsnummer (9 sifre), saksnummer eller PID.",
+          "Søket må være et fødsels- eller d-nummer (11 sifre), organisasjonsnummer (9 sifre), saksnummer eller PID.",
       };
   }
 }
@@ -283,7 +283,7 @@ export default function SøkSide() {
                         </Heading>
                         <BodyShort>
                           {formaterFødselsnummer(søketekst)} ser ut som et{" "}
-                          {erDnummer(søketekst) ? "D-nummer" : "fødselsnummer"}. Hvis du vil, kan du
+                          {erDnummer(søketekst) ? "d-nummer" : "fødselsnummer"}. Hvis du vil, kan du
                           opprette en sak, eller slå opp personen i Watson Søk.
                         </BodyShort>
                       </VStack>

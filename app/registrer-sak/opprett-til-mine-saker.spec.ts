@@ -9,7 +9,7 @@ test.describe("Oppretting og tildeling av sak", () => {
 
     await page.goto("/registrer-sak", { waitUntil: "networkidle" });
 
-    await page.getByRole("searchbox", { name: "Fødsels- eller D-nummer" }).fill("12345678901");
+    await page.getByRole("searchbox", { name: "Fødsels- eller d-nummer" }).fill("12345678901");
     await page.getByLabel("Søk etter person").getByRole("button", { name: "Søk" }).click();
     await expect(
       page.getByRole("heading", { name: "Grunnleggende saksinformasjon" }),

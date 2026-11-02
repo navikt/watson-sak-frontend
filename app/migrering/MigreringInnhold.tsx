@@ -141,7 +141,7 @@ function Kandidatliste({
           <Table.Header>
             <Table.Row>
               <Table.HeaderCell scope="col">PID</Table.HeaderCell>
-              <Table.HeaderCell scope="col">Fødsels- eller D-nummer</Table.HeaderCell>
+              <Table.HeaderCell scope="col">Fødsels- eller d-nummer</Table.HeaderCell>
               <Table.HeaderCell scope="col">Opprettet i Access</Table.HeaderCell>
               <Table.HeaderCell scope="col">Status</Table.HeaderCell>
               {erLeder && (
