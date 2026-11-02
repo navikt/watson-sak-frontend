@@ -341,7 +341,11 @@ describe("tillatte handlinger og resultatkall", () => {
 
     const { lagreResultat } = await import("./api.server");
     await expect(
-      lagreResultat("token", "42", { versjon: 1, steg: "POLITI", politi: { type: "BOT" } }),
+      lagreResultat("token", "42", {
+        versjon: 1,
+        steg: "POLITI",
+        politi: { type: "FORELEGG", belop: 5000 },
+      }),
     ).rejects.toThrow();
   });
 });

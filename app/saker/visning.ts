@@ -170,10 +170,10 @@ function formaterHenleggelsesarsak(arsak: string): string {
 export type SluttresultatDetalj = { etikett: string; verdi: string };
 
 const strafferabattEtiketter: Record<string, string> = {
-  INGEN: "Ingen",
+  INGEN: "Ingen strafferabatt",
   NAV: "Liggetid hos Nav",
   POLITIET: "Liggetid hos politiet",
-  BEGGE: "Liggetid hos Nav og politiet",
+  BEGGE: "Liggetid hos begge",
 };
 
 export function hentSluttresultatDetaljer(
@@ -209,11 +209,20 @@ export function hentSluttresultatDetaljer(
     if (dom.domfeltBelop != null) {
       leggTil("Domfelt beløp", `${formaterBelop(dom.domfeltBelop)} kr`);
     }
+    if (dom.bot != null) {
+      leggTil("Bot", `${formaterBelop(dom.bot)} kr`);
+    }
     if (dom.siviltRettskrav != null) {
       leggTil("Sivilt rettskrav", `${formaterBelop(dom.siviltRettskrav)} kr`);
     }
     if (dom.tilstaaelsesdom != null) {
       leggTil("Tilståelsesdom", dom.tilstaaelsesdom ? "Ja" : "Nei");
+    }
+    if (dom.medvirker != null) {
+      leggTil("Medvirker", dom.medvirker ? "Ja" : "Nei");
+    }
+    if (dom.emkBrudd != null) {
+      leggTil("Brudd på EMK art. 6", dom.emkBrudd ? "Ja" : "Nei");
     }
     if (dom.strafferabattLiggetid) {
       leggTil(

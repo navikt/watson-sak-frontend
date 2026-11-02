@@ -296,6 +296,23 @@ describe("resultatFeltErAktivt", () => {
     expect(resultatFeltErAktivt(betingetFelt, { "utredning.type": "KONTROLLNOTAT" })).toBe(false);
     expect(resultatFeltErAktivt(betingetFelt, { "utredning.type": "HENLAGT" })).toBe(true);
   });
+
+  it("viser brudd på EMK art. 6 bare når retten ga strafferabatt", () => {
+    const emkBrudd = {
+      felt: "politi.emkBrudd",
+      etikett: "Brudd på EMK art. 6?",
+      datatype: "boolsk" as const,
+      paakrevd: false,
+      verdier: [],
+      paakrevdNar: "politi.strafferabattLiggetid=NAV, POLITIET eller BEGGE",
+    };
+
+    expect(resultatFeltErAktivt(emkBrudd, {})).toBe(false);
+    expect(resultatFeltErAktivt(emkBrudd, { "politi.strafferabattLiggetid": "INGEN" })).toBe(false);
+    for (const rabatt of ["NAV", "POLITIET", "BEGGE"]) {
+      expect(resultatFeltErAktivt(emkBrudd, { "politi.strafferabattLiggetid": rabatt })).toBe(true);
+    }
+  });
 });
 
 describe("erGyldigIsoDato", () => {

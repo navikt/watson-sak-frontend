@@ -195,9 +195,12 @@ describe("hentSluttresultatDetaljer", () => {
           betingetFengselMaaneder: 3,
           samfunnsstraffTimer: 40,
           domfeltBelop: 15000,
+          bot: 2500,
           siviltRettskrav: 4500,
           tilstaaelsesdom: true,
-          strafferabattLiggetid: "INGEN",
+          medvirker: false,
+          emkBrudd: true,
+          strafferabattLiggetid: "BEGGE",
         },
       }),
     ).toEqual([
@@ -206,9 +209,18 @@ describe("hentSluttresultatDetaljer", () => {
       { etikett: "Betinget fengsel", verdi: "3 måneder" },
       { etikett: "Samfunnsstraff", verdi: "40 timer" },
       { etikett: "Domfelt beløp", verdi: "15 000 kr" },
+      { etikett: "Bot", verdi: "2 500 kr" },
       { etikett: "Sivilt rettskrav", verdi: "4 500 kr" },
       { etikett: "Tilståelsesdom", verdi: "Ja" },
-      { etikett: "Strafferabatt", verdi: "Ingen" },
+      { etikett: "Medvirker", verdi: "Nei" },
+      { etikett: "Brudd på EMK art. 6", verdi: "Ja" },
+      { etikett: "Strafferabatt", verdi: "Liggetid hos begge" },
+    ]);
+  });
+
+  it("viser eldre BOT-resultater med beløp som før", () => {
+    expect(hentSluttresultatDetaljer({ politi: { type: "BOT", belop: 1000 } })).toEqual([
+      { etikett: "Beløp", verdi: "1 000 kr" },
     ]);
   });
 

@@ -30,8 +30,11 @@ const resultatFeltStier = {
   "politi.betingetFengselDager": ["politi", "betingetFengselDager"],
   "politi.samfunnsstraffTimer": ["politi", "samfunnsstraffTimer"],
   "politi.domfeltBelop": ["politi", "domfeltBelop"],
+  "politi.bot": ["politi", "bot"],
   "politi.siviltRettskrav": ["politi", "siviltRettskrav"],
   "politi.tilstaaelsesdom": ["politi", "tilstaaelsesdom"],
+  "politi.medvirker": ["politi", "medvirker"],
+  "politi.emkBrudd": ["politi", "emkBrudd"],
   "politi.strafferabattLiggetid": ["politi", "strafferabattLiggetid"],
   paaklaget: ["paaklaget"],
 } as const;
