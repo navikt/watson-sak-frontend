@@ -6,6 +6,7 @@ import {
   GavelIcon,
 } from "@navikt/aksel-icons";
 import { BodyShort, Button, HGrid, Loader, Modal, VStack } from "@navikt/ds-react";
+import { Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
 import type { KontrollsakSteg } from "~/saker/types.backend";
 import {
   BREVMAL_BESKRIVELSE,
@@ -22,6 +23,7 @@ type OpprettDokumentModalProps = {
   /** Sakens steg. Styrer hvilke maler som vises. */
   steg: KontrollsakSteg;
   oppretter: boolean;
+  svar?: unknown;
   onClose: () => void;
   onVelg: (valg?: { malId: MalId; erStraffesak: boolean }) => void;
 };
@@ -75,6 +77,7 @@ export function OpprettDokumentModal({
   åpen,
   steg,
   oppretter,
+  svar,
   onClose,
   onVelg,
 }: OpprettDokumentModalProps) {
@@ -90,6 +93,9 @@ export function OpprettDokumentModal({
       width="40rem"
     >
       <Modal.Body>
+        <Innsendingsfeil svar={svar} tittel="Vi fikk ikke opprettet dokumentet">
+          Prøv igjen om litt.
+        </Innsendingsfeil>
         {oppretter ? (
           <div className="flex justify-center py-[var(--ax-space-48)]">
             <Loader size="large" title="Oppretter dokument" />

@@ -335,12 +335,6 @@ export default function SøkSide() {
                           </form>
                         )}
                       </HStack>
-                      <Innsendingsfeil
-                        svar={forhåndsutfyllFetcher.data}
-                        tittel="Vi fikk ikke hentet opplysningene"
-                      >
-                        Du kan fylle ut feltene selv eller prøve igjen om litt.
-                      </Innsendingsfeil>
                     </VStack>
                   </Box>
                 ) : (

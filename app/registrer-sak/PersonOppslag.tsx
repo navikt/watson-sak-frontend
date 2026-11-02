@@ -117,7 +117,7 @@ export function PersonOppslag({
         svar={personFetcher.data}
         tittel="Vi fikk ikke hentet opplysninger om personen"
       >
-        Du kan fylle ut feltene selv eller prøve igjen om litt.
+        Prøv å søke på nytt om litt.
       </Innsendingsfeil>
       {harSøkt && oppslagFeil && !(personFetcher.data && "teknisk" in personFetcher.data) && (
         <LocalAlert status="announcement" className="max-w-xl">

@@ -1,6 +1,6 @@
 import { FilePlusIcon, FolderPlusIcon, NotePencilIcon, UploadIcon } from "@navikt/aksel-icons";
 import { BodyShort, Box, Button, Heading, HStack, Link, Loader, VStack } from "@navikt/ds-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link as RouterLink, useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { Kort } from "~/komponenter/Kort";
@@ -8,7 +8,7 @@ import type { MalId } from "~/saker/filer/dokument/maler";
 import type { KontrollsakSteg } from "~/saker/types.backend";
 import { RouteConfig } from "~/routeConfig";
 import { formaterDato } from "~/utils/date-utils";
-import { erTekniskFeilSvar } from "~/feilhåndtering/Innsendingsfeil";
+import { erTekniskFeilSvar, Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
 import { TILLATTE_FILTYPER } from "./fil-type-utils";
 import { FilerSeksjonCaption } from "./FilerRad";
 import { flatMappeliste, byggFilTre } from "./mapper/bygg-filtre";
@@ -19,11 +19,21 @@ import type { DokumentNode, FilResponse } from "./typer";
 
 function OpprettDokumentKnapp({ sakId, steg }: { sakId: string; steg: KontrollsakSteg }) {
   const action = RouteConfig.API.SAK_DOKUMENTER.replace(":sakId", sakId);
-  const fetcher = useFetcher();
+  const fetcher = useFetcher<{ ok?: boolean; teknisk?: boolean; feilId?: string }>();
   const [åpen, settÅpen] = useState(false);
+  const [tekniskFeilSvar, settTekniskFeilSvar] = useState<unknown>();
+  const forrigeState = useRef(fetcher.state);
+
+  useEffect(() => {
+    const varIgang = forrigeState.current !== "idle";
+    forrigeState.current = fetcher.state;
+    if (!varIgang || fetcher.state !== "idle") return;
+    settTekniskFeilSvar(erTekniskFeilSvar(fetcher.data) ? fetcher.data : undefined);
+  }, [fetcher.state, fetcher.data]);
 
   function opprett(valg?: { malId: MalId; erStraffesak: boolean }) {
     sporHendelse("dokument opprettet", { malId: valg?.malId ?? "tom" });
+    settTekniskFeilSvar(undefined);
     const formData = new FormData();
     if (valg) {
       formData.set("malId", valg.malId);
@@ -47,7 +57,11 @@ function OpprettDokumentKnapp({ sakId, steg }: { sakId: string; steg: Kontrollsa
           åpen
           steg={steg}
           oppretter={fetcher.state !== "idle"}
-          onClose={() => settÅpen(false)}
+          svar={tekniskFeilSvar}
+          onClose={() => {
+            settÅpen(false);
+            settTekniskFeilSvar(undefined);
+          }}
           onVelg={opprett}
         />
       )}

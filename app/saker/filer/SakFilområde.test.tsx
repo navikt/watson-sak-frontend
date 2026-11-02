@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { createRoutesStub } from "react-router";
+import { createRoutesStub, data } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { RouteConfig } from "~/routeConfig";
 import { DokumentTre } from "./DokumentTre";
@@ -70,6 +70,7 @@ function renderOmrådeMedAction(
 function renderTre(
   props: Parameters<typeof DokumentTre>[0],
   mappehandling?: (request: Request) => unknown,
+  dokumentSletting?: (request: Request) => unknown,
 ) {
   const Stub = createRoutesStub([
     {
@@ -81,6 +82,14 @@ function renderTre(
           {
             path: RouteConfig.API.SAK_MAPPER,
             action: async ({ request }: { request: Request }) => mappehandling(request),
+          },
+        ]
+      : []),
+    ...(dokumentSletting
+      ? [
+          {
+            path: RouteConfig.API.SAK_DOKUMENTER,
+            action: async ({ request }: { request: Request }) => dokumentSletting(request),
           },
         ]
       : []),
@@ -310,6 +319,19 @@ describe("SakFilområde", () => {
 
     await waitFor(() => expect(mottatt).toHaveLength(1));
     expect(mottatt[0].get("malId")).toBeNull();
+  });
+
+  it("viser teknisk feil med feil-ID i dialogen når opprettelse feiler", async () => {
+    renderOmrådeMedAction({ dokumenter: [], filer: [], sakId: "ABC-123", steg: "UTREDNING" }, () =>
+      data({ ok: false, teknisk: true, feilId: "feil-opprett-123" }, { status: 500 }),
+    );
+
+    fireEvent.click(screen.getByText("Opprett dokument"));
+    fireEvent.click(await screen.findByText("Blankt dokument"));
+
+    expect(await screen.findByText("Vi fikk ikke opprettet dokumentet")).toBeDefined();
+    expect(screen.getByText("feil-opprett-123")).toBeDefined();
+    expect(screen.getByText("Prøv igjen om litt.")).toBeDefined();
   });
 
   it("sender malId og erStraffesak når en mal velges", async () => {
@@ -670,5 +692,37 @@ describe("DokumentTre med mapper", () => {
     expect(screen.getAllByRole("button", { name: /Handlinger for mappen/ }).length).toBeGreaterThan(
       0,
     );
+  });
+
+  it("beholder slettedialogen ved teknisk feil og lukker den først etter vellykket sletting", async () => {
+    const slettSvar = vi
+      .fn()
+      .mockResolvedValueOnce(
+        data({ ok: false, teknisk: true, feilId: "feil-slett-456" }, { status: 500 }),
+      )
+      .mockResolvedValueOnce({ ok: true });
+    renderTre(
+      { noder: [mockDokumenter[0]], sakId: "ABC-123", redigerbar: true },
+      undefined,
+      async () => slettSvar(),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Handlinger for Rapport" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Slett" }));
+    fireEvent.click(screen.getByRole("button", { name: "Slett dokument" }));
+
+    expect(await screen.findByText("Vi fikk ikke slettet dokumentet")).toBeDefined();
+    expect(screen.getByText("feil-slett-456")).toBeDefined();
+    expect(
+      screen.getByText("Sjekk om dokumentet fortsatt ligger i listen før du prøver igjen."),
+    ).toBeDefined();
+    expect(screen.getByRole("dialog", { name: "Slette dokument?" })).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: "Slett dokument" }));
+
+    await waitFor(() => {
+      expect(slettSvar).toHaveBeenCalledTimes(2);
+      expect(screen.queryByRole("dialog", { name: "Slette dokument?" })).toBeNull();
+    });
   });
 });

@@ -328,10 +328,20 @@ export function ErrorBoundary() {
   if (isRouteErrorResponse(error) && error.status < 500) {
     throw error;
   }
+  const feilId =
+    isRouteErrorResponse(error) && typeof error.data?.feilId === "string"
+      ? error.data.feilId
+      : undefined;
   return (
     <VStack gap="space-12" className="mt-4 mb-8">
       <MiljøtilpassetTittel>Feil – Watson Sak</MiljøtilpassetTittel>
-      <Feilmelding tittel="Vi fikk ikke hentet saken" size="medium" headingLevel="2" kanPrøveIgjen>
+      <Feilmelding
+        tittel="Vi fikk ikke hentet saken"
+        feilId={feilId}
+        size="medium"
+        headingLevel="2"
+        kanPrøveIgjen
+      >
         Dette er en teknisk feil hos oss, ikke noe du har gjort. Prøv igjen om litt.
       </Feilmelding>
     </VStack>

@@ -11,6 +11,7 @@ import { ActionMenu, Alert, BodyShort, Button, Detail, Tag } from "@navikt/ds-re
 import { useCallback, useState, type HTMLAttributes } from "react";
 import { Link } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
+import { Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
 import { RouteConfig } from "~/routeConfig";
 import { formaterDato } from "~/utils/date-utils";
 import { DokumentIkon } from "./dokument-ikon";
@@ -390,6 +391,7 @@ export function DokumentTre({
 
   return (
     <>
+      <Innsendingsfeil svar={mappehandling.tekniskFeilSvar} />
       {mappehandling.feil && (
         <Alert variant="error" size="small" className="mb-2">
           {mappehandling.feil}
@@ -466,6 +468,7 @@ export function DokumentTre({
         sletter={sletting.sletter}
         onBekreft={sletting.bekreft}
         onAvbryt={sletting.avbryt}
+        feil={sletting.feil}
       />
       {flytteElement && (
         <FlyttTilMappeModal

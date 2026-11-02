@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { createElement, useCallback, useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
+import { erTekniskFeilSvar, Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
 import { RouteConfig } from "~/routeConfig";
 
 /** Hvor slettingen ble igangsatt – brukes i analytics. */
@@ -25,10 +26,11 @@ type UseDokumentSlettingArgs = {
  */
 export function useDokumentSletting({ sakId, kilde, redirectTo }: UseDokumentSlettingArgs) {
   const [kandidat, setKandidat] = useState<Slettekandidat | null>(null);
-  const fetcher = useFetcher<{ ok: true }>();
+  const fetcher = useFetcher<{ ok?: boolean; teknisk?: boolean; feilId?: string }>();
   const sletter = fetcher.state !== "idle";
   // Dokument vi venter på suksess-svar for (kun når slettingen ikke redirecter bort).
   const venterPåResultat = useRef<string | null>(null);
+  const forrigeState = useRef(fetcher.state);
 
   const start = useCallback(
     (dokument: Slettekandidat) => {
@@ -55,7 +57,6 @@ export function useDokumentSletting({ sakId, kilde, redirectTo }: UseDokumentSle
       { docId: kandidat.id, ...(redirect ? { redirectTo: redirect } : {}) },
       { method: "delete", action: RouteConfig.API.SAK_DOKUMENTER.replace(":sakId", sakId) },
     );
-    setKandidat(null);
   }, [kandidat, sakId, kilde, redirectTo, fetcher]);
 
   const avbryt = useCallback(() => {
@@ -65,13 +66,26 @@ export function useDokumentSletting({ sakId, kilde, redirectTo }: UseDokumentSle
     setKandidat(null);
   }, [kandidat, kilde]);
 
-  // Spor «dokument slettet» når DELETE-kallet faktisk har lykkes (ikke-redirect-tilfellet).
+  // Dialogen lukkes og «dokument slettet» spores først når DELETE-kallet har lykkes.
   useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data?.ok && venterPåResultat.current) {
+    const varIgang = forrigeState.current !== "idle";
+    forrigeState.current = fetcher.state;
+    if (!varIgang || fetcher.state !== "idle" || !kandidat || !fetcher.data?.ok) return;
+    if (venterPåResultat.current) {
       sporHendelse("dokument slettet", { kilde });
       venterPåResultat.current = null;
     }
-  }, [fetcher.state, fetcher.data, kilde]);
+    setKandidat(null);
+  }, [fetcher.state, fetcher.data, kandidat, kilde]);
 
-  return { kandidat, sletter, start, bekreft, avbryt };
+  const feil =
+    kandidat && fetcher.state === "idle" && erTekniskFeilSvar(fetcher.data)
+      ? createElement(
+          Innsendingsfeil,
+          { svar: fetcher.data, tittel: "Vi fikk ikke slettet dokumentet" },
+          "Sjekk om dokumentet fortsatt ligger i listen før du prøver igjen.",
+        )
+      : undefined;
+
+  return { kandidat, sletter, start, bekreft, avbryt, feil };
 }

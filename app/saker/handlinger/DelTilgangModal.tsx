@@ -1,8 +1,9 @@
 import { PersonGroupIcon } from "@navikt/aksel-icons";
 import { BodyShort, Button, Modal, UNSAFE_Combobox, VStack } from "@navikt/ds-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
+import { Innsendingsfeil, erTekniskFeilSvar } from "~/feilhåndtering/Innsendingsfeil";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
@@ -23,6 +24,9 @@ export function DelTilgangModal({
   const [valgtSaksbehandler, setValgtSaksbehandler] = useState<string | undefined>(undefined);
   const modalRef = useRef<HTMLDialogElement>(null);
   const fetcher = useFetcher();
+  const submitPågår = useRef(false);
+  const innsendingHarStartet = useRef(false);
+  const [tekniskFeil, setTekniskFeil] = useState<{ teknisk: true; feilId: string } | null>(null);
   const innloggetBruker = useInnloggetBruker();
   const saksreferanse = getSaksreferanse(sakId);
   const valgbareSaksbehandlere = saksbehandlerDetaljer.filter(
@@ -40,8 +44,27 @@ export function DelTilgangModal({
 
   function handleClose() {
     setValgtSaksbehandler(undefined);
+    setTekniskFeil(null);
     onClose();
   }
+
+  useEffect(() => {
+    if (!submitPågår.current) return;
+    if (fetcher.state !== "idle") {
+      innsendingHarStartet.current = true;
+      return;
+    }
+    if (!innsendingHarStartet.current) return;
+
+    submitPågår.current = false;
+    innsendingHarStartet.current = false;
+    if (fetcher.data && "ok" in fetcher.data && fetcher.data.ok) {
+      setValgtSaksbehandler(undefined);
+      onClose();
+    } else {
+      setTekniskFeil(erTekniskFeilSvar(fetcher.data) ? fetcher.data : null);
+    }
+  }, [fetcher.data, fetcher.state, onClose]);
 
   function handleDel() {
     const navIdent = valgtSaksbehandler ? finnNavIdentFraValg(valgtSaksbehandler) : undefined;
@@ -55,7 +78,9 @@ export function DelTilgangModal({
         action: RouteConfig.SAKER_DETALJ.replace(":sakId", saksreferanse),
       },
     );
-    handleClose();
+    submitPågår.current = true;
+    innsendingHarStartet.current = false;
+    setTekniskFeil(null);
   }
 
   return (
@@ -77,10 +102,11 @@ export function DelTilgangModal({
               setValgtSaksbehandler(isSelected ? option : undefined);
             }}
           />
+          <Innsendingsfeil svar={tekniskFeil} />
         </VStack>
       </Modal.Body>
       <Modal.Footer>
-        <Button onClick={handleDel} disabled={!valgtSaksbehandler}>
+        <Button onClick={handleDel} disabled={!valgtSaksbehandler || fetcher.state !== "idle"}>
           Del tilgang
         </Button>
         <Button variant="secondary" onClick={handleClose}>

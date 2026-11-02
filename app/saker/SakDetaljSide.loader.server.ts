@@ -2,7 +2,11 @@ import { data } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { env, skalBrukeMockdata } from "~/config/env.server";
-import { hentEllerFeil } from "~/feilhåndtering/teknisk-feil.server";
+import {
+  erTekniskFeil,
+  hentEllerFeil,
+  loggTekniskFeil,
+} from "~/feilhåndtering/teknisk-feil.server";
 import { logger } from "~/logging/logging";
 import { hentMockMigreringKandidater } from "~/migrering/mock-data.server";
 import { hentMigreringskandidat } from "~/migrering/api.server";
@@ -87,6 +91,23 @@ function mockSeksjonsfeil(request: Request): Seksjonsfeil {
   );
 }
 
+/**
+ * 🔴 Kritiske kilder: uten dem kan ikke siden vises. Teknisk feil logges med feil-ID og kastes
+ * som 500-svar med ID-en, så route-boundary kan vise samme ID som i loggen.
+ * Kjente feil (401, 403, 404, redirect) kastes videre uendret.
+ */
+async function kritisk<T>(
+  hent: Promise<T>,
+  loggkontekst: Parameters<typeof loggTekniskFeil>[1],
+): Promise<T> {
+  try {
+    return await hent;
+  } catch (feil) {
+    if (!erTekniskFeil(feil)) throw feil;
+    throw data({ feilId: loggTekniskFeil(feil, loggkontekst) }, { status: 500 });
+  }
+}
+
 export async function loader({ request, params }: Route.LoaderArgs) {
   const sakId = parseSakId(params.sakId);
   const relaterteSakerSide = hentRelaterteSakerSide(request);
@@ -106,8 +127,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       mapperUtfall,
       tillatteHandlingerUtfall,
     ] = await Promise.all([
-      backendApi.hentKontrollsak(token, sakId),
-      hentInnloggetBruker({ request }),
+      kritisk(backendApi.hentKontrollsak(token, sakId), { ...logg, kontekst: "hente sak" }),
+      kritisk(hentInnloggetBruker({ request }), { ...logg, kontekst: "hente innlogget bruker" }),
       hentEllerFeil(() => backendApi.hentHendelser(token, sakId), {
         ...logg,
         kontekst: "hente historikk",

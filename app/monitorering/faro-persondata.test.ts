@@ -22,6 +22,22 @@ describe("fjernPersondata", () => {
     expect(vasket).toContain('"url":"/sok"');
   });
 
+  it("fjerner query og fragment fra URL-er midt i en melding", () => {
+    const item = {
+      payload: {
+        value: "Request failed: https://watson.example/sok?navn=Ola%20Nordmann#x (status 500)",
+        message: "Feil ved /saker/1?side=2&navn=Kari, prøv igjen",
+      },
+    } as unknown as TransportItem;
+
+    const vasket = JSON.stringify(fjernPersondata(item));
+
+    expect(vasket).not.toContain("Ola");
+    expect(vasket).not.toContain("Kari");
+    expect(vasket).toContain("Request failed: https://watson.example/sok (status 500)");
+    expect(vasket).toContain("Feil ved /saker/1, prøv igjen");
+  });
+
   it("lar tall som ikke er 11 siffer stå", () => {
     const item = { payload: { sakId: "1234", tid: 1730000000000 } } as unknown as TransportItem;
     expect(fjernPersondata(item)).toEqual(item);

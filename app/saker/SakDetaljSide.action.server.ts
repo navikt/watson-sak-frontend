@@ -107,9 +107,7 @@ function saksflytfeil(
     const status = (feil.init as ResponseInit | null)?.status ?? 400;
     return data<SaksflytFeil>({ ok: false, feil: feil.data }, { status });
   }
-  // fetch avviser med TypeError ved nettverks- og DNS-feil, før backend har svart.
-  if (feil instanceof TypeError) {
-    return tekniskFeilSvar(feil, loggkontekst);
-  }
-  throw feil;
+  // Nettverksfeil (TypeError), ugyldig JSON (SyntaxError), kontraktbrudd og andre tekniske feil
+  // vises i modalen. `tekniskFeilSvar` kaster ikke-tekniske feil videre.
+  return tekniskFeilSvar(feil, loggkontekst);
 }

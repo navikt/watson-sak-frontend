@@ -409,6 +409,23 @@ describe("SakDetaljSide loader — backend-sti", () => {
     expect(resultat.sak).toEqual(grunnleggendeSak);
   });
 
+  it("kaster 500 med feil-ID når saken ikke kan hentes, og 403 uendret", async () => {
+    mockHentHendelser.mockResolvedValue([]);
+    mockHentSaksbehandlere.mockResolvedValue([]);
+    mockHentFiler.mockResolvedValue([]);
+    const { loader } = await import("./SakDetaljSide.server");
+
+    mockHentKontrollsak.mockRejectedValueOnce(new MockBackendFeilException(500, "Intern feil"));
+    await expect(loader(lagLoaderArgs())).rejects.toMatchObject({
+      data: { feilId: expect.stringMatching(/^[0-9a-f]{8}$/) },
+      init: { status: 500 },
+    });
+
+    const ingenTilgang = new MockBackendFeilException(403, "Ingen tilgang");
+    mockHentKontrollsak.mockRejectedValueOnce(ingenTilgang);
+    await expect(loader(lagLoaderArgs())).rejects.toBe(ingenTilgang);
+  });
+
   it("avviser ugyldig sakId før loaderen kaller backend", async () => {
     const { loader } = await import("./SakDetaljSide.server");
 
@@ -755,6 +772,54 @@ describe("SakDetaljSide loader — backend-sti", () => {
       ],
     });
     mockEndreSteg.mockRejectedValueOnce(new MockBackendFeilException(500, "Intern feil"));
+    const formData = new FormData();
+    formData.set("handling", "endre_steg_dialog");
+    formData.set("steg", "AVSLUTTET");
+    formData.set("registrerResultat", "true");
+    formData.set("resultat.utredning.type", "HENLAGT");
+    formData.set("resultat.utredning.henleggelsesarsak", "IKKE_KAPASITET");
+    const { action } = await import("./SakDetaljSide.server");
+
+    const resultat = await action({
+      request: new Request("http://localhost/saker/1", { method: "POST", body: formData }),
+      params: { sakId: "1" },
+    } as Parameters<typeof action>[0]);
+
+    expect(resultat).toMatchObject({
+      data: { ok: false, teknisk: true, feilId: expect.stringMatching(/^[0-9a-f]{8}$/) },
+      init: { status: 500 },
+    });
+    expect(JSON.stringify(resultat)).not.toContain("IKKE_KAPASITET");
+  });
+
+  it("returnerer teknisk feil når backend svarer med ugyldig JSON under saksflyt", async () => {
+    mockHentTillatteHandlinger.mockResolvedValue({
+      versjon: 1,
+      tilstand: { steg: "UTREDNING", status: "AKTIV", resultat: null, ytelser: [] },
+      handlinger: [
+        { type: "FLYTT_TIL_NESTE_STEG", metode: "POST", sti: "/api/v1/kontrollsaker/1/steg" },
+      ],
+      tillatteSteg: [],
+      muligeNesteSteg: ["AVSLUTTET"],
+      feltskjema: [
+        {
+          felt: "utredning.type",
+          etikett: "Resultat fra utredningen",
+          datatype: "enum",
+          paakrevd: true,
+          verdier: [{ verdi: "HENLAGT", etikett: "Henlagt" }],
+        },
+        {
+          felt: "utredning.henleggelsesarsak",
+          etikett: "Årsak",
+          datatype: "enum",
+          paakrevd: false,
+          paakrevdNar: "utredning.type=HENLAGT",
+          verdier: [{ verdi: "IKKE_KAPASITET", etikett: "Ikke kapasitet" }],
+        },
+      ],
+    });
+    mockEndreSteg.mockRejectedValueOnce(new SyntaxError("Unexpected token < in JSON"));
     const formData = new FormData();
     formData.set("handling", "endre_steg_dialog");
     formData.set("steg", "AVSLUTTET");
