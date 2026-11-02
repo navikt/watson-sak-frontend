@@ -160,6 +160,10 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
       return;
     }
     const erSisteTrinn = tilstand.trinnIndeks === tilstand.handling.trinn.length - 1;
+    if (trinn.type === "enkeltvalg" && trinn.lagreValgUtenNeste?.(alleVerdier)) {
+      send(tilstand.handling, alleVerdier, { handling: "lagre_resultat" });
+      return;
+    }
     if (innsending || erSisteTrinn) {
       send(tilstand.handling, tilstand.verdier, innsending);
     } else {

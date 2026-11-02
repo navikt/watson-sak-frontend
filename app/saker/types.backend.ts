@@ -97,8 +97,11 @@ const resultatResponseSchema = z.object({
       betingetFengselDager: z.number().nullable().optional(),
       samfunnsstraffTimer: z.number().nullable().optional(),
       domfeltBelop: z.number().nullable().optional(),
+      bot: z.number().nullable().optional(),
       siviltRettskrav: z.number().nullable().optional(),
       tilstaaelsesdom: z.boolean().nullable().optional(),
+      medvirker: z.boolean().nullable().optional(),
+      emkBrudd: z.boolean().nullable().optional(),
       strafferabattLiggetid: strafferabattLiggetidSchema.nullable().optional(),
       /** Eldre registreringer. Nye resultater bruker feltene over. */
       detaljer: z.string().nullable().optional(),
@@ -149,14 +152,7 @@ const lagreResultatRequestSchema = z.object({
     .optional(),
   politi: z
     .object({
-      type: z.enum([
-        "HENLAGT",
-        "FORELEGG",
-        "BOT",
-        "PATALEUNNLATELSE",
-        "FRIFINNELSE",
-        "DOMFELLELSE",
-      ]),
+      type: z.enum(["HENLAGT", "FORELEGG", "PATALEUNNLATELSE", "FRIFINNELSE", "DOMFELLELSE"]),
       henleggelsesarsak: henleggelsesarsakSchema.optional(),
       begrunnelse: z.string().optional(),
       belop: z.number().nonnegative().optional(),
@@ -167,8 +163,11 @@ const lagreResultatRequestSchema = z.object({
       betingetFengselDager: z.number().int().nonnegative().optional(),
       samfunnsstraffTimer: z.number().int().nonnegative().optional(),
       domfeltBelop: z.number().nonnegative().optional(),
+      bot: z.number().nonnegative().optional(),
       siviltRettskrav: z.number().nonnegative().optional(),
       tilstaaelsesdom: z.boolean().optional(),
+      medvirker: z.boolean().optional(),
+      emkBrudd: z.boolean().optional(),
       strafferabattLiggetid: strafferabattLiggetidSchema.optional(),
     })
     .optional(),

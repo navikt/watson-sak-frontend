@@ -114,15 +114,15 @@ describe("hentHandlinger", () => {
 
   it("viser bare resultattyper som backend tillater", () => {
     const tillatte = lagTillatteHandlinger({ steg: "POLITI", status: "VENTER_PA_RESULTAT" });
-    tillatte.tillatteResultater = ["BOT", "HENLAGT"];
+    tillatte.tillatteResultater = ["FORELEGG", "HENLAGT"];
     const felt = tillatte.feltskjema.find((f) => f.felt === "politi.type");
     if (!felt) throw new Error("Mangler politi.type");
     expect(hentValg(felt, tillatte.tillatteResultater).map((valg) => valg.verdi)).toEqual([
       "HENLAGT",
-      "BOT",
+      "FORELEGG",
     ]);
-    expect(hentValg(felt, tillatte.tillatteResultater, ["BOT"]).map((v) => v.verdi)).toEqual([
-      "BOT",
+    expect(hentValg(felt, tillatte.tillatteResultater, ["FORELEGG"]).map((v) => v.verdi)).toEqual([
+      "FORELEGG",
     ]);
   });
 
@@ -283,7 +283,7 @@ describe("byggInnsending", () => {
     const formData = byggInnsending(
       finn(hentHandlinger(tillatte), "registrer-resultat"),
       {
-        "politi.type": "BOT",
+        "politi.type": "FORELEGG",
         "politi.belop": "3000",
         "politi.domsdato": "2026-01-15",
         "politi.ubetingetFengselDager": "14",
@@ -293,7 +293,7 @@ describe("byggInnsending", () => {
       tillatte,
     );
     expect(Object.fromEntries(formData)).toMatchObject({
-      "resultat.politi.type": "BOT",
+      "resultat.politi.type": "FORELEGG",
       "resultat.politi.belop": "3000",
     });
     for (const felt of ["domsdato", "ubetingetFengselDager", "tilstaaelsesdom"]) {
@@ -357,7 +357,7 @@ describe("byggInnsending", () => {
     const tillatte = lagTillatteHandlinger({ steg: "POLITI", status: "VENTER_PA_RESULTAT" });
     const formData = byggInnsending(
       finn(hentHandlinger(tillatte), "registrer-resultat"),
-      { "politi.type": "BOT", paaklaget: "true" },
+      { "politi.type": "FORELEGG", paaklaget: "true" },
       tillatte,
     );
     expect(formData.has("resultat.paaklaget")).toBe(false);

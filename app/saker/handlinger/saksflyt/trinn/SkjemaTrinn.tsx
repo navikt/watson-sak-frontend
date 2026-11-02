@@ -3,11 +3,11 @@ import {
   DatePicker,
   Fieldset,
   Heading,
+  HGrid,
   HStack,
   Radio,
   RadioGroup,
   Select,
-  Stack,
   Textarea,
   TextField,
   useDatepicker,
@@ -32,6 +32,31 @@ import { type Feil, hentSynligeFelter } from "../validering";
 
 type Skjemafelt = TillatteHandlingerResponse["feltskjema"][number];
 
+const domfellelseVenstre = [
+  "politi.ubetingetFengselMaaneder",
+  "politi.ubetingetFengselDager",
+  "politi.betingetFengselMaaneder",
+  "politi.betingetFengselDager",
+  "politi.samfunnsstraffTimer",
+  "politi.tilstaaelsesdom",
+];
+const domfellelseHoyre = [
+  "politi.siviltRettskrav",
+  "politi.bot",
+  "politi.domfeltBelop",
+  "politi.medvirker",
+];
+const domfellelseEtter = ["politi.strafferabattLiggetid", "politi.emkBrudd"];
+
+function erPolitiresultatfelt(felt: Skjemafelt): boolean {
+  return felt.felt.startsWith("politi.") || felt.felt === "paaklaget";
+}
+
+function etikettMedStatus(felt: Skjemafelt, valgfri: boolean): string {
+  if (erPolitiresultatfelt(felt)) return valgfri ? felt.etikett : `${felt.etikett} (påkrevd)`;
+  return valgfri ? `${felt.etikett} (valgfritt)` : felt.etikett;
+}
+
 type FeltProps = {
   felt: Skjemafelt;
   verdier: Verdier;
@@ -48,7 +73,11 @@ function Datofelt({ felt, verdier, feil, onChange }: FeltProps) {
   });
   return (
     <DatePicker {...datepickerProps}>
-      <DatePicker.Input {...inputProps} label={felt.etikett} error={feil[felt.felt]} />
+      <DatePicker.Input
+        {...inputProps}
+        label={etikettMedStatus(felt, !resultatFeltErPaakrevd(felt, verdier))}
+        error={feil[felt.felt]}
+      />
     </DatePicker>
   );
 }
@@ -122,7 +151,7 @@ function Resultatfelt({
 }: FeltProps & { tillatteVerdier?: readonly string[]; tillatteResultater: readonly string[] }) {
   const verdi = verdier[felt.felt] ?? "";
   const valgfri = !resultatFeltErPaakrevd(felt, verdier);
-  const etikett = valgfri ? `${felt.etikett} (valgfritt)` : felt.etikett;
+  const etikett = etikettMedStatus(felt, valgfri);
   const visning = feltvisning[felt.felt] ?? {};
 
   if (visning.enhet) {
@@ -182,10 +211,10 @@ function Resultatfelt({
           error={feil[felt.felt]}
           onChange={(nyVerdi: string) => onChange(felt.felt, nyVerdi)}
         >
-          <Stack gap="space-0 space-24" direction={{ xs: "column", sm: "row" }} wrap={false}>
+          <HStack gap="space-24" wrap={false}>
             <Radio value="true">Ja</Radio>
             <Radio value="false">Nei</Radio>
-          </Stack>
+          </HStack>
         </RadioGroup>
       );
     case "tekst": {
@@ -230,7 +259,11 @@ function Resultatfelt({
     case "belop":
       return (
         <Beløpsfelt
-          label={`${felt.etikett} (kr)${valgfri ? " (valgfritt)" : ""}`}
+          label={
+            erPolitiresultatfelt(felt)
+              ? `${etikett} (kr)`
+              : `${felt.etikett} (kr)${valgfri ? " (valgfritt)" : ""}`
+          }
           value={verdi}
           error={feil[felt.felt]}
           onChange={(nyVerdi) => onChange(felt.felt, nyVerdi)}
@@ -304,10 +337,16 @@ export function SkjemaTrinn({
         return medlem ? [{ felt: medlem, enhet: feltvisning[navn]?.enhet ?? "" }] : [];
       });
       const valgfri = medlemmer.every(({ felt }) => !resultatFeltErPaakrevd(felt, verdier));
+      const etikett =
+        valgfri && medlemmer[0]?.felt.felt.startsWith("politi.")
+          ? gruppe.legend
+          : valgfri
+            ? `${gruppe.legend} (valgfritt)`
+            : gruppe.legend;
       return (
         <Enhetsfelter
           key={felt.felt}
-          legend={valgfri ? `${gruppe.legend} (valgfritt)` : gruppe.legend}
+          legend={etikett}
           felter={medlemmer}
           verdier={verdier}
           feil={feil}
@@ -343,6 +382,23 @@ export function SkjemaTrinn({
     );
   }
 
+  function visDomfellelseFelter() {
+    const domsdato = felter.filter((felt) => felt.felt === "politi.domsdato");
+    const venstre = felter.filter((felt) => domfellelseVenstre.includes(felt.felt));
+    const hoyre = felter.filter((felt) => domfellelseHoyre.includes(felt.felt));
+    const etter = felter.filter((felt) => domfellelseEtter.includes(felt.felt));
+    return (
+      <>
+        {domsdato.map(visFelt)}
+        <HGrid columns={{ xs: 1, md: 2 }} gap="space-20">
+          <VStack gap="space-20">{venstre.map(visFelt)}</VStack>
+          <VStack gap="space-20">{hoyre.map(visFelt)}</VStack>
+        </HGrid>
+        {etter.map(visFelt)}
+      </>
+    );
+  }
+
   return (
     <VStack gap="space-20">
       {undertittel && (
@@ -350,7 +406,7 @@ export function SkjemaTrinn({
           {undertittel}
         </Heading>
       )}
-      {felter.map(visFelt)}
+      {verdier["politi.type"] === "DOMFELLELSE" ? visDomfellelseFelter() : felter.map(visFelt)}
     </VStack>
   );
 }

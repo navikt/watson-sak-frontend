@@ -30,7 +30,9 @@ export type Trinn =
       grupper?: readonly { tittel: string; verdier: readonly string[] }[];
       /** Viser «Avbryt», som lukker modalen, i stedet for «Tilbake». */
       avbryt?: boolean;
-      primær: string;
+      primær: string | ((verdier: Verdier) => string);
+      /** Sender det valgte resultatet direkte uten å åpne skjematrinnet. */
+      lagreValgUtenNeste?: (verdier: Verdier) => boolean;
     }
   | { type: "status"; tittel: string; primær: string }
   | {
@@ -291,11 +293,13 @@ const handlingstabell: Partial<Record<KontrollsakSteg, readonly Sakshandling[]>>
           legend: "Resultat",
           beskrivelse: "Velg resultatet som er registrert i saken.",
           grupper: [
-            { tittel: "Politiet", verdier: ["HENLAGT", "FORELEGG", "BOT", "PATALEUNNLATELSE"] },
+            { tittel: "Politiet", verdier: ["HENLAGT", "FORELEGG", "PATALEUNNLATELSE"] },
             { tittel: "Domstolen", verdier: ["FRIFINNELSE", "DOMFELLELSE"] },
           ],
           avbryt: true,
-          primær: "Neste",
+          primær: (verdier) =>
+            verdier["politi.type"] === "PATALEUNNLATELSE" ? "Lagre resultat" : "Neste",
+          lagreValgUtenNeste: (verdier) => verdier["politi.type"] === "PATALEUNNLATELSE",
         },
         {
           type: "skjema",
@@ -311,10 +315,13 @@ const handlingstabell: Partial<Record<KontrollsakSteg, readonly Sakshandling[]>>
             "politi.betingetFengselMaaneder",
             "politi.betingetFengselDager",
             "politi.samfunnsstraffTimer",
-            "politi.domfeltBelop",
-            "politi.siviltRettskrav",
             "politi.tilstaaelsesdom",
+            "politi.siviltRettskrav",
+            "politi.bot",
+            "politi.domfeltBelop",
+            "politi.medvirker",
             "politi.strafferabattLiggetid",
+            "politi.emkBrudd",
           ],
           standardverdier: {
             paaklaget: "false",

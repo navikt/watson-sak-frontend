@@ -81,7 +81,7 @@ const resultatvalg: Partial<Record<KontrollsakSteg, ResultatType[]>> = {
     "HENLAGT",
   ],
   STRAFFERETTSLIG_VURDERING: ["ANMELDT", "HENLAGT"],
-  POLITI: ["HENLAGT", "FORELEGG", "BOT", "PATALEUNNLATELSE", "FRIFINNELSE", "DOMFELLELSE"],
+  POLITI: ["HENLAGT", "FORELEGG", "PATALEUNNLATELSE", "FRIFINNELSE", "DOMFELLELSE"],
 };
 
 type Henleggelsesarsak = keyof typeof henleggelsesarsakEtiketter;
@@ -253,7 +253,7 @@ function feltskjemaFor(steg: KontrollsakSteg): TillatteHandlingerResponse["felts
           "tekst",
           false,
           [],
-          "politi.type=HENLAGT, PATALEUNNLATELSE eller FRIFINNELSE",
+          "politi.type=HENLAGT eller FRIFINNELSE",
         ),
         mockFelt(
           "paaklaget",
@@ -263,7 +263,7 @@ function feltskjemaFor(steg: KontrollsakSteg): TillatteHandlingerResponse["felts
           [],
           "politi.type=HENLAGT",
         ),
-        mockFelt("politi.belop", "Beløp", "belop", false, [], "politi.type=FORELEGG eller BOT"),
+        mockFelt("politi.belop", "Beløp", "belop", false, [], "politi.type=FORELEGG"),
         mockFelt("politi.domsdato", "Domsdato", "dato", false, [], DOMFELLELSE),
         valgfrittDomfellelsesfelt("politi.ubetingetFengselMaaneder", "Ubetinget fengsel (måneder)"),
         valgfrittDomfellelsesfelt("politi.ubetingetFengselDager", "Ubetinget fengsel (dager)"),
@@ -272,12 +272,14 @@ function feltskjemaFor(steg: KontrollsakSteg): TillatteHandlingerResponse["felts
         valgfrittDomfellelsesfelt("politi.samfunnsstraffTimer", "Samfunnsstraff"),
         valgfrittDomfellelsesfelt("politi.domfeltBelop", "Domfelt beløp", "belop"),
         valgfrittDomfellelsesfelt("politi.siviltRettskrav", "Sivilt rettskrav", "belop"),
-        mockFelt("politi.tilstaaelsesdom", "Tilståelsesdom", "boolsk", false, [], DOMFELLELSE),
+        valgfrittDomfellelsesfelt("politi.bot", "Bot", "belop"),
+        mockFelt("politi.tilstaaelsesdom", "Tilståelsesdom", "boolsk", true, [], DOMFELLELSE),
+        mockFelt("politi.medvirker", "Medvirker?", "boolsk", true, [], DOMFELLELSE),
         mockFelt(
           "politi.strafferabattLiggetid",
-          "Strafferabatt (EMK art. 6)?",
+          "Strafferabatt?",
           "enum",
-          false,
+          true,
           [
             { verdi: "INGEN", etikett: "Ingen strafferabatt" },
             { verdi: "NAV", etikett: "Liggetid hos Nav" },
@@ -286,6 +288,7 @@ function feltskjemaFor(steg: KontrollsakSteg): TillatteHandlingerResponse["felts
           ],
           DOMFELLELSE,
         ),
+        mockFelt("politi.emkBrudd", "Brudd på EMK art. 6?", "boolsk", true, [], DOMFELLELSE),
       ];
     default:
       return [];

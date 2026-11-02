@@ -271,6 +271,7 @@ describe("SaksflytModal", () => {
     await screen.findByRole("dialog", { name: "Registrer resultat" });
     expect(screen.getByRole("group", { name: "Politiet" })).toBeDefined();
     expect(screen.getByRole("group", { name: "Domstolen" })).toBeDefined();
+    expect(screen.queryByRole("radio", { name: "Bot" })).toBeNull();
     const radionavn = screen.getAllByRole("radio").map((radio) => radio.getAttribute("name"));
     expect(new Set(radionavn).size).toBe(1);
     klikk("Neste");
@@ -280,7 +281,19 @@ describe("SaksflytModal", () => {
 
     expect(await screen.findByRole("heading", { name: "Domfelt" })).toBeDefined();
     expect(screen.getByText("Tilgang til dokumenter og underlag")).toBeDefined();
-    expect(screen.getByRole("radio", { name: "Nei" })).toHaveProperty("checked", true);
+    expect(
+      within(screen.getByRole("radiogroup", { name: "Tilståelsesdom (påkrevd)" })).getByRole(
+        "radio",
+        {
+          name: "Nei",
+        },
+      ),
+    ).toHaveProperty("checked", true);
+    expect(screen.getByRole("radiogroup", { name: "Medvirker? (påkrevd)" })).toBeDefined();
+    expect(screen.getByRole("radiogroup", { name: /Strafferabatt\? \(påkrevd\)/ })).toBeDefined();
+    expect(
+      screen.getByRole("radiogroup", { name: "Brudd på EMK art. 6? (påkrevd)" }),
+    ).toBeDefined();
     expect(screen.getByRole("radio", { name: "Ingen strafferabatt" })).toHaveProperty(
       "checked",
       true,
@@ -288,19 +301,32 @@ describe("SaksflytModal", () => {
     fireEvent.change(screen.getByLabelText("Ubetinget fengsel (dager)"), {
       target: { value: "1,5" },
     });
+    fireEvent.change(screen.getByLabelText("Bot (kr)"), { target: { value: "2500" } });
+    fireEvent.click(
+      within(screen.getByRole("radiogroup", { name: "Medvirker? (påkrevd)" })).getByRole("radio", {
+        name: "Ja",
+      }),
+    );
     klikk("Lagre og avslutt");
     expect(screen.getByText("Domsdato må fylles ut")).toBeDefined();
     expect(screen.getByText("Ubetinget fengsel (dager) må være et helt tall")).toBeDefined();
+    expect(screen.getByText("Brudd på EMK art. 6? må fylles ut")).toBeDefined();
     expect(submitMock).not.toHaveBeenCalled();
 
     fireEvent.change(screen.getByLabelText("Ubetinget fengsel (dager)"), {
       target: { value: "14" },
     });
+    fireEvent.click(
+      within(screen.getByRole("radiogroup", { name: "Brudd på EMK art. 6? (påkrevd)" })).getByRole(
+        "radio",
+        { name: "Nei" },
+      ),
+    );
     const domfelt = screen.getByLabelText("Domfelt beløp (kroner)");
     fireEvent.change(domfelt, { target: { value: "15000" } });
     expect(domfelt).toHaveProperty("value", "15 000");
     fireEvent.click(screen.getByRole("radio", { name: "Liggetid hos Nav" }));
-    const dato = screen.getByLabelText("Domsdato");
+    const dato = screen.getByLabelText("Domsdato (påkrevd)");
     fireEvent.change(dato, { target: { value: "01.09.2026" } });
     fireEvent.blur(dato);
     klikk("Lagre og avslutt");
@@ -314,10 +340,29 @@ describe("SaksflytModal", () => {
       "resultat.politi.type": "DOMFELLELSE",
       "resultat.politi.domsdato": "2026-09-01",
       "resultat.politi.ubetingetFengselDager": "14",
+      "resultat.politi.bot": "2500",
       "resultat.politi.domfeltBelop": "15000",
       "resultat.politi.tilstaaelsesdom": "false",
+      "resultat.politi.medvirker": "true",
       "resultat.politi.strafferabattLiggetid": "NAV",
+      "resultat.politi.emkBrudd": "false",
     });
+  });
+
+  it("lagrer påtaleunnlatelse direkte uten årsak", async () => {
+    renderModal({ steg: "POLITI", status: "VENTER_PA_RESULTAT" });
+    klikk("Registrer resultat");
+    await screen.findByRole("dialog", { name: "Registrer resultat" });
+    fireEvent.click(screen.getByRole("radio", { name: "Påtaleunnlatelse" }));
+    klikk("Lagre resultat");
+
+    expect(await screen.findByText("Lagret")).toBeDefined();
+    expect(sendtSkjema()).toEqual({
+      handling: "lagre_resultat",
+      versjon: "1",
+      "resultat.politi.type": "PATALEUNNLATELSE",
+    });
+    expect(sendtSkjema()).not.toHaveProperty("resultat.politi.begrunnelse");
   });
 
   it("lukker modalen med Avbryt fra valget av resultat", async () => {
@@ -341,7 +386,7 @@ describe("SaksflytModal", () => {
     expect(screen.queryByText("Tilgang til dokumenter og underlag")).toBeNull();
     klikk("Registrer påklaget henleggelse");
     expect(screen.getByText("Årsak må fylles ut")).toBeDefined();
-    fireEvent.change(screen.getByLabelText("Årsak"), {
+    fireEvent.change(screen.getByLabelText("Årsak (påkrevd)"), {
       target: { value: "Bevisene holder ikke" },
     });
     klikk("Registrer påklaget henleggelse");
@@ -363,7 +408,7 @@ describe("SaksflytModal", () => {
     klikk("Neste");
 
     await screen.findByRole("heading", { name: "Henlagt" });
-    fireEvent.change(screen.getByLabelText("Årsak"), {
+    fireEvent.change(screen.getByLabelText("Årsak (påkrevd)"), {
       target: { value: "Bevisene holder ikke" },
     });
     klikk("Lagre og avslutt");
