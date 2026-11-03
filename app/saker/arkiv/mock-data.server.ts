@@ -63,25 +63,23 @@ export function hentMockArkivJournalposter(state: MockState, sakId: string): Ark
   const filer = hentFilerForSak(state, sakId);
   // Word-filer konverteres til PDF før journalføring, så bare PDF-en ligger i arkivet.
   const konverterteFilIder = new Set(filer.map((fil) => fil.arkivertFraFilId).filter(Boolean));
-  const arkiverte = hentJournalposterForSak(state, sakId).map(
-    (journalpost): ArkivJournalpost => ({
-      journalpostId: journalpost.journalpostId,
-      datoOpprettet: journalpost.opprettet,
-      journalposttype: tilJournalposttypekode(journalpost.journalposttype),
-      journalstatus: "JOURNALFOERT",
-      tittel: journalpost.tittel,
-      tema: journalpost.tema ?? "KTR",
-      temanavn: journalpost.tema === "KTA" ? "Kontroll anmeldelse" : "Kontroll",
-      avsenderMottaker: null,
-      dokumenter: filer
-        .filter(
-          (fil) =>
-            fil.arkivertJournalpostId === journalpost.journalpostId &&
-            !konverterteFilIder.has(fil.id),
-        )
-        .map((fil) => ({ dokumentInfoId: fil.id, tittel: fil.filnavn })),
-    }),
-  );
+  const arkiverte = hentJournalposterForSak(state, sakId).map((journalpost): ArkivJournalpost => ({
+    journalpostId: journalpost.journalpostId,
+    datoOpprettet: journalpost.opprettet,
+    journalposttype: tilJournalposttypekode(journalpost.journalposttype),
+    journalstatus: "JOURNALFOERT",
+    tittel: journalpost.tittel,
+    tema: journalpost.tema ?? "KTR",
+    temanavn: journalpost.tema === "KTA" ? "Kontroll anmeldelse" : "Kontroll",
+    avsenderMottaker: null,
+    dokumenter: filer
+      .filter(
+        (fil) =>
+          fil.arkivertJournalpostId === journalpost.journalpostId &&
+          !konverterteFilIder.has(fil.id),
+      )
+      .map((fil) => ({ dokumentInfoId: fil.id, tittel: fil.filnavn })),
+  }));
   return [...arkiverte, ...mockJournalposter].sort((a, b) =>
     b.datoOpprettet.localeCompare(a.datoOpprettet),
   );

@@ -160,27 +160,25 @@ export const kommentartraadSchema = z
     synlig: z.boolean().default(true),
     kommentarer: z.array(kommentarSchema).default([]),
   })
-  .transform(
-    (rå): Kommentartraad => ({
-      id: rå.id,
-      dokumentId: rå.dokumentId,
-      ankertype: rå.ankerType,
-      anker: fraBackendAnker(rå.ankerType, rå.anker),
-      ankerVersjon: rå.ankerVersjon,
-      opprinneligSitat: rå.opprinneligSitat ?? null,
-      opprettetAvIdent: rå.opprettetAvIdent,
-      opprettetAvNavn: visningsnavn(rå.opprettetAvIdent, rå.opprettetAvNavn),
-      opprettet: rå.opprettet,
-      resolved: rå.resolved ?? null,
-      /** Avledet av `resolved`: en adressert tråd er skrivebeskyttet til den gjenåpnes. */
-      adressert: (rå.resolved ?? null) !== null,
-      resolvedAvIdent: rå.resolvedAvIdent ?? null,
-      resolvedAvNavn: visningsnavn(rå.resolvedAvIdent, rå.resolvedAvNavn) ?? null,
-      versjon: rå.versjon,
-      synlig: rå.synlig,
-      kommentarer: rå.kommentarer,
-    }),
-  );
+  .transform((rå): Kommentartraad => ({
+    id: rå.id,
+    dokumentId: rå.dokumentId,
+    ankertype: rå.ankerType,
+    anker: fraBackendAnker(rå.ankerType, rå.anker),
+    ankerVersjon: rå.ankerVersjon,
+    opprinneligSitat: rå.opprinneligSitat ?? null,
+    opprettetAvIdent: rå.opprettetAvIdent,
+    opprettetAvNavn: visningsnavn(rå.opprettetAvIdent, rå.opprettetAvNavn),
+    opprettet: rå.opprettet,
+    resolved: rå.resolved ?? null,
+    /** Avledet av `resolved`: en adressert tråd er skrivebeskyttet til den gjenåpnes. */
+    adressert: (rå.resolved ?? null) !== null,
+    resolvedAvIdent: rå.resolvedAvIdent ?? null,
+    resolvedAvNavn: visningsnavn(rå.resolvedAvIdent, rå.resolvedAvNavn) ?? null,
+    versjon: rå.versjon,
+    synlig: rå.synlig,
+    kommentarer: rå.kommentarer,
+  }));
 
 /** Eksakt speiling av `KommentarTraadListeResponse`. */
 export const kommentarlisteSchema = z.object({
