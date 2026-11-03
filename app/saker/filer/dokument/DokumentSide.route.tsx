@@ -11,6 +11,7 @@ import {
 } from "react-router";
 import { DokumentIkkeFunnet } from "~/feilhåndtering/DokumentIkkeFunnet";
 import { Feilmelding } from "~/feilhåndtering/Feilmelding";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import { hentTekniskFeilId } from "./lagringsfeil";
 import { finnEnhetsnavn } from "~/kodeverk/enheter";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
@@ -387,12 +388,11 @@ function DokumentRedigering({
             <LagreStatusVisning status={status} sistLagret={sistLagret} />
             {lagringsfeil && (
               <Feilmelding
-                tittel="Vi fikk ikke lagret dokumentet"
+                tittel={INNSENDINGSFEIL.lagreDokument.tittel}
                 feilId={lagringsfeil.feilId}
                 onPrøvIgjen={prøvIgjen}
               >
-                Det du har skrevet, ligger fortsatt her. Sjekk at du er på nett, og prøv å lagre på
-                nytt om litt.
+                {INNSENDINGSFEIL.lagreDokument.tekst}
               </Feilmelding>
             )}
           </VStack>

@@ -59,7 +59,13 @@ async function renderMedRouter(ui: React.ReactNode, tekniskFeil = false) {
         element: ui,
         action: async () =>
           tekniskFeil
-            ? { ok: false as const, feil: "Intern feil", feilId: "ERR-123", teknisk: true as const }
+            ? {
+                ok: false as const,
+                feil: "Intern feil",
+                feilId: "ERR-123",
+                teknisk: true as const,
+                usikker: false,
+              }
             : {
                 ok: false as const,
                 feil: { skjema: ["Denne funksjonen er ikke tilgjengelig ennå."] },
@@ -324,7 +330,7 @@ describe("SakerPåSammePerson", () => {
     fireEvent.click(screen.getByRole("button", { name: "Koble til sak" }));
     fireEvent.click(screen.getAllByRole("button", { name: "Koble til sak" })[1]);
 
-    expect(await screen.findByText("Vi fikk ikke lagret endringen")).toBeDefined();
+    expect(await screen.findByText("Vi fikk ikke koblet sakene")).toBeDefined();
     expect(screen.getByText("ERR-123")).toBeDefined();
     expect(screen.getByRole("heading", { name: "Koble til sak" })).toBeDefined();
 
@@ -335,7 +341,7 @@ describe("SakerPåSammePerson", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Koble til sak" }));
     expect(await screen.findByRole("heading", { name: "Koble til sak" })).toBeDefined();
-    expect(screen.queryByText("Vi fikk ikke lagret endringen")).toBeNull();
+    expect(screen.queryByText("Vi fikk ikke koblet sakene")).toBeNull();
   });
 
   it("viser frakoblingsmodal for koblede saker", async () => {

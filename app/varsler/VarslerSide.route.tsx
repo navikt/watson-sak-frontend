@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Form, useActionData, useFetcher, useLoaderData, useNavigate } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
@@ -65,9 +66,7 @@ export default function VarslerSide() {
               {ulesteVarsler.map((v) => (
                 <input key={v.id} type="hidden" name="varselId" value={v.id} />
               ))}
-              <Innsendingsfeil svar={actionData} tittel="Vi fikk ikke markert varslene som lest">
-                Prøv igjen om litt.
-              </Innsendingsfeil>
+              <Innsendingsfeil svar={actionData} tekster={INNSENDINGSFEIL.merkVarslerLest} />
               <Button type="submit" variant="secondary" size="small">
                 Merk alle viste som lest
               </Button>

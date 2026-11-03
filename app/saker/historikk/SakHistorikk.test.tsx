@@ -769,7 +769,7 @@ describe("SakHistorikk — feilhåndtering ved lagring", () => {
     await renderMedAksjon(
       <SakHistorikk redigerbar={true} sakId={1} hendelser={[hendelse]} />,
       data(
-        { ok: false, feil: "Intern feil", feilId: "feil-hist-1", teknisk: true },
+        { ok: false, feil: "Intern feil", feilId: "feil-hist-1", teknisk: true, usikker: false },
         { status: 500 },
       ),
     );

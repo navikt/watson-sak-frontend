@@ -1,7 +1,13 @@
 import { createElement, useCallback, useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
-import { erTekniskFeilSvar, Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
+import {
+  erTekniskFeilSvar,
+  Innsendingsfeil,
+  type TekniskFeil,
+  tekniskFeilFra,
+} from "~/feilhåndtering/Innsendingsfeil";
 import { RouteConfig } from "~/routeConfig";
 
 /** Hvor slettingen ble igangsatt – brukes i analytics. */
@@ -33,12 +39,12 @@ export function useDokumentSletting({ sakId, kilde, redirectTo }: UseDokumentSle
   const forrigeState = useRef(fetcher.state);
   // Feil-ID fra svaret på denne dialogens innsending. Egen state, så en feil fra et tidligere
   // dokument ikke vises når dialogen åpnes for et nytt.
-  const [tekniskFeilId, setTekniskFeilId] = useState<string | null>(null);
+  const [tekniskFeil, setTekniskFeil] = useState<TekniskFeil | null>(null);
 
   const start = useCallback(
     (dokument: Slettekandidat) => {
       sporHendelse("dokument sletting påbegynt", { kilde });
-      setTekniskFeilId(null);
+      setTekniskFeil(null);
       setKandidat(dokument);
     },
     [kilde],
@@ -48,7 +54,7 @@ export function useDokumentSletting({ sakId, kilde, redirectTo }: UseDokumentSle
     if (!kandidat) {
       return;
     }
-    setTekniskFeilId(null);
+    setTekniskFeil(null);
     const redirect = redirectTo?.(kandidat.id);
     if (redirect) {
       // Etter en vellykket sletting redirecter action-en og komponenten rives ned, så vi
@@ -71,7 +77,7 @@ export function useDokumentSletting({ sakId, kilde, redirectTo }: UseDokumentSle
     if (kandidat) {
       sporHendelse("dokument sletting avbrutt", { kilde });
     }
-    setTekniskFeilId(null);
+    setTekniskFeil(null);
     setKandidat(null);
   }, [kandidat, kilde, sletter]);
 
@@ -81,7 +87,7 @@ export function useDokumentSletting({ sakId, kilde, redirectTo }: UseDokumentSle
     forrigeState.current = fetcher.state;
     if (!varIgang || fetcher.state !== "idle" || !kandidat) return;
     if (erTekniskFeilSvar(fetcher.data)) {
-      setTekniskFeilId(fetcher.data.feilId);
+      setTekniskFeil(tekniskFeilFra(fetcher.data));
       return;
     }
     if (!fetcher.data?.ok) return;
@@ -93,15 +99,11 @@ export function useDokumentSletting({ sakId, kilde, redirectTo }: UseDokumentSle
   }, [fetcher.state, fetcher.data, kandidat, kilde]);
 
   const feil =
-    kandidat && tekniskFeilId
-      ? createElement(
-          Innsendingsfeil,
-          {
-            svar: { teknisk: true, feilId: tekniskFeilId },
-            tittel: "Vi fikk ikke slettet dokumentet",
-          },
-          "Sjekk om dokumentet fortsatt ligger i listen før du prøver igjen.",
-        )
+    kandidat && tekniskFeil
+      ? createElement(Innsendingsfeil, {
+          svar: tekniskFeil,
+          tekster: INNSENDINGSFEIL.slettDokument,
+        })
       : undefined;
 
   return { kandidat, sletter, start, bekreft, avbryt, feil };

@@ -22,6 +22,7 @@ import { getSaksreferanse } from "~/saker/id";
 import { formaterFødselsnummer } from "~/utils/string-utils";
 import { sporHendelse } from "~/analytics/analytics";
 import { erTekniskFeilSvar, Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import type { TildelingsSvar } from "./MigreringSide.server";
 import {
   hentMigreringsstatus,
@@ -306,9 +307,7 @@ function EndreTildelingModal({
               ))}
             </Select>
             {erTekniskFeilSvar(fetcher.data) ? (
-              <Innsendingsfeil svar={fetcher.data} tittel="Vi fikk ikke tildelt saken">
-                Sjekk om saken er tildelt før du prøver igjen.
-              </Innsendingsfeil>
+              <Innsendingsfeil svar={fetcher.data} tekster={INNSENDINGSFEIL.tildelMigrering} />
             ) : (
               fetcher.data &&
               !fetcher.data.ok && (

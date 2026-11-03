@@ -2,6 +2,7 @@ import { ChatIcon, PlusCircleIcon } from "@navikt/aksel-icons";
 import { Alert, BodyShort, Button, Detail, HStack, Switch, VStack } from "@navikt/ds-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Feilmelding } from "~/feilhåndtering/Feilmelding";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import { elementEtikett, kategoriserElement, type AnkerTreff } from "./anker";
 import { KommentarSkjema } from "./KommentarSkjema";
 import { KommentarTraad } from "./KommentarTraad";
@@ -193,8 +194,8 @@ export function KommentarPanel({
             </BodyShort>
           )}
           {utkastfeil?.teknisk ? (
-            <Feilmelding tittel="Vi fikk ikke lagret kommentaren" feilId={utkastfeil.feilId}>
-              Teksten ligger fortsatt i feltet. Prøv igjen om litt.
+            <Feilmelding tittel={INNSENDINGSFEIL.lagreKommentar.tittel} feilId={utkastfeil.feilId}>
+              {INNSENDINGSFEIL.lagreKommentar.tekst}
             </Feilmelding>
           ) : (
             utkastfeil && (

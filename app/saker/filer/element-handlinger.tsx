@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { erTekniskFeilSvar, Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import { RouteConfig } from "~/routeConfig";
 import { FilIBrukModal } from "./FilIBrukModal";
 import { SlettFilModal } from "./SlettFilModal";
@@ -127,9 +128,7 @@ export function useFilSletting(sakId: string) {
           }}
           feil={
             sistSlettet && (
-              <Innsendingsfeil svar={fetcher.data} tittel="Vi fikk ikke slettet filen">
-                Sjekk om filen fortsatt ligger i listen før du prøver igjen.
-              </Innsendingsfeil>
+              <Innsendingsfeil svar={fetcher.data} tekster={INNSENDINGSFEIL.slettFil} />
             )
           }
         />

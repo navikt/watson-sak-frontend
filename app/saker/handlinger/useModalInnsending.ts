@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { erTekniskFeilSvar } from "~/feilhåndtering/Innsendingsfeil";
+import {
+  erTekniskFeilSvar,
+  type TekniskFeil,
+  tekniskFeilFra,
+} from "~/feilhåndtering/Innsendingsfeil";
 
 type FetcherMedData = { state: "idle" | "loading" | "submitting"; data?: unknown };
 
@@ -20,7 +24,7 @@ export function useModalInnsending(fetcher: FetcherMedData, onSuksess: () => voi
   // `markerSendt` (mens fetcheren ennå er «idle») behandle det gamle svaret og overse det nye.
   const harSettInnsending = useRef(false);
   const [feilmelding, setFeilmelding] = useState<string | null>(null);
-  const [tekniskFeil, setTekniskFeil] = useState<{ teknisk: true; feilId: string } | null>(null);
+  const [tekniskFeil, setTekniskFeil] = useState<TekniskFeil | null>(null);
 
   useEffect(() => {
     if (!venterPåSvar.current) return;
@@ -32,7 +36,7 @@ export function useModalInnsending(fetcher: FetcherMedData, onSuksess: () => voi
     venterPåSvar.current = false;
     harSettInnsending.current = false;
     const tekniskSvar = erTekniskFeilSvar(fetcher.data) ? fetcher.data : null;
-    setTekniskFeil(tekniskSvar ? { teknisk: true, feilId: tekniskSvar.feilId } : null);
+    setTekniskFeil(tekniskSvar ? tekniskFeilFra(tekniskSvar) : null);
     const melding = tekniskSvar ? null : hentFeilmelding(fetcher.data);
     setFeilmelding(melding);
     if (!melding && !tekniskSvar) onSuksess();

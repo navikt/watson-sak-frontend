@@ -9,6 +9,11 @@ import {
 import { Alert, BodyLong, BodyShort, Button, Detail, HStack, Tag, VStack } from "@navikt/ds-react";
 import { useState } from "react";
 import { Feilmelding } from "~/feilhåndtering/Feilmelding";
+import {
+  INNSENDINGSFEIL,
+  type Innsendingstekster,
+  velgTekst,
+} from "~/feilhåndtering/feilmeldinger";
 import { NORSK_TIDSSONE } from "~/utils/date-utils";
 import { elementEtikett, type AnkerTreff } from "./anker";
 import { KommentarSkjema } from "./KommentarSkjema";
@@ -71,23 +76,12 @@ function Ankerbeskrivelse({
 
 type Feilhandling = "lagre" | "slette" | "løse" | "gjenåpne";
 
-const TEKNISKE_FEIL: Record<Feilhandling, { tittel: string; tekst: string }> = {
-  lagre: {
-    tittel: "Vi fikk ikke lagret kommentaren",
-    tekst: "Teksten ligger fortsatt i feltet. Prøv igjen om litt.",
-  },
-  slette: {
-    tittel: "Vi fikk ikke slettet kommentaren",
-    tekst: "Sjekk om kommentaren fortsatt vises før du prøver igjen.",
-  },
-  løse: {
-    tittel: "Vi fikk ikke markert kommentaren som løst",
-    tekst: "Prøv igjen om litt.",
-  },
-  gjenåpne: {
-    tittel: "Vi fikk ikke gjenåpnet kommentaren",
-    tekst: "Prøv igjen om litt.",
-  },
+/** Nr. 30–33 i oversikten over feilmeldinger. */
+const TEKNISKE_FEIL: Record<Feilhandling, Innsendingstekster> = {
+  lagre: INNSENDINGSFEIL.lagreKommentar,
+  slette: INNSENDINGSFEIL.slettKommentar,
+  løse: INNSENDINGSFEIL.løsKommentar,
+  gjenåpne: INNSENDINGSFEIL.gjenåpneKommentar,
 };
 
 function KommentarRad({
@@ -220,6 +214,7 @@ export function KommentarTraad({
     melding: string;
     teknisk?: true;
     feilId?: string;
+    usikker?: boolean;
   } | null>(null);
 
   function håndterResultat(
@@ -237,6 +232,7 @@ export function KommentarTraad({
       melding: resultat.melding,
       ...(resultat.teknisk && { teknisk: true }),
       ...(resultat.teknisk && resultat.feilId && { feilId: resultat.feilId }),
+      ...(resultat.teknisk && { usikker: resultat.usikker !== false }),
     });
     return false;
   }
@@ -335,8 +331,11 @@ export function KommentarTraad({
       </VStack>
 
       {feil?.teknisk ? (
-        <Feilmelding tittel={TEKNISKE_FEIL[feil.handling].tittel} feilId={feil.feilId}>
-          {TEKNISKE_FEIL[feil.handling].tekst}
+        <Feilmelding
+          tittel={velgTekst(TEKNISKE_FEIL[feil.handling], feil.usikker !== false).tittel}
+          feilId={feil.feilId}
+        >
+          {velgTekst(TEKNISKE_FEIL[feil.handling], feil.usikker !== false).tekst}
         </Feilmelding>
       ) : (
         feil && (

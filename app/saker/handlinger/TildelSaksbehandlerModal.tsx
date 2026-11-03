@@ -6,6 +6,7 @@ import { useFetcher } from "react-router";
 import { z } from "zod";
 import { sporHendelse } from "~/analytics/analytics";
 import { Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import { useModalInnsending } from "~/saker/handlinger/useModalInnsending";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
@@ -132,9 +133,7 @@ export function TildelSaksbehandlerModal({
           </VStack>
         </Modal.Body>
         <Modal.Footer>
-          <Innsendingsfeil svar={innsending.tekniskFeil} tittel="Vi fikk ikke fordelt saken">
-            Sjekk om saken er fordelt før du prøver igjen.
-          </Innsendingsfeil>
+          <Innsendingsfeil svar={innsending.tekniskFeil} tekster={INNSENDINGSFEIL.fordelSak} />
           <Button type="submit" disabled={erSubmitting || !navIdentControl.value}>
             Tildel
           </Button>

@@ -5,6 +5,7 @@ import { Alert, Button, Modal } from "@navikt/ds-react";
 import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { Innsendingsfeil, erTekniskFeilSvar } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { NORSK_TIDSSONE } from "~/utils/date-utils";
@@ -134,7 +135,10 @@ export function RedigerHistorikkModal({
               {feilmelding}
             </Alert>
           )}
-          <Innsendingsfeil svar={visFeilmelding ? fetcher.data : undefined} />
+          <Innsendingsfeil
+            svar={visFeilmelding ? fetcher.data : undefined}
+            tekster={INNSENDINGSFEIL.redigerHendelse}
+          />
           <HistorikkSkjemaFelter
             fields={fields}
             defaultSelected={initialDate}

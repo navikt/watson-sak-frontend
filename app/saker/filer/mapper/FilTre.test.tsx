@@ -201,7 +201,7 @@ describe("FilTre", () => {
   });
 
   it("viser teknisk feilmelding ved endring av mappenavn uten å lukke modal eller tømme navnet", async () => {
-    svarFraMappehandling = { ok: false, teknisk: true, feilId: "feil-123" };
+    svarFraMappehandling = { ok: false, teknisk: true, usikker: false, feilId: "feil-123" };
     await renderSeksjon({
       mapper: ["Bank"],
       filer: [],
@@ -215,7 +215,7 @@ describe("FilTre", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Lagre navn" }));
 
-    expect(await screen.findByText("Vi fikk ikke lagret endringen")).toBeDefined();
+    expect(await screen.findByText("Vi fikk ikke endret navnet på mappen")).toBeDefined();
     expect(screen.getByText("feil-123")).toBeDefined();
     expect(screen.queryByText("Kunne ikke oppdatere mappene")).toBeNull();
     expect((screen.getByRole("textbox", { name: "Mappenavn" }) as HTMLInputElement).value).toBe(
@@ -331,7 +331,7 @@ describe("FilTre", () => {
   });
 
   it("viser teknisk feilmelding ved sletting uten å lukke bekreftelsesdialogen", async () => {
-    svarFraFilhandling = { ok: false, teknisk: true, feilId: "feil-456" };
+    svarFraFilhandling = { ok: false, teknisk: true, usikker: false, feilId: "feil-456" };
     await renderSeksjon({ filer: mockFiler, sakId: "SAK-1", kanEndreFiler: true });
 
     await velgIMeny("screenshot.png", "Slett");
@@ -339,9 +339,7 @@ describe("FilTre", () => {
 
     expect(await screen.findByText("Vi fikk ikke slettet filen")).toBeDefined();
     expect(screen.getByText("feil-456")).toBeDefined();
-    expect(
-      screen.getByText("Sjekk om filen fortsatt ligger i listen før du prøver igjen."),
-    ).toBeDefined();
+    expect(screen.getByText("Prøv igjen om litt.")).toBeDefined();
     expect(screen.getByText("Slette vedlegg?")).toBeDefined();
   });
 

@@ -20,6 +20,7 @@ import { useFetcher, useNavigate } from "react-router";
 import { z } from "zod";
 import { sporHendelse } from "~/analytics/analytics";
 import { erTekniskFeilSvar, Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
@@ -357,7 +358,7 @@ export function SendTilAnnenEnhetModal({
           )}
           {steg === "bekreft" && (
             <>
-              <Innsendingsfeil svar={tekniskFeilSvar} />
+              <Innsendingsfeil svar={tekniskFeilSvar} tekster={INNSENDINGSFEIL.sendTilEnhet} />
               <Button
                 type="button"
                 onClick={handleBekreft}

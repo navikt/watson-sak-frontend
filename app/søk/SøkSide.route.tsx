@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { data, Link, unstable_useRoute, useActionData, useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import { tekniskFeilSvar } from "~/feilhåndtering/teknisk-feil.server";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { RouteConfig } from "~/routeConfig";
@@ -229,9 +230,7 @@ export default function SøkSide() {
         <Heading level="1" size="large">
           Søk i saker
         </Heading>
-        <Innsendingsfeil svar={visteData} tittel="Vi fikk ikke søkt">
-          Prøv igjen om litt.
-        </Innsendingsfeil>
+        <Innsendingsfeil svar={visteData} tekster={INNSENDINGSFEIL.søk} />
         {harSøkt && (
           <VStack gap="space-4">
             {resultater && (

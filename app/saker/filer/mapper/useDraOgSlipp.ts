@@ -55,11 +55,15 @@ export function useDraOgSlipp({
       sporHendelse(element.type === "dokument" ? "dokument flyttet" : "vedlegg flyttet", {
         metode: "dra og slipp",
       });
-      mappehandling.utfør({
-        handling: element.type === "dokument" ? "flytt-dokument" : "flytt-fil",
-        id: element.id,
-        mappe: mål,
-      });
+      mappehandling.utfør(
+        {
+          handling: element.type === "dokument" ? "flytt-dokument" : "flytt-fil",
+          id: element.id,
+          mappe: mål,
+        },
+        undefined,
+        element.navn,
+      );
     }
     if (mål) settÅpen(mål, true);
   }

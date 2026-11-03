@@ -1,6 +1,7 @@
 import { act, render, renderHook, screen } from "@testing-library/react";
 import { createElement } from "react";
 import { describe, expect, it, vi } from "vitest";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import { Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
 import { useModalInnsending } from "./useModalInnsending";
 
@@ -54,17 +55,44 @@ describe("useModalInnsending", () => {
     rerender({
       fetcher: {
         state: "idle",
-        data: { ok: false, feil: "Intern feil", feilId: "feil-123", teknisk: true },
+        data: { ok: false, feil: "Intern feil", feilId: "feil-123", teknisk: true, usikker: false },
       },
     });
 
-    render(createElement(Innsendingsfeil, { svar: result.current.tekniskFeil }));
+    render(
+      createElement(Innsendingsfeil, {
+        svar: result.current.tekniskFeil,
+        tekster: INNSENDINGSFEIL.overførAnsvar,
+      }),
+    );
 
     expect(onSuksess).not.toHaveBeenCalled();
-    expect(screen.getByText("Vi fikk ikke lagret endringen").textContent).toBe(
-      "Vi fikk ikke lagret endringen",
+    expect(screen.getByText("Vi fikk ikke overført saken")).toBeDefined();
+    expect(screen.getByText("feil-123")).toBeDefined();
+  });
+
+  it("tar med at vi ikke vet om endringen ble lagret", () => {
+    const { result, rerender } = renderHook(({ fetcher }) => useModalInnsending(fetcher, vi.fn()), {
+      initialProps: { fetcher: { state: "idle" } as Fetcher },
+    });
+
+    act(() => result.current.markerSendt());
+    rerender({ fetcher: { state: "submitting" } as Fetcher });
+    rerender({
+      fetcher: {
+        state: "idle",
+        data: { ok: false, feil: "Intern feil", feilId: "feil-9", teknisk: true, usikker: true },
+      },
+    });
+
+    render(
+      createElement(Innsendingsfeil, {
+        svar: result.current.tekniskFeil,
+        tekster: INNSENDINGSFEIL.overførAnsvar,
+      }),
     );
-    expect(screen.getByText("feil-123").textContent).toBe("feil-123");
+
+    expect(screen.getByText("Vi vet ikke om saken ble overført")).toBeDefined();
   });
 
   it("behandler svaret på nytt forsøk, ikke det gamle, etter en teknisk feil", () => {

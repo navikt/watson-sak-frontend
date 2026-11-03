@@ -10,6 +10,7 @@ const tekniskFeil: MutasjonResultat = {
   melding: "Utelat denne tekniske teksten",
   teknisk: true,
   feilId: "FEIL-123",
+  usikker: false,
 };
 const ok: MutasjonResultat = { ok: true, traad: lagTraad() };
 
@@ -47,10 +48,20 @@ describe("KommentarTraad tekniske feil", () => {
     expect(
       await screen.findByRole("heading", { name: "Vi fikk ikke slettet kommentaren" }),
     ).toBeDefined();
-    expect(
-      screen.getByText("Sjekk om kommentaren fortsatt vises før du prøver igjen."),
-    ).toBeDefined();
+    expect(screen.getByText("Prøv igjen om litt.")).toBeDefined();
     expect(screen.getByText("FEIL-123")).toBeDefined();
+  });
+
+  it("viser «vet ikke» når vi ikke fikk svar på slettingen", async () => {
+    renderTraad({ slett: vi.fn(async () => ({ ...tekniskFeil, usikker: true })) });
+
+    fireEvent.click(screen.getByRole("button", { name: "Slett" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bekreft sletting" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "Vi vet ikke om kommentaren ble slettet" }),
+    ).toBeDefined();
+    expect(screen.getByText("Last inn siden og se om kommentaren fortsatt vises.")).toBeDefined();
   });
 
   it("viser teknisk feil-ID og riktig melding når markering som løst feiler", async () => {

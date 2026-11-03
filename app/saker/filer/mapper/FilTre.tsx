@@ -21,6 +21,7 @@ import { useCallback, useId, useMemo, useRef, useState } from "react";
 import { Link as RouterLink } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import { RouteConfig } from "~/routeConfig";
 import { formaterDato as formaterDokumentdato } from "~/utils/date-utils";
 import { formaterStorrelse } from "~/utils/number-utils";
@@ -406,15 +407,16 @@ export function FilTre({
       </div>
       {/* Feil fra opplasting og fra mappehandlinger vises hver for seg, så en gammel
           opplastingsfeil ikke skjuler feilen fra handlingen som nettopp feilet. */}
-      <Innsendingsfeil svar={tekniskFeilSvar} tittel="Vi fikk ikke lastet opp filen">
-        Sjekk om filen ligger i listen før du prøver igjen.
-      </Innsendingsfeil>
+      <Innsendingsfeil svar={tekniskFeilSvar} tekster={INNSENDINGSFEIL.lastOppFil} />
       {feilFraServer && (
         <Alert variant="error" size="small" className="mb-2">
           {feilFraServer}
         </Alert>
       )}
-      <Innsendingsfeil svar={mappehandling.tekniskFeilSvar} />
+      <Innsendingsfeil
+        svar={mappehandling.tekniskFeilSvar}
+        tekster={mappehandling.tekniskFeilTekster}
+      />
       {mappehandling.feil && (
         <Alert variant="error" size="small" className="mb-2">
           {mappehandling.feil}

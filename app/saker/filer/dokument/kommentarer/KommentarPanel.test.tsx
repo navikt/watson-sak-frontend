@@ -292,6 +292,7 @@ describe("KommentarPanel", () => {
       konflikt: false,
       teknisk: true,
       feilId: "feil-123",
+      usikker: false,
       melding: "Intern feil",
     };
     const handlinger = lagHandlinger({
@@ -308,9 +309,7 @@ describe("KommentarPanel", () => {
     fireEvent.change(felt, { target: { value: "Viktig kommentar" } });
     fireEvent.click(screen.getByRole("button", { name: "Legg til kommentar" }));
 
-    expect(
-      await screen.findByText("Teksten ligger fortsatt i feltet. Prøv igjen om litt."),
-    ).toBeDefined();
+    expect(await screen.findByText("Prøv igjen om litt.")).toBeDefined();
     expect(screen.getByText("feil-123")).toBeDefined();
     expect(felt.value).toBe("Viktig kommentar");
 
@@ -321,17 +320,12 @@ describe("KommentarPanel", () => {
 
     await waitFor(() => expect(handlinger.svar).toHaveBeenCalled());
     expect(svarfelt.value).toBe("Viktig svar");
-    expect(
-      screen.getAllByText("Teksten ligger fortsatt i feltet. Prøv igjen om litt."),
-    ).toHaveLength(2);
+    expect(screen.getAllByText("Prøv igjen om litt.")).toHaveLength(2);
 
     fireEvent.click(screen.getByRole("button", { name: "Slett" }));
     fireEvent.click(screen.getByRole("button", { name: "Bekreft sletting" }));
 
     await waitFor(() => expect(handlinger.slett).toHaveBeenCalled());
-    expect(
-      screen.getByText("Sjekk om kommentaren fortsatt vises før du prøver igjen."),
-    ).toBeDefined();
     expect(screen.getByRole("heading", { name: "Vi fikk ikke slettet kommentaren" })).toBeDefined();
   });
 

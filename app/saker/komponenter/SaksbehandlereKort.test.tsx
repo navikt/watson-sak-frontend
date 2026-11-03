@@ -13,7 +13,13 @@ import { SaksbehandlereKort } from "./SaksbehandlereKort";
 const submitMock = vi.fn();
 const navigateMock = vi.fn();
 let fetcherData:
-  | { ok: boolean; feil?: string | { skjema?: string[] }; feilId?: string; teknisk?: boolean }
+  | {
+      ok: boolean;
+      feil?: string | { skjema?: string[] };
+      feilId?: string;
+      teknisk?: boolean;
+      usikker?: boolean;
+    }
   | undefined;
 
 vi.mock("react-router", async () => {
@@ -830,6 +836,7 @@ describe("SaksbehandlereKort", () => {
       feil: "Intern feil",
       feilId: "ERR-456",
       teknisk: true,
+      usikker: false,
     };
 
     await renderMedRouter(
@@ -851,7 +858,6 @@ describe("SaksbehandlereKort", () => {
     );
 
     expect(screen.getByText("Vi fikk ikke fjernet tilgangen")).toBeDefined();
-    expect(screen.getByText("Sjekk om tilgangen er fjernet før du prøver igjen.")).toBeDefined();
     expect(screen.getAllByText("ERR-456").length).toBeGreaterThan(0);
   });
 

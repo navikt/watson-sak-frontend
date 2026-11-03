@@ -3,6 +3,7 @@ import { Alert, BodyShort, Box, Button, Heading, HStack } from "@navikt/ds-react
 import { useMemo, useState } from "react";
 import { useFetcher } from "react-router";
 import { erTekniskFeilSvar, Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { useDisclosure } from "~/utils/useDisclosure";
@@ -55,9 +56,7 @@ export function SakHistorikk({
       : undefined;
   // Vises både i den korte historikken og i «Vis all historikk».
   const slettFeil = erTekniskFeilSvar(slettSvar) ? (
-    <Innsendingsfeil svar={slettSvar} tittel="Vi fikk ikke slettet hendelsen">
-      Sjekk om hendelsen fortsatt vises før du prøver igjen.
-    </Innsendingsfeil>
+    <Innsendingsfeil svar={slettSvar} tekster={INNSENDINGSFEIL.slettHendelse} />
   ) : slettFeilmelding ? (
     <Alert variant="error" size="small">
       {slettFeilmelding}

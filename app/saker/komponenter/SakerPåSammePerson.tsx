@@ -22,7 +22,13 @@ import {
 } from "@navikt/ds-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { Link, useFetcher, useSearchParams } from "react-router";
-import { erTekniskFeilSvar, Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
+import {
+  erTekniskFeilSvar,
+  Innsendingsfeil,
+  type TekniskFeil,
+  tekniskFeilFra,
+} from "~/feilhåndtering/Innsendingsfeil";
 import { finnEnhetsnavn } from "~/kodeverk/enheter";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { AvkortetTag } from "~/komponenter/AvkortetTag";
@@ -376,7 +382,7 @@ export function SakerPåSammePerson({
   const [feilmelding, setFeilmelding] = useState<string>();
   // Feil-ID fra svaret på innsendingen i den åpne dialogen. Egen state, så en feil fra en
   // tidligere kobling ikke vises når dialogen åpnes på nytt.
-  const [tekniskFeilId, setTekniskFeilId] = useState<string | null>(null);
+  const [tekniskFeil, setTekniskFeil] = useState<TekniskFeil | null>(null);
   const harSendt = useRef(false);
   const fetcher = useFetcher<KobleSakActionResult>();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -393,7 +399,7 @@ export function SakerPåSammePerson({
       return;
     }
     if (erTekniskFeilSvar(fetcher.data)) {
-      setTekniskFeilId(fetcher.data.feilId);
+      setTekniskFeil(tekniskFeilFra(fetcher.data));
       return;
     }
     setFeilmelding(fetcher.data?.feil.skjema?.[0] ?? "Kunne ikke endre koblingen. Prøv igjen.");
@@ -417,7 +423,7 @@ export function SakerPåSammePerson({
     setValgtSak(sak);
     setHandling(nyHandling);
     setFeilmelding(undefined);
-    setTekniskFeilId(null);
+    setTekniskFeil(null);
   }
 
   function lukkKoblingsmodal() {
@@ -429,7 +435,7 @@ export function SakerPåSammePerson({
   function sendKobling() {
     harSendt.current = true;
     setFeilmelding(undefined);
-    setTekniskFeilId(null);
+    setTekniskFeil(null);
   }
 
   const gjeldendeSaksreferanse = getSaksreferanse(gjeldendeSak.id);
@@ -491,7 +497,8 @@ export function SakerPåSammePerson({
 
               {feilmelding && <Alert variant="error">{feilmelding}</Alert>}
               <Innsendingsfeil
-                svar={tekniskFeilId ? { teknisk: true, feilId: tekniskFeilId } : null}
+                svar={tekniskFeil}
+                tekster={erFrakobling ? INNSENDINGSFEIL.fjerneKobling : INNSENDINGSFEIL.kobleSaker}
               />
             </VStack>
           </Modal.Body>

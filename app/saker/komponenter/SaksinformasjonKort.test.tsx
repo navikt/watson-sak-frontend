@@ -149,12 +149,13 @@ describe("SaksinformasjonKort anmeldelsesfelter", () => {
       feil: "intern feil",
       feilId: "feil-456",
       teknisk: true,
+      usikker: false,
     }));
 
     fireEvent.click(screen.getByRole("button", { name: "Endre saksinformasjon" }));
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
 
-    expect(await screen.findByText("Vi fikk ikke lagret endringen")).toBeDefined();
+    expect(await screen.findByText("Vi fikk ikke lagret saksinformasjonen")).toBeDefined();
     expect(screen.getByText("feil-456")).toBeDefined();
     expect(screen.queryByText("intern feil")).toBeNull();
     expect(screen.getByRole("heading", { name: "Anmeldelse" })).toBeDefined();
@@ -166,17 +167,18 @@ describe("SaksinformasjonKort anmeldelsesfelter", () => {
       feil: "intern feil",
       feilId: "feil-456",
       teknisk: true,
+      usikker: false,
     }));
 
     fireEvent.click(screen.getByRole("button", { name: "Endre saksinformasjon" }));
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
-    expect(await screen.findByText("Vi fikk ikke lagret endringen")).toBeDefined();
+    expect(await screen.findByText("Vi fikk ikke lagret saksinformasjonen")).toBeDefined();
 
     fireEvent.click(screen.getByRole("button", { name: "Avbryt" }));
     fireEvent.click(await screen.findByRole("button", { name: "Endre saksinformasjon" }));
 
     expect(await screen.findByRole("button", { name: "Lagre" })).toBeDefined();
-    expect(screen.queryByText("Vi fikk ikke lagret endringen")).toBeNull();
+    expect(screen.queryByText("Vi fikk ikke lagret saksinformasjonen")).toBeNull();
     expect(screen.queryByText("feil-456")).toBeNull();
   });
 });

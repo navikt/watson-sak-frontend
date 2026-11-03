@@ -30,6 +30,7 @@ import { kanRedigereAnmeldelse } from "~/saker/anmeldelse";
 import { erGyldigPolitidistrikt, POLITIDISTRIKTER } from "~/saker/politidistrikter";
 import { Beløpsfelt } from "~/formaterte-inputfelt/FormaterteInputfelt";
 import { erTekniskFeilSvar, Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import { merkingEtikett } from "~/saker/kategorier";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { formaterIsoTilNorskDato, getPersonIdent } from "~/saker/visning";
@@ -325,7 +326,10 @@ export function SaksinformasjonKort({
                 </ErrorSummary>
               )}
 
-              <Innsendingsfeil svar={visFeil ? fetcher.data : null} />
+              <Innsendingsfeil
+                svar={visFeil ? fetcher.data : null}
+                tekster={INNSENDINGSFEIL.saksinformasjon}
+              />
               {feil?.skjema?.[0] && <Alert variant="error">{feil.skjema[0]}</Alert>}
 
               <VStack gap="space-1">

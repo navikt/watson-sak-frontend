@@ -79,11 +79,17 @@ describe("DelTilgangModal", () => {
     });
     await act(async () => {
       fetcherMock.state = "idle";
-      fetcherMock.data = { ok: false, feil: "intern feil", feilId: "ERR-123", teknisk: true };
+      fetcherMock.data = {
+        ok: false,
+        feil: "intern feil",
+        feilId: "ERR-123",
+        teknisk: true,
+        usikker: false,
+      };
       rerender(<DelTilgangModal {...props} />);
     });
 
-    expect(screen.getByText("Vi fikk ikke lagret endringen")).toBeDefined();
+    expect(screen.getByText("Vi fikk ikke delt tilgangen")).toBeDefined();
     expect(screen.getByText("ERR-123")).toBeDefined();
     // Valget står igjen, så brukeren kan prøve på nytt uten å velge saksbehandler igjen.
     expect(
@@ -127,7 +133,7 @@ describe("DelTilgangModal", () => {
     });
 
     expect(screen.getByText("Saksbehandleren har allerede tilgang til saken")).toBeDefined();
-    expect(screen.queryByText("Vi fikk ikke lagret endringen")).toBeNull();
+    expect(screen.queryByText("Vi fikk ikke delt tilgangen")).toBeNull();
     // Valget står igjen, så brukeren kan prøve på nytt uten å velge saksbehandler igjen.
     expect(
       (screen.getByRole("button", { name: "Del tilgang" }) as HTMLButtonElement).disabled,

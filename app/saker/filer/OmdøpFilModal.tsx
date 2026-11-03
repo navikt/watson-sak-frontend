@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { erTekniskFeilSvar, Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import { RouteConfig } from "~/routeConfig";
 import { filnavnSchema, splittFilnavn } from "./filnavn-utils";
 
@@ -82,7 +83,7 @@ export function OmdøpFilModal({ filId, filnavn, sakId, åpen, onClose }: Omdøp
       <form onSubmit={lagre}>
         <Modal.Body>
           <VStack gap="space-16">
-            <Innsendingsfeil svar={fetcher.data} />
+            <Innsendingsfeil svar={fetcher.data} tekster={INNSENDINGSFEIL.endreFilnavn} />
             {serverfeil && (
               <Alert variant="error" size="small">
                 {serverfeil}

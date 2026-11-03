@@ -5,6 +5,7 @@ import { Link } from "react-router";
 import { FødselsnummerSøkefelt } from "~/formaterte-inputfelt/FormaterteInputfelt";
 import { RouteConfig } from "~/routeConfig";
 import { Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import { identEtikett } from "~/utils/string-utils";
 import { INGEN_TILGANG_TIL_Å_OPPRETTE_SAK_MELDING } from "./feilmeldinger";
 import type { PersonOppslagResultat } from "./person-oppslag.mock.server";
@@ -113,12 +114,7 @@ export function PersonOppslag({
       </personFetcher.Form>
 
       {/* Feil fra personoppslag */}
-      <Innsendingsfeil
-        svar={personFetcher.data}
-        tittel="Vi fikk ikke hentet opplysninger om personen"
-      >
-        Prøv å søke på nytt om litt.
-      </Innsendingsfeil>
+      <Innsendingsfeil svar={personFetcher.data} tekster={INNSENDINGSFEIL.slåOppPerson} />
       {harSøkt && oppslagFeil && !(personFetcher.data && "teknisk" in personFetcher.data) && (
         <LocalAlert status="announcement" className="max-w-xl">
           <LocalAlert.Header>

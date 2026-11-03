@@ -29,6 +29,8 @@ export type MutasjonResultat =
       konflikt: boolean;
       teknisk?: true;
       feilId?: string;
+      /** `true` når vi ikke vet om endringen ble lagret. */
+      usikker?: boolean;
     };
 
 type Handling =
@@ -121,12 +123,18 @@ export function useKommentarer({ url, startListe }: { url: string; startListe: K
 
         if (!respons.ok) {
           const svartekst = await respons.text().catch(() => "");
-          let feilsvar: { feil?: unknown; teknisk?: unknown; feilId?: unknown } | null = null;
+          let feilsvar: {
+            feil?: unknown;
+            teknisk?: unknown;
+            feilId?: unknown;
+            usikker?: unknown;
+          } | null = null;
           try {
             feilsvar = JSON.parse(svartekst) as {
               feil?: unknown;
               teknisk?: unknown;
               feilId?: unknown;
+              usikker?: unknown;
             };
           } catch {
             // Andre feilsvar kan fortsatt være ren tekst.
@@ -140,6 +148,7 @@ export function useKommentarer({ url, startListe }: { url: string; startListe: K
               GENERELL_FEIL,
             ...(feilsvar?.teknisk === true && { teknisk: true as const }),
             ...(typeof feilsvar?.feilId === "string" && { feilId: feilsvar.feilId }),
+            ...(feilsvar?.teknisk === true && { usikker: feilsvar.usikker !== false }),
           };
         }
 

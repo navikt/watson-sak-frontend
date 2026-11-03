@@ -4,6 +4,7 @@ import { logger } from "~/logging/logging";
 import { BackendFeilException } from "~/saker/api-core.server";
 import {
   erTekniskFeil,
+  erUsikker,
   hentEllerFeil,
   loggTekniskFeil,
   tekniskFeilSvar,
@@ -116,5 +117,36 @@ describe("tekniskFeilSvar", () => {
   it("kaster 4xx videre", () => {
     const feil = new BackendFeilException(409, "Konflikt");
     expect(() => tekniskFeilSvar(feil, { kontekst: "lagre" })).toThrow(feil);
+  });
+});
+
+describe("erUsikker", () => {
+  it.each([
+    ["500 fra backend", new BackendFeilException(500, "x"), false],
+    ["503 fra backend", new BackendFeilException(503, "x"), false],
+    ["data() med 500", data("x", { status: 500 }), false],
+    ["502 fra ingressen", new BackendFeilException(502, "x"), true],
+    ["504 fra ingressen", new BackendFeilException(504, "x"), true],
+    ["nettverksfeil", new TypeError("fetch failed"), true],
+    ["tidsavbrudd", new DOMException("Timeout", "TimeoutError"), true],
+    ["svar som ikke lot seg tolke", new Error("Ugyldig svar fra watson-admin-api"), true],
+    ["ugyldig JSON", new SyntaxError("Unexpected token <"), true],
+  ])("%s → usikker=%s", (_, feil, forventet) => {
+    expect(erUsikker(feil)).toBe(forventet);
+  });
+
+  it("settes på svaret fra tekniskFeilSvar", () => {
+    vi.spyOn(logger, "error").mockImplementation(() => {});
+
+    expect(
+      tekniskFeilSvar(new BackendFeilException(500, "x"), { kontekst: "lagre" }).data,
+    ).toMatchObject({
+      usikker: false,
+    });
+    expect(
+      tekniskFeilSvar(new TypeError("fetch failed"), { kontekst: "lagre" }).data,
+    ).toMatchObject({
+      usikker: true,
+    });
   });
 });

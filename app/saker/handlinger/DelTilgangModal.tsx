@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { Innsendingsfeil, erTekniskFeilSvar } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
@@ -113,7 +114,7 @@ export function DelTilgangModal({
             }}
           />
           {feilmelding && <Alert variant="error">{feilmelding}</Alert>}
-          <Innsendingsfeil svar={tekniskFeil} />
+          <Innsendingsfeil svar={tekniskFeil} tekster={INNSENDINGSFEIL.delTilgang} />
         </VStack>
       </Modal.Body>
       <Modal.Footer>

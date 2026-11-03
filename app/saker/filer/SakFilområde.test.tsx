@@ -323,7 +323,10 @@ describe("SakFilområde", () => {
 
   it("viser teknisk feil med feil-ID i dialogen når opprettelse feiler", async () => {
     renderOmrådeMedAction({ dokumenter: [], filer: [], sakId: "ABC-123", steg: "UTREDNING" }, () =>
-      data({ ok: false, teknisk: true, feilId: "feil-opprett-123" }, { status: 500 }),
+      data(
+        { ok: false, teknisk: true, usikker: false, feilId: "feil-opprett-123" },
+        { status: 500 },
+      ),
     );
 
     fireEvent.click(screen.getByText("Opprett dokument"));
@@ -698,7 +701,10 @@ describe("DokumentTre med mapper", () => {
     const slettSvar = vi
       .fn()
       .mockResolvedValueOnce(
-        data({ ok: false, teknisk: true, feilId: "feil-slett-456" }, { status: 500 }),
+        data(
+          { ok: false, teknisk: true, usikker: false, feilId: "feil-slett-456" },
+          { status: 500 },
+        ),
       )
       .mockResolvedValueOnce({ ok: true });
     renderTre(
@@ -713,9 +719,7 @@ describe("DokumentTre med mapper", () => {
 
     expect(await screen.findByText("Vi fikk ikke slettet dokumentet")).toBeDefined();
     expect(screen.getByText("feil-slett-456")).toBeDefined();
-    expect(
-      screen.getByText("Sjekk om dokumentet fortsatt ligger i listen før du prøver igjen."),
-    ).toBeDefined();
+    expect(screen.getByText("Prøv igjen om litt.")).toBeDefined();
     expect(screen.getByRole("dialog", { name: "Slette dokument?" })).toBeDefined();
 
     // Avbryt og åpne på nytt: den gamle feilen skal ikke vises før et nytt forsøk.

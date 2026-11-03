@@ -7,6 +7,7 @@ import {
 } from "@navikt/aksel-icons";
 import { BodyShort, Button, HGrid, Loader, Modal, VStack } from "@navikt/ds-react";
 import { Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import type { KontrollsakSteg } from "~/saker/types.backend";
 import {
   BREVMAL_BESKRIVELSE,
@@ -93,9 +94,7 @@ export function OpprettDokumentModal({
       width="40rem"
     >
       <Modal.Body>
-        <Innsendingsfeil svar={svar} tittel="Vi fikk ikke opprettet dokumentet">
-          Prøv igjen om litt.
-        </Innsendingsfeil>
+        <Innsendingsfeil svar={svar} tekster={INNSENDINGSFEIL.opprettDokument} />
         {oppretter ? (
           <div className="flex justify-center py-[var(--ax-space-48)]">
             <Loader size="large" title="Oppretter dokument" />

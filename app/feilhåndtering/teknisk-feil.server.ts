@@ -70,10 +70,35 @@ function statusFra(feil: unknown): number | undefined {
 }
 
 /** Svarformatet actions bruker for tekniske feil. Skjemaet viser `<Feilmelding>` ved knappen. */
-export type TekniskFeilSvar = { ok: false; feil: string; feilId: string; teknisk: true };
+export type TekniskFeilSvar = {
+  ok: false;
+  feil: string;
+  feilId: string;
+  teknisk: true;
+  /** `true` når vi ikke vet om endringen ble lagret. Se `erUsikker`. */
+  usikker: boolean;
+};
 
-const TEKNISK_FEIL_ACTION =
-  "Vi fikk ikke lagret endringen på grunn av en teknisk feil. Sjekk om endringen ble lagret før du prøver igjen.";
+const TEKNISK_FEIL_ACTION = "Det oppstod en teknisk feil.";
+
+/** Svar fra ingressen når den ikke fikk svar fra backend i tide. Backend kan ha fullført. */
+const USIKRE_STATUSER = [502, 504];
+
+/**
+ * 🔴 Avgjør om vi vet at endringen IKKE ble lagret.
+ *
+ * Sikker (`false`) bare når baksystemet selv svarte med 5xx. watson-admin-api kjører
+ * endringer i databasetransaksjoner, så en feil der betyr at endringen er rullet tilbake.
+ *
+ * Usikker (`true`) i alle andre tilfeller: nettverksfeil og tidsavbrudd (ingen svar),
+ * 502 og 504 fra ingressen, og svar som ikke lot seg tolke. I det siste tilfellet svarte
+ * backend OK, så endringen er sannsynligvis lagret. Usikker er det trygge valget: da ber
+ * vi brukeren sjekke før et nytt forsøk, så ingenting blir lagret to ganger.
+ */
+export function erUsikker(feil: unknown): boolean {
+  const status = statusFra(feil);
+  return status === undefined || status < 500 || USIKRE_STATUSER.includes(status);
+}
 
 /**
  * Gjør en teknisk feil i en action om til et svar skjemaet kan vise, i stedet for en feilside.
@@ -83,7 +108,7 @@ export function tekniskFeilSvar(feil: unknown, loggkontekst: Loggkontekst) {
   if (!erTekniskFeil(feil)) throw feil;
   const feilId = loggTekniskFeil(feil, loggkontekst);
   return data<TekniskFeilSvar>(
-    { ok: false, feil: TEKNISK_FEIL_ACTION, feilId, teknisk: true },
+    { ok: false, feil: TEKNISK_FEIL_ACTION, feilId, teknisk: true, usikker: erUsikker(feil) },
     { status: 500 },
   );
 }

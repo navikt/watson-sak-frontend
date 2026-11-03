@@ -391,7 +391,10 @@ export function DokumentTre({
 
   return (
     <>
-      <Innsendingsfeil svar={mappehandling.tekniskFeilSvar} />
+      <Innsendingsfeil
+        svar={mappehandling.tekniskFeilSvar}
+        tekster={mappehandling.tekniskFeilTekster}
+      />
       {mappehandling.feil && (
         <Alert variant="error" size="small" className="mb-2">
           {mappehandling.feil}
