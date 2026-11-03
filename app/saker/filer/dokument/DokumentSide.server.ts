@@ -157,6 +157,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       {
         innloggetIdent: innlogget.navIdent,
         arkivert: dokument.arkivert ?? null,
+        sakAvsluttet: tilgang.sak.steg === "AVSLUTTET",
       },
     ),
     kommentarinnlastingFeilet: false,

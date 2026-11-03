@@ -11,6 +11,7 @@ import { RouteConfig } from "~/routeConfig";
 import { IngenFiltilgangKort } from "./filer/IngenFiltilgangKort";
 import { SakFilområde } from "./filer/SakFilområde";
 import { erSakseier } from "./handlinger/tilgjengeligeHandlinger";
+import { FilerTilgjengeligVarsel } from "./komponenter/FilerTilgjengeligVarsel";
 import { hentHandlinger } from "./handlinger/saksflyt/saksflyt";
 import { SaksflytModal } from "./handlinger/saksflyt/SaksflytModal";
 import { getSaksreferanse } from "./id";
@@ -160,6 +161,10 @@ export default function SakDetaljSide() {
                 tilgjengeligeSteg.length > 0 ? () => setVisSaksflytModal(true) : undefined
               }
             />
+
+            {sak.steg === "AVSLUTTET" && harDirekteTilgang && (
+              <FilerTilgjengeligVarsel filerTilgjengeligTil={sak.filerTilgjengeligTil} />
+            )}
 
             <SaksinformasjonKort
               sak={sak}

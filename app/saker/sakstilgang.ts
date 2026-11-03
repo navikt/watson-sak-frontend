@@ -38,9 +38,10 @@ export function kanLasteOppFiler(sak: KontrollsakResponse, innlogget: Innlogget)
 }
 
 /**
- * Lesetilgang til arkiv, dokumenter og historikk. Backend fjerner eier og delt-med når saken
- * avsluttes, og gir da lesetilgang til alle med tilgang til personen. Persontilgangen
- * håndheves av backend, så frontend slipper avsluttede saker gjennom her.
+ * Lesetilgang til arkiv, dokumenter og historikk. På avsluttet sak gir backend lesetilgang til alle
+ * med tilgang til personen, men bare journalførte dokumenter. Unntaket er ansvarlig og delt med, som
+ * ser alt i 30 dager etter avslutning (TH-101). Backend håndhever dette, så frontend slipper
+ * avsluttede saker gjennom her.
  */
 export function kanLeseSaksinnhold(sak: KontrollsakResponse, innlogget: Innlogget): boolean {
   return kanEndreSak(sak, innlogget) || sak.steg === "AVSLUTTET";

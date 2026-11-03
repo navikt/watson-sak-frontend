@@ -104,8 +104,8 @@ function konfliktsvar(melding: string) {
 
 /**
  * Kommentering krever bare **lesetilgang**: en saksbehandler skal kunne kommentere
- * selv om dokumentet er låst eller saken er avsluttet. Det eneste som blokkerer
- * mutasjoner er at dokumentet er arkivert – og det gir 409, ikke 403.
+ * selv om dokumentet er låst. Avsluttet sak blokkerer mutasjoner med 403 (TH-101),
+ * og arkivert dokument gir 409.
  */
 async function krevLesetilgangIMock(request: Request, sakReferanse: string, docId: string) {
   const tilgang = await hentSakstilgangFraMock(request, sakReferanse);
@@ -116,7 +116,11 @@ async function krevLesetilgangIMock(request: Request, sakReferanse: string, docI
   const dokument = await hentDokument(request, sakId, docId);
   if (!dokument) throw data("Dokument ikke funnet", { status: 404 });
 
-  return { sakId, arkivert: dokument.arkivert ?? null };
+  return {
+    sakId,
+    arkivert: dokument.arkivert ?? null,
+    sakAvsluttet: tilgang.sak.steg === "AVSLUTTET",
+  };
 }
 
 async function krevLesetilgangIBackend(request: Request, sakReferanse: string) {
@@ -157,10 +161,18 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     }
   }
 
-  const { sakId, arkivert } = await krevLesetilgangIMock(request, sakReferanse, docId);
+  const { sakId, arkivert, sakAvsluttet } = await krevLesetilgangIMock(
+    request,
+    sakReferanse,
+    docId,
+  );
   const innlogget = await hentInnloggetBruker({ request });
   return Response.json(
-    hentKommentarliste(request, sakId, docId, { innloggetIdent: innlogget.navIdent, arkivert }),
+    hentKommentarliste(request, sakId, docId, {
+      innloggetIdent: innlogget.navIdent,
+      arkivert,
+      sakAvsluttet,
+    }),
   );
 }
 
@@ -274,7 +286,16 @@ export async function action({ request, params }: ActionFunctionArgs) {
       }
     }
 
-    const { sakId, arkivert } = await krevLesetilgangIMock(request, sakReferanse, docId);
+    const { sakId, arkivert, sakAvsluttet } = await krevLesetilgangIMock(
+      request,
+      sakReferanse,
+      docId,
+    );
+    if (sakAvsluttet) {
+      // Speiler backend (TH-101): kommentarer på avsluttet sak kan bare leses. Catch-blokken
+      // under gjør feilen om til 403, akkurat som et avslag fra backend.
+      throw new KommentarBackendFeil(403, "Saken er avsluttet. Kommentarene kan ikke endres.");
+    }
     if (arkivert !== null) {
       // Speiler DokumentArkivertException i backend, som gir 409 – ikke 403.
       return konfliktsvar("Dokumentet er arkivert og kan ikke endres.");
