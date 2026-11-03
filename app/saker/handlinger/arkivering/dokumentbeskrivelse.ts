@@ -8,5 +8,6 @@ export const dokumentbeskrivelser = [
   "Brev - innhenting av kontoopplysninger",
   "Brev - innhenting av timelister",
   "Kontrollnotat",
+  "Anmeldelse",
   ANNEN_DOKUMENTBESKRIVELSE,
 ] as const;
