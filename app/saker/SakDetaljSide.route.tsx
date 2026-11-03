@@ -84,8 +84,7 @@ export default function SakDetaljSide() {
     sak.legacyPid &&
     migreringsstatus === "FULLSTENDIG";
   const avslutningKreverFerdigFlyttet =
-    (miljø === "local-mock" || migreringErÅpen(miljø)) &&
-    migreringsstatus === "UNDER_MIGRERING";
+    (miljø === "local-mock" || migreringErÅpen(miljø)) && migreringsstatus === "UNDER_MIGRERING";
   const harDirekteTilgang = kanEndreSak(sak, innloggetBruker);
   const kanLese = kanLeseSaksinnhold(sak, innloggetBruker);
   const historikkTilstand: "vis" | "ikke-delt" | "ingen-persontilgang" = !kanLese

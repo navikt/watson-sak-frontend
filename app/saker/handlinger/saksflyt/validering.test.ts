@@ -8,9 +8,9 @@ const melding =
 
 describe("validerTrinn for bekreftAvslutning", () => {
   it("krever ferdig flytting når flagget er satt", () => {
-    expect(
-      validerTrinn(bekreftAvslutning, {}, lagTillatteHandlinger(), true),
-    ).toEqual({ "": melding });
+    expect(validerTrinn(bekreftAvslutning, {}, lagTillatteHandlinger(), true)).toEqual({
+      "": melding,
+    });
   });
 
   it("tillater avslutning når flagget ikke er satt", () => {
