@@ -224,7 +224,7 @@ export default function SakDetaljSide() {
                 feilId={seksjonsfeil.filer}
                 kanPrøveIgjen
               >
-                Resten av saken kan du bruke som vanlig. Prøv igjen om litt.
+                Resten av saken kan du jobbe med som vanlig. Prøv igjen om litt.
               </Feilmelding>
             ) : filTilstand === "vis" ? (
               <SakFilområde
@@ -274,7 +274,7 @@ export default function SakDetaljSide() {
                 feilId={seksjonsfeil.andreSaker}
                 kanPrøveIgjen
               >
-                Resten av saken kan du bruke som vanlig. Prøv igjen om litt.
+                Resten av saken kan du jobbe med som vanlig. Prøv igjen om litt.
               </Feilmelding>
             )}
             <SakerPåSammePerson

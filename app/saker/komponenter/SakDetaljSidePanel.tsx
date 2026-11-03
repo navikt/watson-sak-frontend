@@ -66,7 +66,7 @@ export function SakDetaljSidePanel({
           feilId={seksjonsfeil.historikk}
           kanPrøveIgjen
         >
-          Resten av saken kan du bruke som vanlig. Prøv igjen om litt.
+          Resten av saken kan du jobbe med som vanlig. Prøv igjen om litt.
         </Feilmelding>
       ) : historikkTilstand === "vis" ? (
         <SakHistorikk
