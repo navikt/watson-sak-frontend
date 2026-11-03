@@ -381,13 +381,22 @@ export default function OpprettSakSide() {
                           Du flytter en sak fra Access
                         </Heading>
                         <BodyShort size="small">
-                          Start med å laste opp alle filer fra S-området. Fyll deretter ut
-                          grunnleggende saksinformasjon, før du eventuelt legger inn øvrige notater
-                          fra Access i notatfeltet.
+                          Start med å laste opp alle filer fra S-området. Legg inn notater fra
+                          Access i notatfeltet og fyll deretter ut grunnleggende saksinformasjon.
                         </BodyShort>
                       </VStack>
                     </Box>
                     <Saksvedlegg filer={filer} setFiler={setFiler} fraSOmråde />
+                    <Textarea
+                      key={fields.notat.key}
+                      name={fields.notat.name}
+                      id={fields.notat.id}
+                      label="Notat – informasjon fra Access"
+                      description="Legg inn informasjon fra Access som ikke følger med som fil."
+                      className="max-w-2xl"
+                      defaultValue={fields.notat.initialValue}
+                      error={fields.notat.errors?.[0]}
+                    />
                   </>
                 )}
 
@@ -432,19 +441,6 @@ export default function OpprettSakSide() {
                 <hr className="border-ax-border-neutral-subtle max-w-2xl" />
 
                 {!erFlytting && <Saksvedlegg filer={filer} setFiler={setFiler} />}
-
-                {erFlytting && (
-                  <Textarea
-                    key={fields.notat.key}
-                    name={fields.notat.name}
-                    id={fields.notat.id}
-                    label="Notat – informasjon fra Access"
-                    description="Legg inn informasjon fra Access som ikke følger med som fil."
-                    className="max-w-2xl"
-                    defaultValue={fields.notat.initialValue}
-                    error={fields.notat.errors?.[0]}
-                  />
-                )}
 
                 {/* Submit-rad */}
                 <HStack gap="space-12" justify="end">
