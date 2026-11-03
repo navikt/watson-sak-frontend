@@ -133,6 +133,26 @@ describe("MineSakerSide loader — backend-sti", () => {
     expect(JSON.stringify(mockHentKontrollsaker.mock.calls)).not.toContain("Z999999");
   }, 15000);
 
+  it("filtrerer bare Mine saker, ikke delte saker", async () => {
+    mockHentKontrollsaker.mockResolvedValue(tomSideResponse);
+    const { loader } = await import("./MineSakerSide.route");
+
+    await loader({
+      request: new Request("http://localhost/mine-saker?steg=UTREDNING&status=INGEN"),
+      params: {},
+      context: {},
+    } as Parameters<typeof loader>[0]);
+
+    const kall = mockHentKontrollsaker.mock.calls.map(([argumenter]) => argumenter);
+    expect(kall.find((a) => a.ansvarlig === "MEG")).toEqual(
+      expect.objectContaining({ steg: ["UTREDNING"], utenStatus: true }),
+    );
+    const delt = kall.find((a) => a.tilknyttet === "MEG");
+    expect(delt?.steg).toBeUndefined();
+    expect(delt?.status).toBeUndefined();
+    expect(delt?.utenStatus).toBeUndefined();
+  }, 15000);
+
   it("returnerer utilgjengelig tilstand og ingen saker når tilgangssjekken feiler", async () => {
     const { BackendUtilgjengeligError } = await import("~/utils/backend-utilgjengelig.server");
     mockHentKontrollsaker.mockRejectedValue(new BackendUtilgjengeligError());

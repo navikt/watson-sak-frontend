@@ -209,7 +209,7 @@ export function MineSakerInnhold({
               <Saksliste
                 rader={deltMedSaker.map((sak) => mapKontrollsakTilSakslisteRad(sak, detaljSti))}
                 tomTekst="Ingen saker er delt med deg."
-                tilbake={{ to: RouteConfig.MINE_SAKER, label: "Mine saker" }}
+                tilbake={{ to: `${RouteConfig.MINE_SAKER}?fane=delt`, label: "Delt med meg" }}
               />
             </Tabs.Panel>
           </Tabs>
