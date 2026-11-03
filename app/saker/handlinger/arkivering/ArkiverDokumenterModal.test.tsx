@@ -78,6 +78,15 @@ describe("ArkiverDokumenterModal", () => {
     fetcher.data = undefined;
   });
 
+  it("har Anmeldelse som eget valg for dokumentbeskrivelse", async () => {
+    await renderModal([fil("fil-1", "anmeldelse.pdf")]);
+
+    const valg = within(screen.getByLabelText("Dokumentbeskrivelse")).getByRole("option", {
+      name: "Anmeldelse",
+    });
+    expect(valg).toBeDefined();
+  });
+
   it("krever tema, dokumentbeskrivelse og minst én fil eller ett dokument", async () => {
     await renderModal([fil("fil-1", "rapport.pdf")]);
 
