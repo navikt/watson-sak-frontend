@@ -30,6 +30,7 @@ type SaksflytModalProps = {
   sakId: string;
   tillatteHandlinger: TillatteHandlingerResponse;
   start: SaksflytStart;
+  avslutningKreverFerdigFlyttet?: boolean;
   onClose: () => void;
 };
 
@@ -68,7 +69,13 @@ function sekundærknapp(trinn: Trinn, kanGåTilbake: boolean) {
  * Hver handling er en liste med trinn (se `saksflyt.ts`). Modalen viser menyen, går gjennom
  * trinnene og sender alt i ett kall etter siste trinn.
  */
-export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: SaksflytModalProps) {
+export function SaksflytModal({
+  sakId,
+  tillatteHandlinger,
+  start,
+  avslutningKreverFerdigFlyttet = false,
+  onClose,
+}: SaksflytModalProps) {
   const fetcher = useFetcher();
   const erSubmitting = fetcher.state !== "idle";
   const venterPåSvar = useRef(false);
@@ -168,7 +175,12 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
 
   function fortsett(trinn: Trinn, alleVerdier: Verdier, innsending?: Innsending) {
     if (tilstand.fase !== "trinn") return;
-    const feil = validerTrinn(trinn, alleVerdier, tillatteHandlinger);
+    const feil = validerTrinn(
+      trinn,
+      alleVerdier,
+      tillatteHandlinger,
+      avslutningKreverFerdigFlyttet,
+    );
     if (Object.keys(feil).length > 0) {
       dispatch({ type: "settFeil", feil });
       return;

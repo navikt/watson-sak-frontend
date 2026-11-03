@@ -163,15 +163,29 @@ export async function backendAction(
       ) {
         throw data("Velg endelig resultat før du flytter saken til Avsluttet", { status: 400 });
       }
-      const sak = await backendApi.endreSteg(
-        token,
-        sakId,
-        tillatte.versjon,
-        nyttSteg as KontrollsakSteg,
-        resultat,
-        beskrivelse ?? undefined,
-      );
-      return { ok: true, sak };
+      try {
+        const sak = await backendApi.endreSteg(
+          token,
+          sakId,
+          tillatte.versjon,
+          nyttSteg as KontrollsakSteg,
+          resultat,
+          beskrivelse ?? undefined,
+        );
+        return { ok: true, sak };
+      } catch (feil) {
+        if (
+          feil instanceof backendApi.BackendFeilException &&
+          feil.status === 409 &&
+          feil.message === "Du må bekrefte at saken er ferdig flyttet før du kan avslutte den."
+        ) {
+          throw data(
+            "Du må bekrefte at saken er ferdig flyttet før du kan avslutte den. Huk av i sjekklisten for flytting på saken.",
+            { status: 409 },
+          );
+        }
+        throw feil;
+      }
     }
     case "lagre_resultat": {
       const tillatte = await backendApi.hentTillatteHandlinger(token, sakId);

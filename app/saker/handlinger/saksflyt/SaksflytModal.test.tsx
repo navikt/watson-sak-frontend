@@ -27,7 +27,11 @@ vi.mock("react-router", async () => {
   };
 });
 
-function renderModal(sak: Partial<KontrollsakResponse> = {}, start: SaksflytStart = "meny") {
+function renderModal(
+  sak: Partial<KontrollsakResponse> = {},
+  start: SaksflytStart = "meny",
+  avslutningKreverFerdigFlyttet = false,
+) {
   const onClose = vi.fn();
   const router = createMemoryRouter(
     [
@@ -38,6 +42,7 @@ function renderModal(sak: Partial<KontrollsakResponse> = {}, start: SaksflytStar
             sakId="101"
             tillatteHandlinger={lagTillatteHandlinger(sak)}
             start={start}
+            avslutningKreverFerdigFlyttet={avslutningKreverFerdigFlyttet}
             onClose={onClose}
           />
         ),
@@ -470,6 +475,29 @@ describe("SaksflytModal", () => {
       steg: "AVSLUTTET",
       registrerResultat: "false",
     });
+  });
+
+  it("stopper avslutning når saken ikke er ferdig flyttet", async () => {
+    renderModal(
+      {
+        steg: "POLITI",
+        status: "VENTER_PA_RESULTAT",
+        resultat: { politi: { type: "BOT" } } as KontrollsakResponse["resultat"],
+      },
+      "meny",
+      true,
+    );
+    klikk("Avslutt sak");
+    await screen.findByRole("dialog", { name: "Avslutt sak" });
+
+    klikk("Avslutt sak");
+
+    expect(
+      screen.getByText(
+        "Du må bekrefte at saken er ferdig flyttet før du kan avslutte den. Huk av i sjekklisten for flytting på saken.",
+      ),
+    ).toBeDefined();
+    expect(submitMock).not.toHaveBeenCalled();
   });
 
   it("flytter fokus til dialogen når trinnet byttes", async () => {
