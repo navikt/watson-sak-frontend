@@ -159,4 +159,24 @@ describe("SaksinformasjonKort anmeldelsesfelter", () => {
     expect(screen.queryByText("intern feil")).toBeNull();
     expect(screen.getByRole("heading", { name: "Anmeldelse" })).toBeDefined();
   });
+
+  it("viser ikke den gamle tekniske feilen når redigeringen startes på nytt", async () => {
+    renderKort(lagKontrollsak(), () => ({
+      ok: false,
+      feil: "intern feil",
+      feilId: "feil-456",
+      teknisk: true,
+    }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Endre saksinformasjon" }));
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    expect(await screen.findByText("Vi fikk ikke lagret endringen")).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: "Avbryt" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Endre saksinformasjon" }));
+
+    expect(await screen.findByRole("button", { name: "Lagre" })).toBeDefined();
+    expect(screen.queryByText("Vi fikk ikke lagret endringen")).toBeNull();
+    expect(screen.queryByText("feil-456")).toBeNull();
+  });
 });

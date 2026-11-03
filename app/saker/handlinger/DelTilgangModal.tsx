@@ -1,5 +1,5 @@
 import { PersonGroupIcon } from "@navikt/aksel-icons";
-import { BodyShort, Button, Modal, UNSAFE_Combobox, VStack } from "@navikt/ds-react";
+import { Alert, BodyShort, Button, Modal, UNSAFE_Combobox, VStack } from "@navikt/ds-react";
 import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
@@ -27,6 +27,8 @@ export function DelTilgangModal({
   const submitPågår = useRef(false);
   const innsendingHarStartet = useRef(false);
   const [tekniskFeil, setTekniskFeil] = useState<{ teknisk: true; feilId: string } | null>(null);
+  // Avvisning fra backend, f.eks. 409. Vises med backendens tekst.
+  const [feilmelding, setFeilmelding] = useState<string | null>(null);
   const innloggetBruker = useInnloggetBruker();
   const saksreferanse = getSaksreferanse(sakId);
   const valgbareSaksbehandlere = saksbehandlerDetaljer.filter(
@@ -45,6 +47,7 @@ export function DelTilgangModal({
   function handleClose() {
     setValgtSaksbehandler(undefined);
     setTekniskFeil(null);
+    setFeilmelding(null);
     onClose();
   }
 
@@ -61,8 +64,14 @@ export function DelTilgangModal({
     if (fetcher.data && "ok" in fetcher.data && fetcher.data.ok) {
       setValgtSaksbehandler(undefined);
       onClose();
+    } else if (erTekniskFeilSvar(fetcher.data)) {
+      setTekniskFeil(fetcher.data);
     } else {
-      setTekniskFeil(erTekniskFeilSvar(fetcher.data) ? fetcher.data : null);
+      const feil =
+        fetcher.data && "feil" in fetcher.data && typeof fetcher.data.feil === "string"
+          ? fetcher.data.feil
+          : null;
+      setFeilmelding(feil ?? "Vi fikk ikke delt tilgangen. Prøv igjen.");
     }
   }, [fetcher.data, fetcher.state, onClose]);
 
@@ -81,6 +90,7 @@ export function DelTilgangModal({
     submitPågår.current = true;
     innsendingHarStartet.current = false;
     setTekniskFeil(null);
+    setFeilmelding(null);
   }
 
   return (
@@ -102,6 +112,7 @@ export function DelTilgangModal({
               setValgtSaksbehandler(isSelected ? option : undefined);
             }}
           />
+          {feilmelding && <Alert variant="error">{feilmelding}</Alert>}
           <Innsendingsfeil svar={tekniskFeil} />
         </VStack>
       </Modal.Body>

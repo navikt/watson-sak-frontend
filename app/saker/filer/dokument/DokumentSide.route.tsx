@@ -155,16 +155,23 @@ function DokumentRedigering({
 
   const lagre = useCallback(
     async (data: Autolagringsdata, { forlater }: { forlater: boolean }) => {
-      const respons = await fetch(lagreUrl, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-        // `keepalive` brukes kun ved navigasjon/lukking, slik at kallet rekker ut selv
-        // om siden rives ned. Det har en 64 KB body-grense, så vanlige (debouncede)
-        // lagringer bruker vanlig fetch – ellers kunne store dokumenter (f.eks. tabeller)
-        // feile lagringen.
-        keepalive: forlater,
-      });
+      let respons: Response;
+      try {
+        respons = await fetch(lagreUrl, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+          // `keepalive` brukes kun ved navigasjon/lukking, slik at kallet rekker ut selv
+          // om siden rives ned. Det har en 64 KB body-grense, så vanlige (debouncede)
+          // lagringer bruker vanlig fetch – ellers kunne store dokumenter (f.eks. tabeller)
+          // feile lagringen.
+          keepalive: forlater,
+        });
+      } catch (feil) {
+        // Nettverksbrudd: fetch avviser før serveren svarer, så det finnes ingen feil-ID.
+        settLagringsfeil({});
+        throw feil;
+      }
       if (!respons.ok) {
         settLagringsfeil({ feilId: await hentTekniskFeilId(respons) });
         throw new Error("Lagring feilet");
@@ -174,7 +181,7 @@ function DokumentRedigering({
     [lagreUrl],
   );
 
-  const { status, sistLagret, registrerEndring } = useAutolagring({ lagre });
+  const { status, sistLagret, registrerEndring, prøvIgjen } = useAutolagring({ lagre });
 
   const lagreHistorikkpunkt = useCallback(
     async (forlater = false) => {
@@ -379,7 +386,11 @@ function DokumentRedigering({
           <VStack gap="space-4">
             <LagreStatusVisning status={status} sistLagret={sistLagret} />
             {lagringsfeil && (
-              <Feilmelding tittel="Vi fikk ikke lagret dokumentet" feilId={lagringsfeil.feilId}>
+              <Feilmelding
+                tittel="Vi fikk ikke lagret dokumentet"
+                feilId={lagringsfeil.feilId}
+                onPrøvIgjen={prøvIgjen}
+              >
                 Det du har skrevet, ligger fortsatt her. Sjekk at du er på nett, og prøv å lagre på
                 nytt om litt.
               </Feilmelding>

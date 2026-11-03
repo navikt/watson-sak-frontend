@@ -325,7 +325,7 @@ export function SaksinformasjonKort({
                 </ErrorSummary>
               )}
 
-              <Innsendingsfeil svar={fetcher.data} />
+              <Innsendingsfeil svar={visFeil ? fetcher.data : null} />
               {feil?.skjema?.[0] && <Alert variant="error">{feil.skjema[0]}</Alert>}
 
               <VStack gap="space-1">

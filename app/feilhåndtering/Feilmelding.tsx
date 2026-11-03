@@ -16,6 +16,8 @@ type Props = {
   feilId?: string;
   /** Vis «Prøv igjen», som henter dataene på siden på nytt. */
   kanPrøveIgjen?: boolean;
+  /** Egen handling for «Prøv igjen», i stedet for å hente dataene på siden på nytt. */
+  onPrøvIgjen?: () => void;
   size?: "medium" | "small";
   headingLevel?: "2" | "3" | "4";
 };
@@ -30,6 +32,7 @@ export function Feilmelding({
   children,
   feilId,
   kanPrøveIgjen = false,
+  onPrøvIgjen,
   size = "small",
   headingLevel = "3",
 }: Props) {
@@ -49,7 +52,13 @@ export function Feilmelding({
             </>
           )}
         </BodyShort>
-        {kanPrøveIgjen && <PrøvIgjenKnapp />}
+        {onPrøvIgjen ? (
+          <Button type="button" size="small" variant="secondary" onClick={onPrøvIgjen}>
+            Prøv igjen
+          </Button>
+        ) : (
+          kanPrøveIgjen && <PrøvIgjenKnapp />
+        )}
       </VStack>
     </Alert>
   );

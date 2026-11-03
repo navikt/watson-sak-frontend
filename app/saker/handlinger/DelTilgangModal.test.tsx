@@ -92,4 +92,47 @@ describe("DelTilgangModal", () => {
     expect(screen.getByRole("dialog")).toBeDefined();
     expect(onClose).not.toHaveBeenCalled();
   });
+
+  it("viser backendens melding når deling avvises med 409", async () => {
+    const onClose = vi.fn();
+    const props = {
+      sakId: "101",
+      saksbehandlerDetaljer,
+      åpen: true,
+      onClose,
+    };
+    const { rerender } = render(<DelTilgangModal {...props} />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("combobox", { name: "Saksbehandler" }));
+    });
+    await act(async () => {
+      fireEvent.pointerUp(
+        await screen.findByRole("option", { name: "Ola Saksbehandler (Z123456)" }),
+      );
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Del tilgang" }));
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(submitMock).toHaveBeenCalledOnce();
+
+    await act(async () => {
+      fetcherMock.state = "submitting";
+      rerender(<DelTilgangModal {...props} />);
+    });
+    await act(async () => {
+      fetcherMock.state = "idle";
+      fetcherMock.data = { ok: false, feil: "Saksbehandleren har allerede tilgang til saken" };
+      rerender(<DelTilgangModal {...props} />);
+    });
+
+    expect(screen.getByText("Saksbehandleren har allerede tilgang til saken")).toBeDefined();
+    expect(screen.queryByText("Vi fikk ikke lagret endringen")).toBeNull();
+    // Valget står igjen, så brukeren kan prøve på nytt uten å velge saksbehandler igjen.
+    expect(
+      (screen.getByRole("button", { name: "Del tilgang" }) as HTMLButtonElement).disabled,
+    ).toBe(false);
+    expect(screen.getByRole("dialog")).toBeDefined();
+    expect(onClose).not.toHaveBeenCalled();
+  });
 });
