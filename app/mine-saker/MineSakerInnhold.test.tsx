@@ -72,9 +72,9 @@ const standardAktivtFilter = {
   status: ["INGEN" as const, "VENTER_PA_INFORMASJON" as const],
 };
 
-function renderMedRouter(ui: React.ReactNode) {
+function renderMedRouter(ui: React.ReactNode, startsti = "/") {
   const router = createMemoryRouter([{ path: "/", element: ui }], {
-    initialEntries: ["/"],
+    initialEntries: [startsti],
   });
 
   return render(<RouterProvider router={router} />);
@@ -187,22 +187,41 @@ describe("MineSakerInnhold", () => {
     );
   });
 
-  it("viser 'Delt med meg'-seksjon når det finnes delt-med-saker", () => {
-    const deltSak = lagKontrollsak({ id: 999 });
+  it("viser faner for Mine saker og Delt med meg når det finnes delte saker", () => {
     renderMedRouter(
       <MineSakerInnhold
-        saker={[]}
-        deltMedSaker={[deltSak]}
+        saker={[lagKontrollsak()]}
+        deltMedSaker={[lagKontrollsak({ id: 999 })]}
         detaljSti="/saker"
         filterAlternativer={standardFilterAlternativer}
         aktivtFilter={standardAktivtFilter}
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Delt med meg" })).toBeDefined();
+    const mine = screen.getByRole("tab", { name: "Mine saker (1)" });
+    const delt = screen.getByRole("tab", { name: "Delt med meg (1)" });
+    expect(mine.getAttribute("aria-selected")).toBe("true");
+    expect(delt.getAttribute("aria-selected")).toBe("false");
   });
 
-  it("skjuler 'Delt med meg'-seksjon når ingen saker er delt", () => {
+  it("åpner Delt med meg-fanen via ?fane=delt", () => {
+    renderMedRouter(
+      <MineSakerInnhold
+        saker={[]}
+        deltMedSaker={[lagKontrollsak({ id: 999 })]}
+        detaljSti="/saker"
+        filterAlternativer={standardFilterAlternativer}
+        aktivtFilter={standardAktivtFilter}
+      />,
+      "/?fane=delt",
+    );
+
+    expect(
+      screen.getByRole("tab", { name: "Delt med meg (1)" }).getAttribute("aria-selected"),
+    ).toBe("true");
+  });
+
+  it("skjuler fanene når ingen saker er delt", () => {
     renderMedRouter(
       <MineSakerInnhold
         saker={[lagKontrollsak()]}
@@ -213,7 +232,7 @@ describe("MineSakerInnhold", () => {
       />,
     );
 
-    expect(screen.queryByRole("heading", { name: "Delt med meg" })).toBeNull();
+    expect(screen.queryByRole("tab")).toBeNull();
   });
 
   describe("sidedeling", () => {
