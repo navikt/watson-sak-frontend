@@ -1,9 +1,11 @@
-import { useEffect, useReducer, useRef } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { BodyShort, Button, ErrorMessage, HStack, Modal, VStack } from "@navikt/ds-react";
 import { useFetcher } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import type { TillatteHandlingerResponse } from "~/saker/types.backend";
+import { INNSENDINGSFEIL, type Innsendingstekster } from "~/feilhåndtering/feilmeldinger";
+import { erTekniskFeilSvar, Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
 import { byggLagreResultatRequest } from "../resultat-request";
 import {
   byggInnsending,
@@ -32,6 +34,13 @@ type SaksflytModalProps = {
 };
 
 const lagringsfeil = "Kunne ikke lagre endringen. Last inn siden på nytt og prøv igjen.";
+
+/** Feiltekster for handlingen som ble sendt (nr. 7a–7c i oversikten). */
+function teksterForSaksflyt(handling: FormDataEntryValue | null): Innsendingstekster {
+  if (handling === "endre_status") return INNSENDINGSFEIL.endreStatus;
+  if (handling === "lagre_resultat") return INNSENDINGSFEIL.lagreResultat;
+  return INNSENDINGSFEIL.endreSteg;
+}
 
 function trinntittel(trinn: Trinn) {
   return trinn.type === "bekreftAvslutning" ? "Avslutt sak" : trinn.tittel;
@@ -63,6 +72,8 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
   const fetcher = useFetcher();
   const erSubmitting = fetcher.state !== "idle";
   const venterPåSvar = useRef(false);
+  // Teksten i feilmeldingen følger handlingen som faktisk ble sendt.
+  const [feiltekster, settFeiltekster] = useState<Innsendingstekster>(INNSENDINGSFEIL.endreSteg);
   const [tilstand, dispatch] = useReducer(
     saksflytReducer,
     start === "endre-status"
@@ -99,6 +110,8 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
       fetcher.data.ok
     ) {
       dispatch({ type: "lagret" });
+    } else if (erTekniskFeilSvar(fetcher.data)) {
+      dispatch({ type: "settFeil", feil: {} });
     } else {
       const melding =
         fetcher.data &&
@@ -136,6 +149,7 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
         return;
       }
     }
+    settFeiltekster(teksterForSaksflyt(formData.get("handling")));
     venterPåSvar.current = true;
     fetcher.submit(formData, {
       method: "post",
@@ -207,6 +221,7 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
               onVelg={velgHandling}
               deaktivert={erSubmitting}
             />
+            <Innsendingsfeil svar={fetcher.data} tekster={feiltekster} />
             {generellFeil && <ErrorMessage showIcon>{generellFeil}</ErrorMessage>}
           </VStack>
         </Modal.Body>
@@ -278,6 +293,7 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
             (trinn.type === "skjema" && trinn.visAvslutningsvarsel?.(alleVerdier))) && (
             <Avslutningsvarsel />
           )}
+          <Innsendingsfeil svar={fetcher.data} tekster={feiltekster} />
           {generellFeil && <ErrorMessage showIcon>{generellFeil}</ErrorMessage>}
         </VStack>
       </Modal.Body>

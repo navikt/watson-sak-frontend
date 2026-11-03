@@ -8,6 +8,7 @@ import { hentStegbaserteSaksregler } from "~/saker/stegregler";
 import { kanEndreSak, kanLasteOppFiler } from "~/saker/sakstilgang";
 import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
 import { parseSakId } from "~/saker/sti-param.server";
+import { tekniskFeilSvar } from "~/feilhåndtering/teknisk-feil.server";
 import {
   endreMappe,
   flyttDokumentTilMappe,
@@ -158,7 +159,19 @@ export async function action({ request, params }: ActionFunctionArgs) {
     return feil(400, resultat.error.issues[0]?.message ?? "Ugyldig forespørsel");
   }
 
-  return skalBrukeMockdata
-    ? utførMotMock(request, sakReferanse, resultat.data)
-    : utførMotBackend(request, sakReferanse, resultat.data);
+  const kontekst = {
+    opprett: "opprette mappe",
+    endre: "endre mappe",
+    slett: "slette mappe",
+    "flytt-dokument": "flytte dokument til mappe",
+    "flytt-fil": "flytte fil til mappe",
+  }[resultat.data.handling];
+
+  try {
+    return await (skalBrukeMockdata
+      ? utførMotMock(request, sakReferanse, resultat.data)
+      : utførMotBackend(request, sakReferanse, resultat.data));
+  } catch (feil) {
+    return tekniskFeilSvar(feil, { kontekst, sakId: sakReferanse, request });
+  }
 }

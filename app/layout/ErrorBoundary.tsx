@@ -25,7 +25,10 @@ export function RootErrorBoundary({ error }: Route.ErrorBoundaryProps) {
       </HtmlRamme>
     );
   }
-  logger.error("Feil fanget av error boundary", { error });
+  logger.error("Feil fanget av error boundary", {
+    feiltype: error instanceof Error ? error.name : typeof error,
+    status: isRouteErrorResponse(error) ? error.status : undefined,
+  });
   if (isRouteErrorResponse(error) && error.status === 404) {
     return (
       <HtmlRamme umamiSiteId="">

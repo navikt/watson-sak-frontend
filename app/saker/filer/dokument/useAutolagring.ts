@@ -32,6 +32,8 @@ export type Autolagring = {
   sistLagret: Date | null;
   /** Registrer en endring. Trigger debounced lagring. */
   registrerEndring: (data: Autolagringsdata) => void;
+  /** Lagrer ulagrede endringer på nytt med en gang, f.eks. etter en feil. */
+  prøvIgjen: () => void;
 };
 
 export function useAutolagring({ lagre, forsinkelseMs = 300 }: UseAutolagringArgs): Autolagring {
@@ -125,5 +127,9 @@ export function useAutolagring({ lagre, forsinkelseMs = 300 }: UseAutolagringArg
     return () => window.removeEventListener("beforeunload", håndterLukking);
   }, []);
 
-  return { status, sistLagret, registrerEndring };
+  const prøvIgjen = useCallback(() => {
+    void flush();
+  }, [flush]);
+
+  return { status, sistLagret, registrerEndring, prøvIgjen };
 }

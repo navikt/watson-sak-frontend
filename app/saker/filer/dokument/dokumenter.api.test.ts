@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { BackendFeilException } from "~/saker/api-core.server";
 import { getSaksreferanse } from "~/saker/id";
 import type { KontrollsakSaksbehandler, KontrollsakSteg } from "~/saker/types.backend";
 import { hentFordelingssaker } from "~/testing/mock-store/alle-saker.server";
@@ -12,9 +13,27 @@ import { hentMockState, resetDefaultSession } from "~/testing/mock-store/session
 import type { Route } from "./+types/dokumenter.api";
 import { action } from "./dokumenter.api";
 
+const backendMocks = vi.hoisted(() => ({
+  mockdata: true,
+  hentKontrollsak: vi.fn(),
+  opprettDokument: vi.fn(),
+}));
+
 vi.mock("~/config/env.server", () => ({
-  skalBrukeMockdata: true,
+  get skalBrukeMockdata() {
+    return backendMocks.mockdata;
+  },
   env: { ENVIRONMENT: "local-mock" },
+}));
+
+vi.mock("~/auth/access-token", () => ({
+  getBackendOboToken: vi.fn().mockResolvedValue("mock-token"),
+}));
+
+vi.mock("~/saker/api.server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("~/saker/api.server")>()),
+  hentKontrollsak: backendMocks.hentKontrollsak,
+  opprettDokument: backendMocks.opprettDokument,
 }));
 
 vi.mock("~/auth/innlogget-bruker.server", () => ({
@@ -66,6 +85,8 @@ function deleteRequest(docId: string) {
 describe("dokumenter.api POST", () => {
   beforeEach(() => {
     resetDefaultSession();
+    backendMocks.mockdata = true;
+    vi.clearAllMocks();
   });
 
   it("oppretter et tomt dokument og redirecter til editoren", async () => {
@@ -185,11 +206,36 @@ describe("dokumenter.api POST", () => {
       } as Route.ActionArgs),
     ).rejects.toMatchObject({ init: { status: 403 } });
   });
+
+  it("returnerer teknisk feilsvar ved backendfeil under lagring", async () => {
+    const sak = hentFordelingssaker(state())[0];
+    const ref = getSaksreferanse(sak.id);
+    backendMocks.mockdata = false;
+    backendMocks.hentKontrollsak.mockResolvedValue({ steg: "UTREDES" });
+    backendMocks.opprettDokument.mockRejectedValue(
+      new BackendFeilException(500, "Skal ikke vises i svaret"),
+    );
+
+    const svar = (await action({
+      request: new Request("http://localhost", { method: "POST" }),
+      params: { sakId: ref },
+    } as Route.ActionArgs)) as {
+      init?: ResponseInit;
+      data?: { ok: boolean; teknisk?: boolean; feilId?: string; feil?: string };
+    };
+
+    expect(svar.init?.status).toBe(500);
+    expect(svar.data).toMatchObject({ ok: false, teknisk: true });
+    expect(svar.data?.feilId).toMatch(/^[0-9a-f]{8}$/);
+    expect(JSON.stringify(svar.data)).not.toContain("Skal ikke vises i svaret");
+  });
 });
 
 describe("dokumenter.api DELETE", () => {
   beforeEach(() => {
     resetDefaultSession();
+    backendMocks.mockdata = true;
+    vi.clearAllMocks();
   });
 
   it("sletter dokumentet når eier har tilgang på aktiv sak", async () => {

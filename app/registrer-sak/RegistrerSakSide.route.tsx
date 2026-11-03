@@ -30,6 +30,8 @@ import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { useMiljø } from "~/miljø/useMiljø";
 import { RouteConfig } from "~/routeConfig";
+import { Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import { opprettSakSchema } from "~/registrer-sak/validering";
 import { GrunnleggendeSaksfelter } from "./GrunnleggendeSaksfelter";
 import {
@@ -446,6 +448,7 @@ export default function OpprettSakSide() {
 
                 {/* Submit-rad */}
                 <HStack gap="space-12" justify="end">
+                  <Innsendingsfeil svar={lastResult} tekster={INNSENDINGSFEIL.registrerSak} />
                   <Button as={Link} to={RouteConfig.INDEX} variant="tertiary">
                     Avbryt
                   </Button>

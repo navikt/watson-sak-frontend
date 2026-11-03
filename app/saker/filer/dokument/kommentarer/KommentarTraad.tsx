@@ -8,6 +8,12 @@ import {
 } from "@navikt/aksel-icons";
 import { Alert, BodyLong, BodyShort, Button, Detail, HStack, Tag, VStack } from "@navikt/ds-react";
 import { useState } from "react";
+import { Feilmelding } from "~/feilhåndtering/Feilmelding";
+import {
+  INNSENDINGSFEIL,
+  type Innsendingstekster,
+  velgTekst,
+} from "~/feilhåndtering/feilmeldinger";
 import { NORSK_TIDSSONE } from "~/utils/date-utils";
 import { elementEtikett, type AnkerTreff } from "./anker";
 import { KommentarSkjema } from "./KommentarSkjema";
@@ -67,6 +73,16 @@ function Ankerbeskrivelse({
     </VStack>
   );
 }
+
+type Feilhandling = "lagre" | "slette" | "løse" | "gjenåpne";
+
+/** Nr. 30–33 i oversikten over feilmeldinger. */
+const TEKNISKE_FEIL: Record<Feilhandling, Innsendingstekster> = {
+  lagre: INNSENDINGSFEIL.lagreKommentar,
+  slette: INNSENDINGSFEIL.slettKommentar,
+  løse: INNSENDINGSFEIL.løsKommentar,
+  gjenåpne: INNSENDINGSFEIL.gjenåpneKommentar,
+};
 
 function KommentarRad({
   kommentar,
@@ -193,15 +209,31 @@ export function KommentarTraad({
   onMelding,
 }: KommentarTraadProps) {
   const [svarer, settSvarer] = useState(false);
-  const [feil, settFeil] = useState<string | null>(null);
+  const [feil, settFeil] = useState<{
+    handling: Feilhandling;
+    melding: string;
+    teknisk?: true;
+    feilId?: string;
+    usikker?: boolean;
+  } | null>(null);
 
-  function håndterResultat(resultat: MutasjonResultat, suksessmelding: string): boolean {
+  function håndterResultat(
+    resultat: MutasjonResultat,
+    suksessmelding: string,
+    handling: Feilhandling,
+  ): boolean {
     if (resultat.ok) {
       settFeil(null);
       onMelding(suksessmelding);
       return true;
     }
-    settFeil(resultat.melding);
+    settFeil({
+      handling,
+      melding: resultat.melding,
+      ...(resultat.teknisk && { teknisk: true }),
+      ...(resultat.teknisk && resultat.feilId && { feilId: resultat.feilId }),
+      ...(resultat.teknisk && { usikker: resultat.usikker !== false }),
+    });
     return false;
   }
 
@@ -286,22 +318,31 @@ export function KommentarTraad({
               const resultat = await handlinger.rediger(kommentar, tekst);
               if (resultat.ok) kommentarAnalytics.redigert(traad.ankertype);
               else kommentarAnalytics.redigeringFeilet(traad.ankertype, resultatkode(resultat));
-              return håndterResultat(resultat, "Kommentaren er endret.");
+              return håndterResultat(resultat, "Kommentaren er endret.", "lagre");
             }}
             onSlett={async () => {
               const resultat = await handlinger.slett(kommentar);
               if (resultat.ok) kommentarAnalytics.slettet(traad.ankertype);
               else kommentarAnalytics.slettingFeilet(traad.ankertype, resultatkode(resultat));
-              håndterResultat(resultat, "Kommentaren er slettet.");
+              håndterResultat(resultat, "Kommentaren er slettet.", "slette");
             }}
           />
         ))}
       </VStack>
 
-      {feil && (
-        <Alert variant="warning" size="small" inline>
-          {feil}
-        </Alert>
+      {feil?.teknisk ? (
+        <Feilmelding
+          tittel={velgTekst(TEKNISKE_FEIL[feil.handling], feil.usikker !== false).tittel}
+          feilId={feil.feilId}
+        >
+          {velgTekst(TEKNISKE_FEIL[feil.handling], feil.usikker !== false).tekst}
+        </Feilmelding>
+      ) : (
+        feil && (
+          <Alert variant="warning" size="small" inline>
+            {feil.melding}
+          </Alert>
+        )
       )}
 
       {kanEndreTråden && (
@@ -316,7 +357,7 @@ export function KommentarTraad({
                 const resultat = await handlinger.svar(traad, tekst);
                 if (resultat.ok) kommentarAnalytics.svarOpprettet(traad.ankertype);
                 else kommentarAnalytics.svarFeilet(traad.ankertype, resultatkode(resultat));
-                const ok = håndterResultat(resultat, "Svaret er lagt til.");
+                const ok = håndterResultat(resultat, "Svaret er lagt til.", "lagre");
                 if (ok) settSvarer(false);
                 return ok;
               }}
@@ -348,7 +389,7 @@ export function KommentarTraad({
                       "løs",
                       resultatkode(resultat),
                     );
-                  håndterResultat(resultat, "Kommentaren er markert som løst.");
+                  håndterResultat(resultat, "Kommentaren er markert som løst.", "løse");
                 }}
               >
                 Marker som løst
@@ -375,7 +416,7 @@ export function KommentarTraad({
                 "gjenåpne",
                 resultatkode(resultat),
               );
-            håndterResultat(resultat, "Kommentaren er gjenåpnet.");
+            håndterResultat(resultat, "Kommentaren er gjenåpnet.", "gjenåpne");
           }}
         >
           Gjenåpne

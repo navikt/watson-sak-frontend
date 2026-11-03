@@ -3,6 +3,8 @@ import { Alert, Button, Modal, TextField, VStack } from "@navikt/ds-react";
 import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
+import { erTekniskFeilSvar, Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import { RouteConfig } from "~/routeConfig";
 import { filnavnSchema, splittFilnavn } from "./filnavn-utils";
 
@@ -15,7 +17,12 @@ interface OmdøpFilModalProps {
 }
 
 export function OmdøpFilModal({ filId, filnavn, sakId, åpen, onClose }: OmdøpFilModalProps) {
-  const fetcher = useFetcher<{ ok: boolean; melding?: string }>();
+  const fetcher = useFetcher<{
+    ok: boolean;
+    melding?: string;
+    teknisk?: boolean;
+    feilId?: string;
+  }>();
   const { navn: opprinneligNavn, endelse } = splittFilnavn(filnavn);
   const [navn, setNavn] = useState(opprinneligNavn);
   const [valideringsfeil, setValideringsfeil] = useState<string>();
@@ -36,6 +43,8 @@ export function OmdøpFilModal({ filId, filnavn, sakId, åpen, onClose }: Omdøp
     submitPågår.current = false;
     if (fetcher.data?.ok) {
       onClose();
+    } else if (erTekniskFeilSvar(fetcher.data)) {
+      setServerfeil(undefined);
     } else {
       setServerfeil(fetcher.data?.melding ?? "Kunne ikke endre filnavnet");
     }
@@ -74,6 +83,7 @@ export function OmdøpFilModal({ filId, filnavn, sakId, åpen, onClose }: Omdøp
       <form onSubmit={lagre}>
         <Modal.Body>
           <VStack gap="space-16">
+            <Innsendingsfeil svar={fetcher.data} tekster={INNSENDINGSFEIL.endreFilnavn} />
             {serverfeil && (
               <Alert variant="error" size="small">
                 {serverfeil}

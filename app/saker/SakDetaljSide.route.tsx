@@ -1,7 +1,8 @@
 import { ArrowLeftIcon, CheckmarkIcon, XMarkIcon } from "@navikt/aksel-icons";
 import { BodyShort, Box, Button, HGrid, HStack, VStack } from "@navikt/ds-react";
 import { useCallback, useEffect, useState } from "react";
-import { useLoaderData, useNavigate } from "react-router";
+import { isRouteErrorResponse, useLoaderData, useNavigate, useRouteError } from "react-router";
+import { Feilmelding } from "~/feilhåndtering/Feilmelding";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { migreringErÅpen } from "~/migrering/miljo";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
@@ -58,6 +59,7 @@ export default function SakDetaljSide() {
     andreSaker,
     andreSakerSide,
     saksbehandlerDetaljer,
+    seksjonsfeil,
   } = useLoaderData<typeof loader>();
   const [sak, setSak] = useState(loaderSak);
   const { vis: visEksempelBekreftelse, lukk: lukkBekreftelse } = useLukketBekreftelse(loaderSak.id);
@@ -139,6 +141,17 @@ export default function SakDetaljSide() {
           gap="space-16"
         >
           <VStack gap="space-8">
+            {seksjonsfeil.tillatteHandlinger && (
+              <Feilmelding
+                headingLevel="2"
+                tittel="Vi fikk ikke hentet handlingene du kan gjøre på saken"
+                feilId={seksjonsfeil.tillatteHandlinger}
+                kanPrøveIgjen
+              >
+                Du kan lese saken, men ikke endre steg, status eller resultat før vi får hentet
+                dette. Prøv igjen om litt.
+              </Feilmelding>
+            )}
             <SaksflytStepper
               steg={sak.steg}
               resultat={sak.resultat}
@@ -204,7 +217,16 @@ export default function SakDetaljSide() {
                 />
               ))}
 
-            {filTilstand === "vis" ? (
+            {filTilstand === "vis" && seksjonsfeil.filer ? (
+              <Feilmelding
+                headingLevel="2"
+                tittel="Vi fikk ikke hentet filene på saken"
+                feilId={seksjonsfeil.filer}
+                kanPrøveIgjen
+              >
+                Resten av saken kan du jobbe med som vanlig. Prøv igjen om litt.
+              </Feilmelding>
+            ) : filTilstand === "vis" ? (
               <SakFilområde
                 dokumenter={dokumenter}
                 filer={filer}
@@ -245,6 +267,16 @@ export default function SakDetaljSide() {
               )}
             />
 
+            {seksjonsfeil.andreSaker && (
+              <Feilmelding
+                headingLevel="2"
+                tittel="Vi fikk ikke hentet andre saker på personen"
+                feilId={seksjonsfeil.andreSaker}
+                kanPrøveIgjen
+              >
+                Resten av saken kan du jobbe med som vanlig. Prøv igjen om litt.
+              </Feilmelding>
+            )}
             <SakerPåSammePerson
               saker={andreSaker}
               side={andreSakerSide.side}
@@ -265,6 +297,7 @@ export default function SakDetaljSide() {
             kanRedigere={kanRedigere}
             kanLeggeTilHistorikk={erEier && stegregler.kanLeggeTilHistorikk}
             historikkTilstand={historikkTilstand}
+            seksjonsfeil={seksjonsfeil}
           />
         </HGrid>
       </VStack>
@@ -283,5 +316,34 @@ export default function SakDetaljSide() {
         />
       )}
     </>
+  );
+}
+
+/**
+ * Vises når saken eller innlogget bruker ikke kunne hentes. Siden gir ikke mening uten dem,
+ * men menyen og headeren står igjen. 401, 403, 404 og 429 går videre til rot-boundary som før.
+ */
+export function ErrorBoundary() {
+  const error = useRouteError();
+  if (isRouteErrorResponse(error) && error.status < 500) {
+    throw error;
+  }
+  const feilId =
+    isRouteErrorResponse(error) && typeof error.data?.feilId === "string"
+      ? error.data.feilId
+      : undefined;
+  return (
+    <VStack gap="space-12" className="mt-4 mb-8">
+      <MiljøtilpassetTittel>Feil – Watson Sak</MiljøtilpassetTittel>
+      <Feilmelding
+        tittel="Vi fikk ikke hentet saken"
+        feilId={feilId}
+        size="medium"
+        headingLevel="2"
+        kanPrøveIgjen
+      >
+        Dette er en teknisk feil hos oss, ikke noe du har gjort. Prøv igjen om litt.
+      </Feilmelding>
+    </VStack>
   );
 }

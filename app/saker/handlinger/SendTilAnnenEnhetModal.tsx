@@ -19,6 +19,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useFetcher, useNavigate } from "react-router";
 import { z } from "zod";
 import { sporHendelse } from "~/analytics/analytics";
+import { erTekniskFeilSvar, Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
@@ -71,6 +73,7 @@ export function SendTilAnnenEnhetModal({
   const [valgtEnhet, setValgtEnhet] = useState("");
   const [bekreftetEnhet, setBekreftetEnhet] = useState<string | null>(null);
   const [feilmelding, setFeilmelding] = useState<string | null>(null);
+  const [tekniskFeilSvar, setTekniskFeilSvar] = useState<unknown>(null);
   const kreverNyAnsvarlig = sakSteg !== "OPPRETTET";
   const valgbareSaksbehandlere = valgtEnhet
     ? saksbehandlerDetaljer.filter(
@@ -111,6 +114,7 @@ export function SendTilAnnenEnhetModal({
       setInnsendingFormData(null);
       setBekreftetEnhet(null);
       setFeilmelding(null);
+      setTekniskFeilSvar(null);
     }
     forrigeÅpen.current = åpen;
   }, [åpen]);
@@ -123,10 +127,17 @@ export function SendTilAnnenEnhetModal({
     if (fetcher.data?.ok) {
       sporHendelse("send til annen enhet sendt");
       setFeilmelding(null);
+      setTekniskFeilSvar(null);
       setSteg("suksess");
     } else {
       sporHendelse("send til annen enhet sending feilet");
-      setFeilmelding(fetcher.data?.feil ?? "Kunne ikke sende saken til annen enhet. Prøv igjen.");
+      const teknisk = erTekniskFeilSvar(fetcher.data);
+      setTekniskFeilSvar(teknisk ? fetcher.data : null);
+      setFeilmelding(
+        teknisk
+          ? null
+          : (fetcher.data?.feil ?? "Kunne ikke sende saken til annen enhet. Prøv igjen."),
+      );
       setSteg("bekreft");
     }
     submitPågår.current = false;
@@ -148,6 +159,7 @@ export function SendTilAnnenEnhetModal({
         tilEnhet: formData.get("seksjon"),
       });
       setFeilmelding(null);
+      setTekniskFeilSvar(null);
       setInnsendingFormData(formData);
       setSteg("bekreft");
     },
@@ -194,6 +206,7 @@ export function SendTilAnnenEnhetModal({
     setValgtEnhet("");
     setInnsendingFormData(null);
     setFeilmelding(null);
+    setTekniskFeilSvar(null);
     setBekreftetEnhet(null);
     onClose();
   }
@@ -345,6 +358,7 @@ export function SendTilAnnenEnhetModal({
           )}
           {steg === "bekreft" && (
             <>
+              <Innsendingsfeil svar={tekniskFeilSvar} tekster={INNSENDINGSFEIL.sendTilEnhet} />
               <Button
                 type="button"
                 onClick={handleBekreft}

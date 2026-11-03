@@ -51,16 +51,25 @@ function lagKontrollsak(
   };
 }
 
-async function renderMedRouter(ui: React.ReactNode) {
+async function renderMedRouter(ui: React.ReactNode, tekniskFeil = false) {
   const router = createMemoryRouter(
     [
       {
         path: "/",
         element: ui,
-        action: async () => ({
-          ok: false as const,
-          feil: { skjema: ["Denne funksjonen er ikke tilgjengelig ennå."] },
-        }),
+        action: async () =>
+          tekniskFeil
+            ? {
+                ok: false as const,
+                feil: "Intern feil",
+                feilId: "ERR-123",
+                teknisk: true as const,
+                usikker: false,
+              }
+            : {
+                ok: false as const,
+                feil: { skjema: ["Denne funksjonen er ikke tilgjengelig ennå."] },
+              },
       },
     ],
     {
@@ -305,6 +314,34 @@ describe("SakerPåSammePerson", () => {
     await waitFor(() => {});
 
     expect(await screen.findByText("Denne funksjonen er ikke tilgjengelig ennå.")).toBeDefined();
+  });
+
+  it("viser kontekstuell feilmelding ved teknisk feil i koblingen", async () => {
+    await renderMedRouter(
+      <SakerPåSammePerson
+        saker={[lagKontrollsak("203")]}
+        gjeldendeSak={lagKontrollsak("105")}
+        innloggetNavIdent="Z999999"
+      />,
+      true,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Vis detaljer for sak 203" }));
+    fireEvent.click(screen.getByRole("button", { name: "Koble til sak" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "Koble til sak" })[1]);
+
+    expect(await screen.findByText("Vi fikk ikke koblet sakene")).toBeDefined();
+    expect(screen.getByText("ERR-123")).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Koble til sak" })).toBeDefined();
+
+    // Lukk og åpne på nytt: den gamle feilen skal ikke vises før et nytt forsøk.
+    fireEvent.click(screen.getByRole("button", { name: "Avbryt" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { name: "Koble til sak" })).toBeNull(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Koble til sak" }));
+    expect(await screen.findByRole("heading", { name: "Koble til sak" })).toBeDefined();
+    expect(screen.queryByText("Vi fikk ikke koblet sakene")).toBeNull();
   });
 
   it("viser frakoblingsmodal for koblede saker", async () => {

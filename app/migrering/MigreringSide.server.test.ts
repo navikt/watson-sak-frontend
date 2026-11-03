@@ -455,12 +455,15 @@ describe("tildelingsaction", () => {
     expect(await action(skjema(gyldig))).toMatchObject({ ok: false });
   });
 
-  it("sender utløpt sesjon og andre feil videre", async () => {
+  it("sender utløpt sesjon videre og svarer teknisk ved serverfeil", async () => {
     mocks.tildel.mockRejectedValueOnce(new Response(null, { status: 401 }));
     await expect(action(skjema(gyldig))).rejects.toMatchObject({ status: 401 });
 
     mocks.tildel.mockRejectedValueOnce(new Response(null, { status: 502 }));
-    await expect(action(skjema(gyldig))).rejects.toMatchObject({ status: 502 });
+    expect(await action(skjema(gyldig))).toMatchObject({
+      data: { ok: false, teknisk: true, feilId: expect.stringMatching(/^[a-f0-9]{8}$/) },
+      init: { status: 500 },
+    });
   });
 
   it("stenger tildeling i prod", async () => {

@@ -13,6 +13,8 @@ import {
 import { useState } from "react";
 import { useFetcher } from "react-router";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
+import { Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import { finnEnhetsnavn } from "~/kodeverk/enheter";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { AvkortetTag } from "~/komponenter/AvkortetTag";
@@ -305,6 +307,7 @@ export function SaksbehandlereKort({
                 {fristillFeil}
               </Alert>
             )}
+            <Innsendingsfeil svar={fristillFetcher.data} tekster={INNSENDINGSFEIL.fristill} />
 
             {/* En fristilt sak kan ligge i bero eller vente på informasjon og må likevel kunne tas. */}
             {stegregler.erAktiv && !ansvarligSaksbehandler && (
@@ -337,6 +340,7 @@ export function SaksbehandlereKort({
                     {tildelMegFeil}
                   </Alert>
                 )}
+                <Innsendingsfeil svar={tildelMegFetcher.data} tekster={INNSENDINGSFEIL.tildelMeg} />
               </VStack>
             )}
           </VStack>
@@ -389,6 +393,7 @@ export function SaksbehandlereKort({
                 )}
               </HStack>
             )}
+            <Innsendingsfeil svar={fetcher.data} tekster={INNSENDINGSFEIL.fjernTilgang} />
           </VStack>
 
           {erEier &&

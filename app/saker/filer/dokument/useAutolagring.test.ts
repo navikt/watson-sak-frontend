@@ -90,6 +90,41 @@ describe("useAutolagring", () => {
     expect(lagre).toHaveBeenLastCalledWith({ tittel: "B", innhold }, { forlater: false });
   });
 
+  it("lagrer de samme endringene på nytt med prøvIgjen, uten ny redigering", async () => {
+    const lagre = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockResolvedValue(undefined);
+    const { result } = renderHook(() => useAutolagring({ lagre, forsinkelseMs: 800 }));
+
+    act(() => result.current.registrerEndring({ tittel: "A", innhold }));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(800);
+    });
+    expect(result.current.status).toBe("feil");
+
+    await act(async () => {
+      result.current.prøvIgjen();
+      await vi.runAllTimersAsync();
+    });
+
+    expect(result.current.status).toBe("lagret");
+    expect(lagre).toHaveBeenCalledTimes(2);
+    expect(lagre).toHaveBeenLastCalledWith({ tittel: "A", innhold }, { forlater: false });
+  });
+
+  it("gjør ingenting med prøvIgjen når alt er lagret", async () => {
+    const lagre = vi.fn().mockResolvedValue(undefined);
+    const { result } = renderHook(() => useAutolagring({ lagre }));
+
+    await act(async () => {
+      result.current.prøvIgjen();
+      await vi.runAllTimersAsync();
+    });
+
+    expect(lagre).not.toHaveBeenCalled();
+  });
+
   it("flusher med forlater=true (keepalive) ved unmount", async () => {
     const lagre = vi.fn().mockResolvedValue(undefined);
     const { result, unmount } = renderHook(() => useAutolagring({ lagre, forsinkelseMs: 800 }));

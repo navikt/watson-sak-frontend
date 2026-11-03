@@ -1,19 +1,23 @@
 import { BellIcon, InformationSquareIcon } from "@navikt/aksel-icons";
 import { BodyShort, Button, Heading, HStack, InfoCard, Tag, VStack } from "@navikt/ds-react";
 import { useEffect, useState } from "react";
-import { Form, useFetcher, useLoaderData, useNavigate } from "react-router";
+import { Form, useActionData, useFetcher, useLoaderData, useNavigate } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
+import { Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import type { Varsel } from "./typer";
 import { varselDestinasjon } from "./typer";
+import type { action } from "./VarslerSide.action.server";
 import type { loader } from "./VarslerSide.loader.server";
 
 export { action } from "./VarslerSide.action.server";
 export { loader } from "./VarslerSide.loader.server";
 
 export default function VarslerSide() {
+  const actionData = useActionData<typeof action>();
   const loaderData = useLoaderData<typeof loader>();
   const lastFlereFetcher = useFetcher<typeof loader>();
   const [akkumulerteVarsler, setAkkumulerteVarsler] = useState<Varsel[]>(loaderData.varsler);
@@ -62,6 +66,7 @@ export default function VarslerSide() {
               {ulesteVarsler.map((v) => (
                 <input key={v.id} type="hidden" name="varselId" value={v.id} />
               ))}
+              <Innsendingsfeil svar={actionData} tekster={INNSENDINGSFEIL.merkVarslerLest} />
               <Button type="submit" variant="secondary" size="small">
                 Merk alle viste som lest
               </Button>

@@ -1,5 +1,6 @@
 import { parseSakId, parseUuid } from "~/saker/sti-param.server";
 import { data, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
+import { tekniskFeilSvar } from "~/feilhåndtering/teknisk-feil.server";
 import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
@@ -70,7 +71,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
         ) {
           return data({ ok: false as const, melding: feil.message }, { status: feil.status });
         }
-        throw feil;
+        return tekniskFeilSvar(feil, { kontekst: "endre filnavn", sakId, request });
       }
     }
 
@@ -86,7 +87,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
           { status: 409 },
         );
       }
-      throw feil;
+      return tekniskFeilSvar(feil, { kontekst: "slette fil", sakId, request });
     }
     return { ok: true as const };
   }

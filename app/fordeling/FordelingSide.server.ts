@@ -5,6 +5,7 @@ import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
 import { mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import { hentFordelingssaker } from "~/saker/mock-alle-saker.server";
+import { tekniskFeilSvar } from "~/feilhåndtering/teknisk-feil.server";
 import type { Route } from "./+types/FordelingSide.route";
 import { hentKontrollsakerForFordeling, tildelKontrollsak } from "./api.server";
 import { mapKontrollsakTilFordelingSak, erKlarForFordeling } from "./mapper";
@@ -29,36 +30,40 @@ export async function action({ request }: Route.ActionArgs) {
     throw data("Mangler sak eller navIdent for tildeling.", { status: 400 });
   }
 
-  if (skalBrukeMockdata) {
-    const kontrollsak = hentFordelingssaker(request).find(
-      (eksisterendeSak) => eksisterendeSak.id === Number(sakId),
-    );
+  try {
+    if (skalBrukeMockdata) {
+      const kontrollsak = hentFordelingssaker(request).find(
+        (eksisterendeSak) => eksisterendeSak.id === Number(sakId),
+      );
 
-    if (!kontrollsak) {
-      throw data("Sak ikke funnet", { status: 404 });
+      if (!kontrollsak) {
+        throw data("Sak ikke funnet", { status: 404 });
+      }
+
+      const valgtSaksbehandler = mockSaksbehandlerDetaljer.find(
+        (saksbehandler) => saksbehandler.navIdent === navIdent,
+      );
+
+      if (!valgtSaksbehandler) {
+        throw data("Saksbehandler ikke funnet", { status: 404 });
+      }
+
+      kontrollsak.saksbehandlere.eier = {
+        navIdent: valgtSaksbehandler.navIdent,
+        navn: valgtSaksbehandler.navn,
+        enhet: valgtSaksbehandler.enhet,
+      };
+      oppdaterTilgjengeligeHandlinger(kontrollsak);
+      return { ok: true };
     }
 
-    const valgtSaksbehandler = mockSaksbehandlerDetaljer.find(
-      (saksbehandler) => saksbehandler.navIdent === navIdent,
-    );
+    const token = await getBackendOboToken(request);
+    await tildelKontrollsak({ token, sakId, saksbehandler: navIdent });
 
-    if (!valgtSaksbehandler) {
-      throw data("Saksbehandler ikke funnet", { status: 404 });
-    }
-
-    kontrollsak.saksbehandlere.eier = {
-      navIdent: valgtSaksbehandler.navIdent,
-      navn: valgtSaksbehandler.navn,
-      enhet: valgtSaksbehandler.enhet,
-    };
-    oppdaterTilgjengeligeHandlinger(kontrollsak);
     return { ok: true };
+  } catch (feil) {
+    return tekniskFeilSvar(feil, { kontekst: "fordele sak", request });
   }
-
-  const token = await getBackendOboToken(request);
-  await tildelKontrollsak({ token, sakId, saksbehandler: navIdent });
-
-  return { ok: true };
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
