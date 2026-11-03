@@ -221,6 +221,27 @@ describe("MineSakerInnhold", () => {
     ).toBe("true");
   });
 
+  it("filtrerer delte saker og gir dem filter og sortering som Mine saker", () => {
+    renderMedRouter(
+      <MineSakerInnhold
+        saker={[]}
+        deltMedSaker={[
+          lagKontrollsak({ id: 901, steg: "UTREDNING" }),
+          lagKontrollsak({ id: 902, steg: "OPPRETTET" }),
+        ]}
+        detaljSti="/saker"
+        filterAlternativer={standardFilterAlternativer}
+        aktivtFilter={{ steg: ["UTREDNING"], status: [] }}
+      />,
+      "/?fane=delt&steg=UTREDNING",
+    );
+
+    expect(screen.getByRole("tab", { name: "Delt med meg (1)" })).toBeDefined();
+    expect(screen.getByRole("group", { name: "Filtrer saker" })).toBeDefined();
+    expect(screen.getAllByRole("columnheader").length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("row")).toHaveLength(2);
+  });
+
   it("skjuler fanene når ingen saker er delt", () => {
     renderMedRouter(
       <MineSakerInnhold

@@ -14,6 +14,7 @@ import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
 import { AntallTreffEtikett } from "~/saker/saksliste/AntallTreffEtikett";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
 import { RouteConfig } from "~/routeConfig";
+import { filtrerMineSaker } from "./filtre";
 import { ANTALL_PER_SIDE, paginerElementer } from "~/utils/paginering";
 import {
   type AlleSakerKolonne,
@@ -60,17 +61,6 @@ export function MineSakerInnhold({
   const sorteringskolonne = parseKolonne(searchParams.get("sorter"));
   const sorteringsretning = parseRetning(searchParams.get("retning"));
 
-  const sorterteSaker = useMemo(
-    () => sorterSaker(saker, sorteringskolonne, sorteringsretning),
-    [saker, sorteringskolonne, sorteringsretning],
-  );
-
-  const valgtSide = Number.parseInt(searchParams.get("side") ?? "1", 10) || 1;
-  const paginerteSaker = useMemo(
-    () => paginerElementer(sorterteSaker, valgtSide, ANTALL_PER_SIDE),
-    [sorterteSaker, valgtSide],
-  );
-
   function gåTilSide(side: number) {
     setSearchParams((forrige) => {
       const neste = new URLSearchParams(forrige);
@@ -82,9 +72,28 @@ export function MineSakerInnhold({
   const harDeltFane = deltMedSaker.length > 0;
   const aktivFane: Fane = harDeltFane && searchParams.get("fane") === "delt" ? "delt" : "mine";
 
+  // Mine saker er filtrert i loaderen. Delte saker hentes ufiltrert og filtreres her med samme regler.
+  const filtrerteDeltSaker = useMemo(
+    () => filtrerMineSaker(deltMedSaker, aktivtFilter.steg, aktivtFilter.status),
+    [deltMedSaker, aktivtFilter.steg, aktivtFilter.status],
+  );
+  const aktiveSaker = aktivFane === "delt" ? filtrerteDeltSaker : saker;
+
+  const sorterteSaker = useMemo(
+    () => sorterSaker(aktiveSaker, sorteringskolonne, sorteringsretning),
+    [aktiveSaker, sorteringskolonne, sorteringsretning],
+  );
+
+  const valgtSide = Number.parseInt(searchParams.get("side") ?? "1", 10) || 1;
+  const paginerteSaker = useMemo(
+    () => paginerElementer(sorterteSaker, valgtSide, ANTALL_PER_SIDE),
+    [sorterteSaker, valgtSide],
+  );
+
   function byttFane(verdi: string) {
     setSearchParams((forrige) => {
       const neste = new URLSearchParams(forrige);
+      neste.delete("side");
       if (verdi === "delt") {
         neste.set("fane", "delt");
       } else {
@@ -95,7 +104,15 @@ export function MineSakerInnhold({
   }
 
   const harAktiveFiltre = aktivtFilter.steg.length > 0 || aktivtFilter.status.length > 0;
-  const tomTekst = harAktiveFiltre ? "Endre filtrering for å finne saker" : "Du har ingen saker.";
+  const tomTekst = harAktiveFiltre
+    ? "Endre filtrering for å finne saker"
+    : aktivFane === "delt"
+      ? "Ingen saker er delt med deg."
+      : "Du har ingen saker.";
+  const tilbakeMål =
+    aktivFane === "delt"
+      ? { to: `${RouteConfig.MINE_SAKER}?fane=delt`, label: "Delt med meg" }
+      : { to: RouteConfig.MINE_SAKER, label: "Mine saker" };
 
   function toggleFilter(key: "steg" | "status", verdi: string) {
     sporHendelse("filter brukt", { filtergruppe: key, side: "mine-saker" });
@@ -145,7 +162,7 @@ export function MineSakerInnhold({
               mapKontrollsakTilSakslisteRad(sak, detaljSti),
             )}
             tomTekst={tomTekst}
-            tilbake={{ to: RouteConfig.MINE_SAKER, label: "Mine saker" }}
+            tilbake={tilbakeMål}
             sortering={{
               kolonne: sorteringskolonne,
               retning: sorteringsretning === "asc" ? "stigende" : "synkende",
@@ -200,17 +217,13 @@ export function MineSakerInnhold({
           <Tabs value={aktivFane} onChange={byttFane}>
             <Tabs.List>
               <Tabs.Tab value="mine" label={`Mine saker (${saker.length})`} />
-              <Tabs.Tab value="delt" label={`Delt med meg (${deltMedSaker.length})`} />
+              <Tabs.Tab value="delt" label={`Delt med meg (${filtrerteDeltSaker.length})`} />
             </Tabs.List>
             <Tabs.Panel value="mine" className="pt-4">
-              {mineSaker}
+              {aktivFane === "mine" && mineSaker}
             </Tabs.Panel>
             <Tabs.Panel value="delt" className="pt-4">
-              <Saksliste
-                rader={deltMedSaker.map((sak) => mapKontrollsakTilSakslisteRad(sak, detaljSti))}
-                tomTekst="Ingen saker er delt med deg."
-                tilbake={{ to: `${RouteConfig.MINE_SAKER}?fane=delt`, label: "Delt med meg" }}
-              />
+              {aktivFane === "delt" && mineSaker}
             </Tabs.Panel>
           </Tabs>
         ) : (
