@@ -50,6 +50,30 @@ describe("Filtre – koblet kategori/misbrukstype", () => {
     expect(params.has("arbeidsfilter")).toBe(false);
   });
 
+  it("viser Steg og Status øverst, over Kategori og Merking", () => {
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <Filtre
+          alternativer={{
+            ...ALTERNATIVER,
+            merking: ["Prioritert"],
+            steg: [{ label: "Utredning", value: "UTREDNING" }],
+            status: STATUSFILTER_VALG,
+          }}
+        />
+      </MemoryRouter>,
+    );
+
+    const rekkefølge = ["Steg", "Status", "Kategori", "Merking"].map((tittel) =>
+      screen.getByText(tittel),
+    );
+    rekkefølge.slice(1).forEach((element, i) => {
+      expect(
+        rekkefølge[i].compareDocumentPosition(element) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+  });
+
   it("viser alle misbrukstyper når ingen kategori er valgt", () => {
     render(
       <MemoryRouter initialEntries={["/"]}>
