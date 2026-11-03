@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { SaksflytModal, type SaksflytStart } from "./SaksflytModal";
 import { dagpengerId, lagTillatteHandlinger, lagYtelse } from "./testdata";
+import { SAK_UNDER_FLYTTING_FEIL } from "~/migrering/avslutning";
 
 const submitMock = vi.fn();
 let mockSvar: unknown;
@@ -27,7 +28,11 @@ vi.mock("react-router", async () => {
   };
 });
 
-function renderModal(sak: Partial<KontrollsakResponse> = {}, start: SaksflytStart = "meny") {
+function renderModal(
+  sak: Partial<KontrollsakResponse> = {},
+  start: SaksflytStart = "meny",
+  avslutningKreverFerdigFlyttet = false,
+) {
   const onClose = vi.fn();
   const router = createMemoryRouter(
     [
@@ -38,6 +43,7 @@ function renderModal(sak: Partial<KontrollsakResponse> = {}, start: SaksflytStar
             sakId="101"
             tillatteHandlinger={lagTillatteHandlinger(sak)}
             start={start}
+            avslutningKreverFerdigFlyttet={avslutningKreverFerdigFlyttet}
             onClose={onClose}
           />
         ),
@@ -385,6 +391,39 @@ describe("SaksflytModal", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it("stopper «Lagre og avslutt» i politiet når saken ikke er ferdig flyttet", async () => {
+    renderModal({ steg: "POLITI", status: "VENTER_PA_RESULTAT" }, "meny", true);
+    klikk("Registrer resultat");
+    fireEvent.click(await screen.findByRole("radio", { name: "Henlagt" }));
+    klikk("Neste");
+    await screen.findByRole("heading", { name: "Henlagt" });
+    fireEvent.change(screen.getByLabelText("Årsak (påkrevd)"), {
+      target: { value: "Bevisene holder ikke" },
+    });
+
+    klikk("Lagre og avslutt");
+
+    expect(screen.getByText(SAK_UNDER_FLYTTING_FEIL)).toBeDefined();
+    expect(submitMock).not.toHaveBeenCalled();
+  });
+
+  it("lagrer påklaget henleggelse selv om saken ikke er ferdig flyttet", async () => {
+    renderModal({ steg: "POLITI", status: "VENTER_PA_RESULTAT" }, "meny", true);
+    klikk("Registrer resultat");
+    fireEvent.click(await screen.findByRole("radio", { name: "Henlagt" }));
+    klikk("Neste");
+    await screen.findByRole("heading", { name: "Henlagt" });
+    fireEvent.click(screen.getByRole("radio", { name: "Ja" }));
+    fireEvent.change(screen.getByLabelText("Årsak (påkrevd)"), {
+      target: { value: "Bevisene holder ikke" },
+    });
+
+    klikk("Registrer påklaget henleggelse");
+
+    expect(await screen.findByText("Lagret")).toBeDefined();
+    expect(sendtSkjema()).toMatchObject({ handling: "lagre_resultat" });
+  });
+
   it("lagrer påklaget henleggelse fra politiet uten å avslutte saken", async () => {
     renderModal({ steg: "POLITI", status: "VENTER_PA_RESULTAT" });
     klikk("Registrer resultat");
@@ -470,6 +509,25 @@ describe("SaksflytModal", () => {
       steg: "AVSLUTTET",
       registrerResultat: "false",
     });
+  });
+
+  it("stopper avslutning når saken ikke er ferdig flyttet", async () => {
+    renderModal(
+      {
+        steg: "POLITI",
+        status: "VENTER_PA_RESULTAT",
+        resultat: { politi: { type: "BOT" } } as KontrollsakResponse["resultat"],
+      },
+      "meny",
+      true,
+    );
+    klikk("Avslutt sak");
+    await screen.findByRole("dialog", { name: "Avslutt sak" });
+
+    klikk("Avslutt sak");
+
+    expect(screen.getByText(SAK_UNDER_FLYTTING_FEIL)).toBeDefined();
+    expect(submitMock).not.toHaveBeenCalled();
   });
 
   it("flytter fokus til dialogen når trinnet byttes", async () => {

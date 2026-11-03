@@ -1,4 +1,5 @@
 import { data } from "react-router";
+import { BACKEND_SAK_UNDER_FLYTTING, SAK_UNDER_FLYTTING_FEIL } from "~/migrering/avslutning";
 import { erTekniskFeil } from "~/feilhåndtering/teknisk-feil.server";
 import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
@@ -163,15 +164,27 @@ export async function backendAction(
       ) {
         throw data("Velg endelig resultat før du flytter saken til Avsluttet", { status: 400 });
       }
-      const sak = await backendApi.endreSteg(
-        token,
-        sakId,
-        tillatte.versjon,
-        nyttSteg as KontrollsakSteg,
-        resultat,
-        beskrivelse ?? undefined,
-      );
-      return { ok: true, sak };
+      try {
+        const sak = await backendApi.endreSteg(
+          token,
+          sakId,
+          tillatte.versjon,
+          nyttSteg as KontrollsakSteg,
+          resultat,
+          beskrivelse ?? undefined,
+        );
+        return { ok: true, sak };
+      } catch (feil) {
+        // Beholder exception-typen, så både endre_steg og endre_steg_dialog får svaret som skjemafeil.
+        if (
+          feil instanceof backendApi.BackendFeilException &&
+          feil.status === 409 &&
+          feil.message === BACKEND_SAK_UNDER_FLYTTING
+        ) {
+          throw new backendApi.BackendFeilException(409, SAK_UNDER_FLYTTING_FEIL);
+        }
+        throw feil;
+      }
     }
     case "lagre_resultat": {
       const tillatte = await backendApi.hentTillatteHandlinger(token, sakId);
