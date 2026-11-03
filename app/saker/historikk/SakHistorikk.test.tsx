@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { act } from "react";
-import { createMemoryRouter, RouterProvider } from "react-router";
+import { createMemoryRouter, data, RouterProvider } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { SakHendelse } from "./typer";
 import { SakHistorikk } from "./SakHistorikk";
@@ -756,6 +756,34 @@ describe("SakHistorikk — feilhåndtering ved lagring", () => {
 
     await waitFor(() => {
       expect(screen.getByText(FEILMELDING_STREAMING_BUFFER)).toBeDefined();
+    });
+  });
+
+  it("viser teknisk feil med feil-ID ved sletting, både i kompakt visning og i «Vis all historikk»", async () => {
+    const hendelse = lagBackendHendelse({
+      hendelsesType: "MANUELL_HENDELSE",
+      tittel: "Mitt notat",
+      opprettetAvNavn: "Ola Nordmann",
+    });
+
+    await renderMedAksjon(
+      <SakHistorikk redigerbar={true} sakId={1} hendelser={[hendelse]} />,
+      data(
+        { ok: false, feil: "Intern feil", feilId: "feil-hist-1", teknisk: true },
+        { status: 500 },
+      ),
+    );
+
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "Slett" }));
+    });
+
+    expect(await screen.findByText("Vi fikk ikke slettet hendelsen")).toBeDefined();
+    expect(screen.getByText("feil-hist-1")).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: /Vis all historikk/ }));
+    await waitFor(() => {
+      expect(screen.getAllByText("Vi fikk ikke slettet hendelsen")).toHaveLength(2);
     });
   });
 });

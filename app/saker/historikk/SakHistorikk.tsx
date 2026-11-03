@@ -2,6 +2,7 @@ import { PlusCircleIcon } from "@navikt/aksel-icons";
 import { Alert, BodyShort, Box, Button, Heading, HStack } from "@navikt/ds-react";
 import { useMemo, useState } from "react";
 import { useFetcher } from "react-router";
+import { erTekniskFeilSvar, Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { useDisclosure } from "~/utils/useDisclosure";
@@ -47,10 +48,21 @@ export function SakHistorikk({
     () => lagForrigeHendelseKart(historikkHendelser),
     [historikkHendelser],
   );
+  const slettSvar = fetcher.state === "idle" ? fetcher.data : undefined;
   const slettFeilmelding =
-    fetcher.state === "idle" && fetcher.data && "ok" in fetcher.data && !fetcher.data.ok
-      ? fetcher.data.feil?.skjema?.[0]
+    slettSvar && "ok" in slettSvar && !slettSvar.ok && !erTekniskFeilSvar(slettSvar)
+      ? slettSvar.feil?.skjema?.[0]
       : undefined;
+  // Vises både i den korte historikken og i «Vis all historikk».
+  const slettFeil = erTekniskFeilSvar(slettSvar) ? (
+    <Innsendingsfeil svar={slettSvar} tittel="Vi fikk ikke slettet hendelsen">
+      Sjekk om hendelsen fortsatt vises før du prøver igjen.
+    </Innsendingsfeil>
+  ) : slettFeilmelding ? (
+    <Alert variant="error" size="small">
+      {slettFeilmelding}
+    </Alert>
+  ) : null;
 
   function åpneRediger(hendelse: SakHendelse) {
     setValgtHendelse(hendelse);
@@ -84,11 +96,7 @@ export function SakHistorikk({
           </Button>
         )}
       </HStack>
-      {slettFeilmelding && (
-        <Alert variant="error" size="small" className="mb-3">
-          {slettFeilmelding}
-        </Alert>
-      )}
+      {slettFeil && <div className="mb-3">{slettFeil}</div>}
       {historikkGrupper.length === 0 ? (
         <BodyShort>Ingen historikk for denne saken.</BodyShort>
       ) : (
@@ -126,7 +134,7 @@ export function SakHistorikk({
           onLeggTil={onÅpneLeggTil}
           onRediger={åpneRediger}
           onSlett={slettHendelse}
-          slettFeilmelding={slettFeilmelding}
+          slettFeil={slettFeil}
           forrigeHendelseKart={forrigeHendelseKart}
           erMigreringssak={erMigreringssak}
         />

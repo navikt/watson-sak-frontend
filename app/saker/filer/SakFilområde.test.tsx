@@ -718,6 +718,13 @@ describe("DokumentTre med mapper", () => {
     ).toBeDefined();
     expect(screen.getByRole("dialog", { name: "Slette dokument?" })).toBeDefined();
 
+    // Avbryt og åpne på nytt: den gamle feilen skal ikke vises før et nytt forsøk.
+    fireEvent.click(screen.getByRole("button", { name: "Avbryt" }));
+    fireEvent.click(screen.getByRole("button", { name: "Handlinger for Rapport" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Slett" }));
+    expect(await screen.findByRole("dialog", { name: "Slette dokument?" })).toBeDefined();
+    expect(screen.queryByText("Vi fikk ikke slettet dokumentet")).toBeNull();
+
     fireEvent.click(screen.getByRole("button", { name: "Slett dokument" }));
 
     await waitFor(() => {

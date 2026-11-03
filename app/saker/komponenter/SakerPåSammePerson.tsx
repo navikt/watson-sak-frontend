@@ -374,6 +374,9 @@ export function SakerPåSammePerson({
   );
   const [handling, setHandling] = useState<Koblingshandling>("koble");
   const [feilmelding, setFeilmelding] = useState<string>();
+  // Feil-ID fra svaret på innsendingen i den åpne dialogen. Egen state, så en feil fra en
+  // tidligere kobling ikke vises når dialogen åpnes på nytt.
+  const [tekniskFeilId, setTekniskFeilId] = useState<string | null>(null);
   const harSendt = useRef(false);
   const fetcher = useFetcher<KobleSakActionResult>();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -389,7 +392,10 @@ export function SakerPåSammePerson({
       setValgtSak(null);
       return;
     }
-    if (erTekniskFeilSvar(fetcher.data)) return;
+    if (erTekniskFeilSvar(fetcher.data)) {
+      setTekniskFeilId(fetcher.data.feilId);
+      return;
+    }
     setFeilmelding(fetcher.data?.feil.skjema?.[0] ?? "Kunne ikke endre koblingen. Prøv igjen.");
   }, [fetcher.data, fetcher.state]);
 
@@ -411,6 +417,7 @@ export function SakerPåSammePerson({
     setValgtSak(sak);
     setHandling(nyHandling);
     setFeilmelding(undefined);
+    setTekniskFeilId(null);
   }
 
   function lukkKoblingsmodal() {
@@ -421,6 +428,8 @@ export function SakerPåSammePerson({
 
   function sendKobling() {
     harSendt.current = true;
+    setFeilmelding(undefined);
+    setTekniskFeilId(null);
   }
 
   const gjeldendeSaksreferanse = getSaksreferanse(gjeldendeSak.id);
@@ -481,7 +490,9 @@ export function SakerPåSammePerson({
               )}
 
               {feilmelding && <Alert variant="error">{feilmelding}</Alert>}
-              <Innsendingsfeil svar={fetcher.data} />
+              <Innsendingsfeil
+                svar={tekniskFeilId ? { teknisk: true, feilId: tekniskFeilId } : null}
+              />
             </VStack>
           </Modal.Body>
           <Modal.Footer>

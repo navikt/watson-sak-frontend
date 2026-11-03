@@ -327,6 +327,15 @@ describe("SakerPåSammePerson", () => {
     expect(await screen.findByText("Vi fikk ikke lagret endringen")).toBeDefined();
     expect(screen.getByText("ERR-123")).toBeDefined();
     expect(screen.getByRole("heading", { name: "Koble til sak" })).toBeDefined();
+
+    // Lukk og åpne på nytt: den gamle feilen skal ikke vises før et nytt forsøk.
+    fireEvent.click(screen.getByRole("button", { name: "Avbryt" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { name: "Koble til sak" })).toBeNull(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Koble til sak" }));
+    expect(await screen.findByRole("heading", { name: "Koble til sak" })).toBeDefined();
+    expect(screen.queryByText("Vi fikk ikke lagret endringen")).toBeNull();
   });
 
   it("viser frakoblingsmodal for koblede saker", async () => {

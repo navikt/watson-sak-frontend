@@ -1,6 +1,6 @@
 import { ClockIcon, PlusCircleIcon } from "@navikt/aksel-icons";
-import { Alert, BodyShort, Button, HStack, Modal, ToggleGroup } from "@navikt/ds-react";
-import { useMemo, useRef, useState } from "react";
+import { BodyShort, Button, HStack, Modal, ToggleGroup } from "@navikt/ds-react";
+import { type ReactNode, useMemo, useRef, useState } from "react";
 import { HistorikkProsessListe } from "./HistorikkProsessListe";
 import {
   erMigreringssakMedTilbakedatertOpprettelse,
@@ -18,7 +18,8 @@ interface VisAllHistorikkModalProps {
   onLeggTil: () => void;
   onRediger: (hendelse: SakHendelse) => void;
   onSlett: (hendelse: SakHendelse) => void;
-  slettFeilmelding?: string;
+  /** Feilmelding fra siste sletting, laget av SakHistorikk. */
+  slettFeil?: ReactNode;
   forrigeHendelseKart?: Map<string, SakHendelse>;
   erMigreringssak?: boolean;
 }
@@ -48,7 +49,7 @@ export function VisAllHistorikkModal({
   onLeggTil,
   onRediger,
   onSlett,
-  slettFeilmelding,
+  slettFeil,
   forrigeHendelseKart,
   erMigreringssak,
 }: VisAllHistorikkModalProps) {
@@ -82,11 +83,7 @@ export function VisAllHistorikkModal({
       width="48rem"
     >
       <Modal.Body>
-        {slettFeilmelding && (
-          <Alert variant="error" size="small" className="mb-3">
-            {slettFeilmelding}
-          </Alert>
-        )}
+        {slettFeil && <div className="mb-3">{slettFeil}</div>}
         <HStack justify="space-between" align="center" className="pb-4">
           {hendelser.length > 0 ? (
             <ToggleGroup

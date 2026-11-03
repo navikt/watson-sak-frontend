@@ -31,10 +31,14 @@ export function useDokumentSletting({ sakId, kilde, redirectTo }: UseDokumentSle
   // Dokument vi venter på suksess-svar for (kun når slettingen ikke redirecter bort).
   const venterPåResultat = useRef<string | null>(null);
   const forrigeState = useRef(fetcher.state);
+  // Feil-ID fra svaret på denne dialogens innsending. Egen state, så en feil fra et tidligere
+  // dokument ikke vises når dialogen åpnes for et nytt.
+  const [tekniskFeilId, setTekniskFeilId] = useState<string | null>(null);
 
   const start = useCallback(
     (dokument: Slettekandidat) => {
       sporHendelse("dokument sletting påbegynt", { kilde });
+      setTekniskFeilId(null);
       setKandidat(dokument);
     },
     [kilde],
@@ -44,6 +48,7 @@ export function useDokumentSletting({ sakId, kilde, redirectTo }: UseDokumentSle
     if (!kandidat) {
       return;
     }
+    setTekniskFeilId(null);
     const redirect = redirectTo?.(kandidat.id);
     if (redirect) {
       // Etter en vellykket sletting redirecter action-en og komponenten rives ned, så vi
@@ -63,6 +68,7 @@ export function useDokumentSletting({ sakId, kilde, redirectTo }: UseDokumentSle
     if (kandidat) {
       sporHendelse("dokument sletting avbrutt", { kilde });
     }
+    setTekniskFeilId(null);
     setKandidat(null);
   }, [kandidat, kilde]);
 
@@ -70,7 +76,12 @@ export function useDokumentSletting({ sakId, kilde, redirectTo }: UseDokumentSle
   useEffect(() => {
     const varIgang = forrigeState.current !== "idle";
     forrigeState.current = fetcher.state;
-    if (!varIgang || fetcher.state !== "idle" || !kandidat || !fetcher.data?.ok) return;
+    if (!varIgang || fetcher.state !== "idle" || !kandidat) return;
+    if (erTekniskFeilSvar(fetcher.data)) {
+      setTekniskFeilId(fetcher.data.feilId);
+      return;
+    }
+    if (!fetcher.data?.ok) return;
     if (venterPåResultat.current) {
       sporHendelse("dokument slettet", { kilde });
       venterPåResultat.current = null;
@@ -79,10 +90,13 @@ export function useDokumentSletting({ sakId, kilde, redirectTo }: UseDokumentSle
   }, [fetcher.state, fetcher.data, kandidat, kilde]);
 
   const feil =
-    kandidat && fetcher.state === "idle" && erTekniskFeilSvar(fetcher.data)
+    kandidat && tekniskFeilId
       ? createElement(
           Innsendingsfeil,
-          { svar: fetcher.data, tittel: "Vi fikk ikke slettet dokumentet" },
+          {
+            svar: { teknisk: true, feilId: tekniskFeilId },
+            tittel: "Vi fikk ikke slettet dokumentet",
+          },
           "Sjekk om dokumentet fortsatt ligger i listen før du prøver igjen.",
         )
       : undefined;
