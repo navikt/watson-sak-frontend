@@ -88,10 +88,12 @@ describe("MineSakerSide loader", () => {
     });
   });
 
-  it("har ingen aktive filtre når ingen URL-parametere er satt", async () => {
+  it("filtrerer bort avsluttede saker når ingen URL-parametere er satt", async () => {
     const resultat = await loader(loaderArgs);
 
-    expect(resultat.aktivtFilter.steg).toEqual([]);
+    expect(resultat.aktivtFilter.steg).not.toContain("AVSLUTTET");
+    expect(resultat.aktivtFilter.steg.length).toBeGreaterThan(0);
+    expect(resultat.saker.every((sak) => sak.steg !== "AVSLUTTET")).toBe(true);
     expect(resultat.aktivtFilter.status).toEqual([]);
   });
 
