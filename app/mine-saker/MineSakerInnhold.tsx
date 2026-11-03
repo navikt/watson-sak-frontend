@@ -102,7 +102,13 @@ export function MineSakerInnhold({
     setSearchParams((forrige) => {
       const neste = new URLSearchParams(forrige);
 
-      const gjeldende = neste.getAll(key);
+      // Ta utgangspunkt i aktivt filter, ikke URL-en, så standardfilteret
+      // (alle steg unntatt avsluttet) blir med når brukeren endrer det.
+      const gjeldende: string[] = aktivtFilter[key];
+      neste.delete("steg");
+      neste.delete("status");
+      for (const v of aktivtFilter.steg) neste.append("steg", v);
+      for (const v of aktivtFilter.status) neste.append("status", v);
       neste.delete(key);
       neste.delete("side");
 

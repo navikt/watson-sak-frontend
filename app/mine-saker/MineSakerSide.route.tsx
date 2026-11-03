@@ -30,7 +30,8 @@ export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const harFilterParams = url.searchParams.has("steg") || url.searchParams.has("status");
 
-  const stegFilter = harFilterParams ? parseSteg(url.searchParams.getAll("steg")) : [];
+  // Uten filter i URL-en skjuler vi avsluttede saker (TH-122).
+  const stegFilter = harFilterParams ? parseSteg(url.searchParams.getAll("steg")) : [...ALLE_STEG];
 
   const statusFilter = harFilterParams ? parseVentestatuser(url.searchParams.getAll("status")) : [];
 
