@@ -17,6 +17,18 @@ test.describe("Søk", () => {
       await expect(page.getByText(/Bruk søkefeltet i toppmenyen for å søke/)).toBeVisible();
     });
 
+    test("hjelpeteksten ved søkefeltet forklarer hva man kan søke på", async ({ page }) => {
+      await page.getByRole("button", { name: "Hva kan du søke på?" }).click();
+
+      const hjelp = page.getByText("Du kan søke på:").locator("..");
+      await expect(hjelp.getByText("Saksnummer", { exact: true })).toBeVisible();
+      await expect(hjelp.getByText("PID (bare saker opprettet i Watson Sak)")).toBeVisible();
+      await expect(hjelp.getByText("Fødsels- eller d-nummer (11 siffer)")).toBeVisible();
+      await expect(hjelp.getByText("Organisasjonsnummer (9 siffer)")).toBeVisible();
+      await expect(hjelp.getByText("Mellomrom spiller ingen rolle.")).toBeVisible();
+      await sjekkTilgjengelighet(page);
+    });
+
     test("kan søke på saksnummer og viser stor sak-oppsummering", async ({ page }) => {
       await page.getByLabel("Søk i saker").fill("1028");
       await page.getByLabel("Søk i saker").press("Enter");
