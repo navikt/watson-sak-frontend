@@ -113,6 +113,8 @@ describe("KommentarPanel", () => {
     });
 
     expect(screen.getByText("Kunne ikke laste kommentarer.")).toBeDefined();
+    // En teknisk feil skal ikke se ut som en avsluttet sak.
+    expect(screen.queryByText(/Saken er avsluttet/)).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Prøv igjen" }));
     expect(onLastPåNytt).toHaveBeenCalledOnce();
   });

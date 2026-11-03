@@ -129,7 +129,7 @@ export function KommentarPanel({
 
   return (
     <VStack gap="space-12" className="min-h-0">
-      {!kanKommentere && (
+      {!kanKommentere && !innlastingFeilet && (
         <Alert variant="info" size="small" inline>
           {arkivert ? "Dokumentet er arkivert." : "Saken er avsluttet."} Du kan lese kommentarene,
           men ikke endre dem.

@@ -164,6 +164,9 @@ describe("kommentarer.api loader", () => {
     } as never)) as Response;
 
     expect(respons.status).toBe(200);
+    const liste = kommentarlisteKlientSchema.parse(await respons.json());
+    // TH-101: kommentarer på avsluttet sak kan bare leses.
+    expect(liste.kanKommentere).toBe(false);
   });
 });
 
@@ -441,11 +444,18 @@ describe("kommentarer.api action", () => {
     ).rejects.toMatchObject({ init: { status: 403 } });
   });
 
-  it("lar lesetilgang kommentere selv om saken er avsluttet", async () => {
+  it("avviser kommentarer med 403 når saken er avsluttet (TH-101)", async () => {
     const { ref, docId, sakId } = settOppSak({ steg: "AVSLUTTET" });
-    await opprettTraad(ref, docId, "Kommentar på avsluttet sak");
 
-    expect(mockliste(sakId, docId).traader).toHaveLength(1);
+    await expect(
+      kjørAction(ref, docId, {
+        ...DOKUMENTANKER_BODY,
+        traadId: crypto.randomUUID(),
+        kommentarId: crypto.randomUUID(),
+        tekst: "Kommentar på avsluttet sak",
+      }),
+    ).rejects.toMatchObject({ init: { status: 403 } });
+    expect(mockliste(sakId, docId).traader).toHaveLength(0);
   });
 
   it("svarer 409 – ikke 403 – for arkivert dokument", async () => {
