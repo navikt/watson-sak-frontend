@@ -1,6 +1,6 @@
 import type { InnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
-import { lagMockOyeblikksbilde } from "~/saker/mock-oppsummering.server";
+import { lagMockOyeblikksbilde, velgSakKategori } from "~/saker/mock-oppsummering.server";
 import { mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import { getSaksenhet } from "~/saker/selectors";
 import type { KontrollsakResponse } from "~/saker/types.backend";
@@ -35,7 +35,9 @@ export function lagMockLederStatistikk(
   iDag: Date = new Date(),
 ): LederStatistikk {
   const saker = hentAlleSaker(request).filter(
-    (sak) => getSaksenhet(sak) === enhetId && sak.steg !== "AVSLUTTET",
+    (sak) =>
+      (getSaksenhet(sak) === enhetId || sak.saksbehandlere.eier?.enhet === enhetId) &&
+      sak.steg !== "AVSLUTTET",
   );
   const grensedato = trekkFraDager(datoIOslo(iDag), 30);
   const erOverFrist = (sak: KontrollsakResponse) =>
@@ -57,16 +59,25 @@ export function lagMockLederStatistikk(
       const sakerForAnsatt = saker.filter(
         (sak) => sak.saksbehandlere.eier?.navIdent === ansatt.navIdent,
       );
+      const aktiveSaker = sakerForAnsatt.filter((sak) => velgSakKategori(sak) === "aktive");
       return {
         navn: ansatt.navn,
         navIdent: ansatt.navIdent,
         totaltAntallIkkeAvsluttede: sakerForAnsatt.length,
         antallOverFrist: sakerForAnsatt.filter(erOverFrist).length,
+        antallAktive: aktiveSaker.length,
+        antallAktiveOverFrist: aktiveSaker.filter(erOverFrist).length,
       };
     })
     .sort((a, b) => a.navn.localeCompare(b.navn, "nb"));
 
   const ufordelte = saker.filter((sak) => !sak.saksbehandlere.eier);
+  const aktiveUfordelte = ufordelte.filter((sak) => velgSakKategori(sak) === "aktive");
+  const visteIdenter = new Set(ansatte.map((ansatt) => ansatt.navIdent));
+  const andre = saker.filter(
+    (sak) => sak.saksbehandlere.eier && !visteIdenter.has(sak.saksbehandlere.eier.navIdent),
+  );
+  const aktiveAndre = andre.filter((sak) => velgSakKategori(sak) === "aktive");
 
   return {
     enhetId,
@@ -86,6 +97,14 @@ export function lagMockLederStatistikk(
       ufordelt: {
         totaltAntallIkkeAvsluttede: ufordelte.length,
         antallOverFrist: ufordelte.filter(erOverFrist).length,
+        antallAktive: aktiveUfordelte.length,
+        antallAktiveOverFrist: aktiveUfordelte.filter(erOverFrist).length,
+      },
+      andreSaksbehandlere: {
+        totaltAntallIkkeAvsluttede: andre.length,
+        antallOverFrist: andre.filter(erOverFrist).length,
+        antallAktive: aktiveAndre.length,
+        antallAktiveOverFrist: aktiveAndre.filter(erOverFrist).length,
       },
     },
   };

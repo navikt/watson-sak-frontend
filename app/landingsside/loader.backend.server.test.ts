@@ -37,7 +37,7 @@ describe("landingsside-loader mot backend", () => {
   });
 
   it("bruker oppsummeringen fra backend i velkomstteksten", async () => {
-    hentOppsummeringMock.mockResolvedValue({ nye: 0, aktive: 2, venter: 0, iBero: 0 });
+    hentOppsummeringMock.mockResolvedValue({ nye: 0, aktive: 2, venter: 0 });
 
     const resultat = await loader(args);
     if (resultat.type !== "saksbehandler") throw new Error("Forventet saksbehandler");
@@ -64,7 +64,7 @@ describe("landingsside-loader mot backend", () => {
   it("viser forsiden med driftsmelding, men uten saker når tilgangsmaskinen er utilgjengelig", async () => {
     const { BackendUtilgjengeligError } = await import("~/utils/backend-utilgjengelig.server");
     hentKontrollsakerMock.mockRejectedValue(new BackendUtilgjengeligError());
-    hentOppsummeringMock.mockResolvedValue({ nye: 0, aktive: 2, venter: 0, iBero: 0 });
+    hentOppsummeringMock.mockResolvedValue({ nye: 0, aktive: 2, venter: 0 });
 
     const resultat = await loader(args);
     if (resultat.type !== "saksbehandler") throw new Error("Forventet saksbehandler");
@@ -76,7 +76,7 @@ describe("landingsside-loader mot backend", () => {
 
   describe("melding om saker som skal flyttes fra Access", () => {
     const hentFlagg = async () => {
-      hentOppsummeringMock.mockResolvedValue({ nye: 0, aktive: 0, venter: 0, iBero: 0 });
+      hentOppsummeringMock.mockResolvedValue({ nye: 0, aktive: 0, venter: 0 });
       const resultat = await loader(args);
       if (resultat.type !== "saksbehandler") throw new Error("Forventet saksbehandler");
       return resultat.harSakerSomSkalFlyttes;

@@ -8,7 +8,7 @@ const gyldigRespons = {
     totaltAntallIkkeAvsluttede: 5,
     antallOverFrist: 1,
     antallUfordelte: 2,
-    oyeblikksbilde: { totalt: 0, aktive: 0, venterPåAndre: 0, ikkeFordelt: 0 },
+    oyeblikksbilde: { totalt: 0, nye: 0, aktive: 0, venterPåAndre: 0, ikkeFordelt: 0 },
     perSteg: {
       OPPRETTET: 1,
       UTREDNING: 1,
@@ -34,11 +34,15 @@ const gyldigRespons = {
         navIdent: "Z000001",
         totaltAntallIkkeAvsluttede: 0,
         antallOverFrist: 0,
+        antallAktive: 0,
+        antallAktiveOverFrist: 0,
       },
     ],
     ufordelt: {
       totaltAntallIkkeAvsluttede: 2,
       antallOverFrist: 1,
+      antallAktive: 0,
+      antallAktiveOverFrist: 0,
     },
   },
 };
