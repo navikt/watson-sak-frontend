@@ -249,21 +249,25 @@ function DokumentRedigering({
 
   const håndterTittel = useCallback(
     (nyTittel: string) => {
+      // Skrivebeskyttet (avsluttet sak eller arkivert dokument): ingen lagring.
+      if (!kanRedigere) return;
       setTittel(nyTittel);
       tittelRef.current = nyTittel;
       registrerEndring({ tittel: nyTittel, innhold: innholdRef.current });
       registrerHistorikk({ tittel: nyTittel, innhold: innholdRef.current });
     },
-    [registrerEndring, registrerHistorikk],
+    [kanRedigere, registrerEndring, registrerHistorikk],
   );
 
   const håndterInnhold = useCallback(
     (innhold: DokumentInnhold) => {
       innholdRef.current = innhold;
+      // Plate kaller onChange også ved markering i skrivebeskyttet modus. Det skal ikke lagres.
+      if (!kanRedigere) return;
       registrerEndring({ tittel: tittelRef.current, innhold });
       registrerHistorikk({ tittel: tittelRef.current, innhold });
     },
-    [registrerEndring, registrerHistorikk],
+    [kanRedigere, registrerEndring, registrerHistorikk],
   );
 
   const historikkKall = useCallback(

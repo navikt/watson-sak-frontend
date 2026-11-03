@@ -222,6 +222,26 @@ describe("KommentarPanel", () => {
     });
   });
 
+  it("forklarer at kommentarer bare kan leses på avsluttet sak (TH-101)", () => {
+    renderPanel({ kanKommentere: false, arkivert: false });
+
+    expect(
+      screen.getByText(/Saken er avsluttet\. Du kan lese kommentarene, men ikke endre dem\./),
+    ).toBeDefined();
+    expect(screen.getByRole("button", { name: "Ny kommentar" })).toHaveProperty("disabled", true);
+    expect(screen.queryByRole("button", { name: /Svar/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Rediger/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Slett/ })).toBeNull();
+  });
+
+  it("forklarer at kommentarer bare kan leses på arkivert dokument", () => {
+    renderPanel({ kanKommentere: false, arkivert: true });
+
+    expect(
+      screen.getByText(/Dokumentet er arkivert\. Du kan lese kommentarene, men ikke endre dem\./),
+    ).toBeDefined();
+  });
+
   it("starter en generell kommentar fra panelknappen", () => {
     const { onStartGenereltUtkast } = renderPanel();
 
@@ -417,7 +437,7 @@ describe("KommentarPanel", () => {
     renderPanel({ kanKommentere: false, arkivert: true });
 
     expect(
-      screen.getByText("Dokumentet er arkivert. Kommentarer kan leses, men ikke endres."),
+      screen.getByText("Dokumentet er arkivert. Du kan lese kommentarene, men ikke endre dem."),
     ).toBeDefined();
     expect(screen.getByRole("button", { name: "Ny kommentar" })).toHaveProperty("disabled", true);
     expect(screen.queryByRole("button", { name: "Svar" })).toBeNull();

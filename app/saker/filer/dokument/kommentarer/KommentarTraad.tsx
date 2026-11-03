@@ -188,7 +188,7 @@ export type KommentarTraadProps = {
   traad: Kommentartraad;
   treff: AnkerTreff | null | undefined;
   erAktiv: boolean;
-  /** Kommentering er lov selv om dokumentet ikke kan redigeres – men ikke når det er arkivert. */
+  /** Kommentering er lov selv om dokumentet ikke kan redigeres – men ikke når det er arkivert eller saken avsluttet. */
   kanKommentere: boolean;
   sender: boolean;
   handlinger: KommentarHandlinger;

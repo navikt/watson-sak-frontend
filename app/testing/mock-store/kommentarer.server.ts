@@ -186,7 +186,7 @@ export function hentKommentarliste(
   state: MockState,
   sakId: string,
   docId: string,
-  opts: { innloggetIdent: string; arkivert: string | null },
+  opts: { innloggetIdent: string; arkivert: string | null; sakAvsluttet?: boolean },
 ): Kommentarliste {
   const traader = hentEllerSeed(state, sakId, docId)
     .map((traad) => tilRespons(traad, opts.innloggetIdent))
@@ -196,7 +196,7 @@ export function hentKommentarliste(
   return {
     dokumentId: docId,
     arkivert: opts.arkivert,
-    kanKommentere: opts.arkivert === null,
+    kanKommentere: opts.arkivert === null && !opts.sakAvsluttet,
     traader,
   };
 }
