@@ -3,12 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
 import { DelTilgangModal } from "./DelTilgangModal";
 
-const submitMock = vi.fn();
+const { fetcherMock, submitMock } = vi.hoisted(() => ({
+  fetcherMock: { state: "idle" as "idle" | "submitting", data: undefined as unknown },
+  submitMock: vi.fn(),
+}));
 
 vi.mock("react-router", () => ({
-  useFetcher: () => ({
-    submit: submitMock,
-  }),
+  useFetcher: () => ({ ...fetcherMock, submit: submitMock }),
 }));
 
 vi.mock("~/auth/innlogget-bruker", () => ({
@@ -27,6 +28,8 @@ const saksbehandlerDetaljer: KontrollsakSaksbehandler[] = [
 describe("DelTilgangModal", () => {
   beforeEach(() => {
     submitMock.mockClear();
+    fetcherMock.state = "idle";
+    fetcherMock.data = undefined;
   });
 
   it("viser ikke innlogget saksbehandler som et delingsvalg", async () => {
@@ -45,5 +48,97 @@ describe("DelTilgangModal", () => {
 
     expect(screen.queryByText("Test Saksbehandler (Z999999)")).toBeNull();
     expect(screen.getByText("Ola Saksbehandler (Z123456)")).toBeDefined();
+  });
+
+  it("viser teknisk feil og beholder valget når deling feiler", async () => {
+    const onClose = vi.fn();
+    const props = {
+      sakId: "101",
+      saksbehandlerDetaljer,
+      åpen: true,
+      onClose,
+    };
+    const { rerender } = render(<DelTilgangModal {...props} />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("combobox", { name: "Saksbehandler" }));
+    });
+    await act(async () => {
+      fireEvent.pointerUp(
+        await screen.findByRole("option", { name: "Ola Saksbehandler (Z123456)" }),
+      );
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Del tilgang" }));
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(submitMock).toHaveBeenCalledOnce();
+
+    await act(async () => {
+      fetcherMock.state = "submitting";
+      rerender(<DelTilgangModal {...props} />);
+    });
+    await act(async () => {
+      fetcherMock.state = "idle";
+      fetcherMock.data = {
+        ok: false,
+        feil: "intern feil",
+        feilId: "ERR-123",
+        teknisk: true,
+        usikker: false,
+      };
+      rerender(<DelTilgangModal {...props} />);
+    });
+
+    expect(screen.getByText("Vi fikk ikke delt tilgangen")).toBeDefined();
+    expect(screen.getByText("ERR-123")).toBeDefined();
+    // Valget står igjen, så brukeren kan prøve på nytt uten å velge saksbehandler igjen.
+    expect(
+      (screen.getByRole("button", { name: "Del tilgang" }) as HTMLButtonElement).disabled,
+    ).toBe(false);
+    expect(screen.getByRole("dialog")).toBeDefined();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("viser backendens melding når deling avvises med 409", async () => {
+    const onClose = vi.fn();
+    const props = {
+      sakId: "101",
+      saksbehandlerDetaljer,
+      åpen: true,
+      onClose,
+    };
+    const { rerender } = render(<DelTilgangModal {...props} />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("combobox", { name: "Saksbehandler" }));
+    });
+    await act(async () => {
+      fireEvent.pointerUp(
+        await screen.findByRole("option", { name: "Ola Saksbehandler (Z123456)" }),
+      );
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Del tilgang" }));
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(submitMock).toHaveBeenCalledOnce();
+
+    await act(async () => {
+      fetcherMock.state = "submitting";
+      rerender(<DelTilgangModal {...props} />);
+    });
+    await act(async () => {
+      fetcherMock.state = "idle";
+      fetcherMock.data = { ok: false, feil: "Saksbehandleren har allerede tilgang til saken" };
+      rerender(<DelTilgangModal {...props} />);
+    });
+
+    expect(screen.getByText("Saksbehandleren har allerede tilgang til saken")).toBeDefined();
+    expect(screen.queryByText("Vi fikk ikke delt tilgangen")).toBeNull();
+    // Valget står igjen, så brukeren kan prøve på nytt uten å velge saksbehandler igjen.
+    expect(
+      (screen.getByRole("button", { name: "Del tilgang" }) as HTMLButtonElement).disabled,
+    ).toBe(false);
+    expect(screen.getByRole("dialog")).toBeDefined();
+    expect(onClose).not.toHaveBeenCalled();
   });
 });

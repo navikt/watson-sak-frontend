@@ -1,6 +1,6 @@
 import { data } from "react-router";
 import { skalBrukeMockdata } from "~/config/env.server";
-import { logger } from "~/logging/logging";
+import { tekniskFeilSvar } from "~/feilhåndtering/teknisk-feil.server";
 import * as backendApi from "~/saker/api.server";
 import { hentTekstfelt } from "~/utils/form-data";
 import type { Route } from "./+types/SakDetaljSide.route";
@@ -10,6 +10,15 @@ import { parseSakId } from "~/saker/sti-param.server";
 import { erTildelingshandling } from "~/saker/SakDetaljSide.felles.server";
 
 // --- Action ---
+
+/**
+ * `handling` kommer fra skjemaet og kan være hva som helst. Bare kjente handlingsnavn
+ * (bokstaver og understrek) havner i loggen, ellers en fast tekst. Da kan ikke en
+ * innsendt verdi med persondata havne i loggen.
+ */
+function loggkontekstFor(handling: string): string {
+  return /^[A-Za-z_]{1,40}$/.test(handling) ? `utføre ${handling}` : "utføre ukjent handling";
+}
 
 export async function action({ request, params }: Route.ActionArgs) {
   const sakId = parseSakId(params.sakId);
@@ -31,13 +40,13 @@ export async function action({ request, params }: Route.ActionArgs) {
       if (erTildelingshandling(handling) && erTilgangsfeil(feil)) {
         return data<SaksflytFeil>({ ok: false, feil: tilgangsfeilmelding(feil) }, { status: 403 });
       }
-      throw feil;
+      return tekniskFeilSvar(feil, { kontekst: loggkontekstFor(handling), sakId, request });
     }
   }
   try {
     return await utfør();
   } catch (feil) {
-    return saksflytfeil(feil);
+    return saksflytfeil(feil, { kontekst: loggkontekstFor(handling), sakId, request });
   }
 }
 
@@ -84,10 +93,14 @@ const saksflythandlinger = new Set(["endre_steg_dialog", "lagre_resultat", "endr
 
 type SaksflytFeil = { ok: false; feil: string };
 
-function saksflytfeil(feil: unknown) {
+function saksflytfeil(
+  feil: unknown,
+  loggkontekst: { kontekst: string; sakId: string | number; request: Request },
+) {
   if (feil instanceof Response) throw feil;
   if (feil instanceof backendApi.BackendFeilException) {
     if (feil.status === 409) return konfliktfeil(feil, "");
+    if (feil.status >= 500) return tekniskFeilSvar(feil, loggkontekst);
     return data<SaksflytFeil>(
       { ok: false, feil: "Kunne ikke lagre endringen. Last inn siden på nytt og prøv igjen." },
       { status: feil.status },
@@ -103,13 +116,7 @@ function saksflytfeil(feil: unknown) {
     const status = (feil.init as ResponseInit | null)?.status ?? 400;
     return data<SaksflytFeil>({ ok: false, feil: feil.data }, { status });
   }
-  // fetch avviser med TypeError ved nettverks- og DNS-feil, før backend har svart.
-  if (feil instanceof TypeError) {
-    logger.error("Fikk ikke kontakt med backend fra saksflyt-modalen", { feil: feil.message });
-    return data<SaksflytFeil>(
-      { ok: false, feil: "Fikk ikke kontakt med baksystemet. Prøv igjen om litt." },
-      { status: 502 },
-    );
-  }
-  throw feil;
+  // Nettverksfeil (TypeError), ugyldig JSON (SyntaxError), kontraktbrudd og andre tekniske feil
+  // vises i modalen. `tekniskFeilSvar` kaster ikke-tekniske feil videre.
+  return tekniskFeilSvar(feil, loggkontekst);
 }

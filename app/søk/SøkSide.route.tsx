@@ -1,8 +1,11 @@
 import { FileXMarkIcon, MagnifyingGlassIcon } from "@navikt/aksel-icons";
 import { BodyShort, Box, Button, Heading, HStack, Pagination, Tag, VStack } from "@navikt/ds-react";
 import { useRef } from "react";
-import { Form, Link, unstable_useRoute, useActionData, useFetcher } from "react-router";
+import { data, Link, unstable_useRoute, useActionData, useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
+import { Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
+import { tekniskFeilSvar } from "~/feilhåndtering/teknisk-feil.server";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { RouteConfig } from "~/routeConfig";
 import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
@@ -34,7 +37,23 @@ export async function action({ request }: Route.ActionArgs) {
     };
   }
 
-  return søkSaker(request, søketekst, side);
+  try {
+    return await søkSaker(request, søketekst, side);
+  } catch (feil) {
+    const svar = tekniskFeilSvar(feil, { kontekst: "søke", request });
+    return data(
+      {
+        ...svar.data,
+        søketekst,
+        søketype: "ukjent" as SøkeType,
+        resultater: undefined,
+        side: 1,
+        totalSider: 1,
+        totalAntall: 0,
+      },
+      svar.init ?? { status: 500 },
+    );
+  }
 }
 
 function hentResultatlenker(container: HTMLElement | null): HTMLAnchorElement[] {
@@ -158,6 +177,7 @@ export default function SøkSide() {
   const fetcher = useFetcher<typeof action>({
     key: `sok-side-${actionData?.søketekst ?? ""}`,
   });
+  const forhåndsutfyllFetcher = useFetcher<{ teknisk?: boolean; feilId?: string }>();
   const { loaderData } = unstable_useRoute("root");
   const watsonSokUrl = loaderData?.envs.watsonSokUrl ?? null;
 
@@ -210,6 +230,7 @@ export default function SøkSide() {
         <Heading level="1" size="large">
           Søk i saker
         </Heading>
+        <Innsendingsfeil svar={visteData} tekster={INNSENDINGSFEIL.søk} />
         {harSøkt && (
           <VStack gap="space-4">
             {resultater && (
@@ -288,7 +309,7 @@ export default function SøkSide() {
                         </BodyShort>
                       </VStack>
                       <HStack gap="space-4">
-                        <Form
+                        <forhåndsutfyllFetcher.Form
                           method="post"
                           action={RouteConfig.API.FORHÅNDSUTFYLL_REGISTRER_SAK}
                           onSubmit={() => sporHendelse("søk opprett sak klikket")}
@@ -297,7 +318,7 @@ export default function SøkSide() {
                           <Button type="submit" variant="secondary">
                             Opprett sak
                           </Button>
-                        </Form>
+                        </forhåndsutfyllFetcher.Form>
                         {watsonSokUrl && (
                           <form
                             method="post"

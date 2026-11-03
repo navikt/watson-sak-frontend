@@ -186,20 +186,50 @@ describe("OpprettSakSide action", () => {
       melding: "Kunne ikke opprette kontrollsak.",
     });
 
-    await expect(
-      action({
-        request: new Request("http://localhost/registrer-sak", {
-          method: "POST",
-          body: lagFormDataMedMinimum({
-            legacyPid: "100245",
-            legacyKilde: "UTREDNING",
-            notat: "Notat",
-          }),
+    const svar = await action({
+      request: new Request("http://localhost/registrer-sak", {
+        method: "POST",
+        body: lagFormDataMedMinimum({
+          legacyPid: "100245",
+          legacyKilde: "UTREDNING",
+          notat: "Notat",
         }),
-        params: {},
-        context: {},
-      } as Route.ActionArgs),
-    ).rejects.toThrow("Kunne ikke opprette kontrollsak.");
+      }),
+      params: {},
+      context: {},
+    } as Route.ActionArgs);
+
+    // Teknisk feil vises ved skjemaet, ikke som suksess eller feilside.
+    expect(svar).toMatchObject({
+      data: { ok: false, teknisk: true, feilId: expect.stringMatching(/^[0-9a-f]{8}$/) },
+      init: { status: 500 },
+    });
+    expect(JSON.stringify(svar)).not.toContain("Notat");
+  }, 15000);
+
+  it("returnerer teknisk feil ved backend-feil uten å sende skjemadata tilbake", async () => {
+    const { action } = await import("./RegistrerSakSide.server");
+    const { opprettKontrollsak } = await import("./api.server");
+    const { BackendFeilException } = await import("~/saker/api-core.server");
+    const formData = lagFormDataMedMinimum({
+      legacyPid: "100245",
+      legacyKilde: "UTREDNING",
+      notat: "IKKE-SEND-DENNE-FORMVERDIEN",
+    });
+    vi.mocked(opprettKontrollsak).mockRejectedValueOnce(new BackendFeilException(500, "Feil"));
+
+    const response = await action({
+      request: new Request("http://localhost/registrer-sak", { method: "POST", body: formData }),
+      params: {},
+      context: {},
+    } as Route.ActionArgs);
+
+    expect(response).toMatchObject({
+      init: { status: 500 },
+      data: { ok: false, teknisk: true, feilId: expect.stringMatching(/^[0-9a-f]{8}$/) },
+    });
+    expect(JSON.stringify(response)).not.toContain("IKKE-SEND-DENNE-FORMVERDIEN");
+    expect(JSON.stringify(response)).not.toContain("100245");
   }, 15000);
 
   it("parser flere ytelse-rader fra indekserte felt", async () => {

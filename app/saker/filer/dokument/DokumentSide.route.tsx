@@ -10,6 +10,9 @@ import {
   useSearchParams,
 } from "react-router";
 import { DokumentIkkeFunnet } from "~/feilhåndtering/DokumentIkkeFunnet";
+import { Feilmelding } from "~/feilhåndtering/Feilmelding";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
+import { hentTekniskFeilId } from "./lagringsfeil";
 import { finnEnhetsnavn } from "~/kodeverk/enheter";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
@@ -116,6 +119,8 @@ function DokumentRedigering({
   const historikkData = useRef<Autolagringsdata | null>(null);
   const [editorVersjon, settEditorVersjon] = useState(0);
   const [historikkFeil, settHistorikkFeil] = useState<string | null>(null);
+  // Satt når siste lagring feilet. feilId finnes bare når serveren svarte med teknisk feil.
+  const [lagringsfeil, settLagringsfeil] = useState<{ feilId?: string } | null>(null);
   const revalidator = useRevalidator();
   const revalidatorRef = useRef(revalidator);
 
@@ -132,7 +137,7 @@ function DokumentRedigering({
     redirectTo: () => sakUrl,
   });
 
-  const lagreUrl = RouteConfig.SAKER_DOKUMENT.replace(":sakId", sakReferanse).replace(
+  const lagreUrl = RouteConfig.API.SAK_DOKUMENT_LAGRE.replace(":sakId", sakReferanse).replace(
     ":docId",
     dokument.id,
   );
@@ -151,24 +156,33 @@ function DokumentRedigering({
 
   const lagre = useCallback(
     async (data: Autolagringsdata, { forlater }: { forlater: boolean }) => {
-      const respons = await fetch(lagreUrl, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-        // `keepalive` brukes kun ved navigasjon/lukking, slik at kallet rekker ut selv
-        // om siden rives ned. Det har en 64 KB body-grense, så vanlige (debouncede)
-        // lagringer bruker vanlig fetch – ellers kunne store dokumenter (f.eks. tabeller)
-        // feile lagringen.
-        keepalive: forlater,
-      });
+      let respons: Response;
+      try {
+        respons = await fetch(lagreUrl, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+          // `keepalive` brukes kun ved navigasjon/lukking, slik at kallet rekker ut selv
+          // om siden rives ned. Det har en 64 KB body-grense, så vanlige (debouncede)
+          // lagringer bruker vanlig fetch – ellers kunne store dokumenter (f.eks. tabeller)
+          // feile lagringen.
+          keepalive: forlater,
+        });
+      } catch (feil) {
+        // Nettverksbrudd: fetch avviser før serveren svarer, så det finnes ingen feil-ID.
+        settLagringsfeil({});
+        throw feil;
+      }
       if (!respons.ok) {
+        settLagringsfeil({ feilId: await hentTekniskFeilId(respons) });
         throw new Error("Lagring feilet");
       }
+      settLagringsfeil(null);
     },
     [lagreUrl],
   );
 
-  const { status, sistLagret, registrerEndring } = useAutolagring({ lagre });
+  const { status, sistLagret, registrerEndring, prøvIgjen } = useAutolagring({ lagre });
 
   const lagreHistorikkpunkt = useCallback(
     async (forlater = false) => {
@@ -369,7 +383,20 @@ function DokumentRedigering({
             {historikkFeil && <Detail className="text-ax-text-danger">{historikkFeil}</Detail>}
           </>
         }
-        lagreStatus={<LagreStatusVisning status={status} sistLagret={sistLagret} />}
+        lagreStatus={
+          <VStack gap="space-4">
+            <LagreStatusVisning status={status} sistLagret={sistLagret} />
+            {lagringsfeil && (
+              <Feilmelding
+                tittel={INNSENDINGSFEIL.lagreDokument.tittel}
+                feilId={lagringsfeil.feilId}
+                onPrøvIgjen={prøvIgjen}
+              >
+                {INNSENDINGSFEIL.lagreDokument.tekst}
+              </Feilmelding>
+            )}
+          </VStack>
+        }
         renderForhåndsvisning={() => (
           <PdfForhåndsvisning url={pdfForhåndsvisningUrl} sistLagret={sistLagret} erDemo={erDemo} />
         )}
@@ -380,6 +407,7 @@ function DokumentRedigering({
         sletter={sletting.sletter}
         onBekreft={sletting.bekreft}
         onAvbryt={sletting.avbryt}
+        feil={sletting.feil}
       />
     </>
   );

@@ -83,6 +83,21 @@ describe("filer.api POST — backend-sti", () => {
     });
     expect(mockLastOppFil).not.toHaveBeenCalled();
   });
+
+  it("returnerer et teknisk feilsvar ved backendfeil", async () => {
+    mockLastOppFil.mockRejectedValue(new MockBackendFeilException(500, "Intern backendfeil"));
+
+    const svar = await actionMedBackend();
+
+    expect(svar).toMatchObject({
+      data: {
+        ok: false,
+        teknisk: true,
+        feilId: expect.stringMatching(/^[0-9a-f]{8}$/),
+      },
+      init: { status: 500 },
+    });
+  });
 });
 
 async function actionMedBackend(request: Request = uploadRequest()) {

@@ -286,6 +286,49 @@ describe("KommentarPanel", () => {
     expect(felt.value).toBe("Viktig utkast");
   });
 
+  it("viser kontekstuell teknisk feil ved lagring, svar og sletting", async () => {
+    const tekniskFeil: MutasjonResultat = {
+      ok: false,
+      konflikt: false,
+      teknisk: true,
+      feilId: "feil-123",
+      usikker: false,
+      melding: "Intern feil",
+    };
+    const handlinger = lagHandlinger({
+      opprettTraad: vi.fn(async () => tekniskFeil),
+      svar: vi.fn(async () => tekniskFeil),
+      slett: vi.fn(async () => tekniskFeil),
+    });
+    renderPanel({
+      handlinger,
+      utkast: { ankertype: "DOCUMENT", anker: { type: "DOCUMENT" }, kilde: "panel" },
+    });
+
+    const felt = screen.getByLabelText("Kommentar") as HTMLTextAreaElement;
+    fireEvent.change(felt, { target: { value: "Viktig kommentar" } });
+    fireEvent.click(screen.getByRole("button", { name: "Legg til kommentar" }));
+
+    expect(await screen.findByText("Prøv igjen om litt.")).toBeDefined();
+    expect(screen.getByText("feil-123")).toBeDefined();
+    expect(felt.value).toBe("Viktig kommentar");
+
+    fireEvent.click(screen.getByRole("button", { name: "Svar" }));
+    const svarfelt = screen.getByLabelText("Svar på kommentaren") as HTMLTextAreaElement;
+    fireEvent.change(svarfelt, { target: { value: "Viktig svar" } });
+    fireEvent.click(screen.getByRole("button", { name: "Svar" }));
+
+    await waitFor(() => expect(handlinger.svar).toHaveBeenCalled());
+    expect(svarfelt.value).toBe("Viktig svar");
+    expect(screen.getAllByText("Prøv igjen om litt.")).toHaveLength(2);
+
+    fireEvent.click(screen.getByRole("button", { name: "Slett" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bekreft sletting" }));
+
+    await waitFor(() => expect(handlinger.slett).toHaveBeenCalled());
+    expect(screen.getByRole("heading", { name: "Vi fikk ikke slettet kommentaren" })).toBeDefined();
+  });
+
   it("lar deg svare på en tråd", async () => {
     const handlinger = lagHandlinger();
     renderPanel({ handlinger });

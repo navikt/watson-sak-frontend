@@ -4,6 +4,8 @@ import { PersonPencilIcon } from "@navikt/aksel-icons";
 import { Alert, BodyShort, Button, Modal, UNSAFE_Combobox, VStack } from "@navikt/ds-react";
 import { useFetcher } from "react-router";
 import { z } from "zod";
+import { Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import { useModalInnsending } from "~/saker/handlinger/useModalInnsending";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
@@ -106,6 +108,7 @@ export function OverforAnsvarligModal({
           </VStack>
         </Modal.Body>
         <Modal.Footer>
+          <Innsendingsfeil svar={innsending.tekniskFeil} tekster={INNSENDINGSFEIL.overførAnsvar} />
           <Button type="submit" disabled={erSubmitting}>
             Overfør sak
           </Button>

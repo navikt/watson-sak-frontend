@@ -81,14 +81,17 @@ async function kastFeil(respons: Response, beskrivelse: string): Promise<never> 
   kastHvisUtlogget(respons);
   const detalj = await lesProblemDetail(respons);
   const melding = detalj ?? beskrivelse;
+  // Backendens `detail` kan inneholde persondata. Den gis videre til brukeren i feilen,
+  // men logges bare ved lokal utvikling. Samme regel som i `håndterFeil`.
+  const loggdetalj = process.env.NODE_ENV === "development" && detalj ? `: ${detalj}` : "";
   if (respons.status === 409) {
-    logger.warn(`${beskrivelse} — konflikt (409): ${melding}`);
+    logger.warn(`${beskrivelse} — konflikt (409)${loggdetalj}`);
     throw new KommentarKonfliktFeil(melding);
   }
   if (respons.status < 500) {
-    logger.warn(`${beskrivelse} — status ${respons.status}: ${melding}`);
+    logger.warn(`${beskrivelse} — status ${respons.status}${loggdetalj}`);
   } else {
-    logger.error(`${beskrivelse} — status ${respons.status}: ${melding}`);
+    logger.error(`${beskrivelse} — status ${respons.status}${loggdetalj}`);
   }
   throw new KommentarBackendFeil(respons.status, melding);
 }

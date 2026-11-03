@@ -2,6 +2,8 @@ import type { LoaderFunctionArgs } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { env, isProd, skalBrukeMockdata, SPORING_SCRIPT_URL } from "~/config/env.server";
+import { loggTekniskFeil } from "~/feilhåndtering/teknisk-feil.server";
+import { FeatureFlagg } from "~/feature-toggling/featureflagg";
 import {
   hentAlleFeatureFlagg,
   hentStatusmeldingFeatureFlagg,
@@ -30,13 +32,30 @@ async function hentKodeverkMedFallback(token: string): Promise<Kodeverk> {
   }
 }
 
+/**
+ * Uten Unleash skal appen fortsatt virke. Alle flagg er av, så ny funksjonalitet
+ * skjules i stedet for at hele appen viser feilside.
+ */
+async function medFallback<T>(hent: () => Promise<T>, fallback: T, request: Request): Promise<T> {
+  try {
+    return await hent();
+  } catch (feil) {
+    loggTekniskFeil(feil, { kontekst: "hente feature-flagg", request });
+    return fallback;
+  }
+}
+
+const alleFlaggAv = Object.fromEntries(
+  Object.values(FeatureFlagg).map((flagg) => [flagg, false]),
+) as Record<FeatureFlagg, boolean>;
+
 export async function rootLoader({ request }: LoaderFunctionArgs) {
   const oboToken = skalBrukeMockdata ? null : await getBackendOboToken(request).catch(() => null);
   const user = await hentInnloggetBruker({ request, oboToken });
   const cookieHeader = request.headers.get("Cookie");
   const [featureFlagg, statusmelding, preferencesCookieValue, kodeverk] = await Promise.all([
-    hentAlleFeatureFlagg(user.navIdent),
-    hentStatusmeldingFeatureFlagg(),
+    medFallback(() => hentAlleFeatureFlagg(user.navIdent), alleFlaggAv, request),
+    medFallback(() => hentStatusmeldingFeatureFlagg(), false as const, request),
     preferencesCookie.parse(cookieHeader),
     oboToken ? hentKodeverkMedFallback(oboToken) : Promise.resolve(mockKodeverk),
   ]);

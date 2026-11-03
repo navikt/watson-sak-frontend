@@ -19,6 +19,8 @@ const mockTildelKontrollsak = vi.fn();
 const mockFristillKontrollsak = vi.fn();
 const mockVideresend = vi.fn();
 const mockRedigerKontrollsak = vi.fn();
+const mockKobleSak = vi.fn();
+const mockOpprettManuellHendelse = vi.fn();
 const mockHentTillatteHandlinger = vi.fn().mockResolvedValue({
   versjon: 1,
   tilstand: { steg: "OPPRETTET", status: null, statusFørBero: null, resultat: null, ytelser: [] },
@@ -80,6 +82,8 @@ vi.mock("~/saker/api.server", () => ({
   fristillKontrollsak: mockFristillKontrollsak,
   videresend: mockVideresend,
   redigerKontrollsak: mockRedigerKontrollsak,
+  kobleSak: mockKobleSak,
+  opprettManuellHendelse: mockOpprettManuellHendelse,
   søkKontrollsaker: mockSøkKontrollsaker,
 }));
 
@@ -409,6 +413,43 @@ describe("SakDetaljSide loader — backend-sti", () => {
     expect(resultat.sak).toEqual(grunnleggendeSak);
   });
 
+  it("kaster 500 med feil-ID når saken ikke kan hentes, og 403 uendret", async () => {
+    mockHentHendelser.mockResolvedValue([]);
+    mockHentSaksbehandlere.mockResolvedValue([]);
+    mockHentFiler.mockResolvedValue([]);
+    const { loader } = await import("./SakDetaljSide.server");
+
+    mockHentKontrollsak.mockRejectedValueOnce(new MockBackendFeilException(500, "Intern feil"));
+    await expect(loader(lagLoaderArgs())).rejects.toMatchObject({
+      data: { feilId: expect.stringMatching(/^[0-9a-f]{8}$/) },
+      init: { status: 500 },
+    });
+
+    const ingenTilgang = new MockBackendFeilException(403, "Ingen tilgang");
+    mockHentKontrollsak.mockRejectedValueOnce(ingenTilgang);
+    await expect(loader(lagLoaderArgs())).rejects.toBe(ingenTilgang);
+  });
+
+  it("logger ikke innsendt handling med persondata ved teknisk feil", async () => {
+    const konsoll = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockHentKontrollsak.mockRejectedValueOnce(new MockBackendFeilException(500, "Intern feil"));
+    const formData = new FormData();
+    formData.set("handling", "Ola Nordmann 12345678901");
+    const { action } = await import("./SakDetaljSide.server");
+
+    const resultat = await action({
+      request: new Request("http://localhost/saker/1", { method: "POST", body: formData }),
+      params: { sakId: "1" },
+    } as Parameters<typeof action>[0]);
+
+    expect(resultat).toMatchObject({ data: { teknisk: true }, init: { status: 500 } });
+    const logg = JSON.stringify(konsoll.mock.calls);
+    expect(logg).toContain("utføre ukjent handling");
+    expect(logg).not.toContain("12345678901");
+    expect(logg).not.toContain("Nordmann");
+    konsoll.mockRestore();
+  });
+
   it("avviser ugyldig sakId før loaderen kaller backend", async () => {
     const { loader } = await import("./SakDetaljSide.server");
 
@@ -712,6 +753,7 @@ describe("SakDetaljSide loader — backend-sti", () => {
     const formData = new FormData();
     formData.set("handling", "endre_status");
     formData.set("status", "I_BERO");
+    formData.set("hemmelighet", "FORMDATA_SKAL_IKKE_LEKKE");
     const { action } = await import("./SakDetaljSide.server");
 
     const resultat = await action({
@@ -720,9 +762,106 @@ describe("SakDetaljSide loader — backend-sti", () => {
     } as Parameters<typeof action>[0]);
 
     expect(resultat).toMatchObject({
-      data: { ok: false, feil: expect.stringContaining("Fikk ikke kontakt") },
-      init: { status: 502 },
+      data: { ok: false, teknisk: true, feilId: expect.stringMatching(/^[0-9a-f]{8}$/) },
+      init: { status: 500 },
     });
+    expect(JSON.stringify(resultat)).not.toContain("FORMDATA_SKAL_IKKE_LEKKE");
+  });
+
+  it("returnerer teknisk feil når backend feiler under saksflyt", async () => {
+    mockHentTillatteHandlinger.mockResolvedValue({
+      versjon: 1,
+      tilstand: { steg: "UTREDNING", status: "AKTIV", resultat: null, ytelser: [] },
+      handlinger: [
+        { type: "FLYTT_TIL_NESTE_STEG", metode: "POST", sti: "/api/v1/kontrollsaker/1/steg" },
+      ],
+      tillatteSteg: [],
+      muligeNesteSteg: ["AVSLUTTET"],
+      feltskjema: [
+        {
+          felt: "utredning.type",
+          etikett: "Resultat fra utredningen",
+          datatype: "enum",
+          paakrevd: true,
+          verdier: [{ verdi: "HENLAGT", etikett: "Henlagt" }],
+        },
+        {
+          felt: "utredning.henleggelsesarsak",
+          etikett: "Årsak",
+          datatype: "enum",
+          paakrevd: false,
+          paakrevdNar: "utredning.type=HENLAGT",
+          verdier: [{ verdi: "IKKE_KAPASITET", etikett: "Ikke kapasitet" }],
+        },
+      ],
+    });
+    mockEndreSteg.mockRejectedValueOnce(new MockBackendFeilException(500, "Intern feil"));
+    const formData = new FormData();
+    formData.set("handling", "endre_steg_dialog");
+    formData.set("steg", "AVSLUTTET");
+    formData.set("registrerResultat", "true");
+    formData.set("resultat.utredning.type", "HENLAGT");
+    formData.set("resultat.utredning.henleggelsesarsak", "IKKE_KAPASITET");
+    const { action } = await import("./SakDetaljSide.server");
+
+    const resultat = await action({
+      request: new Request("http://localhost/saker/1", { method: "POST", body: formData }),
+      params: { sakId: "1" },
+    } as Parameters<typeof action>[0]);
+
+    expect(resultat).toMatchObject({
+      data: { ok: false, teknisk: true, feilId: expect.stringMatching(/^[0-9a-f]{8}$/) },
+      init: { status: 500 },
+    });
+    expect(JSON.stringify(resultat)).not.toContain("IKKE_KAPASITET");
+  });
+
+  it("returnerer teknisk feil når backend svarer med ugyldig JSON under saksflyt", async () => {
+    mockHentTillatteHandlinger.mockResolvedValue({
+      versjon: 1,
+      tilstand: { steg: "UTREDNING", status: "AKTIV", resultat: null, ytelser: [] },
+      handlinger: [
+        { type: "FLYTT_TIL_NESTE_STEG", metode: "POST", sti: "/api/v1/kontrollsaker/1/steg" },
+      ],
+      tillatteSteg: [],
+      muligeNesteSteg: ["AVSLUTTET"],
+      feltskjema: [
+        {
+          felt: "utredning.type",
+          etikett: "Resultat fra utredningen",
+          datatype: "enum",
+          paakrevd: true,
+          verdier: [{ verdi: "HENLAGT", etikett: "Henlagt" }],
+        },
+        {
+          felt: "utredning.henleggelsesarsak",
+          etikett: "Årsak",
+          datatype: "enum",
+          paakrevd: false,
+          paakrevdNar: "utredning.type=HENLAGT",
+          verdier: [{ verdi: "IKKE_KAPASITET", etikett: "Ikke kapasitet" }],
+        },
+      ],
+    });
+    mockEndreSteg.mockRejectedValueOnce(new SyntaxError("Unexpected token < in JSON"));
+    const formData = new FormData();
+    formData.set("handling", "endre_steg_dialog");
+    formData.set("steg", "AVSLUTTET");
+    formData.set("registrerResultat", "true");
+    formData.set("resultat.utredning.type", "HENLAGT");
+    formData.set("resultat.utredning.henleggelsesarsak", "IKKE_KAPASITET");
+    const { action } = await import("./SakDetaljSide.server");
+
+    const resultat = await action({
+      request: new Request("http://localhost/saker/1", { method: "POST", body: formData }),
+      params: { sakId: "1" },
+    } as Parameters<typeof action>[0]);
+
+    expect(resultat).toMatchObject({
+      data: { ok: false, teknisk: true, feilId: expect.stringMatching(/^[0-9a-f]{8}$/) },
+      init: { status: 500 },
+    });
+    expect(JSON.stringify(resultat)).not.toContain("IKKE_KAPASITET");
   });
 
   it("returnerer feil til saksflyt-modalen i stedet for å kaste når backend avviser", async () => {
@@ -841,19 +980,166 @@ describe("SakDetaljSide loader — backend-sti", () => {
     });
   });
 
-  it("lar andre feil enn 403 fra hentFiler boble opp (kaster fortsatt loaderen)", async () => {
+  it("returnerer teknisk feil uten skjemadata når redigering feiler med 500", async () => {
+    mockHentInnloggetBruker.mockResolvedValue({
+      preferredUsername: "z999999",
+      name: "Saks Behandlersen",
+      navIdent: "Z999999",
+      enhet: "4812",
+      erLeder: true,
+    });
+    mockHentKontrollsak.mockResolvedValue({
+      ...grunnleggendeSak,
+      saksbehandlere: {
+        ...grunnleggendeSak.saksbehandlere,
+        eier: { navIdent: "Z999999", navn: "Saksbehandler", enhet: "4812" },
+      },
+    });
+    mockRedigerKontrollsak.mockRejectedValueOnce(new MockBackendFeilException(500, "Intern feil"));
+    const formData = new FormData();
+    formData.set("handling", "rediger_saksinformasjon");
+    formData.set("kategori", "ANNET");
+    formData.set("kilde", "ANONYM_TIPS");
+    formData.set("hemmelighet", "FORMDATA_SKAL_IKKE_LEKKE");
+    const { action } = await import("./SakDetaljSide.server");
+
+    const resultat = await action({
+      request: new Request("http://localhost/saker/1", { method: "POST", body: formData }),
+      params: { sakId: "1" },
+    } as Parameters<typeof action>[0]);
+
+    expect(resultat).toMatchObject({
+      data: { ok: false, teknisk: true, feilId: expect.stringMatching(/^[0-9a-f]{8}$/) },
+      init: { status: 500 },
+    });
+    expect(JSON.stringify(resultat)).not.toContain("FORMDATA_SKAL_IKKE_LEKKE");
+  });
+
+  it("returnerer teknisk feil når opprettelse av historikk feiler med 500", async () => {
+    mockHentKontrollsak.mockResolvedValue({ ...grunnleggendeSak, steg: "UTREDNING" });
+    mockHentInnloggetBruker.mockResolvedValue({ navIdent: "Z999999" });
+    mockOpprettManuellHendelse.mockRejectedValueOnce(
+      new MockBackendFeilException(500, "Intern feil"),
+    );
+    const formData = new FormData();
+    formData.set("handling", "legg_til_historikk");
+    formData.set("tittel", "Notat");
+    formData.set("dato", "2026-01-02");
+    formData.set("tid", "12:00");
+    const { action } = await import("./SakDetaljSide.server");
+
+    const resultat = await action({
+      request: new Request("http://localhost/saker/1", { method: "POST", body: formData }),
+      params: { sakId: "1" },
+    } as Parameters<typeof action>[0]);
+
+    expect(resultat).toMatchObject({
+      data: { ok: false, teknisk: true, feilId: expect.stringMatching(/^[0-9a-f]{8}$/) },
+      init: { status: 500 },
+    });
+  });
+
+  it("beholder skjemafeil når opprettelse av historikk avvises med 409", async () => {
+    mockHentKontrollsak.mockResolvedValue({ ...grunnleggendeSak, steg: "UTREDNING" });
+    mockHentInnloggetBruker.mockResolvedValue({ navIdent: "Z999999" });
+    mockOpprettManuellHendelse.mockRejectedValueOnce(
+      new MockBackendFeilException(409, "Historikken kan ikke endres"),
+    );
+    const formData = new FormData();
+    formData.set("handling", "legg_til_historikk");
+    formData.set("tittel", "Notat");
+    formData.set("dato", "2026-01-02");
+    formData.set("tid", "12:00");
+    const { action } = await import("./SakDetaljSide.server");
+
+    const resultat = await action({
+      request: new Request("http://localhost/saker/1", { method: "POST", body: formData }),
+      params: { sakId: "1" },
+    } as Parameters<typeof action>[0]);
+
+    expect(resultat).toMatchObject({ ok: false, feil: { skjema: expect.any(Array) } });
+    expect(resultat).not.toMatchObject({ data: { teknisk: true }, init: { status: 500 } });
+  });
+
+  it("returnerer teknisk feil når kobling feiler med 500", async () => {
+    const sak = { ...grunnleggendeSak, personIdent: "12345678910" };
+    mockHentKontrollsak.mockResolvedValueOnce(sak).mockResolvedValueOnce({ ...sak, id: 2 });
+    mockHentInnloggetBruker.mockResolvedValue({ navIdent: "Z999999" });
+    mockKobleSak.mockRejectedValueOnce(new MockBackendFeilException(500, "Intern feil"));
+    const formData = new FormData();
+    formData.set("handling", "koble_sak");
+    formData.set("relatertSakId", "2");
+    const { action } = await import("./SakDetaljSide.server");
+
+    const resultat = await action({
+      request: new Request("http://localhost/saker/1", { method: "POST", body: formData }),
+      params: { sakId: "1" },
+    } as Parameters<typeof action>[0]);
+
+    expect(resultat).toMatchObject({
+      data: { ok: false, teknisk: true, feilId: expect.stringMatching(/^[0-9a-f]{8}$/) },
+      init: { status: 500 },
+    });
+  });
+
+  it("beholder skjemafeil når kobling avvises med 409", async () => {
+    const sak = { ...grunnleggendeSak, personIdent: "12345678910" };
+    mockHentKontrollsak.mockResolvedValueOnce(sak).mockResolvedValueOnce({ ...sak, id: 2 });
+    mockHentInnloggetBruker.mockResolvedValue({ navIdent: "Z999999" });
+    mockKobleSak.mockRejectedValueOnce(
+      new MockBackendFeilException(409, "Koblingen kan ikke endres"),
+    );
+    const formData = new FormData();
+    formData.set("handling", "koble_sak");
+    formData.set("relatertSakId", "2");
+    const { action } = await import("./SakDetaljSide.server");
+
+    const resultat = await action({
+      request: new Request("http://localhost/saker/1", { method: "POST", body: formData }),
+      params: { sakId: "1" },
+    } as Parameters<typeof action>[0]);
+
+    expect(resultat).toMatchObject({ ok: false, feil: { skjema: expect.any(Array) } });
+    expect(resultat).not.toMatchObject({ data: { teknisk: true }, init: { status: 500 } });
+  });
+
+  it("returnerer teknisk feil uten tildelingsdata når tildeling feiler med 500", async () => {
+    mockTildelKontrollsak.mockRejectedValueOnce(new MockBackendFeilException(500, "Intern feil"));
+    const formData = new FormData();
+    formData.set("handling", "TILDEL_MEG");
+    formData.set("navIdent", "Z111111");
+    formData.set("hemmelighet", "FORMDATA_SKAL_IKKE_LEKKE");
+    const { action } = await import("./SakDetaljSide.server");
+
+    const resultat = await action({
+      request: new Request("http://localhost/saker/1", { method: "POST", body: formData }),
+      params: { sakId: "1" },
+    } as Parameters<typeof action>[0]);
+
+    expect(resultat).toMatchObject({
+      data: { ok: false, teknisk: true, feilId: expect.stringMatching(/^[0-9a-f]{8}$/) },
+      init: { status: 500 },
+    });
+    expect(JSON.stringify(resultat)).not.toContain("FORMDATA_SKAL_IKKE_LEKKE");
+  });
+
+  it("viser feil i filområdet når hentFiler gir 500, uten å skjule det som manglende tilgang", async () => {
     mockHentKontrollsak.mockResolvedValue(grunnleggendeSak);
     mockHentHendelser.mockResolvedValue([]);
     mockHentSaksbehandlere.mockResolvedValue([]);
     mockHentFiler.mockRejectedValue(new MockBackendFeilException(500, "Intern feil"));
 
     const { loader } = await import("./SakDetaljSide.server");
+    const resultat = await loader(lagLoaderArgs());
 
-    await expect(loader(lagLoaderArgs())).rejects.toThrow("Intern feil");
+    expect(resultat.seksjonsfeil.filer).toMatch(/^[0-9a-f]{8}$/);
+    // 500 er ikke manglende tilgang: filområdet skal vise feil, ikke «ingen tilgang».
+    expect(resultat.harFilTilgang).toBe(true);
+    expect(resultat.sak).toEqual(grunnleggendeSak);
   });
 
   it("degraderer historikk stille når hentHendelser gir 403", async () => {
-    mockHentKontrollsak.mockResolvedValue(grunnleggendeSak);
+    mockHentKontrollsak.mockResolvedValue({ ...grunnleggendeSak, steg: "UTREDNING" });
     mockHentHendelser.mockRejectedValue(new MockBackendFeilException(403, "Ingen tilgang"));
     mockHentSaksbehandlere.mockResolvedValue([]);
     mockHentFiler.mockResolvedValue([]);

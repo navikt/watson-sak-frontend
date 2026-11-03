@@ -22,4 +22,5 @@ export type RedigerSaksinformasjonResultat =
       ok: false;
       feil: Record<string, string[]>;
       verdier?: RedigerSaksinformasjonData;
-    };
+    }
+  | { ok: false; feil: string; feilId: string; teknisk: true };

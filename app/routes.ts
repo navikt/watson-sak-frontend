@@ -28,6 +28,7 @@ export default [
   route(RouteConfig.API.FORHÅNDSUTFYLL_REGISTRER_SAK, "registrer-sak/forhåndsutfyll.api.ts"),
   route(RouteConfig.API.SAK_DOKUMENTER, "saker/filer/dokument/dokumenter.api.ts"),
   route(RouteConfig.API.SAK_DOKUMENT_HISTORIKK, "saker/filer/dokument/dokumenthistorikk.api.ts"),
+  route(RouteConfig.API.SAK_DOKUMENT_LAGRE, "saker/filer/dokument/dokument-lagring.api.ts"),
   route(
     RouteConfig.API.SAK_DOKUMENT_KOMMENTARER,
     "saker/filer/dokument/kommentarer/kommentarer.api.ts",

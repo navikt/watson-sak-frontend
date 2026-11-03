@@ -1,6 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { createElement, useCallback, useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
+import {
+  erTekniskFeilSvar,
+  Innsendingsfeil,
+  type TekniskFeil,
+  tekniskFeilFra,
+} from "~/feilhåndtering/Innsendingsfeil";
 import { RouteConfig } from "~/routeConfig";
 
 /** Hvor slettingen ble igangsatt – brukes i analytics. */
@@ -25,14 +32,19 @@ type UseDokumentSlettingArgs = {
  */
 export function useDokumentSletting({ sakId, kilde, redirectTo }: UseDokumentSlettingArgs) {
   const [kandidat, setKandidat] = useState<Slettekandidat | null>(null);
-  const fetcher = useFetcher<{ ok: true }>();
+  const fetcher = useFetcher<{ ok?: boolean; teknisk?: boolean; feilId?: string }>();
   const sletter = fetcher.state !== "idle";
   // Dokument vi venter på suksess-svar for (kun når slettingen ikke redirecter bort).
   const venterPåResultat = useRef<string | null>(null);
+  const forrigeState = useRef(fetcher.state);
+  // Feil-ID fra svaret på denne dialogens innsending. Egen state, så en feil fra et tidligere
+  // dokument ikke vises når dialogen åpnes for et nytt.
+  const [tekniskFeil, setTekniskFeil] = useState<TekniskFeil | null>(null);
 
   const start = useCallback(
     (dokument: Slettekandidat) => {
       sporHendelse("dokument sletting påbegynt", { kilde });
+      setTekniskFeil(null);
       setKandidat(dokument);
     },
     [kilde],
@@ -42,6 +54,7 @@ export function useDokumentSletting({ sakId, kilde, redirectTo }: UseDokumentSle
     if (!kandidat) {
       return;
     }
+    setTekniskFeil(null);
     const redirect = redirectTo?.(kandidat.id);
     if (redirect) {
       // Etter en vellykket sletting redirecter action-en og komponenten rives ned, så vi
@@ -55,23 +68,43 @@ export function useDokumentSletting({ sakId, kilde, redirectTo }: UseDokumentSle
       { docId: kandidat.id, ...(redirect ? { redirectTo: redirect } : {}) },
       { method: "delete", action: RouteConfig.API.SAK_DOKUMENTER.replace(":sakId", sakId) },
     );
-    setKandidat(null);
   }, [kandidat, sakId, kilde, redirectTo, fetcher]);
 
   const avbryt = useCallback(() => {
+    // Ikke lukk mens slettingen pågår. Da kunne svaret høre til et annet dokument
+    // enn det dialogen er åpen for. Gjelder også kryss og Escape, ikke bare Avbryt-knappen.
+    if (sletter) return;
     if (kandidat) {
       sporHendelse("dokument sletting avbrutt", { kilde });
     }
+    setTekniskFeil(null);
     setKandidat(null);
-  }, [kandidat, kilde]);
+  }, [kandidat, kilde, sletter]);
 
-  // Spor «dokument slettet» når DELETE-kallet faktisk har lykkes (ikke-redirect-tilfellet).
+  // Dialogen lukkes og «dokument slettet» spores først når DELETE-kallet har lykkes.
   useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data?.ok && venterPåResultat.current) {
+    const varIgang = forrigeState.current !== "idle";
+    forrigeState.current = fetcher.state;
+    if (!varIgang || fetcher.state !== "idle" || !kandidat) return;
+    if (erTekniskFeilSvar(fetcher.data)) {
+      setTekniskFeil(tekniskFeilFra(fetcher.data));
+      return;
+    }
+    if (!fetcher.data?.ok) return;
+    if (venterPåResultat.current) {
       sporHendelse("dokument slettet", { kilde });
       venterPåResultat.current = null;
     }
-  }, [fetcher.state, fetcher.data, kilde]);
+    setKandidat(null);
+  }, [fetcher.state, fetcher.data, kandidat, kilde]);
 
-  return { kandidat, sletter, start, bekreft, avbryt };
+  const feil =
+    kandidat && tekniskFeil
+      ? createElement(Innsendingsfeil, {
+          svar: tekniskFeil,
+          tekster: INNSENDINGSFEIL.slettDokument,
+        })
+      : undefined;
+
+  return { kandidat, sletter, start, bekreft, avbryt, feil };
 }

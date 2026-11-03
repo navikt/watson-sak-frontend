@@ -8,6 +8,7 @@ import { leggTilHendelse } from "~/saker/historikk/mock-data.server";
 import { hentStegbaserteSaksregler } from "~/saker/stegregler";
 import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
 import { parseSakId } from "~/saker/sti-param.server";
+import { tekniskFeilSvar } from "~/feilhåndtering/teknisk-feil.server";
 import { hentFilerForSak, leggTilFil } from "./mock-data-filer.server";
 
 /**
@@ -66,17 +67,22 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
-    const sak = await backendApi.hentKontrollsak(token, sakReferanse);
+    let sak: Awaited<ReturnType<typeof backendApi.hentKontrollsak>>;
+    try {
+      sak = await backendApi.hentKontrollsak(token, sakReferanse);
+    } catch (feil) {
+      return tekniskFeilSvar(feil, { kontekst: "laste opp fil", sakId: sakReferanse, request });
+    }
     if (!hentStegbaserteSaksregler(sak.steg).kanLasteOppFiler) {
       throw data("Ingen tilgang til å laste opp filer", { status: 403 });
     }
     try {
       return await backendApi.lastOppFil(token, sakReferanse, fil);
     } catch (feil) {
-      if (feil instanceof BackendFeilException) {
+      if (feil instanceof BackendFeilException && feil.status < 500) {
         return { message: feil.message };
       }
-      throw feil;
+      return tekniskFeilSvar(feil, { kontekst: "laste opp fil", sakId: sakReferanse, request });
     }
   }
 

@@ -7,6 +7,7 @@ import { hentFordelingssaker } from "~/testing/mock-store/alle-saker.server";
 import type { Route } from "./+types/FordelingSide.route";
 import { loader as routeLoader } from "./FordelingSide.route";
 import { BackendUtilgjengeligError } from "~/utils/backend-utilgjengelig.server";
+import { BackendFeilException } from "~/saker/api-core.server";
 
 const testRequest = new Request("http://localhost");
 function state() {
@@ -122,6 +123,34 @@ describe("FordelingSide action", () => {
       token: "token-123",
       sakId: "101",
       saksbehandler: "Z123456",
+    });
+  });
+
+  it("returnerer teknisk feil når backend feiler under tildeling", async () => {
+    testState.skalBrukeMockdata = false;
+    tildelKontrollsakMock.mockRejectedValue(new BackendFeilException(500, "Intern feil"));
+
+    const { action } = await import("./FordelingSide.server");
+    const formData = new FormData();
+    formData.set("handling", "tildel");
+    formData.set("sakId", "101");
+    formData.set("navIdent", "Z123456");
+
+    const resultat = await action({
+      request: new Request(`http://localhost${RouteConfig.FORDELING}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: {},
+      context: {},
+    } as Route.ActionArgs);
+
+    expect(resultat).toMatchObject({
+      init: { status: 500 },
+      data: {
+        teknisk: true,
+        feilId: expect.stringMatching(/^[0-9a-f]{8}$/),
+      },
     });
   });
 

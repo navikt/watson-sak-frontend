@@ -1,5 +1,6 @@
 import { data, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
+import { tekniskFeilSvar } from "~/feilhåndtering/teknisk-feil.server";
 import { velgMigreringKilde, type TildelingsSvar } from "./migrering-kilde.server";
 import { MIGRERINGSSTATUSER, type MigreringFilter, type MigreringLister } from "./types";
 
@@ -41,7 +42,9 @@ const KANDIDAT_ID_MØNSTER = /^(UTREDNING|SV|NKA_DAGPENGER|NKA_AAP):\d{1,12}$/;
 const NAV_IDENT_MØNSTER = /^[A-Za-z]\d{6}$/;
 
 /** Lederen flytter en kandidat til en annen ansatt. Kilden avgjør om lederen har rett til det. */
-export async function action({ request }: ActionFunctionArgs): Promise<TildelingsSvar> {
+export async function action({
+  request,
+}: ActionFunctionArgs): Promise<TildelingsSvar | ReturnType<typeof tekniskFeilSvar>> {
   const bruker = await hentInnloggetBruker({ request });
   if (!bruker.erLeder) {
     throw data("Bare ledere kan endre tildeling", { status: 403 });
@@ -52,5 +55,9 @@ export async function action({ request }: ActionFunctionArgs): Promise<Tildeling
   if (!KANDIDAT_ID_MØNSTER.test(kandidatId) || !NAV_IDENT_MØNSTER.test(navIdent)) {
     throw data("Ugyldig tildeling", { status: 400 });
   }
-  return velgMigreringKilde(request).tildel({ bruker, kandidatId, navIdent });
+  try {
+    return await velgMigreringKilde(request).tildel({ bruker, kandidatId, navIdent });
+  } catch (feil) {
+    return tekniskFeilSvar(feil, { kontekst: "tildele migreringssak", request });
+  }
 }

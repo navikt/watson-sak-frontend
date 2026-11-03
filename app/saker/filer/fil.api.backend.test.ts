@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Route } from "./+types/fil.api";
 
 const mockOmdøpFil = vi.fn();
+const mockSlettFil = vi.fn();
 
 class MockBackendFeilException extends Error {
   constructor(
@@ -23,6 +24,7 @@ vi.mock("~/auth/access-token", () => ({
 vi.mock("~/saker/api.server", () => ({
   BackendFeilException: MockBackendFeilException,
   omdøpFil: mockOmdøpFil,
+  slettFil: mockSlettFil,
 }));
 
 function patchRequest(navn = "nytt navn"): Request {
@@ -73,6 +75,21 @@ describe("fil.api PATCH — backend-sti", () => {
     expect(resultat).toMatchObject({
       data: { ok: false, melding: "Fil ikke funnet" },
       init: { status: 404 },
+    });
+  });
+
+  it("returnerer et teknisk feilsvar ved backendfeil", async () => {
+    mockOmdøpFil.mockRejectedValue(new MockBackendFeilException(500, "Intern backendfeil"));
+
+    const svar = await actionMedBackend();
+
+    expect(svar).toMatchObject({
+      data: {
+        ok: false,
+        teknisk: true,
+        feilId: expect.stringMatching(/^[0-9a-f]{8}$/),
+      },
+      init: { status: 500 },
     });
   });
 });
