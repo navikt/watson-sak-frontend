@@ -89,7 +89,6 @@ export function validerTrinn(
   trinn: Trinn,
   verdier: Verdier,
   tillatteHandlinger: TillatteHandlingerResponse,
-  avslutningKreverFerdigFlyttet = false,
 ): Feil {
   const feil: Feil = {};
   switch (trinn.type) {
@@ -105,10 +104,6 @@ export function validerTrinn(
       if (verdier.status === undefined) feil.status = "Velg status";
       return feil;
     case "bekreftAvslutning":
-      if (avslutningKreverFerdigFlyttet) {
-        feil[""] =
-          "Du må bekrefte at saken er ferdig flyttet før du kan avslutte den. Huk av i sjekklisten for flytting på saken.";
-      }
       return feil;
     case "skjema":
       for (const felt of hentSynligeFelter(trinn, verdier, tillatteHandlinger.feltskjema)) {

@@ -8,6 +8,7 @@
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { env } from "~/config/env.server";
+import { BACKEND_SAK_UNDER_FLYTTING, SAK_UNDER_FLYTTING_FEIL } from "~/migrering/avslutning";
 
 const mockHentKontrollsak = vi.fn();
 const mockHentHendelser = vi.fn();
@@ -865,14 +866,12 @@ describe("SakDetaljSide loader — backend-sti", () => {
   });
 
   it.each([
-    [
-      "Du må bekrefte at saken er ferdig flyttet før du kan avslutte den.",
-      "Du må bekrefte at saken er ferdig flyttet før du kan avslutte den. Huk av i sjekklisten for flytting på saken.",
-    ],
-    ["Versjonskonflikt", "Versjonskonflikt"],
+    ["endre_steg_dialog", BACKEND_SAK_UNDER_FLYTTING, SAK_UNDER_FLYTTING_FEIL],
+    ["endre_steg", BACKEND_SAK_UNDER_FLYTTING, SAK_UNDER_FLYTTING_FEIL],
+    ["endre_steg_dialog", "Versjonskonflikt", "Versjonskonflikt"],
   ])(
-    "returnerer 409-meldingen til saksflyt-modalen når backend avviser: %s",
-    async (detalj, melding) => {
+    "%s returnerer 409-meldingen som skjemasvar når backend avviser: %s",
+    async (handling, detalj, melding) => {
       mockHentTillatteHandlinger.mockResolvedValue({
         versjon: 1,
         tilstand: { steg: "UTREDNING", status: "AKTIV", resultat: null, ytelser: [] },
@@ -900,7 +899,7 @@ describe("SakDetaljSide loader — backend-sti", () => {
         ],
       });
       const formData = new FormData();
-      formData.set("handling", "endre_steg_dialog");
+      formData.set("handling", handling);
       formData.set("steg", "AVSLUTTET");
       formData.set("registrerResultat", "true");
       formData.set("resultat.utredning.type", "HENLAGT");

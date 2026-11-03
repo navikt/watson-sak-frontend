@@ -1,4 +1,5 @@
 import { data } from "react-router";
+import { BACKEND_SAK_UNDER_FLYTTING, SAK_UNDER_FLYTTING_FEIL } from "~/migrering/avslutning";
 import { erTekniskFeil } from "~/feilhåndtering/teknisk-feil.server";
 import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
@@ -174,15 +175,13 @@ export async function backendAction(
         );
         return { ok: true, sak };
       } catch (feil) {
+        // Beholder exception-typen, så både endre_steg og endre_steg_dialog får svaret som skjemafeil.
         if (
           feil instanceof backendApi.BackendFeilException &&
           feil.status === 409 &&
-          feil.message === "Du må bekrefte at saken er ferdig flyttet før du kan avslutte den."
+          feil.message === BACKEND_SAK_UNDER_FLYTTING
         ) {
-          throw data(
-            "Du må bekrefte at saken er ferdig flyttet før du kan avslutte den. Huk av i sjekklisten for flytting på saken.",
-            { status: 409 },
-          );
+          throw new backendApi.BackendFeilException(409, SAK_UNDER_FLYTTING_FEIL);
         }
         throw feil;
       }

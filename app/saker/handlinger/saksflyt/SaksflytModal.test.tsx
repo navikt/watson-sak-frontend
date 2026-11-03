@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { SaksflytModal, type SaksflytStart } from "./SaksflytModal";
 import { dagpengerId, lagTillatteHandlinger, lagYtelse } from "./testdata";
+import { SAK_UNDER_FLYTTING_FEIL } from "~/migrering/avslutning";
 
 const submitMock = vi.fn();
 let mockSvar: unknown;
@@ -390,6 +391,39 @@ describe("SaksflytModal", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it("stopper «Lagre og avslutt» i politiet når saken ikke er ferdig flyttet", async () => {
+    renderModal({ steg: "POLITI", status: "VENTER_PA_RESULTAT" }, "meny", true);
+    klikk("Registrer resultat");
+    fireEvent.click(await screen.findByRole("radio", { name: "Henlagt" }));
+    klikk("Neste");
+    await screen.findByRole("heading", { name: "Henlagt" });
+    fireEvent.change(screen.getByLabelText("Årsak (påkrevd)"), {
+      target: { value: "Bevisene holder ikke" },
+    });
+
+    klikk("Lagre og avslutt");
+
+    expect(screen.getByText(SAK_UNDER_FLYTTING_FEIL)).toBeDefined();
+    expect(submitMock).not.toHaveBeenCalled();
+  });
+
+  it("lagrer påklaget henleggelse selv om saken ikke er ferdig flyttet", async () => {
+    renderModal({ steg: "POLITI", status: "VENTER_PA_RESULTAT" }, "meny", true);
+    klikk("Registrer resultat");
+    fireEvent.click(await screen.findByRole("radio", { name: "Henlagt" }));
+    klikk("Neste");
+    await screen.findByRole("heading", { name: "Henlagt" });
+    fireEvent.click(screen.getByRole("radio", { name: "Ja" }));
+    fireEvent.change(screen.getByLabelText("Årsak (påkrevd)"), {
+      target: { value: "Bevisene holder ikke" },
+    });
+
+    klikk("Registrer påklaget henleggelse");
+
+    expect(await screen.findByText("Lagret")).toBeDefined();
+    expect(sendtSkjema()).toMatchObject({ handling: "lagre_resultat" });
+  });
+
   it("lagrer påklaget henleggelse fra politiet uten å avslutte saken", async () => {
     renderModal({ steg: "POLITI", status: "VENTER_PA_RESULTAT" });
     klikk("Registrer resultat");
@@ -492,11 +526,7 @@ describe("SaksflytModal", () => {
 
     klikk("Avslutt sak");
 
-    expect(
-      screen.getByText(
-        "Du må bekrefte at saken er ferdig flyttet før du kan avslutte den. Huk av i sjekklisten for flytting på saken.",
-      ),
-    ).toBeDefined();
+    expect(screen.getByText(SAK_UNDER_FLYTTING_FEIL)).toBeDefined();
     expect(submitMock).not.toHaveBeenCalled();
   });
 

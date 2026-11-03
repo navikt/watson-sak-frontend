@@ -25,7 +25,6 @@ import { byggLagreResultatRequest, validerResultatFeltNavn } from "../handlinger
 import { erAktivSakKontrollsak } from "../handlinger/tilgjengeligeHandlinger";
 import { kanMottaSakFraEnhet } from "./mottaksenhet";
 import { BackendFeilException } from "~/saker/api-core.server";
-import { hentMockMigreringKandidater } from "~/migrering/mock-data.server";
 import {
   erGyldigMockStegovergang,
   hentMockTillatteHandlinger,
@@ -181,24 +180,6 @@ export async function mockAction(
     case "endre_steg":
     case "endre_steg_dialog": {
       const nyttSteg = hentTekstfelt(formData, "steg", "Ugyldig steg");
-      if (
-        nyttSteg === "AVSLUTTET" &&
-        sak.legacyPid &&
-        sak.legacyKilde &&
-        hentMockMigreringKandidater(innloggetBruker.navIdent).some(
-          (k) =>
-            k.legacyKilde === sak.legacyKilde &&
-            k.legacyPid === sak.legacyPid &&
-            k.personIdent === sak.personIdent &&
-            k.alleredeMigrertTilKontrollsakId === sak.id &&
-            k.migreringsstatus === "UNDER_MIGRERING",
-        )
-      ) {
-        throw data(
-          "Du må bekrefte at saken er ferdig flyttet før du kan avslutte den. Huk av i sjekklisten for flytting på saken.",
-          { status: 409 },
-        );
-      }
       krevTillattHandling(tillatte, "FLYTT_TIL_NESTE_STEG");
       if (!hentVisbareSteg(tillatte).includes(nyttSteg as KontrollsakSteg)) {
         throw data("Steget er ikke tillatt for saken i gjeldende tilstand", { status: 409 });

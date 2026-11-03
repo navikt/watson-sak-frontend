@@ -23,6 +23,7 @@ import { MenyTrinn } from "./trinn/MenyTrinn";
 import { SkjemaTrinn } from "./trinn/SkjemaTrinn";
 import { EnkeltvalgTrinn, SjekklisteTrinn, StatusTrinn } from "./trinn/ValgTrinn";
 import { validerTrinn } from "./validering";
+import { SAK_UNDER_FLYTTING_FEIL } from "~/migrering/avslutning";
 
 export type SaksflytStart = "meny" | "endre-status";
 
@@ -167,6 +168,10 @@ export function SaksflytModal({
   function velgHandling(handling: Sakshandling) {
     const verdier = hentStartverdier(handling, tillatteHandlinger);
     if (handling.trinn.length === 0) {
+      if (avslutningKreverFerdigFlyttet && avslutterSaken(handling.innsending)) {
+        dispatch({ type: "settFeil", feil: { "": SAK_UNDER_FLYTTING_FEIL } });
+        return;
+      }
       send(handling, verdier);
       return;
     }
@@ -175,18 +180,18 @@ export function SaksflytModal({
 
   function fortsett(trinn: Trinn, alleVerdier: Verdier, innsending?: Innsending) {
     if (tilstand.fase !== "trinn") return;
-    const feil = validerTrinn(
-      trinn,
-      alleVerdier,
-      tillatteHandlinger,
-      avslutningKreverFerdigFlyttet,
-    );
+    const feil = validerTrinn(trinn, alleVerdier, tillatteHandlinger);
     if (Object.keys(feil).length > 0) {
       dispatch({ type: "settFeil", feil });
       return;
     }
     const erSisteTrinn = tilstand.trinnIndeks === tilstand.handling.trinn.length - 1;
-    if (innsending || erSisteTrinn) {
+    const sender = innsending ?? (erSisteTrinn ? tilstand.handling.innsending : undefined);
+    if (avslutningKreverFerdigFlyttet && sender && avslutterSaken(sender)) {
+      dispatch({ type: "settFeil", feil: { "": SAK_UNDER_FLYTTING_FEIL } });
+      return;
+    }
+    if (sender) {
       send(tilstand.handling, tilstand.verdier, innsending);
     } else {
       dispatch({ type: "neste" });
@@ -324,4 +329,9 @@ export function SaksflytModal({
       </Modal.Footer>
     </Modal>
   );
+}
+
+/** Innsendingen flytter saken til Avsluttet. Lagring av påklaget henleggelse avslutter ikke. */
+function avslutterSaken(innsending: Innsending): boolean {
+  return innsending.handling === "endre_steg_dialog" && innsending.steg === "AVSLUTTET";
 }
