@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createRoutesStub, data } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { RouteConfig } from "~/routeConfig";
@@ -731,5 +731,31 @@ describe("DokumentTre med mapper", () => {
       expect(slettSvar).toHaveBeenCalledTimes(2);
       expect(screen.queryByRole("dialog", { name: "Slette dokument?" })).toBeNull();
     });
+  });
+
+  it("lar ikke kryss eller Escape lukke slettedialogen mens slettingen pågår", async () => {
+    let svar: (verdi: unknown) => void = () => {};
+    const slettSvar = vi.fn(() => new Promise((resolve) => (svar = resolve)));
+    renderTre(
+      { noder: [mockDokumenter[0]], sakId: "ABC-123", redigerbar: true },
+      undefined,
+      async () => slettSvar(),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Handlinger for Rapport" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Slett" }));
+    fireEvent.click(screen.getByRole("button", { name: "Slett dokument" }));
+    await waitFor(() => expect(slettSvar).toHaveBeenCalled());
+
+    const dialog = screen.getByRole("dialog", { name: "Slette dokument?" });
+    fireEvent.keyDown(dialog, { key: "Escape" });
+    const lukk = screen.queryByRole("button", { name: "Lukk" });
+    if (lukk) fireEvent.click(lukk);
+    expect(screen.getByRole("dialog", { name: "Slette dokument?" })).toBeDefined();
+
+    await act(async () => svar({ ok: true }));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Slette dokument?" })).toBeNull(),
+    );
   });
 });

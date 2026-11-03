@@ -120,6 +120,8 @@ export function useFilSletting(sakId: string) {
           sletter={fetcher.state !== "idle"}
           onBekreft={bekreft}
           onAvbryt={() => {
+            // Ikke lukk mens slettingen pågår (også kryss og Escape), se useDokumentSletting.
+            if (fetcher.state !== "idle") return;
             settKandidat(null);
             settSistSlettet(null);
           }}

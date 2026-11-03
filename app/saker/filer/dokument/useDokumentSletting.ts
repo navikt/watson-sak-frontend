@@ -65,12 +65,15 @@ export function useDokumentSletting({ sakId, kilde, redirectTo }: UseDokumentSle
   }, [kandidat, sakId, kilde, redirectTo, fetcher]);
 
   const avbryt = useCallback(() => {
+    // Ikke lukk mens slettingen pågår. Da kunne svaret høre til et annet dokument
+    // enn det dialogen er åpen for. Gjelder også kryss og Escape, ikke bare Avbryt-knappen.
+    if (sletter) return;
     if (kandidat) {
       sporHendelse("dokument sletting avbrutt", { kilde });
     }
     setTekniskFeilId(null);
     setKandidat(null);
-  }, [kandidat, kilde]);
+  }, [kandidat, kilde, sletter]);
 
   // Dialogen lukkes og «dokument slettet» spores først når DELETE-kallet har lykkes.
   useEffect(() => {

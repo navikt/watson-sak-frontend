@@ -22,6 +22,12 @@ export function SlettFilModal({
     <Modal
       open={kandidat !== null}
       onClose={onAvbryt}
+      // Kan ikke lukkes mens slettingen pågår, verken med kryss eller Escape. Da kunne svaret
+      // høre til et annet element enn det dialogen er åpen for.
+      onBeforeClose={() => !sletter}
+      onCancel={(event) => {
+        if (sletter) event.preventDefault();
+      }}
       header={{ heading: "Slette vedlegg?", icon: <TrashIcon aria-hidden /> }}
       width="small"
     >
