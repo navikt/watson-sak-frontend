@@ -192,9 +192,12 @@ test.describe("Søk", () => {
 
       await expect(page).toHaveURL("/");
       await expect(headerSøk).toHaveAttribute("aria-invalid", "true");
+      await expect(page.getByText("Skriv inn et søk")).toBeVisible();
+      await expect(headerSøk).toHaveAccessibleDescription(/Skriv inn et søk/);
 
       await headerSøk.fill("1028");
       await expect(headerSøk).not.toHaveAttribute("aria-invalid", "true");
+      await expect(page.getByText("Skriv inn et søk")).toHaveCount(0);
     });
 
     test("søkefelt i header poster til søkesiden", async ({ page }) => {

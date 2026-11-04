@@ -1,5 +1,13 @@
 import { BooksIcon, LeaveIcon, LightBulbIcon, MenuGridIcon, PersonIcon } from "@navikt/aksel-icons";
-import { ActionMenu, BodyShort, HelpText, InternalHeader, Spacer, Tag } from "@navikt/ds-react";
+import {
+  ActionMenu,
+  BodyShort,
+  ErrorMessage,
+  HelpText,
+  InternalHeader,
+  Spacer,
+  Tag,
+} from "@navikt/ds-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Form, Link, useLocation } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
@@ -26,6 +34,8 @@ const SHERLOCK_EASTER_EGG = "sherlock";
 // Easter egg: søk på "end credits" viser en rulletekst over alle som har
 // vært med på å lage Watson. Her utføres ikke selve søket.
 const END_CREDITS_EASTER_EGG = "end credits";
+
+const HURTIGSØK_FEIL_ID = "hurtigsok-feilmelding";
 
 export function AppHeader() {
   const innloggetBruker = useInnloggetBrukerValgfri();
@@ -121,6 +131,7 @@ export function AppHeader() {
           variant="secondary"
           size="small"
           aria-invalid={hurtigsøkUgyldig}
+          aria-describedby={hurtigsøkUgyldig ? HURTIGSØK_FEIL_ID : undefined}
           className="w-full [&_input[aria-invalid=true]]:border-ax-border-danger"
           autoComplete="off"
           aria-keyshortcuts="Meta+K Control+K"
@@ -138,6 +149,13 @@ export function AppHeader() {
         </ul>
         <BodyShort>Mellomrom spiller ingen rolle.</BodyShort>
       </HelpText>
+      <div aria-live="polite" className="self-center ml-2">
+        {hurtigsøkUgyldig && (
+          <ErrorMessage id={HURTIGSØK_FEIL_ID} size="small" showIcon>
+            Skriv inn et søk
+          </ErrorMessage>
+        )}
+      </div>
       <Spacer />
       <VarselBjelle />
       <ActionMenu>
