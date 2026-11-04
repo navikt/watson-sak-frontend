@@ -144,6 +144,43 @@ describe("VarslerSide", () => {
     expect(screen.getByRole("heading", { level: 3, name: "69: Varsel ulest-2" })).toBeTruthy();
   });
 
+  it("kan laste flere uleste etter «Marker alle som lest» selv om fetcheren revalideres", async () => {
+    let markert = false;
+    visSide(
+      ({ request }) => {
+        const ulesteSide = Number(new URL(request.url).searchParams.get("ulesteSide") ?? "1");
+        const prefiks = markert ? "ny" : "gammel";
+        const totalSider = markert ? 2 : 3;
+        return lagLoaderData(
+          {
+            varsler: ulesteSide <= totalSider ? [lagVarsel(`${prefiks}-${ulesteSide}`, false)] : [],
+            totalItems: totalSider,
+            totalSider,
+            side: ulesteSide,
+          },
+          { varsler: [], totalItems: 0 },
+        );
+      },
+      {
+        action: () => {
+          markert = true;
+          return { ok: true };
+        },
+      },
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: "Last flere uleste" }));
+    await screen.findByRole("heading", { level: 3, name: "69: Varsel gammel-2" });
+    fireEvent.click(screen.getByRole("button", { name: "Last flere uleste" }));
+    await screen.findByRole("heading", { level: 3, name: "69: Varsel gammel-3" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Marker alle som lest" }));
+    await screen.findByRole("heading", { level: 3, name: "69: Varsel ny-1" });
+
+    fireEvent.click(await screen.findByRole("button", { name: "Last flere uleste" }));
+    expect(await screen.findByRole("heading", { level: 3, name: "69: Varsel ny-2" })).toBeTruthy();
+  });
+
   it("skjuler «Gå tilbake» når siden er åpnet direkte", async () => {
     window.history.replaceState({ idx: 0 }, "");
     visSide(standard);
