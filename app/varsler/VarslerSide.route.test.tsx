@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { createRoutesStub, Link } from "react-router";
+import { createRoutesStub } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import type { Varsel } from "./typer";
 import VarslerSide from "./VarslerSide.route";
@@ -31,13 +31,12 @@ function lagLoaderData(varsler: Varsel[], antallUleste: number, antallLeste: num
 
 function visSide(
   loaderData: ReturnType<typeof lagLoaderData>,
-  { fraAnnenSide = false, action }: { fraAnnenSide?: boolean; action?: () => unknown } = {},
+  { action }: { action?: () => unknown } = {},
 ) {
   const Stub = createRoutesStub([
-    { path: "/", Component: () => <Link to="/varsler">Til varsler</Link> },
     { path: "/varsler", Component: VarslerSide, loader: () => loaderData, action },
   ]);
-  return render(<Stub initialEntries={[fraAnnenSide ? "/" : "/varsler"]} />);
+  return render(<Stub initialEntries={["/varsler"]} />);
 }
 
 describe("VarslerSide", () => {
@@ -69,17 +68,27 @@ describe("VarslerSide", () => {
   });
 
   it("skjuler «Gå tilbake» når siden er åpnet direkte", async () => {
+    window.history.replaceState({ idx: 0 }, "");
     visSide(lagLoaderData([lagVarsel("1", false)], 1, 0));
 
     await screen.findByRole("heading", { level: 1, name: "Varsler" });
     expect(screen.queryByRole("button", { name: "Gå tilbake" })).toBeNull();
   });
 
-  it("viser «Gå tilbake» når brukeren kom fra en annen side", async () => {
-    visSide(lagLoaderData([lagVarsel("1", false)], 1, 0), { fraAnnenSide: true });
-
-    fireEvent.click(await screen.findByRole("link", { name: "Til varsler" }));
+  it("viser «Gå tilbake» når det finnes en tidligere side i historikken, også etter omlasting", async () => {
+    window.history.replaceState({ idx: 2 }, "");
+    visSide(lagLoaderData([lagVarsel("1", false)], 1, 0));
 
     expect(await screen.findByRole("button", { name: "Gå tilbake" })).toBeTruthy();
+  });
+
+  it("viser ikke «Gå tilbake» etter innsending når siden ble åpnet direkte", async () => {
+    window.history.replaceState({ idx: 0 }, "");
+    visSide(lagLoaderData([lagVarsel("1", false)], 1, 0), { action: () => ({ ok: true }) });
+
+    fireEvent.click(await screen.findByRole("button", { name: "Marker alle som lest" }));
+
+    await screen.findByRole("heading", { level: 1, name: "Varsler" });
+    expect(screen.queryByRole("button", { name: "Gå tilbake" })).toBeNull();
   });
 });

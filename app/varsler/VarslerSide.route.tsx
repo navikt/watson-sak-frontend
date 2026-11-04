@@ -1,14 +1,7 @@
 import { ArrowLeftIcon, BellIcon, InformationSquareIcon } from "@navikt/aksel-icons";
 import { BodyShort, Button, Heading, HStack, InfoCard, VStack } from "@navikt/ds-react";
 import { useEffect, useState } from "react";
-import {
-  Form,
-  useActionData,
-  useFetcher,
-  useLoaderData,
-  useLocation,
-  useNavigate,
-} from "react-router";
+import { Form, useActionData, useFetcher, useLoaderData, useNavigate } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
 import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
@@ -35,9 +28,7 @@ export default function VarslerSide() {
     leste: loaderData.antallLeste,
   });
   const navigate = useNavigate();
-  // `key` er "default" når siden er første oppføring i historikken (ny fane, bokmerke),
-  // og da finnes det ingen side i appen å gå tilbake til.
-  const harForrigeSide = useLocation().key !== "default";
+  const harForrigeSide = useHarForrigeSide();
 
   // Synkroniser state når loaderen revalideres (f.eks. etter «Marker alle som lest»)
   useEffect(() => {
@@ -87,6 +78,7 @@ export default function VarslerSide() {
             {ulesteVarsler.length > 0 && (
               <Form
                 method="post"
+                replace
                 onSubmit={() =>
                   sporHendelse("varsler markert som lest", { antall: ulesteVarsler.length })
                 }
@@ -134,6 +126,21 @@ export default function VarslerSide() {
   );
 }
 
+/**
+ * Om det finnes en tidligere side i appen å gå tilbake til. React Router lagrer
+ * posisjonen i historikken som `idx` i `history.state`. Den er 0 når siden åpnes
+ * direkte (ny fane, bokmerke) og overlever omlasting. Leses først etter hydrering,
+ * slik at serveren og første klientrendering gir samme markup.
+ */
+function useHarForrigeSide() {
+  const [harForrigeSide, setHarForrigeSide] = useState(false);
+  useEffect(() => {
+    const idx = (window.history.state as { idx?: unknown } | null)?.idx;
+    setHarForrigeSide(typeof idx === "number" && idx > 0);
+  }, []);
+  return harForrigeSide;
+}
+
 function Varselgruppe({
   tittel,
   antall,
@@ -163,20 +170,22 @@ function Varselkort({ varsel }: { varsel: Varsel }) {
   return (
     <InfoCard size="small" data-color={varsel.erLest ? "neutral" : "info"}>
       <InfoCard.Header icon={<InformationSquareIcon aria-hidden />}>
-        <HStack gap="space-8" align="center" justify="space-between" wrap={false}>
+        <HStack gap="space-8" align="center" justify="space-between">
           <InfoCard.Title as="h3">{varsel.tittel}</InfoCard.Title>
-          <BodyShort size="small" className="text-ax-text-neutral-subtle shrink-0">
+          <BodyShort size="small" className="text-ax-text-neutral-subtle ml-auto">
             <time dateTime={varsel.tidspunkt}>{formaterVarselTidspunkt(varsel.tidspunkt)}</time>
           </BodyShort>
         </HStack>
       </InfoCard.Header>
       <InfoCard.Content>
-        <HStack gap="space-16" align="end" justify="space-between" wrap={false}>
-          <BodyShort size="small">{varsel.tekst}</BodyShort>
+        <HStack gap="space-16" align="end" justify="space-between">
+          <BodyShort size="small" className="min-w-0 flex-[1_1_16rem]">
+            {varsel.tekst}
+          </BodyShort>
           <Button
             size="small"
             variant="secondary"
-            className="shrink-0"
+            className="ml-auto"
             onClick={() => {
               const sakReferanse = getSaksreferanse(varsel.sakId);
               const destinasjon = varselDestinasjon(varsel, sakReferanse);
