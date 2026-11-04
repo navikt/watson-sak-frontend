@@ -28,28 +28,36 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   if (skalBrukeMockdata) {
     const alle = hentVarslerFraMock(request);
-    const fraMock = (varsler: typeof alle, ønsketSide: number): Varselside => {
-      const resultat = paginerElementer(varsler, ønsketSide, VARSLER_PER_SIDE);
-      return {
-        varsler: ønsketSide > resultat.totalSider ? [] : resultat.elementer,
-        totalItems: varsler.length,
-        totalSider: resultat.totalSider,
-      };
-    };
-    uleste = fraMock(
+    const ulesteResultat = paginerElementer(
       alle.filter((varsel) => !varsel.erLest),
       ulesteSide,
+      VARSLER_PER_SIDE,
     );
-    leste = fraMock(
-      alle.filter((varsel) => varsel.erLest),
-      side,
-    );
+    // Uleste lastes med «Last flere», så en side bak slutten skal gi en tom liste.
+    uleste = {
+      varsler: ulesteSide > ulesteResultat.totalSider ? [] : ulesteResultat.elementer,
+      totalItems: alle.filter((varsel) => !varsel.erLest).length,
+      totalSider: ulesteResultat.totalSider,
+    };
+    // Leste har vanlig paginering: `paginerElementer` gir siste side når `side` er for høy.
+    const lesteAlle = alle.filter((varsel) => varsel.erLest);
+    const lesteResultat = paginerElementer(lesteAlle, side, VARSLER_PER_SIDE);
+    leste = {
+      varsler: lesteResultat.elementer,
+      totalItems: lesteAlle.length,
+      totalSider: lesteResultat.totalSider,
+    };
   } else {
     const token = await getBackendOboToken(request);
     [uleste, leste] = await Promise.all([
       hentVarselside(token, "uleste", ulesteSide, VARSLER_PER_SIDE),
       hentVarselside(token, "leste", side, VARSLER_PER_SIDE),
     ]);
+    // En gammel lenke kan peke på en side som ikke finnes lenger. Hent siste side i stedet
+    // for å vise en tom liste uten paginering.
+    if (side > leste.totalSider) {
+      leste = await hentVarselside(token, "leste", leste.totalSider, VARSLER_PER_SIDE);
+    }
   }
 
   return {

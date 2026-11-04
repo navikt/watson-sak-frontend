@@ -81,6 +81,15 @@ describe("VarslerSide loader", () => {
     });
   });
 
+  it("viser siste side av leste når side er for høy", async () => {
+    hentVarslerFraMockMock.mockReturnValue(lagVarsler(5, true, "l"));
+
+    const resultat = await runLoader("http://localhost/varsler?side=2");
+
+    expect(resultat.leste.side).toBe(1);
+    expect(resultat.leste.varsler).toHaveLength(5);
+  });
+
   describe("backend-modus", () => {
     it("henter uleste og leste med riktig filter, side og sidestørrelse", async () => {
       testState.skalBrukeMockdata = false;
@@ -105,6 +114,23 @@ describe("VarslerSide loader", () => {
       expect(resultat.uleste.harFlere).toBe(true);
       expect(resultat.leste.totalItems).toBe(42);
       expect(resultat.leste.totalSider).toBe(5);
+    });
+
+    it("henter siste side av leste på nytt når side er for høy", async () => {
+      testState.skalBrukeMockdata = false;
+      hentVarselsideMock.mockImplementation(
+        async (_token: string, filter: string, page: number) => ({
+          varsler: filter === "leste" && page === 2 ? [{ id: "l1" }] : [],
+          totalItems: filter === "leste" ? 15 : 0,
+          totalSider: filter === "leste" ? 2 : 1,
+        }),
+      );
+
+      const resultat = await runLoader("http://localhost/varsler?side=9");
+
+      expect(hentVarselsideMock).toHaveBeenCalledWith("token-123", "leste", 2, 10);
+      expect(resultat.leste.side).toBe(2);
+      expect(resultat.leste.varsler).toHaveLength(1);
     });
   });
 });

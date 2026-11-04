@@ -55,6 +55,10 @@ export default function VarslerSide() {
     const data = flereUlesteFetcher.data;
     if (!data) return;
     setUlesteState((forrige) => {
+      // React Router laster fetcheren på nytt etter innsendinger. Da kan det komme et
+      // svar for en side vi ikke venter på (f.eks. side 3 etter at listen er nullstilt
+      // til side 1). Godta bare svaret for neste side.
+      if (data.uleste.side !== forrige.nesteSide) return forrige;
       const kjente = new Set(forrige.varsler.map((v) => v.id));
       return {
         varsler: [...forrige.varsler, ...data.uleste.varsler.filter((v) => !kjente.has(v.id))],
@@ -221,7 +225,7 @@ function Varselkort({ varsel }: { varsel: Varsel }) {
       <InfoCard.Header icon={<InformationSquareIcon aria-hidden />}>
         <HStack
           gap="space-8"
-          align="center"
+          align="start"
           justify="space-between"
           wrap={false}
           className="w-full flex-1"
