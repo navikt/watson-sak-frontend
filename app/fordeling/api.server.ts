@@ -4,7 +4,9 @@ import { BACKEND_API_URL, skalBrukeMockdata } from "~/config/env.server";
 import { logger } from "~/logging/logging";
 import { BackendUtilgjengeligError } from "~/utils/backend-utilgjengelig.server";
 import { kontrollsakPageResponseSchema } from "~/saker/types.backend";
-import { ALLE_STEG } from "~/saker/steg";
+import { data } from "react-router";
+import { ANTALL_PER_SIDE } from "~/utils/paginering";
+import { ufordelteSakerResponseSchema } from "./types.backend";
 import { sti } from "~/saker/sti-param.server";
 import type { KontrollsakPageResponse } from "./types.backend";
 import type { Aldersvarsel, ANSVARLIG_MEG } from "~/alle-saker/aldersfilter";
@@ -98,20 +100,67 @@ export async function hentKontrollsaker(
   return parsed.data;
 }
 
-export async function hentKontrollsakerForFordeling(request: Request, enhet: string) {
+export async function hentKontrollsakerForFordeling(request: Request) {
   if (skalBrukeMockdata) {
     return null;
   }
 
+  if (!BACKEND_API_URL) throw new Error("Mangler backend-url for henting av ufordelte saker.");
   const token = await getBackendOboToken(request);
-  return hentKontrollsaker({
-    token,
-    page: 1,
-    size: 100,
-    utenAnsvarlig: true,
-    enhet: [enhet],
-    steg: ALLE_STEG,
+  const søk = new URL(request.url).searchParams;
+  const side = søk.get("side") ?? "1";
+  if (!/^\d+$/.test(side) || !Number.isSafeInteger(Number(side)) || Number(side) < 1) {
+    throw data("Ugyldig sidenummer", { status: 400 });
+  }
+  const params = new URLSearchParams({ page: side, size: String(ANTALL_PER_SIDE) });
+  const omfang = søk.get("omfang");
+  if (omfang !== null) params.set("omfang", omfang);
+  for (const [urlNavn, apiNavn] of [
+    ["kategori", "kategori"],
+    ["misbrukstype", "misbruktype"],
+    ["merking", "merking"],
+    ["steg", "steg"],
+  ]) {
+    for (const verdi of søk.getAll(urlNavn)) params.append(apiNavn, verdi);
+  }
+  const felt: Record<string, string> = {
+    saksid: "id",
+    kategori: "kategori",
+    misbrukstype: "misbruktype",
+    steg: "steg",
+    status: "status",
+    opprettet: "opprettet",
+    oppdatert: "oppdatert",
+  };
+  const kolonne = søk.get("sorter") ?? "opprettet";
+  const retning = søk.get("retning") ?? "synkende";
+  if (!Object.hasOwn(felt, kolonne) || !["stigende", "synkende"].includes(retning)) {
+    throw data("Ugyldig sortering", { status: 400 });
+  }
+  params.set("sortering", `${felt[kolonne]},${retning === "stigende" ? "ASC" : "DESC"}`);
+  const response = await fetch(`${BACKEND_API_URL}/api/v1/kontrollsaker/ufordelte?${params}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
   });
+  if (!response.ok) {
+    kastHvisUtlogget(response);
+    logger.warn("Kunne ikke hente ufordelte saker", { status: response.status });
+    if (response.status === 503) throw new BackendUtilgjengeligError();
+    if (response.status === 400 || response.status === 403) {
+      throw data(
+        response.status === 403
+          ? "Du har ikke tilgang til valgt omfang."
+          : "Ugyldig søk etter ufordelte saker.",
+        { status: response.status },
+      );
+    }
+    throw new Error("Kunne ikke hente ufordelte saker.");
+  }
+  const parsed = ufordelteSakerResponseSchema.safeParse(await response.json());
+  if (!parsed.success) {
+    logger.error("Ugyldig responsformat for ufordelte saker");
+    throw new Error("Ugyldig svar fra watson-admin-api (ufordelte saker)");
+  }
+  return parsed.data;
 }
 
 type TildelKontrollsakArgs = {

@@ -4,6 +4,8 @@ import { hentKontrollsakerForFordeling } from "./api.server";
 import { RouteConfig } from "~/routeConfig";
 import { hentMockState, resetDefaultSession } from "~/testing/mock-store/session.server";
 import { hentFordelingssaker } from "~/testing/mock-store/alle-saker.server";
+import { lagMockStatistikk } from "~/statistikk/mock.server";
+import { erKlarForFordeling } from "./mapper";
 import type { Route } from "./+types/FordelingSide.route";
 import { loader as routeLoader } from "./FordelingSide.route";
 import { BackendUtilgjengeligError } from "~/utils/backend-utilgjengelig.server";
@@ -220,80 +222,186 @@ describe("FordelingSide loader", () => {
     vi.clearAllMocks();
   });
 
-  it("mapper backend-shapede mockkontrollsaker til FordelingSak i mockmiljø", async () => {
+  it("viser innlogget enhets mockdata og valgmønster fra statistikk", async () => {
     const { loader } = await import("./FordelingSide.server");
+    const request = new Request(`http://localhost${RouteConfig.FORDELING}?omfang=organisasjon`);
+    const bruker = {
+      preferredUsername: "test",
+      name: "Saks Behandlersen",
+      navIdent: "Z999999",
+      enhet: "NAV Kontroll Øst",
+      enhetId: "4812",
+      erLeder: true,
+    };
+    hentInnloggetBrukerMock.mockResolvedValueOnce(bruker);
 
     const resultat = await loader({
-      request: new Request(`http://localhost${RouteConfig.FORDELING}`),
+      request,
       params: {},
       context: {},
     } as Route.LoaderArgs);
 
-    const mockKontrollsaker = hentFordelingssaker(state());
-    const forventedeSaker = mockKontrollsaker
-      .filter((sak) => sak.saksbehandlere.eier === null && sak.steg !== "AVSLUTTET")
-      .map((sak) => sak.id);
+    const mockKontrollsaker = hentFordelingssaker(state()).filter(erKlarForFordeling);
+    const statistikk = lagMockStatistikk(
+      { nivaa: "underavdeling", fra: "2026-01-01", til: "2026-12-31" },
+      bruker.enhet,
+      bruker.enhetId,
+      { saker: mockKontrollsaker, navIdent: bruker.navIdent },
+    );
+    const førsteMockSak = hentFordelingssaker(state()).find(
+      (sak) => String(sak.id) === String(resultat.saker[0]?.id),
+    );
+    const forventedeValg = statistikk.organisasjonsvalg
+      .filter((valg) => valg.verdi !== "meg")
+      .map((valg) => (valg.verdi === "enhet:4812" ? { ...valg, label: bruker.enhet } : valg));
 
-    expect(resultat.enhet).toBeNull();
-    expect(resultat.saker.map((sak) => sak.id)).toEqual(forventedeSaker);
+    expect(resultat.enhet).toBe("hele organisasjonen");
+    expect(resultat.valgtOmfang).toBe("organisasjon");
+    expect(resultat.organisasjonsvalg).toEqual(forventedeValg);
+    expect(resultat.saker.length).toBe(mockKontrollsaker.length);
     expect(resultat.saker.every((sak) => sak.stegKode !== "AVSLUTTET")).toBe(true);
+    expect(førsteMockSak).toBeDefined();
     expect(resultat.saker[0]).toMatchObject({
-      navn: mockKontrollsaker[0].personNavn ?? null,
-      opprettetDato: mockKontrollsaker[0].opprettet.slice(0, 10),
-      oppdatertDato: (mockKontrollsaker[0].oppdatert ?? mockKontrollsaker[0].opprettet).slice(
-        0,
-        10,
-      ),
-      misbrukstyper: mockKontrollsaker[0].misbruktype.map(formaterMisbrukstype),
-      ytelser: mockKontrollsaker[0].ytelser.map((ytelse) => formaterYtelseType(ytelse.type)),
+      navn: førsteMockSak?.personNavn ?? null,
+      opprettetDato: førsteMockSak?.opprettet.slice(0, 10),
+      oppdatertDato: (førsteMockSak?.oppdatert ?? førsteMockSak?.opprettet)?.slice(0, 10),
+      misbrukstyper: førsteMockSak?.misbruktype.map(formaterMisbrukstype),
+      ytelser: førsteMockSak?.ytelser.map((ytelse) => formaterYtelseType(ytelse.type)),
     });
   });
 
-  it("beholder grunnavgrensning i backend-modus ved å sende innlogget enhets-ID til fordeling-kall", async () => {
+  it.each(["1e1", "0x2", "  ", "0"])("avviser sideverdien %j med 400 i mockmodus", async (side) => {
+    const { loader } = await import("./FordelingSide.server");
+    const url = new URL("http://localhost/fordeling");
+    url.searchParams.set("side", side);
+
+    await expect(
+      loader({ request: new Request(url), params: {}, context: {} } as Route.LoaderArgs),
+    ).rejects.toMatchObject({ init: { status: 400 } });
+  });
+
+  it("avviser AVSLUTTET-steg med 400 i mockmodus", async () => {
+    const { loader } = await import("./FordelingSide.server");
+
+    await expect(
+      loader({
+        request: new Request("http://localhost/fordeling?steg=AVSLUTTET"),
+        params: {},
+        context: {},
+      } as Route.LoaderArgs),
+    ).rejects.toMatchObject({ init: { status: 400 } });
+  });
+
+  it("bevarer backend-avslag for AVSLUTTET-steg med 400", async () => {
+    testState.skalBrukeMockdata = false;
+    vi.mocked(hentKontrollsakerForFordeling).mockRejectedValue({ init: { status: 400 } });
+    const { loader } = await import("./FordelingSide.server");
+    const request = new Request("http://localhost/fordeling?steg=AVSLUTTET");
+
+    await expect(
+      loader({ request, params: {}, context: {} } as Route.LoaderArgs),
+    ).rejects.toMatchObject({ init: { status: 400 } });
+    expect(hentKontrollsakerForFordeling).toHaveBeenCalledWith(request);
+  });
+
+  it("sender bare forespørselen til fordelings-API-et og mapper backend-metadata", async () => {
     testState.skalBrukeMockdata = false;
     const { hentKontrollsakerForFordeling } = await import("./api.server");
     vi.mocked(hentKontrollsakerForFordeling).mockResolvedValue({
       items: [],
       page: 1,
-      size: 100,
+      size: 20,
       totalItems: 0,
       totalPages: 0,
+      oppsummering: { antallSaker: 0, eldsteLiggetidDager: 0 },
+      valgtOmfang: "enhet:4812",
+      enhetNavn: "NAV Kontroll Øst",
+      organisasjonsvalg: [{ verdi: "enhet:4812", label: "NAV Kontroll Øst", type: "enhet" }],
     });
 
     const { loader } = await import("./FordelingSide.server");
     const resultat = await loader({
-      request: new Request("http://localhost/fordeling?enhet=9999&utenAnsvarlig=false"),
+      request: new Request("http://localhost/fordeling?omfang=enhet%3A4812&side=1"),
       params: {},
       context: {},
     } as Route.LoaderArgs);
 
-    expect(hentKontrollsakerForFordeling).toHaveBeenCalledWith(expect.any(Request), "4812");
+    expect(hentKontrollsakerForFordeling).toHaveBeenCalledWith(expect.any(Request));
     expect(resultat.enhet).toBe("NAV Kontroll Øst");
+    expect(resultat.valgtOmfang).toBe("enhet:4812");
+    expect(resultat.oppsummering).toEqual({ antallSaker: 0, eldsteLiggetidDager: 0 });
+    expect(resultat.paginering).toEqual({ side: 1, totalSider: 0, totalAntall: 0 });
   });
 
-  it("skjuler avsluttede saker fra backend-resultatet", async () => {
+  it("returnerer alle elementene backend leverer uten lokal filtrering eller paginering", async () => {
     testState.skalBrukeMockdata = false;
     const kontrollsaker = hentFordelingssaker(state()).slice(0, 2);
     kontrollsaker[0].saksbehandlere.eier = null;
     kontrollsaker[0].steg = "OPPRETTET";
-    kontrollsaker[1].saksbehandlere.eier = null;
+    kontrollsaker[1].saksbehandlere.eier = {
+      navIdent: "Z123456",
+      navn: "Kari Nordmann",
+      enhet: "NAV Kontroll Øst",
+    };
     kontrollsaker[1].steg = "AVSLUTTET";
     vi.mocked(hentKontrollsakerForFordeling).mockResolvedValue({
       items: kontrollsaker,
-      page: 1,
-      size: 2,
-      totalItems: 2,
-      totalPages: 1,
+      page: 2,
+      size: 20,
+      totalItems: 45,
+      totalPages: 3,
+      oppsummering: { antallSaker: 45, eldsteLiggetidDager: 58 },
+      valgtOmfang: "enhet:4812",
+      enhetNavn: "NAV Kontroll Øst",
+      organisasjonsvalg: [{ verdi: "enhet:4812", label: "NAV Kontroll Øst", type: "enhet" }],
     });
 
     const { loader } = await import("./FordelingSide.server");
     const resultat = await loader({
-      request: new Request("http://localhost/fordeling"),
+      request: new Request("http://localhost/fordeling?side=2"),
       params: {},
       context: {},
     } as Route.LoaderArgs);
 
-    expect(resultat.saker.map((sak) => sak.stegKode)).toEqual(["OPPRETTET"]);
+    expect(resultat.saker.map((sak) => sak.id)).toEqual(kontrollsaker.map((sak) => sak.id));
+    expect(resultat.saker.map((sak) => sak.stegKode)).toContain("AVSLUTTET");
+    expect(resultat.paginering).toEqual({ side: 2, totalSider: 3, totalAntall: 45 });
+    expect(resultat.oppsummering).toEqual({ antallSaker: 45, eldsteLiggetidDager: 58 });
+  });
+
+  it("redirecter side utenfor intervallet til siste side og bevarer andre parametre", async () => {
+    testState.skalBrukeMockdata = false;
+    vi.mocked(hentKontrollsakerForFordeling).mockResolvedValue({
+      items: [],
+      page: 4,
+      size: 20,
+      totalItems: 41,
+      totalPages: 3,
+      oppsummering: { antallSaker: 41, eldsteLiggetidDager: 7 },
+      valgtOmfang: "enhet:4812",
+      enhetNavn: "NAV Kontroll Øst",
+      organisasjonsvalg: [{ verdi: "enhet:4812", label: "NAV Kontroll Øst", type: "enhet" }],
+    });
+
+    const { loader } = await import("./FordelingSide.server");
+    const redirectResponse = await loader({
+      request: new Request(
+        "http://localhost/fordeling?side=4&omfang=enhet%3A4812&kategori=ARBEID&sorter=saksid&retning=stigende",
+      ),
+      params: {},
+      context: {},
+    } as Route.LoaderArgs).catch((feil: unknown) => feil);
+
+    expect(redirectResponse).toBeInstanceOf(Response);
+    const response = redirectResponse as Response;
+    expect(response.status).toBe(302);
+    const location = new URL(response.headers.get("Location") ?? "", "http://localhost");
+    expect(location.pathname).toBe("/fordeling");
+    expect(location.searchParams.get("side")).toBe("3");
+    expect(location.searchParams.get("omfang")).toBe("enhet:4812");
+    expect(location.searchParams.get("kategori")).toBe("ARBEID");
+    expect(location.searchParams.get("sorter")).toBe("saksid");
+    expect(location.searchParams.get("retning")).toBe("stigende");
   });
 
   it("returnerer utilgjengelig tilstand og ingen saker når tilgangssjekken feiler", async () => {
@@ -310,24 +418,21 @@ describe("FordelingSide loader", () => {
     expect(resultat.saker).toEqual([]);
   });
 
-  it("feiler tydelig når innlogget bruker ikke kan knyttes til en konfigurert enhet", async () => {
+  it("bevarer backend-avslag for valgt omfang", async () => {
     testState.skalBrukeMockdata = false;
-    hentInnloggetBrukerMock.mockResolvedValueOnce({
-      preferredUsername: "test",
-      name: "Saks Behandlersen",
-      navIdent: "Z999999",
-      enhet: "Ukjent enhet",
-      enhetId: null,
+    vi.mocked(hentKontrollsakerForFordeling).mockRejectedValue({
+      init: { status: 403 },
     });
 
     const { loader } = await import("./FordelingSide.server");
 
     await expect(
       loader({
-        request: new Request("http://localhost/fordeling"),
+        request: new Request("http://localhost/fordeling?omfang=organisasjon"),
         params: {},
         context: {},
       } as Route.LoaderArgs),
-    ).rejects.toThrow("Fant ikke konfigurert enhet for innlogget bruker.");
+    ).rejects.toMatchObject({ init: { status: 403 } });
+    expect(hentKontrollsakerForFordeling).toHaveBeenCalledTimes(1);
   });
 });
