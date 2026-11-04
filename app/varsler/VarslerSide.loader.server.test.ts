@@ -1,14 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Varsel } from "./typer";
 
-const testState = vi.hoisted(() => ({
-  skalBrukeMockdata: true,
-}));
-
+const testState = vi.hoisted(() => ({ skalBrukeMockdata: true }));
 const getBackendOboTokenMock = vi.hoisted(() => vi.fn().mockResolvedValue("token-123"));
-const hentAlleVarslerMock = vi.hoisted(() =>
-  vi.fn().mockResolvedValue({ varsler: [], harFlere: false, totalItems: 0 }),
+const hentVarselsideMock = vi.hoisted(() =>
+  vi.fn().mockResolvedValue({ varsler: [], totalItems: 0, totalSider: 1 }),
 );
-const hentAntallUlesteMock = vi.hoisted(() => vi.fn().mockResolvedValue(0));
 const hentVarslerFraMockMock = vi.hoisted(() => vi.fn().mockReturnValue([]));
 
 vi.mock("~/config/env.server", () => ({
@@ -16,25 +13,25 @@ vi.mock("~/config/env.server", () => ({
     return testState.skalBrukeMockdata;
   },
 }));
-
-vi.mock("~/auth/access-token", () => ({
-  getBackendOboToken: getBackendOboTokenMock,
-}));
-
-vi.mock("~/varsler/api.server", () => ({
-  hentAlleVarsler: hentAlleVarslerMock,
-  hentAntallUleste: hentAntallUlesteMock,
-}));
-
-vi.mock("~/varsler/mock-data.server", () => ({
-  hentVarsler: hentVarslerFraMockMock,
-}));
+vi.mock("~/auth/access-token", () => ({ getBackendOboToken: getBackendOboTokenMock }));
+vi.mock("~/varsler/api.server", () => ({ hentVarselside: hentVarselsideMock }));
+vi.mock("~/varsler/mock-data.server", () => ({ hentVarsler: hentVarslerFraMockMock }));
 
 async function runLoader(url: string) {
   const { loader } = await import("./VarslerSide.loader.server");
-  const request = new Request(url);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return loader({ request, params: {}, context: {} } as any);
+  return loader({ request: new Request(url), params: {}, context: {} } as any);
+}
+
+function lagVarsler(antall: number, erLest: boolean, prefiks: string): Varsel[] {
+  return Array.from({ length: antall }, (_, i) => ({
+    id: `${prefiks}${i}`,
+    sakId: "1",
+    tittel: "T",
+    tekst: "T",
+    tidspunkt: "2026-01-01",
+    erLest,
+  }));
 }
 
 describe("VarslerSide loader", () => {
@@ -45,87 +42,69 @@ describe("VarslerSide loader", () => {
   });
 
   describe("mock-modus", () => {
-    it("returnerer page=1 og varsler fra mock", async () => {
+    it("deler varslene i uleste og leste med maks 10 per side", async () => {
       hentVarslerFraMockMock.mockReturnValue([
-        { id: "v1", sakId: "101", tittel: "T", tekst: "T", tidspunkt: "2026-01-01", erLest: false },
+        ...lagVarsler(12, false, "u"),
+        ...lagVarsler(25, true, "l"),
       ]);
 
       const resultat = await runLoader("http://localhost/varsler");
 
-      expect(resultat.page).toBe(1);
-      expect(resultat.varsler).toHaveLength(1);
+      expect(resultat.uleste.varsler).toHaveLength(10);
+      expect(resultat.uleste.totalItems).toBe(12);
+      expect(resultat.uleste.harFlere).toBe(true);
+      expect(resultat.leste.varsler).toHaveLength(10);
+      expect(resultat.leste.totalItems).toBe(25);
+      expect(resultat.leste.totalSider).toBe(3);
+      expect(resultat.leste.side).toBe(1);
     });
 
-    it("faller tilbake til side 1 ved ugyldig page-parameter (NaN-sikring)", async () => {
-      const resultat = await runLoader("http://localhost/varsler?page=abc");
-      expect(resultat.page).toBe(1);
+    it("bruker side for leste og ulesteSide for uleste hver for seg", async () => {
+      hentVarslerFraMockMock.mockReturnValue([
+        ...lagVarsler(12, false, "u"),
+        ...lagVarsler(25, true, "l"),
+      ]);
+
+      const resultat = await runLoader("http://localhost/varsler?side=3&ulesteSide=2");
+
+      expect(resultat.leste.side).toBe(3);
+      expect(resultat.leste.varsler.map((v) => v.id)).toEqual(["l20", "l21", "l22", "l23", "l24"]);
+      expect(resultat.uleste.varsler.map((v) => v.id)).toEqual(["u10", "u11"]);
+      expect(resultat.uleste.harFlere).toBe(false);
     });
 
-    it("faller tilbake til side 1 ved negativt sidenummer", async () => {
-      const resultat = await runLoader("http://localhost/varsler?page=-3");
-      expect(resultat.page).toBe(1);
-    });
+    it.each(["abc", "-3", "0"])("faller tilbake til side 1 ved ugyldig side=%s", async (side) => {
+      const resultat = await runLoader(`http://localhost/varsler?side=${side}&ulesteSide=${side}`);
 
-    it("paginerer korrekt — returnerer harFlere=true når det finnes mer data", async () => {
-      const mange = Array.from({ length: 25 }, (_, i) => ({
-        id: `v${i}`,
-        sakId: "1",
-        tittel: "T",
-        tekst: "T",
-        tidspunkt: "2026-01-01",
-        erLest: false,
-      }));
-      hentVarslerFraMockMock.mockReturnValue(mange);
-
-      const resultat = await runLoader("http://localhost/varsler?page=1");
-
-      expect(resultat.harFlere).toBe(true);
+      expect(resultat.leste.side).toBe(1);
+      expect(resultat.uleste.side).toBe(1);
     });
   });
 
   describe("backend-modus", () => {
-    it("kaller hentAlleVarsler med riktig token og side", async () => {
+    it("henter uleste og leste med riktig filter, side og sidestørrelse", async () => {
       testState.skalBrukeMockdata = false;
 
-      await runLoader("http://localhost/varsler?page=3");
+      await runLoader("http://localhost/varsler?side=4&ulesteSide=2");
 
-      expect(hentAlleVarslerMock).toHaveBeenCalledWith("token-123", 3, expect.any(Number));
+      expect(hentVarselsideMock).toHaveBeenCalledWith("token-123", "uleste", 2, 10);
+      expect(hentVarselsideMock).toHaveBeenCalledWith("token-123", "leste", 4, 10);
     });
 
-    it("returnerer resultat fra backend med korrekt page", async () => {
+    it("returnerer totaler og om det finnes flere uleste", async () => {
       testState.skalBrukeMockdata = false;
-      hentAlleVarslerMock.mockResolvedValue({ varsler: [], harFlere: true, totalItems: 42 });
-
-      const resultat = await runLoader("http://localhost/varsler?page=2");
-
-      expect(resultat.page).toBe(2);
-      expect(resultat.harFlere).toBe(true);
-      expect(resultat.totalItems).toBe(42);
-    });
-
-    it("returnerer antall uleste og leste fra backend", async () => {
-      testState.skalBrukeMockdata = false;
-      hentAlleVarslerMock.mockResolvedValue({ varsler: [], harFlere: true, totalItems: 42 });
-      hentAntallUlesteMock.mockResolvedValue(5);
+      hentVarselsideMock.mockImplementation(async (_token: string, filter: string) =>
+        filter === "uleste"
+          ? { varsler: [], totalItems: 15, totalSider: 2 }
+          : { varsler: [], totalItems: 42, totalSider: 5 },
+      );
 
       const resultat = await runLoader("http://localhost/varsler");
 
-      expect(hentAntallUlesteMock).toHaveBeenCalledWith("token-123");
-      expect(resultat.antallUleste).toBe(5);
-      expect(resultat.antallLeste).toBe(37);
+      expect(resultat.uleste.totalItems).toBe(15);
+      expect(resultat.uleste.harFlere).toBe(true);
+      expect(resultat.leste.totalItems).toBe(42);
+      expect(resultat.leste.totalSider).toBe(5);
     });
-  });
-
-  it("teller uleste og leste i mock-modus", async () => {
-    hentVarslerFraMockMock.mockReturnValue([
-      { id: "v1", sakId: "1", tittel: "T", tekst: "T", tidspunkt: "2026-01-01", erLest: false },
-      { id: "v2", sakId: "1", tittel: "T", tekst: "T", tidspunkt: "2026-01-01", erLest: true },
-      { id: "v3", sakId: "1", tittel: "T", tekst: "T", tidspunkt: "2026-01-01", erLest: true },
-    ]);
-
-    const resultat = await runLoader("http://localhost/varsler");
-
-    expect(resultat.antallUleste).toBe(1);
-    expect(resultat.antallLeste).toBe(2);
   });
 });

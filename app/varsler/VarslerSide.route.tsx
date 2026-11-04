@@ -1,7 +1,14 @@
 import { ArrowLeftIcon, BellIcon, InformationSquareIcon } from "@navikt/aksel-icons";
-import { BodyShort, Button, Heading, HStack, InfoCard, VStack } from "@navikt/ds-react";
-import { useEffect, useState } from "react";
-import { Form, useActionData, useFetcher, useLoaderData, useNavigate } from "react-router";
+import { BodyShort, Button, Heading, HStack, InfoCard, Pagination, VStack } from "@navikt/ds-react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
+import {
+  Form,
+  useActionData,
+  useFetcher,
+  useLoaderData,
+  useNavigate,
+  useSearchParams,
+} from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
 import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
@@ -18,38 +25,58 @@ export { loader } from "./VarslerSide.loader.server";
 
 export default function VarslerSide() {
   const actionData = useActionData<typeof action>();
-  const loaderData = useLoaderData<typeof loader>();
-  const lastFlereFetcher = useFetcher<typeof loader>();
-  const [akkumulerteVarsler, setAkkumulerteVarsler] = useState<Varsel[]>(loaderData.varsler);
-  const [nesteSide, setNesteSide] = useState(loaderData.page + 1);
-  const [harFlere, setHarFlere] = useState(loaderData.harFlere);
-  const [antall, setAntall] = useState({
-    uleste: loaderData.antallUleste,
-    leste: loaderData.antallLeste,
-  });
+  const { uleste, leste } = useLoaderData<typeof loader>();
+  const flereUlesteFetcher = useFetcher<typeof loader>();
+  const [, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const harForrigeSide = useHarForrigeSide();
 
-  // Synkroniser state når loaderen revalideres (f.eks. etter «Marker alle som lest»)
+  // Uleste lastes med «Last flere» og samles opp her. Listen nullstilles bare når
+  // første side faktisk endrer seg (f.eks. etter «Marker alle som lest»), ikke når
+  // brukeren blar i leste varsler og loaderen kjører på nytt.
+  const [ulesteState, setUlesteState] = useState({
+    varsler: uleste.varsler,
+    nesteSide: uleste.side + 1,
+    harFlere: uleste.harFlere,
+  });
+  const førsteSideNøkkel = uleste.varsler.map((v) => v.id).join(",");
+  const forrigeFørsteSideNøkkel = useRef(førsteSideNøkkel);
   useEffect(() => {
-    setAkkumulerteVarsler(loaderData.varsler);
-    setNesteSide(loaderData.page + 1);
-    setHarFlere(loaderData.harFlere);
-    setAntall({ uleste: loaderData.antallUleste, leste: loaderData.antallLeste });
-  }, [loaderData]);
+    if (forrigeFørsteSideNøkkel.current === førsteSideNøkkel) return;
+    forrigeFørsteSideNøkkel.current = førsteSideNøkkel;
+    setUlesteState({
+      varsler: uleste.varsler,
+      nesteSide: uleste.side + 1,
+      harFlere: uleste.harFlere,
+    });
+  }, [førsteSideNøkkel, uleste]);
 
   useEffect(() => {
-    const data = lastFlereFetcher.data;
-    if (data) {
-      setAkkumulerteVarsler((prev) => [...prev, ...data.varsler]);
-      setNesteSide(data.page + 1);
-      setHarFlere(data.harFlere);
-      setAntall({ uleste: data.antallUleste, leste: data.antallLeste });
-    }
-  }, [lastFlereFetcher.data]);
+    const data = flereUlesteFetcher.data;
+    if (!data) return;
+    setUlesteState((forrige) => {
+      const kjente = new Set(forrige.varsler.map((v) => v.id));
+      return {
+        varsler: [...forrige.varsler, ...data.uleste.varsler.filter((v) => !kjente.has(v.id))],
+        nesteSide: data.uleste.side + 1,
+        harFlere: data.uleste.harFlere,
+      };
+    });
+  }, [flereUlesteFetcher.data]);
 
-  const ulesteVarsler = akkumulerteVarsler.filter((v) => !v.erLest);
-  const lesteVarsler = akkumulerteVarsler.filter((v) => v.erLest);
+  function gåTilSide(side: number) {
+    setSearchParams(
+      (forrige) => {
+        const neste = new URLSearchParams(forrige);
+        neste.set("side", String(side));
+        return neste;
+      },
+      { preventScrollReset: true },
+    );
+  }
+
+  const ulesteVarsler = ulesteState.varsler;
+  const harIngenVarsler = uleste.totalItems === 0 && leste.totalItems === 0;
 
   return (
     <>
@@ -97,27 +124,47 @@ export default function VarslerSide() {
 
         <Innsendingsfeil svar={actionData} tekster={INNSENDINGSFEIL.merkVarslerLest} />
 
-        {akkumulerteVarsler.length === 0 ? (
+        {harIngenVarsler ? (
           <BodyShort className="text-ax-text-neutral-subtle">Du har ingen varsler.</BodyShort>
         ) : (
           <VStack gap="space-24">
-            <Varselgruppe tittel="Uleste" antall={antall.uleste} varsler={ulesteVarsler} />
-            <Varselgruppe tittel="Leste" antall={antall.leste} varsler={lesteVarsler} />
+            {ulesteVarsler.length > 0 && (
+              <Varselgruppe tittel="Uleste" antall={uleste.totalItems} varsler={ulesteVarsler}>
+                {ulesteState.harFlere && (
+                  <HStack justify="center">
+                    <Button
+                      type="button"
+                      variant="tertiary"
+                      size="small"
+                      loading={flereUlesteFetcher.state !== "idle"}
+                      onClick={() => {
+                        const params = new URLSearchParams({
+                          ulesteSide: String(ulesteState.nesteSide),
+                          side: String(leste.side),
+                        });
+                        flereUlesteFetcher.load(`${RouteConfig.VARSLER}?${params}`);
+                      }}
+                    >
+                      Last flere uleste
+                    </Button>
+                  </HStack>
+                )}
+              </Varselgruppe>
+            )}
 
-            {harFlere && (
-              <HStack justify="center">
-                <Button
-                  type="button"
-                  variant="tertiary"
-                  size="small"
-                  loading={lastFlereFetcher.state !== "idle"}
-                  onClick={() => {
-                    lastFlereFetcher.load(`${RouteConfig.VARSLER}?page=${nesteSide}`);
-                  }}
-                >
-                  Last flere
-                </Button>
-              </HStack>
+            {leste.totalItems > 0 && (
+              <Varselgruppe tittel="Leste" antall={leste.totalItems} varsler={leste.varsler}>
+                {leste.totalSider > 1 && (
+                  <HStack justify="center">
+                    <Pagination
+                      page={leste.side}
+                      onPageChange={gåTilSide}
+                      count={leste.totalSider}
+                      size="small"
+                    />
+                  </HStack>
+                )}
+              </Varselgruppe>
             )}
           </VStack>
         )}
@@ -145,12 +192,13 @@ function Varselgruppe({
   tittel,
   antall,
   varsler,
+  children,
 }: {
   tittel: string;
   antall: number;
   varsler: Varsel[];
+  children?: ReactNode;
 }) {
-  if (varsler.length === 0) return null;
   return (
     <section aria-label={tittel}>
       <VStack gap="space-16">
@@ -160,6 +208,7 @@ function Varselgruppe({
         {varsler.map((varsel) => (
           <Varselkort key={varsel.id} varsel={varsel} />
         ))}
+        {children}
       </VStack>
     </section>
   );
@@ -170,9 +219,20 @@ function Varselkort({ varsel }: { varsel: Varsel }) {
   return (
     <InfoCard size="small" data-color={varsel.erLest ? "neutral" : "info"}>
       <InfoCard.Header icon={<InformationSquareIcon aria-hidden />}>
-        <HStack gap="space-8" align="center" justify="space-between">
-          <InfoCard.Title as="h3">{varsel.tittel}</InfoCard.Title>
-          <BodyShort size="small" className="text-ax-text-neutral-subtle ml-auto">
+        <HStack
+          gap="space-8"
+          align="center"
+          justify="space-between"
+          wrap={false}
+          className="w-full flex-1"
+        >
+          <InfoCard.Title as="h3" className="min-w-0">
+            {getSaksreferanse(varsel.sakId)}: {varsel.tittel}
+          </InfoCard.Title>
+          <BodyShort
+            size="small"
+            className="text-ax-text-neutral-subtle ml-auto shrink-0 whitespace-nowrap"
+          >
             <time dateTime={varsel.tidspunkt}>{formaterVarselTidspunkt(varsel.tidspunkt)}</time>
           </BodyShort>
         </HStack>
