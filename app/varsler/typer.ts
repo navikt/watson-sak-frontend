@@ -64,3 +64,23 @@ export function varselDestinasjon(varsel: Varsel, sakReferanse: string): string 
   }
   return RouteConfig.SAKER_DETALJ.replace(":sakId", sakReferanse);
 }
+
+const varselTidspunktFormat = new Intl.DateTimeFormat("nb-NO", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+  timeZone: "Europe/Oslo",
+});
+
+/** Formaterer tidspunktet som «02.05.2026, 10:32». Ugyldig input returneres uendret. */
+export function formaterVarselTidspunkt(iso: string): string {
+  const dato = new Date(iso);
+  if (Number.isNaN(dato.getTime())) return iso;
+  const deler = Object.fromEntries(
+    varselTidspunktFormat.formatToParts(dato).map((del) => [del.type, del.value]),
+  );
+  return `${deler.day}.${deler.month}.${deler.year}, ${deler.hour}:${deler.minute}`;
+}

@@ -39,6 +39,13 @@ export async function hentUlesteVarsler(token: string): Promise<Varsel[]> {
   return data.items.map(tilVarsel).sort((a, b) => b.tidspunkt.localeCompare(a.tidspunkt));
 }
 
+/** Totalt antall uleste varsler. Henter én rad og leser `totalItems` fra pagineringen. */
+export async function hentAntallUleste(token: string): Promise<number> {
+  const params = new URLSearchParams({ kunUleste: "true", page: "1", size: "1" });
+  const data = await fetchVarslerPage(token, params, "hentAntallUleste");
+  return data.totalItems;
+}
+
 export interface VarslerPage {
   varsler: Varsel[];
   harFlere: boolean;
