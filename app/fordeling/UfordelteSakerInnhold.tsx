@@ -89,10 +89,15 @@ export function UfordelteSakerInnhold({
       (nøkkel) => [nøkkel, searchParams.getAll(nøkkel)],
     ),
   ]);
-  // Valget gjelder bare konteksten det ble gjort i. Nullstiller modalen uten å remontere
-  // liste og filtre, så tastaturfokus beholdes når filter, sortering eller side endres.
-  const [tildeling, setTildeling] = useState<{ kontekst: string; sak: FordelingSak } | null>(null);
-  const sakSomTildeles = tildeling?.kontekst === modalKontekst ? tildeling.sak : null;
+  // Nullstiller valgt sak når filter, sortering, side eller omfang endres. Tilstanden justeres
+  // under rendering i stedet for å remontere liste og filtre, så tastaturfokus beholdes og
+  // tilbakenavigering ikke kan gjenopprette et gammelt valg.
+  const [sakSomTildeles, setSakSomTildeles] = useState<FordelingSak | null>(null);
+  const [forrigeKontekst, setForrigeKontekst] = useState(modalKontekst);
+  if (forrigeKontekst !== modalKontekst) {
+    setForrigeKontekst(modalKontekst);
+    setSakSomTildeles(null);
+  }
   const søkestreng = searchParams.toString();
   const tilbakemål = {
     to: søkestreng ? `${RouteConfig.FORDELING}?${søkestreng}` : RouteConfig.FORDELING,
@@ -233,7 +238,7 @@ export function UfordelteSakerInnhold({
                             const valgtSak = saker.find((sak) => sak.id === rad.id);
 
                             if (valgtSak) {
-                              setTildeling({ kontekst: modalKontekst, sak: valgtSak });
+                              setSakSomTildeles(valgtSak);
                             }
                           }}
                           className="cursor-pointer border-none bg-transparent p-0 text-sm font-semibold text-ax-text-accent underline-offset-2 hover:underline focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
@@ -324,7 +329,7 @@ export function UfordelteSakerInnhold({
               saksbehandlerDetaljer={saksbehandlerDetaljer}
               submitPath={submitPath}
               åpen={sakSomTildeles !== null}
-              onClose={() => setTildeling(null)}
+              onClose={() => setSakSomTildeles(null)}
             />
           </>
         )}

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import {
   createMemoryRouter,
@@ -118,6 +118,24 @@ describe("UfordelteSakerInnhold", () => {
     expect(mottattState).toEqual({
       tilbake: { to: `${RouteConfig.FORDELING}${søk}`, label: "Ufordelte saker" },
     });
+  });
+
+  it("åpner ikke tildelingsmodalen igjen når brukeren går tilbake til samme kontekst", async () => {
+    const router = createMemoryRouter(
+      [{ path: "/", element: <UfordelteSakerInnhold {...standardProps} /> }],
+      { initialEntries: ["/"] },
+    );
+    render(<RouterProvider router={router} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Tildel" }));
+    expect(screen.getByRole("dialog", { name: "Tildel sak 301" })).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: "Utroskap" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+
+    await act(() => router.navigate(-1));
+    expect(router.state.location.search).toBe("");
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("viser enheten i overskriften og fanetittelen", () => {
