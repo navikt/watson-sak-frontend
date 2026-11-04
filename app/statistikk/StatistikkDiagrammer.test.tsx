@@ -41,6 +41,38 @@ describe("StatistikkDiagrammer", () => {
     expect(screen.getByText("Sakskategorifordeling")).toBeDefined();
   });
 
+  it("viser antall saker per steg og samlet antall per sakstype", () => {
+    renderMedRouter((data) => ({
+      ...data,
+      sakstyper: [
+        {
+          navn: "Samliv",
+          filterverdi: "SAMLIV",
+          deler: [
+            { navn: "Opprettet", filterverdi: "OPPRETTET", verdi: 7 },
+            { navn: "Utredning", filterverdi: "UTREDNING", verdi: 5 },
+          ],
+        },
+        {
+          navn: "Arbeid",
+          filterverdi: "ARBEID",
+          deler: [{ navn: "Opprettet", filterverdi: "OPPRETTET", verdi: 3 }],
+        },
+      ],
+    }));
+
+    const samliv = screen.getByLabelText("Samliv, Opprettet: 7 saker");
+    expect(samliv.textContent).toBe("7");
+    expect(screen.getByLabelText("Samliv, Utredning: 5 saker").textContent).toBe("5");
+    expect(screen.getByText("12")).toBeDefined();
+
+    const stolpe = (navn: string) =>
+      screen.getByLabelText(`${navn}, Opprettet: ${navn === "Samliv" ? 7 : 3} saker`)
+        .parentElement as HTMLElement;
+    expect(stolpe("Samliv").style.width).toContain("calc(1 *");
+    expect(stolpe("Arbeid").style.width).toContain("calc(0.25 *");
+  });
+
   it("lenker åpne, aktive og ventende nøkkeltall til riktig saksfilter", () => {
     renderMedRouter();
 
