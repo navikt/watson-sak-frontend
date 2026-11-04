@@ -20,12 +20,12 @@ export function TagOverflow({ tags, tomInnhold = "–" }: TagOverflowProps) {
 
   return (
     <HStack gap="space-4" wrap={false} align="center">
-      <Tag variant="outline" data-color="info" size="small">
+      <Tag variant="outline" data-color="info" size="small" className="whitespace-nowrap shrink-0">
         {første}
       </Tag>
       {resten.length > 0 && (
         <Tooltip content={resten.join(", ")}>
-          <Tag variant="neutral" size="small">
+          <Tag variant="neutral" size="small" className="whitespace-nowrap shrink-0">
             +{resten.length}
           </Tag>
         </Tooltip>

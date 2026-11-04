@@ -13,7 +13,7 @@ import { hentLederOversiktData } from "~/lederoversikt/loader.server";
 import { lagLederVelkomstOppsummering } from "~/lederoversikt/velkomst";
 import { hentMineSaker } from "~/saker/mock-alle-saker.server";
 import { lagMockMineSakerOppsummering } from "~/saker/mock-oppsummering.server";
-import { getOpprettetDato } from "~/saker/selectors";
+import { getOppdatertDato } from "~/saker/selectors";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { erBackendUtilgjengelig } from "~/utils/backend-utilgjengelig.server";
 import { hentMineSakerOppsummering, type MineSakerOppsummering } from "./api.server";
@@ -98,7 +98,7 @@ async function lastSaksbehandlerData(
   );
 
   const mineSaker = [...aktiveMineSaker]
-    .sort((a, b) => getOpprettetDato(b).localeCompare(getOpprettetDato(a)))
+    .sort((a, b) => getOppdatertDato(b).localeCompare(getOppdatertDato(a)))
     .slice(0, 10);
 
   const velkomstOppsummering = oppsummering ? lagVelkomstOppsummering(oppsummering) : null;
