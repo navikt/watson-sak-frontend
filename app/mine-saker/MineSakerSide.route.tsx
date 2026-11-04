@@ -30,7 +30,8 @@ export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const harFilterParams = url.searchParams.has("steg") || url.searchParams.has("status");
 
-  const stegFilter = harFilterParams ? parseSteg(url.searchParams.getAll("steg")) : [];
+  // Uten filter i URL-en skjuler vi avsluttede saker (TH-122).
+  const stegFilter = harFilterParams ? parseSteg(url.searchParams.getAll("steg")) : [...ALLE_STEG];
 
   const statusFilter = harFilterParams ? parseVentestatuser(url.searchParams.getAll("status")) : [];
 
@@ -50,12 +51,15 @@ export async function loader({ request }: Route.LoaderArgs) {
       // Sorteringen og sidedelingen skjer i klienten, så vi henter alle saker på én gang.
       // TODO: Flytt sidedeling og sortering til backend (se RAILS-2-1). size=200 er en midlertidig øvre grense.
       size: 200,
+    };
+    // Filtrene gjelder bare Mine saker. Delt med meg henter alltid alle delte saker.
+    const mineFiltre = {
       steg: stegFilter.length > 0 ? stegFilter : undefined,
       status: blokkerendeStatus.length > 0 ? blokkerendeStatus : undefined,
       utenStatus: harIngenStatus ? true : undefined,
     };
     const resultat = await hentParEllerUtilgjengelig(
-      hentKontrollsaker({ ...felles, ansvarlig: "MEG" }),
+      hentKontrollsaker({ ...felles, ...mineFiltre, ansvarlig: "MEG" }),
       hentKontrollsaker({ ...felles, tilknyttet: "MEG" }),
     );
     if (resultat.saksdataUtilgjengelig) {

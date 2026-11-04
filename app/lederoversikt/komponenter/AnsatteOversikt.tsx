@@ -27,7 +27,7 @@ function sorterAnsatte(
     if (sortering.kolonne === "navn") {
       return a.navn.localeCompare(b.navn, "nb") * faktor;
     }
-    return (a.totaltAntallIkkeAvsluttede - b.totaltAntallIkkeAvsluttede) * faktor;
+    return (a.antallAktive - b.antallAktive) * faktor;
   });
 }
 
@@ -75,8 +75,9 @@ export function AnsatteOversikt({
   const synlige = visAlle ? sorterte : sorterte.slice(0, STANDARD_ANTALL_SYNLIGE);
   const maksAntall = Math.max(
     1,
-    ansatte.ufordelt.totaltAntallIkkeAvsluttede,
-    ...ansatte.liste.map((ansatt) => ansatt.totaltAntallIkkeAvsluttede),
+    ansatte.ufordelt.antallAktive,
+    ansatte.andreSaksbehandlere?.antallAktive ?? 0,
+    ...ansatte.liste.map((ansatt) => ansatt.antallAktive),
   );
   const kanViseFærre = ansatte.liste.length > STANDARD_ANTALL_SYNLIGE;
 
@@ -121,7 +122,7 @@ export function AnsatteOversikt({
           </BodyShort>
         ) : null}
 
-        {(ansatte.liste.length > 0 || ansatte.ufordelt.totaltAntallIkkeAvsluttede > 0) && (
+        {(ansatte.liste.length > 0 || ansatte.ufordelt.antallAktive > 0) && (
           <>
             <Table size="small">
               <Table.Header>
@@ -202,6 +203,14 @@ export function AnsatteOversikt({
                     <AnsattStolpe ansatt={ansatte.ufordelt} maksAntall={maksAntall} />
                   </Table.DataCell>
                 </Table.Row>
+                {ansatte.andreSaksbehandlere && ansatte.andreSaksbehandlere.antallAktive > 0 && (
+                  <Table.Row>
+                    <Table.DataCell>Andre saksbehandlere</Table.DataCell>
+                    <Table.DataCell>
+                      <AnsattStolpe ansatt={ansatte.andreSaksbehandlere} maksAntall={maksAntall} />
+                    </Table.DataCell>
+                  </Table.Row>
+                )}
               </Table.Body>
             </Table>
 
@@ -244,33 +253,33 @@ function AnsattStolpe({
   maksAntall,
 }: {
   ansatt: {
-    totaltAntallIkkeAvsluttede: number;
-    antallOverFrist: number;
+    antallAktive: number;
+    antallAktiveOverFrist: number;
   };
   maksAntall: number;
 }) {
   const bredde = (antall: number) => `${(antall / maksAntall) * 100}%`;
-  const innenforFrist = ansatt.totaltAntallIkkeAvsluttede - ansatt.antallOverFrist;
+  const innenforFrist = ansatt.antallAktive - ansatt.antallAktiveOverFrist;
 
   return (
     <HStack gap="space-4" align="center">
       <div
         role="img"
-        aria-label={`${innenforFrist} innenfor frist og ${ansatt.antallOverFrist} over frist, av totalt ${ansatt.totaltAntallIkkeAvsluttede} saker`}
+        aria-label={`${innenforFrist} innenfor frist og ${ansatt.antallAktiveOverFrist} over frist, av totalt ${ansatt.antallAktive} aktive saker`}
         className="flex h-4 min-w-24 flex-1 overflow-hidden rounded-sm bg-ax-bg-neutral-moderate"
       >
         {innenforFrist > 0 && (
           <div className="h-full bg-ax-bg-accent-strong" style={{ width: bredde(innenforFrist) }} />
         )}
-        {ansatt.antallOverFrist > 0 && (
+        {ansatt.antallAktiveOverFrist > 0 && (
           <div
             className="h-full bg-ax-bg-danger-strong"
-            style={{ width: bredde(ansatt.antallOverFrist) }}
+            style={{ width: bredde(ansatt.antallAktiveOverFrist) }}
           />
         )}
       </div>
       <BodyShort size="small" className="w-6 shrink-0 text-right tabular-nums">
-        {ansatt.totaltAntallIkkeAvsluttede}
+        {ansatt.antallAktive}
       </BodyShort>
     </HStack>
   );

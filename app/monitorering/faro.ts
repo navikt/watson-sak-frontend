@@ -1,12 +1,14 @@
 import {
   getWebInstrumentations,
   initializeFaro,
+  LogLevel,
   ReactIntegration,
   ReactRouterVersion,
   type Faro,
 } from "@grafana/faro-react";
 import { useEffect } from "react";
 import { matchRoutes, unstable_useRoute } from "react-router";
+import { fjernPersondata } from "./faro-persondata";
 
 export function useFaro() {
   const { loaderData } = unstable_useRoute("root");
@@ -32,6 +34,10 @@ function initFaro(url: string) {
     url,
     app: {
       name: "watson-sak",
+    },
+    beforeSend: fjernPersondata,
+    consoleInstrumentation: {
+      disabledLevels: [LogLevel.DEBUG, LogLevel.TRACE, LogLevel.LOG, LogLevel.INFO],
     },
     sessionTracking: {
       enabled: true,

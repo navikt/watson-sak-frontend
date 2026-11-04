@@ -2,6 +2,7 @@ import { parseWithZod } from "@conform-to/zod/v4";
 import { data } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { skalBrukeMockdata } from "~/config/env.server";
+import { tekniskFeilSvar } from "~/feilhåndtering/teknisk-feil.server";
 import { logger } from "~/logging/logging";
 import { getSaksreferanse } from "~/saker/id";
 import { erFnr } from "~/utils/string-utils";
@@ -75,63 +76,67 @@ export async function action({ request }: Route.ActionArgs) {
     return submission.reply();
   }
 
-  const skjemaData = submission.value;
-  const token = skalBrukeMockdata ? "demo" : await getBackendOboToken(request);
+  try {
+    const skjemaData = submission.value;
+    const token = skalBrukeMockdata ? "demo" : await getBackendOboToken(request);
 
-  const resultat = await opprettKontrollsak({
-    request,
-    token,
-    payload: byggOpprettKontrollsakPayload({ skjema: skjemaData }),
-  });
+    const resultat = await opprettKontrollsak({
+      request,
+      token,
+      payload: byggOpprettKontrollsakPayload({ skjema: skjemaData }),
+    });
 
-  if (!resultat.ok) {
-    if ("kontrollsakId" in resultat) {
-      return submission.reply({
-        formErrors: [
-          resultat.kontrollsakId > 0
-            ? `Denne saken er allerede overført til kontrollsak ${resultat.kontrollsakId}.`
-            : "Denne saken er allerede overført til en kontrollsak.",
-        ],
-      });
+    if (!resultat.ok) {
+      if ("kontrollsakId" in resultat) {
+        return submission.reply({
+          formErrors: [
+            resultat.kontrollsakId > 0
+              ? `Denne saken er allerede overført til kontrollsak ${resultat.kontrollsakId}.`
+              : "Denne saken er allerede overført til en kontrollsak.",
+          ],
+        });
+      }
+      if (resultat.status === 404) {
+        return submission.reply({
+          formErrors: [
+            "Personen ble ikke funnet. Søk på nytt for å bekrefte at personen eksisterer.",
+          ],
+        });
+      }
+      if (resultat.status === 403) {
+        // Forsvar i dybden: personoppslaget nekter i praksis allerede saksbehandlere
+        // uten nødvendig tilgang, men tilgang kan i teorien endre seg mellom oppslag
+        // og innsending av skjemaet.
+        return submission.reply({
+          formErrors: [INGEN_TILGANG_TIL_Å_OPPRETTE_SAK_MELDING],
+        });
+      }
+      logger.error("Uventet feil ved opprettelse av kontrollsak", { status: resultat.status });
+      throw new Error(resultat.melding);
     }
-    if (resultat.status === 404) {
-      return submission.reply({
-        formErrors: [
-          "Personen ble ikke funnet. Søk på nytt for å bekrefte at personen eksisterer.",
-        ],
-      });
+
+    const filer = formData
+      .getAll("filer")
+      .filter((f: FormDataEntryValue): f is File => f instanceof File && f.size > 0);
+    if (filer.length > 0) {
+      if (skalBrukeMockdata) {
+        await Promise.all(
+          filer.map((fil: File) => lastOppFil(request, token, resultat.sak.id, fil, true)),
+        );
+      } else {
+        Promise.all(
+          filer.map((fil: File) => lastOppFil(request, token, resultat.sak.id, fil, true)),
+        ).catch((err) => {
+          logger.error("Uventet feil ved filopplasting etter sak-opprettelse", { err });
+        });
+      }
     }
-    if (resultat.status === 403) {
-      // Forsvar i dybden: personoppslaget nekter i praksis allerede saksbehandlere
-      // uten nødvendig tilgang, men tilgang kan i teorien endre seg mellom oppslag
-      // og innsending av skjemaet.
-      return submission.reply({
-        formErrors: [INGEN_TILGANG_TIL_Å_OPPRETTE_SAK_MELDING],
-      });
-    }
-    logger.error("Uventet feil ved opprettelse av kontrollsak", { status: resultat.status });
-    throw new Error(resultat.melding);
+
+    return data({
+      ok: true as const,
+      sakId: getSaksreferanse(resultat.sak.id),
+    });
+  } catch (feil) {
+    return tekniskFeilSvar(feil, { kontekst: "registrere sak", request });
   }
-
-  const filer = formData
-    .getAll("filer")
-    .filter((f: FormDataEntryValue): f is File => f instanceof File && f.size > 0);
-  if (filer.length > 0) {
-    if (skalBrukeMockdata) {
-      await Promise.all(
-        filer.map((fil: File) => lastOppFil(request, token, resultat.sak.id, fil, true)),
-      );
-    } else {
-      Promise.all(
-        filer.map((fil: File) => lastOppFil(request, token, resultat.sak.id, fil, true)),
-      ).catch((err) => {
-        logger.error("Uventet feil ved filopplasting etter sak-opprettelse", { err });
-      });
-    }
-  }
-
-  return data({
-    ok: true as const,
-    sakId: getSaksreferanse(resultat.sak.id),
-  });
 }

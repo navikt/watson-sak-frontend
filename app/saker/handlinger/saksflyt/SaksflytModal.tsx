@@ -1,9 +1,11 @@
-import { useEffect, useReducer, useRef } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { BodyShort, Button, ErrorMessage, HStack, Modal, VStack } from "@navikt/ds-react";
 import { useFetcher } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import type { TillatteHandlingerResponse } from "~/saker/types.backend";
+import { INNSENDINGSFEIL, type Innsendingstekster } from "~/feilhåndtering/feilmeldinger";
+import { erTekniskFeilSvar, Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
 import { byggLagreResultatRequest } from "../resultat-request";
 import {
   byggInnsending,
@@ -21,6 +23,7 @@ import { MenyTrinn } from "./trinn/MenyTrinn";
 import { SkjemaTrinn } from "./trinn/SkjemaTrinn";
 import { EnkeltvalgTrinn, SjekklisteTrinn, StatusTrinn } from "./trinn/ValgTrinn";
 import { validerTrinn } from "./validering";
+import { SAK_UNDER_FLYTTING_FEIL } from "~/migrering/avslutning";
 
 export type SaksflytStart = "meny" | "endre-status";
 
@@ -28,10 +31,18 @@ type SaksflytModalProps = {
   sakId: string;
   tillatteHandlinger: TillatteHandlingerResponse;
   start: SaksflytStart;
+  avslutningKreverFerdigFlyttet?: boolean;
   onClose: () => void;
 };
 
 const lagringsfeil = "Kunne ikke lagre endringen. Last inn siden på nytt og prøv igjen.";
+
+/** Feiltekster for handlingen som ble sendt (nr. 7a–7c i oversikten). */
+function teksterForSaksflyt(handling: FormDataEntryValue | null): Innsendingstekster {
+  if (handling === "endre_status") return INNSENDINGSFEIL.endreStatus;
+  if (handling === "lagre_resultat") return INNSENDINGSFEIL.lagreResultat;
+  return INNSENDINGSFEIL.endreSteg;
+}
 
 function trinntittel(trinn: Trinn) {
   return trinn.type === "bekreftAvslutning" ? "Avslutt sak" : trinn.tittel;
@@ -59,10 +70,18 @@ function sekundærknapp(trinn: Trinn, kanGåTilbake: boolean) {
  * Hver handling er en liste med trinn (se `saksflyt.ts`). Modalen viser menyen, går gjennom
  * trinnene og sender alt i ett kall etter siste trinn.
  */
-export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: SaksflytModalProps) {
+export function SaksflytModal({
+  sakId,
+  tillatteHandlinger,
+  start,
+  avslutningKreverFerdigFlyttet = false,
+  onClose,
+}: SaksflytModalProps) {
   const fetcher = useFetcher();
   const erSubmitting = fetcher.state !== "idle";
   const venterPåSvar = useRef(false);
+  // Teksten i feilmeldingen følger handlingen som faktisk ble sendt.
+  const [feiltekster, settFeiltekster] = useState<Innsendingstekster>(INNSENDINGSFEIL.endreSteg);
   const [tilstand, dispatch] = useReducer(
     saksflytReducer,
     start === "endre-status"
@@ -99,6 +118,8 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
       fetcher.data.ok
     ) {
       dispatch({ type: "lagret" });
+    } else if (erTekniskFeilSvar(fetcher.data)) {
+      dispatch({ type: "settFeil", feil: {} });
     } else {
       const melding =
         fetcher.data &&
@@ -136,6 +157,7 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
         return;
       }
     }
+    settFeiltekster(teksterForSaksflyt(formData.get("handling")));
     venterPåSvar.current = true;
     fetcher.submit(formData, {
       method: "post",
@@ -146,6 +168,10 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
   function velgHandling(handling: Sakshandling) {
     const verdier = hentStartverdier(handling, tillatteHandlinger);
     if (handling.trinn.length === 0) {
+      if (avslutningKreverFerdigFlyttet && avslutterSaken(handling.innsending)) {
+        dispatch({ type: "settFeil", feil: { "": SAK_UNDER_FLYTTING_FEIL } });
+        return;
+      }
       send(handling, verdier);
       return;
     }
@@ -160,11 +186,12 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
       return;
     }
     const erSisteTrinn = tilstand.trinnIndeks === tilstand.handling.trinn.length - 1;
-    if (trinn.type === "enkeltvalg" && trinn.lagreValgUtenNeste?.(alleVerdier)) {
-      send(tilstand.handling, alleVerdier, { handling: "lagre_resultat" });
+    const sender = innsending ?? (erSisteTrinn ? tilstand.handling.innsending : undefined);
+    if (avslutningKreverFerdigFlyttet && sender && avslutterSaken(sender)) {
+      dispatch({ type: "settFeil", feil: { "": SAK_UNDER_FLYTTING_FEIL } });
       return;
     }
-    if (innsending || erSisteTrinn) {
+    if (sender) {
       send(tilstand.handling, tilstand.verdier, innsending);
     } else {
       dispatch({ type: "neste" });
@@ -211,6 +238,7 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
               onVelg={velgHandling}
               deaktivert={erSubmitting}
             />
+            <Innsendingsfeil svar={fetcher.data} tekster={feiltekster} />
             {generellFeil && <ErrorMessage showIcon>{generellFeil}</ErrorMessage>}
           </VStack>
         </Modal.Body>
@@ -282,6 +310,7 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
             (trinn.type === "skjema" && trinn.visAvslutningsvarsel?.(alleVerdier))) && (
             <Avslutningsvarsel />
           )}
+          <Innsendingsfeil svar={fetcher.data} tekster={feiltekster} />
           {generellFeil && <ErrorMessage showIcon>{generellFeil}</ErrorMessage>}
         </VStack>
       </Modal.Body>
@@ -300,4 +329,9 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
       </Modal.Footer>
     </Modal>
   );
+}
+
+/** Innsendingen flytter saken til Avsluttet. Lagring av påklaget henleggelse avslutter ikke. */
+function avslutterSaken(innsending: Innsending): boolean {
+  return innsending.handling === "endre_steg_dialog" && innsending.steg === "AVSLUTTET";
 }

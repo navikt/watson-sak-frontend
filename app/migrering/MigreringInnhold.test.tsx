@@ -128,12 +128,12 @@ beforeAll(() => {
 });
 
 describe("MigreringInnhold", () => {
-  it("viser overskrift, infotekst og tabell med PID, Fødsels- eller D-nummer, Opprettet i Access og Status", () => {
+  it("viser overskrift, infotekst og tabell med PID, Fødsels- eller d-nummer, Opprettet i Access og Status", () => {
     renderSide(lagLister({ liste: lagSide([kandidat("100245", "IKKE_PABEGYNT")]) }));
 
     expect(screen.getByRole("heading", { level: 1, name: "Flytt fra Access" })).not.toBeNull();
     expect(screen.getByText("Her ser du dine egne saker.", { exact: false })).not.toBeNull();
-    for (const navn of ["PID", "Fødsels- eller D-nummer", "Opprettet i Access", "Status"]) {
+    for (const navn of ["PID", "Fødsels- eller d-nummer", "Opprettet i Access", "Status"]) {
       expect(screen.getByRole("columnheader", { name: navn })).not.toBeNull();
     }
     expect(screen.getByText("112233 44556")).not.toBeNull();

@@ -8,7 +8,6 @@ const kategorier: {
   { nøkkel: "aktive", entall: "aktiv sak", flertall: "aktive saker" },
   { nøkkel: "nye", entall: "ny sak", flertall: "nye saker" },
   { nøkkel: "venter", entall: "sak på vent", flertall: "saker på vent" },
-  { nøkkel: "iBero", entall: "sak i bero", flertall: "saker i bero" },
 ];
 
 /** Viser de to største kategoriene fra oppsummeringen backend teller. */

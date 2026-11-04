@@ -1,6 +1,7 @@
 import { data, type ActionFunctionArgs } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
 import { skalBrukeMockdata } from "~/config/env.server";
+import { tekniskFeilSvar } from "~/feilhåndtering/teknisk-feil.server";
 import { markerVarselSomLest as markerSomLestApi } from "~/varsler/api.server";
 import { markerVarselSomLest as markerSomLestMock } from "~/varsler/mock-data.server";
 
@@ -16,14 +17,18 @@ export async function action({ request }: ActionFunctionArgs) {
     .getAll("varselId")
     .filter((id): id is string => typeof id === "string" && id.trim().length > 0);
 
-  if (skalBrukeMockdata) {
-    for (const id of varselIder) {
-      markerSomLestMock(request, id);
+  try {
+    if (skalBrukeMockdata) {
+      for (const id of varselIder) {
+        markerSomLestMock(request, id);
+      }
+    } else {
+      const token = await getBackendOboToken(request);
+      // TODO: Erstatt med batch-endepunkt når backend støtter det
+      await Promise.all(varselIder.map((id) => markerSomLestApi(token, id)));
     }
-  } else {
-    const token = await getBackendOboToken(request);
-    // TODO: Erstatt med batch-endepunkt når backend støtter det
-    await Promise.all(varselIder.map((id) => markerSomLestApi(token, id)));
+  } catch (feil) {
+    return tekniskFeilSvar(feil, { kontekst: "markere varsel som lest", request });
   }
 
   return { ok: true };

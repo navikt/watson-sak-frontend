@@ -105,7 +105,12 @@ export async function håndterFeil(
 ): Promise<never> {
   kastHvisUtlogget(respons);
   const detalj = await hentProblemDetail(respons);
-  const melding = `${beskrivelse} — status ${respons.status}${detalj ? `: ${detalj}` : ""}`;
+  // Backendens `detail` kan inneholde persondata. Den kan vises til brukeren der det er ment
+  // (f.eks. ved 409), men logges bare ved lokal utvikling.
+  const melding =
+    process.env.NODE_ENV === "development" && detalj
+      ? `${beskrivelse} — status ${respons.status}: ${detalj}`
+      : `${beskrivelse} — status ${respons.status}`;
   if (opts?.forventedeStatuser?.includes(respons.status)) {
     logger.warn(melding);
   } else {

@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { getSaksenhet } from "~/saker/selectors";
+import { lagMockOyeblikksbilde } from "~/saker/mock-oppsummering.server";
 import { lagInitialKontrollsaker } from "~/testing/mock-store/saker/fordeling.server";
 import { lagInitialMineKontrollsaker } from "~/testing/mock-store/saker/mine-saker.server";
 import { lagMockStatistikk } from "./mock.server";
@@ -39,6 +41,50 @@ describe("lagMockStatistikk", () => {
     );
 
     expect(resultat.varsler).toEqual([]);
+  });
+
+  it("beregner nøkkeltall fra sakene for valgt enhet", () => {
+    const saker = [...lagInitialKontrollsaker(), ...lagInitialMineKontrollsaker()];
+    const enhetId = "ky153k";
+    const enhetensSaker = saker.filter(
+      (sak) => getSaksenhet(sak) === enhetId || sak.saksbehandlere.eier?.enhet === enhetId,
+    );
+    const øyeblikksbilde = lagMockOyeblikksbilde(enhetensSaker);
+
+    const resultat = lagMockStatistikk(
+      { nivaa: "underavdeling", enhetId, fra: "2026-09-01", til: "2026-09-30" },
+      "Øst",
+      "hu424t",
+      { saker, navIdent: "Z123456" },
+    );
+    const nøkkeltall = Object.fromEntries(
+      resultat.nøkkeltall.map(({ label, verdi }) => [label, Number(verdi)]),
+    );
+
+    expect(nøkkeltall).toMatchObject({
+      Totalt: øyeblikksbilde.totalt,
+      Aktive: øyeblikksbilde.aktive,
+      "Venter på andre": øyeblikksbilde.venterPåAndre,
+      "Ikke fordelt": øyeblikksbilde.ikkeFordelt,
+    });
+    expect(nøkkeltall.Totalt).toBe(
+      øyeblikksbilde.nye + nøkkeltall.Aktive + nøkkeltall["Venter på andre"],
+    );
+  });
+
+  it("teller «Meg selv» fra samme utvalg som forsiden", () => {
+    const mineSaker = lagInitialMineKontrollsaker();
+
+    const resultat = lagMockStatistikk(
+      { nivaa: "meg", fra: "2026-09-01", til: "2026-09-30" },
+      "Øst",
+      "ky153k",
+      { saker: lagInitialKontrollsaker(), navIdent: "Z123456", mineSaker },
+    );
+
+    expect(resultat.nøkkeltall.find(({ label }) => label === "Totalt")?.verdi).toBe(
+      String(lagMockOyeblikksbilde(mineSaker).totalt),
+    );
   });
 
   it("lager alle datasett som statistikksiden trenger", () => {

@@ -348,4 +348,24 @@ describe("feilhåndtering", () => {
 
     await expect(hentKommentarliste(TOKEN, SAK, DOC)).rejects.toBeInstanceOf(KommentarBackendFeil);
   });
+
+  it.each([409, 403, 500])(
+    "logger ikke backendens detail ved %i, men gir den videre i feilen",
+    async (status) => {
+      const konsoll = [
+        vi.spyOn(console, "warn").mockImplementation(() => {}),
+        vi.spyOn(console, "error").mockImplementation(() => {}),
+      ];
+      fetchMock(problemDetail(status, "Kommentar om Ola Nordmann 12345678901"));
+
+      const feil = await slettKommentar(TOKEN, SAK, DOC, KOMMENTAR, 1).catch((e: unknown) => e);
+
+      const logg = JSON.stringify(konsoll.flatMap((spion) => spion.mock.calls));
+      expect(logg).toContain(`${status}`);
+      expect(logg).not.toContain("12345678901");
+      expect(logg).not.toContain("Nordmann");
+      expect((feil as Error).message).toBe("Kommentar om Ola Nordmann 12345678901");
+      for (const spion of konsoll) spion.mockRestore();
+    },
+  );
 });

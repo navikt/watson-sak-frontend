@@ -21,6 +21,8 @@ import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { formaterFødselsnummer } from "~/utils/string-utils";
 import { sporHendelse } from "~/analytics/analytics";
+import { erTekniskFeilSvar, Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import type { TildelingsSvar } from "./MigreringSide.server";
 import {
   hentMigreringsstatus,
@@ -141,7 +143,7 @@ function Kandidatliste({
           <Table.Header>
             <Table.Row>
               <Table.HeaderCell scope="col">PID</Table.HeaderCell>
-              <Table.HeaderCell scope="col">Fødsels- eller D-nummer</Table.HeaderCell>
+              <Table.HeaderCell scope="col">Fødsels- eller d-nummer</Table.HeaderCell>
               <Table.HeaderCell scope="col">Opprettet i Access</Table.HeaderCell>
               <Table.HeaderCell scope="col">Status</Table.HeaderCell>
               {erLeder && (
@@ -304,10 +306,15 @@ function EndreTildelingModal({
                 </option>
               ))}
             </Select>
-            {fetcher.data && !fetcher.data.ok && (
-              <Alert variant="error" size="small">
-                {fetcher.data.feil}
-              </Alert>
+            {erTekniskFeilSvar(fetcher.data) ? (
+              <Innsendingsfeil svar={fetcher.data} tekster={INNSENDINGSFEIL.tildelMigrering} />
+            ) : (
+              fetcher.data &&
+              !fetcher.data.ok && (
+                <Alert variant="error" size="small">
+                  {fetcher.data.feil}
+                </Alert>
+              )
             )}
           </VStack>
         </Modal.Body>

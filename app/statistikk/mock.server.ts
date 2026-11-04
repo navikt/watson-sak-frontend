@@ -1,10 +1,17 @@
 import type { Aldersvarsel } from "~/alle-saker/aldersfilter";
 import { filtrerSaker } from "~/alle-saker/saker-utils";
+import { getSaksenhet } from "~/saker/selectors";
+import { lagMockOyeblikksbilde } from "~/saker/mock-oppsummering.server";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import type { Statistikk, StatistikkSpørring } from "./types";
 
 /** Mock-sakene varslene telles i, og innlogget bruker for «Meg selv»-omfanget. */
-type Aldersgrunnlag = { saker: KontrollsakResponse[]; navIdent: string };
+/** `mineSaker` er samme utvalg som forsiden teller (hentMineSaker), med demosakene som eies av innlogget bruker. */
+type Aldersgrunnlag = {
+  saker: KontrollsakResponse[];
+  navIdent: string;
+  mineSaker?: KontrollsakResponse[];
+};
 
 /**
  * Teller med samme filter som «Alle saker» bruker i mockmodus, så tallet i varslet blir det
@@ -87,6 +94,32 @@ export function lagMockStatistikk(
       : spørring.nivaa === "hovedavdeling" && avdelingId
         ? [avdelingId]
         : [];
+  // Mocken kjenner bare valgt enhet og saker med enhetstilhørighet; hovedavdeling tar med underenheter som finnes i sakene.
+  const nøkkeltallEnheter =
+    spørring.nivaa === "hovedavdeling" && avdelingId
+      ? [
+          ...omfangEnheter,
+          ...new Set(
+            aldersgrunnlag.saker
+              .map(getSaksenhet)
+              .filter((enhet) => enhet.startsWith(`${avdelingId}-`)),
+          ),
+        ]
+      : omfangEnheter;
+  const nøkkeltallSaker =
+    spørring.nivaa === "meg"
+      ? (aldersgrunnlag.mineSaker ??
+        aldersgrunnlag.saker.filter(
+          (sak) => sak.saksbehandlere.eier?.navIdent === aldersgrunnlag.navIdent,
+        ))
+      : nøkkeltallEnheter.length > 0
+        ? aldersgrunnlag.saker.filter(
+            (sak) =>
+              nøkkeltallEnheter.includes(getSaksenhet(sak)) ||
+              nøkkeltallEnheter.includes(sak.saksbehandlere.eier?.enhet ?? ""),
+          )
+        : aldersgrunnlag.saker;
+  const øyeblikksbilde = lagMockOyeblikksbilde(nøkkeltallSaker);
 
   return {
     valgtOmfang:
@@ -116,25 +149,36 @@ export function lagMockStatistikk(
     periode: { fra: spørring.fra, til: spørring.til, label },
     varsler: lagVarsler(aldersgrunnlag, omfangEnheter, spørring.nivaa === "meg"),
     nøkkeltall: [
-      { label: "Totalt", verdi: "87", forklaring: "Antall åpne saker", tone: "accent" },
+      {
+        label: "Totalt",
+        verdi: String(øyeblikksbilde.totalt),
+        forklaring: `Åpne saker, inkludert ${øyeblikksbilde.nye} nye`,
+        tone: "accent",
+      },
       {
         label: "Aktive",
-        verdi: "60",
-        forklaring: "Aktiv i utredning eller strafferettslig vurdering",
+        verdi: String(øyeblikksbilde.aktive),
+        forklaring: "I utredning eller strafferettslig vurdering",
         tone: "warning",
       },
       {
         label: "Venter på andre",
-        verdi: "15",
-        forklaring: "Venter på informasjon/I bero/Forvaltning/Politi",
+        verdi: String(øyeblikksbilde.venterPåAndre),
+        forklaring:
+          "Venter på informasjon, vedtak eller resultat, i bero, forvaltning eller politi",
         tone: "accent",
       },
-      { label: "Ikke fordelt", verdi: "12", forklaring: "Saker", tone: "danger" },
+      {
+        label: "Ikke fordelt",
+        verdi: String(øyeblikksbilde.ikkeFordelt),
+        forklaring: "Saker",
+        tone: "danger",
+      },
       { label: "Eldste åpne sak", verdi: "27 mnd", forklaring: "Sak 102", tone: "neutral" },
       {
         label: "Saksbehandlingstid",
         verdi: "4 mnd",
-        forklaring: "Utredning (snitt)",
+        forklaring: "Utredes til avsluttet (snitt)",
         tone: "success",
       },
     ],

@@ -53,11 +53,18 @@ function lenkeForNøkkeltall(
   switch (tall.label) {
     case "Totalt":
       return lagStegfilterUrl(ALLE_STEG, data);
+    // Samme definisjon som SakKategori i backend, slik at lista viser like mange saker som kortet.
     case "Aktive":
-      return lagStegfilterUrl(["UTREDNING", "STRAFFERETTSLIG_VURDERING"], data, ["AKTIV"]);
+      return lagStegfilterUrl(["UTREDNING", "STRAFFERETTSLIG_VURDERING"], data, [
+        "AKTIV",
+        "PAAKLAGET",
+        "UTEN_STATUS",
+      ]);
     case "Venter på andre":
       return lagStegfilterUrl(ALLE_STEG, data, [
         "VENTER_PA_INFORMASJON",
+        "VENTER_PA_VEDTAK",
+        "VENTER_PA_RESULTAT",
         "I_BERO",
         "HOS_FORVALTNING",
         "HOS_POLITI",

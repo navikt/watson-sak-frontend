@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
+import { tekniskFeilSvar } from "~/feilhåndtering/teknisk-feil.server";
 import * as backendApi from "~/saker/api.server";
 import { kanLeseSaksinnhold } from "~/saker/sakstilgang";
 import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
@@ -103,8 +104,8 @@ function konfliktsvar(melding: string) {
 
 /**
  * Kommentering krever bare **lesetilgang**: en saksbehandler skal kunne kommentere
- * selv om dokumentet er låst eller saken er avsluttet. Det eneste som blokkerer
- * mutasjoner er at dokumentet er arkivert – og det gir 409, ikke 403.
+ * selv om dokumentet er låst. Avsluttet sak blokkerer mutasjoner med 403 (TH-101),
+ * og arkivert dokument gir 409.
  */
 async function krevLesetilgangIMock(request: Request, sakReferanse: string, docId: string) {
   const tilgang = await hentSakstilgangFraMock(request, sakReferanse);
@@ -115,7 +116,11 @@ async function krevLesetilgangIMock(request: Request, sakReferanse: string, docI
   const dokument = await hentDokument(request, sakId, docId);
   if (!dokument) throw data("Dokument ikke funnet", { status: 404 });
 
-  return { sakId, arkivert: dokument.arkivert ?? null };
+  return {
+    sakId,
+    arkivert: dokument.arkivert ?? null,
+    sakAvsluttet: tilgang.sak.steg === "AVSLUTTET",
+  };
 }
 
 async function krevLesetilgangIBackend(request: Request, sakReferanse: string) {
@@ -156,10 +161,18 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     }
   }
 
-  const { sakId, arkivert } = await krevLesetilgangIMock(request, sakReferanse, docId);
+  const { sakId, arkivert, sakAvsluttet } = await krevLesetilgangIMock(
+    request,
+    sakReferanse,
+    docId,
+  );
   const innlogget = await hentInnloggetBruker({ request });
   return Response.json(
-    hentKommentarliste(request, sakId, docId, { innloggetIdent: innlogget.navIdent, arkivert }),
+    hentKommentarliste(request, sakId, docId, {
+      innloggetIdent: innlogget.navIdent,
+      arkivert,
+      sakAvsluttet,
+    }),
   );
 }
 
@@ -192,150 +205,179 @@ export async function action({ request, params }: ActionFunctionArgs) {
     tekst = normalisert.tekst;
   }
 
-  if (!skalBrukeMockdata) {
-    const { token } = await krevLesetilgangIBackend(request, sakReferanse);
-    try {
-      switch (kropp.handling) {
-        case "opprett_traad":
-          return Response.json({
-            ok: true as const,
-            traad: await kommentarApi.opprettKommentartraad(token, sakReferanse, docId, {
-              traadId: kropp.traadId,
-              kommentarId: kropp.kommentarId,
-              anker: fraBackendAnker(kropp.ankerType, kropp.anker),
-              opprinneligSitat: kropp.opprinneligSitat ?? null,
-              tekst,
-            }),
-          });
-        case "opprett_kommentar":
-          return Response.json({
-            ok: true as const,
-            traad: await kommentarApi.opprettKommentar(token, sakReferanse, docId, kropp.traadId, {
-              kommentarId: kropp.kommentarId,
-              tekst,
-              traadVersjon: kropp.traadVersjon,
-            }),
-          });
-        case "rediger_kommentar":
-          return Response.json({
-            ok: true as const,
-            traad: await kommentarApi.redigerKommentar(
-              token,
-              sakReferanse,
-              docId,
-              kropp.kommentarId,
-              { tekst, versjon: kropp.versjon },
-            ),
-          });
-        case "slett_kommentar":
-          return Response.json({
-            ok: true as const,
-            traad: await kommentarApi.slettKommentar(
-              token,
-              sakReferanse,
-              docId,
-              kropp.kommentarId,
-              kropp.versjon,
-            ),
-          });
-        case "sett_adressering":
-          return Response.json({
-            ok: true as const,
-            traad: kropp.adressert
-              ? await kommentarApi.adresserKommentartraad(
-                  token,
-                  sakReferanse,
-                  docId,
-                  kropp.traadId,
-                  kropp.versjon,
-                )
-              : await kommentarApi.gjenaapneKommentartraad(
-                  token,
-                  sakReferanse,
-                  docId,
-                  kropp.traadId,
-                  kropp.versjon,
-                ),
-          });
+  try {
+    if (!skalBrukeMockdata) {
+      const { token } = await krevLesetilgangIBackend(request, sakReferanse);
+      try {
+        switch (kropp.handling) {
+          case "opprett_traad":
+            return Response.json({
+              ok: true as const,
+              traad: await kommentarApi.opprettKommentartraad(token, sakReferanse, docId, {
+                traadId: kropp.traadId,
+                kommentarId: kropp.kommentarId,
+                anker: fraBackendAnker(kropp.ankerType, kropp.anker),
+                opprinneligSitat: kropp.opprinneligSitat ?? null,
+                tekst,
+              }),
+            });
+          case "opprett_kommentar":
+            return Response.json({
+              ok: true as const,
+              traad: await kommentarApi.opprettKommentar(
+                token,
+                sakReferanse,
+                docId,
+                kropp.traadId,
+                {
+                  kommentarId: kropp.kommentarId,
+                  tekst,
+                  traadVersjon: kropp.traadVersjon,
+                },
+              ),
+            });
+          case "rediger_kommentar":
+            return Response.json({
+              ok: true as const,
+              traad: await kommentarApi.redigerKommentar(
+                token,
+                sakReferanse,
+                docId,
+                kropp.kommentarId,
+                { tekst, versjon: kropp.versjon },
+              ),
+            });
+          case "slett_kommentar":
+            return Response.json({
+              ok: true as const,
+              traad: await kommentarApi.slettKommentar(
+                token,
+                sakReferanse,
+                docId,
+                kropp.kommentarId,
+                kropp.versjon,
+              ),
+            });
+          case "sett_adressering":
+            return Response.json({
+              ok: true as const,
+              traad: kropp.adressert
+                ? await kommentarApi.adresserKommentartraad(
+                    token,
+                    sakReferanse,
+                    docId,
+                    kropp.traadId,
+                    kropp.versjon,
+                  )
+                : await kommentarApi.gjenaapneKommentartraad(
+                    token,
+                    sakReferanse,
+                    docId,
+                    kropp.traadId,
+                    kropp.versjon,
+                  ),
+            });
+        }
+      } catch (feil) {
+        if (feil instanceof KommentarKonfliktFeil) {
+          return konfliktsvar(feil.message);
+        }
+        håndterBackendfeil(feil);
       }
-    } catch (feil) {
-      if (feil instanceof KommentarKonfliktFeil) {
-        return konfliktsvar(feil.message);
+    }
+
+    const { sakId, arkivert, sakAvsluttet } = await krevLesetilgangIMock(
+      request,
+      sakReferanse,
+      docId,
+    );
+    if (sakAvsluttet) {
+      // Speiler backend (TH-101): kommentarer på avsluttet sak kan bare leses. Catch-blokken
+      // under gjør feilen om til 403, akkurat som et avslag fra backend.
+      throw new KommentarBackendFeil(403, "Saken er avsluttet. Kommentarene kan ikke endres.");
+    }
+    if (arkivert !== null) {
+      // Speiler DokumentArkivertException i backend, som gir 409 – ikke 403.
+      return konfliktsvar("Dokumentet er arkivert og kan ikke endres.");
+    }
+    const innlogget = await hentInnloggetBruker({ request });
+
+    switch (kropp.handling) {
+      case "opprett_traad": {
+        const resultat = opprettKommentartraad(request, sakId, docId, {
+          traadId: kropp.traadId,
+          kommentarId: kropp.kommentarId,
+          ankertype: kropp.ankerType,
+          anker: fraBackendAnker(kropp.ankerType, kropp.anker),
+          opprinneligSitat: kropp.opprinneligSitat ?? null,
+          tekst,
+          forfatterIdent: innlogget.navIdent,
+          forfatterNavn: innlogget.name,
+        });
+        if (resultat.status === "konflikt") return konfliktsvar(resultat.melding);
+        if (resultat.status !== "ok") throw data("Kommentartråd ikke funnet", { status: 404 });
+        return Response.json({ ok: true as const, traad: resultat.traad });
       }
+      case "opprett_kommentar": {
+        const resultat = opprettKommentar(request, sakId, docId, kropp.traadId, {
+          kommentarId: kropp.kommentarId,
+          tekst,
+          traadVersjon: kropp.traadVersjon,
+          forfatterIdent: innlogget.navIdent,
+          forfatterNavn: innlogget.name,
+        });
+        if (resultat.status === "konflikt") return konfliktsvar(resultat.melding);
+        if (resultat.status !== "ok") throw data("Kommentartråd ikke funnet", { status: 404 });
+        return Response.json({ ok: true as const, traad: resultat.traad });
+      }
+      case "rediger_kommentar": {
+        const resultat = redigerKommentar(request, sakId, docId, kropp.kommentarId, {
+          tekst,
+          versjon: kropp.versjon,
+          innloggetIdent: innlogget.navIdent,
+        });
+        if (resultat.status === "konflikt") return konfliktsvar(resultat.melding);
+        if (resultat.status === "ikke_forfatter") {
+          throw data("Bare forfatteren kan endre eller slette kommentaren", { status: 403 });
+        }
+        if (resultat.status !== "ok") throw data("Kommentar ikke funnet", { status: 404 });
+        return Response.json({ ok: true as const, traad: resultat.traad });
+      }
+      case "slett_kommentar": {
+        const resultat = slettKommentar(request, sakId, docId, kropp.kommentarId, {
+          versjon: kropp.versjon,
+          innloggetIdent: innlogget.navIdent,
+        });
+        if (resultat.status === "konflikt") return konfliktsvar(resultat.melding);
+        if (resultat.status === "ikke_forfatter") {
+          throw data("Bare forfatteren kan endre eller slette kommentaren", { status: 403 });
+        }
+        if (resultat.status !== "ok") throw data("Kommentar ikke funnet", { status: 404 });
+        return Response.json({ ok: true as const, traad: resultat.traad });
+      }
+      case "sett_adressering": {
+        const resultat = settAdressering(request, sakId, docId, kropp.traadId, {
+          adressert: kropp.adressert,
+          versjon: kropp.versjon,
+          innloggetIdent: innlogget.navIdent,
+          navn: innlogget.name,
+        });
+        if (resultat.status === "konflikt") return konfliktsvar(resultat.melding);
+        if (resultat.status !== "ok") throw data("Kommentartråd ikke funnet", { status: 404 });
+        return Response.json({ ok: true as const, traad: resultat.traad });
+      }
+    }
+  } catch (feil) {
+    if (feil instanceof KommentarKonfliktFeil) {
+      return konfliktsvar(feil.message);
+    }
+    if (feil instanceof KommentarBackendFeil && feil.status < 500) {
       håndterBackendfeil(feil);
     }
-  }
-
-  const { sakId, arkivert } = await krevLesetilgangIMock(request, sakReferanse, docId);
-  if (arkivert !== null) {
-    // Speiler DokumentArkivertException i backend, som gir 409 – ikke 403.
-    return konfliktsvar("Dokumentet er arkivert og kan ikke endres.");
-  }
-  const innlogget = await hentInnloggetBruker({ request });
-
-  switch (kropp.handling) {
-    case "opprett_traad": {
-      const resultat = opprettKommentartraad(request, sakId, docId, {
-        traadId: kropp.traadId,
-        kommentarId: kropp.kommentarId,
-        ankertype: kropp.ankerType,
-        anker: fraBackendAnker(kropp.ankerType, kropp.anker),
-        opprinneligSitat: kropp.opprinneligSitat ?? null,
-        tekst,
-        forfatterIdent: innlogget.navIdent,
-        forfatterNavn: innlogget.name,
-      });
-      if (resultat.status === "konflikt") return konfliktsvar(resultat.melding);
-      if (resultat.status !== "ok") throw data("Kommentartråd ikke funnet", { status: 404 });
-      return Response.json({ ok: true as const, traad: resultat.traad });
-    }
-    case "opprett_kommentar": {
-      const resultat = opprettKommentar(request, sakId, docId, kropp.traadId, {
-        kommentarId: kropp.kommentarId,
-        tekst,
-        traadVersjon: kropp.traadVersjon,
-        forfatterIdent: innlogget.navIdent,
-        forfatterNavn: innlogget.name,
-      });
-      if (resultat.status === "konflikt") return konfliktsvar(resultat.melding);
-      if (resultat.status !== "ok") throw data("Kommentartråd ikke funnet", { status: 404 });
-      return Response.json({ ok: true as const, traad: resultat.traad });
-    }
-    case "rediger_kommentar": {
-      const resultat = redigerKommentar(request, sakId, docId, kropp.kommentarId, {
-        tekst,
-        versjon: kropp.versjon,
-        innloggetIdent: innlogget.navIdent,
-      });
-      if (resultat.status === "konflikt") return konfliktsvar(resultat.melding);
-      if (resultat.status === "ikke_forfatter") {
-        throw data("Bare forfatteren kan endre eller slette kommentaren", { status: 403 });
-      }
-      if (resultat.status !== "ok") throw data("Kommentar ikke funnet", { status: 404 });
-      return Response.json({ ok: true as const, traad: resultat.traad });
-    }
-    case "slett_kommentar": {
-      const resultat = slettKommentar(request, sakId, docId, kropp.kommentarId, {
-        versjon: kropp.versjon,
-        innloggetIdent: innlogget.navIdent,
-      });
-      if (resultat.status === "konflikt") return konfliktsvar(resultat.melding);
-      if (resultat.status === "ikke_forfatter") {
-        throw data("Bare forfatteren kan endre eller slette kommentaren", { status: 403 });
-      }
-      if (resultat.status !== "ok") throw data("Kommentar ikke funnet", { status: 404 });
-      return Response.json({ ok: true as const, traad: resultat.traad });
-    }
-    case "sett_adressering": {
-      const resultat = settAdressering(request, sakId, docId, kropp.traadId, {
-        adressert: kropp.adressert,
-        versjon: kropp.versjon,
-        innloggetIdent: innlogget.navIdent,
-        navn: innlogget.name,
-      });
-      if (resultat.status === "konflikt") return konfliktsvar(resultat.melding);
-      if (resultat.status !== "ok") throw data("Kommentartråd ikke funnet", { status: 404 });
-      return Response.json({ ok: true as const, traad: resultat.traad });
-    }
+    return tekniskFeilSvar(feil, {
+      kontekst: "lagre kommentar",
+      sakId: sakReferanse,
+      request,
+    });
   }
 }

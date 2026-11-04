@@ -2,11 +2,11 @@ import { forskjellIDager } from "~/utils/date-utils";
 import { getSaksreferanse } from "~/saker/id";
 export { paginerElementer } from "~/utils/paginering";
 import type { FordelingSak } from "./typer";
-import { matcherSteg } from "~/saker/steg";
+import { ALLE_STEG, matcherSteg } from "~/saker/steg";
 import type { KontrollsakSteg } from "~/saker/types.backend";
 
-/** Ansvarlig kan bare fjernes i disse stegene, så bare de kan ha ufordelte saker. */
-export const UFORDELTE_STEG: KontrollsakSteg[] = ["OPPRETTET", "STRAFFERETTSLIG_VURDERING"];
+/** Alle åpne steg, inkludert historiske saker som mangler ansvarlig. */
+export const UFORDELTE_STEG: KontrollsakSteg[] = ALLE_STEG;
 
 export const ufordelteSorteringskolonner = [
   "saksid",

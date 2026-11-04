@@ -185,11 +185,18 @@ describe("mapper.api mot backend", () => {
     expect(svar.data).toEqual({ ok: false, melding: "Mappen er ikke tom" });
   });
 
-  it("kaster andre backendfeil videre", async () => {
+  it("returnerer teknisk feilsvar ved teknisk backendfeil", async () => {
     mocks.hentKontrollsak.mockResolvedValue(lagSak({}));
     mocks.hentInnloggetBruker.mockResolvedValue(innlogget());
     mocks.slettMappe.mockRejectedValue(new mocks.BackendFeilException(500, "Intern feil"));
 
-    await expect(send({ handling: "slett", sti: "Bank" })).rejects.toThrow("Intern feil");
+    const svar = (await send({ handling: "slett", sti: "Bank" })) as {
+      data: { ok: boolean; teknisk: boolean; feilId: string };
+      init: { status: number };
+    };
+
+    expect(svar.init.status).toBe(500);
+    expect(svar.data).toMatchObject({ ok: false, teknisk: true });
+    expect(svar.data.feilId).toMatch(/^[0-9a-f]{8}$/);
   });
 });

@@ -17,7 +17,7 @@ export function InfoBanner() {
     return null;
   }
   return (
-    <GlobalAlert status="announcement" className="mb-4">
+    <GlobalAlert status="warning" className="mb-4">
       <GlobalAlertHeader className="px-4">
         <GlobalAlertTitle>{statusmelding.tittel}</GlobalAlertTitle>
         <GlobalAlertCloseButton onClick={onLukk} />

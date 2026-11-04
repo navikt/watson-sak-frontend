@@ -8,6 +8,7 @@ import * as backendApi from "~/saker/api.server";
 import { hentStegbaserteSaksregler } from "~/saker/stegregler";
 import { hentSakstilgangFraMock } from "~/saker/tilgang.server";
 import type { KontrollsakSteg } from "~/saker/types.backend";
+import { tekniskFeilSvar } from "~/feilhåndtering/teknisk-feil.server";
 import {
   lagreDokument,
   opprettDokument,
@@ -63,11 +64,58 @@ export async function action({ request, params }: ActionFunctionArgs) {
     throw data("Metoden støttes ikke", { status: 405 });
   }
 
-  if (!skalBrukeMockdata) {
-    const token = await getBackendOboToken(request);
-    const sak = await backendApi.hentKontrollsak(token, sakReferanse);
-    if (!hentStegbaserteSaksregler(sak.steg).kanRedigereDokumenter) {
-      throw data("Dokumenter kan ikke endres før saken er satt til Utredning", { status: 403 });
+  try {
+    if (!skalBrukeMockdata) {
+      const token = await getBackendOboToken(request);
+      const sak = await backendApi.hentKontrollsak(token, sakReferanse);
+      if (!hentStegbaserteSaksregler(sak.steg).kanRedigereDokumenter) {
+        throw data("Dokumenter kan ikke endres før saken er satt til Utredning", { status: 403 });
+      }
+
+      if (request.method === "DELETE") {
+        const formData = await request.formData();
+        const docId = formData.get("docId");
+        if (typeof docId !== "string" || !docId) {
+          throw data("Mangler dokument-id", { status: 400 });
+        }
+
+        await backendApi.slettDokument(token, sakReferanse, docId);
+
+        const redirectTo = formData.get("redirectTo");
+        if (
+          typeof redirectTo === "string" &&
+          redirectTo.startsWith("/") &&
+          !redirectTo.startsWith("//")
+        ) {
+          return redirect(redirectTo);
+        }
+        return { ok: true as const };
+      }
+
+      const formData = await lesFormData(request);
+      const valgtMal = lesValgtMal(formData);
+      sjekkMalForSteg(valgtMal, sak.steg);
+
+      const opprettet = await backendApi.opprettDokument(token, sakReferanse);
+      if (!opprettet.id) {
+        throw data("Kunne ikke opprette dokument", { status: 502 });
+      }
+      if (valgtMal) {
+        await backendApi.lagreDokument(token, sakReferanse, opprettet.id, {
+          tittel: MAL_NAVN[valgtMal.malId],
+          innhold: byggMalInnhold(valgtMal),
+          opprettHistorikk: true,
+        });
+      }
+      return redirect(byggDokumentUrl(sakReferanse, opprettet.id));
+    }
+
+    const tilgang = await hentSakstilgangFraMock(request, sakReferanse);
+    if (!tilgang) {
+      throw data("Sak ikke funnet", { status: 404 });
+    }
+    if (!tilgang.kanRedigereDokumenter) {
+      throw data("Ingen tilgang til å endre dokumenter", { status: 403 });
     }
 
     if (request.method === "DELETE") {
@@ -76,9 +124,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
       if (typeof docId !== "string" || !docId) {
         throw data("Mangler dokument-id", { status: 400 });
       }
+      const slettet = slettDokument(request, String(tilgang.sak.id), docId);
+      if (!slettet) {
+        throw data("Dokument ikke funnet", { status: 404 });
+      }
 
-      await backendApi.slettDokument(token, sakReferanse, docId);
-
+      // Når man sletter dokumentet man ser på, redirecter vi til en trygg, intern URL.
+      // Det hindrer at React Router revaliderer den nå-døde dokument-loaderen (som ville
+      // gitt 404). Treet på saksvisningen sender ingen redirectTo og revalideres som vanlig.
       const redirectTo = formData.get("redirectTo");
       if (
         typeof redirectTo === "string" &&
@@ -92,71 +145,27 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
     const formData = await lesFormData(request);
     const valgtMal = lesValgtMal(formData);
-    sjekkMalForSteg(valgtMal, sak.steg);
+    sjekkMalForSteg(valgtMal, tilgang.sak.steg);
 
-    const opprettet = await backendApi.opprettDokument(token, sakReferanse);
-    if (!opprettet.id) {
-      throw data("Kunne ikke opprette dokument", { status: 502 });
-    }
+    const innlogget = await hentInnloggetBruker({ request });
+    const { id } = opprettDokument(request, String(tilgang.sak.id), innlogget.name);
     if (valgtMal) {
-      await backendApi.lagreDokument(token, sakReferanse, opprettet.id, {
+      lagreDokument(request, String(tilgang.sak.id), id, {
         tittel: MAL_NAVN[valgtMal.malId],
         innhold: byggMalInnhold(valgtMal),
-        opprettHistorikk: true,
+        endretAv: innlogget.name,
       });
-    }
-    return redirect(byggDokumentUrl(sakReferanse, opprettet.id));
-  }
-
-  const tilgang = await hentSakstilgangFraMock(request, sakReferanse);
-  if (!tilgang) {
-    throw data("Sak ikke funnet", { status: 404 });
-  }
-  if (!tilgang.kanRedigereDokumenter) {
-    throw data("Ingen tilgang til å endre dokumenter", { status: 403 });
-  }
-
-  if (request.method === "DELETE") {
-    const formData = await request.formData();
-    const docId = formData.get("docId");
-    if (typeof docId !== "string" || !docId) {
-      throw data("Mangler dokument-id", { status: 400 });
-    }
-    const slettet = slettDokument(request, String(tilgang.sak.id), docId);
-    if (!slettet) {
-      throw data("Dokument ikke funnet", { status: 404 });
+      opprettEllerOppdaterDokumentHistorikk(request, String(tilgang.sak.id), id, innlogget.name);
     }
 
-    // Når man sletter dokumentet man ser på, redirecter vi til en trygg, intern URL.
-    // Det hindrer at React Router revaliderer den nå-døde dokument-loaderen (som ville
-    // gitt 404). Treet på saksvisningen sender ingen redirectTo og revalideres som vanlig.
-    const redirectTo = formData.get("redirectTo");
-    if (
-      typeof redirectTo === "string" &&
-      redirectTo.startsWith("/") &&
-      !redirectTo.startsWith("//")
-    ) {
-      return redirect(redirectTo);
-    }
-    return { ok: true as const };
-  }
-
-  const formData = await lesFormData(request);
-  const valgtMal = lesValgtMal(formData);
-  sjekkMalForSteg(valgtMal, tilgang.sak.steg);
-
-  const innlogget = await hentInnloggetBruker({ request });
-  const { id } = opprettDokument(request, String(tilgang.sak.id), innlogget.name);
-  if (valgtMal) {
-    lagreDokument(request, String(tilgang.sak.id), id, {
-      tittel: MAL_NAVN[valgtMal.malId],
-      innhold: byggMalInnhold(valgtMal),
-      endretAv: innlogget.name,
+    return redirect(byggDokumentUrl(sakReferanse, id));
+  } catch (feil) {
+    return tekniskFeilSvar(feil, {
+      kontekst: request.method === "DELETE" ? "slette dokument" : "lagre dokument",
+      sakId: sakReferanse,
+      request,
     });
-    opprettEllerOppdaterDokumentHistorikk(request, String(tilgang.sak.id), id, innlogget.name);
   }
-
-  return redirect(byggDokumentUrl(sakReferanse, id));
 }
 
 function byggDokumentUrl(sakReferanse: string, docId: string): string {

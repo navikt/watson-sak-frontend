@@ -1,5 +1,6 @@
 import { TrashIcon } from "@navikt/aksel-icons";
-import { BodyLong, Button, Modal } from "@navikt/ds-react";
+import { BodyLong, Button, Modal, VStack } from "@navikt/ds-react";
+import type { ReactNode } from "react";
 
 type SlettDokumentModalProps = {
   /** Dokumentet som vurderes slettet, eller `null` når dialogen er lukket. */
@@ -7,6 +8,7 @@ type SlettDokumentModalProps = {
   sletter: boolean;
   onBekreft: () => void;
   onAvbryt: () => void;
+  feil?: ReactNode;
 };
 
 /** Bekreftelsesdialog før et dokument slettes permanent. */
@@ -15,19 +17,29 @@ export function SlettDokumentModal({
   sletter,
   onBekreft,
   onAvbryt,
+  feil,
 }: SlettDokumentModalProps) {
   return (
     <Modal
       open={kandidat !== null}
       onClose={onAvbryt}
+      // Kan ikke lukkes mens slettingen pågår, verken med kryss eller Escape. Da kunne svaret
+      // høre til et annet element enn det dialogen er åpen for.
+      onBeforeClose={() => !sletter}
+      onCancel={(event) => {
+        if (sletter) event.preventDefault();
+      }}
       header={{ heading: "Slette dokument?", icon: <TrashIcon aria-hidden /> }}
       width="small"
     >
       <Modal.Body>
-        <BodyLong>
-          Er du sikker på at du vil slette <strong>{kandidat?.tittel || "Uten tittel"}</strong>?
-          Dette kan ikke angres.
-        </BodyLong>
+        <VStack gap="space-16">
+          <BodyLong>
+            Er du sikker på at du vil slette <strong>{kandidat?.tittel || "Uten tittel"}</strong>?
+            Dette kan ikke angres.
+          </BodyLong>
+          {feil}
+        </VStack>
       </Modal.Body>
       <Modal.Footer>
         <Button variant="danger" onClick={onBekreft} loading={sletter}>

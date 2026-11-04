@@ -10,7 +10,7 @@ vi.mock("~/logging/logging", () => ({
   },
 }));
 
-const gyldigRespons = { nye: 1, aktive: 2, venter: 3, iBero: 4 };
+const gyldigRespons = { nye: 1, aktive: 2, venter: 3 };
 
 function stubFetch(respons: { ok: boolean; status: number; body?: unknown }) {
   const fetchMock = vi.fn().mockResolvedValue({

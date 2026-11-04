@@ -384,6 +384,8 @@ export const kontrollsakResponseSchema = z
       tilgang: kontrollsakTilgangSchema.optional(),
       opprettet: z.string(),
       oppdatert: z.string().nullable(),
+      avsluttetTidspunkt: z.string().nullable().optional(),
+      filerTilgjengeligTil: z.string().nullable().optional(),
       legacyPid: z.string().nullable().optional(),
       legacyKilde: z.string().nullable().optional(),
       enhet: z.string().nullable().optional(),

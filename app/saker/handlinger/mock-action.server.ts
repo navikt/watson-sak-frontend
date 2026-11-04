@@ -244,6 +244,12 @@ export async function mockAction(
       sak.resultat = kandidat.resultat;
       sak.ytelser = kandidat.ytelser;
       sak.steg = nyttSteg as KontrollsakSteg;
+      if (sak.steg === "AVSLUTTET" && !sak.avsluttetTidspunkt) {
+        // Speiler backend (TH-101): tidspunktet settes ved avslutning, og delt med beholdes.
+        const nå = new Date();
+        sak.avsluttetTidspunkt = nå.toISOString();
+        sak.filerTilgjengeligTil = new Date(nå.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      }
       sak.status = (
         {
           OPPRETTET: null,

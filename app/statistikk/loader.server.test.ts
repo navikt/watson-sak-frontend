@@ -37,7 +37,7 @@ describe("statistikk-loader", () => {
       { nivaa: "underavdeling", fra: "2026-09-01", til: "2026-09-30" },
       "Øst",
       "ky153k",
-      { saker: expect.any(Array), navIdent: "Z123456" },
+      { saker: expect.any(Array), navIdent: "Z123456", mineSaker: expect.any(Array) },
     );
     expect(getBackendOboTokenMock).not.toHaveBeenCalled();
   });
@@ -68,7 +68,7 @@ describe("statistikk-loader", () => {
       { nivaa: "underavdeling", fra: `${år}-01-01`, til: `${år}-12-31` },
       "Øst",
       "ky153k",
-      { saker: expect.any(Array), navIdent: "Z123456" },
+      { saker: expect.any(Array), navIdent: "Z123456", mineSaker: expect.any(Array) },
     );
   });
 

@@ -17,6 +17,7 @@ import {
 import { hentStegbaserteSaksregler } from "../../stegregler";
 import { hentMapperstier, hentMapperstierFraMock } from "../mapper/mapper.server";
 import { getSaksenhet } from "~/saker/selectors";
+import { tekniskFeilSvar } from "~/feilhåndtering/teknisk-feil.server";
 import { hentKommentarliste as hentKommentarlisteFraBackend } from "./kommentarer/kommentarer.api.server";
 import { hentKommentarliste as hentKommentarlisteFraMock } from "./kommentarer/mock-data.server";
 import { logger } from "~/logging/logging";
@@ -156,6 +157,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       {
         innloggetIdent: innlogget.navIdent,
         arkivert: dokument.arkivert ?? null,
+        sakAvsluttet: tilgang.sak.steg === "AVSLUTTET",
       },
     ),
     kommentarinnlastingFeilet: false,
@@ -196,8 +198,14 @@ export async function action({ request, params }: Route.ActionArgs) {
       throw data("Metoden støttes ikke", { status: 405 });
     }
 
-    const token = await getBackendOboToken(request);
-    const sak = await backendApi.hentKontrollsak(token, sakReferanse);
+    let token: string;
+    let sak: KontrollsakResponse;
+    try {
+      token = await getBackendOboToken(request);
+      sak = await backendApi.hentKontrollsak(token, sakReferanse);
+    } catch (feil) {
+      return tekniskFeilSvar(feil, { kontekst: "lagre dokument", sakId: sakReferanse, request });
+    }
     if (!hentStegbaserteSaksregler(sak.steg).kanRedigereDokumenter) {
       throw data("Dokumenter kan ikke redigeres før saken er satt til Utredning", { status: 403 });
     }
@@ -211,11 +219,16 @@ export async function action({ request, params }: Route.ActionArgs) {
       throw data("Ugyldig dokumentinnhold", { status: 400 });
     }
 
-    const oppdatert = await backendApi.lagreDokument(token, sakReferanse, docId, {
-      tittel: normaliserTittel(kropp.tittel),
-      innhold: kropp.innhold,
-      opprettHistorikk: kropp.opprettHistorikk === true,
-    });
+    let oppdatert: Awaited<ReturnType<typeof backendApi.lagreDokument>>;
+    try {
+      oppdatert = await backendApi.lagreDokument(token, sakReferanse, docId, {
+        tittel: normaliserTittel(kropp.tittel),
+        innhold: kropp.innhold,
+        opprettHistorikk: kropp.opprettHistorikk === true,
+      });
+    } catch (feil) {
+      return tekniskFeilSvar(feil, { kontekst: "lagre dokument", sakId: sakReferanse, request });
+    }
 
     return { ok: true as const, tittel: oppdatert.tittel, endretDato: oppdatert.endretDato };
   }
@@ -223,7 +236,12 @@ export async function action({ request, params }: Route.ActionArgs) {
     throw data("Metoden støttes ikke", { status: 405 });
   }
 
-  const tilgang = await hentSakstilgangFraMock(request, parseSakId(params.sakId));
+  let tilgang: Awaited<ReturnType<typeof hentSakstilgangFraMock>>;
+  try {
+    tilgang = await hentSakstilgangFraMock(request, sakReferanse);
+  } catch (feil) {
+    return tekniskFeilSvar(feil, { kontekst: "lagre dokument", sakId: sakReferanse, request });
+  }
   if (!tilgang) {
     throw data("Sak ikke funnet", { status: 404 });
   }
@@ -241,23 +259,23 @@ export async function action({ request, params }: Route.ActionArgs) {
     throw data("Ugyldig dokumentinnhold", { status: 400 });
   }
 
-  const innlogget = await hentInnloggetBruker({ request });
-  const oppdatert = lagreDokument(
-    request,
-    String(tilgang.sak.id),
-    parseUuid(params.docId, "docId"),
-    {
+  let oppdatert: ReturnType<typeof lagreDokument>;
+  try {
+    const innlogget = await hentInnloggetBruker({ request });
+    oppdatert = lagreDokument(request, String(tilgang.sak.id), docId, {
       tittel: normaliserTittel(kropp.tittel),
       innhold: kropp.innhold,
       endretAv: innlogget.name,
-    },
-  );
+    });
 
-  if (!oppdatert) {
-    throw data("Dokument ikke funnet", { status: 404 });
-  }
-  if (kropp.opprettHistorikk === true) {
-    opprettEllerOppdaterDokumentHistorikk(request, String(tilgang.sak.id), docId, innlogget.name);
+    if (!oppdatert) {
+      throw data("Dokument ikke funnet", { status: 404 });
+    }
+    if (kropp.opprettHistorikk === true) {
+      opprettEllerOppdaterDokumentHistorikk(request, String(tilgang.sak.id), docId, innlogget.name);
+    }
+  } catch (feil) {
+    return tekniskFeilSvar(feil, { kontekst: "lagre dokument", sakId: sakReferanse, request });
   }
 
   return { ok: true as const, tittel: oppdatert.tittel, endretDato: oppdatert.endretDato };

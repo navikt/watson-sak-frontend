@@ -4,6 +4,8 @@ import { PencilIcon } from "@navikt/aksel-icons";
 import { Alert, Button, Modal } from "@navikt/ds-react";
 import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
+import { Innsendingsfeil, erTekniskFeilSvar } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { NORSK_TIDSSONE } from "~/utils/date-utils";
@@ -49,6 +51,7 @@ export function RedigerHistorikkModal({
   const modalRef = useRef<HTMLDialogElement>(null);
   const fetcher = useFetcher();
   const submitPågår = useRef(false);
+  const innsendingHarStartet = useRef(false);
   // Komponenten forblir montert selv når modalen er lukket (eies av
   // SakHistorikk), så fetcher.data fra en tidligere innsending kan fortsatt
   // ligge igjen neste gang modalen åpnes for en (evt. annen) hendelse uten at
@@ -56,7 +59,11 @@ export function RedigerHistorikkModal({
   // åpning, og settes kun når en feil faktisk oppstår i DENNE visningen.
   const [visFeilmelding, setVisFeilmelding] = useState(false);
   const feilmelding =
-    visFeilmelding && fetcher.data && "ok" in fetcher.data && !fetcher.data.ok
+    visFeilmelding &&
+    fetcher.data &&
+    "ok" in fetcher.data &&
+    !fetcher.data.ok &&
+    !erTekniskFeilSvar(fetcher.data)
       ? fetcher.data.feil?.skjema?.[0]
       : undefined;
 
@@ -99,13 +106,19 @@ export function RedigerHistorikkModal({
   // resonnement i LeggTilHistorikkModal.
   useEffect(() => {
     if (!submitPågår.current || fetcher.state !== "idle") return;
+    if (!innsendingHarStartet.current) return;
     submitPågår.current = false;
+    innsendingHarStartet.current = false;
     if (fetcher.data && "ok" in fetcher.data && fetcher.data.ok) {
       onClose();
     } else {
       setVisFeilmelding(true);
     }
   }, [fetcher.data, fetcher.state]);
+
+  useEffect(() => {
+    if (submitPågår.current && fetcher.state !== "idle") innsendingHarStartet.current = true;
+  }, [fetcher.state]);
 
   return (
     <Modal
@@ -122,6 +135,10 @@ export function RedigerHistorikkModal({
               {feilmelding}
             </Alert>
           )}
+          <Innsendingsfeil
+            svar={visFeilmelding ? fetcher.data : undefined}
+            tekster={INNSENDINGSFEIL.redigerHendelse}
+          />
           <HistorikkSkjemaFelter
             fields={fields}
             defaultSelected={initialDate}

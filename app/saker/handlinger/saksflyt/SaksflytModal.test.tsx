@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { SaksflytModal, type SaksflytStart } from "./SaksflytModal";
 import { dagpengerId, lagTillatteHandlinger, lagYtelse } from "./testdata";
+import { SAK_UNDER_FLYTTING_FEIL } from "~/migrering/avslutning";
 
 const submitMock = vi.fn();
 let mockSvar: unknown;
@@ -27,7 +28,11 @@ vi.mock("react-router", async () => {
   };
 });
 
-function renderModal(sak: Partial<KontrollsakResponse> = {}, start: SaksflytStart = "meny") {
+function renderModal(
+  sak: Partial<KontrollsakResponse> = {},
+  start: SaksflytStart = "meny",
+  avslutningKreverFerdigFlyttet = false,
+) {
   const onClose = vi.fn();
   const router = createMemoryRouter(
     [
@@ -38,6 +43,7 @@ function renderModal(sak: Partial<KontrollsakResponse> = {}, start: SaksflytStar
             sakId="101"
             tillatteHandlinger={lagTillatteHandlinger(sak)}
             start={start}
+            avslutningKreverFerdigFlyttet={avslutningKreverFerdigFlyttet}
             onClose={onClose}
           />
         ),
@@ -305,7 +311,7 @@ describe("SaksflytModal", () => {
     fireEvent.change(screen.getByLabelText("Ubetinget fengsel (dager)"), {
       target: { value: "1,5" },
     });
-    fireEvent.change(screen.getByLabelText("Bot (kr)"), { target: { value: "2500" } });
+    fireEvent.change(screen.getByLabelText("Bot (kroner)"), { target: { value: "2500" } });
     fireEvent.click(screen.getByRole("radio", { name: "Liggetid hos Nav" }));
     fireEvent.click(
       within(screen.getByRole("radiogroup", { name: "Medvirker? (påkrevd)" })).getByRole("radio", {
@@ -354,20 +360,26 @@ describe("SaksflytModal", () => {
     });
   });
 
-  it("lagrer påtaleunnlatelse direkte uten årsak", async () => {
+  it("avslutter saken med påtaleunnlatelse uten årsak etter varsel om tilgang", async () => {
     renderModal({ steg: "POLITI", status: "VENTER_PA_RESULTAT" });
     klikk("Registrer resultat");
     await screen.findByRole("dialog", { name: "Registrer resultat" });
     fireEvent.click(screen.getByRole("radio", { name: "Påtaleunnlatelse" }));
-    klikk("Lagre resultat");
+    klikk("Neste");
+
+    expect(await screen.findByRole("heading", { name: "Påtaleunnlatelse" })).toBeDefined();
+    expect(screen.getByText("Tilgang til dokumenter og underlag")).toBeDefined();
+    expect(screen.queryByLabelText(/Årsak/)).toBeNull();
+    klikk("Lagre og avslutt");
 
     expect(await screen.findByText("Lagret")).toBeDefined();
     expect(sendtSkjema()).toEqual({
-      handling: "lagre_resultat",
+      handling: "endre_steg_dialog",
       versjon: "1",
+      steg: "AVSLUTTET",
+      registrerResultat: "true",
       "resultat.politi.type": "PATALEUNNLATELSE",
     });
-    expect(sendtSkjema()).not.toHaveProperty("resultat.politi.begrunnelse");
   });
 
   it("lukker modalen med Avbryt fra valget av resultat", async () => {
@@ -377,6 +389,39 @@ describe("SaksflytModal", () => {
     expect(screen.queryByRole("button", { name: "Tilbake" })).toBeNull();
     klikk("Avbryt");
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("stopper «Lagre og avslutt» i politiet når saken ikke er ferdig flyttet", async () => {
+    renderModal({ steg: "POLITI", status: "VENTER_PA_RESULTAT" }, "meny", true);
+    klikk("Registrer resultat");
+    fireEvent.click(await screen.findByRole("radio", { name: "Henlagt" }));
+    klikk("Neste");
+    await screen.findByRole("heading", { name: "Henlagt" });
+    fireEvent.change(screen.getByLabelText("Årsak (påkrevd)"), {
+      target: { value: "Bevisene holder ikke" },
+    });
+
+    klikk("Lagre og avslutt");
+
+    expect(screen.getByText(SAK_UNDER_FLYTTING_FEIL)).toBeDefined();
+    expect(submitMock).not.toHaveBeenCalled();
+  });
+
+  it("lagrer påklaget henleggelse selv om saken ikke er ferdig flyttet", async () => {
+    renderModal({ steg: "POLITI", status: "VENTER_PA_RESULTAT" }, "meny", true);
+    klikk("Registrer resultat");
+    fireEvent.click(await screen.findByRole("radio", { name: "Henlagt" }));
+    klikk("Neste");
+    await screen.findByRole("heading", { name: "Henlagt" });
+    fireEvent.click(screen.getByRole("radio", { name: "Ja" }));
+    fireEvent.change(screen.getByLabelText("Årsak (påkrevd)"), {
+      target: { value: "Bevisene holder ikke" },
+    });
+
+    klikk("Registrer påklaget henleggelse");
+
+    expect(await screen.findByText("Lagret")).toBeDefined();
+    expect(sendtSkjema()).toMatchObject({ handling: "lagre_resultat" });
   });
 
   it("lagrer påklaget henleggelse fra politiet uten å avslutte saken", async () => {
@@ -466,6 +511,25 @@ describe("SaksflytModal", () => {
     });
   });
 
+  it("stopper avslutning når saken ikke er ferdig flyttet", async () => {
+    renderModal(
+      {
+        steg: "POLITI",
+        status: "VENTER_PA_RESULTAT",
+        resultat: { politi: { type: "BOT" } } as KontrollsakResponse["resultat"],
+      },
+      "meny",
+      true,
+    );
+    klikk("Avslutt sak");
+    await screen.findByRole("dialog", { name: "Avslutt sak" });
+
+    klikk("Avslutt sak");
+
+    expect(screen.getByText(SAK_UNDER_FLYTTING_FEIL)).toBeDefined();
+    expect(submitMock).not.toHaveBeenCalled();
+  });
+
   it("flytter fokus til dialogen når trinnet byttes", async () => {
     renderModal();
     klikk("Henlegg sak");
@@ -494,5 +558,35 @@ describe("SaksflytModal", () => {
       await screen.findByText("Kunne ikke lagre endringen. Last inn siden på nytt og prøv igjen."),
     ).toBeDefined();
     expect(screen.getByRole("dialog", { name: "Avslutt sak" })).toBeDefined();
+  });
+
+  it("viser «vet ikke» når vi ikke fikk svar fra baksystemet", async () => {
+    mockSvar = { ok: false, feil: "intern feil", feilId: "feil-789", teknisk: true, usikker: true };
+    renderModal({ steg: "OPPRETTET", status: null });
+    klikk("Gå til utredning");
+
+    expect(await screen.findByText("Vi vet ikke om steget ble endret")).toBeDefined();
+    expect(
+      screen.getByText("Last inn siden og se hvilket steg saken står i før du prøver igjen."),
+    ).toBeDefined();
+  });
+
+  it("viser kontekstuell feilmelding ved teknisk feil", async () => {
+    mockSvar = {
+      ok: false,
+      feil: "intern feil",
+      feilId: "feil-123",
+      teknisk: true,
+      usikker: false,
+    };
+    renderModal({ steg: "OPPRETTET", status: null });
+    klikk("Gå til utredning");
+
+    expect(await screen.findByText("Vi fikk ikke endret steget")).toBeDefined();
+    expect(screen.getByText("feil-123")).toBeDefined();
+    expect(screen.queryByText("intern feil")).toBeNull();
+    expect(
+      screen.getByRole("dialog", { name: "Endre steg eller registrer resultat" }),
+    ).toBeDefined();
   });
 });

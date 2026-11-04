@@ -1,6 +1,8 @@
 import { BodyShort, Box, Button, Checkbox, Heading, VStack } from "@navikt/ds-react";
 import { useState } from "react";
-import { Form } from "react-router";
+import { Form, useActionData } from "react-router";
+import { Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 
 type Props = {
   /** Når `false` vises sjekklisten som forhåndsvisning uten mulighet for å lagre. */
@@ -14,6 +16,7 @@ type Props = {
 export function MigreringSjekkliste({ kanLagres }: Props) {
   const [lastetOppFiler, setLastetOppFiler] = useState(false);
   const [overførtInformasjon, setOverførtInformasjon] = useState(false);
+  const svar = useActionData();
   const alleKryssetAv = lastetOppFiler && overførtInformasjon;
 
   return (
@@ -58,6 +61,7 @@ export function MigreringSjekkliste({ kanLagres }: Props) {
           <Button type="submit" size="small" disabled={!kanLagres || !alleKryssetAv}>
             Marker saken som ferdig flyttet
           </Button>
+          <Innsendingsfeil svar={svar} tekster={INNSENDINGSFEIL.ferdigFlyttet} />
           {!kanLagres && (
             <BodyShort size="small" textColor="subtle">
               Forhåndsvisning. Ferdigmerking kan ikke lagres ennå.

@@ -1045,6 +1045,9 @@ export const backendGenererteDemoSaker = [
     kobledeSaker: [],
     opprettet: "2026-05-17T17:13:00Z",
     oppdatert: "2026-05-19T13:29:00Z",
+    // TH-101: avsluttet for 3 dager siden, så banneret og lesevinduet kan prøves lokalt.
+    avsluttetTidspunkt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    filerTilgjengeligTil: new Date(Date.now() + 27 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
     id: 1020,

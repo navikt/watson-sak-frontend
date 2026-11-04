@@ -1,5 +1,5 @@
 import { BooksIcon, LeaveIcon, LightBulbIcon, MenuGridIcon, PersonIcon } from "@navikt/aksel-icons";
-import { ActionMenu, InternalHeader, Spacer, Tag } from "@navikt/ds-react";
+import { ActionMenu, BodyShort, HelpText, InternalHeader, Spacer, Tag } from "@navikt/ds-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Form, Link, useLocation } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
@@ -38,7 +38,7 @@ export function AppHeader() {
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "k" && event.metaKey) {
+      if (event.key.toLowerCase() === "k" && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
         sporHendelse("hurtigsøk aktivert");
         skjemaRef.current?.querySelector("input")?.focus();
@@ -86,7 +86,7 @@ export function AppHeader() {
         action={RouteConfig.SØK}
         role="search"
         aria-label="Hurtigsøk"
-        className="flex items-center self-stretch"
+        className="flex w-[495px] min-w-0 shrink items-center self-stretch"
         ref={skjemaRef}
         data-hurtigsøk-skjema
         onSubmit={(event) => {
@@ -113,11 +113,23 @@ export function AppHeader() {
           name="søketekst"
           variant="secondary"
           size="small"
-          htmlSize={24}
-          aria-keyshortcuts="Meta+K"
+          placeholder="Søk på fødsels-/D-nummer, organisasjonsnummer, saksnummer og PID"
+          className="w-full"
+          autoComplete="off"
+          aria-keyshortcuts="Meta+K Control+K"
           onKeyDown={handleSøkefeltKeyDown}
         />
       </Form>
+      <HelpText title="Hva kan du søke på?" placement="bottom" wrapperClassName="self-center ml-2">
+        <BodyShort spacing>Du kan søke på:</BodyShort>
+        <ul className="m-0 mb-3 list-disc pl-5">
+          <li>Saksnummer</li>
+          <li>PID (bare saker opprettet i Watson Sak)</li>
+          <li>Fødsels- eller d-nummer (11 siffer)</li>
+          <li>Organisasjonsnummer (9 siffer)</li>
+        </ul>
+        <BodyShort>Mellomrom spiller ingen rolle.</BodyShort>
+      </HelpText>
       <Spacer />
       <VarselBjelle />
       <ActionMenu>

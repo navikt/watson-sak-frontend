@@ -1,4 +1,4 @@
-import { Heading, HGrid, HStack, LocalAlert, Pagination, VStack } from "@navikt/ds-react";
+import { Heading, HGrid, HStack, LocalAlert, Pagination, Select, VStack } from "@navikt/ds-react";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
@@ -14,11 +14,6 @@ import { mapFordelingSakTilSakslisteRad } from "~/saker/saksliste/adaptere";
 import { AntallTreffEtikett } from "~/saker/saksliste/AntallTreffEtikett";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
 import {
-  filtrerUfordelteSaker,
-  hentUfordelteFiltervalg,
-  lagUfordelteOppsummering,
-  paginerElementer,
-  sorterUfordelteSaker,
   ufordelteSorteringskolonner,
   type UfordeltSorteringskolonne,
   type UfordeltSorteringsretning,
@@ -27,7 +22,6 @@ import {
 import { parseSteg } from "~/saker/steg";
 import { formaterSteg } from "~/saker/visning";
 import type { KontrollsakSaksbehandler } from "~/saker/types.backend";
-import { ANTALL_PER_SIDE } from "~/utils/paginering";
 import type { FordelingSak } from "./typer";
 
 const RESET_KEYS = ["side"];
@@ -36,9 +30,18 @@ interface UfordelteSakerInnholdProps {
   saker: FordelingSak[];
   enhet: string | null;
   saksbehandlere: string[];
-  saksbehandlerDetaljer?: KontrollsakSaksbehandler[];
-  submitPath?: string;
-  saksdataUtilgjengelig?: boolean;
+  saksbehandlerDetaljer: KontrollsakSaksbehandler[];
+  submitPath: string;
+  saksdataUtilgjengelig: boolean;
+  oppsummering: { antallSaker: number; eldsteLiggetidDager: number };
+  paginering: { side: number; totalSider: number; totalAntall: number };
+  valgtOmfang: string;
+  organisasjonsvalg: { verdi: string; label: string; type: string }[];
+  filtervalg: {
+    kategorier: { verdi: string; etikett: string }[];
+    misbrukstyper: { verdi: string; etikett: string }[];
+    merkinger: { verdi: string; etikett: string }[];
+  };
 }
 
 export function UfordelteSakerInnhold({
@@ -46,69 +49,60 @@ export function UfordelteSakerInnhold({
   enhet,
   saksbehandlere,
   saksbehandlerDetaljer,
-  submitPath = RouteConfig.FORDELING,
-  saksdataUtilgjengelig = false,
+  submitPath,
+  saksdataUtilgjengelig,
+  oppsummering,
+  paginering,
+  valgtOmfang,
+  organisasjonsvalg,
+  filtervalg,
 }: UfordelteSakerInnholdProps) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [sakSomTildeles, setSakSomTildeles] = useState<FordelingSak | null>(null);
 
   const kategoriFilter = useFilterParam("kategori", { resetKeys: RESET_KEYS });
   const misbrukstypeFilter = useFilterParam("misbrukstype", { resetKeys: RESET_KEYS });
   const merkingFilter = useFilterParam("merking", { resetKeys: RESET_KEYS });
   const stegFilter = useFilterParam("steg", { resetKeys: RESET_KEYS });
 
-  const valgtSide = Number.parseInt(searchParams.get("side") ?? "1", 10) || 1;
-  const sorteringskolonne = hentSorteringskolonne(searchParams.get("sorter"));
-  const sorteringsretning = hentSorteringsretning(searchParams.get("retning"));
+  const sorteringskolonne = hentSorteringskolonne(searchParams.get("sorter") ?? "opprettet");
+  const sorteringsretning = hentSorteringsretning(searchParams.get("retning") ?? "synkende");
 
-  const filtervalg = useMemo(() => hentUfordelteFiltervalg(saker), [saker]);
   const gyldigSteg = useMemo(
     () => parseSteg(stegFilter.valgteVerdier).filter((steg) => UFORDELTE_STEG.includes(steg)),
     [stegFilter.valgteVerdier],
   );
   const aktiveFiltreVerdier = [
-    ...kategoriFilter.valgteVerdier,
-    ...misbrukstypeFilter.valgteVerdier,
-    ...merkingFilter.valgteVerdier,
+    ...hentValgteEtiketter(kategoriFilter.valgteVerdier, filtervalg.kategorier),
+    ...hentValgteEtiketter(misbrukstypeFilter.valgteVerdier, filtervalg.misbrukstyper),
+    ...hentValgteEtiketter(merkingFilter.valgteVerdier, filtervalg.merkinger),
     ...gyldigSteg.map((steg) => formaterSteg(steg)),
   ];
   const filterTekst = aktiveFiltreVerdier.length > 0 ? aktiveFiltreVerdier.join(", ") : null;
-  const overskriftUtenFilter = enhet ? `Ufordelte saker i ${enhet}` : "Ufordelte saker";
+  const overskriftUtenFilter = `Ufordelte saker i ${enhet ?? "hele organisasjonen"}`;
   const overskrift = filterTekst
     ? `${overskriftUtenFilter} – ${filterTekst}`
     : overskriftUtenFilter;
-  const filtrerteSaker = useMemo(
-    () =>
-      filtrerUfordelteSaker(saker, {
-        kategorier: kategoriFilter.valgteVerdier,
-        misbrukstyper: misbrukstypeFilter.valgteVerdier,
-        merkinger: merkingFilter.valgteVerdier,
-        steg: gyldigSteg,
-      }),
-    [
-      saker,
-      kategoriFilter.valgteVerdier,
-      misbrukstypeFilter.valgteVerdier,
-      merkingFilter.valgteVerdier,
-      gyldigSteg,
-    ],
-  );
-  const sorterteSaker = useMemo(() => {
-    if (!sorteringskolonne || !sorteringsretning) {
-      return filtrerteSaker;
-    }
-
-    return sorterUfordelteSaker(filtrerteSaker, sorteringskolonne, sorteringsretning);
-  }, [filtrerteSaker, sorteringskolonne, sorteringsretning]);
-  const paginerteSaker = useMemo(
-    () => paginerElementer(sorterteSaker, valgtSide, ANTALL_PER_SIDE),
-    [sorterteSaker, valgtSide],
-  );
-  const oppsummering = useMemo(() => lagUfordelteOppsummering(filtrerteSaker), [filtrerteSaker]);
-  const sakslisteRader = useMemo(
-    () => paginerteSaker.elementer.map((sak) => mapFordelingSakTilSakslisteRad(sak)),
-    [paginerteSaker.elementer],
-  );
+  const sakslisteRader = saker.map((sak) => mapFordelingSakTilSakslisteRad(sak));
+  const modalKontekst = JSON.stringify([
+    enhet,
+    ...["omfang", "side", "kategori", "misbrukstype", "merking", "steg", "sorter", "retning"].map(
+      (nøkkel) => [nøkkel, searchParams.getAll(nøkkel)],
+    ),
+  ]);
+  // Nullstiller valgt sak når filter, sortering, side eller omfang endres. Tilstanden justeres
+  // under rendering i stedet for å remontere liste og filtre, så tastaturfokus beholdes og
+  // tilbakenavigering ikke kan gjenopprette et gammelt valg.
+  const [sakSomTildeles, setSakSomTildeles] = useState<FordelingSak | null>(null);
+  const [forrigeKontekst, setForrigeKontekst] = useState(modalKontekst);
+  if (forrigeKontekst !== modalKontekst) {
+    setForrigeKontekst(modalKontekst);
+    setSakSomTildeles(null);
+  }
+  const søkestreng = searchParams.toString();
+  const tilbakemål = {
+    to: søkestreng ? `${RouteConfig.FORDELING}?${søkestreng}` : RouteConfig.FORDELING,
+    label: "Ufordelte saker",
+  };
 
   function gåTilSide(side: number) {
     setSearchParams((forrige) => {
@@ -135,17 +129,47 @@ export function UfordelteSakerInnhold({
     });
   }
 
-  const harSaker = saker.length > 0;
+  function velgOmfang(verdi: string) {
+    setSearchParams((forrige) => {
+      const neste = new URLSearchParams(forrige);
+      neste.set("omfang", verdi);
+      neste.delete("side");
+      return neste;
+    });
+  }
+
+  const harAktiveFiltre = aktiveFiltreVerdier.length > 0;
 
   return (
     <section aria-labelledby="ufordelte-saker-overskrift" className="pb-12">
       <MiljøtilpassetTittel>{`${overskrift} – Watson Sak`}</MiljøtilpassetTittel>
       <VStack gap="space-12" className="mt-4 mb-8">
-        <Heading id="ufordelte-saker-overskrift" level="1" size="large">
-          {overskrift}
-        </Heading>
+        <HStack justify="space-between" align="center" gap="space-8" wrap>
+          <Heading
+            id="ufordelte-saker-overskrift"
+            level="1"
+            size="large"
+            className="min-w-0 max-w-full break-words"
+          >
+            {overskrift}
+          </Heading>
+          {organisasjonsvalg.length > 1 && (
+            <Select
+              label="Vis"
+              className="w-full self-start sm:w-auto sm:min-w-72"
+              value={searchParams.get("omfang") ?? valgtOmfang}
+              onChange={(event) => velgOmfang(event.target.value)}
+            >
+              {organisasjonsvalg.map((valg) => (
+                <option key={valg.verdi} value={valg.verdi}>
+                  {valg.label}
+                </option>
+              ))}
+            </Select>
+          )}
+        </HStack>
 
-        {harSaker && !saksdataUtilgjengelig && (
+        {!saksdataUtilgjengelig && (
           <HGrid columns={{ xs: 1, sm: "repeat(2, minmax(0, 15rem))" }} gap="space-12">
             <Nøkkeltallkort
               verdi={oppsummering.antallSaker}
@@ -164,136 +188,162 @@ export function UfordelteSakerInnhold({
 
         {saksdataUtilgjengelig ? (
           <BackendUtilgjengeligMelding />
-        ) : !harSaker ? (
-          <LocalAlert status="announcement">
-            <LocalAlert.Header>
-              <LocalAlert.Title as="h2">Ingen ufordelte saker</LocalAlert.Title>
-            </LocalAlert.Header>
-            <LocalAlert.Content>
-              Det er for øyeblikket ingen saker som venter på fordeling.
-            </LocalAlert.Content>
-          </LocalAlert>
         ) : (
-          <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start">
-            <div className="min-w-0">
-              <div className="overflow-x-auto">
-                <AntallTreffEtikett antall={filtrerteSaker.length} />
-                <Saksliste
-                  rader={sakslisteRader}
-                  kolonner={[
-                    "saksid",
-                    "kategori",
-                    "misbrukstype",
-                    "steg",
-                    "status",
-                    "opprettet",
-                    "oppdatert",
-                  ]}
-                  tomTekst="Endre filtrering for å finne saker"
-                  tilbake={{ to: RouteConfig.FORDELING, label: "Ufordelte saker" }}
-                  handlingKolonneTittel={<span className="sr-only">Handling</span>}
-                  sortering={{
-                    kolonne: sorteringskolonne,
-                    retning: sorteringsretning,
-                    onSort: (kolonne) => sorterPåKolonne(kolonne as UfordeltSorteringskolonne),
-                    sorterbare: [...ufordelteSorteringskolonner],
-                  }}
-                  renderRadHandling={(rad) => (
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        const valgtSak = paginerteSaker.elementer.find((sak) => sak.id === rad.id);
-
-                        if (valgtSak) {
-                          setSakSomTildeles(valgtSak);
-                        }
+          <>
+            <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start">
+              <div className="min-w-0">
+                <AntallTreffEtikett antall={paginering.totalAntall} />
+                {paginering.totalAntall === 0 ? (
+                  <LocalAlert status="announcement">
+                    <LocalAlert.Header>
+                      <LocalAlert.Title as="h2">
+                        {harAktiveFiltre
+                          ? "Ingen saker passer filtreringen"
+                          : "Ingen ufordelte saker"}
+                      </LocalAlert.Title>
+                    </LocalAlert.Header>
+                    <LocalAlert.Content>
+                      {harAktiveFiltre
+                        ? "Endre filtrering for å finne saker."
+                        : "Det er for øyeblikket ingen saker som venter på fordeling."}
+                    </LocalAlert.Content>
+                  </LocalAlert>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Saksliste
+                      rader={sakslisteRader}
+                      kolonner={[
+                        "saksid",
+                        "kategori",
+                        "misbrukstype",
+                        "steg",
+                        "status",
+                        "opprettet",
+                        "oppdatert",
+                      ]}
+                      tomTekst="Endre filtrering for å finne saker"
+                      tilbake={tilbakemål}
+                      handlingKolonneTittel={<span className="sr-only">Handling</span>}
+                      sortering={{
+                        kolonne: sorteringskolonne,
+                        retning: sorteringsretning,
+                        onSort: (kolonne) => sorterPåKolonne(kolonne as UfordeltSorteringskolonne),
+                        sorterbare: [...ufordelteSorteringskolonner],
                       }}
-                      className="cursor-pointer border-none bg-transparent p-0 text-sm font-semibold text-ax-text-accent underline-offset-2 hover:underline focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
-                    >
-                      Tildel
-                    </button>
-                  )}
-                />
+                      renderRadHandling={(rad) => (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            const valgtSak = saker.find((sak) => sak.id === rad.id);
+
+                            if (valgtSak) {
+                              setSakSomTildeles(valgtSak);
+                            }
+                          }}
+                          className="cursor-pointer border-none bg-transparent p-0 text-sm font-semibold text-ax-text-accent underline-offset-2 hover:underline focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
+                        >
+                          Tildel
+                        </button>
+                      )}
+                    />
+                  </div>
+                )}
+
+                {paginering.totalSider > 1 && (
+                  <HStack justify="center" className="mt-6">
+                    <Pagination
+                      page={paginering.side}
+                      onPageChange={gåTilSide}
+                      count={paginering.totalSider}
+                      size="small"
+                    />
+                  </HStack>
+                )}
               </div>
 
-              {paginerteSaker.totalSider > 1 && (
-                <HStack justify="center" className="mt-6">
-                  <Pagination
-                    page={paginerteSaker.aktivSide}
-                    onPageChange={gåTilSide}
-                    count={paginerteSaker.totalSider}
+              <Filterpanel>
+                <ChipsFiltergruppe
+                  tittel="Steg"
+                  alternativer={UFORDELTE_STEG.map((s) => ({
+                    verdi: s,
+                    etikett: formaterSteg(s),
+                  }))}
+                  valgteVerdier={stegFilter.valgteVerdier}
+                  onToggle={(verdi) => {
+                    sporHendelse("filter brukt", { filtergruppe: "steg", side: "fordeling" });
+                    stegFilter.toggle(verdi);
+                  }}
+                  size="small"
+                />
+                {filtervalg.kategorier.length > 0 && (
+                  <ChipsFiltergruppe
+                    tittel="Kategori"
+                    alternativer={filtervalg.kategorier}
+                    valgteVerdier={kategoriFilter.valgteVerdier}
+                    onToggle={(verdi) => {
+                      sporHendelse("filter brukt", {
+                        filtergruppe: "kategori",
+                        side: "fordeling",
+                      });
+                      kategoriFilter.toggle(verdi);
+                    }}
                     size="small"
                   />
-                </HStack>
-              )}
+                )}
+                {filtervalg.misbrukstyper.length > 0 && (
+                  <ChipsFiltergruppe
+                    tittel="Misbrukstype"
+                    alternativer={filtervalg.misbrukstyper}
+                    valgteVerdier={misbrukstypeFilter.valgteVerdier}
+                    onToggle={(verdi) => {
+                      sporHendelse("filter brukt", {
+                        filtergruppe: "misbrukstype",
+                        side: "fordeling",
+                      });
+                      misbrukstypeFilter.toggle(verdi);
+                    }}
+                    size="small"
+                  />
+                )}
+                {filtervalg.merkinger.length > 0 && (
+                  <ChipsFiltergruppe
+                    tittel="Merking"
+                    alternativer={filtervalg.merkinger}
+                    valgteVerdier={merkingFilter.valgteVerdier}
+                    onToggle={(verdi) => {
+                      sporHendelse("filter brukt", {
+                        filtergruppe: "merking",
+                        side: "fordeling",
+                      });
+                      merkingFilter.toggle(verdi);
+                    }}
+                    size="small"
+                  />
+                )}
+              </Filterpanel>
             </div>
-
-            <Filterpanel>
-              <ChipsFiltergruppe
-                tittel="Steg"
-                alternativer={UFORDELTE_STEG.map((s) => ({ verdi: s, etikett: formaterSteg(s) }))}
-                valgteVerdier={stegFilter.valgteVerdier}
-                onToggle={(verdi) => {
-                  sporHendelse("filter brukt", { filtergruppe: "steg", side: "fordeling" });
-                  stegFilter.toggle(verdi);
-                }}
-                size="small"
-              />
-              {filtervalg.kategorier.length > 0 && (
-                <ChipsFiltergruppe
-                  tittel="Kategori"
-                  alternativer={filtervalg.kategorier.map((v) => ({ verdi: v, etikett: v }))}
-                  valgteVerdier={kategoriFilter.valgteVerdier}
-                  onToggle={(verdi) => {
-                    sporHendelse("filter brukt", { filtergruppe: "kategori", side: "fordeling" });
-                    kategoriFilter.toggle(verdi);
-                  }}
-                  size="small"
-                />
-              )}
-              {filtervalg.misbrukstyper.length > 0 && (
-                <ChipsFiltergruppe
-                  tittel="Misbrukstype"
-                  alternativer={filtervalg.misbrukstyper.map((v) => ({ verdi: v, etikett: v }))}
-                  valgteVerdier={misbrukstypeFilter.valgteVerdier}
-                  onToggle={(verdi) => {
-                    sporHendelse("filter brukt", {
-                      filtergruppe: "misbrukstype",
-                      side: "fordeling",
-                    });
-                    misbrukstypeFilter.toggle(verdi);
-                  }}
-                  size="small"
-                />
-              )}
-              {filtervalg.merkinger.length > 0 && (
-                <ChipsFiltergruppe
-                  tittel="Merking"
-                  alternativer={filtervalg.merkinger.map((v) => ({ verdi: v, etikett: v }))}
-                  valgteVerdier={merkingFilter.valgteVerdier}
-                  onToggle={(verdi) => {
-                    sporHendelse("filter brukt", { filtergruppe: "merking", side: "fordeling" });
-                    merkingFilter.toggle(verdi);
-                  }}
-                  size="small"
-                />
-              )}
-            </Filterpanel>
-          </div>
+            <TildelSaksbehandlerModal
+              sakId={sakSomTildeles ? String(sakSomTildeles.id) : ""}
+              saksbehandlere={saksbehandlere}
+              saksbehandlerDetaljer={saksbehandlerDetaljer}
+              submitPath={submitPath}
+              åpen={sakSomTildeles !== null}
+              onClose={() => setSakSomTildeles(null)}
+            />
+          </>
         )}
       </VStack>
-
-      <TildelSaksbehandlerModal
-        sakId={sakSomTildeles ? String(sakSomTildeles.id) : ""}
-        saksbehandlere={saksbehandlere}
-        saksbehandlerDetaljer={saksbehandlerDetaljer}
-        submitPath={submitPath}
-        åpen={sakSomTildeles !== null}
-        onClose={() => setSakSomTildeles(null)}
-      />
     </section>
   );
+}
+
+function hentValgteEtiketter(
+  valgteVerdier: string[],
+  alternativer: { verdi: string; etikett: string }[],
+) {
+  const etiketter = new Map(alternativer.map(({ verdi, etikett }) => [verdi, etikett]));
+  return valgteVerdier.map((verdi) => etiketter.get(verdi) ?? verdi);
 }
 
 function hentSorteringskolonne(verdi: string | null): UfordeltSorteringskolonne | null {

@@ -4,6 +4,8 @@ import { MagnifyingGlassIcon } from "@navikt/aksel-icons";
 import { Link } from "react-router";
 import { FødselsnummerSøkefelt } from "~/formaterte-inputfelt/FormaterteInputfelt";
 import { RouteConfig } from "~/routeConfig";
+import { Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
+import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import { identEtikett } from "~/utils/string-utils";
 import { INGEN_TILGANG_TIL_Å_OPPRETTE_SAK_MELDING } from "./feilmeldinger";
 import type { PersonOppslagResultat } from "./person-oppslag.mock.server";
@@ -14,7 +16,8 @@ type EksisterendeSak = PersonOppslagResultat["eksisterendeSaker"][number];
 type PersonFetcherData =
   | PersonOppslagResultat
   | { person: null; eksisterendeSaker: [] }
-  | { feil: string };
+  | { feil: string }
+  | { feil: string; feilId: string; teknisk: true; ok: false };
 
 type Props = {
   personFetcher: FetcherWithComponents<PersonFetcherData>;
@@ -81,7 +84,7 @@ export function PersonOppslag({
         onSubmit={onPersonOppslag}
       >
         <FødselsnummerSøkefelt
-          label="Fødsels- eller D-nummer"
+          label="Fødsels- eller d-nummer"
           hideLabel={false}
           name="fnr"
           value={søkeFnr}
@@ -111,7 +114,8 @@ export function PersonOppslag({
       </personFetcher.Form>
 
       {/* Feil fra personoppslag */}
-      {harSøkt && oppslagFeil && (
+      <Innsendingsfeil svar={personFetcher.data} tekster={INNSENDINGSFEIL.slåOppPerson} />
+      {harSøkt && oppslagFeil && !(personFetcher.data && "teknisk" in personFetcher.data) && (
         <LocalAlert status="announcement" className="max-w-xl">
           <LocalAlert.Header>
             <LocalAlert.Title as="h2">Feil ved personoppslag</LocalAlert.Title>
@@ -126,7 +130,7 @@ export function PersonOppslag({
           <LocalAlert.Header>
             <LocalAlert.Title as="h2">Personen ble ikke funnet</LocalAlert.Title>
           </LocalAlert.Header>
-          <LocalAlert.Content>Sjekk at fødsels- eller D-nummeret er riktig.</LocalAlert.Content>
+          <LocalAlert.Content>Sjekk at fødsels- eller d-nummeret er riktig.</LocalAlert.Content>
         </LocalAlert>
       )}
 
@@ -156,7 +160,7 @@ export function PersonOppslag({
             {søktMedHistoriskIdent && (
               <LocalAlert status="warning">
                 <LocalAlert.Content>
-                  Fødsels- eller D-nummeret du søkte med er historisk. Saken opprettes på gjeldende
+                  Fødsels- eller d-nummeret du søkte med er historisk. Saken opprettes på gjeldende
                   identifikator: <strong>{person.personnummer}</strong>.
                 </LocalAlert.Content>
               </LocalAlert>
