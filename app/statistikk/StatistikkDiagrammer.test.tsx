@@ -65,6 +65,7 @@ describe("StatistikkDiagrammer", () => {
     expect(samliv.textContent).toBe("7");
     expect(screen.getByLabelText("Samliv, Utredning: 5 saker").textContent).toBe("5");
     expect(screen.getByText("12")).toBeDefined();
+    expect(samliv.getAttribute("title")).toBe("Samliv, Opprettet: 7 saker");
 
     const stolpe = (navn: string) =>
       screen.getByLabelText(`${navn}, Opprettet: ${navn === "Samliv" ? 7 : 3} saker`)

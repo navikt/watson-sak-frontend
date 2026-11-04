@@ -6,7 +6,7 @@ import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { ALLE_STEG } from "~/saker/steg";
 import { Diagramkort, Legend } from "./Diagramkort";
-import { fargeForKode, kakeGradient } from "./farger";
+import { fargeForKode, kakeGradient, tekstfargeForKode } from "./farger";
 import { Saksflyt } from "./Saksflyt";
 import type { Statistikk } from "./types";
 import { formaterAntallSaker, formaterBeløp, prosentFormatter, visningsnavn } from "./visning";
@@ -249,11 +249,13 @@ export function StatistikkDiagrammer({
                                 steg: del.filterverdi,
                               })}
                               aria-label={`${visningsnavn(rad.navn)}, ${visningsnavn(del.navn)}: ${formatter.format(del.verdi)} saker`}
-                              className="flex h-full min-w-0 basis-0 items-center justify-center overflow-hidden text-sm font-semibold text-white focus-visible:z-10"
+                              className="flex h-full min-w-0 basis-0 items-center justify-center overflow-hidden text-sm font-semibold focus-visible:z-10"
                               style={{
                                 flexGrow: del.verdi,
                                 backgroundColor: `var(${fargeForKode(del.filterverdi)})`,
+                                color: `var(${tekstfargeForKode(del.filterverdi)})`,
                               }}
+                              title={`${visningsnavn(rad.navn)}, ${visningsnavn(del.navn)}: ${formatter.format(del.verdi)} saker`}
                             >
                               <span aria-hidden>{formatter.format(del.verdi)}</span>
                             </RouterLink>
