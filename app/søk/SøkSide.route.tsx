@@ -68,7 +68,7 @@ function TomStatusboks({
   children,
 }: {
   ikon: React.ReactNode;
-  tittel: string;
+  tittel?: string;
   beskrivelse: string;
   children?: React.ReactNode;
 }) {
@@ -79,9 +79,11 @@ function TomStatusboks({
           {ikon}
         </Box>
         <VStack gap="space-4" align="center">
-          <Heading level="2" size="small" align="center">
-            {tittel}
-          </Heading>
+          {tittel && (
+            <Heading level="2" size="small" align="center">
+              {tittel}
+            </Heading>
+          )}
           <BodyShort align="center" className="text-ax-text-neutral-subtle max-w-md">
             {beskrivelse}
           </BodyShort>
@@ -119,7 +121,7 @@ function SøkeVeiledning() {
   );
 }
 
-function IngenTreff({ tittel, beskrivelse }: { tittel: string; beskrivelse: string }) {
+function IngenTreff({ tittel, beskrivelse }: { tittel?: string; beskrivelse: string }) {
   return (
     <TomStatusboks
       ikon={<FileXMarkIcon aria-hidden fontSize="2rem" className="text-ax-icon-neutral-subtle" />}
@@ -142,7 +144,7 @@ function IngenTreff({ tittel, beskrivelse }: { tittel: string; beskrivelse: stri
 function tomTreffTekst(
   søketype: SøkeType,
   søketekst: string,
-): { tittel: string; beskrivelse: string } {
+): { tittel?: string; beskrivelse: string } {
   switch (søketype) {
     case "saksnummer":
       return {
@@ -162,7 +164,6 @@ function tomTreffTekst(
       };
     default:
       return {
-        tittel: "Ugyldig søk",
         beskrivelse:
           "Søket må være et fødsels- eller d-nummer (11 sifre), organisasjonsnummer (9 sifre), saksnummer eller PID.",
       };

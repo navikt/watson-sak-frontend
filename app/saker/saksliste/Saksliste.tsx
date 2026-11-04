@@ -223,7 +223,7 @@ function renderCelle(
       );
     case "kategori":
       return rad.kategori ? (
-        <Tag variant="outline" data-color="info" size="small">
+        <Tag variant="outline" data-color="info" size="small" className="whitespace-nowrap shrink-0">
           {rad.kategori}
         </Tag>
       ) : (

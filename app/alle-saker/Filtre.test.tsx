@@ -50,12 +50,13 @@ describe("Filtre – koblet kategori/misbrukstype", () => {
     expect(params.has("arbeidsfilter")).toBe(false);
   });
 
-  it("viser Steg og Status øverst, over Kategori og Merking", () => {
+  it("viser Saksbehandler øverst, før Steg og Status", () => {
     render(
       <MemoryRouter initialEntries={["/"]}>
         <Filtre
           alternativer={{
             ...ALTERNATIVER,
+            saksbehandler: [{ label: "Ola Saksbehandler", value: "ola" }],
             merking: ["Prioritert"],
             steg: [{ label: "Utredning", value: "UTREDNING" }],
             status: STATUSFILTER_VALG,
@@ -64,9 +65,10 @@ describe("Filtre – koblet kategori/misbrukstype", () => {
       </MemoryRouter>,
     );
 
-    const rekkefølge = ["Steg", "Status", "Kategori", "Merking"].map((tittel) =>
-      screen.getByText(tittel),
-    );
+    const rekkefølge = [
+      screen.getByRole("combobox", { name: "Saksbehandler" }),
+      ...["Steg", "Status", "Kategori", "Merking"].map((tittel) => screen.getByText(tittel)),
+    ];
     rekkefølge.slice(1).forEach((element, i) => {
       expect(
         rekkefølge[i].compareDocumentPosition(element) & Node.DOCUMENT_POSITION_FOLLOWING,

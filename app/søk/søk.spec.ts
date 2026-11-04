@@ -53,7 +53,8 @@ test.describe("Søk", () => {
       await page.getByLabel("Søk i saker").fill("finnesikke123");
       await page.getByLabel("Søk i saker").press("Enter");
 
-      await expect(page.getByRole("heading", { name: "Ugyldig søk" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Ugyldig søk" })).toHaveCount(0);
+      await expect(page.getByText(/Søket må være et fødsels- eller d-nummer/)).toBeVisible();
       await expect(page.getByRole("button", { name: "Se alle saker" })).toBeVisible();
     });
 
@@ -81,7 +82,7 @@ test.describe("Søk", () => {
       await page.getByLabel("Søk i saker").fill("finnesikke123");
       await page.getByLabel("Søk i saker").press("Enter");
 
-      await expect(page.getByRole("heading", { name: "Ugyldig søk" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Ugyldig søk" })).toHaveCount(0);
       await expect(
         page.getByRole("heading", { name: "Ser du etter en person?" }),
       ).not.toBeVisible();
@@ -182,6 +183,20 @@ test.describe("Søk", () => {
   });
 
   test.describe("header-søk", () => {
+    test("hindrer innsending av tomt hurtigsøk og markerer feltet", async ({ page }) => {
+      await page.goto("/", { waitUntil: "networkidle" });
+
+      const headerSøk = page.getByRole("search", { name: "Hurtigsøk" }).getByRole("searchbox");
+      await headerSøk.fill("   ");
+      await headerSøk.press("Enter");
+
+      await expect(page).toHaveURL("/");
+      await expect(headerSøk).toHaveAttribute("aria-invalid", "true");
+
+      await headerSøk.fill("1028");
+      await expect(headerSøk).not.toHaveAttribute("aria-invalid", "true");
+    });
+
     test("søkefelt i header poster til søkesiden", async ({ page }) => {
       await page.goto("/", { waitUntil: "networkidle" });
 

@@ -34,6 +34,7 @@ export function AppHeader() {
   const triggerGlitch = useGlitch();
   const triggerSherlockCursor = useSherlockCursor();
   const [visEndCredits, setVisEndCredits] = useState(false);
+  const [hurtigsøkUgyldig, setHurtigsøkUgyldig] = useState(false);
   const lukkEndCredits = useCallback(() => setVisEndCredits(false), []);
 
   useEffect(() => {
@@ -92,6 +93,12 @@ export function AppHeader() {
         onSubmit={(event) => {
           const formData = new FormData(event.currentTarget);
           const søketekst = formData.get("søketekst")?.toString().trim();
+          if (!søketekst) {
+            event.preventDefault();
+            setHurtigsøkUgyldig(true);
+            return;
+          }
+          setHurtigsøkUgyldig(false);
           if (søketekst?.toLowerCase() === END_CREDITS_EASTER_EGG) {
             event.preventDefault();
             setVisEndCredits(true);
@@ -113,10 +120,11 @@ export function AppHeader() {
           name="søketekst"
           variant="secondary"
           size="small"
-          placeholder="Søk på fødsels-/D-nummer, organisasjonsnummer, saksnummer og PID"
-          className="w-full"
+          aria-invalid={hurtigsøkUgyldig}
+          className="w-full [&_input[aria-invalid=true]]:border-ax-border-danger"
           autoComplete="off"
           aria-keyshortcuts="Meta+K Control+K"
+          onChange={() => setHurtigsøkUgyldig(false)}
           onKeyDown={handleSøkefeltKeyDown}
         />
       </Form>

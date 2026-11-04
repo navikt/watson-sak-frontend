@@ -8,7 +8,13 @@ import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
 
 export function SistAktiveSakerOversikt({ saker }: { saker: KontrollsakResponse[] }) {
-  const rader = saker.map((sak) => mapKontrollsakTilSakslisteRad(sak));
+  const rader = saker
+    .map((sak) => mapKontrollsakTilSakslisteRad(sak))
+    .sort(
+      (a, b) =>
+        new Date(b.oppdatert ?? b.opprettet).getTime() -
+        new Date(a.oppdatert ?? a.opprettet).getTime(),
+    );
 
   return (
     <Kort as="section">
