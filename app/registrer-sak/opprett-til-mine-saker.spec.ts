@@ -17,7 +17,8 @@ test.describe("Oppretting og tildeling av sak", () => {
 
     await page.getByLabel("Kategori").selectOption("DOKUMENTFALSK");
     await page.getByLabel("Kilde").selectOption("NAV_KONTROLL");
-    await page.getByLabel("Enhet").selectOption("ky153k");
+    // Ufordelte saker viser innlogget brukers enhet som standard (Analyse i local-mock).
+    await page.getByLabel("Enhet").selectOption("by295h");
     await page.getByRole("button", { name: "Opprett sak" }).click();
 
     const bekreftelseDialog = page.getByRole("dialog", { name: "Opprett sak" });
