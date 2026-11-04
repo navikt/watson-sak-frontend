@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { tilVarsel, varselDestinasjon, varselPageBackendResponseSchema } from "./typer";
+import {
+  formaterVarselTidspunkt,
+  tilVarsel,
+  varselDestinasjon,
+  varselPageBackendResponseSchema,
+} from "./typer";
 
 /** Eksakt kopi av `VarselResponse` slik watson-admin-api serialiserer den. */
 const backendVarsel = {
@@ -56,5 +61,15 @@ describe("varselkontrakt", () => {
     const varsel = tilVarsel({ ...backendVarsel, dokumentId: null, traadId: null });
 
     expect(varselDestinasjon(varsel, "102")).toBe("/saker/102");
+  });
+});
+
+describe("formaterVarselTidspunkt", () => {
+  it("formaterer som dd.mm.åååå, tt:mm i norsk tid", () => {
+    expect(formaterVarselTidspunkt("2026-05-02T08:32:00Z")).toBe("02.05.2026, 10:32");
+  });
+
+  it("returnerer input uendret når tidspunktet er ugyldig", () => {
+    expect(formaterVarselTidspunkt("ikke-en-dato")).toBe("ikke-en-dato");
   });
 });

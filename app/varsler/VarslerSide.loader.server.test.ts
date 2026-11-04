@@ -8,6 +8,7 @@ const getBackendOboTokenMock = vi.hoisted(() => vi.fn().mockResolvedValue("token
 const hentAlleVarslerMock = vi.hoisted(() =>
   vi.fn().mockResolvedValue({ varsler: [], harFlere: false, totalItems: 0 }),
 );
+const hentAntallUlesteMock = vi.hoisted(() => vi.fn().mockResolvedValue(0));
 const hentVarslerFraMockMock = vi.hoisted(() => vi.fn().mockReturnValue([]));
 
 vi.mock("~/config/env.server", () => ({
@@ -22,6 +23,7 @@ vi.mock("~/auth/access-token", () => ({
 
 vi.mock("~/varsler/api.server", () => ({
   hentAlleVarsler: hentAlleVarslerMock,
+  hentAntallUleste: hentAntallUlesteMock,
 }));
 
 vi.mock("~/varsler/mock-data.server", () => ({
@@ -100,5 +102,30 @@ describe("VarslerSide loader", () => {
       expect(resultat.harFlere).toBe(true);
       expect(resultat.totalItems).toBe(42);
     });
+
+    it("returnerer antall uleste og leste fra backend", async () => {
+      testState.skalBrukeMockdata = false;
+      hentAlleVarslerMock.mockResolvedValue({ varsler: [], harFlere: true, totalItems: 42 });
+      hentAntallUlesteMock.mockResolvedValue(5);
+
+      const resultat = await runLoader("http://localhost/varsler");
+
+      expect(hentAntallUlesteMock).toHaveBeenCalledWith("token-123");
+      expect(resultat.antallUleste).toBe(5);
+      expect(resultat.antallLeste).toBe(37);
+    });
+  });
+
+  it("teller uleste og leste i mock-modus", async () => {
+    hentVarslerFraMockMock.mockReturnValue([
+      { id: "v1", sakId: "1", tittel: "T", tekst: "T", tidspunkt: "2026-01-01", erLest: false },
+      { id: "v2", sakId: "1", tittel: "T", tekst: "T", tidspunkt: "2026-01-01", erLest: true },
+      { id: "v3", sakId: "1", tittel: "T", tekst: "T", tidspunkt: "2026-01-01", erLest: true },
+    ]);
+
+    const resultat = await runLoader("http://localhost/varsler");
+
+    expect(resultat.antallUleste).toBe(1);
+    expect(resultat.antallLeste).toBe(2);
   });
 });
