@@ -55,6 +55,32 @@ describe("landingsside-loader mot backend", () => {
     expect(resultat.mineSaker).toEqual([]);
   });
 
+  it("sorterer mine saker etter sist oppdatert, med opprettet som reserve", async () => {
+    hentOppsummeringMock.mockResolvedValue({ nye: 0, aktive: 3, venter: 0, iBero: 0 });
+    hentKontrollsakerMock.mockResolvedValue({
+      items: [
+        { id: 1, steg: "UTREDNING", opprettet: "2026-01-01T00:00:00Z", oppdatert: null },
+        {
+          id: 2,
+          steg: "UTREDNING",
+          opprettet: "2026-03-01T00:00:00Z",
+          oppdatert: "2026-03-02T00:00:00Z",
+        },
+        {
+          id: 3,
+          steg: "UTREDNING",
+          opprettet: "2026-01-02T00:00:00Z",
+          oppdatert: "2026-05-01T00:00:00Z",
+        },
+      ],
+    });
+
+    const resultat = await loader(args);
+    if (resultat.type !== "saksbehandler") throw new Error("Forventet saksbehandler");
+
+    expect(resultat.mineSaker.map((sak) => sak.id)).toEqual([3, 2, 1]);
+  });
+
   it("sender utløpt sesjon videre", async () => {
     hentOppsummeringMock.mockRejectedValue(data("Sesjonen er utløpt.", { status: 401 }));
 

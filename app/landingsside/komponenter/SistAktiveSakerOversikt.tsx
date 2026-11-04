@@ -17,11 +17,11 @@ export function SistAktiveSakerOversikt({ saker }: { saker: KontrollsakResponse[
           <HStack gap="space-4" align="center">
             <BriefcaseIcon aria-hidden fontSize="1.25rem" />
             <Heading level="2" size="medium">
-              Sist aktive saker
+              Mine saker - siste oppdaterte
             </Heading>
           </HStack>
           <Link as={RouterLink} to={RouteConfig.MINE_SAKER}>
-            Se alle saker <ArrowRightIcon aria-hidden fontSize="1rem" />
+            Se mine saker <ArrowRightIcon aria-hidden fontSize="1rem" />
           </Link>
         </HStack>
 
