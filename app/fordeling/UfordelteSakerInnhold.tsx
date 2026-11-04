@@ -1,5 +1,5 @@
 import { Heading, HGrid, HStack, LocalAlert, Pagination, Select, VStack } from "@navikt/ds-react";
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { ChipsFiltergruppe } from "~/filtre/ChipsFiltergruppe";
@@ -89,6 +89,15 @@ export function UfordelteSakerInnhold({
       (nøkkel) => [nøkkel, searchParams.getAll(nøkkel)],
     ),
   ]);
+  // Valget gjelder bare konteksten det ble gjort i. Nullstiller modalen uten å remontere
+  // liste og filtre, så tastaturfokus beholdes når filter, sortering eller side endres.
+  const [tildeling, setTildeling] = useState<{ kontekst: string; sak: FordelingSak } | null>(null);
+  const sakSomTildeles = tildeling?.kontekst === modalKontekst ? tildeling.sak : null;
+  const søkestreng = searchParams.toString();
+  const tilbakemål = {
+    to: søkestreng ? `${RouteConfig.FORDELING}?${søkestreng}` : RouteConfig.FORDELING,
+    label: "Ufordelte saker",
+  };
 
   function gåTilSide(side: number) {
     setSearchParams((forrige) => {
@@ -175,149 +184,149 @@ export function UfordelteSakerInnhold({
         {saksdataUtilgjengelig ? (
           <BackendUtilgjengeligMelding />
         ) : (
-          <TildelModalKontekst
-            key={modalKontekst}
-            saksbehandlere={saksbehandlere}
-            saksbehandlerDetaljer={saksbehandlerDetaljer}
-            submitPath={submitPath}
-          >
-            {(velgSak) => (
-              <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start">
-                <div className="min-w-0">
-                  <AntallTreffEtikett antall={paginering.totalAntall} />
-                  {paginering.totalAntall === 0 ? (
-                    <LocalAlert status="announcement">
-                      <LocalAlert.Header>
-                        <LocalAlert.Title as="h2">
-                          {harAktiveFiltre
-                            ? "Ingen saker passer filtreringen"
-                            : "Ingen ufordelte saker"}
-                        </LocalAlert.Title>
-                      </LocalAlert.Header>
-                      <LocalAlert.Content>
+          <>
+            <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start">
+              <div className="min-w-0">
+                <AntallTreffEtikett antall={paginering.totalAntall} />
+                {paginering.totalAntall === 0 ? (
+                  <LocalAlert status="announcement">
+                    <LocalAlert.Header>
+                      <LocalAlert.Title as="h2">
                         {harAktiveFiltre
-                          ? "Endre filtrering for å finne saker."
-                          : "Det er for øyeblikket ingen saker som venter på fordeling."}
-                      </LocalAlert.Content>
-                    </LocalAlert>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <Saksliste
-                        rader={sakslisteRader}
-                        kolonner={[
-                          "saksid",
-                          "kategori",
-                          "misbrukstype",
-                          "steg",
-                          "status",
-                          "opprettet",
-                          "oppdatert",
-                        ]}
-                        tomTekst="Endre filtrering for å finne saker"
-                        tilbake={{ to: RouteConfig.FORDELING, label: "Ufordelte saker" }}
-                        handlingKolonneTittel={<span className="sr-only">Handling</span>}
-                        sortering={{
-                          kolonne: sorteringskolonne,
-                          retning: sorteringsretning,
-                          onSort: (kolonne) =>
-                            sorterPåKolonne(kolonne as UfordeltSorteringskolonne),
-                          sorterbare: [...ufordelteSorteringskolonner],
-                        }}
-                        renderRadHandling={(rad) => (
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              const valgtSak = saker.find((sak) => sak.id === rad.id);
+                          ? "Ingen saker passer filtreringen"
+                          : "Ingen ufordelte saker"}
+                      </LocalAlert.Title>
+                    </LocalAlert.Header>
+                    <LocalAlert.Content>
+                      {harAktiveFiltre
+                        ? "Endre filtrering for å finne saker."
+                        : "Det er for øyeblikket ingen saker som venter på fordeling."}
+                    </LocalAlert.Content>
+                  </LocalAlert>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Saksliste
+                      rader={sakslisteRader}
+                      kolonner={[
+                        "saksid",
+                        "kategori",
+                        "misbrukstype",
+                        "steg",
+                        "status",
+                        "opprettet",
+                        "oppdatert",
+                      ]}
+                      tomTekst="Endre filtrering for å finne saker"
+                      tilbake={tilbakemål}
+                      handlingKolonneTittel={<span className="sr-only">Handling</span>}
+                      sortering={{
+                        kolonne: sorteringskolonne,
+                        retning: sorteringsretning,
+                        onSort: (kolonne) => sorterPåKolonne(kolonne as UfordeltSorteringskolonne),
+                        sorterbare: [...ufordelteSorteringskolonner],
+                      }}
+                      renderRadHandling={(rad) => (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            const valgtSak = saker.find((sak) => sak.id === rad.id);
 
-                              if (valgtSak) {
-                                velgSak(valgtSak);
-                              }
-                            }}
-                            className="cursor-pointer border-none bg-transparent p-0 text-sm font-semibold text-ax-text-accent underline-offset-2 hover:underline focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
-                          >
-                            Tildel
-                          </button>
-                        )}
-                      />
-                    </div>
-                  )}
+                            if (valgtSak) {
+                              setTildeling({ kontekst: modalKontekst, sak: valgtSak });
+                            }
+                          }}
+                          className="cursor-pointer border-none bg-transparent p-0 text-sm font-semibold text-ax-text-accent underline-offset-2 hover:underline focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
+                        >
+                          Tildel
+                        </button>
+                      )}
+                    />
+                  </div>
+                )}
 
-                  {paginering.totalSider > 1 && (
-                    <HStack justify="center" className="mt-6">
-                      <Pagination
-                        page={paginering.side}
-                        onPageChange={gåTilSide}
-                        count={paginering.totalSider}
-                        size="small"
-                      />
-                    </HStack>
-                  )}
-                </div>
+                {paginering.totalSider > 1 && (
+                  <HStack justify="center" className="mt-6">
+                    <Pagination
+                      page={paginering.side}
+                      onPageChange={gåTilSide}
+                      count={paginering.totalSider}
+                      size="small"
+                    />
+                  </HStack>
+                )}
+              </div>
 
-                <Filterpanel>
+              <Filterpanel>
+                <ChipsFiltergruppe
+                  tittel="Steg"
+                  alternativer={UFORDELTE_STEG.map((s) => ({
+                    verdi: s,
+                    etikett: formaterSteg(s),
+                  }))}
+                  valgteVerdier={stegFilter.valgteVerdier}
+                  onToggle={(verdi) => {
+                    sporHendelse("filter brukt", { filtergruppe: "steg", side: "fordeling" });
+                    stegFilter.toggle(verdi);
+                  }}
+                  size="small"
+                />
+                {filtervalg.kategorier.length > 0 && (
                   <ChipsFiltergruppe
-                    tittel="Steg"
-                    alternativer={UFORDELTE_STEG.map((s) => ({
-                      verdi: s,
-                      etikett: formaterSteg(s),
-                    }))}
-                    valgteVerdier={stegFilter.valgteVerdier}
+                    tittel="Kategori"
+                    alternativer={filtervalg.kategorier}
+                    valgteVerdier={kategoriFilter.valgteVerdier}
                     onToggle={(verdi) => {
-                      sporHendelse("filter brukt", { filtergruppe: "steg", side: "fordeling" });
-                      stegFilter.toggle(verdi);
+                      sporHendelse("filter brukt", {
+                        filtergruppe: "kategori",
+                        side: "fordeling",
+                      });
+                      kategoriFilter.toggle(verdi);
                     }}
                     size="small"
                   />
-                  {filtervalg.kategorier.length > 0 && (
-                    <ChipsFiltergruppe
-                      tittel="Kategori"
-                      alternativer={filtervalg.kategorier}
-                      valgteVerdier={kategoriFilter.valgteVerdier}
-                      onToggle={(verdi) => {
-                        sporHendelse("filter brukt", {
-                          filtergruppe: "kategori",
-                          side: "fordeling",
-                        });
-                        kategoriFilter.toggle(verdi);
-                      }}
-                      size="small"
-                    />
-                  )}
-                  {filtervalg.misbrukstyper.length > 0 && (
-                    <ChipsFiltergruppe
-                      tittel="Misbrukstype"
-                      alternativer={filtervalg.misbrukstyper}
-                      valgteVerdier={misbrukstypeFilter.valgteVerdier}
-                      onToggle={(verdi) => {
-                        sporHendelse("filter brukt", {
-                          filtergruppe: "misbrukstype",
-                          side: "fordeling",
-                        });
-                        misbrukstypeFilter.toggle(verdi);
-                      }}
-                      size="small"
-                    />
-                  )}
-                  {filtervalg.merkinger.length > 0 && (
-                    <ChipsFiltergruppe
-                      tittel="Merking"
-                      alternativer={filtervalg.merkinger}
-                      valgteVerdier={merkingFilter.valgteVerdier}
-                      onToggle={(verdi) => {
-                        sporHendelse("filter brukt", {
-                          filtergruppe: "merking",
-                          side: "fordeling",
-                        });
-                        merkingFilter.toggle(verdi);
-                      }}
-                      size="small"
-                    />
-                  )}
-                </Filterpanel>
-              </div>
-            )}
-          </TildelModalKontekst>
+                )}
+                {filtervalg.misbrukstyper.length > 0 && (
+                  <ChipsFiltergruppe
+                    tittel="Misbrukstype"
+                    alternativer={filtervalg.misbrukstyper}
+                    valgteVerdier={misbrukstypeFilter.valgteVerdier}
+                    onToggle={(verdi) => {
+                      sporHendelse("filter brukt", {
+                        filtergruppe: "misbrukstype",
+                        side: "fordeling",
+                      });
+                      misbrukstypeFilter.toggle(verdi);
+                    }}
+                    size="small"
+                  />
+                )}
+                {filtervalg.merkinger.length > 0 && (
+                  <ChipsFiltergruppe
+                    tittel="Merking"
+                    alternativer={filtervalg.merkinger}
+                    valgteVerdier={merkingFilter.valgteVerdier}
+                    onToggle={(verdi) => {
+                      sporHendelse("filter brukt", {
+                        filtergruppe: "merking",
+                        side: "fordeling",
+                      });
+                      merkingFilter.toggle(verdi);
+                    }}
+                    size="small"
+                  />
+                )}
+              </Filterpanel>
+            </div>
+            <TildelSaksbehandlerModal
+              sakId={sakSomTildeles ? String(sakSomTildeles.id) : ""}
+              saksbehandlere={saksbehandlere}
+              saksbehandlerDetaljer={saksbehandlerDetaljer}
+              submitPath={submitPath}
+              åpen={sakSomTildeles !== null}
+              onClose={() => setTildeling(null)}
+            />
+          </>
         )}
       </VStack>
     </section>
@@ -330,36 +339,6 @@ function hentValgteEtiketter(
 ) {
   const etiketter = new Map(alternativer.map(({ verdi, etikett }) => [verdi, etikett]));
   return valgteVerdier.map((verdi) => etiketter.get(verdi) ?? verdi);
-}
-
-interface TildelModalKontekstProps {
-  children: (velgSak: (sak: FordelingSak) => void) => ReactNode;
-  saksbehandlere: string[];
-  saksbehandlerDetaljer: KontrollsakSaksbehandler[];
-  submitPath: string;
-}
-
-function TildelModalKontekst({
-  children,
-  saksbehandlere,
-  saksbehandlerDetaljer,
-  submitPath,
-}: TildelModalKontekstProps) {
-  const [sakSomTildeles, setSakSomTildeles] = useState<FordelingSak | null>(null);
-
-  return (
-    <>
-      {children(setSakSomTildeles)}
-      <TildelSaksbehandlerModal
-        sakId={sakSomTildeles ? String(sakSomTildeles.id) : ""}
-        saksbehandlere={saksbehandlere}
-        saksbehandlerDetaljer={saksbehandlerDetaljer}
-        submitPath={submitPath}
-        åpen={sakSomTildeles !== null}
-        onClose={() => setSakSomTildeles(null)}
-      />
-    </>
-  );
 }
 
 function hentSorteringskolonne(verdi: string | null): UfordeltSorteringskolonne | null {

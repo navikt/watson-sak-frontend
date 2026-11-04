@@ -1,6 +1,12 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { createMemoryRouter, MemoryRouter, RouterProvider, useSearchParams } from "react-router";
+import {
+  createMemoryRouter,
+  MemoryRouter,
+  RouterProvider,
+  useLocation,
+  useSearchParams,
+} from "react-router";
 import type { ComponentProps } from "react";
 import { RouteConfig } from "~/routeConfig";
 import { mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
@@ -75,6 +81,45 @@ function renderInnhold(
 }
 
 describe("UfordelteSakerInnhold", () => {
+  it("beholder fokus på filterknappen når et filter velges", () => {
+    const router = createMemoryRouter(
+      [{ path: "/", element: <UfordelteSakerInnhold {...standardProps} /> }],
+      { initialEntries: ["/"] },
+    );
+    render(<RouterProvider router={router} />);
+
+    const knapp = screen.getByRole("button", { name: "Utroskap" });
+    knapp.focus();
+    fireEvent.click(knapp);
+
+    expect(new URLSearchParams(router.state.location.search).get("kategori")).toBe("UTROSKAP");
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Utroskap" }));
+    expect(document.activeElement).toBe(knapp);
+  });
+
+  it("sender valgt enhet, filtre og side med som tilbakemål når en sak åpnes", () => {
+    let mottattState: unknown = null;
+    function SakSide() {
+      mottattState = useLocation().state;
+      return <p>Saken</p>;
+    }
+    const søk = "?omfang=enhet&kategori=ARBEID&side=2";
+    const router = createMemoryRouter(
+      [
+        { path: "/", element: <UfordelteSakerInnhold {...standardProps} /> },
+        { path: "/saker/:sakId", element: <SakSide /> },
+      ],
+      { initialEntries: [`/${søk}`] },
+    );
+    render(<RouterProvider router={router} />);
+
+    fireEvent.click(screen.getByRole("link", { name: "#301" }));
+
+    expect(mottattState).toEqual({
+      tilbake: { to: `${RouteConfig.FORDELING}${søk}`, label: "Ufordelte saker" },
+    });
+  });
+
   it("viser enheten i overskriften og fanetittelen", () => {
     renderInnhold();
 
