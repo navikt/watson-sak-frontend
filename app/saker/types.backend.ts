@@ -387,6 +387,10 @@ export const kontrollsakResponseSchema = z
       tilgang: kontrollsakTilgangSchema.optional(),
       opprettet: z.string(),
       oppdatert: z.string().nullable(),
+      visLiggetidVarsel: z.preprocess(
+        (value) => (value === undefined ? false : value),
+        z.boolean().optional(),
+      ),
       avsluttetTidspunkt: z.string().nullable().optional(),
       filerTilgjengeligTil: z.string().nullable().optional(),
       legacyPid: z.string().nullable().optional(),
@@ -442,6 +446,14 @@ export const kontrollsakHendelseResponseObjectSchema = z.object({
   tittel: z.string().nullable().optional(),
   opprettetAvNavn: z.string().nullable().optional(),
   opprettetVedSaksopprettelse: z.boolean().optional(),
+  berortSaksbehandlerNavn: z.string().nullable().optional(),
+  kobletSakId: z.number().nullable().optional(),
+  oppgaveId: z.string().nullable().optional(),
+  fraEnhetNavn: z.string().nullable().optional(),
+  fraSaksbehandlerNavn: z.string().nullable().optional(),
+  tilEnhetNavn: z.string().nullable().optional(),
+  tilSaksbehandlerNavn: z.string().nullable().optional(),
+  delAvFlytting: z.boolean().nullable().optional(),
 });
 
 export const kontrollsakHendelseResponseSchema = z.preprocess(

@@ -1,4 +1,4 @@
-import { VStack } from "@navikt/ds-react";
+import { LocalAlert, VStack } from "@navikt/ds-react";
 import { Feilmelding } from "~/feilhåndtering/Feilmelding";
 import type { Seksjonsfeil } from "~/saker/SakDetaljSide.loader.server";
 import { IngenHistorikktilgangKort } from "~/saker/historikk/IngenHistorikktilgangKort";
@@ -58,6 +58,15 @@ export function SakDetaljSidePanel({
         kanTildeleSak={kanTildeleSak}
         tillatteHandlinger={tillatteHandlinger}
       />
+
+      {sak.visLiggetidVarsel && (
+        <LocalAlert status="warning">
+          <LocalAlert.Header>
+            <LocalAlert.Title as="h2">Manglende oppdatering</LocalAlert.Title>
+          </LocalAlert.Header>
+          <LocalAlert.Content>Saken har ikke vært oppdatert på 30 dager</LocalAlert.Content>
+        </LocalAlert>
+      )}
 
       {historikkTilstand === "vis" && seksjonsfeil.historikk ? (
         <Feilmelding

@@ -64,6 +64,13 @@ export function grupperHistorikkHendelser(hendelser: SakHendelse[]): SakHendelse
   let opplastingerVedOpprettelseLagtTil = false;
 
   for (const hendelse of hendelser) {
+    if (
+      (hendelse.hendelsesType === "SAK_TILDELT" || hendelse.hendelsesType === "SAK_OVERFORT") &&
+      hendelse.delAvFlytting === true
+    ) {
+      continue;
+    }
+
     if (hendelse.hendelsesType === "FIL_LASTET_OPP" && hendelse.opprettetVedSaksopprettelse) {
       if (!opplastingerVedOpprettelseLagtTil) {
         grupper.push(
@@ -189,15 +196,15 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
     case "SAKSINFORMASJON_ENDRET":
       return "Saksinformasjon endret";
     case "MOTTAKSENHET_ENDRET":
-      return "Mottaksenhet endret";
+      return "Sak flyttet";
     case "VIDERESENDT_TIL_NAY_NFP":
       return "Videresendt til NAY/NFP";
     case "POLITIANMELDT":
       return "Politianmeldt";
     case "TILGANG_DELT":
       return "Tilgang delt";
-    case "TILGANG_FJERNET":
-      return "Tilgang fjernet";
+    case "DELING_FJERNET":
+      return "Deling fjernet";
     case "ANSVARLIG_SAKSBEHANDLER_ENDRET":
       return "Ansvarlig saksbehandler endret";
     case "YTELSE_STANSET":
@@ -218,6 +225,8 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
       return "Journalpost opprettet";
     case "OPPGAVE_OPPRETTET":
       return "Oppgave opprettet";
+    case "OPPGAVE_FERDIGSTILT":
+      return "Oppgave ferdigstilt";
     case "FIL_LASTET_OPP":
       return "Fil lastet opp";
     case "SAK_FRISTILT":
@@ -258,14 +267,51 @@ export function hendelseBeskrivelse(
     hendelse.hendelsesType === "MIGRERING_PABEGYNT" ||
     hendelse.hendelsesType === "MIGRERING_FULLFORT" ||
     hendelse.hendelsesType === "SAK_FRISTILT" ||
-    hendelse.hendelsesType === "SAK_DELT" ||
     hendelse.hendelsesType === "SAK_OVERFORT"
   ) {
     return null;
   }
 
-  if (hendelse.hendelsesType === "SAK_REDIGERT" || hendelse.hendelsesType === "SAK_KOBLET") {
+  if (hendelse.hendelsesType === "SAK_REDIGERT") {
     return hendelse.beskrivelse ?? null;
+  }
+
+  if (hendelse.hendelsesType === "SAK_TILDELT") {
+    return hendelse.berortSaksbehandlerNavn ? `Til: ${hendelse.berortSaksbehandlerNavn}` : null;
+  }
+
+  if (hendelse.hendelsesType === "SAK_DELT") {
+    return hendelse.berortSaksbehandlerNavn ? `Med: ${hendelse.berortSaksbehandlerNavn}` : null;
+  }
+
+  if (hendelse.hendelsesType === "DELING_FJERNET") {
+    return hendelse.berortSaksbehandlerNavn ? `For: ${hendelse.berortSaksbehandlerNavn}` : null;
+  }
+
+  if (hendelse.hendelsesType === "SAK_KOBLET") {
+    return hendelse.kobletSakId != null ? `Sak koblet til ${hendelse.kobletSakId}` : null;
+  }
+
+  if (hendelse.hendelsesType === "OPPGAVE_FERDIGSTILT") {
+    const linjer: string[] = [];
+    if (hendelse.oppgaveId) linjer.push(`${hendelse.oppgaveId} ble ferdigstilt i Gosys`);
+    if (!hendelse.opprettetAvNavn || hendelse.opprettetAvNavn === "SYSTEM") {
+      linjer.push("Utført i Gosys");
+    }
+    return linjer.join("\n") || null;
+  }
+
+  if (hendelse.hendelsesType === "SAK_OPPRETTET") {
+    return null;
+  }
+
+  if (hendelse.hendelsesType === "MOTTAKSENHET_ENDRET") {
+    const linjer = [
+      [hendelse.fraEnhetNavn, hendelse.fraSaksbehandlerNavn].filter(Boolean).join(", "),
+      [hendelse.tilEnhetNavn, hendelse.tilSaksbehandlerNavn].filter(Boolean).join(", "),
+    ];
+    const [fra, til] = linjer;
+    return [fra && `Fra: ${fra}`, til && `Til: ${til}`].filter(Boolean).join("\n") || null;
   }
 
   if (hendelse.hendelsesType === "NOTAT_SENDT") {
@@ -281,7 +327,7 @@ export function hendelseBeskrivelse(
   }
 
   if (hendelse.hendelsesType === "SAKSINFORMASJON_ENDRET") {
-    return hendelse.beskrivelse ?? `Steg: ${formaterSteg(hendelse.steg)}`;
+    return hendelse.beskrivelse ?? formaterSteg(hendelse.steg);
   }
 
   if (
@@ -326,25 +372,13 @@ export function hendelseBeskrivelse(
       hendelse.hendelsesType === "SAK_SATT_I_BERO") &&
     hendelse.status
   ) {
-    const deler = [
-      `På vent: ${formaterStatus(hendelse.status)}`,
-      `Steg: ${formaterSteg(hendelse.steg)}`,
-    ];
+    const deler = [`På vent: ${formaterStatus(hendelse.status)}`];
 
     if (hendelse.beskrivelse) {
       deler.push(hendelse.beskrivelse);
     }
 
     return deler.join(" – ");
-  }
-
-  if (
-    hendelse.hendelsesType === "TILGANG_FJERNET" &&
-    hendelse.berortSaksbehandlerNavn &&
-    hendelse.berortSaksbehandlerNavIdent &&
-    hendelse.berortSaksbehandlerEnhet
-  ) {
-    return `Fjernet deling med: ${hendelse.berortSaksbehandlerNavn} (${hendelse.berortSaksbehandlerNavIdent}) · ${hendelse.berortSaksbehandlerEnhet}`;
   }
 
   if (
@@ -357,7 +391,7 @@ export function hendelseBeskrivelse(
     return hendelse.beskrivelse ?? null;
   }
 
-  return `Steg: ${formaterSteg(hendelse.steg)}`;
+  return null;
 }
 
 export function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
@@ -381,7 +415,8 @@ export function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
     case "POLITIANMELDT":
       return <GavelIcon {...iconProps} />;
     case "TILGANG_DELT":
-    case "TILGANG_FJERNET":
+    case "SAK_DELT":
+    case "DELING_FJERNET":
       return <PersonGroupIcon {...iconProps} />;
     case "ANSVARLIG_SAKSBEHANDLER_ENDRET":
       return <PersonIcon {...iconProps} />;

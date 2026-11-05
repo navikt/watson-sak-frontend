@@ -47,7 +47,7 @@ describe("hendelseBeskrivelse", () => {
   it("faller tilbake til status for SAKSINFORMASJON_ENDRET uten beskrivelse", () => {
     const hendelse = lagHendelse({ hendelsesType: "SAKSINFORMASJON_ENDRET" });
 
-    expect(hendelseBeskrivelse(hendelse)).toBe("Steg: Utredning");
+    expect(hendelseBeskrivelse(hendelse)).toBe("Utredning");
   });
 
   it("viser journalposttype i stedet for duplisert beskrivelse", () => {
@@ -87,11 +87,11 @@ describe("hendelseBeskrivelse", () => {
 });
 
 describe("hendelseTittel", () => {
-  it("viser SAK_KOBLET som «Sak koblet» med beskrivelsen fra hendelsen", () => {
-    const hendelse = lagHendelse({ hendelsesType: "SAK_KOBLET", beskrivelse: "Koblet til sak 42" });
+  it("viser SAK_KOBLET som «Sak koblet» med koblet sak-id", () => {
+    const hendelse = lagHendelse({ hendelsesType: "SAK_KOBLET", kobletSakId: 42 });
 
     expect(hendelseTittel(hendelse)).toBe("Sak koblet");
-    expect(hendelseBeskrivelse(hendelse)).toBe("Koblet til sak 42");
+    expect(hendelseBeskrivelse(hendelse)).toBe("Sak koblet til 42");
   });
 
   it("viser lesbar tittel når saksdetaljer er redigert", () => {
@@ -249,7 +249,142 @@ describe("snapshot av steg og status", () => {
     });
 
     expect(hendelseTittel(hendelse)).toBe(forventetTittel);
-    expect(hendelseBeskrivelse(hendelse)).toBe("Steg: Opprettet");
+    expect(hendelseBeskrivelse(hendelse)).toBeNull();
+  });
+
+  it("viser Steg for STATUS_ENDRET, men ikke for SAK_TILDELT", () => {
+    expect(
+      hendelseBeskrivelse(lagHendelse({ hendelsesType: "STATUS_ENDRET", steg: "UTREDNING" })),
+    ).toBe("Steg: Utredning");
+    expect(
+      hendelseBeskrivelse(lagHendelse({ hendelsesType: "SAK_TILDELT", steg: "UTREDNING" })),
+    ).toBeNull();
+  });
+});
+
+describe("nye historikktekster", () => {
+  it("viser tildelt saksbehandler", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "SAK_TILDELT",
+      berortSaksbehandlerNavn: "Ola Nordmann",
+      opprettetAvNavn: "Kari Nordmann",
+    });
+
+    expect(hendelseTittel(hendelse)).toBe("Sak tildelt");
+    expect(hendelseBeskrivelse(hendelse)).toBe("Til: Ola Nordmann");
+    expect(hendelse.opprettetAvNavn).toBe("Kari Nordmann");
+  });
+
+  it("viser hvem saken ble delt med", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "SAK_DELT",
+      berortSaksbehandlerNavn: "Ola Nordmann",
+    });
+
+    expect(hendelseTittel(hendelse)).toBe("Sak delt");
+    expect(hendelseBeskrivelse(hendelse)).toBe("Med: Ola Nordmann");
+  });
+
+  it("viser hvem delingen ble fjernet for", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "DELING_FJERNET",
+      berortSaksbehandlerNavn: "Ola Nordmann",
+    });
+
+    expect(hendelseTittel(hendelse)).toBe("Deling fjernet");
+    expect(hendelseBeskrivelse(hendelse)).toBe("For: Ola Nordmann");
+  });
+
+  it("viser koblet sak-id", () => {
+    const hendelse = lagHendelse({ hendelsesType: "SAK_KOBLET", kobletSakId: 42 });
+
+    expect(hendelseTittel(hendelse)).toBe("Sak koblet");
+    expect(hendelseBeskrivelse(hendelse)).toBe("Sak koblet til 42");
+  });
+
+  it("viser ferdigstilt Gosys-oppgave og utfører", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "OPPGAVE_FERDIGSTILT",
+      oppgaveId: "12345",
+      opprettetAvNavn: "Kari Nordmann",
+    });
+
+    expect(hendelseTittel(hendelse)).toBe("Oppgave ferdigstilt");
+    expect(hendelseBeskrivelse(hendelse)).toBe("12345 ble ferdigstilt i Gosys");
+    expect(hendelse.opprettetAvNavn).toBe("Kari Nordmann");
+  });
+
+  it.each([null, "", "SYSTEM"])("viser Utført i Gosys når utfører er %s", (utfører) => {
+    const hendelse = lagHendelse({
+      hendelsesType: "OPPGAVE_FERDIGSTILT",
+      oppgaveId: "12345",
+      opprettetAvNavn: utfører,
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe("12345 ble ferdigstilt i Gosys\nUtført i Gosys");
+  });
+
+  it("viser opprettelsestittel og utfører uten steg-tekst", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "SAK_OPPRETTET",
+      opprettetAvNavn: "Kari Nordmann",
+    });
+
+    expect(hendelseTittel(hendelse)).toBe("Sak opprettet");
+    expect(hendelseBeskrivelse(hendelse)).toBeNull();
+    expect(hendelse.opprettetAvNavn).toBe("Kari Nordmann");
+  });
+
+  it("viser flytting med enhet alene (V1)", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "MOTTAKSENHET_ENDRET",
+      fraEnhetNavn: "Enhet A",
+      tilEnhetNavn: "Enhet B",
+      opprettetAvNavn: "Kari Nordmann",
+    });
+
+    expect(hendelseTittel(hendelse)).toBe("Sak flyttet");
+    expect(hendelseBeskrivelse(hendelse)).toBe("Fra: Enhet A\nTil: Enhet B");
+  });
+
+  it("viser flytting med enhet og saksbehandler (V2)", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "MOTTAKSENHET_ENDRET",
+      fraEnhetNavn: "Enhet A",
+      fraSaksbehandlerNavn: "Ola Nordmann",
+      tilEnhetNavn: "Enhet B",
+      tilSaksbehandlerNavn: "Kari Nordmann",
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe(
+      "Fra: Enhet A, Ola Nordmann\nTil: Enhet B, Kari Nordmann",
+    );
+  });
+
+  it("utelater den manglende linjen fra eldre hendelser", () => {
+    const hendelser = [
+      lagHendelse({ hendelsesType: "SAK_TILDELT", opprettetAvNavn: "Kari Nordmann" }),
+      lagHendelse({ hendelsesType: "SAK_KOBLET", opprettetAvNavn: "Kari Nordmann" }),
+      lagHendelse({ hendelsesType: "MOTTAKSENHET_ENDRET", opprettetAvNavn: "Kari Nordmann" }),
+    ];
+
+    expect(hendelser.map((hendelse) => hendelseTittel(hendelse))).toEqual([
+      "Sak tildelt",
+      "Sak koblet",
+      "Sak flyttet",
+    ]);
+    expect(hendelser.map((hendelse) => hendelseBeskrivelse(hendelse))).toEqual([null, null, null]);
+    expect(hendelser.every((hendelse) => hendelse.opprettetAvNavn === "Kari Nordmann")).toBe(true);
+  });
+
+  it("skjuler tildeling og overføring som del av flytting", () => {
+    const synlig = lagHendelse({ hendelsesType: "SAK_TILDELT" });
+    const skjultTildeling = lagHendelse({ hendelsesType: "SAK_TILDELT", delAvFlytting: true });
+    const skjultOverforing = lagHendelse({ hendelsesType: "SAK_OVERFORT", delAvFlytting: true });
+
+    expect(grupperHistorikkHendelser([synlig, skjultTildeling, skjultOverforing])).toEqual([
+      [synlig],
+    ]);
   });
 });
 
