@@ -554,7 +554,7 @@ export async function mockAction(
         const berortSaksbehandlerEnhet =
           saksbehandler.enhet === null ? undefined : saksbehandler.enhet;
 
-        leggTilBrukerhendelse(sak, "TILGANG_FJERNET", undefined, {
+        leggTilBrukerhendelse(sak, "DELING_FJERNET", undefined, {
           berortSaksbehandlerNavn: saksbehandler.navn,
           berortSaksbehandlerNavIdent: saksbehandler.navIdent,
           berortSaksbehandlerEnhet,

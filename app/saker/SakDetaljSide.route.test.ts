@@ -214,7 +214,7 @@ describe("SakDetaljSide action", () => {
     ]);
 
     const historikk = hentHistorikk(testRequest, String(kontrollsak.id));
-    expect(historikk[0]?.hendelsesType).toBe("TILGANG_FJERNET");
+    expect(historikk[0]?.hendelsesType).toBe("DELING_FJERNET");
     expect(historikk[0]?.berortSaksbehandlerNavn).toBe("Kari Nordmann");
   });
 

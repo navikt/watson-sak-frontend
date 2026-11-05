@@ -9,14 +9,13 @@ export const sakHendelseSchema = z
   .preprocess(
     normaliserHistoriskHendelseInput,
     kontrollsakHendelseResponseObjectSchema.extend({
-      berortSaksbehandlerNavn: z.string().optional(),
       berortSaksbehandlerNavIdent: z.string().optional(),
       berortSaksbehandlerEnhet: z.string().optional(),
     }),
   )
   .transform((hendelse) => {
     const resultat = { ...hendelse };
-    if (resultat.berortSaksbehandlerNavn !== undefined) {
+    if (resultat.berortSaksbehandlerNavn != null) {
       resultat.berortSaksbehandlerNavn = visningsnavn(
         resultat.berortSaksbehandlerNavIdent,
         resultat.berortSaksbehandlerNavn,

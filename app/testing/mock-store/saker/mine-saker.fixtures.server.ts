@@ -806,6 +806,7 @@ export const backendGenererteDemoSaker = [
     kobledeSaker: [],
     opprettet: "2026-05-13T09:17:00Z",
     oppdatert: "2026-05-15T13:01:00Z",
+    visLiggetidVarsel: true,
   },
   {
     id: 1012,
