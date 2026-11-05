@@ -62,6 +62,97 @@ describe("hentKodeverk", () => {
   }, 15000);
 });
 
+describe("hentKontrollsakForDetalj", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it.each(["AVVIST_HABILITET", "AVVIST_SKJERMING"] as const)(
+    "returnerer målrettet avslag for %s",
+    async (avvisningsgrunn) => {
+      const fetchMock = vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            type: "about:blank",
+            title: "Tilgang til saken er avvist",
+            status: 403,
+            detail: "Du har ikke tilgang til å åpne denne saken.",
+            instance: "/api/v1/kontrollsaker/42",
+            avvisningsgrunn,
+          }),
+          { status: 403, headers: { "Content-Type": "application/problem+json" } },
+        ),
+      );
+      vi.stubGlobal("fetch", fetchMock);
+
+      const { hentKontrollsakForDetalj } = await import("./api.server");
+
+      await expect(hentKontrollsakForDetalj("token", "42")).resolves.toEqual({
+        status: "avvist",
+        avvisningsgrunn,
+      });
+    },
+  );
+
+  it.each([undefined, "AVVIST_UKJENT"])(
+    "behandler manglende eller ukjent årsak %s som vanlig backend-feil",
+    async (avvisningsgrunn) => {
+      const body = {
+        type: "about:blank",
+        title: "Tilgang til saken er avvist",
+        status: 403,
+        detail: "Ingen tilgang",
+        instance: "/api/v1/kontrollsaker/42",
+        avvisningsgrunn,
+      };
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValue(new Response(JSON.stringify(body), { status: 403 }));
+      vi.stubGlobal("fetch", fetchMock);
+
+      const { hentKontrollsakForDetalj } = await import("./api.server");
+
+      await expect(hentKontrollsakForDetalj("token", "42")).rejects.toMatchObject({
+        status: 403,
+      });
+    },
+  );
+
+  it("feiler lukket når detaljsvaret mangler tilgangsflagget", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: 42,
+          kontrollobjekt: { personIdent: "12345678901", navn: "Birger Testesen" },
+          saksbehandlere: {
+            ansvarlig: null,
+            deltMed: [],
+            opprettetAv: { navIdent: "Z123456", navn: "Saksbehandler", enhet: "4812" },
+          },
+          steg: "OPPRETTET",
+          status: null,
+          kategori: "ARBEID",
+          kilde: "NAV_KONTROLL",
+          misbruktype: [],
+          prioritet: "NORMAL",
+          ytelser: [],
+          opprettet: "2026-03-20T12:34:56Z",
+          oppdatert: null,
+        }),
+        { status: 200 },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { hentKontrollsakForDetalj } = await import("./api.server");
+
+    await expect(hentKontrollsakForDetalj("token", "42")).rejects.toThrow(
+      "Ugyldig svar fra watson-admin-api (hentKontrollsak)",
+    );
+  });
+});
+
 describe("søkKontrollsaker", () => {
   afterEach(() => {
     vi.restoreAllMocks();

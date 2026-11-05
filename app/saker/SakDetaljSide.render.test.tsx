@@ -1,9 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { RouteConfig } from "~/routeConfig";
 import { resetDefaultSession } from "~/testing/mock-store/session.server";
 import { mockKodeverk } from "~/testing/mock-store/kodeverk.server";
-import SakDetaljSide, { loader } from "./SakDetaljSide.route";
+import SakDetaljSide, { ErrorBoundary, loader } from "./SakDetaljSide.route";
 
 vi.mock("~/config/env.server", () => ({
   skalBrukeMockdata: true,
@@ -43,15 +44,23 @@ const testSakId = "201";
 const deltMedSakId = "101";
 let erLeder = false;
 
-function renderDetaljside(sakId = testSakId) {
+function renderDetaljside(sakId = testSakId, query = "") {
   const router = createMemoryRouter(
     [
       {
         path: "/saker/:sakId",
         loader: ({ params }) =>
-          loader({ request: testRequest, params: { sakId: params.sakId ?? sakId } } as never),
+          loader({
+            request: new Request(`http://localhost/saker/${params.sakId ?? sakId}${query}`),
+            params: { sakId: params.sakId ?? sakId },
+          } as never),
         Component: SakDetaljSide,
+        ErrorBoundary,
         HydrateFallback: () => null,
+      },
+      {
+        path: RouteConfig.MINE_SAKER,
+        Component: () => <h1>Mine saker</h1>,
       },
     ],
     {
@@ -59,7 +68,7 @@ function renderDetaljside(sakId = testSakId) {
     },
   );
 
-  return render(<RouterProvider router={router} />);
+  return { ...render(<RouterProvider router={router} />), router };
 }
 
 describe("SakDetaljSide render", () => {
@@ -85,6 +94,32 @@ describe("SakDetaljSide render", () => {
     expect(screen.getByRole("button", { name: "Avbryt" })).toBeDefined();
     expect(screen.getByLabelText("Kategori (må fylles ut)")).toBeDefined();
   }, 15000);
+
+  it.each([
+    [
+      "AVVIST_SKJERMING",
+      "Du har bedt om tilgang til å se informasjon om en person som er ansatt i Nav.",
+    ],
+    ["AVVIST_HABILITET", "Du har bedt om tilgang til å se informasjon om en person."],
+  ] as const)(
+    "viser avvisningsside for %s uten saksdata",
+    async (avvisningsgrunn, tekst) => {
+      const { router } = renderDetaljside(testSakId, `?mockAvvisningsgrunn=${avvisningsgrunn}`);
+
+      expect(
+        await screen.findByRole("heading", { level: 1, name: "Begrenset tilgang" }),
+      ).toBeDefined();
+      expect(screen.getByText(tekst, { exact: false })).toBeDefined();
+      expect(screen.getByRole("button", { name: "Tilbake til Mine saker" })).toBeDefined();
+      expect(screen.queryByText("Kari Nordmann")).toBeNull();
+      expect(screen.queryByText("Test Saksbehandler")).toBeNull();
+      expect(screen.queryByText(/Sak 201/)).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Tilbake til Mine saker" }));
+      expect(await screen.findByRole("heading", { level: 1, name: "Mine saker" })).toBeDefined();
+      expect(router.state.location.pathname).toBe(RouteConfig.MINE_SAKER);
+    },
+    15000,
+  );
 
   it("viser misbruktype når kategori byttes til en kategori med misbrukstyper", async () => {
     renderDetaljside();
