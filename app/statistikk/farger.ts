@@ -53,7 +53,10 @@ const SKILLE_GRADER = 1.5;
 const SKILLEFARGE = "var(--ax-bg-default)";
 
 function normaliserKode(kode: string): string {
-  return kode.replace(/[–—]/g, "-").trim().toUpperCase();
+  return kode
+    .replace(/[–—]/g, "-")
+    .trim()
+    .toUpperCase();
 }
 
 function indeksForKode(kode: string): number {
@@ -68,6 +71,16 @@ function indeksForKode(kode: string): number {
 export function fargeForKode(kode: string): string {
   const normalisertKode = normaliserKode(kode);
   return FARGE_FOR_KODE[normalisertKode] ?? FARGER[indeksForKode(normalisertKode)];
+}
+
+/**
+ * Tekstfarge med minst 4,5:1 kontrast mot `fargeForKode(kode)` i begge temaer.
+ * Aksel sin kontrastfarge passer for «-strong»-fargene. Oransje (`--ax-warning-500`) trenger egen tekstfarge.
+ */
+export function tekstfargeForKode(kode: string): string {
+  return fargeForKode(kode) === "--ax-warning-500"
+    ? "--watson-data-warning-tekst"
+    : "--ax-text-neutral-contrast";
 }
 
 /**

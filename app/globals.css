@@ -8,14 +8,17 @@
  * Egen datavisualiseringsfarge for statistikk (se app/statistikk/farger.ts).
  * Aksel mangler en blågrønn tone, så vi fyller hullet mellom grønn og blå
  * med samme lyshet som Aksel sine «-strong»-farger.
+ * `--watson-data-warning-tekst` er tekstfargen på `--ax-warning-500` (minst 4,5:1).
  */
 :root,
 .light {
   --watson-data-teal: #00807f;
+  --watson-data-warning-tekst: #000;
 }
 
 .dark {
   --watson-data-teal: #2a9d9a;
+  --watson-data-warning-tekst: #fff;
 }
 
 /*

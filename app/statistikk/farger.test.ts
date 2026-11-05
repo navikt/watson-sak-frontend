@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { fargeForKode, kakeGradient } from "./farger";
+import { fargeForKode, kakeGradient, tekstfargeForKode } from "./farger";
+
+describe("tekstfargeForKode", () => {
+  it("bruker Aksel sin kontrastfarge, bortsett fra på oransje bakgrunn", () => {
+    expect(tekstfargeForKode("UTREDNING")).toBe("--watson-data-warning-tekst");
+    expect(tekstfargeForKode("OPPRETTET")).toBe("--ax-text-neutral-contrast");
+    expect(tekstfargeForKode("POLITI")).toBe("--ax-text-neutral-contrast");
+  });
+});
 
 describe("fargeForKode", () => {
   it("gir kjente statistikkserier ulike Aksel-farger", () => {

@@ -6,7 +6,7 @@ import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { ALLE_STEG } from "~/saker/steg";
 import { Diagramkort, Legend } from "./Diagramkort";
-import { fargeForKode, kakeGradient } from "./farger";
+import { fargeForKode, kakeGradient, tekstfargeForKode } from "./farger";
 import { Saksflyt } from "./Saksflyt";
 import type { Statistikk } from "./types";
 import { formaterAntallSaker, formaterBeløp, prosentFormatter, visningsnavn } from "./visning";
@@ -143,6 +143,11 @@ export function StatistikkDiagrammer({
     totalKontrollrapport === 0 &&
     totalHenlagt === 0;
   const snittDagerAvsluttet = data.periodeTall.snittDagerAvsluttet;
+  const radSummer = data.sakstyper.map((rad) => {
+    const synlige = rad.deler.filter(({ navn, verdi }) => verdi > 0 && !skjulteStatuser.has(navn));
+    return { rad, synlige, total: synlige.reduce((sum, del) => sum + del.verdi, 0) };
+  });
+  const maksSakstype = Math.max(1, ...radSummer.map(({ total }) => total));
   const maksAlder = Math.max(1, ...data.alderssammensetning.map((alder) => alder.verdi));
   const antallOverGrense = data.alderssammensetning
     .filter((bucket) => nedreAldersgrense(bucket.navn) >= ALDER_GRENSE_MND)
@@ -224,39 +229,45 @@ export function StatistikkDiagrammer({
                 onToggle={toggleStatus}
               />
               <VStack gap="space-8">
-                {data.sakstyper.map((rad) => {
-                  const synlige = rad.deler.filter(
-                    ({ navn, verdi }) => verdi > 0 && !skjulteStatuser.has(navn),
-                  );
-                  const total = synlige.reduce((sum, del) => sum + del.verdi, 0);
-                  return (
-                    <HStack key={rad.navn} gap="space-8" align="center" wrap={false}>
-                      <BodyShort size="small" className="w-20 shrink-0 text-right">
-                        {visningsnavn(rad.navn)}
-                      </BodyShort>
-                      <div
-                        className="flex h-6 min-w-0 flex-1 gap-0.5 overflow-hidden rounded-sm"
-                        title={`${rad.navn}: ${formatter.format(total)} saker`}
-                      >
-                        {synlige.map((del) => (
-                          <RouterLink
-                            key={del.navn}
-                            to={lagSaksfilterUrl({
-                              kategori: rad.filterverdi,
-                              steg: del.filterverdi,
-                            })}
-                            aria-label={`${visningsnavn(rad.navn)}, ${visningsnavn(del.navn)}: ${formatter.format(del.verdi)} saker`}
-                            className="block h-full min-w-0 basis-0 focus-visible:z-10"
-                            style={{
-                              flexGrow: del.verdi,
-                              backgroundColor: `var(${fargeForKode(del.filterverdi)})`,
-                            }}
-                          />
-                        ))}
-                      </div>
-                    </HStack>
-                  );
-                })}
+                {radSummer.map(({ rad, synlige, total }) => (
+                  <HStack key={rad.navn} gap="space-8" align="center" wrap={false}>
+                    <BodyShort size="small" className="w-28 shrink-0 text-right">
+                      {visningsnavn(rad.navn)}
+                    </BodyShort>
+                    <div className="min-w-0 flex-1">
+                      <HStack gap="space-8" align="center" wrap={false}>
+                        <div
+                          className="flex h-6 min-w-0 gap-0.5 overflow-hidden rounded-sm"
+                          style={{ width: `calc((100% - 3rem) * ${total / maksSakstype})` }}
+                          title={`${rad.navn}: ${formatter.format(total)} saker`}
+                        >
+                          {synlige.map((del) => (
+                            <RouterLink
+                              key={del.navn}
+                              to={lagSaksfilterUrl({
+                                kategori: rad.filterverdi,
+                                steg: del.filterverdi,
+                              })}
+                              aria-label={`${visningsnavn(rad.navn)}, ${visningsnavn(del.navn)}: ${formatter.format(del.verdi)} saker`}
+                              className="flex h-full min-w-0 basis-0 items-center justify-center overflow-hidden text-sm font-semibold focus-visible:z-10"
+                              style={{
+                                flexGrow: del.verdi,
+                                backgroundColor: `var(${fargeForKode(del.filterverdi)})`,
+                                color: `var(${tekstfargeForKode(del.filterverdi)})`,
+                              }}
+                              title={`${visningsnavn(rad.navn)}, ${visningsnavn(del.navn)}: ${formatter.format(del.verdi)} saker`}
+                            >
+                              <span aria-hidden>{formatter.format(del.verdi)}</span>
+                            </RouterLink>
+                          ))}
+                        </div>
+                        <BodyShort size="small" weight="semibold" className="shrink-0">
+                          {formatter.format(total)}
+                        </BodyShort>
+                      </HStack>
+                    </div>
+                  </HStack>
+                ))}
               </VStack>
             </>
           )}
