@@ -1,5 +1,5 @@
 import { ArrowLeftIcon, CheckmarkIcon, XMarkIcon } from "@navikt/aksel-icons";
-import { BodyShort, Box, Button, HGrid, HStack, VStack } from "@navikt/ds-react";
+import { BodyLong, BodyShort, Box, Button, Heading, HGrid, HStack, VStack } from "@navikt/ds-react";
 import { useCallback, useEffect, useState } from "react";
 import { isRouteErrorResponse, useLoaderData, useNavigate, useRouteError } from "react-router";
 import { Feilmelding } from "~/feilhåndtering/Feilmelding";
@@ -29,7 +29,11 @@ import { action, loader } from "./SakDetaljSide.server";
 import { hentStegbaserteSaksregler } from "./stegregler";
 import { useLukketBekreftelse } from "./useLukketBekreftelse";
 import { useTilbakeLenke } from "./tilbake";
-import type { KontrollsakResponse, KontrollsakSaksbehandler } from "./types.backend";
+import {
+  kontrollsakAvvisningsgrunnSchema,
+  type KontrollsakResponse,
+  type KontrollsakSaksbehandler,
+} from "./types.backend";
 import { useDisclosure } from "~/utils/useDisclosure";
 
 export { action, loader };
@@ -48,6 +52,37 @@ function finnSaksbehandlerDetalj(
 }
 
 export default function SakDetaljSide() {
+  return <SakDetaljSideInnhold />;
+}
+
+function TilgangAvvistSide({
+  avvisningsgrunn,
+}: {
+  avvisningsgrunn: "AVVIST_HABILITET" | "AVVIST_SKJERMING";
+}) {
+  const navigate = useNavigate();
+  const melding =
+    avvisningsgrunn === "AVVIST_SKJERMING"
+      ? "Du har bedt om tilgang til å se informasjon om en person som er ansatt i Nav. I følge tilgangene har du begrenset tilgang til å se informasjonen. Ta kontakt med nærmeste leder for veiledning."
+      : "Du har bedt om tilgang til å se informasjon om en person. I følge tilgangene har du begrenset tilgang til å se informasjonen, fordi du ikke har tilgang til å se informasjon om deg selv eller dine nærmeste.";
+
+  return (
+    <VStack gap="space-16" className="mt-4 mb-8">
+      <MiljøtilpassetTittel>Begrenset tilgang – Watson Sak</MiljøtilpassetTittel>
+      <Heading level="1" size="large">
+        Begrenset tilgang
+      </Heading>
+      <BodyLong>{melding}</BodyLong>
+      <div>
+        <Button type="button" onClick={() => navigate(RouteConfig.MINE_SAKER)}>
+          Tilbake til Mine saker
+        </Button>
+      </div>
+    </VStack>
+  );
+}
+
+function SakDetaljSideInnhold() {
   const {
     sak: loaderSak,
     tillatteHandlinger,
@@ -334,6 +369,17 @@ export default function SakDetaljSide() {
  */
 export function ErrorBoundary() {
   const error = useRouteError();
+  const avvisningsgrunn =
+    isRouteErrorResponse(error) &&
+    error.status === 403 &&
+    error.data &&
+    typeof error.data === "object" &&
+    "avvisningsgrunn" in error.data
+      ? kontrollsakAvvisningsgrunnSchema.safeParse(error.data.avvisningsgrunn)
+      : null;
+  if (avvisningsgrunn?.success) {
+    return <TilgangAvvistSide avvisningsgrunn={avvisningsgrunn.data} />;
+  }
   if (isRouteErrorResponse(error) && error.status < 500) {
     throw error;
   }
