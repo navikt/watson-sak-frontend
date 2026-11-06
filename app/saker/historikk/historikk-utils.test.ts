@@ -324,6 +324,88 @@ describe("nye historikktekster", () => {
     expect(hendelseBeskrivelse(hendelse)).toBe("12345 ble ferdigstilt i Gosys\nUtført i Gosys");
   });
 
+  it("viser oppgaveendringer og utfører", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "OPPGAVE_ENDRET",
+      oppgaveId: "12345",
+      oppgaveEndringTekst: "Frist endret fra 01.11.2026 til 15.11.2026",
+      opprettetAvNavn: "Kari Nordmann",
+    });
+
+    expect(hendelseTittel(hendelse)).toBe("Oppgave oppdatert");
+    expect(hendelseBeskrivelse(hendelse)).toBe(
+      "12345 ble oppdatert: Frist endret fra 01.11.2026 til 15.11.2026",
+    );
+    expect(hendelse.opprettetAvNavn).toBe("Kari Nordmann");
+  });
+
+  it.each([null, "", "SYSTEM"])(
+    "viser oppgaveendring utført i Gosys når utfører er %s",
+    (utfører) => {
+      const hendelse = lagHendelse({
+        hendelsesType: "OPPGAVE_ENDRET",
+        oppgaveId: "12345",
+        oppgaveEndringTekst: "Frist endret",
+        opprettetAvNavn: utfører,
+      });
+
+      expect(hendelseBeskrivelse(hendelse)).toBe(
+        "12345 ble oppdatert: Frist endret\nUtført i Gosys",
+      );
+    },
+  );
+
+  it("viser oppgaveendring uten endringstekst eller oppgave-id", () => {
+    const utenTekst = lagHendelse({
+      hendelsesType: "OPPGAVE_ENDRET",
+      oppgaveId: "12345",
+      opprettetAvNavn: "Kari Nordmann",
+    });
+    const utenOppgaveId = lagHendelse({
+      hendelsesType: "OPPGAVE_ENDRET",
+      oppgaveEndringTekst: "Frist endret",
+      opprettetAvNavn: "Kari Nordmann",
+    });
+
+    expect(hendelseBeskrivelse(utenTekst)).toBe("12345 ble oppdatert");
+    expect(hendelseBeskrivelse(utenOppgaveId)).toBeNull();
+  });
+
+  it("viser eksternt opprettet oppgave og utfører", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "OPPGAVE_OPPRETTET_EKSTERN",
+      oppgaveId: "12345",
+      opprettetAvNavn: "Kari Nordmann",
+    });
+
+    expect(hendelseTittel(hendelse)).toBe("Ny oppgave");
+    expect(hendelseBeskrivelse(hendelse)).toBe(
+      "Oppgave 12345 ble opprettet utenfor Watson og koblet til denne saken",
+    );
+    expect(hendelse.opprettetAvNavn).toBe("Kari Nordmann");
+  });
+
+  it.each([null, "", "SYSTEM"])(
+    "viser ekstern oppgave utført i Gosys når utfører er %s",
+    (utfører) => {
+      const hendelse = lagHendelse({
+        hendelsesType: "OPPGAVE_OPPRETTET_EKSTERN",
+        oppgaveId: "12345",
+        opprettetAvNavn: utfører,
+      });
+
+      expect(hendelseBeskrivelse(hendelse)).toBe(
+        "Oppgave 12345 ble opprettet utenfor Watson og koblet til denne saken\nUtført i Gosys",
+      );
+    },
+  );
+
+  it("beholder tittelen for oppgaver opprettet i Watson", () => {
+    const hendelse = lagHendelse({ hendelsesType: "OPPGAVE_OPPRETTET" });
+
+    expect(hendelseTittel(hendelse)).toBe("Oppgave opprettet");
+  });
+
   it("viser opprettelsestittel og utfører uten steg-tekst", () => {
     const hendelse = lagHendelse({
       hendelsesType: "SAK_OPPRETTET",
