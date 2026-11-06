@@ -1,6 +1,6 @@
 import { FileXMarkIcon, MagnifyingGlassIcon } from "@navikt/aksel-icons";
 import { BodyShort, Box, Button, Heading, HStack, Pagination, Tag, VStack } from "@navikt/ds-react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { data, Link, unstable_useRoute, useActionData, useFetcher } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
@@ -11,15 +11,25 @@ import { RouteConfig } from "~/routeConfig";
 import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
 import {
+  erSorterbarSakskolonne,
+  SAKSLISTE_OPPSETT,
+  SORTERBARE_SAKSKOLONNER,
+  STANDARD_SAKSSORTERING,
+  standardRetningForKolonne,
+  type Sakssortering,
+} from "~/saker/saksliste/oppsett";
+import { sorterSaker } from "~/alle-saker/saker-utils";
+import {
   erDnummer,
   formaterFødselsnummer,
   formaterOrganisasjonsnummer,
 } from "~/utils/string-utils";
 import { hentValgfriTekst } from "~/utils/form-data";
-import { SøkSakOppsummering } from "./SøkSakOppsummering";
 import { søkSaker, type SøkeType } from "./søk.server";
 import { HURTIGSØK_INPUT_SELECTOR } from "./sok-navigasjon";
 import type { Route } from "./+types/SøkSide.route";
+
+export const handle = { bredPageBlock: true };
 
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
@@ -172,11 +182,26 @@ function tomTreffTekst(
 
 export default function SøkSide() {
   const actionData = useActionData<typeof action>();
-  // Nøkkelen scoper fetcheren til gjeldende søketekst, slik at sidenavigering (paginering)
-  // ikke lekker gamle resultater inn i et helt nytt søk (f.eks. hvis brukeren søker på
-  // organisasjon A, blar til side 2, og deretter søker på personIdent B via hurtigsøket).
+  const [søk, setSøk] = useState({ actionData, versjon: 0 });
+
+  // Nytt action-svar nullstiller både sortering og side-fetcher, også ved identisk søketekst.
+  if (søk.actionData !== actionData) {
+    setSøk({ actionData, versjon: søk.versjon + 1 });
+  }
+
+  return <SøkInnhold key={søk.versjon} actionData={actionData} søkVersjon={søk.versjon} />;
+}
+
+function SøkInnhold({
+  actionData,
+  søkVersjon,
+}: {
+  actionData: ReturnType<typeof useActionData<typeof action>>;
+  søkVersjon: number;
+}) {
+  // Hver innsending får egen fetcher, slik at gamle sider ikke lekker inn i neste søk.
   const fetcher = useFetcher<typeof action>({
-    key: `sok-side-${actionData?.søketekst ?? ""}`,
+    key: `sok-side-${søkVersjon}-${actionData?.søketekst ?? ""}`,
   });
   const forhåndsutfyllFetcher = useFetcher<{ teknisk?: boolean; feilId?: string }>();
   const { loaderData } = unstable_useRoute("root");
@@ -191,7 +216,10 @@ export default function SøkSide() {
   const totalSider = visteData?.totalSider ?? 1;
   const totalAntall = visteData?.totalAntall ?? 0;
   const harSøkt = actionData !== undefined;
-  const harEttSaksnummerTreff = søketype === "saksnummer" && resultater?.length === 1;
+  const [sortering, setSortering] = useState<Sakssortering>(STANDARD_SAKSSORTERING);
+  const sorterteResultater = resultater
+    ? sorterSaker(resultater, sortering.kolonne, sortering.retning)
+    : [];
 
   const resultatlisteRef = useRef<HTMLDivElement>(null);
 
@@ -242,18 +270,9 @@ export default function SøkSide() {
               </BodyShort>
             )}
 
-            {resultater && totalAntall > 0 && harEttSaksnummerTreff && (
-              <div
-                ref={resultatlisteRef}
-                onKeyDown={handleResultatlisteKeyDown}
-                data-søk-resultatliste
-              >
-                <SøkSakOppsummering sak={resultater[0]} />
-              </div>
-            )}
-
-            {resultater && totalAntall > 0 && !harEttSaksnummerTreff && (
+            {resultater && totalAntall > 0 && (
               <>
+                <BodyShort size="small">Sorteringen gjelder treffene på denne siden.</BodyShort>
                 <div
                   ref={resultatlisteRef}
                   onKeyDown={handleResultatlisteKeyDown}
@@ -261,18 +280,27 @@ export default function SøkSide() {
                   className="overflow-x-auto [&_table]:w-full"
                 >
                   <Saksliste
-                    rader={resultater.map((sak) => mapKontrollsakTilSakslisteRad(sak))}
-                    kolonner={[
-                      "saksid",
-                      "navn",
-                      "kategori",
-                      "misbrukstype",
-                      "steg",
-                      "status",
-                      "opprettet",
-                    ]}
+                    {...SAKSLISTE_OPPSETT}
+                    rader={sorterteResultater.map((sak) => mapKontrollsakTilSakslisteRad(sak))}
                     tomTekst="Ingen saker funnet."
                     tilbake={{ to: RouteConfig.SØK, label: "Søk" }}
+                    sortering={{
+                      kolonne: sortering.kolonne,
+                      retning: sortering.retning === "asc" ? "stigende" : "synkende",
+                      sorterbare: SORTERBARE_SAKSKOLONNER,
+                      onSort: (kolonne) => {
+                        if (!erSorterbarSakskolonne(kolonne)) return;
+                        setSortering((forrige) => ({
+                          kolonne,
+                          retning:
+                            forrige.kolonne === kolonne
+                              ? forrige.retning === "asc"
+                                ? "desc"
+                                : "asc"
+                              : standardRetningForKolonne(kolonne),
+                        }));
+                      },
+                    }}
                   />
                 </div>
 
