@@ -9,6 +9,13 @@ import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
 import { AntallTreffEtikett } from "~/saker/saksliste/AntallTreffEtikett";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
+import {
+  erSorterbarSakskolonne,
+  SAKSLISTE_OPPSETT,
+  SORTERBARE_SAKSKOLONNER,
+  STANDARD_SAKSSORTERING,
+  standardRetningForKolonne,
+} from "~/saker/saksliste/oppsett";
 import { BackendUtilgjengeligMelding } from "~/komponenter/BackendUtilgjengeligMelding";
 import { RouteConfig } from "~/routeConfig";
 import { hentAlleSaker } from "~/saker/mock-alle-saker.server";
@@ -33,8 +40,8 @@ import { ANSVARLIG_MEG, parseAlderOgAnsvarlig } from "./aldersfilter";
 import { parseStatusfilter, STATUSFILTER_VALG, tilBackendStatusfilter } from "./statusfilter";
 import { hentParEllerUtilgjengelig } from "~/utils/backend-utilgjengelig.server";
 
-const STANDARD_KOLONNE: AlleSakerKolonne = "opprettet";
-const STANDARD_RETNING: Sorteringsretning = "desc";
+const STANDARD_KOLONNE = STANDARD_SAKSSORTERING.kolonne;
+const STANDARD_RETNING = STANDARD_SAKSSORTERING.retning;
 
 /** Tabellen med saker er bred, så siden ber layouten om å slippe maks-bredden
  * for å unngå unødvendig horisontal scroll på brede skjermer. */
@@ -248,34 +255,17 @@ export default function AlleSakerSide() {
                 <AntallTreffEtikett antall={totalAntall} />
                 <div className="overflow-x-auto [&_table]:w-full">
                   <Saksliste
+                    {...SAKSLISTE_OPPSETT}
                     rader={rader}
-                    kolonner={[
-                      "saksid",
-                      "kategori",
-                      "misbrukstype",
-                      "steg",
-                      "status",
-                      "opprettet",
-                      "oppdatert",
-                      "saksbehandler",
-                    ]}
                     tomTekst={tomTekst}
                     tilbake={{ to: RouteConfig.ALLE_SAKER, label: "Alle saker" }}
                     sortering={{
                       kolonne: sorteringskolonne,
                       retning: sorteringsretning === "asc" ? "stigende" : "synkende",
-                      onSort: (kolonne) => sorterPåKolonne(kolonne as AlleSakerKolonne),
-                      sorterbare: Object.keys(BACKEND_SORT_FELT) as AlleSakerKolonne[],
-                    }}
-                    kolonneHeaderProps={{
-                      saksid: { className: "min-w-[100px]" },
-                      kategori: { className: "min-w-[165px]" },
-                      misbrukstype: { className: "min-w-[210px]" },
-                      status: { className: "min-w-[200px]" },
-                      steg: { className: "min-w-[170px]" },
-                      opprettet: { className: "min-w-[140px]" },
-                      oppdatert: { className: "min-w-[140px]" },
-                      saksbehandler: { className: "min-w-[165px]" },
+                      onSort: (kolonne) => {
+                        if (erSorterbarSakskolonne(kolonne)) sorterPåKolonne(kolonne);
+                      },
+                      sorterbare: SORTERBARE_SAKSKOLONNER,
                     }}
                   />
                 </div>
@@ -329,8 +319,4 @@ function parseKolonne(verdi: string | null): AlleSakerKolonne {
 
 function parseRetning(verdi: string | null): Sorteringsretning {
   return verdi === "asc" || verdi === "desc" ? verdi : STANDARD_RETNING;
-}
-
-function standardRetningForKolonne(kolonne: AlleSakerKolonne): Sorteringsretning {
-  return kolonne === "opprettet" || kolonne === "oppdatert" ? "desc" : "asc";
 }
