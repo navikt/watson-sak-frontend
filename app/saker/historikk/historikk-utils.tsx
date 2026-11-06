@@ -225,6 +225,10 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
       return "Journalpost opprettet";
     case "OPPGAVE_OPPRETTET":
       return "Oppgave opprettet";
+    case "OPPGAVE_ENDRET":
+      return "Oppgave oppdatert";
+    case "OPPGAVE_OPPRETTET_EKSTERN":
+      return "Ny oppgave";
     case "OPPGAVE_FERDIGSTILT":
       return "Oppgave ferdigstilt";
     case "FIL_LASTET_OPP":
@@ -295,6 +299,34 @@ export function hendelseBeskrivelse(
   if (hendelse.hendelsesType === "OPPGAVE_FERDIGSTILT") {
     const linjer: string[] = [];
     if (hendelse.oppgaveId) linjer.push(`${hendelse.oppgaveId} ble ferdigstilt i Gosys`);
+    if (!hendelse.opprettetAvNavn || hendelse.opprettetAvNavn === "SYSTEM") {
+      linjer.push("Utført i Gosys");
+    }
+    return linjer.join("\n") || null;
+  }
+
+  if (hendelse.hendelsesType === "OPPGAVE_ENDRET") {
+    const linjer: string[] = [];
+    if (hendelse.oppgaveId) {
+      linjer.push(
+        hendelse.oppgaveEndringTekst
+          ? `${hendelse.oppgaveId} ble oppdatert: ${hendelse.oppgaveEndringTekst}`
+          : `${hendelse.oppgaveId} ble oppdatert`,
+      );
+    }
+    if (!hendelse.opprettetAvNavn || hendelse.opprettetAvNavn === "SYSTEM") {
+      linjer.push("Utført i Gosys");
+    }
+    return linjer.join("\n") || null;
+  }
+
+  if (hendelse.hendelsesType === "OPPGAVE_OPPRETTET_EKSTERN") {
+    const linjer: string[] = [];
+    if (hendelse.oppgaveId) {
+      linjer.push(
+        `Oppgave ${hendelse.oppgaveId} ble opprettet utenfor Watson og koblet til denne saken`,
+      );
+    }
     if (!hendelse.opprettetAvNavn || hendelse.opprettetAvNavn === "SYSTEM") {
       linjer.push("Utført i Gosys");
     }

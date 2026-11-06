@@ -449,6 +449,7 @@ export const kontrollsakHendelseResponseObjectSchema = z.object({
   berortSaksbehandlerNavn: z.string().nullable().optional(),
   kobletSakId: z.number().nullable().optional(),
   oppgaveId: z.string().nullable().optional(),
+  oppgaveEndringTekst: z.string().nullable().optional(),
   fraEnhetNavn: z.string().nullable().optional(),
   fraSaksbehandlerNavn: z.string().nullable().optional(),
   tilEnhetNavn: z.string().nullable().optional(),

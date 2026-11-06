@@ -26,6 +26,8 @@ type BackendHendelsestype =
   | "NOTAT_SENDT"
   | "JOURNALPOST_OPPRETTET"
   | "OPPGAVE_OPPRETTET"
+  | "OPPGAVE_ENDRET"
+  | "OPPGAVE_OPPRETTET_EKSTERN"
   | "OPPGAVE_FERDIGSTILT"
   | "FIL_LASTET_OPP"
   | "FIL_ARKIVERT"
@@ -99,6 +101,7 @@ export function leggTilHendelse(
     | "berortSaksbehandlerEnhet"
     | "kobletSakId"
     | "oppgaveId"
+    | "oppgaveEndringTekst"
     | "fraEnhetNavn"
     | "fraSaksbehandlerNavn"
     | "tilEnhetNavn"
@@ -250,6 +253,32 @@ export function genererHistorikkForSaker(
     }
 
     leggTilStatushistorikk(tempState, sak, tidspunkt);
+
+    if (sak === saker[0]) {
+      leggTilBackendHendelse(
+        tempState,
+        String(sak.id),
+        "OPPGAVE_ENDRET",
+        {
+          ...lagSnapshotFraKontrollsak(sak),
+          oppgaveId: "123456789",
+          oppgaveEndringTekst: "Frist endret fra 01.11.2026 til 15.11.2026",
+          opprettetAvNavn: "Kari Nordmann",
+        },
+        tidspunkt.avsluttet,
+      );
+      leggTilBackendHendelse(
+        tempState,
+        String(sak.id),
+        "OPPGAVE_OPPRETTET_EKSTERN",
+        {
+          ...lagSnapshotFraKontrollsak(sak),
+          oppgaveId: "987654321",
+          opprettetAvNavn: "SYSTEM",
+        },
+        tidspunkt.avsluttet,
+      );
+    }
   }
 
   return tempState.nesteHistorikkId;
