@@ -18,7 +18,7 @@ jobs:
           persist-credentials: false
           ref: ${{ github.ref }}
       - name: Bygg og push docker image til GAR
-        uses: nais/docker-build-push@dd7421d5068057a020ca46ead966c26190c516b1 # main
+        uses: nais/docker-build-push@d3a1f7e259ecc381a50435e1d4add9059429ebd7 # main
         id: docker-push-demo
         with:
           team: holmes
