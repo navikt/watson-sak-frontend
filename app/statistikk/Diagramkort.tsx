@@ -1,5 +1,6 @@
 import { BodyShort, Box, Heading, HStack, VStack } from "@navikt/ds-react";
 import type { ReactNode } from "react";
+import { type Diagramfarge, fargestil } from "./farger";
 import { prosentFormatter, visningsnavn } from "./visning";
 
 export function Diagramkort({
@@ -41,7 +42,7 @@ export function Legend({
   skjulte,
   onToggle,
 }: {
-  items: { navn: string; farge: string; verdi?: number }[];
+  items: { navn: string; farge: Diagramfarge; verdi?: number }[];
   skjulte?: Set<string>;
   onToggle?: (navn: string) => void;
 }) {
@@ -61,11 +62,7 @@ export function Legend({
             onClick={() => onToggle?.(item.navn)}
             disabled={!onToggle}
           >
-            <span
-              aria-hidden
-              className="size-2 rounded-sm"
-              style={{ backgroundColor: `var(${item.farge})` }}
-            />
+            <span aria-hidden className="size-2 rounded-sm" style={fargestil(item.farge)} />
             {visningsnavn(item.navn)}
             {item.verdi != null &&
               ` – ${item.verdi}${prosent != null ? ` (${prosentFormatter.format(prosent)} %)` : ""}`}

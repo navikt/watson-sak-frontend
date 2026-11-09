@@ -1,81 +1,68 @@
-/**
- * Aksel sine «-strong»-farger ligger på samme lyshet (ca. 4,5:1 mot bakgrunnen),
- * så to nabosegmenter har nesten ingen kontrast mot hverandre. Vi skiller dem
- * derfor med en strek i bakgrunnsfargen (se `kakeGradient` og stablede søyler),
- * og velger farger med ulik fargetone for koder som ligger ved siden av hverandre.
- *
- * `--ax-bg-info-strong` er utelatt fordi den har nøyaktig samme verdi som
- * `--ax-bg-brand-blue-strong` i både lyst og mørkt tema. Beige og lime er
- * byttet ut fordi de ble brune og lå for nær warning-oransje.
- * `--watson-data-teal` er definert i `globals.css`.
- */
-const FARGER = [
-  "--ax-bg-accent-strong",
-  "--ax-bg-neutral-strong",
-  "--ax-bg-success-strong",
-  "--ax-warning-500",
-  "--ax-bg-danger-strong",
-  "--ax-bg-brand-blue-strong",
-  "--ax-bg-brand-magenta-strong",
-  "--watson-data-teal",
-  "--ax-bg-meta-purple-strong",
-  "--ax-accent-900",
-] as const;
+import type { CSSProperties } from "react";
 
-const FARGE_FOR_KODE: Record<string, (typeof FARGER)[number]> = {
-  // Steg
-  OPPRETTET: "--ax-bg-accent-strong",
-  TILDELT: "--ax-bg-accent-strong",
-  UTREDES: "--ax-warning-500",
-  UTREDNING: "--ax-warning-500",
-  FORVALTNING: "--ax-bg-meta-purple-strong",
-  AVSLUTTET: "--ax-bg-success-strong",
-  HENLAGT: "--ax-bg-neutral-strong",
-  STRAFFE: "--ax-bg-danger-strong",
-  STRAFFERETTSLIG_VURDERING: "--ax-bg-danger-strong",
-  POLITI: "--watson-data-teal",
-  // Kategorier
-  SAMLIV: "--ax-bg-brand-magenta-strong",
-  ARBEID: "--ax-bg-brand-blue-strong",
-  UTLAND: "--ax-bg-success-strong",
-  IDENTITET: "--ax-bg-meta-purple-strong",
-  TILTAK: "--ax-bg-accent-strong",
-  DOKUMENTFALSK: "--ax-bg-danger-strong",
-  ANNET: "--ax-bg-neutral-strong",
-  BEHANDLER: "--ax-accent-900",
-  // Henleggelsesgrunner
-  "ETTER UTREDNING": "--ax-bg-meta-purple-strong",
-  "SOM STRAFFESAK": "--ax-bg-danger-strong",
+export type Diagramfarge = {
+  /** Aksel-token for fyllfargen. */
+  fyll: string;
+  /** Aksel-token for den tynne rammen rundt lyse farger. */
+  kant?: string;
+  /** Lyse farger skal ha mørk tekst, mørke farger hvit tekst. */
+  lys: boolean;
 };
+
+/**
+ * Fargeskalaen for statistikk, i prioritert rekkefølge (fra Figma, «Sak», node 12046:18817).
+ * Diagrammer med få serier bruker de første fargene. Lyse farger har en tynn ramme.
+ */
+export const FARGESKALA: readonly Diagramfarge[] = [
+  { fyll: "--ax-bg-brand-blue-strong", lys: false },
+  { fyll: "--ax-text-brand-magenta-decoration", lys: false },
+  { fyll: "--ax-text-accent-decoration", lys: false },
+  {
+    fyll: "--ax-bg-brand-blue-moderate",
+    kant: "--ax-border-brand-blue",
+    lys: true,
+  },
+  {
+    fyll: "--ax-bg-brand-magenta-moderate",
+    kant: "--ax-border-brand-magenta",
+    lys: true,
+  },
+  { fyll: "--ax-text-brand-beige-subtle", lys: false },
+  { fyll: "--ax-bg-warning-moderate", kant: "--ax-border-warning", lys: true },
+  { fyll: "--ax-bg-warning-strong", lys: false },
+  { fyll: "--ax-bg-meta-lime-soft", kant: "--ax-border-meta-lime", lys: true },
+  {
+    fyll: "--ax-bg-meta-purple-moderate",
+    kant: "--ax-border-meta-purple",
+    lys: true,
+  },
+];
+
+/** Farge nummer `indeks` i skalaen. Går rundt hvis det er flere serier enn farger. */
+export function fargeForIndeks(indeks: number): Diagramfarge {
+  return FARGESKALA[indeks % FARGESKALA.length];
+}
+
+/** Bakgrunn og eventuell innvendig ramme for et fargefelt. */
+export function fargestil(farge: Diagramfarge): CSSProperties {
+  return {
+    backgroundColor: `var(${farge.fyll})`,
+    ...(farge.kant ? { boxShadow: `inset 0 0 0 1px var(${farge.kant})` } : {}),
+  };
+}
 
 /** Bredde på skillestreken mellom segmenter i kakediagram. */
 const SKILLE_GRADER = 1.5;
+/** Bredde på rammen langs kantene til lyse segmenter i kakediagram. */
+const KANT_GRADER = 0.6;
 const SKILLEFARGE = "var(--ax-bg-default)";
 
-function normaliserKode(kode: string): string {
-  return kode.replace(/[–—]/g, "-").trim().toUpperCase();
-}
-
-function indeksForKode(kode: string): number {
-  return [...kode].reduce((sum, tegn) => sum + (tegn.codePointAt(0) ?? 0), 0) % FARGER.length;
-}
-
 /**
- * Kobler en domenekode (statuskode eller kategorikode) til en Aksel-fargetoken.
- * Dette er en presentasjonsbeslutning, og hører derfor hjemme i frontend –
- * backend skal bare levere stabile domenekoder.
+ * Lager en `conic-gradient` for et kake-/smultringdiagram med en hvit strek mellom
+ * segmentene. Lyse segmenter får rammefargen langs de radielle kantene.
+ * Segmenter uten verdi hoppes over.
  */
-export function fargeForKode(kode: string): string {
-  const normalisertKode = normaliserKode(kode);
-  return FARGE_FOR_KODE[normalisertKode] ?? FARGER[indeksForKode(normalisertKode)];
-}
-
-/**
- * Lager en `conic-gradient` for et kake-/smultringdiagram med en tynn strek i
- * bakgrunnsfargen mellom segmentene, slik at grensene oppfyller kravet om 3:1
- * kontrast selv når nabofargene har lik lyshet. Segmenter uten verdi hoppes over.
- */
-export function kakeGradient(segmenter: { farge: string; verdi: number }[]): string {
+export function kakeGradient(segmenter: { farge: Diagramfarge; verdi: number }[]): string {
   const synlige = segmenter.filter((segment) => segment.verdi > 0);
   const total = synlige.reduce((sum, segment) => sum + segment.verdi, 0);
   if (total === 0) {
@@ -84,12 +71,24 @@ export function kakeGradient(segmenter: { farge: string; verdi: number }[]): str
 
   const skille = synlige.length > 1 ? SKILLE_GRADER : 0;
   let start = 0;
-  const stopp = synlige.flatMap((segment) => {
-    const vinkel = (segment.verdi / total) * 360;
+  const stopp = synlige.flatMap(({ farge, verdi }) => {
+    const vinkel = (verdi / total) * 360;
     const slutt = start + vinkel;
     // Små segmenter får en smalere strek, slik at de aldri blir helt borte.
     const fargeSlutt = slutt - Math.min(skille, vinkel / 2);
-    const deler = [`var(${segment.farge}) ${start}deg ${fargeSlutt}deg`];
+    const fyll = `var(${farge.fyll})`;
+    const deler: string[] = [];
+    const kant = farge.kant ? Math.min(KANT_GRADER, (fargeSlutt - start) / 4) : 0;
+    if (farge.kant && kant > 0) {
+      const k = `var(${farge.kant})`;
+      deler.push(
+        `${k} ${start}deg ${start + kant}deg`,
+        `${fyll} ${start + kant}deg ${fargeSlutt - kant}deg`,
+        `${k} ${fargeSlutt - kant}deg ${fargeSlutt}deg`,
+      );
+    } else {
+      deler.push(`${fyll} ${start}deg ${fargeSlutt}deg`);
+    }
     if (skille > 0) {
       deler.push(`${SKILLEFARGE} ${fargeSlutt}deg ${slutt}deg`);
     }

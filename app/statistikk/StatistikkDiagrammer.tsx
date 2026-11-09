@@ -1,12 +1,12 @@
 import { BodyShort, Box, Button, Heading, HGrid, HStack, VStack } from "@navikt/ds-react";
-import { useState, type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { Link as RouterLink } from "react-router";
 import { Nøkkeltallkort } from "~/komponenter/Nøkkeltallkort";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { ALLE_STEG } from "~/saker/steg";
 import { Diagramkort, Legend } from "./Diagramkort";
-import { fargeForKode, kakeGradient } from "./farger";
+import { fargeForIndeks, fargestil, kakeGradient } from "./farger";
 import { Saksflyt } from "./Saksflyt";
 import type { Statistikk } from "./types";
 import { formaterAntallSaker, formaterBeløp, prosentFormatter, visningsnavn } from "./visning";
@@ -216,15 +216,16 @@ export function StatistikkDiagrammer({
           ) : (
             <>
               <Legend
-                items={data.sakstyper[0].deler.map(({ navn, filterverdi }) => ({
+                items={data.sakstyper[0].deler.map(({ navn }, indeks) => ({
                   navn: visningsnavn(navn),
-                  farge: fargeForKode(filterverdi),
+                  farge: fargeForIndeks(indeks),
                 }))}
                 skjulte={skjulteStatuser}
                 onToggle={toggleStatus}
               />
               <VStack gap="space-8">
                 {data.sakstyper.map((rad) => {
+                  const stegrekkefølge = data.sakstyper[0].deler.map((del) => del.filterverdi);
                   const synlige = rad.deler.filter(
                     ({ navn, verdi }) => verdi > 0 && !skjulteStatuser.has(navn),
                   );
@@ -235,7 +236,7 @@ export function StatistikkDiagrammer({
                         {visningsnavn(rad.navn)}
                       </BodyShort>
                       <div
-                        className="flex h-6 min-w-0 flex-1 gap-0.5 overflow-hidden rounded-sm"
+                        className="flex h-6 min-w-0 flex-1 gap-px overflow-hidden rounded-sm"
                         title={`${rad.navn}: ${formatter.format(total)} saker`}
                       >
                         {synlige.map((del) => (
@@ -246,10 +247,14 @@ export function StatistikkDiagrammer({
                               steg: del.filterverdi,
                             })}
                             aria-label={`${visningsnavn(rad.navn)}, ${visningsnavn(del.navn)}: ${formatter.format(del.verdi)} saker`}
-                            className="block h-full min-w-0 basis-0 focus-visible:z-10"
+                            className="block h-full min-w-0 basis-0 first:rounded-l-sm last:rounded-r-sm focus-visible:z-10"
                             style={{
                               flexGrow: del.verdi,
-                              backgroundColor: `var(${fargeForKode(del.filterverdi)})`,
+                              ...fargestil(
+                                fargeForIndeks(
+                                  Math.max(stegrekkefølge.indexOf(del.filterverdi), 0),
+                                ),
+                              ),
                             }}
                           />
                         ))}
@@ -360,8 +365,8 @@ export function StatistikkDiagrammer({
                 className="mx-auto size-52 rounded-full"
                 style={{
                   background: kakeGradient(
-                    data.kategorifordeling.map((kategori) => ({
-                      farge: fargeForKode(kategori.navn),
+                    data.kategorifordeling.map((kategori, indeks) => ({
+                      farge: fargeForIndeks(indeks),
                       verdi: kategori.verdi,
                     })),
                   ),
@@ -372,9 +377,9 @@ export function StatistikkDiagrammer({
                 </div>
               </div>
               <Legend
-                items={data.kategorifordeling.map((kategori) => ({
+                items={data.kategorifordeling.map((kategori, indeks) => ({
                   ...kategori,
-                  farge: fargeForKode(kategori.navn),
+                  farge: fargeForIndeks(indeks),
                 }))}
               />
             </Diagramkort>
@@ -413,8 +418,8 @@ export function StatistikkDiagrammer({
                   className="size-36 rounded-full"
                   style={{
                     background: kakeGradient(
-                      data.henlagt.map((rad) => ({
-                        farge: fargeForKode(rad.navn),
+                      data.henlagt.map((rad, indeks) => ({
+                        farge: fargeForIndeks(indeks),
                         verdi: rad.verdi,
                       })),
                     ),
@@ -427,7 +432,10 @@ export function StatistikkDiagrammer({
                   </div>
                 </div>
                 <Legend
-                  items={data.henlagt.map((rad) => ({ ...rad, farge: fargeForKode(rad.navn) }))}
+                  items={data.henlagt.map((rad, indeks) => ({
+                    ...rad,
+                    farge: fargeForIndeks(indeks),
+                  }))}
                 />
               </VStack>
             </Diagramkort>

@@ -1,73 +1,47 @@
 import { describe, expect, it } from "vitest";
-import { fargeForKode, kakeGradient } from "./farger";
+import { FARGESKALA, fargeForIndeks, fargestil, kakeGradient } from "./farger";
 
-describe("fargeForKode", () => {
-  it("gir kjente statistikkserier ulike Aksel-farger", () => {
-    const farger = [
-      fargeForKode("SAMLIV"),
-      fargeForKode("ARBEID"),
-      fargeForKode("UTLAND"),
-      fargeForKode("IDENTITET"),
-      fargeForKode("TILTAK"),
-      fargeForKode("DOKUMENTFALSK"),
-      fargeForKode("ANNET"),
-      fargeForKode("BEHANDLER"),
-    ];
+const a = { fyll: "--a", lys: false };
+const b = { fyll: "--b", lys: false };
+const c = { fyll: "--c", lys: false };
 
-    expect(new Set(farger).size).toBe(farger.length);
+describe("fargeForIndeks", () => {
+  it("starter med de prioriterte fargene", () => {
+    expect(fargeForIndeks(0).fyll).toBe("--ax-bg-brand-blue-strong");
+    expect(fargeForIndeks(1).fyll).toBe("--ax-text-brand-magenta-decoration");
+    expect(fargeForIndeks(2).fyll).toBe("--ax-text-accent-decoration");
   });
 
-  it("gir stegene i saksflyten ulike Aksel-farger", () => {
-    const farger = ["OPPRETTET", "UTREDNING", "FORVALTNING", "AVSLUTTET", "POLITI", "STRAFFE"].map(
-      fargeForKode,
-    );
-
-    expect(new Set(farger).size).toBe(farger.length);
+  it("har ti ulike farger og går rundt etter det", () => {
+    expect(new Set(FARGESKALA.map((f) => f.fyll)).size).toBe(10);
+    expect(fargeForIndeks(10)).toBe(fargeForIndeks(0));
   });
 
-  it("bruker aldri info-strong, som er identisk med brand-blue-strong i Aksel", () => {
-    const koder = ["SAMLIV", "ARBEID", "UTLAND", "POLITI", "FORVALTNING", "NY_KATEGORI", "X", "YZ"];
-    for (let i = 0; i < 50; i++) koder.push(`KODE_${i}`);
-
-    expect(koder.map(fargeForKode)).not.toContain("--ax-bg-info-strong");
+  it("gir alle lyse farger en ramme", () => {
+    for (const farge of FARGESKALA) {
+      expect(Boolean(farge.kant)).toBe(farge.lys);
+    }
   });
+});
 
-  it("gir POLITI Watson-teal og BEHANDLER mørk aksent", () => {
-    expect(fargeForKode("POLITI")).toBe("--watson-data-teal");
-    expect(fargeForKode("BEHANDLER")).toBe("--ax-accent-900");
-  });
-
-  it("gir utredning tydelig oransje", () => {
-    expect(fargeForKode("UTREDNING")).toBe("--ax-warning-500");
-  });
-
-  it("bruker aldri de brune beige- og lime-fargene, heller ikke for ukjente koder", () => {
-    const koder = ["NY_KATEGORI", "X", "YZ"];
-    for (let i = 0; i < 50; i++) koder.push(`KODE_${i}`);
-
-    const farger = koder.map(fargeForKode);
-    expect(farger.some((farge) => /beige|lime/.test(farge))).toBe(false);
-  });
-
-  it("normaliserer tankestrek i koder", () => {
-    expect(fargeForKode("ETTER–UTREDNING")).toBe(fargeForKode("ETTER-UTREDNING"));
-  });
-
-  it("gir stabile farger også for ukjente koder", () => {
-    expect(fargeForKode("NY_KATEGORI")).toBe(fargeForKode("NY_KATEGORI"));
-  });
-
-  it("gir backendens UTREDNING samme farge som UTREDES", () => {
-    expect(fargeForKode("UTREDNING")).toBe(fargeForKode("UTREDES"));
+describe("fargestil", () => {
+  it("legger innvendig ramme på lyse farger", () => {
+    expect(fargestil(fargeForIndeks(3))).toEqual({
+      backgroundColor: "var(--ax-bg-brand-blue-moderate)",
+      boxShadow: "inset 0 0 0 1px var(--ax-border-brand-blue)",
+    });
+    expect(fargestil(fargeForIndeks(0))).toEqual({
+      backgroundColor: "var(--ax-bg-brand-blue-strong)",
+    });
   });
 });
 
 describe("kakeGradient", () => {
   it("legger en skillestrek i bakgrunnsfargen mellom segmentene", () => {
     const gradient = kakeGradient([
-      { farge: "--a", verdi: 1 },
-      { farge: "--b", verdi: 0 },
-      { farge: "--c", verdi: 3 },
+      { farge: a, verdi: 1 },
+      { farge: b, verdi: 0 },
+      { farge: c, verdi: 3 },
     ]);
 
     expect(gradient).toBe(
@@ -76,10 +50,20 @@ describe("kakeGradient", () => {
     );
   });
 
+  it("tegner rammefargen langs kantene til lyse segmenter", () => {
+    const lys = { fyll: "--lys", kant: "--kant", lys: true };
+    const gradient = kakeGradient([
+      { farge: lys, verdi: 1 },
+      { farge: a, verdi: 1 },
+    ]);
+
+    expect(gradient).toContain("var(--kant) 0deg 0.6deg, var(--lys) 0.6deg 177.9deg");
+  });
+
   it("lar små segmenter beholde en farget del", () => {
     const gradient = kakeGradient([
-      { farge: "--a", verdi: 1 },
-      { farge: "--b", verdi: 999 },
+      { farge: a, verdi: 1 },
+      { farge: b, verdi: 999 },
     ]);
 
     expect(gradient).toMatch(
@@ -88,10 +72,10 @@ describe("kakeGradient", () => {
   });
 
   it("dropper skillestreken når det bare er ett segment", () => {
-    expect(kakeGradient([{ farge: "--a", verdi: 5 }])).toBe("conic-gradient(var(--a) 0deg 360deg)");
+    expect(kakeGradient([{ farge: a, verdi: 5 }])).toBe("conic-gradient(var(--a) 0deg 360deg)");
   });
 
   it("viser en nøytral ring når alt er null", () => {
-    expect(kakeGradient([{ farge: "--a", verdi: 0 }])).toContain("--ax-bg-neutral-moderate");
+    expect(kakeGradient([{ farge: a, verdi: 0 }])).toContain("--ax-bg-neutral-moderate");
   });
 });

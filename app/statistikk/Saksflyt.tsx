@@ -3,7 +3,7 @@ import { Fragment } from "react";
 import { Link as RouterLink } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { Diagramkort } from "./Diagramkort";
-import { fargeForKode } from "./farger";
+import { fargeForIndeks, fargestil } from "./farger";
 import type { Statistikk } from "./types";
 import { formaterAntallSaker, prosentFormatter, visningsnavn } from "./visning";
 
@@ -28,7 +28,8 @@ export function Saksflyt({ data }: { data: Statistikk["statusfordeling"] }) {
         gap={{ xs: "space-4", md: "space-0 space-12" }}
         align="center"
       >
-        {steg.map((rad) => {
+        {steg.map((rad, indeks) => {
+          const farge = fargeForIndeks(indeks);
           const kode = rad.navn.toLocaleUpperCase("nb-NO").replaceAll(" ", "_");
           const navn = NAVN_FOR_STEG[kode] ?? visningsnavn(rad.navn);
           return (
@@ -61,7 +62,7 @@ export function Saksflyt({ data }: { data: Statistikk["statusfordeling"] }) {
                       height="100%"
                       marginInline="auto"
                       className="flex items-center justify-center no-underline"
-                      style={{ backgroundColor: `var(${fargeForKode(rad.filterverdi)})` }}
+                      style={fargestil(farge)}
                     >
                       <BodyShort
                         as="span"
@@ -70,11 +71,15 @@ export function Saksflyt({ data }: { data: Statistikk["statusfordeling"] }) {
                         className={
                           rad.prosent < 10
                             ? "absolute text-ax-text-neutral"
-                            : "text-ax-text-neutral-contrast"
+                            : farge.lys
+                              ? "text-ax-text-neutral"
+                              : "text-ax-text-neutral-contrast"
                         }
                         style={
                           rad.prosent < 10
-                            ? { left: `calc(${50 + rad.prosent / 2}% + var(--ax-space-8))` }
+                            ? {
+                                left: `calc(${50 + rad.prosent / 2}% + var(--ax-space-8))`,
+                              }
                             : undefined
                         }
                       >
