@@ -230,6 +230,10 @@ export function OpprettSakBekreftelseModal({
             <Button
               as={Link}
               to={RouteConfig.SAKER_DETALJ.replace(":sakId", sakId)}
+              // Full sidenavigasjon: Aksel-modalens scroll-lås slippes med setTimeout(0)
+              // etter at neste side er rendret, og setter da scrollposisjonen tilbake til
+              // der skjemaet var. Skjer bare med faste scrollbarer (Windows), se TH-88.
+              reloadDocument
               variant="primary"
             >
               Gå til saken
