@@ -247,7 +247,7 @@ export function StatistikkDiagrammer({
                               steg: del.filterverdi,
                             })}
                             aria-label={`${visningsnavn(rad.navn)}, ${visningsnavn(del.navn)}: ${formatter.format(del.verdi)} saker`}
-                            className="block h-full min-w-0 basis-0 focus-visible:z-10"
+                            className="block h-full min-w-0 basis-0 first:rounded-l-sm last:rounded-r-sm focus-visible:z-10"
                             style={{
                               flexGrow: del.verdi,
                               ...fargestil(
