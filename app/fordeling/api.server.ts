@@ -35,6 +35,8 @@ type HentKontrollsakerArgs = {
   ansvarlig?: typeof ANSVARLIG_MEG;
   /** Saker der innlogget bruker er ansvarlig eller delt med. Identen utledes av backend. */
   tilknyttet?: typeof ANSVARLIG_MEG;
+  /** Utelat saker som eies av innlogget bruker. Brukes sammen med tilknyttet=MEG. */
+  utelatEgneSaker?: boolean;
 } & KontrollsakerFilter;
 
 function byggKontrollsakerParams(args: HentKontrollsakerArgs): URLSearchParams {
@@ -43,6 +45,9 @@ function byggKontrollsakerParams(args: HentKontrollsakerArgs): URLSearchParams {
   if (args.aldersvarsel) params.set("aldersvarsel", args.aldersvarsel);
   if (args.ansvarlig) params.set("ansvarlig", args.ansvarlig);
   if (args.tilknyttet) params.set("tilknyttet", args.tilknyttet);
+  if (args.utelatEgneSaker != null) {
+    params.set("utelatEgneSaker", String(args.utelatEgneSaker));
+  }
   if (args.utenAnsvarlig != null) params.set("utenAnsvarlig", String(args.utenAnsvarlig));
   if (args.utenStatus != null) params.set("utenStatus", String(args.utenStatus));
   for (const v of args.steg ?? []) params.append("steg", v);

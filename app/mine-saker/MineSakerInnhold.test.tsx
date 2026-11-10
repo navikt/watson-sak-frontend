@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
 import { getSaksreferanse } from "~/saker/id";
+import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { MineSakerInnhold } from "./MineSakerInnhold";
 
@@ -69,28 +70,40 @@ const standardAktivtFilter = {
     "FORVALTNING" as const,
     "STRAFFERETTSLIG_VURDERING" as const,
   ],
-  status: ["INGEN" as const, "VENTER_PA_INFORMASJON" as const],
+  status: [] as ("INGEN" | "VENTER_PA_INFORMASJON" | "VENTER_PA_VEDTAK")[],
 };
 
-function renderMedRouter(ui: React.ReactNode, startsti = "/") {
-  const router = createMemoryRouter([{ path: "/", element: ui }], {
+type Props = React.ComponentProps<typeof MineSakerInnhold>;
+
+function lagProps(overrides: Partial<Props> = {}): Props {
+  return {
+    rader: [mapKontrollsakTilSakslisteRad(lagKontrollsak(), "/saker")],
+    aktivFane: "mine",
+    aktivSide: 1,
+    totalAntall: 1,
+    totalSider: 0,
+    antallMineSaker: 1,
+    antallDelteSaker: 0,
+    sorteringskolonne: "opprettet",
+    sorteringsretning: "desc",
+    filterAlternativer: standardFilterAlternativer,
+    aktivtFilter: standardAktivtFilter,
+    ...overrides,
+  };
+}
+
+function renderMedRouter(props: Props = lagProps(), startsti = "/") {
+  const router = createMemoryRouter([{ path: "/", element: <MineSakerInnhold {...props} /> }], {
     initialEntries: [startsti],
   });
 
-  return render(<RouterProvider router={router} />);
+  render(<RouterProvider router={router} />);
+  return router;
 }
 
 describe("MineSakerInnhold", () => {
-  it("viser saksliste med kolonner", () => {
-    renderMedRouter(
-      <MineSakerInnhold
-        saker={[lagKontrollsak()]}
-        deltMedSaker={[]}
-        detaljSti="/saker"
-        filterAlternativer={standardFilterAlternativer}
-        aktivtFilter={standardAktivtFilter}
-      />,
-    );
+  it("viser saksliste med kolonner uten Saksbehandler i Mine saker", () => {
+    renderMedRouter();
 
     expect(screen.getByRole("columnheader", { name: "Saksid" })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Navn" })).toBeDefined();
@@ -98,220 +111,121 @@ describe("MineSakerInnhold", () => {
     expect(screen.getByRole("columnheader", { name: "Misbrukstype" })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Opprettet" })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Oppdatert" })).toBeDefined();
+    expect(screen.queryByRole("columnheader", { name: "Saksbehandler" })).toBeNull();
   });
 
   it("viser sakslenke med riktig detaljsti", () => {
-    renderMedRouter(
-      <MineSakerInnhold
-        saker={[lagKontrollsak()]}
-        deltMedSaker={[]}
-        detaljSti="/saker"
-        filterAlternativer={standardFilterAlternativer}
-        aktivtFilter={standardAktivtFilter}
-      />,
-    );
+    renderMedRouter();
 
     const sakId = 201;
     const lenke = screen.getByRole("link", { name: `#${sakId}` });
     expect(lenke.getAttribute("href")).toBe(`/saker/${getSaksreferanse(sakId)}`);
   });
 
-  it("viser Chips-filtre for steg og status", () => {
+  it("viser steg- og statusfiltre også når listen er tom", () => {
     renderMedRouter(
-      <MineSakerInnhold
-        saker={[lagKontrollsak()]}
-        deltMedSaker={[]}
-        detaljSti="/saker"
-        filterAlternativer={standardFilterAlternativer}
-        aktivtFilter={standardAktivtFilter}
-      />,
+      lagProps({
+        rader: [],
+        totalAntall: 0,
+        antallMineSaker: 0,
+        aktivtFilter: { steg: [], status: ["VENTER_PA_VEDTAK"] },
+      }),
     );
 
-    expect(
-      within(screen.getByRole("group", { name: "Filtrer saker" })).getByText("Status"),
-    ).toBeDefined();
+    const filterpanel = screen.getByRole("group", { name: "Filtrer saker" });
+    expect(within(filterpanel).getByText("Status")).toBeDefined();
     expect(screen.getByRole("button", { name: "Opprettet" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Utredning" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Avsluttet" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Aktiv" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "I bero" })).toBeDefined();
-  });
-
-  it("viser tomtekst når ingen saker matcher filter", () => {
-    renderMedRouter(
-      <MineSakerInnhold
-        saker={[]}
-        deltMedSaker={[]}
-        detaljSti="/saker"
-        filterAlternativer={standardFilterAlternativer}
-        aktivtFilter={standardAktivtFilter}
-      />,
-    );
-
+    expect(
+      screen.getByRole("button", { name: "Venter på vedtak" }).getAttribute("aria-pressed"),
+    ).toBe("true");
     expect(screen.getByText("Endre filtrering for å finne saker")).toBeDefined();
+    expect(screen.getByRole("tab", { name: "Mine saker (0)" })).toBeDefined();
+    expect(screen.getByRole("tab", { name: "Delt med meg (0)" })).toBeDefined();
   });
 
-  it("viser tilpasset tomtekst når ingen filtre er valgt og ingen saker finnes", () => {
+  it("viser tomtekst når ingen filtre er valgt og ingen saker finnes", () => {
     renderMedRouter(
-      <MineSakerInnhold
-        saker={[]}
-        deltMedSaker={[]}
-        detaljSti="/saker"
-        filterAlternativer={standardFilterAlternativer}
-        aktivtFilter={{
-          steg: [],
-          status: [],
-        }}
-      />,
+      lagProps({
+        rader: [],
+        totalAntall: 0,
+        antallMineSaker: 0,
+        aktivtFilter: { steg: [], status: [] },
+      }),
     );
 
     expect(screen.getByText("Du har ingen saker.")).toBeDefined();
   });
 
-  it("markerer aktive filtre som selected", () => {
-    renderMedRouter(
-      <MineSakerInnhold
-        saker={[lagKontrollsak()]}
-        deltMedSaker={[]}
-        detaljSti="/saker"
-        filterAlternativer={standardFilterAlternativer}
-        aktivtFilter={standardAktivtFilter}
-      />,
-    );
-
-    const opprettetChip = screen.getByRole("button", { name: "Opprettet" });
-    expect(opprettetChip.getAttribute("aria-pressed")).toBe("true");
-
-    expect(screen.getByRole("button", { name: "Avsluttet" }).getAttribute("aria-pressed")).toBe(
-      "false",
-    );
-  });
-
-  it("viser faner for Mine saker og Delt med meg når det finnes delte saker", () => {
-    renderMedRouter(
-      <MineSakerInnhold
-        saker={[lagKontrollsak()]}
-        deltMedSaker={[lagKontrollsak({ id: 999 })]}
-        detaljSti="/saker"
-        filterAlternativer={standardFilterAlternativer}
-        aktivtFilter={standardAktivtFilter}
-      />,
-    );
-
-    const mine = screen.getByRole("tab", { name: "Mine saker (1)" });
-    const delt = screen.getByRole("tab", { name: "Delt med meg (1)" });
-    expect(mine.getAttribute("aria-selected")).toBe("true");
-    expect(delt.getAttribute("aria-selected")).toBe("false");
-  });
-
-  it("åpner Delt med meg-fanen via ?fane=delt", () => {
-    renderMedRouter(
-      <MineSakerInnhold
-        saker={[]}
-        deltMedSaker={[lagKontrollsak({ id: 999 })]}
-        detaljSti="/saker"
-        filterAlternativer={standardFilterAlternativer}
-        aktivtFilter={standardAktivtFilter}
-      />,
-      "/?fane=delt",
+  it("viser Saksbehandler og backend-paginering kun i Delt med meg", () => {
+    const rad = mapKontrollsakTilSakslisteRad(lagKontrollsak({ id: 999 }), "/saker");
+    const router = renderMedRouter(
+      lagProps({
+        rader: [rad],
+        aktivFane: "delt",
+        aktivSide: 2,
+        totalAntall: 26,
+        totalSider: 2,
+        antallDelteSaker: 26,
+      }),
+      "/?fane=delt&side=2",
     );
 
     expect(
-      screen.getByRole("tab", { name: "Delt med meg (1)" }).getAttribute("aria-selected"),
+      screen.getByRole("tab", { name: "Delt med meg (26)" }).getAttribute("aria-selected"),
     ).toBe("true");
+    expect(screen.getByRole("columnheader", { name: "Saksbehandler" })).toBeDefined();
+    expect(screen.getByText("Ola Saksbehandler")).toBeDefined();
+    expect(screen.getByRole("link", { name: "#999" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "2" }).getAttribute("aria-current")).toBe("true");
+    expect(screen.getByText("26 saker")).toBeDefined();
+    expect(router.state.location.search).toContain("fane=delt");
   });
 
-  it("skjuler fanene når ingen saker er delt", () => {
-    renderMedRouter(
-      <MineSakerInnhold
-        saker={[lagKontrollsak()]}
-        deltMedSaker={[]}
-        detaljSti="/saker"
-        filterAlternativer={standardFilterAlternativer}
-        aktivtFilter={standardAktivtFilter}
-      />,
-    );
-
-    expect(screen.queryByRole("tab")).toBeNull();
-  });
-
-  describe("sidedeling", () => {
-    // 25 saker der sak 1 er nyest, slik at standardsorteringen (opprettet, synkende) gir id 1–25.
-    const mangeSaker = Array.from({ length: 25 }, (_, indeks) =>
-      lagKontrollsak({
-        id: indeks + 1,
-        opprettet: new Date(Date.UTC(2026, 0, 31 - indeks)).toISOString(),
+  it("beholder filtre og sortering, men fjerner side ved fanebytte", () => {
+    const router = renderMedRouter(
+      lagProps({
+        aktivtFilter: { steg: ["OPPRETTET"], status: ["VENTER_PA_VEDTAK"] },
       }),
+      "/?side=3&steg=OPPRETTET&status=VENTER_PA_VEDTAK&sorter=status&retning=asc",
     );
 
-    function renderMedSider(søkestreng = "") {
-      const router = createMemoryRouter(
-        [
-          {
-            path: "/",
-            element: (
-              <MineSakerInnhold
-                saker={mangeSaker}
-                deltMedSaker={[]}
-                detaljSti="/saker"
-                filterAlternativer={standardFilterAlternativer}
-                aktivtFilter={standardAktivtFilter}
-              />
-            ),
-          },
-        ],
-        { initialEntries: [`/${søkestreng}`] },
-      );
-      render(<RouterProvider router={router} />);
-      return router;
-    }
+    fireEvent.click(screen.getByRole("tab", { name: "Delt med meg (0)" }));
 
-    function synligeSakslenker() {
-      return screen.getAllByRole("link", { name: /^#\d+$/ });
-    }
+    const søk = new URLSearchParams(router.state.location.search);
+    expect(søk.get("fane")).toBe("delt");
+    expect(søk.has("side")).toBe(false);
+    expect(søk.get("steg")).toBe("OPPRETTET");
+    expect(søk.get("status")).toBe("VENTER_PA_VEDTAK");
+    expect(søk.get("sorter")).toBe("status");
+    expect(søk.get("retning")).toBe("asc");
+  });
 
-    it("viser 20 saker på første side", () => {
-      renderMedSider();
+  it("oppdaterer side i URL-en når brukeren bytter side", () => {
+    const router = renderMedRouter(lagProps({ totalSider: 2 }));
 
-      const lenker = synligeSakslenker();
-      expect(lenker).toHaveLength(20);
-      expect(lenker[0].textContent).toBe("#1");
-      expect(lenker[19].textContent).toBe("#20");
-    });
+    fireEvent.click(screen.getByRole("button", { name: "2" }));
 
-    it("viser resten av sakene når side=2", () => {
-      renderMedSider("?side=2");
+    expect(new URLSearchParams(router.state.location.search).get("side")).toBe("2");
+  });
 
-      const lenker = synligeSakslenker();
-      expect(lenker).toHaveLength(5);
-      expect(lenker[0].textContent).toBe("#21");
-    });
+  it("går til første side ved sortering", () => {
+    const router = renderMedRouter(lagProps({ totalSider: 2 }), "/?side=2");
 
-    it("oppdaterer side i URL-en ved sidebytte", () => {
-      const router = renderMedSider();
+    fireEvent.click(
+      within(screen.getByRole("columnheader", { name: "Saksid" })).getByRole("button"),
+    );
 
-      fireEvent.click(screen.getByRole("button", { name: "2" }));
+    const søk = new URLSearchParams(router.state.location.search);
+    expect(søk.has("side")).toBe(false);
+    expect(søk.get("sorter")).toBe("saksid");
+    expect(søk.get("retning")).toBe("asc");
+  });
 
-      expect(router.state.location.search).toContain("side=2");
-      expect(synligeSakslenker()[0].textContent).toBe("#21");
-    });
+  it("går til første side ved filtrering", () => {
+    const router = renderMedRouter(lagProps({ totalSider: 2 }), "/?side=2");
 
-    it("går tilbake til første side ved sortering", () => {
-      const router = renderMedSider("?side=2");
+    fireEvent.click(screen.getByRole("button", { name: "Utredning" }));
 
-      fireEvent.click(
-        within(screen.getByRole("columnheader", { name: "Saksid" })).getByRole("button"),
-      );
-
-      expect(new URLSearchParams(router.state.location.search).has("side")).toBe(false);
-    });
-
-    it("går tilbake til første side ved filtrering", () => {
-      const router = renderMedSider("?side=2");
-
-      fireEvent.click(screen.getByRole("button", { name: "Utredning" }));
-
-      expect(new URLSearchParams(router.state.location.search).has("side")).toBe(false);
-    });
+    expect(new URLSearchParams(router.state.location.search).has("side")).toBe(false);
   });
 });

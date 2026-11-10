@@ -30,10 +30,42 @@ vi.mock("~/fordeling/api.server", () => ({
 const tomSideResponse = {
   items: [],
   page: 1,
-  size: 200,
+  size: 20,
   totalItems: 0,
   totalPages: 0,
 };
+
+function lagKontrollsak(id: number, eierNavIdent: string | null) {
+  return {
+    id,
+    personIdent: "10987654321",
+    personNavn: "Test Person",
+    saksbehandlere: {
+      eier: eierNavIdent
+        ? { navIdent: eierNavIdent, navn: "Test Saksbehandler", enhet: "4812" }
+        : null,
+      deltMed: [],
+      opprettetAv: { navIdent: "Z000001", navn: "Test Oppretter", enhet: "4812" },
+    },
+    steg: "OPPRETTET",
+    kategori: "ARBEID",
+    kilde: "PUBLIKUM",
+    misbruktype: [],
+    prioritet: "NORMAL",
+    status: null,
+    ytelser: [],
+    merking: [],
+    arbeidsgivere: [],
+    opprettet: "2026-02-03T10:11:12Z",
+    oppdatert: null,
+    oppgaver: [],
+    kobledeSaker: [],
+    dokumenter: [],
+    adresseskjermet: false,
+    gjeldendePersonIdent: null,
+    historiskeIdenter: [],
+  };
+}
 
 describe("MineSakerSide loader — backend-sti", () => {
   afterEach(() => {
@@ -113,7 +145,7 @@ describe("MineSakerSide loader — backend-sti", () => {
     );
   }, 15000);
 
-  it("kaller backend med ansvarlig=MEG og tilknyttet=MEG uten ident", async () => {
+  it("henter Mine saker med ansvarlig=MEG og teller Delt med meg med size=1", async () => {
     mockHentKontrollsaker.mockResolvedValue(tomSideResponse);
     const { loader } = await import("./MineSakerSide.route");
 
@@ -124,16 +156,23 @@ describe("MineSakerSide loader — backend-sti", () => {
     } as Parameters<typeof loader>[0]);
 
     expect(mockHentKontrollsaker).toHaveBeenCalledTimes(2);
-    expect(mockHentKontrollsaker).toHaveBeenCalledWith(
-      expect.objectContaining({ ansvarlig: "MEG" }),
+    expect(mockHentKontrollsaker).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ ansvarlig: "MEG", page: 1, size: 20 }),
     );
-    expect(mockHentKontrollsaker).toHaveBeenCalledWith(
-      expect.objectContaining({ tilknyttet: "MEG" }),
+    expect(mockHentKontrollsaker).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        tilknyttet: "MEG",
+        utelatEgneSaker: true,
+        page: 1,
+        size: 1,
+      }),
     );
     expect(JSON.stringify(mockHentKontrollsaker.mock.calls)).not.toContain("Z999999");
   }, 15000);
 
-  it("filtrerer bare Mine saker, ikke delte saker", async () => {
+  it("sender steg- og statusfiltre for både Mine og Delt med meg", async () => {
     mockHentKontrollsaker.mockResolvedValue(tomSideResponse);
     const { loader } = await import("./MineSakerSide.route");
 
@@ -148,9 +187,92 @@ describe("MineSakerSide loader — backend-sti", () => {
       expect.objectContaining({ steg: ["UTREDNING"], utenStatus: true }),
     );
     const delt = kall.find((a) => a.tilknyttet === "MEG");
-    expect(delt?.steg).toBeUndefined();
-    expect(delt?.status).toBeUndefined();
-    expect(delt?.utenStatus).toBeUndefined();
+    expect(delt).toEqual(
+      expect.objectContaining({
+        steg: ["UTREDNING"],
+        status: undefined,
+        utenStatus: true,
+        utelatEgneSaker: true,
+      }),
+    );
+  }, 15000);
+
+  it("henter bare Delt med meg aktivt og bruker sidemetadata fra backend", async () => {
+    mockHentKontrollsaker
+      .mockResolvedValueOnce({
+        items: [lagKontrollsak(42, "Z888888")],
+        page: 3,
+        size: 20,
+        totalItems: 46,
+        totalPages: 3,
+      })
+      .mockResolvedValueOnce({ ...tomSideResponse, size: 1, totalItems: 9, totalPages: 9 });
+    const { loader } = await import("./MineSakerSide.route");
+
+    const result = await loader({
+      request: new Request(
+        "http://localhost/mine-saker?fane=delt&side=3&sorter=status&retning=asc&steg=UTREDES&status=INGEN&status=VENTER_PA_VEDTAK",
+      ),
+      params: {},
+      context: {},
+    } as Parameters<typeof loader>[0]);
+
+    expect(mockHentKontrollsaker).toHaveBeenCalledTimes(2);
+    expect(mockHentKontrollsaker).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        tilknyttet: "MEG",
+        utelatEgneSaker: true,
+        page: 3,
+        size: 20,
+        steg: ["UTREDNING"],
+        status: ["VENTER_PA_VEDTAK"],
+        utenStatus: true,
+        sortering: "status,ASC",
+      }),
+    );
+    expect(mockHentKontrollsaker).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        ansvarlig: "MEG",
+        page: 1,
+        size: 1,
+        steg: ["UTREDNING"],
+        status: ["VENTER_PA_VEDTAK"],
+        utenStatus: true,
+        sortering: undefined,
+      }),
+    );
+    expect(result.aktivFane).toBe("delt");
+    expect(result.deltMedSaker).toHaveLength(1);
+    expect(result.aktivSide).toBe(3);
+    expect(result.totalAntall).toBe(46);
+    expect(result.totalSider).toBe(3);
+    expect(result.antallMineSaker).toBe(9);
+    expect(result.antallDelteSaker).toBe(46);
+  }, 15000);
+
+  it("sender URL-side og backend-sortering for Mine saker", async () => {
+    mockHentKontrollsaker
+      .mockResolvedValueOnce({ ...tomSideResponse, page: 2, totalItems: 27, totalPages: 2 })
+      .mockResolvedValueOnce({ ...tomSideResponse, size: 1, totalItems: 5, totalPages: 5 });
+    const { loader } = await import("./MineSakerSide.route");
+
+    const result = await loader({
+      request: new Request("http://localhost/mine-saker?side=2&sorter=saksid&retning=asc"),
+      params: {},
+      context: {},
+    } as Parameters<typeof loader>[0]);
+
+    expect(mockHentKontrollsaker).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ page: 2, size: 20, sortering: "id,ASC", ansvarlig: "MEG" }),
+    );
+    expect(result.aktivSide).toBe(2);
+    expect(result.totalAntall).toBe(27);
+    expect(result.totalSider).toBe(2);
+    expect(result.antallMineSaker).toBe(27);
+    expect(result.antallDelteSaker).toBe(5);
   }, 15000);
 
   it("returnerer utilgjengelig tilstand og ingen saker når tilgangssjekken feiler", async () => {
@@ -186,31 +308,36 @@ describe("MineSakerSide loader — backend-sti", () => {
     ).rejects.toBe(sesjonsfeil);
   });
 
-  it("ekskluderer egne saker fra deltMedSaker", async () => {
-    const lagSakMedEier = (id: number, eierNavIdent: string) => ({
-      id,
-      saksbehandlere: {
-        eier: { navIdent: eierNavIdent, navn: "Test", enhet: "4812" },
-        deltMed: [],
-        opprettetAv: { navIdent: "Z000000", navn: "Test", enhet: "4812" },
-      },
-    });
-    const minSak = { ...tomSideResponse, items: [lagSakMedEier(1, "Z999999")] };
-    const tilknyttedeSaker = {
-      ...tomSideResponse,
-      items: [lagSakMedEier(1, "Z999999"), lagSakMedEier(2, "Z888888")],
-    };
-    mockHentKontrollsaker.mockResolvedValueOnce(minSak).mockResolvedValueOnce(tilknyttedeSaker);
+  it("sender filterparametrene for begge faner når Delt med meg er aktiv", async () => {
+    mockHentKontrollsaker
+      .mockResolvedValueOnce({ ...tomSideResponse, items: [lagKontrollsak(2, "Z888888")] })
+      .mockResolvedValueOnce({ ...tomSideResponse, size: 1, totalItems: 1, totalPages: 1 });
 
     const { loader } = await import("./MineSakerSide.route");
 
     const result = await loader({
-      request: new Request("http://localhost/mine-saker"),
+      request: new Request("http://localhost/mine-saker?fane=delt&steg=OPPRETTET&status=INGEN"),
       params: {},
       context: {},
     } as Parameters<typeof loader>[0]);
 
-    expect(result.deltMedSaker).toHaveLength(1);
-    expect(result.deltMedSaker[0].id).toBe(2);
+    expect(mockHentKontrollsaker).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        tilknyttet: "MEG",
+        utelatEgneSaker: true,
+        steg: ["OPPRETTET"],
+        utenStatus: true,
+      }),
+    );
+    expect(mockHentKontrollsaker).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        ansvarlig: "MEG",
+        steg: ["OPPRETTET"],
+        utenStatus: true,
+      }),
+    );
+    expect(result.deltMedSaker.map((sak) => sak.id)).toEqual([2]);
   }, 15000);
 });
