@@ -77,15 +77,15 @@ test.describe("Landingsside", () => {
   });
 
   test("kan markere et varsel som lest", async ({ page }) => {
-    await expect(page.getByRole("heading", { name: "Sak #103 må vurderes" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Sak 103 må vurderes" })).toBeVisible();
 
     await page.getByRole("button", { name: "Marker som lest" }).first().click();
 
-    await expect(page.getByRole("heading", { name: "Sak #103 må vurderes" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Sak 103 må vurderes" })).toHaveCount(0);
     await page.reload({ waitUntil: "networkidle" });
 
-    await expect(page.getByRole("heading", { name: "Sak #103 må vurderes" })).toHaveCount(0);
-    await expect(page.getByRole("heading", { name: "Sak #102 har ny hendelse" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Sak 103 må vurderes" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Sak 102 har ny hendelse" })).toBeVisible();
   });
 
   test("viser maks to siste varsler side ved side fra md-bredde", async ({ page }) => {
@@ -100,7 +100,7 @@ test.describe("Landingsside", () => {
     await expect(varslerSeksjon.getByRole("button", { name: "Marker som lest" })).toHaveCount(2);
     await expect(varslerSeksjon.getByRole("link", { name: "Se alle varsler" })).toBeVisible();
 
-    const varsler = varslerSeksjon.getByRole("heading", { name: /Sak #\d+/ });
+    const varsler = varslerSeksjon.getByRole("heading", { name: /Sak \d+/ });
     const førsteBoks = await varsler.nth(0).boundingBox();
     const andreBoks = await varsler.nth(1).boundingBox();
 

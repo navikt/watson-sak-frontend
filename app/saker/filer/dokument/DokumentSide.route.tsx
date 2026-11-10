@@ -312,7 +312,7 @@ function DokumentRedigering({
           icon={<ArrowLeftIcon aria-hidden />}
           className="self-start"
         >
-          Tilbake til sak #{sakReferanse}
+          Tilbake til sak {sakReferanse}
         </Button>
 
         <HStack justify="space-between" align="center" gap="space-4" wrap>

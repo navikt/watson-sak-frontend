@@ -115,7 +115,9 @@ describe("SakerPåSammePerson", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Saker på samme person" })).toBeDefined();
-    expect(screen.getByText((_, element) => element?.textContent === "Saksid: 203")).toBeDefined();
+    expect(
+      screen.getByText((_, element) => element?.textContent === "Saksnummer: 203"),
+    ).toBeDefined();
     expect(screen.getByText((_, element) => element?.textContent === "Enhet: Øst")).toBeDefined();
     expect(
       screen.getByText((_, element) => element?.textContent === "Saksbehandler: Lise Raus"),
@@ -137,8 +139,12 @@ describe("SakerPåSammePerson", () => {
       />,
     );
 
-    expect(screen.getByText((_, element) => element?.textContent === "Saksid: 203")).toBeDefined();
-    expect(screen.getByText((_, element) => element?.textContent === "Saksid: 204")).toBeDefined();
+    expect(
+      screen.getByText((_, element) => element?.textContent === "Saksnummer: 203"),
+    ).toBeDefined();
+    expect(
+      screen.getByText((_, element) => element?.textContent === "Saksnummer: 204"),
+    ).toBeDefined();
     expect(screen.getByText("Utredning")).toBeDefined();
     expect(screen.queryByText("Venter på vedtak")).toBeNull();
   });

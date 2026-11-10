@@ -75,7 +75,7 @@ const standardKolonner: SakslisteKolonne[] = [
 ];
 
 const standardTitler: Record<SakslisteKolonne, string> = {
-  saksid: "Saksid",
+  saksid: "Saksnummer",
   navn: "Navn",
   kategori: "Kategori",
   misbrukstype: "Misbrukstype",
@@ -210,10 +210,10 @@ function renderCelle(
     case "saksid":
       return rad.detaljHref ? (
         <Link as={RouterLink} to={rad.detaljHref} state={lenkeState}>
-          #{rad.saksreferanse}
+          {rad.saksreferanse}
         </Link>
       ) : (
-        <BodyShort size="small">#{rad.saksreferanse}</BodyShort>
+        <BodyShort size="small">{rad.saksreferanse}</BodyShort>
       );
     case "navn":
       return (

@@ -206,7 +206,7 @@ export function SaksflytModal({
           <VStack gap="space-8" align="center" className="py-6 text-center">
             <BodyShort weight="semibold">Lagret</BodyShort>
             <BodyShort textColor="subtle">
-              Endringen på sak #{getSaksreferanse(sakId)} er lagret.
+              Endringen på sak {getSaksreferanse(sakId)} er lagret.
             </BodyShort>
           </VStack>
         </Modal.Body>

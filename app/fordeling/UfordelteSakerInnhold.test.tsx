@@ -113,7 +113,7 @@ describe("UfordelteSakerInnhold", () => {
     );
     render(<RouterProvider router={router} />);
 
-    fireEvent.click(screen.getByRole("link", { name: "#301" }));
+    fireEvent.click(screen.getByRole("link", { name: "301" }));
 
     expect(mottattState).toEqual({
       tilbake: { to: `${RouteConfig.FORDELING}${søk}`, label: "Ufordelte saker" },
@@ -164,8 +164,8 @@ describe("UfordelteSakerInnhold", () => {
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(
       "Ufordelte saker i Analyse – Utroskap, Skjult samliv, Prioritert",
     );
-    expect(screen.getByRole("link", { name: "#301" })).toBeDefined();
-    expect(screen.getByRole("link", { name: "#302" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "301" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "302" })).toBeDefined();
   });
 
   it("viser steg-etiketter for gyldige verdier og ignorerer ukjente steg", () => {
@@ -188,7 +188,7 @@ describe("UfordelteSakerInnhold", () => {
   it("viser felles sakslistekolonner uten navn og beholder tildel-handling", () => {
     renderInnhold();
 
-    expect(screen.getByRole("columnheader", { name: "Saksid" })).toBeDefined();
+    expect(screen.getByRole("columnheader", { name: "Saksnummer" })).toBeDefined();
     expect(screen.queryByRole("columnheader", { name: "Navn" })).toBeNull();
     expect(screen.getByRole("columnheader", { name: "Kategori" })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Misbrukstype" })).toBeDefined();
@@ -196,7 +196,7 @@ describe("UfordelteSakerInnhold", () => {
     expect(screen.getByRole("columnheader", { name: /Steg/ })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: /Opprettet/ })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Oppdatert" })).toBeDefined();
-    expect(screen.getByRole("link", { name: "#301" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "301" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Tildel" })).toBeDefined();
   });
 
@@ -218,7 +218,7 @@ describe("UfordelteSakerInnhold", () => {
     expect(screen.getByText("105 saker")).toBeDefined();
     expect(screen.getByText("41", { exact: false })).toBeDefined();
     expect(screen.getByRole("button", { name: "1" })).toBeDefined();
-    expect(screen.getAllByRole("link", { name: /^#\d+$/ })).toHaveLength(20);
+    expect(screen.getAllByRole("link", { name: /^\d+$/ })).toHaveLength(20);
   });
 
   it("viser serverens oppsummering også når den ikke samsvarer med sidens saker", () => {
@@ -265,9 +265,9 @@ describe("UfordelteSakerInnhold", () => {
     it("viser alle saker backend har paginert til siden", () => {
       renderMedSider();
 
-      expect(screen.getAllByRole("link", { name: /^#\d+$/ })).toHaveLength(20);
-      expect(screen.getByRole("link", { name: "#1" })).toBeDefined();
-      expect(screen.getByRole("link", { name: "#20" })).toBeDefined();
+      expect(screen.getAllByRole("link", { name: /^\d+$/ })).toHaveLength(20);
+      expect(screen.getByRole("link", { name: "1" })).toBeDefined();
+      expect(screen.getByRole("link", { name: "20" })).toBeDefined();
     });
 
     it("bytter side og beholder andre URL-filtre", () => {

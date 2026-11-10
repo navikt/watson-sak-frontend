@@ -46,7 +46,7 @@ test.describe("Mine saker", () => {
 
     // Mockdata har ingen saker delt med testbrukeren, så åpne en sak etter å ha gått tilbake til Mine saker.
     await hovedinnhold.getByRole("tab", { name: /Mine saker/ }).click();
-    const sakLenke = hovedinnhold.getByRole("link", { name: /^#\d+$/ }).first();
+    const sakLenke = hovedinnhold.getByRole("link", { name: /^\d+$/ }).first();
     await expect(sakLenke).toBeVisible();
     await sakLenke.click();
     await expect(page).toHaveURL(/\/saker\/\d+/);
