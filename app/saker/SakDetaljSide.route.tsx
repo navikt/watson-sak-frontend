@@ -1,5 +1,15 @@
 import { ArrowLeftIcon, CheckmarkIcon, XMarkIcon } from "@navikt/aksel-icons";
-import { BodyLong, BodyShort, Box, Button, Heading, HGrid, HStack, VStack } from "@navikt/ds-react";
+import {
+  BodyLong,
+  BodyShort,
+  Box,
+  Button,
+  Heading,
+  HGrid,
+  HStack,
+  LocalAlert,
+  VStack,
+} from "@navikt/ds-react";
 import { useCallback, useEffect, useState } from "react";
 import { isRouteErrorResponse, useLoaderData, useNavigate, useRouteError } from "react-router";
 import { Feilmelding } from "~/feilhåndtering/Feilmelding";
@@ -60,25 +70,29 @@ function TilgangAvvistSide({
 }: {
   avvisningsgrunn: "AVVIST_HABILITET" | "AVVIST_SKJERMING";
 }) {
-  const navigate = useNavigate();
   const melding =
     avvisningsgrunn === "AVVIST_SKJERMING"
-      ? "Du har bedt om tilgang til å se informasjon om en person som er ansatt i Nav. I følge tilgangene har du begrenset tilgang til å se informasjonen. Ta kontakt med nærmeste leder for veiledning."
-      : "Du har bedt om tilgang til å se informasjon om en person. I følge tilgangene har du begrenset tilgang til å se informasjonen, fordi du ikke har tilgang til å se informasjon om deg selv eller dine nærmeste.";
+      ? "Du har bedt om tilgang til å se informasjon om en person som er ansatt i Nav. Ifølge tilgangsstyringen kan du ikke se denne informasjonen."
+      : "Du har bedt om tilgang til å se informasjon om en person. Ifølge tilgangsstyringen kan du ikke se denne informasjonen, fordi du ikke har tilgang til å se informasjon om deg selv eller dine nærmeste.";
 
   return (
-    <VStack gap="space-16" className="mt-4 mb-8">
-      <MiljøtilpassetTittel>Begrenset tilgang – Watson Sak</MiljøtilpassetTittel>
-      <Heading level="1" size="large">
-        Begrenset tilgang
-      </Heading>
-      <BodyLong>{melding}</BodyLong>
-      <div>
-        <Button type="button" onClick={() => navigate(RouteConfig.MINE_SAKER)}>
-          Tilbake til Mine saker
-        </Button>
-      </div>
-    </VStack>
+    <div className="mt-4 mb-8 max-w-2xl">
+      <MiljøtilpassetTittel>Ingen tilgang – Watson Sak</MiljøtilpassetTittel>
+      <LocalAlert status="warning">
+        <LocalAlert.Header>
+          {/* Title tillater ikke h1, men dette er sidens hovedoverskrift. */}
+          <LocalAlert.Title as="div">
+            <h1 className="m-0 [font:inherit]">Du har ikke tilgang til denne saken</h1>
+          </LocalAlert.Title>
+        </LocalAlert.Header>
+        <LocalAlert.Content>
+          <VStack gap="space-16">
+            <BodyLong>{melding}</BodyLong>
+            <BodyLong>Ta kontakt med nærmeste leder for veiledning.</BodyLong>
+          </VStack>
+        </LocalAlert.Content>
+      </LocalAlert>
+    </div>
   );
 }
 
