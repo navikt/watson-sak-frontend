@@ -486,7 +486,10 @@ describe("FilTre", () => {
           .getAllByRole("option")
           .map((option) => option.textContent),
       ).toContain("Sak SAK-1 / Bank / Kontoutskrifter");
-      expect(within(flyttTil).getByRole("option", { name: "Sak SAK-1" })).toHaveProperty("value", "");
+      expect(within(flyttTil).getByRole("option", { name: "Sak SAK-1" })).toHaveProperty(
+        "value",
+        "",
+      );
       fireEvent.change(flyttTil, {
         target: { value: "Bank/Kontoutskrifter" },
       });
