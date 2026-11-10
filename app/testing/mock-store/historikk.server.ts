@@ -61,7 +61,18 @@ function leggTilBackendHendelse(
   return hendelse;
 }
 
-/** Hent historikken for en sak, sortert med nyeste først */
+/** Løpenummeret i mock-ID-en, som øker for hver hendelse som opprettes */
+function opprettelsesnummer(hendelseId: string): number {
+  return Number(hendelseId.split("-").at(-1));
+}
+
+/**
+ * Hent historikken for en sak, sortert med nyeste først.
+ *
+ * Speiler backend (`ORDER BY hendelsestidspunkt DESC, opprettet_tidspunkt DESC`):
+ * Ved likt tidspunkt kommer hendelsen som ble opprettet sist først. Redigering
+ * endrer ikke opprettelsesrekkefølgen.
+ */
 export function hentHistorikk(state: MockState, sakId: string): SakHendelse[] {
   const hendelser = state.historikk.get(sakId) ?? [];
   return [...hendelser].sort((a, b) => {
@@ -71,7 +82,7 @@ export function hentHistorikk(state: MockState, sakId: string): SakHendelse[] {
       return tidspunktSortering;
     }
 
-    return b.hendelseId.localeCompare(a.hendelseId);
+    return opprettelsesnummer(b.hendelseId) - opprettelsesnummer(a.hendelseId);
   });
 }
 
