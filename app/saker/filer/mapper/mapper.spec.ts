@@ -52,7 +52,7 @@ test.describe("Mapper i Filer", () => {
     await page.getByRole("button", { name: "Handlinger for mappen Beta" }).click();
     await page.getByRole("menuitem", { name: "Flytt til …" }).click();
     const flytt = page.getByRole("dialog", { name: "Flytt «Beta»" });
-    await flytt.getByRole("combobox", { name: "Flytt til" }).selectOption({ label: "1011" });
+    await flytt.getByRole("combobox", { name: "Flytt til" }).selectOption({ label: "Sak 1011" });
     await flytt.getByRole("button", { name: "Flytt" }).click();
     await expect(flytt).toBeHidden();
 
