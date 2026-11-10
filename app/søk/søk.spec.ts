@@ -38,9 +38,9 @@ test.describe("Søk", () => {
       await expect(page.getByText(/1 treff for "1028"/)).toBeVisible();
       await expect(page.getByRole("table")).toBeVisible();
       await expect(page.getByRole("article")).toHaveCount(0);
-      await expect(page.getByRole("link", { name: "#1028", exact: true })).toBeVisible();
+      await expect(page.getByRole("link", { name: "1028", exact: true })).toBeVisible();
       await expect(page.getByRole("columnheader")).toHaveText([
-        "Saksid",
+        "Saksnummer",
         "Kategori",
         "Misbrukstype",
         "Steg",
@@ -67,7 +67,7 @@ test.describe("Søk", () => {
       await page.getByLabel("Søk i saker").press("Enter");
 
       await expect(page.getByRole("table")).toBeVisible();
-      await expect(page.getByRole("link", { name: "#1027", exact: true })).toBeVisible();
+      await expect(page.getByRole("link", { name: "1027", exact: true })).toBeVisible();
       await expect(page.locator(SØK_RESULTATLENKE_SELECTOR)).toHaveCount(1);
     });
 
@@ -78,12 +78,12 @@ test.describe("Søk", () => {
       const lenker = page.locator(SØK_RESULTATLENKE_SELECTOR);
       await expect(lenker).toHaveCount(2);
       const standardRekkefølge = await lenker.allTextContents();
-      const saksidHeader = page.getByRole("columnheader", { name: "Sorter på saksid" });
+      const saksidHeader = page.getByRole("columnheader", { name: "Sorter på saksnummer" });
 
-      await page.getByRole("button", { name: "Sorter på saksid" }).click();
+      await page.getByRole("button", { name: "Sorter på saksnummer" }).click();
       await expect(saksidHeader).toHaveAttribute("aria-sort", "ascending");
       const stigende = await lenker.allTextContents();
-      await page.getByRole("button", { name: "Sorter på saksid" }).click();
+      await page.getByRole("button", { name: "Sorter på saksnummer" }).click();
       await expect(saksidHeader).toHaveAttribute("aria-sort", "descending");
       await expect(lenker).toHaveText([...stigende].reverse());
       await expect(page.getByText("Sorteringen gjelder treffene på denne siden.")).toBeVisible();
@@ -165,7 +165,7 @@ test.describe("Søk", () => {
       await page.getByLabel("Søk i saker").fill("1028");
       await page.getByLabel("Søk i saker").press("Enter");
 
-      await page.getByRole("link", { name: "#1028", exact: true }).click();
+      await page.getByRole("link", { name: "1028", exact: true }).click();
       await expect(page).toHaveURL(/\/saker\/1028/);
     });
 

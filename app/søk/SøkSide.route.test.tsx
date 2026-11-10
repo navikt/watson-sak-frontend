@@ -83,7 +83,7 @@ describe("SøkSide resultatliste", () => {
     renderSøk();
 
     expect(screen.getAllByRole("columnheader").map((header) => header.textContent)).toEqual([
-      "Saksid",
+      "Saksnummer",
       "Kategori",
       "Misbrukstype",
       "Steg",
@@ -99,7 +99,7 @@ describe("SøkSide resultatliste", () => {
         expect.stringContaining("min-w-[200px]"),
       ]),
     );
-    expect(lenketekster()).toEqual(["#10", "#20"]);
+    expect(lenketekster()).toEqual(["10", "20"]);
     expect(saker.map((sak) => sak.id)).toEqual([20, 10]);
     expect(
       screen.getByRole("button", { name: "Sorter på opprettet" }).closest("th"),
@@ -121,7 +121,7 @@ describe("SøkSide resultatliste", () => {
       renderSøk();
       expect(screen.getByRole("table")).toBeDefined();
       expect(screen.queryByRole("article")).toBeNull();
-      expect(lenketekster()).toEqual(["#20"]);
+      expect(lenketekster()).toEqual(["20"]);
     },
   );
 
@@ -131,27 +131,27 @@ describe("SøkSide resultatliste", () => {
       actionData = { ...actionData, søketype };
       renderSøk();
       expect(screen.getByRole("table")).toBeDefined();
-      expect(lenketekster()).toEqual(["#10", "#20"]);
+      expect(lenketekster()).toEqual(["10", "20"]);
     },
   );
 
   it("veksler retning og starter datokolonner synkende og saksid stigende", () => {
     renderSøk();
     fireEvent.click(screen.getByRole("button", { name: "Sorter på opprettet" }));
-    expect(lenketekster()).toEqual(["#20", "#10"]);
-    fireEvent.click(screen.getByRole("button", { name: "Sorter på saksid" }));
-    expect(lenketekster()).toEqual(["#10", "#20"]);
-    fireEvent.click(screen.getByRole("button", { name: "Sorter på saksid" }));
-    expect(lenketekster()).toEqual(["#20", "#10"]);
+    expect(lenketekster()).toEqual(["20", "10"]);
+    fireEvent.click(screen.getByRole("button", { name: "Sorter på saksnummer" }));
+    expect(lenketekster()).toEqual(["10", "20"]);
+    fireEvent.click(screen.getByRole("button", { name: "Sorter på saksnummer" }));
+    expect(lenketekster()).toEqual(["20", "10"]);
     fireEvent.click(screen.getByRole("button", { name: "Sorter på opprettet" }));
-    expect(lenketekster()).toEqual(["#10", "#20"]);
+    expect(lenketekster()).toEqual(["10", "20"]);
     expect(submit).not.toHaveBeenCalled();
   });
 
   it("beholder sortering ved sidebytte og sorterer bare treffene på den siden", () => {
     const visning = renderSøk();
-    fireEvent.click(screen.getByRole("button", { name: "Sorter på saksid" }));
-    fireEvent.click(screen.getByRole("button", { name: "Sorter på saksid" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sorter på saksnummer" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sorter på saksnummer" }));
     fireEvent.click(screen.getByRole("button", { name: "2" }));
     expect(submit).toHaveBeenCalledWith(
       { søketekst: actionData.søketekst, side: "2" },
@@ -172,11 +172,10 @@ describe("SøkSide resultatliste", () => {
       </MemoryRouter>,
     );
 
-    expect(lenketekster()).toEqual(["#40", "#30"]);
-    expect(screen.getByRole("button", { name: "Sorter på saksid" }).closest("th")).toHaveProperty(
-      "ariaSort",
-      "descending",
-    );
+    expect(lenketekster()).toEqual(["40", "30"]);
+    expect(
+      screen.getByRole("button", { name: "Sorter på saksnummer" }).closest("th"),
+    ).toHaveProperty("ariaSort", "descending");
     expect(screen.getByText('25 treff for "11223344556"')).toBeDefined();
   });
 
@@ -197,8 +196,8 @@ describe("SøkSide resultatliste", () => {
         </MemoryRouter>,
       );
 
-      expect(lenketekster()).toEqual(["#10", "#20"]);
-      expect(screen.queryByRole("link", { name: "#99" })).toBeNull();
+      expect(lenketekster()).toEqual(["10", "20"]);
+      expect(screen.queryByRole("link", { name: "99" })).toBeNull();
       expect(
         screen.getByRole("button", { name: "Sorter på opprettet" }).closest("th"),
       ).toHaveProperty("ariaSort", "descending");

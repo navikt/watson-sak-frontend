@@ -105,7 +105,7 @@ describe("MineSakerInnhold", () => {
   it("viser saksliste med kolonner uten Saksbehandler i Mine saker", () => {
     renderMedRouter();
 
-    expect(screen.getByRole("columnheader", { name: "Saksid" })).toBeDefined();
+    expect(screen.getByRole("columnheader", { name: "Saksnummer" })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Navn" })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Kategori" })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Misbrukstype" })).toBeDefined();
@@ -118,7 +118,7 @@ describe("MineSakerInnhold", () => {
     renderMedRouter();
 
     const sakId = 201;
-    const lenke = screen.getByRole("link", { name: `#${sakId}` });
+    const lenke = screen.getByRole("link", { name: `${sakId}` });
     expect(lenke.getAttribute("href")).toBe(`/saker/${getSaksreferanse(sakId)}`);
   });
 
@@ -175,7 +175,7 @@ describe("MineSakerInnhold", () => {
     ).toBe("true");
     expect(screen.getByRole("columnheader", { name: "Saksbehandler" })).toBeDefined();
     expect(screen.getByText("Ola Saksbehandler")).toBeDefined();
-    expect(screen.getByRole("link", { name: "#999" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "999" })).toBeDefined();
     expect(screen.getByRole("button", { name: "2" }).getAttribute("aria-current")).toBe("true");
     expect(screen.getByText("26 saker")).toBeDefined();
     expect(router.state.location.search).toContain("fane=delt");
@@ -212,7 +212,7 @@ describe("MineSakerInnhold", () => {
     const router = renderMedRouter(lagProps({ totalSider: 2 }), "/?side=2");
 
     fireEvent.click(
-      within(screen.getByRole("columnheader", { name: "Saksid" })).getByRole("button"),
+      within(screen.getByRole("columnheader", { name: "Saksnummer" })).getByRole("button"),
     );
 
     const søk = new URLSearchParams(router.state.location.search);

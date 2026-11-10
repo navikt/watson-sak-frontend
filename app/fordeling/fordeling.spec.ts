@@ -17,8 +17,8 @@ test.describe("Ufordelte saker", () => {
     await expect(page.getByRole("columnheader", { name: "Kategori" })).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "Misbrukstype" })).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "Opprettet" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "#111" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "#102" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "111" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "102" })).toHaveCount(0);
     await expect(
       page.locator("#maincontent").getByRole("searchbox", { name: "Søk i saker" }),
     ).toHaveCount(0);
