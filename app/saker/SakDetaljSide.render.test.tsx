@@ -104,19 +104,20 @@ describe("SakDetaljSide render", () => {
   ] as const)(
     "viser avvisningsside for %s uten saksdata",
     async (avvisningsgrunn, tekst) => {
-      const { router } = renderDetaljside(testSakId, `?mockAvvisningsgrunn=${avvisningsgrunn}`);
+      renderDetaljside(testSakId, `?mockAvvisningsgrunn=${avvisningsgrunn}`);
 
       expect(
-        await screen.findByRole("heading", { level: 1, name: "Begrenset tilgang" }),
+        await screen.findByRole("heading", {
+          level: 1,
+          name: "Du har ikke tilgang til denne saken",
+        }),
       ).toBeDefined();
       expect(screen.getByText(tekst, { exact: false })).toBeDefined();
-      expect(screen.getByRole("button", { name: "Tilbake til Mine saker" })).toBeDefined();
+      expect(screen.getByText("Ta kontakt med nærmeste leder for veiledning.")).toBeDefined();
+      expect(screen.queryByRole("button")).toBeNull();
       expect(screen.queryByText("Kari Nordmann")).toBeNull();
       expect(screen.queryByText("Test Saksbehandler")).toBeNull();
       expect(screen.queryByText(/Sak 201/)).toBeNull();
-      fireEvent.click(screen.getByRole("button", { name: "Tilbake til Mine saker" }));
-      expect(await screen.findByRole("heading", { level: 1, name: "Mine saker" })).toBeDefined();
-      expect(router.state.location.pathname).toBe(RouteConfig.MINE_SAKER);
     },
     15000,
   );
