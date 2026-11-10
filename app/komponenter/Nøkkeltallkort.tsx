@@ -2,6 +2,7 @@ import { ChevronRightCircleIcon } from "@navikt/aksel-icons";
 import { Box, Detail, Heading, VStack } from "@navikt/ds-react";
 import type { ReactNode } from "react";
 import { Link as RouterLink } from "react-router";
+import { formaterDesimaltall } from "~/utils/number-utils";
 
 type Nøkkeltallfarge =
   | "accent"
@@ -45,7 +46,7 @@ export function Nøkkeltallkort({ verdi, etikett, forklaring, farge, lenke }: N�
           data-color={farge}
           style={lenke ? { maxWidth: "calc(100% - var(--ax-space-32))" } : undefined}
         >
-          {verdi}
+          {typeof verdi === "number" ? formaterDesimaltall(verdi, 0, 20) : verdi}
         </Heading>
         <div>
           <Detail weight="semibold" data-color="neutral">

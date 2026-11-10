@@ -296,7 +296,7 @@ function SakKort({
           <HStack justify="space-between" align="center" wrap gap="space-12">
             <HStack gap="space-24" align="center" wrap>
               <BodyShort size="small">
-                Saksid: <strong>{saksreferanse}</strong>
+                Saksnummer: <strong>{saksreferanse}</strong>
               </BodyShort>
               <BodyShort size="small">
                 Enhet: <strong>{enhet}</strong>

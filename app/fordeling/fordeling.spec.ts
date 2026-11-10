@@ -10,12 +10,15 @@ test.describe("Ufordelte saker", () => {
   });
 
   test("viser nytt hovedinnhold for ufordelte saker", async ({ page }) => {
-    await expect(page.getByRole("heading", { name: "Ufordelte saker" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Ufordelte saker i Analyse" })).toBeVisible();
+    await expect(page.getByRole("combobox", { name: "Vis" })).toHaveCount(0);
     await expect(page.getByText("Ikke fordelt")).toBeVisible();
     await expect(page.getByText("Liggetid for eldste sak")).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "Kategori" })).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "Misbrukstype" })).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "Opprettet" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "111" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "102" })).toHaveCount(0);
     await expect(
       page.locator("#maincontent").getByRole("searchbox", { name: "Søk i saker" }),
     ).toHaveCount(0);
@@ -33,31 +36,30 @@ test.describe("Ufordelte saker", () => {
         { timeout: 1000 },
       );
     }).toPass({ timeout: 10000 });
-    await expect(rader.nth(0)).toContainText("Annet");
 
-    const tiltakRad = page.locator("tbody tr").filter({ hasText: "Tiltak" });
-    await expect(tiltakRad).toHaveCount(1);
-    await expect(tiltakRad).toContainText("Misbruk av tiltaksplass");
+    const sak111 = rader.filter({ hasText: "111" });
+    await expect(sak111).toHaveCount(1);
+    await expect(sak111).toContainText("Tiltak");
+    await expect(sak111).toContainText("Misbruk av tiltaksplass");
 
-    const arbeidKnapp = page.getByRole("button", { name: "Arbeid", exact: true });
-    await arbeidKnapp.click();
-    await expect(arbeidKnapp).toHaveAttribute("aria-pressed", "true");
+    const tiltakFilter = page.getByRole("button", { name: "Tiltak", exact: true });
+    await tiltakFilter.click();
+    await expect(tiltakFilter).toHaveAttribute("aria-pressed", "true");
 
-    await page.getByRole("button", { name: "Feil inntektsgrunnlag" }).click();
+    const misbrukstypeFilter = page.getByRole("button", {
+      name: "Misbruk av tiltaksplass",
+      exact: true,
+    });
+    await misbrukstypeFilter.click();
 
-    const sakSomSkalTildeles = page
-      .locator("tbody tr")
-      .filter({ hasText: "109" })
-      .filter({ hasText: "Feil inntektsgrunnlag" })
-      .filter({ hasText: "Arbeid" });
-
-    await expect(sakSomSkalTildeles).toHaveCount(1);
-    await sakSomSkalTildeles.getByRole("button", { name: "Tildel" }).click();
+    await expect(misbrukstypeFilter).toHaveAttribute("aria-pressed", "true");
+    await expect(sak111).toHaveCount(1);
+    await sak111.getByRole("button", { name: "Tildel" }).click();
 
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
-    await dialog.getByLabel("Saksbehandler").fill("Saks Behandlersen");
-    await dialog.getByRole("option", { name: "Saks Behandlersen (Z999999)" }).click();
+    await dialog.getByLabel("Saksbehandler").fill("Amalie Olsen");
+    await dialog.getByRole("option", { name: "Amalie Olsen (Z300003)" }).click();
 
     const tildelKnapp = dialog.getByRole("button", { name: "Tildel" });
     await expect(tildelKnapp).toBeEnabled();
@@ -71,7 +73,7 @@ test.describe("Ufordelte saker", () => {
     ]);
 
     await expect(dialog).not.toBeVisible();
-    await expect(sakSomSkalTildeles).toHaveCount(0);
+    await expect(sak111).toHaveCount(0);
   });
 
   test("er UU-compliant", async ({ page }) => {

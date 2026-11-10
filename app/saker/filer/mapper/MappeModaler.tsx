@@ -94,10 +94,10 @@ function MappevelgerSelect({
 }) {
   return (
     <Select label={label} value={verdi} onChange={(e) => onEndre(e.target.value)} error={error}>
-      <option value={ROTNIVÅ}>{sakId}</option>
+      <option value={ROTNIVÅ}>{`Sak ${sakId}`}</option>
       {mapper.map((sti) => (
         <option key={sti} value={sti}>
-          {`${sakId} / ${sti.replaceAll("/", " / ")}`}
+          {`Sak ${sakId} / ${sti.replaceAll("/", " / ")}`}
         </option>
       ))}
     </Select>

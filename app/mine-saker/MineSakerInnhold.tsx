@@ -1,31 +1,31 @@
 import { Heading, HStack, Pagination, Tabs, VStack } from "@navikt/ds-react";
-import { useMemo } from "react";
 import { useSearchParams } from "react-router";
-import { BackendUtilgjengeligMelding } from "~/komponenter/BackendUtilgjengeligMelding";
 import { sporHendelse } from "~/analytics/analytics";
+import { BackendUtilgjengeligMelding } from "~/komponenter/BackendUtilgjengeligMelding";
 import { ChipsFiltergruppe } from "~/filtre/ChipsFiltergruppe";
 import { Filterpanel } from "~/filtre/Filterpanel";
-import type {
-  KontrollsakResponse,
-  KontrollsakStatus,
-  KontrollsakSteg,
-} from "~/saker/types.backend";
-import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
+import { RouteConfig } from "~/routeConfig";
+import type { SakslisteRad } from "~/saker/saksliste/Saksliste";
 import { AntallTreffEtikett } from "~/saker/saksliste/AntallTreffEtikett";
 import { Saksliste } from "~/saker/saksliste/Saksliste";
-import { RouteConfig } from "~/routeConfig";
-import { ANTALL_PER_SIDE, paginerElementer } from "~/utils/paginering";
-import {
-  type AlleSakerKolonne,
-  type Sorteringsretning,
-  sorterSaker,
-  sorteringskolonner,
-} from "~/alle-saker/saker-utils";
-
-const STANDARD_KOLONNE: AlleSakerKolonne = "opprettet";
-const STANDARD_RETNING: Sorteringsretning = "desc";
+import { SORTERBARE_SAKSKOLONNER, standardRetningForKolonne } from "~/saker/saksliste/oppsett";
+import type { KontrollsakStatus, KontrollsakSteg } from "~/saker/types.backend";
+import type { Sorteringsretning } from "~/alle-saker/saker-utils";
 
 type Fane = "mine" | "delt";
+type Sorteringskolonne = "saksid" | "kategori" | "steg" | "status" | "opprettet" | "oppdatert";
+
+const MINE_KOLONNER = [
+  "saksid",
+  "navn",
+  "kategori",
+  "misbrukstype",
+  "steg",
+  "status",
+  "opprettet",
+  "oppdatert",
+] as const;
+const DELTE_KOLONNER = [...MINE_KOLONNER, "saksbehandler"] as const;
 
 type FilterAlternativ = {
   verdi: string;
@@ -33,9 +33,15 @@ type FilterAlternativ = {
 };
 
 type Props = {
-  saker: KontrollsakResponse[];
-  deltMedSaker: KontrollsakResponse[];
-  detaljSti: string;
+  rader: SakslisteRad[];
+  aktivFane: Fane;
+  aktivSide: number;
+  totalAntall: number;
+  totalSider: number;
+  antallMineSaker: number;
+  antallDelteSaker: number;
+  sorteringskolonne: Sorteringskolonne;
+  sorteringsretning: Sorteringsretning;
   filterAlternativer: {
     steg: FilterAlternativ[];
     status: FilterAlternativ[];
@@ -48,28 +54,26 @@ type Props = {
 };
 
 export function MineSakerInnhold({
-  saker,
-  deltMedSaker,
-  detaljSti,
+  rader,
+  aktivFane,
+  aktivSide,
+  totalAntall,
+  totalSider,
+  antallMineSaker,
+  antallDelteSaker,
+  sorteringskolonne,
+  sorteringsretning,
   filterAlternativer,
   aktivtFilter,
   saksdataUtilgjengelig = false,
 }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
-
-  const sorteringskolonne = parseKolonne(searchParams.get("sorter"));
-  const sorteringsretning = parseRetning(searchParams.get("retning"));
-
-  const sorterteSaker = useMemo(
-    () => sorterSaker(saker, sorteringskolonne, sorteringsretning),
-    [saker, sorteringskolonne, sorteringsretning],
-  );
-
-  const valgtSide = Number.parseInt(searchParams.get("side") ?? "1", 10) || 1;
-  const paginerteSaker = useMemo(
-    () => paginerElementer(sorterteSaker, valgtSide, ANTALL_PER_SIDE),
-    [sorterteSaker, valgtSide],
-  );
+  const harAktiveFiltre = aktivtFilter.steg.length > 0 || aktivtFilter.status.length > 0;
+  const tomTekst = harAktiveFiltre
+    ? "Endre filtrering for å finne saker"
+    : aktivFane === "delt"
+      ? "Ingen saker er delt med deg."
+      : "Du har ingen saker.";
 
   function gåTilSide(side: number) {
     setSearchParams((forrige) => {
@@ -79,12 +83,10 @@ export function MineSakerInnhold({
     });
   }
 
-  const harDeltFane = deltMedSaker.length > 0;
-  const aktivFane: Fane = harDeltFane && searchParams.get("fane") === "delt" ? "delt" : "mine";
-
   function byttFane(verdi: string) {
     setSearchParams((forrige) => {
       const neste = new URLSearchParams(forrige);
+      neste.delete("side");
       if (verdi === "delt") {
         neste.set("fane", "delt");
       } else {
@@ -94,32 +96,30 @@ export function MineSakerInnhold({
     });
   }
 
-  const harAktiveFiltre = aktivtFilter.steg.length > 0 || aktivtFilter.status.length > 0;
-  const tomTekst = harAktiveFiltre ? "Endre filtrering for å finne saker" : "Du har ingen saker.";
-
   function toggleFilter(key: "steg" | "status", verdi: string) {
     sporHendelse("filter brukt", { filtergruppe: key, side: "mine-saker" });
     setSearchParams((forrige) => {
       const neste = new URLSearchParams(forrige);
 
-      const gjeldende = neste.getAll(key);
+      // Ta utgangspunkt i aktivt filter, ikke URL-en, så standardfilteret
+      // (alle steg unntatt avsluttet) blir med når brukeren endrer det.
+      const gjeldende: string[] = aktivtFilter[key];
+      neste.delete("steg");
+      neste.delete("status");
+      for (const v of aktivtFilter.steg) neste.append("steg", v);
+      for (const v of aktivtFilter.status) neste.append("status", v);
       neste.delete(key);
       neste.delete("side");
 
-      if (gjeldende.includes(verdi)) {
-        for (const v of gjeldende.filter((v) => v !== verdi)) {
-          neste.append(key, v);
-        }
-      } else {
-        for (const v of [...gjeldende, verdi]) {
-          neste.append(key, v);
-        }
-      }
+      const oppdaterte = gjeldende.includes(verdi)
+        ? gjeldende.filter((v) => v !== verdi)
+        : [...gjeldende, verdi];
+      for (const v of oppdaterte) neste.append(key, v);
       return neste;
     });
   }
 
-  function sorterPåKolonne(kolonne: AlleSakerKolonne) {
+  function sorterPåKolonne(kolonne: Sorteringskolonne) {
     setSearchParams((forrige) => {
       const neste = new URLSearchParams(forrige);
       const nesteRetning: Sorteringsretning =
@@ -135,57 +135,73 @@ export function MineSakerInnhold({
     });
   }
 
-  const mineSaker = (
-    <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:gap-8">
-      <div className="min-w-0 flex-1 xl:order-first">
-        <AntallTreffEtikett antall={sorterteSaker.length} />
-        <div className="overflow-x-auto [&_table]:w-full">
-          <Saksliste
-            rader={paginerteSaker.elementer.map((sak) =>
-              mapKontrollsakTilSakslisteRad(sak, detaljSti),
-            )}
-            tomTekst={tomTekst}
-            tilbake={{ to: RouteConfig.MINE_SAKER, label: "Mine saker" }}
-            sortering={{
-              kolonne: sorteringskolonne,
-              retning: sorteringsretning === "asc" ? "stigende" : "synkende",
-              onSort: (kolonne) => sorterPåKolonne(kolonne as AlleSakerKolonne),
-              sorterbare: [...sorteringskolonner],
-            }}
-          />
+  function visSaksliste(fane: Fane) {
+    const tilbakeParams = new URLSearchParams(searchParams);
+    tilbakeParams.delete("side");
+    if (fane === "delt") {
+      tilbakeParams.set("fane", "delt");
+    } else {
+      tilbakeParams.delete("fane");
+    }
+    const tilbakeSøk = tilbakeParams.toString();
+    const tilbakeSti = `${RouteConfig.MINE_SAKER}${tilbakeSøk ? `?${tilbakeSøk}` : ""}`;
+
+    return (
+      <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:gap-8">
+        <div className="min-w-0 flex-1 xl:order-first">
+          <AntallTreffEtikett antall={totalAntall} />
+          <div className="overflow-x-auto [&_table]:w-full">
+            <Saksliste
+              rader={rader}
+              kolonner={fane === "delt" ? [...DELTE_KOLONNER] : [...MINE_KOLONNER]}
+              tomTekst={tomTekst}
+              tilbake={{
+                to: tilbakeSti,
+                label: fane === "delt" ? "Delt med meg" : "Mine saker",
+              }}
+              sortering={{
+                kolonne: sorteringskolonne,
+                retning: sorteringsretning === "asc" ? "stigende" : "synkende",
+                onSort: (kolonne) => {
+                  if (erSorterbarKolonne(kolonne)) sorterPåKolonne(kolonne);
+                },
+                sorterbare: [...SORTERBARE_SAKSKOLONNER],
+              }}
+            />
+          </div>
+          {totalSider > 1 && (
+            <HStack justify="center" className="mt-6">
+              <Pagination
+                page={aktivSide}
+                onPageChange={gåTilSide}
+                count={totalSider}
+                size="small"
+              />
+            </HStack>
+          )}
         </div>
-        {paginerteSaker.totalSider > 1 && (
-          <HStack justify="center" className="mt-6">
-            <Pagination
-              page={paginerteSaker.aktivSide}
-              onPageChange={gåTilSide}
-              count={paginerteSaker.totalSider}
+
+        <div role="group" aria-label="Filtrer saker" className="xl:order-last xl:w-56 xl:shrink-0">
+          <Filterpanel>
+            <ChipsFiltergruppe
+              tittel="Steg"
+              alternativer={filterAlternativer.steg}
+              valgteVerdier={aktivtFilter.steg}
+              onToggle={(verdi) => toggleFilter("steg", verdi)}
               size="small"
             />
-          </HStack>
-        )}
+            <ChipsFiltergruppe
+              tittel="Status"
+              alternativer={filterAlternativer.status}
+              valgteVerdier={aktivtFilter.status}
+              onToggle={(verdi) => toggleFilter("status", verdi)}
+              size="small"
+            />
+          </Filterpanel>
+        </div>
       </div>
-
-      <div role="group" aria-label="Filtrer saker" className="xl:order-last xl:w-56 xl:shrink-0">
-        <Filterpanel>
-          <ChipsFiltergruppe
-            tittel="Steg"
-            alternativer={filterAlternativer.steg}
-            valgteVerdier={aktivtFilter.steg}
-            onToggle={(verdi) => toggleFilter("steg", verdi)}
-            size="small"
-          />
-          <ChipsFiltergruppe
-            tittel="Status"
-            alternativer={filterAlternativer.status}
-            valgteVerdier={aktivtFilter.status}
-            onToggle={(verdi) => toggleFilter("status", verdi)}
-            size="small"
-          />
-        </Filterpanel>
-      </div>
-    </div>
-  );
+    );
+  }
 
   return (
     <section aria-labelledby="mine-saker-overskrift" className="pb-12">
@@ -196,41 +212,25 @@ export function MineSakerInnhold({
 
         {saksdataUtilgjengelig ? (
           <BackendUtilgjengeligMelding />
-        ) : harDeltFane ? (
+        ) : (
           <Tabs value={aktivFane} onChange={byttFane}>
             <Tabs.List>
-              <Tabs.Tab value="mine" label={`Mine saker (${saker.length})`} />
-              <Tabs.Tab value="delt" label={`Delt med meg (${deltMedSaker.length})`} />
+              <Tabs.Tab value="mine" label={`Mine saker (${antallMineSaker})`} />
+              <Tabs.Tab value="delt" label={`Delt med meg (${antallDelteSaker})`} />
             </Tabs.List>
             <Tabs.Panel value="mine" className="pt-4">
-              {mineSaker}
+              {aktivFane === "mine" && visSaksliste("mine")}
             </Tabs.Panel>
             <Tabs.Panel value="delt" className="pt-4">
-              <Saksliste
-                rader={deltMedSaker.map((sak) => mapKontrollsakTilSakslisteRad(sak, detaljSti))}
-                tomTekst="Ingen saker er delt med deg."
-                tilbake={{ to: `${RouteConfig.MINE_SAKER}?fane=delt`, label: "Delt med meg" }}
-              />
+              {aktivFane === "delt" && visSaksliste("delt")}
             </Tabs.Panel>
           </Tabs>
-        ) : (
-          mineSaker
         )}
       </VStack>
     </section>
   );
 }
 
-function parseKolonne(verdi: string | null): AlleSakerKolonne {
-  return sorteringskolonner.includes(verdi as AlleSakerKolonne)
-    ? (verdi as AlleSakerKolonne)
-    : STANDARD_KOLONNE;
-}
-
-function parseRetning(verdi: string | null): Sorteringsretning {
-  return verdi === "asc" || verdi === "desc" ? verdi : STANDARD_RETNING;
-}
-
-function standardRetningForKolonne(kolonne: AlleSakerKolonne): Sorteringsretning {
-  return kolonne === "opprettet" || kolonne === "oppdatert" ? "desc" : "asc";
+function erSorterbarKolonne(kolonne: string): kolonne is Sorteringskolonne {
+  return SORTERBARE_SAKSKOLONNER.includes(kolonne as Sorteringskolonne);
 }

@@ -272,7 +272,9 @@ describe("DokumentEditor med kommentarer", () => {
     });
 
     expect(
-      await screen.findByText("Dokumentet er arkivert. Kommentarer kan leses, men ikke endres."),
+      await screen.findByText(
+        "Dokumentet er arkivert. Du kan lese kommentarene, men ikke endre dem.",
+      ),
     ).toBeDefined();
     expect(screen.getByRole("button", { name: "Ny kommentar" })).toHaveProperty("disabled", true);
   });

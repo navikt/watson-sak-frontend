@@ -447,7 +447,7 @@ export function FilTre({
           >
             <FolderIcon aria-hidden className="size-5 shrink-0 text-ax-icon-neutral" />
             <BodyShort as="span" weight="semibold" className="truncate">
-              {sakId}
+              {`Sak ${sakId}`}
             </BodyShort>
             <BodyShort
               as="span"
@@ -463,7 +463,7 @@ export function FilTre({
           {rotÅpen && (
             <ul
               id={rotInnholdId}
-              aria-label={sakId}
+              aria-label={`Sak ${sakId}`}
               className="mb-2 ml-[9px] flex flex-col border-l-2 border-ax-border-neutral-subtle pl-3"
             >
               {tre.length === 0 && !lasterOpp ? (
@@ -484,7 +484,7 @@ export function FilTre({
                   }`}
                 >
                   <Detail className="text-ax-text-neutral-subtle">
-                    Slipp her for å flytte til {sakId}
+                    Slipp her for å flytte til Sak {sakId}
                   </Detail>
                 </li>
               )}

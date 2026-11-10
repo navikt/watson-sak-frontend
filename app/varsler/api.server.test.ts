@@ -114,63 +114,70 @@ describe("varsler api.server", () => {
     });
   });
 
-  describe("hentAlleVarsler", () => {
-    it("kaller riktig URL med kunUleste=false og paginering", async () => {
+  describe("hentVarselside", () => {
+    it.each([
+      ["uleste", "kunUleste=true&page=2&size=10"],
+      ["leste", "kunLeste=true&page=2&size=10"],
+    ] as const)("kaller riktig URL for %s", async (filter, query) => {
       const fetchMock = vi.fn().mockResolvedValue({
         ok: true,
         json: async () => gyldigVarselPageResponse,
       });
       vi.stubGlobal("fetch", fetchMock);
 
-      const { hentAlleVarsler } = await import("./api.server");
-      await hentAlleVarsler("token-abc", 2, 20);
+      const { hentVarselside } = await import("./api.server");
+      await hentVarselside("token-abc", filter, 2, 10);
 
-      expect(fetchMock).toHaveBeenCalledWith(
-        "https://backend.test/api/v1/varsler?kunUleste=false&page=2&size=20",
-        {
-          headers: {
-            Authorization: "Bearer token-abc",
-            Accept: "application/json",
-          },
+      expect(fetchMock).toHaveBeenCalledWith(`https://backend.test/api/v1/varsler?${query}`, {
+        headers: {
+          Authorization: "Bearer token-abc",
+          Accept: "application/json",
         },
-      );
+      });
     });
 
-    it("returnerer harFlere=true når det finnes flere sider", async () => {
+    it("returnerer totalt antall og antall sider", async () => {
       vi.stubGlobal(
         "fetch",
         vi.fn().mockResolvedValue({
           ok: true,
-          json: async () => ({ ...gyldigVarselPageResponse, page: 1, totalPages: 3 }),
+          json: async () => ({ ...gyldigVarselPageResponse, totalItems: 25, totalPages: 3 }),
         }),
       );
 
-      const { hentAlleVarsler } = await import("./api.server");
-      const resultat = await hentAlleVarsler("token-abc", 1, 20);
+      const { hentVarselside } = await import("./api.server");
+      const resultat = await hentVarselside("token-abc", "leste", 1, 10);
 
-      expect(resultat.harFlere).toBe(true);
+      expect(resultat.totalItems).toBe(25);
+      expect(resultat.totalSider).toBe(3);
+      expect(resultat.varsler).toHaveLength(2);
     });
 
-    it("returnerer harFlere=false på siste side", async () => {
+    it("gir minst én side når det ikke finnes varsler", async () => {
       vi.stubGlobal(
         "fetch",
         vi.fn().mockResolvedValue({
           ok: true,
-          json: async () => ({ ...gyldigVarselPageResponse, page: 2, totalPages: 2 }),
+          json: async () => ({
+            ...gyldigVarselPageResponse,
+            items: [],
+            totalItems: 0,
+            totalPages: 0,
+          }),
         }),
       );
 
-      const { hentAlleVarsler } = await import("./api.server");
-      const resultat = await hentAlleVarsler("token-abc", 2, 20);
+      const { hentVarselside } = await import("./api.server");
+      const resultat = await hentVarselside("token-abc", "leste", 1, 10);
 
-      expect(resultat.harFlere).toBe(false);
+      expect(resultat.totalSider).toBe(1);
     });
 
     it("kaster feil ved ikke-ok HTTP-svar", async () => {
       vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 503 }));
 
-      const { hentAlleVarsler } = await import("./api.server");
-      await expect(hentAlleVarsler("token-abc", 1, 20)).rejects.toThrow(
+      const { hentVarselside } = await import("./api.server");
+      await expect(hentVarselside("token-abc", "uleste", 1, 10)).rejects.toThrow(
         "Kunne ikke hente varsler.",
       );
     });

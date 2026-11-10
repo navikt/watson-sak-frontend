@@ -135,22 +135,6 @@ export function Filtre({ alternativer }: Props) {
 
   return (
     <Filterpanel>
-      {alternativer.steg.length > 0 && (
-        <ChipsFiltergruppeForKodeAlternativ
-          tittel="Steg"
-          paramKey="steg"
-          alternativer={alternativer.steg}
-        />
-      )}
-
-      {alternativer.status.length > 0 && (
-        <ChipsFiltergruppeForKodeAlternativ
-          tittel="Status"
-          paramKey="status"
-          alternativer={alternativer.status}
-        />
-      )}
-
       {alternativer.saksbehandler.length > 0 && (
         <div className="min-w-48 xl:min-w-0">
           <UNSAFE_Combobox
@@ -165,6 +149,22 @@ export function Filtre({ alternativer }: Props) {
             onToggleSelected={velgSaksbehandler}
           />
         </div>
+      )}
+
+      {alternativer.steg.length > 0 && (
+        <ChipsFiltergruppeForKodeAlternativ
+          tittel="Steg"
+          paramKey="steg"
+          alternativer={alternativer.steg}
+        />
+      )}
+
+      {alternativer.status.length > 0 && (
+        <ChipsFiltergruppeForKodeAlternativ
+          tittel="Status"
+          paramKey="status"
+          alternativer={alternativer.status}
+        />
       )}
 
       {alternativer.enhet.length > 0 && (

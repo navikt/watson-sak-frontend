@@ -52,7 +52,7 @@ export function medInnloggetEier(
  * I local-mock er identen allerede "Z999999". I demo (Azure AD) er den noe
  * annet, men representerer samme bruker — så vi normaliserer til mock-identen.
  */
-function normaliserTilMockIdent(navIdent: string): string {
+export function normaliserTilMockIdent(navIdent: string): string {
   // Alle mock-saker er eid av mockMineSakerInnloggetNavIdent.
   // Enhver annen ident som ikke finnes i mockdata behandles som innlogget bruker.
   return navIdent === mockMineSakerInnloggetNavIdent ? navIdent : mockMineSakerInnloggetNavIdent;

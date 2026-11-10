@@ -6,10 +6,12 @@
  * `Promise.all` i loaderen og krasjet hele sakssiden i stedet for å skjule
  * filområdet. Se `hentFilerMedTilgangskontroll` i `SakDetaljSide.server.ts`.
  */
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { env } from "~/config/env.server";
+import { BACKEND_SAK_UNDER_FLYTTING, SAK_UNDER_FLYTTING_FEIL } from "~/migrering/avslutning";
 
 const mockHentKontrollsak = vi.fn();
+const mockHentKontrollsakForDetalj = vi.fn();
 const mockHentHendelser = vi.fn();
 const mockHentSaksbehandlere = vi.fn();
 const mockHentFiler = vi.fn();
@@ -72,6 +74,7 @@ vi.mock("~/auth/access-token", () => ({
 vi.mock("~/saker/api.server", () => ({
   BackendFeilException: MockBackendFeilException,
   hentKontrollsak: mockHentKontrollsak,
+  hentKontrollsakForDetalj: mockHentKontrollsakForDetalj,
   hentHendelser: mockHentHendelser,
   hentSaksbehandlere: mockHentSaksbehandlere,
   hentFiler: mockHentFiler,
@@ -111,6 +114,14 @@ const grunnleggendeSak = {
 };
 
 describe("SakDetaljSide loader — backend-sti", () => {
+  beforeEach(() => {
+    mockHentKontrollsak.mockReset().mockResolvedValue(grunnleggendeSak);
+    mockHentKontrollsakForDetalj.mockReset().mockImplementation(async (token, sakId) => ({
+      status: "ok",
+      sak: await mockHentKontrollsak(token, sakId),
+    }));
+  });
+
   afterEach(() => {
     env.ENVIRONMENT = "local-dev";
     vi.clearAllMocks();
@@ -413,20 +424,47 @@ describe("SakDetaljSide loader — backend-sti", () => {
     expect(resultat.sak).toEqual(grunnleggendeSak);
   });
 
+  it.each(["AVVIST_HABILITET", "AVVIST_SKJERMING"] as const)(
+    "returnerer bare avvisningsgrunn ved detaljavslag %s før andre kall",
+    async (avvisningsgrunn) => {
+      mockHentKontrollsakForDetalj.mockResolvedValueOnce({
+        status: "avvist",
+        avvisningsgrunn,
+      });
+
+      const { loader } = await import("./SakDetaljSide.server");
+      await expect(loader(lagLoaderArgs())).rejects.toMatchObject({
+        data: { avvisningsgrunn },
+        init: { status: 403 },
+      });
+
+      expect(mockHentInnloggetBruker).not.toHaveBeenCalled();
+      expect(mockHentHendelser).not.toHaveBeenCalled();
+      expect(mockHentSaksbehandlere).not.toHaveBeenCalled();
+      expect(mockHentFiler).not.toHaveBeenCalled();
+      expect(mockHentMapper).not.toHaveBeenCalled();
+      expect(mockHentTillatteHandlinger).not.toHaveBeenCalled();
+      expect(mockSøkKontrollsaker).not.toHaveBeenCalled();
+      expect(mockHentMigreringskandidat).not.toHaveBeenCalled();
+    },
+  );
+
   it("kaster 500 med feil-ID når saken ikke kan hentes, og 403 uendret", async () => {
     mockHentHendelser.mockResolvedValue([]);
     mockHentSaksbehandlere.mockResolvedValue([]);
     mockHentFiler.mockResolvedValue([]);
     const { loader } = await import("./SakDetaljSide.server");
 
-    mockHentKontrollsak.mockRejectedValueOnce(new MockBackendFeilException(500, "Intern feil"));
+    mockHentKontrollsakForDetalj.mockRejectedValueOnce(
+      new MockBackendFeilException(500, "Intern feil"),
+    );
     await expect(loader(lagLoaderArgs())).rejects.toMatchObject({
       data: { feilId: expect.stringMatching(/^[0-9a-f]{8}$/) },
       init: { status: 500 },
     });
 
     const ingenTilgang = new MockBackendFeilException(403, "Ingen tilgang");
-    mockHentKontrollsak.mockRejectedValueOnce(ingenTilgang);
+    mockHentKontrollsakForDetalj.mockRejectedValueOnce(ingenTilgang);
     await expect(loader(lagLoaderArgs())).rejects.toBe(ingenTilgang);
   });
 
@@ -455,7 +493,7 @@ describe("SakDetaljSide loader — backend-sti", () => {
 
     await expect(loader(lagLoaderArgs("../1"))).rejects.toMatchObject({ init: { status: 404 } });
 
-    expect(mockHentKontrollsak).not.toHaveBeenCalled();
+    expect(mockHentKontrollsakForDetalj).not.toHaveBeenCalled();
     expect(mockHentHendelser).not.toHaveBeenCalled();
     expect(mockHentSaksbehandlere).not.toHaveBeenCalled();
     expect(mockHentFiler).not.toHaveBeenCalled();
@@ -864,52 +902,59 @@ describe("SakDetaljSide loader — backend-sti", () => {
     expect(JSON.stringify(resultat)).not.toContain("IKKE_KAPASITET");
   });
 
-  it("returnerer feil til saksflyt-modalen i stedet for å kaste når backend avviser", async () => {
-    mockHentTillatteHandlinger.mockResolvedValue({
-      versjon: 1,
-      tilstand: { steg: "UTREDNING", status: "AKTIV", resultat: null, ytelser: [] },
-      handlinger: [
-        { type: "FLYTT_TIL_NESTE_STEG", metode: "POST", sti: "/api/v1/kontrollsaker/1/steg" },
-      ],
-      tillatteSteg: [],
-      muligeNesteSteg: ["AVSLUTTET"],
-      feltskjema: [
-        {
-          felt: "utredning.type",
-          etikett: "Resultat fra utredningen",
-          datatype: "enum",
-          paakrevd: true,
-          verdier: [{ verdi: "HENLAGT", etikett: "Henlagt" }],
-        },
-        {
-          felt: "utredning.henleggelsesarsak",
-          etikett: "Årsak",
-          datatype: "enum",
-          paakrevd: false,
-          paakrevdNar: "utredning.type=HENLAGT",
-          verdier: [{ verdi: "IKKE_KAPASITET", etikett: "Ikke kapasitet" }],
-        },
-      ],
-    });
-    const formData = new FormData();
-    formData.set("handling", "endre_steg_dialog");
-    formData.set("steg", "AVSLUTTET");
-    formData.set("registrerResultat", "true");
-    formData.set("resultat.utredning.type", "HENLAGT");
-    formData.set("resultat.utredning.henleggelsesarsak", "IKKE_KAPASITET");
-    const { action } = await import("./SakDetaljSide.server");
-    mockEndreSteg.mockRejectedValueOnce(new MockBackendFeilException(409, "Versjonskonflikt"));
+  it.each([
+    ["endre_steg_dialog", BACKEND_SAK_UNDER_FLYTTING, SAK_UNDER_FLYTTING_FEIL],
+    ["endre_steg", BACKEND_SAK_UNDER_FLYTTING, SAK_UNDER_FLYTTING_FEIL],
+    ["endre_steg_dialog", "Versjonskonflikt", "Versjonskonflikt"],
+  ])(
+    "%s returnerer 409-meldingen som skjemasvar når backend avviser: %s",
+    async (handling, detalj, melding) => {
+      mockHentTillatteHandlinger.mockResolvedValue({
+        versjon: 1,
+        tilstand: { steg: "UTREDNING", status: "AKTIV", resultat: null, ytelser: [] },
+        handlinger: [
+          { type: "FLYTT_TIL_NESTE_STEG", metode: "POST", sti: "/api/v1/kontrollsaker/1/steg" },
+        ],
+        tillatteSteg: [],
+        muligeNesteSteg: ["AVSLUTTET"],
+        feltskjema: [
+          {
+            felt: "utredning.type",
+            etikett: "Resultat fra utredningen",
+            datatype: "enum",
+            paakrevd: true,
+            verdier: [{ verdi: "HENLAGT", etikett: "Henlagt" }],
+          },
+          {
+            felt: "utredning.henleggelsesarsak",
+            etikett: "Årsak",
+            datatype: "enum",
+            paakrevd: false,
+            paakrevdNar: "utredning.type=HENLAGT",
+            verdier: [{ verdi: "IKKE_KAPASITET", etikett: "Ikke kapasitet" }],
+          },
+        ],
+      });
+      const formData = new FormData();
+      formData.set("handling", handling);
+      formData.set("steg", "AVSLUTTET");
+      formData.set("registrerResultat", "true");
+      formData.set("resultat.utredning.type", "HENLAGT");
+      formData.set("resultat.utredning.henleggelsesarsak", "IKKE_KAPASITET");
+      const { action } = await import("./SakDetaljSide.server");
+      mockEndreSteg.mockRejectedValueOnce(new MockBackendFeilException(409, detalj));
 
-    const resultat = await action({
-      request: new Request("http://localhost/saker/1", { method: "POST", body: formData }),
-      params: { sakId: "1" },
-    } as Parameters<typeof action>[0]);
+      const resultat = await action({
+        request: new Request("http://localhost/saker/1", { method: "POST", body: formData }),
+        params: { sakId: "1" },
+      } as Parameters<typeof action>[0]);
 
-    expect(resultat).toMatchObject({
-      data: { ok: false, feil: "Versjonskonflikt" },
-      init: { status: 409 },
-    });
-  });
+      expect(resultat).toMatchObject({
+        data: { ok: false, feil: melding },
+        init: { status: 409 },
+      });
+    },
+  );
 
   it("returnerer 409 fra backend som feilmelding også utenfor saksflyt-modalen", async () => {
     mockHentInnloggetBruker.mockResolvedValue({

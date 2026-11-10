@@ -7,6 +7,7 @@ import * as backendApi from "~/saker/api.server";
 import { mockSaksbehandlere, mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import { action, loader as lastSakerForFordeling } from "./FordelingSide.server";
 import { UfordelteSakerInnhold } from "./UfordelteSakerInnhold";
+import { useKodeverk } from "~/kodeverk/useKodeverk";
 
 export { action };
 
@@ -15,15 +16,18 @@ export { action };
 export const handle = { bredPageBlock: true };
 
 export async function loader(args: Parameters<typeof lastSakerForFordeling>[0]) {
-  let saker: Awaited<ReturnType<typeof lastSakerForFordeling>>["saker"];
-  let enhet: string | null;
+  let fordelingsdata: Awaited<ReturnType<typeof lastSakerForFordeling>>;
   try {
-    ({ saker, enhet } = await lastSakerForFordeling(args));
+    fordelingsdata = await lastSakerForFordeling(args);
   } catch (feil) {
     if (!erBackendUtilgjengelig(feil)) throw feil;
     return {
       saker: [],
       enhet: null,
+      valgtOmfang: "",
+      organisasjonsvalg: [],
+      oppsummering: { antallSaker: 0, eldsteLiggetidDager: 0 },
+      paginering: { side: 1, totalSider: 0, totalAntall: 0 },
       saksbehandlere: [],
       saksbehandlerDetaljer: [],
       saksdataUtilgjengelig: true,
@@ -34,8 +38,7 @@ export async function loader(args: Parameters<typeof lastSakerForFordeling>[0]) 
     const token = await getBackendOboToken(args.request);
     const saksbehandlerDetaljer = await backendApi.hentSaksbehandlere(token);
     return {
-      saker,
-      enhet,
+      ...fordelingsdata,
       saksbehandlere: saksbehandlerDetaljer.map((sb) => sb.navn),
       saksbehandlerDetaljer,
       saksdataUtilgjengelig: false,
@@ -43,8 +46,7 @@ export async function loader(args: Parameters<typeof lastSakerForFordeling>[0]) 
   }
 
   return {
-    saker,
-    enhet,
+    ...fordelingsdata,
     saksbehandlere: mockSaksbehandlere,
     saksbehandlerDetaljer: mockSaksbehandlerDetaljer,
     saksdataUtilgjengelig: false,
@@ -52,16 +54,17 @@ export async function loader(args: Parameters<typeof lastSakerForFordeling>[0]) 
 }
 
 export default function FordelingSide() {
-  const { saker, enhet, saksbehandlere, saksbehandlerDetaljer, saksdataUtilgjengelig } =
-    useLoaderData<typeof loader>();
+  const fordelingsdata = useLoaderData<typeof loader>();
+  const { kategorier, misbrukstyper, merker } = useKodeverk();
 
   return (
     <UfordelteSakerInnhold
-      saker={saker}
-      enhet={enhet}
-      saksbehandlere={saksbehandlere}
-      saksbehandlerDetaljer={saksbehandlerDetaljer}
-      saksdataUtilgjengelig={saksdataUtilgjengelig}
+      {...fordelingsdata}
+      filtervalg={{
+        kategorier: kategorier.map((k) => ({ verdi: k.kode, etikett: k.beskrivelse })),
+        misbrukstyper: misbrukstyper.map((m) => ({ verdi: m.kode, etikett: m.beskrivelse })),
+        merkinger: merker.map((merke) => ({ verdi: merke, etikett: merke })),
+      }}
       submitPath={RouteConfig.FORDELING}
     />
   );

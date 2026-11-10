@@ -15,6 +15,7 @@ import { hentAlleSaker, medInnloggetEier } from "~/saker/mock-alle-saker.server"
 import { mockSaksbehandlere, mockSaksbehandlerDetaljer } from "~/saker/mock-saksbehandlere.server";
 import { mockSeksjoner } from "~/saker/mock-seksjoner.server";
 import type { KontrollsakResponse, TillatteHandlingerResponse } from "~/saker/types.backend";
+import { kontrollsakAvvisningsgrunnSchema } from "~/saker/types.backend";
 import { hentDokumenttreForSak } from "./filer/mock-data.server";
 import { hentMapperstier, hentMapperstierFraMock } from "./filer/mapper/mapper.server";
 import { hentFilerForSak } from "./filer/mock-data-filer.server";
@@ -91,6 +92,13 @@ function mockSeksjonsfeil(request: Request): Seksjonsfeil {
   );
 }
 
+/** Bare mock-modus kan simulere disse tilgangsavslagene med queryparameter. */
+function mockAvvisningsgrunn(request: Request) {
+  const verdi = new URL(request.url).searchParams.get("mockAvvisningsgrunn");
+  const parsed = kontrollsakAvvisningsgrunnSchema.safeParse(verdi);
+  return parsed.success ? parsed.data : null;
+}
+
 /**
  * 🔴 Kritiske kilder: uten dem kan ikke siden vises. Teknisk feil logges med feil-ID og kastes
  * som 500-svar med ID-en, så route-boundary kan vise samme ID som i loggen.
@@ -115,11 +123,18 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     const token = await getBackendOboToken(request);
     const logg = { sakId, request };
 
-    // 🔴 Sak og innlogget bruker er kritiske: uten dem gir siden ikke mening, og vi kan ikke
-    // avgjøre tilgang. Feiler de, tar route-ErrorBoundary over (inne i sideoppsettet).
-    // Resten er seksjoner som feiler hver for seg.
+    // Hent detaljsaken først. Ved målrettet 403 skal ingen andre saksdata lastes.
+    const detaljResultat = await kritisk(backendApi.hentKontrollsakForDetalj(token, sakId), {
+      ...logg,
+      kontekst: "hente sak",
+    });
+    if (detaljResultat.status === "avvist") {
+      throw data({ avvisningsgrunn: detaljResultat.avvisningsgrunn }, { status: 403 });
+    }
+    const sak = detaljResultat.sak;
+
+    // Innlogget bruker er også kritisk. Resten er seksjoner som feiler hver for seg.
     const [
-      sak,
       innlogget,
       historikkUtfall,
       saksbehandlereUtfall,
@@ -127,7 +142,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       mapperUtfall,
       tillatteHandlingerUtfall,
     ] = await Promise.all([
-      kritisk(backendApi.hentKontrollsak(token, sakId), { ...logg, kontekst: "hente sak" }),
       kritisk(hentInnloggetBruker({ request }), { ...logg, kontekst: "hente innlogget bruker" }),
       hentEllerFeil(() => backendApi.hentHendelser(token, sakId), {
         ...logg,
@@ -252,6 +266,11 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       seksjoner: mockSeksjoner,
       seksjonsfeil,
     };
+  }
+
+  const mockGrunn = mockAvvisningsgrunn(request);
+  if (mockGrunn) {
+    throw data({ avvisningsgrunn: mockGrunn }, { status: 403 });
   }
 
   const alleSaker = hentAlleSaker(request);

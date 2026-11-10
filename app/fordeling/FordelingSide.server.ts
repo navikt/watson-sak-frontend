@@ -1,4 +1,4 @@
-import { data } from "react-router";
+import { data, redirect } from "react-router";
 import { oppdaterTilgjengeligeHandlinger } from "~/saker/mock-uuid";
 import { getBackendOboToken } from "~/auth/access-token";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
@@ -8,7 +8,8 @@ import { hentFordelingssaker } from "~/saker/mock-alle-saker.server";
 import { tekniskFeilSvar } from "~/feilhåndtering/teknisk-feil.server";
 import type { Route } from "./+types/FordelingSide.route";
 import { hentKontrollsakerForFordeling, tildelKontrollsak } from "./api.server";
-import { mapKontrollsakTilFordelingSak, erKlarForFordeling } from "./mapper";
+import { mapKontrollsakTilFordelingSak } from "./mapper";
+import { hentMockFordelingsside } from "./mock.server";
 
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
@@ -67,28 +68,29 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-  if (skalBrukeMockdata) {
-    return {
-      saker: hentFordelingssaker(request)
-        .filter(erKlarForFordeling)
-        .map(mapKontrollsakTilFordelingSak),
-      enhet: null,
-    };
-  }
-
-  const innloggetBruker = await hentInnloggetBruker({ request });
-  if (!innloggetBruker.enhetId) {
-    throw new Error("Fant ikke konfigurert enhet for innlogget bruker.");
-  }
-  const kontrollsaker = await hentKontrollsakerForFordeling(request, innloggetBruker.enhetId);
+  const kontrollsaker = skalBrukeMockdata
+    ? hentMockFordelingsside(request, await hentInnloggetBruker({ request }))
+    : await hentKontrollsakerForFordeling(request);
   if (!kontrollsaker) {
     throw new Error("Forventet kontrollsaker i backend-modus for fordeling.");
   }
 
-  // Backend returnerer kun saker uten ansvarlig i saksbehandlerens enhet
-  // (utenAnsvarlig=true og enhet=<innlogget enhet> er sendt).
+  const sisteSide = Math.max(1, kontrollsaker.totalPages);
+  if (kontrollsaker.page > sisteSide) {
+    const url = new URL(request.url);
+    url.searchParams.set("side", String(sisteSide));
+    throw redirect(`${url.pathname}${url.search}`);
+  }
   return {
-    saker: kontrollsaker.items.filter(erKlarForFordeling).map(mapKontrollsakTilFordelingSak),
-    enhet: innloggetBruker.enhet,
+    saker: kontrollsaker.items.map(mapKontrollsakTilFordelingSak),
+    enhet: kontrollsaker.enhetNavn,
+    valgtOmfang: kontrollsaker.valgtOmfang,
+    organisasjonsvalg: kontrollsaker.organisasjonsvalg,
+    oppsummering: kontrollsaker.oppsummering,
+    paginering: {
+      side: kontrollsaker.page,
+      totalSider: kontrollsaker.totalPages,
+      totalAntall: kontrollsaker.totalItems,
+    },
   };
 }

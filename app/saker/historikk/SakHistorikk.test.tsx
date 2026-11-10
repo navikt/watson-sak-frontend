@@ -69,13 +69,13 @@ describe("SakHistorikk", () => {
     vi.useRealTimers();
   });
 
-  it("renderer backend hendelsestype og stegfelt", async () => {
+  it("renderer opprettelseshendelse uten steglinje", async () => {
     await renderMedRouter(
       <SakHistorikk redigerbar={true} sakId={1} hendelser={[lagBackendHendelse()]} />,
     );
 
     expect(screen.getByText("Sak opprettet")).toBeDefined();
-    expect(screen.getByText(/Steg: Opprettet/)).toBeDefined();
+    expect(screen.queryByText(/Steg:/)).toBeNull();
   });
 
   it("skjuler utførende på opprettelseshendelsen for migreringssaker", async () => {
@@ -208,7 +208,7 @@ describe("SakHistorikk", () => {
     );
 
     expect(screen.getByText("Avklaring opprettet")).toBeDefined();
-    expect(screen.getByText(/Steg: Avsluttet/)).toBeDefined();
+    expect(screen.queryByText(/Steg:/)).toBeNull();
   });
 
   it("renderer beskrivelse for stegendring", async () => {
@@ -259,7 +259,7 @@ describe("SakHistorikk", () => {
         sakId={1}
         hendelser={[
           lagBackendHendelse({
-            hendelsesType: "TILGANG_FJERNET",
+            hendelsesType: "DELING_FJERNET",
             berortSaksbehandlerNavn: "Ada Larsen",
             berortSaksbehandlerNavIdent: "Z234567",
             berortSaksbehandlerEnhet: "Seksjon B",
@@ -268,13 +268,11 @@ describe("SakHistorikk", () => {
       />,
     );
 
-    expect(screen.getByText("Tilgang fjernet")).toBeDefined();
-    expect(
-      screen.getByText(/Fjernet deling med: Ada Larsen \(Z234567\) · Seksjon B/),
-    ).toBeDefined();
+    expect(screen.getByText("Deling fjernet")).toBeDefined();
+    expect(screen.getByText("For: Ada Larsen")).toBeDefined();
   });
 
-  it("renderer sak satt på vent med status og steg", async () => {
+  it("renderer sak satt på vent med status uten steglinje", async () => {
     await renderMedRouter(
       <SakHistorikk
         redigerbar={true}
@@ -290,7 +288,8 @@ describe("SakHistorikk", () => {
     );
 
     expect(screen.getByText("Sak satt på vent")).toBeDefined();
-    expect(screen.getByText(/På vent: Venter på vedtak – Steg: Utredning/)).toBeDefined();
+    expect(screen.getByText("På vent: Venter på vedtak")).toBeDefined();
+    expect(screen.queryByText(/Steg:/)).toBeNull();
   });
 
   it("renderer gjenoppta som vanlig gjenopptak for ventesaker", async () => {

@@ -1,5 +1,13 @@
 import { BooksIcon, LeaveIcon, LightBulbIcon, MenuGridIcon, PersonIcon } from "@navikt/aksel-icons";
-import { ActionMenu, BodyShort, HelpText, InternalHeader, Spacer, Tag } from "@navikt/ds-react";
+import {
+  ActionMenu,
+  BodyShort,
+  ErrorMessage,
+  HelpText,
+  InternalHeader,
+  Spacer,
+  Tag,
+} from "@navikt/ds-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Form, Link, useLocation } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
@@ -27,6 +35,8 @@ const SHERLOCK_EASTER_EGG = "sherlock";
 // vært med på å lage Watson. Her utføres ikke selve søket.
 const END_CREDITS_EASTER_EGG = "end credits";
 
+const HURTIGSØK_FEIL_ID = "hurtigsok-feilmelding";
+
 export function AppHeader() {
   const innloggetBruker = useInnloggetBrukerValgfri();
   const skjemaRef = useRef<HTMLFormElement>(null);
@@ -34,6 +44,7 @@ export function AppHeader() {
   const triggerGlitch = useGlitch();
   const triggerSherlockCursor = useSherlockCursor();
   const [visEndCredits, setVisEndCredits] = useState(false);
+  const [hurtigsøkUgyldig, setHurtigsøkUgyldig] = useState(false);
   const lukkEndCredits = useCallback(() => setVisEndCredits(false), []);
 
   useEffect(() => {
@@ -92,6 +103,12 @@ export function AppHeader() {
         onSubmit={(event) => {
           const formData = new FormData(event.currentTarget);
           const søketekst = formData.get("søketekst")?.toString().trim();
+          if (!søketekst) {
+            event.preventDefault();
+            setHurtigsøkUgyldig(true);
+            return;
+          }
+          setHurtigsøkUgyldig(false);
           if (søketekst?.toLowerCase() === END_CREDITS_EASTER_EGG) {
             event.preventDefault();
             setVisEndCredits(true);
@@ -113,10 +130,12 @@ export function AppHeader() {
           name="søketekst"
           variant="secondary"
           size="small"
-          placeholder="Søk på fødsels-/D-nummer, organisasjonsnummer, saksnummer og PID"
-          className="w-full"
+          aria-invalid={hurtigsøkUgyldig}
+          aria-describedby={hurtigsøkUgyldig ? HURTIGSØK_FEIL_ID : undefined}
+          className="w-full [&_input[aria-invalid=true]]:border-ax-border-danger"
           autoComplete="off"
           aria-keyshortcuts="Meta+K Control+K"
+          onChange={() => setHurtigsøkUgyldig(false)}
           onKeyDown={handleSøkefeltKeyDown}
         />
       </Form>
@@ -130,6 +149,13 @@ export function AppHeader() {
         </ul>
         <BodyShort>Mellomrom spiller ingen rolle.</BodyShort>
       </HelpText>
+      <div aria-live="polite" className="self-center ml-2">
+        {hurtigsøkUgyldig && (
+          <ErrorMessage id={HURTIGSØK_FEIL_ID} size="small" showIcon>
+            Skriv inn et søk
+          </ErrorMessage>
+        )}
+      </div>
       <Spacer />
       <VarselBjelle />
       <ActionMenu>

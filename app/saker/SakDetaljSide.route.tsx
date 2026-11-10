@@ -1,5 +1,15 @@
 import { ArrowLeftIcon, CheckmarkIcon, XMarkIcon } from "@navikt/aksel-icons";
-import { BodyShort, Box, Button, HGrid, HStack, VStack } from "@navikt/ds-react";
+import {
+  BodyLong,
+  BodyShort,
+  Box,
+  Button,
+  Heading,
+  HGrid,
+  HStack,
+  LocalAlert,
+  VStack,
+} from "@navikt/ds-react";
 import { useCallback, useEffect, useState } from "react";
 import { isRouteErrorResponse, useLoaderData, useNavigate, useRouteError } from "react-router";
 import { Feilmelding } from "~/feilhåndtering/Feilmelding";
@@ -11,6 +21,7 @@ import { RouteConfig } from "~/routeConfig";
 import { IngenFiltilgangKort } from "./filer/IngenFiltilgangKort";
 import { SakFilområde } from "./filer/SakFilområde";
 import { erSakseier } from "./handlinger/tilgjengeligeHandlinger";
+import { FilerTilgjengeligVarsel } from "./komponenter/FilerTilgjengeligVarsel";
 import { hentHandlinger } from "./handlinger/saksflyt/saksflyt";
 import { SaksflytModal } from "./handlinger/saksflyt/SaksflytModal";
 import { getSaksreferanse } from "./id";
@@ -28,7 +39,11 @@ import { action, loader } from "./SakDetaljSide.server";
 import { hentStegbaserteSaksregler } from "./stegregler";
 import { useLukketBekreftelse } from "./useLukketBekreftelse";
 import { useTilbakeLenke } from "./tilbake";
-import type { KontrollsakResponse, KontrollsakSaksbehandler } from "./types.backend";
+import {
+  kontrollsakAvvisningsgrunnSchema,
+  type KontrollsakResponse,
+  type KontrollsakSaksbehandler,
+} from "./types.backend";
 import { useDisclosure } from "~/utils/useDisclosure";
 
 export { action, loader };
@@ -47,6 +62,41 @@ function finnSaksbehandlerDetalj(
 }
 
 export default function SakDetaljSide() {
+  return <SakDetaljSideInnhold />;
+}
+
+function TilgangAvvistSide({
+  avvisningsgrunn,
+}: {
+  avvisningsgrunn: "AVVIST_HABILITET" | "AVVIST_SKJERMING";
+}) {
+  const melding =
+    avvisningsgrunn === "AVVIST_SKJERMING"
+      ? "Du har bedt om tilgang til å se informasjon om en person som er ansatt i Nav. Ifølge tilgangsstyringen kan du ikke se denne informasjonen."
+      : "Du har bedt om tilgang til å se informasjon om en person. Ifølge tilgangsstyringen kan du ikke se denne informasjonen, fordi du ikke har tilgang til å se informasjon om deg selv eller dine nærmeste.";
+
+  return (
+    <div className="mt-4 mb-8 max-w-2xl">
+      <MiljøtilpassetTittel>Ingen tilgang – Watson Sak</MiljøtilpassetTittel>
+      <LocalAlert status="warning">
+        <LocalAlert.Header>
+          {/* Title tillater ikke h1, men dette er sidens hovedoverskrift. */}
+          <LocalAlert.Title as="div">
+            <h1 className="m-0 [font:inherit]">Du har ikke tilgang til denne saken</h1>
+          </LocalAlert.Title>
+        </LocalAlert.Header>
+        <LocalAlert.Content>
+          <VStack gap="space-16">
+            <BodyLong>{melding}</BodyLong>
+            <BodyLong>Ta kontakt med nærmeste leder for veiledning.</BodyLong>
+          </VStack>
+        </LocalAlert.Content>
+      </LocalAlert>
+    </div>
+  );
+}
+
+function SakDetaljSideInnhold() {
   const {
     sak: loaderSak,
     tillatteHandlinger,
@@ -82,6 +132,9 @@ export default function SakDetaljSide() {
     erEier &&
     sak.legacyPid &&
     migreringsstatus === "FULLSTENDIG";
+  // Mock-miljøene kan ikke ferdigstille flytting, så der kreves det ikke før avslutning (TH-118).
+  const avslutningKreverFerdigFlyttet =
+    migreringErÅpen(miljø) && migreringsstatus === "UNDER_MIGRERING";
   const harDirekteTilgang = kanEndreSak(sak, innloggetBruker);
   const kanLese = kanLeseSaksinnhold(sak, innloggetBruker);
   const historikkTilstand: "vis" | "ikke-delt" | "ingen-persontilgang" = !kanLese
@@ -160,6 +213,10 @@ export default function SakDetaljSide() {
                 tilgjengeligeSteg.length > 0 ? () => setVisSaksflytModal(true) : undefined
               }
             />
+
+            {sak.steg === "AVSLUTTET" && harDirekteTilgang && (
+              <FilerTilgjengeligVarsel filerTilgjengeligTil={sak.filerTilgjengeligTil} />
+            )}
 
             <SaksinformasjonKort
               sak={sak}
@@ -312,6 +369,7 @@ export default function SakDetaljSide() {
           sakId={String(sak.id)}
           tillatteHandlinger={tillatteHandlinger}
           start="meny"
+          avslutningKreverFerdigFlyttet={avslutningKreverFerdigFlyttet}
           onClose={() => setVisSaksflytModal(false)}
         />
       )}
@@ -325,6 +383,17 @@ export default function SakDetaljSide() {
  */
 export function ErrorBoundary() {
   const error = useRouteError();
+  const avvisningsgrunn =
+    isRouteErrorResponse(error) &&
+    error.status === 403 &&
+    error.data &&
+    typeof error.data === "object" &&
+    "avvisningsgrunn" in error.data
+      ? kontrollsakAvvisningsgrunnSchema.safeParse(error.data.avvisningsgrunn)
+      : null;
+  if (avvisningsgrunn?.success) {
+    return <TilgangAvvistSide avvisningsgrunn={avvisningsgrunn.data} />;
+  }
   if (isRouteErrorResponse(error) && error.status < 500) {
     throw error;
   }

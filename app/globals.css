@@ -5,20 +5,6 @@
 @config '../tailwind.config.cjs';
 
 /*
- * Egen datavisualiseringsfarge for statistikk (se app/statistikk/farger.ts).
- * Aksel mangler en blågrønn tone, så vi fyller hullet mellom grønn og blå
- * med samme lyshet som Aksel sine «-strong»-farger.
- */
-:root,
-.light {
-  --watson-data-teal: #00807f;
-}
-
-.dark {
-  --watson-data-teal: #2a9d9a;
-}
-
-/*
  * Glitch-effekt for easter eggs (se app/utils/useGlitch.ts). Klassene legges
  * på body (RGB-forskyvning) og et fullskjerms overlay-element (revne
  * scanlines), og fjernes igjen etter kort tid av hooken.

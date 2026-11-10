@@ -295,7 +295,7 @@ export function SendTilAnnenEnhetModal({
               <BodyShort>Du sender nå saken til en annen enhet:</BodyShort>
               <div className="rounded-md bg-ax-bg-neutral-soft px-5 py-4">
                 <HGrid columns="auto 1fr" gap="space-4 space-16">
-                  <SammendragRad label="Sak" verdi={`#${saksreferanse}`} />
+                  <SammendragRad label="Sak" verdi={saksreferanse} />
                   <SammendragRad
                     label="Ny enhet"
                     verdi={
@@ -339,7 +339,7 @@ export function SendTilAnnenEnhetModal({
               <VStack gap="space-4" align="center">
                 <BodyShort weight="semibold">Sak sendt til annen enhet</BodyShort>
                 <BodyShort textColor="subtle">
-                  Sak #{saksreferanse} er sendt til {bekreftetEnhet}.
+                  Sak {saksreferanse} er sendt til {bekreftetEnhet}.
                 </BodyShort>
               </VStack>
             </VStack>

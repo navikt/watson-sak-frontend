@@ -29,15 +29,28 @@ test.describe("Søk", () => {
       await sjekkTilgjengelighet(page);
     });
 
-    test("kan søke på saksnummer og viser stor sak-oppsummering", async ({ page }) => {
+    test("kan søke på saksnummer og viser samme tabellkolonner som Alle saker", async ({
+      page,
+    }) => {
       await page.getByLabel("Søk i saker").fill("1028");
       await page.getByLabel("Søk i saker").press("Enter");
 
       await expect(page.getByText(/1 treff for "1028"/)).toBeVisible();
-      await expect(page.getByRole("article")).toHaveCount(1);
-      await expect(page.getByRole("heading", { name: "Sak 1028" })).toHaveCount(1);
-      await expect(page.getByText("Prioritet", { exact: true })).toBeVisible();
-      await expect(page.getByRole("button", { name: "Åpne sak" })).toBeVisible();
+      await expect(page.getByRole("table")).toBeVisible();
+      await expect(page.getByRole("article")).toHaveCount(0);
+      await expect(page.getByRole("link", { name: "1028", exact: true })).toBeVisible();
+      await expect(page.getByRole("columnheader")).toHaveText([
+        "Saksnummer",
+        "Kategori",
+        "Misbrukstype",
+        "Steg",
+        "Status",
+        "Opprettet",
+        "Oppdatert",
+        "Saksbehandler",
+      ]);
+      await expect(page.getByRole("button", { name: "Sorter på misbrukstype" })).toHaveCount(0);
+      await expect(page.getByRole("button", { name: "Sorter på saksbehandler" })).toHaveCount(0);
     });
 
     test("kan søke på fødselsnummer med flere treff og viser tabell", async ({ page }) => {
@@ -49,11 +62,62 @@ test.describe("Søk", () => {
       await expect(page.locator(SØK_RESULTATLENKE_SELECTOR)).toHaveCount(2);
     });
 
+    test("viser PID-treff som tabellrad", async ({ page }) => {
+      await page.getByLabel("Søk i saker").fill("01027");
+      await page.getByLabel("Søk i saker").press("Enter");
+
+      await expect(page.getByRole("table")).toBeVisible();
+      await expect(page.getByRole("link", { name: "1027", exact: true })).toBeVisible();
+      await expect(page.locator(SØK_RESULTATLENKE_SELECTOR)).toHaveCount(1);
+    });
+
+    test("sorterer viste treff og nullstiller ved nytt identisk søk", async ({ page }) => {
+      const søkefelt = page.getByLabel("Søk i saker");
+      await søkefelt.fill("11223344556");
+      await søkefelt.press("Enter");
+      const lenker = page.locator(SØK_RESULTATLENKE_SELECTOR);
+      await expect(lenker).toHaveCount(2);
+      const standardRekkefølge = await lenker.allTextContents();
+      const saksidHeader = page.getByRole("columnheader", { name: "Sorter på saksnummer" });
+
+      await page.getByRole("button", { name: "Sorter på saksnummer" }).click();
+      await expect(saksidHeader).toHaveAttribute("aria-sort", "ascending");
+      const stigende = await lenker.allTextContents();
+      await page.getByRole("button", { name: "Sorter på saksnummer" }).click();
+      await expect(saksidHeader).toHaveAttribute("aria-sort", "descending");
+      await expect(lenker).toHaveText([...stigende].reverse());
+      await expect(page.getByText("Sorteringen gjelder treffene på denne siden.")).toBeVisible();
+
+      await søkefelt.press("Enter");
+      await expect(page.getByRole("columnheader", { name: "Sorter på opprettet" })).toHaveAttribute(
+        "aria-sort",
+        "descending",
+      );
+      await expect(lenker).toHaveText(standardRekkefølge);
+    });
+
+    test("beholder tabelloppsettet på smal skjerm uten å gjøre siden bredere", async ({ page }) => {
+      await page.setViewportSize({ width: 640, height: 900 });
+      await page.getByLabel("Søk i saker").fill("1028");
+      await page.getByLabel("Søk i saker").press("Enter");
+      await expect(page.getByRole("table")).toBeVisible();
+
+      const resultatliste = page.locator("[data-søk-resultatliste]");
+      await expect(resultatliste).toBeVisible();
+      expect(
+        await resultatliste.evaluate((element) => element.scrollWidth > element.clientWidth),
+      ).toBe(true);
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+      ).toBe(true);
+    });
+
     test("viser tom-tilstand med veiledning ved ugyldig søkeformat", async ({ page }) => {
       await page.getByLabel("Søk i saker").fill("finnesikke123");
       await page.getByLabel("Søk i saker").press("Enter");
 
-      await expect(page.getByRole("heading", { name: "Ugyldig søk" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Ugyldig søk" })).toHaveCount(0);
+      await expect(page.getByText(/Søket må være et fødsels- eller d-nummer/)).toBeVisible();
       await expect(page.getByRole("button", { name: "Se alle saker" })).toBeVisible();
     });
 
@@ -81,7 +145,7 @@ test.describe("Søk", () => {
       await page.getByLabel("Søk i saker").fill("finnesikke123");
       await page.getByLabel("Søk i saker").press("Enter");
 
-      await expect(page.getByRole("heading", { name: "Ugyldig søk" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Ugyldig søk" })).toHaveCount(0);
       await expect(
         page.getByRole("heading", { name: "Ser du etter en person?" }),
       ).not.toBeVisible();
@@ -101,7 +165,7 @@ test.describe("Søk", () => {
       await page.getByLabel("Søk i saker").fill("1028");
       await page.getByLabel("Søk i saker").press("Enter");
 
-      await page.getByRole("article").getByRole("link", { name: "Sak 1028" }).click();
+      await page.getByRole("link", { name: "1028", exact: true }).click();
       await expect(page).toHaveURL(/\/saker\/1028/);
     });
 
@@ -123,7 +187,7 @@ test.describe("Søk", () => {
     test("er UU-compliant med saksnummer-treff", async ({ page }) => {
       await page.getByLabel("Søk i saker").fill("1028");
       await page.getByLabel("Søk i saker").press("Enter");
-      await expect(page.getByRole("article")).toBeVisible();
+      await expect(page.getByRole("table")).toBeVisible();
 
       await sjekkTilgjengelighet(page);
     });
@@ -182,6 +246,23 @@ test.describe("Søk", () => {
   });
 
   test.describe("header-søk", () => {
+    test("hindrer innsending av tomt hurtigsøk og markerer feltet", async ({ page }) => {
+      await page.goto("/", { waitUntil: "networkidle" });
+
+      const headerSøk = page.getByRole("search", { name: "Hurtigsøk" }).getByRole("searchbox");
+      await headerSøk.fill("   ");
+      await headerSøk.press("Enter");
+
+      await expect(page).toHaveURL("/");
+      await expect(headerSøk).toHaveAttribute("aria-invalid", "true");
+      await expect(page.getByText("Skriv inn et søk")).toBeVisible();
+      await expect(headerSøk).toHaveAccessibleDescription(/Skriv inn et søk/);
+
+      await headerSøk.fill("1028");
+      await expect(headerSøk).not.toHaveAttribute("aria-invalid", "true");
+      await expect(page.getByText("Skriv inn et søk")).toHaveCount(0);
+    });
+
     test("søkefelt i header poster til søkesiden", async ({ page }) => {
       await page.goto("/", { waitUntil: "networkidle" });
 

@@ -31,7 +31,7 @@ describe("Saksliste", () => {
   it("viser standardkolonnene og detaljlenke", () => {
     renderMedRouter(<Saksliste rader={rader} tomTekst="Ingen saker." />);
 
-    expect(screen.getByRole("columnheader", { name: "Saksid" })).toBeDefined();
+    expect(screen.getByRole("columnheader", { name: "Saksnummer" })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Navn" })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Kategori" })).toBeDefined();
     expect(screen.getByRole("columnheader", { name: "Misbrukstype" })).toBeDefined();
@@ -45,7 +45,7 @@ describe("Saksliste", () => {
       .getAllByRole("columnheader")
       .map((overskrift) => overskrift.textContent);
     expect(overskrifter.indexOf("Steg")).toBeLessThan(overskrifter.indexOf("Status"));
-    expect(screen.getByRole("link", { name: "#201" }).getAttribute("href")).toBe("/saker/201");
+    expect(screen.getByRole("link", { name: "201" }).getAttribute("href")).toBe("/saker/201");
   });
 
   it("kan skjule navn og vise handlingskolonne", () => {
@@ -68,7 +68,7 @@ describe("Saksliste", () => {
 
     expect(screen.getByText("Ingen saker akkurat nå.")).toBeDefined();
     expect(screen.getByRole("table")).toBeDefined();
-    expect(screen.getByRole("columnheader", { name: "Saksid" })).toBeDefined();
+    expect(screen.getByRole("columnheader", { name: "Saksnummer" })).toBeDefined();
   });
 
   it("gjør raden fokuserbar og navigerer med Enter-tasten", () => {
@@ -81,7 +81,7 @@ describe("Saksliste", () => {
     );
     render(<RouterProvider router={router} />);
 
-    const rad = screen.getByRole("row", { name: /#201/ });
+    const rad = screen.getByRole("row", { name: /201/ });
     expect(rad.getAttribute("tabindex")).toBe("0");
 
     fireEvent.keyDown(rad, { key: "Enter" });

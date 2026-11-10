@@ -4,6 +4,7 @@ import { logger } from "~/logging/logging";
 import {
   kontrollsakPageResponseSchema,
   kontrollsakResponseSchema,
+  kontrollsakAvvisningsgrunnSchema,
   oppgaveKortSchema,
   type KontrollsakPageResponse,
   type KontrollsakResponse,
@@ -11,6 +12,7 @@ import {
   type LagreResultatRequest,
   type KontrollsakSteg,
   type KontrollsakStatus,
+  type KontrollsakAvvisningsgrunn,
   type TillatteHandlingerResponse,
   tillatteHandlingerResponseSchema,
 } from "./types.backend";
@@ -37,6 +39,63 @@ export async function hentKontrollsak(token: string, sakId: string): Promise<Kon
   }
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke hente kontrollsak");
   return parseEllerKastFeil(kontrollsakResponseSchema, await respons.json(), "hentKontrollsak");
+}
+
+export type KontrollsakDetaljResultat =
+  | { status: "ok"; sak: KontrollsakResponse }
+  | { status: "avvist"; avvisningsgrunn: KontrollsakAvvisningsgrunn };
+
+/**
+ * Henter detaljsaken og gjenkjenner bare de to whitelista 403-avslagene.
+ * Andre kallesteder bruker fortsatt `hentKontrollsak` og får vanlig feilhåndtering.
+ */
+export async function hentKontrollsakForDetalj(
+  token: string,
+  sakId: string,
+): Promise<KontrollsakDetaljResultat> {
+  const respons = await fetch(apiUrl(byggSti`/api/v1/kontrollsaker/${sakId}`), {
+    headers: authHeaders(token),
+  });
+  if (respons.status === 404) {
+    throw data("Sak ikke funnet", { status: 404 });
+  }
+  if (respons.status === 403) {
+    try {
+      const body: unknown = await respons.clone().json();
+      const parsed = z
+        .object({
+          type: z.string(),
+          title: z.string(),
+          status: z.literal(403),
+          detail: z.string(),
+          instance: z.string(),
+          avvisningsgrunn: kontrollsakAvvisningsgrunnSchema,
+        })
+        .safeParse(body);
+      if (parsed.success) {
+        return { status: "avvist", avvisningsgrunn: parsed.data.avvisningsgrunn };
+      }
+    } catch {
+      // Ugyldig JSON behandles som et generisk 403-avslag nedenfor.
+    }
+  }
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke hente kontrollsak");
+
+  const body: unknown = await respons.json();
+  const tilgang = body && typeof body === "object" && "tilgang" in body ? body.tilgang : undefined;
+  if (
+    !tilgang ||
+    typeof tilgang !== "object" ||
+    !("harTilgangTilKontrollobjekt" in tilgang) ||
+    typeof tilgang.harTilgangTilKontrollobjekt !== "boolean"
+  ) {
+    logger.error("Detaljsvaret mangler gyldig tilgangsflagg");
+    throw new Error("Ugyldig svar fra watson-admin-api (hentKontrollsak)");
+  }
+  return {
+    status: "ok",
+    sak: parseEllerKastFeil(kontrollsakResponseSchema, body, "hentKontrollsak"),
+  };
 }
 
 export async function hentTillatteHandlinger(

@@ -29,6 +29,29 @@ test.describe("Mine saker", () => {
     expect(antallEtter).toBeGreaterThanOrEqual(antallFør);
   });
 
+  test("beholder filter ved fanebytte og åpner en sak", async ({ page }) => {
+    const hovedinnhold = page.locator("#maincontent");
+    const ventestatus = hovedinnhold.getByRole("button", { name: "Venter på vedtak" });
+
+    await ventestatus.click();
+    await expect(ventestatus).toHaveAttribute("aria-pressed", "true");
+
+    await hovedinnhold.getByRole("tab", { name: /Delt med meg/ }).click();
+    await expect(page).toHaveURL(/fane=delt/);
+    await expect(hovedinnhold.getByLabel("Filtrer saker")).toBeVisible();
+    await expect(hovedinnhold.getByRole("button", { name: "Venter på vedtak" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    // Mockdata har ingen saker delt med testbrukeren, så åpne en sak etter å ha gått tilbake til Mine saker.
+    await hovedinnhold.getByRole("tab", { name: /Mine saker/ }).click();
+    const sakLenke = hovedinnhold.getByRole("link", { name: /^\d+$/ }).first();
+    await expect(sakLenke).toBeVisible();
+    await sakLenke.click();
+    await expect(page).toHaveURL(/\/saker\/\d+/);
+  });
+
   test("kan navigere til sakdetalj", async ({ page }) => {
     const sakLenke = page.locator("#maincontent").getByRole("link").first();
 

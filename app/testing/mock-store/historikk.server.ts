@@ -6,14 +6,17 @@ type BackendHendelsestype =
   | "SAK_OPPRETTET"
   | "AVKLARING_OPPRETTET"
   | "SAK_TILDELT"
+  | "SAK_DELT"
+  | "DELING_FJERNET"
   | "SAK_FRISTILT"
+  | "SAK_OVERFORT"
+  | "SAK_KOBLET"
   | "STATUS_ENDRET"
   | "SAKSINFORMASJON_ENDRET"
   | "MOTTAKSENHET_ENDRET"
   | "VIDERESENDT_TIL_NAY_NFP"
   | "POLITIANMELDT"
   | "TILGANG_DELT"
-  | "TILGANG_FJERNET"
   | "ANSVARLIG_SAKSBEHANDLER_ENDRET"
   | "YTELSE_STANSET"
   | "SAK_SATT_PA_VENT"
@@ -23,6 +26,9 @@ type BackendHendelsestype =
   | "NOTAT_SENDT"
   | "JOURNALPOST_OPPRETTET"
   | "OPPGAVE_OPPRETTET"
+  | "OPPGAVE_ENDRET"
+  | "OPPGAVE_OPPRETTET_EKSTERN"
+  | "OPPGAVE_FERDIGSTILT"
   | "FIL_LASTET_OPP"
   | "FIL_ARKIVERT"
   | "FIL_OMDØPT"
@@ -55,7 +61,18 @@ function leggTilBackendHendelse(
   return hendelse;
 }
 
-/** Hent historikken for en sak, sortert med nyeste først */
+/** Løpenummeret i mock-ID-en, som øker for hver hendelse som opprettes */
+function opprettelsesnummer(hendelseId: string): number {
+  return Number(hendelseId.split("-").at(-1));
+}
+
+/**
+ * Hent historikken for en sak, sortert med nyeste først.
+ *
+ * Speiler backend (`ORDER BY hendelsestidspunkt DESC, opprettet_tidspunkt DESC`):
+ * Ved likt tidspunkt kommer hendelsen som ble opprettet sist først. Redigering
+ * endrer ikke opprettelsesrekkefølgen.
+ */
 export function hentHistorikk(state: MockState, sakId: string): SakHendelse[] {
   const hendelser = state.historikk.get(sakId) ?? [];
   return [...hendelser].sort((a, b) => {
@@ -65,7 +82,7 @@ export function hentHistorikk(state: MockState, sakId: string): SakHendelse[] {
       return tidspunktSortering;
     }
 
-    return b.hendelseId.localeCompare(a.hendelseId);
+    return opprettelsesnummer(b.hendelseId) - opprettelsesnummer(a.hendelseId);
   });
 }
 
@@ -93,6 +110,14 @@ export function leggTilHendelse(
     | "berortSaksbehandlerNavn"
     | "berortSaksbehandlerNavIdent"
     | "berortSaksbehandlerEnhet"
+    | "kobletSakId"
+    | "oppgaveId"
+    | "oppgaveEndringTekst"
+    | "fraEnhetNavn"
+    | "fraSaksbehandlerNavn"
+    | "tilEnhetNavn"
+    | "tilSaksbehandlerNavn"
+    | "delAvFlytting"
     | "status"
     | "beskrivelse"
     | "tittel"
@@ -239,6 +264,32 @@ export function genererHistorikkForSaker(
     }
 
     leggTilStatushistorikk(tempState, sak, tidspunkt);
+
+    if (sak === saker[0]) {
+      leggTilBackendHendelse(
+        tempState,
+        String(sak.id),
+        "OPPGAVE_ENDRET",
+        {
+          ...lagSnapshotFraKontrollsak(sak),
+          oppgaveId: "123456789",
+          oppgaveEndringTekst: "Frist endret fra 01.11.2026 til 15.11.2026",
+          opprettetAvNavn: "Kari Nordmann",
+        },
+        tidspunkt.avsluttet,
+      );
+      leggTilBackendHendelse(
+        tempState,
+        String(sak.id),
+        "OPPGAVE_OPPRETTET_EKSTERN",
+        {
+          ...lagSnapshotFraKontrollsak(sak),
+          oppgaveId: "987654321",
+          opprettetAvNavn: "SYSTEM",
+        },
+        tidspunkt.avsluttet,
+      );
+    }
   }
 
   return tempState.nesteHistorikkId;

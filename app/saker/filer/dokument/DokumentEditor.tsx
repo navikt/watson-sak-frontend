@@ -64,8 +64,8 @@ type DokumentEditorProps = {
    * Kommentarene hentet i loaderen, parallelt med dokument og historikk.
    * Wrapperen bærer backendens `kanKommentere` og `arkivert` – frontend regner
    * aldri ut kommenterbarhet selv. Kommentering er bevisst skilt fra
-   * `redigerbar`: lesetilgang holder, også på låste dokumenter og avsluttede
-   * saker. Arkiverte dokumenter kan derimot ikke muteres.
+   * `redigerbar`: lesetilgang holder, også på låste dokumenter. Arkiverte
+   * dokumenter og avsluttede saker kan derimot ikke muteres.
    */
   kommentarliste?: Kommentarliste;
   /** Om første innlasting av kommentarer feilet mens dokumentet fortsatt kunne vises. */
@@ -145,7 +145,7 @@ export function DokumentEditor({
   const revalidator = useRevalidator();
 
   const kommentarer = useKommentarer({ url: kommentarUrl, startListe: kommentarliste });
-  // Backendfasit: kun arkiverte dokumenter blokkerer kommentering.
+  // Backendfasit: arkiverte dokumenter og avsluttede saker blokkerer kommentering.
   const kanKommentere = kommentarer.kanKommentere;
   const arkivert = (kommentarliste.arkivert ?? null) !== null;
   const forankring = useKommentarforankring({

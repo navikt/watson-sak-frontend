@@ -23,6 +23,7 @@ import { MenyTrinn } from "./trinn/MenyTrinn";
 import { SkjemaTrinn } from "./trinn/SkjemaTrinn";
 import { EnkeltvalgTrinn, SjekklisteTrinn, StatusTrinn } from "./trinn/ValgTrinn";
 import { validerTrinn } from "./validering";
+import { SAK_UNDER_FLYTTING_FEIL } from "~/migrering/avslutning";
 
 export type SaksflytStart = "meny" | "endre-status";
 
@@ -30,6 +31,7 @@ type SaksflytModalProps = {
   sakId: string;
   tillatteHandlinger: TillatteHandlingerResponse;
   start: SaksflytStart;
+  avslutningKreverFerdigFlyttet?: boolean;
   onClose: () => void;
 };
 
@@ -68,7 +70,13 @@ function sekundærknapp(trinn: Trinn, kanGåTilbake: boolean) {
  * Hver handling er en liste med trinn (se `saksflyt.ts`). Modalen viser menyen, går gjennom
  * trinnene og sender alt i ett kall etter siste trinn.
  */
-export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: SaksflytModalProps) {
+export function SaksflytModal({
+  sakId,
+  tillatteHandlinger,
+  start,
+  avslutningKreverFerdigFlyttet = false,
+  onClose,
+}: SaksflytModalProps) {
   const fetcher = useFetcher();
   const erSubmitting = fetcher.state !== "idle";
   const venterPåSvar = useRef(false);
@@ -160,6 +168,10 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
   function velgHandling(handling: Sakshandling) {
     const verdier = hentStartverdier(handling, tillatteHandlinger);
     if (handling.trinn.length === 0) {
+      if (avslutningKreverFerdigFlyttet && avslutterSaken(handling.innsending)) {
+        dispatch({ type: "settFeil", feil: { "": SAK_UNDER_FLYTTING_FEIL } });
+        return;
+      }
       send(handling, verdier);
       return;
     }
@@ -174,7 +186,12 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
       return;
     }
     const erSisteTrinn = tilstand.trinnIndeks === tilstand.handling.trinn.length - 1;
-    if (innsending || erSisteTrinn) {
+    const sender = innsending ?? (erSisteTrinn ? tilstand.handling.innsending : undefined);
+    if (avslutningKreverFerdigFlyttet && sender && avslutterSaken(sender)) {
+      dispatch({ type: "settFeil", feil: { "": SAK_UNDER_FLYTTING_FEIL } });
+      return;
+    }
+    if (sender) {
       send(tilstand.handling, tilstand.verdier, innsending);
     } else {
       dispatch({ type: "neste" });
@@ -189,7 +206,7 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
           <VStack gap="space-8" align="center" className="py-6 text-center">
             <BodyShort weight="semibold">Lagret</BodyShort>
             <BodyShort textColor="subtle">
-              Endringen på sak #{getSaksreferanse(sakId)} er lagret.
+              Endringen på sak {getSaksreferanse(sakId)} er lagret.
             </BodyShort>
           </VStack>
         </Modal.Body>
@@ -312,4 +329,9 @@ export function SaksflytModal({ sakId, tillatteHandlinger, start, onClose }: Sak
       </Modal.Footer>
     </Modal>
   );
+}
+
+/** Innsendingen flytter saken til Avsluttet. Lagring av påklaget henleggelse avslutter ikke. */
+function avslutterSaken(innsending: Innsending): boolean {
+  return innsending.handling === "endre_steg_dialog" && innsending.steg === "AVSLUTTET";
 }

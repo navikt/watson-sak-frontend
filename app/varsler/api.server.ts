@@ -39,30 +39,32 @@ export async function hentUlesteVarsler(token: string): Promise<Varsel[]> {
   return data.items.map(tilVarsel).sort((a, b) => b.tidspunkt.localeCompare(a.tidspunkt));
 }
 
-export interface VarslerPage {
+export type Varselfilter = "uleste" | "leste";
+
+export interface Varselside {
   varsler: Varsel[];
-  harFlere: boolean;
   totalItems: number;
+  totalSider: number;
 }
 
-export async function hentAlleVarsler(
+/** Henter én side med enten uleste eller leste varsler, nyeste først. */
+export async function hentVarselside(
   token: string,
+  filter: Varselfilter,
   page: number,
   size: number,
-): Promise<VarslerPage> {
+): Promise<Varselside> {
   const params = new URLSearchParams({
-    kunUleste: "false",
+    [filter === "uleste" ? "kunUleste" : "kunLeste"]: "true",
     page: String(page),
     size: String(size),
   });
-  const data = await fetchVarslerPage(token, params, "hentAlleVarsler");
-
-  const varsler = data.items.map(tilVarsel).sort((a, b) => b.tidspunkt.localeCompare(a.tidspunkt));
+  const data = await fetchVarslerPage(token, params, `hentVarselside(${filter})`);
 
   return {
-    varsler,
-    harFlere: page < data.totalPages,
+    varsler: data.items.map(tilVarsel).sort((x, y) => y.tidspunkt.localeCompare(x.tidspunkt)),
     totalItems: data.totalItems,
+    totalSider: Math.max(data.totalPages, 1),
   };
 }
 
