@@ -30,12 +30,16 @@ spec:
   accessPolicy:
     outbound:
       rules:
-        - application: nav-persondata-api
-          namespace: holmes
         - application: watson-admin-api
           namespace: holmes
       external:
         - host: holmes-unleash-api.nav.cloud.nais.io
+  resources:
+    requests:
+      cpu: 50m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
   image: {{image}}
   port: 3000
   azure:
