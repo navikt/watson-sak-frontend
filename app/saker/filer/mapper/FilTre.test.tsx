@@ -388,9 +388,9 @@ describe("FilTre", () => {
       });
       const tre = screen.getByRole("list", { name: "Dokumenter og filer" });
       expect(within(tre).getAllByRole("listitem")[0]).toBe(
-        screen.getByRole("button", { name: /^SAK-1/, expanded: true }).closest("li"),
+        screen.getByRole("button", { name: /^Sak SAK-1/, expanded: true }).closest("li"),
       );
-      const rotmappe = screen.getByRole("list", { name: "SAK-1" });
+      const rotmappe = screen.getByRole("list", { name: "Sak SAK-1" });
       const elementer = within(rotmappe)
         .getAllByRole("listitem")
         .map((li) => li.textContent ?? "");
@@ -485,8 +485,11 @@ describe("FilTre", () => {
         within(flyttTil)
           .getAllByRole("option")
           .map((option) => option.textContent),
-      ).toContain("SAK-1 / Bank / Kontoutskrifter");
-      expect(within(flyttTil).getByRole("option", { name: "SAK-1" })).toHaveProperty("value", "");
+      ).toContain("Sak SAK-1 / Bank / Kontoutskrifter");
+      expect(within(flyttTil).getByRole("option", { name: "Sak SAK-1" })).toHaveProperty(
+        "value",
+        "",
+      );
       fireEvent.change(flyttTil, {
         target: { value: "Bank/Kontoutskrifter" },
       });
@@ -664,7 +667,7 @@ describe("FilTre", () => {
       fireEvent.click(await screen.findByRole("menuitem", { name: "Slett mappe" }));
 
       await waitFor(() => {
-        expect(document.activeElement).toBe(screen.getByRole("button", { name: /^SAK-1/ }));
+        expect(document.activeElement).toBe(screen.getByRole("button", { name: /^Sak SAK-1/ }));
       });
     });
 
