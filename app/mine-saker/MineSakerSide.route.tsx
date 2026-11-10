@@ -5,6 +5,7 @@ import { skalBrukeMockdata } from "~/config/env.server";
 import { hentKontrollsaker } from "~/fordeling/api.server";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { hentAlleSaker, hentMineSaker } from "~/saker/mock-alle-saker.server";
+import { normaliserTilMockIdent } from "~/testing/mock-store/alle-saker.server";
 import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
 import { SORTERBARE_SAKSKOLONNER, standardRetningForKolonne } from "~/saker/saksliste/oppsett";
 import { sorterSaker } from "~/alle-saker/saker-utils";
@@ -119,14 +120,20 @@ export async function loader({ request }: Route.LoaderArgs) {
   } else {
     const alleSaker = hentAlleSaker(request);
     const egneSaker = hentMineSaker(request, innloggetBruker.navIdent, innloggetBruker.name);
+    const innloggetIdentiteter = new Set([
+      innloggetBruker.navIdent,
+      normaliserTilMockIdent(innloggetBruker.navIdent),
+    ]);
+    const erInnloggetBruker = (navIdent?: string) =>
+      navIdent !== undefined && innloggetIdentiteter.has(navIdent);
     const delteSaker = alleSaker.filter((sak) => {
       const eier = sak.saksbehandlere.eier?.navIdent;
       const erTilknyttet =
-        eier === innloggetBruker.navIdent ||
-        sak.saksbehandlere.deltMed.some(
-          (saksbehandler) => saksbehandler.navIdent === innloggetBruker.navIdent,
+        erInnloggetBruker(eier) ||
+        sak.saksbehandlere.deltMed.some((saksbehandler) =>
+          erInnloggetBruker(saksbehandler.navIdent),
         );
-      return erTilknyttet && eier !== innloggetBruker.navIdent;
+      return erTilknyttet && !erInnloggetBruker(eier);
     });
     const mineTreff = sorterSaker(
       filtrerMineSaker(egneSaker, stegFilter, statusFilter),
