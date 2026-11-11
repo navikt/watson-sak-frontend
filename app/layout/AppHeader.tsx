@@ -157,7 +157,7 @@ export function AppHeader() {
         )}
       </div>
       <Spacer />
-      <VarselBjelle />
+      {!innloggetBruker?.erLesebruker && <VarselBjelle />}
       <ActionMenu>
         <ActionMenu.Trigger>
           <InternalHeader.Button>

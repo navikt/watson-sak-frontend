@@ -125,6 +125,24 @@ describe("hentInnloggetBruker", () => {
     });
   });
 
+  it("eksponerer leserstatus uten å gi lederrolle", async () => {
+    testState.environment = "prod";
+    hentSaksbehandlerInfoMock.mockResolvedValue({
+      navIdent: "Z123456",
+      navn: "Test",
+      enhet: "Øst",
+      enhetId: "ky153k",
+      erLeder: false,
+      erLesebruker: true,
+    });
+    const { hentInnloggetBruker } = await import("./innlogget-bruker.server");
+
+    const bruker = await hentInnloggetBruker({ request: new Request("http://localhost") });
+
+    expect(bruker.erLesebruker).toBe(true);
+    expect(bruker.erLeder).toBe(false);
+  });
+
   it("logger inn som leder-øst i local-mock når BRUKERPROFIL er satt til leder-øst", async () => {
     testState.environment = "local-mock";
     testState.brukerprofil = "leder-øst";

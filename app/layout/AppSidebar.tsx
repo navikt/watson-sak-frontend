@@ -13,6 +13,7 @@ import {
 import { Tooltip } from "@navikt/ds-react";
 import { useState, type ComponentType } from "react";
 import { NavLink } from "react-router";
+import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { migreringErÅpen } from "~/migrering/miljo";
 import { skalBrukeMockdataForMiljø } from "~/config/backend-config";
 import { useMiljø } from "~/miljø/useMiljø";
@@ -41,6 +42,7 @@ const lenker: Lenke[] = [
 ];
 
 export function AppSidebar() {
+  const bruker = useInnloggetBruker();
   const { preferences, oppdaterPreference } = usePreferences();
   const [erInnstillingerApne, setErInnstillingerApne] = useState(false);
 
@@ -48,8 +50,10 @@ export function AppSidebar() {
   const miljø = useMiljø();
   const synligeLenker = lenker.filter(
     (lenke) =>
-      lenke.to !== RouteConfig.MIGRERING ||
-      (miljø && (migreringErÅpen(miljø) || skalBrukeMockdataForMiljø(miljø))),
+      (!bruker.erLesebruker ||
+        (lenke.to !== RouteConfig.REGISTRER_SAK && lenke.to !== RouteConfig.MIGRERING)) &&
+      (lenke.to !== RouteConfig.MIGRERING ||
+        (miljø && (migreringErÅpen(miljø) || skalBrukeMockdataForMiljø(miljø)))),
   );
 
   const toggleSidebar = () => {

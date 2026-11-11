@@ -68,7 +68,7 @@ export default function SakDetaljSide() {
 function TilgangAvvistSide({
   avvisningsgrunn,
 }: {
-  avvisningsgrunn: "AVVIST_HABILITET" | "AVVIST_SKJERMING";
+  avvisningsgrunn: "AVVIST_HABILITET" | "AVVIST_SKJERMING" | "AVVIST_VERGE";
 }) {
   const melding =
     avvisningsgrunn === "AVVIST_SKJERMING"

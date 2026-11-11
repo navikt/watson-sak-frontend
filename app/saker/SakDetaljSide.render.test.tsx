@@ -101,6 +101,7 @@ describe("SakDetaljSide render", () => {
       "Du har bedt om tilgang til å se informasjon om en person som er ansatt i Nav.",
     ],
     ["AVVIST_HABILITET", "Du har bedt om tilgang til å se informasjon om en person."],
+    ["AVVIST_VERGE", "Du har bedt om tilgang til å se informasjon om en person."],
   ] as const)(
     "viser avvisningsside for %s uten saksdata",
     async (avvisningsgrunn, tekst) => {

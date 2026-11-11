@@ -116,7 +116,9 @@ async function lastLederData(
   request: Request,
   innloggetBruker: Awaited<ReturnType<typeof hentInnloggetBruker>>,
 ) {
-  const sakerSomSkalFlyttes = harSakerSomSkalFlyttes(request, innloggetBruker.navIdent);
+  const sakerSomSkalFlyttes = innloggetBruker.erLesebruker
+    ? Promise.resolve(false)
+    : harSakerSomSkalFlyttes(request, innloggetBruker.navIdent);
   const statistikk = await hentLederOversiktData({ request, innloggetBruker });
 
   return {
@@ -131,7 +133,7 @@ async function lastLederData(
 export async function loader({ request }: LoaderFunctionArgs) {
   const innloggetBruker = await hentInnloggetBruker({ request });
 
-  if (innloggetBruker.erLeder) {
+  if (innloggetBruker.erLeder || innloggetBruker.erLesebruker) {
     return lastLederData(request, innloggetBruker);
   }
 

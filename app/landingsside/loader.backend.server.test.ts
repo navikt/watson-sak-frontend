@@ -1,6 +1,7 @@
 import { data } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { loader } from "./loader.server";
+import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 
 const miljøMock = vi.hoisted(() => ({ ENVIRONMENT: "prod" }));
 vi.mock("~/config/env.server", () => ({ skalBrukeMockdata: false, env: miljøMock }));
@@ -20,6 +21,9 @@ const hentOppsummeringMock = vi.hoisted(() => vi.fn());
 vi.mock("./api.server", () => ({ hentMineSakerOppsummering: hentOppsummeringMock }));
 const hentKontrollsakerMock = vi.hoisted(() => vi.fn().mockResolvedValue({ items: [] }));
 vi.mock("~/fordeling/api.server", () => ({ hentKontrollsaker: hentKontrollsakerMock }));
+const hentLederOversiktMock = vi.hoisted(() => vi.fn());
+vi.mock("~/lederoversikt/loader.server", () => ({ hentLederOversiktData: hentLederOversiktMock }));
+vi.mock("~/lederoversikt/velkomst", () => ({ lagLederVelkomstOppsummering: () => null }));
 
 const args = {
   request: new Request("http://localhost/"),
@@ -34,6 +38,30 @@ describe("landingsside-loader mot backend", () => {
     hentKontrollsakerMock.mockReset();
     hentKontrollsakerMock.mockResolvedValue({ items: [] });
     miljøMock.ENVIRONMENT = "prod";
+  });
+
+  it("gir Holmes ansattoversikten uten lederrolle eller migreringsoppslag", async () => {
+    vi.mocked(hentInnloggetBruker).mockResolvedValueOnce({
+      preferredUsername: "test",
+      name: "Test",
+      navIdent: "Z123456",
+      enhet: "Øst",
+      enhetId: "ky153k",
+      erLeder: false,
+      erLesebruker: true,
+    });
+    const statistikk = { enhet: {}, enhetNavn: "Øst", ansatte: { liste: [] } };
+    hentLederOversiktMock.mockResolvedValueOnce(statistikk);
+    miljøMock.ENVIRONMENT = "dev";
+
+    const resultat = await loader(args);
+
+    expect(resultat.type).toBe("leder");
+    if (resultat.type !== "leder") throw new Error("Forventet statistikkoversikt");
+    expect(resultat.statistikk).toBe(statistikk);
+    expect(resultat.harSakerSomSkalFlyttes).toBe(false);
+    expect(hentMigreringslisteMock).not.toHaveBeenCalled();
+    expect(hentKontrollsakerMock).not.toHaveBeenCalled();
   });
 
   it("bruker oppsummeringen fra backend i velkomstteksten", async () => {

@@ -424,7 +424,7 @@ describe("SakDetaljSide loader — backend-sti", () => {
     expect(resultat.sak).toEqual(grunnleggendeSak);
   });
 
-  it.each(["AVVIST_HABILITET", "AVVIST_SKJERMING"] as const)(
+  it.each(["AVVIST_HABILITET", "AVVIST_SKJERMING", "AVVIST_VERGE"] as const)(
     "returnerer bare avvisningsgrunn ved detaljavslag %s før andre kall",
     async (avvisningsgrunn) => {
       mockHentKontrollsakForDetalj.mockResolvedValueOnce({
