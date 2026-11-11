@@ -1,5 +1,6 @@
 import { BACKEND_API_URL } from "~/config/env.server";
 import { logger } from "~/logging/logging";
+import { kastHvisUtlogget } from "./session-utløpt.server";
 import { SaksbehandlerInfoSchema, type SaksbehandlerInfo } from "./domene";
 
 const FEILMELDING = "Kunne ikke hente informasjon om innlogget saksbehandler.";
@@ -18,6 +19,7 @@ export async function hentSaksbehandlerInfo(token: string): Promise<Saksbehandle
   }
 
   if (!response.ok) {
+    kastHvisUtlogget(response);
     logger.warn("Mottok feil fra innlogget-bruker-API", {
       status: response.status,
     });

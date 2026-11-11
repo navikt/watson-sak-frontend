@@ -58,6 +58,15 @@ describe("hentSaksbehandlerInfo", () => {
     });
   });
 
+  it.each([401, 429])("bevarer route-feilen når backend svarer %s", async (status) => {
+    fetchMock.mockResolvedValue(new Response(null, { status }));
+
+    await expect(hentSaksbehandlerInfo("token")).rejects.toMatchObject({
+      init: { status },
+    });
+    expect(loggerMock.warn).not.toHaveBeenCalled();
+  });
+
   it("feiler når backend svarer med ugyldig JSON", async () => {
     fetchMock.mockResolvedValue(new Response("{", { status: 200 }));
 

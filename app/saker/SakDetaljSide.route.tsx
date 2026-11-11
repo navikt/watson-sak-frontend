@@ -290,11 +290,17 @@ function SakDetaljSideInnhold() {
                 mapper={mapper}
                 sakId={saksreferanse}
                 steg={sak.steg}
-                redigerbar={harDirekteTilgang && stegregler.kanRedigereDokumenter}
+                redigerbar={
+                  !innloggetBruker.erLesebruker &&
+                  harDirekteTilgang &&
+                  stegregler.kanRedigereDokumenter
+                }
                 kanLasteOppFiler={
                   kanLasteOppFiler(sak, innloggetBruker) && stegregler.kanLasteOppFiler
                 }
-                kanEndreFiler={harDirekteTilgang && stegregler.kanLasteOppFiler}
+                kanEndreFiler={
+                  !innloggetBruker.erLesebruker && harDirekteTilgang && stegregler.kanLasteOppFiler
+                }
                 migreringsnotatEksempel={migreringsnotatEksempel}
                 visMigreringsnotatForhandsvisning={Boolean(
                   sak.legacyPid &&

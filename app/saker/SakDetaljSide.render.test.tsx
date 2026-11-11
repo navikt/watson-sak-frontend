@@ -18,6 +18,7 @@ vi.mock("~/auth/innlogget-bruker.server", () => ({
     preferredUsername: "test@nav.no",
     enhet: "4812",
     erLeder,
+    erLesebruker,
   }),
 }));
 
@@ -27,6 +28,7 @@ vi.mock("~/auth/innlogget-bruker", () => ({
     name: "Test Saksbehandler",
     enhet: "4812",
     erLeder,
+    erLesebruker,
   }),
 }));
 
@@ -43,6 +45,7 @@ const testRequest = new Request("http://localhost");
 const testSakId = "201";
 const deltMedSakId = "101";
 let erLeder = false;
+let erLesebruker = false;
 
 function renderDetaljside(sakId = testSakId, query = "") {
   const router = createMemoryRouter(
@@ -82,6 +85,7 @@ describe("SakDetaljSide render", () => {
     });
     resetDefaultSession();
     erLeder = false;
+    erLesebruker = false;
     visningsmiljø.verdi = "local-mock";
   });
 
@@ -434,6 +438,17 @@ describe("SakDetaljSide render", () => {
     expect(
       screen.queryByText("Du må få delt tilgang til saken for å kunne se dokumenter og vedlegg."),
     ).toBeNull();
+  }, 15000);
+
+  it("beholder filinnsyn, men skjuler filskriving for Holmes-lesere", async () => {
+    erLesebruker = true;
+
+    renderDetaljside("102");
+
+    expect(await screen.findByRole("heading", { name: "Filer" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Last opp fil" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Opprett mappe" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Opprett dokument" })).toBeNull();
   }, 15000);
 
   it("skjuler filer og historikk for leder som ikke er saksbehandler på saken", async () => {
