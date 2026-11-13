@@ -61,7 +61,7 @@ async function hentAnsatteValg(request: Request): Promise<MigreringAnsatt[] | nu
   }
 }
 
-/** `prod` er stengt til importen er godkjent. `local-backend` og `dev` kaller det beskyttede migrerings-API-et. */
+/** Åpne miljøer kaller det beskyttede migrerings-API-et. */
 export function httpMigreringKilde(request: Request): MigreringKilde {
   return {
     async hentLister({ side, filter }) {

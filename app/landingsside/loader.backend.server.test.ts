@@ -100,12 +100,13 @@ describe("landingsside-loader mot backend", () => {
     };
 
     it("spør ikke backend når migrering er stengt", async () => {
+      miljøMock.ENVIRONMENT = "local-dev";
       expect(await hentFlagg()).toBe(false);
       expect(hentMigreringslisteMock).not.toHaveBeenCalled();
     });
 
     it("er sann når brukeren har saker som ikke er ferdig flyttet", async () => {
-      miljøMock.ENVIRONMENT = "dev";
+      miljøMock.ENVIRONMENT = "prod";
       hentMigreringslisteMock.mockResolvedValue({ totalAntall: 3 });
 
       expect(await hentFlagg()).toBe(true);
