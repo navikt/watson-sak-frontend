@@ -121,15 +121,17 @@ function SakDetaljSideInnhold() {
   const miljø = useMiljø();
   const stegregler = hentStegbaserteSaksregler(sak.steg);
   const erEier = erSakseier(sak, innloggetBruker.navIdent);
+  const kanSkrive = !innloggetBruker.erLesebruker;
+  const erEierMedSkriveadgang = erEier && kanSkrive;
   const tilgjengeligeSteg =
-    erEier && tillatteHandlinger
+    erEierMedSkriveadgang && tillatteHandlinger
       ? hentHandlinger(tillatteHandlinger).flatMap((handling) =>
           handling.innsending.handling === "endre_steg_dialog" ? [handling.innsending.steg] : [],
         )
       : [];
   const erFerdigMigrert =
     (miljø === "local-mock" || migreringErÅpen(miljø)) &&
-    erEier &&
+    erEierMedSkriveadgang &&
     sak.legacyPid &&
     migreringsstatus === "FULLSTENDIG";
   // Mock-miljøene kan ikke ferdigstille flytting, så der kreves det ikke før avslutning (TH-118).
@@ -159,7 +161,7 @@ function SakDetaljSideInnhold() {
   const ansvarligSaksbehandler = sak.saksbehandlere.eier
     ? finnSaksbehandlerDetalj(saksbehandlerDetaljer, sak.saksbehandlere.eier.navIdent)
     : null;
-  const kanRedigere = erEier && stegregler.erAktiv;
+  const kanRedigere = erEierMedSkriveadgang && stegregler.erAktiv;
   const onSakOppdatert = useCallback((oppdatertSak: KontrollsakResponse) => {
     setSak(oppdatertSak);
   }, []);
@@ -228,7 +230,7 @@ function SakDetaljSideInnhold() {
 
             {sak.legacyPid &&
               sak.legacyKilde &&
-              erEier &&
+              erEierMedSkriveadgang &&
               (miljø === "local-mock" || migreringErÅpen(miljø)) &&
               (erFerdigMigrert ? (
                 visEksempelBekreftelse && (
@@ -290,17 +292,11 @@ function SakDetaljSideInnhold() {
                 mapper={mapper}
                 sakId={saksreferanse}
                 steg={sak.steg}
-                redigerbar={
-                  !innloggetBruker.erLesebruker &&
-                  harDirekteTilgang &&
-                  stegregler.kanRedigereDokumenter
-                }
+                redigerbar={kanSkrive && harDirekteTilgang && stegregler.kanRedigereDokumenter}
                 kanLasteOppFiler={
                   kanLasteOppFiler(sak, innloggetBruker) && stegregler.kanLasteOppFiler
                 }
-                kanEndreFiler={
-                  !innloggetBruker.erLesebruker && harDirekteTilgang && stegregler.kanLasteOppFiler
-                }
+                kanEndreFiler={kanSkrive && harDirekteTilgang && stegregler.kanLasteOppFiler}
                 migreringsnotatEksempel={migreringsnotatEksempel}
                 visMigreringsnotatForhandsvisning={Boolean(
                   sak.legacyPid &&
@@ -321,7 +317,7 @@ function SakDetaljSideInnhold() {
               renderHandlinger={({ onJournalpostOpprettet, arkiv }) => (
                 <SakHandlingerKnapper
                   sak={sak}
-                  erEier={erEier}
+                  erEier={erEierMedSkriveadgang}
                   filer={filer}
                   dokumenter={dokumenter}
                   onJournalpostOpprettet={onJournalpostOpprettet}
@@ -346,6 +342,7 @@ function SakDetaljSideInnhold() {
               totalSider={andreSakerSide.totalSider}
               gjeldendeSak={sak}
               innloggetNavIdent={innloggetBruker.navIdent}
+              kanSkrive={kanSkrive}
             />
           </VStack>
 
@@ -356,9 +353,9 @@ function SakDetaljSideInnhold() {
             tillatteHandlinger={tillatteHandlinger}
             historikk={historikk}
             erEier={erEier}
-            kanTildeleSak={sak.tilgang?.kanTildeleSak ?? true}
+            kanTildeleSak={kanSkrive && (sak.tilgang?.kanTildeleSak ?? true)}
             kanRedigere={kanRedigere}
-            kanLeggeTilHistorikk={erEier && stegregler.kanLeggeTilHistorikk}
+            kanLeggeTilHistorikk={erEierMedSkriveadgang && stegregler.kanLeggeTilHistorikk}
             historikkTilstand={historikkTilstand}
             seksjonsfeil={seksjonsfeil}
           />

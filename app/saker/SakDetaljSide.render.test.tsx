@@ -451,6 +451,51 @@ describe("SakDetaljSide render", () => {
     expect(screen.queryByRole("button", { name: "Opprett dokument" })).toBeNull();
   }, 15000);
 
+  it.each(["eier", "delt med"] as const)(
+    "skjuler skrivehandlinger for Holmes-leser som er %s på en aktiv sak",
+    async (relasjon) => {
+      erLesebruker = true;
+      const { hentMockState } = await import("~/testing/mock-store/session.server");
+      const { hentAlleSaker } = await import("~/testing/mock-store/alle-saker.server");
+      const sak = hentAlleSaker(hentMockState(testRequest)).find((s) => s.id === Number(testSakId));
+      if (!sak) {
+        throw new Error("Fant ikke testdata for sak");
+      }
+      if (relasjon === "eier") {
+        sak.saksbehandlere.eier = {
+          navIdent: "Z999999",
+          navn: "Test Saksbehandler",
+          enhet: "4812",
+        };
+      } else {
+        sak.saksbehandlere.eier = {
+          navIdent: "Z111111",
+          navn: "Annen Saksbehandler",
+          enhet: "4812",
+        };
+        sak.saksbehandlere.deltMed = [
+          { navIdent: "Z999999", navn: "Test Saksbehandler", enhet: "4812" },
+        ];
+      }
+
+      renderDetaljside(testSakId);
+
+      expect(await screen.findByRole("heading", { name: /^Sak / })).toBeDefined();
+      expect(screen.getByRole("heading", { name: "Filer" })).toBeDefined();
+      expect(screen.queryByRole("button", { name: "Endre saksinformasjon" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Endre steg" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Endre status" })).toBeNull();
+      if (relasjon === "eier") {
+        expect(screen.queryByRole("button", { name: "Fjern deling med Kari Nordmann" })).toBeNull();
+      }
+      expect(screen.queryByRole("button", { name: "Arkiver dokument(er) i Gosys" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Opprett oppgave i Gosys" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Last opp fil" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Opprett mappe" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Opprett dokument" })).toBeNull();
+    },
+  );
+
   it("skjuler filer og historikk for leder som ikke er saksbehandler på saken", async () => {
     erLeder = true;
     const { hentMockState } = await import("~/testing/mock-store/session.server");
