@@ -24,17 +24,20 @@ describe("Migreringslenke i sidebar", () => {
     state.erLesebruker = false;
   });
 
-  it("skjuler skriveinnganger for lesebruker og beholder søk og statistikk", () => {
-    state.erLesebruker = true;
-    state.miljø = "local-mock";
-    visSidebar();
-    expect(screen.queryByRole("link", { name: "Opprett sak" })).toBeNull();
-    expect(screen.queryByRole("link", { name: "Flytt fra Access" })).toBeNull();
-    expect(screen.getByRole("link", { name: "Alle saker" })).not.toBeNull();
-    expect(screen.getByRole("link", { name: "Statistikk" })).not.toBeNull();
-  });
+  it.each<Miljø>(["local-mock", "prod"])(
+    "skjuler skriveinnganger for lesebruker og beholder søk og statistikk i %s",
+    (miljø) => {
+      state.erLesebruker = true;
+      state.miljø = miljø;
+      visSidebar();
+      expect(screen.queryByRole("link", { name: "Opprett sak" })).toBeNull();
+      expect(screen.queryByRole("link", { name: "Flytt fra Access" })).toBeNull();
+      expect(screen.getByRole("link", { name: "Alle saker" })).not.toBeNull();
+      expect(screen.getByRole("link", { name: "Statistikk" })).not.toBeNull();
+    },
+  );
 
-  it.each<Miljø>(["local-mock", "local-backend", "demo", "dev"])("vises i %s", (miljø) => {
+  it.each<Miljø>(["local-mock", "local-backend", "demo", "dev", "prod"])("vises i %s", (miljø) => {
     state.miljø = miljø;
     visSidebar();
     const migreringslenke = screen.getByRole("link", { name: "Flytt fra Access" });
@@ -42,7 +45,7 @@ describe("Migreringslenke i sidebar", () => {
     expect(screen.getAllByRole("link").at(-1)).toBe(migreringslenke);
   });
 
-  it.each<Miljø | undefined>(["prod", "local-dev", undefined])("skjules i %s", (miljø) => {
+  it.each<Miljø | undefined>(["local-dev", undefined])("skjules i %s", (miljø) => {
     state.miljø = miljø;
     visSidebar();
     expect(screen.queryByRole("link", { name: "Flytt fra Access" })).toBeNull();
