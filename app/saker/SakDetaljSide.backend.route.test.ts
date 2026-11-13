@@ -558,7 +558,7 @@ describe("SakDetaljSide loader — backend-sti", () => {
           paakrevd: false,
           verdier: [
             { verdi: "HENLAGT", etikett: "Henlagt" },
-            { verdi: "KONTROLLNOTAT", etikett: "Kontrollnotat" },
+            { verdi: "ORIENTERINGSNOTAT", etikett: "Orienteringsnotat" },
             { verdi: "FEILUTBETALINGSSAK_ORDINAER", etikett: "Feilutbetalingssak, ordinær" },
           ],
         },

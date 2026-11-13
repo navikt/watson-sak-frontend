@@ -45,7 +45,7 @@ describe("KnyttOppgaveModal", () => {
         journalpost={{
           journalpostId: "jp-1",
           tema: "KTA",
-          dokumentbeskrivelse: "Kontrollnotat",
+          dokumentbeskrivelse: "Orienteringsnotat",
           dokumentnavn: ["rapport.pdf", "Vurderingsnotat"],
         }}
         onClose={vi.fn()}
@@ -56,7 +56,7 @@ describe("KnyttOppgaveModal", () => {
       screen.getByRole("dialog", { name: "Knytt oppgave til de journalførte dokumentene" }),
     ).toBeDefined();
     expect(screen.getByText("Kontroll anmeldelse")).toBeDefined();
-    expect(screen.getByText("Kontrollnotat")).toBeDefined();
+    expect(screen.getByText("Orienteringsnotat")).toBeDefined();
     expect(screen.getByText("rapport.pdf")).toBeDefined();
     expect(screen.queryByLabelText("Tema")).toBeNull();
     expect(kodeverkTema.verdi).toBe("KTA");
@@ -84,7 +84,7 @@ describe("KnyttOppgaveModal", () => {
         journalpost={{
           journalpostId: "jp-1",
           tema: "KTA",
-          dokumentbeskrivelse: "Kontrollnotat",
+          dokumentbeskrivelse: "Orienteringsnotat",
           dokumentnavn: ["rapport.pdf"],
         }}
         onClose={vi.fn()}

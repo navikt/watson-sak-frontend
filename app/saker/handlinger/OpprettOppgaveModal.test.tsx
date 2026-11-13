@@ -61,7 +61,7 @@ const arkiv: ArkivOversikt = {
         datoOpprettet: "2026-05-04T10:00:00",
         journalposttype: "N",
         journalstatus: "JOURNALFOERT",
-        tittel: "Kontrollnotat",
+        tittel: "Orienteringsnotat",
         tema: "KTR",
         temanavn: "Kontroll",
         avsenderMottaker: null,
@@ -112,7 +112,7 @@ describe("OpprettOppgaveModal", () => {
     expect(screen.getByLabelText("Behandlende enhet")).toBeDefined();
     expect(screen.getByLabelText("Gjelderverdi")).toBeDefined();
     expect(screen.getByLabelText("Beskrivelse")).toBeDefined();
-    expect(screen.getByRole("radio", { name: "Kontrollnotat" })).toBeDefined();
+    expect(screen.getByRole("radio", { name: "Orienteringsnotat" })).toBeDefined();
   });
 
   it("krever at oppgaven knyttes til en journalføring", async () => {
@@ -129,14 +129,14 @@ describe("OpprettOppgaveModal", () => {
     await renderMedRouter(<OpprettOppgaveModal {...defaultProps} />);
 
     fyllUtSkjema();
-    fireEvent.click(screen.getByRole("radio", { name: "Kontrollnotat" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Orienteringsnotat" }));
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
     await waitFor(() => {});
     expect(screen.getByText("Du oppretter nå en oppgave:")).toBeDefined();
     expect(screen.getByText("Kontroll anmeldelse")).toBeDefined();
     expect(screen.getByText("Vurder henvendelse")).toBeDefined();
     expect(screen.getByText("Dagpenger")).toBeDefined();
-    expect(screen.getByText("Kontrollnotat")).toBeDefined();
+    expect(screen.getByText("Orienteringsnotat")).toBeDefined();
     expect(
       screen
         .getByRole("button", { name: "Opprett" })

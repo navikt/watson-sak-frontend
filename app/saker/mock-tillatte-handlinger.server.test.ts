@@ -19,13 +19,13 @@ describe("hentMockTillatteHandlinger", () => {
       { verdi: "IKKE_KAPASITET", etikett: "Ikke kapasitet" },
       { verdi: "IKKE_TILSTREKKELIG_BEVISGRUNNLAG", etikett: "Ikke tilstrekkelig dokumentasjon" },
       { verdi: "IKKE_TILSTREKKELIG_SKYLD", etikett: "Ikke tilstrekkelig skyld" },
-      { verdi: "FORELDET", etikett: "Foreldet" },
       {
         verdi: "SAK_PABEGYNT_ELLER_OVERTATT_AV_ANDRE",
         etikett: "Sak påbegynt eller overtatt av andre",
       },
+      { verdi: "FORELDET", etikett: "Foreldet" },
       { verdi: "IKKE_PRIORITERT", etikett: "Ikke prioritert" },
-      { verdi: "KONTROLLNOTAT", etikett: "Kontrollnotat" },
+      { verdi: "INGEN_FEIL", etikett: "Ingen feil" },
     ]);
   });
 
