@@ -276,22 +276,26 @@ describe("SakDetaljSide render", () => {
     15000,
   );
 
-  it("viser sjekklisten for ansvarlig i lokal backend uten migreringsnotat-placeholder", async () => {
-    visningsmiljø.verdi = "local-backend";
-    const { container } = renderDetaljside("1182");
+  it.each(["local-backend", "prod"])(
+    "viser sjekklisten for ansvarlig i %s uten migreringsnotat-placeholder",
+    async (miljø) => {
+      visningsmiljø.verdi = miljø;
+      const { container } = renderDetaljside("1182");
 
-    const filer = await screen.findByRole("checkbox", { name: "Lastet opp alle filer fra S:" });
-    const info = screen.getByRole("checkbox", { name: "Overført all informasjon fra Access" });
-    expect((filer as HTMLInputElement).disabled).toBe(false);
-    expect((info as HTMLInputElement).disabled).toBe(false);
-    expect(screen.getByRole("heading", { name: "Sjekkliste – flytt fra Access" })).toBeDefined();
-    expect(container.querySelector('input[name="handling"]')?.getAttribute("value")).toBe(
-      "MIGRERING_FERDIGSTILL",
-    );
-    expect(container.querySelector('input[name="lastetOppFiler"]')).not.toBeNull();
-    expect(container.querySelector('input[name="overfortInformasjon"]')).not.toBeNull();
-    expect(screen.queryByText("Migreringsnotat (forhåndsvisning)")).toBeNull();
-  }, 15000);
+      const filer = await screen.findByRole("checkbox", { name: "Lastet opp alle filer fra S:" });
+      const info = screen.getByRole("checkbox", { name: "Overført all informasjon fra Access" });
+      expect((filer as HTMLInputElement).disabled).toBe(false);
+      expect((info as HTMLInputElement).disabled).toBe(false);
+      expect(screen.getByRole("heading", { name: "Sjekkliste – flytt fra Access" })).toBeDefined();
+      expect(container.querySelector('input[name="handling"]')?.getAttribute("value")).toBe(
+        "MIGRERING_FERDIGSTILL",
+      );
+      expect(container.querySelector('input[name="lastetOppFiler"]')).not.toBeNull();
+      expect(container.querySelector('input[name="overfortInformasjon"]')).not.toBeNull();
+      expect(screen.queryByText("Migreringsnotat (forhåndsvisning)")).toBeNull();
+    },
+    15000,
+  );
 
   it("aktiverer ferdigknappen først når begge punktene i sjekklisten er krysset av", async () => {
     visningsmiljø.verdi = "local-backend";
