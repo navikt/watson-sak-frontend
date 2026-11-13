@@ -27,7 +27,11 @@ export const kontrollsakStatusSchema = z.enum([
   "I_BERO",
 ]);
 
-export const kontrollsakAvvisningsgrunnSchema = z.enum(["AVVIST_HABILITET", "AVVIST_SKJERMING"]);
+export const kontrollsakAvvisningsgrunnSchema = z.enum([
+  "AVVIST_HABILITET",
+  "AVVIST_SKJERMING",
+  "AVVIST_VERGE",
+]);
 export type KontrollsakAvvisningsgrunn = z.infer<typeof kontrollsakAvvisningsgrunnSchema>;
 
 const kontrollsakKategoriSchema = z.string();

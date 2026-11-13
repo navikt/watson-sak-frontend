@@ -146,26 +146,29 @@ describe("SakDetaljSide loader — backend-sti", () => {
     });
   });
 
-  it("ferdigmerker bare ansvarlig etter eksplisitt bekreftelse i lokal backend", async () => {
-    env.ENVIRONMENT = "local-backend";
-    mockHentKontrollsak.mockResolvedValue({
-      ...grunnleggendeSak,
-      legacyKilde: "UTREDNING",
-      legacyPid: "200001",
-    });
-    mockFerdigstillMigreringskandidat.mockResolvedValue(undefined);
-    const formData = new FormData();
-    formData.set("handling", "MIGRERING_FERDIGSTILL");
-    formData.set("lastetOppFiler", "ja");
-    formData.set("overfortInformasjon", "ja");
-    const request = new Request("http://localhost/saker/1", { method: "POST", body: formData });
-    const { action } = await import("./SakDetaljSide.server");
+  it.each(["local-backend", "prod"] as const)(
+    "ferdigmerker bare ansvarlig etter eksplisitt bekreftelse i %s",
+    async (miljø) => {
+      env.ENVIRONMENT = miljø;
+      mockHentKontrollsak.mockResolvedValue({
+        ...grunnleggendeSak,
+        legacyKilde: "UTREDNING",
+        legacyPid: "200001",
+      });
+      mockFerdigstillMigreringskandidat.mockResolvedValue(undefined);
+      const formData = new FormData();
+      formData.set("handling", "MIGRERING_FERDIGSTILL");
+      formData.set("lastetOppFiler", "ja");
+      formData.set("overfortInformasjon", "ja");
+      const request = new Request("http://localhost/saker/1", { method: "POST", body: formData });
+      const { action } = await import("./SakDetaljSide.server");
 
-    expect(
-      await action({ request, params: { sakId: "1" } } as Parameters<typeof action>[0]),
-    ).toEqual({ ok: true });
-    expect(mockFerdigstillMigreringskandidat).toHaveBeenCalledWith(request, "UTREDNING:200001");
-  });
+      expect(
+        await action({ request, params: { sakId: "1" } } as Parameters<typeof action>[0]),
+      ).toEqual({ ok: true });
+      expect(mockFerdigstillMigreringskandidat).toHaveBeenCalledWith(request, "UTREDNING:200001");
+    },
+  );
 
   it("avviser ferdigmerking når innlogget bruker ikke er ansvarlig", async () => {
     env.ENVIRONMENT = "local-backend";
@@ -424,7 +427,7 @@ describe("SakDetaljSide loader — backend-sti", () => {
     expect(resultat.sak).toEqual(grunnleggendeSak);
   });
 
-  it.each(["AVVIST_HABILITET", "AVVIST_SKJERMING"] as const)(
+  it.each(["AVVIST_HABILITET", "AVVIST_SKJERMING", "AVVIST_VERGE"] as const)(
     "returnerer bare avvisningsgrunn ved detaljavslag %s før andre kall",
     async (avvisningsgrunn) => {
       mockHentKontrollsakForDetalj.mockResolvedValueOnce({

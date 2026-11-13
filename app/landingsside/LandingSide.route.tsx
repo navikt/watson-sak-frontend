@@ -1,6 +1,7 @@
 import { VStack } from "@navikt/ds-react";
 import { useEffect, useRef } from "react";
 import { useFetcher, useLoaderData } from "react-router";
+import { useInnloggetBruker } from "~/auth/innlogget-bruker";
 import { LederOversikt } from "~/lederoversikt/LederOversikt";
 import { MiljøtilpassetTittel } from "~/layout/MiljøtilpassetTittel";
 import { usePreferences } from "~/preferanser/PreferencesContext";
@@ -17,6 +18,7 @@ export { action } from "./action.server";
 export { loader } from "./loader.server";
 
 export default function LandingSide() {
+  const bruker = useInnloggetBruker();
   const loaderData = useLoaderData<typeof loader>();
   const fetcher = useFetcher();
   const prevFetcherState = useRef(fetcher.state);
@@ -43,16 +45,18 @@ export default function LandingSide() {
 
         {loaderData.harSakerSomSkalFlyttes ? <FlyttFraAccessBanner /> : null}
 
-        <SisteVarsler
-          varsler={varsler}
-          erSubmitting={fetcher.state !== "idle"}
-          onMarkerSomLest={(varselId) => {
-            fetcher.submit(
-              { varselId },
-              { method: "post", action: RouteConfig.API.MARKER_VARSEL_LEST },
-            );
-          }}
-        />
+        {!bruker.erLesebruker && (
+          <SisteVarsler
+            varsler={varsler}
+            erSubmitting={fetcher.state !== "idle"}
+            onMarkerSomLest={(varselId) => {
+              fetcher.submit(
+                { varselId },
+                { method: "post", action: RouteConfig.API.MARKER_VARSEL_LEST },
+              );
+            }}
+          />
+        )}
 
         {loaderData.type === "leder" ? (
           <LederOversikt statistikk={loaderData.statistikk} />

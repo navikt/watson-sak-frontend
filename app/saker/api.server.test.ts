@@ -68,7 +68,7 @@ describe("hentKontrollsakForDetalj", () => {
     vi.unstubAllGlobals();
   });
 
-  it.each(["AVVIST_HABILITET", "AVVIST_SKJERMING"] as const)(
+  it.each(["AVVIST_HABILITET", "AVVIST_SKJERMING", "AVVIST_VERGE"] as const)(
     "returnerer målrettet avslag for %s",
     async (avvisningsgrunn) => {
       const fetchMock = vi.fn().mockResolvedValue(
