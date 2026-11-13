@@ -68,6 +68,7 @@ interface SakerPåSammePersonProps {
   totalSider?: number;
   gjeldendeSak: KontrollsakResponse;
   innloggetNavIdent: string;
+  kanSkrive?: boolean;
 }
 
 interface SakKortProps {
@@ -373,6 +374,7 @@ export function SakerPåSammePerson({
   totalSider = 0,
   gjeldendeSak,
   innloggetNavIdent,
+  kanSkrive = false,
 }: SakerPåSammePersonProps) {
   const [valgtSak, setValgtSak] = useState<KontrollsakResponse | null>(null);
   const [sakMedIdentHistorikk, setSakMedIdentHistorikk] = useState<KontrollsakResponse | null>(
@@ -458,8 +460,9 @@ export function SakerPåSammePerson({
                 sak={sak}
                 erKoblet={gjeldendeSak.kobledeSaker.includes(sak.id)}
                 kanEndreKobling={
-                  erSaksbehandlerPåSak(gjeldendeSak, innloggetNavIdent) ||
-                  erSaksbehandlerPåSak(sak, innloggetNavIdent)
+                  kanSkrive &&
+                  (erSaksbehandlerPåSak(gjeldendeSak, innloggetNavIdent) ||
+                    erSaksbehandlerPåSak(sak, innloggetNavIdent))
                 }
                 onEndreKobling={åpneKoblingsmodal}
                 onVisIdentHistorikk={setSakMedIdentHistorikk}

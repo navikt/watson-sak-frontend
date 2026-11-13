@@ -46,6 +46,13 @@ describe("tilgangsregler for saken", () => {
     expect(kanEndreSak(sak, som(navIdent))).toBe(endre);
   });
 
+  it("beholder filinnsyn, men fjerner skriveadgang for Holmes-lesere", () => {
+    const leser = { ...som(ANNEN), erLesebruker: true };
+
+    expect(kanSeFilområdet(ufordelt, leser)).toBe(true);
+    expect(kanLasteOppFiler(ufordelt, leser)).toBe(false);
+  });
+
   it("regner sak uten eier som ufordelt", () => {
     expect(erUfordelt(ufordelt)).toBe(true);
     expect(erUfordelt(fordelt)).toBe(false);

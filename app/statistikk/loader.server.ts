@@ -47,7 +47,9 @@ export async function loader({ request }: { request: Request }) {
   const bruker = await hentInnloggetBruker({ request });
   const url = new URL(request.url);
   const periode = lagPeriode(url);
-  const omfang = url.searchParams.get("omfang") ?? (bruker.enhetId ? "enhet:underavdeling" : "meg");
+  const omfang =
+    url.searchParams.get("omfang") ??
+    (bruker.erLesebruker ? "organisasjon" : bruker.enhetId ? "enhet:underavdeling" : "meg");
   const nivaa =
     omfang === "organisasjon"
       ? "nav-kontroll"

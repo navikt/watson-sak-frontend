@@ -13,6 +13,7 @@ export interface InnloggetBruker {
   enhet: string;
   enhetId: string | null;
   erLeder: boolean;
+  erLesebruker?: boolean;
 }
 
 /**
@@ -175,5 +176,6 @@ export async function hentInnloggetBruker({
     enhet: saksbehandlerInfo.enhet ?? "Ukjent",
     enhetId: saksbehandlerInfo.enhetId,
     erLeder: saksbehandlerInfo.erLeder,
+    erLesebruker: saksbehandlerInfo.erLesebruker === true,
   };
 }

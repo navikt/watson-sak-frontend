@@ -18,6 +18,7 @@ vi.mock("~/auth/innlogget-bruker.server", () => ({
     preferredUsername: "test@nav.no",
     enhet: "4812",
     erLeder,
+    erLesebruker,
   }),
 }));
 
@@ -27,6 +28,7 @@ vi.mock("~/auth/innlogget-bruker", () => ({
     name: "Test Saksbehandler",
     enhet: "4812",
     erLeder,
+    erLesebruker,
   }),
 }));
 
@@ -43,6 +45,7 @@ const testRequest = new Request("http://localhost");
 const testSakId = "201";
 const deltMedSakId = "101";
 let erLeder = false;
+let erLesebruker = false;
 
 function renderDetaljside(sakId = testSakId, query = "") {
   const router = createMemoryRouter(
@@ -82,6 +85,7 @@ describe("SakDetaljSide render", () => {
     });
     resetDefaultSession();
     erLeder = false;
+    erLesebruker = false;
     visningsmiljø.verdi = "local-mock";
   });
 
@@ -101,6 +105,7 @@ describe("SakDetaljSide render", () => {
       "Du har bedt om tilgang til å se informasjon om en person som er ansatt i Nav.",
     ],
     ["AVVIST_HABILITET", "Du har bedt om tilgang til å se informasjon om en person."],
+    ["AVVIST_VERGE", "Du har bedt om tilgang til å se informasjon om en person."],
   ] as const)(
     "viser avvisningsside for %s uten saksdata",
     async (avvisningsgrunn, tekst) => {
@@ -438,6 +443,62 @@ describe("SakDetaljSide render", () => {
       screen.queryByText("Du må få delt tilgang til saken for å kunne se dokumenter og vedlegg."),
     ).toBeNull();
   }, 15000);
+
+  it("beholder filinnsyn, men skjuler filskriving for Holmes-lesere", async () => {
+    erLesebruker = true;
+
+    renderDetaljside("102");
+
+    expect(await screen.findByRole("heading", { name: "Filer" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Last opp fil" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Opprett mappe" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Opprett dokument" })).toBeNull();
+  }, 15000);
+
+  it.each(["eier", "delt med"] as const)(
+    "skjuler skrivehandlinger for Holmes-leser som er %s på en aktiv sak",
+    async (relasjon) => {
+      erLesebruker = true;
+      const { hentMockState } = await import("~/testing/mock-store/session.server");
+      const { hentAlleSaker } = await import("~/testing/mock-store/alle-saker.server");
+      const sak = hentAlleSaker(hentMockState(testRequest)).find((s) => s.id === Number(testSakId));
+      if (!sak) {
+        throw new Error("Fant ikke testdata for sak");
+      }
+      if (relasjon === "eier") {
+        sak.saksbehandlere.eier = {
+          navIdent: "Z999999",
+          navn: "Test Saksbehandler",
+          enhet: "4812",
+        };
+      } else {
+        sak.saksbehandlere.eier = {
+          navIdent: "Z111111",
+          navn: "Annen Saksbehandler",
+          enhet: "4812",
+        };
+        sak.saksbehandlere.deltMed = [
+          { navIdent: "Z999999", navn: "Test Saksbehandler", enhet: "4812" },
+        ];
+      }
+
+      renderDetaljside(testSakId);
+
+      expect(await screen.findByRole("heading", { name: /^Sak / })).toBeDefined();
+      expect(screen.getByRole("heading", { name: "Filer" })).toBeDefined();
+      expect(screen.queryByRole("button", { name: "Endre saksinformasjon" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Endre steg" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Endre status" })).toBeNull();
+      if (relasjon === "eier") {
+        expect(screen.queryByRole("button", { name: "Fjern deling med Kari Nordmann" })).toBeNull();
+      }
+      expect(screen.queryByRole("button", { name: "Arkiver dokument(er) i Gosys" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Opprett oppgave i Gosys" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Last opp fil" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Opprett mappe" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Opprett dokument" })).toBeNull();
+    },
+  );
 
   it("skjuler filer og historikk for leder som ikke er saksbehandler på saken", async () => {
     erLeder = true;

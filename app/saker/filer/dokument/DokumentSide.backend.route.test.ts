@@ -10,6 +10,10 @@ const mockHentDokument = vi.fn();
 const mockHentDokumentHistorikk = vi.fn();
 const mockHentKommentarliste = vi.fn();
 const mockLagreDokument = vi.fn();
+const mockGjenopprettDokumentHistorikk = vi.fn();
+const { brukerstatus } = vi.hoisted(() => ({
+  brukerstatus: { erLesebruker: false },
+}));
 
 vi.mock("~/config/env.server", () => ({
   skalBrukeMockdata: false,
@@ -21,11 +25,12 @@ vi.mock("~/auth/access-token", () => ({
 }));
 
 vi.mock("~/auth/innlogget-bruker.server", () => ({
-  hentInnloggetBruker: vi.fn().mockResolvedValue({
+  hentInnloggetBruker: vi.fn().mockImplementation(async () => ({
     navIdent: "Z999999",
     name: "Test Saksbehandler",
     erLeder: false,
-  }),
+    erLesebruker: brukerstatus.erLesebruker,
+  })),
 }));
 
 vi.mock("~/saker/api.server", () => ({
@@ -33,6 +38,7 @@ vi.mock("~/saker/api.server", () => ({
   hentDokument: mockHentDokument,
   hentDokumentHistorikk: mockHentDokumentHistorikk,
   lagreDokument: mockLagreDokument,
+  gjenopprettDokumentHistorikk: mockGjenopprettDokumentHistorikk,
 }));
 
 vi.mock("../mapper/mapper.server", () => ({
@@ -56,6 +62,10 @@ const sak = {
     deltMed: [],
   },
 } as unknown as KontrollsakResponse;
+
+beforeEach(() => {
+  brukerstatus.erLesebruker = false;
+});
 
 describe("DokumentSide loader — kommentarfeil", () => {
   beforeEach(() => {
@@ -95,6 +105,19 @@ describe("DokumentSide loader — kommentarfeil", () => {
 
     expect(resultat.kommentarinnlastingFeilet).toBe(false);
     expect(resultat.kommentarliste.traader).toHaveLength(1);
+  });
+
+  it("viser dokumentet uten skrivehandlinger for lesebruker som eier saken", async () => {
+    brukerstatus.erLesebruker = true;
+    mockHentKontrollsak.mockResolvedValue({ ...sak, steg: "UTREDES" });
+    mockHentKommentarliste.mockResolvedValue(lagListe());
+
+    const resultat = await hent();
+
+    expect(resultat.kanRedigere).toBe(false);
+    expect(resultat.kanEndreMapper).toBe(false);
+    expect(resultat.kanFlytteDokumenter).toBe(false);
+    expect(resultat.kommentarliste.kanKommentere).toBe(false);
   });
 });
 
@@ -186,6 +209,46 @@ describe("DokumentSide action — tekniske feil", () => {
       },
     });
     expect(JSON.stringify(resultat)).not.toContain("sensitivt dokumentinnhold");
+  });
+});
+
+describe("DokumentSide action — lesebruker", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockHentKontrollsak.mockResolvedValue({ ...sak, steg: "UTREDES" });
+  });
+
+  it("avviser dokumentlagring før backend-kall", async () => {
+    brukerstatus.erLesebruker = true;
+
+    await expect(lagre()).rejects.toMatchObject({ init: { status: 403 } });
+
+    expect(mockLagreDokument).not.toHaveBeenCalled();
+  });
+
+  it("avviser gjenoppretting av dokumenthistorikk før backend-kall", async () => {
+    brukerstatus.erLesebruker = true;
+    const { action } = await import("./dokumenthistorikk.api");
+    const request = new Request("http://localhost", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        handling: "gjenopprett_historikkpunkt",
+        historikkId: "historikk-1",
+      }),
+    });
+
+    await expect(
+      action({
+        request,
+        params: {
+          sakId: "42",
+          docId: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+        },
+      } as Route.ActionArgs),
+    ).rejects.toMatchObject({ init: { status: 403 } });
+
+    expect(mockGjenopprettDokumentHistorikk).not.toHaveBeenCalled();
   });
 });
 

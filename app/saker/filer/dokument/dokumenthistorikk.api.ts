@@ -37,6 +37,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
       ? "hente dokumenthistorikkpunkt"
       : "gjenopprette dokument fra historikk";
 
+  if (!skalBrukeMockdata && kropp.handling === "gjenopprett_historikkpunkt") {
+    const innlogget = await hentInnloggetBruker({ request });
+    if (innlogget.erLesebruker) {
+      throw data("Lesebrukere kan ikke gjenopprette dokumenter", { status: 403 });
+    }
+  }
+
   try {
     if (!skalBrukeMockdata) {
       const token = await getBackendOboToken(request);
