@@ -4,6 +4,7 @@ import {
   kontrollsakResponseSchema,
   kontrollsakHendelseResponseSchema,
   tillatteHandlingerResponseSchema,
+  normaliserKontrollnotat,
 } from "./types.backend";
 
 const basisSak = {
@@ -179,6 +180,12 @@ describe("kontrollsakStatusSchema", () => {
 
   it("avviser ukjent status", () => {
     expect(kontrollsakStatusSchema.safeParse("UKJENT").success).toBe(false);
+  });
+});
+
+describe("normaliserKontrollnotat", () => {
+  it.each(["KONTROLLNOTAT", "ORIENTERINGSNOTAT"])("normaliserer %s til ORIENTERINGSNOTAT", (verdi) => {
+    expect(normaliserKontrollnotat(verdi)).toBe("ORIENTERINGSNOTAT");
   });
 });
 

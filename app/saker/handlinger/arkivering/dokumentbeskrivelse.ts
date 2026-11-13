@@ -7,7 +7,7 @@ export const dokumentbeskrivelser = [
   "Kontrollrapport - utland",
   "Brev - innhenting av kontoopplysninger",
   "Brev - innhenting av timelister",
-  "Kontrollnotat",
+  "Orienteringsnotat",
   "Anmeldelse",
   ANNEN_DOKUMENTBESKRIVELSE,
 ] as const;

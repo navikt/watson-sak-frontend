@@ -91,7 +91,7 @@ export function harLagretResultatForOvergang(
         (tilSteg === "FORVALTNING"
           ? resultat.utredning.type === "FEILUTBETALINGSSAK_ORDINAER" ||
             resultat.utredning.type === "FEILUTBETALINGSSAK_POTENSIELL_STRAFFESAK"
-          : resultat.utredning.type === "KONTROLLNOTAT" || resultat.utredning.type === "HENLAGT") &&
+          : resultat.utredning.type === "ORIENTERINGSNOTAT" || resultat.utredning.type === "HENLAGT") &&
         (resultat.utredning.type !== "HENLAGT" || resultat.utredning.henleggelsesarsak != null)
       );
     case "FORVALTNING":
@@ -107,7 +107,7 @@ export function harLagretResultatForOvergang(
       const utfall = hentForvaltningensEndeligeUtfall(resultat);
       return (
         utfall?.type === "FEILUTBETALINGSSAK_ORDINAER" ||
-        utfall?.type === "KONTROLLNOTAT" ||
+        utfall?.type === "ORIENTERINGSNOTAT" ||
         utfall?.type === "HENLAGT"
       );
     case "STRAFFERETTSLIG_VURDERING":
@@ -120,7 +120,7 @@ export function harLagretResultatForOvergang(
       }
       if (tilSteg !== "AVSLUTTET") return false;
       return (
-        resultat?.strafferettsligVurdering?.type === "KONTROLLNOTAT" ||
+        resultat?.strafferettsligVurdering?.type === "ORIENTERINGSNOTAT" ||
         resultat?.strafferettsligVurdering?.type === "FEILUTBETALINGSSAK_ORDINAER" ||
         (resultat?.strafferettsligVurdering?.type === "HENLAGT" &&
           resultat.strafferettsligVurdering.henleggelsesarsak != null)

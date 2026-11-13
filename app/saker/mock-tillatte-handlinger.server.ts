@@ -32,7 +32,7 @@ export function erGyldigMockStegovergang(
       }
       return (
         nyttSteg === "AVSLUTTET" &&
-        ["KONTROLLNOTAT", "HENLAGT"].includes(sak.resultat?.utredning?.type ?? "") &&
+        ["ORIENTERINGSNOTAT", "HENLAGT"].includes(sak.resultat?.utredning?.type ?? "") &&
         (sak.resultat?.utredning?.type !== "HENLAGT" ||
           sak.resultat.utredning.henleggelsesarsak != null)
       );
@@ -77,7 +77,7 @@ const resultatvalg: Partial<Record<KontrollsakSteg, ResultatType[]>> = {
     "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE",
     "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
     "FEILUTBETALINGSSAK_ORDINAER",
-    "KONTROLLNOTAT",
+    "ORIENTERINGSNOTAT",
     "HENLAGT",
   ],
   STRAFFERETTSLIG_VURDERING: ["ANMELDT", "HENLAGT"],
@@ -92,10 +92,10 @@ const henleggelsesarsakerPerSteg: Partial<Record<KontrollsakSteg, Henleggelsesar
     "IKKE_KAPASITET",
     "IKKE_TILSTREKKELIG_BEVISGRUNNLAG",
     "IKKE_TILSTREKKELIG_SKYLD",
-    "FORELDET",
     "SAK_PABEGYNT_ELLER_OVERTATT_AV_ANDRE",
+    "FORELDET",
     "IKKE_PRIORITERT",
-    "KONTROLLNOTAT",
+    "INGEN_FEIL",
   ],
   STRAFFERETTSLIG_VURDERING: [
     "NAY_MANGLER_I_SAKSBEHANDLINGEN",
@@ -189,7 +189,7 @@ function feltskjemaFor(steg: KontrollsakSteg): TillatteHandlingerResponse["felts
           "Endelig resultat",
           "enum",
           false,
-          (["FEILUTBETALINGSSAK_ORDINAER", "KONTROLLNOTAT", "HENLAGT"] as const).map((verdi) => ({
+          (["FEILUTBETALINGSSAK_ORDINAER", "ORIENTERINGSNOTAT", "HENLAGT"] as const).map((verdi) => ({
             verdi,
             etikett: resultatEtiketter[verdi],
           })),

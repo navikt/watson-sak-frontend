@@ -168,7 +168,7 @@ describe("SaksflytModal", () => {
     renderModal();
     klikk("Send til forvaltning");
     await screen.findByRole("dialog", { name: "Send til forvaltning" });
-    expect(screen.queryByRole("radio", { name: "Kontrollnotat" })).toBeNull();
+    expect(screen.queryByRole("radio", { name: "Orienteringsnotat" })).toBeNull();
 
     klikk("Neste");
     expect(screen.getByText("Resultat fra utredningen må fylles ut")).toBeDefined();

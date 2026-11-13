@@ -123,7 +123,7 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     expect(historikk[0]?.status).toBeNull();
   });
 
-  it.each(["HENLAGT", "KONTROLLNOTAT"])(
+  it.each(["HENLAGT", "ORIENTERINGSNOTAT"])(
     "avslutter fra Forvaltning som %s uten endelig beløp",
     async (type) => {
       const sak = hentAlleSaker(testRequest).find((s: KontrollsakResponse) => s.steg === "UTREDES");
@@ -376,10 +376,10 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     await expect(
       utforAction(getSaksreferanse(sak.id), {
         handling,
-        "resultat.utredning.type": "KONTROLLNOTAT",
+        "resultat.utredning.type": "ORIENTERINGSNOTAT",
       }),
     ).rejects.toMatchObject({ init: { status: 400 } });
-    expect(sak.resultat?.utredning?.type).not.toBe("KONTROLLNOTAT");
+    expect(sak.resultat?.utredning?.type).not.toBe("ORIENTERINGSNOTAT");
   });
 
   it("Endre status gjenoppretter status før bero", async () => {
@@ -569,7 +569,7 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
         resultat: {
           forvaltning: {
             type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
-            endeligUtfall: { type: "KONTROLLNOTAT" },
+            endeligUtfall: { type: "ORIENTERINGSNOTAT" },
           },
         },
       }).tillatteSteg,
@@ -619,18 +619,18 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
     });
     expect(henlagtUtenEndeligBelop.tillatteSteg).toEqual(["AVSLUTTET"]);
     expect(henlagtUtenEndeligBelop.muligeNesteSteg).toEqual(["AVSLUTTET"]);
-    const kontrollnotatUtenEndeligBelop = hentMockTillatteHandlinger({
+    const orienteringsnotatUtenEndeligBelop = hentMockTillatteHandlinger({
       ...forvaltning,
       ytelser: forvaltning.ytelser.map((ytelse) => ({ ...ytelse, endeligBelop: null })),
       resultat: {
         forvaltning: {
           type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
-          endeligUtfall: { type: "KONTROLLNOTAT" },
+          endeligUtfall: { type: "ORIENTERINGSNOTAT" },
         },
       },
     });
-    expect(kontrollnotatUtenEndeligBelop.tillatteSteg).toEqual(["AVSLUTTET"]);
-    expect(kontrollnotatUtenEndeligBelop.paakrevdeRegistreringerPerSteg.AVSLUTTET).not.toContain(
+    expect(orienteringsnotatUtenEndeligBelop.tillatteSteg).toEqual(["AVSLUTTET"]);
+    expect(orienteringsnotatUtenEndeligBelop.paakrevdeRegistreringerPerSteg.AVSLUTTET).not.toContain(
       "ytelser[].endeligBelop",
     );
     expect(henlagtUtenEndeligBelop.handlinger.map((handling) => handling.type)).toContain(

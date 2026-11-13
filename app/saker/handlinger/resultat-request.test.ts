@@ -13,7 +13,7 @@ const feltskjema: TillatteHandlingerResponse["feltskjema"] = [
     datatype: "enum",
     paakrevd: true,
     verdier: [
-      { verdi: "KONTROLLNOTAT", etikett: "Kontrollnotat" },
+      { verdi: "ORIENTERINGSNOTAT", etikett: "Orienteringsnotat" },
       { verdi: "HENLAGT", etikett: "Henlagt" },
     ],
   },
@@ -293,7 +293,7 @@ describe("resultatFeltErAktivt", () => {
     expect(betingetFelt).toBeDefined();
     if (!betingetFelt) return;
 
-    expect(resultatFeltErAktivt(betingetFelt, { "utredning.type": "KONTROLLNOTAT" })).toBe(false);
+    expect(resultatFeltErAktivt(betingetFelt, { "utredning.type": "ORIENTERINGSNOTAT" })).toBe(false);
     expect(resultatFeltErAktivt(betingetFelt, { "utredning.type": "HENLAGT" })).toBe(true);
   });
 
