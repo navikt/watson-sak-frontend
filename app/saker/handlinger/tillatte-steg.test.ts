@@ -10,7 +10,7 @@ const feltskjema: TillatteHandlingerResponse["feltskjema"] = [
     paakrevd: false,
     verdier: [
       { verdi: "HENLAGT", etikett: "Henlagt" },
-      { verdi: "KONTROLLNOTAT", etikett: "Kontrollnotat" },
+      { verdi: "ORIENTERINGSNOTAT", etikett: "Orienteringsnotat" },
       { verdi: "FEILUTBETALINGSSAK_ORDINAER", etikett: "Feilutbetalingssak, ordinær" },
     ],
   },
@@ -133,7 +133,7 @@ describe("hentVisbareSteg", () => {
     svar.tilstand.resultat = {
       forvaltning: {
         type: "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
-        endeligUtfall: { type: "KONTROLLNOTAT" },
+        endeligUtfall: { type: "ORIENTERINGSNOTAT" },
       },
     };
     expect(hentVisbareSteg(svar)).toEqual(["AVSLUTTET"]);
