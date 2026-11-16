@@ -216,6 +216,7 @@ export function genererHistorikkForSaker(
     filer: new Map(),
     mapper: new Map(),
     journalposter: new Map(),
+    henleggelsesnotater: new Map(),
     varsler: [],
     nesteFordelingssakId: 0,
     nesteHistorikkId: nesteId,

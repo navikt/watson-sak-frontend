@@ -18,6 +18,7 @@ import { hentTekstfelt, hentValgfriTekst } from "~/utils/form-data";
 import { hentTema } from "./tema.server";
 import { hentDokumenttreForSak } from "../filer/mock-data.server";
 import { leggTilJournalpost } from "~/testing/mock-store/journalposter.server";
+import { registrerHenleggelsesnotater } from "~/testing/mock-store/henleggelsesnotater.server";
 import { arkiverFil, opprettArkivertFilFraDokument } from "../filer/mock-data-filer.server";
 import { arkiverDokument } from "~/testing/mock-store/dokumenter.server";
 import { hentMockState } from "~/testing/mock-store/session.server";
@@ -59,7 +60,9 @@ import {
   handlingerSomKreverUtredning,
   krevEierEllerLeder,
   krevTillattHandling,
+  krevUtredningForHenleggelsesnotater,
   lagTidspunktFraSkjema,
+  lesHenleggelsesnotater,
   lagreMockResultat,
   normaliserArbeidsgiverFeil,
   parseStatusFraDialog,
@@ -686,6 +689,25 @@ export async function mockAction(
         beskrivelse: `Oppgave opprettet for journalpost ${journalpostId}`,
       });
       break;
+    }
+    case "registrer_henleggelsesnotater": {
+      krevUtredningForHenleggelsesnotater(sak.steg);
+      const lest = lesHenleggelsesnotater(formData);
+      if (!lest.ok) return lest;
+      // `?mockFeil=henleggelsesnotat` simulerer at journalføringen av henleggelsesnotatet feiler.
+      const feilede = new URL(request.url).searchParams
+        .getAll("mockFeil")
+        .includes("henleggelsesnotat")
+        ? (["HENLEGGELSESNOTAT"] as const)
+        : [];
+      const notater = registrerHenleggelsesnotater(
+        hentMockState(request),
+        String(sak.id),
+        lest.notater,
+        [...feilede],
+      );
+      sak.oppdatert = new Date().toISOString();
+      return { ok: true, notater } satisfies ActionResult;
     }
     default: {
       throw data("Ugyldig handling", { status: 400 });

@@ -2,6 +2,11 @@ import { data } from "react-router";
 import { logger } from "~/logging/logging";
 import { redigerSaksinformasjonSchema } from "~/registrer-sak/validering";
 import * as backendApi from "~/saker/api.server";
+import {
+  type Henleggelsesnotat,
+  type HenleggelsesnotatResultat,
+  registrerHenleggelsesnotaterRequestSchema,
+} from "~/saker/types.backend";
 import type {
   KontrollsakResponse,
   KontrollsakSaksbehandler,
@@ -128,7 +133,12 @@ export function koblingsFeilmelding(feil: unknown): string {
 // --- Typer ---
 
 export type ActionResult =
-  | { ok: true; sak?: Route.ComponentProps["loaderData"]["sak"]; journalpostId?: string }
+  | {
+      ok: true;
+      sak?: Route.ComponentProps["loaderData"]["sak"];
+      journalpostId?: string;
+      notater?: HenleggelsesnotatResultat[];
+    }
   | { ok: false; feil: string }
   | RedigerSaksinformasjonResultat;
 
@@ -323,4 +333,40 @@ export function erSaksbehandlerPåSak(sak: KontrollsakResponse, navIdent: string
     sak.saksbehandlere.eier?.navIdent === navIdent ||
     sak.saksbehandlere.deltMed.some((saksbehandler) => saksbehandler.navIdent === navIdent)
   );
+}
+
+// --- Henleggelsesnotater ---
+
+export const HENLEGGELSESNOTATER_FELT = "notater";
+
+/**
+ * Leser `notater` (JSON) fra skjemaet. Returnerer en feilmelding i stedet for å kaste,
+ * så skjemaet kan vise den. Notatteksten skal aldri logges, heller ikke ved feil.
+ */
+export function lesHenleggelsesnotater(
+  formData: FormData,
+): { ok: true; notater: Henleggelsesnotat[] } | { ok: false; feil: string } {
+  const rå = formData.get(HENLEGGELSESNOTATER_FELT);
+  if (typeof rå !== "string") return { ok: false, feil: "Mangler notater" };
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(rå);
+  } catch {
+    return { ok: false, feil: "Ugyldige notater" };
+  }
+  const resultat = registrerHenleggelsesnotaterRequestSchema.safeParse({ notater: parsed });
+  if (!resultat.success) {
+    return { ok: false, feil: resultat.error.issues[0]?.message ?? "Ugyldige notater" };
+  }
+  return { ok: true, notater: resultat.data.notater };
+}
+
+/** Notater ved henleggelse kan bare registreres i Utredning, som i backend. */
+export function krevUtredningForHenleggelsesnotater(steg: KontrollsakSteg | undefined) {
+  if (steg !== "UTREDNING" && steg !== "UTREDES") {
+    throw new backendApi.BackendFeilException(
+      409,
+      "Notater ved henleggelse kan bare registreres når saken er i Utredning",
+    );
+  }
 }

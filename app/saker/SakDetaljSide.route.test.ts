@@ -2101,3 +2101,100 @@ describe("SakDetaljSide rediger arbeidsgivere", () => {
     expect(historikk[0]?.beskrivelse).toBe("Oppgave opprettet for journalpost jp-123");
   });
 });
+
+describe("henleggelsesnotater — mock", () => {
+  beforeEach(() => {
+    resetDefaultSession();
+  });
+
+  function sakIUtredning() {
+    const sak = required(hentAlleSaker(testRequest).find((sak) => sak.id === 102));
+    sak.steg = "UTREDES";
+    sak.saksbehandlere.eier = { navIdent: "Z999999", navn: "Test Saksbehandler", enhet: "4812" };
+    return sak;
+  }
+
+  async function registrer(sakRef: string, notater: unknown, query = "") {
+    const formData = new FormData();
+    formData.set("handling", "registrer_henleggelsesnotater");
+    formData.set("notater", JSON.stringify(notater));
+    return action({
+      request: new Request(`http://localhost/saker/${sakRef}${query}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: sakRef },
+    } as Route.ActionArgs);
+  }
+
+  it("registrerer notater og viser dem i loaderen", async () => {
+    const sak = sakIUtredning();
+    const sakRef = getSaksreferanse(sak.id);
+
+    const resultat = await registrer(sakRef, [
+      { notattype: "HENLEGGELSESNOTAT", tekst: "Saken henlegges" },
+      { notattype: "ORIENTERINGSNOTAT", tekst: null },
+    ]);
+
+    expect(resultat).toEqual({
+      ok: true,
+      notater: [
+        {
+          notattype: "HENLEGGELSESNOTAT",
+          utfall: "JOURNALFORT",
+          journalpostId: `mock-jp-${sak.id}-HENLEGGELSESNOTAT`,
+        },
+        { notattype: "ORIENTERINGSNOTAT", utfall: "REGISTRERT_UTEN_TEKST", journalpostId: null },
+      ],
+    });
+
+    const loaderData = await loader({
+      request: testRequest,
+      params: { sakId: sakRef },
+    } as Route.LoaderArgs);
+    expect(loaderData.registrerteNotater.map((n) => n.notattype)).toEqual([
+      "HENLEGGELSESNOTAT",
+      "ORIENTERINGSNOTAT",
+    ]);
+  });
+
+  it("gir FEILET på henleggelsesnotatet med ?mockFeil=henleggelsesnotat", async () => {
+    const sak = sakIUtredning();
+    const resultat = await registrer(
+      getSaksreferanse(sak.id),
+      [{ notattype: "HENLEGGELSESNOTAT", tekst: "a" }],
+      "?mockFeil=henleggelsesnotat",
+    );
+    expect(resultat).toEqual({
+      ok: true,
+      notater: [{ notattype: "HENLEGGELSESNOTAT", utfall: "FEILET", journalpostId: null }],
+    });
+  });
+
+  it("avviser mer enn to notater", async () => {
+    const sak = sakIUtredning();
+    const resultat = await registrer(getSaksreferanse(sak.id), [
+      { notattype: "HENLEGGELSESNOTAT", tekst: "a" },
+      { notattype: "ORIENTERINGSNOTAT", tekst: "b" },
+      { notattype: "HENLEGGELSESNOTAT", tekst: "c" },
+    ]);
+    expect(resultat).toMatchObject({ ok: false });
+  });
+
+  it("avviser for lang tekst", async () => {
+    const sak = sakIUtredning();
+    const resultat = await registrer(getSaksreferanse(sak.id), [
+      { notattype: "HENLEGGELSESNOTAT", tekst: "x".repeat(10_001) },
+    ]);
+    expect(resultat).toEqual({ ok: false, feil: "Notatet kan ha maks 10 000 tegn" });
+  });
+
+  it("avviser når saken ikke er i Utredning", async () => {
+    const sak = sakIUtredning();
+    sak.steg = "FORVALTNING";
+    const resultat = await registrer(getSaksreferanse(sak.id), [
+      { notattype: "HENLEGGELSESNOTAT", tekst: "a" },
+    ]);
+    expect(resultat).toMatchObject({ data: { ok: false }, init: { status: 409 } });
+  });
+});

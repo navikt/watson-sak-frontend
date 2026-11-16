@@ -34,6 +34,8 @@ const mockHentTillatteHandlinger = vi.fn().mockResolvedValue({
   feltskjema: [],
 });
 const mockSøkKontrollsaker = vi.fn();
+const mockRegistrerHenleggelsesnotater = vi.fn();
+const mockHentHenleggelsesnotater = vi.fn().mockResolvedValue([]);
 const mockFerdigstillMigreringskandidat = vi.fn();
 const mockHentMigreringskandidat = vi.fn();
 vi.mock("~/migrering/api.server", () => ({
@@ -88,6 +90,8 @@ vi.mock("~/saker/api.server", () => ({
   kobleSak: mockKobleSak,
   opprettManuellHendelse: mockOpprettManuellHendelse,
   søkKontrollsaker: mockSøkKontrollsaker,
+  registrerHenleggelsesnotater: mockRegistrerHenleggelsesnotater,
+  hentHenleggelsesnotater: mockHentHenleggelsesnotater,
 }));
 
 function lagLoaderArgs(sakId = "1", query = "") {
@@ -1447,5 +1451,117 @@ describe("SakDetaljSide loader — backend-sti", () => {
 
     expect(resultat.andreSaker).toEqual([]);
     expect(resultat.andreSakerSide).toEqual({ side: 1, totalSider: 0 });
+  });
+});
+
+describe("henleggelsesnotater — backend-sti", () => {
+  const sakIUtredning = { ...grunnleggendeSak, steg: "UTREDNING" };
+
+  beforeEach(() => {
+    mockHentInnloggetBruker.mockResolvedValue({
+      preferredUsername: "z999999",
+      name: "Saks Behandlersen",
+      navIdent: "Z999999",
+      enhet: "4812",
+    });
+    mockHentKontrollsak.mockReset().mockResolvedValue(sakIUtredning);
+    mockHentKontrollsakForDetalj.mockReset().mockImplementation(async (token, sakId) => ({
+      status: "ok",
+      sak: await mockHentKontrollsak(token, sakId),
+    }));
+    mockRegistrerHenleggelsesnotater.mockReset();
+    mockHentHenleggelsesnotater.mockReset().mockResolvedValue([]);
+  });
+
+  async function registrer(notater: unknown) {
+    const formData = new FormData();
+    formData.set("handling", "registrer_henleggelsesnotater");
+    formData.set("notater", JSON.stringify(notater));
+    const { action } = await import("./SakDetaljSide.server");
+    return action({
+      request: new Request("http://localhost/saker/1", { method: "POST", body: formData }),
+      params: { sakId: "1" },
+    } as Parameters<typeof action>[0]);
+  }
+
+  it("registrerer gyldige notater og returnerer utfallet", async () => {
+    const svar = [
+      { notattype: "HENLEGGELSESNOTAT", utfall: "JOURNALFORT", journalpostId: "jp-1" },
+      { notattype: "ORIENTERINGSNOTAT", utfall: "REGISTRERT_UTEN_TEKST", journalpostId: null },
+    ];
+    mockRegistrerHenleggelsesnotater.mockResolvedValue(svar);
+    const notater = [
+      { notattype: "HENLEGGELSESNOTAT", tekst: "Saken henlegges" },
+      { notattype: "ORIENTERINGSNOTAT", tekst: null },
+    ];
+
+    expect(await registrer(notater)).toEqual({ ok: true, notater: svar });
+    expect(mockRegistrerHenleggelsesnotater).toHaveBeenCalledWith("mock-token", "1", notater);
+  });
+
+  it("avviser mer enn to notater uten å kalle backend", async () => {
+    const resultat = await registrer([
+      { notattype: "HENLEGGELSESNOTAT", tekst: "a" },
+      { notattype: "ORIENTERINGSNOTAT", tekst: "b" },
+      { notattype: "ORIENTERINGSNOTAT", tekst: "c" },
+    ]);
+    expect(resultat).toMatchObject({ ok: false });
+    expect(mockRegistrerHenleggelsesnotater).not.toHaveBeenCalled();
+  });
+
+  it("avviser for lang tekst uten å kalle backend", async () => {
+    const resultat = await registrer([
+      { notattype: "HENLEGGELSESNOTAT", tekst: "x".repeat(10_001) },
+    ]);
+    expect(resultat).toEqual({ ok: false, feil: "Notatet kan ha maks 10 000 tegn" });
+    expect(mockRegistrerHenleggelsesnotater).not.toHaveBeenCalled();
+  });
+
+  it("avviser når saken ikke er i Utredning", async () => {
+    mockHentKontrollsak.mockResolvedValue({ ...grunnleggendeSak, steg: "FORVALTNING" });
+    const resultat = await registrer([{ notattype: "HENLEGGELSESNOTAT", tekst: "a" }]);
+    expect(resultat).toMatchObject({ data: { ok: false }, init: { status: 409 } });
+    expect(mockRegistrerHenleggelsesnotater).not.toHaveBeenCalled();
+  });
+
+  it("viser 400 fra backend som feilmelding", async () => {
+    mockRegistrerHenleggelsesnotater.mockRejectedValue(
+      new MockBackendFeilException(400, "Ugyldig tekst"),
+    );
+    const resultat = await registrer([{ notattype: "HENLEGGELSESNOTAT", tekst: "a" }]);
+    expect(resultat).toEqual({ ok: false, feil: "Ugyldig tekst" });
+  });
+
+  it("loader gir registrerteNotater for sak i Utredning", async () => {
+    const registrerte = [
+      {
+        notattype: "HENLEGGELSESNOTAT",
+        journalpostId: "jp-1",
+        registrertTidspunkt: "2026-11-16T10:00:00Z",
+      },
+    ];
+    mockHentHenleggelsesnotater.mockResolvedValue(registrerte);
+    mockHentHendelser.mockResolvedValue([]);
+    mockHentSaksbehandlere.mockResolvedValue([]);
+    mockHentFiler.mockResolvedValue([]);
+    const { loader } = await import("./SakDetaljSide.server");
+
+    const resultat = await loader(lagLoaderArgs());
+
+    expect(resultat.registrerteNotater).toEqual(registrerte);
+    expect(mockHentHenleggelsesnotater).toHaveBeenCalledWith("mock-token", "1");
+  });
+
+  it("loader henter ikke notater for sak i Opprettet", async () => {
+    mockHentKontrollsak.mockResolvedValue(grunnleggendeSak);
+    mockHentHendelser.mockResolvedValue([]);
+    mockHentSaksbehandlere.mockResolvedValue([]);
+    mockHentFiler.mockResolvedValue([]);
+    const { loader } = await import("./SakDetaljSide.server");
+
+    const resultat = await loader(lagLoaderArgs());
+
+    expect(resultat.registrerteNotater).toEqual([]);
+    expect(mockHentHenleggelsesnotater).not.toHaveBeenCalled();
   });
 });
