@@ -276,10 +276,13 @@ const saksbehandlerSchema = z
     navn: z.string(),
     enhet: z.string().nullable(),
     enhetId: z.string().nullable().optional(),
+    erOpplaeringsbruker: z.boolean().optional(),
   })
   .transform((saksbehandler) => ({
     ...saksbehandler,
-    navn: visningsnavn(saksbehandler.navIdent, saksbehandler.navn),
+    navn: saksbehandler.erOpplaeringsbruker
+      ? saksbehandler.navn
+      : visningsnavn(saksbehandler.navIdent, saksbehandler.navn),
   }));
 
 const saksbehandlereSchema = z
@@ -309,6 +312,7 @@ const kontrollsakSaksbehandlerSchema = z.object({
   enhet: z.string().nullable(),
   kontrollEnhetId: z.string().nullable().optional(),
   erEkstraSaksbehandler: z.boolean().optional(),
+  erOpplaeringsbruker: z.boolean().optional(),
 });
 
 export const oppgaveKortSchema = z.object({

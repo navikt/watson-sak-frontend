@@ -96,6 +96,7 @@ const kommentarSchema = z
     tekst: z.string().default(""),
     forfatterIdent: z.string().default(""),
     forfatterNavn: z.string().default(""),
+    forfatterErOpplaeringsbruker: z.boolean().optional(),
     opprettet: z.string(),
     endret: z.string(),
     versjon: z.number().default(0),
@@ -104,7 +105,9 @@ const kommentarSchema = z
   })
   .transform((kommentar) => ({
     ...kommentar,
-    forfatterNavn: visningsnavn(kommentar.forfatterIdent, kommentar.forfatterNavn),
+    forfatterNavn: kommentar.forfatterErOpplaeringsbruker
+      ? kommentar.forfatterNavn
+      : visningsnavn(kommentar.forfatterIdent, kommentar.forfatterNavn),
   }));
 
 export type Kommentar = z.infer<typeof kommentarSchema>;
@@ -125,11 +128,13 @@ export const kommentartraadKlientSchema = z.object({
   opprinneligSitat: z.string().nullish(),
   opprettetAvIdent: z.string().default(""),
   opprettetAvNavn: z.string().default(""),
+  opprettetAvErOpplaeringsbruker: z.boolean().optional(),
   opprettet: z.string(),
   resolved: z.string().nullish(),
   adressert: z.boolean(),
   resolvedAvIdent: z.string().nullish(),
   resolvedAvNavn: z.string().nullish(),
+  resolvedAvErOpplaeringsbruker: z.boolean().optional(),
   versjon: z.number().default(0),
   synlig: z.boolean().default(true),
   kommentarer: z.array(kommentarSchema).default([]),
@@ -152,10 +157,12 @@ export const kommentartraadSchema = z
     opprinneligSitat: z.string().nullish(),
     opprettetAvIdent: z.string().default(""),
     opprettetAvNavn: z.string().default(""),
+    opprettetAvErOpplaeringsbruker: z.boolean().optional(),
     opprettet: z.string(),
     resolved: z.string().nullish(),
     resolvedAvIdent: z.string().nullish(),
     resolvedAvNavn: z.string().nullish(),
+    resolvedAvErOpplaeringsbruker: z.boolean().optional(),
     versjon: z.number().default(0),
     synlig: z.boolean().default(true),
     kommentarer: z.array(kommentarSchema).default([]),
@@ -168,13 +175,23 @@ export const kommentartraadSchema = z
     ankerVersjon: rå.ankerVersjon,
     opprinneligSitat: rå.opprinneligSitat ?? null,
     opprettetAvIdent: rå.opprettetAvIdent,
-    opprettetAvNavn: visningsnavn(rå.opprettetAvIdent, rå.opprettetAvNavn),
+    ...(rå.opprettetAvErOpplaeringsbruker !== undefined
+      ? { opprettetAvErOpplaeringsbruker: rå.opprettetAvErOpplaeringsbruker }
+      : {}),
+    opprettetAvNavn: rå.opprettetAvErOpplaeringsbruker
+      ? rå.opprettetAvNavn
+      : visningsnavn(rå.opprettetAvIdent, rå.opprettetAvNavn),
     opprettet: rå.opprettet,
     resolved: rå.resolved ?? null,
     /** Avledet av `resolved`: en adressert tråd er skrivebeskyttet til den gjenåpnes. */
     adressert: (rå.resolved ?? null) !== null,
     resolvedAvIdent: rå.resolvedAvIdent ?? null,
-    resolvedAvNavn: visningsnavn(rå.resolvedAvIdent, rå.resolvedAvNavn) ?? null,
+    ...(rå.resolvedAvErOpplaeringsbruker !== undefined
+      ? { resolvedAvErOpplaeringsbruker: rå.resolvedAvErOpplaeringsbruker }
+      : {}),
+    resolvedAvNavn: rå.resolvedAvErOpplaeringsbruker
+      ? (rå.resolvedAvNavn ?? null)
+      : (visningsnavn(rå.resolvedAvIdent, rå.resolvedAvNavn) ?? null),
     versjon: rå.versjon,
     synlig: rå.synlig,
     kommentarer: rå.kommentarer,

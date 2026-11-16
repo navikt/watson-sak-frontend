@@ -151,6 +151,58 @@ describe("hentKontrollsakForDetalj", () => {
       "Ugyldig svar fra watson-admin-api (hentKontrollsak)",
     );
   });
+
+  it("bevarer opplæringsbrukeres saksbehandlernavn og gamle overstyringer", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: 42,
+          kontrollobjekt: { personIdent: "12345678901", navn: "Birger Testesen" },
+          saksbehandlere: {
+            eier: {
+              navIdent: "Z993376",
+              navn: "Backendnavn Petter",
+              enhet: "4812",
+              erOpplaeringsbruker: true,
+            },
+            deltMed: [
+              {
+                navIdent: "Z990778",
+                navn: "Test Z990778",
+                enhet: "4812",
+                erOpplaeringsbruker: false,
+              },
+            ],
+            opprettetAv: { navIdent: "Z993471", navn: "Test Z993471", enhet: "4812" },
+          },
+          steg: "OPPRETTET",
+          status: null,
+          kategori: "ARBEID",
+          kilde: "NAV_KONTROLL",
+          misbruktype: [],
+          prioritet: "NORMAL",
+          ytelser: [],
+          tilgang: { harTilgangTilKontrollobjekt: true },
+          opprettet: "2026-03-20T12:34:56Z",
+          oppdatert: null,
+        }),
+        { status: 200 },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { hentKontrollsakForDetalj } = await import("./api.server");
+    const resultat = await hentKontrollsakForDetalj("token", "42");
+
+    expect(resultat.status).toBe("ok");
+    if (resultat.status === "ok") {
+      expect(resultat.sak.saksbehandlere).toMatchObject({
+        eier: { navn: "Backendnavn Petter", erOpplaeringsbruker: true },
+        deltMed: [{ navn: "Kari Ledersen Øst", erOpplaeringsbruker: false }],
+        opprettetAv: { navn: "Wenche Vest" },
+      });
+    }
+  });
 });
 
 describe("søkKontrollsaker", () => {
@@ -641,6 +693,20 @@ describe("hentSaksbehandlere", () => {
             kontrollEnhetId: null,
             erEkstraSaksbehandler: true,
           },
+          {
+            navIdent: "Z993376",
+            navn: "Test Z993376",
+            enhet: "Opplæring",
+            kontrollEnhetId: null,
+            erOpplaeringsbruker: true,
+            erEkstraSaksbehandler: false,
+          },
+          {
+            navIdent: "Z993471",
+            navn: "Test Z993471",
+            enhet: "Opplæring",
+            kontrollEnhetId: null,
+          },
         ],
       }),
     );
@@ -651,6 +717,69 @@ describe("hentSaksbehandlere", () => {
     expect(resultat).toMatchObject([
       { navIdent: "Z111111", kontrollEnhetId: "hu424t" },
       { navIdent: "Z222222", kontrollEnhetId: null, erEkstraSaksbehandler: true },
+      {
+        navIdent: "Z993376",
+        navn: "Test Z993376",
+        erOpplaeringsbruker: true,
+        erEkstraSaksbehandler: false,
+      },
+      { navIdent: "Z993471", navn: "Wenche Vest" },
+    ]);
+    expect(resultat[3]).not.toHaveProperty("erOpplaeringsbruker");
+  });
+});
+
+describe("hentDokumentHistorikk", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it("bevarer opplæringsbrukeres navn og gamle overstyringer", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        items: [
+          {
+            id: "historikk-1",
+            tittel: "Dokument",
+            endretAvIdent: "Z993376",
+            endretAvNavn: "Backendnavn Petter",
+            endretAvErOpplaeringsbruker: true,
+            endretTidspunkt: "2026-01-01T10:00:00Z",
+          },
+          {
+            id: "historikk-2",
+            tittel: "Dokument",
+            endretAvIdent: "Z990778",
+            endretAvNavn: "Test Z990778",
+            endretAvErOpplaeringsbruker: false,
+            endretTidspunkt: "2026-01-02T10:00:00Z",
+          },
+          {
+            id: "historikk-3",
+            tittel: "Dokument",
+            endretAvIdent: "Z993471",
+            endretAvNavn: "Test Z993471",
+            endretTidspunkt: "2026-01-03T10:00:00Z",
+          },
+        ],
+        page: 0,
+        size: 10,
+        totalItems: 3,
+        totalPages: 1,
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { hentDokumentHistorikk } = await import("./api.server");
+    const resultat = await hentDokumentHistorikk("token", "42", "dokument-1");
+
+    expect(resultat.items.map((item) => item.endretAvNavn)).toEqual([
+      "Backendnavn Petter",
+      "Kari Ledersen Øst",
+      "Wenche Vest",
     ]);
   });
 });

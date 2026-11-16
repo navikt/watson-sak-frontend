@@ -3,6 +3,7 @@ import { BackendFeilException } from "~/saker/api-core.server";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { action, loader } from "./kommentarer.api";
 import { lagListe } from "./kommentar-fixtures";
+import { kommentarlisteKlientSchema, kommentarlisteSchema } from "./typer";
 
 const { mockHentKontrollsak, mockHentKommentarliste, mockOpprettKommentartraad } = vi.hoisted(
   () => ({
@@ -113,5 +114,105 @@ describe("kommentarer.api loader — backend-modus", () => {
     expect(svar.data?.feilId).toMatch(/^[0-9a-f]{8}$/);
     expect(JSON.stringify(svar.data)).not.toContain("Skal ikke vises i svaret");
     expect(JSON.stringify(svar.data)).not.toContain("Kommentarinnhold");
+  });
+});
+
+describe("navnevisning for opplæringsbrukere i kommentarresponsen", () => {
+  it("bevarer navn gjennom backend- og klientskjemaene uten å miste gamle overstyringer", () => {
+    const backendListe = {
+      dokumentId: "d1",
+      kanKommentere: true,
+      traader: [
+        {
+          id: "traad-opplaering",
+          dokumentId: "d1",
+          ankerType: "DOCUMENT",
+          anker: {},
+          opprettetAvIdent: "Z993376",
+          opprettetAvNavn: "Backendnavn Petter",
+          opprettetAvErOpplaeringsbruker: true,
+          opprettet: "2026-01-01T10:00:00Z",
+          resolved: "2026-01-02T10:00:00Z",
+          resolvedAvIdent: "Z990778",
+          resolvedAvNavn: "Backendnavn Kari",
+          resolvedAvErOpplaeringsbruker: true,
+          kommentarer: [
+            {
+              id: "kommentar-opplaering",
+              traadId: "traad-opplaering",
+              tekst: "Kommentar",
+              forfatterIdent: "Z993471",
+              forfatterNavn: "Backendnavn Wenche",
+              forfatterErOpplaeringsbruker: true,
+              opprettet: "2026-01-01T10:00:00Z",
+              endret: "2026-01-01T10:00:00Z",
+            },
+          ],
+        },
+        {
+          id: "traad-eldre",
+          dokumentId: "d1",
+          ankerType: "DOCUMENT",
+          anker: {},
+          opprettetAvIdent: "Z993376",
+          opprettetAvNavn: "Test Z993376",
+          opprettet: "2026-01-03T10:00:00Z",
+          resolved: "2026-01-04T10:00:00Z",
+          resolvedAvIdent: "Z990778",
+          resolvedAvNavn: "Test Z990778",
+          resolvedAvErOpplaeringsbruker: false,
+          kommentarer: [
+            {
+              id: "kommentar-eldre",
+              traadId: "traad-eldre",
+              tekst: "Eldre kommentar",
+              forfatterIdent: "Z993471",
+              forfatterNavn: "Test Z993471",
+              opprettet: "2026-01-03T10:00:00Z",
+              endret: "2026-01-03T10:00:00Z",
+            },
+          ],
+        },
+      ],
+    };
+
+    const backendParset = kommentarlisteSchema.parse(backendListe);
+    expect(backendParset.traader[0]).toMatchObject({
+      opprettetAvNavn: "Backendnavn Petter",
+      opprettetAvErOpplaeringsbruker: true,
+      resolvedAvNavn: "Backendnavn Kari",
+      resolvedAvErOpplaeringsbruker: true,
+      kommentarer: [
+        {
+          forfatterNavn: "Backendnavn Wenche",
+          forfatterErOpplaeringsbruker: true,
+        },
+      ],
+    });
+    expect(backendParset.traader[1]).toMatchObject({
+      opprettetAvNavn: "Petter Øst",
+      resolvedAvNavn: "Kari Ledersen Øst",
+      resolvedAvErOpplaeringsbruker: false,
+      kommentarer: [{ forfatterNavn: "Wenche Vest" }],
+    });
+
+    const klientListe = kommentarlisteKlientSchema.parse(JSON.parse(JSON.stringify(backendParset)));
+    expect(klientListe.traader[0]).toMatchObject({
+      opprettetAvNavn: "Backendnavn Petter",
+      opprettetAvErOpplaeringsbruker: true,
+      resolvedAvNavn: "Backendnavn Kari",
+      resolvedAvErOpplaeringsbruker: true,
+      kommentarer: [
+        {
+          forfatterNavn: "Backendnavn Wenche",
+          forfatterErOpplaeringsbruker: true,
+        },
+      ],
+    });
+    expect(klientListe.traader[1]).toMatchObject({
+      opprettetAvNavn: "Petter Øst",
+      resolvedAvNavn: "Kari Ledersen Øst",
+      kommentarer: [{ forfatterNavn: "Wenche Vest" }],
+    });
   });
 });

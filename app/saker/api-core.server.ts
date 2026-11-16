@@ -19,10 +19,13 @@ export const saksbehandlerListeSchema = z.array(
       enhet: z.string().nullable(),
       kontrollEnhetId: z.string().nullable().optional(),
       erEkstraSaksbehandler: z.boolean().optional(),
+      erOpplaeringsbruker: z.boolean().optional(),
     })
     .transform((saksbehandler) => ({
       ...saksbehandler,
-      navn: visningsnavn(saksbehandler.navIdent, saksbehandler.navn),
+      navn: saksbehandler.erOpplaeringsbruker
+        ? saksbehandler.navn
+        : visningsnavn(saksbehandler.navIdent, saksbehandler.navn),
     })),
 );
 
@@ -39,13 +42,23 @@ const dokumentHistorikkNodeSchema = z.object({
   tittel: z.string(),
   endretAvIdent: z.string(),
   endretAvNavn: z.string(),
+  endretAvErOpplaeringsbruker: z.boolean().optional(),
   endretTidspunkt: z.string(),
 });
 
-function medEndretAvVisningsnavn<T extends { endretAvIdent: string; endretAvNavn: string }>(
-  node: T,
-): T {
-  return { ...node, endretAvNavn: visningsnavn(node.endretAvIdent, node.endretAvNavn) };
+function medEndretAvVisningsnavn<
+  T extends {
+    endretAvIdent: string;
+    endretAvNavn: string;
+    endretAvErOpplaeringsbruker?: boolean;
+  },
+>(node: T): T {
+  return {
+    ...node,
+    endretAvNavn: node.endretAvErOpplaeringsbruker
+      ? node.endretAvNavn
+      : visningsnavn(node.endretAvIdent, node.endretAvNavn),
+  };
 }
 
 export const dokumentHistorikkResponseSchema = dokumentHistorikkNodeSchema

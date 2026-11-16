@@ -68,8 +68,14 @@ export const lederStatistikkResponseSchema = z.object({
         .extend({
           navn: z.string().min(1),
           navIdent: z.string().min(1),
+          erOpplaeringsbruker: z.boolean().optional(),
         })
-        .transform((ansatt) => ({ ...ansatt, navn: visningsnavn(ansatt.navIdent, ansatt.navn) })),
+        .transform((ansatt) => ({
+          ...ansatt,
+          navn: ansatt.erOpplaeringsbruker
+            ? ansatt.navn
+            : visningsnavn(ansatt.navIdent, ansatt.navn),
+        })),
     ),
     ufordelt: ansattSakstallSchema,
     /** Saker med ansvarlig som ikke er i ansattlista, for eksempel etter enhetsbytte. */
