@@ -57,7 +57,7 @@ export function formaterStatus(status: KontrollsakStatus): string {
 }
 
 export const resultatEtiketter: Record<ResultatType, string> = {
-  KONTROLLNOTAT: "Kontrollnotat",
+  ORIENTERINGSNOTAT: "Orienteringsnotat",
   FEILUTBETALINGSSAK_ORDINAER: "Feilutbetalingssak, ordinær",
   FEILUTBETALINGSSAK_POTENSIELL_STRAFFESAK: "Feilutbetalingssak, potensiell straffesak",
   HENLAGT: "Henlagt",
@@ -78,7 +78,8 @@ export const henleggelsesarsakEtiketter = {
   IKKE_TILSTREKKELIG_SKYLD: "Ikke tilstrekkelig skyld",
   SAK_PABEGYNT_ELLER_OVERTATT_AV_ANDRE: "Sak påbegynt eller overtatt av andre",
   IKKE_PRIORITERT: "Ikke prioritert",
-  KONTROLLNOTAT: "Kontrollnotat",
+  INGEN_FEIL: "Ingen feil",
+  ORIENTERINGSNOTAT: "Orienteringsnotat",
   NAY_MANGLER_I_SAKSBEHANDLINGEN: "NAY: Mangler i saksbehandlingen",
   NFP_MANGLER_I_SAKSBEHANDLINGEN: "NFP: Mangler i saksbehandlingen",
   NAY_MANGLER_VED_BEREGNINGSSKJEMA: "NAY: Mangler ved beregningsskjema",
@@ -123,7 +124,7 @@ export function hentSluttresultat(resultat: KontrollsakResponse["resultat"]): st
   const endeligUtfall = resultat.forvaltning?.endeligUtfall ?? resultat.endeligUtfall;
   if (endeligUtfall?.type) return formaterResultattype(endeligUtfall.type);
   const utredning = resultat.utredning?.type;
-  if (utredning === "HENLAGT" || utredning === "KONTROLLNOTAT") {
+  if (utredning === "HENLAGT" || utredning === "ORIENTERINGSNOTAT") {
     return formaterResultattype(utredning);
   }
   return null;

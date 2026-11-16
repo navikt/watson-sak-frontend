@@ -289,7 +289,7 @@ describe("tillatte handlinger og resultatkall", () => {
     ],
     tillatteSteg: ["FORVALTNING"],
     tillatteStatuser: ["AKTIV", "I_BERO"],
-    tillatteResultater: ["KONTROLLNOTAT"],
+    tillatteResultater: ["ORIENTERINGSNOTAT"],
     paakrevdeRegistreringer: ["utredning.type"],
     paakrevdeRegistreringerPerSteg: { FORVALTNING: ["utredning.type", "ytelser[].belop"] },
     feltskjema: [
@@ -298,7 +298,7 @@ describe("tillatte handlinger og resultatkall", () => {
         etikett: "Resultat fra utredningen",
         datatype: "enum",
         paakrevd: true,
-        verdier: [{ verdi: "KONTROLLNOTAT", etikett: "Kontrollnotat" }],
+        verdier: [{ verdi: "ORIENTERINGSNOTAT", etikett: "Orienteringsnotat" }],
       },
     ],
   };
@@ -341,7 +341,7 @@ describe("tillatte handlinger og resultatkall", () => {
       expect.objectContaining({ headers: expect.any(Object) }),
     );
     expect(resultat.handlinger[0]?.type).toBe("FLYTT_TIL_NESTE_STEG");
-    expect(resultat.feltskjema[0]?.verdier[0]?.etikett).toBe("Kontrollnotat");
+    expect(resultat.feltskjema[0]?.verdier[0]?.etikett).toBe("Orienteringsnotat");
   });
 
   it("sender versjonert stegrequest med valgfritt resultat og bruker POST", async () => {

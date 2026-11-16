@@ -1152,7 +1152,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     const formData = new FormData();
     formData.set("handling", "opprett_journalpost");
     formData.set("tema", "KTR");
-    formData.set("tittel", "Kontrollnotat");
+    formData.set("tittel", "Orienteringsnotat");
     formData.set("dokumentId", "00000000-0000-4000-8000-000000000101");
 
     const resultat = await action({
@@ -1187,7 +1187,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     const formData = new FormData();
     formData.set("handling", "opprett_journalpost");
     formData.set("tema", "KTR");
-    formData.set("tittel", "Kontrollnotat");
+    formData.set("tittel", "Orienteringsnotat");
 
     await expect(
       action({
