@@ -827,6 +827,11 @@ describe("filhendelser", () => {
     expect(hendelseBeskrivelse(hendelse)).toBeNull();
   });
 
+  it("hendelseBeskrivelse viser filnavn for FIL_SLETTET", () => {
+    const hendelse = lagHendelse({ hendelsesType: "FIL_SLETTET", filnavn: "bevis.pdf" });
+    expect(hendelseBeskrivelse(hendelse)).toBe("Fil: bevis.pdf");
+  });
+
   it("hendelseBeskrivelse returnerer null for FIL_ÅPNET", () => {
     const hendelse = lagHendelse({ hendelsesType: "FIL_ÅPNET", status: null });
     expect(hendelseBeskrivelse(hendelse)).toBeNull();

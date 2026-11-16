@@ -146,7 +146,7 @@ describe("fil.api DELETE", () => {
     expect(historikk).toHaveLength(antallFør + 1);
     expect(historikk[0]).toMatchObject({
       hendelsesType: "FIL_SLETTET",
-      beskrivelse: "bevis.pdf",
+      filnavn: "bevis.pdf",
       opprettetAvNavn: "Test Saksbehandler",
     });
   });
