@@ -25,7 +25,7 @@ export function byggNotater(
   }));
 }
 
-export function erJournalført(resultat: HenleggelsesnotatResultat): boolean {
+function erJournalført(resultat: HenleggelsesnotatResultat): boolean {
   return resultat.utfall === "JOURNALFORT" || resultat.utfall === "ALLEREDE_JOURNALFORT";
 }
 

@@ -501,16 +501,15 @@ export type KontrollsakMisbrukstype = z.infer<typeof kontrollsakMisbrukstypeSche
 /** Maks lengde på notattekst. Samme grense som i watson-admin-api. */
 export const HENLEGGELSESNOTAT_MAKS_LENGDE = 10_000;
 
-export const henleggelsesnotattypeSchema = z.enum(["HENLEGGELSESNOTAT", "ORIENTERINGSNOTAT"]);
+const henleggelsesnotattypeSchema = z.enum(["HENLEGGELSESNOTAT", "ORIENTERINGSNOTAT"]);
 export type Henleggelsesnotattype = z.infer<typeof henleggelsesnotattypeSchema>;
 
-export const henleggelsesnotatUtfallSchema = z.enum([
+const henleggelsesnotatUtfallSchema = z.enum([
   "JOURNALFORT",
   "ALLEREDE_JOURNALFORT",
   "REGISTRERT_UTEN_TEKST",
   "FEILET",
 ]);
-export type HenleggelsesnotatUtfall = z.infer<typeof henleggelsesnotatUtfallSchema>;
 
 /** Notatene fra skjemaet. Validert på serveren før de sendes til backend. */
 export const registrerHenleggelsesnotaterRequestSchema = z.object({
@@ -531,7 +530,7 @@ export const registrerHenleggelsesnotaterRequestSchema = z.object({
       "Hver notattype kan bare registreres én gang",
     ),
 });
-export type RegistrerHenleggelsesnotaterRequest = z.infer<
+type RegistrerHenleggelsesnotaterRequest = z.infer<
   typeof registrerHenleggelsesnotaterRequestSchema
 >;
 export type Henleggelsesnotat = RegistrerHenleggelsesnotaterRequest["notater"][number];
@@ -545,7 +544,7 @@ export const registrerHenleggelsesnotaterResponseSchema = z.object({
     }),
   ),
 });
-export type RegistrerHenleggelsesnotaterResponse = z.infer<
+type RegistrerHenleggelsesnotaterResponse = z.infer<
   typeof registrerHenleggelsesnotaterResponseSchema
 >;
 export type HenleggelsesnotatResultat = RegistrerHenleggelsesnotaterResponse["notater"][number];

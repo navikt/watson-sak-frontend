@@ -337,7 +337,7 @@ export function erSaksbehandlerPåSak(sak: KontrollsakResponse, navIdent: string
 
 // --- Henleggelsesnotater ---
 
-export const HENLEGGELSESNOTATER_FELT = "notater";
+const HENLEGGELSESNOTATER_FELT = "notater";
 
 /**
  * Leser `notater` (JSON) fra skjemaet. Returnerer en feilmelding i stedet for å kaste,
