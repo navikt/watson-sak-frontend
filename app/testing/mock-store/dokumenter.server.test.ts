@@ -10,6 +10,7 @@ import {
   slettDokument,
 } from "./dokumenter.server";
 import { hentMockState, resetDefaultSession } from "./session.server";
+import { hentHistorikk } from "./historikk.server";
 
 const testRequest = new Request("http://localhost");
 function state() {
@@ -90,6 +91,11 @@ describe("mock-store dokumenter", () => {
       endretAvIdent: "mock-ola-nordmann",
       endretAvNavn: "Ola Nordmann",
     });
+    expect(hentHistorikk(state(), sakUtenDokumenter)[0]).toMatchObject({
+      hendelsesType: "DOKUMENT_OPPRETTET",
+      dokumentnavn: "Uten tittel",
+      beskrivelse: "Dokument opprettet",
+    });
   });
 
   it("lagrer tittel og innhold på et dokument", () => {
@@ -129,6 +135,11 @@ describe("mock-store dokumenter", () => {
     expect(hentDokument(state(), sakUtenDokumenter, id)).toBeUndefined();
     expect(hentDokumenttreForSak(state(), sakUtenDokumenter).some((n) => n.id === id)).toBe(false);
     expect(hentDokumentHistorikk(state(), sakUtenDokumenter, id)).toEqual([]);
+    expect(hentHistorikk(state(), sakUtenDokumenter)[0]).toMatchObject({
+      hendelsesType: "DOKUMENT_SLETTET",
+      dokumentnavn: "Uten tittel",
+      beskrivelse: "Dokument slettet",
+    });
   });
 
   it("sletter et seedet dokument på rot", () => {

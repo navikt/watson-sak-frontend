@@ -327,6 +327,10 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
       return "Sak koblet";
     case "FIL_SLETTET":
       return "Fil slettet";
+    case "DOKUMENT_OPPRETTET":
+      return "Dokument opprettet";
+    case "DOKUMENT_SLETTET":
+      return "Dokument slettet";
     case "FIL_OMDØPT":
       return "Filnavn endret";
     case "FIL_ÅPNET":
@@ -433,6 +437,14 @@ export function hendelseBeskrivelse(
 
   if (hendelse.hendelsesType === "SAK_OPPRETTET") {
     return null;
+  }
+
+  if (
+    hendelse.hendelsesType === "DOKUMENT_OPPRETTET" ||
+    hendelse.hendelsesType === "DOKUMENT_SLETTET"
+  ) {
+    if (!hendelse.dokumentnavn) return null;
+    return `${hendelse.dokumentnavn} ${hendelse.hendelsesType === "DOKUMENT_OPPRETTET" ? "opprettet" : "slettet"}`;
   }
 
   if (hendelse.hendelsesType === "MOTTAKSENHET_ENDRET") {
@@ -579,6 +591,10 @@ export function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
     case "FIL_LASTET_OPP":
       return <FilesIcon {...iconProps} />;
     case "FIL_SLETTET":
+      return <TrashIcon {...iconProps} />;
+    case "DOKUMENT_OPPRETTET":
+      return <PlusCircleIcon {...iconProps} />;
+    case "DOKUMENT_SLETTET":
       return <TrashIcon {...iconProps} />;
     case "FIL_OMDØPT":
       return <PencilIcon {...iconProps} />;

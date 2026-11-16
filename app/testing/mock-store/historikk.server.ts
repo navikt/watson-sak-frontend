@@ -32,7 +32,9 @@ type BackendHendelsestype =
   | "FIL_LASTET_OPP"
   | "FIL_ARKIVERT"
   | "FIL_OMDØPT"
-  | "FIL_SLETTET";
+  | "FIL_SLETTET"
+  | "DOKUMENT_OPPRETTET"
+  | "DOKUMENT_SLETTET";
 
 function lagId(state: MockState): string {
   return `00000000-0000-4000-8000-${String(state.nesteHistorikkId++).padStart(12, "0")}`;
@@ -125,6 +127,7 @@ export function leggTilHendelse(
     | "opprettetVedSaksopprettelse"
     | "saksendringer"
     | "filnavn"
+    | "dokumentnavn"
   >,
 ) {
   return leggTilBackendHendelse(

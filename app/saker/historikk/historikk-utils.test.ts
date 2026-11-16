@@ -1,7 +1,7 @@
 import { createElement } from "react";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { GavelIcon } from "@navikt/aksel-icons";
+import { GavelIcon, PlusCircleIcon, TrashIcon } from "@navikt/aksel-icons";
 import { HistorikkProsessListe } from "./HistorikkProsessListe";
 import type { SakHendelse } from "./typer";
 import {
@@ -26,6 +26,31 @@ function lagHendelse(overrides: Partial<SakHendelse>): SakHendelse {
 }
 
 describe("hendelseBeskrivelse", () => {
+  it.each([
+    ["DOKUMENT_OPPRETTET", "opprettet"],
+    ["DOKUMENT_SLETTET", "slettet"],
+  ])("viser dokumentnavnet for %s", (hendelsesType, handling) => {
+    const hendelse = lagHendelse({
+      hendelsesType,
+      dokumentnavn: "Saksframlegg",
+      beskrivelse: "Backend-beskrivelse",
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe(`Saksframlegg ${handling}`);
+  });
+
+  it.each(["DOKUMENT_OPPRETTET", "DOKUMENT_SLETTET"])(
+    "viser ingen beskrivelse for %s når dokumentnavnet mangler",
+    (hendelsesType) => {
+      const hendelse = lagHendelse({
+        hendelsesType,
+        beskrivelse: "Backend-beskrivelse",
+      });
+
+      expect(hendelseBeskrivelse(hendelse)).toBeNull();
+    },
+  );
+
   it("viser hvilke felter som ble endret for SAKSINFORMASJON_ENDRET", () => {
     const hendelse = lagHendelse({
       hendelsesType: "SAKSINFORMASJON_ENDRET",
@@ -149,6 +174,13 @@ describe("hendelseBeskrivelse", () => {
 });
 
 describe("hendelseTittel", () => {
+  it.each([
+    ["DOKUMENT_OPPRETTET", "Dokument opprettet"],
+    ["DOKUMENT_SLETTET", "Dokument slettet"],
+  ])("viser %s med riktig tittel", (hendelsesType, tittel) => {
+    expect(hendelseTittel(lagHendelse({ hendelsesType }))).toBe(tittel);
+  });
+
   it("viser SAK_KOBLET som «Sak koblet» med koblet sak-id", () => {
     const hendelse = lagHendelse({ hendelsesType: "SAK_KOBLET", kobletSakId: 42 });
 
@@ -588,6 +620,15 @@ describe("nye historikktekster", () => {
 });
 
 describe("HendelseBullet", () => {
+  it.each([
+    ["DOKUMENT_OPPRETTET", PlusCircleIcon],
+    ["DOKUMENT_SLETTET", TrashIcon],
+  ])("viser riktig ikon for %s", (hendelsesType, ikonType) => {
+    const ikon = HendelseBullet({ hendelse: lagHendelse({ hendelsesType }) });
+
+    expect(ikon.type).toBe(ikonType);
+  });
+
   it("viser gavelikon for historisk ANMELDT-statusendring", () => {
     const ikon = HendelseBullet({
       hendelse: lagHendelse({

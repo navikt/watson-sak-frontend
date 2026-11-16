@@ -10,6 +10,7 @@ export const sakHendelseSchema = z
     normaliserHistoriskHendelseInput,
     kontrollsakHendelseResponseObjectSchema.extend({
       filnavn: z.string().nullable().optional(),
+      dokumentnavn: z.string().nullable().optional(),
       berortSaksbehandlerNavIdent: z.string().optional(),
       berortSaksbehandlerEnhet: z.string().optional(),
       saksendringer: z

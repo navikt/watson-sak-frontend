@@ -7,6 +7,7 @@ import type {
 } from "~/saker/filer/typer";
 import type { MockState } from "./session.server";
 import { slettKommentarerForDokument } from "./kommentarer.server";
+import { leggTilHendelse } from "./historikk.server";
 
 function innholdsnøkkel(sakId: string, docId: string): string {
   return `${sakId}:${docId}`;
@@ -238,6 +239,14 @@ export function opprettDokument(
   ]);
   state.tommeDokumentområder.delete(sakId);
 
+  const sak = state.kontrollsaker.find((kandidat) => String(kandidat.id) === sakId);
+  if (sak) {
+    leggTilHendelse(state, sak, "DOKUMENT_OPPRETTET", undefined, {
+      dokumentnavn: "Uten tittel",
+      beskrivelse: "Dokument opprettet",
+    });
+  }
+
   return { id };
 }
 
@@ -372,9 +381,19 @@ export function slettDokument(state: MockState, sakId: string, docId: string): b
     return false;
   }
 
+  const dokumentnavn = dokumenter[indeks].tittel;
   dokumenter.splice(indeks, 1);
   state.dokumentInnhold.delete(innholdsnøkkel(sakId, docId));
   state.dokumentHistorikk.delete(historikknøkkel(sakId, docId));
   slettKommentarerForDokument(state, sakId, docId);
+
+  const sak = state.kontrollsaker.find((kandidat) => String(kandidat.id) === sakId);
+  if (sak) {
+    leggTilHendelse(state, sak, "DOKUMENT_SLETTET", undefined, {
+      dokumentnavn,
+      beskrivelse: "Dokument slettet",
+    });
+  }
+
   return true;
 }
