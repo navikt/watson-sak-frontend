@@ -1,5 +1,8 @@
+import { createElement } from "react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { GavelIcon } from "@navikt/aksel-icons";
+import { HistorikkProsessListe } from "./HistorikkProsessListe";
 import type { SakHendelse } from "./typer";
 import {
   HendelseBullet,
@@ -836,5 +839,55 @@ describe("filhendelser", () => {
       beskrivelse: "Virusskanning OK",
     });
     expect(hendelseBeskrivelse(hendelse)).toBe("Virusskanning OK");
+  });
+
+  it("viser filnavn for FIL_LASTET_OPP når filnavn finnes", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "FIL_LASTET_OPP",
+      status: null,
+      filnavn: "vedlegg.pdf",
+      beskrivelse: "Fil lastet opp",
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe("Fil: vedlegg.pdf");
+  });
+
+  it("bruker beskrivelsen fra hendelsen når filnavn mangler for FIL_LASTET_OPP", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "FIL_LASTET_OPP",
+      status: null,
+      beskrivelse: "Fil lastet opp",
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe("Fil lastet opp");
+  });
+
+  it("viser filnavn for hver fil i gruppen «Filer lastet opp»", () => {
+    const hendelser = [
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000003",
+        hendelsesType: "FIL_LASTET_OPP",
+        filnavn: "vedlegg.pdf",
+        opprettetVedSaksopprettelse: true,
+      }),
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000002",
+        hendelsesType: "FIL_LASTET_OPP",
+        filnavn: "dokument.docx",
+        opprettetVedSaksopprettelse: true,
+      }),
+    ];
+
+    render(
+      createElement(HistorikkProsessListe, {
+        hendelser,
+        redigerbar: false,
+        onRediger: () => {},
+        onSlett: () => {},
+      }),
+    );
+
+    expect(screen.getByText("Fil: vedlegg.pdf")).toBeTruthy();
+    expect(screen.getByText("Fil: dokument.docx")).toBeTruthy();
   });
 });

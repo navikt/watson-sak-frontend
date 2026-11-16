@@ -124,6 +124,7 @@ export function leggTilHendelse(
     | "opprettetAvNavn"
     | "opprettetVedSaksopprettelse"
     | "saksendringer"
+    | "filnavn"
   >,
 ) {
   return leggTilBackendHendelse(

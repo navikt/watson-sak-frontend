@@ -502,6 +502,9 @@ export function hendelseBeskrivelse(
     hendelse.hendelsesType === "FIL_ÅPNET" ||
     hendelse.hendelsesType === "FIL_ARKIVERT"
   ) {
+    if (hendelse.hendelsesType === "FIL_LASTET_OPP" && hendelse.filnavn) {
+      return `Fil: ${hendelse.filnavn}`;
+    }
     return hendelse.beskrivelse ?? null;
   }
 

@@ -46,7 +46,10 @@ export function HistorikkProsessListe({
         const hendelse = gruppe[0];
         const forrigeHendelse = forrigeHendelseKart?.get(hendelse.hendelseId);
         const beskrivelse =
-          gruppe.length > 1 ? null : hendelseBeskrivelse(hendelse, forrigeHendelse);
+          gruppe.length > 1
+            ? gruppe.flatMap((fil) => (fil.filnavn ? [`Fil: ${fil.filnavn}`] : [])).join("\n") ||
+              null
+            : hendelseBeskrivelse(hendelse, forrigeHendelse);
         const erManuellHendelse = hendelse.hendelsesType === "MANUELL_HENDELSE";
 
         return (
