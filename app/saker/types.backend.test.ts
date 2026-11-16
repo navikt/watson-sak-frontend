@@ -184,9 +184,12 @@ describe("kontrollsakStatusSchema", () => {
 });
 
 describe("normaliserKontrollnotat", () => {
-  it.each(["KONTROLLNOTAT", "ORIENTERINGSNOTAT"])("normaliserer %s til ORIENTERINGSNOTAT", (verdi) => {
-    expect(normaliserKontrollnotat(verdi)).toBe("ORIENTERINGSNOTAT");
-  });
+  it.each(["KONTROLLNOTAT", "ORIENTERINGSNOTAT"])(
+    "normaliserer %s til ORIENTERINGSNOTAT",
+    (verdi) => {
+      expect(normaliserKontrollnotat(verdi)).toBe("ORIENTERINGSNOTAT");
+    },
+  );
 });
 
 describe("adresseskjermet i kontrollobjekt", () => {

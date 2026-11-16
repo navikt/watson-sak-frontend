@@ -91,7 +91,8 @@ export function harLagretResultatForOvergang(
         (tilSteg === "FORVALTNING"
           ? resultat.utredning.type === "FEILUTBETALINGSSAK_ORDINAER" ||
             resultat.utredning.type === "FEILUTBETALINGSSAK_POTENSIELL_STRAFFESAK"
-          : resultat.utredning.type === "ORIENTERINGSNOTAT" || resultat.utredning.type === "HENLAGT") &&
+          : resultat.utredning.type === "ORIENTERINGSNOTAT" ||
+            resultat.utredning.type === "HENLAGT") &&
         (resultat.utredning.type !== "HENLAGT" || resultat.utredning.henleggelsesarsak != null)
       );
     case "FORVALTNING":

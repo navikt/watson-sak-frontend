@@ -47,18 +47,18 @@ export function normaliserKontrollnotat(v: unknown): unknown {
 const resultatTypeSchema = z.preprocess(
   normaliserKontrollnotat,
   z.enum([
-  "ORIENTERINGSNOTAT",
-  "FEILUTBETALINGSSAK_ORDINAER",
-  "FEILUTBETALINGSSAK_POTENSIELL_STRAFFESAK",
-  "HENLAGT",
-  "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE",
-  "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
-  "ANMELDT",
-  "FORELEGG",
-  "BOT",
-  "PATALEUNNLATELSE",
-  "FRIFINNELSE",
-  "DOMFELLELSE",
+    "ORIENTERINGSNOTAT",
+    "FEILUTBETALINGSSAK_ORDINAER",
+    "FEILUTBETALINGSSAK_POTENSIELL_STRAFFESAK",
+    "HENLAGT",
+    "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE",
+    "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+    "ANMELDT",
+    "FORELEGG",
+    "BOT",
+    "PATALEUNNLATELSE",
+    "FRIFINNELSE",
+    "DOMFELLELSE",
   ]),
 );
 export type ResultatType = z.infer<typeof resultatTypeSchema>;
@@ -75,11 +75,11 @@ const strafferabattLiggetidSchema = z.enum(["INGEN", "NAV", "POLITIET", "BEGGE"]
 
 const resultatResponseSchema = z.object({
   utredning: z
-      .object({
-        type: normalisertResultatverdiSchema,
-        belop: z.number().nullable().optional(),
-        henleggelsesarsak: henleggelsesarsakSchema.nullable().optional(),
-      })
+    .object({
+      type: normalisertResultatverdiSchema,
+      belop: z.number().nullable().optional(),
+      henleggelsesarsak: henleggelsesarsakSchema.nullable().optional(),
+    })
     .nullable()
     .optional(),
   forvaltning: z
@@ -254,9 +254,9 @@ export const tillatteHandlingerResponseSchema = z.object({
       paakrevdNar: z.string().nullable().optional(),
       /** Vilkår for når feltet gjelder, men kan stå tomt. */
       valgfriNar: z.string().nullable().optional(),
-        verdier: z
-          .array(z.object({ verdi: normalisertResultatverdiSchema, etikett: z.string() }))
-          .default([]),
+      verdier: z
+        .array(z.object({ verdi: normalisertResultatverdiSchema, etikett: z.string() }))
+        .default([]),
     }),
   ),
 });

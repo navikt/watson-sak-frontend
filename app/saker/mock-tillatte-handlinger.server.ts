@@ -189,10 +189,12 @@ function feltskjemaFor(steg: KontrollsakSteg): TillatteHandlingerResponse["felts
           "Endelig resultat",
           "enum",
           false,
-          (["FEILUTBETALINGSSAK_ORDINAER", "ORIENTERINGSNOTAT", "HENLAGT"] as const).map((verdi) => ({
-            verdi,
-            etikett: resultatEtiketter[verdi],
-          })),
+          (["FEILUTBETALINGSSAK_ORDINAER", "ORIENTERINGSNOTAT", "HENLAGT"] as const).map(
+            (verdi) => ({
+              verdi,
+              etikett: resultatEtiketter[verdi],
+            }),
+          ),
           "forvaltning.type=SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
         ),
         mockFelt("ytelser[].endeligBelop", "Endelig beløp for ytelsen", "belop", false),

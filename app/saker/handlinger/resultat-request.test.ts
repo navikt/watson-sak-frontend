@@ -293,7 +293,9 @@ describe("resultatFeltErAktivt", () => {
     expect(betingetFelt).toBeDefined();
     if (!betingetFelt) return;
 
-    expect(resultatFeltErAktivt(betingetFelt, { "utredning.type": "ORIENTERINGSNOTAT" })).toBe(false);
+    expect(resultatFeltErAktivt(betingetFelt, { "utredning.type": "ORIENTERINGSNOTAT" })).toBe(
+      false,
+    );
     expect(resultatFeltErAktivt(betingetFelt, { "utredning.type": "HENLAGT" })).toBe(true);
   });
 

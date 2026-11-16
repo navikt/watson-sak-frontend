@@ -630,9 +630,9 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
       },
     });
     expect(orienteringsnotatUtenEndeligBelop.tillatteSteg).toEqual(["AVSLUTTET"]);
-    expect(orienteringsnotatUtenEndeligBelop.paakrevdeRegistreringerPerSteg.AVSLUTTET).not.toContain(
-      "ytelser[].endeligBelop",
-    );
+    expect(
+      orienteringsnotatUtenEndeligBelop.paakrevdeRegistreringerPerSteg.AVSLUTTET,
+    ).not.toContain("ytelser[].endeligBelop");
     expect(henlagtUtenEndeligBelop.handlinger.map((handling) => handling.type)).toContain(
       "FLYTT_TIL_NESTE_STEG",
     );
