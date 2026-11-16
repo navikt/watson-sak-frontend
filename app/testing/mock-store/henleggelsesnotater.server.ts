@@ -4,7 +4,13 @@ import type {
   HenleggelsesnotatResultat,
   RegistrertHenleggelsesnotat,
 } from "~/saker/types.backend";
+import { hentJournalposterForSak, leggTilJournalpost } from "./journalposter.server";
 import type { MockState } from "./session.server";
+
+const notattitler: Record<Henleggelsesnotattype, string> = {
+  HENLEGGELSESNOTAT: "Henleggelsesnotat",
+  ORIENTERINGSNOTAT: "Orienteringsnotat",
+};
 
 export function hentHenleggelsesnotaterForSak(
   state: MockState,
@@ -47,6 +53,19 @@ export function registrerHenleggelsesnotater(
     const indeks = registrerte.findIndex((r) => r.notattype === notat.notattype);
     if (indeks >= 0) registrerte[indeks] = registrert;
     else registrerte.push(registrert);
+    // Journalposten ligger i arkivlageret, uten notatteksten.
+    if (
+      journalpostId &&
+      !hentJournalposterForSak(state, sakId).some((jp) => jp.journalpostId === journalpostId)
+    ) {
+      leggTilJournalpost(state, sakId, {
+        journalpostId,
+        journalposttype: "NOTAT",
+        tittel: notattitler[notat.notattype],
+        opprettet: new Date().toISOString(),
+        tema: "KTR",
+      });
+    }
     return {
       notattype: notat.notattype,
       utfall: harTekst ? "JOURNALFORT" : "REGISTRERT_UTEN_TEKST",

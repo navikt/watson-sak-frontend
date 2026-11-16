@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode, type RefObject } from "rea
 import { CheckmarkCircleFillIcon, TasklistIcon } from "@navikt/aksel-icons";
 import { BodyShort, Button, ErrorMessage, Heading, Modal, VStack } from "@navikt/ds-react";
 import { useFetcher } from "react-router";
+import type { OpprettetJournalpost } from "~/saker/arkiv/typer";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { erTekniskFeilSvar } from "~/feilhåndtering/Innsendingsfeil";
@@ -40,6 +41,7 @@ type HenleggUtredningFlytProps = {
   tillatteHandlinger: TillatteHandlingerResponse;
   /** Notater som allerede er registrert på saken, fra loaderen. */
   registrerteNotater: readonly RegistrertHenleggelsesnotat[];
+  onNotatJournalført?: (journalpost: OpprettetJournalpost) => void;
   modalRef: RefObject<HTMLDialogElement | null>;
   /** Pågående innsending av selve avslutningen. */
   erSubmitting: boolean;
@@ -68,6 +70,7 @@ export function HenleggUtredningFlyt({
   feil,
   tillatteHandlinger,
   registrerteNotater,
+  onNotatJournalført,
   modalRef,
   erSubmitting,
   avslutningsfeil,
@@ -80,6 +83,10 @@ export function HenleggUtredningFlyt({
   const venterPåSvar = useRef(false);
   const feltRefs = useRef<Partial<Record<Henleggelsesnotattype, HTMLElement | null>>>({});
   const overskriftRef = useRef<HTMLHeadingElement>(null);
+  const journalførtRef = useRef(onNotatJournalført);
+  useEffect(() => {
+    journalførtRef.current = onNotatJournalført;
+  }, [onNotatJournalført]);
 
   const [delsteg, settDelsteg] = useState<Delsteg>("valg");
   const [kortÅpent, settKortÅpent] = useState(false);
@@ -133,6 +140,17 @@ export function HenleggUtredningFlyt({
     if (svar && typeof svar === "object" && "ok" in svar && svar.ok && "notater" in svar) {
       const notater = svar.notater as HenleggelsesnotatResultat[];
       settØkteResultater((forrige) => slåSammenResultater(forrige, notater));
+      // Notater som ble journalført skal vises i Gosys-oversikten, også når et annet notat feilet.
+      for (const notat of notater) {
+        if (notat.utfall === "JOURNALFORT" && notat.journalpostId) {
+          journalførtRef.current?.({
+            journalpostId: notat.journalpostId,
+            journalposttype: "NOTAT",
+            tittel: notattypeEtiketter[notat.notattype],
+            dokumenttitler: [notattypeEtiketter[notat.notattype]],
+          });
+        }
+      }
       const feilede = notater.filter((notat) => notat.utfall === "FEILET");
       if (feilede.length === 0) {
         settNotatfeil({});

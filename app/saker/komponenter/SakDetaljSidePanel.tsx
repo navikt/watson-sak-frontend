@@ -9,6 +9,7 @@ import type {
   KontrollsakSaksbehandler,
   TillatteHandlingerResponse,
 } from "~/saker/types.backend";
+import type { OpprettetJournalpost } from "~/saker/arkiv/typer";
 import type { SakHendelse } from "../historikk/typer";
 import { SaksbehandlereKort } from "./SaksbehandlereKort";
 
@@ -25,6 +26,8 @@ interface SakDetaljSidePanelProps {
   historikkTilstand: "vis" | "ikke-delt" | "ingen-persontilgang";
   seksjonsfeil?: Seksjonsfeil;
   registrerteNotater?: readonly RegistrertHenleggelsesnotat[];
+  /** Kalles for hvert notat som journalføres ved henleggelse. */
+  onNotatJournalført?: (journalpost: OpprettetJournalpost) => void;
 }
 
 export function SakDetaljSidePanel({
@@ -40,6 +43,7 @@ export function SakDetaljSidePanel({
   historikkTilstand,
   seksjonsfeil = {},
   registrerteNotater = [],
+  onNotatJournalført,
 }: SakDetaljSidePanelProps) {
   return (
     <VStack gap="space-20" className="md:sticky md:top-4 md:self-start">
@@ -71,6 +75,7 @@ export function SakDetaljSidePanel({
         kanTildeleSak={kanTildeleSak}
         tillatteHandlinger={tillatteHandlinger}
         registrerteNotater={registrerteNotater}
+        onNotatJournalført={onNotatJournalført}
       />
 
       {sak.visLiggetidVarsel && (

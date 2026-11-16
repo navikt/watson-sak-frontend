@@ -18,6 +18,7 @@ import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import { finnEnhetsnavn } from "~/kodeverk/enheter";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { AvkortetTag } from "~/komponenter/AvkortetTag";
+import type { OpprettetJournalpost } from "~/saker/arkiv/typer";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { kanFordeleSak, kanOverføreTil, kanTildeleTil } from "~/saker/ledertilgang";
@@ -52,6 +53,8 @@ interface SaksbehandlereKortProps {
   tillatteHandlinger?: TillatteHandlingerResponse;
   /** Notater som ble registrert da saken ble henlagt. */
   registrerteNotater?: readonly RegistrertHenleggelsesnotat[];
+  /** Kalles for hvert notat som journalføres ved henleggelse. */
+  onNotatJournalført?: (journalpost: OpprettetJournalpost) => void;
 }
 
 function hentInitialer(navn: string) {
@@ -101,6 +104,7 @@ export function SaksbehandlereKort({
   kanTildeleSak = true,
   tillatteHandlinger,
   registrerteNotater = [],
+  onNotatJournalført,
 }: SaksbehandlereKortProps) {
   const [visOverforModal, setVisOverforModal] = useState(false);
   const [visDelTilgangModal, setVisDelTilgangModal] = useState(false);
@@ -467,6 +471,7 @@ export function SaksbehandlereKort({
           tillatteHandlinger={tillatteHandlinger}
           start={åpenSaksflyt}
           registrerteNotater={registrerteNotater}
+          onNotatJournalført={onNotatJournalført}
           onClose={() => setÅpenSaksflyt(null)}
         />
       )}

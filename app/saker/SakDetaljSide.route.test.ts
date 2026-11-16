@@ -122,15 +122,19 @@ describe("SakDetaljSide action", () => {
     const formData = new FormData();
     formData.set("handling", handling);
 
-    await expect(
-      action({
-        request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
-          method: "POST",
-          body: formData,
-        }),
-        params: { sakId: kontrollsakRef },
-      } as Route.ActionArgs),
-    ).rejects.toMatchObject({ init: { status: 400 } });
+    const svar = action({
+      request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: kontrollsakRef },
+    } as Route.ActionArgs);
+    if (handling === "opprett_oppgave") {
+      // Oppgavefeil returneres til dialogen, slik at skjemaet beholder verdiene.
+      await expect(svar).resolves.toMatchObject({ data: { ok: false }, init: { status: 400 } });
+    } else {
+      await expect(svar).rejects.toMatchObject({ init: { status: 400 } });
+    }
   });
 
   it("legger til delt saksbehandler og logger historikk", async () => {
@@ -1381,7 +1385,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
         }),
         params: { sakId: kontrollsakRef },
       } as Route.ActionArgs),
-    ).rejects.toMatchObject({ init: { status: 400 } });
+    ).resolves.toMatchObject({ data: { ok: false }, init: { status: 400 } });
     expect(hentHistorikk(testRequest, String(kontrollsak.id))).toHaveLength(antallHendelserFør);
   });
 
@@ -1403,15 +1407,18 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
       formData.set("tittel", "Tittel");
       formData.set("oppgavetype", "VUR");
 
-      await expect(
-        action({
-          request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
-            method: "POST",
-            body: formData,
-          }),
-          params: { sakId: kontrollsakRef },
-        } as Route.ActionArgs),
-      ).rejects.toMatchObject({ init: { status: 400 } });
+      const svar = action({
+        request: new Request(`http://localhost/saker/${kontrollsakRef}`, {
+          method: "POST",
+          body: formData,
+        }),
+        params: { sakId: kontrollsakRef },
+      } as Route.ActionArgs);
+      if (handling === "opprett_oppgave") {
+        await expect(svar).resolves.toMatchObject({ data: { ok: false }, init: { status: 400 } });
+      } else {
+        await expect(svar).rejects.toMatchObject({ init: { status: 400 } });
+      }
     },
   );
 });

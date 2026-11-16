@@ -82,4 +82,33 @@ describe("mock-store for henleggelsesnotater", () => {
     resetDefaultSession();
     expect(hentHenleggelsesnotaterForSak(state(), "7")).toEqual([]);
   });
+
+  it("legger journalført notat i arkivlageret, uten tekst og uten duplikat ved nytt forsøk", async () => {
+    const { hentMockArkivJournalposter } = await import("~/saker/arkiv/mock-data.server");
+    const notater = [{ notattype: "ORIENTERINGSNOTAT" as const, tekst: "Hemmelig tekst" }];
+
+    registrerHenleggelsesnotater(state(), "7", notater);
+    const andre = registrerHenleggelsesnotater(state(), "7", notater);
+
+    expect(andre[0].utfall).toBe("ALLEREDE_JOURNALFORT");
+    const treff = hentMockArkivJournalposter(state(), "7").filter(
+      (jp) => jp.journalpostId === "mock-jp-7-ORIENTERINGSNOTAT",
+    );
+    expect(treff).toHaveLength(1);
+    expect(treff[0]).toMatchObject({
+      tittel: "Orienteringsnotat",
+      tema: "KTR",
+      journalposttype: "N",
+    });
+    expect(treff[0].datoOpprettet.slice(0, 10)).toBe(new Date().toISOString().slice(0, 10));
+    expect(JSON.stringify(treff[0])).not.toContain("Hemmelig tekst");
+  });
+
+  it("legger ikke notat uten tekst i arkivlageret", async () => {
+    const { hentMockArkivJournalposter } = await import("~/saker/arkiv/mock-data.server");
+    registrerHenleggelsesnotater(state(), "8", [{ notattype: "HENLEGGELSESNOTAT", tekst: null }]);
+    expect(
+      hentMockArkivJournalposter(state(), "8").some((jp) => jp.tittel === "Henleggelsesnotat"),
+    ).toBe(false);
+  });
 });

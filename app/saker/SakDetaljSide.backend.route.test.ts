@@ -35,6 +35,7 @@ const mockHentTillatteHandlinger = vi.fn().mockResolvedValue({
 });
 const mockSøkKontrollsaker = vi.fn();
 const mockRegistrerHenleggelsesnotater = vi.fn();
+const mockOpprettOppgave = vi.fn();
 const mockHentHenleggelsesnotater = vi.fn().mockResolvedValue([]);
 const mockFerdigstillMigreringskandidat = vi.fn();
 const mockHentMigreringskandidat = vi.fn();
@@ -91,6 +92,7 @@ vi.mock("~/saker/api.server", () => ({
   opprettManuellHendelse: mockOpprettManuellHendelse,
   søkKontrollsaker: mockSøkKontrollsaker,
   registrerHenleggelsesnotater: mockRegistrerHenleggelsesnotater,
+  opprettOppgave: mockOpprettOppgave,
   hentHenleggelsesnotater: mockHentHenleggelsesnotater,
 }));
 
@@ -1530,6 +1532,31 @@ describe("henleggelsesnotater — backend-sti", () => {
     );
     const resultat = await registrer([{ notattype: "HENLEGGELSESNOTAT", tekst: "a" }]);
     expect(resultat).toEqual({ ok: false, feil: "Ugyldig tekst" });
+  });
+
+  it("returnerer 403 på opprett_oppgave som data til skjemaet", async () => {
+    mockOpprettOppgave.mockRejectedValue(new MockBackendFeilException(403, "Tilgang avvist"));
+    const formData = new FormData();
+    for (const [navn, verdi] of Object.entries({
+      handling: "opprett_oppgave",
+      tema: "KTR",
+      behandlendeEnhet: "4100",
+      prioritet: "NORMAL",
+      frist: "2026-12-01",
+      beskrivelse: "Følg opp",
+      oppgavetype: "VURD_HENV",
+      journalpostId: "jp-1",
+      gjelderverdi: "ab0356",
+    })) {
+      formData.set(navn, verdi);
+    }
+    const { action } = await import("./SakDetaljSide.server");
+    const resultat = await action({
+      request: new Request("http://localhost/saker/1", { method: "POST", body: formData }),
+      params: { sakId: "1" },
+    } as Parameters<typeof action>[0]);
+
+    expect(resultat).toMatchObject({ data: { ok: false }, init: { status: 403 } });
   });
 
   it("returnerer 403 til skjemaet i stedet for å kaste", async () => {

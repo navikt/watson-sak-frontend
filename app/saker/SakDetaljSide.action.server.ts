@@ -94,6 +94,7 @@ const saksflythandlinger = new Set([
   "lagre_resultat",
   "endre_status",
   "registrer_henleggelsesnotater",
+  "opprett_oppgave",
 ]);
 
 type SaksflytFeil = { ok: false; feil: string };

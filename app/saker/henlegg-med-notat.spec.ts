@@ -52,7 +52,11 @@ test.describe("Henlegg utredning med notat", () => {
     await page.getByRole("button", { name: "Lukk" }).last().click();
 
     await expect(page.getByText("Registrert", { exact: true })).toBeVisible();
-    await expect(page.getByText("Orienteringsnotat", { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("definition").filter({ hasText: "Orienteringsnotat" }),
+    ).toBeVisible();
+    // Notatet vises i den åpnede Gosys-oversikten uten at siden lastes på nytt.
+    await expect(page.getByRole("cell", { name: "Orienteringsnotat" }).first()).toBeVisible();
   });
 
   test("henlegger uten notat", async ({ page }) => {

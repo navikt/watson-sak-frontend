@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { OpprettetJournalpost } from "~/saker/arkiv/typer";
 import type { HenleggelsesnotatResultat, RegistrertHenleggelsesnotat } from "~/saker/types.backend";
 import { SaksflytModal } from "./SaksflytModal";
 import { lagTillatteHandlinger } from "./testdata";
@@ -71,7 +72,10 @@ function svarMed(
   };
 }
 
-function renderModal(registrerteNotater: RegistrertHenleggelsesnotat[] = []) {
+function renderModal(
+  registrerteNotater: RegistrertHenleggelsesnotat[] = [],
+  onNotatJournalført: (journalpost: OpprettetJournalpost) => void = () => {},
+) {
   const onClose = vi.fn();
   const router = createMemoryRouter(
     [
@@ -83,6 +87,7 @@ function renderModal(registrerteNotater: RegistrertHenleggelsesnotat[] = []) {
             tillatteHandlinger={lagTillatteHandlinger({ steg: "UTREDNING" })}
             start="meny"
             registrerteNotater={registrerteNotater}
+            onNotatJournalført={onNotatJournalført}
             onClose={onClose}
           />
         ),
@@ -481,5 +486,43 @@ describe("henlegg utredning med notat", () => {
     fyllOppgaveskjema();
     klikk("Arkiver oppgave og avslutt sak");
     expect(await screen.findByText(/Kunne ikke opprette oppgave/)).toBeDefined();
+  });
+
+  it("varsler Gosys-oversikten om journalførte notater, også når det andre feilet", async () => {
+    const varsel = vi.fn();
+    svarMed((notattype) =>
+      notattype === "ORIENTERINGSNOTAT"
+        ? journalført("ORIENTERINGSNOTAT", "jp-5")
+        : { notattype: "HENLEGGELSESNOTAT", utfall: "FEILET", journalpostId: null },
+    );
+    renderModal([], varsel);
+    await åpneHenleggelse();
+    skriv("henleggelsesnotat", "A");
+    skriv("orienteringsnotat", "B");
+    klikk("Avslutt sak");
+    await screen.findByText("Henleggelsesnotatet kunne ikke arkiveres. Prøv igjen.");
+
+    expect(varsel).toHaveBeenCalledTimes(1);
+    expect(varsel).toHaveBeenCalledWith({
+      journalpostId: "jp-5",
+      journalposttype: "NOTAT",
+      tittel: "Orienteringsnotat",
+      dokumenttitler: ["Orienteringsnotat"],
+    });
+  });
+
+  it("varsler ikke Gosys-oversikten når ingenting er journalført", async () => {
+    const varsel = vi.fn();
+    svarMed((notattype) => ({
+      notattype: notattype as "HENLEGGELSESNOTAT",
+      utfall: "REGISTRERT_UTEN_TEKST",
+      journalpostId: null,
+    }));
+    renderModal([], varsel);
+    await åpneHenleggelse();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Henleggelsesnotat" }));
+    klikk("Avslutt sak");
+    await screen.findByRole("dialog", { name: "Avslutt sak" });
+    expect(varsel).not.toHaveBeenCalled();
   });
 });

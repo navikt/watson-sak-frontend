@@ -10,7 +10,7 @@ import {
   LocalAlert,
   VStack,
 } from "@navikt/ds-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { isRouteErrorResponse, useLoaderData, useNavigate, useRouteError } from "react-router";
 import { Feilmelding } from "~/feilhåndtering/Feilmelding";
 import { useInnloggetBruker } from "~/auth/innlogget-bruker";
@@ -33,6 +33,7 @@ import { MigreringSjekkliste } from "./komponenter/MigreringSjekkliste";
 import { SaksflytStepper } from "./komponenter/SaksflytStepper";
 import { SaksinformasjonKort } from "./komponenter/SaksinformasjonKort";
 import { getAlder, getNavn } from "./selectors";
+import type { OpprettetJournalpost } from "~/saker/arkiv/typer";
 import { GosysDokumentpanel } from "./arkiv/GosysDokumentpanel";
 import { SakHandlingerKnapper } from "./handlinger/SakHandlingerKnapper";
 import { action, loader } from "./SakDetaljSide.server";
@@ -163,6 +164,19 @@ function SakDetaljSideInnhold() {
     ? finnSaksbehandlerDetalj(saksbehandlerDetaljer, sak.saksbehandlere.eier.navIdent)
     : null;
   const kanRedigere = erEierMedSkriveadgang && stegregler.erAktiv;
+  // Notater som journalføres i henleggelsesdialogen skal vises i Gosys-oversikten.
+  const journalpostHandler = useRef<((journalpost: OpprettetJournalpost) => void) | null>(null);
+  const registrerJournalpostHandler = useCallback(
+    (handler: ((journalpost: OpprettetJournalpost) => void) | null) => {
+      journalpostHandler.current = handler;
+    },
+    [],
+  );
+  const onNotatJournalført = useCallback(
+    (journalpost: OpprettetJournalpost) => journalpostHandler.current?.(journalpost),
+    [],
+  );
+
   const onSakOppdatert = useCallback((oppdatertSak: KontrollsakResponse) => {
     setSak(oppdatertSak);
   }, []);
@@ -315,6 +329,7 @@ function SakDetaljSideInnhold() {
               sakId={saksreferanse}
               saksreferanse={saksreferanse}
               kanSeArkiv={sak.tilgang?.kanSeArkiv ?? false}
+              registrerJournalpostHandler={registrerJournalpostHandler}
               renderHandlinger={({ onJournalpostOpprettet, arkiv }) => (
                 <SakHandlingerKnapper
                   sak={sak}
@@ -360,6 +375,7 @@ function SakDetaljSideInnhold() {
             historikkTilstand={historikkTilstand}
             seksjonsfeil={seksjonsfeil}
             registrerteNotater={registrerteNotater}
+            onNotatJournalført={onNotatJournalført}
           />
         </HGrid>
       </VStack>
