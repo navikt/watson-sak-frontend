@@ -33,6 +33,7 @@ interface UfordelteSakerInnholdProps {
   saksbehandlerDetaljer: KontrollsakSaksbehandler[];
   submitPath: string;
   saksdataUtilgjengelig: boolean;
+  erLesebruker: boolean;
   oppsummering: { antallSaker: number; eldsteLiggetidDager: number };
   paginering: { side: number; totalSider: number; totalAntall: number };
   valgtOmfang: string;
@@ -51,6 +52,7 @@ export function UfordelteSakerInnhold({
   saksbehandlerDetaljer,
   submitPath,
   saksdataUtilgjengelig,
+  erLesebruker,
   oppsummering,
   paginering,
   valgtOmfang,
@@ -230,22 +232,24 @@ export function UfordelteSakerInnhold({
                         onSort: (kolonne) => sorterPåKolonne(kolonne as UfordeltSorteringskolonne),
                         sorterbare: [...ufordelteSorteringskolonner],
                       }}
-                      renderRadHandling={(rad) => (
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            const valgtSak = saker.find((sak) => sak.id === rad.id);
+                      renderRadHandling={(rad) =>
+                        erLesebruker ? null : (
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              const valgtSak = saker.find((sak) => sak.id === rad.id);
 
-                            if (valgtSak) {
-                              setSakSomTildeles(valgtSak);
-                            }
-                          }}
-                          className="cursor-pointer border-none bg-transparent p-0 text-sm font-semibold text-ax-text-accent underline-offset-2 hover:underline focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
-                        >
-                          Tildel
-                        </button>
-                      )}
+                              if (valgtSak) {
+                                setSakSomTildeles(valgtSak);
+                              }
+                            }}
+                            className="cursor-pointer border-none bg-transparent p-0 text-sm font-semibold text-ax-text-accent underline-offset-2 hover:underline focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ax-border-accent"
+                          >
+                            Tildel
+                          </button>
+                        )
+                      }
                     />
                   </div>
                 )}
@@ -323,14 +327,16 @@ export function UfordelteSakerInnhold({
                 )}
               </Filterpanel>
             </div>
-            <TildelSaksbehandlerModal
-              sakId={sakSomTildeles ? String(sakSomTildeles.id) : ""}
-              saksbehandlere={saksbehandlere}
-              saksbehandlerDetaljer={saksbehandlerDetaljer}
-              submitPath={submitPath}
-              åpen={sakSomTildeles !== null}
-              onClose={() => setSakSomTildeles(null)}
-            />
+            {!erLesebruker && (
+              <TildelSaksbehandlerModal
+                sakId={sakSomTildeles ? String(sakSomTildeles.id) : ""}
+                saksbehandlere={saksbehandlere}
+                saksbehandlerDetaljer={saksbehandlerDetaljer}
+                submitPath={submitPath}
+                åpen={sakSomTildeles !== null}
+                onClose={() => setSakSomTildeles(null)}
+              />
+            )}
           </>
         )}
       </VStack>

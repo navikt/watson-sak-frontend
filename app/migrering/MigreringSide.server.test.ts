@@ -96,7 +96,7 @@ const side = (
 const tomSide = { kandidater: [], side: 1, totalSider: 0, totalAntall: 0 };
 
 describe("Migreringsprototypens loader", () => {
-  it.each<Miljø>(["prod", "local-dev"])("avviser %s før data hentes", async (miljø) => {
+  it.each<Miljø>(["local-dev"])("avviser %s før data hentes", async (miljø) => {
     mocks.miljø = miljø;
     mocks.mockmodus = skalBrukeMockdataForMiljø(miljø);
     await expect(loader(args())).rejects.toMatchObject({ status: 404 });
@@ -105,21 +105,24 @@ describe("Migreringsprototypens loader", () => {
     expect(mocks.backend).not.toHaveBeenCalled();
   });
 
-  it.each<Miljø>(["local-backend", "dev"])("bruker beskyttet backend-API i %s", async (miljø) => {
-    mocks.miljø = miljø;
-    mocks.mockmodus = false;
-    mocks.backend.mockResolvedValue(side([basis]));
-    mocks.bruker.mockResolvedValue({ navIdent: "L999999", erLeder: false });
-    const argumenter = args();
+  it.each<Miljø>(["local-backend", "dev", "prod"])(
+    "bruker beskyttet backend-API i %s",
+    async (miljø) => {
+      mocks.miljø = miljø;
+      mocks.mockmodus = false;
+      mocks.backend.mockResolvedValue(side([basis]));
+      mocks.bruker.mockResolvedValue({ navIdent: "L999999", erLeder: false });
+      const argumenter = args();
 
-    const resultat = await loader(argumenter);
+      const resultat = await loader(argumenter);
 
-    expect(mocks.backend).toHaveBeenCalledTimes(1);
-    expect(mocks.backend).toHaveBeenCalledWith(argumenter.request, "MINE", 1, 20, { status: [] });
-    expect(mocks.kandidater).not.toHaveBeenCalled();
-    expect(resultat.liste.kandidater.map((k) => k.kandidatId)).toEqual(["UTREDNING:100245"]);
-    expect(resultat.utilgjengelig).toBe(false);
-  });
+      expect(mocks.backend).toHaveBeenCalledTimes(1);
+      expect(mocks.backend).toHaveBeenCalledWith(argumenter.request, "MINE", 1, 20, { status: [] });
+      expect(mocks.kandidater).not.toHaveBeenCalled();
+      expect(resultat.liste.kandidater.map((k) => k.kandidatId)).toEqual(["UTREDNING:100245"]);
+      expect(resultat.utilgjengelig).toBe(false);
+    },
+  );
 
   it("henter samlet liste og ansattvalg for ledere", async () => {
     mocks.miljø = "local-backend";
@@ -466,8 +469,8 @@ describe("tildelingsaction", () => {
     });
   });
 
-  it("stenger tildeling i prod", async () => {
-    mocks.miljø = "prod";
+  it("stenger tildeling i local-dev", async () => {
+    mocks.miljø = "local-dev";
     await expect(action(skjema(gyldig))).rejects.toMatchObject({ init: { status: 404 } });
   });
 });

@@ -109,9 +109,10 @@ export function SaksbehandlereKort({
   const tildelMegFetcher = useFetcher();
   const fristillFetcher = useFetcher();
   const stegregler = hentStegbaserteSaksregler(sak.steg);
+  const kanSkrive = !innloggetBruker.erLesebruker;
   const erAktivStatus = sak.status === null || sak.status === "AKTIV";
-  const kanEndreTilgang = stegregler.erAktiv && erAktivStatus;
-  const kanEndreDeltTilgang = stegregler.kanEndreDeltTilgang && erAktivStatus;
+  const kanEndreTilgang = kanSkrive && stegregler.erAktiv && erAktivStatus;
+  const kanEndreDeltTilgang = kanSkrive && stegregler.kanEndreDeltTilgang && erAktivStatus;
   const ansvarligSaksbehandler = ansvarligFraProps ?? sak.saksbehandlere.eier;
   const sakPath = RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id));
   const enhetskode = getSaksenhet(sak);
@@ -134,25 +135,28 @@ export function SaksbehandlereKort({
   // Ansvarlig eller leder kan endre enhet i alle aktive steg uansett status.
   // Ufordelte saker kan bare flyttes i Opprettet og Strafferettslig vurdering.
   const kanEndreEnhet =
+    kanSkrive &&
     stegregler.erAktiv &&
     kanFordele &&
     (ansvarligSaksbehandler !== null || stegregler.kanEndreEnhetForUfordeltSak);
   // Fristilling er tillatt uansett arbeidsstatus, også når saken venter eller er i bero.
-  const kanFristilleAnsvarlig = stegregler.kanFristilleAnsvarlig && kanFordele;
+  const kanFristilleAnsvarlig = kanSkrive && stegregler.kanFristilleAnsvarlig && kanFordele;
   const mottakereForOverføring = saksbehandlerDetaljer.filter((saksbehandler) =>
     kanOverføreTil(sak, saksbehandler),
   );
   const mottakereForTildeling = saksbehandlerDetaljer.filter((saksbehandler) =>
     kanTildeleTil(sak, saksbehandler),
   );
-  const kanTildeleAndre = mottakereForTildeling.length > 0;
+  const kanTildeleAndre = kanSkrive && mottakereForTildeling.length > 0;
   // Backend avviser fristilling og tildeling med 409 eller 403, og action returnerer { ok: false, feil } i stedet for å kaste.
   const fristillFeil = hentFetcherFeil(fristillFetcher);
   const tildelMegFeil = hentFetcherFeil(tildelMegFetcher);
   const kanEndreStatus =
-    erEier && tillatteHandlinger?.handlinger.some((handling) => handling.type === "ENDRE_STATUS");
+    kanSkrive &&
+    erEier &&
+    tillatteHandlinger?.handlinger.some((handling) => handling.type === "ENDRE_STATUS");
   const kanEndreSteg =
-    erEier && tillatteHandlinger && hentHandlinger(tillatteHandlinger).length > 0;
+    kanSkrive && erEier && tillatteHandlinger && hentHandlinger(tillatteHandlinger).length > 0;
   const erAvsluttet = sak.steg === "AVSLUTTET";
   const statusTag = hentStatusTag(sak);
   const sluttresultatDetaljer = hentSluttresultatDetaljer(sak.resultat, sak.ytelser);
@@ -310,7 +314,7 @@ export function SaksbehandlereKort({
             <Innsendingsfeil svar={fristillFetcher.data} tekster={INNSENDINGSFEIL.fristill} />
 
             {/* En fristilt sak kan ligge i bero eller vente på informasjon og må likevel kunne tas. */}
-            {stegregler.erAktiv && !ansvarligSaksbehandler && (
+            {kanSkrive && stegregler.erAktiv && !ansvarligSaksbehandler && (
               <VStack gap="space-8">
                 {kanTildeleSak ? (
                   <Button

@@ -22,6 +22,7 @@ const testState = vi.hoisted(() => ({
 
 const getBackendOboTokenMock = vi.hoisted(() => vi.fn().mockResolvedValue("token-123"));
 const tildelKontrollsakMock = vi.hoisted(() => vi.fn());
+const hentSaksbehandlereMock = vi.hoisted(() => vi.fn().mockResolvedValue([]));
 const hentInnloggetBrukerMock = vi.hoisted(() =>
   vi.fn().mockResolvedValue({
     preferredUsername: "test",
@@ -38,6 +39,11 @@ vi.mock("~/auth/access-token", () => ({
 
 vi.mock("~/auth/innlogget-bruker.server", () => ({
   hentInnloggetBruker: hentInnloggetBrukerMock,
+}));
+
+vi.mock("~/saker/api.server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("~/saker/api.server")>()),
+  hentSaksbehandlere: hentSaksbehandlereMock,
 }));
 
 vi.mock("~/config/env.server", () => ({
@@ -331,6 +337,40 @@ describe("FordelingSide loader", () => {
     expect(resultat.valgtOmfang).toBe("enhet:4812");
     expect(resultat.oppsummering).toEqual({ antallSaker: 0, eldsteLiggetidDager: 0 });
     expect(resultat.paginering).toEqual({ side: 1, totalSider: 0, totalAntall: 0 });
+  });
+
+  it("henter ikke saksbehandlerlisten for lesebruker", async () => {
+    testState.skalBrukeMockdata = false;
+    hentInnloggetBrukerMock.mockResolvedValueOnce({
+      preferredUsername: "test",
+      name: "Lesebruker",
+      navIdent: "Z123456",
+      enhet: "Øst",
+      enhetId: "ky153k",
+      erLeder: false,
+      erLesebruker: true,
+    });
+    vi.mocked(hentKontrollsakerForFordeling).mockResolvedValue({
+      items: [],
+      page: 1,
+      size: 20,
+      totalItems: 0,
+      totalPages: 0,
+      oppsummering: { antallSaker: 0, eldsteLiggetidDager: 0 },
+      valgtOmfang: "organisasjon",
+      enhetNavn: "hele organisasjonen",
+      organisasjonsvalg: [],
+    });
+
+    const resultat = await routeLoader({
+      request: new Request("http://localhost/fordeling"),
+      params: {},
+      context: {},
+    } as Route.LoaderArgs);
+
+    expect(hentSaksbehandlereMock).not.toHaveBeenCalled();
+    expect(resultat.saksbehandlere).toEqual([]);
+    expect(resultat.erLesebruker).toBe(true);
   });
 
   it("returnerer alle elementene backend leverer uten lokal filtrering eller paginering", async () => {

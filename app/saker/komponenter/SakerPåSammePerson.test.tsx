@@ -111,6 +111,7 @@ describe("SakerPåSammePerson", () => {
         saker={[lagKontrollsak("203")]}
         gjeldendeSak={lagKontrollsak("105")}
         innloggetNavIdent="Z999999"
+        kanSkrive
       />,
     );
 
@@ -248,6 +249,7 @@ describe("SakerPåSammePerson", () => {
         saker={[lagKontrollsak("203")]}
         gjeldendeSak={lagKontrollsak("105")}
         innloggetNavIdent="Z999999"
+        kanSkrive
       />,
     );
 
@@ -268,6 +270,7 @@ describe("SakerPåSammePerson", () => {
         saker={[lagKontrollsak("203")]}
         gjeldendeSak={lagKontrollsak("105")}
         innloggetNavIdent="Z999999"
+        kanSkrive
       />,
     );
 
@@ -309,6 +312,7 @@ describe("SakerPåSammePerson", () => {
         saker={[lagKontrollsak("203")]}
         gjeldendeSak={lagKontrollsak("105")}
         innloggetNavIdent="Z999999"
+        kanSkrive
       />,
     );
 
@@ -328,6 +332,7 @@ describe("SakerPåSammePerson", () => {
         saker={[lagKontrollsak("203")]}
         gjeldendeSak={lagKontrollsak("105")}
         innloggetNavIdent="Z999999"
+        kanSkrive
       />,
       true,
     );
@@ -356,6 +361,7 @@ describe("SakerPåSammePerson", () => {
         saker={[lagKontrollsak("203")]}
         gjeldendeSak={lagKontrollsak("105", { kobledeSaker: [203] })}
         innloggetNavIdent="Z999999"
+        kanSkrive
       />,
     );
 
@@ -389,6 +395,7 @@ describe("SakerPåSammePerson", () => {
         saker={[annenSak]}
         gjeldendeSak={gjeldendeSak}
         innloggetNavIdent="Z999999"
+        kanSkrive
       />,
     );
 
@@ -396,6 +403,25 @@ describe("SakerPåSammePerson", () => {
     await waitFor(() => {});
 
     expect(screen.queryByRole("button", { name: "Koble til sak" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Gå til sak" })).toBeDefined();
+  });
+
+  it("skjuler koblingshandlinger for lesebruker som har tilgang til saken", async () => {
+    const gjeldendeSak = lagKontrollsak("105", { kobledeSaker: [203] });
+    await renderMedRouter(
+      <SakerPåSammePerson
+        saker={[lagKontrollsak("203")]}
+        gjeldendeSak={gjeldendeSak}
+        innloggetNavIdent="Z999999"
+        kanSkrive={false}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Vis detaljer for sak 203" }));
+    await waitFor(() => {});
+
+    expect(screen.queryByRole("button", { name: "Koble til sak" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Fjern kobling" })).toBeNull();
     expect(screen.getByRole("button", { name: "Gå til sak" })).toBeDefined();
   });
 });

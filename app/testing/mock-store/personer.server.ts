@@ -334,7 +334,7 @@ const opprinneligeMockPersoner: MockPerson[] = [
     alder: 29,
   },
   {
-    personIdent: "68024579135",
+    personIdent: "68824579281",
     navn: "Torbjørn Attrappsen",
     aktørId: "50000000000006",
     alder: 30,

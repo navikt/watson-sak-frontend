@@ -27,7 +27,11 @@ export const kontrollsakStatusSchema = z.enum([
   "I_BERO",
 ]);
 
-export const kontrollsakAvvisningsgrunnSchema = z.enum(["AVVIST_HABILITET", "AVVIST_SKJERMING"]);
+export const kontrollsakAvvisningsgrunnSchema = z.enum([
+  "AVVIST_HABILITET",
+  "AVVIST_SKJERMING",
+  "AVVIST_VERGE",
+]);
 export type KontrollsakAvvisningsgrunn = z.infer<typeof kontrollsakAvvisningsgrunnSchema>;
 
 const kontrollsakKategoriSchema = z.string();
@@ -35,27 +39,36 @@ const kontrollsakKildeSchema = z.string();
 const kontrollsakMisbrukstypeSchema = z.string();
 const kontrollsakPrioritetSchema = z.enum(["LAV", "NORMAL", "HOY"]);
 
-const resultatTypeSchema = z.enum([
-  "KONTROLLNOTAT",
-  "FEILUTBETALINGSSAK_ORDINAER",
-  "FEILUTBETALINGSSAK_POTENSIELL_STRAFFESAK",
-  "HENLAGT",
-  "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE",
-  "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
-  "ANMELDT",
-  "FORELEGG",
-  "BOT",
-  "PATALEUNNLATELSE",
-  "FRIFINNELSE",
-  "DOMFELLELSE",
-]);
+/** Fjernes når backend er ferdig migrert til ORIENTERINGSNOTAT. */
+export function normaliserKontrollnotat(v: unknown): unknown {
+  return v === "KONTROLLNOTAT" ? "ORIENTERINGSNOTAT" : v;
+}
+
+const resultatTypeSchema = z.preprocess(
+  normaliserKontrollnotat,
+  z.enum([
+    "ORIENTERINGSNOTAT",
+    "FEILUTBETALINGSSAK_ORDINAER",
+    "FEILUTBETALINGSSAK_POTENSIELL_STRAFFESAK",
+    "HENLAGT",
+    "SAKEN_SKAL_VURDERES_FOR_ANMELDELSE",
+    "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE",
+    "ANMELDT",
+    "FORELEGG",
+    "BOT",
+    "PATALEUNNLATELSE",
+    "FRIFINNELSE",
+    "DOMFELLELSE",
+  ]),
+);
 export type ResultatType = z.infer<typeof resultatTypeSchema>;
 
-const henleggelsesarsakSchema = z.string();
+const normalisertResultatverdiSchema = z.preprocess(normaliserKontrollnotat, z.string());
+const henleggelsesarsakSchema = normalisertResultatverdiSchema;
 
 const endeligUtfallResponseSchema = z.object({
-  type: z.string(),
-  henleggelsesarsak: z.string().nullable().optional(),
+  type: normalisertResultatverdiSchema,
+  henleggelsesarsak: henleggelsesarsakSchema.nullable().optional(),
 });
 
 const strafferabattLiggetidSchema = z.enum(["INGEN", "NAV", "POLITIET", "BEGGE"]);
@@ -63,15 +76,15 @@ const strafferabattLiggetidSchema = z.enum(["INGEN", "NAV", "POLITIET", "BEGGE"]
 const resultatResponseSchema = z.object({
   utredning: z
     .object({
-      type: z.string(),
+      type: normalisertResultatverdiSchema,
       belop: z.number().nullable().optional(),
-      henleggelsesarsak: z.string().nullable().optional(),
+      henleggelsesarsak: henleggelsesarsakSchema.nullable().optional(),
     })
     .nullable()
     .optional(),
   forvaltning: z
     .object({
-      type: z.string(),
+      type: normalisertResultatverdiSchema,
       endeligUtfall: endeligUtfallResponseSchema.nullable().optional(),
       tilbakekrevdBelop: z.number().nullable().optional(),
     })
@@ -79,8 +92,8 @@ const resultatResponseSchema = z.object({
     .optional(),
   strafferettsligVurdering: z
     .object({
-      type: z.string(),
-      henleggelsesarsak: z.string().nullable().optional(),
+      type: normalisertResultatverdiSchema,
+      henleggelsesarsak: henleggelsesarsakSchema.nullable().optional(),
       anmeldtBelop: z.number().nullable().optional(),
       politidistrikt: z.string().nullable().optional(),
       politietsSaksreferanse: z.string().nullable().optional(),
@@ -89,8 +102,8 @@ const resultatResponseSchema = z.object({
     .optional(),
   politi: z
     .object({
-      type: z.string(),
-      henleggelsesarsak: z.string().nullable().optional(),
+      type: normalisertResultatverdiSchema,
+      henleggelsesarsak: henleggelsesarsakSchema.nullable().optional(),
       begrunnelse: z.string().nullable().optional(),
       belop: z.number().nullable().optional(),
       domsdato: z.string().nullable().optional(),
@@ -138,7 +151,10 @@ const lagreResultatRequestSchema = z.object({
       ]),
       endeligUtfall: z
         .object({
-          type: z.enum(["FEILUTBETALINGSSAK_ORDINAER", "KONTROLLNOTAT", "HENLAGT"]),
+          type: z.preprocess(
+            normaliserKontrollnotat,
+            z.enum(["FEILUTBETALINGSSAK_ORDINAER", "ORIENTERINGSNOTAT", "HENLAGT"]),
+          ),
           henleggelsesarsak: henleggelsesarsakSchema.optional(),
         })
         .optional(),
@@ -238,7 +254,16 @@ export const tillatteHandlingerResponseSchema = z.object({
       paakrevdNar: z.string().nullable().optional(),
       /** Vilkår for når feltet gjelder, men kan stå tomt. */
       valgfriNar: z.string().nullable().optional(),
-      verdier: z.array(z.object({ verdi: z.string(), etikett: z.string() })).default([]),
+      verdier: z
+        .array(
+          z
+            .object({ verdi: normalisertResultatverdiSchema, etikett: z.string() })
+            .transform(({ verdi, etikett }) => ({
+              verdi,
+              etikett: verdi === "ORIENTERINGSNOTAT" ? "Orienteringsnotat" : etikett,
+            })),
+        )
+        .default([]),
     }),
   ),
 });

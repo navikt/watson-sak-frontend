@@ -41,14 +41,15 @@ export async function hentSakstilgangFraMock(
   const sak = medInnloggetEier(rawSak, innlogget.navIdent, innlogget.name);
 
   const kanEndre = kanEndreSak(sak, innlogget);
+  const kanSkrive = !innlogget.erLesebruker;
   const stegregler = hentStegbaserteSaksregler(sak.steg);
 
   return {
     sak,
     kanSe: kanLeseSaksinnhold(sak, innlogget),
     kanSeFiler: kanSeFilområdet(sak, innlogget),
-    kanRedigereDokumenter: kanEndre && stegregler.kanRedigereDokumenter,
-    kanLasteOppFiler: kanLasteOppFiler(sak, innlogget) && stegregler.kanLasteOppFiler,
-    kanEndreFiler: kanEndre && stegregler.kanLasteOppFiler,
+    kanRedigereDokumenter: kanEndre && kanSkrive && stegregler.kanRedigereDokumenter,
+    kanLasteOppFiler: kanSkrive && kanLasteOppFiler(sak, innlogget) && stegregler.kanLasteOppFiler,
+    kanEndreFiler: kanEndre && kanSkrive && stegregler.kanLasteOppFiler,
   };
 }

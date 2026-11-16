@@ -2,6 +2,7 @@ import { PageBlock } from "@navikt/ds-react/Page";
 import { Outlet, useMatches } from "react-router";
 import type { LoaderFunctionArgs, ShouldRevalidateFunctionArgs } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
+import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { erUtloggetFeil } from "~/auth/session-utløpt.server";
 import { skalBrukeMockdata } from "~/config/env.server";
 import { logger } from "~/logging/logging";
@@ -29,6 +30,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return { varsler: hentUlesteVarslerFraMock(request) };
   }
   const token = await getBackendOboToken(request);
+  const bruker = await hentInnloggetBruker({ request, oboToken: token });
+  if (bruker.erLesebruker) return { varsler: [] };
   try {
     return { varsler: await hentUlesteVarslerFraApi(token) };
   } catch (err) {

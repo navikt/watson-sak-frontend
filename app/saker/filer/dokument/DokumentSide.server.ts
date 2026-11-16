@@ -101,10 +101,14 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       dokumenter: sak.dokumenter ?? [],
       mapper,
       dokumentHistorikk: dokumentHistorikk?.items ?? [],
-      // Kommenterbarhet er backendens fasit (`kanKommentere` i GET-wrapperen).
-      // Falt kallet ut, viser vi et skrivebeskyttet panel med tydelig retry.
+      // Holmes-lesere skal ikke arve backendens kommentartilgang.
       kommentarliste:
-        kommentarresultat.liste ??
+        (kommentarresultat.liste
+          ? {
+              ...kommentarresultat.liste,
+              kanKommentere: kommentarresultat.liste.kanKommentere && !innlogget.erLesebruker,
+            }
+          : null) ??
         ({
           dokumentId: docId,
           arkivert: dokument.arkivert ?? null,
@@ -114,12 +118,19 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       kommentarinnlastingFeilet: kommentarresultat.feilet,
       sakReferanse,
       kanRedigere:
-        kanSe && hentStegbaserteSaksregler(sak.steg).kanRedigereDokumenter && !dokument.arkivert,
+        kanSe &&
+        !innlogget.erLesebruker &&
+        hentStegbaserteSaksregler(sak.steg).kanRedigereDokumenter &&
+        !dokument.arkivert,
       // Styrer bare visningen. `mapper.api.ts` sjekker samme regel på serveren.
       kanEndreMapper:
-        kanLasteOppFiler(sak, innlogget) && hentStegbaserteSaksregler(sak.steg).kanLasteOppFiler,
+        !innlogget.erLesebruker &&
+        kanLasteOppFiler(sak, innlogget) &&
+        hentStegbaserteSaksregler(sak.steg).kanLasteOppFiler,
       kanFlytteDokumenter:
-        kanEndreSak(sak, innlogget) && hentStegbaserteSaksregler(sak.steg).kanLasteOppFiler,
+        !innlogget.erLesebruker &&
+        kanEndreSak(sak, innlogget) &&
+        hentStegbaserteSaksregler(sak.steg).kanLasteOppFiler,
       variabelVerdier: byggVariabelVerdier(sak, innlogget),
       miljø: env.ENVIRONMENT,
     };
@@ -140,6 +151,16 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   if (!dokument) {
     throw data("Dokument ikke funnet", { status: 404 });
   }
+  const kommentarliste = hentKommentarlisteFraMock(
+    request,
+    String(tilgang.sak.id),
+    parseUuid(params.docId, "docId"),
+    {
+      innloggetIdent: innlogget.navIdent,
+      arkivert: dokument.arkivert ?? null,
+      sakAvsluttet: tilgang.sak.steg === "AVSLUTTET",
+    },
+  );
 
   return {
     dokument,
@@ -150,16 +171,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       String(tilgang.sak.id),
       parseUuid(params.docId, "docId"),
     ),
-    kommentarliste: hentKommentarlisteFraMock(
-      request,
-      String(tilgang.sak.id),
-      parseUuid(params.docId, "docId"),
-      {
-        innloggetIdent: innlogget.navIdent,
-        arkivert: dokument.arkivert ?? null,
-        sakAvsluttet: tilgang.sak.steg === "AVSLUTTET",
-      },
-    ),
+    kommentarliste: innlogget.erLesebruker
+      ? { ...kommentarliste, kanKommentere: false }
+      : kommentarliste,
     kommentarinnlastingFeilet: false,
     sakReferanse: parseSakId(params.sakId),
     kanRedigere: tilgang.kanRedigereDokumenter && !dokument.arkivert,
@@ -196,6 +210,10 @@ export async function action({ request, params }: Route.ActionArgs) {
   if (!skalBrukeMockdata) {
     if (request.method !== "PUT") {
       throw data("Metoden støttes ikke", { status: 405 });
+    }
+    const innlogget = await hentInnloggetBruker({ request });
+    if (innlogget.erLesebruker) {
+      throw data("Lesebrukere kan ikke redigere dokumenter", { status: 403 });
     }
 
     let token: string;

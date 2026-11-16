@@ -224,12 +224,11 @@ describe("KommentarPanel", () => {
     });
   });
 
-  it("forklarer at kommentarer bare kan leses på avsluttet sak (TH-101)", () => {
+  it("viser en nøytral melding når kommentarer bare kan leses", () => {
     renderPanel({ kanKommentere: false, arkivert: false });
 
-    expect(
-      screen.getByText(/Saken er avsluttet\. Du kan lese kommentarene, men ikke endre dem\./),
-    ).toBeDefined();
+    expect(screen.getByText("Du kan lese kommentarene, men ikke endre dem.")).toBeDefined();
+    expect(screen.queryByText("Saken er avsluttet.")).toBeNull();
     expect(screen.getByRole("button", { name: "Ny kommentar" })).toHaveProperty("disabled", true);
     expect(screen.queryByRole("button", { name: /Svar/ })).toBeNull();
     expect(screen.queryByRole("button", { name: /Rediger/ })).toBeNull();

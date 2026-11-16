@@ -1,7 +1,7 @@
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { erSakseier } from "./handlinger/tilgjengeligeHandlinger";
 
-type Innlogget = { navIdent: string };
+type Innlogget = { navIdent: string; erLesebruker?: boolean };
 
 /*
  * Speiler `FilTilgangService` i watson-admin-api. Backend håndhever reglene,
@@ -34,7 +34,7 @@ export function kanEndreSak(sak: KontrollsakResponse, innlogget: Innlogget): boo
 
 /** Kan laste opp filer, omdøpe og flytte dem og lage mapper. Alle på en ufordelt sak. */
 export function kanLasteOppFiler(sak: KontrollsakResponse, innlogget: Innlogget): boolean {
-  return erUfordelt(sak) || kanEndreSak(sak, innlogget);
+  return !innlogget.erLesebruker && (erUfordelt(sak) || kanEndreSak(sak, innlogget));
 }
 
 /**

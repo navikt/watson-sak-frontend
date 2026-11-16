@@ -221,7 +221,7 @@ describe("StatistikkDiagrammer", () => {
     renderMedRouter((data) => ({
       ...data,
       kontrollrapport: [
-        { navn: "KONTROLLNOTAT", verdi: 3, prosent: 60 },
+        { navn: "ORIENTERINGSNOTAT", verdi: 3, prosent: 60 },
         { navn: "POTENSIELL_STRAFFESAK", verdi: 2, prosent: 40 },
       ],
       henlagt: [
@@ -232,7 +232,7 @@ describe("StatistikkDiagrammer", () => {
 
     expect(screen.getByText("Av 5 saker med kontrollrapport")).toBeDefined();
     expect(screen.getByText("Av totalt 5 henlagte saker")).toBeDefined();
-    expect(screen.getByText("Kontrollnotat")).toBeDefined();
+    expect(screen.getByText("Orienteringsnotat")).toBeDefined();
     expect(screen.getByRole("button", { name: /Bevisets stilling/ })).toBeDefined();
   });
 

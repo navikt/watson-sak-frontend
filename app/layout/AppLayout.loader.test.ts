@@ -1,10 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { data, redirect, RouterContextProvider } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
+import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { hentUlesteVarsler } from "~/varsler/api.server";
 import { loader } from "./AppLayout";
 
 vi.mock("~/auth/access-token", () => ({ getBackendOboToken: vi.fn() }));
+vi.mock("~/auth/innlogget-bruker.server", () => ({
+  hentInnloggetBruker: vi.fn().mockResolvedValue({ erLesebruker: false }),
+}));
 vi.mock("~/config/env.server", () => ({ skalBrukeMockdata: false }));
 vi.mock("~/logging/logging", () => ({ logger: { warn: vi.fn() } }));
 vi.mock("~/varsler/api.server", () => ({ hentUlesteVarsler: vi.fn() }));
@@ -32,6 +36,20 @@ describe("layout-loaderens autentisering", () => {
     const feil = redirect("/oauth2/login");
     vi.mocked(getBackendOboToken).mockRejectedValue(feil);
     await expect(loader(args())).rejects.toBe(feil);
+    expect(hentUlesteVarsler).not.toHaveBeenCalled();
+  });
+
+  it("henter ikke varsler for lesebruker", async () => {
+    vi.mocked(hentInnloggetBruker).mockResolvedValueOnce({
+      preferredUsername: "test",
+      name: "Test",
+      navIdent: "Z123456",
+      enhet: "Øst",
+      enhetId: "ky153k",
+      erLeder: false,
+      erLesebruker: true,
+    });
+    await expect(loader(args())).resolves.toEqual({ varsler: [] });
     expect(hentUlesteVarsler).not.toHaveBeenCalled();
   });
 

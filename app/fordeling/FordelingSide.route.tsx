@@ -1,5 +1,6 @@
 import { useLoaderData } from "react-router";
 import { getBackendOboToken } from "~/auth/access-token";
+import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { skalBrukeMockdata } from "~/config/env.server";
 import { RouteConfig } from "~/routeConfig";
 import { erBackendUtilgjengelig } from "~/utils/backend-utilgjengelig.server";
@@ -31,17 +32,30 @@ export async function loader(args: Parameters<typeof lastSakerForFordeling>[0]) 
       saksbehandlere: [],
       saksbehandlerDetaljer: [],
       saksdataUtilgjengelig: true,
+      erLesebruker: true,
     };
   }
 
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(args.request);
+    const bruker = await hentInnloggetBruker({ request: args.request, oboToken: token });
+    if (bruker.erLesebruker) {
+      return {
+        ...fordelingsdata,
+        saksbehandlere: [],
+        saksbehandlerDetaljer: [],
+        saksdataUtilgjengelig: false,
+        erLesebruker: true,
+      };
+    }
+
     const saksbehandlerDetaljer = await backendApi.hentSaksbehandlere(token);
     return {
       ...fordelingsdata,
       saksbehandlere: saksbehandlerDetaljer.map((sb) => sb.navn),
       saksbehandlerDetaljer,
       saksdataUtilgjengelig: false,
+      erLesebruker: false,
     };
   }
 
@@ -50,6 +64,7 @@ export async function loader(args: Parameters<typeof lastSakerForFordeling>[0]) 
     saksbehandlere: mockSaksbehandlere,
     saksbehandlerDetaljer: mockSaksbehandlerDetaljer,
     saksdataUtilgjengelig: false,
+    erLesebruker: false,
   };
 }
 

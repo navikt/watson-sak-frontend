@@ -55,6 +55,7 @@ const standardProps: ComponentProps<typeof UfordelteSakerInnhold> = {
   saksbehandlerDetaljer: mockSaksbehandlerDetaljer,
   submitPath: RouteConfig.FORDELING,
   saksdataUtilgjengelig: false,
+  erLesebruker: false,
   oppsummering: { antallSaker: 20, eldsteLiggetidDager: 8 },
   paginering: { side: 1, totalSider: 1, totalAntall: 20 },
   valgtOmfang: "enhet",
@@ -81,6 +82,13 @@ function renderInnhold(
 }
 
 describe("UfordelteSakerInnhold", () => {
+  it("skjuler tildelingshandlinger og modal for lesebruker", () => {
+    renderInnhold({ erLesebruker: true });
+
+    expect(screen.queryByRole("button", { name: "Tildel" })).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
   it("beholder fokus på filterknappen når et filter velges", () => {
     const router = createMemoryRouter(
       [{ path: "/", element: <UfordelteSakerInnhold {...standardProps} /> }],

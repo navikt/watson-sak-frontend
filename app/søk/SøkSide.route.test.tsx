@@ -10,13 +10,14 @@ vi.mock("./søk.server", () => ({ søkSaker: vi.fn() }));
 const routerMocks = vi.hoisted(() => ({
   actionData: vi.fn(),
   fetcher: vi.fn(),
+  rootLoaderData: { envs: { watsonSokUrl: null as string | null }, user: { erLesebruker: false } },
 }));
 
 vi.mock("react-router", async (importOriginal) => ({
   ...(await importOriginal<typeof import("react-router")>()),
   useActionData: routerMocks.actionData,
   useFetcher: routerMocks.fetcher,
-  unstable_useRoute: () => ({ loaderData: { envs: {} } }),
+  unstable_useRoute: () => ({ loaderData: routerMocks.rootLoaderData }),
 }));
 
 describe("SøkSide action", () => {
@@ -64,6 +65,10 @@ describe("SøkSide resultatliste", () => {
   beforeEach(() => {
     sideData.clear();
     submit.mockClear();
+    routerMocks.rootLoaderData = {
+      envs: { watsonSokUrl: null },
+      user: { erLesebruker: false },
+    };
     actionData = {
       søketekst: "11223344556",
       søketype: "personIdent",
@@ -203,4 +208,23 @@ describe("SøkSide resultatliste", () => {
       ).toHaveProperty("ariaSort", "descending");
     },
   );
+
+  it("skjuler opprett sak for lesebruker når personsøket ikke gir treff", () => {
+    actionData = {
+      ...actionData,
+      søketype: "personIdent",
+      resultater: [],
+      totalSider: 1,
+      totalAntall: 0,
+    };
+    routerMocks.rootLoaderData = {
+      envs: { watsonSokUrl: "https://watson-sok.test" },
+      user: { erLesebruker: true },
+    };
+
+    renderSøk();
+
+    expect(screen.queryByRole("button", { name: "Opprett sak" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Slå opp i Watson Søk" })).toBeDefined();
+  });
 });

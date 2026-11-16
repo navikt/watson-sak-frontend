@@ -206,6 +206,7 @@ function SøkInnhold({
   const forhåndsutfyllFetcher = useFetcher<{ teknisk?: boolean; feilId?: string }>();
   const { loaderData } = unstable_useRoute("root");
   const watsonSokUrl = loaderData?.envs.watsonSokUrl ?? null;
+  const erLesebruker = loaderData?.user.erLesebruker === true;
 
   const visteData = fetcher.data ?? actionData;
 
@@ -338,16 +339,18 @@ function SøkInnhold({
                         </BodyShort>
                       </VStack>
                       <HStack gap="space-4">
-                        <forhåndsutfyllFetcher.Form
-                          method="post"
-                          action={RouteConfig.API.FORHÅNDSUTFYLL_REGISTRER_SAK}
-                          onSubmit={() => sporHendelse("søk opprett sak klikket")}
-                        >
-                          <input type="hidden" name="fnr" value={søketekst} />
-                          <Button type="submit" variant="secondary">
-                            Opprett sak
-                          </Button>
-                        </forhåndsutfyllFetcher.Form>
+                        {!erLesebruker && (
+                          <forhåndsutfyllFetcher.Form
+                            method="post"
+                            action={RouteConfig.API.FORHÅNDSUTFYLL_REGISTRER_SAK}
+                            onSubmit={() => sporHendelse("søk opprett sak klikket")}
+                          >
+                            <input type="hidden" name="fnr" value={søketekst} />
+                            <Button type="submit" variant="secondary">
+                              Opprett sak
+                            </Button>
+                          </forhåndsutfyllFetcher.Form>
+                        )}
                         {watsonSokUrl && (
                           <form
                             method="post"

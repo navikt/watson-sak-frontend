@@ -24,6 +24,11 @@ describe("statistikk-loader", () => {
   beforeEach(() => {
     testState.skalBrukeMockdata = true;
     vi.clearAllMocks();
+    hentInnloggetBrukerMock.mockResolvedValue({
+      enhet: "Øst",
+      enhetId: "ky153k",
+      navIdent: "Z123456",
+    });
     lagMockStatistikkMock.mockReturnValue({ nøkkeltall: [] });
   });
 
@@ -55,6 +60,25 @@ describe("statistikk-loader", () => {
       nivaa: "nav-kontroll",
       fra: "2026-01-01",
       til: "2026-01-31",
+    });
+  });
+
+  it("starter Holmes-lesere på organisasjonsnivå", async () => {
+    testState.skalBrukeMockdata = false;
+    hentInnloggetBrukerMock.mockResolvedValue({
+      enhet: "Annen enhet",
+      enhetId: "other-unit",
+      navIdent: "Z123456",
+      erLesebruker: true,
+    });
+    const { loader } = await import("./loader.server");
+
+    await loader({ request: new Request("http://localhost/statistikk") });
+
+    expect(hentStatistikkMock).toHaveBeenCalledWith("token-123", {
+      nivaa: "nav-kontroll",
+      fra: expect.any(String),
+      til: expect.any(String),
     });
   });
 

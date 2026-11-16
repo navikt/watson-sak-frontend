@@ -63,7 +63,7 @@ async function renderModal(filer: FilResponse[], dokumenter: DokumentNode[] = []
   return { ...resultat, rerenderModal: () => resultat.rerender(lagModal()) };
 }
 
-function fyllUtSkjema(dokumentbeskrivelse = "Kontrollnotat") {
+function fyllUtSkjema(dokumentbeskrivelse = "Orienteringsnotat") {
   fireEvent.change(screen.getByLabelText("Tema"), { target: { value: "KTA" } });
   // Nettleseren sender både input og change når et valg endres. Conform lytter på input.
   fireEvent.input(screen.getByLabelText("Dokumentbeskrivelse"), {
@@ -224,7 +224,7 @@ describe("ArkiverDokumenterModal", () => {
     expect(sporHendelseMock).toHaveBeenCalledWith("journalpost opprettet", {
       antallFiler: 1,
       antallDokumenter: 0,
-      dokumentbeskrivelse: "Kontrollnotat",
+      dokumentbeskrivelse: "Orienteringsnotat",
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Knytt til oppgave" }));
@@ -232,7 +232,7 @@ describe("ArkiverDokumenterModal", () => {
     expect(onKnyttTilOppgave).toHaveBeenCalledWith({
       journalpostId: "jp-1",
       tema: "KTA",
-      dokumentbeskrivelse: "Kontrollnotat",
+      dokumentbeskrivelse: "Orienteringsnotat",
       dokumentnavn: ["rapport.pdf"],
     });
   });

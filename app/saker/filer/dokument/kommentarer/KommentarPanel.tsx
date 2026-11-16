@@ -25,7 +25,7 @@ export type KommentarPanelProps = {
   traader: Kommentartraad[];
   treffPerTraad: Map<string, AnkerTreff | null>;
   aktivTraadId: string | null;
-  /** Kommentering er skilt fra redigering: lesetilgang holder, men ikke arkivert dokument eller avsluttet sak. */
+  /** Panelet er skrivebeskyttet for lesebrukere, arkiverte dokumenter og avsluttede saker. */
   kanKommentere: boolean;
   arkivert: boolean;
   innlastingFeilet?: boolean;
@@ -131,8 +131,7 @@ export function KommentarPanel({
     <VStack gap="space-12" className="min-h-0">
       {!kanKommentere && !innlastingFeilet && (
         <Alert variant="info" size="small" inline>
-          {arkivert ? "Dokumentet er arkivert." : "Saken er avsluttet."} Du kan lese kommentarene,
-          men ikke endre dem.
+          {arkivert && "Dokumentet er arkivert. "}Du kan lese kommentarene, men ikke endre dem.
         </Alert>
       )}
       {innlastingFeilet && (
