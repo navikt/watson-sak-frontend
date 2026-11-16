@@ -178,7 +178,7 @@ describe("hendelseTittel", () => {
     ["MIGRERING_FULLFORT", "Saken er ferdig flyttet"],
     ["SAK_FRISTILT", "Saksbehandler fjernet"],
     ["SAK_DELT", "Sak delt"],
-    ["SAK_OVERFORT", "Sak overført"],
+    ["SAK_OVERFORT", "Saksbehandler endret"],
   ])("viser %s som «%s» uten steg", (hendelsesType, tittel) => {
     const hendelse = lagHendelse({ hendelsesType, beskrivelse: tittel });
 
@@ -535,6 +535,30 @@ describe("nye historikktekster", () => {
     ]);
     expect(hendelser.map((hendelse) => hendelseBeskrivelse(hendelse))).toEqual([null, null, null]);
     expect(hendelser.every((hendelse) => hendelse.opprettetAvNavn === "Kari Nordmann")).toBe(true);
+  });
+
+  it("viser fra og til når saksbehandler endres", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "SAK_OVERFORT",
+      fraSaksbehandlerNavn: "Ola Nordmann",
+      tilSaksbehandlerNavn: "Kari Nordmann",
+    });
+
+    expect(hendelseTittel(hendelse)).toBe("Saksbehandler endret");
+    expect(hendelseBeskrivelse(hendelse)).toBe("Fra: Ola Nordmann\nTil: Kari Nordmann");
+  });
+
+  it("viser bare til for eldre overføringer uten forrige saksbehandler", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "SAK_OVERFORT",
+      berortSaksbehandlerNavn: "Kari Nordmann",
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe("Til: Kari Nordmann");
+  });
+
+  it("viser ingen beskrivelse for overføring uten navn", () => {
+    expect(hendelseBeskrivelse(lagHendelse({ hendelsesType: "SAK_OVERFORT" }))).toBeNull();
   });
 
   it("skjuler tildeling og overføring som del av flytting", () => {

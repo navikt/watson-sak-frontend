@@ -317,7 +317,7 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
     case "SAK_DELT":
       return "Sak delt";
     case "SAK_OVERFORT":
-      return "Sak overført";
+      return "Saksbehandler endret";
     case "SAK_KOBLET":
       return "Sak koblet";
     case "FIL_SLETTET":
@@ -348,10 +348,21 @@ export function hendelseBeskrivelse(
   if (
     hendelse.hendelsesType === "MANUELL_HENDELSE_REDIGERT" ||
     hendelse.hendelsesType === "MIGRERING_PABEGYNT" ||
-    hendelse.hendelsesType === "MIGRERING_FULLFORT" ||
-    hendelse.hendelsesType === "SAK_OVERFORT"
+    hendelse.hendelsesType === "MIGRERING_FULLFORT"
   ) {
     return null;
+  }
+
+  if (hendelse.hendelsesType === "SAK_OVERFORT") {
+    const til = hendelse.tilSaksbehandlerNavn ?? hendelse.berortSaksbehandlerNavn;
+    return (
+      [
+        hendelse.fraSaksbehandlerNavn && `Fra: ${hendelse.fraSaksbehandlerNavn}`,
+        til && `Til: ${til}`,
+      ]
+        .filter(Boolean)
+        .join("\n") || null
+    );
   }
 
   if (hendelse.hendelsesType === "SAK_REDIGERT") {
