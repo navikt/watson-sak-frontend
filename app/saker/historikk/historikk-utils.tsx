@@ -250,9 +250,9 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
     case "FIL_ARKIVERT":
       return "Fil arkivert";
     case "MIGRERING_PABEGYNT":
-      return "Migrering påbegynt";
+      return "Opprettet i Watson";
     case "MIGRERING_FULLFORT":
-      return "Migrering fullført";
+      return "Saken er ferdig flyttet";
     default:
       return hendelse.hendelsesType;
   }

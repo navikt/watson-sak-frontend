@@ -112,8 +112,8 @@ describe("hendelseTittel", () => {
   });
 
   it.each([
-    ["MIGRERING_PABEGYNT", "Migrering påbegynt"],
-    ["MIGRERING_FULLFORT", "Migrering fullført"],
+    ["MIGRERING_PABEGYNT", "Opprettet i Watson"],
+    ["MIGRERING_FULLFORT", "Saken er ferdig flyttet"],
     ["SAK_FRISTILT", "Sak fristilt"],
     ["SAK_DELT", "Sak delt"],
     ["SAK_OVERFORT", "Sak overført"],
