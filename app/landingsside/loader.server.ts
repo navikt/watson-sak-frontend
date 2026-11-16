@@ -112,9 +112,7 @@ async function lastSaksbehandlerData(
     (sak) => sak.steg !== "POLITI" && sak.steg !== "ANMELDT" && sak.steg !== "AVSLUTTET",
   );
 
-  const mineSaker = [...aktiveMineSaker]
-    .sort((a, b) => tidspunkt(b) - tidspunkt(a))
-    .slice(0, 10);
+  const mineSaker = [...aktiveMineSaker].sort((a, b) => tidspunkt(b) - tidspunkt(a)).slice(0, 10);
 
   const velkomstOppsummering = oppsummering ? lagVelkomstOppsummering(oppsummering) : null;
 

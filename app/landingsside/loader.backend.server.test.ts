@@ -104,8 +104,18 @@ describe("landingsside-loader mot backend", () => {
     hentOppsummeringMock.mockResolvedValue({ nye: 0, aktive: 2, venter: 0 });
     hentKontrollsakerMock.mockResolvedValue({
       items: [
-        { id: 1, steg: "UTREDNING", opprettet: "2026-01-01T00:00:00Z", oppdatert: "2026-03-02T00:00:00Z" },
-        { id: 2, steg: "UTREDNING", opprettet: "2026-01-01T00:00:00Z", oppdatert: "2026-03-02T00:00:00.500Z" },
+        {
+          id: 1,
+          steg: "UTREDNING",
+          opprettet: "2026-01-01T00:00:00Z",
+          oppdatert: "2026-03-02T00:00:00Z",
+        },
+        {
+          id: 2,
+          steg: "UTREDNING",
+          opprettet: "2026-01-01T00:00:00Z",
+          oppdatert: "2026-03-02T00:00:00.500Z",
+        },
       ],
     });
 
