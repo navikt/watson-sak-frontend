@@ -22,6 +22,8 @@ const ETIKETTER: Record<string, string> = {
   IKKE_TILSTREKKELIG_SKYLD: "Ikke tilstrekkelig skyld",
   INGEN_UTREDNING: "Ingen utredning",
   INTET_STRAFFBART_FORHOLD: "Intet straffbart forhold",
+  // BigQuery-rader og eldre backend kan sende det gamle navnet.
+  KONTROLLNOTAT: "Orienteringsnotat",
   ORIENTERINGSNOTAT: "Orienteringsnotat",
   POTENSIELL_STRAFFESAK: "Potensiell straffesak",
   HENLAGT: "Henlagt",

@@ -162,6 +162,26 @@ describe("kontrollsakStatusSchema", () => {
       }
     });
 
+    it("normaliserer eldre kontrollnotatverdier i feltskjemaet", () => {
+      const resultat = tillatteHandlingerResponseSchema.safeParse({
+        ...svar,
+        feltskjema: [
+          {
+            ...svar.feltskjema[0],
+            verdier: [{ verdi: "KONTROLLNOTAT", etikett: "Kontrollnotat" }],
+          },
+        ],
+      });
+
+      expect(resultat.success).toBe(true);
+      if (resultat.success) {
+        expect(resultat.data.feltskjema[0]?.verdier[0]).toEqual({
+          verdi: "ORIENTERINGSNOTAT",
+          etikett: "Orienteringsnotat",
+        });
+      }
+    });
+
     it("avviser ukjent feltdatatype og handlingstype", () => {
       expect(
         tillatteHandlingerResponseSchema.safeParse({

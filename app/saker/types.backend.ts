@@ -255,7 +255,14 @@ export const tillatteHandlingerResponseSchema = z.object({
       /** Vilkår for når feltet gjelder, men kan stå tomt. */
       valgfriNar: z.string().nullable().optional(),
       verdier: z
-        .array(z.object({ verdi: normalisertResultatverdiSchema, etikett: z.string() }))
+        .array(
+          z
+            .object({ verdi: normalisertResultatverdiSchema, etikett: z.string() })
+            .transform(({ verdi, etikett }) => ({
+              verdi,
+              etikett: verdi === "ORIENTERINGSNOTAT" ? "Orienteringsnotat" : etikett,
+            })),
+        )
         .default([]),
     }),
   ),
