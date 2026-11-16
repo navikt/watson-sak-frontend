@@ -537,6 +537,21 @@ describe("nye historikktekster", () => {
     expect(hendelser.every((hendelse) => hendelse.opprettetAvNavn === "Kari Nordmann")).toBe(true);
   });
 
+  it("viser resultat lagret og slettet", () => {
+    const lagret = lagHendelse({
+      hendelsesType: "SAK_RESULTAT_ENDRET",
+      beskrivelse: "Resultat lagret",
+    });
+    const slettet = lagHendelse({
+      hendelsesType: "SAK_RESULTAT_ENDRET",
+      beskrivelse: "Resultat slettet",
+    });
+
+    expect(hendelseTittel(lagret)).toBe("Resultat lagret");
+    expect(hendelseTittel(slettet)).toBe("Resultat slettet");
+    expect(hendelseBeskrivelse(lagret)).toBeNull();
+  });
+
   it("viser fra og til når saksbehandler endres", () => {
     const hendelse = lagHendelse({
       hendelsesType: "SAK_OVERFORT",

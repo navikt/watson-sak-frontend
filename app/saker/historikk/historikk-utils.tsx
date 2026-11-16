@@ -318,6 +318,11 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
       return "Sak delt";
     case "SAK_OVERFORT":
       return "Saksbehandler endret";
+    case "SAK_RESULTAT_ENDRET":
+      return hendelse.beskrivelse === "Resultat slettet" ||
+        hendelse.beskrivelse === "Sakens resultat slettet"
+        ? "Resultat slettet"
+        : "Resultat lagret";
     case "SAK_KOBLET":
       return "Sak koblet";
     case "FIL_SLETTET":
