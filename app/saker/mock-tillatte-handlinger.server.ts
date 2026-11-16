@@ -402,7 +402,9 @@ export function hentMockTillatteHandlinger(sak: KontrollsakResponse): TillatteHa
       steg === "AVSLUTTET"
         ? []
         : sak.status === "I_BERO"
-          ? [statusFørBero]
+          ? statusFørBero === "PAAKLAGET"
+            ? ["PAAKLAGET"]
+            : statusvalg[steg]
           : sak.status === "PAAKLAGET"
             ? ["PAAKLAGET", "I_BERO"]
             : [...statusvalg[steg], "I_BERO"],

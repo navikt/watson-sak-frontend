@@ -100,6 +100,50 @@ describe("landingsside-loader mot backend", () => {
     expect(resultat.mineSaker.map((sak) => sak.id)).toEqual([1, 11, 10, 9, 8, 7, 6, 5, 4, 3]);
   });
 
+  it("sorterer datoer med ulik presisjon etter tidspunkt, ikke tekst", async () => {
+    hentOppsummeringMock.mockResolvedValue({ nye: 0, aktive: 2, venter: 0 });
+    hentKontrollsakerMock.mockResolvedValue({
+      items: [
+        {
+          id: 1,
+          steg: "UTREDNING",
+          opprettet: "2026-01-01T00:00:00Z",
+          oppdatert: "2026-03-02T00:00:00Z",
+        },
+        {
+          id: 2,
+          steg: "UTREDNING",
+          opprettet: "2026-01-01T00:00:00Z",
+          oppdatert: "2026-03-02T00:00:00.500Z",
+        },
+      ],
+    });
+
+    const resultat = await loader(args);
+    if (resultat.type !== "saksbehandler") throw new Error("Forventet saksbehandler");
+
+    expect(resultat.mineSaker.map((sak) => sak.id)).toEqual([2, 1]);
+  });
+
+  it("henter alle sider før de ti sist oppdaterte velges", async () => {
+    hentOppsummeringMock.mockResolvedValue({ nye: 0, aktive: 2, venter: 0 });
+    const sak = (id: number, oppdatert: string) => ({
+      id,
+      steg: "UTREDNING",
+      opprettet: "2026-01-01T00:00:00Z",
+      oppdatert,
+    });
+    hentKontrollsakerMock
+      .mockResolvedValueOnce({ items: [sak(1, "2026-02-01T00:00:00Z")], totalPages: 2 })
+      .mockResolvedValueOnce({ items: [sak(2, "2026-06-01T00:00:00Z")], totalPages: 2 });
+
+    const resultat = await loader(args);
+    if (resultat.type !== "saksbehandler") throw new Error("Forventet saksbehandler");
+
+    expect(hentKontrollsakerMock).toHaveBeenCalledTimes(2);
+    expect(resultat.mineSaker.map((s) => s.id)).toEqual([2, 1]);
+  });
+
   it("sender utløpt sesjon videre", async () => {
     hentOppsummeringMock.mockRejectedValue(data("Sesjonen er utløpt.", { status: 401 }));
 

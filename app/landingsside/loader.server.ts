@@ -58,6 +58,26 @@ async function harSakerSomSkalFlyttes(request: Request, navIdent: string): Promi
   }
 }
 
+const SIDESTØRRELSE = 200;
+const MAKS_SIDER = 5;
+
+/** Siste oppdaterte velges på klientsiden, så alle sider må hentes. Backend sorterer null-verdier først. */
+async function hentAlleMineSaker(token: string): Promise<{ items: KontrollsakResponse[] }> {
+  const hent = (page: number) =>
+    hentKontrollsaker({ token, page, size: SIDESTØRRELSE, ansvarlig: "MEG" });
+  const første = await hent(1);
+  const antallSider = Math.min(første.totalPages ?? 1, MAKS_SIDER);
+  const items = [...første.items];
+  for (let side = 2; side <= antallSider; side++) {
+    items.push(...(await hent(side)).items);
+  }
+  return { items };
+}
+
+function tidspunkt(sak: KontrollsakResponse): number {
+  return Date.parse(getOppdatertDato(sak));
+}
+
 async function lastSaksbehandlerData(
   request: Request,
   innloggetBruker: { navIdent: string; name: string },
@@ -70,12 +90,7 @@ async function lastSaksbehandlerData(
   if (!skalBrukeMockdata) {
     const token = await getBackendOboToken(request);
     const [resultat, hentetOppsummering] = await Promise.all([
-      hentKontrollsaker({
-        token,
-        page: 1,
-        size: 200,
-        ansvarlig: "MEG",
-      }).catch((feil: unknown) => {
+      hentAlleMineSaker(token).catch((feil: unknown) => {
         if (!erBackendUtilgjengelig(feil)) throw feil;
         saksdataUtilgjengelig = true;
         return { items: [] };
@@ -97,9 +112,7 @@ async function lastSaksbehandlerData(
     (sak) => sak.steg !== "POLITI" && sak.steg !== "ANMELDT" && sak.steg !== "AVSLUTTET",
   );
 
-  const mineSaker = [...aktiveMineSaker]
-    .sort((a, b) => getOppdatertDato(b).localeCompare(getOppdatertDato(a)))
-    .slice(0, 10);
+  const mineSaker = [...aktiveMineSaker].sort((a, b) => tidspunkt(b) - tidspunkt(a)).slice(0, 10);
 
   const velkomstOppsummering = oppsummering ? lagVelkomstOppsummering(oppsummering) : null;
 
