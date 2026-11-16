@@ -1,7 +1,7 @@
 import { data } from "react-router";
 import { z } from "zod";
 import { kastHvisUtlogget } from "~/auth/session-utløpt.server";
-import { BACKEND_API_URL } from "~/config/env.server";
+import { BACKEND_API_URL, env } from "~/config/env.server";
 import { logger } from "~/logging/logging";
 import type {
   DokumentHistorikkSide,
@@ -11,6 +11,9 @@ import type {
 import { dokumentNodeSchema } from "./types.backend";
 import { visningsnavn } from "~/auth/visningsnavn";
 
+const visningsnavnForMiljø =
+  env.ENVIRONMENT === "dev" || env.ENVIRONMENT === "local-dev" ? undefined : visningsnavn;
+
 export const saksbehandlerListeSchema = z.array(
   z
     .object({
@@ -19,13 +22,12 @@ export const saksbehandlerListeSchema = z.array(
       enhet: z.string().nullable(),
       kontrollEnhetId: z.string().nullable().optional(),
       erEkstraSaksbehandler: z.boolean().optional(),
-      erOpplaeringsbruker: z.boolean().optional(),
     })
     .transform((saksbehandler) => ({
       ...saksbehandler,
-      navn: saksbehandler.erOpplaeringsbruker
-        ? saksbehandler.navn
-        : visningsnavn(saksbehandler.navIdent, saksbehandler.navn),
+      navn: visningsnavnForMiljø
+        ? visningsnavnForMiljø(saksbehandler.navIdent, saksbehandler.navn)
+        : saksbehandler.navn,
     })),
 );
 
@@ -42,22 +44,17 @@ const dokumentHistorikkNodeSchema = z.object({
   tittel: z.string(),
   endretAvIdent: z.string(),
   endretAvNavn: z.string(),
-  endretAvErOpplaeringsbruker: z.boolean().optional(),
   endretTidspunkt: z.string(),
 });
 
-function medEndretAvVisningsnavn<
-  T extends {
-    endretAvIdent: string;
-    endretAvNavn: string;
-    endretAvErOpplaeringsbruker?: boolean;
-  },
->(node: T): T {
+function medEndretAvVisningsnavn<T extends { endretAvIdent: string; endretAvNavn: string }>(
+  node: T,
+): T {
   return {
     ...node,
-    endretAvNavn: node.endretAvErOpplaeringsbruker
-      ? node.endretAvNavn
-      : visningsnavn(node.endretAvIdent, node.endretAvNavn),
+    endretAvNavn: visningsnavnForMiljø
+      ? visningsnavnForMiljø(node.endretAvIdent, node.endretAvNavn)
+      : node.endretAvNavn,
   };
 }
 

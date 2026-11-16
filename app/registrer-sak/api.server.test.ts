@@ -14,6 +14,7 @@ import { lastOppFil, opprettKontrollsak } from "./api.server";
 vi.mock("~/config/env.server", () => ({
   BACKEND_API_URL: "https://backend.test",
   skalBrukeMockdata: true,
+  env: { ENVIRONMENT: "local-mock" },
 }));
 
 vi.mock("~/auth/innlogget-bruker.server", () => ({
@@ -47,6 +48,7 @@ describe("opprettKontrollsak", () => {
     vi.doMock("~/config/env.server", () => ({
       BACKEND_API_URL: "https://backend.test",
       skalBrukeMockdata: false,
+      env: { ENVIRONMENT: "dev" },
     }));
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -117,6 +119,7 @@ describe("opprettKontrollsak", () => {
     vi.doMock("~/config/env.server", () => ({
       BACKEND_API_URL: "https://backend.test",
       skalBrukeMockdata: false,
+      env: { ENVIRONMENT: "dev" },
     }));
     const fetchMock = vi.fn().mockResolvedValue({
       ok: false,
@@ -163,6 +166,7 @@ describe("opprettKontrollsak", () => {
     vi.doMock("~/config/env.server", () => ({
       BACKEND_API_URL: "https://backend.test",
       skalBrukeMockdata: false,
+      env: { ENVIRONMENT: "dev" },
     }));
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -202,6 +206,7 @@ describe("opprettKontrollsak", () => {
     vi.doMock("~/config/env.server", () => ({
       BACKEND_API_URL: "https://backend.test",
       skalBrukeMockdata: false,
+      env: { ENVIRONMENT: "dev" },
     }));
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -240,6 +245,7 @@ describe("opprettKontrollsak", () => {
     vi.doMock("~/config/env.server", () => ({
       BACKEND_API_URL: "https://backend.test",
       skalBrukeMockdata: false,
+      env: { ENVIRONMENT: "dev" },
     }));
     const fetchMock = vi.fn().mockResolvedValue({
       ok: false,
@@ -325,6 +331,7 @@ describe("opprettKontrollsak", () => {
     vi.doMock("~/config/env.server", () => ({
       BACKEND_API_URL: "https://backend.test",
       skalBrukeMockdata: false,
+      env: { ENVIRONMENT: "dev" },
     }));
     const fetchMock = vi
       .fn()
@@ -364,6 +371,7 @@ describe("opprettKontrollsak", () => {
     vi.doMock("~/config/env.server", () => ({
       BACKEND_API_URL: "https://backend.test",
       skalBrukeMockdata: false,
+      env: { ENVIRONMENT: "dev" },
     }));
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 201 });
     vi.stubGlobal("fetch", fetchMock);
@@ -589,6 +597,7 @@ describe("opprettKontrollsak", () => {
     vi.doMock("~/config/env.server", () => ({
       BACKEND_API_URL: "https://backend.test",
       skalBrukeMockdata: false,
+      env: { ENVIRONMENT: "dev" },
     }));
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 500 }));
 

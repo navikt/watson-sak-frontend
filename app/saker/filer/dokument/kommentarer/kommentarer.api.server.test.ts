@@ -12,10 +12,12 @@ import {
 } from "./kommentarer.api.server";
 import type { Anker } from "./typer";
 
+const { mockEnv } = vi.hoisted(() => ({ mockEnv: { ENVIRONMENT: "dev" } }));
+
 vi.mock("~/config/env.server", () => ({
   BACKEND_API_URL: "http://backend",
   skalBrukeMockdata: false,
-  env: { ENVIRONMENT: "dev" },
+  env: mockEnv,
 }));
 
 const TOKEN = "test-token";
@@ -73,6 +75,29 @@ const listeFixture = {
   kanKommentere: true,
   traader: [traadFixture],
 };
+
+function listeMedOpplaeringsbrukere() {
+  return {
+    ...listeFixture,
+    traader: [
+      {
+        ...traadFixture,
+        opprettetAvIdent: "Z993376",
+        opprettetAvNavn: "Backendnavn Petter",
+        resolved: "2026-03-02T09:00:00Z",
+        resolvedAvIdent: "Z990778",
+        resolvedAvNavn: "Backendnavn Kari",
+        kommentarer: [
+          {
+            ...kommentarFixture,
+            forfatterIdent: "Z993471",
+            forfatterNavn: "Backendnavn Wenche",
+          },
+        ],
+      },
+    ],
+  };
+}
 
 function svar(kropp: unknown, status = 200) {
   return new Response(JSON.stringify(kropp), {
@@ -154,6 +179,39 @@ describe("hentKommentarliste", () => {
     expect(liste.arkivert).toBe("2026-04-01T10:00:00Z");
     expect(liste.traader[0].adressert).toBe(true);
     expect(liste.traader[0].resolvedAvNavn).toBe("Kari Hansen");
+  });
+
+  it("bruker backendnavn i dev selv om identene kolliderer med Z-testidenter", async () => {
+    fetchMock(svar(listeMedOpplaeringsbrukere()));
+
+    const liste = await hentKommentarliste(TOKEN, SAK, DOC);
+
+    expect(liste.traader[0]).toMatchObject({
+      opprettetAvNavn: "Backendnavn Petter",
+      resolvedAvNavn: "Backendnavn Kari",
+      kommentarer: [{ forfatterNavn: "Backendnavn Wenche" }],
+    });
+  });
+
+  it("overstyrer alle berørte identnavn i prod", async () => {
+    mockEnv.ENVIRONMENT = "prod";
+    vi.resetModules();
+    try {
+      const { hentKommentarliste: hentKommentarlisteProd } =
+        await import("./kommentarer.api.server");
+      fetchMock(svar(listeMedOpplaeringsbrukere()));
+
+      const liste = await hentKommentarlisteProd(TOKEN, SAK, DOC);
+
+      expect(liste.traader[0]).toMatchObject({
+        opprettetAvNavn: "Petter Øst",
+        resolvedAvNavn: "Kari Ledersen Øst",
+        kommentarer: [{ forfatterNavn: "Wenche Vest" }],
+      });
+    } finally {
+      mockEnv.ENVIRONMENT = "dev";
+      vi.resetModules();
+    }
   });
 
   it("kaster tydelig feil når svaret ikke følger kontrakten", async () => {

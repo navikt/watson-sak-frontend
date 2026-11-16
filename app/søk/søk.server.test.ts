@@ -6,6 +6,7 @@ import { søkSaker } from "./søk.server";
 vi.mock("~/config/env.server", () => ({
   BACKEND_API_URL: "https://backend.test",
   skalBrukeMockdata: true,
+  env: { ENVIRONMENT: "local-mock" },
 }));
 
 const testRequest = new Request("http://localhost");
@@ -68,6 +69,25 @@ describe("søkSaker", () => {
 
     expect(søketype).toBe("organisasjonsnummer");
     expect(resultater.map((sak) => sak.id)).toEqual([nySak.id]);
+  });
+
+  it("overstyrer testbrukernavn i mock-fordelingssaker", () => {
+    const sak = leggTilMockSakIFordeling(state(), {
+      personIdent: "10987654321",
+      saksbehandlere: {
+        eier: { navIdent: "Z993376", navn: "Backendnavn Petter", enhet: "hu424t" },
+      },
+      kategori: "ARBEID",
+      kilde: "A_KRIMSAMARBEID",
+      misbruktype: [],
+      prioritet: "NORMAL",
+      ytelser: [],
+    });
+
+    expect(sak.saksbehandlere.eier).toMatchObject({
+      navIdent: "Z993376",
+      navn: "Petter Øst",
+    });
   });
 
   it("pagineres til maks 20 treff per side og rapporterer riktig antall sider", async () => {

@@ -1,7 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+const mockEnvironment = vi.hoisted(() => ({ value: "prod" }));
+
 vi.mock("~/config/env.server", () => ({
   BACKEND_API_URL: "https://backend.test",
+  env: {
+    get ENVIRONMENT() {
+      return mockEnvironment.value;
+    },
+  },
 }));
 
 vi.mock("~/logging/logging", () => ({
@@ -114,4 +121,75 @@ describe("hentLederStatistikk", () => {
       "Ugyldig svar fra watson-admin-api",
     );
   });
+
+  it.each([
+    ["dev", ["Backendnavn Petter", "Backendnavn Kari", "Backendnavn Wenche"]],
+    ["prod", ["Petter Øst", "Kari Ledersen Øst", "Wenche Vest"]],
+  ] as const)(
+    "bruker backendnavn i %s og overstyrer bare kjente identiteter",
+    async (environment, expectedNames) => {
+      mockEnvironment.value = environment;
+      vi.resetModules();
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          status: 200,
+          json: async () => ({
+            ...gyldigRespons,
+            ansatte: {
+              ...gyldigRespons.ansatte,
+              liste: [
+                {
+                  navn: "Backendnavn Petter",
+                  navIdent: "Z993376",
+                  totaltAntallIkkeAvsluttede: 0,
+                  antallOverFrist: 0,
+                  antallAktive: 0,
+                  antallAktiveOverFrist: 0,
+                },
+                {
+                  navn: "Backendnavn Kari",
+                  navIdent: "Z990778",
+                  totaltAntallIkkeAvsluttede: 0,
+                  antallOverFrist: 0,
+                  antallAktive: 0,
+                  antallAktiveOverFrist: 0,
+                },
+                {
+                  navn: "Backendnavn Wenche",
+                  navIdent: "Z993471",
+                  totaltAntallIkkeAvsluttede: 0,
+                  antallOverFrist: 0,
+                  antallAktive: 0,
+                  antallAktiveOverFrist: 0,
+                },
+                {
+                  navn: "Test Z993376",
+                  navIdent: "Z123456",
+                  totaltAntallIkkeAvsluttede: 0,
+                  antallOverFrist: 0,
+                  antallAktive: 0,
+                  antallAktiveOverFrist: 0,
+                },
+              ],
+            },
+          }),
+        }),
+      );
+
+      try {
+        const { hentLederStatistikk } = await import("./api.server");
+        const resultat = await hentLederStatistikk("token-123");
+
+        expect(resultat.ansatte.liste.map(({ navn }) => navn)).toEqual([
+          ...expectedNames,
+          "Test Z993376",
+        ]);
+      } finally {
+        mockEnvironment.value = "prod";
+        vi.resetModules();
+      }
+    },
+  );
 });

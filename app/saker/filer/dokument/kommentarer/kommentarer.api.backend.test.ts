@@ -3,7 +3,7 @@ import { BackendFeilException } from "~/saker/api-core.server";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { action, loader } from "./kommentarer.api";
 import { lagListe } from "./kommentar-fixtures";
-import { kommentarlisteKlientSchema, kommentarlisteSchema } from "./typer";
+import { kommentarlisteKlientSchema } from "./typer";
 
 const { mockHentKontrollsak, mockHentKommentarliste, mockOpprettKommentartraad } = vi.hoisted(
   () => ({
@@ -117,29 +117,32 @@ describe("kommentarer.api loader — backend-modus", () => {
   });
 });
 
-describe("navnevisning for opplæringsbrukere i kommentarresponsen", () => {
-  it("bevarer navn gjennom backend- og klientskjemaene uten å miste gamle overstyringer", () => {
-    const backendListe = {
+describe("klientskjema for kommentarer", () => {
+  it("validerer og bevarer navnene valgt av BFF-en uten å overstyre dem på nytt", () => {
+    const klientListe = {
       dokumentId: "d1",
       kanKommentere: true,
       traader: [
         {
-          id: "traad-opplaering",
+          id: "traad",
           dokumentId: "d1",
-          ankerType: "DOCUMENT",
-          anker: {},
+          ankertype: "DOCUMENT",
+          anker: { type: "DOCUMENT" },
+          ankerVersjon: 1,
           opprettetAvIdent: "Z993376",
           opprettetAvNavn: "Backendnavn Petter",
           opprettetAvErOpplaeringsbruker: true,
           opprettet: "2026-01-01T10:00:00Z",
-          resolved: "2026-01-02T10:00:00Z",
-          resolvedAvIdent: "Z990778",
-          resolvedAvNavn: "Backendnavn Kari",
-          resolvedAvErOpplaeringsbruker: true,
+          resolved: null,
+          adressert: false,
+          resolvedAvIdent: null,
+          resolvedAvNavn: null,
+          versjon: 0,
+          synlig: true,
           kommentarer: [
             {
-              id: "kommentar-opplaering",
-              traadId: "traad-opplaering",
+              id: "kommentar",
+              traadId: "traad",
               tekst: "Kommentar",
               forfatterIdent: "Z993471",
               forfatterNavn: "Backendnavn Wenche",
@@ -149,70 +152,20 @@ describe("navnevisning for opplæringsbrukere i kommentarresponsen", () => {
             },
           ],
         },
-        {
-          id: "traad-eldre",
-          dokumentId: "d1",
-          ankerType: "DOCUMENT",
-          anker: {},
-          opprettetAvIdent: "Z993376",
-          opprettetAvNavn: "Test Z993376",
-          opprettet: "2026-01-03T10:00:00Z",
-          resolved: "2026-01-04T10:00:00Z",
-          resolvedAvIdent: "Z990778",
-          resolvedAvNavn: "Test Z990778",
-          resolvedAvErOpplaeringsbruker: false,
-          kommentarer: [
-            {
-              id: "kommentar-eldre",
-              traadId: "traad-eldre",
-              tekst: "Eldre kommentar",
-              forfatterIdent: "Z993471",
-              forfatterNavn: "Test Z993471",
-              opprettet: "2026-01-03T10:00:00Z",
-              endret: "2026-01-03T10:00:00Z",
-            },
-          ],
-        },
       ],
     };
 
-    const backendParset = kommentarlisteSchema.parse(backendListe);
-    expect(backendParset.traader[0]).toMatchObject({
+    const parset = kommentarlisteKlientSchema.parse(klientListe);
+    expect(parset.traader[0]).toMatchObject({
       opprettetAvNavn: "Backendnavn Petter",
-      opprettetAvErOpplaeringsbruker: true,
-      resolvedAvNavn: "Backendnavn Kari",
-      resolvedAvErOpplaeringsbruker: true,
+      resolvedAvNavn: null,
       kommentarer: [
         {
           forfatterNavn: "Backendnavn Wenche",
-          forfatterErOpplaeringsbruker: true,
         },
       ],
     });
-    expect(backendParset.traader[1]).toMatchObject({
-      opprettetAvNavn: "Petter Øst",
-      resolvedAvNavn: "Kari Ledersen Øst",
-      resolvedAvErOpplaeringsbruker: false,
-      kommentarer: [{ forfatterNavn: "Wenche Vest" }],
-    });
-
-    const klientListe = kommentarlisteKlientSchema.parse(JSON.parse(JSON.stringify(backendParset)));
-    expect(klientListe.traader[0]).toMatchObject({
-      opprettetAvNavn: "Backendnavn Petter",
-      opprettetAvErOpplaeringsbruker: true,
-      resolvedAvNavn: "Backendnavn Kari",
-      resolvedAvErOpplaeringsbruker: true,
-      kommentarer: [
-        {
-          forfatterNavn: "Backendnavn Wenche",
-          forfatterErOpplaeringsbruker: true,
-        },
-      ],
-    });
-    expect(klientListe.traader[1]).toMatchObject({
-      opprettetAvNavn: "Petter Øst",
-      resolvedAvNavn: "Kari Ledersen Øst",
-      kommentarer: [{ forfatterNavn: "Wenche Vest" }],
-    });
+    expect(parset.traader[0]).not.toHaveProperty("opprettetAvErOpplaeringsbruker");
+    expect(parset.traader[0].kommentarer[0]).not.toHaveProperty("forfatterErOpplaeringsbruker");
   });
 });

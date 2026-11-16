@@ -2,7 +2,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { logger } from "~/logging/logging";
 import { BackendFeilException, håndterFeil } from "./api-core.server";
 
-vi.mock("~/config/env.server", () => ({ BACKEND_API_URL: "http://backend" }));
+vi.mock("~/config/env.server", () => ({
+  BACKEND_API_URL: "http://backend",
+  env: { ENVIRONMENT: "dev" },
+}));
 
 describe("håndterFeil", () => {
   afterEach(() => vi.restoreAllMocks());

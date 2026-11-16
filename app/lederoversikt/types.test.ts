@@ -65,16 +65,20 @@ const gyldigRespons = {
 };
 
 describe("lederStatistikkResponseSchema", () => {
-  it("godtar komplett lederstatistikk med ansatte uten saker", () => {
+  it("parser backendnavn og ignorerer det foreldede opplæringsflagget", () => {
     const resultat = lederStatistikkResponseSchema.parse(gyldigRespons);
 
     expect(resultat).toMatchObject({
       ansatte: {
-        liste: [{}, { navn: "Test Z993376", erOpplaeringsbruker: true }, { navn: "Wenche Vest" }],
+        liste: [
+          { navIdent: "Z000001", navn: "Ada Ansatt" },
+          { navIdent: "Z993376", navn: "Test Z993376" },
+          { navIdent: "Z993471", navn: "Test Z993471" },
+        ],
       },
       ledetEnheter: [],
     });
-    expect(resultat.ansatte.liste[2]).not.toHaveProperty("erOpplaeringsbruker");
+    expect(resultat.ansatte.liste[1]).not.toHaveProperty("erOpplaeringsbruker");
   });
 
   it("krever alle aktive steg og statuser", () => {

@@ -9,6 +9,7 @@ import { getSaksreferanse } from "./id";
 
 vi.mock("~/config/env.server", () => ({
   skalBrukeMockdata: true,
+  env: { ENVIRONMENT: "local-mock" },
 }));
 
 vi.mock("~/auth/innlogget-bruker.server", () => ({

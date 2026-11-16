@@ -1,8 +1,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+const mockEnvironment = vi.hoisted(() => ({ value: "prod" }));
+
 vi.mock("~/config/env.server", () => ({
   BACKEND_API_URL: "https://backend.test",
   skalBrukeMockdata: false,
+  get ENVIRONMENT() {
+    return mockEnvironment.value;
+  },
+  env: {
+    get ENVIRONMENT() {
+      return mockEnvironment.value;
+    },
+  },
 }));
 
 describe("hentKodeverk", () => {
@@ -152,57 +162,75 @@ describe("hentKontrollsakForDetalj", () => {
     );
   });
 
-  it("bevarer opplæringsbrukeres saksbehandlernavn og gamle overstyringer", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          id: 42,
-          kontrollobjekt: { personIdent: "12345678901", navn: "Birger Testesen" },
-          saksbehandlere: {
-            eier: {
-              navIdent: "Z993376",
-              navn: "Backendnavn Petter",
-              enhet: "4812",
-              erOpplaeringsbruker: true,
-            },
-            deltMed: [
-              {
-                navIdent: "Z990778",
-                navn: "Test Z990778",
-                enhet: "4812",
-                erOpplaeringsbruker: false,
-              },
-            ],
-            opprettetAv: { navIdent: "Z993471", navn: "Test Z993471", enhet: "4812" },
+  it.each([
+    ["dev", ["Backendnavn Petter", "Backendnavn Kari", "Backendnavn Wenche"]],
+    ["prod", ["Petter Øst", "Kari Ledersen Øst", "Wenche Vest"]],
+  ] as const)(
+    "bruker backendnavn i %s og overstyrer bare de konfigurerte identene ellers",
+    async (environment, expectedNames) => {
+      mockEnvironment.value = environment;
+      vi.resetModules();
+      const sak = {
+        id: 42,
+        kontrollobjekt: { personIdent: "12345678901", navn: "Birger Testesen" },
+        saksbehandlere: {
+          eier: {
+            navIdent: "Z993376",
+            navn: "Backendnavn Petter",
+            enhet: "4812",
           },
-          steg: "OPPRETTET",
-          status: null,
-          kategori: "ARBEID",
-          kilde: "NAV_KONTROLL",
-          misbruktype: [],
-          prioritet: "NORMAL",
-          ytelser: [],
-          tilgang: { harTilgangTilKontrollobjekt: true },
-          opprettet: "2026-03-20T12:34:56Z",
-          oppdatert: null,
-        }),
-        { status: 200 },
-      ),
-    );
-    vi.stubGlobal("fetch", fetchMock);
+          deltMed: [
+            {
+              navIdent: "Z990778",
+              navn: "Backendnavn Kari",
+              enhet: "4812",
+            },
+          ],
+          opprettetAv: { navIdent: "Z993471", navn: "Backendnavn Wenche", enhet: "4812" },
+        },
+        steg: "OPPRETTET",
+        status: null,
+        kategori: "ARBEID",
+        kilde: "NAV_KONTROLL",
+        misbruktype: [],
+        prioritet: "NORMAL",
+        ytelser: [],
+        tilgang: { harTilgangTilKontrollobjekt: true },
+        opprettet: "2026-03-20T12:34:56Z",
+        oppdatert: null,
+      };
+      const saksbehandlere = [
+        { navIdent: "Z993376", navn: "Backendnavn Petter", enhet: "4812" },
+        { navIdent: "Z990778", navn: "Backendnavn Kari", enhet: "4812" },
+        { navIdent: "Z993471", navn: "Backendnavn Wenche", enhet: "4812" },
+        { navIdent: "Z123456", navn: "Test Z993376", enhet: "4812" },
+      ];
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(new Response(JSON.stringify(sak), { status: 200 }))
+        .mockResolvedValueOnce(new Response(JSON.stringify(saksbehandlere), { status: 200 }));
+      vi.stubGlobal("fetch", fetchMock);
 
-    const { hentKontrollsakForDetalj } = await import("./api.server");
-    const resultat = await hentKontrollsakForDetalj("token", "42");
+      try {
+        const { hentKontrollsakForDetalj, hentSaksbehandlere } = await import("./api.server");
+        const resultat = await hentKontrollsakForDetalj("token", "42");
+        const liste = await hentSaksbehandlere("token");
 
-    expect(resultat.status).toBe("ok");
-    if (resultat.status === "ok") {
-      expect(resultat.sak.saksbehandlere).toMatchObject({
-        eier: { navn: "Backendnavn Petter", erOpplaeringsbruker: true },
-        deltMed: [{ navn: "Kari Ledersen Øst", erOpplaeringsbruker: false }],
-        opprettetAv: { navn: "Wenche Vest" },
-      });
-    }
-  });
+        expect(resultat.status).toBe("ok");
+        if (resultat.status === "ok") {
+          expect(resultat.sak.saksbehandlere).toMatchObject({
+            eier: { navn: expectedNames[0] },
+            deltMed: [{ navn: expectedNames[1] }],
+            opprettetAv: { navn: expectedNames[2] },
+          });
+        }
+        expect(liste.map(({ navn }) => navn)).toEqual([...expectedNames, "Test Z993376"]);
+      } finally {
+        mockEnvironment.value = "prod";
+        vi.resetModules();
+      }
+    },
+  );
 });
 
 describe("søkKontrollsaker", () => {
@@ -673,7 +701,7 @@ describe("hentSaksbehandlere", () => {
     vi.unstubAllGlobals();
   });
 
-  it("beholder kontrollenhet og ekstraflagg fra backend", async () => {
+  it("beholder kontrollenhet og ekstraflagg fra backend uten å bruke opplæringsflagg", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
@@ -698,7 +726,6 @@ describe("hentSaksbehandlere", () => {
             navn: "Test Z993376",
             enhet: "Opplæring",
             kontrollEnhetId: null,
-            erOpplaeringsbruker: true,
             erEkstraSaksbehandler: false,
           },
           {
@@ -717,14 +744,10 @@ describe("hentSaksbehandlere", () => {
     expect(resultat).toMatchObject([
       { navIdent: "Z111111", kontrollEnhetId: "hu424t" },
       { navIdent: "Z222222", kontrollEnhetId: null, erEkstraSaksbehandler: true },
-      {
-        navIdent: "Z993376",
-        navn: "Test Z993376",
-        erOpplaeringsbruker: true,
-        erEkstraSaksbehandler: false,
-      },
+      { navIdent: "Z993376", navn: "Petter Øst", erEkstraSaksbehandler: false },
       { navIdent: "Z993471", navn: "Wenche Vest" },
     ]);
+    expect(resultat[2]).not.toHaveProperty("erOpplaeringsbruker");
     expect(resultat[3]).not.toHaveProperty("erOpplaeringsbruker");
   });
 });
@@ -735,7 +758,7 @@ describe("hentDokumentHistorikk", () => {
     vi.unstubAllGlobals();
   });
 
-  it("bevarer opplæringsbrukeres navn og gamle overstyringer", async () => {
+  it("viser eksisterende frontend-testnavn uavhengig av opplæringsflagg", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
@@ -777,9 +800,74 @@ describe("hentDokumentHistorikk", () => {
     const resultat = await hentDokumentHistorikk("token", "42", "dokument-1");
 
     expect(resultat.items.map((item) => item.endretAvNavn)).toEqual([
-      "Backendnavn Petter",
+      "Petter Øst",
       "Kari Ledersen Øst",
       "Wenche Vest",
     ]);
+  });
+});
+
+describe("hentHendelser", () => {
+  afterEach(() => {
+    mockEnvironment.value = "prod";
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    vi.resetModules();
+  });
+
+  it.each(["dev", "local-dev"] as const)("beholder backendnavn i %s", async (miljø) => {
+    mockEnvironment.value = miljø;
+    vi.resetModules();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => [
+          {
+            hendelseId: "00000000-0000-4000-8000-000000000001",
+            tidspunkt: "2026-01-02T12:00:00Z",
+            hendelsesType: "SAK_OPPRETTET",
+            berortSaksbehandlerNavIdent: "Z993376",
+            berortSaksbehandlerNavn: "Backendnavn med ident",
+            opprettetAvNavn: "TEST Z993376",
+          },
+        ],
+      }),
+    );
+
+    const { hentHendelser } = await import("./api.server");
+    const [hendelse] = await hentHendelser("token", "42");
+
+    expect(hendelse.berortSaksbehandlerNavn).toBe("Backendnavn med ident");
+    expect(hendelse.opprettetAvNavn).toBe("TEST Z993376");
+  });
+
+  it("viser eksisterende testnavn i prod med og uten ident", async () => {
+    mockEnvironment.value = "prod";
+    vi.resetModules();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => [
+          {
+            hendelseId: "00000000-0000-4000-8000-000000000001",
+            tidspunkt: "2026-01-02T12:00:00Z",
+            hendelsesType: "SAK_OPPRETTET",
+            berortSaksbehandlerNavIdent: "Z993376",
+            berortSaksbehandlerNavn: "Backendnavn med ident",
+            opprettetAvNavn: "TEST Z993376",
+          },
+        ],
+      }),
+    );
+
+    const { hentHendelser } = await import("./api.server");
+    const [hendelse] = await hentHendelser("token", "42");
+
+    expect(hendelse.berortSaksbehandlerNavn).toBe("Petter Øst");
+    expect(hendelse.opprettetAvNavn).toBe("Petter Øst");
   });
 });

@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { visningsnavn } from "~/auth/visningsnavn";
 
 /** Maks lengde på en kommentartekst. Speiler KOMMENTAR_MAKS_LENGDE i watson-admin-api. */
 export const MAKS_KOMMENTARLENGDE = 5000;
@@ -88,29 +87,35 @@ export function tilBackendAnker(anker: Anker): {
  * `erEgen`, `erRot`) også internt, slik at det ikke oppstår to sannheter om
  * hva et felt heter.
  */
-const kommentarSchema = z
-  .object({
+type Navneoverstyrer = {
+  (ident: string | null | undefined, navn: string): string;
+  (ident: string | null | undefined, navn: string | null | undefined): string | null | undefined;
+};
+
+function lagKommentarSchema(navneoverstyrer?: Navneoverstyrer) {
+  const skjema = z.object({
     id: z.string(),
     traadId: z.string(),
     erRot: z.boolean().default(false),
     tekst: z.string().default(""),
     forfatterIdent: z.string().default(""),
     forfatterNavn: z.string().default(""),
-    forfatterErOpplaeringsbruker: z.boolean().optional(),
     opprettet: z.string(),
     endret: z.string(),
     versjon: z.number().default(0),
     /** Backend avgjør om innlogget saksbehandler kan redigere/slette kommentaren. */
     erEgen: z.boolean().default(false),
-  })
-  .transform((kommentar) => ({
-    ...kommentar,
-    forfatterNavn: kommentar.forfatterErOpplaeringsbruker
-      ? kommentar.forfatterNavn
-      : visningsnavn(kommentar.forfatterIdent, kommentar.forfatterNavn),
-  }));
+  });
 
-export type Kommentar = z.infer<typeof kommentarSchema>;
+  return navneoverstyrer
+    ? skjema.transform((kommentar) => ({
+        ...kommentar,
+        forfatterNavn: navneoverstyrer(kommentar.forfatterIdent, kommentar.forfatterNavn),
+      }))
+    : skjema;
+}
+
+export type Kommentar = z.infer<ReturnType<typeof lagKommentarSchema>>;
 
 const ankerSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("DOCUMENT") }),
@@ -128,16 +133,14 @@ export const kommentartraadKlientSchema = z.object({
   opprinneligSitat: z.string().nullish(),
   opprettetAvIdent: z.string().default(""),
   opprettetAvNavn: z.string().default(""),
-  opprettetAvErOpplaeringsbruker: z.boolean().optional(),
   opprettet: z.string(),
   resolved: z.string().nullish(),
   adressert: z.boolean(),
   resolvedAvIdent: z.string().nullish(),
   resolvedAvNavn: z.string().nullish(),
-  resolvedAvErOpplaeringsbruker: z.boolean().optional(),
   versjon: z.number().default(0),
   synlig: z.boolean().default(true),
-  kommentarer: z.array(kommentarSchema).default([]),
+  kommentarer: z.array(lagKommentarSchema()).default([]),
 });
 
 export type Kommentartraad = z.infer<typeof kommentartraadKlientSchema>;
@@ -147,64 +150,64 @@ export type Kommentartraad = z.infer<typeof kommentartraadKlientSchema>;
  * navn: `ankertype`, den sammensatte `anker`-unionen og det avledede flagget
  * `adressert` (backend sender `resolved` som tidspunkt eller null).
  */
-export const kommentartraadSchema = z
-  .object({
-    id: z.string(),
-    dokumentId: z.string(),
-    ankerType: ankertypeSchema.catch("DOCUMENT"),
-    anker: z.unknown(),
-    ankerVersjon: z.number().default(ANKER_VERSJON),
-    opprinneligSitat: z.string().nullish(),
-    opprettetAvIdent: z.string().default(""),
-    opprettetAvNavn: z.string().default(""),
-    opprettetAvErOpplaeringsbruker: z.boolean().optional(),
-    opprettet: z.string(),
-    resolved: z.string().nullish(),
-    resolvedAvIdent: z.string().nullish(),
-    resolvedAvNavn: z.string().nullish(),
-    resolvedAvErOpplaeringsbruker: z.boolean().optional(),
-    versjon: z.number().default(0),
-    synlig: z.boolean().default(true),
-    kommentarer: z.array(kommentarSchema).default([]),
-  })
-  .transform((rå): Kommentartraad => ({
-    id: rå.id,
-    dokumentId: rå.dokumentId,
-    ankertype: rå.ankerType,
-    anker: fraBackendAnker(rå.ankerType, rå.anker),
-    ankerVersjon: rå.ankerVersjon,
-    opprinneligSitat: rå.opprinneligSitat ?? null,
-    opprettetAvIdent: rå.opprettetAvIdent,
-    ...(rå.opprettetAvErOpplaeringsbruker !== undefined
-      ? { opprettetAvErOpplaeringsbruker: rå.opprettetAvErOpplaeringsbruker }
-      : {}),
-    opprettetAvNavn: rå.opprettetAvErOpplaeringsbruker
-      ? rå.opprettetAvNavn
-      : visningsnavn(rå.opprettetAvIdent, rå.opprettetAvNavn),
-    opprettet: rå.opprettet,
-    resolved: rå.resolved ?? null,
-    /** Avledet av `resolved`: en adressert tråd er skrivebeskyttet til den gjenåpnes. */
-    adressert: (rå.resolved ?? null) !== null,
-    resolvedAvIdent: rå.resolvedAvIdent ?? null,
-    ...(rå.resolvedAvErOpplaeringsbruker !== undefined
-      ? { resolvedAvErOpplaeringsbruker: rå.resolvedAvErOpplaeringsbruker }
-      : {}),
-    resolvedAvNavn: rå.resolvedAvErOpplaeringsbruker
-      ? (rå.resolvedAvNavn ?? null)
-      : (visningsnavn(rå.resolvedAvIdent, rå.resolvedAvNavn) ?? null),
-    versjon: rå.versjon,
-    synlig: rå.synlig,
-    kommentarer: rå.kommentarer,
-  }));
+export function lagKommentartraadSchema(navneoverstyrer?: Navneoverstyrer) {
+  const kommentarSchema = lagKommentarSchema(navneoverstyrer);
+  return z
+    .object({
+      id: z.string(),
+      dokumentId: z.string(),
+      ankerType: ankertypeSchema.catch("DOCUMENT"),
+      anker: z.unknown(),
+      ankerVersjon: z.number().default(ANKER_VERSJON),
+      opprinneligSitat: z.string().nullish(),
+      opprettetAvIdent: z.string().default(""),
+      opprettetAvNavn: z.string().default(""),
+      opprettet: z.string(),
+      resolved: z.string().nullish(),
+      resolvedAvIdent: z.string().nullish(),
+      resolvedAvNavn: z.string().nullish(),
+      versjon: z.number().default(0),
+      synlig: z.boolean().default(true),
+      kommentarer: z.array(kommentarSchema).default([]),
+    })
+    .transform((rå): Kommentartraad => ({
+      id: rå.id,
+      dokumentId: rå.dokumentId,
+      ankertype: rå.ankerType,
+      anker: fraBackendAnker(rå.ankerType, rå.anker),
+      ankerVersjon: rå.ankerVersjon,
+      opprinneligSitat: rå.opprinneligSitat ?? null,
+      opprettetAvIdent: rå.opprettetAvIdent,
+      opprettetAvNavn: navneoverstyrer
+        ? navneoverstyrer(rå.opprettetAvIdent, rå.opprettetAvNavn)
+        : rå.opprettetAvNavn,
+      opprettet: rå.opprettet,
+      resolved: rå.resolved ?? null,
+      /** Avledet av `resolved`: en adressert tråd er skrivebeskyttet til den gjenåpnes. */
+      adressert: (rå.resolved ?? null) !== null,
+      resolvedAvIdent: rå.resolvedAvIdent ?? null,
+      resolvedAvNavn: navneoverstyrer
+        ? (navneoverstyrer(rå.resolvedAvIdent, rå.resolvedAvNavn) ?? null)
+        : (rå.resolvedAvNavn ?? null),
+      versjon: rå.versjon,
+      synlig: rå.synlig,
+      kommentarer: rå.kommentarer,
+    }));
+}
 
 /** Eksakt speiling av `KommentarTraadListeResponse`. */
-export const kommentarlisteSchema = z.object({
-  dokumentId: z.string(),
-  arkivert: z.string().nullish(),
-  /** Backendfasit for om dokumentet kan kommenteres. Falsk når dokumentet er arkivert. */
-  kanKommentere: z.boolean(),
-  traader: z.array(kommentartraadSchema).default([]),
-});
+export function lagKommentarlisteSchema(navneoverstyrer?: Navneoverstyrer) {
+  return z.object({
+    dokumentId: z.string(),
+    arkivert: z.string().nullish(),
+    /** Backendfasit for om dokumentet kan kommenteres. Falsk når dokumentet er arkivert. */
+    kanKommentere: z.boolean(),
+    traader: z.array(lagKommentartraadSchema(navneoverstyrer)).default([]),
+  });
+}
+
+/** Backendskjema uten navneoverstyring; brukes også når backend er navnekilde. */
+const kommentarlisteSchema = lagKommentarlisteSchema();
 
 export type Kommentarliste = z.infer<typeof kommentarlisteSchema>;
 

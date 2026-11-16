@@ -1,9 +1,11 @@
 import { data } from "react-router";
 import { z } from "zod";
+import { env } from "~/config/env.server";
+import { visningsnavn, visningsnavnFraNavn } from "~/auth/visningsnavn";
 import { logger } from "~/logging/logging";
 import {
-  kontrollsakPageResponseSchema,
-  kontrollsakResponseSchema,
+  lagKontrollsakPageResponseSchema,
+  lagKontrollsakResponseSchema,
   kontrollsakAvvisningsgrunnSchema,
   oppgaveKortSchema,
   type KontrollsakPageResponse,
@@ -16,7 +18,7 @@ import {
   type TillatteHandlingerResponse,
   tillatteHandlingerResponseSchema,
 } from "./types.backend";
-import { sakHendelseSchema } from "./historikk/typer";
+import { lagSakHendelseSchema } from "./historikk/typer";
 import { type Oppgavekodeverk, oppgavekodeverkSchema } from "./handlinger/oppgavekodeverk";
 import type { Tema } from "./handlinger/tema";
 import { sti as byggSti } from "./sti-param.server";
@@ -27,6 +29,15 @@ import {
   håndterFeil,
   parseEllerKastFeil,
 } from "~/saker/api-core.server";
+
+const visningsnavnForMiljø =
+  env.ENVIRONMENT === "dev" || env.ENVIRONMENT === "local-dev" ? undefined : visningsnavn;
+const kontrollsakResponseSchema = lagKontrollsakResponseSchema(visningsnavnForMiljø);
+const kontrollsakPageResponseSchema = lagKontrollsakPageResponseSchema(visningsnavnForMiljø);
+const sakHendelseSchema = lagSakHendelseSchema(
+  visningsnavnForMiljø,
+  visningsnavnForMiljø ? visningsnavnFraNavn : undefined,
+);
 
 // --- Kontrollsak ---
 

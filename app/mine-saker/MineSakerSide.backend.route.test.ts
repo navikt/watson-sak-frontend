@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const mockHentKontrollsaker = vi.fn();
 
 vi.mock("~/config/env.server", () => ({
+  env: { ENVIRONMENT: "prod" },
   skalBrukeMockdata: false,
 }));
 
