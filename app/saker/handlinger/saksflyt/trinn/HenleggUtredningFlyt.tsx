@@ -192,6 +192,16 @@ export function HenleggUtredningFlyt({
     else onLukk();
   }
 
+  /** X og Esc oppfører seg som «Avbryt» når noe er journalført. Ellers lukker de direkte. */
+  function førLukking(opptatt: boolean): boolean {
+    if (opptatt) return false;
+    if (journalførte.length > 0) {
+      avbryt();
+      return false;
+    }
+    return true;
+  }
+
   const knappestil = "w-full";
 
   if (delsteg === "oppgave" && orienteringsJournalpostId) {
@@ -200,6 +210,7 @@ export function HenleggUtredningFlyt({
         ref={modalRef}
         open
         onClose={onLukk}
+        onBeforeClose={() => førLukking(false)}
         width="medium"
         header={{
           heading: "Knytt oppgave til orienteringsnotat",
@@ -245,7 +256,7 @@ export function HenleggUtredningFlyt({
         ref={modalRef}
         open
         onClose={onLukk}
-        onBeforeClose={() => !erSubmitting}
+        onBeforeClose={() => førLukking(erSubmitting)}
         width="small"
         {...(tekst || opprettetOppgave
           ? { "aria-label": "Avslutt sak" }
@@ -263,7 +274,7 @@ export function HenleggUtredningFlyt({
                 />
                 <Heading ref={overskriftRef} level="2" size="small">
                   {opprettetOppgave
-                    ? "Oppgaven er opprettet og knyttet til orienteringsnotatet"
+                    ? "Oppgaven er opprettet og knyttet til orienteringsnotatet."
                     : tekst}
                 </Heading>
                 {!opprettetOppgave && orienteringsJournalpostId && (
@@ -320,7 +331,7 @@ export function HenleggUtredningFlyt({
       ref={modalRef}
       open
       onClose={onLukk}
-      onBeforeClose={() => !sendtInn}
+      onBeforeClose={() => førLukking(sendtInn)}
       header={{ heading: "Henlegg sak" }}
       width="small"
     >

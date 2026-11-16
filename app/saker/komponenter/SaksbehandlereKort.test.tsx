@@ -258,7 +258,12 @@ describe("SaksbehandlereKort", () => {
 
     expect(screen.getByText("Årsak")).toBeDefined();
     expect(screen.getByText("Registrert")).toBeDefined();
-    expect(screen.getByText("Henleggelsesnotat, Orienteringsnotat")).toBeDefined();
+    const henleggelse = screen.getByText("Henleggelsesnotat");
+    const orientering = screen.getByText("Orienteringsnotat");
+    expect(henleggelse.tagName).toBe("DD");
+    expect(orientering.tagName).toBe("DD");
+    expect(henleggelse.previousElementSibling?.textContent).toBe("Registrert");
+    expect(henleggelse.nextElementSibling).toBe(orientering);
   });
 
   it("viser ikke «Registrert» uten notater", async () => {

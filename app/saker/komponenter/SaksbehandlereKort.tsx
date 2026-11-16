@@ -210,14 +210,16 @@ export function SaksbehandlereKort({
               </div>
               {sluttresultatDetaljer.length > 0 && (
                 <VStack as="dl" gap="space-8">
-                  {sluttresultatDetaljer.map(({ etikett, verdi }) => (
+                  {sluttresultatDetaljer.map(({ etikett, verdi, verdier }) => (
                     <div key={etikett}>
                       <BodyShort as="dt" size="small" textColor="subtle">
                         {etikett}
                       </BodyShort>
-                      <BodyShort as="dd" weight="semibold">
-                        {verdi}
-                      </BodyShort>
+                      {(verdier ?? [verdi]).map((linje) => (
+                        <BodyShort key={linje} as="dd" weight="semibold">
+                          {linje}
+                        </BodyShort>
+                      ))}
                     </div>
                   ))}
                 </VStack>

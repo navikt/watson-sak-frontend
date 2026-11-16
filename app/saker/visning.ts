@@ -170,7 +170,12 @@ function formaterHenleggelsesarsak(arsak: string): string {
     : arsak;
 }
 
-export type SluttresultatDetalj = { etikett: string; verdi: string };
+export type SluttresultatDetalj = {
+  etikett: string;
+  verdi: string;
+  /** Flere verdier under samme etikett, vist på hver sin linje. */
+  verdier?: string[];
+};
 
 const strafferabattEtiketter: Record<string, string> = {
   INGEN: "Ingen strafferabatt",
@@ -247,13 +252,10 @@ export function hentSluttresultatDetaljer(
     leggTil("Årsak", formaterHenleggelsesarsak(henleggelsesarsak));
   }
   if (registrerteNotater.length > 0) {
-    leggTil(
-      "Registrert",
-      (Object.keys(notattypeEtiketter) as Henleggelsesnotattype[])
-        .filter((type) => registrerteNotater.some((notat) => notat.notattype === type))
-        .map((type) => notattypeEtiketter[type])
-        .join(", "),
-    );
+    const notater = (Object.keys(notattypeEtiketter) as Henleggelsesnotattype[])
+      .filter((type) => registrerteNotater.some((notat) => notat.notattype === type))
+      .map((type) => notattypeEtiketter[type]);
+    detaljer.push({ etikett: "Registrert", verdi: notater.join(", "), verdier: notater });
   }
 
   const ytelsesSum =

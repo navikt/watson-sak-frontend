@@ -247,6 +247,26 @@ describe("henlegg utredning med notat", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it("viser at saken er åpen når X eller Esc brukes etter journalføring", async () => {
+    svarMed((notattype) => journalført(notattype as "HENLEGGELSESNOTAT"));
+    const { onClose } = renderModal();
+    await åpneHenleggelse();
+    skriv("henleggelsesnotat", "Tekst");
+    klikk("Avslutt sak");
+    await screen.findByText("Henleggelsesnotatet er arkivert og journalført i Gosys");
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Lukk" })[0]);
+    expect(await screen.findByText("Notatet er arkivert. Saken er fortsatt åpen.")).toBeDefined();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("lukker direkte med X før noe er journalført", async () => {
+    const { onClose } = renderModal();
+    await åpneHenleggelse();
+    fireEvent.click(screen.getAllByRole("button", { name: "Lukk" })[0]);
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+  });
+
   async function tilOppgaveskjema() {
     svarMed((notattype) => journalført(notattype as "ORIENTERINGSNOTAT", "jp-77"));
     renderModal();
@@ -293,7 +313,12 @@ describe("henlegg utredning med notat", () => {
     fyllOppgaveskjema();
     klikk("Arkiver oppgave og avslutt sak");
 
-    await waitFor(() => expect(screen.getByRole("button", { name: "Avslutt sak" })).toBeDefined());
+    expect(
+      await screen.findByText("Oppgaven er opprettet og knyttet til orienteringsnotatet."),
+    ).toBeDefined();
+    expect(screen.getByText("Tilgang til dokumenter og underlag")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Avbryt" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Knytt til oppgave" })).toBeNull();
     expect(innsendinger("endre_steg_dialog")).toHaveLength(0);
     klikk("Avslutt sak");
     expect(innsendinger("endre_steg_dialog")).toHaveLength(1);
