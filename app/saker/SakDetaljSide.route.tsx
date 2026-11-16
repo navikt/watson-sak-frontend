@@ -375,6 +375,7 @@ function SakDetaljSideInnhold() {
           tillatteHandlinger={tillatteHandlinger}
           start="meny"
           avslutningKreverFerdigFlyttet={avslutningKreverFerdigFlyttet}
+          registrerteNotater={registrerteNotater}
           onClose={() => setVisSaksflytModal(false)}
         />
       )}
