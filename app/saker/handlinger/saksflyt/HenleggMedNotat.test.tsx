@@ -1,12 +1,14 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { HenleggelsesnotatResultat } from "~/saker/types.backend";
+import type { HenleggelsesnotatResultat, RegistrertHenleggelsesnotat } from "~/saker/types.backend";
 import { SaksflytModal } from "./SaksflytModal";
 import { lagTillatteHandlinger } from "./testdata";
 
 const submitMock = vi.fn();
 let svarPåHandling: (formData: FormData) => unknown;
+/** Når satt, blir innsendingen stående som pågående. */
+let holdSvar = false;
 
 vi.mock("../useOppgavekodeverk", () => ({
   useOppgavekodeverk: () => ({
@@ -28,10 +30,15 @@ vi.mock("react-router", async () => {
     ...actual,
     useFetcher: () => {
       const [data, setData] = react.useState<unknown>(undefined);
+      const [sender, setSender] = react.useState(false);
       return {
-        state: "idle",
+        state: sender ? "submitting" : "idle",
         submit: (formData: FormData, opts: unknown) => {
           submitMock(formData, opts);
+          if (holdSvar) {
+            setSender(true);
+            return;
+          }
           setData(svarPåHandling(formData));
         },
         data,
@@ -64,7 +71,7 @@ function svarMed(
   };
 }
 
-function renderModal() {
+function renderModal(registrerteNotater: RegistrertHenleggelsesnotat[] = []) {
   const onClose = vi.fn();
   const router = createMemoryRouter(
     [
@@ -75,6 +82,7 @@ function renderModal() {
             sakId="101"
             tillatteHandlinger={lagTillatteHandlinger({ steg: "UTREDNING" })}
             start="meny"
+            registrerteNotater={registrerteNotater}
             onClose={onClose}
           />
         ),
@@ -115,6 +123,7 @@ describe("henlegg utredning med notat", () => {
   beforeEach(() => {
     submitMock.mockClear();
     svarPåHandling = () => ({ ok: true });
+    holdSvar = false;
   });
   afterEach(cleanup);
 
@@ -328,5 +337,149 @@ describe("henlegg utredning med notat", () => {
     await tilOppgaveskjema();
     klikk("Avbryt");
     expect(await screen.findByRole("button", { name: "Knytt til oppgave" })).toBeDefined();
+  });
+
+  const registrert = (
+    notattype: RegistrertHenleggelsesnotat["notattype"],
+    journalpostId: string | null,
+  ): RegistrertHenleggelsesnotat => ({
+    notattype,
+    journalpostId,
+    registrertTidspunkt: "2026-11-16T10:00:00Z",
+  });
+
+  it("viser journalførte notater fra loaderen som avkrysset og låst, og bruker journalpostId", async () => {
+    renderModal([registrert("ORIENTERINGSNOTAT", "jp-9")]);
+    await åpneHenleggelse();
+
+    const avkrysning = screen.getByRole("checkbox", {
+      name: "Orienteringsnotat",
+    }) as HTMLInputElement;
+    expect(avkrysning.checked).toBe(true);
+    expect(avkrysning.disabled).toBe(true);
+    expect(screen.getByText("Arkivert i Gosys")).toBeDefined();
+    expect(screen.queryByRole("button", { name: /Skriv notat.*orienteringsnotat/i })).toBeNull();
+    expect(screen.getByRole("button", { name: /Skriv notat.*henleggelsesnotat/i })).toBeDefined();
+
+    klikk("Avslutt sak");
+    expect(
+      await screen.findByText("Orienteringsnotat er arkivert og journalført i Gosys"),
+    ).toBeDefined();
+    expect(innsendinger("registrer_henleggelsesnotater")).toHaveLength(0);
+    expect(screen.getByRole("button", { name: "Knytt til oppgave" })).toBeDefined();
+  });
+
+  it("lar notater uten journalpost få tekst", async () => {
+    renderModal([registrert("ORIENTERINGSNOTAT", null)]);
+    await åpneHenleggelse();
+    const avkrysning = screen.getByRole("checkbox", {
+      name: "Orienteringsnotat",
+    }) as HTMLInputElement;
+    expect(avkrysning.disabled).toBe(false);
+    expect(screen.getByRole("button", { name: /Skriv notat.*orienteringsnotat/i })).toBeDefined();
+  });
+
+  it("låser journalført notat ved delvis suksess og sender bare det som gjenstår", async () => {
+    svarMed((notattype) =>
+      notattype === "HENLEGGELSESNOTAT"
+        ? journalført("HENLEGGELSESNOTAT", "jp-1")
+        : { notattype: "ORIENTERINGSNOTAT", utfall: "FEILET", journalpostId: null },
+    );
+    renderModal();
+    await åpneHenleggelse();
+    skriv("henleggelsesnotat", "A");
+    skriv("orienteringsnotat", "B");
+    klikk("Avslutt sak");
+    await screen.findByText("Orienteringsnotatet kunne ikke arkiveres. Prøv igjen.");
+
+    expect(
+      (screen.getByRole("checkbox", { name: "Henleggelsesnotat" }) as HTMLInputElement).disabled,
+    ).toBe(true);
+
+    svarMed((notattype) => journalført(notattype as "ORIENTERINGSNOTAT", "jp-2"));
+    klikk("Avslutt sak");
+    expect(
+      await screen.findByText(
+        "Henleggelsesnotatet og orienteringsnotatet er arkivert og journalført i Gosys",
+      ),
+    ).toBeDefined();
+    const registreringer = innsendinger("registrer_henleggelsesnotater");
+    expect(JSON.parse(String(registreringer[1].get("notater")))).toEqual([
+      { notattype: "ORIENTERINGSNOTAT", tekst: "B" },
+    ]);
+    expect(screen.getByRole("button", { name: "Knytt til oppgave" })).toBeDefined();
+  });
+
+  it("beholder «Knytt til oppgave» når orienteringsnotatet lyktes og henleggelsesnotatet feilet", async () => {
+    svarMed((notattype) =>
+      notattype === "ORIENTERINGSNOTAT"
+        ? journalført("ORIENTERINGSNOTAT", "jp-3")
+        : { notattype: "HENLEGGELSESNOTAT", utfall: "FEILET", journalpostId: null },
+    );
+    renderModal();
+    await åpneHenleggelse();
+    skriv("henleggelsesnotat", "A");
+    skriv("orienteringsnotat", "B");
+    klikk("Avslutt sak");
+    await screen.findByText("Henleggelsesnotatet kunne ikke arkiveres. Prøv igjen.");
+
+    // Retur med bare henleggelsesnotatet i svaret skal ikke fjerne orienteringsnotatets journalpost.
+    svarMed((notattype) => journalført(notattype as "HENLEGGELSESNOTAT", "jp-4"));
+    klikk("Avslutt sak");
+    await screen.findByText(/er arkivert og journalført i Gosys/);
+    fireEvent.click(screen.getByRole("button", { name: "Knytt til oppgave" }));
+    await screen.findByRole("dialog", { name: "Knytt oppgave til orienteringsnotat" });
+    fyllOppgaveskjema();
+    klikk("Arkiver oppgave og avslutt sak");
+    await waitFor(() => expect(innsendinger("opprett_oppgave")).toHaveLength(1));
+    expect(innsendinger("opprett_oppgave")[0].get("journalpostId")).toBe("jp-3");
+  });
+
+  it("lukker ikke og bytter ikke trinn med X mens oppgaven opprettes", async () => {
+    await tilOppgaveskjema();
+    holdSvar = true;
+    fyllOppgaveskjema();
+    klikk("Arkiver oppgave og avslutt sak");
+    await waitFor(() => expect(innsendinger("opprett_oppgave")).toHaveLength(1));
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Lukk" })[0]);
+    expect(
+      screen.getByRole("dialog", { name: "Knytt oppgave til orienteringsnotat" }),
+    ).toBeDefined();
+    expect(screen.queryByText("Notatet er arkivert. Saken er fortsatt åpen.")).toBeNull();
+  });
+
+  it("sier at utfallet er ukjent ved teknisk feil, med feil-ID", async () => {
+    await tilOppgaveskjema();
+    svarPåHandling = () => ({
+      ok: false,
+      feil: "intern",
+      feilId: "feil-42",
+      teknisk: true,
+      usikker: true,
+    });
+    fyllOppgaveskjema();
+    klikk("Arkiver oppgave og avslutt sak");
+
+    expect(
+      await screen.findByText(
+        "Vi vet ikke om oppgaven ble opprettet. Sjekk Gosys før du prøver igjen. Feil-ID: feil-42",
+      ),
+    ).toBeDefined();
+    expect(innsendinger("endre_steg_dialog")).toHaveLength(0);
+  });
+
+  it("beholder dagens melding ved tydelig avvist oppgave", async () => {
+    await tilOppgaveskjema();
+    svarPåHandling = () => ({
+      ok: false,
+      feil: "x",
+      feilId: "feil-43",
+      teknisk: true,
+      usikker: false,
+    });
+    fyllOppgaveskjema();
+    klikk("Arkiver oppgave og avslutt sak");
+    expect(await screen.findByText(/Kunne ikke opprette oppgave/)).toBeDefined();
   });
 });

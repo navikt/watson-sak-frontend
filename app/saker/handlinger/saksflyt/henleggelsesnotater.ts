@@ -1,4 +1,8 @@
-import type { Henleggelsesnotattype, HenleggelsesnotatResultat } from "~/saker/types.backend";
+import type {
+  Henleggelsesnotattype,
+  HenleggelsesnotatResultat,
+  RegistrertHenleggelsesnotat,
+} from "~/saker/types.backend";
 
 export const NOTATTYPER: readonly Henleggelsesnotattype[] = [
   "HENLEGGELSESNOTAT",
@@ -18,11 +22,14 @@ export const tomtNotatvalg: Notatvalg = {
 /** Innholdet i `notater`-feltet. Bare avkryssede notater tas med, og tomme tekster sendes som `null`. */
 export function byggNotater(
   valg: Notatvalg,
+  låste: readonly Henleggelsesnotattype[] = [],
 ): { notattype: Henleggelsesnotattype; tekst: string | null }[] {
-  return NOTATTYPER.filter((type) => valg.valgt[type]).map((notattype) => ({
-    notattype,
-    tekst: valg.tekst[notattype].trim() === "" ? null : valg.tekst[notattype],
-  }));
+  return NOTATTYPER.filter((type) => valg.valgt[type] && !låste.includes(type)).map(
+    (notattype) => ({
+      notattype,
+      tekst: valg.tekst[notattype].trim() === "" ? null : valg.tekst[notattype],
+    }),
+  );
 }
 
 function erJournalført(resultat: HenleggelsesnotatResultat): boolean {
@@ -56,4 +63,35 @@ export function kvitteringstekst(typer: readonly Henleggelsesnotattype[]): strin
   if (henleggelse) return "Henleggelsesnotatet er arkivert og journalført i Gosys";
   if (orientering) return "Orienteringsnotat er arkivert og journalført i Gosys";
   return null;
+}
+
+/** Notater som allerede er journalført, slik loaderen har dem. */
+export function resultaterFraRegistrerte(
+  registrerte: readonly RegistrertHenleggelsesnotat[],
+): HenleggelsesnotatResultat[] {
+  return registrerte
+    .filter((notat) => notat.journalpostId !== null)
+    .map((notat) => ({
+      notattype: notat.notattype,
+      utfall: "ALLEREDE_JOURNALFORT",
+      journalpostId: notat.journalpostId,
+    }));
+}
+
+/**
+ * Slår sammen resultater per notattype. Et journalført notat blir stående, slik at tidligere
+ * suksesser og journalpost-ID-er ikke går tapt når et senere forsøk bare gjelder andre notater.
+ */
+export function slåSammenResultater(
+  forrige: readonly HenleggelsesnotatResultat[],
+  nye: readonly HenleggelsesnotatResultat[],
+): HenleggelsesnotatResultat[] {
+  return NOTATTYPER.flatMap((type) => {
+    const gammel = forrige.find((resultat) => resultat.notattype === type);
+    const ny = nye.find((resultat) => resultat.notattype === type);
+    if (gammel && erJournalført(gammel) && !(ny && erJournalført(ny) && ny.journalpostId)) {
+      return [gammel];
+    }
+    return ny ? [ny] : gammel ? [gammel] : [];
+  });
 }

@@ -4,6 +4,7 @@ import { ExclamationmarkTriangleIcon } from "@navikt/aksel-icons";
 import { BodyShort, Button, HStack, InfoCard, Modal, VStack } from "@navikt/ds-react";
 import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
+import { erTekniskFeilSvar } from "~/feilhåndtering/Innsendingsfeil";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
@@ -16,15 +17,27 @@ type OppgaveTrinnProps = {
   journalpostId: string;
   onTilbake: () => void;
   onOpprettet: () => void;
+  /** Gir beskjed om innsending pågår, slik at flyten kan hindre lukking. */
+  onSenderEndret: (sender: boolean) => void;
 };
 
 /** Oppretter en oppgave knyttet til orienteringsnotatet. Innholdet i modalen, uten selve `Modal`. */
-export function OppgaveTrinn({ sakId, journalpostId, onTilbake, onOpprettet }: OppgaveTrinnProps) {
+export function OppgaveTrinn({
+  sakId,
+  journalpostId,
+  onTilbake,
+  onOpprettet,
+  onSenderEndret,
+}: OppgaveTrinnProps) {
   const fetcher = useFetcher();
   const submitPågår = useRef(false);
   const [feilmelding, settFeilmelding] = useState<string | null>(null);
   const { tilstand: kodeverk, prøvIgjen } = useOppgavekodeverk("KTR");
   const senderInn = fetcher.state !== "idle";
+  useEffect(() => {
+    onSenderEndret(senderInn);
+    return () => onSenderEndret(false);
+  }, [senderInn, onSenderEndret]);
 
   const [form, fields] = useForm({
     id: "knytt-oppgave-orienteringsnotat",
@@ -54,6 +67,15 @@ export function OppgaveTrinn({ sakId, journalpostId, onTilbake, onOpprettet }: O
     if (fetcher.data && "ok" in fetcher.data && fetcher.data.ok) {
       sporHendelse("oppgave opprettet", { knyttetTil: "orienteringsnotat" });
       onOpprettet();
+    } else if (
+      erTekniskFeilSvar(fetcher.data) &&
+      (fetcher.data as { usikker?: unknown }).usikker !== false
+    ) {
+      // Timeout, nettverksfeil og 5xx: oppgaven kan være opprettet.
+      const feilId = fetcher.data.feilId;
+      settFeilmelding(
+        `Vi vet ikke om oppgaven ble opprettet. Sjekk Gosys før du prøver igjen.${feilId ? ` Feil-ID: ${feilId}` : ""}`,
+      );
     } else {
       settFeilmelding("Kunne ikke opprette oppgave. Saken er ikke avsluttet. Prøv igjen.");
     }

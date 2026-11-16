@@ -53,6 +53,16 @@ export function SakDetaljSidePanel({
           Navn og enhet kan mangle i saken. Prøv igjen om litt.
         </Feilmelding>
       )}
+      {seksjonsfeil.henleggelsesnotater && (
+        <Feilmelding
+          headingLevel="2"
+          tittel="Vi fikk ikke hentet notatene som er registrert ved henleggelsen"
+          feilId={seksjonsfeil.henleggelsesnotater}
+          kanPrøveIgjen
+        >
+          Notater kan mangle i resultatet. Prøv igjen om litt.
+        </Feilmelding>
+      )}
       <SaksbehandlereKort
         sak={sak}
         saksbehandlerDetaljer={saksbehandlerDetaljer}

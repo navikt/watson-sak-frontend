@@ -89,7 +89,12 @@ function konfliktfeil(feil: backendApi.BackendFeilException, handling: string) {
 }
 
 /** Handlingene fra saksflyt-modalen. Feil returneres slik at modalen beholder verdiene. */
-const saksflythandlinger = new Set(["endre_steg_dialog", "lagre_resultat", "endre_status"]);
+const saksflythandlinger = new Set([
+  "endre_steg_dialog",
+  "lagre_resultat",
+  "endre_status",
+  "registrer_henleggelsesnotater",
+]);
 
 type SaksflytFeil = { ok: false; feil: string };
 

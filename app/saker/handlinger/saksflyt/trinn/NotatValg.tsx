@@ -16,6 +16,8 @@ import { NOTATTYPER, type Notatvalg } from "../henleggelsesnotater";
 
 type NotatValgProps = {
   valg: Notatvalg;
+  /** Notater som allerede er arkivert i Gosys. De vises som avkrysset og låst. */
+  låste: readonly Henleggelsesnotattype[];
   åpneFelt: Record<Henleggelsesnotattype, boolean>;
   feil: Partial<Record<Henleggelsesnotattype, string>>;
   åpen: boolean;
@@ -31,6 +33,7 @@ type NotatValgProps = {
 /** Valg av notattyper under henleggelsesårsaken. Teksten i notatene lagres bare i komponenttilstand. */
 export function NotatValg({
   valg,
+  låste,
   åpneFelt,
   feil,
   åpen,
@@ -42,7 +45,7 @@ export function NotatValg({
   onFeltÅpnet,
 }: NotatValgProps) {
   const id = useId();
-  const valgte = NOTATTYPER.filter((type) => valg.valgt[type]);
+  const valgte = NOTATTYPER.filter((type) => valg.valgt[type] || låste.includes(type));
   return (
     <ExpansionCard
       aria-labelledby={`${id}-tittel`}
@@ -71,6 +74,18 @@ export function NotatValg({
               const etikett = notattypeEtiketter[type];
               const feltId = `${id}-${type}`;
               const erÅpen = åpneFelt[type];
+              if (låste.includes(type)) {
+                return (
+                  <VStack key={type} gap="space-4" align="start" className="w-full">
+                    <Checkbox value={type} disabled>
+                      {etikett}
+                    </Checkbox>
+                    <BodyShort size="small" textColor="subtle" className="pl-8">
+                      Arkivert i Gosys
+                    </BodyShort>
+                  </VStack>
+                );
+              }
               return (
                 <VStack key={type} gap="space-4" align="start" className="w-full">
                   <Checkbox value={type} disabled={deaktivert}>

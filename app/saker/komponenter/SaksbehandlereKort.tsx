@@ -466,6 +466,7 @@ export function SaksbehandlereKort({
           sakId={String(sak.id)}
           tillatteHandlinger={tillatteHandlinger}
           start={åpenSaksflyt}
+          registrerteNotater={registrerteNotater}
           onClose={() => setÅpenSaksflyt(null)}
         />
       )}

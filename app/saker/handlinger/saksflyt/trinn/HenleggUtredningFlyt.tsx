@@ -8,6 +8,7 @@ import { erTekniskFeilSvar } from "~/feilhåndtering/Innsendingsfeil";
 import type {
   Henleggelsesnotattype,
   HenleggelsesnotatResultat,
+  RegistrertHenleggelsesnotat,
   TillatteHandlingerResponse,
 } from "~/saker/types.backend";
 import { notattypeEtiketter } from "~/saker/visning";
@@ -15,6 +16,8 @@ import type { Sakshandling, Trinn, Verdier } from "../saksflyt";
 import {
   byggNotater,
   journalførteNotattyper,
+  resultaterFraRegistrerte,
+  slåSammenResultater,
   kvitteringstekst,
   NOTATTYPER,
   orienteringsnotatJournalpostId,
@@ -35,6 +38,8 @@ type HenleggUtredningFlytProps = {
   verdier: Verdier;
   feil: Feil;
   tillatteHandlinger: TillatteHandlingerResponse;
+  /** Notater som allerede er registrert på saken, fra loaderen. */
+  registrerteNotater: readonly RegistrertHenleggelsesnotat[];
   modalRef: RefObject<HTMLDialogElement | null>;
   /** Pågående innsending av selve avslutningen. */
   erSubmitting: boolean;
@@ -62,6 +67,7 @@ export function HenleggUtredningFlyt({
   verdier,
   feil,
   tillatteHandlinger,
+  registrerteNotater,
   modalRef,
   erSubmitting,
   avslutningsfeil,
@@ -81,10 +87,15 @@ export function HenleggUtredningFlyt({
   const [åpneFelt, settÅpneFelt] = useState({ HENLEGGELSESNOTAT: false, ORIENTERINGSNOTAT: false });
   const [notatfeil, settNotatfeil] = useState<Partial<Record<Henleggelsesnotattype, string>>>({});
   const [generellFeil, settGenerellFeil] = useState<string | null>(null);
-  const [resultater, settResultater] = useState<HenleggelsesnotatResultat[]>([]);
+  const [økteResultater, settØkteResultater] = useState<HenleggelsesnotatResultat[]>([]);
+  const [oppgaveSender, settOppgaveSender] = useState(false);
   const [fokuserFeil, settFokuserFeil] = useState<Henleggelsesnotattype | null>(null);
 
   const sendtInn = fetcher.state !== "idle";
+  const resultater = slåSammenResultater(
+    resultaterFraRegistrerte(registrerteNotater),
+    økteResultater,
+  );
   const journalførte = journalførteNotattyper(resultater);
   const orienteringsJournalpostId = orienteringsnotatJournalpostId(resultater);
 
@@ -121,7 +132,7 @@ export function HenleggUtredningFlyt({
     const svar = fetcher.data;
     if (svar && typeof svar === "object" && "ok" in svar && svar.ok && "notater" in svar) {
       const notater = svar.notater as HenleggelsesnotatResultat[];
-      settResultater(notater);
+      settØkteResultater((forrige) => slåSammenResultater(forrige, notater));
       const feilede = notater.filter((notat) => notat.utfall === "FEILET");
       if (feilede.length === 0) {
         settNotatfeil({});
@@ -149,7 +160,7 @@ export function HenleggUtredningFlyt({
     }
   }, [fetcher.data, fetcher.state]);
 
-  const valgteNotater = byggNotater(valg);
+  const valgteNotater = byggNotater(valg, journalførte);
 
   function registrerEllerFortsett() {
     if (!onValiderÅrsak()) return;
@@ -210,7 +221,7 @@ export function HenleggUtredningFlyt({
         ref={modalRef}
         open
         onClose={onLukk}
-        onBeforeClose={() => førLukking(false)}
+        onBeforeClose={() => førLukking(oppgaveSender)}
         width="medium"
         header={{
           heading: "Knytt oppgave til orienteringsnotat",
@@ -222,6 +233,7 @@ export function HenleggUtredningFlyt({
           journalpostId={orienteringsJournalpostId}
           onTilbake={() => settDelsteg("kvittering")}
           onOpprettet={() => settDelsteg("bekreft")}
+          onSenderEndret={settOppgaveSender}
         />
       </Modal>
     );
@@ -347,6 +359,7 @@ export function HenleggUtredningFlyt({
           <hr className="border-ax-border-neutral-subtle" />
           <NotatValg
             valg={valg}
+            låste={journalførte}
             åpneFelt={åpneFelt}
             feil={notatfeil}
             åpen={kortÅpent}

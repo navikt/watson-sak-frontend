@@ -1532,6 +1532,14 @@ describe("henleggelsesnotater — backend-sti", () => {
     expect(resultat).toEqual({ ok: false, feil: "Ugyldig tekst" });
   });
 
+  it("returnerer 403 til skjemaet i stedet for å kaste", async () => {
+    mockRegistrerHenleggelsesnotater.mockRejectedValue(
+      new MockBackendFeilException(403, "Tilgang avvist"),
+    );
+    const resultat = await registrer([{ notattype: "HENLEGGELSESNOTAT", tekst: "a" }]);
+    expect(resultat).toMatchObject({ data: { ok: false }, init: { status: 403 } });
+  });
+
   it("loader gir registrerteNotater for sak i Utredning", async () => {
     const registrerte = [
       {

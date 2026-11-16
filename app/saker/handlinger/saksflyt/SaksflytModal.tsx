@@ -3,7 +3,10 @@ import { BodyShort, Button, ErrorMessage, HStack, Modal, VStack } from "@navikt/
 import { useFetcher } from "react-router";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
-import type { TillatteHandlingerResponse } from "~/saker/types.backend";
+import type {
+  RegistrertHenleggelsesnotat,
+  TillatteHandlingerResponse,
+} from "~/saker/types.backend";
 import { INNSENDINGSFEIL, type Innsendingstekster } from "~/feilhåndtering/feilmeldinger";
 import { erTekniskFeilSvar, Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
 import { byggLagreResultatRequest } from "../resultat-request";
@@ -33,6 +36,8 @@ type SaksflytModalProps = {
   tillatteHandlinger: TillatteHandlingerResponse;
   start: SaksflytStart;
   avslutningKreverFerdigFlyttet?: boolean;
+  /** Notater som er registrert på saken. Brukes når henleggelsen starter på nytt. */
+  registrerteNotater?: readonly RegistrertHenleggelsesnotat[];
   onClose: () => void;
 };
 
@@ -76,6 +81,7 @@ export function SaksflytModal({
   tillatteHandlinger,
   start,
   avslutningKreverFerdigFlyttet = false,
+  registrerteNotater = [],
   onClose,
 }: SaksflytModalProps) {
   const fetcher = useFetcher();
@@ -257,6 +263,7 @@ export function SaksflytModal({
         verdier={verdier}
         feil={feil}
         tillatteHandlinger={tillatteHandlinger}
+        registrerteNotater={registrerteNotater}
         modalRef={modalRef}
         erSubmitting={erSubmitting}
         avslutningsfeil={
