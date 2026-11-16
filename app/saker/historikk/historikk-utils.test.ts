@@ -114,7 +114,7 @@ describe("hendelseTittel", () => {
   it.each([
     ["MIGRERING_PABEGYNT", "Opprettet i Watson"],
     ["MIGRERING_FULLFORT", "Saken er ferdig flyttet"],
-    ["SAK_FRISTILT", "Sak fristilt"],
+    ["SAK_FRISTILT", "Saksbehandler fjernet"],
     ["SAK_DELT", "Sak delt"],
     ["SAK_OVERFORT", "Sak overført"],
   ])("viser %s som «%s» uten steg", (hendelsesType, tittel) => {
@@ -293,6 +293,22 @@ describe("nye historikktekster", () => {
 
     expect(hendelseTittel(hendelse)).toBe("Deling fjernet");
     expect(hendelseBeskrivelse(hendelse)).toBe("For: Ola Nordmann");
+  });
+
+  it("viser hvem som ble fjernet som ansvarlig saksbehandler", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "SAK_FRISTILT",
+      berortSaksbehandlerNavn: "Ola Nordmann",
+    });
+
+    expect(hendelseTittel(hendelse)).toBe("Saksbehandler fjernet");
+    expect(hendelseBeskrivelse(hendelse)).toBe("Fjernet: Ola Nordmann");
+  });
+
+  it("viser ingen beskrivelse for fjernet saksbehandler når navnet mangler", () => {
+    const hendelse = lagHendelse({ hendelsesType: "SAK_FRISTILT" });
+
+    expect(hendelseBeskrivelse(hendelse)).toBeNull();
   });
 
   it("viser koblet sak-id", () => {

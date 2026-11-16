@@ -234,7 +234,7 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
     case "FIL_LASTET_OPP":
       return "Fil lastet opp";
     case "SAK_FRISTILT":
-      return "Sak fristilt";
+      return "Saksbehandler fjernet";
     case "SAK_DELT":
       return "Sak delt";
     case "SAK_OVERFORT":
@@ -270,7 +270,6 @@ export function hendelseBeskrivelse(
     hendelse.hendelsesType === "MANUELL_HENDELSE_REDIGERT" ||
     hendelse.hendelsesType === "MIGRERING_PABEGYNT" ||
     hendelse.hendelsesType === "MIGRERING_FULLFORT" ||
-    hendelse.hendelsesType === "SAK_FRISTILT" ||
     hendelse.hendelsesType === "SAK_OVERFORT"
   ) {
     return null;
@@ -282,6 +281,10 @@ export function hendelseBeskrivelse(
 
   if (hendelse.hendelsesType === "SAK_TILDELT") {
     return hendelse.berortSaksbehandlerNavn ? `Til: ${hendelse.berortSaksbehandlerNavn}` : null;
+  }
+
+  if (hendelse.hendelsesType === "SAK_FRISTILT") {
+    return hendelse.berortSaksbehandlerNavn ? `Fjernet: ${hendelse.berortSaksbehandlerNavn}` : null;
   }
 
   if (hendelse.hendelsesType === "SAK_DELT") {

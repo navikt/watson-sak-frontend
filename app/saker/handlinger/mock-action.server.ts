@@ -176,8 +176,12 @@ export async function mockAction(
       if (!sak.saksbehandlere.eier) {
         throw data("Saken har ingen ansvarlig saksbehandler å fjerne", { status: 409 });
       }
+      const fjernetSaksbehandler = sak.saksbehandlere.eier;
       sak.saksbehandlere.eier = null;
-      leggTilBrukerhendelse(sak, "SAK_FRISTILT");
+      leggTilBrukerhendelse(sak, "SAK_FRISTILT", undefined, {
+        berortSaksbehandlerNavn: fjernetSaksbehandler.navn,
+        berortSaksbehandlerNavIdent: fjernetSaksbehandler.navIdent,
+      });
       break;
     }
     case "endre_steg":
