@@ -68,6 +68,11 @@ export type Sakshandling = {
   /** Bredden på modalen gjennom hele handlingen. Standard er `small`. */
   bredde?: "small" | "medium";
   trinn: readonly Trinn[];
+  /**
+   * Henleggelsen viser valg av henleggelsesnotat og orienteringsnotat sammen med årsaken,
+   * og har egne trinn for kvittering og oppgave. `trinn` beskriver da bare årsaksvalget.
+   */
+  medNotater?: boolean;
   /** Resultatverdier handlingen alltid sender, for eksempel `utredning.type=HENLAGT`. */
   faste: Verdier;
   innsending: Innsending;
@@ -123,11 +128,12 @@ export const feltgrupper: Readonly<Record<string, { legend: string; felter: read
 
 const bekreftAvslutning: Trinn = { type: "bekreftAvslutning", primær: "Avslutt sak" };
 
-function henlegg(felt: string, faste: Verdier): Sakshandling {
+function henlegg(felt: string, faste: Verdier, medNotater = false): Sakshandling {
   return {
     id: "henlegg",
     seksjon: "resultat",
     etikett: "Henlegg sak",
+    ...(medNotater ? { medNotater } : {}),
     faste,
     trinn: [
       {
@@ -136,7 +142,7 @@ function henlegg(felt: string, faste: Verdier): Sakshandling {
         felt,
         legend: "Henleggelsesårsak",
         beskrivelse: "Velg årsak - alternativene avhenger av fasen",
-        primær: "Henlegg og avslutt sak",
+        primær: medNotater ? "Avslutt sak" : "Henlegg og avslutt sak",
       },
       bekreftAvslutning,
     ],
@@ -204,7 +210,7 @@ const handlingstabell: Partial<Record<KontrollsakSteg, readonly Sakshandling[]>>
       ],
       innsending: { handling: "endre_steg_dialog", steg: "FORVALTNING" },
     },
-    henlegg("utredning.henleggelsesarsak", { "utredning.type": "HENLAGT" }),
+    henlegg("utredning.henleggelsesarsak", { "utredning.type": "HENLAGT" }, true),
   ],
   FORVALTNING: [
     {

@@ -5,6 +5,7 @@ import { IngenHistorikktilgangKort } from "~/saker/historikk/IngenHistorikktilga
 import { SakHistorikk } from "~/saker/historikk/SakHistorikk";
 import type {
   KontrollsakResponse,
+  RegistrertHenleggelsesnotat,
   KontrollsakSaksbehandler,
   TillatteHandlingerResponse,
 } from "~/saker/types.backend";
@@ -23,6 +24,7 @@ interface SakDetaljSidePanelProps {
   kanLeggeTilHistorikk: boolean;
   historikkTilstand: "vis" | "ikke-delt" | "ingen-persontilgang";
   seksjonsfeil?: Seksjonsfeil;
+  registrerteNotater?: readonly RegistrertHenleggelsesnotat[];
 }
 
 export function SakDetaljSidePanel({
@@ -37,6 +39,7 @@ export function SakDetaljSidePanel({
   kanLeggeTilHistorikk,
   historikkTilstand,
   seksjonsfeil = {},
+  registrerteNotater = [],
 }: SakDetaljSidePanelProps) {
   return (
     <VStack gap="space-20" className="md:sticky md:top-4 md:self-start">
@@ -57,6 +60,7 @@ export function SakDetaljSidePanel({
         erEier={erEier}
         kanTildeleSak={kanTildeleSak}
         tillatteHandlinger={tillatteHandlinger}
+        registrerteNotater={registrerteNotater}
       />
 
       {sak.visLiggetidVarsel && (

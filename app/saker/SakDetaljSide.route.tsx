@@ -110,6 +110,7 @@ function SakDetaljSideInnhold() {
     andreSakerSide,
     saksbehandlerDetaljer,
     seksjonsfeil,
+    registrerteNotater,
   } = useLoaderData<typeof loader>();
   const [sak, setSak] = useState(loaderSak);
   const { vis: visEksempelBekreftelse, lukk: lukkBekreftelse } = useLukketBekreftelse(loaderSak.id);
@@ -358,6 +359,7 @@ function SakDetaljSideInnhold() {
             kanLeggeTilHistorikk={erEierMedSkriveadgang && stegregler.kanLeggeTilHistorikk}
             historikkTilstand={historikkTilstand}
             seksjonsfeil={seksjonsfeil}
+            registrerteNotater={registrerteNotater}
           />
         </HGrid>
       </VStack>

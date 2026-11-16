@@ -26,6 +26,7 @@ import { hentStegbaserteSaksregler } from "~/saker/stegregler";
 import type {
   KontrollsakResponse,
   KontrollsakSaksbehandler,
+  RegistrertHenleggelsesnotat,
   TillatteHandlingerResponse,
 } from "~/saker/types.backend";
 import { DelTilgangModal } from "~/saker/handlinger/DelTilgangModal";
@@ -49,6 +50,8 @@ interface SaksbehandlereKortProps {
   erEier: boolean;
   kanTildeleSak?: boolean;
   tillatteHandlinger?: TillatteHandlingerResponse;
+  /** Notater som ble registrert da saken ble henlagt. */
+  registrerteNotater?: readonly RegistrertHenleggelsesnotat[];
 }
 
 function hentInitialer(navn: string) {
@@ -97,6 +100,7 @@ export function SaksbehandlereKort({
   erEier,
   kanTildeleSak = true,
   tillatteHandlinger,
+  registrerteNotater = [],
 }: SaksbehandlereKortProps) {
   const [visOverforModal, setVisOverforModal] = useState(false);
   const [visDelTilgangModal, setVisDelTilgangModal] = useState(false);
@@ -159,7 +163,11 @@ export function SaksbehandlereKort({
     kanSkrive && erEier && tillatteHandlinger && hentHandlinger(tillatteHandlinger).length > 0;
   const erAvsluttet = sak.steg === "AVSLUTTET";
   const statusTag = hentStatusTag(sak);
-  const sluttresultatDetaljer = hentSluttresultatDetaljer(sak.resultat, sak.ytelser);
+  const sluttresultatDetaljer = hentSluttresultatDetaljer(
+    sak.resultat,
+    sak.ytelser,
+    registrerteNotater,
+  );
 
   return (
     <>

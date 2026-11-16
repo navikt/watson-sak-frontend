@@ -228,6 +228,59 @@ describe("SaksbehandlereKort", () => {
     expect(screen.queryByRole("button", { name: "Endre status" })).toBeNull();
   });
 
+  it("viser «Registrert» med notattypene under årsaken når henleggelsen har notater", async () => {
+    const sak = lagKontrollsak({
+      steg: "AVSLUTTET",
+      status: null,
+      resultat: { utredning: { type: "HENLAGT", henleggelsesarsak: "IKKE_KAPASITET" } },
+    });
+    await renderMedRouter(
+      <SaksbehandlereKort
+        erEier={true}
+        sak={sak}
+        saksbehandlerDetaljer={[lagSaksbehandler()]}
+        ansvarligSaksbehandler={lagSaksbehandler()}
+        tillatteHandlinger={lagTillatteHandlinger(sak)}
+        registrerteNotater={[
+          {
+            notattype: "ORIENTERINGSNOTAT",
+            journalpostId: "jp-1",
+            registrertTidspunkt: "2026-11-16T10:00:00Z",
+          },
+          {
+            notattype: "HENLEGGELSESNOTAT",
+            journalpostId: null,
+            registrertTidspunkt: "2026-11-16T10:00:00Z",
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Årsak")).toBeDefined();
+    expect(screen.getByText("Registrert")).toBeDefined();
+    expect(screen.getByText("Henleggelsesnotat, Orienteringsnotat")).toBeDefined();
+  });
+
+  it("viser ikke «Registrert» uten notater", async () => {
+    const sak = lagKontrollsak({
+      steg: "AVSLUTTET",
+      status: null,
+      resultat: { utredning: { type: "HENLAGT", henleggelsesarsak: "IKKE_KAPASITET" } },
+    });
+    await renderMedRouter(
+      <SaksbehandlereKort
+        erEier={true}
+        sak={sak}
+        saksbehandlerDetaljer={[lagSaksbehandler()]}
+        ansvarligSaksbehandler={lagSaksbehandler()}
+        tillatteHandlinger={lagTillatteHandlinger(sak)}
+      />,
+    );
+
+    expect(screen.getByText("Årsak")).toBeDefined();
+    expect(screen.queryByText("Registrert")).toBeNull();
+  });
+
   it("viser straffedetaljer under taggen for avsluttet sak", async () => {
     const sak = lagKontrollsak({
       steg: "AVSLUTTET",

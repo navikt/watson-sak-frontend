@@ -19,6 +19,7 @@ import {
 } from "./saksflyt";
 import { lagStarttilstand, saksflytReducer } from "./saksflytReducer";
 import { Avslutningsvarsel } from "./trinn/Avslutningsvarsel";
+import { HenleggUtredningFlyt } from "./trinn/HenleggUtredningFlyt";
 import { MenyTrinn } from "./trinn/MenyTrinn";
 import { SkjemaTrinn } from "./trinn/SkjemaTrinn";
 import { EnkeltvalgTrinn, SjekklisteTrinn, StatusTrinn } from "./trinn/ValgTrinn";
@@ -247,6 +248,44 @@ export function SaksflytModal({
   }
 
   const { handling, trinnIndeks, verdier, feil } = tilstand;
+  if (handling.medNotater) {
+    const årsaktrinn = handling.trinn[0];
+    return (
+      <HenleggUtredningFlyt
+        sakId={sakId}
+        handling={handling}
+        verdier={verdier}
+        feil={feil}
+        tillatteHandlinger={tillatteHandlinger}
+        modalRef={modalRef}
+        erSubmitting={erSubmitting}
+        avslutningsfeil={
+          <>
+            <Innsendingsfeil svar={fetcher.data} tekster={feiltekster} />
+            {generellFeil && <ErrorMessage showIcon>{generellFeil}</ErrorMessage>}
+          </>
+        }
+        onChange={(navn, verdi) => dispatch({ type: "settVerdi", navn, verdi })}
+        onValiderÅrsak={() => {
+          const årsaksfeil = validerTrinn(
+            årsaktrinn,
+            { ...verdier, ...handling.faste },
+            tillatteHandlinger,
+          );
+          dispatch({ type: "settFeil", feil: årsaksfeil });
+          return Object.keys(årsaksfeil).length === 0;
+        }}
+        onAvslutt={() => {
+          if (avslutningKreverFerdigFlyttet) {
+            dispatch({ type: "settFeil", feil: { "": SAK_UNDER_FLYTTING_FEIL } });
+            return;
+          }
+          send(handling, verdier);
+        }}
+        onLukk={lukk}
+      />
+    );
+  }
   const trinn = handling.trinn[trinnIndeks];
   const alleVerdier = { ...verdier, ...handling.faste };
   const settVerdi = (navn: string, verdi: string) => dispatch({ type: "settVerdi", navn, verdi });
