@@ -495,3 +495,69 @@ export type KontrollsakStatus = z.infer<typeof kontrollsakStatusSchema>;
 export type KontrollsakKategori = z.infer<typeof kontrollsakKategoriSchema>;
 export type KontrollsakKilde = z.infer<typeof kontrollsakKildeSchema>;
 export type KontrollsakMisbrukstype = z.infer<typeof kontrollsakMisbrukstypeSchema>;
+
+// --- Henleggelsesnotater ---
+
+/** Maks lengde på notattekst. Samme grense som i watson-admin-api. */
+export const HENLEGGELSESNOTAT_MAKS_LENGDE = 10_000;
+
+const henleggelsesnotattypeSchema = z.enum(["HENLEGGELSESNOTAT", "ORIENTERINGSNOTAT"]);
+export type Henleggelsesnotattype = z.infer<typeof henleggelsesnotattypeSchema>;
+
+const henleggelsesnotatUtfallSchema = z.enum([
+  "JOURNALFORT",
+  "ALLEREDE_JOURNALFORT",
+  "REGISTRERT_UTEN_TEKST",
+  "FEILET",
+]);
+
+/** Notatene fra skjemaet. Validert på serveren før de sendes til backend. */
+export const registrerHenleggelsesnotaterRequestSchema = z.object({
+  notater: z
+    .array(
+      z.object({
+        notattype: henleggelsesnotattypeSchema,
+        tekst: z
+          .string()
+          .max(HENLEGGELSESNOTAT_MAKS_LENGDE, "Notatet kan ha maks 10 000 tegn")
+          .nullable(),
+      }),
+    )
+    .min(1, "Velg minst ett notat")
+    .max(2, "Du kan registrere maks to notater")
+    .refine(
+      (notater) => new Set(notater.map((notat) => notat.notattype)).size === notater.length,
+      "Hver notattype kan bare registreres én gang",
+    ),
+});
+type RegistrerHenleggelsesnotaterRequest = z.infer<
+  typeof registrerHenleggelsesnotaterRequestSchema
+>;
+export type Henleggelsesnotat = RegistrerHenleggelsesnotaterRequest["notater"][number];
+
+export const registrerHenleggelsesnotaterResponseSchema = z.object({
+  notater: z.array(
+    z.object({
+      notattype: henleggelsesnotattypeSchema,
+      utfall: henleggelsesnotatUtfallSchema,
+      journalpostId: z.string().nullable(),
+    }),
+  ),
+});
+type RegistrerHenleggelsesnotaterResponse = z.infer<
+  typeof registrerHenleggelsesnotaterResponseSchema
+>;
+export type HenleggelsesnotatResultat = RegistrerHenleggelsesnotaterResponse["notater"][number];
+
+export const registrerteHenleggelsesnotaterResponseSchema = z.object({
+  notater: z.array(
+    z.object({
+      notattype: henleggelsesnotattypeSchema,
+      journalpostId: z.string().nullable(),
+      registrertTidspunkt: z.string(),
+    }),
+  ),
+});
+export type RegistrertHenleggelsesnotat = z.infer<
+  typeof registrerteHenleggelsesnotaterResponseSchema
+>["notater"][number];

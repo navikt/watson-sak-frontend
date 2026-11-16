@@ -18,6 +18,7 @@ import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import { finnEnhetsnavn } from "~/kodeverk/enheter";
 import { useKodeverk } from "~/kodeverk/useKodeverk";
 import { AvkortetTag } from "~/komponenter/AvkortetTag";
+import type { OpprettetJournalpost } from "~/saker/arkiv/typer";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
 import { kanFordeleSak, kanOverføreTil, kanTildeleTil } from "~/saker/ledertilgang";
@@ -26,6 +27,7 @@ import { hentStegbaserteSaksregler } from "~/saker/stegregler";
 import type {
   KontrollsakResponse,
   KontrollsakSaksbehandler,
+  RegistrertHenleggelsesnotat,
   TillatteHandlingerResponse,
 } from "~/saker/types.backend";
 import { DelTilgangModal } from "~/saker/handlinger/DelTilgangModal";
@@ -49,6 +51,10 @@ interface SaksbehandlereKortProps {
   erEier: boolean;
   kanTildeleSak?: boolean;
   tillatteHandlinger?: TillatteHandlingerResponse;
+  /** Notater som ble registrert da saken ble henlagt. */
+  registrerteNotater?: readonly RegistrertHenleggelsesnotat[];
+  /** Kalles for hvert notat som journalføres ved henleggelse. */
+  onNotatJournalført?: (journalpost: OpprettetJournalpost) => void;
 }
 
 function hentInitialer(navn: string) {
@@ -97,6 +103,8 @@ export function SaksbehandlereKort({
   erEier,
   kanTildeleSak = true,
   tillatteHandlinger,
+  registrerteNotater = [],
+  onNotatJournalført,
 }: SaksbehandlereKortProps) {
   const [visOverforModal, setVisOverforModal] = useState(false);
   const [visDelTilgangModal, setVisDelTilgangModal] = useState(false);
@@ -159,7 +167,11 @@ export function SaksbehandlereKort({
     kanSkrive && erEier && tillatteHandlinger && hentHandlinger(tillatteHandlinger).length > 0;
   const erAvsluttet = sak.steg === "AVSLUTTET";
   const statusTag = hentStatusTag(sak);
-  const sluttresultatDetaljer = hentSluttresultatDetaljer(sak.resultat, sak.ytelser);
+  const sluttresultatDetaljer = hentSluttresultatDetaljer(
+    sak.resultat,
+    sak.ytelser,
+    registrerteNotater,
+  );
 
   return (
     <>
@@ -202,14 +214,16 @@ export function SaksbehandlereKort({
               </div>
               {sluttresultatDetaljer.length > 0 && (
                 <VStack as="dl" gap="space-8">
-                  {sluttresultatDetaljer.map(({ etikett, verdi }) => (
+                  {sluttresultatDetaljer.map(({ etikett, verdi, verdier }) => (
                     <div key={etikett}>
                       <BodyShort as="dt" size="small" textColor="subtle">
                         {etikett}
                       </BodyShort>
-                      <BodyShort as="dd" weight="semibold">
-                        {verdi}
-                      </BodyShort>
+                      {(verdier ?? [verdi]).map((linje) => (
+                        <BodyShort key={linje} as="dd" weight="semibold">
+                          {linje}
+                        </BodyShort>
+                      ))}
                     </div>
                   ))}
                 </VStack>
@@ -456,6 +470,8 @@ export function SaksbehandlereKort({
           sakId={String(sak.id)}
           tillatteHandlinger={tillatteHandlinger}
           start={åpenSaksflyt}
+          registrerteNotater={registrerteNotater}
+          onNotatJournalført={onNotatJournalført}
           onClose={() => setÅpenSaksflyt(null)}
         />
       )}

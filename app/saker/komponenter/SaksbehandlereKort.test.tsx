@@ -228,6 +228,64 @@ describe("SaksbehandlereKort", () => {
     expect(screen.queryByRole("button", { name: "Endre status" })).toBeNull();
   });
 
+  it("viser «Registrert» med notattypene under årsaken når henleggelsen har notater", async () => {
+    const sak = lagKontrollsak({
+      steg: "AVSLUTTET",
+      status: null,
+      resultat: { utredning: { type: "HENLAGT", henleggelsesarsak: "IKKE_KAPASITET" } },
+    });
+    await renderMedRouter(
+      <SaksbehandlereKort
+        erEier={true}
+        sak={sak}
+        saksbehandlerDetaljer={[lagSaksbehandler()]}
+        ansvarligSaksbehandler={lagSaksbehandler()}
+        tillatteHandlinger={lagTillatteHandlinger(sak)}
+        registrerteNotater={[
+          {
+            notattype: "ORIENTERINGSNOTAT",
+            journalpostId: "jp-1",
+            registrertTidspunkt: "2026-11-16T10:00:00Z",
+          },
+          {
+            notattype: "HENLEGGELSESNOTAT",
+            journalpostId: null,
+            registrertTidspunkt: "2026-11-16T10:00:00Z",
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Årsak")).toBeDefined();
+    expect(screen.getByText("Registrert")).toBeDefined();
+    const henleggelse = screen.getByText("Henleggelsesnotat");
+    const orientering = screen.getByText("Orienteringsnotat");
+    expect(henleggelse.tagName).toBe("DD");
+    expect(orientering.tagName).toBe("DD");
+    expect(henleggelse.previousElementSibling?.textContent).toBe("Registrert");
+    expect(henleggelse.nextElementSibling).toBe(orientering);
+  });
+
+  it("viser ikke «Registrert» uten notater", async () => {
+    const sak = lagKontrollsak({
+      steg: "AVSLUTTET",
+      status: null,
+      resultat: { utredning: { type: "HENLAGT", henleggelsesarsak: "IKKE_KAPASITET" } },
+    });
+    await renderMedRouter(
+      <SaksbehandlereKort
+        erEier={true}
+        sak={sak}
+        saksbehandlerDetaljer={[lagSaksbehandler()]}
+        ansvarligSaksbehandler={lagSaksbehandler()}
+        tillatteHandlinger={lagTillatteHandlinger(sak)}
+      />,
+    );
+
+    expect(screen.getByText("Årsak")).toBeDefined();
+    expect(screen.queryByText("Registrert")).toBeNull();
+  });
+
   it("viser straffedetaljer under taggen for avsluttet sak", async () => {
     const sak = lagKontrollsak({
       steg: "AVSLUTTET",

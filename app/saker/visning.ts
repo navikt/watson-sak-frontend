@@ -6,6 +6,8 @@ import type {
   KontrollsakStatus,
   KontrollsakSteg,
   KontrollsakYtelse,
+  RegistrertHenleggelsesnotat,
+  Henleggelsesnotattype,
   ResultatType,
 } from "./types.backend";
 import {
@@ -168,7 +170,12 @@ function formaterHenleggelsesarsak(arsak: string): string {
     : arsak;
 }
 
-export type SluttresultatDetalj = { etikett: string; verdi: string };
+export type SluttresultatDetalj = {
+  etikett: string;
+  verdi: string;
+  /** Flere verdier under samme etikett, vist på hver sin linje. */
+  verdier?: string[];
+};
 
 const strafferabattEtiketter: Record<string, string> = {
   INGEN: "Ingen strafferabatt",
@@ -177,9 +184,15 @@ const strafferabattEtiketter: Record<string, string> = {
   BEGGE: "Liggetid hos begge",
 };
 
+export const notattypeEtiketter: Record<Henleggelsesnotattype, string> = {
+  HENLEGGELSESNOTAT: "Henleggelsesnotat",
+  ORIENTERINGSNOTAT: "Orienteringsnotat",
+};
+
 export function hentSluttresultatDetaljer(
   resultat: KontrollsakResponse["resultat"],
   ytelser: KontrollsakResponse["ytelser"] = [],
+  registrerteNotater: readonly Pick<RegistrertHenleggelsesnotat, "notattype">[] = [],
 ): SluttresultatDetalj[] {
   const dom = resultat?.politi;
   const detaljer: SluttresultatDetalj[] = [];
@@ -237,6 +250,12 @@ export function hentSluttresultatDetaljer(
   const henleggelsesarsak = hentHenleggelsesarsak(resultat);
   if (henleggelsesarsak) {
     leggTil("Årsak", formaterHenleggelsesarsak(henleggelsesarsak));
+  }
+  if (registrerteNotater.length > 0) {
+    const notater = (Object.keys(notattypeEtiketter) as Henleggelsesnotattype[])
+      .filter((type) => registrerteNotater.some((notat) => notat.notattype === type))
+      .map((type) => notattypeEtiketter[type]);
+    detaljer.push({ etikett: "Registrert", verdi: notater.join(", "), verdier: notater });
   }
 
   const ytelsesSum =

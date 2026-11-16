@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { KontrollsakResponse } from "~/saker/types.backend";
@@ -104,11 +104,11 @@ describe("SaksflytModal", () => {
     klikk("Henlegg sak");
     expect(await screen.findByRole("dialog", { name: "Henlegg sak" })).toBeDefined();
 
-    klikk("Henlegg og avslutt sak");
+    klikk("Avslutt sak");
     expect(screen.getByText("Velg henleggelsesårsak")).toBeDefined();
 
     fireEvent.click(screen.getByRole("radio", { name: "Ikke kapasitet" }));
-    klikk("Henlegg og avslutt sak");
+    klikk("Avslutt sak");
     expect(await screen.findByRole("dialog", { name: "Avslutt sak" })).toBeDefined();
     expect(screen.getByText("Tilgang til dokumenter og underlag")).toBeDefined();
     expect(submitMock).not.toHaveBeenCalled();
@@ -145,14 +145,13 @@ describe("SaksflytModal", () => {
     });
   });
 
-  it("går tilbake til menyen fra første trinn", async () => {
-    renderModal();
+  it("lukker modalen med Avbryt fra henleggelsen i utredning", async () => {
+    const { onClose } = renderModal();
     klikk("Henlegg sak");
     await screen.findByRole("dialog", { name: "Henlegg sak" });
-    klikk("Tilbake");
-    expect(
-      await screen.findByRole("dialog", { name: "Endre steg eller registrer resultat" }),
-    ).toBeDefined();
+    klikk("Avbryt");
+    expect(onClose).toHaveBeenCalled();
+    expect(submitMock).not.toHaveBeenCalled();
   });
 
   it("lukker modalen fra advarselen før avslutning", async () => {
@@ -534,7 +533,9 @@ describe("SaksflytModal", () => {
     renderModal();
     klikk("Henlegg sak");
     await screen.findByRole("dialog", { name: "Henlegg sak" });
-    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Henlegg sak" }));
+    await waitFor(() =>
+      expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Henlegg sak" })),
+    );
   });
 
   it("viser feilmeldingen fra serveren", async () => {
@@ -550,7 +551,7 @@ describe("SaksflytModal", () => {
     klikk("Henlegg sak");
     await screen.findByRole("dialog", { name: "Henlegg sak" });
     fireEvent.click(screen.getByRole("radio", { name: "Ikke kapasitet" }));
-    klikk("Henlegg og avslutt sak");
+    klikk("Avslutt sak");
     await screen.findByRole("dialog", { name: "Avslutt sak" });
     klikk("Avslutt sak");
 

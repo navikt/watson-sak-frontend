@@ -1,9 +1,13 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import { BodyShort, Button, ErrorMessage, HStack, Modal, VStack } from "@navikt/ds-react";
 import { useFetcher } from "react-router";
+import type { OpprettetJournalpost } from "~/saker/arkiv/typer";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
-import type { TillatteHandlingerResponse } from "~/saker/types.backend";
+import type {
+  RegistrertHenleggelsesnotat,
+  TillatteHandlingerResponse,
+} from "~/saker/types.backend";
 import { INNSENDINGSFEIL, type Innsendingstekster } from "~/feilhåndtering/feilmeldinger";
 import { erTekniskFeilSvar, Innsendingsfeil } from "~/feilhåndtering/Innsendingsfeil";
 import { byggLagreResultatRequest } from "../resultat-request";
@@ -19,6 +23,7 @@ import {
 } from "./saksflyt";
 import { lagStarttilstand, saksflytReducer } from "./saksflytReducer";
 import { Avslutningsvarsel } from "./trinn/Avslutningsvarsel";
+import { HenleggUtredningFlyt } from "./trinn/HenleggUtredningFlyt";
 import { MenyTrinn } from "./trinn/MenyTrinn";
 import { SkjemaTrinn } from "./trinn/SkjemaTrinn";
 import { EnkeltvalgTrinn, SjekklisteTrinn, StatusTrinn } from "./trinn/ValgTrinn";
@@ -32,6 +37,10 @@ type SaksflytModalProps = {
   tillatteHandlinger: TillatteHandlingerResponse;
   start: SaksflytStart;
   avslutningKreverFerdigFlyttet?: boolean;
+  /** Notater som er registrert på saken. Brukes når henleggelsen starter på nytt. */
+  registrerteNotater?: readonly RegistrertHenleggelsesnotat[];
+  /** Kalles for hvert notat som journalføres, slik at Gosys-oversikten kan oppdateres. */
+  onNotatJournalført?: (journalpost: OpprettetJournalpost) => void;
   onClose: () => void;
 };
 
@@ -75,6 +84,8 @@ export function SaksflytModal({
   tillatteHandlinger,
   start,
   avslutningKreverFerdigFlyttet = false,
+  registrerteNotater = [],
+  onNotatJournalført,
   onClose,
 }: SaksflytModalProps) {
   const fetcher = useFetcher();
@@ -247,6 +258,46 @@ export function SaksflytModal({
   }
 
   const { handling, trinnIndeks, verdier, feil } = tilstand;
+  if (handling.medNotater) {
+    const årsaktrinn = handling.trinn[0];
+    return (
+      <HenleggUtredningFlyt
+        sakId={sakId}
+        handling={handling}
+        verdier={verdier}
+        feil={feil}
+        tillatteHandlinger={tillatteHandlinger}
+        registrerteNotater={registrerteNotater}
+        onNotatJournalført={onNotatJournalført}
+        modalRef={modalRef}
+        erSubmitting={erSubmitting}
+        avslutningsfeil={
+          <>
+            <Innsendingsfeil svar={fetcher.data} tekster={feiltekster} />
+            {generellFeil && <ErrorMessage showIcon>{generellFeil}</ErrorMessage>}
+          </>
+        }
+        onChange={(navn, verdi) => dispatch({ type: "settVerdi", navn, verdi })}
+        onValiderÅrsak={() => {
+          const årsaksfeil = validerTrinn(
+            årsaktrinn,
+            { ...verdier, ...handling.faste },
+            tillatteHandlinger,
+          );
+          dispatch({ type: "settFeil", feil: årsaksfeil });
+          return Object.keys(årsaksfeil).length === 0;
+        }}
+        onAvslutt={() => {
+          if (avslutningKreverFerdigFlyttet) {
+            dispatch({ type: "settFeil", feil: { "": SAK_UNDER_FLYTTING_FEIL } });
+            return;
+          }
+          send(handling, verdier);
+        }}
+        onLukk={lukk}
+      />
+    );
+  }
   const trinn = handling.trinn[trinnIndeks];
   const alleVerdier = { ...verdier, ...handling.faste };
   const settVerdi = (navn: string, verdi: string) => dispatch({ type: "settVerdi", navn, verdi });

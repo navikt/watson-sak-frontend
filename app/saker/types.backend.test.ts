@@ -5,6 +5,9 @@ import {
   kontrollsakHendelseResponseSchema,
   tillatteHandlingerResponseSchema,
   normaliserKontrollnotat,
+  registrerHenleggelsesnotaterRequestSchema,
+  registrerHenleggelsesnotaterResponseSchema,
+  registrerteHenleggelsesnotaterResponseSchema,
 } from "./types.backend";
 
 const basisSak = {
@@ -306,5 +309,82 @@ describe("kontrollsakHendelseResponseSchema – historikkfelt", () => {
   it("parser hendelse uten status og beskrivelse", () => {
     const resultat = kontrollsakHendelseResponseSchema.safeParse(basisHendelse);
     expect(resultat.success).toBe(true);
+  });
+});
+
+describe("henleggelsesnotat-skjemaer", () => {
+  it("godtar ett eller to notater med unike typer", () => {
+    expect(
+      registrerHenleggelsesnotaterRequestSchema.safeParse({
+        notater: [
+          { notattype: "HENLEGGELSESNOTAT", tekst: "a" },
+          { notattype: "ORIENTERINGSNOTAT", tekst: null },
+        ],
+      }).success,
+    ).toBe(true);
+  });
+
+  it.each([
+    ["ingen notater", []],
+    [
+      "tre notater",
+      [
+        { notattype: "HENLEGGELSESNOTAT", tekst: null },
+        { notattype: "ORIENTERINGSNOTAT", tekst: null },
+        { notattype: "ORIENTERINGSNOTAT", tekst: null },
+      ],
+    ],
+    [
+      "like typer",
+      [
+        { notattype: "HENLEGGELSESNOTAT", tekst: null },
+        { notattype: "HENLEGGELSESNOTAT", tekst: null },
+      ],
+    ],
+    ["for lang tekst", [{ notattype: "HENLEGGELSESNOTAT", tekst: "x".repeat(10_001) }]],
+    ["ukjent type", [{ notattype: "KONTROLLNOTAT", tekst: null }]],
+  ])("avviser %s", (_, notater) => {
+    expect(registrerHenleggelsesnotaterRequestSchema.safeParse({ notater }).success).toBe(false);
+  });
+
+  it("godtar tekst på nøyaktig 10 000 tegn", () => {
+    expect(
+      registrerHenleggelsesnotaterRequestSchema.safeParse({
+        notater: [{ notattype: "HENLEGGELSESNOTAT", tekst: "x".repeat(10_000) }],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("parser svar på registrering", () => {
+    const svar = {
+      notater: [
+        { notattype: "HENLEGGELSESNOTAT", utfall: "JOURNALFORT", journalpostId: "1" },
+        { notattype: "ORIENTERINGSNOTAT", utfall: "FEILET", journalpostId: null },
+      ],
+    };
+    expect(registrerHenleggelsesnotaterResponseSchema.parse(svar)).toEqual(svar);
+    expect(
+      registrerHenleggelsesnotaterResponseSchema.safeParse({
+        notater: [{ notattype: "HENLEGGELSESNOTAT", utfall: "UKJENT", journalpostId: null }],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("parser registrerte notater", () => {
+    const svar = {
+      notater: [
+        {
+          notattype: "ORIENTERINGSNOTAT",
+          journalpostId: null,
+          registrertTidspunkt: "2026-11-16T10:00:00Z",
+        },
+      ],
+    };
+    expect(registrerteHenleggelsesnotaterResponseSchema.parse(svar)).toEqual(svar);
+    expect(
+      registrerteHenleggelsesnotaterResponseSchema.safeParse({
+        notater: [{ notattype: "ORIENTERINGSNOTAT", journalpostId: null }],
+      }).success,
+    ).toBe(false);
   });
 });

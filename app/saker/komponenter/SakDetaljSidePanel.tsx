@@ -5,9 +5,11 @@ import { IngenHistorikktilgangKort } from "~/saker/historikk/IngenHistorikktilga
 import { SakHistorikk } from "~/saker/historikk/SakHistorikk";
 import type {
   KontrollsakResponse,
+  RegistrertHenleggelsesnotat,
   KontrollsakSaksbehandler,
   TillatteHandlingerResponse,
 } from "~/saker/types.backend";
+import type { OpprettetJournalpost } from "~/saker/arkiv/typer";
 import type { SakHendelse } from "../historikk/typer";
 import { SaksbehandlereKort } from "./SaksbehandlereKort";
 
@@ -23,6 +25,9 @@ interface SakDetaljSidePanelProps {
   kanLeggeTilHistorikk: boolean;
   historikkTilstand: "vis" | "ikke-delt" | "ingen-persontilgang";
   seksjonsfeil?: Seksjonsfeil;
+  registrerteNotater?: readonly RegistrertHenleggelsesnotat[];
+  /** Kalles for hvert notat som journalføres ved henleggelse. */
+  onNotatJournalført?: (journalpost: OpprettetJournalpost) => void;
 }
 
 export function SakDetaljSidePanel({
@@ -37,6 +42,8 @@ export function SakDetaljSidePanel({
   kanLeggeTilHistorikk,
   historikkTilstand,
   seksjonsfeil = {},
+  registrerteNotater = [],
+  onNotatJournalført,
 }: SakDetaljSidePanelProps) {
   return (
     <VStack gap="space-20" className="md:sticky md:top-4 md:self-start">
@@ -50,6 +57,16 @@ export function SakDetaljSidePanel({
           Navn og enhet kan mangle i saken. Prøv igjen om litt.
         </Feilmelding>
       )}
+      {seksjonsfeil.henleggelsesnotater && (
+        <Feilmelding
+          headingLevel="2"
+          tittel="Vi fikk ikke hentet notatene som er registrert ved henleggelsen"
+          feilId={seksjonsfeil.henleggelsesnotater}
+          kanPrøveIgjen
+        >
+          Notater kan mangle i resultatet. Prøv igjen om litt.
+        </Feilmelding>
+      )}
       <SaksbehandlereKort
         sak={sak}
         saksbehandlerDetaljer={saksbehandlerDetaljer}
@@ -57,6 +74,8 @@ export function SakDetaljSidePanel({
         erEier={erEier}
         kanTildeleSak={kanTildeleSak}
         tillatteHandlinger={tillatteHandlinger}
+        registrerteNotater={registrerteNotater}
+        onNotatJournalført={onNotatJournalført}
       />
 
       {sak.visLiggetidVarsel && (

@@ -34,7 +34,9 @@ import {
   koblingsFeilmelding,
   krevEierEllerLeder,
   krevTillattHandling,
+  krevUtredningForHenleggelsesnotater,
   lagTidspunktFraSkjema,
+  lesHenleggelsesnotater,
   normaliserArbeidsgiverFeil,
   parseStatusFraDialog,
   sjekkEierEllerLeder,
@@ -486,6 +488,21 @@ export async function backendAction(
       } catch (feil) {
         if (erTekniskFeil(feil)) throw feil;
         return { ok: false, feil: { skjema: [historikkFeilmelding(feil)] } } satisfies ActionResult;
+      }
+    }
+    case "registrer_henleggelsesnotater": {
+      krevUtredningForHenleggelsesnotater(sakFraTilgangskontroll?.steg);
+      const lest = lesHenleggelsesnotater(formData);
+      if (!lest.ok) return lest;
+      try {
+        const notater = await backendApi.registrerHenleggelsesnotater(token, sakId, lest.notater);
+        return { ok: true, notater };
+      } catch (feil) {
+        // 400 er ugyldig tekst. Meldingen fra backend vises i skjemaet.
+        if (feil instanceof backendApi.BackendFeilException && feil.status === 400) {
+          return { ok: false, feil: feil.message };
+        }
+        throw feil;
       }
     }
     default: {

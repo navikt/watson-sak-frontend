@@ -31,6 +31,13 @@ interface GosysDokumentpanelProps {
   /** Om brukeren har tilgang til å se journalposter i Gosys (`tilgang.kanSeArkiv`). */
   kanSeArkiv: boolean;
   /** Handlingsknapper som vises ved siden av «Åpne dokumentoversikt». */
+  /**
+   * Gir eieren funksjonen som viser en ny journalpost i oversikten, for journalposter som
+   * opprettes utenfor panelet. Kalles med `null` når panelet fjernes.
+   */
+  registrerJournalpostHandler?: (
+    handler: ((journalpost: OpprettetJournalpost) => void) | null,
+  ) => void;
   renderHandlinger?: (props: {
     onJournalpostOpprettet: (journalpost: OpprettetJournalpost) => void;
     arkiv: ArkivOversikt;
@@ -47,6 +54,7 @@ export function GosysDokumentpanel({
   sakId,
   saksreferanse,
   kanSeArkiv,
+  registrerJournalpostHandler,
   renderHandlinger,
 }: GosysDokumentpanelProps) {
   const [åpen, settÅpen] = useState(false);
@@ -64,11 +72,19 @@ export function GosysDokumentpanel({
     if (skalÅpnes && kanSeArkiv && tilstand.status === "feil") void hent();
   }
 
-  function onJournalpostOpprettet(journalpost: OpprettetJournalpost) {
-    if (!kanSeArkiv) return;
-    settÅpen(true);
-    journalpostOpprettet(tilVentendeJournalpost(journalpost));
-  }
+  const onJournalpostOpprettet = useCallback(
+    (journalpost: OpprettetJournalpost) => {
+      if (!kanSeArkiv) return;
+      settÅpen(true);
+      journalpostOpprettet(tilVentendeJournalpost(journalpost));
+    },
+    [kanSeArkiv, journalpostOpprettet],
+  );
+
+  useEffect(() => {
+    registrerJournalpostHandler?.(onJournalpostOpprettet);
+    return () => registrerJournalpostHandler?.(null);
+  }, [registrerJournalpostHandler, onJournalpostOpprettet]);
 
   const hentOversikt = useCallback(() => void hent(), [hent]);
   const arkiv: ArkivOversikt = { kanSeArkiv, tilstand, hent: hentOversikt };
