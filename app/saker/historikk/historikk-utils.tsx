@@ -24,7 +24,14 @@ import {
   formaterJournalposttype,
   formaterOppgavetype,
 } from "~/saker/handlinger/opprett-formatering";
-import { formaterStatus } from "~/saker/visning";
+import {
+  formaterBelop,
+  formaterKategori,
+  formaterKilde,
+  formaterMisbrukstype,
+  formaterStatus,
+} from "~/saker/visning";
+import { POLITIDISTRIKTER } from "~/saker/politidistrikter";
 import { formaterSteg } from "~/saker/visning";
 import { NORSK_TIDSSONE } from "~/utils/date-utils";
 import type { SakHendelse } from "./typer";
@@ -165,6 +172,78 @@ function stegOgStatusBeskrivelse(hendelse: SakHendelse, forrigeHendelse?: SakHen
   return deler.join(hendelse.hendelsesType === "SAK_STATUS_ENDRET" ? "\n" : " – ");
 }
 
+const saksendringsetiketter: Record<string, string> = {
+  kategori: "Kategori",
+  kilde: "Kilde",
+  anmeldt_belop: "Anmeldt beløp",
+  politidistrikt: "Politidistrikt",
+  politiets_saksreferanse: "Politiets saksreferanse",
+  misbruktype: "Misbrukstype",
+  merking: "Merking",
+  ytelser: "Ytelser",
+  arbeidsgivere: "Arbeidsgivere",
+};
+
+function formaterSaksendringsverdi(felt: string, verdi: string): string {
+  switch (felt) {
+    case "kategori":
+      return formaterKategori(verdi) ?? verdi;
+    case "kilde":
+      return formaterKilde(verdi);
+    case "anmeldt_belop": {
+      const belop = Number(verdi);
+      return Number.isFinite(belop) ? formaterBelop(belop) : verdi;
+    }
+    case "politidistrikt":
+      return POLITIDISTRIKTER.find((politidistrikt) => politidistrikt === verdi) ?? verdi;
+    case "misbruktype":
+      return formaterMisbrukstype(verdi);
+    default:
+      return verdi;
+  }
+}
+
+function formaterSaksendringer(hendelse: SakHendelse): string | null {
+  const linjer = (hendelse.saksendringer ?? []).flatMap((endring) => {
+    const etikett = saksendringsetiketter[endring.felt];
+    if (!etikett) return [];
+
+    if (endring.felt === "ytelser" || endring.felt === "arbeidsgivere") {
+      if (endring.fra == null || endring.til == null) return [];
+      return [`${etikett} endret fra ${endring.fra} til ${endring.til}`];
+    }
+
+    if (endring.lagtTil != null || endring.fjernet != null) {
+      const deler = [
+        ...(endring.lagtTil?.length
+          ? [
+              `lagt til ${endring.lagtTil
+                .map((verdi) => formaterSaksendringsverdi(endring.felt, verdi))
+                .join(", ")}`,
+            ]
+          : []),
+        ...(endring.fjernet?.length
+          ? [
+              `fjernet ${endring.fjernet
+                .map((verdi) => formaterSaksendringsverdi(endring.felt, verdi))
+                .join(", ")}`,
+            ]
+          : []),
+      ];
+      return deler.length > 0 ? [`${etikett}: ${deler.join(", ")}`] : [];
+    }
+
+    const fra = endring.fra == null ? null : formaterSaksendringsverdi(endring.felt, endring.fra);
+    const til = endring.til == null ? null : formaterSaksendringsverdi(endring.felt, endring.til);
+    if (fra != null && til != null) return [`${etikett} endret fra ${fra} til ${til}`];
+    if (til != null) return [`${etikett} satt til ${til}`];
+    if (fra != null) return [`${etikett} fjernet (var ${fra})`];
+    return [];
+  });
+
+  return linjer.length > 0 ? linjer.join("\n") : null;
+}
+
 export function formaterTidspunkt(isoString: string): string {
   try {
     return new Intl.DateTimeFormat("nb-NO", {
@@ -276,7 +355,7 @@ export function hendelseBeskrivelse(
   }
 
   if (hendelse.hendelsesType === "SAK_REDIGERT") {
-    return hendelse.beskrivelse ?? null;
+    return formaterSaksendringer(hendelse) ?? hendelse.beskrivelse ?? null;
   }
 
   if (hendelse.hendelsesType === "SAK_TILDELT") {
@@ -362,7 +441,7 @@ export function hendelseBeskrivelse(
   }
 
   if (hendelse.hendelsesType === "SAKSINFORMASJON_ENDRET") {
-    return hendelse.beskrivelse ?? formaterSteg(hendelse.steg);
+    return formaterSaksendringer(hendelse) ?? hendelse.beskrivelse ?? formaterSteg(hendelse.steg);
   }
 
   if (

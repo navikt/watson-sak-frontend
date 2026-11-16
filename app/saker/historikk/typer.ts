@@ -11,6 +11,18 @@ export const sakHendelseSchema = z
     kontrollsakHendelseResponseObjectSchema.extend({
       berortSaksbehandlerNavIdent: z.string().optional(),
       berortSaksbehandlerEnhet: z.string().optional(),
+      saksendringer: z
+        .array(
+          z.object({
+            felt: z.string(),
+            fra: z.string().nullable().optional(),
+            til: z.string().nullable().optional(),
+            lagtTil: z.array(z.string()).nullable().optional(),
+            fjernet: z.array(z.string()).nullable().optional(),
+          }),
+        )
+        .nullable()
+        .optional(),
     }),
   )
   .transform((hendelse) => {

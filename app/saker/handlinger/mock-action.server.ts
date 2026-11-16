@@ -439,6 +439,73 @@ export async function mockAction(
         belop: ytelse.beløp ?? null,
         endeligBelop: ytelse.endeligBeløp ?? null,
       }));
+      const saksendringer: Array<{
+        felt: string;
+        fra?: string | null;
+        til?: string | null;
+        lagtTil?: string[] | null;
+        fjernet?: string[] | null;
+      }> = [];
+      const leggTilVerdendring = (felt: string, fra: string | null, til: string | null) => {
+        if (fra !== til) saksendringer.push({ felt, fra, til });
+      };
+      const leggTilListeendring = (felt: string, fra: string[], til: string[]) => {
+        const lagtTil = til.filter((verdi) => !fra.includes(verdi));
+        const fjernet = fra.filter((verdi) => !til.includes(verdi));
+        if (lagtTil.length > 0 || fjernet.length > 0) {
+          saksendringer.push({ felt, lagtTil, fjernet });
+        }
+      };
+
+      leggTilVerdendring("kategori", sak.kategori ?? null, validert.kategori);
+      leggTilVerdendring("kilde", sak.kilde ?? null, validert.kilde);
+      leggTilListeendring("misbruktype", sak.misbruktype ?? [], validert.misbruktype);
+      leggTilListeendring("merking", sak.merking ?? [], validert.merking);
+      const gamleArbeidsgivere = sak.arbeidsgivere ?? [];
+      if (
+        JSON.stringify([...gamleArbeidsgivere].sort()) !==
+        JSON.stringify([...validert.arbeidsgivere].sort())
+      ) {
+        saksendringer.push({
+          felt: "arbeidsgivere",
+          fra: String(gamleArbeidsgivere.length),
+          til: String(validert.arbeidsgivere.length),
+        });
+      }
+      if (JSON.stringify(sak.ytelser) !== JSON.stringify(nyeYtelser)) {
+        saksendringer.push({
+          felt: "ytelser",
+          fra: String(sak.ytelser.length),
+          til: String(nyeYtelser.length),
+        });
+      }
+
+      const vurderingFørEndring = sak.resultat?.strafferettsligVurdering;
+      if (anmeldelse.sendt && anmeldelse.resultat.success) {
+        const nyAnmeldelse = anmeldelse.resultat.data;
+        leggTilVerdendring(
+          "anmeldt_belop",
+          vurderingFørEndring?.anmeldtBelop == null
+            ? null
+            : String(vurderingFørEndring.anmeldtBelop),
+          String(nyAnmeldelse.anmeldtBelop),
+        );
+        leggTilVerdendring(
+          "politidistrikt",
+          vurderingFørEndring?.politidistrikt ?? null,
+          nyAnmeldelse.politidistrikt,
+        );
+        if (
+          (vurderingFørEndring?.politietsSaksreferanse?.trim() || "") !==
+          nyAnmeldelse.politietsSaksreferanse
+        ) {
+          saksendringer.push({
+            felt: "politiets_saksreferanse",
+            fra: vurderingFørEndring?.politietsSaksreferanse ?? null,
+            til: nyAnmeldelse.politietsSaksreferanse || null,
+          });
+        }
+      }
       const endredeFelter = [
         ...finnEndredeSaksinformasjonsfelter(sak, validert, nyeYtelser),
         ...(anmeldelse.sendt && anmeldelse.resultat.success
@@ -462,6 +529,7 @@ export async function mockAction(
       }
       leggTilBrukerhendelse(sak, "SAKSINFORMASJON_ENDRET", undefined, {
         beskrivelse: beskrivEndredeFelter(endredeFelter),
+        saksendringer,
       });
       return { ok: true, sak } satisfies ActionResult;
     }

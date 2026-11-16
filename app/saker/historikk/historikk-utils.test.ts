@@ -79,6 +79,65 @@ describe("hendelseBeskrivelse", () => {
     expect(hendelseBeskrivelse(hendelse)).toBe("Endret: kategori, prioritet");
   });
 
+  it("formaterer kategori i saksendringer", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "SAK_REDIGERT",
+      saksendringer: [{ felt: "kategori", fra: "ANNET", til: "ARBEID" }],
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe("Kategori endret fra Annet til Arbeid");
+  });
+
+  it("viser når en saksendring er satt til eller fjernet", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "SAK_REDIGERT",
+      saksendringer: [
+        { felt: "kilde", til: "PUBLIKUM" },
+        { felt: "politidistrikt", fra: "Øst politidistrikt" },
+      ],
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe(
+      "Kilde satt til Publikum\nPolitidistrikt fjernet (var Øst politidistrikt)",
+    );
+  });
+
+  it("viser listeendringer med verdier som er lagt til og fjernet", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "SAK_REDIGERT",
+      saksendringer: [{ felt: "merking", lagtTil: ["NY", "VIKTIG"], fjernet: ["GAMMEL"] }],
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe("Merking: lagt til NY, VIKTIG, fjernet GAMMEL");
+  });
+
+  it("viser endring i antall ytelser og arbeidsgivere", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "SAK_REDIGERT",
+      saksendringer: [
+        { felt: "ytelser", fra: "2", til: "3" },
+        { felt: "arbeidsgivere", fra: "1", til: "2" },
+      ],
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe(
+      "Ytelser endret fra 2 til 3\nArbeidsgivere endret fra 1 til 2",
+    );
+  });
+
+  it("hopper over saksendringer med ukjent feltnavn", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "SAK_REDIGERT",
+      beskrivelse: "Endret tidligere",
+      saksendringer: [
+        { felt: "kategori", til: "ARBEID" },
+        { felt: "nytt_backendfelt", fra: "før", til: "etter" },
+      ],
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe("Kategori satt til Arbeid");
+  });
+
   it("viser ikke steg som fallback når saksdetaljer mangler beskrivelse", () => {
     const hendelse = lagHendelse({ hendelsesType: "SAK_REDIGERT" });
 

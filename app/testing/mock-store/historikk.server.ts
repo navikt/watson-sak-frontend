@@ -123,6 +123,7 @@ export function leggTilHendelse(
     | "tittel"
     | "opprettetAvNavn"
     | "opprettetVedSaksopprettelse"
+    | "saksendringer"
   >,
 ) {
   return leggTilBackendHendelse(
