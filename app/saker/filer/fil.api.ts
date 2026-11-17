@@ -123,7 +123,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   }
 
   leggTilHendelse(request, tilgang.sak, "FIL_SLETTET", undefined, {
-    beskrivelse: slettet.filnavn,
+    filnavn: slettet.filnavn,
     opprettetAvNavn: innlogget.name,
   });
 

@@ -124,7 +124,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
       if (typeof docId !== "string" || !docId) {
         throw data("Mangler dokument-id", { status: 400 });
       }
-      const slettet = slettDokument(request, String(tilgang.sak.id), docId);
+      const innlogget = await hentInnloggetBruker({ request });
+      const slettet = slettDokument(request, String(tilgang.sak.id), docId, innlogget.name);
       if (!slettet) {
         throw data("Dokument ikke funnet", { status: 404 });
       }
@@ -148,7 +149,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
     sjekkMalForSteg(valgtMal, tilgang.sak.steg);
 
     const innlogget = await hentInnloggetBruker({ request });
-    const { id } = opprettDokument(request, String(tilgang.sak.id), innlogget.name);
+    const { id } = opprettDokument(
+      request,
+      String(tilgang.sak.id),
+      innlogget.name,
+      valgtMal ? MAL_NAVN[valgtMal.malId] : undefined,
+    );
     if (valgtMal) {
       lagreDokument(request, String(tilgang.sak.id), id, {
         tittel: MAL_NAVN[valgtMal.malId],

@@ -294,7 +294,7 @@ export function formaterKategori(kategori: KontrollsakKategori | null | undefine
   return kontrollsakKategoriEtiketter[kategori] ?? kategori;
 }
 
-function formaterKilde(kilde: KontrollsakKilde | null | undefined): string {
+export function formaterKilde(kilde: KontrollsakKilde | null | undefined): string {
   if (!kilde) {
     return "Ukjent kilde";
   }

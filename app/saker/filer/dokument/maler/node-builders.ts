@@ -87,6 +87,43 @@ export function kontrollrapportHeader(): Node[] {
   return dokumentHeader("Kontrollrapport");
 }
 
+function navLogoCelle(): Node {
+  return celle({
+    type: "img",
+    url: "/nav-logo.svg",
+    alt: "NAV",
+    erStatisk: true,
+    children: [{ text: "" }],
+  });
+}
+
+/**
+ * Header for brev til bruker: bare Nav-logoen og mottakerblokken, uten
+ * «Unntatt offentlighet»-merking. Brevet går til personen opplysningene gjelder.
+ */
+export function brevTilBrukerHeader(): Node[] {
+  return [
+    tabell(rad(navLogoCelle())),
+    tabell(
+      rad(celle("Til:"), celle(pMedVariabler(variabel("navn")))),
+      rad(celle("Adresse:"), celle("[adresse]")),
+      rad(celle("Vår ref.:"), celle(pMedVariabler(variabel("saksnummer")))),
+      rad(celle("Dato:"), celle(pMedVariabler(variabel("dagens-dato")))),
+      rad(celle("Gjelder:"), celle(pMedVariabler(variabel("fødselsnummer")))),
+    ),
+  ];
+}
+
+/** Hilsen og signatur som avslutter brev fra Nav kontroll. */
+export function signatur(): Node[] {
+  return [
+    p("Vennlig hilsen"),
+    pMedVariabler("Nav kontroll ", variabel("avdeling")),
+    pMedVariabler(variabel("saksbehandler")),
+    p("rådgiver"),
+  ];
+}
+
 /** Nav-logo, «Unntatt offentlighet»-merking og dokumentets hovedtittel. */
 export function dokumentHeader(
   tittel: string,
@@ -95,13 +132,7 @@ export function dokumentHeader(
   return [
     tabell(
       rad(
-        celle({
-          type: "img",
-          url: "/nav-logo.svg",
-          alt: "NAV",
-          erStatisk: true,
-          children: [{ text: "" }],
-        }),
+        navLogoCelle(),
         celle({
           type: "p",
           justering: "right",

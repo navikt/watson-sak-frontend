@@ -1,5 +1,8 @@
+import { createElement } from "react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { GavelIcon } from "@navikt/aksel-icons";
+import { GavelIcon, PlusCircleIcon, TrashIcon } from "@navikt/aksel-icons";
+import { HistorikkProsessListe } from "./HistorikkProsessListe";
 import type { SakHendelse } from "./typer";
 import {
   HendelseBullet,
@@ -23,6 +26,31 @@ function lagHendelse(overrides: Partial<SakHendelse>): SakHendelse {
 }
 
 describe("hendelseBeskrivelse", () => {
+  it.each([
+    ["DOKUMENT_OPPRETTET", "opprettet"],
+    ["DOKUMENT_SLETTET", "slettet"],
+  ])("viser dokumentnavnet for %s", (hendelsesType, handling) => {
+    const hendelse = lagHendelse({
+      hendelsesType,
+      dokumentnavn: "Saksframlegg",
+      beskrivelse: "Backend-beskrivelse",
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe(`Saksframlegg ${handling}`);
+  });
+
+  it.each(["DOKUMENT_OPPRETTET", "DOKUMENT_SLETTET"])(
+    "viser ingen beskrivelse for %s når dokumentnavnet mangler",
+    (hendelsesType) => {
+      const hendelse = lagHendelse({
+        hendelsesType,
+        beskrivelse: "Backend-beskrivelse",
+      });
+
+      expect(hendelseBeskrivelse(hendelse)).toBeNull();
+    },
+  );
+
   it("viser hvilke felter som ble endret for SAKSINFORMASJON_ENDRET", () => {
     const hendelse = lagHendelse({
       hendelsesType: "SAKSINFORMASJON_ENDRET",
@@ -79,6 +107,65 @@ describe("hendelseBeskrivelse", () => {
     expect(hendelseBeskrivelse(hendelse)).toBe("Endret: kategori, prioritet");
   });
 
+  it("formaterer kategori i saksendringer", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "SAK_REDIGERT",
+      saksendringer: [{ felt: "kategori", fra: "ANNET", til: "ARBEID" }],
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe("Kategori endret fra Annet til Arbeid");
+  });
+
+  it("viser når en saksendring er satt til eller fjernet", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "SAK_REDIGERT",
+      saksendringer: [
+        { felt: "kilde", til: "PUBLIKUM" },
+        { felt: "politidistrikt", fra: "Øst politidistrikt" },
+      ],
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe(
+      "Kilde satt til Publikum\nPolitidistrikt fjernet (var Øst politidistrikt)",
+    );
+  });
+
+  it("viser listeendringer med verdier som er lagt til og fjernet", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "SAK_REDIGERT",
+      saksendringer: [{ felt: "merking", lagtTil: ["NY", "VIKTIG"], fjernet: ["GAMMEL"] }],
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe("Merking: lagt til NY, VIKTIG, fjernet GAMMEL");
+  });
+
+  it("viser endring i antall ytelser og arbeidsgivere", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "SAK_REDIGERT",
+      saksendringer: [
+        { felt: "ytelser", fra: "2", til: "3" },
+        { felt: "arbeidsgivere", fra: "1", til: "2" },
+      ],
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe(
+      "Ytelser endret fra 2 til 3\nArbeidsgivere endret fra 1 til 2",
+    );
+  });
+
+  it("hopper over saksendringer med ukjent feltnavn", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "SAK_REDIGERT",
+      beskrivelse: "Endret tidligere",
+      saksendringer: [
+        { felt: "kategori", til: "ARBEID" },
+        { felt: "nytt_backendfelt", fra: "før", til: "etter" },
+      ],
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe("Kategori satt til Arbeid");
+  });
+
   it("viser ikke steg som fallback når saksdetaljer mangler beskrivelse", () => {
     const hendelse = lagHendelse({ hendelsesType: "SAK_REDIGERT" });
 
@@ -87,6 +174,13 @@ describe("hendelseBeskrivelse", () => {
 });
 
 describe("hendelseTittel", () => {
+  it.each([
+    ["DOKUMENT_OPPRETTET", "Dokument opprettet"],
+    ["DOKUMENT_SLETTET", "Dokument slettet"],
+  ])("viser %s med riktig tittel", (hendelsesType, tittel) => {
+    expect(hendelseTittel(lagHendelse({ hendelsesType }))).toBe(tittel);
+  });
+
   it("viser SAK_KOBLET som «Sak koblet» med koblet sak-id", () => {
     const hendelse = lagHendelse({ hendelsesType: "SAK_KOBLET", kobletSakId: 42 });
 
@@ -112,11 +206,11 @@ describe("hendelseTittel", () => {
   });
 
   it.each([
-    ["MIGRERING_PABEGYNT", "Migrering påbegynt"],
-    ["MIGRERING_FULLFORT", "Migrering fullført"],
-    ["SAK_FRISTILT", "Sak fristilt"],
+    ["MIGRERING_PABEGYNT", "Opprettet i Watson"],
+    ["MIGRERING_FULLFORT", "Saken er ferdig flyttet"],
+    ["SAK_FRISTILT", "Saksbehandler fjernet"],
     ["SAK_DELT", "Sak delt"],
-    ["SAK_OVERFORT", "Sak overført"],
+    ["SAK_OVERFORT", "Saksbehandler endret"],
   ])("viser %s som «%s» uten steg", (hendelsesType, tittel) => {
     const hendelse = lagHendelse({ hendelsesType, beskrivelse: tittel });
 
@@ -295,6 +389,22 @@ describe("nye historikktekster", () => {
     expect(hendelseBeskrivelse(hendelse)).toBe("For: Ola Nordmann");
   });
 
+  it("viser hvem som ble fjernet som ansvarlig saksbehandler", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "SAK_FRISTILT",
+      berortSaksbehandlerNavn: "Ola Nordmann",
+    });
+
+    expect(hendelseTittel(hendelse)).toBe("Saksbehandler fjernet");
+    expect(hendelseBeskrivelse(hendelse)).toBe("Fjernet: Ola Nordmann");
+  });
+
+  it("viser ingen beskrivelse for fjernet saksbehandler når navnet mangler", () => {
+    const hendelse = lagHendelse({ hendelsesType: "SAK_FRISTILT" });
+
+    expect(hendelseBeskrivelse(hendelse)).toBeNull();
+  });
+
   it("viser koblet sak-id", () => {
     const hendelse = lagHendelse({ hendelsesType: "SAK_KOBLET", kobletSakId: 42 });
 
@@ -459,6 +569,95 @@ describe("nye historikktekster", () => {
     expect(hendelser.every((hendelse) => hendelse.opprettetAvNavn === "Kari Nordmann")).toBe(true);
   });
 
+  it("viser ytelser endret uten antall når antallet er det samme", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "SAK_REDIGERT",
+      saksendringer: [{ felt: "ytelser", fra: "1", til: "1" }],
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe("Ytelser endret");
+  });
+
+  it("viser én arkivert fil med dokumentbeskrivelsen", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "JOURNALPOST_OPPRETTET",
+      antallArkiverteDokumenter: 1,
+      journalpostTittel: "Varsel om kontroll",
+    });
+
+    expect(hendelseTittel(hendelse)).toBe("Fil arkivert");
+    expect(hendelseBeskrivelse(hendelse)).toBe(
+      "Dokument arkivert i journalpost\nVarsel om kontroll",
+    );
+  });
+
+  it("viser flere arkiverte filer med dokumentbeskrivelsen", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "JOURNALPOST_OPPRETTET",
+      antallArkiverteDokumenter: 3,
+      journalpostTittel: "Varsel om kontroll",
+    });
+
+    expect(hendelseTittel(hendelse)).toBe("Filer arkivert");
+    expect(hendelseBeskrivelse(hendelse)).toBe(
+      "Dokumenter arkivert i journalpost\nVarsel om kontroll",
+    );
+  });
+
+  it("viser arkivering uten dokumentbeskrivelse når den mangler", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "JOURNALPOST_OPPRETTET",
+      antallArkiverteDokumenter: 2,
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe("Dokumenter arkivert i journalpost");
+  });
+
+  it("viser vanlig journalpost når ingenting er arkivert", () => {
+    expect(hendelseTittel(lagHendelse({ hendelsesType: "JOURNALPOST_OPPRETTET" }))).toBe(
+      "Journalpost opprettet",
+    );
+  });
+
+  it("viser resultat lagret og slettet", () => {
+    const lagret = lagHendelse({
+      hendelsesType: "SAK_RESULTAT_ENDRET",
+      beskrivelse: "Resultat lagret",
+    });
+    const slettet = lagHendelse({
+      hendelsesType: "SAK_RESULTAT_ENDRET",
+      beskrivelse: "Resultat slettet",
+    });
+
+    expect(hendelseTittel(lagret)).toBe("Resultat lagret");
+    expect(hendelseTittel(slettet)).toBe("Resultat slettet");
+    expect(hendelseBeskrivelse(lagret)).toBeNull();
+  });
+
+  it("viser fra og til når saksbehandler endres", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "SAK_OVERFORT",
+      fraSaksbehandlerNavn: "Ola Nordmann",
+      tilSaksbehandlerNavn: "Kari Nordmann",
+    });
+
+    expect(hendelseTittel(hendelse)).toBe("Saksbehandler endret");
+    expect(hendelseBeskrivelse(hendelse)).toBe("Fra: Ola Nordmann\nTil: Kari Nordmann");
+  });
+
+  it("viser bare til for eldre overføringer uten forrige saksbehandler", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "SAK_OVERFORT",
+      berortSaksbehandlerNavn: "Kari Nordmann",
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe("Til: Kari Nordmann");
+  });
+
+  it("viser ingen beskrivelse for overføring uten navn", () => {
+    expect(hendelseBeskrivelse(lagHendelse({ hendelsesType: "SAK_OVERFORT" }))).toBeNull();
+  });
+
   it("skjuler tildeling og overføring som del av flytting", () => {
     const synlig = lagHendelse({ hendelsesType: "SAK_TILDELT" });
     const skjultTildeling = lagHendelse({ hendelsesType: "SAK_TILDELT", delAvFlytting: true });
@@ -471,6 +670,15 @@ describe("nye historikktekster", () => {
 });
 
 describe("HendelseBullet", () => {
+  it.each([
+    ["DOKUMENT_OPPRETTET", PlusCircleIcon],
+    ["DOKUMENT_SLETTET", TrashIcon],
+  ])("viser riktig ikon for %s", (hendelsesType, ikonType) => {
+    const ikon = HendelseBullet({ hendelse: lagHendelse({ hendelsesType }) });
+
+    expect(ikon.type).toBe(ikonType);
+  });
+
   it("viser gavelikon for historisk ANMELDT-statusendring", () => {
     const ikon = HendelseBullet({
       hendelse: lagHendelse({
@@ -749,6 +957,11 @@ describe("filhendelser", () => {
     expect(hendelseBeskrivelse(hendelse)).toBeNull();
   });
 
+  it("hendelseBeskrivelse viser filnavn for FIL_SLETTET", () => {
+    const hendelse = lagHendelse({ hendelsesType: "FIL_SLETTET", filnavn: "bevis.pdf" });
+    expect(hendelseBeskrivelse(hendelse)).toBe("Fil: bevis.pdf");
+  });
+
   it("hendelseBeskrivelse returnerer null for FIL_ÅPNET", () => {
     const hendelse = lagHendelse({ hendelsesType: "FIL_ÅPNET", status: null });
     expect(hendelseBeskrivelse(hendelse)).toBeNull();
@@ -761,5 +974,55 @@ describe("filhendelser", () => {
       beskrivelse: "Virusskanning OK",
     });
     expect(hendelseBeskrivelse(hendelse)).toBe("Virusskanning OK");
+  });
+
+  it("viser filnavn for FIL_LASTET_OPP når filnavn finnes", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "FIL_LASTET_OPP",
+      status: null,
+      filnavn: "vedlegg.pdf",
+      beskrivelse: "Fil lastet opp",
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe("Fil: vedlegg.pdf");
+  });
+
+  it("bruker beskrivelsen fra hendelsen når filnavn mangler for FIL_LASTET_OPP", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "FIL_LASTET_OPP",
+      status: null,
+      beskrivelse: "Fil lastet opp",
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe("Fil lastet opp");
+  });
+
+  it("viser filnavn for hver fil i gruppen «Filer lastet opp»", () => {
+    const hendelser = [
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000003",
+        hendelsesType: "FIL_LASTET_OPP",
+        filnavn: "vedlegg.pdf",
+        opprettetVedSaksopprettelse: true,
+      }),
+      lagHendelse({
+        hendelseId: "00000000-0000-0000-0000-000000000002",
+        hendelsesType: "FIL_LASTET_OPP",
+        filnavn: "dokument.docx",
+        opprettetVedSaksopprettelse: true,
+      }),
+    ];
+
+    render(
+      createElement(HistorikkProsessListe, {
+        hendelser,
+        redigerbar: false,
+        onRediger: () => {},
+        onSlett: () => {},
+      }),
+    );
+
+    expect(screen.getByText("Fil: vedlegg.pdf")).toBeTruthy();
+    expect(screen.getByText("Fil: dokument.docx")).toBeTruthy();
   });
 });
