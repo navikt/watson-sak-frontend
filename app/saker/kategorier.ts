@@ -41,6 +41,7 @@ export const kontrollsakKildeEtiketter: Record<string, string> = {
   NAV_KONTROLL: "Nav kontroll",
   NAV_OVRIG: "Nav øvrig",
   REGISTERSAMKJORING: "Registersamkjøring",
+  ACCESS_MIGRERING: "Access migrering",
   A_KRIMSAMARBEID: "A-krimsamarbeid",
   POLITIET: "Politiet",
   SKATTEETATEN: "Skatteetaten",
