@@ -39,6 +39,9 @@ spec:
       claims:
         groups:
           - id: 962b04a8-40d7-4995-b035-63b2f8e0a46b
+          - id: 3d001f08-dde6-4093-b10d-da4569b9d178
+          - id: 450df3a0-0fc2-4b4c-a7f3-d9caa48fd0fd
+          - id: 9f6abab5-2d19-425e-91af-1c40c65ef994
     sidecar:
       enabled: true
       autoLogin: true
