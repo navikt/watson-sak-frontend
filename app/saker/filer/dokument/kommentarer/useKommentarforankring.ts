@@ -278,10 +278,10 @@ export function useKommentarforankring({
     (mål: EventTarget | null) => {
       if (!(mål instanceof Element)) return;
       const dom = mål.closest<HTMLElement>('[data-slate-node="element"]');
-      if (!dom) {
-        settAktivtElement(null);
-        return;
-      }
+      // Utenfor et element (marg, padding, mellomrom mellom avsnitt) beholder vi
+      // forrige element. Ellers forsvinner knappen når pekeren krysser margen på
+      // vei fra avsnittet til knappen til venstre.
+      if (!dom) return;
       const node = editor.api.toSlateNode(dom);
       if (!node) return;
       const sti = editor.api.findPath(node);
