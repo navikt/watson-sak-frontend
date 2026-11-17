@@ -53,7 +53,7 @@ function MalValg({
       data-color="neutral"
       onClick={() => onVelg({ malId, erStraffesak })}
       aria-label={erBrev ? MAL_NAVN[malId] : `${MAL_NAVN[malId]} ${undertekst}`}
-      className="relative h-[72px] w-full justify-start px-[var(--ax-space-16)] text-left !shadow-[inset_0_0_0_1px_var(--ax-border-neutral-subtle)] hover:!bg-ax-bg-neutral-soft hover:!shadow-[inset_0_0_0_1px_var(--ax-border-neutral-subtle)]"
+      className="relative h-full w-full py-[var(--ax-space-12)] pr-[var(--ax-space-48)] justify-start pl-[var(--ax-space-16)] text-left !shadow-[inset_0_0_0_1px_var(--ax-border-neutral-subtle)] hover:!bg-ax-bg-neutral-soft hover:!shadow-[inset_0_0_0_1px_var(--ax-border-neutral-subtle)]"
     >
       <span className="flex min-w-0 items-center gap-[var(--ax-space-12)]">
         <Ikon aria-hidden className="h-7 w-7 shrink-0" />
@@ -91,7 +91,7 @@ export function OpprettDokumentModal({
       open={åpen}
       onClose={oppretter ? undefined : onClose}
       header={{ heading: "Opprett dokument", closeButton: !oppretter }}
-      width="40rem"
+      width="52rem"
     >
       <Modal.Body>
         <Innsendingsfeil svar={svar} tekster={INNSENDINGSFEIL.opprettDokument} />
@@ -149,7 +149,7 @@ export function OpprettDokumentModal({
               variant="secondary"
               data-color="neutral"
               onClick={() => onVelg()}
-              className="relative h-[64px] w-full justify-start px-[var(--ax-space-16)] text-left !shadow-[inset_0_0_0_1px_var(--ax-border-neutral-subtle)] hover:!bg-ax-bg-neutral-soft hover:!shadow-[inset_0_0_0_1px_var(--ax-border-neutral-subtle)]"
+              className="relative h-full w-full py-[var(--ax-space-12)] pr-[var(--ax-space-48)] justify-start pl-[var(--ax-space-16)] text-left !shadow-[inset_0_0_0_1px_var(--ax-border-neutral-subtle)] hover:!bg-ax-bg-neutral-soft hover:!shadow-[inset_0_0_0_1px_var(--ax-border-neutral-subtle)]"
             >
               <span className="flex min-w-0 items-center gap-[var(--ax-space-12)]">
                 <FileIcon aria-hidden className="h-7 w-7 shrink-0" />
