@@ -9,6 +9,12 @@ import type { MockState } from "./session.server";
 import { slettKommentarerForDokument } from "./kommentarer.server";
 import { leggTilHendelse } from "./historikk.server";
 
+function finnSak(state: MockState, sakId: string) {
+  return [...state.kontrollsaker, ...state.mineKontrollsaker].find(
+    (kandidat) => String(kandidat.id) === sakId,
+  );
+}
+
 function innholdsnøkkel(sakId: string, docId: string): string {
   return `${sakId}:${docId}`;
 }
@@ -239,7 +245,7 @@ export function opprettDokument(
   ]);
   state.tommeDokumentområder.delete(sakId);
 
-  const sak = state.kontrollsaker.find((kandidat) => String(kandidat.id) === sakId);
+  const sak = finnSak(state, sakId);
   if (sak) {
     leggTilHendelse(state, sak, "DOKUMENT_OPPRETTET", undefined, {
       dokumentnavn: "Uten tittel",
@@ -387,7 +393,7 @@ export function slettDokument(state: MockState, sakId: string, docId: string): b
   state.dokumentHistorikk.delete(historikknøkkel(sakId, docId));
   slettKommentarerForDokument(state, sakId, docId);
 
-  const sak = state.kontrollsaker.find((kandidat) => String(kandidat.id) === sakId);
+  const sak = finnSak(state, sakId);
   if (sak) {
     leggTilHendelse(state, sak, "DOKUMENT_SLETTET", undefined, {
       dokumentnavn,

@@ -98,6 +98,17 @@ describe("mock-store dokumenter", () => {
     });
   });
 
+  it("legger historikkhendelse også på egne kontrollsaker", () => {
+    const egenSak = String(state().mineKontrollsaker[0]?.id);
+    registrerTomtDokumentområdeForSak(state(), egenSak);
+
+    opprettDokument(state(), egenSak, "Ola Nordmann");
+
+    expect(hentHistorikk(state(), egenSak)[0]).toMatchObject({
+      hendelsesType: "DOKUMENT_OPPRETTET",
+    });
+  });
+
   it("lagrer tittel og innhold på et dokument", () => {
     const { id } = opprettDokument(state(), sakUtenDokumenter, "Ola Nordmann");
     const nyttInnhold = [{ type: "p", children: [{ text: "Oppdatert" }] }];
