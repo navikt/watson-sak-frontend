@@ -190,6 +190,18 @@ describe("DokumentEditor med kommentarer", () => {
     expect(screen.getByRole("button", { name: "Kommenter avsnitt" })).toBeDefined();
   });
 
+  it("beholder elementknappen når pekeren krysser margen på vei til knappen", async () => {
+    renderEditor();
+
+    const avsnitt = await screen.findByText(/Brødtekst med et/);
+    fireEvent.mouseOver(avsnitt);
+    await screen.findByRole("button", { name: "Kommenter avsnitt" });
+
+    fireEvent.mouseOver(screen.getByRole("textbox", { name: "Dokumentinnhold" }));
+
+    expect(screen.getByRole("button", { name: "Kommenter avsnitt" })).toBeDefined();
+  });
+
   it("beholder elementknappen når den får tastaturfokus og kan aktivere den", async () => {
     renderEditor();
 
