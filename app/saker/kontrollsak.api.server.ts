@@ -17,6 +17,11 @@ import {
   type KontrollsakAvvisningsgrunn,
   type TillatteHandlingerResponse,
   tillatteHandlingerResponseSchema,
+  registrerHenleggelsesnotaterResponseSchema,
+  registrerteHenleggelsesnotaterResponseSchema,
+  type Henleggelsesnotat,
+  type HenleggelsesnotatResultat,
+  type RegistrertHenleggelsesnotat,
 } from "./types.backend";
 import { lagSakHendelseSchema } from "./historikk/typer";
 import { type Oppgavekodeverk, oppgavekodeverkSchema } from "./handlinger/oppgavekodeverk";
@@ -534,4 +539,40 @@ export async function slettManuellHendelse(
     },
   );
   if (!respons.ok) await håndterFeil(respons, "Kunne ikke slette manuell hendelse");
+}
+
+// --- Henleggelsesnotater ---
+
+/** Notatteksten sendes bare i body. Den skal aldri logges. */
+export async function registrerHenleggelsesnotater(
+  token: string,
+  sakId: string,
+  notater: Henleggelsesnotat[],
+): Promise<HenleggelsesnotatResultat[]> {
+  const respons = await fetch(apiUrl(byggSti`/api/v1/kontrollsaker/${sakId}/henleggelsesnotater`), {
+    method: "PUT",
+    headers: authHeaders(token),
+    body: JSON.stringify({ notater }),
+  });
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke registrere henleggelsesnotater");
+  return parseEllerKastFeil(
+    registrerHenleggelsesnotaterResponseSchema,
+    await respons.json(),
+    "registrerHenleggelsesnotater",
+  ).notater;
+}
+
+export async function hentHenleggelsesnotater(
+  token: string,
+  sakId: string,
+): Promise<RegistrertHenleggelsesnotat[]> {
+  const respons = await fetch(apiUrl(byggSti`/api/v1/kontrollsaker/${sakId}/henleggelsesnotater`), {
+    headers: authHeaders(token),
+  });
+  if (!respons.ok) await håndterFeil(respons, "Kunne ikke hente henleggelsesnotater");
+  return parseEllerKastFeil(
+    registrerteHenleggelsesnotaterResponseSchema,
+    await respons.json(),
+    "hentHenleggelsesnotater",
+  ).notater;
 }

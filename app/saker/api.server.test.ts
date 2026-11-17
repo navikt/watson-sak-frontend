@@ -818,6 +818,13 @@ describe("hentHendelser", () => {
   it.each(["dev", "local-dev"] as const)("beholder backendnavn i %s", async (miljø) => {
     mockEnvironment.value = miljø;
     vi.resetModules();
+    const historikkfelter = {
+      filnavn: "vedlegg.pdf",
+      dokumentnavn: "Kontrollnotat",
+      antallArkiverteDokumenter: 2,
+      journalpostTittel: "Oversendelse",
+      saksendringer: [{ felt: "prioritet", fra: "NORMAL", til: "HOY" }],
+    };
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
@@ -831,6 +838,7 @@ describe("hentHendelser", () => {
             berortSaksbehandlerNavIdent: "Z993376",
             berortSaksbehandlerNavn: "Backendnavn med ident",
             opprettetAvNavn: "TEST Z993376",
+            ...historikkfelter,
           },
         ],
       }),
@@ -841,6 +849,7 @@ describe("hentHendelser", () => {
 
     expect(hendelse.berortSaksbehandlerNavn).toBe("Backendnavn med ident");
     expect(hendelse.opprettetAvNavn).toBe("TEST Z993376");
+    expect(hendelse).toMatchObject(historikkfelter);
   });
 
   it("viser eksisterende testnavn i prod med og uten ident", async () => {

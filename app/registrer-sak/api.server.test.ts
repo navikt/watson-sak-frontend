@@ -560,7 +560,8 @@ describe("opprettKontrollsak", () => {
       expect.arrayContaining([
         expect.objectContaining({
           hendelsesType: "FIL_LASTET_OPP",
-          beskrivelse: "vedlegg.pdf",
+          beskrivelse: "Fil lastet opp",
+          filnavn: "vedlegg.pdf",
           opprettetAvNavn: "Saks Behandlersen",
           opprettetVedSaksopprettelse: true,
         }),

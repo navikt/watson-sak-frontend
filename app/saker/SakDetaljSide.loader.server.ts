@@ -21,6 +21,8 @@ import { hentMapperstier, hentMapperstierFraMock } from "./filer/mapper/mapper.s
 import { hentFilerForSak } from "./filer/mock-data-filer.server";
 import { migreringErÅpen } from "~/migrering/miljo";
 import { migreringsnotatSeed } from "~/testing/mock-store/dokumenter.server";
+import { hentHenleggelsesnotaterForSak } from "~/testing/mock-store/henleggelsesnotater.server";
+import { hentMockState } from "~/testing/mock-store/session.server";
 import { erSakseier } from "./handlinger/tilgjengeligeHandlinger";
 import { hentMockTillatteHandlinger } from "./mock-tillatte-handlinger.server";
 import { hentHistorikk } from "./historikk/mock-data.server";
@@ -30,6 +32,11 @@ import { parseSakId } from "~/saker/sti-param.server";
 import type { Route } from "./+types/SakDetaljSide.route";
 
 // --- Loader ---
+
+/** Notater ved henleggelse registreres i Utredning og vises også etter avslutning. */
+function kanHaHenleggelsesnotater(steg: KontrollsakResponse["steg"]): boolean {
+  return steg === "UTREDNING" || steg === "UTREDES" || steg === "AVSLUTTET";
+}
 
 const RELATERTE_SAKER_SIDESTORRELSE = 10;
 
@@ -70,7 +77,15 @@ function ingenTillatteHandlinger(sak: KontrollsakResponse): TillatteHandlingerRe
 
 /** Feil-ID per seksjon som ikke kunne hentes. Seksjonen viser `<Feilmelding>` i stedet for tom data. */
 export type Seksjonsfeil = Partial<
-  Record<"historikk" | "filer" | "saksbehandlere" | "tillatteHandlinger" | "andreSaker", string>
+  Record<
+    | "historikk"
+    | "filer"
+    | "saksbehandlere"
+    | "tillatteHandlinger"
+    | "andreSaker"
+    | "henleggelsesnotater",
+    string
+  >
 >;
 
 const SEKSJONER = [
@@ -141,6 +156,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       filerUtfall,
       mapperUtfall,
       tillatteHandlingerUtfall,
+      henleggelsesnotaterUtfall,
     ] = await Promise.all([
       kritisk(hentInnloggetBruker({ request }), { ...logg, kontekst: "hente innlogget bruker" }),
       hentEllerFeil(() => backendApi.hentHendelser(token, sakId), {
@@ -164,6 +180,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
         ...logg,
         kontekst: "hente tillatte handlinger",
       }),
+      kanHaHenleggelsesnotater(sak.steg)
+        ? hentEllerFeil(() => backendApi.hentHenleggelsesnotater(token, sakId), {
+            ...logg,
+            kontekst: "hente henleggelsesnotater",
+          })
+        : Promise.resolve({ status: "ok", data: [] } as const),
     ]);
 
     if (tillatteHandlingerUtfall.status === "ingenTilgang") {
@@ -210,6 +232,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       harFilTilgang: filerUtfall.status !== "ingenTilgang",
     };
     const mapper = mapperUtfall.status === "ok" ? mapperUtfall.data : [];
+    const registrerteNotater =
+      henleggelsesnotaterUtfall.status === "ok" ? henleggelsesnotaterUtfall.data : [];
     const feilFra = (utfall: { status: string; feilId?: string }) =>
       utfall.status === "feil" ? utfall.feilId : undefined;
     const seksjonsfeil: Seksjonsfeil = {
@@ -218,6 +242,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       filer: feilFra(filerUtfall) ?? feilFra(mapperUtfall),
       tillatteHandlinger: feilFra(tillatteHandlingerUtfall),
       andreSaker: feilFra(andreSakerUtfall),
+      henleggelsesnotater: feilFra(henleggelsesnotaterUtfall),
     };
 
     // Dokumenter/filer skal kun eksponeres i loader-responsen (og dermed nås av klienten)
@@ -265,6 +290,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       saksbehandlerDetaljer,
       seksjoner: mockSeksjoner,
       seksjonsfeil,
+      registrerteNotater,
     };
   }
 
@@ -367,5 +393,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     saksbehandlerDetaljer: mockSaksbehandlerDetaljer,
     seksjoner: mockSeksjoner,
     seksjonsfeil,
+    registrerteNotater: kanHaHenleggelsesnotater(sak.steg)
+      ? hentHenleggelsesnotaterForSak(hentMockState(request), String(sak.id))
+      : [],
   };
 }

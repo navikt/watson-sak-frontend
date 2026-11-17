@@ -1,4 +1,4 @@
-import type { KontrollsakResponse } from "~/saker/types.backend";
+import type { KontrollsakResponse, RegistrertHenleggelsesnotat } from "~/saker/types.backend";
 import type { SakHendelse } from "~/saker/historikk/typer";
 import type {
   DokumentHistorikk,
@@ -32,6 +32,8 @@ export interface MockState {
   mapper: Map<string, MappeResponse[]>;
   /** Journalposter opprettet fra saken, per sak. */
   journalposter: Map<string, MockJournalpost[]>;
+  /** Registrerte notater ved henleggelse, per sak. Teksten lagres ikke, som i backend. */
+  henleggelsesnotater: Map<string, RegistrertHenleggelsesnotat[]>;
   varsler: Varsel[];
   /** Ny ansvarlig per migreringskandidat (kandidatId) etter «Endre tildeling» i mockmiljø. */
   migreringTildelinger: Map<string, string>;
@@ -61,6 +63,7 @@ function lagFreshState(): MockState {
     filer: new Map(),
     mapper: new Map(),
     journalposter: new Map(),
+    henleggelsesnotater: new Map(),
     varsler: lagInitialeVarsler(),
     migreringTildelinger: new Map(),
     nesteFordelingssakId: 10000,

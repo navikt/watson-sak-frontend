@@ -24,7 +24,14 @@ import {
   formaterJournalposttype,
   formaterOppgavetype,
 } from "~/saker/handlinger/opprett-formatering";
-import { formaterStatus } from "~/saker/visning";
+import {
+  formaterBelop,
+  formaterKategori,
+  formaterKilde,
+  formaterMisbrukstype,
+  formaterStatus,
+} from "~/saker/visning";
+import { POLITIDISTRIKTER } from "~/saker/politidistrikter";
 import { formaterSteg } from "~/saker/visning";
 import { NORSK_TIDSSONE } from "~/utils/date-utils";
 import type { SakHendelse } from "./typer";
@@ -165,6 +172,80 @@ function stegOgStatusBeskrivelse(hendelse: SakHendelse, forrigeHendelse?: SakHen
   return deler.join(hendelse.hendelsesType === "SAK_STATUS_ENDRET" ? "\n" : " – ");
 }
 
+const saksendringsetiketter: Record<string, string> = {
+  kategori: "Kategori",
+  kilde: "Kilde",
+  anmeldt_belop: "Anmeldt beløp",
+  politidistrikt: "Politidistrikt",
+  politiets_saksreferanse: "Politiets saksreferanse",
+  misbruktype: "Misbrukstype",
+  merking: "Merking",
+  ytelser: "Ytelser",
+  arbeidsgivere: "Arbeidsgivere",
+};
+
+function formaterSaksendringsverdi(felt: string, verdi: string): string {
+  switch (felt) {
+    case "kategori":
+      return formaterKategori(verdi) ?? verdi;
+    case "kilde":
+      return formaterKilde(verdi);
+    case "anmeldt_belop": {
+      const belop = Number(verdi);
+      return Number.isFinite(belop) ? formaterBelop(belop) : verdi;
+    }
+    case "politidistrikt":
+      return POLITIDISTRIKTER.find((politidistrikt) => politidistrikt === verdi) ?? verdi;
+    case "misbruktype":
+      return formaterMisbrukstype(verdi);
+    default:
+      return verdi;
+  }
+}
+
+function formaterSaksendringer(hendelse: SakHendelse): string | null {
+  const linjer = (hendelse.saksendringer ?? []).flatMap((endring) => {
+    const etikett = saksendringsetiketter[endring.felt];
+    if (!etikett) return [];
+
+    if (endring.felt === "ytelser" || endring.felt === "arbeidsgivere") {
+      if (endring.fra == null || endring.til == null) return [];
+      // Samme antall betyr at innholdet er endret, for eksempel en ytelse som er byttet ut.
+      if (endring.fra === endring.til) return [`${etikett} endret`];
+      return [`${etikett} endret fra ${endring.fra} til ${endring.til}`];
+    }
+
+    if (endring.lagtTil != null || endring.fjernet != null) {
+      const deler = [
+        ...(endring.lagtTil?.length
+          ? [
+              `lagt til ${endring.lagtTil
+                .map((verdi) => formaterSaksendringsverdi(endring.felt, verdi))
+                .join(", ")}`,
+            ]
+          : []),
+        ...(endring.fjernet?.length
+          ? [
+              `fjernet ${endring.fjernet
+                .map((verdi) => formaterSaksendringsverdi(endring.felt, verdi))
+                .join(", ")}`,
+            ]
+          : []),
+      ];
+      return deler.length > 0 ? [`${etikett}: ${deler.join(", ")}`] : [];
+    }
+
+    const fra = endring.fra == null ? null : formaterSaksendringsverdi(endring.felt, endring.fra);
+    const til = endring.til == null ? null : formaterSaksendringsverdi(endring.felt, endring.til);
+    if (fra != null && til != null) return [`${etikett} endret fra ${fra} til ${til}`];
+    if (til != null) return [`${etikett} satt til ${til}`];
+    if (fra != null) return [`${etikett} fjernet (var ${fra})`];
+    return [];
+  });
+
+  return linjer.length > 0 ? linjer.join("\n") : null;
+}
+
 export function formaterTidspunkt(isoString: string): string {
   try {
     return new Intl.DateTimeFormat("nb-NO", {
@@ -222,7 +303,8 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
     case "NOTAT_SENDT":
       return "Notat opprettet i Gosys";
     case "JOURNALPOST_OPPRETTET":
-      return "Journalpost opprettet";
+      if (!hendelse.antallArkiverteDokumenter) return "Journalpost opprettet";
+      return hendelse.antallArkiverteDokumenter > 1 ? "Filer arkivert" : "Fil arkivert";
     case "OPPGAVE_OPPRETTET":
       return "Oppgave opprettet";
     case "OPPGAVE_ENDRET":
@@ -234,15 +316,24 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
     case "FIL_LASTET_OPP":
       return "Fil lastet opp";
     case "SAK_FRISTILT":
-      return "Sak fristilt";
+      return "Saksbehandler fjernet";
     case "SAK_DELT":
       return "Sak delt";
     case "SAK_OVERFORT":
-      return "Sak overført";
+      return "Saksbehandler endret";
+    case "SAK_RESULTAT_ENDRET":
+      return hendelse.beskrivelse === "Resultat slettet" ||
+        hendelse.beskrivelse === "Sakens resultat slettet"
+        ? "Resultat slettet"
+        : "Resultat lagret";
     case "SAK_KOBLET":
       return "Sak koblet";
     case "FIL_SLETTET":
       return "Fil slettet";
+    case "DOKUMENT_OPPRETTET":
+      return "Dokument opprettet";
+    case "DOKUMENT_SLETTET":
+      return "Dokument slettet";
     case "FIL_OMDØPT":
       return "Filnavn endret";
     case "FIL_ÅPNET":
@@ -250,9 +341,9 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
     case "FIL_ARKIVERT":
       return "Fil arkivert";
     case "MIGRERING_PABEGYNT":
-      return "Migrering påbegynt";
+      return "Opprettet i Watson";
     case "MIGRERING_FULLFORT":
-      return "Migrering fullført";
+      return "Saken er ferdig flyttet";
     default:
       return hendelse.hendelsesType;
   }
@@ -269,19 +360,33 @@ export function hendelseBeskrivelse(
   if (
     hendelse.hendelsesType === "MANUELL_HENDELSE_REDIGERT" ||
     hendelse.hendelsesType === "MIGRERING_PABEGYNT" ||
-    hendelse.hendelsesType === "MIGRERING_FULLFORT" ||
-    hendelse.hendelsesType === "SAK_FRISTILT" ||
-    hendelse.hendelsesType === "SAK_OVERFORT"
+    hendelse.hendelsesType === "MIGRERING_FULLFORT"
   ) {
     return null;
   }
 
+  if (hendelse.hendelsesType === "SAK_OVERFORT") {
+    const til = hendelse.tilSaksbehandlerNavn ?? hendelse.berortSaksbehandlerNavn;
+    return (
+      [
+        hendelse.fraSaksbehandlerNavn && `Fra: ${hendelse.fraSaksbehandlerNavn}`,
+        til && `Til: ${til}`,
+      ]
+        .filter(Boolean)
+        .join("\n") || null
+    );
+  }
+
   if (hendelse.hendelsesType === "SAK_REDIGERT") {
-    return hendelse.beskrivelse ?? null;
+    return formaterSaksendringer(hendelse) ?? hendelse.beskrivelse ?? null;
   }
 
   if (hendelse.hendelsesType === "SAK_TILDELT") {
     return hendelse.berortSaksbehandlerNavn ? `Til: ${hendelse.berortSaksbehandlerNavn}` : null;
+  }
+
+  if (hendelse.hendelsesType === "SAK_FRISTILT") {
+    return hendelse.berortSaksbehandlerNavn ? `Fjernet: ${hendelse.berortSaksbehandlerNavn}` : null;
   }
 
   if (hendelse.hendelsesType === "SAK_DELT") {
@@ -337,6 +442,14 @@ export function hendelseBeskrivelse(
     return null;
   }
 
+  if (
+    hendelse.hendelsesType === "DOKUMENT_OPPRETTET" ||
+    hendelse.hendelsesType === "DOKUMENT_SLETTET"
+  ) {
+    if (!hendelse.dokumentnavn) return null;
+    return `${hendelse.dokumentnavn} ${hendelse.hendelsesType === "DOKUMENT_OPPRETTET" ? "opprettet" : "slettet"}`;
+  }
+
   if (hendelse.hendelsesType === "MOTTAKSENHET_ENDRET") {
     const linjer = [
       [hendelse.fraEnhetNavn, hendelse.fraSaksbehandlerNavn].filter(Boolean).join(", "),
@@ -350,6 +463,17 @@ export function hendelseBeskrivelse(
     return hendelse.beskrivelse ?? null;
   }
 
+  if (hendelse.hendelsesType === "JOURNALPOST_OPPRETTET" && hendelse.antallArkiverteDokumenter) {
+    return [
+      hendelse.antallArkiverteDokumenter > 1
+        ? "Dokumenter arkivert i journalpost"
+        : "Dokument arkivert i journalpost",
+      hendelse.journalpostTittel,
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
+
   if (hendelse.hendelsesType === "JOURNALPOST_OPPRETTET") {
     return hendelse.tittel ? `Type: ${formaterJournalposttype(hendelse.tittel)}` : null;
   }
@@ -359,7 +483,7 @@ export function hendelseBeskrivelse(
   }
 
   if (hendelse.hendelsesType === "SAKSINFORMASJON_ENDRET") {
-    return hendelse.beskrivelse ?? formaterSteg(hendelse.steg);
+    return formaterSaksendringer(hendelse) ?? hendelse.beskrivelse ?? formaterSteg(hendelse.steg);
   }
 
   if (
@@ -420,6 +544,12 @@ export function hendelseBeskrivelse(
     hendelse.hendelsesType === "FIL_ÅPNET" ||
     hendelse.hendelsesType === "FIL_ARKIVERT"
   ) {
+    if (
+      (hendelse.hendelsesType === "FIL_LASTET_OPP" || hendelse.hendelsesType === "FIL_SLETTET") &&
+      hendelse.filnavn
+    ) {
+      return `Fil: ${hendelse.filnavn}`;
+    }
     return hendelse.beskrivelse ?? null;
   }
 
@@ -469,12 +599,20 @@ export function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
     case "NOTAT_SENDT":
       return <DocPencilIcon {...iconProps} />;
     case "JOURNALPOST_OPPRETTET":
-      return <DocPencilIcon {...iconProps} />;
+      return hendelse.antallArkiverteDokumenter ? (
+        <ArchiveIcon {...iconProps} />
+      ) : (
+        <DocPencilIcon {...iconProps} />
+      );
     case "OPPGAVE_OPPRETTET":
       return <TasklistIcon {...iconProps} />;
     case "FIL_LASTET_OPP":
       return <FilesIcon {...iconProps} />;
     case "FIL_SLETTET":
+      return <TrashIcon {...iconProps} />;
+    case "DOKUMENT_OPPRETTET":
+      return <PlusCircleIcon {...iconProps} />;
+    case "DOKUMENT_SLETTET":
       return <TrashIcon {...iconProps} />;
     case "FIL_OMDØPT":
       return <PencilIcon {...iconProps} />;

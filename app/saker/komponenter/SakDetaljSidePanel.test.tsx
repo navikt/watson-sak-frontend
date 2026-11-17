@@ -1,6 +1,8 @@
 import { render, screen } from "@testing-library/react";
+import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { SakDetaljSidePanel } from "./SakDetaljSidePanel";
+import type { Seksjonsfeil } from "~/saker/SakDetaljSide.loader.server";
 import { kontrollsakResponseSchema } from "~/saker/types.backend";
 
 vi.mock("./SaksbehandlereKort", () => ({ SaksbehandlereKort: () => null }));
@@ -27,13 +29,13 @@ const basisSak = {
   oppdatert: null,
 } as const;
 
-function renderPanel(visLiggetidVarsel?: boolean) {
+function renderPanel(visLiggetidVarsel?: boolean, seksjonsfeil: Seksjonsfeil = {}) {
   const sak = kontrollsakResponseSchema.parse({
     ...basisSak,
     ...(visLiggetidVarsel !== undefined && { visLiggetidVarsel }),
   });
 
-  return render(
+  const panel = (
     <SakDetaljSidePanel
       sak={sak}
       saksbehandlerDetaljer={[]}
@@ -45,8 +47,12 @@ function renderPanel(visLiggetidVarsel?: boolean) {
       kanRedigere={false}
       kanLeggeTilHistorikk={false}
       historikkTilstand="vis"
-    />,
+      seksjonsfeil={seksjonsfeil}
+    />
   );
+  // Feilmeldingen med «Prøv igjen» bruker useRevalidator, som krever en data-router.
+  const router = createMemoryRouter([{ path: "/", element: panel }]);
+  return render(<RouterProvider router={router} />);
 }
 
 describe("SakDetaljSidePanel liggetidsvarsel", () => {
@@ -63,5 +69,23 @@ describe("SakDetaljSidePanel liggetidsvarsel", () => {
 
     expect(screen.queryByRole("heading", { name: "Manglende oppdatering" })).toBeNull();
     expect(screen.queryByText("Saken har ikke vært oppdatert på 30 dager")).toBeNull();
+  });
+});
+
+describe("SakDetaljSidePanel seksjonsfeil for henleggelsesnotater", () => {
+  it("viser feilmelding med feil-ID når notatene ikke kunne hentes", () => {
+    renderPanel(undefined, { henleggelsesnotater: "feil-123" });
+
+    expect(
+      screen.getByRole("heading", {
+        name: "Vi fikk ikke hentet notatene som er registrert ved henleggelsen",
+      }),
+    ).toBeTruthy();
+    expect(screen.getByText(/feil-123/)).toBeTruthy();
+  });
+
+  it("viser ingen feilmelding uten seksjonsfeil", () => {
+    renderPanel();
+    expect(screen.queryByText(/notatene som er registrert/)).toBeNull();
   });
 });

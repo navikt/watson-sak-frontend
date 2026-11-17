@@ -3,7 +3,14 @@ import type { DokumentInnhold } from "~/saker/filer/typer";
 import { anmeldelsemal } from "./anmeldelse";
 import { arbeidRapportmal } from "./arbeid";
 import { ensligForsørgerRapportmal } from "./enslig-forsørger";
-import { byggMalInnhold, type MalId } from "./index";
+import type { KontrollsakSteg } from "~/saker/types.backend";
+import {
+  BREVMAL_BESKRIVELSE,
+  byggMalInnhold,
+  erMalTilgjengelig,
+  MAL_KATEGORI,
+  type MalId,
+} from "./index";
 import { innhentingsbrevmal } from "./innhentingsbrev";
 import { utlandRapportmal } from "./utland";
 
@@ -211,5 +218,83 @@ describe("PID-feltet", () => {
     { id: "anmeldelse", innhold: anmeldelsemal() },
   ])("$id: PID er saksnummeret", ({ innhold }) => {
     expect(JSON.stringify(innhold)).toContain(`${pidCelle},${saksnummerCelle}`);
+  });
+});
+
+describe("orienteringsbrev til bruker", () => {
+  const BREV: { id: MalId; tittel: string; steg: KontrollsakSteg[] }[] = [
+    {
+      id: "orientering-innhenting-konto",
+      tittel: "Nav kontroll innhenter opplysninger fra finansinstitusjon",
+      steg: ["UTREDNING", "UTREDES"],
+    },
+    {
+      id: "orientering-innhenting-valutaregister",
+      tittel: "Nav kontroll innhenter opplysninger fra Valutaregisteret",
+      steg: ["UTREDNING", "UTREDES"],
+    },
+    {
+      id: "orientering-avsluttet-innhenting-konto",
+      tittel: "Informasjon om avsluttet undersøkelse",
+      steg: ["UTREDNING", "UTREDES"],
+    },
+    {
+      id: "orientering-anmeldelse",
+      tittel: "Informasjon om anmeldelse",
+      steg: ["STRAFFERETTSLIG_VURDERING"],
+    },
+    {
+      id: "orientering-henleggelse",
+      tittel: "Vi anmelder ikke saken din",
+      steg: ["STRAFFERETTSLIG_VURDERING"],
+    },
+  ];
+  const ALLE_STEG: KontrollsakSteg[] = [
+    "OPPRETTET",
+    "UTREDNING",
+    "UTREDES",
+    "FORVALTNING",
+    "STRAFFERETTSLIG_VURDERING",
+    "POLITI",
+    "ANMELDT",
+    "AVSLUTTET",
+  ];
+
+  it.each(BREV)("$id: er en brevmal med beskrivelse", ({ id }) => {
+    expect(MAL_KATEGORI[id]).toBe("brev");
+    expect(BREVMAL_BESKRIVELSE[id]).toBeTruthy();
+  });
+
+  it.each(BREV)(
+    "$id: har riktig tittel og er ikke merket unntatt offentlighet",
+    ({ id, tittel }) => {
+      const innhold = byggMalInnhold({ malId: id, erStraffesak: false });
+      const tekst = JSON.stringify(innhold);
+
+      expect(innhold).toContainEqual({ type: "h1", children: [{ text: tittel }] });
+      expect(tekst).not.toContain("Unntatt offentlighet");
+      expect(tekst).toContain("/nav-logo.svg");
+    },
+  );
+
+  it.each(BREV)("$id: setter inn relevante standardvariabler", ({ id }) => {
+    const innhold = byggMalInnhold({ malId: id, erStraffesak: false });
+
+    expect(variabelIder(innhold)).toEqual(
+      expect.arrayContaining([
+        "navn",
+        "fødselsnummer",
+        "saksnummer",
+        "dagens-dato",
+        "saksbehandler",
+        "avdeling",
+      ]),
+    );
+  });
+
+  it.each(BREV)("$id: er bare tilgjengelig i riktige steg", ({ id, steg }) => {
+    for (const s of ALLE_STEG) {
+      expect(erMalTilgjengelig(id, s)).toBe(steg.includes(s));
+    }
   });
 });
