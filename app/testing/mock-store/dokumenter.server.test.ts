@@ -95,6 +95,7 @@ describe("mock-store dokumenter", () => {
       hendelsesType: "DOKUMENT_OPPRETTET",
       dokumentnavn: "Uten tittel",
       beskrivelse: "Dokument opprettet",
+      opprettetAvNavn: "Ola Nordmann",
     });
   });
 
@@ -106,6 +107,27 @@ describe("mock-store dokumenter", () => {
 
     expect(hentHistorikk(state(), egenSak)[0]).toMatchObject({
       hendelsesType: "DOKUMENT_OPPRETTET",
+    });
+  });
+
+  it("bruker malnavnet i historikken når dokumentet opprettes fra mal", () => {
+    opprettDokument(state(), sakUtenDokumenter, "Ola Nordmann", "Kontrollrapport – Arbeid");
+
+    expect(hentHistorikk(state(), sakUtenDokumenter)[0]).toMatchObject({
+      hendelsesType: "DOKUMENT_OPPRETTET",
+      dokumentnavn: "Kontrollrapport – Arbeid",
+    });
+  });
+
+  it("tar med hvem som slettet dokumentet i historikken", () => {
+    const { id } = opprettDokument(state(), sakUtenDokumenter, "Ola Nordmann");
+
+    slettDokument(state(), sakUtenDokumenter, id, "Kari Nordmann");
+
+    expect(hentHistorikk(state(), sakUtenDokumenter)[0]).toMatchObject({
+      hendelsesType: "DOKUMENT_SLETTET",
+      dokumentnavn: "Uten tittel",
+      opprettetAvNavn: "Kari Nordmann",
     });
   });
 

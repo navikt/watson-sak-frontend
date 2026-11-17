@@ -215,10 +215,15 @@ export function hentDokument(state: MockState, sakId: string, docId: string): Do
   };
 }
 
+/**
+ * [tittel] er navnet historikken viser. Backend slår opp gjeldende tittel når historikken leses,
+ * så ved opprettelse fra mal skal malnavnet med, selv om det lagres i et eget steg.
+ */
 export function opprettDokument(
   state: MockState,
   sakId: string,
   opprettetAv: string,
+  tittel = "Uten tittel",
 ): { id: string } {
   const dokumenter = hentEllerSeed(state, sakId);
   const id = crypto.randomUUID();
@@ -248,8 +253,9 @@ export function opprettDokument(
   const sak = finnSak(state, sakId);
   if (sak) {
     leggTilHendelse(state, sak, "DOKUMENT_OPPRETTET", undefined, {
-      dokumentnavn: "Uten tittel",
+      dokumentnavn: tittel,
       beskrivelse: "Dokument opprettet",
+      opprettetAvNavn: opprettetAv,
     });
   }
 
@@ -380,7 +386,12 @@ export function registrerTomtDokumentområdeForSak(state: MockState, sakId: stri
   state.dokumenter.set(sakId, []);
 }
 
-export function slettDokument(state: MockState, sakId: string, docId: string): boolean {
+export function slettDokument(
+  state: MockState,
+  sakId: string,
+  docId: string,
+  slettetAv?: string,
+): boolean {
   const dokumenter = hentEllerSeed(state, sakId);
   const indeks = dokumenter.findIndex((dokument) => dokument.id === docId);
   if (indeks === -1) {
@@ -398,6 +409,7 @@ export function slettDokument(state: MockState, sakId: string, docId: string): b
     leggTilHendelse(state, sak, "DOKUMENT_SLETTET", undefined, {
       dokumentnavn,
       beskrivelse: "Dokument slettet",
+      opprettetAvNavn: slettetAv,
     });
   }
 
