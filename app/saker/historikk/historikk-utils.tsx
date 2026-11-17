@@ -462,11 +462,11 @@ export function hendelseBeskrivelse(
   }
 
   if (hendelse.hendelsesType === "JOURNALPOST_OPPRETTET" && hendelse.antallArkiverteDokumenter) {
-    const flere = hendelse.antallArkiverteDokumenter > 1;
-    const navn = hendelse.arkiverteDokumentnavn ?? [];
     return [
-      flere ? "Dokumenter arkivert som journalposter" : "Dokument arkivert i journalpost",
-      navn.length > 0 && `${flere ? "Dokumenter" : "Dokument"}: ${navn.join(", ")}`,
+      hendelse.antallArkiverteDokumenter > 1
+        ? "Dokumenter arkivert i journalpost"
+        : "Dokument arkivert i journalpost",
+      hendelse.journalpostTittel,
     ]
       .filter(Boolean)
       .join("\n");

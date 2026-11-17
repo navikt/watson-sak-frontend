@@ -569,39 +569,39 @@ describe("nye historikktekster", () => {
     expect(hendelser.every((hendelse) => hendelse.opprettetAvNavn === "Kari Nordmann")).toBe(true);
   });
 
-  it("viser én arkivert fil på journalposten", () => {
+  it("viser én arkivert fil med dokumentbeskrivelsen", () => {
     const hendelse = lagHendelse({
       hendelsesType: "JOURNALPOST_OPPRETTET",
       antallArkiverteDokumenter: 1,
-      arkiverteDokumentnavn: ["kontoutskrift.pdf"],
+      journalpostTittel: "Varsel om kontroll",
     });
 
     expect(hendelseTittel(hendelse)).toBe("Fil arkivert");
     expect(hendelseBeskrivelse(hendelse)).toBe(
-      "Dokument arkivert i journalpost\nDokument: kontoutskrift.pdf",
+      "Dokument arkivert i journalpost\nVarsel om kontroll",
     );
   });
 
-  it("viser flere arkiverte filer på journalposten", () => {
+  it("viser flere arkiverte filer med dokumentbeskrivelsen", () => {
     const hendelse = lagHendelse({
       hendelsesType: "JOURNALPOST_OPPRETTET",
       antallArkiverteDokumenter: 3,
-      arkiverteDokumentnavn: ["a.pdf", "b.pdf", "Avhør"],
+      journalpostTittel: "Varsel om kontroll",
     });
 
     expect(hendelseTittel(hendelse)).toBe("Filer arkivert");
     expect(hendelseBeskrivelse(hendelse)).toBe(
-      "Dokumenter arkivert som journalposter\nDokumenter: a.pdf, b.pdf, Avhør",
+      "Dokumenter arkivert i journalpost\nVarsel om kontroll",
     );
   });
 
-  it("viser arkivering uten navn når filene mangler navn", () => {
+  it("viser arkivering uten dokumentbeskrivelse når den mangler", () => {
     const hendelse = lagHendelse({
       hendelsesType: "JOURNALPOST_OPPRETTET",
       antallArkiverteDokumenter: 2,
     });
 
-    expect(hendelseBeskrivelse(hendelse)).toBe("Dokumenter arkivert som journalposter");
+    expect(hendelseBeskrivelse(hendelse)).toBe("Dokumenter arkivert i journalpost");
   });
 
   it("viser vanlig journalpost når ingenting er arkivert", () => {
