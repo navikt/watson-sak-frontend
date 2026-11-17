@@ -4,10 +4,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Varsel } from "./typer";
 import { VarselBjelle } from "./VarselBjelle";
 
-const state = vi.hoisted(() => ({ varsler: [] as Varsel[] }));
+const state = vi.hoisted(() => ({
+  varsler: [] as Varsel[],
+  antallUleste: undefined as number | undefined,
+}));
 vi.mock("./bruk-varsler", () => ({
   VARSLER_FETCHER_KEY: "varsler-polling",
   useVarsler: () => state.varsler,
+  useAntallUleste: () => state.antallUleste ?? state.varsler.filter((v) => !v.erLest).length,
   useRefreshVarsler: () => vi.fn(),
 }));
 
@@ -30,6 +34,16 @@ function visBjelle() {
 describe("VarselBjelle", () => {
   beforeEach(() => {
     state.varsler = [];
+    state.antallUleste = undefined;
+  });
+
+  it("viser totalt antall uleste fra backend, ikke bare de hentede varslene", async () => {
+    state.varsler = lagUlesteVarsler(50);
+    state.antallUleste = 55;
+    const { container } = visBjelle();
+
+    await screen.findByRole("button", { name: "Varsler, 55 uleste" });
+    expect(container.querySelector(".aksel-badge")?.textContent).toBe("55");
   });
 
   it("viser ikke merke når ingen varsler er uleste", async () => {

@@ -27,19 +27,19 @@ export function shouldRevalidate({
 
 export async function loader({ request }: LoaderFunctionArgs) {
   if (skalBrukeMockdata) {
-    return { varsler: hentUlesteVarslerFraMock(request) };
+    return hentUlesteVarslerFraMock(request);
   }
   const token = await getBackendOboToken(request);
   const bruker = await hentInnloggetBruker({ request, oboToken: token });
-  if (bruker.erLesebruker) return { varsler: [] };
+  if (bruker.erLesebruker) return { varsler: [], antallUleste: 0 };
   try {
-    return { varsler: await hentUlesteVarslerFraApi(token) };
+    return await hentUlesteVarslerFraApi(token);
   } catch (err) {
     if (erUtloggetFeil(err)) throw err;
     logger.warn("Klarte ikke hente varsler, faller tilbake til tom liste", {
       feil: String(err),
     });
-    return { varsler: [] };
+    return { varsler: [], antallUleste: 0 };
   }
 }
 

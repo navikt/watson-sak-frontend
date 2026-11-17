@@ -14,7 +14,7 @@ import { Link as RouterLink, useFetcher, useNavigate } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
-import { useVarsler, useRefreshVarsler, VARSLER_FETCHER_KEY } from "./bruk-varsler";
+import { useAntallUleste, useVarsler, useRefreshVarsler, VARSLER_FETCHER_KEY } from "./bruk-varsler";
 import type { Varsel } from "./typer";
 
 const ANTALL_VARSLER_I_OVERLAY = 5;
@@ -22,10 +22,11 @@ const POLLING_INTERVALL_MS = 60_000;
 
 export function VarselBjelle() {
   const varsler = useVarsler();
+  const antallUleste = useAntallUleste();
   const [erÅpen, setErÅpen] = useState(false);
   const knappRef = useRef<HTMLButtonElement>(null);
   const fetcher = useFetcher();
-  const pollingFetcher = useFetcher<{ varsler: Varsel[] }>({ key: VARSLER_FETCHER_KEY });
+  const pollingFetcher = useFetcher({ key: VARSLER_FETCHER_KEY });
   const navigate = useNavigate();
   const refreshVarsler = useRefreshVarsler();
   const prevFetcherState = useRef(fetcher.state);
@@ -47,7 +48,6 @@ export function VarselBjelle() {
     prevFetcherState.current = fetcher.state;
   }, [fetcher.state, refreshVarsler]);
 
-  const antallUleste = varsler.filter((v) => !v.erLest).length;
   const varslerIOverlay = varsler.filter((v) => !v.erLest).slice(0, ANTALL_VARSLER_I_OVERLAY);
 
   function håndterVarselKlikk(varsel: Varsel) {

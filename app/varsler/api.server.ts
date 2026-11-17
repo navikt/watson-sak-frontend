@@ -33,10 +33,20 @@ async function fetchVarslerPage(token: string, params: URLSearchParams, kontekst
   return parsed.data;
 }
 
-export async function hentUlesteVarsler(token: string): Promise<Varsel[]> {
+export interface UlesteVarsler {
+  /** De nyeste uleste varslene, maks én side. */
+  varsler: Varsel[];
+  /** Totalt antall uleste varsler hos backend, også de som ikke er med i `varsler`. */
+  antallUleste: number;
+}
+
+export async function hentUlesteVarsler(token: string): Promise<UlesteVarsler> {
   const params = new URLSearchParams({ kunUleste: "true", page: "1", size: "50" });
   const data = await fetchVarslerPage(token, params, "hentUlesteVarsler");
-  return data.items.map(tilVarsel).sort((a, b) => b.tidspunkt.localeCompare(a.tidspunkt));
+  return {
+    varsler: data.items.map(tilVarsel).sort((a, b) => b.tidspunkt.localeCompare(a.tidspunkt)),
+    antallUleste: data.totalItems,
+  };
 }
 
 export type Varselfilter = "uleste" | "leste";
