@@ -210,6 +210,8 @@ function formaterSaksendringer(hendelse: SakHendelse): string | null {
 
     if (endring.felt === "ytelser" || endring.felt === "arbeidsgivere") {
       if (endring.fra == null || endring.til == null) return [];
+      // Samme antall betyr at innholdet er endret, for eksempel en ytelse som er byttet ut.
+      if (endring.fra === endring.til) return [`${etikett} endret`];
       return [`${etikett} endret fra ${endring.fra} til ${endring.til}`];
     }
 

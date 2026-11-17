@@ -569,6 +569,15 @@ describe("nye historikktekster", () => {
     expect(hendelser.every((hendelse) => hendelse.opprettetAvNavn === "Kari Nordmann")).toBe(true);
   });
 
+  it("viser ytelser endret uten antall når antallet er det samme", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "SAK_REDIGERT",
+      saksendringer: [{ felt: "ytelser", fra: "1", til: "1" }],
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe("Ytelser endret");
+  });
+
   it("viser én arkivert fil med dokumentbeskrivelsen", () => {
     const hendelse = lagHendelse({
       hendelsesType: "JOURNALPOST_OPPRETTET",
