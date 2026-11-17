@@ -11,6 +11,8 @@ export const sakHendelseSchema = z
     kontrollsakHendelseResponseObjectSchema.extend({
       filnavn: z.string().nullable().optional(),
       dokumentnavn: z.string().nullable().optional(),
+      antallArkiverteDokumenter: z.number().int().nullable().optional(),
+      arkiverteDokumentnavn: z.array(z.string()).nullable().optional(),
       berortSaksbehandlerNavIdent: z.string().optional(),
       berortSaksbehandlerEnhet: z.string().optional(),
       saksendringer: z

@@ -301,7 +301,8 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
     case "NOTAT_SENDT":
       return "Notat opprettet i Gosys";
     case "JOURNALPOST_OPPRETTET":
-      return "Journalpost opprettet";
+      if (!hendelse.antallArkiverteDokumenter) return "Journalpost opprettet";
+      return hendelse.antallArkiverteDokumenter > 1 ? "Filer arkivert" : "Fil arkivert";
     case "OPPGAVE_OPPRETTET":
       return "Oppgave opprettet";
     case "OPPGAVE_ENDRET":
@@ -460,6 +461,17 @@ export function hendelseBeskrivelse(
     return hendelse.beskrivelse ?? null;
   }
 
+  if (hendelse.hendelsesType === "JOURNALPOST_OPPRETTET" && hendelse.antallArkiverteDokumenter) {
+    const flere = hendelse.antallArkiverteDokumenter > 1;
+    const navn = hendelse.arkiverteDokumentnavn ?? [];
+    return [
+      flere ? "Dokumenter arkivert som journalposter" : "Dokument arkivert i journalpost",
+      navn.length > 0 && `${flere ? "Dokumenter" : "Dokument"}: ${navn.join(", ")}`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
+
   if (hendelse.hendelsesType === "JOURNALPOST_OPPRETTET") {
     return hendelse.tittel ? `Type: ${formaterJournalposttype(hendelse.tittel)}` : null;
   }
@@ -585,7 +597,11 @@ export function HendelseBullet({ hendelse }: { hendelse: SakHendelse }) {
     case "NOTAT_SENDT":
       return <DocPencilIcon {...iconProps} />;
     case "JOURNALPOST_OPPRETTET":
-      return <DocPencilIcon {...iconProps} />;
+      return hendelse.antallArkiverteDokumenter ? (
+        <ArchiveIcon {...iconProps} />
+      ) : (
+        <DocPencilIcon {...iconProps} />
+      );
     case "OPPGAVE_OPPRETTET":
       return <TasklistIcon {...iconProps} />;
     case "FIL_LASTET_OPP":

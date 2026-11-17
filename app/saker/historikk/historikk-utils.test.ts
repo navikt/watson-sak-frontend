@@ -569,6 +569,47 @@ describe("nye historikktekster", () => {
     expect(hendelser.every((hendelse) => hendelse.opprettetAvNavn === "Kari Nordmann")).toBe(true);
   });
 
+  it("viser én arkivert fil på journalposten", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "JOURNALPOST_OPPRETTET",
+      antallArkiverteDokumenter: 1,
+      arkiverteDokumentnavn: ["kontoutskrift.pdf"],
+    });
+
+    expect(hendelseTittel(hendelse)).toBe("Fil arkivert");
+    expect(hendelseBeskrivelse(hendelse)).toBe(
+      "Dokument arkivert i journalpost\nDokument: kontoutskrift.pdf",
+    );
+  });
+
+  it("viser flere arkiverte filer på journalposten", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "JOURNALPOST_OPPRETTET",
+      antallArkiverteDokumenter: 3,
+      arkiverteDokumentnavn: ["a.pdf", "b.pdf", "Avhør"],
+    });
+
+    expect(hendelseTittel(hendelse)).toBe("Filer arkivert");
+    expect(hendelseBeskrivelse(hendelse)).toBe(
+      "Dokumenter arkivert som journalposter\nDokumenter: a.pdf, b.pdf, Avhør",
+    );
+  });
+
+  it("viser arkivering uten navn når filene mangler navn", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "JOURNALPOST_OPPRETTET",
+      antallArkiverteDokumenter: 2,
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe("Dokumenter arkivert som journalposter");
+  });
+
+  it("viser vanlig journalpost når ingenting er arkivert", () => {
+    expect(hendelseTittel(lagHendelse({ hendelsesType: "JOURNALPOST_OPPRETTET" }))).toBe(
+      "Journalpost opprettet",
+    );
+  });
+
   it("viser resultat lagret og slettet", () => {
     const lagret = lagHendelse({
       hendelsesType: "SAK_RESULTAT_ENDRET",
