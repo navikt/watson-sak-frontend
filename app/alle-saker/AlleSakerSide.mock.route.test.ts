@@ -7,7 +7,10 @@ const { hentAlleSakerMock, hentInnloggetBrukerMock } = vi.hoisted(() => ({
   hentInnloggetBrukerMock: vi.fn(),
 }));
 
-vi.mock("~/config/env.server", () => ({ skalBrukeMockdata: true }));
+vi.mock("~/config/env.server", () => ({
+  env: { ENVIRONMENT: "local-mock" },
+  skalBrukeMockdata: true,
+}));
 vi.mock("~/saker/mock-alle-saker.server", () => ({ hentAlleSaker: hentAlleSakerMock }));
 vi.mock("~/auth/innlogget-bruker.server", () => ({ hentInnloggetBruker: hentInnloggetBrukerMock }));
 vi.mock("~/saker/saksliste/adaptere", () => ({

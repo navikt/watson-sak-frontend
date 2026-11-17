@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("~/config/env.server", () => ({ BACKEND_API_URL: "http://backend" }));
+vi.mock("~/config/env.server", () => ({
+  env: { ENVIRONMENT: "local-mock" },
+  BACKEND_API_URL: "http://backend",
+}));
 vi.mock("~/logging/logging", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
 }));

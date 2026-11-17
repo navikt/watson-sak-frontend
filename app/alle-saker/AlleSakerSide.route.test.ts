@@ -7,7 +7,10 @@ const { hentKontrollsakerMock } = vi.hoisted(() => ({
 }));
 const hentSaksbehandlereMock = vi.hoisted(() => vi.fn().mockResolvedValue([]));
 
-vi.mock("~/config/env.server", () => ({ skalBrukeMockdata: false }));
+vi.mock("~/config/env.server", () => ({
+  env: { ENVIRONMENT: "local-mock" },
+  skalBrukeMockdata: false,
+}));
 vi.mock("~/auth/access-token", () => ({
   getBackendOboToken: vi.fn().mockResolvedValue("mock-token"),
 }));

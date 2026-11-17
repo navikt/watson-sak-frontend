@@ -171,7 +171,10 @@ export async function hentInnloggetBruker({
 
   return {
     preferredUsername: parseResult.preferred_username,
-    name: visningsnavn(parseResult.NAVident, parseResult.name),
+    name:
+      saksbehandlerInfo.erOpplaeringsbruker === true
+        ? saksbehandlerInfo.navn
+        : visningsnavn(parseResult.NAVident, parseResult.name),
     navIdent: parseResult.NAVident,
     enhet: saksbehandlerInfo.enhet ?? "Ukjent",
     enhetId: saksbehandlerInfo.enhetId,

@@ -3,6 +3,7 @@ import { BackendFeilException } from "~/saker/api-core.server";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { action, loader } from "./kommentarer.api";
 import { lagListe } from "./kommentar-fixtures";
+import { kommentarlisteKlientSchema } from "./typer";
 
 const { mockHentKontrollsak, mockHentKommentarliste, mockOpprettKommentartraad } = vi.hoisted(
   () => ({
@@ -113,5 +114,58 @@ describe("kommentarer.api loader — backend-modus", () => {
     expect(svar.data?.feilId).toMatch(/^[0-9a-f]{8}$/);
     expect(JSON.stringify(svar.data)).not.toContain("Skal ikke vises i svaret");
     expect(JSON.stringify(svar.data)).not.toContain("Kommentarinnhold");
+  });
+});
+
+describe("klientskjema for kommentarer", () => {
+  it("validerer og bevarer navnene valgt av BFF-en uten å overstyre dem på nytt", () => {
+    const klientListe = {
+      dokumentId: "d1",
+      kanKommentere: true,
+      traader: [
+        {
+          id: "traad",
+          dokumentId: "d1",
+          ankertype: "DOCUMENT",
+          anker: { type: "DOCUMENT" },
+          ankerVersjon: 1,
+          opprettetAvIdent: "Z993376",
+          opprettetAvNavn: "Backendnavn Petter",
+          opprettetAvErOpplaeringsbruker: true,
+          opprettet: "2026-01-01T10:00:00Z",
+          resolved: null,
+          adressert: false,
+          resolvedAvIdent: null,
+          resolvedAvNavn: null,
+          versjon: 0,
+          synlig: true,
+          kommentarer: [
+            {
+              id: "kommentar",
+              traadId: "traad",
+              tekst: "Kommentar",
+              forfatterIdent: "Z993471",
+              forfatterNavn: "Backendnavn Wenche",
+              forfatterErOpplaeringsbruker: true,
+              opprettet: "2026-01-01T10:00:00Z",
+              endret: "2026-01-01T10:00:00Z",
+            },
+          ],
+        },
+      ],
+    };
+
+    const parset = kommentarlisteKlientSchema.parse(klientListe);
+    expect(parset.traader[0]).toMatchObject({
+      opprettetAvNavn: "Backendnavn Petter",
+      resolvedAvNavn: null,
+      kommentarer: [
+        {
+          forfatterNavn: "Backendnavn Wenche",
+        },
+      ],
+    });
+    expect(parset.traader[0]).not.toHaveProperty("opprettetAvErOpplaeringsbruker");
+    expect(parset.traader[0].kommentarer[0]).not.toHaveProperty("forfatterErOpplaeringsbruker");
   });
 });

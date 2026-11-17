@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { visningsnavn } from "~/auth/visningsnavn";
 
 /** Maks lengde på politidistrikt. Samme grense som i watson-admin-api. */
 const POLITIDISTRIKT_MAKS_LENGDE = 100;
@@ -270,29 +269,37 @@ export const tillatteHandlingerResponseSchema = z.object({
 
 export type TillatteHandlingerResponse = z.infer<typeof tillatteHandlingerResponseSchema>;
 
-const saksbehandlerSchema = z
-  .object({
+type Visningsnavn = (navIdent: string, navn: string) => string;
+
+function lagSaksbehandlerSchema(visningsnavn?: Visningsnavn) {
+  const schema = z.object({
     navIdent: z.string(),
     navn: z.string(),
     enhet: z.string().nullable(),
     enhetId: z.string().nullable().optional(),
-  })
-  .transform((saksbehandler) => ({
-    ...saksbehandler,
-    navn: visningsnavn(saksbehandler.navIdent, saksbehandler.navn),
-  }));
+  });
+  return visningsnavn
+    ? schema.transform((saksbehandler) => ({
+        ...saksbehandler,
+        navn: visningsnavn(saksbehandler.navIdent, saksbehandler.navn),
+      }))
+    : schema;
+}
 
-const saksbehandlereSchema = z
-  .object({
-    eier: saksbehandlerSchema.nullable().optional(),
-    ansvarlig: saksbehandlerSchema.nullable().optional(),
-    deltMed: z.array(saksbehandlerSchema),
-    opprettetAv: saksbehandlerSchema,
-  })
-  .transform(({ eier, ansvarlig, ...rest }) => ({
-    ...rest,
-    eier: eier ?? ansvarlig ?? null,
-  }));
+function lagSaksbehandlereSchema(visningsnavn?: Visningsnavn) {
+  const saksbehandlerSchema = lagSaksbehandlerSchema(visningsnavn);
+  return z
+    .object({
+      eier: saksbehandlerSchema.nullable().optional(),
+      ansvarlig: saksbehandlerSchema.nullable().optional(),
+      deltMed: z.array(saksbehandlerSchema),
+      opprettetAv: saksbehandlerSchema,
+    })
+    .transform(({ eier, ansvarlig, ...rest }) => ({
+      ...rest,
+      eier: eier ?? ansvarlig ?? null,
+    }));
+}
 
 const kontrollsakYtelseSchema = z.object({
   id: z.string().uuid().optional(),
@@ -389,60 +396,68 @@ function normaliserKontrollsakInput(input: unknown): unknown {
   return input;
 }
 
-export const kontrollsakResponseSchema = z
-  .preprocess(
-    normaliserKontrollsakInput,
-    z.object({
-      id: z.number(),
-      kontrollobjekt: kontrollobjektSchema,
-      saksbehandlere: saksbehandlereSchema,
-      steg: kontrollsakStegSchema,
-      status: kontrollsakStatusSchema.nullable(),
-      statusFørBero: kontrollsakStatusSchema.nullable().optional(),
-      resultat: resultatResponseSchema.nullable().optional(),
-      kategori: kontrollsakKategoriSchema,
-      kilde: kontrollsakKildeSchema,
-      misbruktype: z.array(kontrollsakMisbrukstypeSchema),
-      prioritet: kontrollsakPrioritetSchema,
-      ytelser: z.array(kontrollsakYtelseSchema),
-      merking: z.array(z.string()).default([]),
-      oppgaver: z.array(oppgaveKortSchema).default([]),
-      kobledeSaker: z.array(z.number()).default([]),
-      dokumenter: z.array(dokumentNodeSchema).default([]),
-      tilgang: kontrollsakTilgangSchema.optional(),
-      opprettet: z.string(),
-      oppdatert: z.string().nullable(),
-      visLiggetidVarsel: z.preprocess(
-        (value) => (value === undefined ? false : value),
-        z.boolean().optional(),
-      ),
-      avsluttetTidspunkt: z.string().nullable().optional(),
-      filerTilgjengeligTil: z.string().nullable().optional(),
-      legacyPid: z.string().nullable().optional(),
-      legacyKilde: z.string().nullable().optional(),
-      enhet: z.string().nullable().optional(),
-    }),
-  )
-  .transform(({ kontrollobjekt, ...sak }) => ({
-    ...sak,
-    personIdent: kontrollobjekt.personIdent,
-    gjeldendePersonIdent: kontrollobjekt.gjeldendePersonIdent,
-    historiskeIdenter: kontrollobjekt.historiskeIdenter,
-    personNavn: kontrollobjekt.navn,
-    arbeidsgivere: kontrollobjekt.arbeidsgivere.map((a) => a.organisasjonsnummer),
-    adresseskjermet: kontrollobjekt.adresseskjermet,
-    ...(sak.tilgang ? { tilgang: sak.tilgang } : {}),
-  }));
+export function lagKontrollsakResponseSchema(visningsnavn?: Visningsnavn) {
+  return z
+    .preprocess(
+      normaliserKontrollsakInput,
+      z.object({
+        id: z.number(),
+        kontrollobjekt: kontrollobjektSchema,
+        saksbehandlere: lagSaksbehandlereSchema(visningsnavn),
+        steg: kontrollsakStegSchema,
+        status: kontrollsakStatusSchema.nullable(),
+        statusFørBero: kontrollsakStatusSchema.nullable().optional(),
+        resultat: resultatResponseSchema.nullable().optional(),
+        kategori: kontrollsakKategoriSchema,
+        kilde: kontrollsakKildeSchema,
+        misbruktype: z.array(kontrollsakMisbrukstypeSchema),
+        prioritet: kontrollsakPrioritetSchema,
+        ytelser: z.array(kontrollsakYtelseSchema),
+        merking: z.array(z.string()).default([]),
+        oppgaver: z.array(oppgaveKortSchema).default([]),
+        kobledeSaker: z.array(z.number()).default([]),
+        dokumenter: z.array(dokumentNodeSchema).default([]),
+        tilgang: kontrollsakTilgangSchema.optional(),
+        opprettet: z.string(),
+        oppdatert: z.string().nullable(),
+        visLiggetidVarsel: z.preprocess(
+          (value) => (value === undefined ? false : value),
+          z.boolean().optional(),
+        ),
+        avsluttetTidspunkt: z.string().nullable().optional(),
+        filerTilgjengeligTil: z.string().nullable().optional(),
+        legacyPid: z.string().nullable().optional(),
+        legacyKilde: z.string().nullable().optional(),
+        enhet: z.string().nullable().optional(),
+      }),
+    )
+    .transform(({ kontrollobjekt, ...sak }) => ({
+      ...sak,
+      personIdent: kontrollobjekt.personIdent,
+      gjeldendePersonIdent: kontrollobjekt.gjeldendePersonIdent,
+      historiskeIdenter: kontrollobjekt.historiskeIdenter,
+      personNavn: kontrollobjekt.navn,
+      arbeidsgivere: kontrollobjekt.arbeidsgivere.map((a) => a.organisasjonsnummer),
+      adresseskjermet: kontrollobjekt.adresseskjermet,
+      ...(sak.tilgang ? { tilgang: sak.tilgang } : {}),
+    }));
+}
+
+export const kontrollsakResponseSchema = lagKontrollsakResponseSchema();
 
 export type KontrollsakResponse = z.infer<typeof kontrollsakResponseSchema>;
 
-export const kontrollsakPageResponseSchema = z.object({
-  items: z.array(kontrollsakResponseSchema),
-  page: z.number(),
-  size: z.number(),
-  totalItems: z.number(),
-  totalPages: z.number(),
-});
+export function lagKontrollsakPageResponseSchema(visningsnavn?: Visningsnavn) {
+  return z.object({
+    items: z.array(lagKontrollsakResponseSchema(visningsnavn)),
+    page: z.number(),
+    size: z.number(),
+    totalItems: z.number(),
+    totalPages: z.number(),
+  });
+}
+
+export const kontrollsakPageResponseSchema = lagKontrollsakPageResponseSchema();
 
 export function normaliserHistoriskHendelseInput(input: unknown): unknown {
   if (!input || typeof input !== "object") {

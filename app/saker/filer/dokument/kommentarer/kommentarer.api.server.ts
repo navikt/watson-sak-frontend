@@ -1,15 +1,21 @@
 import { kastHvisUtlogget } from "~/auth/session-utløpt.server";
-import { BACKEND_API_URL } from "~/config/env.server";
+import { visningsnavn } from "~/auth/visningsnavn";
+import { BACKEND_API_URL, env } from "~/config/env.server";
 import { logger } from "~/logging/logging";
 import { sti } from "~/saker/sti-param.server";
 import {
-  kommentarlisteSchema,
-  kommentartraadSchema,
+  lagKommentarlisteSchema,
+  lagKommentartraadSchema,
   tilBackendAnker,
   type Anker,
   type Kommentarliste,
   type Kommentartraad,
 } from "./typer";
+
+const brukerBackendnavn = env.ENVIRONMENT === "dev" || env.ENVIRONMENT === "local-dev";
+const navneoverstyrer = brukerBackendnavn ? undefined : visningsnavn;
+const parseKommentarliste = lagKommentarlisteSchema(navneoverstyrer);
+const parseKommentartraad = lagKommentartraadSchema(navneoverstyrer);
 
 /**
  * Klient mot `DokumentKommentarController` i watson-admin-api, under
@@ -97,7 +103,7 @@ async function kastFeil(respons: Response, beskrivelse: string): Promise<never> 
 }
 
 function parseTraad(data: unknown, kontekst: string): Kommentartraad {
-  const resultat = kommentartraadSchema.safeParse(data);
+  const resultat = parseKommentartraad.safeParse(data);
   if (!resultat.success) {
     logger.error(`Schema-validering feilet for ${kontekst}`, { feil: resultat.error.format() });
     throw new Error(`Ugyldig svar fra watson-admin-api (${kontekst})`);
@@ -116,7 +122,7 @@ export async function hentKommentarliste(
   });
   if (!respons.ok) await kastFeil(respons, "Kunne ikke hente kommentarer");
 
-  const resultat = kommentarlisteSchema.safeParse(await respons.json());
+  const resultat = parseKommentarliste.safeParse(await respons.json());
   if (!resultat.success) {
     logger.error("Schema-validering feilet for hentKommentarliste", {
       feil: resultat.error.format(),

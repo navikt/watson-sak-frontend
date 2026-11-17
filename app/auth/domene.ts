@@ -7,6 +7,7 @@ export const SaksbehandlerInfoSchema = z.object({
   enhetId: z.string().nullable(),
   erLeder: z.boolean(),
   erLesebruker: z.boolean(),
+  erOpplaeringsbruker: z.boolean().optional(),
 });
 
 export type SaksbehandlerInfo = z.infer<typeof SaksbehandlerInfoSchema>;

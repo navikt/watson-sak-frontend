@@ -47,6 +47,7 @@ vi.mock("~/saker/api.server", async (importOriginal) => ({
 }));
 
 vi.mock("~/config/env.server", () => ({
+  env: { ENVIRONMENT: "local-mock" },
   get BACKEND_API_URL() {
     return "https://backend.test";
   },

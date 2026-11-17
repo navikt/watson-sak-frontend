@@ -1,6 +1,7 @@
 import { kastHvisUtlogget } from "~/auth/session-utløpt.server";
-import { BACKEND_API_URL } from "~/config/env.server";
+import { BACKEND_API_URL, env } from "~/config/env.server";
 import { logger } from "~/logging/logging";
+import { visningsnavn } from "~/auth/visningsnavn";
 import { lederStatistikkResponseSchema, type LederStatistikk } from "./types";
 
 /**
@@ -43,5 +44,18 @@ export async function hentLederStatistikk(
     throw new Error("Ugyldig svar fra watson-admin-api (lederstatistikk)");
   }
 
-  return resultat.data;
+  if (env.ENVIRONMENT === "dev" || env.ENVIRONMENT === "local-dev") {
+    return resultat.data;
+  }
+
+  return {
+    ...resultat.data,
+    ansatte: {
+      ...resultat.data.ansatte,
+      liste: resultat.data.ansatte.liste.map((ansatt) => ({
+        ...ansatt,
+        navn: visningsnavn(ansatt.navIdent, ansatt.navn),
+      })),
+    },
+  };
 }

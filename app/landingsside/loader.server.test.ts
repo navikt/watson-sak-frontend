@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { loader } from "./loader.server";
 
 vi.mock("~/config/env.server", () => ({
+  env: { ENVIRONMENT: "local-mock" },
   skalBrukeMockdata: true,
 }));
 
