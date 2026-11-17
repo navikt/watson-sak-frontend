@@ -20,8 +20,13 @@ export function hentDokument(request: Request, sakId: string, docId: string) {
   return _hentDokument(hentMockState(request), sakId, docId);
 }
 
-export function opprettDokument(request: Request, sakId: string, opprettetAv: string) {
-  return _opprettDokument(hentMockState(request), sakId, opprettetAv);
+export function opprettDokument(
+  request: Request,
+  sakId: string,
+  opprettetAv: string,
+  tittel?: string,
+) {
+  return _opprettDokument(hentMockState(request), sakId, opprettetAv, tittel);
 }
 
 export function lagreDokument(
@@ -69,6 +74,6 @@ export function gjenopprettDokumentHistorikk(
   return _gjenopprettDokumentHistorikk(hentMockState(request), sakId, docId, historikkId, endretAv);
 }
 
-export function slettDokument(request: Request, sakId: string, docId: string) {
-  return _slettDokument(hentMockState(request), sakId, docId);
+export function slettDokument(request: Request, sakId: string, docId: string, slettetAv?: string) {
+  return _slettDokument(hentMockState(request), sakId, docId, slettetAv);
 }

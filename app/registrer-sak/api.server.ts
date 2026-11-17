@@ -218,7 +218,8 @@ export async function lastOppFil(
         throw new Error(`Fant ikke sak ${sakId} for historikkhendelse ved filopplasting.`);
       }
       leggTilMockHendelse(request, sak, "FIL_LASTET_OPP", undefined, {
-        beskrivelse: fil.name,
+        beskrivelse: "Fil lastet opp",
+        filnavn: fil.name,
         opprettetAvNavn: opprettetAv,
         opprettetVedSaksopprettelse: true,
       });
