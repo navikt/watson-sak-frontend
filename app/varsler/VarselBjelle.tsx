@@ -14,7 +14,12 @@ import { Link as RouterLink, useFetcher, useNavigate } from "react-router";
 import { sporHendelse } from "~/analytics/analytics";
 import { RouteConfig } from "~/routeConfig";
 import { getSaksreferanse } from "~/saker/id";
-import { useAntallUleste, useVarsler, useRefreshVarsler, VARSLER_FETCHER_KEY } from "./bruk-varsler";
+import {
+  useAntallUleste,
+  useVarsler,
+  useRefreshVarsler,
+  VARSLER_FETCHER_KEY,
+} from "./bruk-varsler";
 import type { Varsel } from "./typer";
 
 const ANTALL_VARSLER_I_OVERLAY = 5;
