@@ -6,6 +6,7 @@ import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { hentAlleSaker, hentMineSaker } from "~/saker/mock-alle-saker.server";
 
 vi.mock("~/config/env.server", () => ({
+  env: { ENVIRONMENT: "local-mock" },
   skalBrukeMockdata: true,
 }));
 

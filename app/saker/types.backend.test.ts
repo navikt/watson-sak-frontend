@@ -34,6 +34,22 @@ const basisSak = {
 } as const;
 
 describe("kontrollsakResponseSchema – ny kontraktmodell", () => {
+  it("bevarer valgt visningsnavn når skjemaet parses på nytt i nettleseren", () => {
+    const sak = kontrollsakResponseSchema.parse({ ...basisSak, steg: "OPPRETTET" });
+    const valgtNavn = "Petter Øst";
+    const medValgtNavn = {
+      ...sak,
+      saksbehandlere: {
+        ...sak.saksbehandlere,
+        eier: { ...basisSak.saksbehandlere.ansvarlig, navn: valgtNavn },
+      },
+    };
+
+    const reparsert = kontrollsakResponseSchema.parse(medValgtNavn);
+
+    expect(reparsert.saksbehandlere.eier?.navn).toBe(valgtNavn);
+  });
+
   it("parser sak med steg OPPRETTET og status null", () => {
     const resultat = kontrollsakResponseSchema.safeParse({ ...basisSak, steg: "OPPRETTET" });
     expect(resultat.success).toBe(true);

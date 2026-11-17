@@ -1,15 +1,21 @@
 import { getBackendOboToken } from "~/auth/access-token";
 import { kastHvisUtlogget } from "~/auth/session-utløpt.server";
-import { BACKEND_API_URL, skalBrukeMockdata } from "~/config/env.server";
+import { BACKEND_API_URL, env, skalBrukeMockdata } from "~/config/env.server";
+import { visningsnavn } from "~/auth/visningsnavn";
 import { logger } from "~/logging/logging";
 import { BackendUtilgjengeligError } from "~/utils/backend-utilgjengelig.server";
-import { kontrollsakPageResponseSchema } from "~/saker/types.backend";
+import { lagKontrollsakPageResponseSchema } from "~/saker/types.backend";
 import { data } from "react-router";
 import { ANTALL_PER_SIDE } from "~/utils/paginering";
-import { ufordelteSakerResponseSchema } from "./types.backend";
+import { lagUfordelteSakerResponseSchema } from "./types.backend";
 import { sti } from "~/saker/sti-param.server";
 import type { KontrollsakPageResponse } from "./types.backend";
 import type { Aldersvarsel, ANSVARLIG_MEG } from "~/alle-saker/aldersfilter";
+
+const visningsnavnForMiljø =
+  env.ENVIRONMENT === "dev" || env.ENVIRONMENT === "local-dev" ? undefined : visningsnavn;
+const kontrollsakPageResponseSchema = lagKontrollsakPageResponseSchema(visningsnavnForMiljø);
+const ufordelteSakerResponseSchema = lagUfordelteSakerResponseSchema(visningsnavnForMiljø);
 
 type KontrollsakerFilter = {
   ansvarligNavIdent?: string;

@@ -1,8 +1,11 @@
-import { kontrollsakResponseSchema, type KontrollsakResponse } from "~/saker/types.backend";
+import { visningsnavn } from "~/auth/visningsnavn";
+import { lagKontrollsakResponseSchema, type KontrollsakResponse } from "~/saker/types.backend";
 import { normaliserLegacyKontrollsak, oppdaterTilgjengeligeHandlinger } from "~/saker/mock-uuid";
 import { registrerTomtDokumentområdeForSak } from "~/testing/mock-store/dokumenter.server";
 import { berikLegacySakMedPerson, hentMockPersonNavn } from "~/testing/mock-store/personer.server";
 import type { MockState } from "~/testing/mock-store/session.server";
+
+const kontrollsakResponseSchema = lagKontrollsakResponseSchema(visningsnavn);
 
 const deltMedEksempel = [
   {

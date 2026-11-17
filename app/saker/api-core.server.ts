@@ -1,7 +1,7 @@
 import { data } from "react-router";
 import { z } from "zod";
 import { kastHvisUtlogget } from "~/auth/session-utløpt.server";
-import { BACKEND_API_URL } from "~/config/env.server";
+import { BACKEND_API_URL, env } from "~/config/env.server";
 import { logger } from "~/logging/logging";
 import type {
   DokumentHistorikkSide,
@@ -10,6 +10,9 @@ import type {
 } from "~/saker/filer/typer";
 import { dokumentNodeSchema } from "./types.backend";
 import { visningsnavn } from "~/auth/visningsnavn";
+
+const visningsnavnForMiljø =
+  env.ENVIRONMENT === "dev" || env.ENVIRONMENT === "local-dev" ? undefined : visningsnavn;
 
 export const saksbehandlerListeSchema = z.array(
   z
@@ -22,7 +25,9 @@ export const saksbehandlerListeSchema = z.array(
     })
     .transform((saksbehandler) => ({
       ...saksbehandler,
-      navn: visningsnavn(saksbehandler.navIdent, saksbehandler.navn),
+      navn: visningsnavnForMiljø
+        ? visningsnavnForMiljø(saksbehandler.navIdent, saksbehandler.navn)
+        : saksbehandler.navn,
     })),
 );
 
@@ -45,7 +50,12 @@ const dokumentHistorikkNodeSchema = z.object({
 function medEndretAvVisningsnavn<T extends { endretAvIdent: string; endretAvNavn: string }>(
   node: T,
 ): T {
-  return { ...node, endretAvNavn: visningsnavn(node.endretAvIdent, node.endretAvNavn) };
+  return {
+    ...node,
+    endretAvNavn: visningsnavnForMiljø
+      ? visningsnavnForMiljø(node.endretAvIdent, node.endretAvNavn)
+      : node.endretAvNavn,
+  };
 }
 
 export const dokumentHistorikkResponseSchema = dokumentHistorikkNodeSchema

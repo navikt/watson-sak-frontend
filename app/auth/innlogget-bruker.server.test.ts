@@ -105,6 +105,86 @@ describe("hentInnloggetBruker", () => {
     expect(bruker.erLeder).toBe(true);
   });
 
+  it("bruker backendnavnet for opplæringsbruker med ident som ellers har overstyrt visningsnavn", async () => {
+    testState.environment = "dev";
+    parseAzureUserTokenMock.mockReturnValue({
+      ok: true,
+      preferred_username: "syntetisk.bruker@nav.no",
+      name: "Syntetisk Tokenbruker",
+      NAVident: "Z993376",
+    });
+    hentSaksbehandlerInfoMock.mockResolvedValue({
+      navIdent: "Z993376",
+      navn: "Syntetisk Opplaeringsbruker",
+      enhet: "Syntetisk enhet",
+      enhetId: "syntetisk-enhet",
+      erLeder: false,
+      erOpplaeringsbruker: true,
+    });
+    const { hentInnloggetBruker } = await import("./innlogget-bruker.server");
+
+    const bruker = await hentInnloggetBruker({
+      request: new Request("http://localhost"),
+      oboToken: "obo-token",
+    });
+
+    expect(bruker.name).toBe("Syntetisk Opplaeringsbruker");
+  });
+
+  it.each([false, undefined])(
+    "beholder overstyrt visningsnavn når opplæringsflagget er %s",
+    async (erOpplaeringsbruker) => {
+      testState.environment = "dev";
+      parseAzureUserTokenMock.mockReturnValue({
+        ok: true,
+        preferred_username: "syntetisk.bruker@nav.no",
+        name: "Syntetisk Tokenbruker",
+        NAVident: "Z993376",
+      });
+      hentSaksbehandlerInfoMock.mockResolvedValue({
+        navIdent: "Z993376",
+        navn: "Syntetisk Backendnavn",
+        enhet: "Syntetisk enhet",
+        enhetId: "syntetisk-enhet",
+        erLeder: false,
+        ...(erOpplaeringsbruker === undefined ? {} : { erOpplaeringsbruker }),
+      });
+      const { hentInnloggetBruker } = await import("./innlogget-bruker.server");
+
+      const bruker = await hentInnloggetBruker({
+        request: new Request("http://localhost"),
+        oboToken: "obo-token",
+      });
+
+      expect(bruker.name).toBe("Petter Øst");
+    },
+  );
+
+  it("beholder tokennavnet for ordinære brukere", async () => {
+    testState.environment = "dev";
+    parseAzureUserTokenMock.mockReturnValue({
+      ok: true,
+      preferred_username: "syntetisk.bruker@nav.no",
+      name: "Syntetisk Tokenbruker",
+      NAVident: "Z123456",
+    });
+    hentSaksbehandlerInfoMock.mockResolvedValue({
+      navIdent: "Z123456",
+      navn: "Syntetisk Backendnavn",
+      enhet: "Syntetisk enhet",
+      enhetId: "syntetisk-enhet",
+      erLeder: false,
+    });
+    const { hentInnloggetBruker } = await import("./innlogget-bruker.server");
+
+    const bruker = await hentInnloggetBruker({
+      request: new Request("http://localhost"),
+      oboToken: "obo-token",
+    });
+
+    expect(bruker.name).toBe("Syntetisk Tokenbruker");
+  });
+
   it("beholder mockbruker i local-mock", async () => {
     testState.environment = "local-mock";
 

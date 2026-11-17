@@ -37,6 +37,23 @@ const gyldigRespons = {
         antallAktive: 0,
         antallAktiveOverFrist: 0,
       },
+      {
+        navn: "Test Z993376",
+        navIdent: "Z993376",
+        erOpplaeringsbruker: true,
+        totaltAntallIkkeAvsluttede: 0,
+        antallOverFrist: 0,
+        antallAktive: 0,
+        antallAktiveOverFrist: 0,
+      },
+      {
+        navn: "Test Z993471",
+        navIdent: "Z993471",
+        totaltAntallIkkeAvsluttede: 0,
+        antallOverFrist: 0,
+        antallAktive: 0,
+        antallAktiveOverFrist: 0,
+      },
     ],
     ufordelt: {
       totaltAntallIkkeAvsluttede: 2,
@@ -48,11 +65,20 @@ const gyldigRespons = {
 };
 
 describe("lederStatistikkResponseSchema", () => {
-  it("godtar komplett lederstatistikk med ansatte uten saker", () => {
-    expect(lederStatistikkResponseSchema.parse(gyldigRespons)).toEqual({
-      ...gyldigRespons,
+  it("parser backendnavn og ignorerer det foreldede opplæringsflagget", () => {
+    const resultat = lederStatistikkResponseSchema.parse(gyldigRespons);
+
+    expect(resultat).toMatchObject({
+      ansatte: {
+        liste: [
+          { navIdent: "Z000001", navn: "Ada Ansatt" },
+          { navIdent: "Z993376", navn: "Test Z993376" },
+          { navIdent: "Z993471", navn: "Test Z993471" },
+        ],
+      },
       ledetEnheter: [],
     });
+    expect(resultat.ansatte.liste[1]).not.toHaveProperty("erOpplaeringsbruker");
   });
 
   it("krever alle aktive steg og statuser", () => {

@@ -7,6 +7,7 @@ const hentSakstilgangFraMock = vi.hoisted(() => vi.fn());
 const hentFilerForSak = vi.hoisted(() => vi.fn());
 
 vi.mock("~/config/env.server", () => ({
+  env: { ENVIRONMENT: "local-mock" },
   get skalBrukeMockdata() {
     return testState.brukerMockdata;
   },

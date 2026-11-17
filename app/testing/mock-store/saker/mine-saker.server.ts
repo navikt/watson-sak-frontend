@@ -1,4 +1,5 @@
-import { kontrollsakResponseSchema } from "~/saker/types.backend";
+import { visningsnavn } from "~/auth/visningsnavn";
+import { lagKontrollsakResponseSchema } from "~/saker/types.backend";
 import { normaliserLegacyKontrollsak } from "~/saker/mock-uuid";
 import { berikLegacySakMedPerson, hentMockPersonNavn } from "~/testing/mock-store/personer.server";
 import {
@@ -8,6 +9,8 @@ import {
 } from "~/testing/mock-store/saker/mine-saker.fixtures.server";
 
 export { mockMineSakerInnloggetNavIdent };
+
+const kontrollsakResponseSchema = lagKontrollsakResponseSchema(visningsnavn);
 
 function lagMockMineKontrollsaker() {
   const legacySaker = initialeMockMineKontrollsaker.map((sak) =>

@@ -1,8 +1,16 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+const environmentMock = vi.hoisted((): { ENVIRONMENT: string } => ({ ENVIRONMENT: "dev" }));
+
 vi.mock("~/config/env.server", () => ({
   BACKEND_API_URL: "https://backend.test",
   skalBrukeMockdata: false,
+  env: environmentMock,
+}));
+
+vi.mock("~/auth/visningsnavn", () => ({
+  visningsnavn: (navIdent: string, navn: string) =>
+    navIdent === "Z999999" ? "Frontend-testnavn" : navn,
 }));
 
 const getBackendOboTokenMock = vi.hoisted(() => vi.fn().mockResolvedValue("obo-token"));
@@ -35,10 +43,42 @@ const fordelingsSvar = {
   organisasjonsvalg: [{ verdi: "enhet:4812", label: "NAV Kontroll Øst", type: "enhet" }],
 };
 
+const sakMedSaksbehandler = {
+  id: 101,
+  kontrollobjekt: { personIdent: "12345678901", navn: "Kontrollobjekt" },
+  saksbehandlere: {
+    deltMed: [],
+    opprettetAv: { navIdent: "Z999999", navn: "Backendnavn", enhet: null },
+  },
+  steg: "OPPRETTET",
+  status: null,
+  kategori: "ARBEID",
+  kilde: "TIPS",
+  misbruktype: [],
+  prioritet: "NORMAL",
+  ytelser: [],
+  opprettet: "2025-01-01T00:00:00Z",
+  oppdatert: null,
+};
+
+const sideMedSak = {
+  items: [sakMedSaksbehandler],
+  page: 1,
+  size: 20,
+  totalItems: 1,
+  totalPages: 1,
+};
+
+const fordelingsSvarMedSak = {
+  ...fordelingsSvar,
+  ...sideMedSak,
+};
+
 describe("Fordeling api.server", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+    environmentMock.ENVIRONMENT = "dev";
   });
 
   it("henter kontrollsaker fra backend med bearer-token", async () => {
@@ -332,6 +372,69 @@ describe("Fordeling api.server", () => {
       hentKontrollsakerForFordeling(new Request("http://localhost/fordeling")),
     ).rejects.toThrow("Ugyldig svar fra watson-admin-api (ufordelte saker)");
     expect(JSON.stringify(error.mock.calls)).not.toContain("ikke-logg-meg");
+  });
+
+  it("bruker backendnavn i dev og frontend-overstyring i prod for begge svarschemaene", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    environmentMock.ENVIRONMENT = "dev";
+    vi.resetModules();
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => fordelingsSvarMedSak,
+    });
+    const devApi = await import("./api.server");
+    const devSide = await devApi.hentKontrollsaker({ token: "t", page: 1, size: 20 });
+    const devFordeling = await devApi.hentKontrollsakerForFordeling(
+      new Request("http://localhost/fordeling"),
+    );
+    expect(devSide.items[0].saksbehandlere.opprettetAv).toMatchObject({
+      navIdent: "Z999999",
+      navn: "Backendnavn",
+    });
+    expect(devFordeling?.items[0].saksbehandlere.opprettetAv).toMatchObject({
+      navIdent: "Z999999",
+      navn: "Backendnavn",
+    });
+
+    environmentMock.ENVIRONMENT = "prod";
+    vi.resetModules();
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => fordelingsSvarMedSak,
+    });
+    const prodApi = await import("./api.server");
+    const prodSide = await prodApi.hentKontrollsaker({ token: "t", page: 1, size: 20 });
+    const prodFordeling = await prodApi.hentKontrollsakerForFordeling(
+      new Request("http://localhost/fordeling"),
+    );
+    expect(prodSide.items[0].saksbehandlere.opprettetAv).toMatchObject({
+      navIdent: "Z999999",
+      navn: "Frontend-testnavn",
+    });
+    expect(prodFordeling?.items[0].saksbehandlere.opprettetAv).toMatchObject({
+      navIdent: "Z999999",
+      navn: "Frontend-testnavn",
+    });
+    expect(prodFordeling?.oppsummering).toEqual({
+      antallSaker: 21,
+      eldsteLiggetidDager: 30,
+    });
+
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        ...fordelingsSvarMedSak,
+        oppsummering: { antallSaker: -1, eldsteLiggetidDager: 30 },
+      }),
+    });
+    await expect(
+      prodApi.hentKontrollsakerForFordeling(new Request("http://localhost/fordeling")),
+    ).rejects.toThrow("Ugyldig svar fra watson-admin-api (ufordelte saker)");
   });
 
   it("sender tildeling til backend med saksbehandler", async () => {
