@@ -49,7 +49,7 @@ describe("layout-loaderens autentisering", () => {
       erLeder: false,
       erLesebruker: true,
     });
-    await expect(loader(args())).resolves.toEqual({ varsler: [] });
+    await expect(loader(args())).resolves.toEqual({ varsler: [], antallUleste: 0 });
     expect(hentUlesteVarsler).not.toHaveBeenCalled();
   });
 
@@ -61,6 +61,6 @@ describe("layout-loaderens autentisering", () => {
 
   it("beholder tom varselliste ved andre feil", async () => {
     vi.mocked(hentUlesteVarsler).mockRejectedValue(new Error("Backend er utilgjengelig"));
-    await expect(loader(args())).resolves.toEqual({ varsler: [] });
+    await expect(loader(args())).resolves.toEqual({ varsler: [], antallUleste: 0 });
   });
 });

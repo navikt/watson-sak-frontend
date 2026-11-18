@@ -6,7 +6,8 @@ import {
 } from "~/testing/mock-store/varsler.server";
 
 export function hentUlesteVarsler(request: Request) {
-  return _hentUlesteVarsler(hentMockState(request));
+  const varsler = _hentUlesteVarsler(hentMockState(request));
+  return { varsler, antallUleste: varsler.length };
 }
 
 export function hentVarsler(request: Request) {

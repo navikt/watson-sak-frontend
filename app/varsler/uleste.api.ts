@@ -7,14 +7,14 @@ import { hentUlesteVarsler as hentUlesteVarslerFraMock } from "./mock-data.serve
 
 export async function loader({ request }: LoaderFunctionArgs) {
   if (skalBrukeMockdata) {
-    return { varsler: hentUlesteVarslerFraMock(request) };
+    return hentUlesteVarslerFraMock(request);
   }
 
   const token = await getBackendOboToken(request);
   try {
-    return { varsler: await hentUlesteVarslerFraApi(token) };
+    return await hentUlesteVarslerFraApi(token);
   } catch (err) {
     logger.warn("Klarte ikke hente uleste varsler", { feil: String(err) });
-    return { varsler: [] };
+    return { varsler: [], antallUleste: 0 };
   }
 }
