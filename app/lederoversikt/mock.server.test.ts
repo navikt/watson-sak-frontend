@@ -71,7 +71,7 @@ describe("lagMockLederStatistikk", () => {
     expect(resultat.enhet.perSteg.POLITI).toBe(1);
     expect(resultat.enhet.perSteg.FORVALTNING).toBe(1);
     expect(resultat.enhet.perSteg.UTREDNING).toBe(1);
-    expect(resultat.enhet.perStatus.UTEN_STATUS).toBe(2);
+    expect(resultat.enhet.perStatus).not.toHaveProperty("UTEN_STATUS");
     expect(resultat.enhet.perStatus.AKTIV).toBe(0);
     expect(lederStatistikkResponseSchema.safeParse(resultat).success).toBe(true);
     expect(resultat.enhet.perStatus.I_BERO).toBe(1);

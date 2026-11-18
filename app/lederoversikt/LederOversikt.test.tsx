@@ -19,7 +19,6 @@ function lagStatistikk(overstyringer: Partial<LederStatistikk> = {}): LederStati
         POLITI: 0,
       },
       perStatus: {
-        UTEN_STATUS: 0,
         AKTIV: 0,
         VENTER_PA_INFORMASJON: 0,
         VENTER_PA_VEDTAK: 0,

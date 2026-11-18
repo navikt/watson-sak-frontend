@@ -58,7 +58,6 @@ function lenkeForNøkkeltall(
       return lagStegfilterUrl(["UTREDNING", "STRAFFERETTSLIG_VURDERING"], data, [
         "AKTIV",
         "PAAKLAGET",
-        "UTEN_STATUS",
       ]);
     case "Venter på andre":
       return lagStegfilterUrl(ALLE_STEG, data, [
@@ -66,8 +65,6 @@ function lenkeForNøkkeltall(
         "VENTER_PA_VEDTAK",
         "VENTER_PA_RESULTAT",
         "I_BERO",
-        "HOS_FORVALTNING",
-        "HOS_POLITI",
       ]);
     case "Ikke fordelt":
       return RouteConfig.FORDELING;

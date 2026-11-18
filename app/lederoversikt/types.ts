@@ -9,7 +9,6 @@ export const LEDERSTATISTIKK_STEG = [
 ] as const;
 
 const lederStatusSchema = z.enum([
-  "UTEN_STATUS",
   "AKTIV",
   "VENTER_PA_INFORMASJON",
   "VENTER_PA_VEDTAK",
@@ -42,7 +41,8 @@ export const lederStatistikkResponseSchema = z.object({
       POLITI: antallSchema,
     }),
     perStatus: z.object({
-      UTEN_STATUS: antallSchema,
+      /** Fjernes når backend uten UTEN_STATUS er i prod (TH-149). */
+      UTEN_STATUS: antallSchema.optional(),
       AKTIV: antallSchema,
       VENTER_PA_INFORMASJON: antallSchema,
       VENTER_PA_VEDTAK: antallSchema,

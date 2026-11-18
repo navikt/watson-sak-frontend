@@ -13,7 +13,6 @@ import {
 } from "./types";
 
 const STATUSER: LederStatus[] = [
-  "UTEN_STATUS",
   "AKTIV",
   "VENTER_PA_INFORMASJON",
   "VENTER_PA_VEDTAK",
@@ -47,10 +46,7 @@ export function lagMockLederStatistikk(
     LEDERSTATISTIKK_STEG.map((steg) => [steg, saker.filter((sak) => sak.steg === steg).length]),
   ) as LederStatistikk["enhet"]["perSteg"];
   const perStatus = Object.fromEntries(
-    STATUSER.map((status) => [
-      status,
-      saker.filter((sak) => (sak.status ?? "UTEN_STATUS") === status).length,
-    ]),
+    STATUSER.map((status) => [status, saker.filter((sak) => sak.status === status).length]),
   ) as Record<LederStatus, number>;
 
   const ansatte: LederAnsattStatistikk[] = mockSaksbehandlerDetaljer

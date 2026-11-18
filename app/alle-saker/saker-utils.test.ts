@@ -263,12 +263,12 @@ describe("filtrerSaker", () => {
       filtrerSaker(sakerMedArbeidsfilter, {
         ...grunnfilter,
         steg: ALLE_STEG,
-        status: ["VENTER_PA_INFORMASJON", "I_BERO", "HOS_FORVALTNING", "HOS_POLITI"],
+        status: ["VENTER_PA_INFORMASJON", "I_BERO"],
       }).map((sak) => sak.id),
-    ).toEqual([402, 403, 404, 405]);
+    ).toEqual([402, 404]);
   });
 
-  it("venter på andre kombinerer to steg og to statuser med ELLER uten krav om ansvarlig", () => {
+  it("venter på andre kombinerer statuser med ELLER uten krav om ansvarlig", () => {
     const utenAnsvarlig = {
       eier: null,
       deltMed: [],
@@ -306,10 +306,10 @@ describe("filtrerSaker", () => {
       misbrukstype: [],
       merking: [],
       steg: ALLE_STEG,
-      status: ["VENTER_PA_INFORMASJON", "I_BERO", "HOS_FORVALTNING", "HOS_POLITI"],
+      status: ["VENTER_PA_INFORMASJON", "I_BERO", "VENTER_PA_VEDTAK", "VENTER_PA_RESULTAT"],
     });
 
-    expect(resultat.map((sak) => sak.id)).toEqual([1, 2, 3, 4, 5, 12]);
+    expect(resultat.map((sak) => sak.id)).toEqual([1, 2, 5, 6, 7]);
   });
 
   it("filtrerer på status", () => {
@@ -332,7 +332,7 @@ describe("filtrerSaker", () => {
     expect(resultat.map((sak) => sak.id)).toEqual([500]);
   });
 
-  it("lar statusvalg brukes enkeltvis og avgrenses av steg", () => {
+  it("lar statusvalg avgrenses av steg", () => {
     const sakerMedStatus = [
       lagSak({ id: 1, steg: "UTREDNING", status: "I_BERO" }),
       lagSak({ id: 2, steg: "FORVALTNING", status: "AKTIV" }),
@@ -346,9 +346,9 @@ describe("filtrerSaker", () => {
       merking: [],
       steg: [],
     };
-    expect(
-      filtrerSaker(sakerMedStatus, { ...filter, status: ["HOS_FORVALTNING"] }).map((s) => s.id),
-    ).toEqual([2]);
+    expect(filtrerSaker(sakerMedStatus, { ...filter, status: ["AKTIV"] }).map((s) => s.id)).toEqual(
+      [2],
+    );
     expect(
       filtrerSaker(sakerMedStatus, { ...filter, status: ["I_BERO"] }).map((s) => s.id),
     ).toEqual([1, 3]);
@@ -356,7 +356,7 @@ describe("filtrerSaker", () => {
       filtrerSaker(sakerMedStatus, {
         ...filter,
         steg: ["UTREDNING"],
-        status: ["I_BERO", "HOS_POLITI"],
+        status: ["I_BERO", "AKTIV"],
       }).map((s) => s.id),
     ).toEqual([1]);
   });

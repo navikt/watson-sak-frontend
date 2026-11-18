@@ -3,23 +3,24 @@ import type { KontrollsakResponse } from "~/saker/types.backend";
 import { matcherStatusfilter, parseStatusfilter, tilBackendStatusfilter } from "./statusfilter";
 
 describe("statusfilter", () => {
-  it("oversetter «Uten status» til utenStatus, sammen med andre statuser", () => {
-    expect(
-      tilBackendStatusfilter(parseStatusfilter(["AKTIV", "PAAKLAGET", "UTEN_STATUS"])),
-    ).toEqual({
+  it("sender bare statuser til backend", () => {
+    expect(tilBackendStatusfilter(["AKTIV", "PAAKLAGET"])).toEqual({
       status: ["AKTIV", "PAAKLAGET"],
-      statusSteg: undefined,
-      utenStatus: true,
     });
+    expect(tilBackendStatusfilter([])).toEqual({ status: undefined });
   });
 
-  it("utelater utenStatus når «Uten status» ikke er valgt", () => {
-    expect(tilBackendStatusfilter(["AKTIV"]).utenStatus).toBeUndefined();
+  it("ignorerer ukjente verdier fra eldre bokmerker", () => {
+    expect(
+      parseStatusfilter(["AKTIV", "UTEN_STATUS", "HOS_FORVALTNING", "HOS_POLITI", "ukjent"]),
+    ).toEqual(["AKTIV"]);
   });
 
-  it("matcher saker uten status bare med «Uten status»", () => {
+  it("matcher bare saker med valgt status", () => {
     const sak = { steg: "UTREDNING", status: null } as KontrollsakResponse;
-    expect(matcherStatusfilter(sak, ["UTEN_STATUS"])).toBe(true);
     expect(matcherStatusfilter(sak, ["AKTIV"])).toBe(false);
+    expect(matcherStatusfilter({ ...sak, status: "AKTIV" } as KontrollsakResponse, ["AKTIV"])).toBe(
+      true,
+    );
   });
 });
