@@ -3,7 +3,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
 import { getSaksreferanse } from "~/saker/id";
 import { mapKontrollsakTilSakslisteRad } from "~/saker/saksliste/adaptere";
-import type { KontrollsakResponse } from "~/saker/types.backend";
+import type { KontrollsakResponse, KontrollsakStatus } from "~/saker/types.backend";
 import { MineSakerInnhold } from "./MineSakerInnhold";
 
 function lagKontrollsak(overrides: Partial<KontrollsakResponse> = {}): KontrollsakResponse {
@@ -70,7 +70,7 @@ const standardAktivtFilter = {
     "FORVALTNING" as const,
     "STRAFFERETTSLIG_VURDERING" as const,
   ],
-  status: [] as ("INGEN" | "VENTER_PA_INFORMASJON" | "VENTER_PA_VEDTAK")[],
+  status: [] as KontrollsakStatus[],
 };
 
 type Props = React.ComponentProps<typeof MineSakerInnhold>;

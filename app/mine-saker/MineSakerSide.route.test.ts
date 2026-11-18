@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { loader } from "./MineSakerSide.route";
-import { filtrerMineSaker } from "./filtre";
+import { filtrerMineSaker, parseVentestatuser } from "./filtre";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import { hentInnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { hentAlleSaker, hentMineSaker } from "~/saker/mock-alle-saker.server";
@@ -95,7 +95,7 @@ describe("MineSakerSide loader", () => {
     });
     expect(resultat.filterAlternativer.status.length).toBe(6);
     expect(resultat.filterAlternativer.status).toContainEqual({
-      verdi: "INGEN",
+      verdi: "AKTIV",
       etikett: "Aktiv",
     });
   });
@@ -236,12 +236,12 @@ describe("MineSakerSide loader", () => {
     "returnerer filtrerte treffantall for aktiv og inaktiv fane når fane er %s",
     async ({ fane, mineAntall, delteAntall }) => {
       const mine = Array.from({ length: 25 }, (_, index) =>
-        lagKontrollsak({ id: 300 + index, status: index < mineAntall ? null : "I_BERO" }),
+        lagKontrollsak({ id: 300 + index, status: index < mineAntall ? "AKTIV" : "I_BERO" }),
       );
       const delte = Array.from({ length: 23 }, (_, index) =>
         lagKontrollsak({
           id: 400 + index,
-          status: index < delteAntall ? null : "I_BERO",
+          status: index < delteAntall ? "AKTIV" : "I_BERO",
           saksbehandlere: {
             eier: { navIdent: "Y111111", navn: "Annen Behandler", enhet: "4812" },
             deltMed: [{ navIdent: "Z999999", navn: "Saks Behandlersen", enhet: "4812" }],
@@ -254,7 +254,7 @@ describe("MineSakerSide loader", () => {
 
       const resultat = await loader({
         ...loaderArgs,
-        request: new Request(`http://localhost/mine-saker?fane=${fane}&status=INGEN`),
+        request: new Request(`http://localhost/mine-saker?fane=${fane}&status=AKTIV`),
       });
 
       expect(resultat.antallMineSaker).toBe(mineAntall);
@@ -283,15 +283,16 @@ describe("filtrerMineSaker", () => {
     expect(filtrerMineSaker(saker, ["UTREDNING"], []).map((sak) => sak.id)).toEqual([9, 10]);
   });
 
-  it("filtrerer på ventestatus INGEN (ikke blokkert)", () => {
+  it("filtrerer på ventestatus AKTIV", () => {
     const saker = [
-      lagKontrollsak({ status: null }),
+      lagKontrollsak({ status: "AKTIV" }),
+      lagKontrollsak({ id: 10, status: null }),
       lagKontrollsak({ status: "VENTER_PA_VEDTAK" }),
     ];
 
-    const resultat = filtrerMineSaker(saker, [], ["INGEN"]);
+    const resultat = filtrerMineSaker(saker, [], ["AKTIV"]);
     expect(resultat).toHaveLength(1);
-    expect(resultat[0].status).toBeNull();
+    expect(resultat[0].status).toBe("AKTIV");
   });
 
   it("filtrerer på ventestatus med blokkeringsårsak", () => {
@@ -308,15 +309,20 @@ describe("filtrerMineSaker", () => {
 
   it("kombinerer steg- og ventestatusfiltre", () => {
     const saker = [
-      lagKontrollsak({ steg: "OPPRETTET", status: null }),
+      lagKontrollsak({ steg: "OPPRETTET", status: "AKTIV" }),
+      lagKontrollsak({ id: 10, steg: "OPPRETTET", status: null }),
       lagKontrollsak({ steg: "OPPRETTET", status: "I_BERO" }),
       lagKontrollsak({ steg: "AVSLUTTET", status: null }),
     ];
 
-    const resultat = filtrerMineSaker(saker, ["OPPRETTET"], ["INGEN"]);
+    const resultat = filtrerMineSaker(saker, ["OPPRETTET"], ["AKTIV"]);
     expect(resultat).toHaveLength(1);
     expect(resultat[0].steg).toBe("OPPRETTET");
-    expect(resultat[0].status).toBeNull();
+    expect(resultat[0].status).toBe("AKTIV");
+  });
+
+  it("tolker gammel URL-verdi INGEN som AKTIV", () => {
+    expect(parseVentestatuser(["INGEN"])).toEqual(["AKTIV"]);
   });
 
   it("returnerer alle saker når ingen filtre er satt", () => {

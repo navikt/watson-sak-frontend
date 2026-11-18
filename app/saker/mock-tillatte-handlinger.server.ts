@@ -342,7 +342,7 @@ export function hentMockTillatteHandlinger(sak: KontrollsakResponse): TillatteHa
     erGyldigMockStegovergang(sak, nesteSteg),
   );
   const statusvalg: Record<KontrollsakSteg, (KontrollsakStatus | null)[]> = {
-    OPPRETTET: [null],
+    OPPRETTET: ["AKTIV"],
     UTREDNING: ["AKTIV", "VENTER_PA_INFORMASJON"],
     UTREDES: ["AKTIV", "VENTER_PA_INFORMASJON"],
     FORVALTNING: ["VENTER_PA_VEDTAK"],

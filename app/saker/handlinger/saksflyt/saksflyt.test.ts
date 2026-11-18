@@ -223,9 +223,9 @@ describe("hentStartverdier", () => {
     expect(hentStartverdier(endreStatus, tillatte)).toEqual({ status: "VENTER_PA_INFORMASJON" });
   });
 
-  it("bruker egen verdi for Aktiv når saken ikke har status", () => {
-    const tillatte = lagTillatteHandlinger({ steg: "OPPRETTET", status: null });
-    expect(hentStartverdier(endreStatus, tillatte)).toEqual({ status: INGEN_STATUS });
+  it("bruker AKTIV som startverdi for en opprettet sak", () => {
+    const tillatte = lagTillatteHandlinger({ steg: "OPPRETTET", status: "AKTIV" });
+    expect(hentStartverdier(endreStatus, tillatte)).toEqual({ status: "AKTIV" });
   });
 });
 

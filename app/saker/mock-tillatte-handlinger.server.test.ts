@@ -24,6 +24,17 @@ describe("hentMockTillatteHandlinger", () => {
     ).toEqual(["AKTIV", "VENTER_PA_INFORMASJON"]);
   });
 
+  it("lar en opprettet sak i bero gjenopptas med AKTIV status", () => {
+    const tillatteStatuser = lagTillatteHandlinger({
+      steg: "OPPRETTET",
+      status: "I_BERO",
+      statusFørBero: null,
+    }).tillatteStatuser;
+
+    expect(tillatteStatuser).toContain("AKTIV");
+    expect(tillatteStatuser).not.toContain(null);
+  });
+
   it("tilbyr nøyaktig de sju henleggelsesårsakene for utredning, i fast rekkefølge", () => {
     expect(henleggelsesarsakerFor("utredning.henleggelsesarsak", "UTREDNING")).toEqual([
       { verdi: "IKKE_KAPASITET", etikett: "Ikke kapasitet" },
