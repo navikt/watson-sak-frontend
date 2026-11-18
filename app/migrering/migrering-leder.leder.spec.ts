@@ -10,7 +10,7 @@ test.describe("Flytt fra Access for leder", () => {
     await page.waitForLoadState("networkidle");
   });
 
-  test("viser én samlet liste med saksbehandler, og personnummer bare på egne saker", async ({
+  test("viser én samlet liste med saksbehandler, og personnummer på alle saker", async ({
     page,
   }) => {
     await expect(page.getByRole("table")).toHaveCount(1);
@@ -30,7 +30,7 @@ test.describe("Flytt fra Access for leder", () => {
 
     const andres = page.getByRole("row", { name: /700002/ });
     await expect(andres).toContainText("Trine Trygdesen");
-    await expect(andres).not.toContainText(/\d{6} ?\d{5}/);
+    await expect(andres).toContainText("997000 02999");
     await expect(
       page.getByRole("button", { name: "Flytt sak med PID 700002 fra Access" }),
     ).toHaveCount(0);
