@@ -125,7 +125,12 @@ function diffStegOgStatus(hendelse: SakHendelse, forrigeHendelse?: SakHendelse) 
 
 function stegTittel(steg: SakHendelse["steg"]): string {
   if (steg === "UTREDES") return "Sak utredes";
-  if (steg === "UTREDNING" || steg === "FORVALTNING" || steg === "STRAFFERETTSLIG_VURDERING") {
+  if (
+    steg === "UTREDNING" ||
+    steg === "FORVALTNING" ||
+    steg === "STRAFFERETTSLIG_VURDERING" ||
+    steg === "POLITI"
+  ) {
     return `Sak til ${formaterSteg(steg).toLocaleLowerCase("nb-NO")}`;
   }
   return `Sak ${formaterSteg(steg).toLocaleLowerCase("nb-NO")}`;

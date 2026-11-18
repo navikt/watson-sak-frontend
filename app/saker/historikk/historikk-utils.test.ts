@@ -788,7 +788,7 @@ describe("SAK_STATUS_ENDRET (generisk hendelse fra backend for status- og arbeid
   it("viser statusendring uten forrigeHendelse som om alt er endret (bakoverkompatibelt)", () => {
     const hendelse = lagHendelse({ hendelsesType: "SAK_STATUS_ENDRET", steg: "POLITI" });
 
-    expect(hendelseTittel(hendelse)).toBe("Sak politi");
+    expect(hendelseTittel(hendelse)).toBe("Sak til politi");
     expect(hendelseBeskrivelse(hendelse)).toBe("Steg: Politi");
   });
 
