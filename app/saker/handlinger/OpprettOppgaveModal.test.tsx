@@ -78,7 +78,7 @@ const defaultProps = {
   arkiv,
 };
 
-function fyllUtSkjema() {
+function fyllUtSkjema({ gjelderverdi = "ab0356" }: { gjelderverdi?: string } = {}) {
   fireEvent.change(screen.getByLabelText("Tema"), { target: { value: "KTA" } });
   fireEvent.change(screen.getByLabelText("Oppgavetype"), { target: { value: "VURD_HENV" } });
   fireEvent.change(screen.getByLabelText("Prioritet"), { target: { value: "HOY" } });
@@ -86,8 +86,9 @@ function fyllUtSkjema() {
   for (const [navn, verdi] of [
     ["frist", "2026-06-01"],
     ["behandlendeEnhet", "4100"],
-    ["gjelderverdi", "ab0356"],
+    ["gjelderverdi", gjelderverdi],
   ]) {
+    if (!verdi) continue;
     fireEvent.change(document.querySelector(`input[name="${navn}"]`) as HTMLInputElement, {
       target: { value: verdi },
     });
@@ -192,6 +193,37 @@ describe("OpprettOppgaveModal", () => {
     expect(formData.get("journalpostId")).toBe("jp-1");
     expect(formData.get("gjelderverdi")).toBe("ab0356");
     expect(options).toEqual(expect.objectContaining({ method: "post" }));
+  });
+
+  it("skjuler gjelderverdi og oppretter uten når temaet ikke har gjelderverdier", async () => {
+    kodeverkMock.tilstand = {
+      status: "ok",
+      kodeverk: { ...kodeverkOk.kodeverk, gjelderverdier: [] },
+    };
+    await renderMedRouter(<OpprettOppgaveModal {...defaultProps} />);
+
+    expect(screen.queryByLabelText("Gjelderverdi")).toBeNull();
+    fyllUtSkjema({ gjelderverdi: "" });
+    fireEvent.click(screen.getByRole("radio", { name: "Orienteringsnotat" }));
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+
+    expect(await screen.findByText("Du oppretter nå en oppgave:")).toBeDefined();
+    expect(screen.queryByText("Gjelderverdi")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Opprett" }));
+
+    await waitFor(() => expect(submitMock).toHaveBeenCalledTimes(1));
+    expect(submitMock.mock.calls[0][0].get("gjelderverdi")).toBeFalsy();
+  });
+
+  it("krever gjelderverdi når temaet har gjelderverdier", async () => {
+    await renderMedRouter(<OpprettOppgaveModal {...defaultProps} />);
+
+    fyllUtSkjema({ gjelderverdi: "" });
+    fireEvent.click(screen.getByRole("radio", { name: "Orienteringsnotat" }));
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+
+    await waitFor(() => {});
+    expect(screen.queryByText("Du oppretter nå en oppgave:")).toBeNull();
   });
 
   it("henter kodeverket for temaet saksbehandleren velger", async () => {

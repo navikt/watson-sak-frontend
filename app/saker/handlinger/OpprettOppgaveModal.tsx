@@ -24,7 +24,7 @@ import type { ArkivOversikt } from "~/saker/arkiv/useArkivJournalposter";
 import { getSaksreferanse } from "~/saker/id";
 import { formaterDato } from "~/utils/date-utils";
 import { OppgaveSkjema } from "./OppgaveSkjema";
-import { oppgavefeltSkjema } from "./oppgavefelt";
+import { krevGjelderverdi, oppgavefeltObjekt } from "./oppgavefelt";
 import {
   formaterOppgavePrioritet,
   formaterOppgavetype,
@@ -38,10 +38,12 @@ import { useOppgavekodeverk } from "./useOppgavekodeverk";
 const utenDokument = "uten-dokument";
 const dokumentvalgFeil = "Velg om oppgaven skal knyttes til et dokument";
 
-const opprettOppgaveSkjema = oppgavefeltSkjema.extend({
-  tema: temaSkjema,
-  journalpostId: z.string({ error: dokumentvalgFeil }).min(1, dokumentvalgFeil),
-});
+const opprettOppgaveSkjema = oppgavefeltObjekt
+  .extend({
+    tema: temaSkjema,
+    journalpostId: z.string({ error: dokumentvalgFeil }).min(1, dokumentvalgFeil),
+  })
+  .superRefine(krevGjelderverdi);
 
 type Steg = "skjema" | "bekreft" | "suksess";
 
@@ -221,14 +223,16 @@ export function OpprettOppgaveModal({ sakId, åpen, onClose, arkiv }: OpprettOpp
                     label="Frist"
                     verdi={formaterDato(innsendingFormData.get("frist")?.toString() ?? "")}
                   />
-                  <SammendragRad
-                    label="Gjelderverdi"
-                    verdi={
-                      gjelderverdier.find(
-                        (valg) => valg.behandlingstema === innsendingFormData.get("gjelderverdi"),
-                      )?.behandlingstemaTerm ?? ""
-                    }
-                  />
+                  {innsendingFormData.get("gjelderverdi") ? (
+                    <SammendragRad
+                      label="Gjelderverdi"
+                      verdi={
+                        gjelderverdier.find(
+                          (valg) => valg.behandlingstema === innsendingFormData.get("gjelderverdi"),
+                        )?.behandlingstemaTerm ?? ""
+                      }
+                    />
+                  ) : null}
                   <SammendragRad
                     label="Beskrivelse"
                     verdi={innsendingFormData.get("beskrivelse")?.toString() ?? ""}
