@@ -150,6 +150,17 @@ describe("Filtre – koblet kategori/misbrukstype", () => {
 });
 
 describe("Filtre – valgte verdier utenfor kodeverket", () => {
+  it("viser ikke gamle statusverdier som mangler i statusfilteret", () => {
+    render(
+      <MemoryRouter initialEntries={["/?status=HOS_POLITI&status=UTEN_STATUS"]}>
+        <Filtre alternativer={{ ...ALTERNATIVER, status: STATUSFILTER_VALG }} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByRole("button", { name: "HOS_POLITI" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "UTEN_STATUS" })).toBeNull();
+  });
+
   it("viser en valgt enhet som mangler i kodeverket, og lar brukeren velge den bort", () => {
     function LocationSearch() {
       return <div data-testid="search">{useLocation().search}</div>;

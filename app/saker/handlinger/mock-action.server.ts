@@ -259,7 +259,7 @@ export async function mockAction(
       }
       sak.status = (
         {
-          OPPRETTET: null,
+          OPPRETTET: "AKTIV",
           UTREDNING: "AKTIV",
           UTREDES: "AKTIV",
           FORVALTNING: "VENTER_PA_VEDTAK",

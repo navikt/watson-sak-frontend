@@ -576,7 +576,7 @@ export function leggTilMockSakIFordeling(
       },
     },
     steg: "OPPRETTET",
-    status: null,
+    status: "AKTIV",
     kategori: nySak.kategori,
     kilde: nySak.kilde,
     misbruktype: nySak.misbruktype,
