@@ -5,7 +5,6 @@ import {
   BodyShort,
   Box,
   Button,
-  Fieldset,
   HGrid,
   InfoCard,
   Loader,
@@ -36,11 +35,12 @@ import { erTema, formaterTema, temaSkjema } from "./tema";
 import { TemaVelger } from "./TemaVelger";
 import { useOppgavekodeverk } from "./useOppgavekodeverk";
 
+const utenDokument = "uten-dokument";
+const dokumentvalgFeil = "Velg om oppgaven skal knyttes til et dokument";
+
 const opprettOppgaveSkjema = oppgavefeltSkjema.extend({
   tema: temaSkjema,
-  journalpostId: z
-    .string({ error: "Velg journalførte dokumenter" })
-    .min(1, "Velg journalførte dokumenter"),
+  journalpostId: z.string({ error: dokumentvalgFeil }).min(1, dokumentvalgFeil),
 });
 
 type Steg = "skjema" | "bekreft" | "suksess";
@@ -69,8 +69,12 @@ export function OpprettOppgaveModal({ sakId, åpen, onClose, arkiv }: OpprettOpp
     },
     shouldValidate: "onBlur",
     shouldRevalidate: "onInput",
-    onSubmit(event, { formData }) {
+    onSubmit(event) {
       event.preventDefault();
+      const formData = new FormData(event.currentTarget);
+      if (formData.get("journalpostId") === utenDokument) {
+        formData.delete("journalpostId");
+      }
       formData.set("handling", "opprett_oppgave");
       sporHendelse("oppgave bekreftelse vist");
       setFeilmelding(null);
@@ -136,7 +140,11 @@ export function OpprettOppgaveModal({ sakId, åpen, onClose, arkiv }: OpprettOpp
     if (!submitPågår.current || fetcher.state !== "idle") return;
 
     if (fetcher.data && "ok" in fetcher.data && fetcher.data.ok) {
-      sporHendelse("oppgave opprettet", { knyttetTil: "valgt journalpost" });
+      sporHendelse("oppgave opprettet", {
+        knyttetTil: innsendingFormData?.has("journalpostId")
+          ? "valgt journalpost"
+          : "uten dokumenttilknytning",
+      });
       setFeilmelding(null);
       setSteg("suksess");
     } else {
@@ -144,7 +152,7 @@ export function OpprettOppgaveModal({ sakId, åpen, onClose, arkiv }: OpprettOpp
       setSteg("bekreft");
     }
     submitPågår.current = false;
-  }, [fetcher.data, fetcher.state]);
+  }, [fetcher.data, fetcher.state, innsendingFormData]);
 
   return (
     <Modal
@@ -228,7 +236,11 @@ export function OpprettOppgaveModal({ sakId, åpen, onClose, arkiv }: OpprettOpp
                   />
                   <SammendragRad
                     label="Journalføring"
-                    verdi={valgtJournalpost ? journalposttittel(valgtJournalpost) : ""}
+                    verdi={
+                      valgtJournalpost
+                        ? journalposttittel(valgtJournalpost)
+                        : "Ingen dokumenttilknytning"
+                    }
                   />
                 </HGrid>
               </Box>
@@ -305,10 +317,12 @@ function JournalpostValg({
   const legend = "Knytt til journalførte dokumenter i Gosys";
   const feil = felt.errors?.[0];
   const journalposter =
-    tilstand.status === "ok" ? tilstand.journalposter.filter(erGyldigJournalpost) : [];
+    kanSeArkiv && tilstand.status === "ok"
+      ? tilstand.journalposter.filter(erGyldigJournalpost)
+      : [];
+  let melding: ReactNode;
 
   if (!kanSeArkiv || tilstand.status !== "ok" || journalposter.length === 0) {
-    let melding: ReactNode;
     if (!kanSeArkiv) {
       melding = "Du har ikke tilgang til dokumentoversikten i Gosys for denne saken.";
     } else if (tilstand.status === "ikke-hentet" || tilstand.status === "laster") {
@@ -326,14 +340,8 @@ function JournalpostValg({
       );
     } else {
       melding =
-        "Saken har ingen journalførte dokumenter i Gosys. Arkiver dokumenter før du oppretter en oppgave.";
+        "Saken har ingen journalførte dokumenter i Gosys. Hvis du ønsker å knytte oppgaven til et dokument, må du arkivere dokumentet før du oppretter en oppgave.";
     }
-    return (
-      <Fieldset legend={legend} error={feil}>
-        <input name={felt.name} type="hidden" value="" />
-        {typeof melding === "string" ? <BodyShort size="small">{melding}</BodyShort> : melding}
-      </Fieldset>
-    );
   }
 
   return (
@@ -341,9 +349,11 @@ function JournalpostValg({
       key={felt.key}
       name={felt.name}
       legend={legend}
+      description={melding}
       error={feil}
-      defaultValue={felt.initialValue ?? ""}
+      defaultValue={felt.value ?? ""}
     >
+      <Radio value={utenDokument}>Opprett oppgave uten tilknytning til et dokument</Radio>
       {journalposter.map((journalpost) => (
         <Radio
           key={journalpost.journalpostId}
