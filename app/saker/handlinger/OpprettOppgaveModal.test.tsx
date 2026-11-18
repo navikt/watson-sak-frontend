@@ -115,14 +115,51 @@ describe("OpprettOppgaveModal", () => {
     expect(screen.getByRole("radio", { name: "Orienteringsnotat" })).toBeDefined();
   });
 
-  it("krever at oppgaven knyttes til en journalføring", async () => {
+  it("krever et eksplisitt valg av dokumenttilknytning", async () => {
     await renderMedRouter(<OpprettOppgaveModal {...defaultProps} />);
 
     fyllUtSkjema();
     fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
 
-    expect(await screen.findByText("Velg journalførte dokumenter")).toBeDefined();
+    expect(await screen.findByText("Velg om oppgaven skal knyttes til et dokument")).toBeDefined();
     expect(screen.queryByText("Du oppretter nå en oppgave:")).toBeNull();
+  });
+
+  it.each<{
+    navn: string;
+    arkiv: ArkivOversikt;
+  }>([
+    { navn: "saken har dokumenter", arkiv },
+    {
+      navn: "saken er uten dokumenter",
+      arkiv: { ...arkiv, tilstand: { status: "ok", journalposter: [] } },
+    },
+    { navn: "brukeren mangler arkivtilgang", arkiv: { ...arkiv, kanSeArkiv: false } },
+    { navn: "arkivet lastes", arkiv: { ...arkiv, tilstand: { status: "laster" } } },
+    {
+      navn: "arkivet er utilgjengelig",
+      arkiv: { ...arkiv, tilstand: { status: "feil", årsak: "utilgjengelig" } },
+    },
+  ])("oppretter uten dokument når $navn", async ({ arkiv }) => {
+    await renderMedRouter(<OpprettOppgaveModal {...defaultProps} arkiv={arkiv} />);
+
+    const utenDokument = screen.getByRole("radio", {
+      name: "Opprett oppgave uten tilknytning til et dokument",
+    });
+    expect(screen.getAllByRole("radio")[0]).toBe(utenDokument);
+    expect((utenDokument as HTMLInputElement).checked).toBe(false);
+    fyllUtSkjema();
+    fireEvent.click(utenDokument);
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+
+    expect(await screen.findByText("Ingen dokumenttilknytning")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Opprett" }));
+
+    await waitFor(() => expect(submitMock).toHaveBeenCalledTimes(1));
+    const [formData] = submitMock.mock.calls[0];
+    expect(formData.has("journalpostId")).toBe(false);
+    expect(formData.get("handling")).toBe("opprett_oppgave");
+    expect(formData.get("gjelderverdi")).toBe("ab0356");
   });
 
   it("kaller submit med valgt journalpost og gjelderverdi", async () => {
@@ -169,6 +206,37 @@ describe("OpprettOppgaveModal", () => {
     await waitFor(() => expect(kodeverkMock.tema).toBe("KTA"));
   });
 
+  it("beholder valget uten dokument ved avbrutt bekreftelse og lar brukeren velge dokument", async () => {
+    await renderMedRouter(<OpprettOppgaveModal {...defaultProps} />);
+
+    fyllUtSkjema();
+    fireEvent.click(
+      screen.getByRole("radio", {
+        name: "Opprett oppgave uten tilknytning til et dokument",
+      }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    expect(await screen.findByText("Ingen dokumenttilknytning")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Avbryt" }));
+
+    expect(
+      (
+        (await screen.findByRole("radio", {
+          name: "Opprett oppgave uten tilknytning til et dokument",
+        })) as HTMLInputElement
+      ).checked,
+    ).toBe(true);
+    fyllUtSkjema();
+    fireEvent.click(screen.getByRole("radio", { name: "Orienteringsnotat" }));
+    fireEvent.click(screen.getByRole("button", { name: "Lagre" }));
+    expect(await screen.findByText("Du oppretter nå en oppgave:")).toBeDefined();
+    expect(screen.getByText("Orienteringsnotat")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Opprett" }));
+
+    await waitFor(() => expect(submitMock).toHaveBeenCalledTimes(1));
+    expect(submitMock.mock.calls[0][0].get("journalpostId")).toBe("jp-1");
+  });
+
   it("lar saksbehandleren prøve igjen når kodeverket ikke kunne hentes", async () => {
     kodeverkMock.tilstand = { status: "feil" };
     await renderMedRouter(<OpprettOppgaveModal {...defaultProps} />);
@@ -213,7 +281,8 @@ describe("OpprettOppgaveModal", () => {
     expect(
       screen.getByText("Du har ikke tilgang til dokumentoversikten i Gosys for denne saken."),
     ).toBeDefined();
-    expect(screen.queryByRole("radio")).toBeNull();
+    expect(screen.getAllByRole("radio")).toHaveLength(1);
+    expect(screen.queryByRole("radio", { name: "Orienteringsnotat" })).toBeNull();
   });
 
   it("lar saksbehandleren prøve igjen når journalføringene ikke kunne hentes", async () => {
@@ -248,11 +317,12 @@ describe("OpprettOppgaveModal", () => {
     );
 
     expect(screen.getAllByRole("radio").map((radio) => radio.getAttribute("value"))).toEqual([
+      "uten-dokument",
       "jp-1",
     ]);
   });
 
-  it("ber om arkivering først når saken ikke har gyldige journalføringer", async () => {
+  it("forklarer at arkivering bare trengs for dokumenttilknytning", async () => {
     const [gyldig] = arkiv.tilstand.status === "ok" ? arkiv.tilstand.journalposter : [];
     await renderMedRouter(
       <OpprettOppgaveModal
@@ -269,10 +339,10 @@ describe("OpprettOppgaveModal", () => {
 
     expect(
       screen.getByText(
-        "Saken har ingen journalførte dokumenter i Gosys. Arkiver dokumenter før du oppretter en oppgave.",
+        "Saken har ingen journalførte dokumenter i Gosys. Hvis du ønsker å knytte oppgaven til et dokument, må du arkivere dokumentet før du oppretter en oppgave.",
       ),
     ).toBeDefined();
-    expect(screen.queryByRole("radio")).toBeNull();
+    expect(screen.getAllByRole("radio")).toHaveLength(1);
   });
 
   it("kaller onClose ved avbryt", async () => {
