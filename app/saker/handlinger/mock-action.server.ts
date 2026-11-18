@@ -754,11 +754,13 @@ export async function mockAction(
     case "opprett_oppgave": {
       hentTema(formData);
       const oppgavetype = hentValgfriTekst(formData, "oppgavetype") ?? "";
-      const journalpostId = hentTekstfelt(formData, "journalpostId", "Journalpost er påkrevd");
+      const journalpostId = hentValgfriTekst(formData, "journalpostId");
       hentTekstfelt(formData, "gjelderverdi", "Gjelderverdi er påkrevd");
       leggTilBrukerhendelse(sak, "OPPGAVE_OPPRETTET", undefined, {
         tittel: oppgavetype || "Oppgave",
-        beskrivelse: `Oppgave opprettet for journalpost ${journalpostId}`,
+        beskrivelse: journalpostId
+          ? `Oppgave opprettet for journalpost ${journalpostId}`
+          : "Oppgave opprettet uten dokumenttilknytning",
       });
       break;
     }
