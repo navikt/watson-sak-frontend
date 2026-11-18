@@ -15,6 +15,57 @@ vi.mock("~/config/env.server", () => ({
   },
 }));
 
+describe("opprettOppgave", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it.each([undefined, "jp-1"])(
+    "sender korrekt payload med journalpostId %s",
+    async (journalpostId) => {
+      const fetchMock = vi.fn().mockResolvedValue(
+        Response.json({
+          oppgaveId: 123,
+          status: "AAPEN",
+          tema: "KTR",
+          oppgavetype: "VURD_HENV",
+          tildeltEnhetsnr: "4100",
+          tilordnetRessurs: null,
+          aktivDato: "2026-11-18",
+          fristDato: "2026-12-01",
+          prioritet: "NORMAL",
+        }),
+      );
+      vi.stubGlobal("fetch", fetchMock);
+      const { opprettOppgave } = await import("./api.server");
+
+      await opprettOppgave(
+        "token",
+        "1",
+        "KTR",
+        "4100",
+        "NORMAL",
+        "2026-12-01",
+        "Følg opp",
+        "VURD_HENV",
+        journalpostId,
+        "ab0356",
+      );
+
+      const [url, options] = fetchMock.mock.calls[0];
+      expect(url).toBe("https://backend.test/api/v1/kontrollsaker/1/oppgave");
+      expect(JSON.parse(options.body)).toEqual({
+        tildeltEnhetsnr: "4100",
+        tema: "KTR",
+        prioritet: "NORMAL",
+        fristDato: "2026-12-01",
+        beskrivelse: "Følg opp",
+        oppgavetype: "VURD_HENV",
+        behandlingstema: "ab0356",
+        ...(journalpostId ? { journalpostId } : {}),
+      });
+    },
+  );
+});
+
 describe("hentKodeverk", () => {
   afterEach(() => {
     vi.restoreAllMocks();

@@ -199,6 +199,83 @@ test.describe("Sakdetalj – dokumentoversikt i Gosys", () => {
     await sjekkTilgjengelighet(page);
   });
 
+  for (const variant of ["med dokument", "uten dokument", "tomt arkiv", "hentefeil"] as const) {
+    test(`kan opprette oppgave: ${variant}`, async ({ page }, testInfo) => {
+      if (variant === "tomt arkiv" || variant === "hentefeil") {
+        await page.route("**/api/saker/201/arkiv/journalposter", (route) =>
+          route.fulfill({
+            status: variant === "hentefeil" ? 503 : 200,
+            json:
+              variant === "hentefeil"
+                ? { status: "feil", årsak: "utilgjengelig" }
+                : { status: "ok", journalposter: [] },
+          }),
+        );
+      }
+      if (variant === "tomt arkiv") await page.setViewportSize({ width: 390, height: 844 });
+
+      await page.getByRole("button", { name: "Opprett oppgave i Gosys" }).click();
+      const dialog = page.getByRole("dialog", { name: "Opprett oppgave i Gosys" });
+      const utenDokument = dialog.getByRole("radio", {
+        name: "Opprett oppgave uten tilknytning til et dokument",
+      });
+      await expect(utenDokument).not.toBeChecked();
+      await dialog.getByLabel("Tema", { exact: true }).selectOption("KTR");
+      await dialog.getByLabel("Oppgavetype", { exact: true }).selectOption("VUR");
+      await dialog.getByLabel("Prioritet", { exact: true }).selectOption("NORMAL");
+      await dialog
+        .getByLabel("Frist", { exact: true })
+        .fill(`01.12.${new Date().getFullYear() + 1}`);
+      await dialog.getByRole("combobox", { name: "Behandlende enhet" }).fill("4111");
+      await dialog
+        .getByRole("option", { name: "4111 - Nav kontaktsenter Rogaland", exact: true })
+        .click();
+      await dialog.getByRole("combobox", { name: "Gjelderverdi" }).fill("Dagpenger");
+      await dialog.getByRole("option", { name: "Dagpenger", exact: true }).click();
+      await dialog.getByLabel("Beskrivelse", { exact: true }).fill("Følg opp kontrollsaken");
+
+      if (variant === "hentefeil") {
+        await expect(
+          dialog.getByText("Kunne ikke hente journalførte dokumenter fra Gosys."),
+        ).toBeVisible();
+        await expect(dialog.getByRole("button", { name: "Prøv igjen" })).toBeVisible();
+      }
+      if (variant === "tomt arkiv") {
+        await expect(
+          dialog.getByText(/Saken har ingen journalførte dokumenter i Gosys/),
+        ).toBeVisible();
+      }
+      await sjekkTilgjengelighet(page);
+      if (variant === "tomt arkiv" || variant === "hentefeil") {
+        await utenDokument.scrollIntoViewIfNeeded();
+        await page.screenshot({ path: testInfo.outputPath("oppgave-skjema.png") });
+      }
+
+      if (variant === "med dokument") {
+        await dialog
+          .getByRole("radio", { name: "Svarbrev om kontoopplysninger", exact: true })
+          .check();
+      } else {
+        await utenDokument.check();
+      }
+      await dialog.getByRole("button", { name: "Lagre", exact: true }).click();
+      await expect(
+        dialog.getByText(
+          variant === "med dokument"
+            ? "Svarbrev om kontoopplysninger"
+            : "Ingen dokumenttilknytning",
+          { exact: true },
+        ),
+      ).toBeVisible();
+      await sjekkTilgjengelighet(page);
+      await dialog.getByRole("button", { name: "Opprett", exact: true }).click();
+      const suksess = page.getByRole("dialog", { name: "Oppgave opprettet" });
+      await expect(suksess).toBeVisible();
+      await suksess.getByRole("button", { name: "Lukk", exact: true }).last().click();
+      await expect(page.getByRole("dialog")).not.toBeVisible();
+    });
+  }
+
   test("viser ny journalpost med en gang og oppdaterer den når Gosys har den", async ({ page }) => {
     // Gosys har ikke journalposten ennå
     await page.route("**/api/saker/201/arkiv/journalposter", (route) =>

@@ -275,7 +275,7 @@ export async function backendAction(
       const fristDato = hentTekstfelt(formData, "frist", "Frist er påkrevd");
       const beskrivelse = hentTekstfelt(formData, "beskrivelse", "Beskrivelse er påkrevd");
       const oppgavetype = hentTekstfelt(formData, "oppgavetype", "Oppgavetype er påkrevd");
-      const journalpostId = hentTekstfelt(formData, "journalpostId", "Journalpost er påkrevd");
+      const journalpostId = hentValgfriTekst(formData, "journalpostId");
       const behandlingstema = hentTekstfelt(formData, "gjelderverdi", "Gjelderverdi er påkrevd");
       await backendApi.opprettOppgave(
         token,

@@ -1360,7 +1360,7 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(historikk[0]?.opprettetAvNavn).toBe("Test Saksbehandler");
   });
 
-  it("opprett_oppgave avviser forespørsel uten journalpost med 400", async () => {
+  it.each([undefined, " "])("opprett_oppgave godtar journalpostId %s", async (journalpostId) => {
     const kontrollsak = hentFordelingssaker(state())[0];
     const kontrollsakRef = getSaksreferanse(kontrollsak.id);
     kontrollsak.steg = "UTREDES";
@@ -1369,13 +1369,13 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
       navn: "Test Saksbehandler",
       enhet: "4812",
     };
-    const antallHendelserFør = hentHistorikk(testRequest, String(kontrollsak.id)).length;
 
     const formData = new FormData();
     formData.set("handling", "opprett_oppgave");
     formData.set("tema", "KTR");
     formData.set("oppgavetype", "VUR");
-    formData.set("journalpostId", " ");
+    formData.set("gjelderverdi", "ab0356");
+    if (journalpostId !== undefined) formData.set("journalpostId", journalpostId);
 
     await expect(
       action({
@@ -1385,8 +1385,11 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
         }),
         params: { sakId: kontrollsakRef },
       } as Route.ActionArgs),
-    ).resolves.toMatchObject({ data: { ok: false }, init: { status: 400 } });
-    expect(hentHistorikk(testRequest, String(kontrollsak.id))).toHaveLength(antallHendelserFør);
+    ).resolves.toEqual({ ok: true });
+    expect(hentHistorikk(testRequest, String(kontrollsak.id))[0]).toMatchObject({
+      hendelsesType: "OPPGAVE_OPPRETTET",
+      beskrivelse: "Oppgave opprettet uten dokumenttilknytning",
+    });
   });
 
   it.each(["opprett_oppgave", "opprett_journalpost"])(

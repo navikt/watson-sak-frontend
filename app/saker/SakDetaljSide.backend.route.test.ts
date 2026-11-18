@@ -1456,6 +1456,55 @@ describe("SakDetaljSide loader — backend-sti", () => {
   });
 });
 
+describe("opprett oppgave med valgfri dokumenttilknytning — backend-sti", () => {
+  beforeEach(() => {
+    mockHentInnloggetBruker.mockResolvedValue({ navIdent: "Z999999", enhet: "4812" });
+    mockHentKontrollsak.mockResolvedValue({ ...grunnleggendeSak, steg: "UTREDNING" });
+    mockOpprettOppgave.mockReset().mockResolvedValue({ oppgaveId: 123 });
+  });
+
+  afterEach(() => vi.clearAllMocks());
+
+  it.each([undefined, "", "jp-1"])(
+    "sender journalpostId %s til API-klienten",
+    async (journalpostId) => {
+      const formData = new FormData();
+      for (const [navn, verdi] of Object.entries({
+        handling: "opprett_oppgave",
+        tema: "KTR",
+        behandlendeEnhet: "4100",
+        prioritet: "NORMAL",
+        frist: "2026-12-01",
+        beskrivelse: "Følg opp",
+        oppgavetype: "VURD_HENV",
+        gjelderverdi: "ab0356",
+      }))
+        formData.set(navn, verdi);
+      if (journalpostId !== undefined) formData.set("journalpostId", journalpostId);
+      const { action } = await import("./SakDetaljSide.server");
+
+      const resultat = await action({
+        request: new Request("http://localhost/saker/1", { method: "POST", body: formData }),
+        params: { sakId: "1" },
+      } as Parameters<typeof action>[0]);
+
+      expect(resultat).toEqual({ ok: true });
+      expect(mockOpprettOppgave).toHaveBeenCalledExactlyOnceWith(
+        "mock-token",
+        "1",
+        "KTR",
+        "4100",
+        "NORMAL",
+        "2026-12-01",
+        "Følg opp",
+        "VURD_HENV",
+        journalpostId || undefined,
+        "ab0356",
+      );
+    },
+  );
+});
+
 describe("henleggelsesnotater — backend-sti", () => {
   const sakIUtredning = { ...grunnleggendeSak, steg: "UTREDNING" };
 
