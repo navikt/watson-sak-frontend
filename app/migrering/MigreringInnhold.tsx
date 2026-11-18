@@ -172,7 +172,10 @@ function Kandidatliste({
                     className="cursor-pointer hover:bg-ax-bg-neutral-soft"
                   >
                     <Table.DataCell>
-                      <KandidatLenke kandidat={k} />
+                      <KandidatLenke
+                        kandidat={k}
+                        erEgen={!erLeder || k.ansvar.navIdent === egenNavIdent}
+                      />
                     </Table.DataCell>
                     <Table.DataCell>
                       {k.ansvar.type === "BEKREFTET" && k.personIdent
@@ -230,7 +233,7 @@ function Kandidatliste({
 }
 
 /** PID er inngangen til raden: åpner saken hvis den finnes, ellers starter flyttingen. */
-function KandidatLenke({ kandidat: k }: { kandidat: MigreringKandidat }) {
+function KandidatLenke({ kandidat: k, erEgen }: { kandidat: MigreringKandidat; erEgen: boolean }) {
   if (k.alleredeMigrertTilKontrollsakId) {
     return (
       <Link
@@ -244,8 +247,10 @@ function KandidatLenke({ kandidat: k }: { kandidat: MigreringKandidat }) {
       </Link>
     );
   }
-  // Andres saker har ikke personident, og lederen kan ikke starte flyttingen for dem.
-  if (k.ansvar.type !== "BEKREFTET" || !k.personIdent) return <span>{k.legacyPid}</span>;
+  // Lederen ser personident på ansattes saker, men bare den ansvarlige kan starte flyttingen.
+  if (!erEgen || k.ansvar.type !== "BEKREFTET" || !k.personIdent) {
+    return <span>{k.legacyPid}</span>;
+  }
   return (
     <Form
       method="post"

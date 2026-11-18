@@ -320,7 +320,7 @@ const ANSATT_KANDIDATER: ReadonlyArray<{
 ];
 
 /**
- * Syntetiske kandidater til lederens ansatte. Personident er aldri satt, slik som i backend.
+ * Syntetiske kandidater til lederens ansatte. Personident er satt fordi ansvaret er bekreftet, slik som i backend.
  * `tildelinger` overstyrer ansvarlig for kandidater som lederen har flyttet i denne økten.
  */
 export function hentMockAnsattKandidater(
@@ -350,6 +350,8 @@ export function hentMockAnsattKandidater(
       fase: "Utredning uten resultat",
       begrunnelse: "Syntetisk eksempel.",
       kildefelter: [],
+      // Syntetisk: dag 99 finnes ikke.
+      personIdent: `99${pid}999`,
     } satisfies MigreringKandidat;
   });
 }

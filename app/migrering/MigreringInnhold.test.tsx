@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { createRoutesStub, useSearchParams } from "react-router";
+import { formaterFødselsnummer } from "~/utils/string-utils";
 import { MigreringInnhold } from "./MigreringInnhold";
 import type {
   MigreringAnsatt,
@@ -366,7 +367,7 @@ describe("MigreringInnhold", () => {
     const ansattSak = kandidat("200001", "IKKE_PABEGYNT", null, {
       ansvar: { type: "BEKREFTET", navIdent: "Z999001" },
       ansvarligNavn: "Åse Hansen",
-      personIdent: null,
+      personIdent: "22334455667",
     });
     const ansattUnderFlytting = kandidat("200002", "UNDER_MIGRERING", 1190, {
       ansvar: { type: "BEKREFTET", navIdent: "Z999001" },
@@ -378,6 +379,7 @@ describe("MigreringInnhold", () => {
       return renderSide(
         lagLister({
           erLeder: true,
+          egenNavIdent: "L999999",
           ansatteValg,
           liste: lagSide([ansattSak, ansattUnderFlytting, kandidat("100245", "IKKE_PABEGYNT")]),
         }),
@@ -387,6 +389,12 @@ describe("MigreringInnhold", () => {
     }
 
     const ansatteTabell = () => within(screen.getByRole("table"));
+
+    it("viser fødselsnummer på ansattes saker", () => {
+      renderLeder();
+
+      expect(ansatteTabell().getByText(formaterFødselsnummer("22334455667"))).not.toBeNull();
+    });
 
     it("viser én liste med saksbehandler, og ingen flytteknapp på andres saker", () => {
       renderLeder();
