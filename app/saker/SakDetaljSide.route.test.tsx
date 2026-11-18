@@ -121,7 +121,7 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
 
     const historikk = hentHistorikk(testRequest, sak.id);
     expect(historikk[0]?.hendelsesType).toBe("STATUS_ENDRET");
-    expect(historikk[0]?.status).toBeNull();
+    expect(historikk[0]?.status).toBe("AKTIV");
   });
 
   it.each(["HENLAGT", "ORIENTERINGSNOTAT"])(
@@ -206,7 +206,9 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
 
   it("endre_status setter status på saken", async () => {
     const saker = hentAlleSaker(testRequest);
-    const sak = saker.find((s: KontrollsakResponse) => s.steg === "UTREDES" && s.status === null);
+    const sak = saker.find(
+      (s: KontrollsakResponse) => s.steg === "UTREDES" && s.status === "AKTIV",
+    );
     expect(sak).toBeDefined();
     if (!sak) return;
     settInnloggetSomEier(sak);
@@ -229,7 +231,9 @@ describe("SakDetaljSide route action – steg- og statusflyt", () => {
 
   it("endre_status med I_BERO logger bero-hendelse", async () => {
     const saker = hentAlleSaker(testRequest);
-    const sak = saker.find((s: KontrollsakResponse) => s.steg === "UTREDES" && s.status === null);
+    const sak = saker.find(
+      (s: KontrollsakResponse) => s.steg === "UTREDES" && s.status === "AKTIV",
+    );
     expect(sak).toBeDefined();
     if (!sak) return;
     settInnloggetSomEier(sak);

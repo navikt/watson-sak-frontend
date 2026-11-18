@@ -36,7 +36,7 @@ describe("normaliserLegacyKontrollsak", () => {
 
     expect(sak.id).toBe(201);
     expect(sak.steg).toBe("FORVALTNING");
-    expect(sak.status).toBeNull();
+    expect(sak.status).toBe("VENTER_PA_VEDTAK");
     expect(sak.kilde).toBe("PUBLIKUM");
     expect(sak.misbruktype).toEqual(["SVART_ARBEID"]);
     expect(sak.personNavn).toBe("Ola Nordmann");
@@ -91,7 +91,7 @@ describe("normaliserLegacyKontrollsak", () => {
 
     expect(sak.id).toBe(7);
     expect(sak.steg).toBe("OPPRETTET");
-    expect(sak.status).toBeNull();
+    expect(sak.status).toBe("AKTIV");
     expect(sak.kategori).toBe("ANNET");
     expect(sak.kilde).toBe("ANNET");
     expect(sak.misbruktype).toEqual([]);
@@ -125,7 +125,7 @@ describe("normaliserLegacyKontrollsak", () => {
     });
 
     expect(sak.steg).toBe("OPPRETTET");
-    expect(sak.status).toBeNull();
+    expect(sak.status).toBe("AKTIV");
     expect(sak.saksbehandlere.eier).toBeNull();
     expect(sak.saksbehandlere.opprettetAv).toEqual({
       navIdent: "Z123456",

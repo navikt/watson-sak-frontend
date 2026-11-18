@@ -5,6 +5,7 @@ import { Filterpanel } from "~/filtre/Filterpanel";
 import { useFilterParam } from "~/filtre/useFilterParam";
 import { parseMultiValueParam } from "~/filtre/parseMultiValueParam";
 import { ALDERSVARSEL_VALG, ANSVARLIG_MEG } from "./aldersfilter";
+import { parseStatusfilter } from "./statusfilter";
 
 type SaksbehandlerAlternativ = {
   label: string;
@@ -164,6 +165,7 @@ export function Filtre({ alternativer }: Props) {
           tittel="Status"
           paramKey="status"
           alternativer={alternativer.status}
+          visUkjenteValgte={false}
         />
       )}
 
@@ -249,18 +251,23 @@ function ChipsFiltergruppeForKodeAlternativ({
   tittel,
   paramKey,
   alternativer,
+  visUkjenteValgte = true,
 }: {
   tittel: string;
   paramKey: string;
   alternativer: KodeAlternativ[];
+  visUkjenteValgte?: boolean;
 }) {
   const { valgteVerdier, toggle } = useFilterParam(paramKey, { resetKeys: RESET_KEYS });
   // Valgte verdier som mangler i kodeverket vises med koden som etikett. Ellers ser filteret
   // tomt ut mens listen likevel er avgrenset, og brukeren kan ikke velge verdien bort.
   const kjenteVerdier = new Set(alternativer.map((alt) => alt.value));
-  const ukjenteValgte = valgteVerdier
-    .filter((verdi) => !kjenteVerdier.has(verdi))
-    .map((verdi) => ({ verdi, etikett: verdi }));
+  const ukjenteValgte = visUkjenteValgte
+    ? valgteVerdier
+        .filter((verdi) => !kjenteVerdier.has(verdi))
+        .map((verdi) => ({ verdi, etikett: verdi }))
+    : [];
+  const valgte = paramKey === "status" ? parseStatusfilter(valgteVerdier) : valgteVerdier;
 
   return (
     <ChipsFiltergruppe
@@ -269,7 +276,7 @@ function ChipsFiltergruppeForKodeAlternativ({
         ...alternativer.map((alt) => ({ verdi: alt.value, etikett: alt.label })),
         ...ukjenteValgte,
       ]}
-      valgteVerdier={valgteVerdier}
+      valgteVerdier={valgte}
       onToggle={toggle}
       size="small"
     />

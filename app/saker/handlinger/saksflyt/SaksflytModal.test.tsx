@@ -471,8 +471,8 @@ describe("SaksflytModal", () => {
     });
   });
 
-  it("endrer status og viser manglende status som Aktiv", async () => {
-    renderModal({ steg: "OPPRETTET", status: null }, "endre-status");
+  it("endrer status for en opprettet sak med status Aktiv", async () => {
+    renderModal({ steg: "OPPRETTET", status: "AKTIV" }, "endre-status");
     expect(await screen.findByRole("dialog", { name: "Endre status" })).toBeDefined();
     expect(screen.getByRole("radio", { name: "Aktiv" })).toHaveProperty("checked", true);
     expect(screen.queryByRole("button", { name: "Tilbake" })).toBeNull();

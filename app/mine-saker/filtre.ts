@@ -8,8 +8,8 @@ import { ALLE_STEG, matcherSteg, parseSteg } from "~/saker/steg";
 
 export { ALLE_STEG, parseSteg };
 
-export const ALLE_VENTESTATUSER: (KontrollsakStatus | "INGEN")[] = [
-  "INGEN",
+export const ALLE_VENTESTATUSER: KontrollsakStatus[] = [
+  "AKTIV",
   "VENTER_PA_INFORMASJON",
   "VENTER_PA_VEDTAK",
   "VENTER_PA_RESULTAT",
@@ -17,27 +17,28 @@ export const ALLE_VENTESTATUSER: (KontrollsakStatus | "INGEN")[] = [
   "I_BERO",
 ];
 
-export function formaterVentestatus(verdi: KontrollsakStatus | "INGEN"): string {
-  return verdi === "INGEN" ? "Aktiv" : formaterStatus(verdi);
+export function formaterVentestatus(verdi: KontrollsakStatus): string {
+  return formaterStatus(verdi);
 }
 
 export function filtrerMineSaker(
   saker: KontrollsakResponse[],
   steg: KontrollsakSteg[],
-  ventestatuser: (KontrollsakStatus | "INGEN")[],
+  ventestatuser: KontrollsakStatus[],
 ): KontrollsakResponse[] {
   return saker.filter((sak) => {
     if (!matcherSteg(sak.steg, steg)) return false;
     if (ventestatuser.length > 0) {
-      const sakVentestatus: KontrollsakStatus | "INGEN" = sak.status ?? "INGEN";
-      if (!ventestatuser.includes(sakVentestatus)) return false;
+      if (sak.status === null || !ventestatuser.includes(sak.status)) return false;
     }
     return true;
   });
 }
 
-export function parseVentestatuser(verdier: string[]): (KontrollsakStatus | "INGEN")[] {
-  return verdier.filter((v): v is KontrollsakStatus | "INGEN" =>
-    ALLE_VENTESTATUSER.includes(v as KontrollsakStatus | "INGEN"),
-  );
+export function parseVentestatuser(verdier: string[]): KontrollsakStatus[] {
+  return verdier
+    .map((verdi) => (verdi === "INGEN" ? "AKTIV" : verdi))
+    .filter((verdi): verdi is KontrollsakStatus =>
+      ALLE_VENTESTATUSER.includes(verdi as KontrollsakStatus),
+    );
 }

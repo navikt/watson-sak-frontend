@@ -11,7 +11,7 @@ import { SORTERBARE_SAKSKOLONNER, standardRetningForKolonne } from "~/saker/saks
 import { sorterSaker } from "~/alle-saker/saker-utils";
 import { formaterSteg } from "~/saker/visning";
 import { hentParEllerUtilgjengelig } from "~/utils/backend-utilgjengelig.server";
-import type { KontrollsakResponse, KontrollsakStatus } from "~/saker/types.backend";
+import type { KontrollsakResponse } from "~/saker/types.backend";
 import { ANTALL_PER_SIDE, paginerElementer } from "~/utils/paginering";
 import type { Route } from "./+types/MineSakerSide.route";
 import { MineSakerInnhold } from "./MineSakerInnhold";
@@ -59,15 +59,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const statusFilter = harFilterParams ? parseVentestatuser(url.searchParams.getAll("status")) : [];
 
-  // Map status-filteret til backend-parametre:
-  // "INGEN" → utenStatus=true, faktiske blokkerende statuser → status[]
-  const blokkerendeStatus = statusFilter.filter((v): v is KontrollsakStatus => v !== "INGEN");
-  const harIngenStatus = statusFilter.length > 0 && statusFilter.includes("INGEN");
-
   const filterParametre = {
     steg: stegFilter.length > 0 ? stegFilter : undefined,
-    status: blokkerendeStatus.length > 0 ? blokkerendeStatus : undefined,
-    utenStatus: harIngenStatus ? true : undefined,
+    status: statusFilter.length > 0 ? statusFilter : undefined,
   };
   const fellesParametre = {
     page: side,

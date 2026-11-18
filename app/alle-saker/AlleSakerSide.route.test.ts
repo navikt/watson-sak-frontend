@@ -32,7 +32,7 @@ describe("AlleSakerSide loader", () => {
       navn: "åpne saker",
       steg: ALLE_STEG,
       status: [],
-      forventet: { steg: ALLE_STEG, status: undefined, statusSteg: undefined },
+      forventet: { steg: ALLE_STEG, status: undefined },
     },
     {
       navn: "aktive saker",
@@ -41,30 +41,28 @@ describe("AlleSakerSide loader", () => {
       forventet: {
         steg: ["UTREDNING", "STRAFFERETTSLIG_VURDERING"],
         status: ["AKTIV"],
-        statusSteg: undefined,
       },
     },
     {
       navn: "ventende saker",
       steg: ALLE_STEG,
-      status: ["VENTER_PA_INFORMASJON", "I_BERO", "HOS_FORVALTNING", "HOS_POLITI"],
+      status: ["VENTER_PA_INFORMASJON", "I_BERO"],
       forventet: {
         steg: ALLE_STEG,
         status: ["VENTER_PA_INFORMASJON", "I_BERO"],
-        statusSteg: ["FORVALTNING", "POLITI"],
       },
     },
     {
-      navn: "hos politiet alene",
+      navn: "eldre syntetiske statuser ignoreres",
       steg: [],
-      status: ["HOS_POLITI"],
-      forventet: { steg: undefined, status: undefined, statusSteg: ["POLITI"] },
+      status: ["UTEN_STATUS", "HOS_FORVALTNING", "HOS_POLITI"],
+      forventet: { steg: undefined, status: undefined },
     },
     {
       navn: "uten filtre",
       steg: [],
       status: [],
-      forventet: { steg: undefined, status: undefined, statusSteg: undefined },
+      forventet: { steg: undefined, status: undefined },
     },
   ])(
     "sender vanlige filtre for $navn til backend",

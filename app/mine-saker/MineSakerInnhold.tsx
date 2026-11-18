@@ -48,7 +48,7 @@ type Props = {
   };
   aktivtFilter: {
     steg: KontrollsakSteg[];
-    status: (KontrollsakStatus | "INGEN")[];
+    status: KontrollsakStatus[];
   };
   saksdataUtilgjengelig?: boolean;
 };

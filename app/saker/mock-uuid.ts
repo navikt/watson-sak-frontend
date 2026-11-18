@@ -103,6 +103,17 @@ export function normaliserLegacyKontrollsak(sak: LegacyKontrollsak): Kontrollsak
     VENTER_PA_RESULTAT: "VENTER_PA_RESULTAT",
   };
 
+  const standardstatusForSteg: Record<KontrollsakResponse["steg"], KontrollsakStatus | null> = {
+    OPPRETTET: "AKTIV",
+    UTREDNING: "AKTIV",
+    UTREDES: "AKTIV",
+    FORVALTNING: "VENTER_PA_VEDTAK",
+    STRAFFERETTSLIG_VURDERING: "AKTIV",
+    POLITI: "VENTER_PA_RESULTAT",
+    ANMELDT: "VENTER_PA_RESULTAT",
+    AVSLUTTET: null,
+  };
+
   const kildeMap: Record<string, KontrollsakResponse["kilde"]> = {
     INTERN: "NAV_KONTROLL",
     EKSTERN: "ANNET",
@@ -144,7 +155,8 @@ export function normaliserLegacyKontrollsak(sak: LegacyKontrollsak): Kontrollsak
   };
 
   const normalisertSteg: KontrollsakResponse["steg"] = statusMap[legacyStatus] ?? "OPPRETTET";
-  const status: KontrollsakStatus | null = blokkertMap[legacyStatus] ?? null;
+  const status: KontrollsakStatus | null =
+    blokkertMap[legacyStatus] ?? standardstatusForSteg[normalisertSteg];
   const opprettetAv = normaliserLegacyOpprettetAv(sak, saksbehandlerNavn, saksbehandlerEnhet);
   const eier = normaliserLegacyEier(sak);
 

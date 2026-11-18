@@ -28,7 +28,7 @@ describe("Filtre – koblet kategori/misbrukstype", () => {
       return <div data-testid="search">{useLocation().search}</div>;
     }
     render(
-      <MemoryRouter initialEntries={["/?status=I_BERO&status=HOS_POLITI&steg=UTREDNING&side=3"]}>
+      <MemoryRouter initialEntries={["/?status=I_BERO&steg=UTREDNING&side=3"]}>
         <Filtre alternativer={{ ...ALTERNATIVER, status: STATUSFILTER_VALG }} />
         <LocationSearch />
       </MemoryRouter>,
@@ -38,13 +38,10 @@ describe("Filtre – koblet kategori/misbrukstype", () => {
     expect(screen.getByRole("button", { name: "I bero" }).getAttribute("aria-pressed")).toBe(
       "true",
     );
-    expect(screen.getByRole("button", { name: "Hos politiet" }).getAttribute("aria-pressed")).toBe(
-      "true",
-    );
     fireEvent.click(screen.getByRole("button", { name: "I bero" }));
     fireEvent.click(screen.getByRole("button", { name: "Venter på informasjon" }));
     const params = new URLSearchParams(screen.getByTestId("search").textContent ?? "");
-    expect(params.getAll("status")).toEqual(["HOS_POLITI", "VENTER_PA_INFORMASJON"]);
+    expect(params.getAll("status")).toEqual(["VENTER_PA_INFORMASJON"]);
     expect(params.getAll("steg")).toEqual(["UTREDNING"]);
     expect(params.has("side")).toBe(false);
     expect(params.has("arbeidsfilter")).toBe(false);
@@ -153,6 +150,17 @@ describe("Filtre – koblet kategori/misbrukstype", () => {
 });
 
 describe("Filtre – valgte verdier utenfor kodeverket", () => {
+  it("viser ikke gamle statusverdier som mangler i statusfilteret", () => {
+    render(
+      <MemoryRouter initialEntries={["/?status=HOS_POLITI&status=UTEN_STATUS"]}>
+        <Filtre alternativer={{ ...ALTERNATIVER, status: STATUSFILTER_VALG }} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByRole("button", { name: "HOS_POLITI" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "UTEN_STATUS" })).toBeNull();
+  });
+
   it("viser en valgt enhet som mangler i kodeverket, og lar brukeren velge den bort", () => {
     function LocationSearch() {
       return <div data-testid="search">{useLocation().search}</div>;

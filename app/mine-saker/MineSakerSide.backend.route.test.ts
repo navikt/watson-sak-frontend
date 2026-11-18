@@ -73,25 +73,25 @@ describe("MineSakerSide loader — backend-sti", () => {
     vi.clearAllMocks();
   });
 
-  it("sender INGEN status som utenStatus=true", async () => {
+  it("sender AKTIV status som status[] uten utenStatus", async () => {
     mockHentKontrollsaker.mockResolvedValue(tomSideResponse);
     const { loader } = await import("./MineSakerSide.route");
 
     await loader({
-      request: new Request("http://localhost/mine-saker?status=INGEN"),
+      request: new Request("http://localhost/mine-saker?status=AKTIV"),
       params: {},
       context: {},
     } as Parameters<typeof loader>[0]);
 
     expect(mockHentKontrollsaker).toHaveBeenCalledWith(
       expect.objectContaining({
-        utenStatus: true,
-        status: undefined,
+        status: ["AKTIV"],
       }),
     );
+    expect(mockHentKontrollsaker.mock.calls[0][0]).not.toHaveProperty("utenStatus");
   }, 15000);
 
-  it("sender blokkerende status uten INGEN som status[]", async () => {
+  it("sender blokkerende status som status[]", async () => {
     mockHentKontrollsaker.mockResolvedValue(tomSideResponse);
     const { loader } = await import("./MineSakerSide.route");
 
@@ -103,28 +103,28 @@ describe("MineSakerSide loader — backend-sti", () => {
 
     expect(mockHentKontrollsaker).toHaveBeenCalledWith(
       expect.objectContaining({
-        utenStatus: undefined,
         status: ["VENTER_PA_INFORMASJON"],
       }),
     );
+    expect(mockHentKontrollsaker.mock.calls[0][0]).not.toHaveProperty("utenStatus");
   }, 15000);
 
-  it("sender begge parametre når INGEN og blokkerende status er valgt", async () => {
+  it("sender AKTIV og blokkerende status som status[]", async () => {
     mockHentKontrollsaker.mockResolvedValue(tomSideResponse);
     const { loader } = await import("./MineSakerSide.route");
 
     await loader({
-      request: new Request("http://localhost/mine-saker?status=INGEN&status=VENTER_PA_INFORMASJON"),
+      request: new Request("http://localhost/mine-saker?status=AKTIV&status=VENTER_PA_INFORMASJON"),
       params: {},
       context: {},
     } as Parameters<typeof loader>[0]);
 
     expect(mockHentKontrollsaker).toHaveBeenCalledWith(
       expect.objectContaining({
-        utenStatus: true,
-        status: ["VENTER_PA_INFORMASJON"],
+        status: ["AKTIV", "VENTER_PA_INFORMASJON"],
       }),
     );
+    expect(mockHentKontrollsaker.mock.calls[0][0]).not.toHaveProperty("utenStatus");
   }, 15000);
 
   it("sender verken utenStatus eller status når status-filter er tomt", async () => {
@@ -140,10 +140,10 @@ describe("MineSakerSide loader — backend-sti", () => {
 
     expect(mockHentKontrollsaker).toHaveBeenCalledWith(
       expect.objectContaining({
-        utenStatus: undefined,
         status: undefined,
       }),
     );
+    expect(mockHentKontrollsaker.mock.calls[0][0]).not.toHaveProperty("utenStatus");
   }, 15000);
 
   it("henter Mine saker med ansvarlig=MEG og teller Delt med meg med size=1", async () => {
@@ -178,21 +178,20 @@ describe("MineSakerSide loader — backend-sti", () => {
     const { loader } = await import("./MineSakerSide.route");
 
     await loader({
-      request: new Request("http://localhost/mine-saker?steg=UTREDNING&status=INGEN"),
+      request: new Request("http://localhost/mine-saker?steg=UTREDNING&status=AKTIV"),
       params: {},
       context: {},
     } as Parameters<typeof loader>[0]);
 
     const kall = mockHentKontrollsaker.mock.calls.map(([argumenter]) => argumenter);
     expect(kall.find((a) => a.ansvarlig === "MEG")).toEqual(
-      expect.objectContaining({ steg: ["UTREDNING"], utenStatus: true }),
+      expect.objectContaining({ steg: ["UTREDNING"], status: ["AKTIV"] }),
     );
     const delt = kall.find((a) => a.tilknyttet === "MEG");
     expect(delt).toEqual(
       expect.objectContaining({
         steg: ["UTREDNING"],
-        status: undefined,
-        utenStatus: true,
+        status: ["AKTIV"],
         utelatEgneSaker: true,
       }),
     );
@@ -212,7 +211,7 @@ describe("MineSakerSide loader — backend-sti", () => {
 
     const result = await loader({
       request: new Request(
-        "http://localhost/mine-saker?fane=delt&side=3&sorter=status&retning=asc&steg=UTREDES&status=INGEN&status=VENTER_PA_VEDTAK",
+        "http://localhost/mine-saker?fane=delt&side=3&sorter=status&retning=asc&steg=UTREDES&status=AKTIV&status=VENTER_PA_VEDTAK",
       ),
       params: {},
       context: {},
@@ -227,8 +226,7 @@ describe("MineSakerSide loader — backend-sti", () => {
         page: 3,
         size: 20,
         steg: ["UTREDNING"],
-        status: ["VENTER_PA_VEDTAK"],
-        utenStatus: true,
+        status: ["AKTIV", "VENTER_PA_VEDTAK"],
         sortering: "status,ASC",
       }),
     );
@@ -239,8 +237,7 @@ describe("MineSakerSide loader — backend-sti", () => {
         page: 1,
         size: 1,
         steg: ["UTREDNING"],
-        status: ["VENTER_PA_VEDTAK"],
-        utenStatus: true,
+        status: ["AKTIV", "VENTER_PA_VEDTAK"],
         sortering: undefined,
       }),
     );
@@ -317,7 +314,7 @@ describe("MineSakerSide loader — backend-sti", () => {
     const { loader } = await import("./MineSakerSide.route");
 
     const result = await loader({
-      request: new Request("http://localhost/mine-saker?fane=delt&steg=OPPRETTET&status=INGEN"),
+      request: new Request("http://localhost/mine-saker?fane=delt&steg=OPPRETTET&status=AKTIV"),
       params: {},
       context: {},
     } as Parameters<typeof loader>[0]);
@@ -328,7 +325,7 @@ describe("MineSakerSide loader — backend-sti", () => {
         tilknyttet: "MEG",
         utelatEgneSaker: true,
         steg: ["OPPRETTET"],
-        utenStatus: true,
+        status: ["AKTIV"],
       }),
     );
     expect(mockHentKontrollsaker).toHaveBeenNthCalledWith(
@@ -336,7 +333,7 @@ describe("MineSakerSide loader — backend-sti", () => {
       expect.objectContaining({
         ansvarlig: "MEG",
         steg: ["OPPRETTET"],
-        utenStatus: true,
+        status: ["AKTIV"],
       }),
     );
     expect(result.deltMedSaker.map((sak) => sak.id)).toEqual([2]);

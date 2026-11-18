@@ -81,6 +81,17 @@ describe("lederStatistikkResponseSchema", () => {
     expect(resultat.ansatte.liste[1]).not.toHaveProperty("erOpplaeringsbruker");
   });
 
+  it("parser svar uten UTEN_STATUS fra ny backend", () => {
+    const { UTEN_STATUS: utenStatus, ...perStatus } = gyldigRespons.enhet.perStatus;
+    expect(utenStatus).toBe(2);
+    const resultat = lederStatistikkResponseSchema.parse({
+      ...gyldigRespons,
+      enhet: { ...gyldigRespons.enhet, perStatus },
+    });
+
+    expect(resultat.enhet.perStatus).not.toHaveProperty("UTEN_STATUS");
+  });
+
   it("krever alle aktive steg og statuser", () => {
     expect(
       lederStatistikkResponseSchema.safeParse({
