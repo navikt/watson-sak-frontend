@@ -66,7 +66,7 @@ describe("varsler api.server", () => {
       vi.stubGlobal("fetch", fetchMock);
 
       const { hentUlesteVarsler } = await import("./api.server");
-      const varsler = await hentUlesteVarsler("token-abc");
+      const { varsler } = await hentUlesteVarsler("token-abc");
 
       expect(varsler[0]).toMatchObject({
         id: "550e8400-e29b-41d4-a716-446655440001",
@@ -78,6 +78,21 @@ describe("varsler api.server", () => {
       });
     });
 
+    it("returnerer totalt antall uleste fra backend, også utover første side", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: async () => ({ ...gyldigVarselPageResponse, totalItems: 55, totalPages: 2 }),
+        }),
+      );
+
+      const { hentUlesteVarsler } = await import("./api.server");
+      const { antallUleste } = await hentUlesteVarsler("token-abc");
+
+      expect(antallUleste).toBe(55);
+    });
+
     it("sorterer varsler synkende på tidspunkt", async () => {
       const fetchMock = vi.fn().mockResolvedValue({
         ok: true,
@@ -86,7 +101,7 @@ describe("varsler api.server", () => {
       vi.stubGlobal("fetch", fetchMock);
 
       const { hentUlesteVarsler } = await import("./api.server");
-      const varsler = await hentUlesteVarsler("token-abc");
+      const { varsler } = await hentUlesteVarsler("token-abc");
 
       expect(varsler[0].tidspunkt > varsler[1].tidspunkt).toBe(true);
     });
