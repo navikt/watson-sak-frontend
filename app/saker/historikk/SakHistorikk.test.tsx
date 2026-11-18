@@ -226,7 +226,7 @@ describe("SakHistorikk", () => {
       />,
     );
 
-    expect(screen.getByText("Sak politi")).toBeDefined();
+    expect(screen.getByText("Sak til politi")).toBeDefined();
     expect(screen.getByText(/Saken er vurdert og anmeldt – Steg: Politi/)).toBeDefined();
   });
 
