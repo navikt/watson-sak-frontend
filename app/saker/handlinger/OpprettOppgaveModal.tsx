@@ -158,7 +158,6 @@ export function OpprettOppgaveModal({ sakId, åpen, onClose, arkiv }: OpprettOpp
     <Modal
       open={åpen}
       onClose={handleLukk}
-      closeOnBackdropClick
       header={
         steg === "suksess"
           ? undefined
