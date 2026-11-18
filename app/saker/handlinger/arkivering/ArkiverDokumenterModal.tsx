@@ -204,7 +204,6 @@ export function ArkiverDokumenterModal({
     <Modal
       open={åpen}
       onClose={handleLukk}
-      closeOnBackdropClick
       header={
         steg === "suksess"
           ? undefined

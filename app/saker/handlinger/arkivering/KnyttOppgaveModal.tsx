@@ -82,7 +82,6 @@ export function KnyttOppgaveModal({ sakId, journalpost, onClose }: KnyttOppgaveM
     <Modal
       open={journalpost !== null}
       onClose={handleLukk}
-      closeOnBackdropClick
       header={
         opprettet
           ? undefined
