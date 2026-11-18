@@ -97,7 +97,7 @@ export interface MigreringFilter {
 }
 
 export interface MigreringLister {
-  /** Egne kandidater. For ledere også ansattes. Andres personident er aldri satt. */
+  /** Egne kandidater. For ledere også ansattes, med personident når ansvaret er bekreftet. */
   liste: MigreringSide;
   /** Valg til filtre og tildeling. Tom for andre enn ledere. */
   ansatteValg: MigreringAnsatt[];

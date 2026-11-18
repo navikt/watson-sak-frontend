@@ -84,7 +84,7 @@ export async function hentMigreringskandidater(request: Request): Promise<Migrer
 
 /**
  * Henter én side. Bruker backendens eksisterende Azure-token og tilgangskontroller, aldri klientvalgt NAV-ident.
- * `ANSATTE` og `ALLE` er bare for ledere. Backend skjuler andres personident.
+ * `ANSATTE` og `ALLE` er bare for ledere. Backend sender personident bare når ansvaret er bekreftet.
  *
  * @param side 1-basert sidenummer
  */
