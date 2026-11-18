@@ -13,6 +13,7 @@ import {
 } from "@navikt/ds-react";
 import { formaterTilIsoDato } from "~/utils/date-utils";
 import { behandlendeEnheter } from "./behandlendeEnheter";
+import { gjelderverdiPåkrevdFelt } from "./oppgavefelt";
 import { prioritetValg } from "./opprett-formatering";
 import type { OppgavekodeverkTilstand } from "./useOppgavekodeverk";
 
@@ -61,6 +62,8 @@ export function OppgaveSkjema({ fields, kodeverk, onPrøvIgjen }: OppgaveSkjemaP
         }))
       : [];
   const valgtGjelderverdi = gjelderverdier.find((valg) => valg.value === gjelderverdi.value);
+  // Noen temaer, som Kontroll anmeldelse, har ingen gjelderverdier i Gosys. Da skjules feltet.
+  const utenGjelderverdier = kodeverk.status === "ok" && gjelderverdier.length === 0;
   const kodeverkHjelpetekst =
     kodeverk.status === "ok" ? undefined : kodeverkBeskrivelse[kodeverk.status];
 
@@ -154,22 +157,29 @@ export function OppgaveSkjema({ fields, kodeverk, onPrøvIgjen }: OppgaveSkjemaP
       />
 
       <input
+        type="hidden"
+        name={gjelderverdiPåkrevdFelt}
+        value={utenGjelderverdier ? "nei" : "ja"}
+      />
+      <input
         name={fields.gjelderverdi.name}
         defaultValue={fields.gjelderverdi.initialValue}
         hidden
         tabIndex={-1}
         onFocus={() => gjelderverdi.focus()}
       />
-      <UNSAFE_Combobox
-        label="Gjelderverdi"
-        description={kodeverkHjelpetekst}
-        disabled={kodeverk.status !== "ok"}
-        options={gjelderverdier}
-        placeholder="Velg gjelderverdi"
-        selectedOptions={valgtGjelderverdi ? [valgtGjelderverdi] : []}
-        onToggleSelected={(verdi, isSelected) => gjelderverdi.change(isSelected ? verdi : "")}
-        error={fields.gjelderverdi.errors?.[0]}
-      />
+      {!utenGjelderverdier && (
+        <UNSAFE_Combobox
+          label="Gjelderverdi"
+          description={kodeverkHjelpetekst}
+          disabled={kodeverk.status !== "ok"}
+          options={gjelderverdier}
+          placeholder="Velg gjelderverdi"
+          selectedOptions={valgtGjelderverdi ? [valgtGjelderverdi] : []}
+          onToggleSelected={(verdi, isSelected) => gjelderverdi.change(isSelected ? verdi : "")}
+          error={fields.gjelderverdi.errors?.[0]}
+        />
+      )}
 
       <Textarea
         key={fields.beskrivelse.key}

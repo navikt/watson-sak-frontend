@@ -102,10 +102,8 @@ export const mockOppgavekodeverk: Record<Tema, Oppgavekodeverk> = {
     ],
   },
   KTA: {
-    gjelderverdier: [
-      { behandlingstema: "ab0014", behandlingstemaTerm: "Arbeidsavklaringspenger" },
-      { behandlingstema: "ab0356", behandlingstemaTerm: "Dagpenger" },
-    ],
+    // Kontroll anmeldelse har ingen gjelderverdier i Gosys.
+    gjelderverdier: [],
     oppgavetyper: [
       { oppgavetype: "BEH_SAK", term: "Behandle sak" },
       { oppgavetype: "VUR", term: "Vurder dokument" },
