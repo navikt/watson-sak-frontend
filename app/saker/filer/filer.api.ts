@@ -90,7 +90,19 @@ export async function action({ request, params }: ActionFunctionArgs) {
         if (feil instanceof BackendFeilException && feil.status < 500) {
           return { message: delvisFeilmelding(filer, indeks, feil.message) };
         }
-        return tekniskFeilSvar(feil, { kontekst: "laste opp fil", sakId: sakReferanse, request });
+        const svar = tekniskFeilSvar(feil, {
+          kontekst: "laste opp fil",
+          sakId: sakReferanse,
+          request,
+        });
+        // Filene før feilen er lagret. Si det, så brukeren ikke laster dem opp to ganger.
+        if (indeks > 0) {
+          svar.data = {
+            ...svar.data,
+            delvis: `${indeks} av ${filer.length} filer ble lastet opp før feilen. Sjekk listen før du prøver igjen.`,
+          };
+        }
+        return svar;
       }
     }
     return sisteFil;
