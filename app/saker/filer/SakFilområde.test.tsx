@@ -194,9 +194,9 @@ describe("SakFilområde", () => {
     expect(screen.getByText("Opprett dokument")).toBeDefined();
   });
 
-  it("viser 'Last opp fil'-knapp når redigerbar er true", () => {
+  it("viser 'Last opp filer'-knapp når redigerbar er true", () => {
     renderOmråde({ dokumenter: [], filer: [], sakId: "ABC-123", steg: "UTREDNING" });
-    expect(screen.getByText("Last opp fil")).toBeDefined();
+    expect(screen.getByText("Last opp filer")).toBeDefined();
   });
 
   it("viser tomtilstand når det ikke er noen dokumenter eller filer", () => {
@@ -204,7 +204,7 @@ describe("SakFilområde", () => {
     expect(screen.getByText("Ingen dokumenter eller filer ennå")).toBeDefined();
   });
 
-  it("skjuler 'Opprett dokument'- og 'Last opp fil'-knapp når redigerbar er false", () => {
+  it("skjuler 'Opprett dokument'- og 'Last opp filer'-knapp når redigerbar er false", () => {
     renderOmråde({
       dokumenter: mockDokumenter,
       filer: [],
@@ -213,7 +213,7 @@ describe("SakFilområde", () => {
       redigerbar: false,
     });
     expect(screen.queryByText("Opprett dokument")).toBeNull();
-    expect(screen.queryByText("Last opp fil")).toBeNull();
+    expect(screen.queryByText("Last opp filer")).toBeNull();
   });
 
   it("tillater filopplasting uten å tillate opprettelse eller endring av dokumenter", () => {
@@ -227,7 +227,7 @@ describe("SakFilområde", () => {
     });
 
     expect(screen.queryByText("Opprett dokument")).toBeNull();
-    expect(screen.getByText("Last opp fil")).toBeDefined();
+    expect(screen.getByText("Last opp filer")).toBeDefined();
     // Dokumenter kan verken slettes eller flyttes uten endretilgang, så de har ingen meny.
     expect(screen.queryByRole("button", { name: "Handlinger for Rapport" })).toBeNull();
   });
@@ -534,7 +534,7 @@ describe("SakFilområde", () => {
       expect(screen.queryByText("Opprett dokument")).toBeNull();
     });
 
-    it("skjuler 'Last opp fil'-knapp", () => {
+    it("skjuler 'Last opp filer'-knapp", () => {
       renderOmråde({
         dokumenter: [],
         filer: mockFiler,
@@ -542,7 +542,7 @@ describe("SakFilområde", () => {
         steg: "UTREDNING",
         redigerbar: false,
       });
-      expect(screen.queryByText("Last opp fil")).toBeNull();
+      expect(screen.queryByText("Last opp filer")).toBeNull();
     });
 
     it("skjuler handlingsmenyen per fil", () => {

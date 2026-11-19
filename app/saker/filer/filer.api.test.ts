@@ -121,4 +121,54 @@ describe("filer.api POST", () => {
     });
     expect(hentHistorikk(testRequest, sak.id)).toHaveLength(antallFør);
   });
+
+  it("laster opp flere filer i én forespørsel", async () => {
+    const { sak, ref } = settOppAktivSak();
+    const antallFør = hentHistorikk(testRequest, sak.id).length;
+    const formData = new FormData();
+    formData.append("fil", new File(["a"], "en.pdf", { type: "application/pdf" }));
+    formData.append("fil", new File(["b"], "to.pdf", { type: "application/pdf" }));
+
+    const respons = (await action({
+      request: {
+        method: "POST",
+        headers: new Headers(),
+        formData: async () => formData,
+      } as unknown as Request,
+      params: { sakId: ref },
+    } as Route.ActionArgs)) as { filnavn: string };
+
+    expect(respons.filnavn).toBe("to.pdf");
+    const historikk = hentHistorikk(testRequest, sak.id);
+    expect(historikk).toHaveLength(antallFør + 2);
+    expect(
+      historikk
+        .slice(0, 2)
+        .map((h) => h.beskrivelse)
+        .sort(),
+    ).toEqual(["en.pdf", "to.pdf"]);
+  });
+
+  it("laster ikke opp noen filer når én av flere er tom", async () => {
+    const { sak, ref } = settOppAktivSak();
+    const antallFør = hentHistorikk(testRequest, sak.id).length;
+    const formData = new FormData();
+    formData.append("fil", new File(["a"], "en.pdf", { type: "application/pdf" }));
+    formData.append("fil", new File([], "tom.pdf", { type: "application/pdf" }));
+
+    const svar = await action({
+      request: {
+        method: "POST",
+        headers: new Headers(),
+        formData: async () => formData,
+      } as unknown as Request,
+      params: { sakId: ref },
+    } as Route.ActionArgs);
+
+    expect(svar).toMatchObject({
+      data: { message: "Filen tom.pdf er tom. Ingen filer ble lastet opp." },
+      init: { status: 400 },
+    });
+    expect(hentHistorikk(testRequest, sak.id)).toHaveLength(antallFør);
+  });
 });

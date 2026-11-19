@@ -98,6 +98,27 @@ describe("filer.api POST — backend-sti", () => {
       init: { status: 500 },
     });
   });
+
+  it("laster opp flere filer etter hverandre og stopper ved første brukerfeil", async () => {
+    mockLastOppFil
+      .mockResolvedValueOnce({ id: "fil-1", filnavn: "en.pdf" })
+      .mockRejectedValueOnce(new MockBackendFeilException(400, "Filen inneholder virus."));
+    const formData = new FormData();
+    for (const navn of ["en.pdf", "to.pdf", "tre.pdf"]) {
+      formData.append("fil", new File(["x"], navn, { type: "application/pdf" }));
+    }
+
+    const svar = await actionMedBackend({
+      method: "POST",
+      headers: new Headers(),
+      formData: async () => formData,
+    } as unknown as Request);
+
+    expect(mockLastOppFil).toHaveBeenCalledTimes(2);
+    expect(svar).toEqual({
+      message: "to.pdf: Filen inneholder virus. 1 av 3 filer ble lastet opp.",
+    });
+  });
 });
 
 async function actionMedBackend(request: Request = uploadRequest()) {

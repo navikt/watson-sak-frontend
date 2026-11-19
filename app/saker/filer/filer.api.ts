@@ -55,14 +55,20 @@ export async function action({ request, params }: ActionFunctionArgs) {
   }
 
   const formData = await request.formData();
-  const fil = formData.get("fil");
+  // Flere filer sendes som gjentatte «fil»-felt. Svaret er siste opplastede fil.
+  const filer = formData.getAll("fil").filter((fil): fil is File => fil instanceof File);
   // Returneres som { message } (ikke kastet) slik at feilen vises inline i filområdet
   // i stedet for å havne i error boundary.
-  if (!(fil instanceof File)) {
+  if (filer.length === 0) {
     return data({ message: "Velg en fil som skal lastes opp." }, { status: 400 });
   }
-  if (fil.size === 0) {
-    return data({ message: "Filen er tom og kan ikke lastes opp." }, { status: 400 });
+  const tomFil = filer.find((fil) => fil.size === 0);
+  if (tomFil) {
+    const melding =
+      filer.length === 1
+        ? "Filen er tom og kan ikke lastes opp."
+        : `Filen ${tomFil.name} er tom. Ingen filer ble lastet opp.`;
+    return data({ message: melding }, { status: 400 });
   }
 
   if (!skalBrukeMockdata) {
@@ -76,14 +82,18 @@ export async function action({ request, params }: ActionFunctionArgs) {
     if (!hentStegbaserteSaksregler(sak.steg).kanLasteOppFiler) {
       throw data("Ingen tilgang til å laste opp filer", { status: 403 });
     }
-    try {
-      return await backendApi.lastOppFil(token, sakReferanse, fil);
-    } catch (feil) {
-      if (feil instanceof BackendFeilException && feil.status < 500) {
-        return { message: feil.message };
+    let sisteFil: Awaited<ReturnType<typeof backendApi.lastOppFil>> | undefined;
+    for (const [indeks, fil] of filer.entries()) {
+      try {
+        sisteFil = await backendApi.lastOppFil(token, sakReferanse, fil);
+      } catch (feil) {
+        if (feil instanceof BackendFeilException && feil.status < 500) {
+          return { message: delvisFeilmelding(filer, indeks, feil.message) };
+        }
+        return tekniskFeilSvar(feil, { kontekst: "laste opp fil", sakId: sakReferanse, request });
       }
-      return tekniskFeilSvar(feil, { kontekst: "laste opp fil", sakId: sakReferanse, request });
     }
+    return sisteFil;
   }
 
   const tilgang = await hentSakstilgangFraMock(request, sakReferanse);
@@ -95,10 +105,23 @@ export async function action({ request, params }: ActionFunctionArgs) {
   }
 
   const innlogget = await hentInnloggetBruker({ request });
-  const nyFil = leggTilFil(request, String(tilgang.sak.id), fil, innlogget.name);
-  leggTilHendelse(request, tilgang.sak, "FIL_LASTET_OPP", undefined, {
-    beskrivelse: nyFil.filnavn,
-    opprettetAvNavn: innlogget.name,
+  const nyeFiler = filer.map((fil) => {
+    const nyFil = leggTilFil(request, String(tilgang.sak.id), fil, innlogget.name);
+    leggTilHendelse(request, tilgang.sak, "FIL_LASTET_OPP", undefined, {
+      beskrivelse: nyFil.filnavn,
+      opprettetAvNavn: innlogget.name,
+    });
+    return nyFil;
   });
-  return nyFil;
+  return nyeFiler[nyeFiler.length - 1];
+}
+
+/** Ved flere filer: si hvilken fil som feilet, og hvor mange som allerede ble lastet opp. */
+function delvisFeilmelding(filer: File[], indeks: number, melding: string) {
+  if (filer.length === 1) return melding;
+  const lastetOpp =
+    indeks === 0
+      ? "Ingen filer ble lastet opp."
+      : `${indeks} av ${filer.length} filer ble lastet opp.`;
+  return `${filer[indeks].name}: ${melding} ${lastetOpp}`;
 }

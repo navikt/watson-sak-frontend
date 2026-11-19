@@ -154,21 +154,28 @@ export function SakFilområde({
       : null);
 
   function håndterFilvalg(event: React.ChangeEvent<HTMLInputElement>) {
-    const fil = event.target.files?.[0];
-    if (!fil) return;
+    const filer = Array.from(event.target.files ?? []);
+    if (filer.length === 0) return;
 
     // Nullstill input slik at samme fil kan lastes opp igjen
     event.target.value = "";
 
-    if (fil.size === 0) {
-      settKlientfeil("Filen er tom og kan ikke lastes opp.");
+    const tomFil = filer.find((fil) => fil.size === 0);
+    if (tomFil) {
+      settKlientfeil(
+        filer.length === 1
+          ? "Filen er tom og kan ikke lastes opp."
+          : `Filen ${tomFil.name} er tom. Ingen filer ble lastet opp.`,
+      );
       return;
     }
     settKlientfeil(null);
 
     const formData = new FormData();
-    formData.append("fil", fil);
-    sporHendelse("vedlegg lastet opp");
+    for (const fil of filer) {
+      formData.append("fil", fil);
+      sporHendelse("vedlegg lastet opp");
+    }
     opplastingFetcher.submit(formData, {
       method: "post",
       action: url,
@@ -191,6 +198,7 @@ export function SakFilområde({
                     ref={inputRef}
                     type="file"
                     accept={TILLATTE_FILTYPER}
+                    multiple
                     className="sr-only"
                     aria-hidden
                     tabIndex={-1}
@@ -206,7 +214,7 @@ export function SakFilområde({
                     disabled={lasterOpp}
                     onClick={() => inputRef.current?.click()}
                   >
-                    Last opp fil
+                    Last opp filer
                   </Button>
                 </>
               )}

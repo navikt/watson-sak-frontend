@@ -450,7 +450,7 @@ describe("SakDetaljSide render", () => {
     renderDetaljside("102");
 
     expect(await screen.findByRole("heading", { name: "Filer" })).toBeDefined();
-    expect(screen.queryByRole("button", { name: "Last opp fil" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Last opp filer" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Opprett mappe" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Opprett dokument" })).toBeNull();
   }, 15000);
@@ -494,7 +494,7 @@ describe("SakDetaljSide render", () => {
       }
       expect(screen.queryByRole("button", { name: "Arkiver dokument(er) i Gosys" })).toBeNull();
       expect(screen.queryByRole("button", { name: "Opprett oppgave i Gosys" })).toBeNull();
-      expect(screen.queryByRole("button", { name: "Last opp fil" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Last opp filer" })).toBeNull();
       expect(screen.queryByRole("button", { name: "Opprett mappe" })).toBeNull();
       expect(screen.queryByRole("button", { name: "Opprett dokument" })).toBeNull();
     },
