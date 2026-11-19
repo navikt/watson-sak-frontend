@@ -77,6 +77,8 @@ export type TekniskFeilSvar = {
   teknisk: true;
   /** `true` når vi ikke vet om endringen ble lagret. Se `erUsikker`. */
   usikker: boolean;
+  /** Når handlingen gjaldt flere ting og noen ble lagret før feilen, f.eks. flere filer. */
+  delvis?: string;
 };
 
 const TEKNISK_FEIL_ACTION = "Det oppstod en teknisk feil.";

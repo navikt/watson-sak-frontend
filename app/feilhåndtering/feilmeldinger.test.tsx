@@ -48,6 +48,21 @@ describe("Innsendingsfeil", () => {
     );
     expect(container.textContent).toBe("");
   });
+
+  it("viser hvor mye som ble lagret når svaret har delvis", () => {
+    render(
+      <Innsendingsfeil
+        svar={{
+          teknisk: true,
+          feilId: "a1b2c3d4",
+          usikker: false,
+          delvis: "1 av 3 filer ble lastet opp før feilen.",
+        }}
+        tekster={INNSENDINGSFEIL.lastOppFil}
+      />,
+    );
+    expect(screen.getByText(/1 av 3 filer ble lastet opp før feilen\./)).toBeDefined();
+  });
 });
 
 describe("teksterForMappehandling", () => {

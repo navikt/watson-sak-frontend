@@ -98,6 +98,62 @@ describe("filer.api POST — backend-sti", () => {
       init: { status: 500 },
     });
   });
+
+  it("laster opp flere filer etter hverandre og stopper ved første brukerfeil", async () => {
+    mockLastOppFil
+      .mockResolvedValueOnce({ id: "fil-1", filnavn: "en.pdf" })
+      .mockRejectedValueOnce(new MockBackendFeilException(400, "Filen inneholder virus."));
+    const formData = new FormData();
+    for (const navn of ["en.pdf", "to.pdf", "tre.pdf"]) {
+      formData.append("fil", new File(["x"], navn, { type: "application/pdf" }));
+    }
+
+    const svar = await actionMedBackend({
+      method: "POST",
+      headers: new Headers(),
+      formData: async () => formData,
+    } as unknown as Request);
+
+    expect(mockLastOppFil).toHaveBeenCalledTimes(2);
+    expect(svar).toEqual({
+      message: "to.pdf: Filen inneholder virus. 1 av 3 filer ble lastet opp.",
+    });
+  });
+
+  it("forteller hvor mange filer som ble lagret når en senere fil gir teknisk feil", async () => {
+    mockLastOppFil
+      .mockResolvedValueOnce({ id: "fil-1", filnavn: "en.pdf" })
+      .mockRejectedValueOnce(new MockBackendFeilException(500, "Intern backendfeil"));
+    const formData = new FormData();
+    for (const navn of ["en.pdf", "to.pdf", "tre.pdf"]) {
+      formData.append("fil", new File(["x"], navn, { type: "application/pdf" }));
+    }
+
+    const svar = await actionMedBackend({
+      method: "POST",
+      headers: new Headers(),
+      formData: async () => formData,
+    } as unknown as Request);
+
+    expect(mockLastOppFil).toHaveBeenCalledTimes(2);
+    expect(svar).toMatchObject({
+      data: {
+        teknisk: true,
+        feilId: expect.stringMatching(/^[0-9a-f]{8}$/),
+        usikker: false,
+        delvis: "1 av 3 filer ble lastet opp før feilen. Sjekk listen før du prøver igjen.",
+      },
+      init: { status: 500 },
+    });
+  });
+
+  it("sier ingenting om delvis opplasting når første fil gir teknisk feil", async () => {
+    mockLastOppFil.mockRejectedValue(new MockBackendFeilException(500, "Intern backendfeil"));
+
+    const svar = (await actionMedBackend()) as { data: Record<string, unknown> };
+
+    expect(svar.data).not.toHaveProperty("delvis");
+  });
 });
 
 async function actionMedBackend(request: Request = uploadRequest()) {

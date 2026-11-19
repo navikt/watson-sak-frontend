@@ -31,9 +31,11 @@ export function tekniskFeilFra(svar: { teknisk: true; feilId: string }): Teknisk
 export function Innsendingsfeil({ svar, tekster }: { svar: unknown; tekster: Innsendingstekster }) {
   if (!erTekniskFeilSvar(svar)) return null;
   const { tittel, tekst } = velgTekst(tekster, erUsikkerFeil(svar));
+  const delvis = (svar as { delvis?: unknown }).delvis;
   return (
     <Feilmelding tittel={tittel} feilId={svar.feilId}>
       {tekst}
+      {typeof delvis === "string" && ` ${delvis}`}
     </Feilmelding>
   );
 }
