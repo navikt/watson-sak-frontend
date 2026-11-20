@@ -40,6 +40,8 @@ describe("tilgangsregler for saken", () => {
     ["fordelt sak, eier", fordelt, EIER, true, true, true],
     ["fordelt sak, delt med", fordelt, DELT_MED, true, true, true],
     ["fordelt sak, andre (også leder og den som opprettet)", fordelt, ANNEN, false, false, false],
+    ["avsluttet sak, eier", lagSak("AVSLUTTET", EIER), EIER, true, true, true],
+    ["avsluttet sak, andre (TH-164)", lagSak("AVSLUTTET", EIER), ANNEN, false, false, false],
   ] as const)("%s", (_, sak, navIdent, seFiler, lasteOpp, endre) => {
     expect(kanSeFilområdet(sak, som(navIdent))).toBe(seFiler);
     expect(kanLasteOppFiler(sak, som(navIdent))).toBe(lasteOpp);

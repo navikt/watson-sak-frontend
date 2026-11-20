@@ -47,7 +47,11 @@ export function kanLeseSaksinnhold(sak: KontrollsakResponse, innlogget: Innlogge
   return kanEndreSak(sak, innlogget) || sak.steg === "AVSLUTTET";
 }
 
-/** Kan se filområdet (filer og mapper). På en ufordelt sak gjelder det alle. */
+/**
+ * Kan se filområdet (filer og mapper). På en ufordelt sak gjelder det alle. Lesetilgangen
+ * på avsluttet sak gjelder ikke filområdet: der kreves eier eller delt med, ellers ville
+ * filområdet se tomt ut selv om saken har filer (TH-164).
+ */
 export function kanSeFilområdet(sak: KontrollsakResponse, innlogget: Innlogget): boolean {
-  return erUfordelt(sak) || kanLeseSaksinnhold(sak, innlogget);
+  return erUfordelt(sak) || kanEndreSak(sak, innlogget);
 }
