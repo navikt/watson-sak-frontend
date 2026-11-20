@@ -119,7 +119,6 @@ export function SaksbehandlereKort({
   const stegregler = hentStegbaserteSaksregler(sak.steg);
   const kanSkrive = !innloggetBruker.erLesebruker;
   const erAktivStatus = sak.status === null || sak.status === "AKTIV";
-  const kanEndreTilgang = kanSkrive && stegregler.erAktiv && erAktivStatus;
   const kanEndreDeltTilgang = kanSkrive && stegregler.kanEndreDeltTilgang && erAktivStatus;
   const ansvarligSaksbehandler = ansvarligFraProps ?? sak.saksbehandlere.eier;
   const sakPath = RouteConfig.SAKER_DETALJ.replace(":sakId", getSaksreferanse(sak.id));
@@ -139,7 +138,8 @@ export function SaksbehandlereKort({
 
   // Kun sakens ansvarlige saksbehandler eller leder for sakens enhet kan endre ansvarlig saksbehandler og enhet.
   const kanFordele = kanFordeleSak(sak, erEier);
-  const kanEndreAnsvarlig = kanEndreTilgang && kanFordele;
+  // Ansvarlig eller leder kan endre ansvarlig saksbehandler i alle aktive steg uansett status.
+  const kanEndreAnsvarlig = kanSkrive && stegregler.erAktiv && kanFordele;
   // Ansvarlig eller leder kan endre enhet i alle aktive steg uansett status.
   // Ufordelte saker kan bare flyttes i Opprettet og Strafferettslig vurdering.
   const kanEndreEnhet =
