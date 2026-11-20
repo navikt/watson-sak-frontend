@@ -967,6 +967,104 @@ describe("SaksbehandlereKort", () => {
     expect(feilEtterKnappen).toHaveLength(1);
   });
 
+  const ikkeAktiveStatuser = [
+    "VENTER_PA_INFORMASJON",
+    "VENTER_PA_VEDTAK",
+    "VENTER_PA_RESULTAT",
+    "PAAKLAGET",
+    "I_BERO",
+  ] as const;
+
+  it.each(ikkeAktiveStatuser)(
+    "lar ansvarlig endre ansvarlig saksbehandler med status %s",
+    async (status) => {
+      await renderMedRouter(
+        <SaksbehandlereKort
+          erEier={true}
+          sak={lagKontrollsak({ steg: "UTREDNING", status })}
+          saksbehandlerDetaljer={[lagSaksbehandler()]}
+          ansvarligSaksbehandler={lagSaksbehandler()}
+        />,
+      );
+
+      expect(screen.getByRole("button", { name: "Endre ansvarlig saksbehandler" })).toBeDefined();
+    },
+  );
+
+  it.each(ikkeAktiveStatuser)(
+    "lar leder for sakens enhet endre ansvarlig saksbehandler med status %s",
+    async (status) => {
+      useInnloggetBrukerMock.mockReturnValue({
+        navIdent: "Z999999",
+        name: "Leder Lederesen",
+        enhet: "4812",
+        erLeder: true,
+      });
+
+      await renderMedRouter(
+        <SaksbehandlereKort
+          erEier={false}
+          sak={lagKontrollsak({
+            steg: "UTREDNING",
+            status,
+            enhet: "ky153k",
+            tilgang: lederTilgang,
+          })}
+          saksbehandlerDetaljer={[lagSaksbehandler()]}
+          ansvarligSaksbehandler={lagSaksbehandler()}
+        />,
+      );
+
+      expect(screen.getByRole("button", { name: "Endre ansvarlig saksbehandler" })).toBeDefined();
+      expect(screen.queryByRole("button", { name: "Fjern" })).toBeNull();
+    },
+  );
+
+  it("skjuler Endre ansvarlig saksbehandler for avsluttet sak", async () => {
+    useInnloggetBrukerMock.mockReturnValue({
+      navIdent: "Z999999",
+      name: "Leder Lederesen",
+      enhet: "4812",
+      erLeder: true,
+    });
+
+    await renderMedRouter(
+      <SaksbehandlereKort
+        erEier={true}
+        sak={lagKontrollsak({ steg: "AVSLUTTET", enhet: "ky153k", tilgang: lederTilgang })}
+        saksbehandlerDetaljer={[lagSaksbehandler()]}
+        ansvarligSaksbehandler={lagSaksbehandler()}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Endre ansvarlig saksbehandler" })).toBeNull();
+  });
+
+  it("skjuler Endre ansvarlig saksbehandler for leder i en annen enhet når saken er i bero", async () => {
+    useInnloggetBrukerMock.mockReturnValue({
+      navIdent: "Z999999",
+      name: "Leder Lederesen",
+      enhet: "4812",
+      erLeder: true,
+    });
+
+    await renderMedRouter(
+      <SaksbehandlereKort
+        erEier={false}
+        sak={lagKontrollsak({
+          steg: "UTREDNING",
+          status: "I_BERO",
+          enhet: "hu424t",
+          tilgang: { ...lederTilgang, erLederForSakensEnhet: false },
+        })}
+        saksbehandlerDetaljer={[lagSaksbehandler()]}
+        ansvarligSaksbehandler={lagSaksbehandler()}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Endre ansvarlig saksbehandler" })).toBeNull();
+  });
+
   it("skjuler Endre og Fjern for leder i en annen enhet enn saken", async () => {
     useInnloggetBrukerMock.mockReturnValue({
       navIdent: "Z999999",
