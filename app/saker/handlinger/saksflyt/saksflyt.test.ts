@@ -9,6 +9,7 @@ import {
   type Sakshandling,
 } from "./saksflyt";
 import { aapId, dagpengerId, lagTillatteHandlinger, lagYtelse } from "./testdata";
+import { validerTrinn } from "./validering";
 
 function ider(handlinger: Sakshandling[]) {
   return handlinger.map((handling) => handling.id);
@@ -226,6 +227,38 @@ describe("hentStartverdier", () => {
   it("bruker AKTIV som startverdi for en opprettet sak", () => {
     const tillatte = lagTillatteHandlinger({ steg: "OPPRETTET", status: "AKTIV" });
     expect(hentStartverdier(endreStatus, tillatte)).toEqual({ status: "AKTIV" });
+  });
+});
+
+describe("valider statusendring", () => {
+  const statusTrinn = endreStatus.trinn.find((trinn) => trinn.type === "status");
+  if (!statusTrinn) throw new Error("Mangler statustrinn");
+
+  it("avviser statusen saken allerede har", () => {
+    const tillatte = lagTillatteHandlinger({ status: "AKTIV" });
+    expect(validerTrinn(statusTrinn, { status: "AKTIV" }, tillatte)).toEqual({
+      status: "Velg en annen status enn den saken har nå",
+    });
+  });
+
+  it("godtar en annen status", () => {
+    const tillatte = lagTillatteHandlinger({ status: "AKTIV" });
+    expect(validerTrinn(statusTrinn, { status: "VENTER_PA_INFORMASJON" }, tillatte)).toEqual({});
+  });
+
+  it("godtar statusen før bero når saken er i bero", () => {
+    const tillatte = lagTillatteHandlinger({
+      status: "I_BERO",
+      statusFørBero: "VENTER_PA_INFORMASJON",
+    });
+    expect(validerTrinn(statusTrinn, { status: "VENTER_PA_INFORMASJON" }, tillatte)).toEqual({});
+  });
+
+  it("avviser ingen status når saken allerede mangler status", () => {
+    const tillatte = lagTillatteHandlinger({ status: null });
+    expect(validerTrinn(statusTrinn, { status: INGEN_STATUS }, tillatte)).toEqual({
+      status: "Velg en annen status enn den saken har nå",
+    });
   });
 });
 

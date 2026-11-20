@@ -286,6 +286,9 @@ export async function mockAction(
       if (!tillatte.tillatteStatuser.includes(status)) {
         throw data("Statusen er ikke tillatt for saken i gjeldende tilstand", { status: 409 });
       }
+      if (status === tillatte.tilstand.status) {
+        throw data("Saken har allerede denne statusen", { status: 400 });
+      }
       validerResultatFeltNavn(formData, tillatte.feltskjema);
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
 

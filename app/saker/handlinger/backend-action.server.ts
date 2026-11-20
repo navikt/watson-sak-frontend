@@ -209,6 +209,9 @@ export async function backendAction(
       if (!tillatte.tillatteStatuser.includes(status)) {
         throw data("Statusen er ikke tillatt for saken i gjeldende tilstand", { status: 409 });
       }
+      if (status === tillatte.tilstand.status) {
+        throw data("Saken har allerede denne statusen", { status: 400 });
+      }
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");
       const sak = await backendApi.endreStatus(token, sakId, status, beskrivelse ?? undefined);
       return { ok: true, sak };
