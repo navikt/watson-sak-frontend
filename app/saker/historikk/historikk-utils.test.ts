@@ -98,6 +98,26 @@ describe("hendelseBeskrivelse", () => {
     expect(hendelseBeskrivelse(hendelse)).toBe("Type: Vurder dokument");
   });
 
+  it("viser tilknyttet journalpost for opprettet oppgave", () => {
+    const hendelse = lagHendelse({
+      hendelsesType: "OPPGAVE_OPPRETTET",
+      tittel: "JFR",
+      tilknyttetJournalpostId: "453857",
+    });
+
+    expect(hendelseBeskrivelse(hendelse)).toBe("Type: Journalføring\nTilknyttet: 453857");
+  });
+
+  it("bruker oppgavetypenavn fra kodeverket når det er hentet", () => {
+    const hendelse = lagHendelse({ hendelsesType: "OPPGAVE_OPPRETTET", tittel: "VURD_BREV" });
+    const kodeverk = {
+      gjelderverdier: [],
+      oppgavetyper: [{ oppgavetype: "VURD_BREV", term: "Vurder brev" }],
+    };
+
+    expect(hendelseBeskrivelse(hendelse, undefined, kodeverk)).toBe("Type: Vurder brev");
+  });
+
   it("viser hvilke saksdetaljer som ble oppdatert", () => {
     const hendelse = lagHendelse({
       hendelsesType: "SAK_REDIGERT",

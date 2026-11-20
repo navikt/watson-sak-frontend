@@ -439,6 +439,13 @@ export function hentHandlinger(tillatteHandlinger: TillatteHandlingerResponse): 
 /** Verdien som representerer «ingen status» i skjemaet. Serveren tolker den som `null`. */
 export const INGEN_STATUS = "__NULL__";
 
+/** Sammenligner statuser. Manglende status og skjemaets null-verdi betyr `AKTIV`. */
+export function erSammeStatus(a: string | null | undefined, b: string | null | undefined): boolean {
+  const normaliser = (status: string | null | undefined) =>
+    status === null || status === undefined || status === INGEN_STATUS ? "AKTIV" : status;
+  return normaliser(a) === normaliser(b);
+}
+
 const ytelsesfeltPrefiks = "ytelser[].";
 
 type Belopsfelt = "belop" | "endeligBelop";
