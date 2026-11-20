@@ -1356,7 +1356,8 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     const historikk = hentHistorikk(testRequest, String(kontrollsak.id));
     expect(historikk[0]?.hendelsesType).toBe("OPPGAVE_OPPRETTET");
     expect(historikk[0]?.tittel).toBe("VUR");
-    expect(historikk[0]?.beskrivelse).toBe("Oppgave opprettet for journalpost jp-1");
+    expect(historikk[0]?.tilknyttetJournalpostId).toBe("jp-1");
+    expect(historikk[0]?.oppgaveTema).toBe("KTR");
     expect(historikk[0]?.opprettetAvNavn).toBe("Test Saksbehandler");
   });
 
@@ -1388,8 +1389,10 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     ).resolves.toEqual({ ok: true });
     expect(hentHistorikk(testRequest, String(kontrollsak.id))[0]).toMatchObject({
       hendelsesType: "OPPGAVE_OPPRETTET",
-      beskrivelse: "Oppgave opprettet uten dokumenttilknytning",
     });
+    expect(
+      hentHistorikk(testRequest, String(kontrollsak.id))[0]?.tilknyttetJournalpostId,
+    ).toBeUndefined();
   });
 
   it.each(["opprett_oppgave", "opprett_journalpost"])(
@@ -2108,7 +2111,7 @@ describe("SakDetaljSide rediger arbeidsgivere", () => {
 
     const historikk = hentHistorikk(testRequest, String(kontrollsak.id));
     expect(historikk[0]?.hendelsesType).toBe("OPPGAVE_OPPRETTET");
-    expect(historikk[0]?.beskrivelse).toBe("Oppgave opprettet for journalpost jp-123");
+    expect(historikk[0]?.tilknyttetJournalpostId).toBe("jp-123");
   });
 });
 

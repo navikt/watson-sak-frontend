@@ -20,10 +20,9 @@ import {
   XMarkOctagonIcon,
 } from "@navikt/aksel-icons";
 import { BodyShort, VStack } from "@navikt/ds-react";
-import {
-  formaterJournalposttype,
-  formaterOppgavetype,
-} from "~/saker/handlinger/opprett-formatering";
+import type { Oppgavekodeverk } from "~/saker/handlinger/oppgavekodeverk";
+import { finnOppgavetypenavn } from "~/saker/handlinger/oppgavetypenavn";
+import { formaterJournalposttype } from "~/saker/handlinger/opprett-formatering";
 import {
   formaterBelop,
   formaterKategori,
@@ -357,6 +356,7 @@ export function hendelseTittel(hendelse: SakHendelse, forrigeHendelse?: SakHende
 export function hendelseBeskrivelse(
   hendelse: SakHendelse,
   forrigeHendelse?: SakHendelse,
+  oppgavekodeverk?: Oppgavekodeverk,
 ): string | null {
   if (hendelse.hendelsesType === "MANUELL_HENDELSE") {
     return hendelse.beskrivelse ?? null;
@@ -484,7 +484,11 @@ export function hendelseBeskrivelse(
   }
 
   if (hendelse.hendelsesType === "OPPGAVE_OPPRETTET") {
-    return hendelse.tittel ? `Type: ${formaterOppgavetype(hendelse.tittel)}` : null;
+    const linjer = [
+      hendelse.tittel && `Type: ${finnOppgavetypenavn(hendelse.tittel, oppgavekodeverk)}`,
+      hendelse.tilknyttetJournalpostId && `Tilknyttet: ${hendelse.tilknyttetJournalpostId}`,
+    ].filter(Boolean);
+    return linjer.join("\n") || null;
   }
 
   if (hendelse.hendelsesType === "SAKSINFORMASJON_ENDRET") {

@@ -495,6 +495,8 @@ export const kontrollsakHendelseResponseObjectSchema = z.object({
   tilEnhetNavn: z.string().nullable().optional(),
   tilSaksbehandlerNavn: z.string().nullable().optional(),
   delAvFlytting: z.boolean().nullable().optional(),
+  oppgaveTema: z.string().nullable().optional(),
+  tilknyttetJournalpostId: z.string().nullable().optional(),
 });
 
 export const kontrollsakHendelseResponseSchema = z.preprocess(

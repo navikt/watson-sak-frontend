@@ -761,9 +761,8 @@ export async function mockAction(
       const journalpostId = hentValgfriTekst(formData, "journalpostId");
       leggTilBrukerhendelse(sak, "OPPGAVE_OPPRETTET", undefined, {
         tittel: oppgavetype || "Oppgave",
-        beskrivelse: journalpostId
-          ? `Oppgave opprettet for journalpost ${journalpostId}`
-          : "Oppgave opprettet uten dokumenttilknytning",
+        oppgaveTema: hentValgfriTekst(formData, "tema"),
+        tilknyttetJournalpostId: journalpostId,
       });
       break;
     }
