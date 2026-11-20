@@ -97,7 +97,9 @@ export const mockOppgavekodeverk: Record<Tema, Oppgavekodeverk> = {
     ],
     oppgavetyper: [
       { oppgavetype: "BEH_SAK", term: "Behandle sak" },
+      { oppgavetype: "JFR", term: "Journalføring" },
       { oppgavetype: "VUR", term: "Vurder dokument" },
+      { oppgavetype: "VURD_BREV", term: "Vurder brev" },
       { oppgavetype: "VUR_KONS_YTE", term: "Vurder konsekvens for ytelse" },
     ],
   },

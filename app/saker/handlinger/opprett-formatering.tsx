@@ -9,7 +9,9 @@ const journalposttypeEtiketter: Record<string, string> = {
 // Reserve for historikken, som ikke henter kodeverket fra Gosys.
 const oppgavetypeEtiketter: Record<string, string> = {
   BEH_SAK: "Behandle sak",
+  JFR: "Journalføring",
   VUR: "Vurder dokument",
+  VURD_BREV: "Vurder brev",
   VURD_HENV: "Vurder henvendelse",
   VUR_KONS_YTE: "Vurder konsekvens for ytelse",
 };

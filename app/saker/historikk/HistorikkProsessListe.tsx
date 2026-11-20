@@ -8,6 +8,9 @@ import {
   HendelseBullet,
   HendelseInnhold,
 } from "./historikk-utils";
+import type { Oppgavekodeverk } from "~/saker/handlinger/oppgavekodeverk";
+import type { Tema } from "~/saker/handlinger/tema";
+import { useOppgavekodeverk } from "~/saker/handlinger/useOppgavekodeverk";
 import type { SakHendelse } from "./typer";
 
 interface HistorikkProsessListeProps {
@@ -39,6 +42,7 @@ export function HistorikkProsessListe({
   erMigreringssak = false,
 }: HistorikkProsessListeProps) {
   const grupper = hendelsesgrupper ?? grupperHistorikkHendelser(hendelser);
+  const oppgavekodeverk = useOppgavekodeverkForHistorikk(hendelser);
 
   return (
     <Process className={className}>
@@ -49,7 +53,11 @@ export function HistorikkProsessListe({
           gruppe.length > 1
             ? gruppe.flatMap((fil) => (fil.filnavn ? [`Fil: ${fil.filnavn}`] : [])).join("\n") ||
               null
-            : hendelseBeskrivelse(hendelse, forrigeHendelse);
+            : hendelseBeskrivelse(
+                hendelse,
+                forrigeHendelse,
+                hendelse.oppgaveTema ? oppgavekodeverk[hendelse.oppgaveTema] : undefined,
+              );
         const erManuellHendelse = hendelse.hendelsesType === "MANUELL_HENDELSE";
 
         return (
@@ -94,4 +102,23 @@ export function HistorikkProsessListe({
       })}
     </Process>
   );
+}
+
+/**
+ * Henter oppgavekodeverket for temaene til opprettede oppgaver i historikken,
+ * slik at oppgavetypen vises med samme navn som da oppgaven ble opprettet.
+ */
+function useOppgavekodeverkForHistorikk(
+  hendelser: SakHendelse[],
+): Partial<Record<string, Oppgavekodeverk>> {
+  const harTema = (tema: Tema) =>
+    hendelser.some(
+      (hendelse) => hendelse.hendelsesType === "OPPGAVE_OPPRETTET" && hendelse.oppgaveTema === tema,
+    );
+  const ktr = useOppgavekodeverk(harTema("KTR") ? "KTR" : undefined).tilstand;
+  const kta = useOppgavekodeverk(harTema("KTA") ? "KTA" : undefined).tilstand;
+  return {
+    KTR: ktr.status === "ok" ? ktr.kodeverk : undefined,
+    KTA: kta.status === "ok" ? kta.kodeverk : undefined,
+  };
 }

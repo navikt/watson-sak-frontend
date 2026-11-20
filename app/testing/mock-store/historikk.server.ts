@@ -115,6 +115,8 @@ export function leggTilHendelse(
     | "kobletSakId"
     | "oppgaveId"
     | "oppgaveEndringTekst"
+    | "oppgaveTema"
+    | "tilknyttetJournalpostId"
     | "fraEnhetNavn"
     | "fraSaksbehandlerNavn"
     | "tilEnhetNavn"
