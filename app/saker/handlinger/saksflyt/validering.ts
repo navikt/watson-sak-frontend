@@ -10,9 +10,9 @@ import {
 import {
   aktiveVerdier,
   erBelopsfelt,
+  erSammeStatus,
   feltvisning,
   finnSkjemafelt,
-  INGEN_STATUS,
   type Trinn,
   type Verdier,
   ytelseVerdiNavn,
@@ -103,7 +103,7 @@ export function validerTrinn(
       return feil;
     case "status":
       if (verdier.status === undefined) feil.status = "Velg status";
-      else if (verdier.status === (tillatteHandlinger.tilstand.status ?? INGEN_STATUS)) {
+      else if (erSammeStatus(verdier.status, tillatteHandlinger.tilstand.status)) {
         feil.status = "Velg en annen status enn den saken har nå";
       }
       return feil;

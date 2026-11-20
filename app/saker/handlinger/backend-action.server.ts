@@ -21,6 +21,7 @@ import {
   manglerEndeligUtfallVedAvslutning,
 } from "../handlinger/tillatte-steg";
 import { hentStegbaserteSaksregler } from "../stegregler";
+import { erSammeStatus } from "./saksflyt/saksflyt";
 import type { Route } from "../+types/SakDetaljSide.route";
 import {
   type ActionResult,
@@ -209,7 +210,7 @@ export async function backendAction(
       if (!tillatte.tillatteStatuser.includes(status)) {
         throw data("Statusen er ikke tillatt for saken i gjeldende tilstand", { status: 409 });
       }
-      if (status === tillatte.tilstand.status) {
+      if (erSammeStatus(status, tillatte.tilstand.status)) {
         throw data("Saken har allerede denne statusen", { status: 400 });
       }
       const beskrivelse = hentValgfriTekst(formData, "beskrivelse");

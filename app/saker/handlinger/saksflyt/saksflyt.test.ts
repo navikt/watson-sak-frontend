@@ -260,6 +260,18 @@ describe("valider statusendring", () => {
       status: "Velg en annen status enn den saken har nå",
     });
   });
+
+  it("avviser AKTIV når saken mangler status", () => {
+    const tillatte = lagTillatteHandlinger({ status: null });
+    expect(validerTrinn(statusTrinn, { status: "AKTIV" }, tillatte)).toEqual({
+      status: "Velg en annen status enn den saken har nå",
+    });
+  });
+
+  it("godtar en annen status når saken mangler status", () => {
+    const tillatte = lagTillatteHandlinger({ status: null });
+    expect(validerTrinn(statusTrinn, { status: "VENTER_PA_INFORMASJON" }, tillatte)).toEqual({});
+  });
 });
 
 describe("byggInnsending", () => {

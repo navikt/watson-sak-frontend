@@ -44,6 +44,7 @@ import {
 import { finnSakMedReferanse } from "../id";
 import { getSaksenhet } from "../selectors";
 import { hentStegbaserteSaksregler } from "../stegregler";
+import { erSammeStatus } from "./saksflyt/saksflyt";
 import type { RedigerSaksinformasjonData } from "../komponenter/Saksinformasjon.types";
 import {
   type ActionResult,
@@ -286,7 +287,7 @@ export async function mockAction(
       if (!tillatte.tillatteStatuser.includes(status)) {
         throw data("Statusen er ikke tillatt for saken i gjeldende tilstand", { status: 409 });
       }
-      if (status === tillatte.tilstand.status) {
+      if (erSammeStatus(status, tillatte.tilstand.status)) {
         throw data("Saken har allerede denne statusen", { status: 400 });
       }
       validerResultatFeltNavn(formData, tillatte.feltskjema);
