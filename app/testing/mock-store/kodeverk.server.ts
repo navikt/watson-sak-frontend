@@ -67,6 +67,7 @@ export const mockKodeverk: Kodeverk = {
     { kode: "NAV_KONTROLL", beskrivelse: "Nav kontroll" },
     { kode: "NAV_OVRIG", beskrivelse: "Nav øvrig" },
     { kode: "REGISTERSAMKJORING", beskrivelse: "Registersamkjøring" },
+    { kode: "ACCESS_MIGRERING", beskrivelse: "Access migrering" },
     { kode: "A_KRIMSAMARBEID", beskrivelse: "A-krimsamarbeid" },
     { kode: "POLITIET", beskrivelse: "Politiet" },
     { kode: "SKATTEETATEN", beskrivelse: "Skatteetaten" },
