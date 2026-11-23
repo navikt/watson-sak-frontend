@@ -16,25 +16,17 @@ import { useInnloggetBrukerValgfri } from "~/auth/innlogget-bruker";
 import { hentWatsonSakUrl, hentWatsonSokUrl } from "~/config/backend-config";
 import { useMiljø } from "~/miljø/useMiljø";
 import { RouteConfig } from "~/routeConfig";
-import { søkAnalytics } from "~/søk/søk.analytics";
+import {
+  END_CREDITS_EASTER_EGG,
+  MORIARTY_EASTER_EGG,
+  SHERLOCK_EASTER_EGG,
+  søkAnalytics,
+} from "~/søk/søk.analytics";
 import { SØK_RESULTATLENKE_SELECTOR } from "~/søk/sok-navigasjon";
 import { useGlitch } from "~/utils/useGlitch";
 import { useSherlockCursor } from "~/utils/useSherlockCursor";
 import { VarselBjelle } from "~/varsler/VarselBjelle";
 import { EndCredits } from "./EndCredits";
-
-// Easter egg: søk på "Moriarty" trigger en kortvarig glitch-effekt før
-// søket gjennomføres helt normalt (Moriarty kan tross alt være et reelt
-// etternavn, så selve søket skal alltid utføres).
-const MORIARTY_EASTER_EGG = "moriarty";
-
-// Easter egg: søk på "Sherlock" bytter musepekeren til en Sherlock-hatt i
-// 30 sekunder, eller til brukeren trykker Escape.
-const SHERLOCK_EASTER_EGG = "sherlock";
-
-// Easter egg: søk på "end credits" viser en rulletekst over alle som har
-// vært med på å lage Watson. Her utføres ikke selve søket.
-const END_CREDITS_EASTER_EGG = "end credits";
 
 const HURTIGSØK_FEIL_ID = "hurtigsok-feilmelding";
 
@@ -110,13 +102,11 @@ export function AppHeader() {
             return;
           }
           setHurtigsøkUgyldig(false);
+          søkAnalytics.utført("hurtigsøk", søketekst);
           if (søketekst?.toLowerCase() === END_CREDITS_EASTER_EGG) {
             event.preventDefault();
             setVisEndCredits(true);
             return;
-          }
-          if (søketekst) {
-            søkAnalytics.utført("hurtigsøk", søketekst);
           }
           if (søketekst?.toLowerCase() === MORIARTY_EASTER_EGG) {
             triggerGlitch();

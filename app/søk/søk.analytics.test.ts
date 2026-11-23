@@ -33,6 +33,13 @@ describe("søk-analytics", () => {
     expect(klassifiserSøk(søketekst)).toBe("PID");
   });
 
+  it.each(["moriarty", "Moriarty", "sherlock", "SHERLOCK", "end credits", " End Credits "])(
+    "klassifiserer %s som Easter egg",
+    (søketekst) => {
+      expect(klassifiserSøk(søketekst)).toBe("Easter egg");
+    },
+  );
+
   it.each([
     "",
     "   ",
@@ -44,8 +51,6 @@ describe("søk-analytics", () => {
     "Ola Nordmann",
     "123456-78901",
     "sak-123",
-    "moriarty",
-    "sherlock",
   ])("klassifiserer %j som annet", (søketekst) => {
     expect(klassifiserSøk(søketekst)).toBe("Annet");
   });
@@ -55,6 +60,7 @@ describe("søk-analytics", () => {
       ["12345678901", "Fødsels- eller D-nummer"],
       ["987654321", "Organisasjonsnummer"],
       ["Ola Nordmann", "Annet"],
+      ["end credits", "Easter egg"],
     ] as const;
 
     for (const [søketekst] of søk) søkAnalytics.utført("hurtigsøk", søketekst);
@@ -72,6 +78,7 @@ describe("søk-analytics", () => {
         "Organisasjonsnummer",
         "Saksnummer",
         "PID",
+        "Easter egg",
         "Annet",
       ]).toContain((data as Record<string, unknown>).klassifisering);
     }
@@ -80,6 +87,7 @@ describe("søk-analytics", () => {
       ["søk utført", { kilde: "hurtigsøk", klassifisering: søk[0][1] }],
       ["søk utført", { kilde: "hurtigsøk", klassifisering: søk[1][1] }],
       ["søk utført", { kilde: "hurtigsøk", klassifisering: søk[2][1] }],
+      ["søk utført", { kilde: "hurtigsøk", klassifisering: søk[3][1] }],
     ]);
 
     const argumenter = JSON.stringify(sporHendelse.mock.calls);
