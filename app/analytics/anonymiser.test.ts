@@ -42,6 +42,11 @@ describe("anonymiserUmamiPayload", () => {
     expect(resultat.data).toEqual({ kilde: "meny", liste: [{ sti: "/saker/:sakId" }] });
   });
 
+  it("beholder klassifisering for hurtigsøk", () => {
+    const data = { kilde: "hurtigsøk", klassifisering: "Fødsels- eller D-nummer" };
+    expect(vask({ data }).data).toEqual(data);
+  });
+
   it("muterer ikke input", () => {
     const input = { url: "/saker/1", data: { sakId: "1" } };
     vask(input);

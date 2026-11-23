@@ -16,6 +16,7 @@ import { useInnloggetBrukerValgfri } from "~/auth/innlogget-bruker";
 import { hentWatsonSakUrl, hentWatsonSokUrl } from "~/config/backend-config";
 import { useMiljø } from "~/miljø/useMiljø";
 import { RouteConfig } from "~/routeConfig";
+import { søkAnalytics } from "~/søk/søk.analytics";
 import { SØK_RESULTATLENKE_SELECTOR } from "~/søk/sok-navigasjon";
 import { useGlitch } from "~/utils/useGlitch";
 import { useSherlockCursor } from "~/utils/useSherlockCursor";
@@ -115,7 +116,7 @@ export function AppHeader() {
             return;
           }
           if (søketekst) {
-            sporHendelse("søk utført", { kilde: "hurtigsøk" });
+            søkAnalytics.utført("hurtigsøk", søketekst);
           }
           if (søketekst?.toLowerCase() === MORIARTY_EASTER_EGG) {
             triggerGlitch();
