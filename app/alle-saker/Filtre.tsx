@@ -1,4 +1,5 @@
 import { UNSAFE_Combobox } from "@navikt/ds-react";
+import { useState } from "react";
 import { useSearchParams } from "react-router";
 import { ChipsFiltergruppe } from "~/filtre/ChipsFiltergruppe";
 import { Filterpanel } from "~/filtre/Filterpanel";
@@ -44,6 +45,15 @@ export function Filtre({ alternativer }: Props) {
   const valgtSaksbehandler = searchParams.get("saksbehandler") ?? "";
   const valgteKategorier = parseMultiValueParam(searchParams, "kategori");
   const valgtAldersvarsel = searchParams.get("aldersvarsel");
+  const [saksbehandlerSok, setSaksbehandlerSok] = useState("");
+
+  const normalisertSaksbehandlerSok = saksbehandlerSok.trim().toLocaleLowerCase("nb-NO");
+  const filtrerteSaksbehandlere =
+    normalisertSaksbehandlerSok.length < 2
+      ? []
+      : alternativer.saksbehandler.filter((saksbehandler) =>
+          saksbehandler.label.toLocaleLowerCase("nb-NO").includes(normalisertSaksbehandlerSok),
+        );
 
   function toggleAldersvarsel(verdi: string) {
     setSearchParams((forrige) => {
@@ -125,12 +135,14 @@ export function Filtre({ alternativer }: Props) {
           <UNSAFE_Combobox
             label="Saksbehandler"
             size="small"
-            placeholder="Søk etter saksbehandler"
+            placeholder="Søk etter minst to tegn"
             options={alternativer.saksbehandler}
+            filteredOptions={filtrerteSaksbehandlere}
             selectedOptions={alternativer.saksbehandler.filter(
               (sb) => sb.value === valgtSaksbehandler,
             )}
             isMultiSelect={false}
+            onChange={setSaksbehandlerSok}
             onToggleSelected={velgSaksbehandler}
           />
         </div>

@@ -73,6 +73,30 @@ describe("Filtre – koblet kategori/misbrukstype", () => {
     });
   });
 
+  it("filtrerer saksbehandlere først etter minst to tegn", () => {
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <Filtre
+          alternativer={{
+            ...ALTERNATIVER,
+            saksbehandler: [
+              { label: "Ola Saksbehandler", value: "Z000001" },
+              { label: "Kari Nordmann", value: "Z000002" },
+            ],
+          }}
+        />
+      </MemoryRouter>,
+    );
+
+    const sok = screen.getByRole("combobox", { name: "Saksbehandler" });
+    fireEvent.input(sok, { target: { value: "o" } });
+    expect(screen.queryByRole("option", { name: "Ola Saksbehandler" })).toBeNull();
+
+    fireEvent.input(sok, { target: { value: " ol" } });
+    expect(screen.getByRole("option", { name: "Ola Saksbehandler" })).toBeDefined();
+    expect(screen.queryByRole("option", { name: "Kari Nordmann" })).toBeNull();
+  });
+
   it("viser alle misbrukstyper når ingen kategori er valgt", () => {
     render(
       <MemoryRouter initialEntries={["/"]}>
