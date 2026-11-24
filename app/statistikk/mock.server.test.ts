@@ -72,6 +72,40 @@ describe("lagMockStatistikk", () => {
     );
   });
 
+  it("avleder eldste sak, sakstyper og aldersbøtter fra de åpne sakene", () => {
+    vi.useFakeTimers({ now: new Date("2026-03-10T22:30:00Z") });
+    const [utgangspunkt] = lagInitialKontrollsaker();
+    const åpenSak = {
+      ...utgangspunkt,
+      id: 739,
+      kategori: "SAMLIV",
+      steg: "OPPRETTET" as const,
+      opprettet: "2025-01-10T23:30:00Z",
+    };
+    const avsluttetSak = {
+      ...utgangspunkt,
+      id: 740,
+      steg: "AVSLUTTET" as const,
+      opprettet: "2020-01-01T00:00:00Z",
+    };
+
+    const resultat = lagMockStatistikk(
+      { nivaa: "nav-kontroll", fra: "2026-09-01", til: "2026-09-30" },
+      "Øst",
+      "ky153k",
+      { saker: [åpenSak, avsluttetSak], navIdent: "Z123456" },
+    );
+    const eldste = resultat.nøkkeltall.find(({ label }) => label === "Eldste åpne sak");
+    const totalt = Number(resultat.nøkkeltall.find(({ label }) => label === "Totalt")?.verdi);
+
+    expect(eldste).toMatchObject({ verdi: "13 mnd", forklaring: "Sak 739" });
+    expect(
+      resultat.sakstyper.flatMap(({ deler }) => deler).reduce((sum, del) => sum + del.verdi, 0),
+    ).toBe(totalt);
+    expect(resultat.alderssammensetning.reduce((sum, bøtte) => sum + bøtte.verdi, 0)).toBe(totalt);
+    expect(resultat.alderssammensetning.find(({ navn }) => navn === "12–24")?.verdi).toBe(1);
+  });
+
   it("teller «Meg selv» fra samme utvalg som forsiden", () => {
     const mineSaker = lagInitialMineKontrollsaker();
 
@@ -104,6 +138,7 @@ describe("lagMockStatistikk", () => {
       "Øst 2",
       "Hele organisasjonen",
     ]);
+    expect(resultat.organisasjonsvalg[1].verdi).toBe("hovedavdeling:ky153k");
     expect(resultat.organisasjonsvalg.filter((valg) => valg.type === "meg")).toHaveLength(1);
     expect(resultat.periode).toEqual({
       fra: "2026-09-01",
@@ -119,6 +154,49 @@ describe("lagMockStatistikk", () => {
       filterverdi: "OPPRETTET",
       verdi: resultat.periodeTall.innkomne,
       prosent: 100,
+    });
+  });
+
+  it("bruker valgt enhet som hovedavdeling og holder periodetallene konsistente", () => {
+    const resultat = lagMockStatistikk(
+      { nivaa: "hovedavdeling", enhetId: "ky153k", fra: "2026-09-01", til: "2026-09-30" },
+      "Øst",
+      "hu424t",
+      INGEN_SAKER,
+    );
+    const status = Object.fromEntries(
+      resultat.statusfordeling.map(({ navn, verdi }) => [navn, verdi]),
+    );
+    const sumHenlagt = resultat.henlagt.reduce((sum, rad) => sum + rad.verdi, 0);
+    const saksbehandlingstid = resultat.nøkkeltall.find(
+      ({ label }) => label === "Saksbehandlingstid",
+    );
+
+    expect(resultat.valgtOmfang).toBe("hovedavdeling:ky153k");
+    expect(resultat.omfangEnheter).toEqual(["ky153k"]);
+    expect(status.Opprettet).toBe(resultat.periodeTall.innkomne);
+    expect(status.Henlagt).toBe(sumHenlagt);
+    expect(sumHenlagt).toBeLessThanOrEqual(resultat.periodeTall.avsluttede);
+    expect(Math.round(resultat.kontrollrapport.reduce((sum, rad) => sum + rad.prosent, 0))).toBe(
+      100,
+    );
+    expect(saksbehandlingstid).toMatchObject({
+      verdi: "32 dager",
+      forklaring: "Fra utredning til avsluttet, siste 12 mnd (snitt)",
+    });
+  });
+
+  it("viser tom eldste-sak-verdi når utvalget ikke har åpne saker", () => {
+    const resultat = lagMockStatistikk(
+      { nivaa: "underavdeling", fra: "2026-09-01", til: "2026-09-30" },
+      "Øst",
+      "ky153k",
+      INGEN_SAKER,
+    );
+
+    expect(resultat.nøkkeltall.find(({ label }) => label === "Eldste åpne sak")).toMatchObject({
+      verdi: "–",
+      forklaring: "Ingen åpne saker",
     });
   });
 

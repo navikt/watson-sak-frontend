@@ -1,8 +1,67 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
+import { lagInitialKontrollsaker } from "~/testing/mock-store/saker/fordeling.server";
 import { lagMockStatistikk } from "./mock.server";
 import { StatistikkDiagrammer } from "./StatistikkDiagrammer";
+
+function lagSakerForDiagrammer() {
+  const utgangspunkt = lagInitialKontrollsaker()[0];
+  if (!utgangspunkt) throw new Error("Mangler mock-sak som utgangspunkt for diagramtestene");
+
+  const lagSak = ({
+    id,
+    kategori,
+    steg,
+    status,
+    opprettet,
+    fordelt = true,
+  }: {
+    id: number;
+    kategori: string;
+    steg: "OPPRETTET" | "UTREDNING" | "FORVALTNING";
+    status: "AKTIV" | "VENTER_PA_VEDTAK";
+    opprettet: string;
+    fordelt?: boolean;
+  }) => ({
+    ...utgangspunkt,
+    id,
+    kategori,
+    steg,
+    status,
+    opprettet,
+    enhet: "ky153k",
+    saksbehandlere: {
+      ...utgangspunkt.saksbehandlere,
+      eier: fordelt ? { ...utgangspunkt.saksbehandlere.opprettetAv, enhet: "ky153k" } : null,
+    },
+  });
+
+  return [
+    lagSak({
+      id: 102,
+      kategori: "ARBEID",
+      steg: "UTREDNING",
+      status: "AKTIV",
+      opprettet: "2024-01-15T12:00:00Z",
+    }),
+    lagSak({
+      id: 103,
+      kategori: "SAMLIV",
+      steg: "FORVALTNING",
+      status: "VENTER_PA_VEDTAK",
+      opprettet: "2025-01-15T12:00:00Z",
+    }),
+    lagSak({
+      id: 104,
+      kategori: "ANNET",
+      steg: "OPPRETTET",
+      status: "AKTIV",
+      opprettet: "2026-01-15T12:00:00Z",
+      fordelt: false,
+    }),
+  ];
+}
 
 function renderMedRouter(
   endreData: (
@@ -14,7 +73,7 @@ function renderMedRouter(
       { nivaa: "underavdeling", fra: "2026-09-01", til: "2026-09-30" },
       "Øst",
       "ky153k",
-      { saker: [], navIdent: "Z123456" },
+      { saker: lagSakerForDiagrammer(), navIdent: "Z123456" },
     ),
   );
   const router = createMemoryRouter(

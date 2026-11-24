@@ -2,6 +2,7 @@ import { data } from "react-router";
 import type { InnloggetBruker } from "~/auth/innlogget-bruker.server";
 import { hentFordelingssaker } from "~/saker/mock-alle-saker.server";
 import { lagMockStatistikk } from "~/statistikk/mock.server";
+import { getSaksenhet } from "~/saker/selectors";
 import { filtrerSaker, sorterSaker, type AlleSakerKolonne } from "~/alle-saker/saker-utils";
 import { ANTALL_PER_SIDE } from "~/utils/paginering";
 import { erKlarForFordeling, mapKontrollsakTilFordelingSak } from "./mapper";
@@ -34,15 +35,24 @@ export function hentMockFordelingsside(
     bruker.enhetId,
     { saker: alle, navIdent: bruker.navIdent },
   );
-  const egenVerdi = `enhet:${bruker.enhetId}`;
+  const egenVerdi = `hovedavdeling:${bruker.enhetId}`;
   const organisasjonsvalg = statistikk.organisasjonsvalg
     .filter((valg) => valg.verdi !== "meg" && (bruker.erLeder || valg.verdi === egenVerdi))
     .map((valg) => (valg.verdi === egenVerdi ? { ...valg, label: bruker.enhet } : valg));
   const valgtOmfang = params.get("omfang") ?? egenVerdi;
   const valgt = organisasjonsvalg.find((valg) => valg.verdi === valgtOmfang);
   if (!valgt) throw data("Du har ikke tilgang til valgt omfang.", { status: 403 });
-  const enhetId = valgtOmfang.slice("enhet:".length);
-  const enheter = valgtOmfang === "organisasjon" ? [] : [enhetId];
+  const hovedavdeling = valgtOmfang.startsWith("hovedavdeling:");
+  const enhetId = valgtOmfang.slice(hovedavdeling ? "hovedavdeling:".length : "enhet:".length);
+  const enheter =
+    valgtOmfang === "organisasjon"
+      ? []
+      : hovedavdeling
+        ? [
+            enhetId,
+            ...new Set(alle.map(getSaksenhet).filter((enhet) => enhet.startsWith(`${enhetId}-`))),
+          ]
+        : [enhetId];
   const steg = params.getAll("steg");
   if (steg.some((s) => !ALLE_STEG.includes(s as KontrollsakSteg))) {
     throw data("Ugyldig steg for fordeling", { status: 400 });
