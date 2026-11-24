@@ -228,6 +228,7 @@ function Kandidatliste({
         <EndreTildelingModal
           kandidat={endrer}
           mottakerValg={mottakerValg}
+          egenNavIdent={egenNavIdent}
           onLukk={() => setEndrer(null)}
         />
       )}
@@ -284,17 +285,24 @@ const ANNEN_ENHET = "__annen";
 function EndreTildelingModal({
   kandidat,
   mottakerValg,
+  egenNavIdent,
   onLukk,
 }: {
   kandidat: MigreringKandidat;
   mottakerValg: MigreringMottakere;
+  egenNavIdent?: string;
   onLukk: () => void;
 }) {
   const fetcher = useFetcher<TildelingsSvar>();
   const ref = useRef<HTMLDialogElement>(null);
-  const [enhetId, setEnhetId] = useState("");
-  const [navIdent, setNavIdent] = useState("");
   const kjenteEnheter = new Set(mottakerValg.enheter.map((e) => e.id));
+  // Lederens egen enhet er forhåndsvalgt, siden de fleste flyttinger skjer innad. Enheten hentes fra lederens egen
+  // oppføring i mottakerlisten, slik at den matcher enhetene i listen (overenhet, ikke NOM-underenhet).
+  const egenEnhetId = mottakerValg.mottakere.find((m) => m.navIdent === egenNavIdent)?.enhetId;
+  const [enhetId, setEnhetId] = useState(
+    egenEnhetId && kjenteEnheter.has(egenEnhetId) ? egenEnhetId : "",
+  );
+  const [navIdent, setNavIdent] = useState("");
   const harMottakerUtenKjentEnhet = mottakerValg.mottakere.some(
     (a) => !a.enhetId || !kjenteEnheter.has(a.enhetId),
   );

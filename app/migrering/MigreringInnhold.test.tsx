@@ -493,6 +493,34 @@ describe("MigreringInnhold", () => {
       expect((await kall.request.formData()).get("navIdent")).toBe("Z999010");
     });
 
+    it("forhåndsvelger lederens egen enhet", async () => {
+      renderLeder(undefined, {
+        enheter: mottakerValg.enheter,
+        mottakere: [
+          ...mottakerValg.mottakere,
+          { navIdent: "L999999", navn: "Leder Lederesen", enhetId: "nord", enhetNavn: "Nord" },
+        ],
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: "Endre tildeling for PID 200001" }));
+      const dialog = await screen.findByRole("dialog");
+
+      expect(
+        (within(dialog).getByRole("combobox", { name: "Enhet" }) as HTMLSelectElement).value,
+      ).toBe("nord");
+    });
+
+    it("lar enheten stå uvalgt når lederens enhet ikke finnes i listen", async () => {
+      renderLeder();
+
+      fireEvent.click(screen.getByRole("button", { name: "Endre tildeling for PID 200001" }));
+      const dialog = await screen.findByRole("dialog");
+
+      expect(
+        (within(dialog).getByRole("combobox", { name: "Enhet" }) as HTMLSelectElement).value,
+      ).toBe("");
+    });
+
     it("viser bare saksbehandlere i valgt enhet, og ikke dagens ansvarlig", async () => {
       renderLeder();
 
