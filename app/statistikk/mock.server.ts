@@ -218,7 +218,7 @@ export function lagMockStatistikk(
       {
         label: "Saksbehandlingstid",
         verdi: formaterVarighet(periodeTall.snittDagerAvsluttet),
-        forklaring: "Fra utredning til avsluttet, siste 12 mnd (snitt)",
+        forklaring: "Snitt fra utredning til avsluttet, siste 12 mnd",
         tone: "success",
       },
     ],

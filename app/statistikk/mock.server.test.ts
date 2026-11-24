@@ -182,7 +182,7 @@ describe("lagMockStatistikk", () => {
     );
     expect(saksbehandlingstid).toMatchObject({
       verdi: "32 dager",
-      forklaring: "Fra utredning til avsluttet, siste 12 mnd (snitt)",
+      forklaring: "Snitt fra utredning til avsluttet, siste 12 mnd",
     });
   });
 
