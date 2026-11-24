@@ -60,8 +60,11 @@ function validerFelt(felt: Skjemafelt, verdi: string, verdier: Verdier): string 
   if (felt.datatype === "belop") {
     try {
       lesBelop(verdi, felt.etikett);
-    } catch {
-      return "Beløpet må være et tall med opptil to desimaler";
+    } catch (feil) {
+      return feil instanceof Error &&
+        feil.message.endsWith("kan ikke være større enn 1 000 000 000")
+        ? feil.message
+        : "Beløpet må være et tall med opptil to desimaler";
     }
   }
   if (felt.datatype === "tall") {
@@ -121,8 +124,12 @@ export function validerTrinn(
             }
             try {
               lesBelop(verdi, "Beløpet");
-            } catch {
-              feil[navn] = "Beløpet må være et tall med opptil to desimaler";
+            } catch (feiltype) {
+              feil[navn] =
+                feiltype instanceof Error &&
+                feiltype.message.endsWith("kan ikke være større enn 1 000 000 000")
+                  ? feiltype.message
+                  : "Beløpet må være et tall med opptil to desimaler";
             }
           }
           continue;
