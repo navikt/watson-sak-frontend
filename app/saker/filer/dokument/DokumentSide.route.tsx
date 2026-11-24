@@ -205,9 +205,10 @@ function DokumentRedigering({
     async (forlater = false) => {
       const data = historikkData.current;
       if (!data) return;
-      // Pauset mens dokumentet hentes på nytt etter fokus. Dataene beholdes, og skrives
-      // først når hentingen er ferdig og vi vet om de fortsatt er gyldige.
-      if (fokusHentingVersjon.current !== null) {
+      // Pauset mens dokumentet hentes på nytt etter fokus, og mens fanen er skjult: en annen
+      // fane kan ha lagret nyere innhold, og et historikkpunkt sender hele dokumentet. Dataene
+      // beholdes, og skrives først når fokushentingen har avgjort om de fortsatt er gyldige.
+      if (fokusHentingVersjon.current !== null || document.visibilityState === "hidden") {
         historikkUtsatt.current = true;
         return;
       }
@@ -284,7 +285,15 @@ function DokumentRedigering({
   useEffect(() => {
     async function henting() {
       if (document.visibilityState !== "visible") return;
-      if (statusRef.current !== "lagret") return;
+      if (statusRef.current !== "lagret") {
+        // Ulagrede lokale endringer: ingen henting, men et historikkpunkt som ble utsatt
+        // mens fanen var skjult inneholder dem og kan skrives nå.
+        if (historikkUtsatt.current) {
+          historikkUtsatt.current = false;
+          void lagreHistorikkpunkt();
+        }
+        return;
+      }
       if (fokusHentingVersjon.current !== null) return;
       fokusHentingVersjon.current = lokalEndringsversjon.current;
       // Et historikkpunkt som allerede er sendt må bli ferdig før vi leser serverversjonen.
@@ -297,7 +306,7 @@ function DokumentRedigering({
       document.removeEventListener("visibilitychange", henting);
       window.removeEventListener("focus", henting);
     };
-  }, []);
+  }, [lagreHistorikkpunkt]);
 
   const revalidatorState = revalidator.state;
   useEffect(() => {
@@ -365,7 +374,12 @@ function DokumentRedigering({
       if (ignorerInnhold.current !== null) {
         const ventet = ignorerInnhold.current;
         ignorerInnhold.current = null;
-        if (JSON.stringify(innhold) === ventet) return;
+        if (JSON.stringify(innhold) === ventet) {
+          // Editoren rapporterer sin egen array. Bruk den som referanse, slik at neste rene
+          // markeringsendring (samme array) gjenkjennes som uendret under.
+          innholdRef.current = innhold;
+          return;
+        }
       }
       // Plate kaller onChange også ved ren markeringsendring, og da er innholdet det samme
       // objektet. Det er ingen endring å lagre, og den skal ikke regnes som lokalt arbeid.
