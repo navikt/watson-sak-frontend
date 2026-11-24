@@ -2,6 +2,7 @@ import { z } from "zod";
 import { lesBelop } from "./handlinger/resultat-request";
 import { erGyldigPolitidistrikt } from "./politidistrikter";
 import { type KontrollsakResponse, POLITIETS_SAKSREFERANSE_MAKS_LENGDE } from "./types.backend";
+import { BelopForStortError } from "~/utils/number-utils";
 
 /** Anmeldelsesopplysninger slik de vises på saken. */
 export type Anmeldelse = {
@@ -57,10 +58,13 @@ export const redigerAnmeldelseSchema = z.object({
     .transform((verdi, ctx) => {
       try {
         return lesBelop(verdi, "Anmeldt beløp");
-      } catch {
+      } catch (feil) {
         ctx.addIssue({
           code: "custom",
-          message: "Anmeldt beløp må være et tall med opptil to desimaler",
+          message:
+            feil instanceof BelopForStortError
+              ? feil.message
+              : "Anmeldt beløp må være et tall med opptil to desimaler",
         });
         return z.NEVER;
       }
