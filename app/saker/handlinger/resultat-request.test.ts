@@ -3,6 +3,7 @@ import type { TillatteHandlingerResponse } from "~/saker/types.backend";
 import {
   byggLagreResultatRequest,
   erGyldigIsoDato,
+  lesBelop,
   resultatFeltErAktivt,
 } from "./resultat-request";
 
@@ -26,6 +27,16 @@ const feltskjema: TillatteHandlingerResponse["feltskjema"] = [
     verdier: [{ verdi: "IKKE_TILSTREKKELIG_SKYLD", etikett: "Ikke tilstrekkelig skyld" }],
   },
 ];
+
+describe("lesBelop", () => {
+  it("godtar beløp på maksgrensen", () => {
+    expect(lesBelop("1 000 000 000", "Beløp")).toBe(1_000_000_000);
+  });
+
+  it.each(["1 000 000 000,01", "1 000 000 001"])("avviser beløp over maksgrensen: %s", (verdi) => {
+    expect(() => lesBelop(verdi, "Beløp")).toThrow("Beløp kan ikke være større enn 1 000 000 000");
+  });
+});
 
 function skjemaData(verdier: Record<string, string>, ekstra?: Record<string, string>): FormData {
   const data = new FormData();

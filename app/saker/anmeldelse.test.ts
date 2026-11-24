@@ -116,6 +116,21 @@ describe("redigerAnmeldelseSchema", () => {
   it.each(["", "1,234", "-5", "abc"])("avviser ugyldig beløp %j", (anmeldtBelop) => {
     expect(redigerAnmeldelseSchema.safeParse({ ...gyldig, anmeldtBelop }).success).toBe(false);
   });
+
+  it("godtar nøyaktig 1 milliard og viser maksgrensen for større beløp", () => {
+    expect(
+      redigerAnmeldelseSchema.safeParse({ ...gyldig, anmeldtBelop: "1 000 000 000" }).success,
+    ).toBe(true);
+
+    const resultat = redigerAnmeldelseSchema.safeParse({
+      ...gyldig,
+      anmeldtBelop: "1 000 000 001",
+    });
+    expect(resultat.success).toBe(false);
+    expect(resultat.error?.issues[0]?.message).toBe(
+      "Anmeldt beløp kan ikke være større enn 1 000 000 000",
+    );
+  });
 });
 
 describe("finnEndredeAnmeldelsesfelter", () => {

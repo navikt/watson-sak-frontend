@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAKS_BELØP } from "~/utils/number-utils";
 
 /** Maks lengde på det interne notatet ved opprettelse fra migrering. Håndheves også i retry-ruten. */
 const NOTAT_MAKS_TEGN = 4000;
@@ -82,6 +83,7 @@ const valgfrittBeløpSchema = z.preprocess(
   z
     .number({ message: "Antatt beløp må være et gyldig tall" })
     .positive("Antatt beløp må være et positivt tall")
+    .max(MAKS_BELØP, "Antatt beløp kan ikke være større enn 1 000 000 000")
     .optional(),
 );
 
@@ -94,6 +96,7 @@ const valgfrittEndeligBeløpSchema = z.preprocess(
   z
     .number({ message: "Endelig beløp må være et gyldig tall" })
     .positive("Endelig beløp må være et positivt tall")
+    .max(MAKS_BELØP, "Endelig beløp kan ikke være større enn 1 000 000 000")
     .optional(),
 );
 

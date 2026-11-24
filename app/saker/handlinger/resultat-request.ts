@@ -3,6 +3,7 @@ import type {
   KontrollsakSteg,
   TillatteHandlingerResponse,
 } from "~/saker/types.backend";
+import { BelopForStortError, MAKS_BELØP } from "~/utils/number-utils";
 
 const resultatFeltStier = {
   "utredning.type": ["utredning", "type"],
@@ -207,6 +208,7 @@ export function lesBelop(verdi: string, felt: string): number {
   }
   const belop = Number(normalisert);
   if (!Number.isFinite(belop)) throw new Error(`${felt} må være et gyldig beløp`);
+  if (belop > MAKS_BELØP) throw new BelopForStortError(felt);
   return belop;
 }
 

@@ -1,4 +1,5 @@
 import type { TillatteHandlingerResponse } from "~/saker/types.backend";
+import { BelopForStortError } from "~/utils/number-utils";
 import {
   dagensDatoIOslo,
   erGyldigIsoDato,
@@ -60,8 +61,10 @@ function validerFelt(felt: Skjemafelt, verdi: string, verdier: Verdier): string 
   if (felt.datatype === "belop") {
     try {
       lesBelop(verdi, felt.etikett);
-    } catch {
-      return "Beløpet må være et tall med opptil to desimaler";
+    } catch (feil) {
+      return feil instanceof BelopForStortError
+        ? feil.message
+        : "Beløpet må være et tall med opptil to desimaler";
     }
   }
   if (felt.datatype === "tall") {
@@ -121,8 +124,11 @@ export function validerTrinn(
             }
             try {
               lesBelop(verdi, "Beløpet");
-            } catch {
-              feil[navn] = "Beløpet må være et tall med opptil to desimaler";
+            } catch (feiltype) {
+              feil[navn] =
+                feiltype instanceof BelopForStortError
+                  ? feiltype.message
+                  : "Beløpet må være et tall med opptil to desimaler";
             }
           }
           continue;

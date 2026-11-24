@@ -229,6 +229,36 @@ describe("opprettSakSchema", () => {
     expect(resultat.success).toBe(false);
   });
 
+  it.each([
+    {
+      felt: "beløp" as const,
+      etikett: "Antatt beløp",
+    },
+    {
+      felt: "endeligBeløp" as const,
+      etikett: "Endelig beløp",
+    },
+  ])("validerer maksgrensen for $etikett", ({ felt, etikett }) => {
+    const maks = opprettSakSchema.safeParse({
+      ...minimaltGyldigSkjema,
+      ytelser: [{ [felt]: 1_000_000_000 }],
+    });
+    expect(maks.success).toBe(true);
+
+    for (const beløp of [1_000_000_000.01, 1_000_000_001]) {
+      const resultat = opprettSakSchema.safeParse({
+        ...minimaltGyldigSkjema,
+        ytelser: [{ [felt]: beløp }],
+      });
+      expect(resultat.success).toBe(false);
+      if (!resultat.success) {
+        expect(resultat.error.issues[0]?.message).toBe(
+          `${etikett} kan ikke være større enn 1 000 000 000`,
+        );
+      }
+    }
+  });
+
   it("godtar organisasjonsnummer med 9 siffer", () => {
     const resultat = opprettSakSchema.safeParse({
       ...minimaltGyldigSkjema,
