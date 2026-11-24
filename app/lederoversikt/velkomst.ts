@@ -7,7 +7,7 @@ function sammenstill(deler: string[]): string {
 
 /**
  * Bygger velkomstteksten for lederoversikten fra øyeblikksbildet backend beregner.
- * Tallene er de samme som de fire første nøkkeltallene på statistikksiden.
+ * Tallene omfatter enheten med underenheter og samsvarer med de fire første nøkkeltallene på statistikksiden.
  */
 export function lagLederVelkomstOppsummering(
   enhet: LederEnhetStatistikk,
@@ -16,10 +16,10 @@ export function lagLederVelkomstOppsummering(
   const { totalt, aktive, venterPåAndre, ikkeFordelt } = enhet.oyeblikksbilde;
 
   if (totalt === 0) {
-    return `Enheten ${enhetNavn} har ingen åpne saker akkurat nå.`;
+    return `${enhetNavn} med underenheter har ingen åpne saker akkurat nå.`;
   }
 
-  const innledning = `Enheten ${enhetNavn} har ${totalt} ${totalt === 1 ? "åpen sak" : "åpne saker"}.`;
+  const innledning = `${enhetNavn} med underenheter har ${totalt} ${totalt === 1 ? "åpen sak" : "åpne saker"}.`;
   const deler = [
     aktive > 0 ? `${aktive} ${aktive === 1 ? "er aktiv" : "er aktive"}` : null,
     venterPåAndre > 0 ? `${venterPåAndre} venter på andre` : null,

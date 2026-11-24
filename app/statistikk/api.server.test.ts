@@ -48,4 +48,34 @@ describe("statistikk api.server", () => {
       Accept: "application/json",
     });
   });
+
+  it("validerer organisasjonsvalg for hovedavdeling fra backend", async () => {
+    const svar = lagMockStatistikk(
+      { nivaa: "hovedavdeling", fra: "2026-01-01", til: "2026-01-31" },
+      "Øst",
+      "ky153k",
+      { saker: [], navIdent: "Z123456" },
+    );
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify(svar), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+    );
+
+    const { hentStatistikk } = await import("./api.server");
+    const resultat = await hentStatistikk("token-123", {
+      nivaa: "hovedavdeling",
+      fra: "2026-01-01",
+      til: "2026-01-31",
+    });
+
+    expect(resultat.organisasjonsvalg[1]).toMatchObject({
+      verdi: "hovedavdeling:ky153k",
+      type: "enhet",
+    });
+  });
 });

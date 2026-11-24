@@ -334,7 +334,9 @@ export function StatistikkDiagrammer({
                   suffix={
                     snittDagerAvsluttet == null
                       ? "i perioden"
-                      : `Snitt ${snittDagerAvsluttet} dager`
+                      : snittDagerAvsluttet === 0
+                        ? "Snitt under 1 dag fra utredning"
+                        : `Snitt ${snittDagerAvsluttet} ${snittDagerAvsluttet === 1 ? "dag" : "dager"} fra utredning`
                   }
                   tone="neutral"
                 />

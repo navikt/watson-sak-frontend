@@ -13,7 +13,7 @@ export const statistikkResponseSchema = z.object({
         type: z.literal("meg"),
       }),
       z.object({
-        verdi: z.string().regex(/^enhet:[^:]+$/),
+        verdi: z.string().regex(/^(enhet|hovedavdeling):[^:]+$/),
         label: z.string().min(1),
         type: z.literal("enhet"),
       }),

@@ -33,7 +33,7 @@ describe("lagLederVelkomstOppsummering", () => {
         lagEnhet({ totalt: 0, nye: 0, aktive: 0, venterPåAndre: 0, ikkeFordelt: 0 }),
         "Nord",
       ),
-    ).toBe("Enheten Nord har ingen åpne saker akkurat nå.");
+    ).toBe("Nord med underenheter har ingen åpne saker akkurat nå.");
   });
 
   test("viser alle tre deltall fra øyeblikksbildet", () => {
@@ -42,7 +42,9 @@ describe("lagLederVelkomstOppsummering", () => {
         lagEnhet({ totalt: 42, nye: 0, aktive: 18, venterPåAndre: 12, ikkeFordelt: 3 }),
         "Øst",
       ),
-    ).toBe("Enheten Øst har 42 åpne saker. 18 er aktive, 12 venter på andre og 3 er ikke fordelt.");
+    ).toBe(
+      "Øst med underenheter har 42 åpne saker. 18 er aktive, 12 venter på andre og 3 er ikke fordelt.",
+    );
   });
 
   test("utelater deltall som er 0 og bruker entall", () => {
@@ -51,7 +53,7 @@ describe("lagLederVelkomstOppsummering", () => {
         lagEnhet({ totalt: 1, nye: 0, aktive: 1, venterPåAndre: 0, ikkeFordelt: 0 }),
         "Vest",
       ),
-    ).toBe("Enheten Vest har 1 åpen sak. 1 er aktiv.");
+    ).toBe("Vest med underenheter har 1 åpen sak. 1 er aktiv.");
   });
 
   test("viser bare totalen når ingen deltall er over 0", () => {
@@ -60,7 +62,7 @@ describe("lagLederVelkomstOppsummering", () => {
         lagEnhet({ totalt: 4, nye: 0, aktive: 0, venterPåAndre: 0, ikkeFordelt: 0 }),
         "Sør",
       ),
-    ).toBe("Enheten Sør har 4 åpne saker.");
+    ).toBe("Sør med underenheter har 4 åpne saker.");
   });
 
   test("viser ikke saker over frist", () => {

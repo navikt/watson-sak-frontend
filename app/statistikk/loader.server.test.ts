@@ -126,4 +126,28 @@ describe("statistikk-loader", () => {
       til: expect.any(String),
     });
   });
+
+  it.each([
+    ["organisasjon", "nav-kontroll", undefined],
+    ["enhet:hovedavdeling", "hovedavdeling", undefined],
+    ["enhet:underavdeling", "underavdeling", undefined],
+    ["enhet:unit-42", "underavdeling", "unit-42"],
+    ["hovedavdeling:unit-42", "hovedavdeling", "unit-42"],
+    ["hovedavdeling:", "hovedavdeling", undefined],
+    ["ukjent", "meg", undefined],
+  ] as const)("mapper omfanget %s til riktig spørring", async (omfang, nivaa, enhetId) => {
+    testState.skalBrukeMockdata = false;
+    const { loader } = await import("./loader.server");
+
+    await loader({
+      request: new Request(`http://localhost/statistikk?omfang=${encodeURIComponent(omfang)}`),
+    });
+
+    expect(hentStatistikkMock).toHaveBeenCalledWith("token-123", {
+      nivaa,
+      fra: expect.any(String),
+      til: expect.any(String),
+      ...(enhetId ? { enhetId } : {}),
+    });
+  });
 });

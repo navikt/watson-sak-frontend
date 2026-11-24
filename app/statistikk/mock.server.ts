@@ -1,7 +1,7 @@
 import type { Aldersvarsel } from "~/alle-saker/aldersfilter";
 import { filtrerSaker } from "~/alle-saker/saker-utils";
 import { getSaksenhet } from "~/saker/selectors";
-import { lagMockOyeblikksbilde } from "~/saker/mock-oppsummering.server";
+import { lagMockOyeblikksbilde, velgSakKategori } from "~/saker/mock-oppsummering.server";
 import type { KontrollsakResponse } from "~/saker/types.backend";
 import type { Statistikk, StatistikkSpørring } from "./types";
 
@@ -70,7 +70,8 @@ export function lagMockStatistikk(
     ["Opprettet", "OPPRETTET"],
     ["Utredning", "UTREDNING"],
     ["Forvaltning", "FORVALTNING"],
-    ["Avsluttet", "AVSLUTTET"],
+    ["Strafferettslig vurdering", "STRAFFERETTSLIG_VURDERING"],
+    ["Politi", "POLITI"],
   ] as const;
   const sakstyper = [
     ["Samliv", "SAMLIV"],
@@ -88,21 +89,22 @@ export function lagMockStatistikk(
       : spørring.fra === spørring.til
         ? spørring.fra
         : "Egendefinert periode";
+  const hovedavdelingId = spørring.enhetId ?? avdelingId;
   const omfangEnheter =
     spørring.nivaa === "underavdeling"
-      ? [spørring.enhetId ?? avdelingId].filter((enhetId): enhetId is string => enhetId !== null)
-      : spørring.nivaa === "hovedavdeling" && avdelingId
-        ? [avdelingId]
+      ? [hovedavdelingId].filter((enhetId): enhetId is string => enhetId !== null)
+      : spørring.nivaa === "hovedavdeling" && hovedavdelingId
+        ? [hovedavdelingId]
         : [];
   // Mocken kjenner bare valgt enhet og saker med enhetstilhørighet; hovedavdeling tar med underenheter som finnes i sakene.
   const nøkkeltallEnheter =
-    spørring.nivaa === "hovedavdeling" && avdelingId
+    spørring.nivaa === "hovedavdeling" && hovedavdelingId
       ? [
           ...omfangEnheter,
           ...new Set(
             aldersgrunnlag.saker
               .map(getSaksenhet)
-              .filter((enhet) => enhet.startsWith(`${avdelingId}-`)),
+              .filter((enhet) => enhet.startsWith(`${hovedavdelingId}-`)),
           ),
         ]
       : omfangEnheter;
@@ -119,33 +121,85 @@ export function lagMockStatistikk(
               nøkkeltallEnheter.includes(sak.saksbehandlere.eier?.enhet ?? ""),
           )
         : aldersgrunnlag.saker;
+  const åpneSaker = nøkkeltallSaker.filter((sak) => velgSakKategori(sak) !== null);
   const øyeblikksbilde = lagMockOyeblikksbilde(nøkkeltallSaker);
+  const nå = new Date();
+  const eldsteÅpneSak = åpneSaker.reduce<(typeof åpneSaker)[number] | null>(
+    (eldste, sak) =>
+      !eldste || new Date(sak.opprettet).getTime() < new Date(eldste.opprettet).getTime()
+        ? sak
+        : eldste,
+    null,
+  );
+  const aldersbøtter = [
+    ["0–3", 0, 2],
+    ["3–6", 3, 5],
+    ["6–9", 6, 8],
+    ["9–12", 9, 11],
+    ["12–24", 12, 23],
+    [">24", 24, Number.MAX_SAFE_INTEGER],
+  ] as const;
+  const månederSiden = (opprettet: string) => heleKalendermåneder(opprettet, nå);
+  const periodeTall = {
+    innkomne: 323,
+    avsluttede: 250,
+    snittDagerAvsluttet: 32,
+    antattBeløp: "2400000",
+    vedtattBeløp: "1800000",
+    anmeldtBeløp: "600000",
+  };
+  const henlagt = [
+    ["Etter utredning", 126],
+    ["Som straffesak", 42],
+  ].map(([navn, verdi]) => ({ navn, verdi })) as Statistikk["henlagt"];
+  const henlagtAntall = henlagt.reduce((sum, rad) => sum + rad.verdi, 0);
+
+  const valgtOmfang =
+    spørring.nivaa === "meg"
+      ? "meg"
+      : spørring.nivaa === "hovedavdeling"
+        ? `hovedavdeling:${hovedavdelingId ?? "ukjent"}`
+        : spørring.nivaa === "underavdeling"
+          ? `enhet:${spørring.enhetId ?? avdelingId ?? "ukjent"}`
+          : "organisasjon";
+  const organisasjonsvalg: Statistikk["organisasjonsvalg"] = [
+    { verdi: "meg", label: "Meg selv", type: "meg" },
+    {
+      verdi: `hovedavdeling:${avdelingId ?? "ukjent"}`,
+      label: `Min avdeling (${avdeling})`,
+      type: "enhet",
+    },
+    {
+      verdi: `enhet:${avdelingId ?? "ukjent"}`,
+      label: avdeling || "Egen enhet",
+      type: "enhet",
+    },
+    {
+      verdi: `enhet:${avdelingId ?? "ukjent"}-1`,
+      label: `${avdeling} 1`,
+      type: "enhet",
+    },
+    {
+      verdi: `enhet:${avdelingId ?? "ukjent"}-2`,
+      label: `${avdeling} 2`,
+      type: "enhet",
+    },
+    { verdi: "organisasjon", label: "Hele organisasjonen", type: "organisasjon" },
+  ];
+  if (!organisasjonsvalg.some((valg) => valg.verdi === valgtOmfang)) {
+    organisasjonsvalg.push({
+      verdi: valgtOmfang,
+      label: valgtOmfang.startsWith("hovedavdeling:")
+        ? `Min avdeling (${avdeling || "ukjent"})`
+        : avdeling || "Egen enhet",
+      type: "enhet",
+    });
+  }
 
   return {
-    valgtOmfang:
-      spørring.enhetId || (spørring.nivaa === "underavdeling" && avdelingId)
-        ? `enhet:${spørring.enhetId ?? avdelingId}`
-        : spørring.nivaa,
+    valgtOmfang,
     omfangEnheter,
-    organisasjonsvalg: [
-      { verdi: "meg", label: "Meg selv", type: "meg" },
-      {
-        verdi: `enhet:${avdelingId ?? "ukjent"}`,
-        label: `Min avdeling (${avdeling})`,
-        type: "enhet",
-      },
-      {
-        verdi: `enhet:${avdelingId ?? "ukjent"}-1`,
-        label: `${avdeling} 1`,
-        type: "enhet",
-      },
-      {
-        verdi: `enhet:${avdelingId ?? "ukjent"}-2`,
-        label: `${avdeling} 2`,
-        type: "enhet",
-      },
-      { verdi: "organisasjon", label: "Hele organisasjonen", type: "organisasjon" },
-    ],
+    organisasjonsvalg,
     periode: { fra: spørring.fra, til: spørring.til, label },
     varsler: lagVarsler(aldersgrunnlag, omfangEnheter, spørring.nivaa === "meg"),
     nøkkeltall: [
@@ -174,39 +228,37 @@ export function lagMockStatistikk(
         forklaring: "Saker",
         tone: "danger",
       },
-      { label: "Eldste åpne sak", verdi: "27 mnd", forklaring: "Sak 102", tone: "neutral" },
+      {
+        label: "Eldste åpne sak",
+        verdi: eldsteÅpneSak ? `${månederSiden(eldsteÅpneSak.opprettet)} mnd` : "–",
+        forklaring: eldsteÅpneSak ? `Sak ${eldsteÅpneSak.id}` : "Ingen åpne saker",
+        tone: "neutral",
+      },
       {
         label: "Saksbehandlingstid",
-        verdi: "4 mnd",
-        forklaring: "Utredes til avsluttet (snitt)",
+        verdi: formaterVarighet(periodeTall.snittDagerAvsluttet),
+        forklaring: "Snitt fra utredning til avsluttet, siste 12 mnd",
         tone: "success",
       },
     ],
-    sakstyper: sakstyper.map(([navn, filterverdi], index) => ({
+    sakstyper: sakstyper.map(([navn, filterverdi]) => ({
       navn,
       filterverdi,
-      deler: statuser.map(([status, statusfilter], statusIndex) => ({
+      deler: statuser.map(([status, statusfilter]) => ({
         navn: status,
         filterverdi: statusfilter,
-        verdi: [8, 12, 6, 8][(index + statusIndex) % 4] + statusIndex * 2,
+        verdi: åpneSaker.filter(
+          (sak) => sak.kategori === filterverdi && normaliserSteg(sak.steg) === statusfilter,
+        ).length,
       })),
     })),
-    alderssammensetning: [
-      ["0–3", 49],
-      ["3–6", 18],
-      ["6–9", 9],
-      ["9–12", 7],
-      ["12–24", 3],
-      [">24", 1],
-    ].map(([navn, verdi]) => ({ navn, verdi })) as Statistikk["alderssammensetning"],
-    periodeTall: {
-      innkomne: 323,
-      avsluttede: 156,
-      snittDagerAvsluttet: 32,
-      antattBeløp: "2400000",
-      vedtattBeløp: "1800000",
-      anmeldtBeløp: "600000",
-    },
+    alderssammensetning: aldersbøtter.map(([navn, fra, til]) => ({
+      navn,
+      verdi: åpneSaker.filter(
+        (sak) => månederSiden(sak.opprettet) >= fra && månederSiden(sak.opprettet) <= til,
+      ).length,
+    })),
+    periodeTall,
     statusfordeling: [
       ["Opprettet", "OPPRETTET", 323, 100],
       ["Utredet", "UTREDNING", 234, 72],
@@ -217,7 +269,8 @@ export function lagMockStatistikk(
     ].map(([navn, filterverdi, verdi, prosent]) => ({
       navn,
       filterverdi,
-      verdi,
+      verdi:
+        navn === "Opprettet" ? periodeTall.innkomne : navn === "Henlagt" ? henlagtAntall : verdi,
       prosent,
     })) as Statistikk["statusfordeling"],
     kategorifordeling: [
@@ -234,9 +287,37 @@ export function lagMockStatistikk(
       ["Feilutbetaling", 78, 65],
       ["Potensiell straffesak", 42, 35],
     ].map(([navn, verdi, prosent]) => ({ navn, verdi, prosent })) as Statistikk["kontrollrapport"],
-    henlagt: [
-      ["Etter utredning", 126],
-      ["Som straffesak", 42],
-    ].map(([navn, verdi]) => ({ navn, verdi })) as Statistikk["henlagt"],
+    henlagt,
   };
+}
+
+function normaliserSteg(steg: string): string {
+  if (steg === "UTREDES") return "UTREDNING";
+  if (steg === "ANMELDT") return "POLITI";
+  return steg;
+}
+
+function heleKalendermåneder(opprettet: string, nå: Date): number {
+  const datoFormat = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Oslo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const deler = (dato: Date) =>
+    Object.fromEntries(
+      datoFormat.formatToParts(dato).map(({ type, value }) => [type, Number(value)]),
+    );
+  const fra = deler(new Date(opprettet));
+  const til = deler(nå);
+  const kalenderdager = (til.year - fra.year) * 12 + til.month - fra.month;
+  return kalenderdager - (til.day < fra.day ? 1 : 0);
+}
+
+function formaterVarighet(dager: number | null | undefined): string {
+  if (dager == null) return "–";
+  if (dager === 0) return "under 1 dag";
+  if (dager === 1) return "1 dag";
+  if (dager < 60) return `${dager} dager`;
+  return `${Math.floor(dager / 30)} mnd`;
 }
