@@ -20,10 +20,13 @@ export function PdfForhåndsvisning({
   url,
   sistLagret,
   erDemo = false,
+  oppdateringssignal = 0,
 }: {
   url: string;
   sistLagret: Date | null;
   erDemo?: boolean;
+  /** Økes når dokumentet er endret uten at denne fanen har lagret, f.eks. hentet på nytt etter fokus. */
+  oppdateringssignal?: number;
 }) {
   const [pdfUrl, settPdfUrl] = useState<string>();
   const [feil, settFeil] = useState<string>();
@@ -64,7 +67,7 @@ export function PdfForhåndsvisning({
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [erDemo, url, sistLagret]);
+  }, [erDemo, url, sistLagret, oppdateringssignal]);
 
   useEffect(
     () => () => {

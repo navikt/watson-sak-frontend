@@ -128,7 +128,11 @@ function DokumentRedigering({
     versjon: number;
     innhold: DokumentInnhold;
   } | null>(null);
-  const venterPåFokusHenting = useRef(false);
+  // Settes til lokal endringsversjon når en fokushenting starter. Avvises svaret hvis
+  // brukeren har endret noe siden, så et eldre svar aldri overskriver nyere lokalt arbeid.
+  const fokusHentingVersjon = useRef<number | null>(null);
+  const lokalEndringsversjon = useRef(0);
+  const [pdfOppdateringssignal, settPdfOppdateringssignal] = useState(0);
   // Innholdet vi nettopp har skrevet inn i editoren utenfra. Editoren melder det tilbake som
   // en endring, og det skal ikke lagres på nytt (det ville oppdatert endretDato for ingenting).
   const ignorerInnhold = useRef<string | null>(null);
@@ -203,7 +207,7 @@ function DokumentRedigering({
     function henting() {
       if (document.visibilityState !== "visible") return;
       if (statusRef.current !== "lagret") return;
-      venterPåFokusHenting.current = true;
+      fokusHentingVersjon.current = lokalEndringsversjon.current;
       revalidatorRef.current.revalidate();
     }
     document.addEventListener("visibilitychange", henting);
@@ -215,12 +219,27 @@ function DokumentRedigering({
   }, []);
 
   useEffect(() => {
-    if (!venterPåFokusHenting.current) return;
-    venterPåFokusHenting.current = false;
-    // Brukeren kan ha begynt å skrive mens hentingen pågikk. Da vinner det lokale.
-    if (statusRef.current !== "lagret") return;
+    const hentetVedVersjon = fokusHentingVersjon.current;
+    if (hentetVedVersjon === null) return;
+    fokusHentingVersjon.current = null;
+    // Brukeren kan ha endret noe mens hentingen pågikk, selv om autolagringen har rukket å
+    // bli ferdig. Da er svaret utdatert, og det lokale vinner.
+    if (statusRef.current !== "lagret" || hentetVedVersjon !== lokalEndringsversjon.current) {
+      return;
+    }
     const innholdEndret = JSON.stringify(dokument.innhold) !== JSON.stringify(innholdRef.current);
-    if (dokument.tittel !== tittelRef.current) {
+    const tittelEndret = dokument.tittel !== tittelRef.current;
+    if (!innholdEndret && !tittelEndret) return;
+
+    // Ventende historikkpunkt inneholder den gamle versjonen. Sendes den senere, overskriver
+    // den det vi nå har hentet fra serveren.
+    historikkData.current = null;
+    if (historikkTimer.current) clearTimeout(historikkTimer.current);
+    if (maksHistorikkTimer.current) clearTimeout(maksHistorikkTimer.current);
+    historikkTimer.current = null;
+    maksHistorikkTimer.current = null;
+
+    if (tittelEndret) {
       setTittel(dokument.tittel);
       tittelRef.current = dokument.tittel;
     }
@@ -232,6 +251,7 @@ function DokumentRedigering({
         innhold: dokument.innhold,
       }));
     }
+    settPdfOppdateringssignal((signal) => signal + 1);
   }, [dokument]);
 
   const lagreHistorikkpunkt = useCallback(
@@ -301,6 +321,7 @@ function DokumentRedigering({
     (nyTittel: string) => {
       // Skrivebeskyttet (avsluttet sak eller arkivert dokument): ingen lagring.
       if (!kanRedigere) return;
+      lokalEndringsversjon.current += 1;
       setTittel(nyTittel);
       tittelRef.current = nyTittel;
       registrerEndring({ tittel: nyTittel, innhold: innholdRef.current });
@@ -319,6 +340,7 @@ function DokumentRedigering({
       innholdRef.current = innhold;
       // Plate kaller onChange også ved markering i skrivebeskyttet modus. Det skal ikke lagres.
       if (!kanRedigere) return;
+      lokalEndringsversjon.current += 1;
       registrerEndring({ tittel: tittelRef.current, innhold });
       registrerHistorikk({ tittel: tittelRef.current, innhold });
     },
@@ -340,6 +362,7 @@ function DokumentRedigering({
 
   const håndterGjenopprettet = useCallback(
     (gjenopprettet: Dokument) => {
+      lokalEndringsversjon.current += 1;
       setTittel(gjenopprettet.tittel);
       tittelRef.current = gjenopprettet.tittel;
       innholdRef.current = gjenopprettet.innhold;
@@ -458,7 +481,12 @@ function DokumentRedigering({
           </VStack>
         }
         renderForhåndsvisning={() => (
-          <PdfForhåndsvisning url={pdfForhåndsvisningUrl} sistLagret={sistLagret} erDemo={erDemo} />
+          <PdfForhåndsvisning
+            url={pdfForhåndsvisningUrl}
+            sistLagret={sistLagret}
+            erDemo={erDemo}
+            oppdateringssignal={pdfOppdateringssignal}
+          />
         )}
       />
 
