@@ -274,6 +274,9 @@ function KandidatLenke({ kandidat: k, erEgen }: { kandidat: MigreringKandidat; e
   );
 }
 
+/** Saksbehandlere uten enhet, eller i en enhet som ikke er i enhetslisten, må også kunne velges. */
+const ANNEN_ENHET = "__annen";
+
 /**
  * Lederen velger enhet og søker i saksbehandlerne i den enheten. Mottakeren kan tilhøre hvilken som helst enhet,
  * også en annen enn lederens. Backend validerer mottakeren, så valget her er bare en hjelp til å finne riktig person.
@@ -291,8 +294,18 @@ function EndreTildelingModal({
   const ref = useRef<HTMLDialogElement>(null);
   const [enhetId, setEnhetId] = useState("");
   const [navIdent, setNavIdent] = useState("");
+  const kjenteEnheter = new Set(mottakerValg.enheter.map((e) => e.id));
+  const harMottakerUtenKjentEnhet = mottakerValg.mottakere.some(
+    (a) => !a.enhetId || !kjenteEnheter.has(a.enhetId),
+  );
   const valg = mottakerValg.mottakere
-    .filter((a) => a.navIdent !== kandidat.ansvar.navIdent && a.enhetId === enhetId)
+    .filter(
+      (a) =>
+        a.navIdent !== kandidat.ansvar.navIdent &&
+        (enhetId === ANNEN_ENHET
+          ? !a.enhetId || !kjenteEnheter.has(a.enhetId)
+          : a.enhetId === enhetId),
+    )
     .map((a) => ({ label: `${a.navn} (${a.navIdent})`, value: a.navIdent }));
   const valgt = valg.filter((v) => v.value === navIdent);
   const sender = fetcher.state !== "idle";
@@ -329,6 +342,7 @@ function EndreTildelingModal({
                   {e.navn}
                 </option>
               ))}
+              {harMottakerUtenKjentEnhet && <option value={ANNEN_ENHET}>Annen enhet</option>}
             </Select>
             <input type="hidden" name="navIdent" value={navIdent} />
             <UNSAFE_Combobox

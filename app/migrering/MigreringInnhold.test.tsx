@@ -389,13 +389,13 @@ describe("MigreringInnhold", () => {
       personIdent: null,
     });
 
-    function renderLeder(tildelingsSvar?: unknown) {
+    function renderLeder(tildelingsSvar?: unknown, mottaker: MigreringMottakere = mottakerValg) {
       return renderSide(
         lagLister({
           erLeder: true,
           egenNavIdent: "L999999",
           ansatteValg,
-          mottakerValg,
+          mottakerValg: mottaker,
           liste: lagSide([ansattSak, ansattUnderFlytting, kandidat("100245", "IKKE_PABEGYNT")]),
         }),
         "/migrering",
@@ -508,6 +508,35 @@ describe("MigreringInnhold", () => {
       expect(within(dialog).queryByRole("option", { name: "Bjørn Berg (Z999002)" })).not.toBeNull();
       expect(within(dialog).queryByRole("option", { name: "Åse Hansen (Z999001)" })).toBeNull();
       expect(within(dialog).queryByRole("option", { name: "Nora Nordli (Z999010)" })).toBeNull();
+    });
+
+    it("lar lederen velge saksbehandlere uten kjent enhet under Annen enhet", async () => {
+      const { tildel } = renderLeder(undefined, {
+        enheter: mottakerValg.enheter,
+        mottakere: [
+          ...mottakerValg.mottakere,
+          { navIdent: "Z999020", navn: "Uten Enhet", enhetId: null, enhetNavn: null },
+          { navIdent: "Z999021", navn: "Ukonfigurert", enhetId: "ukjent-nom-id", enhetNavn: "X" },
+        ],
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: "Endre tildeling for PID 200001" }));
+      const dialog = await screen.findByRole("dialog");
+      await velgMottaker(dialog, "__annen", "Uten", "Uten Enhet (Z999020)");
+      fireEvent.click(within(dialog).getByRole("button", { name: "Lagre" }));
+
+      await waitFor(() => expect(tildel).toHaveBeenCalledTimes(1));
+      const kall = (tildel.mock.calls[0] as unknown as [{ request: Request }])[0];
+      expect((await kall.request.formData()).get("navIdent")).toBe("Z999020");
+    });
+
+    it("skjuler Annen enhet når alle mottakere har en kjent enhet", async () => {
+      renderLeder();
+
+      fireEvent.click(screen.getByRole("button", { name: "Endre tildeling for PID 200001" }));
+      const dialog = await screen.findByRole("dialog");
+
+      expect(within(dialog).queryByRole("option", { name: "Annen enhet" })).toBeNull();
     });
 
     it("viser feilen fra tildelingen og holder dialogen åpen", async () => {

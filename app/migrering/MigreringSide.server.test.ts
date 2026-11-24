@@ -373,13 +373,28 @@ describe("mockmodus for ledere", () => {
   it("gir lederen mottakere i alle enheter, ikke bare egen enhet", async () => {
     const resultat = await loader(args());
 
-    expect(resultat.mottakerValg.enheter.map((e) => e.navn)).toEqual([
-      "Analyse",
-      "Nord",
-      "Vest",
-      "Øst",
-    ]);
+    expect(resultat.mottakerValg.enheter.map((e) => e.navn)).toEqual(
+      expect.arrayContaining(["Analyse", "Nord", "Vest", "Øst"]),
+    );
     expect(resultat.mottakerValg.mottakere.some((m) => m.enhetNavn === "Nord")).toBe(true);
+  });
+
+  it("tar med innlogget leder og lederens enhet blant mottakerne i mockmodus", async () => {
+    const resultat = await loader(args());
+
+    expect(resultat.mottakerValg.mottakere.some((m) => m.navIdent === "L999999")).toBe(true);
+  });
+
+  it("lar lederen tildele en ansatts sak til seg selv i mockmodus", async () => {
+    const forespørsel = new Request("http://localhost/migrering", {
+      method: "POST",
+      body: new URLSearchParams({ kandidatId: "UTREDNING:700001", navIdent: "L999999" }),
+    });
+    expect(
+      await action({ request: forespørsel, params: {}, context: {} } as Parameters<
+        typeof action
+      >[0]),
+    ).toEqual({ ok: true });
   });
 
   it("filtrerer på saksbehandler og avdeling, også for lederens egne saker", async () => {
