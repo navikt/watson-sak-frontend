@@ -102,4 +102,28 @@ describe("PdfForhåndsvisning", () => {
 
     expect(screen.getByText("Kunne ikke oppdatere PDF-forhåndsvisningen.")).toBeTruthy();
   });
+
+  it("regenererer forhåndsvisningen når oppdateringssignalet øker", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      blob: () => Promise.resolve(new Blob(["pdf"], { type: "application/pdf" })),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { rerender } = render(
+      <PdfForhåndsvisning url="/api/forhandsvisning" sistLagret={null} oppdateringssignal={0} />,
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(FORHÅNDSVISNING_DEBOUNCE_MS);
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <PdfForhåndsvisning url="/api/forhandsvisning" sistLagret={null} oppdateringssignal={1} />,
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(FORHÅNDSVISNING_DEBOUNCE_MS);
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
 });

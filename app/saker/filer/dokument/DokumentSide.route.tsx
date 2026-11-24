@@ -123,6 +123,21 @@ function DokumentRedigering({
   const [lagringsfeil, settLagringsfeil] = useState<{ feilId?: string } | null>(null);
   const revalidator = useRevalidator();
   const revalidatorRef = useRef(revalidator);
+  // Innhold fra serveren som skal vises i editoren etter at fanen fikk fokus igjen.
+  const [eksterntInnhold, settEksterntInnhold] = useState<{
+    versjon: number;
+    innhold: DokumentInnhold;
+  } | null>(null);
+  // Settes til lokal endringsversjon når en fokushenting starter. Avvises svaret hvis
+  // brukeren har endret noe siden, så et eldre svar aldri overskriver nyere lokalt arbeid.
+  const fokusHentingVersjon = useRef<number | null>(null);
+  const lokalEndringsversjon = useRef(0);
+  const pågåendeHistorikk = useRef<Promise<void> | null>(null);
+  const historikkUtsatt = useRef(false);
+  const [pdfOppdateringssignal, settPdfOppdateringssignal] = useState(0);
+  // Innholdet vi nettopp har skrevet inn i editoren utenfra. Editoren melder det tilbake som
+  // en endring, og det skal ikke lagres på nytt (det ville oppdatert endretDato for ingenting).
+  const ignorerInnhold = useRef<string | null>(null);
 
   useEffect(() => {
     revalidatorRef.current = revalidator;
@@ -183,35 +198,49 @@ function DokumentRedigering({
   );
 
   const { status, sistLagret, registrerEndring, prøvIgjen } = useAutolagring({ lagre });
+  const statusRef = useRef(status);
+  statusRef.current = status;
 
   const lagreHistorikkpunkt = useCallback(
     async (forlater = false) => {
       const data = historikkData.current;
       if (!data) return;
+      // Pauset mens dokumentet hentes på nytt etter fokus, og mens fanen er skjult: en annen
+      // fane kan ha lagret nyere innhold, og et historikkpunkt sender hele dokumentet. Dataene
+      // beholdes, og skrives først når fokushentingen har avgjort om de fortsatt er gyldige.
+      if (fokusHentingVersjon.current !== null || document.visibilityState === "hidden") {
+        historikkUtsatt.current = true;
+        return;
+      }
       if (historikkTimer.current) clearTimeout(historikkTimer.current);
       if (maksHistorikkTimer.current) clearTimeout(maksHistorikkTimer.current);
       historikkTimer.current = null;
       maksHistorikkTimer.current = null;
       historikkData.current = null;
 
-      try {
-        const respons = await fetch(lagreUrl, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...data, opprettHistorikk: true }),
-          keepalive: forlater,
-        });
-        if (!respons.ok) {
+      const kall = (async () => {
+        try {
+          const respons = await fetch(lagreUrl, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...data, opprettHistorikk: true }),
+            keepalive: forlater,
+          });
+          if (!respons.ok) {
+            if (!forlater) settHistorikkFeil("Kunne ikke opprette historikkpunkt.");
+            return;
+          }
+          if (!forlater) {
+            settHistorikkFeil(null);
+            revalidatorRef.current.revalidate();
+          }
+        } catch {
           if (!forlater) settHistorikkFeil("Kunne ikke opprette historikkpunkt.");
-          return;
         }
-        if (!forlater) {
-          settHistorikkFeil(null);
-          revalidatorRef.current.revalidate();
-        }
-      } catch {
-        if (!forlater) settHistorikkFeil("Kunne ikke opprette historikkpunkt.");
-      }
+      })();
+      pågåendeHistorikk.current = kall;
+      await kall;
+      if (pågåendeHistorikk.current === kall) pågåendeHistorikk.current = null;
     },
     [lagreUrl],
   );
@@ -247,10 +276,91 @@ function DokumentRedigering({
     return () => window.removeEventListener("beforeunload", håndterLukking);
   }, [lagreHistorikkpunkt]);
 
+  // Samme dokument kan stå åpent i flere faner. Når fanen får fokus igjen henter vi
+  // dokumentet på nytt, slik at man ikke skriver videre på en utdatert versjon og
+  // overskriver det som er gjort i den andre fanen. Har fanen ulagrede endringer
+  // (eller en lagring som feilet) lar vi være, for å ikke kaste dem.
+  // Mens hentingen pågår er historikkskriving satt på pause (se `lagreHistorikkpunkt`),
+  // fordi et historikkpunkt sender hele dokumentet og ville overskrevet det vi henter.
+  useEffect(() => {
+    async function henting() {
+      if (document.visibilityState !== "visible") return;
+      if (statusRef.current !== "lagret") {
+        // Ulagrede lokale endringer: ingen henting, men et historikkpunkt som ble utsatt
+        // mens fanen var skjult inneholder dem og kan skrives nå.
+        if (historikkUtsatt.current) {
+          historikkUtsatt.current = false;
+          void lagreHistorikkpunkt();
+        }
+        return;
+      }
+      if (fokusHentingVersjon.current !== null) return;
+      fokusHentingVersjon.current = lokalEndringsversjon.current;
+      // Et historikkpunkt som allerede er sendt må bli ferdig før vi leser serverversjonen.
+      await pågåendeHistorikk.current;
+      revalidatorRef.current.revalidate();
+    }
+    document.addEventListener("visibilitychange", henting);
+    window.addEventListener("focus", henting);
+    return () => {
+      document.removeEventListener("visibilitychange", henting);
+      window.removeEventListener("focus", henting);
+    };
+  }, [lagreHistorikkpunkt]);
+
+  const revalidatorState = revalidator.state;
+  useEffect(() => {
+    const hentetVedVersjon = fokusHentingVersjon.current;
+    if (hentetVedVersjon === null || revalidatorState !== "idle") return;
+    fokusHentingVersjon.current = null;
+
+    // Brukeren kan ha endret noe mens hentingen pågikk, selv om autolagringen har rukket å
+    // bli ferdig. Da er svaret utdatert, og det lokale vinner.
+    const utdatert =
+      statusRef.current !== "lagret" || hentetVedVersjon !== lokalEndringsversjon.current;
+    const innholdEndret =
+      !utdatert && JSON.stringify(dokument.innhold) !== JSON.stringify(innholdRef.current);
+    const tittelEndret = !utdatert && dokument.tittel !== tittelRef.current;
+
+    if (innholdEndret || tittelEndret) {
+      // Ventende historikkpunkt inneholder den gamle versjonen. Sendes den senere, overskriver
+      // den det vi nå har hentet fra serveren.
+      historikkData.current = null;
+      historikkUtsatt.current = false;
+      if (historikkTimer.current) clearTimeout(historikkTimer.current);
+      if (maksHistorikkTimer.current) clearTimeout(maksHistorikkTimer.current);
+      historikkTimer.current = null;
+      maksHistorikkTimer.current = null;
+
+      if (tittelEndret) {
+        setTittel(dokument.tittel);
+        tittelRef.current = dokument.tittel;
+      }
+      if (innholdEndret) {
+        innholdRef.current = dokument.innhold;
+        ignorerInnhold.current = JSON.stringify(dokument.innhold);
+        settEksterntInnhold((forrige) => ({
+          versjon: (forrige?.versjon ?? 0) + 1,
+          innhold: dokument.innhold,
+        }));
+      }
+      settPdfOppdateringssignal((signal) => signal + 1);
+      return;
+    }
+
+    // Ingen ny serverversjon (eller svaret ble avvist): historikkpunktet som ble utsatt
+    // under hentingen skal fortsatt lagres.
+    if (historikkUtsatt.current) {
+      historikkUtsatt.current = false;
+      void lagreHistorikkpunkt();
+    }
+  }, [dokument, revalidatorState, lagreHistorikkpunkt]);
+
   const håndterTittel = useCallback(
     (nyTittel: string) => {
       // Skrivebeskyttet (avsluttet sak eller arkivert dokument): ingen lagring.
       if (!kanRedigere) return;
+      lokalEndringsversjon.current += 1;
       setTittel(nyTittel);
       tittelRef.current = nyTittel;
       registrerEndring({ tittel: nyTittel, innhold: innholdRef.current });
@@ -261,9 +371,23 @@ function DokumentRedigering({
 
   const håndterInnhold = useCallback(
     (innhold: DokumentInnhold) => {
+      if (ignorerInnhold.current !== null) {
+        const ventet = ignorerInnhold.current;
+        ignorerInnhold.current = null;
+        if (JSON.stringify(innhold) === ventet) {
+          // Editoren rapporterer sin egen array. Bruk den som referanse, slik at neste rene
+          // markeringsendring (samme array) gjenkjennes som uendret under.
+          innholdRef.current = innhold;
+          return;
+        }
+      }
+      // Plate kaller onChange også ved ren markeringsendring, og da er innholdet det samme
+      // objektet. Det er ingen endring å lagre, og den skal ikke regnes som lokalt arbeid.
+      if (innhold === innholdRef.current) return;
       innholdRef.current = innhold;
       // Plate kaller onChange også ved markering i skrivebeskyttet modus. Det skal ikke lagres.
       if (!kanRedigere) return;
+      lokalEndringsversjon.current += 1;
       registrerEndring({ tittel: tittelRef.current, innhold });
       registrerHistorikk({ tittel: tittelRef.current, innhold });
     },
@@ -285,6 +409,7 @@ function DokumentRedigering({
 
   const håndterGjenopprettet = useCallback(
     (gjenopprettet: Dokument) => {
+      lokalEndringsversjon.current += 1;
       setTittel(gjenopprettet.tittel);
       tittelRef.current = gjenopprettet.tittel;
       innholdRef.current = gjenopprettet.innhold;
@@ -340,6 +465,7 @@ function DokumentRedigering({
       <DokumentEditor
         key={editorVersjon}
         startInnhold={innholdRef.current}
+        eksterntInnhold={eksterntInnhold}
         redigerbar={kanRedigere}
         onEndring={håndterInnhold}
         sakId={sakReferanse}
@@ -402,7 +528,12 @@ function DokumentRedigering({
           </VStack>
         }
         renderForhåndsvisning={() => (
-          <PdfForhåndsvisning url={pdfForhåndsvisningUrl} sistLagret={sistLagret} erDemo={erDemo} />
+          <PdfForhåndsvisning
+            url={pdfForhåndsvisningUrl}
+            sistLagret={sistLagret}
+            erDemo={erDemo}
+            oppdateringssignal={pdfOppdateringssignal}
+          />
         )}
       />
 
