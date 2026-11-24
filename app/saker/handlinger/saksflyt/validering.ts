@@ -1,4 +1,5 @@
 import type { TillatteHandlingerResponse } from "~/saker/types.backend";
+import { BelopForStortError } from "~/utils/number-utils";
 import {
   dagensDatoIOslo,
   erGyldigIsoDato,
@@ -61,8 +62,7 @@ function validerFelt(felt: Skjemafelt, verdi: string, verdier: Verdier): string 
     try {
       lesBelop(verdi, felt.etikett);
     } catch (feil) {
-      return feil instanceof Error &&
-        feil.message.endsWith("kan ikke være større enn 1 000 000 000")
+      return feil instanceof BelopForStortError
         ? feil.message
         : "Beløpet må være et tall med opptil to desimaler";
     }
@@ -126,8 +126,7 @@ export function validerTrinn(
               lesBelop(verdi, "Beløpet");
             } catch (feiltype) {
               feil[navn] =
-                feiltype instanceof Error &&
-                feiltype.message.endsWith("kan ikke være større enn 1 000 000 000")
+                feiltype instanceof BelopForStortError
                   ? feiltype.message
                   : "Beløpet må være et tall med opptil to desimaler";
             }

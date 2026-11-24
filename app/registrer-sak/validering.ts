@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MAKS_BELØP } from "~/saker/handlinger/resultat-request";
+import { MAKS_BELØP } from "~/utils/number-utils";
 
 /** Maks lengde på det interne notatet ved opprettelse fra migrering. Håndheves også i retry-ruten. */
 const NOTAT_MAKS_TEGN = 4000;

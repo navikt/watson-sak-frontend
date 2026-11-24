@@ -85,3 +85,14 @@ export function konverterTilTall(verdi: unknown): number | null {
   const tall = typeof verdi === "number" ? verdi : Number(String(verdi).replace(",", "."));
   return Number.isFinite(tall) ? tall : null;
 }
+
+/** Største beløp backend tar imot (1 milliard kroner). */
+export const MAKS_BELØP = 1_000_000_000;
+
+/** Kastes når et beløp er større enn {@link MAKS_BELØP}. */
+export class BelopForStortError extends Error {
+  constructor(felt: string) {
+    super(`${felt} kan ikke være større enn 1 000 000 000`);
+    this.name = "BelopForStortError";
+  }
+}

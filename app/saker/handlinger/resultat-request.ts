@@ -3,6 +3,7 @@ import type {
   KontrollsakSteg,
   TillatteHandlingerResponse,
 } from "~/saker/types.backend";
+import { BelopForStortError, MAKS_BELØP } from "~/utils/number-utils";
 
 const resultatFeltStier = {
   "utredning.type": ["utredning", "type"],
@@ -207,12 +208,9 @@ export function lesBelop(verdi: string, felt: string): number {
   }
   const belop = Number(normalisert);
   if (!Number.isFinite(belop)) throw new Error(`${felt} må være et gyldig beløp`);
-  if (belop > MAKS_BELØP) throw new Error(`${felt} kan ikke være større enn 1 000 000 000`);
+  if (belop > MAKS_BELØP) throw new BelopForStortError(felt);
   return belop;
 }
-
-/** Største beløp backend tar imot. */
-export const MAKS_BELØP = 1_000_000_000;
 
 /** Største verdi backend tar imot i heltallsfelt (Kotlin `Int`). */
 const MAKS_HELTALL = 2_147_483_647;
