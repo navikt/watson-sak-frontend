@@ -7,13 +7,16 @@ import {
   hentMockAnsattKandidater,
   hentMockMigreringKandidater,
   MOCK_MIGRERING_ANSATTE,
+  MOCK_MIGRERING_MOTTAKERE,
 } from "./mock-data.server";
 import {
   hentMigreringsstatus,
+  INGEN_MOTTAKERE,
   MIGRERING_SIDESTORRELSE,
   type MigreringAnsatt,
   type MigreringFilter,
   type MigreringKandidat,
+  type MigreringMottakere,
   type MigreringSide,
 } from "./types";
 
@@ -71,6 +74,26 @@ function egneFørst(navIdent: string, kandidater: MigreringKandidat[]) {
   ];
 }
 
+/** Backend tar med lederen selv blant mottakerne, og lederens enhet blant enhetene. */
+function mottakerValgMedLeder(bruker: {
+  navIdent: string;
+  name: string;
+  enhet: string;
+  enhetId?: string | null;
+}): MigreringMottakere {
+  const enhetId = bruker.enhetId ?? bruker.enhet;
+  const harEnhet = MOCK_MIGRERING_MOTTAKERE.enheter.some((e) => e.id === enhetId);
+  return {
+    enheter: harEnhet
+      ? MOCK_MIGRERING_MOTTAKERE.enheter
+      : [...MOCK_MIGRERING_MOTTAKERE.enheter, { id: enhetId, navn: bruker.enhet }],
+    mottakere: [
+      ...MOCK_MIGRERING_MOTTAKERE.mottakere.filter((m) => m.navIdent !== bruker.navIdent),
+      { navIdent: bruker.navIdent, navn: bruker.name, enhetId, enhetNavn: bruker.enhet },
+    ],
+  };
+}
+
 /** Gjenskaper backend-reglene med syntetiske data. Tildelinger lagres i mock-sesjonen. */
 export function mockMigreringKilde(request: Request): MigreringKilde {
   return {
@@ -107,11 +130,14 @@ export function mockMigreringKilde(request: Request): MigreringKilde {
           };
         });
       // Syntetiske ansatte vises bare for ledere, slik at saksbehandlere ikke ser andres saker.
+      // Flyttes en sak til noen utenfor lederens ansatte (for eksempel i en annen enhet), forsvinner den fra listen.
       const alle = bruker.erLeder
-        ? egneFørst(bruker.navIdent, [
-            ...egne,
-            ...hentMockAnsattKandidater(tildelinger, ansatteValg),
-          ])
+        ? egneFørst(
+            bruker.navIdent,
+            [...egne, ...hentMockAnsattKandidater(tildelinger, ansatteValg)].filter((k) =>
+              ansatteValg.some((a) => a.navIdent === k.ansvar.navIdent),
+            ),
+          )
         : egne;
       const liste = medFilter(
         alle,
@@ -121,6 +147,7 @@ export function mockMigreringKilde(request: Request): MigreringKilde {
       return {
         liste: sideAv(liste, side),
         ansatteValg,
+        mottakerValg: bruker.erLeder ? mottakerValgMedLeder(bruker) : INGEN_MOTTAKERE,
         filter,
         erLeder: bruker.erLeder,
         egenNavIdent: bruker.navIdent,
@@ -131,7 +158,7 @@ export function mockMigreringKilde(request: Request): MigreringKilde {
     async tildel({ bruker, kandidatId, navIdent }) {
       if (
         navIdent !== bruker.navIdent &&
-        !MOCK_MIGRERING_ANSATTE.some((a) => a.navIdent === navIdent)
+        !MOCK_MIGRERING_MOTTAKERE.mottakere.some((a) => a.navIdent === navIdent)
       ) {
         throw data("Ugyldig tildeling", { status: 400 });
       }

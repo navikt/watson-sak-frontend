@@ -6,13 +6,20 @@ import { logger } from "~/logging/logging";
 import {
   hentMigreringsAnsatte,
   hentMigreringsliste,
+  hentMigreringsMottakere,
   tildelMigreringskandidat,
   type Migreringsfilter,
   type Migreringsvisning,
 } from "./api.server";
 import type { MigreringKilde } from "./migrering-kilde.server";
 import { migreringErÅpen } from "./miljo";
-import { MIGRERING_SIDESTORRELSE, type MigreringAnsatt, type MigreringSide } from "./types";
+import {
+  INGEN_MOTTAKERE,
+  MIGRERING_SIDESTORRELSE,
+  type MigreringAnsatt,
+  type MigreringMottakere,
+  type MigreringSide,
+} from "./types";
 
 const TOM_SIDE: MigreringSide = { kandidater: [], side: 1, totalSider: 0, totalAntall: 0 };
 
@@ -61,6 +68,16 @@ async function hentAnsatteValg(request: Request): Promise<MigreringAnsatt[] | nu
   }
 }
 
+async function hentMottakerValg(request: Request): Promise<MigreringMottakere | null> {
+  try {
+    return await hentMigreringsMottakere(request);
+  } catch (feil) {
+    if (erUtloggetFeil(feil)) throw feil;
+    logger.error("Kunne ikke hente mottakere til tildeling");
+    return null;
+  }
+}
+
 /** Åpne miljøer kaller det beskyttede migrerings-API-et. */
 export function httpMigreringKilde(request: Request): MigreringKilde {
   return {
@@ -71,19 +88,21 @@ export function httpMigreringKilde(request: Request): MigreringKilde {
       const bruker = await hentInnloggetBruker({ request });
       const backendFilter: Migreringsfilter = filter;
       // Uavhengige, potensielt trege kall: hent parallelt så svartiden ikke blir summen.
-      const [liste, ansatteValg] = await Promise.all([
+      const [liste, ansatteValg, mottakerValg] = await Promise.all([
         bruker.erLeder
           ? hentListe(request, "ALLE", side, backendFilter)
           : hentListe(request, "MINE", side, { status: filter.status }),
         bruker.erLeder ? hentAnsatteValg(request) : Promise.resolve([]),
+        bruker.erLeder ? hentMottakerValg(request) : Promise.resolve(INGEN_MOTTAKERE),
       ]);
       return {
         liste: liste.side,
         ansatteValg: ansatteValg ?? [],
+        mottakerValg: mottakerValg ?? INGEN_MOTTAKERE,
         filter,
         erLeder: bruker.erLeder,
         egenNavIdent: bruker.navIdent,
-        utilgjengelig: liste.utilgjengelig || ansatteValg === null,
+        utilgjengelig: liste.utilgjengelig || ansatteValg === null || mottakerValg === null,
       };
     },
 

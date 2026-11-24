@@ -1,9 +1,10 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { createRoutesStub, useSearchParams } from "react-router";
 import { formaterFødselsnummer } from "~/utils/string-utils";
 import { MigreringInnhold } from "./MigreringInnhold";
 import type {
+  MigreringMottakere,
   MigreringAnsatt,
   MigreringKandidat,
   MigreringLister,
@@ -73,10 +74,23 @@ const ansatteValg: MigreringAnsatt[] = [
   },
 ];
 
+const mottakerValg: MigreringMottakere = {
+  enheter: [
+    { id: "nord", navn: "Nord" },
+    { id: "ost", navn: "Øst" },
+  ],
+  mottakere: [
+    { navIdent: "Z999001", navn: "Åse Hansen", enhetId: "ost", enhetNavn: "Øst" },
+    { navIdent: "Z999002", navn: "Bjørn Berg", enhetId: "ost", enhetNavn: "Øst" },
+    { navIdent: "Z999010", navn: "Nora Nordli", enhetId: "nord", enhetNavn: "Nord" },
+  ],
+};
+
 function lagLister(delvis: Partial<MigreringLister> = {}): MigreringLister {
   return {
     liste: lagSide([]),
     ansatteValg: [],
+    mottakerValg: { enheter: [], mottakere: [] },
     filter: { status: [], enhet: null, ansvarlig: null },
     erLeder: false,
     utilgjengelig: false,
@@ -375,12 +389,13 @@ describe("MigreringInnhold", () => {
       personIdent: null,
     });
 
-    function renderLeder(tildelingsSvar?: unknown) {
+    function renderLeder(tildelingsSvar?: unknown, mottaker: MigreringMottakere = mottakerValg) {
       return renderSide(
         lagLister({
           erLeder: true,
           egenNavIdent: "L999999",
           ansatteValg,
+          mottakerValg: mottaker,
           liste: lagSide([ansattSak, ansattUnderFlytting, kandidat("100245", "IKKE_PABEGYNT")]),
         }),
         "/migrering",
@@ -428,19 +443,33 @@ describe("MigreringInnhold", () => {
       ).toBeNull();
     });
 
-    it("lar lederen velge en annen saksbehandler enn dagens, og sender valget", async () => {
+    async function velgMottaker(dialog: HTMLElement, enhetId: string, søk: string, valg: string) {
+      fireEvent.change(within(dialog).getByRole("combobox", { name: "Enhet" }), {
+        target: { value: enhetId },
+      });
+      await act(async () => {
+        fireEvent.change(within(dialog).getByRole("combobox", { name: "Ny saksbehandler" }), {
+          target: { value: søk },
+        });
+      });
+      await act(async () => {
+        fireEvent.pointerUp(within(dialog).getByRole("option", { name: valg }));
+      });
+    }
+
+    it("lar lederen velge enhet og søke etter saksbehandler i den enheten, og sender valget", async () => {
       const { tildel } = renderLeder();
 
       fireEvent.click(screen.getByRole("button", { name: "Endre tildeling for PID 200001" }));
       const dialog = await screen.findByRole("dialog");
-      const valg = within(dialog).getByLabelText("Ny saksbehandler");
       expect(
-        within(valg)
-          .getAllByRole("option")
-          .map((o) => o.textContent),
-      ).toEqual(["Velg saksbehandler", "Bjørn Berg"]);
+        within(dialog).getByRole("combobox", { name: "Enhet" }).querySelectorAll("option").length,
+      ).toBe(3);
+      expect(within(dialog).getByRole("button", { name: "Lagre" }).hasAttribute("disabled")).toBe(
+        true,
+      );
 
-      fireEvent.change(valg, { target: { value: "Z999002" } });
+      await velgMottaker(dialog, "ost", "Bjørn", "Bjørn Berg (Z999002)");
       fireEvent.click(within(dialog).getByRole("button", { name: "Lagre" }));
 
       await waitFor(() => expect(tildel).toHaveBeenCalledTimes(1));
@@ -451,6 +480,93 @@ describe("MigreringInnhold", () => {
       await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     });
 
+    it("lar lederen flytte saken til saksbehandler i en annen enhet", async () => {
+      const { tildel } = renderLeder();
+
+      fireEvent.click(screen.getByRole("button", { name: "Endre tildeling for PID 200001" }));
+      const dialog = await screen.findByRole("dialog");
+      await velgMottaker(dialog, "nord", "Nora", "Nora Nordli (Z999010)");
+      fireEvent.click(within(dialog).getByRole("button", { name: "Lagre" }));
+
+      await waitFor(() => expect(tildel).toHaveBeenCalledTimes(1));
+      const kall = (tildel.mock.calls[0] as unknown as [{ request: Request }])[0];
+      expect((await kall.request.formData()).get("navIdent")).toBe("Z999010");
+    });
+
+    it("forhåndsvelger lederens egen enhet", async () => {
+      renderLeder(undefined, {
+        enheter: mottakerValg.enheter,
+        mottakere: [
+          ...mottakerValg.mottakere,
+          { navIdent: "L999999", navn: "Leder Lederesen", enhetId: "nord", enhetNavn: "Nord" },
+        ],
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: "Endre tildeling for PID 200001" }));
+      const dialog = await screen.findByRole("dialog");
+
+      expect(
+        (within(dialog).getByRole("combobox", { name: "Enhet" }) as HTMLSelectElement).value,
+      ).toBe("nord");
+    });
+
+    it("lar enheten stå uvalgt når lederens enhet ikke finnes i listen", async () => {
+      renderLeder();
+
+      fireEvent.click(screen.getByRole("button", { name: "Endre tildeling for PID 200001" }));
+      const dialog = await screen.findByRole("dialog");
+
+      expect(
+        (within(dialog).getByRole("combobox", { name: "Enhet" }) as HTMLSelectElement).value,
+      ).toBe("");
+    });
+
+    it("viser bare saksbehandlere i valgt enhet, og ikke dagens ansvarlig", async () => {
+      renderLeder();
+
+      fireEvent.click(screen.getByRole("button", { name: "Endre tildeling for PID 200001" }));
+      const dialog = await screen.findByRole("dialog");
+      fireEvent.change(within(dialog).getByRole("combobox", { name: "Enhet" }), {
+        target: { value: "ost" },
+      });
+      await act(async () => {
+        fireEvent.click(within(dialog).getByRole("combobox", { name: "Ny saksbehandler" }));
+      });
+
+      expect(within(dialog).queryByRole("option", { name: "Bjørn Berg (Z999002)" })).not.toBeNull();
+      expect(within(dialog).queryByRole("option", { name: "Åse Hansen (Z999001)" })).toBeNull();
+      expect(within(dialog).queryByRole("option", { name: "Nora Nordli (Z999010)" })).toBeNull();
+    });
+
+    it("lar lederen velge saksbehandlere uten kjent enhet under Annen enhet", async () => {
+      const { tildel } = renderLeder(undefined, {
+        enheter: mottakerValg.enheter,
+        mottakere: [
+          ...mottakerValg.mottakere,
+          { navIdent: "Z999020", navn: "Uten Enhet", enhetId: null, enhetNavn: null },
+          { navIdent: "Z999021", navn: "Ukonfigurert", enhetId: "ukjent-nom-id", enhetNavn: "X" },
+        ],
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: "Endre tildeling for PID 200001" }));
+      const dialog = await screen.findByRole("dialog");
+      await velgMottaker(dialog, "__annen", "Uten", "Uten Enhet (Z999020)");
+      fireEvent.click(within(dialog).getByRole("button", { name: "Lagre" }));
+
+      await waitFor(() => expect(tildel).toHaveBeenCalledTimes(1));
+      const kall = (tildel.mock.calls[0] as unknown as [{ request: Request }])[0];
+      expect((await kall.request.formData()).get("navIdent")).toBe("Z999020");
+    });
+
+    it("skjuler Annen enhet når alle mottakere har en kjent enhet", async () => {
+      renderLeder();
+
+      fireEvent.click(screen.getByRole("button", { name: "Endre tildeling for PID 200001" }));
+      const dialog = await screen.findByRole("dialog");
+
+      expect(within(dialog).queryByRole("option", { name: "Annen enhet" })).toBeNull();
+    });
+
     it("viser feilen fra tildelingen og holder dialogen åpen", async () => {
       renderLeder({
         ok: false,
@@ -459,9 +575,7 @@ describe("MigreringInnhold", () => {
 
       fireEvent.click(screen.getByRole("button", { name: "Endre tildeling for PID 200001" }));
       const dialog = await screen.findByRole("dialog");
-      fireEvent.change(within(dialog).getByLabelText("Ny saksbehandler"), {
-        target: { value: "Z999002" },
-      });
+      await velgMottaker(dialog, "ost", "Bjørn", "Bjørn Berg (Z999002)");
       fireEvent.click(within(dialog).getByRole("button", { name: "Lagre" }));
 
       expect(await within(dialog).findByText(/allerede påbegynt/)).not.toBeNull();

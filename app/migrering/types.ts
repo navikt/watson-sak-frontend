@@ -89,6 +89,26 @@ export interface MigreringAnsatt {
   enhetNavn?: string | null;
 }
 
+/** Saksbehandler en leder kan flytte en sak til. Kan tilhøre hvilken som helst enhet. */
+interface MigreringMottaker {
+  navIdent: string;
+  navn: string;
+  enhetId?: string | null;
+  enhetNavn?: string | null;
+}
+
+/** Enhet en leder kan velge når saken skal flyttes. */
+interface MigreringMottakerEnhet {
+  id: string;
+  navn: string;
+}
+
+/** Enheter og saksbehandlere en leder kan flytte en sak til. */
+export interface MigreringMottakere {
+  enheter: MigreringMottakerEnhet[];
+  mottakere: MigreringMottaker[];
+}
+
 /** Filtrene i URL-en. `enhet` og `ansvarlig` brukes bare i lederens visning. */
 export interface MigreringFilter {
   status: Migreringsstatus[];
@@ -96,11 +116,15 @@ export interface MigreringFilter {
   ansvarlig: string | null;
 }
 
+export const INGEN_MOTTAKERE: MigreringMottakere = { enheter: [], mottakere: [] };
+
 export interface MigreringLister {
   /** Egne kandidater. For ledere også ansattes, med personident når ansvaret er bekreftet. */
   liste: MigreringSide;
   /** Valg til filtre og tildeling. Tom for andre enn ledere. */
   ansatteValg: MigreringAnsatt[];
+  /** Valg til flytting på tvers av enheter. Tom for andre enn ledere. */
+  mottakerValg: MigreringMottakere;
   filter: MigreringFilter;
   erLeder: boolean;
   /** Innlogget brukers NAV-ident. Lederens egne saker ligger først i listen. */

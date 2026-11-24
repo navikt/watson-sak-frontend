@@ -11,6 +11,7 @@ import {
   Modal,
   Pagination,
   Select,
+  UNSAFE_Combobox,
   Table,
   Tag,
   VStack,
@@ -29,9 +30,9 @@ import {
   MIGRERING_SIDESTORRELSE,
   MIGRERINGSSTATUSER,
   statusEtikett,
-  type MigreringAnsatt,
   type MigreringKandidat,
   type MigreringLister,
+  type MigreringMottakere,
   type Migreringsstatus,
   type MigreringSide,
 } from "./types";
@@ -105,7 +106,7 @@ export function MigreringInnhold({ lister }: { lister: MigreringLister }) {
             side={lister.liste}
             erLeder={erLeder}
             egenNavIdent={lister.egenNavIdent}
-            ansatteValg={lister.ansatteValg}
+            mottakerValg={lister.mottakerValg}
           />
         </div>
         <Filterpanel lister={lister} />
@@ -127,12 +128,12 @@ function Kandidatliste({
   side,
   erLeder,
   egenNavIdent,
-  ansatteValg,
+  mottakerValg,
 }: {
   side: MigreringSide;
   erLeder: boolean;
   egenNavIdent?: string;
-  ansatteValg: MigreringAnsatt[];
+  mottakerValg: MigreringMottakere;
 }) {
   const [endrer, setEndrer] = useState<MigreringKandidat | null>(null);
 
@@ -193,7 +194,9 @@ function Kandidatliste({
                         </Table.DataCell>
                         <Table.DataCell>
                           {hentMigreringsstatus(k) === "IKKE_PABEGYNT" &&
-                            ansatteValg.some((a) => a.navIdent !== k.ansvar.navIdent) && (
+                            mottakerValg.mottakere.some(
+                              (a) => a.navIdent !== k.ansvar.navIdent,
+                            ) && (
                               <Button
                                 type="button"
                                 data-rad-handling
@@ -224,7 +227,8 @@ function Kandidatliste({
       {endrer && (
         <EndreTildelingModal
           kandidat={endrer}
-          ansatteValg={ansatteValg}
+          mottakerValg={mottakerValg}
+          egenNavIdent={egenNavIdent}
           onLukk={() => setEndrer(null)}
         />
       )}
@@ -271,18 +275,47 @@ function KandidatLenke({ kandidat: k, erEgen }: { kandidat: MigreringKandidat; e
   );
 }
 
+/** Saksbehandlere uten enhet, eller i en enhet som ikke er i enhetslisten, må også kunne velges. */
+const ANNEN_ENHET = "__annen";
+
+/**
+ * Lederen velger enhet og søker i saksbehandlerne i den enheten. Mottakeren kan tilhøre hvilken som helst enhet,
+ * også en annen enn lederens. Backend validerer mottakeren, så valget her er bare en hjelp til å finne riktig person.
+ */
 function EndreTildelingModal({
   kandidat,
-  ansatteValg,
+  mottakerValg,
+  egenNavIdent,
   onLukk,
 }: {
   kandidat: MigreringKandidat;
-  ansatteValg: MigreringAnsatt[];
+  mottakerValg: MigreringMottakere;
+  egenNavIdent?: string;
   onLukk: () => void;
 }) {
   const fetcher = useFetcher<TildelingsSvar>();
   const ref = useRef<HTMLDialogElement>(null);
-  const valg = ansatteValg.filter((a) => a.navIdent !== kandidat.ansvar.navIdent);
+  const kjenteEnheter = new Set(mottakerValg.enheter.map((e) => e.id));
+  // Lederens egen enhet er forhåndsvalgt, siden de fleste flyttinger skjer innad. Enheten hentes fra lederens egen
+  // oppføring i mottakerlisten, slik at den matcher enhetene i listen (overenhet, ikke NOM-underenhet).
+  const egenEnhetId = mottakerValg.mottakere.find((m) => m.navIdent === egenNavIdent)?.enhetId;
+  const [enhetId, setEnhetId] = useState(
+    egenEnhetId && kjenteEnheter.has(egenEnhetId) ? egenEnhetId : "",
+  );
+  const [navIdent, setNavIdent] = useState("");
+  const harMottakerUtenKjentEnhet = mottakerValg.mottakere.some(
+    (a) => !a.enhetId || !kjenteEnheter.has(a.enhetId),
+  );
+  const valg = mottakerValg.mottakere
+    .filter(
+      (a) =>
+        a.navIdent !== kandidat.ansvar.navIdent &&
+        (enhetId === ANNEN_ENHET
+          ? !a.enhetId || !kjenteEnheter.has(a.enhetId)
+          : a.enhetId === enhetId),
+    )
+    .map((a) => ({ label: `${a.navn} (${a.navIdent})`, value: a.navIdent }));
+  const valgt = valg.filter((v) => v.value === navIdent);
   const sender = fetcher.state !== "idle";
 
   useEffect(() => {
@@ -301,16 +334,34 @@ function EndreTildelingModal({
         <Modal.Body>
           <VStack gap="space-16">
             <input type="hidden" name="kandidatId" value={kandidat.kandidatId} />
-            <Select label="Ny saksbehandler" name="navIdent" defaultValue="">
+            <Select
+              label="Enhet"
+              value={enhetId}
+              onChange={(e) => {
+                setEnhetId(e.target.value);
+                setNavIdent("");
+              }}
+            >
               <option value="" disabled>
-                Velg saksbehandler
+                Velg enhet
               </option>
-              {valg.map((a) => (
-                <option key={a.navIdent} value={a.navIdent}>
-                  {a.navn}
+              {mottakerValg.enheter.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.navn}
                 </option>
               ))}
+              {harMottakerUtenKjentEnhet && <option value={ANNEN_ENHET}>Annen enhet</option>}
             </Select>
+            <input type="hidden" name="navIdent" value={navIdent} />
+            <UNSAFE_Combobox
+              key={enhetId}
+              label="Ny saksbehandler"
+              placeholder={enhetId ? "Søk etter saksbehandler" : "Velg enhet først"}
+              options={valg}
+              selectedOptions={valgt}
+              onToggleSelected={(verdi, erValgt) => setNavIdent(erValgt ? verdi : "")}
+              disabled={!enhetId}
+            />
             {erTekniskFeilSvar(fetcher.data) ? (
               <Innsendingsfeil svar={fetcher.data} tekster={INNSENDINGSFEIL.tildelMigrering} />
             ) : (
@@ -324,7 +375,7 @@ function EndreTildelingModal({
           </VStack>
         </Modal.Body>
         <Modal.Footer>
-          <Button type="submit" loading={sender}>
+          <Button type="submit" loading={sender} disabled={!navIdent}>
             Lagre
           </Button>
           <Button type="button" variant="tertiary" onClick={onLukk}>
