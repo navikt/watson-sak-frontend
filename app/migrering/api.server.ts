@@ -8,6 +8,7 @@ import {
   MIGRERING_SIDESTORRELSE,
   type MigreringAnsatt,
   type MigreringKandidat,
+  type MigreringMottakere,
   type Migreringsstatus,
 } from "./types";
 
@@ -209,7 +210,35 @@ export async function hentMigreringsAnsatte(request: Request): Promise<Migrering
   }));
 }
 
-/** Flytter en kandidat som ikke er påbegynt til en annen ansatt. Backend validerer at lederen har rett til det. */
+const mottakereSchema = z.object({
+  enheter: z.array(z.object({ id: z.string(), navn: z.string() })),
+  mottakere: z.array(
+    z.object({
+      navIdent: z.string(),
+      navn: z.string(),
+      enhetId: z.string().nullish(),
+      enhetNavn: z.string().nullish(),
+    }),
+  ),
+});
+
+/** Enheter og saksbehandlere lederen kan flytte saker til, i hvilken som helst enhet. Backend avviser andre enn ledere. */
+export async function hentMigreringsMottakere(request: Request): Promise<MigreringMottakere> {
+  const token = await getBackendOboToken(request);
+  const response = await fetch(`${BACKEND_API_URL}${sti`/api/v1/migrering/mottakere`}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+  });
+  if (!response.ok) {
+    kastHvisUtlogget(response);
+    logger.error("Kunne ikke hente mottakere for migrering", { status: response.status });
+    throw new Response("Mottakere er ikke tilgjengelig", { status: response.status });
+  }
+  const parsed = mottakereSchema.safeParse(await response.json());
+  if (!parsed.success) throw new Error("Ugyldig svar fra watson-admin-api (migrering/mottakere)");
+  return parsed.data;
+}
+
+/** Flytter en kandidat som ikke er påbegynt til en annen saksbehandler. Backend validerer at lederen har rett til det. */
 export async function tildelMigreringskandidat(
   request: Request,
   kandidatId: string,

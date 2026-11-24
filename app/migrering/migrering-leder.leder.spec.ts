@@ -72,20 +72,34 @@ test.describe("Flytt fra Access for leder", () => {
     const dialog = page.getByRole("dialog", {
       name: "Endre tildeling for PID 700002",
     });
-    const valg = dialog.getByLabel("Ny saksbehandler");
-    await expect(valg.locator("option", { hasText: "Trine Trygdesen" })).toHaveCount(0);
-
-    await valg.selectOption({ label: "Ulrikke Utrederson" });
+    await dialog.getByLabel("Enhet").selectOption({ label: "Øst" });
+    await dialog.getByRole("combobox", { name: "Ny saksbehandler" }).fill("Ulrikke");
+    await dialog.getByRole("option", { name: /Ulrikke Utrederson/ }).click();
     await dialog.getByRole("button", { name: "Lagre" }).click();
 
     await expect(dialog).toHaveCount(0);
     await expect(page.getByRole("row", { name: /700002/ })).toContainText("Ulrikke Utrederson");
   });
 
+  test("lar lederen flytte en sak til en saksbehandler i en annen enhet", async ({ page }) => {
+    await page.getByRole("button", { name: "Endre tildeling for PID 700002" }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByLabel("Enhet").selectOption({ label: "Nord" });
+    await dialog.getByRole("combobox", { name: "Ny saksbehandler" }).fill("Nora");
+    await dialog.getByRole("option", { name: /Nora Nordli/ }).click();
+    await dialog.getByRole("button", { name: "Lagre" }).click();
+
+    await expect(dialog).toHaveCount(0);
+    // Saken ligger nå hos noen utenfor lederens ansatte og forsvinner fra listen.
+    await expect(page.getByRole("row", { name: /700002/ })).toHaveCount(0);
+  });
+
   test("lar lederen tildele sin egen sak til en ansatt", async ({ page }) => {
     await page.getByRole("button", { name: "Endre tildeling for PID 100388" }).click();
     const dialog = page.getByRole("dialog");
-    await dialog.getByLabel("Ny saksbehandler").selectOption({ label: "Vilde Vestby" });
+    await dialog.getByLabel("Enhet").selectOption({ label: "Vest" });
+    await dialog.getByRole("combobox", { name: "Ny saksbehandler" }).fill("Vilde");
+    await dialog.getByRole("option", { name: /Vilde Vestby/ }).click();
     await dialog.getByRole("button", { name: "Lagre" }).click();
 
     await expect(dialog).toHaveCount(0);

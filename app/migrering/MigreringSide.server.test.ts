@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   ansattKandidater: vi.fn(),
   backend: vi.fn(),
   ansatte: vi.fn(),
+  mottakere: vi.fn(),
   tildel: vi.fn(),
 }));
 vi.mock("~/config/env.server", () => ({
@@ -29,10 +30,24 @@ vi.mock("./mock-data.server", () => ({
     { navIdent: "L900002", navn: "Ulrikke Utrederson", enhetId: "ky153k", enhetNavn: "Øst" },
     { navIdent: "L900009", navn: "Vilde Vestby", enhetId: "gu301n", enhetNavn: "Vest" },
   ],
+  MOCK_MIGRERING_MOTTAKERE: {
+    enheter: [
+      { id: "by295h", navn: "Analyse" },
+      { id: "hu424t", navn: "Nord" },
+      { id: "gu301n", navn: "Vest" },
+      { id: "ky153k", navn: "Øst" },
+    ],
+    mottakere: [
+      { navIdent: "L900002", navn: "Ulrikke Utrederson", enhetId: "ky153k", enhetNavn: "Øst" },
+      { navIdent: "L900009", navn: "Vilde Vestby", enhetId: "gu301n", enhetNavn: "Vest" },
+      { navIdent: "L900011", navn: "Nora Nordli", enhetId: "hu424t", enhetNavn: "Nord" },
+    ],
+  },
 }));
 vi.mock("./api.server", () => ({
   hentMigreringsliste: mocks.backend,
   hentMigreringsAnsatte: mocks.ansatte,
+  hentMigreringsMottakere: mocks.mottakere,
   tildelMigreringskandidat: mocks.tildel,
 }));
 
@@ -71,6 +86,7 @@ beforeEach(() => {
   mocks.mockmodus = true;
   mocks.miljø = "local-mock";
   mocks.ansatte.mockResolvedValue([]);
+  mocks.mottakere.mockResolvedValue({ enheter: [], mottakere: [] });
   mocks.ansattKandidater.mockReturnValue([]);
   mocks.bruker.mockResolvedValue({ navIdent: "L999999" });
   mocks.kandidater.mockReturnValue([
@@ -135,7 +151,21 @@ describe("Migreringsprototypens loader", () => {
     expect(mocks.backend).toHaveBeenCalledTimes(1);
     expect(mocks.backend).toHaveBeenCalledWith(expect.anything(), "ALLE", 1, 20, ingenFilter);
     expect(mocks.ansatte).toHaveBeenCalledTimes(1);
+    expect(mocks.mottakere).toHaveBeenCalledTimes(1);
     expect(resultat.liste.kandidater).toHaveLength(1);
+  });
+
+  it("markerer listen som utilgjengelig når mottakere ikke kan hentes, uten å felle siden", async () => {
+    mocks.miljø = "local-backend";
+    mocks.mockmodus = false;
+    mocks.bruker.mockResolvedValue({ navIdent: "L999999", erLeder: true });
+    mocks.backend.mockResolvedValue(side([{ ...basis, personIdent: null }]));
+    mocks.mottakere.mockRejectedValue(new Response(null, { status: 502 }));
+
+    const resultat = await loader(args());
+
+    expect(resultat.mottakerValg).toEqual({ enheter: [], mottakere: [] });
+    expect(resultat.utilgjengelig).toBe(true);
   });
 
   it("henter siden fra URL-en", async () => {
@@ -202,6 +232,7 @@ describe("Migreringsprototypens loader", () => {
     expect(resultat).toEqual({
       liste: tomSide,
       ansatteValg: [],
+      mottakerValg: { enheter: [], mottakere: [] },
       filter: ingenFilter,
       erLeder: false,
       egenNavIdent: "L999999",
@@ -290,6 +321,7 @@ describe("Migreringsprototypens loader", () => {
     await loader(args());
 
     expect(mocks.ansatte).not.toHaveBeenCalled();
+    expect(mocks.mottakere).not.toHaveBeenCalled();
   });
 
   it("filtrerer mine saker på status i mockmodus", async () => {
@@ -338,6 +370,18 @@ describe("mockmodus for ledere", () => {
     expect(resultat.ansatteValg.map((a) => a.navIdent)).toEqual(["L900002", "L900009", "L999999"]);
   });
 
+  it("gir lederen mottakere i alle enheter, ikke bare egen enhet", async () => {
+    const resultat = await loader(args());
+
+    expect(resultat.mottakerValg.enheter.map((e) => e.navn)).toEqual([
+      "Analyse",
+      "Nord",
+      "Vest",
+      "Øst",
+    ]);
+    expect(resultat.mottakerValg.mottakere.some((m) => m.enhetNavn === "Nord")).toBe(true);
+  });
+
   it("filtrerer på saksbehandler og avdeling, også for lederens egne saker", async () => {
     const påAnsvarlig = await loader(medUrl("http://localhost/migrering?ansvarlig=L999999"));
     expect(påAnsvarlig.liste.kandidater.map((k) => k.pid)).toEqual(["100245"]);
@@ -369,6 +413,21 @@ describe("mockmodus for ledere", () => {
     const resultat = await loader(args());
     const flyttet = resultat.liste.kandidater.find((k) => k.pid === "100245");
     expect(flyttet).toMatchObject({ ansvarligNavn: "Ulrikke Utrederson" });
+  });
+
+  it("flytter en sak til saksbehandler i en annen enhet, og saken forsvinner fra lederens liste", async () => {
+    const forespørsel = new Request("http://localhost/migrering", {
+      method: "POST",
+      body: new URLSearchParams({ kandidatId: "UTREDNING:100245", navIdent: "L900011" }),
+    });
+    expect(
+      await action({ request: forespørsel, params: {}, context: {} } as Parameters<
+        typeof action
+      >[0]),
+    ).toEqual({ ok: true });
+
+    const resultat = await loader(args());
+    expect(resultat.liste.kandidater.some((k) => k.pid === "100245")).toBe(false);
   });
 
   it("avviser tildeling til ukjent ident i mockmodus", async () => {

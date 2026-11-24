@@ -1,4 +1,9 @@
-import type { MigreringAnsatt, MigreringKandidat, Migreringsstatus } from "./types";
+import type {
+  MigreringAnsatt,
+  MigreringKandidat,
+  MigreringMottakere,
+  Migreringsstatus,
+} from "./types";
 
 // Syntetiske visningseksempler uten reelle FNR. Dekker alle 6 kategorier iht 2.a frosset kontrakt.
 function utredningsfelter(
@@ -304,6 +309,24 @@ export const MOCK_MIGRERING_ANSATTE: MigreringAnsatt[] = [
   },
   { navIdent: "L900009", navn: "Vilde Vestby", enhetId: "gu301n", enhetNavn: "NAV Kontroll Vest" },
 ];
+
+/** Syntetiske saksbehandlere i alle enheter. Lederen kan flytte saker til hvem som helst av dem. */
+export const MOCK_MIGRERING_MOTTAKERE: MigreringMottakere = {
+  enheter: [
+    { id: "by295h", navn: "Analyse" },
+    { id: "hu424t", navn: "Nord" },
+    { id: "gu301n", navn: "Vest" },
+    { id: "ky153k", navn: "Øst" },
+  ],
+  mottakere: [
+    { navIdent: "L900002", navn: "Ulrikke Utrederson", enhetId: "ky153k", enhetNavn: "Øst" },
+    { navIdent: "L900003", navn: "Trine Trygdesen", enhetId: "ky153k", enhetNavn: "Øst" },
+    { navIdent: "L900009", navn: "Vilde Vestby", enhetId: "gu301n", enhetNavn: "Vest" },
+    { navIdent: "L900011", navn: "Nora Nordli", enhetId: "hu424t", enhetNavn: "Nord" },
+    { navIdent: "L900012", navn: "Nils Nordmo", enhetId: "hu424t", enhetNavn: "Nord" },
+    { navIdent: "L900013", navn: "Anja Analysesen", enhetId: "by295h", enhetNavn: "Analyse" },
+  ],
+};
 
 const ANSATT_KANDIDATER: ReadonlyArray<{
   pid: string;

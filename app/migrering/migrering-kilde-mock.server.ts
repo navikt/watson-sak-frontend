@@ -7,9 +7,11 @@ import {
   hentMockAnsattKandidater,
   hentMockMigreringKandidater,
   MOCK_MIGRERING_ANSATTE,
+  MOCK_MIGRERING_MOTTAKERE,
 } from "./mock-data.server";
 import {
   hentMigreringsstatus,
+  INGEN_MOTTAKERE,
   MIGRERING_SIDESTORRELSE,
   type MigreringAnsatt,
   type MigreringFilter,
@@ -107,11 +109,14 @@ export function mockMigreringKilde(request: Request): MigreringKilde {
           };
         });
       // Syntetiske ansatte vises bare for ledere, slik at saksbehandlere ikke ser andres saker.
+      // Flyttes en sak til noen utenfor lederens ansatte (for eksempel i en annen enhet), forsvinner den fra listen.
       const alle = bruker.erLeder
-        ? egneFørst(bruker.navIdent, [
-            ...egne,
-            ...hentMockAnsattKandidater(tildelinger, ansatteValg),
-          ])
+        ? egneFørst(
+            bruker.navIdent,
+            [...egne, ...hentMockAnsattKandidater(tildelinger, ansatteValg)].filter((k) =>
+              ansatteValg.some((a) => a.navIdent === k.ansvar.navIdent),
+            ),
+          )
         : egne;
       const liste = medFilter(
         alle,
@@ -121,6 +126,7 @@ export function mockMigreringKilde(request: Request): MigreringKilde {
       return {
         liste: sideAv(liste, side),
         ansatteValg,
+        mottakerValg: bruker.erLeder ? MOCK_MIGRERING_MOTTAKERE : INGEN_MOTTAKERE,
         filter,
         erLeder: bruker.erLeder,
         egenNavIdent: bruker.navIdent,
@@ -131,7 +137,7 @@ export function mockMigreringKilde(request: Request): MigreringKilde {
     async tildel({ bruker, kandidatId, navIdent }) {
       if (
         navIdent !== bruker.navIdent &&
-        !MOCK_MIGRERING_ANSATTE.some((a) => a.navIdent === navIdent)
+        !MOCK_MIGRERING_MOTTAKERE.mottakere.some((a) => a.navIdent === navIdent)
       ) {
         throw data("Ugyldig tildeling", { status: 400 });
       }
