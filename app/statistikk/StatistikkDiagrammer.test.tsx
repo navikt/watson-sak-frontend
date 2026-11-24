@@ -269,13 +269,31 @@ describe("StatistikkDiagrammer", () => {
     expect(screen.getByRole("button", { name: /Bevisets stilling/ })).toBeDefined();
   });
 
-  it("viser snitt dager for avsluttede saker når backend leverer det", () => {
+  it("viser snittdager fra utredning for avsluttede saker", () => {
     renderMedRouter((data) => ({
       ...data,
-      periodeTall: { ...data.periodeTall, snittDagerAvsluttet: 41 },
+      periodeTall: { ...data.periodeTall, snittDagerAvsluttet: 12 },
     }));
 
-    expect(screen.getByText("Snitt 41 dager")).toBeDefined();
+    expect(screen.getByText("Snitt 12 dager fra utredning")).toBeDefined();
+  });
+
+  it("viser «under 1 dag» når snittet for avsluttede saker er null dager", () => {
+    renderMedRouter((data) => ({
+      ...data,
+      periodeTall: { ...data.periodeTall, snittDagerAvsluttet: 0 },
+    }));
+
+    expect(screen.getByText("Snitt under 1 dag fra utredning")).toBeDefined();
+  });
+
+  it("bruker entall når snittet for avsluttede saker er én dag", () => {
+    renderMedRouter((data) => ({
+      ...data,
+      periodeTall: { ...data.periodeTall, snittDagerAvsluttet: 1 },
+    }));
+
+    expect(screen.getByText("Snitt 1 dag fra utredning")).toBeDefined();
   });
 
   it("faller tilbake til «i perioden» uten snitt for avsluttede saker", () => {

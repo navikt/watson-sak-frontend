@@ -50,10 +50,13 @@ export async function loader({ request }: { request: Request }) {
   const omfang =
     url.searchParams.get("omfang") ??
     (bruker.erLesebruker ? "organisasjon" : bruker.enhetId ? "enhet:underavdeling" : "meg");
+  const hovedavdelingEnhetId = omfang.startsWith("hovedavdeling:")
+    ? omfang.slice("hovedavdeling:".length) || undefined
+    : undefined;
   const nivaa =
     omfang === "organisasjon"
       ? "nav-kontroll"
-      : omfang === "enhet:hovedavdeling"
+      : omfang === "enhet:hovedavdeling" || omfang.startsWith("hovedavdeling:")
         ? "hovedavdeling"
         : omfang.startsWith("enhet:")
           ? "underavdeling"
@@ -64,11 +67,12 @@ export async function loader({ request }: { request: Request }) {
     fra: periode.fra,
     til: periode.til,
     enhetId:
-      nivaa === "underavdeling" &&
+      hovedavdelingEnhetId ??
+      (nivaa === "underavdeling" &&
       valgtEnhetId &&
       !["underavdeling", "hovedavdeling"].includes(valgtEnhetId)
         ? valgtEnhetId
-        : undefined,
+        : undefined),
   };
   const data = skalBrukeMockdata
     ? lagMockStatistikk(spørring, bruker.enhet, bruker.enhetId, {
