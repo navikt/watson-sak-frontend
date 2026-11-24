@@ -260,9 +260,7 @@ describe("FordelingSide loader", () => {
     );
     const forventedeValg = statistikk.organisasjonsvalg
       .filter((valg) => valg.verdi !== "meg")
-      .map((valg) =>
-        valg.verdi === "hovedavdeling:4812" ? { ...valg, label: bruker.enhet } : valg,
-      );
+      .map((valg) => (valg.verdi === "enhet:4812" ? { ...valg, label: bruker.enhet } : valg));
 
     expect(resultat.enhet).toBe("hele organisasjonen");
     expect(resultat.valgtOmfang).toBe("organisasjon");
