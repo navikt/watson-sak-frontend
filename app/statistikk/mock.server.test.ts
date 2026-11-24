@@ -134,11 +134,13 @@ describe("lagMockStatistikk", () => {
     expect(resultat.organisasjonsvalg.map((valg) => valg.label)).toEqual([
       "Meg selv",
       "Min avdeling (Øst)",
+      "Øst",
       "Øst 1",
       "Øst 2",
       "Hele organisasjonen",
     ]);
     expect(resultat.organisasjonsvalg[1].verdi).toBe("hovedavdeling:ky153k");
+    expect(resultat.organisasjonsvalg[2].verdi).toBe("enhet:ky153k");
     expect(resultat.organisasjonsvalg.filter((valg) => valg.type === "meg")).toHaveLength(1);
     expect(resultat.periode).toEqual({
       fra: "2026-09-01",
@@ -184,6 +186,31 @@ describe("lagMockStatistikk", () => {
       verdi: "32 dager",
       forklaring: "Snitt fra utredning til avsluttet, siste 12 mnd",
     });
+  });
+
+  it("har valgt omfang blant organisasjonsvalgene på alle nivåer", () => {
+    const nivåer = [
+      { nivaa: "meg" },
+      { nivaa: "underavdeling" },
+      { nivaa: "underavdeling", enhetId: "by295h" },
+      { nivaa: "hovedavdeling" },
+      { nivaa: "hovedavdeling", enhetId: "by295h" },
+      { nivaa: "nav-kontroll" },
+    ] as const;
+
+    for (const nivå of nivåer) {
+      const resultat = lagMockStatistikk(
+        { ...nivå, fra: "2026-09-01", til: "2026-09-30" },
+        "Øst",
+        "ky153k",
+        INGEN_SAKER,
+      );
+
+      expect(
+        resultat.organisasjonsvalg.some((valg) => valg.verdi === resultat.valgtOmfang),
+        `${nivå.nivaa} ${"enhetId" in nivå ? "med" : "uten"} enhetId`,
+      ).toBe(true);
+    }
   });
 
   it("viser tom eldste-sak-verdi når utvalget ikke har åpne saker", () => {

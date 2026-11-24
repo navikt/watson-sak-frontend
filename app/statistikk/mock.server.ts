@@ -154,33 +154,52 @@ export function lagMockStatistikk(
   ].map(([navn, verdi]) => ({ navn, verdi })) as Statistikk["henlagt"];
   const henlagtAntall = henlagt.reduce((sum, rad) => sum + rad.verdi, 0);
 
-  return {
-    valgtOmfang:
-      spørring.nivaa === "hovedavdeling"
+  const valgtOmfang =
+    spørring.nivaa === "meg"
+      ? "meg"
+      : spørring.nivaa === "hovedavdeling"
         ? `hovedavdeling:${hovedavdelingId ?? "ukjent"}`
-        : spørring.enhetId || (spørring.nivaa === "underavdeling" && avdelingId)
-          ? `enhet:${spørring.enhetId ?? avdelingId}`
-          : spørring.nivaa,
+        : spørring.nivaa === "underavdeling"
+          ? `enhet:${spørring.enhetId ?? avdelingId ?? "ukjent"}`
+          : "organisasjon";
+  const organisasjonsvalg: Statistikk["organisasjonsvalg"] = [
+    { verdi: "meg", label: "Meg selv", type: "meg" },
+    {
+      verdi: `hovedavdeling:${avdelingId ?? "ukjent"}`,
+      label: `Min avdeling (${avdeling})`,
+      type: "enhet",
+    },
+    {
+      verdi: `enhet:${avdelingId ?? "ukjent"}`,
+      label: avdeling || "Egen enhet",
+      type: "enhet",
+    },
+    {
+      verdi: `enhet:${avdelingId ?? "ukjent"}-1`,
+      label: `${avdeling} 1`,
+      type: "enhet",
+    },
+    {
+      verdi: `enhet:${avdelingId ?? "ukjent"}-2`,
+      label: `${avdeling} 2`,
+      type: "enhet",
+    },
+    { verdi: "organisasjon", label: "Hele organisasjonen", type: "organisasjon" },
+  ];
+  if (!organisasjonsvalg.some((valg) => valg.verdi === valgtOmfang)) {
+    organisasjonsvalg.push({
+      verdi: valgtOmfang,
+      label: valgtOmfang.startsWith("hovedavdeling:")
+        ? `Min avdeling (${avdeling || "ukjent"})`
+        : avdeling || "Egen enhet",
+      type: "enhet",
+    });
+  }
+
+  return {
+    valgtOmfang,
     omfangEnheter,
-    organisasjonsvalg: [
-      { verdi: "meg", label: "Meg selv", type: "meg" },
-      {
-        verdi: `hovedavdeling:${avdelingId ?? "ukjent"}`,
-        label: `Min avdeling (${avdeling})`,
-        type: "enhet",
-      },
-      {
-        verdi: `enhet:${avdelingId ?? "ukjent"}-1`,
-        label: `${avdeling} 1`,
-        type: "enhet",
-      },
-      {
-        verdi: `enhet:${avdelingId ?? "ukjent"}-2`,
-        label: `${avdeling} 2`,
-        type: "enhet",
-      },
-      { verdi: "organisasjon", label: "Hele organisasjonen", type: "organisasjon" },
-    ],
+    organisasjonsvalg,
     periode: { fra: spørring.fra, til: spørring.til, label },
     varsler: lagVarsler(aldersgrunnlag, omfangEnheter, spørring.nivaa === "meg"),
     nøkkeltall: [
