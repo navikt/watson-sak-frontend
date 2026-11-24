@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import type { DokumentInnhold, DokumentNode } from "~/saker/filer/typer";
@@ -186,5 +186,45 @@ describe("DokumentSide", () => {
 
     expect(await screen.findByRole("complementary")).toBeDefined();
     expect(screen.queryByRole("button", { name: "Slett" })).toBeNull();
+  });
+
+  it("henter dokumentet på nytt når fanen får fokus igjen", async () => {
+    let kall = 0;
+    const Stub = createRoutesStub([
+      {
+        path: "/saker/:sakId/dokumenter/:docId",
+        Component: DokumentSide,
+        HydrateFallback: () => null,
+        loader: () => {
+          kall += 1;
+          return {
+            dokument: {
+              id: "1",
+              tittel: kall === 1 ? "Saksframlegg" : "Endret i annen fane",
+              opprettetAv: "Ola",
+              opprettetDato: "2026-02-10",
+              innhold,
+              endretAv: "Ola",
+              endretDato: "2026-02-15",
+              låsAv: null,
+            },
+            dokumenter,
+            sakReferanse: "ABC-123",
+            kanRedigere: true,
+            variabelVerdier: { navn: "Ola Nordmann", saksnummer: "Sak 105" },
+          };
+        },
+      },
+    ]);
+    render(<Stub initialEntries={["/saker/ABC-123/dokumenter/1"]} />);
+
+    const tittel = await screen.findByLabelText<HTMLInputElement>("Dokumenttittel");
+    expect(tittel.value).toBe("Saksframlegg");
+
+    act(() => {
+      window.dispatchEvent(new Event("focus"));
+    });
+
+    await waitFor(() => expect(tittel.value).toBe("Endret i annen fane"));
   });
 });

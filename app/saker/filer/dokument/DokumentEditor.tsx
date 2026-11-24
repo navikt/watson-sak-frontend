@@ -81,6 +81,11 @@ type DokumentEditorProps = {
    * (ikke ferdig innhold) slik at f.eks. PDF-genereringen bare kjører mens fanen er
    * valgt, ikke ved hver render av siden. */
   renderForhåndsvisning?: () => ReactNode;
+  /**
+   * Innhold hentet på nytt fra serveren som skal erstatte det som vises, uten å remounte
+   * editoren (scroll, sidepanel og bredde beholdes). Gjelder når `versjon` øker.
+   */
+  eksterntInnhold?: { versjon: number; innhold: DokumentInnhold } | null;
 };
 
 const MINSTE_EDITORBREDDE = 25;
@@ -114,11 +119,19 @@ export function DokumentEditor({
   startSidepanel,
   startKommentartraadId = null,
   renderForhåndsvisning,
+  eksterntInnhold = null,
 }: DokumentEditorProps) {
   const editor = usePlateEditor({
     plugins: PLUGINS,
     value: startInnhold as TElement[],
   });
+  const eksternVersjon = eksterntInnhold?.versjon;
+  const sistAnvendteVersjon = useRef(eksternVersjon);
+  useEffect(() => {
+    if (!eksterntInnhold || eksternVersjon === sistAnvendteVersjon.current) return;
+    sistAnvendteVersjon.current = eksternVersjon;
+    editor.tf.setValue(eksterntInnhold.innhold as TElement[]);
+  }, [editor, eksterntInnhold, eksternVersjon]);
   const [aktivtSidepanel, settAktivtSidepanel] = useState<SidepanelValg>(
     startSidepanel ?? STANDARD_SIDEPANEL,
   );

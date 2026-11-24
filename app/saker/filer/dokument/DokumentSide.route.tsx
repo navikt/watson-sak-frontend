@@ -123,6 +123,15 @@ function DokumentRedigering({
   const [lagringsfeil, settLagringsfeil] = useState<{ feilId?: string } | null>(null);
   const revalidator = useRevalidator();
   const revalidatorRef = useRef(revalidator);
+  // Innhold fra serveren som skal vises i editoren etter at fanen fikk fokus igjen.
+  const [eksterntInnhold, settEksterntInnhold] = useState<{
+    versjon: number;
+    innhold: DokumentInnhold;
+  } | null>(null);
+  const venterPåFokusHenting = useRef(false);
+  // Innholdet vi nettopp har skrevet inn i editoren utenfra. Editoren melder det tilbake som
+  // en endring, og det skal ikke lagres på nytt (det ville oppdatert endretDato for ingenting).
+  const ignorerInnhold = useRef<string | null>(null);
 
   useEffect(() => {
     revalidatorRef.current = revalidator;
@@ -183,6 +192,47 @@ function DokumentRedigering({
   );
 
   const { status, sistLagret, registrerEndring, prøvIgjen } = useAutolagring({ lagre });
+  const statusRef = useRef(status);
+  statusRef.current = status;
+
+  // Samme dokument kan stå åpent i flere faner. Når fanen får fokus igjen henter vi
+  // dokumentet på nytt, slik at man ikke skriver videre på en utdatert versjon og
+  // overskriver det som er gjort i den andre fanen. Har fanen ulagrede endringer
+  // (eller en lagring som feilet) lar vi være, for å ikke kaste dem.
+  useEffect(() => {
+    function henting() {
+      if (document.visibilityState !== "visible") return;
+      if (statusRef.current !== "lagret") return;
+      venterPåFokusHenting.current = true;
+      revalidatorRef.current.revalidate();
+    }
+    document.addEventListener("visibilitychange", henting);
+    window.addEventListener("focus", henting);
+    return () => {
+      document.removeEventListener("visibilitychange", henting);
+      window.removeEventListener("focus", henting);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!venterPåFokusHenting.current) return;
+    venterPåFokusHenting.current = false;
+    // Brukeren kan ha begynt å skrive mens hentingen pågikk. Da vinner det lokale.
+    if (statusRef.current !== "lagret") return;
+    const innholdEndret = JSON.stringify(dokument.innhold) !== JSON.stringify(innholdRef.current);
+    if (dokument.tittel !== tittelRef.current) {
+      setTittel(dokument.tittel);
+      tittelRef.current = dokument.tittel;
+    }
+    if (innholdEndret) {
+      innholdRef.current = dokument.innhold;
+      ignorerInnhold.current = JSON.stringify(dokument.innhold);
+      settEksterntInnhold((forrige) => ({
+        versjon: (forrige?.versjon ?? 0) + 1,
+        innhold: dokument.innhold,
+      }));
+    }
+  }, [dokument]);
 
   const lagreHistorikkpunkt = useCallback(
     async (forlater = false) => {
@@ -261,6 +311,11 @@ function DokumentRedigering({
 
   const håndterInnhold = useCallback(
     (innhold: DokumentInnhold) => {
+      if (ignorerInnhold.current !== null) {
+        const ventet = ignorerInnhold.current;
+        ignorerInnhold.current = null;
+        if (JSON.stringify(innhold) === ventet) return;
+      }
       innholdRef.current = innhold;
       // Plate kaller onChange også ved markering i skrivebeskyttet modus. Det skal ikke lagres.
       if (!kanRedigere) return;
@@ -340,6 +395,7 @@ function DokumentRedigering({
       <DokumentEditor
         key={editorVersjon}
         startInnhold={innholdRef.current}
+        eksterntInnhold={eksterntInnhold}
         redigerbar={kanRedigere}
         onEndring={håndterInnhold}
         sakId={sakReferanse}
