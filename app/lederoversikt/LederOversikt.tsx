@@ -1,5 +1,6 @@
-import { ToggleGroup, VStack } from "@navikt/ds-react";
-import { useSearchParams } from "react-router";
+import { Link, ToggleGroup, VStack } from "@navikt/ds-react";
+import { Link as RouterLink, useSearchParams } from "react-router";
+import { RouteConfig } from "~/routeConfig";
 import { AnsatteOversikt } from "./komponenter/AnsatteOversikt";
 import type { LederStatistikk } from "./types";
 
@@ -35,6 +36,12 @@ export function LederOversikt({ statistikk }: LederOversiktProps) {
           ))}
         </ToggleGroup>
       ) : null}
+      <Link
+        as={RouterLink}
+        to={`${RouteConfig.STATISTIKK}?${new URLSearchParams({ omfang: `hovedavdeling:${statistikk.enhetId}` })}`}
+      >
+        Se statistikk for {statistikk.enhetNavn} med underenheter
+      </Link>
       <AnsatteOversikt ansatte={statistikk.ansatte} enhetId={statistikk.enhetId} />
     </VStack>
   );

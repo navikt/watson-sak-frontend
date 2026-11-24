@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
+import { RouteConfig } from "~/routeConfig";
 import { LederOversikt } from "./LederOversikt";
 import type { LederStatistikk } from "./types";
 
@@ -58,6 +59,25 @@ describe("LederOversikt", () => {
     renderMedRouter(lagStatistikk());
 
     expect(screen.queryByText("Vis enhet")).toBeNull();
+  });
+
+  it("lenker til statistikk for valgt enhet med underenheter", () => {
+    renderMedRouter(
+      lagStatistikk({
+        enhetId: "tipsmottak",
+        enhetNavn: "Tipsmottak",
+        ledetEnheter: [
+          { id: "ky153k", navn: "Øst" },
+          { id: "tipsmottak", navn: "Tipsmottak" },
+        ],
+      }),
+    );
+
+    expect(
+      screen
+        .getByRole("link", { name: "Se statistikk for Tipsmottak med underenheter" })
+        .getAttribute("href"),
+    ).toBe(`${RouteConfig.STATISTIKK}?omfang=hovedavdeling%3Atipsmottak`);
   });
 
   it("lar leder av flere enheter velge enhet via URL-en", () => {
