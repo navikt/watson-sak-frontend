@@ -703,6 +703,48 @@ describe("SakDetaljSide kontrollsak-runtime", () => {
     expect(sak.ytelser[0]?.belop).toBe(100);
   });
 
+  it("lagrer beløp for mock-ytelser som mangler id", async () => {
+    const sak = hentFordelingssaker(state())[0];
+    const sakRef = getSaksreferanse(sak.id);
+    sak.steg = "FORVALTNING";
+    sak.status = "VENTER_PA_VEDTAK";
+    sak.resultat = null;
+    sak.ytelser = [
+      {
+        type: "SYKEPENGER",
+        periodeFra: null,
+        periodeTil: null,
+        belop: 50,
+        endeligBelop: null,
+      },
+    ];
+    sak.saksbehandlere.eier = {
+      navIdent: "Z999999",
+      navn: "Test Saksbehandler",
+      enhet: "4812",
+    };
+    // Skjemaet får samme utledede ID fra tillatte handlinger som lagringen slår opp med.
+    const ytelseId = hentMockTillatteHandlinger(sak).tilstand.ytelser[0]?.id;
+
+    const formData = new FormData();
+    formData.set("handling", "endre_steg_dialog");
+    formData.set("steg", "AVSLUTTET");
+    formData.set("registrerResultat", "true");
+    formData.set("resultat.forvaltning.type", "SAKEN_SKAL_IKKE_VURDERES_FOR_ANMELDELSE");
+    formData.set("resultat.forvaltning.endeligUtfall.type", "FEILUTBETALINGSSAK_ORDINAER");
+    formData.set(`ytelse.${ytelseId}.endeligBelop`, "75");
+
+    await action({
+      request: new Request(`http://localhost/saker/${sakRef}`, {
+        method: "POST",
+        body: formData,
+      }),
+      params: { sakId: sakRef },
+    } as Route.ActionArgs);
+
+    expect(sak.ytelser[0]?.endeligBelop).toBe(75);
+  });
+
   it("tildeler en sak i bero uten å endre steg eller status", async () => {
     const sak = hentFordelingssaker(state())[0];
     const sakRef = getSaksreferanse(sak.id);

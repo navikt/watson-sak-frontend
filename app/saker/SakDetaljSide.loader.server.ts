@@ -25,6 +25,7 @@ import { hentHenleggelsesnotaterForSak } from "~/testing/mock-store/henleggelses
 import { hentMockState } from "~/testing/mock-store/session.server";
 import { erSakseier } from "./handlinger/tilgjengeligeHandlinger";
 import { hentMockTillatteHandlinger } from "./mock-tillatte-handlinger.server";
+import { mockYtelseId } from "./mock-uuid";
 import { hentHistorikk } from "./historikk/mock-data.server";
 import { finnSakMedReferanse } from "./id";
 import { kanLeseSaksinnhold, kanSeFilområdet } from "./sakstilgang";
@@ -60,9 +61,7 @@ function ingenTillatteHandlinger(sak: KontrollsakResponse): TillatteHandlingerRe
       resultat: sak.resultat ?? null,
       ytelser: sak.ytelser.map((ytelse, indeks) => ({
         ...ytelse,
-        id:
-          ytelse.id ??
-          `00000000-0000-4000-8000-${(sak.id + indeks).toString(16).padStart(12, "0")}`,
+        id: mockYtelseId(sak.id, ytelse, indeks),
       })),
     },
     handlinger: [],
