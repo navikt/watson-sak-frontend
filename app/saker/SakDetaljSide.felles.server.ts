@@ -20,6 +20,7 @@ import { notatMalValg } from "./handlinger/notatValg";
 import { byggLagreResultatRequest } from "./handlinger/resultat-request";
 import { erHenlagtIGjeldendeSteg } from "./handlinger/tillatte-steg";
 import { kanFordeleSak } from "./ledertilgang";
+import { mockYtelseId } from "./mock-uuid";
 import type { Route } from "./+types/SakDetaljSide.route";
 import type { RedigerSaksinformasjonResultat } from "./komponenter/Saksinformasjon.types";
 
@@ -237,8 +238,8 @@ export function lagreMockResultat(sak: KontrollsakResponse, resultat: LagreResul
   };
   if (resultat.ytelser) {
     const belopPerYtelse = new Map(resultat.ytelser.map((ytelse) => [ytelse.id, ytelse]));
-    sak.ytelser = sak.ytelser.map((ytelse) => {
-      const belop = ytelse.id ? belopPerYtelse.get(ytelse.id) : undefined;
+    sak.ytelser = sak.ytelser.map((ytelse, indeks) => {
+      const belop = belopPerYtelse.get(mockYtelseId(sak.id, ytelse, indeks));
       return belop
         ? {
             ...ytelse,

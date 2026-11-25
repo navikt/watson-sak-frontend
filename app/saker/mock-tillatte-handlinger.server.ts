@@ -11,6 +11,7 @@ import {
   kanAvsluttesFraForvaltning,
 } from "./handlinger/tillatte-steg";
 import { henleggelsesarsakEtiketter, resultatEtiketter } from "./visning";
+import { mockYtelseId } from "./mock-uuid";
 
 export function erGyldigMockStegovergang(
   sak: KontrollsakResponse,
@@ -311,7 +312,7 @@ export function hentMockTillatteHandlinger(sak: KontrollsakResponse): TillatteHa
   const handlinger: TillatteHandlingerResponse["handlinger"] = [];
   const ytelser = sak.ytelser.map((ytelse, indeks) => ({
     ...ytelse,
-    id: ytelse.id ?? `00000000-0000-4000-8000-${(sak.id + indeks).toString(16).padStart(12, "0")}`,
+    id: mockYtelseId(sak.id, ytelse, indeks),
   }));
   const muligeNesteSteg: KontrollsakSteg[] =
     sak.status === "I_BERO"

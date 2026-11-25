@@ -2,6 +2,19 @@ import type { KontrollsakResponse, KontrollsakStatus } from "./types.backend";
 
 export function nullstillMockStatushistorikk() {}
 
+/**
+ * ID for en ytelse i mockdata. Mock-saker mangler ofte `id`, så vi lager en stabil ID fra sak-ID og
+ * posisjon. Loader, tillatte handlinger og lagring av resultat må bruke samme ID, ellers finner
+ * ikke lagringen ytelsen skjemaet sendte beløpet for.
+ */
+export function mockYtelseId(
+  sakId: number,
+  ytelse: { id?: string | null },
+  indeks: number,
+): string {
+  return ytelse.id ?? `00000000-0000-4000-8000-${(sakId + indeks).toString(16).padStart(12, "0")}`;
+}
+
 /** Ingen-op etter migrering til ny modell – beholdes for bakoverkompatibilitet i tester */
 export function oppdaterTilgjengeligeHandlinger(sak: KontrollsakResponse): KontrollsakResponse {
   return sak;
