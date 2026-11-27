@@ -21,7 +21,7 @@ import {
   VStack,
 } from "@navikt/ds-react";
 import { useEffect, useId, useRef, useState } from "react";
-import { Link, useFetcher, useSearchParams } from "react-router";
+import { Link, useFetcher, useLocation, useSearchParams } from "react-router";
 import { INNSENDINGSFEIL } from "~/feilhåndtering/feilmeldinger";
 import {
   erTekniskFeilSvar,
@@ -388,6 +388,7 @@ export function SakerPåSammePerson({
   const harSendt = useRef(false);
   const fetcher = useFetcher<KobleSakActionResult>();
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const andreSaker = saker.filter((sak) => sak.id !== gjeldendeSak.id);
   const erKoblingsmodalÅpen = valgtSak !== null;
   const erFrakobling = handling === "fjerne";
@@ -418,7 +419,9 @@ export function SakerPåSammePerson({
     } else {
       neste.set("relaterteSaker", String(ny));
     }
-    setSearchParams(neste, { preventScrollReset: true });
+    // Tar med `location.state`. Uten det forsvinner `state.tilbake` (opphavet saken ble åpnet fra), og
+    // tilbakeknappen på saken faller tilbake til standardmålet med et annet navn.
+    setSearchParams(neste, { preventScrollReset: true, state: location.state });
   }
 
   function åpneKoblingsmodal(sak: KontrollsakResponse, nyHandling: Koblingshandling) {
