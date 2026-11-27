@@ -424,4 +424,33 @@ describe("SakerPåSammePerson", () => {
     expect(screen.queryByRole("button", { name: "Fjern kobling" })).toBeNull();
     expect(screen.getByRole("button", { name: "Gå til sak" })).toBeDefined();
   });
+
+  it("beholder opphavet til tilbakeknappen når man blar i relaterte saker", async () => {
+    const gjeldendeSak = lagKontrollsak("105");
+    const tilbake = { to: "/fordeling?side=2", label: "Ufordelte saker" };
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/",
+          element: (
+            <SakerPåSammePerson
+              saker={[lagKontrollsak("106"), lagKontrollsak("107")]}
+              side={1}
+              totalSider={2}
+              gjeldendeSak={gjeldendeSak}
+              innloggetNavIdent="Z999999"
+            />
+          ),
+        },
+      ],
+      { initialEntries: [{ pathname: "/", state: { tilbake } }] },
+    );
+    render(<RouterProvider router={router} />);
+    await waitFor(() => {});
+
+    fireEvent.click(screen.getByRole("button", { name: /Side 2|^2$/ }));
+
+    await waitFor(() => expect(router.state.location.search).toBe("?relaterteSaker=2"));
+    expect(router.state.location.state).toEqual({ tilbake });
+  });
 });
